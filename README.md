@@ -1,5 +1,5 @@
 # Open RAN Testbed
-An installation guide and scripts to deploy a 5G O-RAN Testbed.
+An installation guide and scripts to deploy a 5G O-RAN testbed.
 
 ## Setting Up on a Virtual Machine
 

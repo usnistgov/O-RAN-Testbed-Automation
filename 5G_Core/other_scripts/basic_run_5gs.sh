@@ -1,0 +1,7 @@
+sudo gnome-terminal -t "AMF Node" -- /bin/sh -c './install/bin/open5gs-amfd'
+sudo gnome-terminal -t "UPF Node" -- /bin/sh -c './install/bin/open5gs-upfd'
+sudo gnome-terminal -t "UDM Node" -- /bin/sh -c './install/bin/open5gs-udmd'
+sudo gnome-terminal -t "AUSF Node" -- /bin/sh -c './install/bin/open5gs-ausfd'
+sudo gnome-terminal -t "PCF Node" -- /bin/sh -c './install/bin/open5gs-pcfd'
+sudo gnome-terminal -t "SMF Node" -- /bin/sh -c './install/bin/open5gs-smfd'
+sudo gnome-terminal -t "NRF Node" -- /bin/sh -c './install/bin/open5gs-nrfd'

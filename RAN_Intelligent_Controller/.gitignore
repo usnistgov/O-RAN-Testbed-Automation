@@ -1,0 +1,9 @@
+# Ignore testbed subdirectories
+/appmgr/
+/charts/
+/e2-interface/
+/hw-go/
+/logs/
+/ric-dep/
+/xApps/
+installation_time.txt

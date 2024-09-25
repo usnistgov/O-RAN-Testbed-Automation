@@ -1,0 +1,5 @@
+# Ignore testbed subdirectories
+/configs/
+/open5gs/
+amf_addresses.txt
+installation_time.txt

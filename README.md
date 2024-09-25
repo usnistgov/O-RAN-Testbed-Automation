@@ -54,55 +54,6 @@ You will then need to wait patiently until you reach an error, or a successful t
 
 After successful installation, ensure that the config/ files are generated; they are generated with `./generate_configurations.sh`.
 
----
-### Custom PLMN and TAC Identifiers
-To select a different PLMN and TAC ID, modify the contents of `5G_Core/options.yaml`, then apply the changes with:
-```
-cd 5G_Core
-./generate_configurations.sh
-./stop.sh
-./run.sh
-cd ../gNodeB
-./generate_configurations.sh
-cd ..
-```
-
----
-### Installation Guide For Separate Machines
-If instead you would like to run the 5G Core, gNodeB, UE, or RIC on a different machine connected to the same network, then you can install each component individually.
-
-Installing the 5G Core Components (MME, SGWC, SMF, AMF, SGWU, UPF, HSS, PCRF, NRF, SCP, AUSF, UDM, PCF, NSSF, BSF, UDR):
-```
-cd 5G_Core
-./full_install.sh
-./generate_configurations.sh
-cd ..
-```
-
-Installing the gNodeB:
-```
-cd gNodeB
-./full_install.sh
-./generate_configurations.sh
-cd ..
-```
-
-Installing the UE:
-```
-cd User_Equipment
-./full_install.sh
-./generate_configurations.sh
-cd ..
-```
-
-Installing the RIC:
-```
-cd RAN_Intelligent_Controller
-./full_install.sh
-```
-
-<!-- Note: If the E2 Terminator (inside the RIC) will be outside of the network, you may need to set `inside_cluster="no"` in gNodeB/generate_configurations.sh, which will use the E2 Terminator port 32222 instead of 36422. -->
-
 ## NIST Commercial Product Disclaimer
 
 Certain equipment, instruments, software, or materials are identified in this paper in order to specify the experimental procedure adequately.  Such identification is not intended to imply recommendation or endorsement of any product or service by NIST, nor is it intended to imply that the materials or equipment identified are necessarily the best available for the purpose.

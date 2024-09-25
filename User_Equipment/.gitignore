@@ -1,0 +1,9 @@
+# Ignore testbed subdirectories
+/configs/
+/czmq/
+/libzmq/
+/logs/
+/srsRAN_4G/
+czmq
+installation_time.txt
+libzmq

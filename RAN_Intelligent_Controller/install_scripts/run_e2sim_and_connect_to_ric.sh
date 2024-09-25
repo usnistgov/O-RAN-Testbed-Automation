@@ -1,0 +1,100 @@
+#!/bin/bash
+
+# Exit immediately if a command fails
+set -e
+
+if [ ! -f "full_install.sh" ]; then
+    echo "You must run this script from the main directory with full_install.sh"
+    exit 1
+fi
+
+# Check if the container with the name 'oransim' is already running
+if [ $(sudo docker ps -q -f name=^/oransim$ | wc -l) -eq 1 ]; then
+    echo "Container 'oransim' is already running."
+elif [ $(sudo docker ps -aq -f name=^/oransim$ | wc -l) -eq 1 ]; then
+    echo "Container 'oransim' exists but is not running, starting container..."
+    sudo docker start oransim
+else
+    echo "Starting a new container 'oransim'..."
+    sudo docker run -d -it --name oransim oransim:0.0.999
+fi
+sudo kubectl get svc -n ricplt | grep e2term-sctp
+
+# Get the IP and port of the E2 termination point inside the near Real Time RIC
+SERVICE_NAME="service-ricplt-e2term-sctp-alpha"
+LINE=$(sudo kubectl get svc -n ricplt | grep $SERVICE_NAME)
+IP_e2term=$(echo $LINE | awk '{print $3}')
+PORT_e2term=$(echo $LINE | awk '{print $5}' | sed 's/:.*//')
+
+echo $IP_e2term
+echo $PORT_e2term
+
+# Path to the output file
+mkdir -p logs
+OUTPUT_FILE="logs/e2sim_output.txt"
+ATTEMPTS=1
+MAX_ATTEMPTS=10
+
+export CHART_REPO_URL=http://0.0.0.0:8090
+
+# Monitor output file for a success message
+while true; do
+    # Check if kpm_sim is already running to avoid duplicate runs
+    if ! pgrep -f "kpm_sim $IP_e2term $PORT_e2term" > /dev/null; then
+        echo "Starting kpm_sim in the background, writing to $OUTPUT_FILE..."
+	> "$OUTPUT_FILE"  # Clears the content of the output file
+        sudo docker exec -i oransim kpm_sim $IP_e2term $PORT_e2term > $OUTPUT_FILE 2>&1 &
+    fi
+
+    if ! grep -q SETUP-RESPONSE-SUCCESS $OUTPUT_FILE; then
+        echo "Waiting for connection between E2 Simulator and RIC, please be patient for all pods to be ready... $ATTEMPTS/$MAX_ATTEMPTS"
+        sleep 5
+    else
+        echo "Success: SETUP-RESPONSE-SUCCESS"
+        break
+    fi
+
+    if [ "$ATTEMPTS" -eq "$MAX_ATTEMPTS" ]; then
+        kubectl get pods -A || true
+
+        # Alternative solution: Restarting the entire ricplt-e2term-alpha pod (long wait for the previous one to terminate)
+        #POD_NAME=$(sudo kubectl get pods -n ricplt -l app=ricplt-e2term-alpha -o jsonpath='{.items[0].metadata.name}')
+        #if [ -n "$POD_NAME" ]; then
+        #    echo "Restarting the pod $POD_NAME, please be patient while it restarts..."
+        #    sudo kubectl delete pod $POD_NAME -n ricplt
+        #    # Wait for the old pod to be completely removed
+        #    sudo kubectl wait --for=delete pod/$POD_NAME -n ricplt --timeout=120s
+        #    # Wait for a new pod to be ready
+        #    sleep 5  # Brief sleep to allow for pod recreation
+        #    NEW_POD_NAME=$(sudo kubectl get pods -n ricplt -l app=ricplt-e2term-alpha -o jsonpath='{.items[0].metadata.name}')
+        #    sudo kubectl wait --for=condition=ready pod/$NEW_POD_NAME -n ricplt --timeout=120s
+        #    ATTEMPTS=0
+        #else
+        #    echo "No pods found with label app=ricplt-e2term-alpha. Please check your label or deployment."
+        #    exit 1
+        #fi
+        echo "Restarting kpm_sim inside of oransim..."
+        sudo docker exec oransim pkill -f kpm_sim
+        ATTEMPTS=0
+    fi
+    ATTEMPTS=$((ATTEMPTS + 1))
+done
+
+SERVICE_NAME="service-ricplt-e2mgr-http"
+LINE=$(sudo kubectl get svc -n ricplt | grep $SERVICE_NAME)
+IP_HTTP_e2term=$(echo $LINE | awk '{print $3}')
+PORT_HTTP_e2term=$(echo $LINE | awk '{print $5}' | sed 's/\/.*//' | cut -d: -f2)
+echo "$IP_HTTP_e2term:$PORT_HTTP_e2term"
+
+curl -X GET $IP_HTTP_e2term:$PORT_HTTP_e2term/v1/nodeb/states 2>/dev/null|jq
+response=$(curl -X GET $IP_HTTP_e2term:$PORT_HTTP_e2term/v1/nodeb/states 2>/dev/null)
+
+# Verify if the connectionStatus is "CONNECTED"
+status=$(echo "$response" | jq -r '.[].connectionStatus' | grep "CONNECTED")
+
+if [[ $status == "CONNECTED" ]]; then
+    echo "Successfully connected the E2 simulator and RIC cluster."
+else
+    echo "Connection between E2 simulator and RIC cluster failed."
+    exit 1
+fi

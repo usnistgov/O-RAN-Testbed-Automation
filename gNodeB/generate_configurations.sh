@@ -3,10 +3,6 @@
 # Exit immediately if a command fails
 set -e
 
-inside_cluster="yes"
-# echo "Are you connecting to the e2term from inside the Kubernetes cluster? [yes/no]"
-# read -p "Enter choice (yes/no): " inside_cluster
-
 # Define the path to the YAML file
 yaml_path="../5G_Core/options.yaml"
 if [ ! -f "$yaml_path" ]; then
@@ -46,6 +42,9 @@ cp srsRAN_Project/configs/gnb_rf_b200_tdd_n78_20mhz.yml configs/gnb.yaml
 echo
 echo
 echo "Fetching e2term port"
+inside_cluster="yes"
+# echo "Are you connecting to the e2term from inside the Kubernetes cluster? [yes/no]"
+# read -p "Enter choice (yes/no): " inside_cluster
 if [ "$inside_cluster" = "yes" ]; then
     PORT_e2term=36422
 else
@@ -54,10 +53,10 @@ fi
 
 # Function to prompt user for IP address
 prompt_for_e2term_ip() {
-    echo "Please enter the IP address of the service."
-    echo "You can find this by running: sudo kubectl get service -n ricplt | grep service-ricplt-e2term-sctp"
+    echo "Please enter the IP address of the service." >&2
+    echo "You can find this by running: sudo kubectl get service -n ricplt | grep service-ricplt-e2term-sctp" >&2
     read -p "Enter IP Address: " user_ip
-    echo $user_ip
+    echo "$user_ip"
 }
 
 # Check if kubectl is installed
@@ -90,10 +89,11 @@ echo "PORT_e2term: $PORT_e2term"
 
 
 echo "Fetching AMF addresses..."
-file_path="../5G_Core/configs/get_amf_addresses.txt"
+file_path="../5G_Core/configs/get_amf_address.txt"
+
 prompt_for_addresses() {
-    echo "Please enter the AMF address and the AMF binding address manually."
-    echo "You can find this information in the 5G_Core/configs/get_amf_addresses.txt file in the first two lines, respectively."
+    echo "Please enter the AMF address and the AMF binding address manually." >&2
+    echo "You can find this information in the 5G_Core/configs/get_amf_addresses.txt file in the first two lines, respectively." >&2
     read -p "Enter AMF Address: " amf_addr
     read -p "Enter AMF Binding Address: " amf_addr_bind
 }

@@ -1,0 +1,9 @@
+Open5GS daemon v2.7.2-65-g6d80d43
+
+09/25 16:20:56.406: [app] INFO: Configuration: '/home/research/Desktop/O-RAN-Testbed-Init/5G_Core/open5gs/install/etc/open5gs/sgwu.yaml' (../lib/app/ogs-init.c:144)
+09/25 16:20:56.407: [app] INFO: File Logging: '/home/research/Desktop/O-RAN-Testbed-Init/5G_Core/logs/sgwu.log' (../lib/app/ogs-init.c:147)
+09/25 16:20:56.459: [pfcp] INFO: pfcp_server() [127.0.0.6]:8805 (../lib/pfcp/path.c:30)
+09/25 16:20:56.459: [gtp] INFO: gtp_server() [127.0.0.6]:2152 (../lib/gtp/path.c:30)
+09/25 16:20:56.459: [app] INFO: SGW-U initialize...done (../src/sgwu/app.c:31)
+09/25 16:20:58.810: [pfcp] INFO: ogs_pfcp_connect() [127.0.0.3]:8805 (../lib/pfcp/path.c:61)
+09/25 16:20:58.811: [sgwu] INFO: PFCP associated [127.0.0.3]:8805 (../src/sgwu/pfcp-sm.c:179)

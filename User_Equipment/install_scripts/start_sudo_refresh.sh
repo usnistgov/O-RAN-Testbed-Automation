@@ -13,4 +13,3 @@ if [ "$USER" != "root" ]; then
 else
     echo "You are root, no need to refresh sudo timeout."
 fi
-

@@ -23,4 +23,3 @@ echo "CHART_REPO_URL set to $CHART_REPO_URL for current and future sessions for 
 # Source the updated profiles to ensure the variable is available immediately
 source /etc/profile
 source ~/.bashrc
-

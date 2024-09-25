@@ -774,28 +774,3 @@ if [[ ! -z "$HELM_REPO_HOST" ]]; then
 fi
 
 echo "Script completed successfully."
-
-## To optionally configure Docker to trust a private registry, define the registry host
-#DOCKER_REGISTRY_HOST=""
-## Configure Docker certificates if necessary
-#if [[ ! -z "$DOCKER_REGISTRY_HOST" ]]; then
-#    mkdir -p "/etc/docker/certs.d/$DOCKER_REGISTRY_HOST"
-#    # Place your CA certificate at /etc/docker/ca.crt or specify the correct path
-#    if [ -f "/etc/docker/ca.crt" ]; then
-#        cp /etc/docker/ca.crt "/etc/docker/certs.d/$DOCKER_REGISTRY_HOST/ca.crt"
-#    else
-#        echo "CA certificate not found at /etc/docker/ca.crt. Skipping certificate configuration."
-#    fi
-#fi
-## Restart Docker service
-#systemctl restart docker.service
-#systemctl enable docker.service
-## If necessary, configure Docker to authenticate using stored credentials or tokens
-#echo "Please enter your Docker username:"
-#read DOCKER_USERNAME
-#echo "Please enter your Docker password:"
-#read -s DOCKER_PASSWORD
-#docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
-#docker pull your.registry.host/your-image:tag
-
-

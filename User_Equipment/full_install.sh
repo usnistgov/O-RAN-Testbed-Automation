@@ -53,6 +53,7 @@ echo "Building ZeroMQ libzmq..."
 # rm -rf libzmq
 if [ -d ../gNodeB/libzmq ]; then
     if [ ! -L libzmq ]; then
+        echo "Found gNodeB library. Creating libqmz link instead."
         ln -s ../gNodeB/libzmq libzmq
     else
         echo "Link to libqmz already created."
@@ -78,6 +79,7 @@ echo "Building ZeroMQ czmq..."
 #rm -rf czmq
 if [ -d ../gNodeB/czmq ]; then
     if [ ! -L czmq ]; then
+        echo "Found gNodeB library. Creating czmq link instead."
         ln -s ../gNodeB/czmq czmq
     else
         echo "Link to czmq already created."

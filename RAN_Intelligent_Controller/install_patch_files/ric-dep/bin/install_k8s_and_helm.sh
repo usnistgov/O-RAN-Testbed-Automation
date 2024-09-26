@@ -33,7 +33,7 @@ usage() {
     echo " -c <cni version>     Kubernetes CNI version" 1>&2;
     echo " -d <docker version>  Docker version" 1>&2;
     echo " -e <helm version>    Helm version" 1>&2;
-    echo " --no-sctp-support    Disable SCTP support" 1>&2;
+    echo " --swap-sctp-config   Tries the other syntax for SCTPSupport in the 'kubeadm init' configuration" 1>&2;
     exit 1;
 }
 
@@ -126,12 +126,10 @@ apt-get update
 apt-get install -y curl wget gnupg2 software-properties-common lsb-release net-tools iproute2 iputils-ping
 # Install 'modprobe' if not present (usually part of 'kmod')
 apt-get install -y kmod
-# Install 'awk' and 'sed' (usually part of 'gawk' and 'sed' packages)
 apt-get install -y gawk sed
-# Install 'iptables' if not present
 apt-get install -y iptables
-# Install 'socat' if not present
 apt-get install -y socat
+apt-get install -y libsctp1 lksctp-tools
 
 #KUBEV="1.28.11"
 #KUBECNIV="0.7.5"
@@ -157,16 +155,16 @@ if [[ ${UBUNTU_RELEASE} == 24.* ]]; then
 fi
 
 # Parsing command-line options
-IS_SCTP_ENABLED="true"
+SWAP_SCTP_CONFIG="false"
 while [[ "$#" -gt 0 ]]; do
     case "$1" in
         -k) KUBEV="$2"; shift ;;
         -d) DOCKERV="$2"; shift ;;
         -e) HELMV="$2"; shift ;;
         -c) KUBECNIV="$2"; shift ;;
-        --no-sctp-support)
-            IS_SCTP_ENABLED="false"
-            echo "No SCTP support is being used."
+        --swap-sctp-config)
+            SWAP_SCTP_CONFIG="true"
+            echo "Found --swap-sctp-config: Trying other syntax for SCTPSupport."
             ;;
         *) usage ;;
     esac
@@ -222,6 +220,9 @@ modprobe ip_vs_rr
 modprobe ip_vs_wrr
 modprobe ip_vs_sh
 
+# Load SCTP module
+modprobe sctp
+
 # Conditional loading of connection tracking modules based on kernel version
 KERNEL_VERSION=$(uname -r)
 if [[ "$KERNEL_VERSION" < "5.0" ]]; then
@@ -238,12 +239,14 @@ if [ ! -z "$IPV6IF" ]; then
     start_ipv6_if "$IPV6IF"
 fi
 
+# Kubelet does not support swap. Disable traditional swap entries in /etc/fstab:
+echo "Checking for traditional swap in /etc/fstab..."
 SWAPFILES=$(grep swap /etc/fstab | sed '/^[ \t]*#/ d' | sed 's/[\t ]/ /g' | tr -s " " | cut -f1 -d' ')
 if [ ! -z "$SWAPFILES" ]; then
     for SWAPFILE in $SWAPFILES
     do
         if [ ! -z "$SWAPFILE" ]; then
-            echo "disabling swap file $SWAPFILE"
+            echo "Disabling swap file $SWAPFILE"
             if [[ $SWAPFILE == UUID* ]]; then
                 UUID=$(echo "$SWAPFILE" | cut -f2 -d'=')
                 swapoff -U "$UUID"
@@ -253,7 +256,31 @@ if [ ! -z "$SWAPFILES" ]; then
             sed -i "\%$SWAPFILE%d" /etc/fstab
         fi
     done
+else
+    echo "No traditional swap entries found in /etc/fstab."
 fi
+
+# Disable zram swap
+echo "Checking for zram swap devices..."
+ZRAM_DEVICES=$(swapon --show=NAME,TYPE | grep partition | grep zram | cut -d' ' -f1)
+if [ ! -z "$ZRAM_DEVICES" ]; then
+    for ZRAM in $ZRAM_DEVICES
+    do
+        # Handle case where device path might already include '/dev/'
+        ZRAM_DEVICE_PATH=$(echo "$ZRAM" | grep -q "^/dev/" && echo "$ZRAM" || echo "/dev/$ZRAM")
+        echo "Disabling zram device $ZRAM_DEVICE_PATH"
+        swapoff "$ZRAM_DEVICE_PATH"
+    done
+    # Disable zram services if they exist
+    systemctl list-units --type=service | grep zram | cut -d' ' -f1 | while read -r service; do
+        echo "Disabling zram service $service"
+        systemctl disable --now "$service"
+    done
+else
+    echo "No zram devices currently active."
+fi
+# Running this should now return nothing: swapon --show
+
 
 echo "### Docker version  = "${DOCKERV}
 echo "### k8s version     = "${KUBEV}
@@ -312,13 +339,14 @@ echo
 mkdir -p /etc/apt/apt.conf.d
 echo "APT::Acquire::Retries \"3\";" > /etc/apt/apt.conf.d/80-retries
 
+# Wait for dpkg lock to be released by directly checking in the loop
+until dpkg --configure -a > /dev/null 2>&1; do
+    echo "Waiting for other software managers to release the dpkg lock..."
+    sleep 5
+done
+
 apt-get update
-RES=$(apt-get install -y  curl jq netcat-openbsd make ipset moreutils 2>&1)
-if [[ $RES == */var/lib/dpkg/lock* ]]; then
-    echo "Fail to get dpkg lock.  Wait for any other package installation"
-    echo "process to finish, then rerun this script"
-    exit -1
-fi
+apt-get install -y curl jq netcat-openbsd make ipset moreutils
 
 APTOPTS="--allow-downgrades --allow-change-held-packages --allow-unauthenticated --ignore-hold "
 
@@ -497,14 +525,17 @@ kubeadm config images pull --kubernetes-version=${KUBEVERSIONWITHOUTSUFFIX}
 
 echo "Kubernetes components reinstalled and ready for initialization."
 
-SCTP_SUPPORT_1=""
-SCTP_SUPPORT_2=""
-if [ "${IS_SCTP_ENABLED}" = "true" ]; then
-    SCTP_SUPPORT_1="apiServerExtraArgs:
-  feature-gates: SCTPSupport=true"
-    SCTP_SUPPORT_2="apiServer:
+SCTP_SUPPORT_1="apiServer:
   extraArgs:
     feature-gates: SCTPSupport=true"
+SCTP_SUPPORT_2="apiServerExtraArgs:
+  feature-gates: SCTPSupport=true"
+
+# Swap the two syntax styles
+if [ "${SWAP_SCTP_CONFIG}" = "true" ]; then
+    TEMP="$SCTP_SUPPORT_1"
+    SCTP_SUPPORT_1="$SCTP_SUPPORT_2"
+    SCTP_SUPPORT_2="$TEMP"
 fi
 
 NODETYPE="master"
@@ -575,30 +606,9 @@ else
     echo "Unsupported Kubernetes version requested ($KUBEVERSION).  Bail."
     exit 1
 fi
+# Address 10.244.0.0/16 is the same one Flannel uses
 
-cat <<EOF > /root/rbac-config.yaml
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-name: tiller
-namespace: kube-system
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-name: tiller
-roleRef:
-apiGroup: rbac.authorization.k8s.io
-kind: ClusterRole
-name: cluster-admin
-subjects:
-- kind: ServiceAccount
-name: tiller
-namespace: kube-system
-EOF
-
-# Ensure CNI configurations are set for Flannel
-echo "Ensuring CNI configurations are set..."
+echo "Configuring Flannel CNI configurations..."
 mkdir -p /etc/cni/net.d
 cat <<EOF > /etc/cni/net.d/10-flannel.conflist
 {
@@ -622,6 +632,45 @@ cat <<EOF > /etc/cni/net.d/10-flannel.conflist
 }
 EOF
 
+
+echo "Configuring RBAC for Helm (Tiller)..."
+cat <<EOF > /root/rbac-config.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: tiller
+  namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: tiller
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+- kind: ServiceAccount
+  name: tiller
+  namespace: kube-system
+EOF
+
+echo "Configuring Kube-Proxy ClusterRoleBinding..."
+cat <<EOF > /root/kube-proxy-rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kube-proxy
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:node-proxier
+subjects:
+- kind: ServiceAccount
+  name: kube-proxy
+  namespace: kube-system
+EOF
+
 # Ensure configurations are set for containerd
 mkdir -p /etc/containerd
 cat <<EOF > /etc/containerd/config.toml
@@ -636,10 +685,7 @@ cat <<EOF > /etc/containerd/config.toml
 EOF
 systemctl restart containerd
 
-if ! kubeadm init --config /root/config.yaml --v=5; then
-    echo "Failed to initialize Kubernetes cluster."
-    exit 1
-fi
+kubeadm init --config /root/config.yaml --v=5
 
 # Set KUBECONFIG
 export KUBECONFIG=/etc/kubernetes/admin.conf
@@ -648,6 +694,15 @@ echo "export KUBECONFIG=/etc/kubernetes/admin.conf" >> /etc/environment
 mkdir -p /root/.kube
 cp -i /etc/kubernetes/admin.conf /root/.kube/config
 chown $(id -u):$(id -g) /root/.kube/config
+
+
+# Wait for kube-apiserver to be ready
+sleep 1
+until kubectl get pods --all-namespaces; do
+    echo "Waiting for API server to be available..."
+    sudo crictl ps -a
+    sleep 8
+done
 
 kubectl get pods --all-namespaces || true
 
@@ -665,6 +720,14 @@ else
         echo "Failed to apply Flannel configuration."
         exit 1
     fi
+fi
+
+if ! kubectl apply -f "/root/rbac-config.yaml"; then
+    echo "Failed to apply RBAC for Helm (Tiller), skipping."
+fi
+
+if ! kubectl apply -f "/root/kube-proxy-rbac.yaml"; then
+    echo "Failed to apply Kube-Proxy ClusterRoleBinding, skipping."
 fi
 
 # Resource metrics enable commands like: kubectl top pod [pod_name] -n [namespace]

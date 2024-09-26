@@ -28,7 +28,8 @@ wait_for_all_pods_running () {
             fi
             # Process the pod status to check if all are 'Running' or 'Completed'
             echo "$POD_STATUS" | awk '{ split($2, arr, "/"); if ($3 != "Running" && $3 != "Completed") exit 1; if ($3 == "Running" && arr[1] != arr[2]) exit 1}' || {
-                echo "Some pods in $NAMESPACE are not yet in 'Running' or 'Completed' state, or not all containers are ready."
+                echo
+                echo "Some pods in $NAMESPACE are not yet in the 'Running' or 'Completed' state, or not all containers are ready. Please be patient as it may take some time for the ricplt pods (e2term) be ready."
                 ALL_PODS_RUNNING=0
                 break
             }

@@ -10,6 +10,14 @@ ue_start_time=$(date +%s)
 # Exit immediately if a command fails
 set -e
 
+# Prevent the unattended-upgrades service from creating dpkg locks that would error the script
+if sudo systemctl stop unattended-upgrades; then
+  echo "Successfully stopped unattended-upgrades service."
+fi
+if sudo systemctl disable unattended-upgrades; then
+  echo "Successfully disabled unattended-upgrades service."
+fi
+
 baseDirectory=$(pwd)
 
 echo "Installing User Equipment..."

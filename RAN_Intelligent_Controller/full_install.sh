@@ -10,6 +10,14 @@ ric_start_time=$(date +%s)
 # Exit immediately if a command fails
 set -e
 
+# Prevent the unattended-upgrades service from creating dpkg locks that would error the script
+if sudo systemctl stop unattended-upgrades; then
+  echo "Successfully stopped unattended-upgrades service."
+fi
+if sudo systemctl disable unattended-upgrades; then
+  echo "Successfully disabled unattended-upgrades service."
+fi
+
 echo "--- Installing RIC with J-release ---"
 
 echo
@@ -27,10 +35,11 @@ cp install_patch_files/ric-dep/bin/install_k8s_and_helm.sh ric-dep/bin/install_k
 
 cd ric-dep/bin/
 if ! sudo ./install_k8s_and_helm.sh; then
-    echo "Failed to run $(pwd)/install_k8s_and_helm.sh, trying without SCTP support..."
-    if ! sudo ./install_k8s_and_helm.sh --no-sctp-support; then
-        echo "Failed to run $(pwd)/install_k8s_and_helm.sh both with and without SCTP support."
-        echo "This error likely has to do with \"kubeadm init\". Please check the logs and configurations, then try again."
+    echo
+    echo
+    echo "Failed to run $(pwd)/install_k8s_and_helm.sh, trying different SCTP support syntax..."
+    if ! sudo ./install_k8s_and_helm.sh --swap-sctp-config; then
+        echo "An error occured when running $(pwd)/install_k8s_and_helm.sh."
         exit 1
     fi
 fi

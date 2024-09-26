@@ -25,7 +25,7 @@ If using VirtualBox, for optimal user experience consider using the following co
 ## Installation Guide
 The first thing to do before anything else is to run the Update Manager and ensure everything is up-to-date, then reboot.
 
-Next, install the VirtualBox Guest Additions, type the following command into the terminal to make Shared Folders work properly, then reboot:
+Optionally, install the VirtualBox Guest Additions, type the following command into the terminal to make Shared Folders work properly, then reboot:
 ```
 sudo adduser $USER vboxsf
 ```
@@ -38,6 +38,11 @@ sudo apt install git
 Then clone the O-RAN-Testbed repository:
 ```
 git clone https://gitlab.nist.gov/gitlab/wnd-oran/O-RAN-Testbed-Init.git
+```
+
+Alternatively, clone the repository with SSH:
+```
+git clone 'git@gitlab.nist.gov:wnd-oran/o-ran-testbed-init.git'
 ```
 
 Then start the installation process (it is recommended to run it as your current user rather than as root):

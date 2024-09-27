@@ -692,9 +692,8 @@ export KUBECONFIG=/etc/kubernetes/admin.conf
 echo "export KUBECONFIG=/etc/kubernetes/admin.conf" >> /etc/environment
 
 mkdir -p /root/.kube
-cp -i /etc/kubernetes/admin.conf /root/.kube/config
+cp -f /etc/kubernetes/admin.conf /root/.kube/config
 chown $(id -u):$(id -g) /root/.kube/config
-
 
 # Wait for kube-apiserver to be ready
 sleep 1

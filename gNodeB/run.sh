@@ -4,6 +4,7 @@ if pgrep -x "gnb" > /dev/null; then
     echo "Already running gnb."
 else
     echo "Starting gnb in background..."
+    mkdir -p logs
     sudo rm -rf logs/gnb.log
     sudo nohup srsRAN_Project/build/apps/gnb/gnb -c configs/gnb.yaml > logs/gnb_stdout.txt 2>&1 &
     sleep 1

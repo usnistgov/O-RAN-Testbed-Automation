@@ -58,7 +58,7 @@ get_latest_docker_version() {
     VERSION_PREFIX=$1
     # Get the full Docker version, falling back to any available version if needed
     LATEST_VERSION=$(apt-cache madison docker.io | grep "$VERSION_PREFIX" | head -1 | awk '{print $3}')
-    
+
     # Fallback if no version is found
     if [[ -z "$LATEST_VERSION" ]]; then
         LATEST_VERSION=$(apt-cache madison docker.io | head -1 | awk '{print $3}')
@@ -92,7 +92,7 @@ wait_for_pods_running () {
         fi
 
         echo "Currently, $ACTUAL_COUNT/$EXPECTED_COUNT pods are in the desired state in namespace '$NAMESPACE'."
-        
+
         if [[ "$ACTUAL_COUNT" -ge "$EXPECTED_COUNT" ]]; then
             echo "Required pod count reached in namespace '$NAMESPACE'."
             break
@@ -302,7 +302,7 @@ echo "deb [signed-by=/etc/apt/keyrings/helm-apt-keyring.gpg] https://baltocdn.co
 
 # If this errors then remove Kubernetes with: sudo rm /etc/apt/sources.list.d/kubernetes.list
 # If this errors then remove Helm with: sudo rm /etc/apt/sources.list.d/helm-stable-debian.list
-sudo apt update
+apt update
 
 # Dynamically fetch the latest versions based on the available packages
 DOCKERVERSION=$(get_latest_docker_version "${DOCKERV}")
@@ -586,7 +586,6 @@ apiVersion: kubeproxy.config.k8s.io/v1alpha1
 kind: KubeProxyConfiguration
 mode: ipvs
 EOF
-    
     elif [[ ${KUBEVERSION} == 1.28.* ]] ; then
     cat <<EOF > /root/config.yaml
 apiVersion: kubeadm.k8s.io/v1beta3
@@ -632,29 +631,6 @@ cat <<EOF > /etc/cni/net.d/10-flannel.conflist
 }
 EOF
 
-
-echo "Configuring RBAC for Helm (Tiller)..."
-cat <<EOF > /root/rbac-config.yaml
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: tiller
-  namespace: kube-system
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: tiller
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: cluster-admin
-subjects:
-- kind: ServiceAccount
-  name: tiller
-  namespace: kube-system
-EOF
-
 echo "Configuring Kube-Proxy ClusterRoleBinding..."
 cat <<EOF > /root/kube-proxy-rbac.yaml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -676,16 +652,23 @@ mkdir -p /etc/containerd
 cat <<EOF > /etc/containerd/config.toml
 [plugins."io.containerd.grpc.v1.cri".containerd]
   default_runtime_name = "runc"
+  [plugins."io.containerd.grpc.v1.cri".containerd.default_runtime.options]
+    SystemdCgroup = true
   [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
     runtime_type = "io.containerd.runc.v2"
-  [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
-    SystemdCgroup = true
-  [plugins."io.containerd.grpc.v1.cri".containerd.default_runtime.options]
-    PodSandboxImage = "registry.k8s.io/pause:3.9"
+    [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
+      PodSandboxImage = "registry.k8s.io/pause:3.9"
 EOF
 systemctl restart containerd
 
 kubeadm init --config /root/config.yaml --v=5
+INIT_STATUS=$?
+
+# Check if kubeadm init was successful
+if [ $? -ne 0 ]; then
+    echo "kubeadm init failed with status $INIT_STATUS"
+    exit $INIT_STATUS
+fi
 
 # Set KUBECONFIG
 export KUBECONFIG=/etc/kubernetes/admin.conf
@@ -699,13 +682,13 @@ chown $(id -u):$(id -g) /root/.kube/config
 sleep 1
 until kubectl get pods --all-namespaces; do
     echo "Waiting for API server to be available..."
-    sudo crictl ps -a
+    crictl ps -a
     sleep 8
 done
 
 kubectl get pods --all-namespaces || true
 
-echo "Applying Flannel CNI..."
+echo "Applying Flannel CNI (Kube version $KUBEVERSION)..."
 if [[ ${KUBEVERSION} == 1.28.* ]]; then
     # Apply the latest Flannel configuration for Kubernetes version 1.28 and above
     if ! kubectl apply -f "https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml"; then
@@ -713,25 +696,66 @@ if [[ ${KUBEVERSION} == 1.28.* ]]; then
         exit 1
     fi
 else
-    # Use a specific Flannel version for other Kubernetes versions, refer to version 0.18.1
-    # We refer to version 0.18.1 because later versions use namespace kube-flannel instead of kube-system TODO
-    if ! kubectl apply -f "https://raw.githubusercontent.com/flannel-io/flannel/v0.18.1/Documentation/kube-flannel.yml"; then
+    # Use a specific Flannel version that does not include deprecated PSP for other Kubernetes versions
+    echo "Removing PSP from Flannel Configuration..."
+    mkdir -p configs_flannel_18.01
+    wget -O configs_flannel_18.01/kube-flannel.yml https://raw.githubusercontent.com/flannel-io/flannel/v0.18.1/Documentation/kube-flannel.yml
+    # Use sed to remove the PodSecurityPolicy section safely
+    sed -i '/apiVersion: policy\/v1beta1/,/---/d' configs_flannel_18.01/kube-flannel.yml
+    # Remove RBAC permissions related to PodSecurityPolicy
+    sed -i '/- apiGroups: \['\''extensions'\''\]/,+4d' configs_flannel_18.01/kube-flannel.yml
+    if ! kubectl apply -f "configs_flannel_18.01/kube-flannel.yml"; then
         echo "Failed to apply Flannel configuration."
         exit 1
     fi
-fi
-
-if ! kubectl apply -f "/root/rbac-config.yaml"; then
-    echo "Failed to apply RBAC for Helm (Tiller), skipping."
 fi
 
 if ! kubectl apply -f "/root/kube-proxy-rbac.yaml"; then
     echo "Failed to apply Kube-Proxy ClusterRoleBinding, skipping."
 fi
 
+echo "Configuring RBAC for metrics-server..."
+cat <<EOF > /root/metrics-server-rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: system:metrics-server
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - nodes
+  - nodes/stats
+  - namespaces
+  - configmaps
+  verbs:
+  - get
+  - list
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: system:metrics-server
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:metrics-server
+subjects:
+- kind: ServiceAccount
+  name: metrics-server
+  namespace: kube-system
+EOF
+
+# Apply RBAC for metrics-server
+if ! kubectl apply -f "/root/metrics-server-rbac.yaml"; then
+    echo "Failed to apply RBAC for metrics-server, skipping."
+fi
+
 # Resource metrics enable commands like: kubectl top pod [pod_name] -n [namespace]
 if ! kubectl apply -f "https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml"; then
-    echo "Failed to apply optional resource metrics, skipping."
+    echo "Failed to apply resource metrics, skipping."
 fi
 
 # Create local-storage storage class

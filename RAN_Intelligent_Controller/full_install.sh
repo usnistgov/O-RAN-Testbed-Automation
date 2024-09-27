@@ -44,6 +44,11 @@ if ! sudo ./install_k8s_and_helm.sh; then
     fi
 fi
 
+# Ensure that kubectl is accessible in the current user as well
+mkdir -p $HOME/.kube
+sudo cp -f /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
 echo
 echo
 echo "Installing Helm Chart and Museum..."
@@ -60,9 +65,33 @@ fi
 sudo ./install_scripts/install_e2sim.sh
 
 echo "Revising RIC Installation YAML File..."
-YAMLFILEPATH="ric-dep/RECIPE_EXAMPLE/example_recipe_latest_stable_MODIFIED.yaml"
-cp ric-dep/RECIPE_EXAMPLE/example_recipe_latest_stable.yaml $YAMLFILEPATH
-sudo ./install_scripts/revise_example_recipe_latest_stable.yaml.sh $YAMLFILEPATH
+RIC_YAML_FILE_PATH="ric-dep/RECIPE_EXAMPLE/example_recipe_latest_stable_MODIFIED.yaml"
+sudo cp ric-dep/RECIPE_EXAMPLE/example_recipe_latest_stable.yaml $RIC_YAML_FILE_PATH
+sudo ./install_scripts/revise_example_recipe_latest_stable.yaml.sh $RIC_YAML_FILE_PATH
+
+# Wait for kube-apiserver to be ready, timeout of 30 minutes (1800 seconds) before restarting service
+echo "Waiting for the Kubernetes API server to become ready before installing near RT-RIC..."
+TIMEOUT=1800
+ELAPSED_TIME=0
+SLEEP_DURATION=5
+while ! kubectl get --raw="/api/v1/namespaces/kube-system/pods" > /dev/null 2>&1; do
+    if [ $ELAPSED_TIME -ge $TIMEOUT ]; then
+        echo "Timeout exceeded while waiting for the API server to respond."
+        echo "Attempting to restart Kubernetes services..."
+        # Restart Kubernetes services or any other commands to recover the situation
+        sudo systemctl restart kubelet
+        sleep $SLEEP_DURATION
+        ELAPSED_TIME=$SLEEP_DURATION
+        echo "Services restarted. Continuing to wait for API server readiness..."
+    else
+        echo "Waiting for API server to respond..."
+        sudo kubectl get pods --namespace=kube-system
+        sudo kubectl get nodes
+        sleep $SLEEP_DURATION
+        ELAPSED_TIME=$(($ELAPSED_TIME + $SLEEP_DURATION))
+    fi
+done
+echo "API server is ready."
 
 cd ric-dep/bin/
 
@@ -129,8 +158,8 @@ while true; do
         echo "xApp ricxapp-hw-go is running and ready (1/1)."
         break # Exit the loop if xApp is running and ready
     else
-        echo "Deployment is not yet successful or ricxapp-hw-go is not running/ready. Checking again in 1 second..."
-        sleep 1 # Wait for 1 second before checking again
+        echo "Deployment is not yet successful or ricxapp-hw-go is not running/ready. Checking again in 3 seconds..."
+        sleep 3
     fi
 done
 

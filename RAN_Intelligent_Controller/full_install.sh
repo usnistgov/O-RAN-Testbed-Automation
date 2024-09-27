@@ -74,7 +74,7 @@ echo "Waiting for the Kubernetes API server to become ready before installing ne
 TIMEOUT=1800
 ELAPSED_TIME=0
 SLEEP_DURATION=5
-while ! kubectl get --raw="/api/v1/namespaces/kube-system/pods" > /dev/null 2>&1; do
+while ! sudo kubectl get --raw="/api/v1/namespaces/kube-system/pods" > /dev/null 2>&1; do
     if [ $ELAPSED_TIME -ge $TIMEOUT ]; then
         echo "Timeout exceeded while waiting for the API server to respond."
         echo "Attempting to restart Kubernetes services..."

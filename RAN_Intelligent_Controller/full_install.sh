@@ -11,10 +11,10 @@ ric_start_time=$(date +%s)
 set -e
 
 # Prevent the unattended-upgrades service from creating dpkg locks that would error the script
-if sudo systemctl stop unattended-upgrades; then
+if sudo systemctl stop unattended-upgrades &>/dev/null; then
   echo "Successfully stopped unattended-upgrades service."
 fi
-if sudo systemctl disable unattended-upgrades; then
+if sudo systemctl disable unattended-upgrades &>/dev/null; then
   echo "Successfully disabled unattended-upgrades service."
 fi
 
@@ -34,20 +34,20 @@ fi
 cp install_patch_files/ric-dep/bin/install_k8s_and_helm.sh ric-dep/bin/install_k8s_and_helm.sh
 
 cd ric-dep/bin/
-if ! sudo ./install_k8s_and_helm.sh; then
-    echo
-    echo
-    echo "Failed to run $(pwd)/install_k8s_and_helm.sh, trying different SCTP support syntax..."
-    if ! sudo ./install_k8s_and_helm.sh --swap-sctp-config; then
-        echo "An error occured when running $(pwd)/install_k8s_and_helm.sh."
-        exit 1
-    fi
+
+if ! ./install_k8s_and_helm.sh; then
+    echo "An error occured when running $(pwd)/install_k8s_and_helm.sh."
+    echo "Please verify that 'kubeadm init' completed successfully."
+    echo "If it did not, verify that SCTPSupport (in $HOME/config.yaml) is supported by your version of Kubernetes."
+    exit 1
 fi
 
-# Ensure that kubectl is accessible in the current user as well
-mkdir -p $HOME/.kube
-sudo cp -f /etc/kubernetes/admin.conf $HOME/.kube/config
-sudo chown $(id -u):$(id -g) $HOME/.kube/config
+# # If install_k8s_and_helm.sh was ran with sudo, then the following would be needed:
+# sudo chown $USER:$USER /root/.kube/config
+# mkdir -p $HOME/.kube
+# sudo cp -f /etc/kubernetes/admin.conf $HOME/.kube/config
+# sudo chown $USER:$USER $HOME/.kube/config
+# echo "export KUBECONFIG=$HOME/.kube/config" >> $HOME/.bashrc
 
 echo
 echo
@@ -56,14 +56,6 @@ sudo ./install_common_templates_to_helm.sh
 
 cd ../../ # Main directory
 
-echo
-echo
-echo "Building and Installing the E2 Simulator..."
-if [ ! -d "e2-interface" ]; then
-    git clone https://gerrit.o-ran-sc.org/r/sim/e2-interface
-fi
-sudo ./install_scripts/install_e2sim.sh
-
 echo "Revising RIC Installation YAML File..."
 RIC_YAML_FILE_PATH="ric-dep/RECIPE_EXAMPLE/example_recipe_latest_stable_MODIFIED.yaml"
 sudo cp ric-dep/RECIPE_EXAMPLE/example_recipe_latest_stable.yaml $RIC_YAML_FILE_PATH
@@ -71,36 +63,68 @@ sudo ./install_scripts/revise_example_recipe_latest_stable.yaml.sh $RIC_YAML_FIL
 
 # Wait for kube-apiserver to be ready, timeout of 30 minutes (1800 seconds) before restarting service
 echo "Waiting for the Kubernetes API server to become ready before installing near RT-RIC..."
-TIMEOUT=1800
-ELAPSED_TIME=0
-SLEEP_DURATION=5
-while ! sudo kubectl get --raw="/api/v1/namespaces/kube-system/pods" > /dev/null 2>&1; do
-    if [ $ELAPSED_TIME -ge $TIMEOUT ]; then
-        echo "Timeout exceeded while waiting for the API server to respond."
-        echo "Attempting to restart Kubernetes services..."
-        # Restart Kubernetes services or any other commands to recover the situation
-        sudo systemctl restart kubelet
-        sleep $SLEEP_DURATION
-        ELAPSED_TIME=$SLEEP_DURATION
-        echo "Services restarted. Continuing to wait for API server readiness..."
-    else
-        echo "Waiting for API server to respond..."
-        sudo kubectl get pods --namespace=kube-system
-        sudo kubectl get nodes
-        sleep $SLEEP_DURATION
-        ELAPSED_TIME=$(($ELAPSED_TIME + $SLEEP_DURATION))
-    fi
-done
-echo "API server is ready."
+sudo ./install_scripts/wait_for_kubectl.sh
 
-cd ric-dep/bin/
 
 echo
 echo
 echo "Installing near RT-RIC..."
-sudo ./install -f ../RECIPE_EXAMPLE/example_recipe_latest_stable.yaml
 
+# Run the installation command
+mkdir -p logs
+cd ric-dep/bin/
+RIC_INSTALLATION_OUTPUT="../../logs/ric_installation_stdout.txt"
+sudo ./install -f ../RECIPE_EXAMPLE/example_recipe_latest_stable.yaml | tee -a "$RIC_INSTALLATION_OUTPUT"
 cd ../../ # Main directory
+./install_scripts/parse_ric_installation_output.sh
+
+# The file should have the following output:
+# {
+#   "r4-a1mediator": "deployed",
+#   "r4-vespamgr": "deployed",
+#   "r4-o1mediator": "deployed",
+#   "r4-rtmgr": "deployed",
+#   "r4-infrastructure": "deployed",
+#   "r4-submgr": "deployed",
+#   "r4-alarmmanager": "deployed",
+#   "r4-appmgr": "deployed",
+#   "r4-e2term": "deployed",
+#   "r4-e2mgr": "deployed",
+#   "r4-dbaas": "deployed"
+# }
+
+# Check if any component has not been successfully deployed
+RIC_INSTALLATION_LOG_JSON="logs/ric_installation_stdout_parsed.json"
+if [ "$(jq 'to_entries | any(.value != "deployed")' "$RIC_INSTALLATION_LOG_JSON")" = "true" ]; then
+    echo "An error occurred during installation. Check $RIC_INSTALLATION_LOG_JSON for details."
+fi
+
+sudo kubectl get pods -A || true
+
+# Remaining taints may prevent the RIC components from initializing
+# Check for remaining taints with: kubectl describe nodes | grep Taints
+KUBEVERSION=$(kubectl version | awk '/Server Version:/ {print $3}' | sed 's/v//')
+if [[ ${KUBEVERSION} == 1.28.* ]]; then
+    echo "Attempting to remove any remaining taints from control-plane..."
+    sudo kubectl taint nodes --all node-role.kubernetes.io/control-plane- || true
+else
+    echo "Attempting to remove any remaining taints from master..."
+    sudo kubectl taint nodes --all node-role.kubernetes.io/master- || true
+fi
+
+
+echo
+echo
+echo "Installing k9s..."
+sudo ./install_scripts/install_k9s.sh
+
+echo
+echo
+echo "Building and Installing the E2 Simulator..."
+if [ ! -d "e2-interface" ]; then
+    git clone https://gerrit.o-ran-sc.org/r/sim/e2-interface
+fi
+sudo ./install_scripts/install_e2sim.sh
 
 echo
 echo
@@ -111,9 +135,7 @@ echo
 echo
 echo "Connecting the E2 Simulator to the RIC Cluster..."
 
-./install_scripts/register_chart_museum_url.sh
-sudo ./install_scripts/register_chart_museum_url.sh
-
+sudo ./install_scripts/register_chart_museum_url.sh && ./install_scripts/register_chart_museum_url.sh
 sudo ./install_scripts/run_chart_museum.sh
 
 echo "Waiting once more to ensure that RIC pods are ready before running e2sim..."
@@ -124,6 +146,7 @@ sudo ./install_scripts/run_e2sim_and_connect_to_ric.sh
 echo "Restoring ownership of directories and files created while in root..."
 sudo chown $USER:$USER logs/e2sim_output.txt
 sudo chown -R $USER:$USER charts || true
+sudo chown -R $USER:$USER logs || true
 
 echo
 echo

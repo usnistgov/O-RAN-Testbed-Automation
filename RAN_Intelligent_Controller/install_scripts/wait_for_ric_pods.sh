@@ -26,13 +26,19 @@ wait_for_all_pods_running () {
                 ALL_PODS_RUNNING=0
                 break
             fi
-            # Process the pod status to check if all are 'Running' or 'Completed'
+            # Process the pod status to check if all are 'Running' or 'Completed' and handle 'CrashLoopBackOff'
             echo "$POD_STATUS" | awk '{ split($2, arr, "/"); if ($3 != "Running" && $3 != "Completed") exit 1; if ($3 == "Running" && arr[1] != arr[2]) exit 1}' || {
+                # Check for CrashLoopBackOff and restart the pod
+                echo "$POD_STATUS" | grep -q "CrashLoopBackOff" && {
+                    echo "Detected 'CrashLoopBackOff' status in $NAMESPACE. Restarting affected pods..."
+                    echo "$POD_STATUS" | awk '/CrashLoopBackOff/ {print $1}' | xargs -I {} kubectl delete pod {} -n $NAMESPACE
+                }
                 echo
-                echo "Some pods in $NAMESPACE are not yet in the 'Running' or 'Completed' state, or not all containers are ready. Please be patient as it may take some time for the ricplt pods (e.g., e2term) to be ready."
+                echo "Some pods in $NAMESPACE are not yet in the 'Running' or 'Completed' state, or not all containers are ready, or being restarted due to 'CrashLoopBackOff'. Please be patient."
                 ALL_PODS_RUNNING=0
                 break
             }
+
         done
         if [ $ALL_PODS_RUNNING -eq 1 ]; then
             echo "All pods are in the desired state across specified namespaces."
@@ -40,6 +46,11 @@ wait_for_all_pods_running () {
         fi
         kubectl get pods -A || true
         sleep 5
+
+        # Check if the API server is not up, and wait for that first
+        if [ ! $(sudo kubectl get --raw="/api/v1/namespaces/kube-system/pods" > /dev/null 2>&1) ]; then
+            sudo ./install_scripts/wait_for_kubectl.sh
+        fi
     done
     kubectl get pods -A || true
 }

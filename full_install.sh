@@ -6,6 +6,19 @@ set -e
 echo
 echo
 echo "################################################################################"
+echo "# Installing RAN Intelligent Controller...                                        #"
+echo "################################################################################"
+echo
+echo
+
+cd RAN_Intelligent_Controller
+./full_install.sh
+
+cd ..
+
+echo
+echo
+echo "################################################################################"
 echo "# Installing 5G Core...                                                        #"
 echo "################################################################################"
 echo
@@ -45,19 +58,6 @@ cd ..
 echo
 echo
 echo "################################################################################"
-echo "# Installing RAN Intelligent Controller...                                        #"
-echo "################################################################################"
-echo
-echo
-
-cd RAN_Intelligent_Controller
-./full_install.sh
-
-cd ..
-
-echo
-echo
-echo "################################################################################"
 echo "# Configuring the applications...                                              #"
 echo "################################################################################"
 echo
@@ -74,5 +74,5 @@ cd ..
 echo
 echo
 echo "################################################################################"
-echo "# Successfully installed the 5G Core, gNodeB, UE, and RIC.                     #"
+echo "# Successfully installed the RIC, 5G Core, gNodeB, and UE.                     #"
 echo "################################################################################"

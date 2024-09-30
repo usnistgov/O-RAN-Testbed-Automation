@@ -11,10 +11,10 @@ gnb_start_time=$(date +%s)
 set -e
 
 # Prevent the unattended-upgrades service from creating dpkg locks that would error the script
-if sudo systemctl stop unattended-upgrades; then
+if sudo systemctl stop unattended-upgrades &>/dev/null; then
   echo "Successfully stopped unattended-upgrades service."
 fi
-if sudo systemctl disable unattended-upgrades; then
+if sudo systemctl disable unattended-upgrades &>/dev/null; then
   echo "Successfully disabled unattended-upgrades service."
 fi
 

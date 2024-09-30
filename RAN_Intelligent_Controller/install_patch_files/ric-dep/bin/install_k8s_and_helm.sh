@@ -18,13 +18,11 @@
 #   limitations under the License.                                             #
 ################################################################################
 
-if [ "$EUID" -ne 0 ]; then
-    echo "Please run this script as root or use sudo."
-    exit 1
-fi
-
 # Exit immediately if a command fails
 set -e
+
+# Echo every command as it is ran
+set -x
 
 usage() {
     echo "Usage: $0 [ -k <k8s version> -d <docker version> -e <helm version> -c <cni-version> --no-sctp-support ]" 1>&2;
@@ -33,9 +31,11 @@ usage() {
     echo " -c <cni version>     Kubernetes CNI version" 1>&2;
     echo " -d <docker version>  Docker version" 1>&2;
     echo " -e <helm version>    Helm version" 1>&2;
-    echo " --swap-sctp-config   Tries the other syntax for SCTPSupport in the 'kubeadm init' configuration" 1>&2;
     exit 1;
 }
+
+IP_ADDRESS=$(hostname -I | cut -d' ' -f1)
+HOSTNAME=$(hostname)
 
 get_latest_package_version() {
     PACKAGE_NAME=$1
@@ -45,25 +45,11 @@ get_latest_package_version() {
     echo $LATEST_VERSION
 }
 
-get_latest_package_version_without_suffix() {
-    PACKAGE_NAME=$1
-    VERSION_PREFIX=$2
-    FULL_VERSION=$(get_latest_package_version $PACKAGE_NAME $VERSION_PREFIX)
+remove_version_suffix() {
+    FULL_VERSION=$1
     # Strip off the suffix after the dash, e.g., 1.28.14-2.1 --> 1.28.14
     VERSION_WITHOUT_SUFFIX=$(echo $FULL_VERSION | cut -d'-' -f1)
     echo $VERSION_WITHOUT_SUFFIX
-}
-
-get_latest_docker_version() {
-    VERSION_PREFIX=$1
-    # Get the full Docker version, falling back to any available version if needed
-    LATEST_VERSION=$(apt-cache madison docker.io | grep "$VERSION_PREFIX" | head -1 | awk '{print $3}')
-
-    # Fallback if no version is found
-    if [[ -z "$LATEST_VERSION" ]]; then
-        LATEST_VERSION=$(apt-cache madison docker.io | head -1 | awk '{print $3}')
-    fi
-    echo $LATEST_VERSION
 }
 
 # Function to wait for pods to be in a running state
@@ -117,19 +103,27 @@ start_ipv6_if () {
     fi
 }
 
-
 # -----------------------------------------------------------------------------
 # Installation of prerequisites
 # -----------------------------------------------------------------------------
+sudo mkdir -p /etc/apt/apt.conf.d
+echo "APT::Acquire::Retries \"3\";" | sudo tee /etc/apt/apt.conf.d/80-retries > /dev/null
+
+# Wait for dpkg lock to be released by directly checking in the loop
+until sudo dpkg --configure -a > /dev/null 2>&1; do
+    echo "Waiting for other software managers to release the dpkg lock..."
+    sleep 5
+done
+
 echo "Installing prerequisites..."
-apt-get update
-apt-get install -y curl wget gnupg2 software-properties-common lsb-release net-tools iproute2 iputils-ping
+sudo apt-get update
+sudo apt-get install -y curl wget gnupg2 software-properties-common lsb-release net-tools iproute2 iputils-ping
 # Install 'modprobe' if not present (usually part of 'kmod')
-apt-get install -y kmod
-apt-get install -y gawk sed
-apt-get install -y iptables
-apt-get install -y socat
-apt-get install -y libsctp1 lksctp-tools
+sudo apt-get install -y kmod
+sudo apt-get install -y gawk sed
+sudo apt-get install -y iptables
+sudo apt-get install -y socat
+sudo apt-get install -y libsctp1 lksctp-tools
 
 #KUBEV="1.28.11"
 #KUBECNIV="0.7.5"
@@ -155,17 +149,12 @@ if [[ ${UBUNTU_RELEASE} == 24.* ]]; then
 fi
 
 # Parsing command-line options
-SWAP_SCTP_CONFIG="false"
 while [[ "$#" -gt 0 ]]; do
     case "$1" in
         -k) KUBEV="$2"; shift ;;
         -d) DOCKERV="$2"; shift ;;
         -e) HELMV="$2"; shift ;;
         -c) KUBECNIV="$2"; shift ;;
-        --swap-sctp-config)
-            SWAP_SCTP_CONFIG="true"
-            echo "Found --swap-sctp-config: Trying other syntax for SCTPSupport."
-            ;;
         *) usage ;;
     esac
     shift
@@ -176,111 +165,22 @@ if [[ ${HELMV} == 2.* ]]; then
     exit -1
 fi
 
-set -x
 export DEBIAN_FRONTEND=noninteractive
-# Add hostname to /etc/hosts if not already present
-HOST_ENTRY="$(hostname -I | awk '{print $1}') $(hostname)"
-if ! grep -q "$(hostname)" /etc/hosts; then
-    echo "$HOST_ENTRY" >> /etc/hosts
+
+# Update /etc/hosts to include the user's IP address
+# Check if the IP address and hostname are not empty
+if [ -z "$IP_ADDRESS" ] || [ -z "$HOSTNAME" ]; then
+    echo "Error: IP address or hostname is empty. Exiting script."
+    exit 1
 fi
+# Remove existing entries for the hostname from /etc/hosts
+sudo sed -i "/$HOSTNAME/d" /etc/hosts
+# Add the new entry to /etc/hosts
+echo "$IP_ADDRESS $HOSTNAME" | sudo tee -a /etc/hosts
 
 printenv
 
 IPV6IF=""
-
-# Check for internet connectivity
-if ping -c 1 8.8.8.8 &> /dev/null; then
-    PUBLIC_IP=$(curl -s ifconfig.co)
-else
-    echo "No internet connectivity detected. Cannot retrieve public IP."
-    PUBLIC_IP="0.0.0.0"
-fi
-
-rm -rf /opt/config
-mkdir -p /opt/config
-echo "" > /opt/config/docker_version.txt
-echo "1.16.0" > /opt/config/k8s_version.txt
-echo "0.7.5" > /opt/config/k8s_cni_version.txt
-echo "3.14.4" > /opt/config/helm_version.txt
-echo "$(hostname -I)" > /opt/config/host_private_ip_addr.txt
-echo "$PUBLIC_IP" > /opt/config/k8s_mst_floating_ip_addr.txt
-echo "$(hostname -I)" > /opt/config/k8s_mst_private_ip_addr.txt
-echo "__mtu__" > /opt/config/mtu.txt
-echo "__cinder_volume_id__" > /opt/config/cinder_volume_id.txt
-echo "$(hostname)" > /opt/config/stack_name.txt
-
-ISAUX='false'
-if [[ $(cat /opt/config/stack_name.txt) == *aux* ]]; then
-    ISAUX='true'
-fi
-
-# Load IP Virtual Server (IPVS) modules
-modprobe ip_vs
-modprobe ip_vs_rr
-modprobe ip_vs_wrr
-modprobe ip_vs_sh
-
-# Load SCTP module
-modprobe sctp
-
-# Conditional loading of connection tracking modules based on kernel version
-KERNEL_VERSION=$(uname -r)
-if [[ "$KERNEL_VERSION" < "5.0" ]]; then
-    # For older kernels (before version 5), load IPv4 and IPv6 specific modules
-    modprobe nf_conntrack_ipv4
-    modprobe nf_conntrack_ipv6
-    modprobe nf_conntrack_proto_sctp
-else
-    # For newer kernels (version 5 and later), use the unified nf_conntrack module
-    modprobe nf_conntrack
-fi
-
-if [ ! -z "$IPV6IF" ]; then
-    start_ipv6_if "$IPV6IF"
-fi
-
-# Kubelet does not support swap. Disable traditional swap entries in /etc/fstab:
-echo "Checking for traditional swap in /etc/fstab..."
-SWAPFILES=$(grep swap /etc/fstab | sed '/^[ \t]*#/ d' | sed 's/[\t ]/ /g' | tr -s " " | cut -f1 -d' ')
-if [ ! -z "$SWAPFILES" ]; then
-    for SWAPFILE in $SWAPFILES
-    do
-        if [ ! -z "$SWAPFILE" ]; then
-            echo "Disabling swap file $SWAPFILE"
-            if [[ $SWAPFILE == UUID* ]]; then
-                UUID=$(echo "$SWAPFILE" | cut -f2 -d'=')
-                swapoff -U "$UUID"
-            else
-                swapoff "$SWAPFILE"
-            fi
-            sed -i "\%$SWAPFILE%d" /etc/fstab
-        fi
-    done
-else
-    echo "No traditional swap entries found in /etc/fstab."
-fi
-
-# Disable zram swap
-echo "Checking for zram swap devices..."
-ZRAM_DEVICES=$(swapon --show=NAME,TYPE | grep partition | grep zram | cut -d' ' -f1)
-if [ ! -z "$ZRAM_DEVICES" ]; then
-    for ZRAM in $ZRAM_DEVICES
-    do
-        # Handle case where device path might already include '/dev/'
-        ZRAM_DEVICE_PATH=$(echo "$ZRAM" | grep -q "^/dev/" && echo "$ZRAM" || echo "/dev/$ZRAM")
-        echo "Disabling zram device $ZRAM_DEVICE_PATH"
-        swapoff "$ZRAM_DEVICE_PATH"
-    done
-    # Disable zram services if they exist
-    systemctl list-units --type=service | grep zram | cut -d' ' -f1 | while read -r service; do
-        echo "Disabling zram service $service"
-        systemctl disable --now "$service"
-    done
-else
-    echo "No zram devices currently active."
-fi
-# Running this should now return nothing: swapon --show
-
 
 echo "### Docker version  = "${DOCKERV}
 echo "### k8s version     = "${KUBEV}
@@ -289,23 +189,22 @@ echo "### k8s cni version = "${KUBECNIV}
 
 echo
 echo "Updating Kubernetes keyring..."
-mkdir -p /etc/apt/keyrings
-KUBE_REPO_VERSION="1.28"  # Modify this as necessary
-curl -fsSL https://pkgs.k8s.io/core:/stable:/v${KUBE_REPO_VERSION}/deb/Release.key | gpg --dearmor | tee /etc/apt/keyrings/kubernetes-apt-keyring.gpg > /dev/null
-echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v${KUBE_REPO_VERSION}/deb/ /" | tee /etc/apt/sources.list.d/kubernetes.list
+sudo mkdir -p /etc/apt/keyrings
+sudo curl -fsSL https://pkgs.k8s.io/core:/stable:/v${KUBEV}/deb/Release.key | gpg --dearmor | sudo tee /etc/apt/keyrings/kubernetes-apt-keyring.gpg > /dev/null
+sudo echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v${KUBEV}/deb/ /" | sudo tee /etc/apt/sources.list.d/kubernetes.list
 
 echo
 echo "Updating Helm keyring..."
-mkdir -p /etc/apt/keyrings
-curl -fsSL https://baltocdn.com/helm/signing.asc | gpg --dearmor | tee /etc/apt/keyrings/helm-apt-keyring.gpg > /dev/null
-echo "deb [signed-by=/etc/apt/keyrings/helm-apt-keyring.gpg] https://baltocdn.com/helm/stable/debian/ all main" | tee /etc/apt/sources.list.d/helm-stable-debian.list
+sudo mkdir -p /etc/apt/keyrings
+sudo curl -fsSL https://baltocdn.com/helm/signing.asc | gpg --dearmor | sudo tee /etc/apt/keyrings/helm-apt-keyring.gpg > /dev/null
+sudo echo "deb [signed-by=/etc/apt/keyrings/helm-apt-keyring.gpg] https://baltocdn.com/helm/stable/debian/ all main" | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list
 
-# If this errors then remove Kubernetes with: sudo rm /etc/apt/sources.list.d/kubernetes.list
-# If this errors then remove Helm with: sudo rm /etc/apt/sources.list.d/helm-stable-debian.list
-apt update
+# If this errors you can remove Kubernetes with: sudo rm /etc/apt/sources.list.d/kubernetes.list
+# If this errors you can remove Helm with: sudo rm /etc/apt/sources.list.d/helm-stable-debian.list
+sudo apt update
 
 # Dynamically fetch the latest versions based on the available packages
-DOCKERVERSION=$(get_latest_docker_version "${DOCKERV}")
+DOCKERVERSION=$(get_latest_package_version "docker.io" "${DOCKERV}")
 KUBEVERSION=$(get_latest_package_version "kubeadm" "${KUBEV}")
 CNIVERSION=$(get_latest_package_version "kubernetes-cni" "${KUBECNIV}")
 HELMVERSION=$(get_latest_package_version "helm" "${HELMV}")
@@ -327,6 +226,11 @@ if [ -z "${HELMVERSION}" ]; then
     HELMVERSION=$(apt-cache madison helm | head -1 | awk '{print $3}')
 fi
 
+DOCKERVERSIONWITHOUTSUFFIX=$(remove_version_suffix "${DOCKERVERSION}")
+KUBEVERSIONWITHOUTSUFFIX=$(remove_version_suffix "${KUBEVERSION}")
+CNIVERSIONWITHOUTSUFFIX=$(remove_version_suffix "${CNIVERSION}")
+HELMVERSIONWITHOUTSUFFIX=$(remove_version_suffix "${HELMVERSION}")
+
 echo
 echo
 echo "Docker version: ${DOCKERVERSION}"
@@ -334,19 +238,108 @@ echo "Kubernetes version: ${KUBEVERSION}"
 echo "Helm version: ${HELMVERSION}"
 echo "Kubernetes CNI version: ${CNIVERSION}"
 echo
+echo "Docker version without suffix: ${DOCKERVERSIONWITHOUTSUFFIX}"
+echo "Kubernetes version without suffix: ${KUBEVERSIONWITHOUTSUFFIX}"
+echo "Helm version without suffix: ${HELMVERSIONWITHOUTSUFFIX}"
+echo "Kubernetes CNI version without suffix: ${CNIVERSIONWITHOUTSUFFIX}"
+echo
 echo
 
-mkdir -p /etc/apt/apt.conf.d
-echo "APT::Acquire::Retries \"3\";" > /etc/apt/apt.conf.d/80-retries
+# Check for internet connectivity
+if ping -c 1 8.8.8.8 &> /dev/null; then
+    PUBLIC_IP=$(curl -s ifconfig.co)
+else
+    echo "No internet connectivity detected. Cannot retrieve public IP."
+    PUBLIC_IP="0.0.0.0"
+fi
 
-# Wait for dpkg lock to be released by directly checking in the loop
-until dpkg --configure -a > /dev/null 2>&1; do
-    echo "Waiting for other software managers to release the dpkg lock..."
-    sleep 5
-done
+sudo rm -rf /opt/config
+sudo mkdir -p /opt/config
+sudo chown $USER:$USER /opt/config
+sudo chmod 755 /opt/config
+echo "$DOCKERVERSIONWITHOUTSUFFIX" > /opt/config/docker_version.txt
+echo "$KUBEVERSIONWITHOUTSUFFIX" > /opt/config/k8s_version.txt
+echo "$CNIVERSIONWITHOUTSUFFIX" > /opt/config/k8s_cni_version.txt
+echo "$HELMVERSIONWITHOUTSUFFIX" > /opt/config/helm_version.txt
+echo "$IP_ADDRESS" > /opt/config/host_private_ip_addr.txt
+echo "$PUBLIC_IP" > /opt/config/k8s_mst_floating_ip_addr.txt
+echo "$HOSTNAME" > /opt/config/k8s_mst_private_ip_addr.txt
+echo "__mtu__" > /opt/config/mtu.txt
+echo "__cinder_volume_id__" > /opt/config/cinder_volume_id.txt
+echo "$HOSTNAME" > /opt/config/stack_name.txt
 
-apt-get update
-apt-get install -y curl jq netcat-openbsd make ipset moreutils
+ISAUX='false'
+if [[ $(cat /opt/config/stack_name.txt) == *aux* ]]; then
+    ISAUX='true'
+fi
+
+# Load IP Virtual Server (IPVS) modules
+sudo modprobe ip_vs
+sudo modprobe ip_vs_rr
+sudo modprobe ip_vs_wrr
+sudo modprobe ip_vs_sh
+
+# Load SCTP module
+sudo modprobe sctp
+
+# Conditional loading of connection tracking modules based on kernel version
+KERNEL_VERSION=$(uname -r)
+if [[ "$KERNEL_VERSION" < "5.0" ]]; then
+    # For older kernels (before version 5), load IPv4 and IPv6 specific modules
+    sudo modprobe nf_conntrack_ipv4
+    sudo modprobe nf_conntrack_ipv6
+    sudo modprobe nf_conntrack_proto_sctp
+else
+    # For newer kernels (version 5 and later), use the unified nf_conntrack module
+    sudo modprobe nf_conntrack
+fi
+
+if [ ! -z "$IPV6IF" ]; then
+    sudo start_ipv6_if "$IPV6IF"
+fi
+
+# Kubelet does not support swap. Disable traditional swap entries in /etc/fstab:
+echo "Checking for traditional swap in /etc/fstab..."
+SWAPFILES=$(grep swap /etc/fstab | sed '/^[ \t]*#/ d' | sed 's/[\t ]/ /g' | tr -s " " | cut -f1 -d' ')
+if [ ! -z "$SWAPFILES" ]; then
+    for SWAPFILE in $SWAPFILES; do
+        if [ ! -z "$SWAPFILE" ]; then
+            echo "Disabling swap file $SWAPFILE"
+            if [[ $SWAPFILE == UUID* ]]; then
+                UUID=$(echo "$SWAPFILE" | cut -f2 -d'=')
+                sudo swapoff -U "$UUID"
+            else
+                sudo swapoff "$SWAPFILE"
+            fi
+            sudo sed -i "\%$SWAPFILE%d" /etc/fstab
+        fi
+    done
+else
+    echo "No traditional swap entries found in /etc/fstab."
+fi
+# Disable zram swap
+echo "Checking for zram swap devices..."
+ZRAM_DEVICES=$(sudo swapon --show=NAME,TYPE | grep partition | grep zram | cut -d' ' -f1)
+if [ ! -z "$ZRAM_DEVICES" ]; then
+    for ZRAM in $ZRAM_DEVICES; do
+        # Handle case where device path might already include '/dev/'
+        ZRAM_DEVICE_PATH=$(echo "$ZRAM" | grep -q "^/dev/" && echo "$ZRAM" || echo "/dev/$ZRAM")
+        echo "Disabling zram device $ZRAM_DEVICE_PATH"
+        sudo swapoff "$ZRAM_DEVICE_PATH"
+    done
+    # Disable zram services if they exist
+    systemctl list-units --type=service | grep zram | cut -d' ' -f1 | while read -r service; do
+        echo "Disabling zram service $service"
+        sudo systemctl disable --now "$service"
+    done
+else
+    echo "No zram devices currently active."
+fi
+# Running this should now return nothing: sudo swapon --show
+
+
+sudo apt-get update
+sudo apt-get install -y curl jq netcat-openbsd make ipset moreutils
 
 APTOPTS="--allow-downgrades --allow-change-held-packages --allow-unauthenticated --ignore-hold "
 
@@ -358,34 +351,34 @@ APTOPTS="--allow-downgrades --allow-change-held-packages --allow-unauthenticated
 echo
 echo
 echo "Stopping and removing existing Docker installations, then installing Docker $DOCKERVERSION..."
-if systemctl is-active --quiet docker.socket; then
-    systemctl stop docker.socket
+if sudo systemctl is-active --quiet docker.socket; then
+    sudo systemctl stop docker.socket
 fi
-if systemctl is-active --quiet docker.service; then
-    systemctl stop docker.service
+if sudo systemctl is-active --quiet docker.service; then
+    sudo systemctl stop docker.service
 fi
-if systemctl is-enabled --quiet docker.socket; then
-    systemctl disable docker.socket
+if sudo systemctl is-enabled --quiet docker.socket; then
+    sudo systemctl disable docker.socket
 fi
-if systemctl is-enabled --quiet docker.service; then
-    systemctl disable docker.service
+if sudo systemctl is-enabled --quiet docker.service; then
+    sudo systemctl disable docker.service
 fi
 
 # Uninstall Docker packages and clean up
-apt-get purge -y --allow-change-held-packages docker docker-engine docker.io containerd runc || true
-rm -rf /var/lib/docker /etc/docker
-apt-get autoremove -y
+sudo apt-get purge -y --allow-change-held-packages docker docker-engine docker.io containerd runc || true
+sudo rm -rf /var/lib/docker /etc/docker
+sudo apt-get autoremove -y
 
 # Install Docker with the specified or latest available version
 echo "Installing Docker..."
 if ! command -v docker &> /dev/null; then
-    apt-get install -y $APTOPTS "docker.io=$DOCKERVERSION"
+    sudo apt-get install -y $APTOPTS "docker.io=$DOCKERVERSION"
 fi
 
 # Configure Docker daemon
 echo "Configuring Docker daemon..."
-mkdir -p /etc/docker
-cat > /etc/docker/daemon.json <<EOF
+sudo mkdir -p /etc/docker
+sudo tee /etc/docker/daemon.json > /dev/null <<EOF
 {
   "exec-opts": ["native.cgroupdriver=systemd"],
   "log-driver": "json-file",
@@ -398,7 +391,7 @@ EOF
 
 # Validate Docker configuration (skip validation if dockerd does not support it)
 if dockerd --help | grep --quiet -- "--validate"; then
-    if ! dockerd --config-file=/etc/docker/daemon.json --validate; then
+    if ! sudo dockerd --config-file=/etc/docker/daemon.json --validate; then
         echo "Invalid Docker configuration detected."
         exit 1
     else
@@ -410,21 +403,21 @@ fi
 
 # Enable and attempt to start Docker service with retries
 echo "Enabling and starting Docker service..."
-systemctl daemon-reload
-systemctl enable docker
+sudo systemctl daemon-reload
+sudo systemctl enable docker
 ATTEMPT=0
 MAX_ATTEMPTS=5
-while ! systemctl restart docker && [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
+while ! sudo systemctl restart docker && [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
     echo "Docker failed to start. Attempt $((ATTEMPT+1))/$MAX_ATTEMPTS..."
     echo "Checking service status..."
-    systemctl status docker.service | grep -A 2 "Active:"
+    sudo systemctl status docker.service | grep -A 2 "Active:"
     echo "Reviewing recent logs..."
     journalctl -xeu docker.service | tail -20
     sleep 10
     ((ATTEMPT++))
 done
 
-if ! systemctl is-active --quiet docker; then
+if ! sudo systemctl is-active --quiet docker; then
     echo "Failed to start Docker after $MAX_ATTEMPTS attempts."
     exit 1
 else
@@ -440,113 +433,180 @@ echo
 echo
 echo "Stopping and removing existing Kubernetes installations..."
 
-# Stop all Docker containers if Docker is installed
+# Stop and remove all Docker containers if Docker is installed
 if command -v docker &> /dev/null; then
-    echo "Removing existing Docker containers..."
-    docker ps -aq | xargs -r docker stop
-    docker ps -aq | xargs -r docker rm
+    echo "Stopping and removing existing Docker containers..."
+    if [ "$(sudo docker ps -aq)" ]; then
+        sudo docker stop $(sudo docker ps -aq) 2>/dev/null || true
+        sudo docker rm $(sudo docker ps -aq) 2>/dev/null || true
+    else
+        echo "No Docker containers to stop or remove."
+    fi
 fi
 
-# Stop kubelet service if it's running
-if systemctl is-active --quiet kubelet; then
-    echo "Stopping kubelet service..."
-    systemctl stop kubelet
-    systemctl disable kubelet
-    echo "kubelet service stopped and disabled."
+# Stop, disable, and mask kubelet service if it's running
+if sudo systemctl is-active --quiet kubelet; then
+    echo "Stopping, disabling, and masking kubelet service..."
+    sudo systemctl stop kubelet
+    sudo systemctl disable kubelet
+    sudo systemctl mask kubelet
+    echo "kubelet service stopped, disabled, and masked."
 fi
-
-# Free ports 6443, 10250, 10257, 10259, 2379, 2380, 6443 (identify the process with sudo ss -tulpn | grep :PORTNUMBER)
-# systemctl stop kube-apiserver kube-controller-manager kube-scheduler etcd || true
-echo "y" | kubeadm reset || true
-if [ ! -z "$(docker ps -a -q)" ]; then
-    docker stop $(docker ps -a -q)
-    docker rm $(docker ps -a -q)
-fi
-pkill -9 kubelet || true
-pkill -9 kube-control || true
-pkill -9 kube-schedul || true
-pkill -9 kube-apiserver || true
-pkill -9 etcd || true
-pkill -9 etcd || true
-pkill -9 etcd || true
-
 
 # Reset Kubernetes using kubeadm if kubeadm is installed
 if command -v kubeadm &> /dev/null; then
-    # Reset Kubernetes using kubeadm
     echo "Resetting Kubernetes..."
-    kubeadm reset -f --ignore-preflight-errors=all
+    echo "y" | sudo kubeadm reset -f
     echo "Kubernetes reset successfully."
 fi
 
+# Stop Kubernetes services using systemd
+services=("kube-apiserver" "kube-controller-manager" "kube-scheduler" "etcd")
+for service in "${services[@]}"; do
+    if systemctl is-active --quiet $service; then
+        echo "Stopping $service..."
+        sudo systemctl stop $service
+    else
+        echo "$service is not active."
+    fi
+done
+
+# Stop and remove Docker containers if Docker is used
+if [ ! -z "$(sudo docker ps -a -q)" ]; then
+    sudo docker stop $(sudo docker ps -a -q)
+    sudo docker rm $(sudo docker ps -a -q)
+fi
+
+# Kill stubborn Kubernetes processes more carefully
+processes=("kubelet" "kube-controller-manager" "kube-scheduler" "kube-apiserver" "etcd")
+for process in "${processes[@]}"; do
+    while pgrep -f $process > /dev/null; do
+        echo "Terminating $process..."
+        sudo pkill -9 -f $process || true
+        sleep 1
+    done
+done
+
+# Check and free ports, check which process is using a port with: ss -tulpn | grep :PORTNUMBER
+ports=(6443 10250 10257 10259 2379 2380)
+for port in "${ports[@]}"; do
+    if sudo ss -tulpn | grep ":$port" > /dev/null; then
+        echo "Freeing port $port..."
+        sudo fuser -k $port/tcp
+    fi
+done
+
 # Clean up Kubernetes directories
-rm -rf /etc/cni/net.d /etc/kubernetes/ /root/.kube/ /var/lib/etcd /var/lib/kubelet
+sudo find /var/lib/kubelet -type d -exec umount {} \; 2>/dev/null || true
+sudo rm -rf /etc/cni/net.d
+sudo rm -rf /etc/kubernetes/
+sudo rm -rf /etc/systemd/system/kubelet.service.d
+sudo rm -rf /var/lib/etcd
+sudo rm -rf /var/lib/kubelet
+sudo rm -rf /var/lib/dockershim
+sudo rm -rf /var/run/kubernetes
+sudo rm -rf /var/lib/cni/
+sudo rm -rf /root/.kube/
+sudo rm -rf $HOME/.kube/
 
 # Remove all Kubernetes-related Docker or containerd images
 if command -v docker &> /dev/null; then
     echo "Removing all Docker images..."
-    docker rmi $(docker images -q) 2>/dev/null || true
+    if [ "$(sudo docker images -q)" ]; then
+        sudo docker rmi $(sudo docker images -q) 2>/dev/null || true
+    else
+        echo "No Docker images to remove."
+    fi
+fi
+
+# Remove containerd containers and images if crictl is installed
+if command -v crictl &> /dev/null; then
+    echo "Removing all containerd containers and images..."
+    sudo crictl stopp $(sudo crictl pods -q) 2>/dev/null || true
+    sudo crictl rmp $(sudo crictl pods -q) 2>/dev/null || true
+    sudo crictl rm $(sudo crictl ps -a -q) 2>/dev/null || true
+    sudo crictl rmi $(sudo crictl images -q) 2>/dev/null || true
+else
+    echo "crictl not found; skipping containerd cleanup."
 fi
 
 # Reset iptables
-iptables -F
-iptables -t nat -F
-iptables -t mangle -F
-iptables -X
-iptables -t nat -X
-iptables -t mangle -X
-echo "System cleaned up."
+sudo iptables -F
+sudo iptables -t nat -F
+sudo iptables -t mangle -F
+sudo iptables -X
+sudo iptables -t nat -X
+sudo iptables -t mangle -X
+echo "Removing CNI network interfaces..."
+sudo ip link delete cni0 2>/dev/null || true
+sudo ip link delete flannel.1 2>/dev/null || true
+sudo ip link delete weave 2>/dev/null || true
+echo "Kubernetes is cleaned up."
 
-
-echo "Reinstalling Kubernetes..."
-KUBEVERSIONWITHOUTSUFFIX=$(get_latest_package_version_without_suffix "kubeadm" "${KUBEV}")
+echo
+echo
+echo "Installing Kubernetes..."
 echo "Kubernetes version without suffix: $KUBEVERSIONWITHOUTSUFFIX"
 
 # Install Kubernetes components
 if [ -z "${CNIVERSION}" ]; then
-    apt-get install -y kubernetes-cni
+    sudo apt-get install -y kubernetes-cni
 else
-    apt-get install -y kubernetes-cni=${CNIVERSION}
+    sudo apt-get install -y kubernetes-cni=${CNIVERSION}
 fi
 
 if [ -z "${KUBEVERSION}" ]; then
-    apt-get install -y kubeadm kubelet kubectl
+    sudo apt-get install -y kubeadm kubelet kubectl
 else
-    apt-get install -y kubeadm=${KUBEVERSION} kubelet=${KUBEVERSION} kubectl=${KUBEVERSION}
+    sudo apt-get install -y kubeadm=${KUBEVERSION} kubelet=${KUBEVERSION} kubectl=${KUBEVERSION}
 fi
 
-apt-mark hold docker.io kubernetes-cni kubelet kubeadm kubectl
+sudo apt-mark hold docker.io kubernetes-cni kubelet kubeadm kubectl
 
-# Enable kubelet without starting it immediately
-systemctl enable kubelet
+# Unmask and enable kubelet without starting it immediately
+sudo systemctl unmask kubelet
+sudo systemctl enable kubelet
+
+# Ensure configurations are set for containerd
+sudo mkdir -p /etc/containerd
+cat <<EOF | sudo tee /etc/containerd/config.toml > /dev/null
+[plugins."io.containerd.grpc.v1.cri".containerd]
+  default_runtime_name = "runc"
+  [plugins."io.containerd.grpc.v1.cri".containerd.default_runtime.options]
+    SystemdCgroup = true
+  [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
+    runtime_type = "io.containerd.runc.v2"
+    [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
+      PodSandboxImage = "registry.k8s.io/pause:3.9"
+EOF
+sudo systemctl restart containerd
 
 # Pull required images for Kubernetes
-kubeadm config images pull --kubernetes-version=${KUBEVERSIONWITHOUTSUFFIX}
+echo "Pulling kube-apiserver, kube-controller-manager, kube-scheduler, kube-proxy, pause, etcd, and coredns..."
+sudo kubeadm config images pull --kubernetes-version=${KUBEVERSIONWITHOUTSUFFIX}
 
 echo "Kubernetes components reinstalled and ready for initialization."
 
-SCTP_SUPPORT_1="apiServer:
-  extraArgs:
-    feature-gates: SCTPSupport=true"
-SCTP_SUPPORT_2="apiServerExtraArgs:
-  feature-gates: SCTPSupport=true"
+mkdir -p $HOME/.kube
+sudo chown -R $USER:$USER $HOME/.kube/
 
-# Swap the two syntax styles
-if [ "${SWAP_SCTP_CONFIG}" = "true" ]; then
-    TEMP="$SCTP_SUPPORT_1"
-    SCTP_SUPPORT_1="$SCTP_SUPPORT_2"
-    SCTP_SUPPORT_2="$TEMP"
-fi
 
 NODETYPE="master"
 if [ "$NODETYPE" == "master" ]; then # MASTER_NODE_COND
 
 if [[ ${KUBEVERSION} == 1.13.* ]]; then
-    cat <<EOF > /root/config.yaml
+    cat <<EOF | tee $HOME/.kube/kube-config.yaml > /dev/null
 apiVersion: kubeadm.k8s.io/v1alpha3
 kubernetesVersion: v${KUBEVERSIONWITHOUTSUFFIX}
 kind: ClusterConfiguration
-$SCTP_SUPPORT_1
+apiServer:
+  certSANs:
+    - 'localhost'
+    - '127.0.0.1'
+    - '$HOSTNAME'
+    - '$IP_ADDRESS'
+apiServerExtraArgs:
+  feature-gates: "SCTPSupport=true"
 networking:
   dnsDomain: cluster.local
   podSubnet: 10.244.0.0/16
@@ -556,12 +616,20 @@ apiVersion: kubeproxy.config.k8s.io/v1alpha1
 kind: KubeProxyConfiguration
 mode: ipvs
 EOF
+
     elif [[ ${KUBEVERSION} == 1.14.* ]]; then
-    cat <<EOF > /root/config.yaml
+    cat <<EOF | tee $HOME/.kube/kube-config.yaml > /dev/null
 apiVersion: kubeadm.k8s.io/v1beta1
 kubernetesVersion: v${KUBEVERSIONWITHOUTSUFFIX}
 kind: ClusterConfiguration
-$SCTP_SUPPORT_1
+apiServer:
+  certSANs:
+    - 'localhost'
+    - '127.0.0.1'
+    - '$HOSTNAME'
+    - '$IP_ADDRESS'
+apiServerExtraArgs:
+  feature-gates: "SCTPSupport=true"
 networking:
   dnsDomain: cluster.local
   podSubnet: 10.244.0.0/16
@@ -571,12 +639,20 @@ apiVersion: kubeproxy.config.k8s.io/v1alpha1
 kind: KubeProxyConfiguration
 mode: ipvs
 EOF
-    elif [[ ${KUBEVERSION} == 1.15.* ]] || [[ ${KUBEVERSION} == 1.16.* ]] || [[ ${KUBEVERSION} == 1.18.* ]]; then
-    cat <<EOF > /root/config.yaml
+
+    elif [[ ${KUBEVERSION} == 1.1[5-9].* ]]; then
+    cat <<EOF | tee $HOME/.kube/kube-config.yaml > /dev/null
 apiVersion: kubeadm.k8s.io/v1beta2
 kubernetesVersion: v${KUBEVERSIONWITHOUTSUFFIX}
 kind: ClusterConfiguration
-$SCTP_SUPPORT_2
+apiServer:
+  certSANs:
+    - 'localhost'
+    - '127.0.0.1'
+    - '$HOSTNAME'
+    - '$IP_ADDRESS'
+  extraArgs:
+    feature-gates: "SCTPSupport=true"
 networking:
   dnsDomain: cluster.local
   podSubnet: 10.244.0.0/16
@@ -586,12 +662,25 @@ apiVersion: kubeproxy.config.k8s.io/v1alpha1
 kind: KubeProxyConfiguration
 mode: ipvs
 EOF
-    elif [[ ${KUBEVERSION} == 1.28.* ]] ; then
-    cat <<EOF > /root/config.yaml
+
+else
+    # In Kubernetes v1.20, the SCTPSupport feature gate reached General Availability (GA) and no longer needs to be specified.
+    # Despite this, specifying apiServerExtraArgs still allows kubeadm to initialize and acts as a backup
+    cat <<EOF | tee $HOME/.kube/kube-config.yaml > /dev/null
 apiVersion: kubeadm.k8s.io/v1beta3
 kubernetesVersion: v${KUBEVERSIONWITHOUTSUFFIX}
 kind: ClusterConfiguration
-$SCTP_SUPPORT_2
+apiServer:
+  certSANs:
+    - 'localhost'
+    - '127.0.0.1'
+    - '$HOSTNAME'
+    - '$IP_ADDRESS'
+  extraArgs:
+    feature-gates: "APIPriorityAndFairness=true"
+    enable-aggregator-routing: "true"
+apiServerExtraArgs:
+  feature-gates: "SCTPSupport=true"
 networking:
   dnsDomain: cluster.local
   podSubnet: 10.244.0.0/16
@@ -601,38 +690,38 @@ apiVersion: kubeproxy.config.k8s.io/v1alpha1
 kind: KubeProxyConfiguration
 mode: ipvs
 EOF
-else
-    echo "Unsupported Kubernetes version requested ($KUBEVERSION).  Bail."
-    exit 1
 fi
-# Address 10.244.0.0/16 is the same one Flannel uses
 
-echo "Configuring Flannel CNI configurations..."
-mkdir -p /etc/cni/net.d
-cat <<EOF > /etc/cni/net.d/10-flannel.conflist
-{
-    "cniVersion": "0.4.0",
-    "name": "flannel",
-    "plugins": [
-        {
-            "type": "flannel",
-            "delegate": {
-                "hairpinMode": true,
-                "isDefaultGateway": true
-            }
-        },
-        {
-            "type": "portmap",
-            "capabilities": {
-                "portMappings": true
-            }
-        }
-    ]
-}
-EOF
+# echo "Configuring Flannel CNI configurations..."
+# sudo mkdir -p /etc/cni/net.d
+# cat <<EOF | sudo tee /etc/cni/net.d/10-flannel.conflist > /dev/null
+# {
+#     "cniVersion": "0.4.0",
+#     "name": "flannel",
+#     "plugins": [
+#         {
+#             "type": "flannel",
+#             "delegate": {
+#                 "hairpinMode": true,
+#                 "isDefaultGateway": true
+#             }
+#         },
+#         {
+#             "type": "portmap",
+#             "capabilities": {
+#                 "portMappings": true
+#             }
+#         }
+#     ]
+# }
+# EOF
+if [ -f /etc/cni/net.d/10-flannel.conflist ]; then
+    echo "Removing outdated  Flannel CNI configuration..."
+    sudo rm -rf /etc/cni/net.d/10-flannel.conflist
+fi
 
 echo "Configuring Kube-Proxy ClusterRoleBinding..."
-cat <<EOF > /root/kube-proxy-rbac.yaml
+cat <<EOF | tee $HOME/.kube/kube-proxy-rbac.yaml > /dev/null
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
@@ -647,46 +736,58 @@ subjects:
   namespace: kube-system
 EOF
 
-# Ensure configurations are set for containerd
-mkdir -p /etc/containerd
-cat <<EOF > /etc/containerd/config.toml
-[plugins."io.containerd.grpc.v1.cri".containerd]
-  default_runtime_name = "runc"
-  [plugins."io.containerd.grpc.v1.cri".containerd.default_runtime.options]
-    SystemdCgroup = true
-  [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
-    runtime_type = "io.containerd.runc.v2"
-    [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
-      PodSandboxImage = "registry.k8s.io/pause:3.9"
-EOF
-systemctl restart containerd
 
-kubeadm init --config /root/config.yaml --v=5
-INIT_STATUS=$?
-
-# Check if kubeadm init was successful
-if [ $? -ne 0 ]; then
-    echo "kubeadm init failed with status $INIT_STATUS"
-    exit $INIT_STATUS
+if [ -f /etc/systemd/system/kubelet.service.d/10-kubeadm.conf ]; then
+    echo "Removing outdated kubelet configuration to prevent conflicts with the current Kubernetes setup..."
+    sudo rm -rf /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
 fi
 
-# Set KUBECONFIG
-export KUBECONFIG=/etc/kubernetes/admin.conf
-echo "export KUBECONFIG=/etc/kubernetes/admin.conf" >> /etc/environment
+ATTEMPT=0
+MAX_ATTEMPTS=5
+until (( ATTEMPT++ == MAX_ATTEMPTS )); do
+    if [[ $ATTEMPT -eq $MAX_ATTEMPTS ]]; then
+        echo "Kubernetes Initialization: Making final attempt with verbose logging enabled..."
+        if sudo kubeadm init --config $HOME/.kube/kube-config.yaml --v=5; then
+            break
+        fi
+    else
+        echo "Kubernetes Initialization: Attempt $ATTEMPT failed; trying again in 10 seconds..."
+        if sudo kubeadm init --config $HOME/.kube/kube-config.yaml; then
+            break
+        fi
+        sleep 10
+    fi
+done
+if [[ $ATTEMPT -gt $MAX_ATTEMPTS ]]; then
+    echo "Kubernetes Initialization: All attempts at \"kubeadm init\" failed. Exiting..."
+    exit 1
+fi
 
-mkdir -p /root/.kube
-cp -f /etc/kubernetes/admin.conf /root/.kube/config
-chown $(id -u):$(id -g) /root/.kube/config
+# Set the KUBECONFIG variable to the admin.conf file's location
+sudo cp -f /etc/kubernetes/admin.conf $HOME/.kube/admin.conf
+sudo chown -R $USER:$USER $HOME/.kube/admin.conf
+export KUBECONFIG=$HOME/.kube/admin.conf
+
+# Add KUBECONFIG to /etc/environment if it's not already there
+if ! sudo grep -q "KUBECONFIG" /etc/environment; then
+  echo "KUBECONFIG=$KUBECONFIG" | sudo tee -a /etc/environment > /dev/null
+fi
+# Update the global profile for interactive logins if KUBECONFIG is not already set
+if ! sudo grep -q "KUBECONFIG" /etc/profile; then
+  echo "export KUBECONFIG=$KUBECONFIG" | sudo tee -a /etc/profile > /dev/null
+fi
+# Add KUBECONFIG to .bashrc if it's not already there
+if ! grep -q "KUBECONFIG" $HOME/.bashrc; then
+  echo "export KUBECONFIG=$HOME/.kube/admin.conf" >> $HOME/.bashrc
+fi
 
 # Wait for kube-apiserver to be ready
 sleep 1
 until kubectl get pods --all-namespaces; do
     echo "Waiting for API server to be available..."
-    crictl ps -a
+    sudo crictl ps -a
     sleep 8
 done
-
-kubectl get pods --all-namespaces || true
 
 echo "Applying Flannel CNI (Kube version $KUBEVERSION)..."
 if [[ ${KUBEVERSION} == 1.28.* ]]; then
@@ -710,56 +811,56 @@ else
     fi
 fi
 
-if ! kubectl apply -f "/root/kube-proxy-rbac.yaml"; then
+if ! kubectl apply -f "$HOME/.kube/kube-proxy-rbac.yaml"; then
     echo "Failed to apply Kube-Proxy ClusterRoleBinding, skipping."
 fi
 
-echo "Configuring RBAC for metrics-server..."
-cat <<EOF > /root/metrics-server-rbac.yaml
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: system:metrics-server
-rules:
-- apiGroups:
-  - ""
-  resources:
-  - pods
-  - nodes
-  - nodes/stats
-  - namespaces
-  - configmaps
-  verbs:
-  - get
-  - list
-  - watch
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: system:metrics-server
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: system:metrics-server
-subjects:
-- kind: ServiceAccount
-  name: metrics-server
-  namespace: kube-system
-EOF
+# echo "Configuring RBAC for metrics-server..."
+# cat <<EOF > $HOME/.kube/metrics-server-rbac.yaml
+# apiVersion: rbac.authorization.k8s.io/v1
+# kind: ClusterRole
+# metadata:
+#   name: system:metrics-server
+# rules:
+# - apiGroups:
+#   - ""
+#   resources:
+#   - pods
+#   - nodes
+#   - nodes/stats
+#   - namespaces
+#   - configmaps
+#   verbs:
+#   - get
+#   - list
+#   - watch
+# ---
+# apiVersion: rbac.authorization.k8s.io/v1
+# kind: ClusterRoleBinding
+# metadata:
+#   name: system:metrics-server
+# roleRef:
+#   apiGroup: rbac.authorization.k8s.io
+#   kind: ClusterRole
+#   name: system:metrics-server
+# subjects:
+# - kind: ServiceAccount
+#   name: metrics-server
+#   namespace: kube-system
+# EOF
 
-# Apply RBAC for metrics-server
-if ! kubectl apply -f "/root/metrics-server-rbac.yaml"; then
-    echo "Failed to apply RBAC for metrics-server, skipping."
-fi
+# # Apply RBAC for metrics-server
+# if ! kubectl apply -f "$HOME/.kube/metrics-server-rbac.yaml"; then
+#     echo "Failed to apply RBAC for metrics-server, skipping."
+# fi
 
-# Resource metrics enable commands like: kubectl top pod [pod_name] -n [namespace]
-if ! kubectl apply -f "https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml"; then
-    echo "Failed to apply resource metrics, skipping."
-fi
+# # Resource metrics enable commands like: kubectl top pod [pod_name] -n [namespace]
+# if ! kubectl apply -f "https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml"; then
+#     echo "Failed to apply resource metrics, skipping."
+# fi
 
 # Create local-storage storage class
-cat <<EOF > /root/local-storage-class.yaml
+cat <<EOF > $HOME/.kube/local-storage-class.yaml
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
@@ -770,7 +871,7 @@ EOF
 echo "Local storage class configuration file created."
 
 # Apply the local-storage storage class
-if ! kubectl apply -f "/root/local-storage-class.yaml"; then
+if ! kubectl apply -f "$HOME/.kube/local-storage-class.yaml"; then
     echo "Failed to apply local storage class, skipping."
 fi
 
@@ -794,8 +895,6 @@ echo "Kubernetes installed successfully."
 # Helm installation
 # -----------------------------------------------------------------------------
 
-HELMVERSIONWITHOUTSUFFIX=$(get_latest_package_version_without_suffix "helm" "${HELMV}")
-
 echo
 echo
 echo "Installing Helm ${HELMVERSIONWITHOUTSUFFIX}..."
@@ -810,8 +909,8 @@ fi
 
 # Extract Helm and move it to /usr/local/bin
 tar -xvf "${TEMP_DIR}/helm-v${HELMVERSIONWITHOUTSUFFIX}-linux-amd64.tar.gz" -C "${TEMP_DIR}"
-mv "${TEMP_DIR}/linux-amd64/helm" /usr/local/bin/helm
-chmod +x /usr/local/bin/helm
+sudo mv "${TEMP_DIR}/linux-amd64/helm" /usr/local/bin/helm
+sudo chmod +x /usr/local/bin/helm
 
 # Clean up temporary directory
 rm -rf "${TEMP_DIR}"
@@ -840,11 +939,11 @@ if [ -z "$PV_NODE_NAME" ]; then
     exit 1
 fi
 
-kubectl label --overwrite nodes "$PV_NODE_NAME" local-storage=enable
+sudo kubectl label --overwrite nodes "$PV_NODE_NAME" local-storage=enable
 
-if [ "$PV_NODE_NAME" == "$(hostname)" ]; then
-    mkdir -p /opt/data/dashboard-data
-    chmod -R 755 /opt/data/dashboard-data
+if [ "$PV_NODE_NAME" == "$HOSTNAME" ]; then
+    sudo mkdir -p /opt/data/dashboard-data
+    sudo chmod -R 755 /opt/data/dashboard-data
 fi
 
 echo "Done with master node setup"
@@ -853,10 +952,9 @@ fi # MASTER_NODE_COND
 # If HELM_REPO_HOST is set, add it to /etc/hosts
 HELM_REPO_HOST="helm.ricinfra.local"
 
-if [[ ! -z "$HELM_REPO_HOST" ]]; then
-    if ! grep -q "$HELM_REPO_HOST" /etc/hosts; then
-        echo "127.0.0.1 $HELM_REPO_HOST" >> /etc/hosts
-    fi
-fi
+# Remove existing entries for the hostname from /etc/hosts
+sudo sed -i "/$HELM_REPO_HOST/d" /etc/hosts
+# Add the new entry to /etc/hosts
+echo "127.0.0.1 $HELM_REPO_HOST" | sudo tee -a /etc/hosts
 
 echo "Script completed successfully."

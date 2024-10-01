@@ -4,12 +4,16 @@
 sudo ls
 ./install_scripts/start_sudo_refresh.sh 
 
+# Refresh the system time
+sudo timedatectl set-ntp true
+
 # Get the start timestamp in seconds
 ric_start_time=$(date +%s)
 
 # Exit immediately if a command fails
 set -e
 
+BASE_DIR=$(pwd)
 sudo rm -rf logs/
 
 # Prevent the unattended-upgrades service from creating dpkg locks that would error the script
@@ -35,7 +39,7 @@ if [ ! -f "ric-dep/bin/install_k8s_and_helm.backup.sh" ]; then
 fi
 cp install_patch_files/ric-dep/bin/install_k8s_and_helm.sh ric-dep/bin/install_k8s_and_helm.sh
 
-cd ric-dep/bin/
+cd $BASE_DIR/ric-dep/bin/
 
 if ! ./install_k8s_and_helm.sh; then
     echo "An error occured when running $(pwd)/install_k8s_and_helm.sh."
@@ -56,7 +60,7 @@ echo
 echo "Installing Helm Chart and Museum..."
 sudo ./install_common_templates_to_helm.sh
 
-cd ../../ # Main directory
+cd $BASE_DIR
 
 echo "Revising RIC Installation YAML File..."
 RIC_YAML_FILE_PATH="ric-dep/RECIPE_EXAMPLE/example_recipe_latest_stable_MODIFIED.yaml"
@@ -68,7 +72,7 @@ echo "Waiting for the Kubernetes API server to become ready before installing ne
 sudo ./install_scripts/wait_for_kubectl.sh
 
 # Run the installation command
-mkdir -p logs
+mkdir -p $BASE_DIR/logs
 
 SUCCESS="false"
 while [ "$SUCCESS" != "true" ]; do
@@ -80,7 +84,7 @@ while [ "$SUCCESS" != "true" ]; do
     echo "Installing near RT-RIC..."
     cd ric-dep/bin/
     sudo ./install -f ../RECIPE_EXAMPLE/example_recipe_latest_stable.yaml 2>&1 | tee -a "$RIC_INSTALLATION_STDOUT"
-    cd ../../ # Main directory
+    cd $BASE_DIR
     echo "Parsing output to check for successful near RT-RIC installation..."
     ./install_scripts/parse_ric_installation_output.sh
 
@@ -125,19 +129,16 @@ while [ "$SUCCESS" != "true" ]; do
     fi
 done
 
-sudo kubectl get pods -A || true
+sudo ./install_scripts/wait_for_kubectl.sh
 
+sudo kubectl get pods -A || true
 # Remaining taints may prevent the RIC components from initializing
 # Check for remaining taints with: kubectl describe nodes | grep Taints
-KUBEVERSION=$(kubectl version | awk '/Server Version:/ {print $3}' | sed 's/v//')
-if [[ ${KUBEVERSION} == 1.28.* ]]; then
-    echo "Attempting to remove any remaining taints from control-plane..."
-    sudo kubectl taint nodes --all node-role.kubernetes.io/control-plane- || true
-else
-    echo "Attempting to remove any remaining taints from master..."
-    sudo kubectl taint nodes --all node-role.kubernetes.io/master- || true
-fi
+echo "Attempting to remove any remaining taints from control-plane/master..."
+sudo kubectl taint nodes --all node-role.kubernetes.io/control-plane- || true
+sudo kubectl taint nodes --all node-role.kubernetes.io/master- || true
 
+cd $BASE_DIR
 
 echo
 echo

@@ -478,11 +478,11 @@ if [ ! -z "$(sudo docker ps -a -q)" ]; then
 fi
 
 # Kill stubborn Kubernetes processes more carefully
-processes=("kubelet" "kube-controller-manager" "kube-scheduler" "kube-apiserver" "etcd")
+processes=("kubelet" "kube-control*" "kube-schedul*" "kube-apiserver" "etcd")
 for process in "${processes[@]}"; do
     while pgrep -f $process > /dev/null; do
         echo "Terminating $process..."
-        sudo pkill -9 -f $process || true
+        sudo pkill -9 $process || true
         sleep 1
     done
 done
@@ -580,6 +580,14 @@ cat <<EOF | sudo tee /etc/containerd/config.toml > /dev/null
       PodSandboxImage = "registry.k8s.io/pause:3.9"
 EOF
 sudo systemctl restart containerd
+
+# Configure crictl to not give endpoint warnings when running: sudo crictl ps -a
+cat <<EOF | sudo tee /etc/crictl.yaml > /dev/null
+runtime-endpoint: unix:///run/containerd/containerd.sock
+image-endpoint: unix:///run/containerd/containerd.sock
+timeout: 10
+debug: false
+EOF
 
 # Pull required images for Kubernetes
 echo "Pulling kube-apiserver, kube-controller-manager, kube-scheduler, kube-proxy, pause, etcd, and coredns..."

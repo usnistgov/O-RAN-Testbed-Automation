@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # Paths to the log files
+mkdir -p logs
 RIC_INSTALLATION_STDOUT="logs/ric_installation_stdout.txt"
 RIC_INSTALLATION_LOG_JSON="logs/ric_installation_stdout_parsed.json"
-mkdir -p ../../logs
 
 if ! command -v jq >/dev/null 2>&1; then
     echo "Installing jq to process JSON files..."

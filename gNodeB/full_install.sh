@@ -10,6 +10,8 @@ gnb_start_time=$(date +%s)
 # Exit immediately if a command fails
 set -e
 
+sudo rm -rf logs/
+
 # Prevent the unattended-upgrades service from creating dpkg locks that would error the script
 if sudo systemctl stop unattended-upgrades &>/dev/null; then
   echo "Successfully stopped unattended-upgrades service."

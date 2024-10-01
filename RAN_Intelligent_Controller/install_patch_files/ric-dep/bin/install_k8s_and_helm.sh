@@ -676,9 +676,6 @@ apiServer:
     - '127.0.0.1'
     - '$HOSTNAME'
     - '$IP_ADDRESS'
-  extraArgs:
-    feature-gates: "APIPriorityAndFairness=true"
-    enable-aggregator-routing: "true"
 apiServerExtraArgs:
   feature-gates: "SCTPSupport=true"
 networking:
@@ -691,6 +688,10 @@ kind: KubeProxyConfiguration
 mode: ipvs
 EOF
 fi
+# Consider adding the following before apiServerExtraArgs:
+# extraArgs:
+#   feature-gates: "APIPriorityAndFairness=true"
+#   enable-aggregator-routing: "true"
 
 # echo "Configuring Flannel CNI configurations..."
 # sudo mkdir -p /etc/cni/net.d

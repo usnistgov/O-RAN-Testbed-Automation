@@ -10,6 +10,8 @@ ric_start_time=$(date +%s)
 # Exit immediately if a command fails
 set -e
 
+sudo rm -rf logs/
+
 # Prevent the unattended-upgrades service from creating dpkg locks that would error the script
 if sudo systemctl stop unattended-upgrades &>/dev/null; then
   echo "Successfully stopped unattended-upgrades service."
@@ -65,39 +67,63 @@ sudo ./install_scripts/revise_example_recipe_latest_stable.yaml.sh $RIC_YAML_FIL
 echo "Waiting for the Kubernetes API server to become ready before installing near RT-RIC..."
 sudo ./install_scripts/wait_for_kubectl.sh
 
-
-echo
-echo
-echo "Installing near RT-RIC..."
-
 # Run the installation command
 mkdir -p logs
-cd ric-dep/bin/
-RIC_INSTALLATION_OUTPUT="../../logs/ric_installation_stdout.txt"
-sudo ./install -f ../RECIPE_EXAMPLE/example_recipe_latest_stable.yaml | tee -a "$RIC_INSTALLATION_OUTPUT"
-cd ../../ # Main directory
-./install_scripts/parse_ric_installation_output.sh
 
-# The file should have the following output:
-# {
-#   "r4-a1mediator": "deployed",
-#   "r4-vespamgr": "deployed",
-#   "r4-o1mediator": "deployed",
-#   "r4-rtmgr": "deployed",
-#   "r4-infrastructure": "deployed",
-#   "r4-submgr": "deployed",
-#   "r4-alarmmanager": "deployed",
-#   "r4-appmgr": "deployed",
-#   "r4-e2term": "deployed",
-#   "r4-e2mgr": "deployed",
-#   "r4-dbaas": "deployed"
-# }
+SUCCESS="false"
+while [ "$SUCCESS" != "true" ]; do
+    RIC_INSTALLATION_STDOUT="$(pwd)/logs/ric_installation_stdout.txt"
+    RIC_INSTALLATION_LOG_JSON="$(pwd)/logs/ric_installation_stdout_parsed.json"
+    
+    echo
+    echo
+    echo "Installing near RT-RIC..."
+    cd ric-dep/bin/
+    sudo ./install -f ../RECIPE_EXAMPLE/example_recipe_latest_stable.yaml 2>&1 | tee -a "$RIC_INSTALLATION_STDOUT"
+    cd ../../ # Main directory
+    echo "Parsing output to check for successful near RT-RIC installation..."
+    ./install_scripts/parse_ric_installation_output.sh
 
-# Check if any component has not been successfully deployed
-RIC_INSTALLATION_LOG_JSON="logs/ric_installation_stdout_parsed.json"
-if [ "$(jq 'to_entries | any(.value != "deployed")' "$RIC_INSTALLATION_LOG_JSON")" = "true" ]; then
-    echo "An error occurred during installation. Check $RIC_INSTALLATION_LOG_JSON for details."
-fi
+    # The $RIC_INSTALLATION_LOG_JSON file should have the following output:
+    # {
+    #   "r4-a1mediator": "deployed",
+    #   "r4-vespamgr": "deployed",
+    #   "r4-o1mediator": "deployed",
+    #   "r4-rtmgr": "deployed",
+    #   "r4-infrastructure": "deployed",
+    #   "r4-submgr": "deployed",
+    #   "r4-alarmmanager": "deployed",
+    #   "r4-appmgr": "deployed",
+    #   "r4-e2term": "deployed",
+    #   "r4-e2mgr": "deployed",
+    #   "r4-dbaas": "deployed"
+    # }
+
+    # Extract the list of components to deploy from the installation stdout log
+    COMPONENT_LINE=$(grep "Deploying RIC infra components" "$RIC_INSTALLATION_STDOUT")
+    # Check if the component line was found
+    if [ -z "$COMPONENT_LINE" ]; then
+        echo "Error: The array of components could not be extracted from $RIC_INSTALLATION_STDOUT"
+        exit 1
+    fi
+    # Parse the component names into an array
+    COMPONENTS_ARRAY=($(echo $COMPONENT_LINE | sed -n 's/.*\[\(.*\)\].*/\1/p' | tr ' ' '\n'))
+    # Generate a jq filter string that checks these components are all "deployed"
+    JQ_FILTER='['
+    for COMP in "${COMPONENTS_ARRAY[@]}"; do
+        JQ_FILTER+="\"r4-$COMP\","
+    done
+    JQ_FILTER="${JQ_FILTER%,}]"  # Remove the trailing comma and close the array
+    # Use jq to check that all specified components are deployed
+    SUCCESS="$(jq --argjson components "$JQ_FILTER" '
+        . as $data |
+        $components | all(. as $c | $data[$c] == "deployed")
+    ' "$RIC_INSTALLATION_LOG_JSON")"
+    if [ "$SUCCESS" != "true" ]; then
+        echo "ERROR: RIC installation was not successful. Waiting for API server to be available then retrying..."
+        sudo ./install_scripts/wait_for_kubectl.sh
+    fi
+done
 
 sudo kubectl get pods -A || true
 

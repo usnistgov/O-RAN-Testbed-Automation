@@ -2,13 +2,15 @@
 
 # Starts a script in background that calls `sudo -v` every minute to ensure that sudo stays active, ensuring the script runs without requiring user interaction
 sudo ls
-./install_scripts/start_sudo_refresh.sh 
+./install_scripts/start_sudo_refresh.sh
 
 # Get the start timestamp in seconds
 open5gs_start_time=$(date +%s)
 
 # Exit immediately if a command fails
 set -e
+
+sudo rm -rf logs/
 
 # Prevent the unattended-upgrades service from creating dpkg locks that would error the script
 if sudo systemctl stop unattended-upgrades &>/dev/null; then

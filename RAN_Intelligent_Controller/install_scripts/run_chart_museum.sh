@@ -7,9 +7,9 @@ function is_port_in_use {
     local port=$1
     # Check for listening services on the port
     if ss -tulpn | grep -q ":${port} "; then
-        return 0  # Port is in use
+        return 0 # Port is in use
     else
-        return 1  # Port is not in use
+        return 1 # Port is not in use
     fi
 }
 

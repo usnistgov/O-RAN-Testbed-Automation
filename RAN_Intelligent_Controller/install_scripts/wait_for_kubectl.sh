@@ -18,7 +18,7 @@ fi
 TIMEOUT=600
 ELAPSED_TIME=0
 SLEEP_DURATION=5
-while ! sudo kubectl get --raw="/api/v1/namespaces/kube-system/pods" > /dev/null 2>&1; do
+while ! kubectl get --raw="/api/v1/namespaces/kube-system/pods" > /dev/null 2>&1; do
     if [ $ELAPSED_TIME -ge $TIMEOUT ]; then
         echo "Timeout exceeded while waiting for the API server to respond."
         echo "Attempting to restart Kubernetes services..."
@@ -33,8 +33,8 @@ while ! sudo kubectl get --raw="/api/v1/namespaces/kube-system/pods" > /dev/null
             echo "Kubernetes service was not running, starting..."
             sudo systemctl start kubelet
         fi
-        sudo kubectl get pods --namespace=kube-system || true
-        sudo kubectl get nodes || true
+        kubectl get pods --namespace=kube-system || true
+        kubectl get nodes || true
         sleep $SLEEP_DURATION
         ELAPSED_TIME=$(($ELAPSED_TIME + $SLEEP_DURATION))
     fi

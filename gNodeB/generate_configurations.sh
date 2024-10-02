@@ -54,7 +54,7 @@ fi
 # Function to prompt user for IP address
 prompt_for_e2term_ip() {
     echo "Please enter the IP address of the service." >&2
-    echo "You can find this by running: sudo kubectl get service -n ricplt | grep service-ricplt-e2term-sctp" >&2
+    echo "You can find this by running: kubectl get service -n ricplt | grep service-ricplt-e2term-sctp" >&2
     read -p "Enter IP Address: " user_ip
     echo "$user_ip"
 }
@@ -64,7 +64,7 @@ if ! command -v kubectl &> /dev/null; then
     echo "Could not find kubectl."
     IP_e2term=$(prompt_for_e2term_ip)
 else
-    service_info=$(sudo kubectl get service -n ricplt | grep service-ricplt-e2term-sctp)
+    service_info=$(kubectl get service -n ricplt | grep service-ricplt-e2term-sctp)
 
     # Check if service_info is empty
     if [ -z "$service_info" ]; then
@@ -172,7 +172,7 @@ update_yaml configs/gnb.yaml "ru_sdr" "srate" "23.04"
 update_yaml configs/gnb.yaml "ru_sdr" "tx_gain" "75"
 update_yaml configs/gnb.yaml "ru_sdr" "rx_gain" "75"
 update_yaml configs/gnb.yaml "ru_sdr" "clock" null # Handle null for clock
-update_yaml configs/gnb.yaml "ru_sdr" "sync" null  # Handle null for sync
+update_yaml configs/gnb.yaml "ru_sdr" "sync" null # Handle null for sync
 
 # Update configuration values for 5G cell parameters
 update_yaml configs/gnb.yaml "cell_cfg" "dl_arfcn" "368500" # NR ARFCN

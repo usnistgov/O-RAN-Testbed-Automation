@@ -34,7 +34,8 @@ usage() {
     exit 1;
 }
 
-IP_ADDRESS=$(hostname -I | cut -d' ' -f1)
+PRIMARY_INTERFACE=$(ip route | grep default | awk '{print $5}')
+IP_ADDRESS=$(ip -f inet addr show $PRIMARY_INTERFACE | grep -Po 'inet \K[\d.]+')
 HOSTNAME=$(hostname)
 
 get_latest_package_version() {
@@ -88,21 +89,6 @@ wait_for_pods_running () {
     done
 }
 
-start_ipv6_if () {
-    IPv6IF="$1"
-    if ip addr show "$IPv6IF" &> /dev/null; then
-        # Ensure the directory exists
-        mkdir -p /etc/network/interfaces.d
-        # Check if the interface is already configured
-        if ! grep -q "${IPv6IF}" /etc/network/interfaces.d/50-cloud-init.cfg; then
-            echo "" >> /etc/network/interfaces.d/50-cloud-init.cfg
-            echo "allow-hotplug ${IPv6IF}" >> /etc/network/interfaces.d/50-cloud-init.cfg
-            echo "iface ${IPv6IF} inet6 auto" >> /etc/network/interfaces.d/50-cloud-init.cfg
-        fi
-        ip link set "${IPv6IF}" up
-    fi
-}
-
 # -----------------------------------------------------------------------------
 # Installation of prerequisites
 # -----------------------------------------------------------------------------
@@ -118,10 +104,10 @@ done
 echo "Installing prerequisites..."
 sudo apt-get update
 sudo apt-get install -y curl wget gnupg2 software-properties-common lsb-release net-tools iproute2 iputils-ping
-# Install 'modprobe' if not present (usually part of 'kmod')
-sudo apt-get install -y kmod
+sudo apt-get install -y kmod # Part of 'kmod'
 sudo apt-get install -y gawk sed
 sudo apt-get install -y iptables
+sudo apt-get install -y ipvsadm
 sudo apt-get install -y socat
 sudo apt-get install -y libsctp1 lksctp-tools
 
@@ -178,9 +164,7 @@ sudo sed -i "/$HOSTNAME/d" /etc/hosts
 # Add the new entry to /etc/hosts
 echo "$IP_ADDRESS $HOSTNAME" | sudo tee -a /etc/hosts
 
-printenv
-
-IPV6IF=""
+#printenv
 
 echo "### Docker version  = "${DOCKERV}
 echo "### k8s version     = "${KUBEV}
@@ -273,6 +257,10 @@ if [[ $(cat /opt/config/stack_name.txt) == *aux* ]]; then
     ISAUX='true'
 fi
 
+# Load necessary kernel modules
+sudo modprobe overlay
+sudo modprobe br_netfilter
+
 # Load IP Virtual Server (IPVS) modules
 sudo modprobe ip_vs
 sudo modprobe ip_vs_rr
@@ -282,9 +270,12 @@ sudo modprobe ip_vs_sh
 # Load SCTP module
 sudo modprobe sctp
 
+# Get the kernel major version
+KERNEL_VERSION=$(uname -r | cut -d'-' -f1)
+MAJOR_VERSION=$(echo $KERNEL_VERSION | cut -d'.' -f1)
+
 # Conditional loading of connection tracking modules based on kernel version
-KERNEL_VERSION=$(uname -r)
-if [[ "$KERNEL_VERSION" < "5.0" ]]; then
+if [ "$MAJOR_VERSION" -lt 5 ]; then
     # For older kernels (before version 5), load IPv4 and IPv6 specific modules
     sudo modprobe nf_conntrack_ipv4
     sudo modprobe nf_conntrack_ipv6
@@ -294,9 +285,51 @@ else
     sudo modprobe nf_conntrack
 fi
 
-if [ ! -z "$IPV6IF" ]; then
-    sudo start_ipv6_if "$IPV6IF"
+# Ensure modules are loaded on boot
+cat <<EOF | sudo tee /etc/modules-load.d/k8s.conf
+overlay
+br_netfilter
+ip_vs
+ip_vs_rr
+ip_vs_wrr
+ip_vs_sh
+sctp
+EOF
+
+# Add connection tracking modules to /etc/modules-load.d/k8s.conf based on kernel version
+if [ "$MAJOR_VERSION" -lt 5 ]; then
+    cat <<EOF | sudo tee -a /etc/modules-load.d/k8s.conf
+nf_conntrack_ipv4
+nf_conntrack_ipv6
+nf_conntrack_proto_sctp
+EOF
+else
+    echo "nf_conntrack" | sudo tee -a /etc/modules-load.d/k8s.conf
 fi
+
+# Set required sysctl parameters
+cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
+net.bridge.bridge-nf-call-ip6tables = 1
+net.bridge.bridge-nf-call-iptables = 1
+net.ipv4.ip_forward = 1
+EOF
+
+cat <<EOF | sudo tee /etc/sysctl.d/ipvs.conf
+net.ipv4.ip_forward = 1
+net.ipv4.conf.all.forwarding = 1
+net.ipv6.conf.all.forwarding = 1
+net.ipv4.conf.all.rp_filter = 0
+net.ipv4.conf.default.rp_filter = 0
+net.ipv4.conf.all.accept_source_route = 0
+net.ipv4.conf.default.accept_source_route = 0
+net.ipv4.conf.all.arp_ignore = 1
+net.ipv4.conf.default.arp_ignore = 1
+net.ipv4.conf.all.arp_announce = 2
+net.ipv4.conf.default.arp_announce = 2
+EOF
+
+# Apply sysctl parameters
+sudo sysctl --system
 
 # Kubelet does not support swap. Disable traditional swap entries in /etc/fstab:
 echo "Checking for traditional swap in /etc/fstab..."
@@ -335,8 +368,14 @@ if [ ! -z "$ZRAM_DEVICES" ]; then
 else
     echo "No zram devices currently active."
 fi
-# Running this should now return nothing: sudo swapon --show
 
+echo "Verifying swap is disabled..."
+if sudo swapon --show | grep -q 'swap'; then
+    echo "Warning: Swap is still active."
+    sudo swapon --show
+else
+    echo "All swap has been successfully disabled."
+fi
 
 sudo apt-get update
 sudo apt-get install -y curl jq netcat-openbsd make ipset moreutils
@@ -465,7 +504,7 @@ services=("kube-apiserver" "kube-controller-manager" "kube-scheduler" "etcd")
 for service in "${services[@]}"; do
     if systemctl is-active --quiet $service; then
         echo "Stopping $service..."
-        sudo systemctl stop $service
+        sudo systemctl stop $service || true
     else
         echo "$service is not active."
     fi
@@ -473,14 +512,14 @@ done
 
 # Stop and remove Docker containers if Docker is used
 if [ ! -z "$(sudo docker ps -a -q)" ]; then
-    sudo docker stop $(sudo docker ps -a -q)
-    sudo docker rm $(sudo docker ps -a -q)
+    sudo docker stop $(sudo docker ps -a -q) || true
+    sudo docker rm $(sudo docker ps -a -q) || true
 fi
 
 # Kill stubborn Kubernetes processes more carefully
-processes=("kubelet" "kube-control*" "kube-schedul*" "kube-apiserver" "etcd")
+processes=("kubelet" "kube-control" "kube-schedul" "kube-apiserver" "etcd")
 for process in "${processes[@]}"; do
-    while pgrep -f $process > /dev/null; do
+    while pgrep $process > /dev/null; do
         echo "Terminating $process..."
         sudo pkill -9 $process || true
         sleep 1
@@ -492,22 +531,22 @@ ports=(6443 10250 10257 10259 2379 2380)
 for port in "${ports[@]}"; do
     if sudo ss -tulpn | grep ":$port" > /dev/null; then
         echo "Freeing port $port..."
-        sudo fuser -k $port/tcp
+        sudo fuser -k $port/tcp || true
     fi
 done
 
 # Clean up Kubernetes directories
 sudo find /var/lib/kubelet -type d -exec umount {} \; 2>/dev/null || true
-sudo rm -rf /etc/cni/net.d
-sudo rm -rf /etc/kubernetes/
-sudo rm -rf /etc/systemd/system/kubelet.service.d
-sudo rm -rf /var/lib/etcd
-sudo rm -rf /var/lib/kubelet
-sudo rm -rf /var/lib/dockershim
-sudo rm -rf /var/run/kubernetes
-sudo rm -rf /var/lib/cni/
-sudo rm -rf /root/.kube/
-sudo rm -rf $HOME/.kube/
+sudo ipvsadm --clear || true
+sudo rm -rf /etc/cni/net.d || true
+sudo rm -rf /etc/kubernetes/ || true
+sudo rm -rf /var/lib/etcd || true
+sudo rm -rf /var/lib/kubelet || true
+sudo rm -rf /var/lib/dockershim || true
+sudo rm -rf /var/run/kubernetes || true
+sudo rm -rf /var/lib/cni/ || true
+sudo rm -rf /root/.kube/ || true
+sudo rm -rf $HOME/.kube/ || true
 
 # Remove all Kubernetes-related Docker or containerd images
 if command -v docker &> /dev/null; then
@@ -563,13 +602,19 @@ fi
 
 sudo apt-mark hold docker.io kubernetes-cni kubelet kubeadm kubectl
 
-# Unmask and enable kubelet without starting it immediately
+# Unmask and enable kubelet service without starting it
 sudo systemctl unmask kubelet
 sudo systemctl enable kubelet
+sudo systemctl daemon-reload
 
 # Ensure configurations are set for containerd
 sudo mkdir -p /etc/containerd
-cat <<EOF | sudo tee /etc/containerd/config.toml > /dev/null
+sudo containerd config default | sudo tee /etc/containerd/config.toml
+sudo chmod 644 /etc/containerd/config.toml
+# Set SystemdCgroup = true
+if ! sudo sed -i 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml; then
+    echo "Using backup containerd configuration with SystemdCgroup = true."
+    cat <<EOF | sudo tee /etc/containerd/config.toml > /dev/null
 [plugins."io.containerd.grpc.v1.cri".containerd]
   default_runtime_name = "runc"
   [plugins."io.containerd.grpc.v1.cri".containerd.default_runtime.options]
@@ -579,7 +624,15 @@ cat <<EOF | sudo tee /etc/containerd/config.toml > /dev/null
     [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
       PodSandboxImage = "registry.k8s.io/pause:3.9"
 EOF
-sudo systemctl restart containerd
+fi
+# Restart containerd
+if ! sudo systemctl restart containerd; then
+    echo "Failed to restart containerd."
+    exit 1
+fi
+
+# Restart kubelet to pick up new containerd configuration
+sudo systemctl restart kubelet
 
 # Configure crictl to not give endpoint warnings when running: sudo crictl ps -a
 cat <<EOF | sudo tee /etc/crictl.yaml > /dev/null
@@ -588,6 +641,7 @@ image-endpoint: unix:///run/containerd/containerd.sock
 timeout: 10
 debug: false
 EOF
+sudo chmod 644 /etc/crictl.yaml
 
 # Pull required images for Kubernetes
 echo "Pulling kube-apiserver, kube-controller-manager, kube-scheduler, kube-proxy, pause, etcd, and coredns..."
@@ -598,11 +652,10 @@ echo "Kubernetes components reinstalled and ready for initialization."
 mkdir -p $HOME/.kube
 sudo chown -R $USER:$USER $HOME/.kube/
 
-
 NODETYPE="master"
 if [ "$NODETYPE" == "master" ]; then # MASTER_NODE_COND
 
-if [[ ${KUBEVERSION} == 1.13.* ]]; then
+if [[ ${KUBEVERSIONWITHOUTSUFFIX} == 1.13.* ]]; then
     cat <<EOF | tee $HOME/.kube/kube-config.yaml > /dev/null
 apiVersion: kubeadm.k8s.io/v1alpha3
 kubernetesVersion: v${KUBEVERSIONWITHOUTSUFFIX}
@@ -611,8 +664,8 @@ apiServer:
   certSANs:
     - 'localhost'
     - '127.0.0.1'
-    - '$HOSTNAME'
-    - '$IP_ADDRESS'
+    - ${HOSTNAME}
+    - ${IP_ADDRESS}
 apiServerExtraArgs:
   feature-gates: "SCTPSupport=true"
 networking:
@@ -625,7 +678,7 @@ kind: KubeProxyConfiguration
 mode: ipvs
 EOF
 
-    elif [[ ${KUBEVERSION} == 1.14.* ]]; then
+    elif [[ ${KUBEVERSIONWITHOUTSUFFIX} == 1.14.* ]]; then
     cat <<EOF | tee $HOME/.kube/kube-config.yaml > /dev/null
 apiVersion: kubeadm.k8s.io/v1beta1
 kubernetesVersion: v${KUBEVERSIONWITHOUTSUFFIX}
@@ -634,8 +687,8 @@ apiServer:
   certSANs:
     - 'localhost'
     - '127.0.0.1'
-    - '$HOSTNAME'
-    - '$IP_ADDRESS'
+    - ${HOSTNAME}
+    - ${IP_ADDRESS}
 apiServerExtraArgs:
   feature-gates: "SCTPSupport=true"
 networking:
@@ -648,7 +701,7 @@ kind: KubeProxyConfiguration
 mode: ipvs
 EOF
 
-    elif [[ ${KUBEVERSION} == 1.1[5-9].* ]]; then
+    elif [[ ${KUBEVERSIONWITHOUTSUFFIX} == 1.1[5-9].* ]]; then
     cat <<EOF | tee $HOME/.kube/kube-config.yaml > /dev/null
 apiVersion: kubeadm.k8s.io/v1beta2
 kubernetesVersion: v${KUBEVERSIONWITHOUTSUFFIX}
@@ -657,8 +710,8 @@ apiServer:
   certSANs:
     - 'localhost'
     - '127.0.0.1'
-    - '$HOSTNAME'
-    - '$IP_ADDRESS'
+    - ${HOSTNAME}
+    - ${IP_ADDRESS}
   extraArgs:
     feature-gates: "SCTPSupport=true"
 networking:
@@ -682,8 +735,8 @@ apiServer:
   certSANs:
     - 'localhost'
     - '127.0.0.1'
-    - '$HOSTNAME'
-    - '$IP_ADDRESS'
+    - ${HOSTNAME}
+    - ${IP_ADDRESS}
 apiServerExtraArgs:
   feature-gates: "SCTPSupport=true"
 networking:
@@ -745,12 +798,6 @@ subjects:
   namespace: kube-system
 EOF
 
-
-if [ -f /etc/systemd/system/kubelet.service.d/10-kubeadm.conf ]; then
-    echo "Removing outdated kubelet configuration to prevent conflicts with the current Kubernetes setup..."
-    sudo rm -rf /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
-fi
-
 ATTEMPT=0
 MAX_ATTEMPTS=5
 until (( ATTEMPT++ == MAX_ATTEMPTS )); do
@@ -770,24 +817,16 @@ done
 if [[ $ATTEMPT -gt $MAX_ATTEMPTS ]]; then
     echo "Kubernetes Initialization: All attempts at \"kubeadm init\" failed. Exiting..."
     exit 1
-fi
-
-# Set the KUBECONFIG variable to the admin.conf file's location
-sudo cp -f /etc/kubernetes/admin.conf $HOME/.kube/admin.conf
-sudo chown -R $USER:$USER $HOME/.kube/admin.conf
-export KUBECONFIG=$HOME/.kube/admin.conf
-
-# Add KUBECONFIG to /etc/environment if it's not already there
-if ! sudo grep -q "KUBECONFIG" /etc/environment; then
-  echo "KUBECONFIG=$KUBECONFIG" | sudo tee -a /etc/environment > /dev/null
-fi
-# Update the global profile for interactive logins if KUBECONFIG is not already set
-if ! sudo grep -q "KUBECONFIG" /etc/profile; then
-  echo "export KUBECONFIG=$KUBECONFIG" | sudo tee -a /etc/profile > /dev/null
-fi
-# Add KUBECONFIG to .bashrc if it's not already there
-if ! grep -q "KUBECONFIG" $HOME/.bashrc; then
-  echo "export KUBECONFIG=$HOME/.kube/admin.conf" >> $HOME/.bashrc
+else
+    echo "Kubernetes initialized successfully."
+    # Set the KUBECONFIG variable to the config file's location
+    mkdir -p $HOME/.kube
+    sudo cp -f /etc/kubernetes/admin.conf $HOME/.kube/config
+    sudo chown $(id -u):$(id -g) $HOME/.kube/config
+    export KUBECONFIG=$HOME/.kube/config
+    sudo sed -i '/KUBECONFIG/d' /etc/environment
+    echo "KUBECONFIG=$KUBECONFIG" | sudo tee -a /etc/environment > /dev/null
+    source /etc/environment
 fi
 
 # Wait for kube-apiserver to be ready
@@ -799,7 +838,7 @@ until kubectl get pods --all-namespaces; do
 done
 
 echo "Applying Flannel CNI (Kube version $KUBEVERSION)..."
-if [[ ${KUBEVERSION} == 1.28.* ]]; then
+if [[ ${KUBEVERSIONWITHOUTSUFFIX} == 1.28.* ]]; then
     # Apply the latest Flannel configuration for Kubernetes version 1.28 and above
     if ! kubectl apply -f "https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml"; then
         echo "Failed to apply Flannel configuration."
@@ -899,7 +938,6 @@ fi
 
 echo "Kubernetes installed successfully."
 
-
 # -----------------------------------------------------------------------------
 # Helm installation
 # -----------------------------------------------------------------------------
@@ -948,12 +986,12 @@ if [ -z "$PV_NODE_NAME" ]; then
     exit 1
 fi
 
-sudo kubectl label --overwrite nodes "$PV_NODE_NAME" local-storage=enable
-
 if [ "$PV_NODE_NAME" == "$HOSTNAME" ]; then
     sudo mkdir -p /opt/data/dashboard-data
     sudo chmod -R 755 /opt/data/dashboard-data
 fi
+
+kubectl label --overwrite nodes "$PV_NODE_NAME" local-storage=enable
 
 echo "Done with master node setup"
 fi # MASTER_NODE_COND

@@ -118,15 +118,15 @@ configure_ngap_server() {
 
     # Use awk to process multi-line patterns, replacing address and adding port
     awk -v ip="$ngap_ip" -v port="$ngap_port" '
-    /ngap:/ { print; in_ngap = 1; next }  # Enter NGAP block
-    in_ngap && /server:/ { print; in_server = 1; next }  # Enter server block within NGAP
-    in_server && /- address:/ {  # Find the address line within server block
+    /ngap:/ { print; in_ngap = 1; next } # Enter NGAP block
+    in_ngap && /server:/ { print; in_server = 1; next } # Enter server block within NGAP
+    in_server && /- address:/ { # Find the address line within server block
         print "      - address: " ip;
-        print "        port: " port;  # Insert port on new line
+        print "        port: " port; # Insert port on new line
         next;
     }
-    /metrics:/ { in_ngap = 0; in_server = 0 }  # Exit NGAP block upon reaching metrics
-    { print }  # Print all other lines as they are
+    /metrics:/ { in_ngap = 0; in_server = 0 } # Exit NGAP block upon reaching metrics
+    { print } # Print all other lines as they are
     ' $file_path > tmp.yaml && mv tmp.yaml $file_path
 
     # Confirmation of update

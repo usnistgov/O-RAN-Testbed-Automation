@@ -40,7 +40,7 @@ else
             ubuntu_codename_mongodb="$ubuntu_codename"
             ;;
         *)
-            ubuntu_codename_mongodb="focal"  # Default to the last supported version if the current one is too new
+            ubuntu_codename_mongodb="focal" # Default to the last supported version if the current one is too new
             ;;
     esac
 

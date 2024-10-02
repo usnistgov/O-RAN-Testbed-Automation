@@ -4,9 +4,6 @@
 sudo ls
 ./install_scripts/start_sudo_refresh.sh 
 
-# Refresh the system time
-sudo timedatectl set-ntp true
-
 # Get the start timestamp in seconds
 ric_start_time=$(date +%s)
 
@@ -23,6 +20,23 @@ fi
 if sudo systemctl disable unattended-upgrades &>/dev/null; then
   echo "Successfully disabled unattended-upgrades service."
 fi
+if sudo systemctl stop apt-daily.timer &>/dev/null; then
+  echo "Successfully stopped apt-daily.timer service."
+fi
+if sudo systemctl disable apt-daily.timer &>/dev/null; then
+  echo "Successfully disabled apt-daily.timer service."
+fi
+if sudo systemctl stop apt-daily-upgrade.timer &>/dev/null; then
+  echo "Successfully stopped apt-daily-upgrade.timer service."
+fi
+if sudo systemctl disable apt-daily-upgrade.timer &>/dev/null; then
+  echo "Successfully disabled apt-daily-upgrade.timer service."
+fi
+
+# Ensure time synchronization is enabled using chrony
+sudo apt-get install -y chrony
+sudo systemctl enable chrony
+sudo systemctl start chrony
 
 echo "--- Installing RIC with J-release ---"
 
@@ -43,7 +57,7 @@ cd $BASE_DIR/ric-dep/bin/
 
 if ! ./install_k8s_and_helm.sh; then
     echo "An error occured when running $(pwd)/install_k8s_and_helm.sh."
-    echo "Please verify that 'kubeadm init' completed successfully."
+    echo "Please verify that 'kubeadm init' completed without errors."
     echo "If it did not, verify that SCTPSupport (in $HOME/config.yaml) is supported by your version of Kubernetes."
     exit 1
 fi
@@ -64,7 +78,9 @@ cd $BASE_DIR
 
 echo "Revising RIC Installation YAML File..."
 RIC_YAML_FILE_PATH="ric-dep/RECIPE_EXAMPLE/example_recipe_latest_stable_MODIFIED.yaml"
+sudo chown $USER:$USER "ric-dep/RECIPE_EXAMPLE/example_recipe_latest_stable.yaml"
 sudo cp ric-dep/RECIPE_EXAMPLE/example_recipe_latest_stable.yaml $RIC_YAML_FILE_PATH
+sudo chown $USER:$USER $RIC_YAML_FILE_PATH
 sudo ./install_scripts/revise_example_recipe_latest_stable.yaml.sh $RIC_YAML_FILE_PATH
 
 # Wait for kube-apiserver to be ready, timeout of 30 minutes (1800 seconds) before restarting service
@@ -117,7 +133,7 @@ while [ "$SUCCESS" != "true" ]; do
     for COMP in "${COMPONENTS_ARRAY[@]}"; do
         JQ_FILTER+="\"r4-$COMP\","
     done
-    JQ_FILTER="${JQ_FILTER%,}]"  # Remove the trailing comma and close the array
+    JQ_FILTER="${JQ_FILTER%,}]" # Remove the trailing comma and close the array
     # Use jq to check that all specified components are deployed
     SUCCESS="$(jq --argjson components "$JQ_FILTER" '
         . as $data |
@@ -131,12 +147,12 @@ done
 
 sudo ./install_scripts/wait_for_kubectl.sh
 
-sudo kubectl get pods -A || true
+kubectl get pods -A || true
 # Remaining taints may prevent the RIC components from initializing
 # Check for remaining taints with: kubectl describe nodes | grep Taints
 echo "Attempting to remove any remaining taints from control-plane/master..."
-sudo kubectl taint nodes --all node-role.kubernetes.io/control-plane- || true
-sudo kubectl taint nodes --all node-role.kubernetes.io/master- || true
+kubectl taint nodes --all node-role.kubernetes.io/control-plane- || true
+kubectl taint nodes --all node-role.kubernetes.io/master- || true
 
 cd $BASE_DIR
 
@@ -155,17 +171,14 @@ sudo ./install_scripts/install_e2sim.sh
 
 echo
 echo
-echo "Waiting for RIC pods..."
-sudo ./install_scripts/wait_for_ric_pods.sh
-
-echo
-echo
 echo "Connecting the E2 Simulator to the RIC Cluster..."
 
 sudo ./install_scripts/register_chart_museum_url.sh && ./install_scripts/register_chart_museum_url.sh
 sudo ./install_scripts/run_chart_museum.sh
 
-echo "Waiting once more to ensure that RIC pods are ready before running e2sim..."
+echo
+echo
+echo "Waiting for RIC pods before running e2sim..."
 sudo ./install_scripts/wait_for_ric_pods.sh
 
 sudo ./install_scripts/run_e2sim_and_connect_to_ric.sh

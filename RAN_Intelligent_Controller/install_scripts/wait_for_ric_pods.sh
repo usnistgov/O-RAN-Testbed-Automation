@@ -13,6 +13,8 @@ wait_for_all_pods_running () {
     local NAMESPACES=("$@")
     local ALL_PODS_RUNNING=0
     local TIMER_START=0
+    local INTERVAL_UNTIL_PURGE=600 # 10 minutes in seconds
+    local DURATION=$INTERVAL_UNTIL_PURGE
 
     echo "Initiating wait for all pods to be in 'Running' or 'Completed' state across specified namespaces."
 
@@ -60,15 +62,16 @@ wait_for_all_pods_running () {
                         echo "Timer started at $(date)"
                     fi
                     CURRENT_TIME=$(date +%s)
-                    let elapsed_time=(${CURRENT_TIME:-0}-${TIMER_START:-0})/60 || true
-                    if [ $elapsed_time -ge 15 ]; then
-                        echo "15 minutes have passed since all pods were ready. Running purge script."
+                    let ELAPSED_TIME=(${CURRENT_TIME:-0}-${TIMER_START:-0}) || true
+                    let DURATION=($INTERVAL_UNTIL_PURGE-$ELAPSED_TIME) || true
+                    if [ $ELAPSED_TIME -ge $INTERVAL_UNTIL_PURGE ]; then
+                        echo "10 minutes have passed since all pods were ready. Running purge script."
                         sudo ./install_scripts/purge_unready_pods.sh
                         TIMER_START=$(date +%s) # Reset timer
                     fi
                 fi
                 echo
-                echo "Some pods in $NAMESPACE are not yet in the 'Running' or 'Completed' state, or not all containers are ready. Please be patient."
+                echo "Some pods in $NAMESPACE are not yet in the 'Running' or 'Completed' state, or not all containers are ready. Please be patient. Unready nodes will be purged in $DURATION seconds."
                 ALL_PODS_RUNNING=0
                 break
             }

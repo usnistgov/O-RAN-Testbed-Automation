@@ -64,4 +64,16 @@ echo "$PODS" | while read -r NAMESPACE NAME READY STATUS RESTARTS AGE; do
     fi
 done
 
+echo "Scanning for and deleting all terminating pods across all namespaces."
+CMD="kubectl get pods -n ricplt --no-headers"
+POD_STATUS=$($CMD 2>/dev/null) # Suppress error output and prevent script exit on command fail
+TERMINATING_PODS=$(echo "$POD_STATUS" | awk '$3 == "Terminating" || $3 == "ContainerStatusUnknown" || $3 == "Evicted" || $3 == "Error" { print $1 }')
+for POD in $TERMINATING_PODS; do
+    echo "Force deleting terminating pod $POD as a fully ready counterpart exists."
+    kubectl delete pod $POD -n ricplt --grace-period=0 --force --wait=false
+done
+
+echo "Restarting kubelet service to ensure proper pod status updates."
+sudo systemctl restart kubelet
+
 echo "Processing of unready pods is complete."

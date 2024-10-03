@@ -64,14 +64,18 @@ while true; do
         sudo docker exec -i oransim kpm_sim $IP_e2term $PORT_e2term > $OUTPUT_FILE 2>&1 &
         sleep 2
     fi
-
-    if ! grep -q SETUP-RESPONSE-SUCCESS $OUTPUT_FILE; then
+ 
+    if ! grep -q "</E2AP-PDU>" $OUTPUT_FILE; then
         echo "Waiting for connection between E2 Simulator and RIC, please be patient for all pods to be ready... $ATTEMPTS/$MAX_ATTEMPTS"
         sleep 5
-    else
-        echo "Success: SETUP-RESPONSE-SUCCESS"
-        break
     fi
+    # if ! grep -q SETUP-RESPONSE-SUCCESS $OUTPUT_FILE; then
+    #     echo "Waiting for connection between E2 Simulator and RIC, please be patient for all pods to be ready... $ATTEMPTS/$MAX_ATTEMPTS"
+    #     sleep 5
+    # else
+    #     echo "Success: SETUP-RESPONSE-SUCCESS"
+    #     break
+    # fi
 
     if [ "$ATTEMPTS" -eq "$MAX_ATTEMPTS" ]; then
         cat $OUTPUT_FILE

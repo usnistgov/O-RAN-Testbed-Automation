@@ -69,9 +69,31 @@ fi
 # sudo chown $USER:$USER $HOME/.kube/config
 # echo "export KUBECONFIG=$HOME/.kube/config" >> $HOME/.bashrc
 
+echo "Disabling Kong Pod and Removing Ingress Files..."
+# Check if yq is installed, and install it if not
+if ! command -v yq &> /dev/null; then
+    echo "Installing yq..."
+    YQ_PATH="https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64"
+    sudo wget $YQ_PATH -O /usr/bin/yq
+    sudo chmod +x /usr/bin/yq
+    # Uninstall with: sudo rm -rf /usr/bin/yq
+fi
+# Disabling kong pod
+cd $BASE_DIR/ric-dep/helm/infrastructure/
+yq '.kong.enabled = false' -i values.yaml
+yq '.kong.enabled' values.yaml
+# Removing Ingress files
+cd $BASE_DIR/ric-dep/helm/appmgr/templates
+rm -rf ingress-appmgr.yaml
+cd $BASE_DIR/ric-dep/helm/e2mgr/templates
+rm -rf ingress-e2mgr.yaml
+cd $BASE_DIR/ric-dep/helm/a1mediator/templates
+rm -rf ingress-a1mediator.yaml
+
 echo
 echo
 echo "Installing Helm Chart and Museum..."
+cd $BASE_DIR/ric-dep/bin/
 sudo ./install_common_templates_to_helm.sh
 
 cd $BASE_DIR
@@ -150,9 +172,16 @@ sudo ./install_scripts/wait_for_kubectl.sh
 kubectl get pods -A || true
 # Remaining taints may prevent the RIC components from initializing
 # Check for remaining taints with: kubectl describe nodes | grep Taints
+echo
+echo
 echo "Attempting to remove any remaining taints from control-plane/master..."
-kubectl taint nodes --all node-role.kubernetes.io/control-plane- || true
-kubectl taint nodes --all node-role.kubernetes.io/master- || true
+if kubectl taint nodes --all node-role.kubernetes.io/control-plane- &> /dev/null; then
+    echo "Successfully removed taint from control-plane"
+fi
+if kubectl taint nodes --all node-role.kubernetes.io/master- &> /dev/null; then
+    echo "Successfully removed taint from master"
+fi
+
 
 cd $BASE_DIR
 

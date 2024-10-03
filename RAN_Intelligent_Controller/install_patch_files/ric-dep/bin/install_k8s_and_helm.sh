@@ -34,6 +34,7 @@ usage() {
     exit 1;
 }
 
+MAIN_DIR=$(pwd)
 PRIMARY_INTERFACE=$(ip route | grep default | awk '{print $5}')
 IP_ADDRESS=$(ip -f inet addr show $PRIMARY_INTERFACE | grep -Po 'inet \K[\d.]+')
 HOSTNAME=$(hostname)
@@ -111,15 +112,15 @@ sudo apt-get install -y ipvsadm
 sudo apt-get install -y socat
 sudo apt-get install -y libsctp1 lksctp-tools
 
-#KUBEV="1.28.11"
-#KUBECNIV="0.7.5"
-#HELMV="3.14.4"
-#DOCKERV="20.10.21"
+#KUBEV="1.28"
+#KUBECNIV="0.7"
+#HELMV="3.14"
+#DOCKERV="20.10"
 
 # The version will be dynamically completed rather than hardcoding in the version
-KUBEV="1.28"
+KUBEV="1.29"
 KUBECNIV="0.7"
-HELMV="3.14"
+HELMV="3.5"
 DOCKERV="20.10"
 
 # Fetch the Ubuntu release version regardless of the derivative distro
@@ -838,7 +839,9 @@ until kubectl get pods --all-namespaces; do
 done
 
 echo "Applying Flannel CNI (Kube version $KUBEVERSION)..."
-if [[ ${KUBEVERSIONWITHOUTSUFFIX} == 1.28.* ]]; then
+KUBE_MAJOR=$(echo $KUBEVERSION | cut -d '.' -f1)
+KUBE_MINOR=$(echo $KUBEVERSION | cut -d '.' -f2)
+if [[ $KUBE_MAJOR -eq 1 && $KUBE_MINOR -ge 28 ]]; then
     # Apply the latest Flannel configuration for Kubernetes version 1.28 and above
     if ! kubectl apply -f "https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml"; then
         echo "Failed to apply Flannel configuration."
@@ -925,7 +928,7 @@ fi
 
 # Check for node readiness for conditional taint removal
 echo "Waiting for essential system pods to be ready..."
-if [[ ${KUBEVERSION} == 1.28.* ]]; then
+if [[ $KUBE_MAJOR -eq 1 && $KUBE_MINOR -ge 28 ]]; then
     wait_for_pods_running 7 kube-system
     wait_for_pods_running 1 kube-flannel
     echo "Removing taints from control-plane..."
@@ -970,9 +973,15 @@ while ! helm version; do
     sleep 15
 done
 
+echo "Helm installed successfully."
+
+# -----------------------------------------------------------------------------
+# Kubernetes configuration for local storage and Helm repo
+# -----------------------------------------------------------------------------
+
 echo "Preparing a master node (lower ID) for using local FS for PV"
 
-if [[ ${KUBEVERSION} == 1.28.* ]]; then
+if [[ $KUBE_MAJOR -eq 1 && $KUBE_MINOR -ge 28 ]]; then
     # Use 'control-plane' for Kubernetes version 1.28 and above
     PV_NODE_NAME=$(kubectl get nodes --selector='node-role.kubernetes.io/control-plane' -o jsonpath='{.items[0].metadata.name}')
 else

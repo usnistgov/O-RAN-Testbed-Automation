@@ -51,8 +51,9 @@ wait_for_all_pods_running () {
                 # Handle 'CrashLoopBackOff' and 'Error' by restarting the pod when all initializing pods are complete
                 INITIALIZING_PODS=$(echo "$POD_STATUS" | awk '$3 == "ContainerCreating" || $3 == "PodInitializing" || $3 ~ /^Init:/ { print $1 }')
                 if [ -n "$INITIALIZING_PODS" ]; then
-                    echo "Some pods in $NAMESPACE are in initializing states. Waiting..."
                     TIMER_START=0
+                    echo
+                    echo "Some pods in $NAMESPACE are still initializing. Please be patient."
                 else
                     # No pods in critical initializing states, safe to delete pods in 'CrashLoopBackOff' or 'Error' states
                     echo "$POD_STATUS" | awk '$3 == "CrashLoopBackOff" || $3 == "Evicted" || $3 == "Error" { print $1 }' | xargs -I {} kubectl delete pod {} -n $NAMESPACE --wait=false
@@ -69,9 +70,9 @@ wait_for_all_pods_running () {
                         sudo ./install_scripts/purge_unready_pods.sh
                         TIMER_START=$(date +%s) # Reset timer
                     fi
+                    echo
+                    echo "Some pods in $NAMESPACE are not yet ready. Please be patient. Unready nodes will be purged in $DURATION seconds."
                 fi
-                echo
-                echo "Some pods in $NAMESPACE are not yet in the 'Running' or 'Completed' state, or not all containers are ready. Please be patient. Unready nodes will be purged in $DURATION seconds."
                 ALL_PODS_RUNNING=0
                 break
             }
@@ -116,5 +117,14 @@ else
     echo "Helm version 2 is in use."
     wait_for_all_pods_running "kube-flannel" "ricinfra" "ricplt"
 fi
+
+echo "Scanning for and deleting all terminating pods across all namespaces."
+CMD="kubectl get pods -n ricplt --no-headers"
+POD_STATUS=$($CMD 2>/dev/null) # Suppress error output and prevent script exit on command fail
+TERMINATING_PODS=$(echo "$POD_STATUS" | awk '$3 == "Terminating" || $3 == "ContainerStatusUnknown" || $3 == "Evicted" || $3 == "Error" { print $1 }')
+for POD in $TERMINATING_PODS; do
+    echo "Force deleting terminating pod $POD as a fully ready counterpart exists."
+    kubectl delete pod $POD -n ricplt --grace-period=0 --force --wait=false
+done
 
 echo "All required pods are now running."

@@ -103,7 +103,7 @@ until sudo dpkg --configure -a > /dev/null 2>&1; do
 done
 
 echo "Installing prerequisites..."
-sudo apt-get update
+sudo apt-get update || true
 sudo apt-get install -y curl wget gnupg2 software-properties-common lsb-release net-tools iproute2 iputils-ping
 sudo apt-get install -y kmod # Part of 'kmod'
 sudo apt-get install -y gawk sed
@@ -562,10 +562,10 @@ fi
 # Remove containerd containers and images if crictl is installed
 if command -v crictl &> /dev/null; then
     echo "Removing all containerd containers and images..."
-    sudo crictl stopp $(sudo crictl pods -q) 2>/dev/null || true
-    sudo crictl rmp $(sudo crictl pods -q) 2>/dev/null || true
-    sudo crictl rm $(sudo crictl ps -a -q) 2>/dev/null || true
-    sudo crictl rmi $(sudo crictl images -q) 2>/dev/null || true
+    sudo crictl stopp $(sudo crictl pods -q 2>/dev/null || true) || true
+    sudo crictl rmp $(sudo crictl pods -q 2>/dev/null || true) || true
+    sudo crictl rm $(sudo crictl ps -a -q 2>/dev/null || true) || true
+    sudo crictl rmi $(sudo crictl images -q 2>/dev/null || true) || true
 else
     echo "crictl not found; skipping containerd cleanup."
 fi

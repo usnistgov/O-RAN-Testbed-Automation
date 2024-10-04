@@ -4,7 +4,7 @@ Installation scripts to automate the deployment process of the 5G O-RAN testbed.
 ## Setting Up on a Virtual Machine
 
 ### Operating System
-Use an Ubuntu-based operating system. Linux Mint 22 or Ubuntu 24.04 are the recommended operating systems for the testbed.
+Use an Ubuntu-based operating system (supported versions are 20, 22, and 24). Linux Mint 22 (based on Ubuntu 24) is the recommendation.
 
 ---
 ### Virtual Machine Preferences
@@ -19,32 +19,37 @@ If using VirtualBox, for optimal user experience consider using the following co
   - **Video Memory**: Set the slider to the maximum if using a Desktop environment.
 - **Storage**
   - If using a SSD hard drive, check the SATA controller's `Solid-state Drive` option.
+- **Network**
+  - **Attached to**: Select `NAT`.
 
 ---
 ## Installation Guide
-The first thing to do is run the Update Manager and ensure everything is up-to-date, then reboot.
+Run the Update Manager to get everything up-to-date, then reboot.
+```
+sudo apt-get update -y && sudo apt-get upgrade -y
+```
 
-Optionally, install the VirtualBox Guest Additions, type the following command into the terminal, then reboot:
+Install the VirtualBox Guest Additions, then type the following command into the terminal and reboot:
 ```
 sudo adduser $USER vboxsf
 ```
 
 Next install Git:
 ```
-sudo apt install git
+sudo apt-get install -y git
 ```
 
 Then clone the O-RAN-Testbed repository over HTTPS:
 ```
-git clone https://gitlab.nist.gov/gitlab/wnd-oran/O-RAN-Testbed-Init.git
+git clone https://github.com/usnistgov/O-RAN-Testbed-Automation.git
 ```
 
 Alternatively, you may clone the repository over SSH:
 ```
-git clone git@gitlab.nist.gov:wnd-oran/O-RAN-Testbed-Init.git
+git clone git@github.com:usnistgov/O-RAN-Testbed-Automation.git
 ```
 
-Next, start the installation process (it is recommended to run it as your current user rather than as root, although either will work):
+Next, start the installation process (it is recommended to run it as your current user rather than as root):
 ```
 ./full_install.sh
 ```

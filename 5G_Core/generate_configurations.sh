@@ -30,20 +30,34 @@ echo "TAC value: $TAC"
 echo "Creating configs directory..."
 mkdir -p configs
 
+apps=("mmed" "sgwcd" "smfd" "amfd" "sgwud" "upfd" "hssd" "pcrfd" "nrfd" "scpd" "seppd" "ausfd" "udmd" "pcfd" "nssfd" "bsfd" "udrd" "webui")
+
+# Backup original files
 if [ ! -f configs/amf_original.yaml ]; then
     echo "Backing up 5G Core configuration files..."
-    cp open5gs/install/etc/open5gs/nrf.yaml configs/nrf_original.yaml
-    cp open5gs/install/etc/open5gs/amf.yaml configs/amf_original.yaml
-    cp open5gs/install/etc/open5gs/upf.yaml configs/upf_original.yaml
-    cp open5gs/install/etc/open5gs/mme.yaml configs/mme_original.yaml
-    cp open5gs/install/etc/open5gs/sgwu.yaml configs/sgwu_original.yaml
+    for app in "${apps[@]}"; do
+        config_file="${app%?}"
+        if [[ "${app: -1}" != "d" ]]; then
+            config_file="$app"
+        fi
+        if [ -f "open5gs/install/etc/open5gs/${config_file}.yaml" ]; then
+            cp "open5gs/install/etc/open5gs/${config_file}.yaml" "configs/${config_file}_original.yaml"
+        elif [ -f "open5gs/install/etc/open5gs/${config_file}1.yaml" ]; then
+            cp "open5gs/install/etc/open5gs/${config_file}1.yaml" "configs/${config_file}_original.yaml"
+        fi
+    done
 fi
 
-cp configs/nrf_original.yaml configs/nrf.yaml
-cp configs/amf_original.yaml configs/amf.yaml
-cp configs/upf_original.yaml configs/upf.yaml
-cp configs/mme_original.yaml configs/mme.yaml
-cp configs/sgwu_original.yaml configs/sgwu.yaml
+# Restore original files
+for app in "${apps[@]}"; do
+    config_file="${app%?}"
+    if [[ "${app: -1}" != "d" ]]; then
+        config_file="$app"
+    fi
+    if [ -f "configs/${config_file}_original.yaml" ]; then
+        cp "configs/${config_file}_original.yaml" "configs/${config_file}.yaml"
+    fi
+done
 
 # Function to update YAML configuration files
 update_yaml() {
@@ -183,13 +197,6 @@ if [ "$amf_ip" != "$(get_configuration_ngap_server_ip)" ]; then
 fi
 
 
-echo "Applying configuration files..."
-cp configs/nrf.yaml open5gs/install/etc/open5gs/nrf.yaml
-cp configs/amf.yaml open5gs/install/etc/open5gs/amf.yaml
-cp configs/upf.yaml open5gs/install/etc/open5gs/upf.yaml
-cp configs/mme.yaml open5gs/install/etc/open5gs/mme.yaml
-cp configs/sgwu.yaml open5gs/install/etc/open5gs/sgwu.yaml
-
 
 # Add route for the UE to have WAN connectivity
 ### Enable IPv4/IPv6 Forwarding
@@ -204,6 +211,8 @@ sudo ufw status
 
 mkdir -p logs
 sudo chown $USER:$USER -R logs
+
+./install_scripts/register_subscriber.sh --imsi 001010123456780 --key 00112233445566778899aabbccddeeff --opc 63BFA50EE6523365FF14C1F45F88737D --apn srsapn
 
 # Restart Open5GS services to apply changes
 echo "To apply changed, stop and start the following:"

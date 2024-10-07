@@ -10,6 +10,7 @@ else
 
     echo "Starting gnb in background..."
     mkdir -p logs
+    sudo chown -R $USER:$USER logs
     sudo rm -rf logs/gnb.log
     sudo nohup srsRAN_Project/build/apps/gnb/gnb -c configs/gnb.yaml > logs/gnb_stdout.txt 2>&1 &
     sleep 1

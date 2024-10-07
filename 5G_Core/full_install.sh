@@ -140,6 +140,19 @@ else
     fi
 fi
 
+echo "Attempting to install mongosh..."
+if ! sudo apt-get install -y mongosh; then
+    echo "Failed to install mongosh. Attempting to fix broken installations..."
+    sudo apt --fix-broken install
+    sudo apt autoremove -y
+    sudo apt clean
+    echo "Trying to install mongosh again..."
+    if ! sudo apt-get install -y mongosh; then
+        echo "Failed to install mongosh after attempting repairs. Exiting script."
+        exit 1
+    fi
+fi
+
 echo "Pinning MongoDB 4.4 packages to prevent automatic updates..."
 echo "mongodb-org hold" | sudo dpkg --set-selections
 echo "mongodb-org-server hold" | sudo dpkg --set-selections
@@ -211,7 +224,10 @@ cd build
 echo "Installing Open5GS..."
 ninja install
 
-echo "Installation complete! Open5GS has been installed and configured."
+echo "Installing WebUI for Subscriber Registration..."
+sudo ./install_scripts/install_webui.sh
+
+echo "Installation complete. Open5GS and WebUI have been installed."
 
 cd ../.. # Main directory with open5gs
 current_dir=$(pwd)

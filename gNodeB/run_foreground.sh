@@ -5,6 +5,7 @@ if pgrep -x "gnb" > /dev/null; then
 else
     echo "Starting gnb..."
     mkdir -p logs
+    sudo chown -R $USER:$USER logs
     sudo rm -rf /tmp/gnb.log
     srsRAN_Project/build/apps/gnb/gnb -c configs/gnb.yaml
 fi

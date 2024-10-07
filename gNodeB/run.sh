@@ -3,6 +3,11 @@
 if pgrep -x "gnb" > /dev/null; then
     echo "Already running gnb."
 else
+    if [ ! -f "configs/gnb.yaml" ]; then
+        echo "Configuration was not found for gNodeB. Please run ./generate_configurations.sh first."
+        exit 1
+    fi
+
     echo "Starting gnb in background..."
     mkdir -p logs
     sudo rm -rf logs/gnb.log

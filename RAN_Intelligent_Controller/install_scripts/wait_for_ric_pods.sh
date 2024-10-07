@@ -13,7 +13,7 @@ wait_for_all_pods_running () {
     local NAMESPACES=("$@")
     local ALL_PODS_RUNNING=0
     local TIMER_START=0
-    local INTERVAL_UNTIL_PURGE=600 # 10 minutes in seconds
+    local INTERVAL_UNTIL_PURGE=480 # 8 minutes
     local DURATION=$INTERVAL_UNTIL_PURGE
 
     echo "Initiating wait for all pods to be in 'Running' or 'Completed' state across specified namespaces."
@@ -55,9 +55,6 @@ wait_for_all_pods_running () {
                     echo
                     echo "Some pods in $NAMESPACE are still initializing. Please be patient."
                 else
-                    # No pods in critical initializing states, safe to delete pods in 'CrashLoopBackOff' or 'Error' states
-                    echo "$POD_STATUS" | awk '$3 == "CrashLoopBackOff" || $3 == "Evicted" || $3 == "Error" { print $1 }' | xargs -I {} kubectl delete pod {} -n $NAMESPACE --wait=false
-
                     if [[ $TIMER_START -eq 0 ]]; then
                         TIMER_START=$(date +%s) # Set TIMER_START to current Unix timestamp
                         echo "Timer started at $(date)"
@@ -88,7 +85,6 @@ wait_for_all_pods_running () {
             sudo ./install_scripts/wait_for_kubectl.sh
         fi
     done
-    kubectl get pods -A || true
 }
 
 

@@ -1,5 +1,10 @@
 #!/bin/bash
 
+if [ ! -f "configs/amf.yaml" ] || [ ! -f "configs/mme.yaml" ]; then
+    echo "Configurations were not found for Open5GS. Please run ./generate_configurations.sh first."
+    exit 1
+fi
+
 sudo ./install_scripts/network_config.sh
 
 run_in_background() {
@@ -44,20 +49,3 @@ else
 fi
 
 ./is_running.sh
-
-# Changed below to be ran with `./run.sh show`
-# sudo gnome-terminal -t "NRF Node" -- /bin/sh -c './open5gs/install/bin/open5gs-nrfd'
-# sudo gnome-terminal -t "SCP Node" -- /bin/sh -c './open5gs/install/bin/open5gs-scpd'
-# sudo gnome-terminal -t "AMF Node" -- /bin/sh -c './open5gs/install/bin/open5gs-amfd'
-# sudo gnome-terminal -t "SMF Node" -- /bin/sh -c './open5gs/install/bin/open5gs-smfd'
-# sudo gnome-terminal -t "UPF Node" -- /bin/sh -c './open5gs/install/bin/open5gs-upfd'
-# sudo gnome-terminal -t "AUSF Node" -- /bin/sh -c './open5gs/install/bin/open5gs-ausfd'
-# sudo gnome-terminal -t "UDM Node" -- /bin/sh -c './open5gs/install/bin/open5gs-udmd'
-# sudo gnome-terminal -t "PCF Node" -- /bin/sh -c './open5gs/install/bin/open5gs-pcfd'
-# sudo gnome-terminal -t "NSSF Node" -- /bin/sh -c './open5gs/install/bin/open5gs-nssfd'
-# sudo gnome-terminal -t "BSF Node" -- /bin/sh -c './open5gs/install/bin/open5gs-bsfd'
-# sudo gnome-terminal -t "UDR Node" -- /bin/sh -c './open5gs/install/bin/open5gs-udrd'
-# sudo gnome-terminal -t "SGWC Node" -- /bin/sh -c './open5gs/install/bin/open5gs-sgwcd'
-# sudo gnome-terminal -t "SGWU Node" -- /bin/sh -c './open5gs/install/bin/open5gs-sgwud'
-# sudo gnome-terminal -t "HSS Node" -- /bin/sh -c './open5gs/install/bin/open5gs-hssd'
-# sudo gnome-terminal -t "PCRF Node" -- /bin/sh -c './open5gs/install/bin/open5gs-pcrfd'

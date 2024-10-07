@@ -5,5 +5,5 @@
 /logs/
 /srsRAN_4G/
 czmq
-installation_time.txt
+install_time.txt
 libzmq

@@ -66,6 +66,7 @@ while true; do
     fi
  
     if ! grep -q "</E2AP-PDU>" $OUTPUT_FILE; then
+        # Alternatively, wait for SETUP-RESPONSE-SUCCESS: if ! grep -q SETUP-RESPONSE-SUCCESS $OUTPUT_FILE; then
         echo "Waiting for connection between E2 Simulator and RIC, please be patient for all pods to be ready... $ATTEMPTS/$MAX_ATTEMPTS"
         sleep 5
     else
@@ -112,15 +113,15 @@ IP_HTTP_e2term=$(echo $LINE | awk '{print $3}')
 PORT_HTTP_e2term=$(echo $LINE | awk '{print $5}' | sed 's/\/.*//' | cut -d: -f2)
 echo "$IP_HTTP_e2term:$PORT_HTTP_e2term"
 
-curl -X GET $IP_HTTP_e2term:$PORT_HTTP_e2term/v1/nodeb/states 2>/dev/null|jq
 response=$(curl -X GET $IP_HTTP_e2term:$PORT_HTTP_e2term/v1/nodeb/states 2>/dev/null)
 
 # Verify if the connectionStatus is "CONNECTED"
 status=$(echo "$response" | jq -r '.[].connectionStatus' | grep "CONNECTED")
-
 if [[ $status == "CONNECTED" ]]; then
+    echo "$response" | jq
     echo "Successfully connected the E2 simulator and RIC cluster."
 else
     echo "Connection between E2 simulator and RIC cluster failed."
-    exit 1
+    echo "Run the following command to get more information:"
+    echo "curl -X GET $IP_HTTP_e2term:$PORT_HTTP_e2term/v1/nodeb/states 2>/dev/null | jq"
 fi

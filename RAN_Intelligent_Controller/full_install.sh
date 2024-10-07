@@ -57,8 +57,6 @@ cd $BASE_DIR/ric-dep/bin/
 
 if ! ./install_k8s_and_helm.sh; then
     echo "An error occured when running $(pwd)/install_k8s_and_helm.sh."
-    echo "Please verify that 'kubeadm init' completed without errors."
-    echo "If it did not, verify that SCTPSupport (in $HOME/config.yaml) is supported by your version of Kubernetes."
     exit 1
 fi
 
@@ -231,9 +229,8 @@ echo
 echo "Building and Installing Hello World xApp..."
 mkdir -p xApps
 cd xApps
-if [ ! -d "hw-go" ]; then
-    git clone https://gerrit.o-ran-sc.org/r/ric-app/hw-go
-fi
+sudo rm -rf hw-go
+git clone https://gerrit.o-ran-sc.org/r/ric-app/hw-go
 cd ..
 
 sudo ./install_scripts/install_xapp_hw-go.sh
@@ -255,9 +252,9 @@ while true; do
     fi
 done
 
-sudo ./install_scripts/check_xapp_deployment_status.sh
 echo
-echo "The xApp has been successfully deployed."
+echo "Checking xApp deployment status..."
+sudo ./install_scripts/check_xapp_deployment_status.sh
 
 # Stop the sudo timeout refresher, it is no longer necessary to run
 ./install_scripts/stop_sudo_refresh.sh 
@@ -266,8 +263,9 @@ echo "The xApp has been successfully deployed."
 ric_end_time=$(date +%s)
 if [ -n "$ric_start_time" ]; then
   duration=$((ric_end_time - ric_start_time))
-  echo "The RIC installation process took $duration seconds to complete."
-  echo "$duration seconds" > installation_time.txt
+  duration_minutes=$(echo "scale=5; $duration / 60" | bc)
+  echo "The RIC installation process took $duration_minutes minutes to complete."
+  echo "$duration_minutes minutes" > install_time.txt
 fi
 
 echo "The RAN Intelligent Controller installation completed successfully."

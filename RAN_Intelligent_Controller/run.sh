@@ -6,6 +6,10 @@ set -e
 echo "Updating etc/hosts in case of a changed local IP address..."
 sudo ./install_scripts/update_host_address.sh
 
+# Kubelet does not support swap
+sudo ./install_scripts/disable_swap.sh
+
+sudo systemctl restart docker
 sudo systemctl restart kubelet
 
 echo "Waiting for Kubernetes API server..."
@@ -29,5 +33,3 @@ echo "Running the xApp Onboarder (dms_cli)..."
 sudo ./install_scripts/run_xapp_onboarder.sh
 
 sudo ./install_scripts/check_xapp_deployment_status.sh
-
-sudo ./start_k9s.sh

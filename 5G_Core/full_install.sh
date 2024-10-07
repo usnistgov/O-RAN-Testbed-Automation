@@ -1,5 +1,14 @@
 #!/bin/bash
 
+# Exit immediately if a command fails
+set -e
+
+# Check for open5gs-amfd and open5gs-upfd binaries to determine if Open5GS is already installed
+if [ -f "open5gs/install/bin/open5gs-amfd" ] && [ -f "open5gs/install/bin/open5gs-upfd" ]; then
+    echo "Open5GS is already installed. Skipping."
+    exit 0
+fi
+
 # Starts a script in background that calls `sudo -v` every minute to ensure that sudo stays active, ensuring the script runs without requiring user interaction
 sudo ls
 ./install_scripts/start_sudo_refresh.sh
@@ -7,8 +16,6 @@ sudo ls
 # Get the start timestamp in seconds
 open5gs_start_time=$(date +%s)
 
-# Exit immediately if a command fails
-set -e
 
 sudo rm -rf logs/
 
@@ -90,22 +97,28 @@ else
     echo "Installing gnupg and curl if not already installed..."
     sudo apt install -y gnupg curl || { echo "Failed to install GnuPG or curl"; exit 1; }
 
-    # Fallback 1: Try importing the MongoDB 4.4 public key using apt-key
-    echo "Attempting to import MongoDB 4.4 server public key using apt-key..."
-    if ! wget -qO - https://www.mongodb.org/static/pgp/server-4.4.asc | sudo apt-key add -; then
-        echo "Failed to import MongoDB public key using apt-key. Trying signed-by method as fallback..."
+    # Preferred method: Try importing the MongoDB 4.4 public key using signed-by method
+    echo "Attempting to import MongoDB 4.4 server public key using signed-by method..."
+    if ! curl -fsSL https://www.mongodb.org/static/pgp/server-4.4.asc | sudo gpg --dearmor -o /usr/share/keyrings/mongodb-archive-keyring.gpg; then
+        echo "Failed to import MongoDB public key using the modern method. Trying apt-key as fallback..."
         
-        # Fallback 2: Use signed-by if apt-key fails
-        if ! curl -fsSL https://www.mongodb.org/static/pgp/server-4.4.asc | sudo tee /usr/share/keyrings/mongodb-archive-keyring.gpg > /dev/null; then
-            echo "Failed to import MongoDB public key using curl."
+        # Fallback 1: Use apt-key if modern method fails (deprecated method)
+        if ! wget -qO - https://www.mongodb.org/static/pgp/server-4.4.asc | sudo apt-key add -; then
+            echo "Failed to import MongoDB public key using apt-key."
             exit 1
         fi
-        echo "Adding MongoDB 4.4 repository using signed-by method..."
-        echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/mongodb-archive-keyring.gpg] https://repo.mongodb.org/apt/ubuntu $ubuntu_codename_mongodb/mongodb-org/4.4 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-4.4.list
-    else
         echo "Adding MongoDB 4.4 repository using apt-key method..."
         echo "deb [arch=amd64] https://repo.mongodb.org/apt/ubuntu $ubuntu_codename_mongodb/mongodb-org/4.4 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-4.4.list
+    else
+        echo "Successfully imported MongoDB public key using the signed-by method. Adding repository..."
+        echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/mongodb-archive-keyring.gpg] https://repo.mongodb.org/apt/ubuntu $ubuntu_codename_mongodb/mongodb-org/4.4 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-4.4.list
     fi
+
+    # Update package lists after adding MongoDB repository
+    while sudo fuser /var/lib/dpkg/lock /var/lib/apt/lists/lock /var/cache/apt/archives/lock >/dev/null 2>&1; do
+        echo "Waiting for the apt lock to be released..."
+        sleep 5
+    done
 
     echo "Updating package lists after adding MongoDB repository..."
     if ! sudo apt update; then
@@ -244,8 +257,9 @@ echo "LD_LIBRARY_PATH updated globally for all users."
 open5gs_end_time=$(date +%s)
 if [ -n "$open5gs_start_time" ]; then
   duration=$((open5gs_end_time - open5gs_start_time))
-  echo "The Open5GS installation process took $duration seconds to complete."
-  echo "$duration seconds" > installation_time.txt
+  duration_minutes=$(echo "scale=5; $duration / 60" | bc)
+  echo "The Open5GS installation process took $duration_minutes minutes to complete."
+  echo "$duration_minutes minutes" > install_time.txt
 fi
 
 echo "The Open5GS installation completed successfully."

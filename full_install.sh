@@ -6,19 +6,6 @@ set -e
 echo
 echo
 echo "################################################################################"
-echo "# Installing RAN Intelligent Controller...                                     #"
-echo "################################################################################"
-echo
-echo
-
-cd RAN_Intelligent_Controller
-./full_install.sh
-
-cd ..
-
-echo
-echo
-echo "################################################################################"
 echo "# Installing 5G Core...                                                        #"
 echo "################################################################################"
 echo
@@ -45,12 +32,25 @@ cd ..
 echo
 echo
 echo "################################################################################"
-echo "# Installing User Equipment...                                                  #"
+echo "# Installing User Equipment...                                                 #"
 echo "################################################################################"
 echo
 echo
 
 cd User_Equipment
+./full_install.sh
+
+cd ..
+
+echo
+echo
+echo "################################################################################"
+echo "# Installing RAN Intelligent Controller...                                     #"
+echo "################################################################################"
+echo
+echo
+
+cd RAN_Intelligent_Controller
 ./full_install.sh
 
 cd ..

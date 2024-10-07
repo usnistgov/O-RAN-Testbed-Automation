@@ -1,5 +1,13 @@
 #!/bin/bash
 
+# Exit immediately if a command fails
+set -e
+
+if [ -f "srsRAN_4G/build/srsue/src/srsue" ]; then
+    echo "srsRAN_4G is already installed. Skipping."
+    exit 0
+fi
+
 # Starts a script in background that calls `sudo -v` every minute to ensure that sudo stays active, ensuring the script runs without requiring user interaction
 sudo ls
 ./install_scripts/start_sudo_refresh.sh 
@@ -7,8 +15,6 @@ sudo ls
 # Get the start timestamp in seconds
 ue_start_time=$(date +%s)
 
-# Exit immediately if a command fails
-set -e
 
 sudo rm -rf logs/
 
@@ -140,8 +146,9 @@ cd $baseDirectory
 ue_end_time=$(date +%s)
 if [ -n "$ue_start_time" ]; then
   duration=$((ue_end_time - ue_start_time))
-  echo "The User Equipment installation process took $duration seconds to complete."
-  echo "$duration seconds" > installation_time.txt
+  duration_minutes=$(echo "scale=5; $duration / 60" | bc)
+  echo "The srsUE installation process took $duration_minutes minutes to complete."
+  echo "$duration_minutes minutes" > install_time.txt
 fi
 
 echo "The User Equipment installation completed successfully."

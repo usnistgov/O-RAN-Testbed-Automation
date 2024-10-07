@@ -44,6 +44,11 @@ else
     exit 1
 fi
 
+# Check if the xApp is already installed and uninstall it if necessary
+if dms_cli get_charts_list | grep -q 'hw-go'; then
+    echo "Uninstalling application 'hw-go'..."
+    dms_cli uninstall hw-go ricxapp || true
+fi
 
 echo "Installing application 'hw-go'..."
 output=$(dms_cli install hw-go 1.0.0 ricxapp)

@@ -76,6 +76,7 @@ configure_plmn_tac() {
     local tac=$3
     local mme_config="configs/mme.yaml"
     local amf_config="configs/amf.yaml"
+    local nrf_config="configs/nrf.yaml"
 
     # Update MME and AMF configuration files
     sed -i "s/^\(\s*mcc:\s*\).*/\1$plmn_mcc/" $mme_config
@@ -85,6 +86,10 @@ configure_plmn_tac() {
     sed -i "s/^\(\s*mcc:\s*\).*/\1$plmn_mcc/" $amf_config
     sed -i "s/^\(\s*mnc:\s*\).*/\1$plmn_mnc/" $amf_config
     sed -i "s/^\(\s*tac:\s*\).*/\1$tac/" $amf_config
+
+    sed -i "s/^\(\s*mcc:\s*\).*/\1$plmn_mcc/" $nrf_config
+    sed -i "s/^\(\s*mnc:\s*\).*/\1$plmn_mnc/" $nrf_config
+    sed -i "s/^\(\s*tac:\s*\).*/\1$tac/" $nrf_config
 }
 
 # Function to set the logging path, disable timestamp for stderr to avoid duplicate timestamps in journalctl
@@ -185,7 +190,18 @@ for file in "${!config_paths[@]}"; do
     for property in ${config_paths[$file]}; do
         update_yaml $amf_ip $file $property
     done
-    configure_logging $file
+    
+done
+
+# Configure logging for all components
+for app in "${apps[@]}"; do
+    config_file="${app%?}"
+    if [[ "${app: -1}" != "d" ]]; then
+        config_file="$app"
+    fi
+    if [ -f "configs/${config_file}.yaml" ]; then
+        configure_logging "configs/${config_file}.yaml"
+    fi
 done
 
 # Configure the PLMN and TAC to match regulatory requirements

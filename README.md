@@ -60,7 +60,7 @@ Note: Since `set -e` is set, the scripts will terminate upon reaching an error s
 ################################################################################
 ```
 
-After successful installation, ensure that the config/ files are generated; they are generated with `./generate_configurations.sh`.
+After successful installation, ensure that the configs/ files are generated; they are generated with `./generate_configurations.sh`.
 
 ## NIST Commercial Product Disclaimer
 

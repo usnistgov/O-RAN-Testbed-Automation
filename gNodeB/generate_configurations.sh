@@ -163,7 +163,7 @@ mkdir -p logs
 
 # Update configuration values for AMF connection
 update_yaml configs/gnb.yaml "cu_cp.amf" "addr" "$amf_addr"
-update_yaml configs/gnb.yaml "cu_cp.amf" "bind_addr" "$amf_bind_addr"
+update_yaml configs/gnb.yaml "cu_cp.amf" "bind_addr" "$amf_addr_bind"
 
 # Update configuration values for RF front-end device
 update_yaml configs/gnb.yaml "ru_sdr" "device_driver" "zmq"
@@ -212,5 +212,8 @@ update_yaml configs/gnb.yaml "cell_cfg.prach" "prach_config_index" "1"
 
 # For ZeroMQ, change otw_format from sc12 --> null
 update_yaml configs/gnb.yaml "ru_sdr" "otw_format" null
+
+mkdir -p logs
+sudo chown $USER:$USER -R logs
 
 echo "Successfully configured the gNodeB. The configuration file is located in the configs/ directory."

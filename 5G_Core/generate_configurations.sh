@@ -202,6 +202,9 @@ sudo ufw status
 sudo ufw disable
 sudo ufw status
 
+mkdir -p logs
+sudo chown $USER:$USER -R logs
+
 # Restart Open5GS services to apply changes
 echo "To apply changed, stop and start the following:"
 echo "    open5gs-mmed"

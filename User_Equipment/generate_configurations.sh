@@ -109,6 +109,9 @@ update_conf configs/ue.conf "gw" "ip_netmask" "255.255.255.0"
 # Update configuration values for GUI
 update_conf configs/ue.conf "gui" "enable" "false"
 
+mkdir -p logs
+sudo chown $USER:$USER -R logs
+
 echo "Successfully configured the UE. The configuration file is located in the configs/ directory."
 
 

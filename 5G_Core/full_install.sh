@@ -224,13 +224,13 @@ cd build
 echo "Installing Open5GS..."
 ninja install
 
-echo "Installing WebUI for Subscriber Registration..."
-sudo ./install_scripts/install_webui.sh
-
-echo "Installation complete. Open5GS and WebUI have been installed."
+echo "Installation complete. Open5GS has been installed."
 
 cd ../.. # Main directory with open5gs
 current_dir=$(pwd)
+
+echo "Installing WebUI for Subscriber Registration..."
+sudo ./install_scripts/install_webui.sh
 
 # Define library paths
 lib_sbi_path="$current_dir/open5gs/build/lib/sbi"

@@ -92,7 +92,7 @@ wait_for_all_pods_running () {
                     let ELAPSED_TIME=(${CURRENT_TIME:-0}-${TIMER_START:-0}) || true
                     let DURATION=($INTERVAL_UNTIL_PURGE-$ELAPSED_TIME) || true
                     if [ $ELAPSED_TIME -ge $INTERVAL_UNTIL_PURGE ]; then
-                        echo "10 minutes have passed since all pods were ready. Running purge script."
+                        echo "$INTERVAL_UNTIL_PURGE minute$([ "$INTERVAL_UNTIL_PURGE" -ne 1 ] && echo s) passed since all pods were ready. Running purge script."
                         sudo ./install_scripts/purge_unready_pods.sh
                         TIMER_START=$CURRENT_TIME
                         let DURATION=$INTERVAL_UNTIL_PURGE

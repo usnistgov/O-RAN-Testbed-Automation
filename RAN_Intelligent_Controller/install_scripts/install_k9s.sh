@@ -2,6 +2,12 @@
 
 set -e
 
+# Check if k9s is already installed
+if command -v k9s &>/dev/null; then
+    echo "Already installed k9s, skipping."
+    exit 0
+fi
+
 echo "Downloading and extracting k9s..."
 
 # Create and navigate to the installation directory

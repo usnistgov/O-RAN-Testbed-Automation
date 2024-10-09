@@ -11,8 +11,7 @@ fi
 # Ensure you're in the correct directory
 cd appmgr/xapp_orchestrater/dev/xapp_onboarder
 
-# Update the system and install prerequisites
-sudo apt update -y
+# Install prerequisites
 if ! command -v python3 &> /dev/null; then
     sudo apt install -y python3
 fi

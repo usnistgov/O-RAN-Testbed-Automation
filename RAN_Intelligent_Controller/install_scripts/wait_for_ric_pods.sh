@@ -13,7 +13,7 @@ wait_for_all_pods_running () {
     local NAMESPACES=("$@")
     local ALL_PODS_RUNNING=0
     local TIMER_START=0
-    local INTERVAL_UNTIL_PURGE=480 # 8 minutes
+    local INTERVAL_UNTIL_PURGE=60 # 1 minute
     local DURATION=$INTERVAL_UNTIL_PURGE
 
     echo "Initiating wait for all pods to be in 'Running' or 'Completed' state across specified namespaces."
@@ -41,10 +41,39 @@ wait_for_all_pods_running () {
                 TERMINATING_PODS=$(echo "$POD_STATUS" | awk '$3 == "Terminating" || $3 == "ContainerStatusUnknown" || $3 == "Evicted" || $3 == "Error" { print $1 }')
                 RUNNING_PODS=$(echo "$POD_STATUS" | awk '$3 == "Running" { split($2, a, "/"); if (a[1] == a[2]) print $1 }')
                 for POD in $TERMINATING_PODS; do
-                    base_name=$(echo $POD | sed 's/-[^-]*$//') # Strip the last part after the final dash
-                    if echo $RUNNING_PODS | grep -q $base_name; then
+                    BASE_NAME=$(echo $POD | sed 's/-[^-]*$//') # Strip the last part after the final dash
+                    if echo $RUNNING_PODS | grep -q $BASE_NAME; then
                         echo "Force deleting terminating pod $POD as a fully ready counterpart exists."
                         kubectl delete pod $POD -n $NAMESPACE --grace-period=0 --force --wait=false
+                    fi
+                done
+
+                # Delete unready pods if a ready one exists
+                local POD_INFO=$(kubectl get pods -A --no-headers)
+                # Initialize associative arrays
+                declare -A BASE_NAME_TO_READY_POD
+                declare -A BASE_NAME_TO_UNREADY_PODS
+                # Parse pod information
+                while IFS=' ' read -r INNER_NAMESPACE POD_NAME READY_STATUS STATUS RESTARTS AGE; do
+                    local BASE_NAME=$(echo "$POD_NAME" | sed 's/\(.*\)-[^-]*-[^-]*$/\1/')
+                    IFS='/' read -ra COUNTS <<< "$READY_STATUS"
+                    local READY_COUNT=${COUNTS[0]}
+                    local TOTAL_COUNT=${COUNTS[1]}
+                    if [[ "$STATUS" == "Running" && "$READY_COUNT" == "$TOTAL_COUNT" ]]; then
+                        BASE_NAME_TO_READY_POD["$BASE_NAME"]=true
+                    else
+                        BASE_NAME_TO_UNREADY_PODS["$BASE_NAME"]+="$INNER_NAMESPACE $POD_NAME "
+                    fi
+                done <<< "$POD_INFO"
+                for BASE_NAME in "${!BASE_NAME_TO_UNREADY_PODS[@]}"; do
+                    if [[ ${BASE_NAME_TO_READY_POD[$BASE_NAME]} ]]; then
+                        for ENTRY in ${BASE_NAME_TO_UNREADY_PODS[$BASE_NAME]}; do
+                            read -r UNREADY_NAMESPACE UNREADY_POD <<< "$ENTRY"
+                            if [[ -n "$UNREADY_POD" ]]; then  # Check if UNREADY_POD is not empty
+                                echo "Deleting unready pod $UNREADY_POD in $UNREADY_NAMESPACE as a ready counterpart exists."
+                                kubectl delete pod $UNREADY_POD -n $UNREADY_NAMESPACE --grace-period=0 --force --wait=false
+                            fi
+                        done
                     fi
                 done
 
@@ -65,7 +94,8 @@ wait_for_all_pods_running () {
                     if [ $ELAPSED_TIME -ge $INTERVAL_UNTIL_PURGE ]; then
                         echo "10 minutes have passed since all pods were ready. Running purge script."
                         sudo ./install_scripts/purge_unready_pods.sh
-                        TIMER_START=$(date +%s) # Reset timer
+                        TIMER_START=$CURRENT_TIME
+                        let DURATION=$INTERVAL_UNTIL_PURGE
                     fi
                     echo
                     echo "Some pods in $NAMESPACE are not yet ready. Please be patient. Unready nodes will be purged in $DURATION seconds."

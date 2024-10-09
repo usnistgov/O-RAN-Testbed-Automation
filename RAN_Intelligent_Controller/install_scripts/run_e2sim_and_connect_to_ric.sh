@@ -26,6 +26,8 @@ else
 fi
 kubectl get svc -n ricplt | grep e2term-sctp || true
 
+sudo docker exec oransim pkill -f kpm_sim || true
+
 # Get the IP and port of the E2 termination point inside the near Real Time RIC
 SERVICE_NAME="service-ricplt-e2term-sctp"
 LINE=""
@@ -60,7 +62,7 @@ while true; do
     # Check if kpm_sim is already running to avoid duplicate runs
     if ! pgrep -f "kpm_sim $IP_e2term $PORT_e2term" > /dev/null; then
         echo "Starting kpm_sim in the background, writing to $OUTPUT_FILE..."
-	> "$OUTPUT_FILE" # Clears the content of the output file
+    	> "$OUTPUT_FILE" # Clears the content of the output file
         sudo docker exec -i oransim kpm_sim $IP_e2term $PORT_e2term > $OUTPUT_FILE 2>&1 &
         sleep 2
     fi
@@ -94,7 +96,7 @@ while true; do
         #    exit 1
         #fi
         echo "Restarting kpm_sim inside of oransim..."
-        sudo docker exec oransim pkill -f kpm_sim
+        sudo docker exec oransim pkill -f kpm_sim || true
         ATTEMPTS=0
         KPM_RESTARTS=$((KPM_RESTARTS + 1))
         if [ "$KPM_RESTARTS" -eq "$KPM_MAX_RESTARTS" ]; then
@@ -116,12 +118,15 @@ echo "$IP_HTTP_e2term:$PORT_HTTP_e2term"
 response=$(curl -X GET $IP_HTTP_e2term:$PORT_HTTP_e2term/v1/nodeb/states 2>/dev/null)
 
 # Verify if the connectionStatus is "CONNECTED"
-status=$(echo "$response" | jq -r '.[].connectionStatus' | grep "CONNECTED")
+status=$(echo "$response" | jq -r '.[].connectionStatus' | grep "CONNECTED" || true)
 if [[ $status == "CONNECTED" ]]; then
     echo "$response" | jq
     echo "Successfully connected the E2 simulator and RIC cluster."
 else
-    echo "Connection between E2 simulator and RIC cluster failed."
+    kubectl get svc -n ricplt || true
+    echo
+    echo
+    echo "Connection between E2 simulator and RIC cluster did not complete."
     echo "Run the following command to get more information:"
-    echo "curl -X GET $IP_HTTP_e2term:$PORT_HTTP_e2term/v1/nodeb/states 2>/dev/null | jq"
+    echo "curl -X GET $IP_HTTP_e2term:$PORT_HTTP_e2term/v1/nodeb/states | jq"
 fi

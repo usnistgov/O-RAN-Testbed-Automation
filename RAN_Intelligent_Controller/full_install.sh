@@ -65,7 +65,7 @@ if [ "$SHOULD_RESET_KUBE" = false ]; then
 else
     # Download ric-dep from gerrit
     if [ ! -d "ric-dep" ]; then
-        git clone "https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep" -b j-release
+        git clone https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep -b j-release
     fi
     # Patch the install script and save a backup of the original
     if [ ! -f "ric-dep/bin/install_k8s_and_helm.backup.sh" ]; then
@@ -140,9 +140,7 @@ fi
 if [ "$SHOULD_RESET_RIC" = false ]; then
     echo "All ricplt pods are already running, skipping."
 else
-    # Remove KubeArmor if it exists
-    kubectl delete daemonsets,replicasets,services,deployments,pods,rc --all -n kubearmor || true
-    sudo ./install_scripts/delete_namespace.sh kubearmor ricinfra ricplt ricxapp || true
+    sudo ./install_scripts/delete_namespace.sh kubearmor ricinfra ricplt || true
 
     echo "Revising RIC Installation YAML File..."
     RIC_YAML_FILE_PATH="ric-dep/RECIPE_EXAMPLE/example_recipe_latest_stable_MODIFIED.yaml"
@@ -251,7 +249,7 @@ fi
 echo
 echo "Connecting the E2 Simulator to the RIC Cluster..."
 
-sudo ./install_scripts/register_chart_museum_url.sh && ./install_scripts/register_chart_museum_url.sh
+./install_scripts/register_chart_museum_url.sh
 sudo ./install_scripts/run_chart_museum.sh
 
 echo
@@ -269,7 +267,7 @@ echo
 echo "Installing the xApp Onboarder (dms_cli)..."
 # Download appmgr from gerrit
 if [ ! -d "appmgr" ]; then
-    git clone "https://gerrit.o-ran-sc.org/r/ric-plt/appmgr"
+    git clone https://gerrit.o-ran-sc.org/r/ric-plt/appmgr
 fi
 sudo ./install_scripts/run_xapp_onboarder.sh
 
@@ -304,6 +302,16 @@ while true; do
     else
         echo "Deployment is not yet successful or ricxapp-hw-go is not running. Checking again in 3 seconds..."
         sleep 3
+    fi
+
+    # Check for disk-pressure taint on the node and warn the user
+    if kubectl describe nodes | grep Taints | grep disk-pressure &>/dev/null; then
+        echo "Disk-pressure taint detected on the node. Attempting to free up disk space..."
+        journalctl -u kubelet --disk-usage
+        sudo journalctl --vacuum-size=100M
+        echo "WARNING: The disk is full. The xApp may not deploy successfully."
+        echo
+        break
     fi
 done
 

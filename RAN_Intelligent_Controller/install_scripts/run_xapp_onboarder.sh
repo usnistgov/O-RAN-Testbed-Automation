@@ -23,8 +23,10 @@ if ! dpkg -l | grep -q python3-venv; then
 fi
 
 # Check if the dmi_cli binary is already installed
-export CHART_REPO_URL="http://0.0.0.0:8090"
-if [[ $(sudo -E dms_cli health) == "True" ]]; then
+if [ "$CHART_REPO_URL" != "http://0.0.0.0:8090" ]; then
+    export CHART_REPO_URL="http://0.0.0.0:8090"
+fi
+if [[ $(sudo -E dms_cli health 2>/dev/null) == "True" ]]; then
     echo "Health check was successful."
     exit 0
 else

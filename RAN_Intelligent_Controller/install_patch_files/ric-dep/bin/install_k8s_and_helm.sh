@@ -822,9 +822,9 @@ else
     echo "Kubernetes initialized successfully."
     # Set the KUBECONFIG variable to the config file's location
     mkdir -p $HOME/.kube
-    sudo cp -f /etc/kubernetes/admin.conf $HOME/.kube/config
-    sudo chown $(id -u):$(id -g) $HOME/.kube/config
     export KUBECONFIG=$HOME/.kube/config
+    sudo cp -f /etc/kubernetes/admin.conf $KUBECONFIG
+    sudo chown $(id -u):$(id -g) $KUBECONFIG
     sudo sed -i '/KUBECONFIG/d' /etc/environment
     echo "KUBECONFIG=$KUBECONFIG" | sudo tee -a /etc/environment > /dev/null
     source /etc/environment

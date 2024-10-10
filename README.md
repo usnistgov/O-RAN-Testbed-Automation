@@ -62,6 +62,7 @@ Note: Since `set -e` is set, the scripts will terminate upon reaching an error s
 
 After successful installation, ensure that the configs/ files are generated; they are generated with `./generate_configurations.sh`.
 
+<!--
 ## Enabling KubeArmor for Kubernetes Runtime Security Enforcement
 
 Optionally, to enable [KubeArmor](https://kubearmor.io/), please run the following.
@@ -69,6 +70,7 @@ Optionally, to enable [KubeArmor](https://kubearmor.io/), please run the followi
 ./RAN_Intelligent_Controller/install_scripts/other_scripts/install_kubearmor.sh
 ```
 This will install pods under namespace "kubearmor" and will terminate/restart the other pods to support the security engine. Check the status of the pods with `kubectl get pods -A`.
+-->
 
 ## NIST Commercial Product Disclaimer
 

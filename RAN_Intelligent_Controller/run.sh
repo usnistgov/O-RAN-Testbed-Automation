@@ -22,8 +22,10 @@ sudo ./install_scripts/wait_for_ric_pods.sh
 echo
 echo "Connecting the E2 Simulator to the RIC Cluster..."
 
-./install_scripts/register_chart_museum_url.sh
-sudo ./install_scripts/register_chart_museum_url.sh
+if [ "$CHART_REPO_URL" != "http://0.0.0.0:8090" ]; then
+    echo "Registering the Chart Museum URL..."
+    ./install_scripts/register_chart_museum_url.sh
+fi
 
 sudo ./install_scripts/run_chart_museum.sh
 sudo ./install_scripts/run_e2sim_and_connect_to_ric.sh

@@ -48,31 +48,29 @@ wait_for_all_pods_running () {
                     fi
                 done
 
-                # Delete unready pods if a ready one exists
-                local POD_INFO=$(kubectl get pods -A --no-headers)
-                # Initialize associative arrays
-                declare -A BASE_NAME_TO_READY_POD
-                declare -A BASE_NAME_TO_UNREADY_PODS
-                # Parse pod information
-                while IFS=' ' read -r INNER_NAMESPACE POD_NAME READY_STATUS STATUS RESTARTS AGE; do
-                    local BASE_NAME=$(echo "$POD_NAME" | sed 's/\(.*\)-[^-]*-[^-]*$/\1/')
-                    IFS='/' read -ra COUNTS <<< "$READY_STATUS"
-                    local READY_COUNT=${COUNTS[0]}
-                    local TOTAL_COUNT=${COUNTS[1]}
-                    if [[ "$STATUS" == "Running" && "$READY_COUNT" == "$TOTAL_COUNT" ]]; then
-                        BASE_NAME_TO_READY_POD["$BASE_NAME"]=true
-                    else
-                        BASE_NAME_TO_UNREADY_PODS["$BASE_NAME"]+="$INNER_NAMESPACE $POD_NAME "
-                    fi
+                declare -A BASE_NAME_TO_PODS # Associative array to store pods by their base name
+
+                POD_INFO=$(kubectl get pods -A --no-headers)
+                while read -r NAMESPACE POD_NAME _; do
+                    # Extract the base name by removing the last two dash-separated fields
+                    BASE_NAME=$(echo "$POD_NAME" | sed 's/\(.*\)-[^-]*-[^-]*$/\1/')
+                    # Append the namespace and pod name to the list for this base name
+                    BASE_NAME_TO_PODS["$BASE_NAME"]+="$NAMESPACE $POD_NAME,"
                 done <<< "$POD_INFO"
-                for BASE_NAME in "${!BASE_NAME_TO_UNREADY_PODS[@]}"; do
-                    if [[ ${BASE_NAME_TO_READY_POD[$BASE_NAME]} ]]; then
-                        for ENTRY in ${BASE_NAME_TO_UNREADY_PODS[$BASE_NAME]}; do
-                            read -r UNREADY_NAMESPACE UNREADY_POD <<< "$ENTRY"
-                            if [[ -n "$UNREADY_POD" ]]; then  # Check if UNREADY_POD is not empty
-                                echo "Deleting unready pod $UNREADY_POD in $UNREADY_NAMESPACE as a ready counterpart exists."
-                                kubectl delete pod $UNREADY_POD -n $UNREADY_NAMESPACE --grace-period=0 --force --wait=false
-                            fi
+
+                # Iterate over the base names and their corresponding pods
+                for BASE_NAME in "${!BASE_NAME_TO_PODS[@]}"; do
+                    POD_LIST="${BASE_NAME_TO_PODS[$BASE_NAME]}"
+                    # Remove the trailing comma and split the entries into an array
+                    IFS=',' read -ra POD_ENTRIES <<< "${POD_LIST%,}"
+                    # Check if there are more than one pod for the same base name
+                    if [ "${#POD_ENTRIES[@]}" -gt 1 ]; then
+                        echo "Found duplicate pods for base name '$BASE_NAME'."
+                        # Loop through the array from the second element to delete duplicates, keeping the first one
+                        for (( i=1; i<${#POD_ENTRIES[@]}; i++ )); do
+                            read -r POD_NAMESPACE POD_NAME <<< "${POD_ENTRIES[i]}"
+                            echo "Deleting duplicate pod '$POD_NAME' in namespace '$POD_NAMESPACE'."
+                            kubectl delete pod "$POD_NAME" -n "$POD_NAMESPACE" --grace-period=0 --force --wait=false
                         done
                     fi
                 done

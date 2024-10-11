@@ -1,4 +1,5 @@
 #!/bin/bash
+echo "# Script: $(realpath $0)..."
 
 if [ ! -f "full_install.sh" ]; then
     echo "You must run this script from the main directory with full_install.sh"

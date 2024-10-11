@@ -1,4 +1,5 @@
 #!/bin/bash
+echo "# Script: $(realpath $0)..."
 
 echo "Installing KubeArmor..."
 helm repo add kubearmor https://kubearmor.github.io/charts

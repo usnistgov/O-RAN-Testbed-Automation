@@ -9,13 +9,17 @@ if [ -f "open5gs/install/bin/open5gs-amfd" ] && [ -f "open5gs/install/bin/open5g
     exit 0
 fi
 
+if ! command -v realpath &> /dev/null; then
+    echo "Package "coreutils" not found, installing..."
+    sudo apt-get install -y coreutils
+fi
+
 # Starts a script in background that calls `sudo -v` every minute to ensure that sudo stays active, ensuring the script runs without requiring user interaction
 sudo ls
 ./install_scripts/start_sudo_refresh.sh
 
 # Get the start timestamp in seconds
-open5gs_start_time=$(date +%s)
-
+install_start_time=$(date +%s)
 
 sudo rm -rf logs/
 
@@ -65,7 +69,7 @@ else
         # Create a temporary directory and navigate to it
         temp_dir=$(mktemp -d -t libssl-XXXXXXXX)
         pushd "$temp_dir"
-        
+
         wget http://nz2.archive.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.1f-1ubuntu2_amd64.deb
         sudo dpkg -i libssl1.1_1.1.1f-1ubuntu2_amd64.deb
 
@@ -80,7 +84,7 @@ else
     echo "Checking for existing MongoDB installations..."
     if dpkg -l | grep -qE "(mongodb-org|mongodb-server|mongodb-server-core)"; then
         echo "Removing conflicting MongoDB packages..."
-        
+
         # Remove all installed MongoDB-related packages safely
         sudo apt-get purge -y mongodb-org mongodb-org-server mongodb-org-shell mongodb-org-mongos mongodb-org-tools \
                              mongodb-server mongodb-server-core mongodb-clients || { echo "Failed to remove conflicting MongoDB packages"; exit 1; }
@@ -107,7 +111,7 @@ else
     echo "Attempting to import MongoDB 4.4 server public key using signed-by method..."
     if ! curl -fsSL https://www.mongodb.org/static/pgp/server-4.4.asc | sudo gpg --dearmor -o /usr/share/keyrings/mongodb-archive-keyring.gpg; then
         echo "Failed to import MongoDB public key using the modern method. Trying apt-key as fallback..."
-        
+
         # Fallback 1: Use apt-key if modern method fails (deprecated method)
         if ! wget -qO - https://www.mongodb.org/static/pgp/server-4.4.asc | sudo apt-key add -; then
             echo "Failed to import MongoDB public key using apt-key."
@@ -181,7 +185,6 @@ else
     echo "MongoDB service is already enabled to start on boot."
 fi
 
-
 # Step 3: Setting up TUN device
 echo "Checking if TUN device ogstun exists..."
 if ! ip link show ogstun > /dev/null 2>&1; then
@@ -247,7 +250,7 @@ lib_core_path="$current_dir/open5gs/install/lib/x86_64-linux-gnu"
 create_ld_script() {
     local lib_path=$1
     local script_path="/etc/profile.d/open5gs_ld_library_path.sh"
-    
+
     # Check if script exists and create if not
     if [[ ! -f $script_path ]]; then
         sudo sh -c "echo '#!/bin/bash' > $script_path"
@@ -273,15 +276,16 @@ export LD_LIBRARY_PATH=$lib_sbi_path:$lib_proto_path:$lib_core_path:$LD_LIBRARY_
 echo "LD_LIBRARY_PATH updated globally for all users."
 
 # Stop the sudo timeout refresher, it is no longer necessary to run
-./install_scripts/stop_sudo_refresh.sh 
+./install_scripts/stop_sudo_refresh.sh
 
 # Calculate how long the script took to run
-open5gs_end_time=$(date +%s)
-if [ -n "$open5gs_start_time" ]; then
-  duration=$((open5gs_end_time - open5gs_start_time))
+install_end_time=$(date +%s)
+if [ -n "$install_start_time" ]; then
+  duration=$((install_end_time - install_start_time))
   duration_minutes=$(echo "scale=5; $duration / 60" | bc)
   echo "The Open5GS installation process took $duration_minutes minutes to complete."
-  echo "$duration_minutes minutes" > install_time.txt
+  mkdir -p logs
+  echo "$duration_minutes minutes" >> install_time.txt
 fi
 
 echo "The Open5GS installation completed successfully."

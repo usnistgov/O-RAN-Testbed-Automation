@@ -1,4 +1,5 @@
 #!/bin/bash
+echo "# Script: $(realpath $0)..."
 
 # Get the file path from the command line argument
 FILE=$1

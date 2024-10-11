@@ -12,7 +12,6 @@ fi
 
 baseDirectory=$(pwd)
 
-
 echo "Downloading configuration file example..."
 rm -rf configs
 mkdir configs
@@ -25,19 +24,19 @@ echo "Configuring UE..."
 # Function to update or add configuration properties in .conf files, considering sections and uncommenting if needed
 update_conf() {
     echo "update_conf($1, $2, $3, $4)"
-    local file_path="$1"
-    local section="$2"
-    local property="$3"
-    local value="$4"
+    local FILE_PATH="$1"
+    local SECTION="$2"
+    local PROPERTY="$3"
+    local VALUE="$4"
 
     # Ensure the section exists; if not, add it at the end
-    if ! grep -q "^\[$section\]" "$file_path"; then
-        echo -e "\n[$section]" >> "$file_path"
+    if ! grep -q "^\[$SECTION\]" "$FILE_PATH"; then
+        echo -e "\n[$SECTION]" >> "$FILE_PATH"
     fi
     # Remove any existing entries of the property in the section (including commented ones)
-    sed -i "/^\[$section\]/,/^\s*\[/{/^[# ]*\s*$property\s*=.*/d}" "$file_path"
+    sed -i "/^\[$SECTION\]/,/^\s*\[/{/^[# ]*\s*$PROPERTY\s*=.*/d}" "$FILE_PATH"
     # Append the new property=value after the section header
-    sed -i "/^\[$section\]/a $property=$value" "$file_path"
+    sed -i "/^\[$SECTION\]/a $PROPERTY=$VALUE" "$FILE_PATH"
 }
 
 mkdir -p logs
@@ -113,7 +112,3 @@ mkdir -p logs
 sudo chown $USER:$USER -R logs
 
 echo "Successfully configured the UE. The configuration file is located in the configs/ directory."
-
-
-
-

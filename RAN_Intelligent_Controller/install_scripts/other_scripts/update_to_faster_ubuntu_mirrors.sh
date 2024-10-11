@@ -1,4 +1,5 @@
 #!/bin/bash
+echo "# Script: $(realpath $0)..."
 
 if [ "$EUID" -ne 0 ]; then
     echo "Please run this script as root or use sudo."
@@ -74,6 +75,7 @@ fi
 # Test mirrors multiple times for consistency
 echo "Testing mirrors multiple times for consistency..."
 declare -A MIRROR_COUNTS
+MIRROR_COUNTS=()
 for i in {1..$NUM_ITERATIONS}; do
     echo "Test $i..."
     echo "1" | apt-select -t 20 -m up-to-date -c

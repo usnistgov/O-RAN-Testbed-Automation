@@ -1,4 +1,5 @@
 #!/bin/bash
+echo "# Script: $(realpath $0)..."
 
 if [ "$EUID" -ne 0 ]; then
     echo "Please run this script as root or use sudo."

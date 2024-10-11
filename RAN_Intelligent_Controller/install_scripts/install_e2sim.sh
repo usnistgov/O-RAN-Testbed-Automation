@@ -1,4 +1,5 @@
 #!/bin/bash
+echo "# Script: $(realpath $0)..."
 
 # Exit immediately if a command fails
 set -e
@@ -8,18 +9,13 @@ if [ ! -f "full_install.sh" ]; then
     exit 1
 fi
 
-# if sudo docker exec oransim which kpm_sim >/dev/null 2>&1; then
-#     echo "The kpm_sim executable is already installed in the oransim container. Skipping e2sim installation."
-#     exit 0
-# fi
-
 # Set docker to use Google's DNS servers, then restart docker
 sudo ./install_scripts/update_docker_dns.sh
 
 sudo apt-get install -y cmake g++ libsctp-dev
-DOCKERFILEPATH="e2-interface/e2sim/Dockerfile_kpm_MODIFIED"
-cp e2-interface/e2sim/Dockerfile_kpm $DOCKERFILEPATH
-sudo ./install_scripts/revise_e2sim_dockerfile.sh $DOCKERFILEPATH
+DOCKER_FILE_PATH="e2-interface/e2sim/Dockerfile_kpm_MODIFIED"
+cp e2-interface/e2sim/Dockerfile_kpm $DOCKER_FILE_PATH
+sudo ./install_scripts/revise_e2sim_dockerfile.sh $DOCKER_FILE_PATH
 cd e2-interface/e2sim/
 
 mkdir -p build

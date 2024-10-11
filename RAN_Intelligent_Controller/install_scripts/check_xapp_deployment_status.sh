@@ -1,4 +1,5 @@
 #!/bin/bash
+echo "# Script: $(realpath $0)..."
 
 kubectl get services -n ricplt | grep service-ricplt-appmgr
 

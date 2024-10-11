@@ -1,4 +1,5 @@
 #!/bin/bash
+echo "# Script: $(realpath $0)..."
 
 if [ "$EUID" -ne 0 ]; then
     echo "Please run this script as root or use sudo."
@@ -8,6 +9,22 @@ fi
 # Exit immediately if a command fails
 set -e
 
+# Function to extract the base name from a pod name, e.g., deployment-ricplt-e2mgr-856f655b4-7sn49 --> deployment-ricplt-e2mgr
+get_base_name () {
+    local POD_NAME=$1
+    local NODE_NAME=$2
+    local BASE_NAME
+    if [[ "$POD_NAME" == *"$NODE_NAME" ]]; then
+        BASE_NAME="$POD_NAME"
+    else
+        BASE_NAME=$(echo "$POD_NAME" | sed -E 's/(-[a-zA-Z0-9]+){1,2}$//')
+        if [ -z "$BASE_NAME" ]; then
+            BASE_NAME="$POD_NAME"
+        fi
+    fi
+    echo "$BASE_NAME"
+}
+
 # Function to wait for pods to be in a running state across multiple namespaces
 wait_for_all_pods_running () {
     local NAMESPACES=("$@")
@@ -15,6 +32,7 @@ wait_for_all_pods_running () {
     local TIMER_START=0
     local INTERVAL_UNTIL_PURGE=60 # 1 minute
     local DURATION=$INTERVAL_UNTIL_PURGE
+    local NODE_NAME=$(kubectl get nodes -o jsonpath='{.items[0].metadata.name}')
 
     echo "Initiating wait for all pods to be in 'Running' or 'Completed' state across specified namespaces."
 
@@ -32,7 +50,7 @@ wait_for_all_pods_running () {
             fi
             # Process the pod status to check if all are 'Running' or 'Completed', and handle Terminating pods
             echo "$POD_STATUS" | awk '{
-                split($2, arr, "/"); 
+                split($2, arr, "/");
                 if ($3 == "Terminating") next;
                 if ($3 != "Running" && $3 != "Completed") exit 1;
                 if ($3 == "Running" && arr[1] != arr[2]) exit 1
@@ -40,26 +58,31 @@ wait_for_all_pods_running () {
                 # Check for 'Terminating' pods with a running counterpart
                 TERMINATING_PODS=$(echo "$POD_STATUS" | awk '$3 == "Terminating" || $3 == "ContainerStatusUnknown" || $3 == "Evicted" || $3 == "Error" { print $1 }')
                 RUNNING_PODS=$(echo "$POD_STATUS" | awk '$3 == "Running" { split($2, a, "/"); if (a[1] == a[2]) print $1 }')
-                for POD in $TERMINATING_PODS; do
-                    BASE_NAME=$(echo $POD | sed 's/-[^-]*$//') # Strip the last part after the final dash
+                for POD_NAME in $TERMINATING_PODS; do
+                    # Extract the base name by removing the last two dash-separated fields
+                    BASE_NAME=$(get_base_name "$POD_NAME" "$NODE_NAME")
                     if echo $RUNNING_PODS | grep -q $BASE_NAME; then
                         echo "Force deleting terminating pod $POD as a fully ready counterpart exists."
                         kubectl delete pod $POD -n $NAMESPACE --grace-period=0 --force --wait=false
                     fi
                 done
 
-                declare -A BASE_NAME_TO_PODS # Associative array to store pods by their base name
+                # Associative array to store pods by their base name
+                declare -A BASE_NAME_TO_PODS
+                BASE_NAME_TO_PODS=()
 
                 POD_INFO=$(kubectl get pods -A --no-headers)
                 while read -r NAMESPACE POD_NAME _; do
                     # Extract the base name by removing the last two dash-separated fields
-                    BASE_NAME=$(echo "$POD_NAME" | sed 's/\(.*\)-[^-]*-[^-]*$/\1/')
-                    # Append the namespace and pod name to the list for this base name
+                    BASE_NAME=$(get_base_name "$POD_NAME" "$NODE_NAME")
                     BASE_NAME_TO_PODS["$BASE_NAME"]+="$NAMESPACE $POD_NAME,"
                 done <<< "$POD_INFO"
 
                 # Iterate over the base names and their corresponding pods
                 for BASE_NAME in "${!BASE_NAME_TO_PODS[@]}"; do
+                    if [ "$BASE_NAME" == "kube" ]; then
+                        continue
+                    fi
                     POD_LIST="${BASE_NAME_TO_PODS[$BASE_NAME]}"
                     # Remove the trailing comma and split the entries into an array
                     IFS=',' read -ra POD_ENTRIES <<< "${POD_LIST%,}"
@@ -69,7 +92,7 @@ wait_for_all_pods_running () {
                         # Loop through the array from the second element to delete duplicates, keeping the first one
                         for (( i=1; i<${#POD_ENTRIES[@]}; i++ )); do
                             read -r POD_NAMESPACE POD_NAME <<< "${POD_ENTRIES[i]}"
-                            echo "Deleting duplicate pod '$POD_NAME' in namespace '$POD_NAMESPACE'."
+                            echo "    Deleting duplicate pod '$POD_NAME' in namespace '$POD_NAMESPACE'."
                             kubectl delete pod "$POD_NAME" -n "$POD_NAMESPACE" --grace-period=0 --force --wait=false
                         done
                     fi
@@ -114,7 +137,6 @@ wait_for_all_pods_running () {
         fi
     done
 }
-
 
 KUBEVERSION=$(kubectl version | awk '/Server Version:/ {print $3}' | sed 's/v//')
 # Fetch the Helm version

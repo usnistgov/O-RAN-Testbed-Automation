@@ -1,4 +1,5 @@
 #!/bin/bash
+echo "# Script: $(realpath $0)..."
 
 if [ $# -lt 1 ]; then
     echo "Usage: $0 <namespace1> [<namespace2> ...]"

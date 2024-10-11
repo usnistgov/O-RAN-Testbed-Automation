@@ -1,4 +1,5 @@
 #!/bin/bash
+echo "# Script: $(realpath $0)..."
 
 # Check if running as root
 if [ "$EUID" -ne 0 ]; then

@@ -1,5 +1,7 @@
 #!/bin/bash
+echo "# Script: $(realpath $0)..."
 
+# Exit immediately if a command fails
 set -e
 
 # Check if k9s is already installed

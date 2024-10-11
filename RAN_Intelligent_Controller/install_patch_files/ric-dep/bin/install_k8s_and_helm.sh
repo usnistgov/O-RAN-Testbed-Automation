@@ -112,10 +112,11 @@ sudo apt-get install -y ipvsadm
 sudo apt-get install -y socat
 sudo apt-get install -y libsctp1 lksctp-tools
 
-#KUBEV="1.28"
-#KUBECNIV="0.7"
-#HELMV="3.14"
-#DOCKERV="20.10"
+# Previous versions from original script (HELMV 3.14.X causes continuous APIServer crashing on Ubuntu 22):
+#KUBEV="1.28" #.11"
+#KUBECNIV="0.7" #.5"
+#HELMV="3.14" #.4"
+#DOCKERV="20.10" #.21"
 
 # The version will be dynamically completed rather than hardcoding in the version
 KUBEV="1.29"
@@ -187,6 +188,8 @@ sudo echo "deb [signed-by=/etc/apt/keyrings/helm-apt-keyring.gpg] https://baltoc
 # If this errors you can remove Kubernetes with: sudo rm /etc/apt/sources.list.d/kubernetes.list
 # If this errors you can remove Helm with: sudo rm /etc/apt/sources.list.d/helm-stable-debian.list
 sudo apt update
+
+APTOPTS="--allow-downgrades --allow-change-held-packages --allow-unauthenticated --ignore-hold "
 
 # Dynamically fetch the latest versions based on the available packages
 DOCKERVERSION=$(get_latest_package_version "docker.io" "${DOCKERV}")
@@ -381,9 +384,6 @@ fi
 sudo apt-get update
 sudo apt-get install -y curl jq netcat-openbsd make ipset moreutils
 
-APTOPTS="--allow-downgrades --allow-change-held-packages --allow-unauthenticated --ignore-hold "
-
-
 # -----------------------------------------------------------------------------
 # Docker uninstallation then clean installation
 # -----------------------------------------------------------------------------
@@ -463,7 +463,6 @@ if ! sudo systemctl is-active --quiet docker; then
 else
     echo "Docker started successfully."
 fi
-
 
 # -----------------------------------------------------------------------------
 # Kubernetes uninstallation then clean installation
@@ -592,13 +591,13 @@ echo "Kubernetes version without suffix: $KUBEVERSIONWITHOUTSUFFIX"
 if [ -z "${CNIVERSION}" ]; then
     sudo apt-get install -y kubernetes-cni
 else
-    sudo apt-get install -y kubernetes-cni=${CNIVERSION}
+    sudo apt-get install -y $APTOPTS kubernetes-cni=${CNIVERSION}
 fi
 
 if [ -z "${KUBEVERSION}" ]; then
     sudo apt-get install -y kubeadm kubelet kubectl
 else
-    sudo apt-get install -y kubeadm=${KUBEVERSION} kubelet=${KUBEVERSION} kubectl=${KUBEVERSION}
+    sudo apt-get install -y $APTOPTS kubeadm=${KUBEVERSION} kubelet=${KUBEVERSION} kubectl=${KUBEVERSION}
 fi
 
 sudo apt-mark hold docker.io kubernetes-cni kubelet kubeadm kubectl

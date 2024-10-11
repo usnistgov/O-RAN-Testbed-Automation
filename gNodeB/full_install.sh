@@ -8,13 +8,17 @@ if [ -f "srsRAN_Project/build/apps/gnb/gnb" ]; then
     exit 0
 fi
 
+if ! command -v realpath &> /dev/null; then
+    echo "Package "coreutils" not found, installing..."
+    sudo apt-get install -y coreutils
+fi
+
 # Starts a script in background that calls `sudo -v` every minute to ensure that sudo stays active, ensuring the script runs without requiring user interaction
 sudo ls
-./install_scripts/start_sudo_refresh.sh 
+./install_scripts/start_sudo_refresh.sh
 
 # Get the start timestamp in seconds
-gnb_start_time=$(date +%s)
-
+install_start_time=$(date +%s)
 
 sudo rm -rf logs/
 
@@ -130,15 +134,16 @@ sudo make -j$(nproc) install
 cd $baseDirectory
 
 # Stop the sudo timeout refresher, it is no longer necessary to run
-./install_scripts/stop_sudo_refresh.sh 
+./install_scripts/stop_sudo_refresh.sh
 
 # Calculate how long the script took to run
-gnb_end_time=$(date +%s)
-if [ -n "$gnb_start_time" ]; then
-  duration=$((gnb_end_time - gnb_start_time))
+install_end_time=$(date +%s)
+if [ -n "$install_start_time" ]; then
+  duration=$((install_end_time - install_start_time))
   duration_minutes=$(echo "scale=5; $duration / 60" | bc)
   echo "The gNodeB installation process took $duration_minutes minutes to complete."
-  echo "$duration_minutes minutes" > install_time.txt
+  mkdir -p logs
+  echo "$duration_minutes minutes" >> install_time.txt
 fi
 
 echo "The gNodeB installation completed successfully."

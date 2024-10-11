@@ -1,11 +1,12 @@
 #!/bin/bash
+echo "# Script: $(realpath $0)..."
 
+# Exit immediately if a command fails
 set -e
 
 # Function to check if a specific port is already used
 function is_port_in_use {
     local port=$1
-    # Check for listening services on the port
     if ss -tulpn | grep -q ":${port} "; then
         return 0 # Port is in use
     else

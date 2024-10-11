@@ -30,95 +30,95 @@ echo "TAC value: $TAC"
 echo "Creating configs directory..."
 mkdir -p configs
 
-apps=("mmed" "sgwcd" "smfd" "amfd" "sgwud" "upfd" "hssd" "pcrfd" "nrfd" "scpd" "seppd" "ausfd" "udmd" "pcfd" "nssfd" "bsfd" "udrd" "webui")
+APPS=("mmed" "sgwcd" "smfd" "amfd" "sgwud" "upfd" "hssd" "pcrfd" "nrfd" "scpd" "seppd" "ausfd" "udmd" "pcfd" "nssfd" "bsfd" "udrd" "webui")
 
 # Backup original files
 if [ ! -f configs/amf_original.yaml ]; then
     echo "Backing up 5G Core configuration files..."
-    for app in "${apps[@]}"; do
-        config_file="${app%?}"
-        if [[ "${app: -1}" != "d" ]]; then
-            config_file="$app"
+    for APP in "${APPS[@]}"; do
+        CONFIG_FILE="${APP%?}"
+        if [[ "${APP: -1}" != "d" ]]; then
+            CONFIG_FILE="$APP"
         fi
-        if [ -f "open5gs/install/etc/open5gs/${config_file}.yaml" ]; then
-            cp "open5gs/install/etc/open5gs/${config_file}.yaml" "configs/${config_file}_original.yaml"
-        elif [ -f "open5gs/install/etc/open5gs/${config_file}1.yaml" ]; then
-            cp "open5gs/install/etc/open5gs/${config_file}1.yaml" "configs/${config_file}_original.yaml"
+        if [ -f "open5gs/install/etc/open5gs/${CONFIG_FILE}.yaml" ]; then
+            cp "open5gs/install/etc/open5gs/${CONFIG_FILE}.yaml" "configs/${CONFIG_FILE}_original.yaml"
+        elif [ -f "open5gs/install/etc/open5gs/${CONFIG_FILE}1.yaml" ]; then
+            cp "open5gs/install/etc/open5gs/${CONFIG_FILE}1.yaml" "configs/${CONFIG_FILE}_original.yaml"
         fi
     done
 fi
 
 # Restore original files
-for app in "${apps[@]}"; do
-    config_file="${app%?}"
-    if [[ "${app: -1}" != "d" ]]; then
-        config_file="$app"
+for APP in "${APPS[@]}"; do
+    CONFIG_FILE="${APP%?}"
+    if [[ "${APP: -1}" != "d" ]]; then
+        CONFIG_FILE="$APP"
     fi
-    if [ -f "configs/${config_file}_original.yaml" ]; then
-        cp "configs/${config_file}_original.yaml" "configs/${config_file}.yaml"
+    if [ -f "configs/${CONFIG_FILE}_original.yaml" ]; then
+        cp "configs/${CONFIG_FILE}_original.yaml" "configs/${CONFIG_FILE}.yaml"
     fi
 done
 
 # Function to update YAML configuration files
 update_yaml() {
-    local ip=$1
-    local file_path=$2
-    local property=$3
-    echo "Updating $file_path for $property to $ip"
-    
-    sed -i "s/\($property: \).*/\1$ip/" $file_path
+    local IP=$1
+    local FILE_PATH=$2
+    local PROPERTY=$3
+    echo "Updating $FILE_PATH for $PROPERTY to $IP"
+
+    sed -i "s/\($PROPERTY: \).*/\1$IP/" $FILE_PATH
 }
 
 # Function to configure PLMN and TAC in the MME and AMF configurations
 configure_plmn_tac() {
-    local plmn_mcc=$1
-    local plmn_mnc=$2
-    local tac=$3
-    local mme_config="configs/mme.yaml"
-    local amf_config="configs/amf.yaml"
-    local nrf_config="configs/nrf.yaml"
+    local PLMN_MCC=$1
+    local PLMN_MNC=$2
+    local TAC=$3
+    local MME_CONFIG="configs/mme.yaml"
+    local AMF_CONFIG="configs/amf.yaml"
+    local NRF_CONFIG="configs/nrf.yaml"
 
     # Update MME and AMF configuration files
-    sed -i "s/^\(\s*mcc:\s*\).*/\1$plmn_mcc/" $mme_config
-    sed -i "s/^\(\s*mnc:\s*\).*/\1$plmn_mnc/" $mme_config
-    sed -i "s/^\(\s*tac:\s*\).*/\1$tac/" $mme_config
+    sed -i "s/^\(\s*mcc:\s*\).*/\1$PLMN_MCC/" $MME_CONFIG
+    sed -i "s/^\(\s*mnc:\s*\).*/\1$PLMN_MNC/" $MME_CONFIG
+    sed -i "s/^\(\s*tac:\s*\).*/\1$TAC/" $MME_CONFIG
 
-    sed -i "s/^\(\s*mcc:\s*\).*/\1$plmn_mcc/" $amf_config
-    sed -i "s/^\(\s*mnc:\s*\).*/\1$plmn_mnc/" $amf_config
-    sed -i "s/^\(\s*tac:\s*\).*/\1$tac/" $amf_config
+    sed -i "s/^\(\s*mcc:\s*\).*/\1$PLMN_MCC/" $AMF_CONFIG
+    sed -i "s/^\(\s*mnc:\s*\).*/\1$PLMN_MNC/" $AMF_CONFIG
+    sed -i "s/^\(\s*tac:\s*\).*/\1$TAC/" $AMF_CONFIG
 
-    sed -i "s/^\(\s*mcc:\s*\).*/\1$plmn_mcc/" $nrf_config
-    sed -i "s/^\(\s*mnc:\s*\).*/\1$plmn_mnc/" $nrf_config
-    sed -i "s/^\(\s*tac:\s*\).*/\1$tac/" $nrf_config
+    sed -i "s/^\(\s*mcc:\s*\).*/\1$PLMN_MCC/" $NRF_CONFIG
+    sed -i "s/^\(\s*mnc:\s*\).*/\1$PLMN_MNC/" $NRF_CONFIG
+    sed -i "s/^\(\s*tac:\s*\).*/\1$TAC/" $NRF_CONFIG
 }
 
 # Function to set the logging path, disable timestamp for stderr to avoid duplicate timestamps in journalctl
 configure_logging() {
-    local file_path=$1
-    echo "Configuring logging in $file_path"
-    
-    sed -i "/logger:/a \ \ default:\n    timestamp: false" $file_path
-    sed -i "/file:/a \ \ \ \ timestamp: true" $file_path
+    local FILE_PATH=$1
+    echo "Configuring logging in $FILE_PATH"
+
+    sed -i "/logger:/a \ \ default:\n    timestamp: false" $FILE_PATH
+    sed -i "/file:/a \ \ \ \ timestamp: true" $FILE_PATH
 
     # Replace the logger file path to output to the logs/ directory
-    sed -i "s|path: $(pwd)/open5gs/install/var/log/open5gs/|path: $(pwd)/logs/|g" $file_path
+    sed -i "s|path: $(pwd)/open5gs/install/var/log/open5gs/|path: $(pwd)/logs/|g" $FILE_PATH
 }
 
 # Function to get the primary IP for the network segment by resetting the last octet to 1
 get_primary_ip_for_network() {
-    local ip_address=$1
+    local IP_ADDRESS=$1
     # Extract the first three octets and append .1 to get the primary IP for the network
-    local primary_ip=$(echo "$ip_address" | awk -F '.' '{print $1"."$2"."$3".1"}')
-    echo $primary_ip
+    local PRIMARY_IP=$(echo "$IP_ADDRESS" | awk -F '.' '{print $1"."$2"."$3".1"}')
+    echo $PRIMARY_IP
 }
 
 # Function to get the ngap_server configuration IP
 get_configuration_ngap_server_ip() {
-    local file_path="configs/amf.yaml"
+    local FILE_PATH="configs/amf.yaml"
     # Use yq to parse the YAML file and extract the IP address
-    local ip_address=$(yq e '.amf.ngap.server[0].address' "$file_path")
-    if [[ -n $ip_address ]]; then
-        echo $ip_address
+    local IP_ADDRESS=$(yq e '.amf.ngap.server[0].address' "$FILE_PATH")
+    if [[ -n $IP_ADDRESS ]]; then
+        echo $IP_ADDRESS
     else
         echo "IP address not found."
     fi
@@ -126,17 +126,13 @@ get_configuration_ngap_server_ip() {
 
 # Function to configure NGAP server addresses in the AMF config and store them in a file for gNodeB
 configure_ngap_server() {
-    local ngap_ip=$1
-    local ngap_port=$2
-    local file_path="configs/amf.yaml"
-    
-    echo "Configuring NGAP server addresses in $file_path"
-    # Displaying the part of the file to be updated for debugging
-    # echo "Current NGAP server configuration:"
-    # grep "ngap:" -A 5 $file_path
+    local NGAP_IP=$1
+    local NGAP_PORT=$2
+    local FILE_PATH="configs/amf.yaml"
 
+    echo "Configuring NGAP server addresses in $FILE_PATH"
     # Use awk to process multi-line patterns, replacing address and adding port
-    awk -v ip="$ngap_ip" -v port="$ngap_port" '
+    awk -v ip="$NGAP_IP" -v port="$NGAP_PORT" '
     /ngap:/ { print; in_ngap = 1; next } # Enter NGAP block
     in_ngap && /server:/ { print; in_server = 1; next } # Enter server block within NGAP
     in_server && /- address:/ { # Find the address line within server block
@@ -146,61 +142,40 @@ configure_ngap_server() {
     }
     /metrics:/ { in_ngap = 0; in_server = 0 } # Exit NGAP block upon reaching metrics
     { print } # Print all other lines as they are
-    ' $file_path > tmp.yaml && mv tmp.yaml $file_path
-
-    # Confirmation of update
-    # echo "Updated NGAP server configuration:"
-    # grep "ngap:" -A 10 $file_path
+    ' $FILE_PATH > tmp.yaml && mv tmp.yaml $FILE_PATH
 }
 
-# Main logic
-# interface=$(get_active_interface)
-# subnet_mask=$(get_subnet_mask $interface)
-# amf_ip=$(get_primary_ip)
-# secondary_ip=$(derive_secondary_ip $amf_ip)
-
-# echo $subnet_mask
-# echo $amf_ip
-# echo $secondary_ip
-
-# # Assign the secondary IP address
-# if ! ip addr show $interface | grep -q "$secondary_ip/$subnet_mask"; then
-#     sudo ip addr add $secondary_ip/$subnet_mask dev $interface
-# fi
-
 # Set the following AMF IP, and it will be updated in the configuration file
-amf_ip=$(get_configuration_ngap_server_ip)
-amf_ip_bind=$(get_primary_ip_for_network $amf_ip)
-
-
-amf_addresses_output="configs/get_amf_address.txt"
-echo "$amf_ip" > $amf_addresses_output
-echo "$amf_ip_bind" >> $amf_addresses_output
+AMF_IP=$(get_configuration_ngap_server_ip)
+AMF_IP_BIND=$(get_primary_ip_for_network $AMF_IP)
+AMF_ADDRESSES_OUTPUT="configs/get_amf_address.txt"
+echo "$AMF_IP" > $AMF_ADDRESSES_OUTPUT
+echo "$AMF_IP_BIND" >> $AMF_ADDRESSES_OUTPUT
 
 # Define Open5GS config paths and properties
-declare -A config_paths
-config_paths["configs/mme.yaml"]="s1ap.server.address gtpc.server.address"
-config_paths["configs/sgwu.yaml"]="gtpu.server.address"
-config_paths["configs/amf.yaml"]="ngap.server.address"
-config_paths["configs/upf.yaml"]="gtpu.server.address"
+declare -A CONFIG_PATHS
+CONFIG_PATHS=()
+CONFIG_PATHS["configs/mme.yaml"]="s1ap.server.address gtpc.server.address"
+CONFIG_PATHS["configs/sgwu.yaml"]="gtpu.server.address"
+CONFIG_PATHS["configs/amf.yaml"]="ngap.server.address"
+CONFIG_PATHS["configs/upf.yaml"]="gtpu.server.address"
 
 mkdir -p logs
 
-for file in "${!config_paths[@]}"; do 
-    for property in ${config_paths[$file]}; do
-        update_yaml $amf_ip $file $property
+for FILE in "${!CONFIG_PATHS[@]}"; do
+    for property in ${CONFIG_PATHS[$FILE]}; do
+        update_yaml $AMF_IP $FILE $property
     done
-    
 done
 
 # Configure logging for all components
-for app in "${apps[@]}"; do
-    config_file="${app%?}"
-    if [[ "${app: -1}" != "d" ]]; then
-        config_file="$app"
+for APP in "${APPS[@]}"; do
+    CONFIG_FILE="${APP%?}"
+    if [[ "${APP: -1}" != "d" ]]; then
+        CONFIG_FILE="$APP"
     fi
-    if [ -f "configs/${config_file}.yaml" ]; then
-        configure_logging "configs/${config_file}.yaml"
+    if [ -f "configs/${CONFIG_FILE}.yaml" ]; then
+        configure_logging "configs/${CONFIG_FILE}.yaml"
     fi
 done
 
@@ -208,11 +183,9 @@ done
 configure_plmn_tac $PLMN_MCC $PLMN_MNC $TAC
 
 # If necessary, configure AMF specific address in amf.yaml
-if [ "$amf_ip" != "$(get_configuration_ngap_server_ip)" ]; then
-    configure_ngap_server $amf_ip "38412"
+if [ "$AMF_IP" != "$(get_configuration_ngap_server_ip)" ]; then
+    configure_ngap_server $AMF_IP "38412"
 fi
-
-
 
 # Add route for the UE to have WAN connectivity
 ### Enable IPv4/IPv6 Forwarding

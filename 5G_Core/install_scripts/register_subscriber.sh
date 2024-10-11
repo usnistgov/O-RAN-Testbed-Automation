@@ -1,4 +1,5 @@
 #!/bin/bash
+echo "# Script: $(realpath $0)..."
 
 DBCTL_DIR="./open5gs/misc/db/open5gs-dbctl"
 

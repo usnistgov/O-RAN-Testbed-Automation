@@ -47,7 +47,7 @@ wait_for_pods_running () {
     sleep 5
     NUMPODS=$(eval "$CMD2")
     echo "> waiting for $NUMPODS/$1 pods running in namespace [$NS] with keyword [$KEYWORD]"
-  done 
+  done
 }
 
 
@@ -88,7 +88,7 @@ while getopts ":k:d:e:n:c" o; do
 done
 
 if [[ ${HELMV} == 2.* ]]; then
-  echo "helm 2 ("${HELMV}")not supported anymore" 
+  echo "helm 2 ("${HELMV}")not supported anymore"
   exit -1
 fi
 
@@ -340,7 +340,7 @@ FLANNEL_SUBNET=10.244.0.1/24
 FLANNEL_MTU=1450
 FLANNEL_IPMASQ=true
 EOF
-else  
+else
   kubeadm init --config /root/config.yaml
 fi
 
@@ -416,13 +416,13 @@ fi
 fi
 
 
-if [[ ! -z "" && ! -z "" ]]; then 
+if [[ ! -z "" && ! -z "" ]]; then
   echo " " >> /etc/hosts
 fi
-if [[ ! -z "" && ! -z "" ]]; then 
+if [[ ! -z "" && ! -z "" ]]; then
   echo " " >> /etc/hosts
 fi
-if [[ ! -z "" && ! -z "helm.ricinfra.local" ]]; then 
+if [[ ! -z "" && ! -z "helm.ricinfra.local" ]]; then
   echo " helm.ricinfra.local" >> /etc/hosts
 fi
 

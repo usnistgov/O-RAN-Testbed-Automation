@@ -1,4 +1,5 @@
 #!/bin/bash
+echo "# Script: $(realpath $0)..."
 
 # Paths to the log files
 mkdir -p logs
@@ -16,27 +17,27 @@ if [ ! -f "$RIC_INSTALLATION_LOG_JSON" ]; then
 fi
 
 # Use associative arrays to store statuses
-declare -A app_statuses
+declare -A APP_STATUSES
+APP_STATUSES=()
 
 # Parse the output file and extract statuses
-while read -r line; do
-    if [[ $line == NAME:* ]]; then
-        app_name="${line#NAME: }"
-        app_name=$(echo "$app_name" | tr -d ',') # Clean up the app name
-    elif [[ $line == STATUS:* ]]; then
-        status="${line#STATUS: }"
-        status=$(echo "$status" | tr -d ',') # Clean up the status
-        app_statuses["$app_name"]="$status"
-    elif [[ $line == Error:* ]]; then
+while read -r LINE; do
+    if [[ $LINE == NAME:* ]]; then
+        APP_NAME="${LINE#NAME: }"
+        APP_NAME=$(echo "$APP_NAME" | tr -d ',') # Clean up the app name
+    elif [[ $LINE == STATUS:* ]]; then
+        STATUS="${LINE#STATUS: }"
+        STATUS=$(echo "$STATUS" | tr -d ',') # Clean up the status
+        APP_STATUSES["$APP_NAME"]="$STATUS"
+    elif [[ $LINE == Error:* ]]; then
         # Extract a more specific error name or description
-        error_description=$(echo "$line" | sed -E 's/Error: INSTALLATION FAILED: (.+)/\1/')
-        error_description=$(echo "$error_description" | tr -d '\"') # Remove quotes to clean up the message
-        app_name="error_$error_description"
-        status="failed"
-        app_statuses["$app_name"]="$status"
+        ERROR_DESCRIPTION=$(echo "$LINE" | sed -E 's/Error: INSTALLATION FAILED: (.+)/\1/')
+        ERROR_DESCRIPTION=$(echo "$ERROR_DESCRIPTION" | tr -d '\"') # Remove quotes to clean up the message
+        APP_NAME="error_$ERROR_DESCRIPTION"
+        STATUS="failed"
+        APP_STATUSES["$APP_NAME"]="$STATUS"
     fi
 done < "$RIC_INSTALLATION_STDOUT"
-
 
 # Read existing JSON data
 if [ -s "$RIC_INSTALLATION_LOG_JSON" ]; then
@@ -46,16 +47,16 @@ else
 fi
 
 # Update JSON data with latest statuses
-for app in "${!app_statuses[@]}"; do
-    new_status="${app_statuses[$app]}"
+for APP in "${!APP_STATUSES[@]}"; do
+    NEW_STATUS="${APP_STATUSES[$APP]}"
     # Check existing status, and only update if it is not 'deployed'
-    current_status=$(echo "$JSON_DATA" | jq -r --arg app "$app" '.[$app]')
-    if [[ $current_status != "deployed" ]]; then
-        JSON_DATA=$(echo "$JSON_DATA" | jq --arg app "$app" --arg status "$new_status" '.[$app] = $status')
+    CURRENT_STATUS=$(echo "$JSON_DATA" | jq -r --arg app "$APP" '.[$app]')
+    if [[ $CURRENT_STATUS != "deployed" ]]; then
+        JSON_DATA=$(echo "$JSON_DATA" | jq --arg app "$APP" --arg status "$NEW_STATUS" '.[$app] = $status')
     fi
 done
 
 # Write updated JSON data to file
 echo "$JSON_DATA" > "$RIC_INSTALLATION_LOG_JSON"
 
-echo "$JSON_DATA"
+echo "$JSON_DATA" | jq

@@ -2,12 +2,17 @@
 
 echo "--- Installing RIC with J-release ---"
 
+if ! command -v realpath &> /dev/null; then
+    echo "Package "coreutils" not found, installing..."
+    sudo apt-get install -y coreutils
+fi
+
 # Starts a script in background that calls `sudo -v` every minute to ensure that sudo stays active, ensuring the script runs without requiring user interaction
 sudo ls
-./install_scripts/start_sudo_refresh.sh 
+./install_scripts/start_sudo_refresh.sh
 
 # Get the start timestamp in seconds
-ric_start_time=$(date +%s)
+install_start_time=$(date +%s)
 
 # Exit immediately if a command fails
 set -e
@@ -50,7 +55,7 @@ fi
 # Check if any of the kube-system pods are not running
 if [ "$SHOULD_RESET_KUBE" = false ]; then
     POD_NAMES=("coredns" "etcd" "kube-apiserver" "kube-controller" "kube-proxy" "kube-scheduler")
-    ALL_PODS=$(kubectl get pods -n kube-system --no-headers)
+    ALL_PODS=$(kubectl get pods -n kube-system --no-headers 2>/dev/null) || true
     for POD_NAME in "${POD_NAMES[@]}"; do
         # Check for at least one pod with the part of the name matching and in 'RUNNING' or 'COMPLETED' status
         if ! echo "$ALL_PODS" | grep -e "$POD_NAME" | awk '{print $3}' | grep -q -e "Running" -e "Completed"; then
@@ -160,7 +165,7 @@ else
     while [ "$SUCCESS" != "true" ]; do
         RIC_INSTALLATION_STDOUT="$(pwd)/logs/ric_installation_stdout.txt"
         RIC_INSTALLATION_LOG_JSON="$(pwd)/logs/ric_installation_stdout_parsed.json"
-        
+
         echo
         echo
         echo "Installing near RT-RIC..."
@@ -226,7 +231,6 @@ if kubectl taint nodes --all node-role.kubernetes.io/master- &>/dev/null; then
     echo "Successfully removed taint removed from master."
 fi
 
-
 cd $BASE_DIR
 
 echo
@@ -280,7 +284,6 @@ if [ ! -d "hw-go" ]; then
 fi
 cd ..
 
-
 echo "Building and Installing Hello World xApp..."
 if [ -d "xApps/hw-go" ] && kubectl get pods -n ricxapp | grep -q "ricxapp-hw-go.*Running"; then
     echo "The Hello World xApp is already installed and running, skipping."
@@ -292,12 +295,12 @@ fi
 while true; do
     # Run the status check script
     output=$(sudo ./install_scripts/check_xapp_deployment_status.sh)
-    
+
     # Check for the deployment status or specific xApp status in the output
     if echo "$output" | grep -q '"status": "deployed"'; then
         break # Exit the loop if deployed
-    elif echo "$output" | grep -q 'ricxapp-hw-go' && echo "$output" | grep -q 'Running'; then
-        echo "xApp ricxapp-hw-go is running."
+    elif echo "$output" | grep -q 'ricxapp-hw-go' && echo "$output" | grep -q '1/1' && echo "$output" | grep -q 'Running'; then
+        echo "xApp ricxapp-hw-go is running and ready (1/1)."
         break # Exit the loop if xApp is running
     else
         echo "Deployment is not yet successful or ricxapp-hw-go is not running. Checking again in 3 seconds..."
@@ -309,7 +312,7 @@ while true; do
         echo "Disk-pressure taint detected on the node. Attempting to free up disk space..."
         journalctl -u kubelet --disk-usage
         sudo journalctl --vacuum-size=100M
-        echo "WARNING: The disk is full. The xApp may not deploy successfully."
+        echo "WARNING: Disk-pressure taint may prevent xApp deployment. Check the node's disk space."
         echo
         break
     fi
@@ -319,15 +322,16 @@ echo "Checking xApp deployment status..."
 sudo ./install_scripts/check_xapp_deployment_status.sh
 
 # Stop the sudo timeout refresher, it is no longer necessary to run
-./install_scripts/stop_sudo_refresh.sh 
+./install_scripts/stop_sudo_refresh.sh
 
 # Calculate how long the script took to run
-ric_end_time=$(date +%s)
-if [ -n "$ric_start_time" ]; then
-  duration=$((ric_end_time - ric_start_time))
+install_end_time=$(date +%s)
+if [ -n "$install_start_time" ]; then
+  duration=$((install_end_time - install_start_time))
   duration_minutes=$(echo "scale=5; $duration / 60" | bc)
   echo "The RIC installation process took $duration_minutes minutes to complete."
-  echo "$duration_minutes minutes" > install_time.txt
+  mkdir -p logs
+  echo "$duration_minutes minutes" >> install_time.txt
 fi
 
 echo "The RAN Intelligent Controller installation completed successfully."

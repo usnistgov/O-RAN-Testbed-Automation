@@ -6,7 +6,6 @@ IF %ERRORLEVEL% NEQ 0 (
     exit /b
 )
 
-
 cd 5G_Core
 git clone https://github.com/open5gs/open5gs.git
 cd ..

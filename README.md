@@ -18,6 +18,7 @@ If using VirtualBox, for optimal user experience consider using the following co
 - **Display**
   - **Video Memory**: Set the slider to the maximum if using a Desktop environment.
 - **Storage**
+  - It is recommended to not go below 50 GB. If after installing the RIC, the xApp stays in the "pending" state then this is likely the cause.
   - If using a SSD hard drive, check the SATA controller's `Solid-state Drive` option.
 - **Network**
   - **Attached to**: Select `NAT`.

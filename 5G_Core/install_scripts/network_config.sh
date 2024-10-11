@@ -1,4 +1,5 @@
 #!/bin/bash
+echo "# Script: $(realpath $0)..."
 
 # Define the interface and addresses
 INTERFACE="ogstun"
@@ -34,8 +35,6 @@ if ! sudo iptables -t nat -C POSTROUTING -s $IPv4_SUBNET ! -o $INTERFACE -j MASQ
     sudo iptables -t nat -A POSTROUTING -s $IPv4_SUBNET ! -o $INTERFACE -j MASQUERADE
 fi
 
-
-
 # Previous version:
 # sudo ip tuntap add name ogstun mode tun
 # sudo ip addr add 10.45.0.1/16 dev ogstun
@@ -43,4 +42,3 @@ fi
 # sudo ip link set ogstun up
 # sudo sysctl -w net.ipv4.ip_forward=1
 # sudo iptables -t nat -A POSTROUTING -s 10.45.0.0/16 ! -o ogstun -j MASQUERADE
-

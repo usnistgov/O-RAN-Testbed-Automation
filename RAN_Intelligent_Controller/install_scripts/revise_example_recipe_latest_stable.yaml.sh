@@ -1,7 +1,8 @@
 #!/bin/bash
+echo "# Script: $(realpath $0)..."
 
 # Get the local IP address
-IPADDRESS=$(hostname -I | awk '{print $1}')
+IP_ADDRESS=$(hostname -I | awk '{print $1}')
 
 # Get the file path from the command line argument
 FILE=$1
@@ -25,9 +26,9 @@ if [[ ! -r "$FILE" ]]; then
 fi
 
 # Use sed to find and replace the IP addresses in the ricip and auxip fields
-sed -i "/extsvcplt:/,/^ *$/s/ricip: \".*\"/ricip: \"$IPADDRESS\"/" $FILE
-sed -i "/extsvcplt:/,/^ *$/s/auxip: \".*\"/auxip: \"$IPADDRESS\"/" $FILE
-echo "IP addresses updated to: $IPADDRESS in the file $FILE"
+sed -i "/extsvcplt:/,/^ *$/s/ricip: \".*\"/ricip: \"$IP_ADDRESS\"/" $FILE
+sed -i "/extsvcplt:/,/^ *$/s/auxip: \".*\"/auxip: \"$IP_ADDRESS\"/" $FILE
+echo "IP addresses updated to: $IP_ADDRESS in the file $FILE"
 
 # Update Prometheus URL in vespamgr to point to r4-infrastructure
 PROMETHEUS_NEW_URL="http://r4-infrastructure-prometheus-server.ricinfra"
@@ -42,7 +43,7 @@ fi
 
 # Function to add or update liveness and readiness probes
 function update_probes {
-    awk -v ip="$IPADDRESS" '
+    awk -v ip="$IP_ADDRESS" '
     # Initialize variables
     BEGIN {
         in_e2term = 0

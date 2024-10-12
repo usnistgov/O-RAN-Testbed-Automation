@@ -1,10 +1,6 @@
-@echo off
-REM Check if Git is installed
-git --version >nul 2>&1
-IF %ERRORLEVEL% NEQ 0 (
-    echo Git is not installed, please install Git and try again.
-    exit /b
-)
+: '
+REM This batch script will download the 5G_Core, gNodeB, User_Equipment and RAN_Intelligent_Controller repositories for analyzing the source code without requiring a full testbed build and installation.
+'
 
 cd 5G_Core
 git clone https://github.com/open5gs/open5gs.git
@@ -31,4 +27,5 @@ cd ..
 cd ..
 
 echo Repositories were cloned successfully.
-pause
+
+if [ "%OS%" == "Windows_NT" ]; then pause; fi

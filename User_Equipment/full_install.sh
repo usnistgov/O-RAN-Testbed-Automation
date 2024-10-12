@@ -9,7 +9,7 @@ if [ -f "srsRAN_4G/build/srsue/src/srsue" ]; then
 fi
 
 if ! command -v realpath &> /dev/null; then
-    echo "Package "coreutils" not found, installing..."
+    echo "Package \"coreutils\" not found, installing..."
     sudo apt-get install -y coreutils
 fi
 

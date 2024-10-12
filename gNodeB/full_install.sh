@@ -9,7 +9,7 @@ if [ -f "srsRAN_Project/build/apps/gnb/gnb" ]; then
 fi
 
 if ! command -v realpath &> /dev/null; then
-    echo "Package "coreutils" not found, installing..."
+    echo "Package \"coreutils\" not found, installing..."
     sudo apt-get install -y coreutils
 fi
 

@@ -10,7 +10,7 @@ if [ -f "open5gs/install/bin/open5gs-amfd" ] && [ -f "open5gs/install/bin/open5g
 fi
 
 if ! command -v realpath &> /dev/null; then
-    echo "Package "coreutils" not found, installing..."
+    echo "Package \"coreutils\" not found, installing..."
     sudo apt-get install -y coreutils
 fi
 

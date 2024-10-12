@@ -18,7 +18,7 @@ sudo ls
 ./install_scripts/start_sudo_refresh.sh
 
 # Get the start timestamp in seconds
-install_start_time=$(date +%s)
+INSTALL_START_TIME=$(date +%s)
 
 sudo rm -rf logs/
 
@@ -36,7 +36,7 @@ if systemctl is-active --quiet apt-daily-upgrade.timer; then
     sudo systemctl disable apt-daily-upgrade.timer &>/dev/null && echo "Successfully disabled apt-daily-upgrade.timer service."
 fi
 
-baseDirectory=$(pwd)
+BASE_DIR=$(pwd)
 
 echo "Installing User Equipment..."
 
@@ -68,7 +68,7 @@ else
     echo "SCTP module loaded successfully."
 fi
 
-cd $baseDirectory
+cd $BASE_DIR
 
 echo
 echo
@@ -97,7 +97,7 @@ else
     cd ..
 fi
 
-cd $baseDirectory
+cd $BASE_DIR
 
 echo
 echo
@@ -123,7 +123,7 @@ else
     cd ..
 fi
 
-cd $baseDirectory
+cd $BASE_DIR
 
 echo
 echo
@@ -147,19 +147,19 @@ make -j$(nproc)
 sudo make -j$(nproc) install
 echo "srsRAN_4G was installed successfully."
 
-cd $baseDirectory
+cd $BASE_DIR
 
 # Stop the sudo timeout refresher, it is no longer necessary to run
 ./install_scripts/stop_sudo_refresh.sh
 
 # Calculate how long the script took to run
-install_end_time=$(date +%s)
-if [ -n "$install_start_time" ]; then
-  duration=$((install_end_time - install_start_time))
-  duration_minutes=$(echo "scale=5; $duration / 60" | bc)
-  echo "The srsUE installation process took $duration_minutes minutes to complete."
+INSTALL_END_TIME=$(date +%s)
+if [ -n "$INSTALL_START_TIME" ]; then
+  DURATION=$((INSTALL_END_TIME - INSTALL_START_TIME))
+  DURATION_MINUTES=$(echo "scale=5; $DURATION/ 60" | bc)
+  echo "The srsUE installation process took $DURATION_MINUTES minutes to complete."
   mkdir -p logs
-  echo "$duration_minutes minutes" >> install_time.txt
+  echo "$DURATION_MINUTES minutes" >> install_time.txt
 fi
 
 echo "The User Equipment installation completed successfully."

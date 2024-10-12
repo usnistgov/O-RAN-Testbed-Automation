@@ -19,7 +19,7 @@ sudo ls
 ./install_scripts/start_sudo_refresh.sh
 
 # Get the start timestamp in seconds
-install_start_time=$(date +%s)
+INSTALL_START_TIME=$(date +%s)
 
 sudo rm -rf logs/
 
@@ -62,7 +62,7 @@ else
     esac
 
     # Step 0: Ensure libssl is installed
-    current_dir=$(pwd)
+    CURRENT_DIR=$(pwd)
     # Check if libssl1.1 is installed
     if ! dpkg -s libssl1.1 >/dev/null 2>&1; then
         echo "libssl1.1 not found. Installing..."
@@ -236,15 +236,15 @@ ninja install
 echo "Installation complete. Open5GS has been installed."
 
 cd ../.. # Main directory with open5gs
-current_dir=$(pwd)
+CURRENT_DIR=$(pwd)
 
 echo "Installing WebUI for Subscriber Registration..."
 sudo ./install_scripts/install_webui.sh
 
 # Define library paths
-lib_sbi_path="$current_dir/open5gs/build/lib/sbi"
-lib_proto_path="$current_dir/open5gs/build/lib/proto"
-lib_core_path="$current_dir/open5gs/install/lib/x86_64-linux-gnu"
+LIB_SBI_PATH="$CURRENT_DIR/open5gs/build/lib/sbi"
+LIB_PROTO_PATH="$CURRENT_DIR/open5gs/build/lib/proto"
+LIB_CORE_PATH="$CURRENT_DIR/open5gs/install/lib/x86_64-linux-gnu"
 
 # Create a new script in /etc/profile.d/ to update LD_LIBRARY_PATH for all users
 create_ld_script() {
@@ -265,12 +265,12 @@ create_ld_script() {
 }
 
 # Update LD_LIBRARY_PATH with all necessary library paths
-create_ld_script $lib_sbi_path
-create_ld_script $lib_proto_path
-create_ld_script $lib_core_path
+create_ld_script $LIB_SBI_PATH
+create_ld_script $LIB_PROTO_PATH
+create_ld_script $LIB_CORE_PATH
 
 # Also update LD_LIBRARY_PATH for the current shell session
-export LD_LIBRARY_PATH=$lib_sbi_path:$lib_proto_path:$lib_core_path:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=$LIB_SBI_PATH:$LIB_PROTO_PATH:$LIB_CORE_PATH:$LD_LIBRARY_PATH
 
 # Inform the user about changes
 echo "LD_LIBRARY_PATH updated globally for all users."
@@ -279,13 +279,13 @@ echo "LD_LIBRARY_PATH updated globally for all users."
 ./install_scripts/stop_sudo_refresh.sh
 
 # Calculate how long the script took to run
-install_end_time=$(date +%s)
-if [ -n "$install_start_time" ]; then
-  duration=$((install_end_time - install_start_time))
-  duration_minutes=$(echo "scale=5; $duration / 60" | bc)
-  echo "The Open5GS installation process took $duration_minutes minutes to complete."
+INSTALL_END_TIME=$(date +%s)
+if [ -n "$INSTALL_START_TIME" ]; then
+  DURATION=$((INSTALL_END_TIME - INSTALL_START_TIME))
+  DURATION_MINUTES=$(echo "scale=5; $DURATION/ 60" | bc)
+  echo "The Open5GS installation process took $DURATION_MINUTES minutes to complete."
   mkdir -p logs
-  echo "$duration_minutes minutes" >> install_time.txt
+  echo "$DURATION_MINUTES minutes" >> install_time.txt
 fi
 
 echo "The Open5GS installation completed successfully."

@@ -12,7 +12,7 @@ sudo ls
 ./install_scripts/start_sudo_refresh.sh
 
 # Get the start timestamp in seconds
-install_start_time=$(date +%s)
+INSTALL_START_TIME=$(date +%s)
 
 # Exit immediately if a command fails
 set -e
@@ -201,8 +201,8 @@ else
         COMPONENTS_ARRAY=($(echo $COMPONENT_LINE | sed -n 's/.*\[\(.*\)\].*/\1/p' | tr ' ' '\n'))
         # Generate a jq filter string that checks these components are all "deployed"
         JQ_FILTER='['
-        for COMP in "${COMPONENTS_ARRAY[@]}"; do
-            JQ_FILTER+="\"r4-$COMP\","
+        for COMPONENT in "${COMPONENTS_ARRAY[@]}"; do
+            JQ_FILTER+="\"r4-$COMPONENT\","
         done
         JQ_FILTER="${JQ_FILTER%,}]" # Remove the trailing comma and close the array
         # Use jq to check that all specified components are deployed
@@ -294,12 +294,12 @@ fi
 # Wait until the xApp is successfully deployed
 while true; do
     # Run the status check script
-    output=$(sudo ./install_scripts/check_xapp_deployment_status.sh)
+    OUTPUT=$(sudo ./install_scripts/check_xapp_deployment_status.sh)
 
     # Check for the deployment status or specific xApp status in the output
-    if echo "$output" | grep -q '"status": "deployed"'; then
+    if echo "$OUTPUT" | grep -q '"status": "deployed"'; then
         break # Exit the loop if deployed
-    elif echo "$output" | grep -q 'ricxapp-hw-go' && echo "$output" | grep -q '1/1' && echo "$output" | grep -q 'Running'; then
+    elif echo "$OUTPUT" | grep -q 'ricxapp-hw-go' && echo "$OUTPUT" | grep -q '1/1' && echo "$OUTPUT" | grep -q 'Running'; then
         echo "xApp ricxapp-hw-go is running and ready (1/1)."
         break # Exit the loop if xApp is running
     else
@@ -325,13 +325,13 @@ sudo ./install_scripts/check_xapp_deployment_status.sh
 ./install_scripts/stop_sudo_refresh.sh
 
 # Calculate how long the script took to run
-install_end_time=$(date +%s)
-if [ -n "$install_start_time" ]; then
-  duration=$((install_end_time - install_start_time))
-  duration_minutes=$(echo "scale=5; $duration / 60" | bc)
-  echo "The RIC installation process took $duration_minutes minutes to complete."
+INSTALL_END_TIME=$(date +%s)
+if [ -n "$INSTALL_START_TIME" ]; then
+  DURATION=$((INSTALL_END_TIME - INSTALL_START_TIME))
+  DURATION_MINUTES=$(echo "scale=5; $DURATION/ 60" | bc)
+  echo "The RIC installation process took $DURATION_MINUTES minutes to complete."
   mkdir -p logs
-  echo "$duration_minutes minutes" >> install_time.txt
+  echo "$DURATION_MINUTES minutes" >> install_time.txt
 fi
 
 echo "The RAN Intelligent Controller installation completed successfully."

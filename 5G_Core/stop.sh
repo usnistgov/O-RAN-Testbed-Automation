@@ -8,7 +8,7 @@ stop_service() {
         sudo pkill -9 -x "$app_name"
     else
         echo "Stopping $app_name..."
-        sudo systemctl stop "$app_name.service"
+        sudo systemctl stop "$app_name.service" 2>/dev/null
     fi
 }
 

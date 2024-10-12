@@ -1,6 +1,6 @@
 #!/bin/bash
 
-sudo pkill -x "gnb"
+sudo pkill -9 -x "gnb"
 
 sleep 1
 ./is_running.sh

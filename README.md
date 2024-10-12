@@ -11,14 +11,14 @@ Use an Ubuntu-based operating system (supported versions are 20, 22, and 24). Li
 If using VirtualBox, for optimal user experience consider using the following configuration parameters:
 - **System**
   - **Base Memory**: Set the RAM to something reasonable, e.g., 4096 MB or 8192 MB.
-  - **Extended Features**: Ensure that `Enable I/O APIC` is checked to improve the handling of interrupts.
+  - **Extended Features**: Ensure that `Enable I/O APIC` is checked to improve interrupt handling.
   - **Extended Features**: Check `Enable PAE/NX` and if possible, also check `Enable Nested VT-x/AMD-V`.
   - **Paravirtualization Interface**: If the host machine is a Mac choose `Default`, if Windows choose `Hyper-V`, and if Linux choose `KVM`.
   - **Hardware Virtualization**: Ensure that `Enabled Nested Paging` is checked.
 - **Display**
   - **Video Memory**: Set the slider to the maximum if using a Desktop environment.
 - **Storage**
-  - It is recommended to not go below 50 GB. If after installing the RIC, the xApp stays in the "pending" state then this is likely the cause.
+  - It is recommended not to have a hard drive less than 50 GB. If after installing the RIC, the xApp stays in the "pending" state then this is likely the cause.
   - If using a SSD hard drive, check the SATA controller's `Solid-state Drive` option.
 - **Network**
   - **Attached to**: Select `NAT`.
@@ -61,7 +61,16 @@ Note: Since `set -e` is set, the scripts will terminate upon reaching an error s
 ################################################################################
 ```
 
-After successful installation, ensure that the configs/ files are generated; they are generated with `./generate_configurations.sh`.
+After successful installation, ensure that the configs/ files are generated; they are generated with `./generate_configurations.sh`. Run the testbed with `./run.sh` to start the 5G Core and gNodeB as background processes, and the User Equipment in the foreground.
+
+```
+Attaching UE...
+Random Access Transmission: prach_occasion=0, preamble_index=0, ra-rnti=0x39, tti=4174
+Random Access Complete.     c-rnti=0x4601, ta=0
+RRC Connected
+PDU Session Establishment successful. IP: 10.45.0.2
+RRC NR reconfiguration successful.
+```
 
 <!--
 ## Enabling KubeArmor for Kubernetes Runtime Security Enforcement

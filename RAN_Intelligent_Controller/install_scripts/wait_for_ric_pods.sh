@@ -80,7 +80,7 @@ wait_for_all_pods_running () {
 
                 # Iterate over the base names and their corresponding pods
                 for BASE_NAME in "${!BASE_NAME_TO_PODS[@]}"; do
-                    if [ "$BASE_NAME" == "kube" ]; then
+                    if [ "$BASE_NAME" == "kube" ] || [ "$BASE_NAME" == "coredns" ]; then
                         continue
                     fi
                     POD_LIST="${BASE_NAME_TO_PODS[$BASE_NAME]}"

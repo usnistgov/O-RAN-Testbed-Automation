@@ -55,6 +55,11 @@ wait_for_all_pods_running () {
                 if ($3 != "Running" && $3 != "Completed") exit 1;
                 if ($3 == "Running" && arr[1] != arr[2]) exit 1
             }' || {
+                # Check for disk-pressure taint on the node and warn the user
+                if kubectl describe nodes | grep Taints | grep disk-pressure &>/dev/null; then
+                    sudo ./install_scripts/handle_disk_pressure_taint.sh
+                fi
+
                 # Check for 'Terminating' pods with a running counterpart
                 TERMINATING_PODS=$(echo "$POD_STATUS" | awk '$3 == "Terminating" || $3 == "ContainerStatusUnknown" || $3 == "Evicted" || $3 == "Error" { print $1 }')
                 RUNNING_PODS=$(echo "$POD_STATUS" | awk '$3 == "Running" { split($2, a, "/"); if (a[1] == a[2]) print $1 }')
@@ -90,7 +95,7 @@ wait_for_all_pods_running () {
                     if [ "${#POD_ENTRIES[@]}" -gt 1 ]; then
                         echo "Found duplicate pods for base name '$BASE_NAME'."
                         # Loop through the array from the second element to delete duplicates, keeping the first one
-                        for (( i=1; i<${#POD_ENTRIES[@]}; i++ )); do
+                        for (( i=${#POD_ENTRIES[@]}-1; i>0; i-- )); do
                             read -r POD_NAMESPACE POD_NAME <<< "${POD_ENTRIES[i]}"
                             echo "    Deleting duplicate pod '$POD_NAME' in namespace '$POD_NAMESPACE'."
                             kubectl delete pod "$POD_NAME" -n "$POD_NAMESPACE" --grace-period=0 --force --wait=false

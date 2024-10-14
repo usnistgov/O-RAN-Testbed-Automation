@@ -1,16 +1,23 @@
-# Open RAN Testbed
-Installation scripts to automate the deployment process of the 5G O-RAN testbed.
+# Automation Tool for Open RAN Testbed
+A set of installation scripts designed to automate the deployment and configuration of a 5G Open Radio Access Network (O-RAN) testbed. The tool simplifies setting up the 5G Core components, gNodeB (Radio Unit, Distributed Unit, Centralized Unit), User Equipment (UE), and RAN Intelligent Controller (RIC) to facilitate reducing the complexity and time required to operationalize the testbed.
 
 ## Setting Up on a Virtual Machine
 
-### Operating System
-Use an Ubuntu-based operating system (supported versions are 20, 22, and 24). Linux Mint 22 (based on Ubuntu 24) is the recommendation.
+### Minimum System Requirements
+- **Operating System**: Linux distributions based on Ubuntu 20, Ubuntu 22, and Ubuntu 24 are supported.
+  - _Recommendation: Linux Mint 22, based on Ubuntu 24._
+- **Hard Drive Storage**: Must be `≥ 35` GB.
+- **Base Memory/RAM**: Must be `≥ 6000` MB.
+- **Number of Processors**: Must be `≥ 2`.
+  - _Recommendation: Between `6-8` processors for optimal performance._
+- A stable internet connection must be maintained during the installation, otherwise, the process will fail and require starting over.
 
----
+> [!NOTE]
+> If any pods stay in a pending or crash loop state after installing the RIC and running the testbed, then limited resources may be the cause.
+
 ### Virtual Machine Preferences
-If using VirtualBox, for optimal user experience consider using the following configuration parameters:
+For VirtualBox users, consider the following configuration parameters:
 - **System**
-  - **Base Memory**: Set the RAM to something reasonable, e.g., 4096 MB or 8192 MB.
   - **Extended Features**: Ensure that `Enable I/O APIC` is checked to improve interrupt handling.
   - **Extended Features**: Check `Enable PAE/NX` and if possible, also check `Enable Nested VT-x/AMD-V`.
   - **Paravirtualization Interface**: If the host machine is a Mac choose `Default`, if Windows choose `Hyper-V`, and if Linux choose `KVM`.
@@ -18,52 +25,53 @@ If using VirtualBox, for optimal user experience consider using the following co
 - **Display**
   - **Video Memory**: Set the slider to the maximum if using a Desktop environment.
 - **Storage**
-  - It is recommended not to have a hard drive less than 50 GB. If after installing the RIC, the xApp stays in the "pending" state then this is likely the cause.
-  - If using a SSD hard drive, check the SATA controller's `Solid-state Drive` option.
+  - Check the SATA controller's `Solid-state Drive` option if using an SSD hard drive.
 - **Network**
   - **Attached to**: Select `NAT`.
 
 ---
 ## Installation Guide
 Run the Update Manager to get everything up-to-date, then reboot.
-```
+```console
 sudo apt-get update -y && sudo apt-get upgrade -y
 ```
 
-Install the VirtualBox Guest Additions, then type the following command into the terminal and reboot:
-```
+For VirtualBox, install the Guest Additions with these commands, then reboot:
+```console
+sudo apt-get install -y build-essential dkms linux-headers-generic
+mkdir /media/cdrom
+sudo mount /dev/cdrom /media/cdrom
+cd /media/cdrom
+sudo ./VBoxLinuxAdditions.run
 sudo adduser $USER vboxsf
-```
+``` 
 
-Next install Git:
-```
+Next, install Git and clone the O-RAN-Testbed repository over HTTPS:
+```console
 sudo apt-get install -y git
-```
-
-Then clone the O-RAN-Testbed repository over HTTPS:
-```
 git clone https://github.com/usnistgov/O-RAN-Testbed-Automation.git
 ```
 
-Alternatively, you may clone the repository over SSH:
-```
-git clone git@github.com:usnistgov/O-RAN-Testbed-Automation.git
-```
+> Alternatively, the repository may be cloned over SSH:
+> ```console
+> git clone git@github.com:usnistgov/O-RAN-Testbed-Automation.git
+> ```
 
-Next, start the installation process (it is recommended to run it as your current user rather than as root):
-```
+Begin the installation process, recommended to be run as your current user rather than as root:
+```console
 ./full_install.sh
 ```
-Note: Since `set -e` is set, the scripts will terminate upon reaching an error so that it can be corrected before trying again. Please be patient until you reach an error or a successful testbed installation:
+> [!TIP]
+> Since `set -e` is set, the scripts will terminate upon reaching an error so that it can be corrected before trying again. Since the scripts are idempotent they will only restart the incomplete steps of the installation process unless specified otherwise. Please be patient until an error is reached or the testbed installation is successful.
 ```
 ################################################################################
 # Successfully installed the 5G Core, gNodeB, UE, and RIC.                     #
 ################################################################################
 ```
 
-After successful installation, ensure that the configs/ files are generated; they are generated with `./generate_configurations.sh`. Run the testbed with `./run.sh` to start the 5G Core and gNodeB as background processes, and the User Equipment in the foreground.
+After successful installation, verify that the configs/ files are generated for the 5G_Core, gNodeB, and User_Equipment using `./generate_configurations.sh`. Run the testbed with `./run.sh` to start the 5G Core and gNodeB as background processes, and the User Equipment in the foreground.
 
-```
+```console
 Attaching UE...
 Random Access Transmission: prach_occasion=0, preamble_index=0, ra-rnti=0x39, tti=4174
 Random Access Complete.     c-rnti=0x4601, ta=0
@@ -72,16 +80,21 @@ PDU Session Establishment successful. IP: 10.45.0.2
 RRC NR reconfiguration successful.
 ```
 
-<!--
-## Enabling KubeArmor for Kubernetes Runtime Security Enforcement
+## Contact Information
 
-Optionally, to enable [KubeArmor](https://kubearmor.io/), please run the following.
-```
-./RAN_Intelligent_Controller/install_scripts/other_scripts/install_kubearmor.sh
-```
-This will install pods under namespace "kubearmor" and will terminate/restart the other pods to support the security engine. Check the status of the pods with `kubectl get pods -A`.
--->
+[USNISTGOV/O-RAN-Testbed-Automation][gh-ota] is developed and maintained
+by the [Internet Technologies Research Group][nist-itrg], principally:
+
+- Simeon J. Wuthier, @Simewu
+- Peng Liu, @fjcintron
+- Kyehwan Lee, @kyehwanlee
+- Fernando J. Cintrón, @fjcintron
 
 ## NIST Commercial Product Disclaimer
 
-Certain equipment, instruments, software, or materials are identified in this paper in order to specify the experimental procedure adequately.  Such identification is not intended to imply recommendation or endorsement of any product or service by NIST, nor is it intended to imply that the materials or equipment identified are necessarily the best available for the purpose.
+Certain equipment, instruments, software, or materials are identified in this paper in order to specify the experimental procedure adequately. Such identification is not intended to imply recommendation or endorsement of any product or service by NIST, nor is it intended to imply that the materials or equipment identified are necessarily the best available for the purpose.
+
+<!-- References -->
+
+[nist-itrg]: https://www.nist.gov/ctl/wireless-networks-division
+[gh-ota]: https://github.com/usnistgov/O-RAN-Testbed-Automation

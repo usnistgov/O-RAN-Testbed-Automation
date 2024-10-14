@@ -52,6 +52,9 @@ SHOULD_RESET_KUBE=false
 if [ ! -d "ric-dep" ]; then
     SHOULD_RESET_KUBE=true
 fi
+if ! helm version &>/dev/null; then
+    SHOULD_RESET_KUBE=true
+fi
 # Check if any of the kube-system pods are not running
 if [ "$SHOULD_RESET_KUBE" = false ]; then
     POD_NAMES=("coredns" "etcd" "kube-apiserver" "kube-controller" "kube-proxy" "kube-scheduler")
@@ -307,14 +310,13 @@ while true; do
         sleep 3
     fi
 
-    # Check for disk-pressure taint on the node and warn the user
+    # Check for disk-pressure taint on the node and warn the user if removing it fails
     if kubectl describe nodes | grep Taints | grep disk-pressure &>/dev/null; then
-        echo "Disk-pressure taint detected on the node. Attempting to free up disk space..."
-        journalctl -u kubelet --disk-usage
-        sudo journalctl --vacuum-size=100M
-        echo "WARNING: Disk-pressure taint may prevent xApp deployment. Check the node's disk space."
-        echo
-        break
+        if ! sudo ./install_scripts/handle_disk_pressure_taint.sh; then
+            echo "WARNING: Disk-pressure taint is preventing xApp deployment. Please ensure sufficient RAM and disk space is available."
+            break
+        fi
+        echo "Disk-pressure taint handled, continuing to check deployment status..."
     fi
 done
 

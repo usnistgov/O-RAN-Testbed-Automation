@@ -79,7 +79,7 @@ wait_for_pods_running () {
             continue
         fi
 
-        echo "Currently, $ACTUAL_COUNT/$EXPECTED_COUNT pods are in the desired state in namespace '$NAMESPACE'."
+        echo "Currently, $ACTUAL_COUNT/$EXPECTED_COUNT pods are in the desired state in namespace $NAMESPACE."
 
         if [[ "$ACTUAL_COUNT" -ge "$EXPECTED_COUNT" ]]; then
             echo "Required pod count reached in namespace '$NAMESPACE'."

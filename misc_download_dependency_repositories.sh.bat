@@ -1,5 +1,5 @@
 : '
-REM This batch script will download the 5G_Core, gNodeB, User_Equipment and RAN_Intelligent_Controller repositories for analyzing the source code without requiring a full testbed build and installation.
+REM This shell/batch script will download the 5G_Core, gNodeB, User_Equipment and RAN_Intelligent_Controller repositories for analyzing the source code without requiring a full testbed build and installation.
 '
 
 cd 5G_Core

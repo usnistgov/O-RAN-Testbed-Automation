@@ -1,7 +1,8 @@
 # Automation Tool for Deploying 5G O-RAN Testbeds
-A set of installation scripts designed to automate the deployment and configuration of a 5G Open Radio Access Network (O-RAN) testbed. The tool simplifies setting up the 5G Core components, gNodeB (Radio Unit, Distributed Unit, Centralized Unit), User Equipment (UE), and RAN Intelligent Controller (RIC) to facilitate reducing the complexity and time required to operationalize the testbed.
+A set of installation scripts designed to automate the deployment and configuration of a 5G Open Radio Access Network (O-RAN) testbed based upon the blueprints described in [[1]][nist-tn]. The tool simplifies setting up the 5G testbed components, 5G Core, gNodeB (Radio Unit (RU), Distributed Unit (DU), Centralized Unit (CU)), User Equipment (UE), and RAN Intelligent Controller (RIC). These scripts facilitate reducing the complexity and time required to operationalize the testbeds described in the report above.
 
-## Setting Up on a Virtual Machine
+## Setting Up the Testbed
+The automation tool can be used in virtual machines and physical machines with the minimum system requirements listed below. More details on the build options, including the configuration of physical hardware and individual software components are described in the report [[1]][nist-tn].
 
 ### Minimum System Requirements
 - **Operating System**: Linux distributions based on Ubuntu 20, Ubuntu 22, and Ubuntu 24 are supported.
@@ -16,7 +17,7 @@ A set of installation scripts designed to automate the deployment and configurat
 > If any pods stay in a pending or crash loop state after installing the RIC and running the testbed, then limited resources may be the cause.
 
 ### Virtual Machine Preferences
-For VirtualBox users, consider the following configuration parameters to improve performance.
+For users using a virtual machine, e.g., VirtualBox, may consider the following configuration parameters to improve performance.
 - **System**
   - **Extended Features**: Ensure that `Enable I/O APIC` is checked to improve interrupt handling.
   - **Extended Features**: Check `Enable PAE/NX` and if possible, also check `Enable Nested VT-x/AMD-V`.
@@ -36,7 +37,7 @@ Run the Update Manager to get packages up-to-date, then reboot.
 sudo apt-get update -y && sudo apt-get upgrade -y
 ```
 
-For VirtualBox, install the Guest Additions with the following commands, then reboot.
+If using VirtualBox, install the Guest Additions with the following commands, then reboot.
 ```console
 sudo apt-get install -y dkms build-essential linux-headers-generic linux-headers-$(uname -r)
 mkdir /media/cdrom
@@ -46,13 +47,13 @@ sudo ./VBoxLinuxAdditions.run
 sudo adduser $USER vboxsf
 ``` 
 
-Next, install Git and clone the O-RAN-Testbed repository over HTTPS:
+Next, install Git and clone the O-RAN-Testbed repository over HTTPS.
 ```console
 sudo apt-get install -y git
 git clone https://github.com/usnistgov/O-RAN-Testbed-Automation.git
 ```
 
-> Alternatively, the repository may be cloned over SSH:
+> Alternatively, the repository may be cloned over SSH.
 > ```console
 > git clone git@github.com:usnistgov/O-RAN-Testbed-Automation.git
 > ```
@@ -82,19 +83,36 @@ RRC NR reconfiguration successful.
 
 ## Contact Information
 
-[USNISTGOV/O-RAN-Testbed-Automation][gh-ota] is developed and maintained
-by the [Internet Technologies Research Group][nist-itrg], principally:
+USNISTGOV/O-RAN-Testbed-Automation [[2]][gh-ota] is developed and maintained
+by the NIST Wireless Networks Division [[3]][nist-wnd], as part of their 
+Open RAN Research Program [[4]][nist-oran].  Contacts for this software:
 
 - Simeon J. Wuthier, @Simewu
 - Peng Liu, @fjcintron
 - Kyehwan Lee, @kyehwanlee
 - Fernando J. Cintrón, @fjcintron
 
-## NIST Commercial Product Disclaimer
+## NIST Disclaimers
 
-Certain equipment, instruments, software, or materials are identified in this paper in order to specify the experimental procedure adequately. Such identification is not intended to imply recommendation or endorsement of any product or service by NIST, nor is it intended to imply that the materials or equipment identified are necessarily the best available for the purpose.
+- #### NIST Software Disclaimer [[5]][gh-nsd]
+- #### NIST Commercial Software Disclaimer [[6]][gh-cpd]
+- #### Fair Use and Licensing Statements of NIST Data/Works [[7]][gh-license]
+
+## References
+1. Liu, Peng, Lee, Kyehwan, Cintrón, Fernando J., Wuthier, Simeon, Savaliya, Bhadresh, Montgomery, Douglas, Rouil, Richard (2024). Blueprint for Deploying 5G O-RAN Testbeds: A Guide to Using Diverse O-RAN Software Stacks. National Institute of Standards and Technology. [https://doi.org/10.6028/NIST.TN.2311][nist-tn]
+2. National Institute of Standards and Technology. GitHub. [https://github.com/USNISTGOV/O-RAN-Testbed-Automation][gh-ota]
+3. Wireless Networks Division. National Institute of Standards and Technology. [https://www.nist.gov/ctl/Wireless-Networks-Division][nist-wnd]
+4. Open RAN Research at NIST. National Institute of Standards and Technology. [https://www.nist.gov/programs-projects/Open-RAN-Research-NIST][nist-oran]
+5. NIST Software Disclaimer. [NIST Software Disclaimer.md][gh-nsd]
+6. NIST Commercial Software Disclaimer. [NIST Commercial Product Disclaimer.md][gh-cpd]
+7. Fair Use and Licensing Statements of NIST Data/Works: [LICENSE][gh-license]
 
 <!-- References -->
 
-[nist-itrg]: https://www.nist.gov/ctl/wireless-networks-division
-[gh-ota]: https://github.com/usnistgov/O-RAN-Testbed-Automation
+[nist-tn]: https://doi.org/10.6028/NIST.TN.2311
+[gh-ota]: https://github.com/USNISTGOV/O-RAN-Testbed-Automation
+[nist-wnd]: https://www.nist.gov/ctl/Wireless-Networks-Division
+[nist-oran]: https://www.nist.gov/programs-projects/Open-RAN-Research-NIST
+[gh-nsd]: NIST%20Software%20Disclaimer.md
+[gh-cpd]: NIST%20Commercial%20Product%20Disclaimer.md
+[gh-license]: LICENSE

@@ -30,12 +30,86 @@
 
 echo "# Script: $(realpath $0)..."
 
+# Function to wait for pods to be in a running state
+wait_for_pods_running () {
+    local EXPECTED_COUNT="$1"
+    local NAMESPACE="${2-all-namespaces}"
+    local KEYWORD="${3-Running}"
+    local ACTUAL_COUNT
+
+    if [ "$NAMESPACE" == "all-namespaces" ]; then
+        cmd="kubectl get pods -A"
+    else
+        cmd="kubectl get pods -n $NAMESPACE"
+    fi
+
+    echo "Initiating wait for $EXPECTED_COUNT pods to be in '$KEYWORD' state in namespace '$NAMESPACE'."
+
+    while true; do
+        ACTUAL_COUNT=$($cmd | grep -E "$KEYWORD" | wc -l 2>/dev/null)
+        local CMD_STATUS=$?
+
+        if [ "$CMD_STATUS" -ne 0 ]; then
+            echo "Failed to execute kubectl command, retrying..."
+            sleep 5
+            continue
+        fi
+
+        echo
+        echo "Currently, $ACTUAL_COUNT/$EXPECTED_COUNT pods are in the desired state in namespace $NAMESPACE."
+
+        if [[ "$ACTUAL_COUNT" -ge "$EXPECTED_COUNT" ]]; then
+            echo "Required pod count reached in namespace '$NAMESPACE'."
+            break
+        fi
+
+        sleep 5
+        kubectl get pods -A || true
+    done
+}
+
 echo "Installing KubeArmor..."
 helm repo add kubearmor https://kubearmor.github.io/charts
 helm repo update
 helm upgrade --install kubearmor-operator kubearmor/kubearmor-operator -n kubearmor --create-namespace
 kubectl apply -f https://raw.githubusercontent.com/kubearmor/KubeArmor/main/pkg/KubeArmorOperator/config/samples/sample-config.yml
 
-echo "KubeArmor Successfully Installed."
-echo "Please give several minutes for KubeArmor to initialize, then terminate and initialize all other pods."
-echo "Check the status with: kubectl get pods -A"
+curl -sfL http://get.kubearmor.io/ | sudo sh -s -- -b /usr/local/bin
+
+
+echo "Waiting for KubeArmor to initialize..."
+wait_for_pods_running 1 kubearmor
+
+echo "KubeArmor Successfully Installed. Adding configurations..."
+
+cat <<EOF | kubectl apply -f -
+apiVersion: security.kubearmor.com/v1
+kind: KubeArmorPolicy
+metadata:
+  name: block-pkg-mgmt-tools-exec
+spec:
+  selector: {}  # Empty selector to apply to all pods
+  process:
+    matchPaths:
+    - path: /usr/bin/apt
+    - path: /usr/bin/apt-get
+  action:
+    Block
+EOF
+
+cat <<EOF | kubectl apply -f -
+apiVersion: security.kubearmor.com/v1
+kind: KubeArmorPolicy
+metadata:
+  name: block-service-access-token-access
+spec:
+  selector: {}  # Empty selector to apply to all pods
+  file:
+    matchDirectories:
+    - dir: /run/secrets/kubernetes.io/serviceaccount/
+      recursive: true
+  action:
+    Block
+EOF
+
+echo "KubeArmor initialized successfully."

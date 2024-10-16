@@ -1,4 +1,32 @@
 #!/bin/bash
+#
+# NIST-developed software is provided by NIST as a public service. You may use,
+# copy, and distribute copies of the software in any medium, provided that you
+# keep intact this entire notice. You may improve, modify, and create derivative
+# works of the software or any portion of the software, and you may copy and
+# distribute such modifications or works. Modified works should carry a notice
+# stating that you changed the software and should note the date and nature of
+# any such change. Please explicitly acknowledge the National Institute of
+# Standards and Technology as the source of the software.
+#
+# NIST-developed software is expressly provided "AS IS." NIST MAKES NO WARRANTY
+# OF ANY KIND, EXPRESS, IMPLIED, IN FACT, OR ARISING BY OPERATION OF LAW,
+# INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTY OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT, AND DATA ACCURACY. NIST
+# NEITHER REPRESENTS NOR WARRANTS THAT THE OPERATION OF THE SOFTWARE WILL BE
+# UNINTERRUPTED OR ERROR-FREE, OR THAT ANY DEFECTS WILL BE CORRECTED. NIST DOES
+# NOT WARRANT OR MAKE ANY REPRESENTATIONS REGARDING THE USE OF THE SOFTWARE OR
+# THE RESULTS THEREOF, INCLUDING BUT NOT LIMITED TO THE CORRECTNESS, ACCURACY,
+# RELIABILITY, OR USEFULNESS OF THE SOFTWARE.
+#
+# You are solely responsible for determining the appropriateness of using and
+# distributing the software and you assume all risks associated with its use,
+# including but not limited to the risks and costs of program errors, compliance
+# with applicable laws, damage to or loss of data, programs or equipment, and
+# the unavailability or interruption of operation. This software is not intended
+# to be used in any situation where a failure could cause risk of injury or
+# damage to property. The software developed by NIST employees is not subject to
+# copyright protection within the United States.
 
 # Exit immediately if a command fails
 set -e
@@ -102,10 +130,10 @@ else
 
     # Step 2: Installing MongoDB 4.4
     echo "Updating package lists..."
-    sudo apt update || { echo "Failed to update package lists"; exit 1; }
+    sudo apt-get update || { echo "Failed to update package lists"; exit 1; }
 
     echo "Installing gnupg and curl if not already installed..."
-    sudo apt install -y gnupg curl || { echo "Failed to install GnuPG or curl"; exit 1; }
+    sudo apt-get install -y gnupg curl || { echo "Failed to install GnuPG or curl"; exit 1; }
 
     # Preferred method: Try importing the MongoDB 4.4 public key using signed-by method
     echo "Attempting to import MongoDB 4.4 server public key using signed-by method..."
@@ -131,7 +159,7 @@ else
     done
 
     echo "Updating package lists after adding MongoDB repository..."
-    if ! sudo apt update; then
+    if ! sudo apt-get update; then
         echo "Failed to update package lists after adding MongoDB repository."
         exit 1
     fi
@@ -139,9 +167,9 @@ else
     echo "Attempting to install MongoDB 4.4..."
     if ! sudo apt-get install -y --allow-change-held-packages mongodb-org=4.4.* mongodb-org-server=4.4.* mongodb-org-shell=4.4.* mongodb-org-mongos=4.4.* mongodb-org-tools=4.4.*; then
         echo "Initial MongoDB installation failed. Attempting to fix broken installations..."
-        sudo apt --fix-broken install
-        sudo apt autoremove -y
-        sudo apt clean
+        sudo apt-get --fix-broken install
+        sudo apt-get autoremove -y
+        sudo apt-get clean
         echo "Trying to install MongoDB 4.4 again..."
         if ! sudo apt-get install -y --allow-change-held-packages mongodb-org=4.4.* mongodb-org-server=4.4.* mongodb-org-shell=4.4.* mongodb-org-mongos=4.4.* mongodb-org-tools=4.4.*; then
             echo "Failed to install MongoDB 4.4 after attempting repairs. Exiting script."
@@ -153,9 +181,9 @@ fi
 echo "Attempting to install mongosh..."
 if ! sudo apt-get install -y mongosh; then
     echo "Failed to install mongosh. Attempting to fix broken installations..."
-    sudo apt --fix-broken install
-    sudo apt autoremove -y
-    sudo apt clean
+    sudo apt-get --fix-broken install
+    sudo apt-get autoremove -y
+    sudo apt-get clean
     echo "Trying to install mongosh again..."
     if ! sudo apt-get install -y mongosh; then
         echo "Failed to install mongosh after attempting repairs. Exiting script."
@@ -212,7 +240,7 @@ sudo ip link set ogstun up
 
 # Step 4: Building Open5GS
 echo "Installing dependencies for building Open5GS..."
-sudo apt install -y python3-pip python3-setuptools python3-wheel ninja-build build-essential flex bison git cmake libsctp-dev libgnutls28-dev libgcrypt-dev libssl-dev libidn11-dev libmongoc-dev libbson-dev libyaml-dev libnghttp2-dev libmicrohttpd-dev libcurl4-gnutls-dev libnghttp2-dev libtins-dev libtalloc-dev meson
+sudo apt-get install -y python3-pip python3-setuptools python3-wheel ninja-build build-essential flex bison git cmake libsctp-dev libgnutls28-dev libgcrypt-dev libssl-dev libidn11-dev libmongoc-dev libbson-dev libyaml-dev libnghttp2-dev libmicrohttpd-dev libcurl4-gnutls-dev libnghttp2-dev libtins-dev libtalloc-dev meson
 
 rm -rf build
 

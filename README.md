@@ -5,8 +5,8 @@ A set of installation scripts designed to automate the deployment and configurat
 The automation tool can be used in virtual machines and physical machines with the minimum system requirements listed below. More details on the build options, including the configuration of physical hardware and individual software components are described in the report [[1]][nist-tn].
 
 ### Minimum System Requirements
-- **Operating System**: Linux distributions based on Ubuntu 20, Ubuntu 22, and Ubuntu 24 are supported.
-  - _Recommendation: Linux Mint 22, based on Ubuntu 24._
+- **Operating System**: Linux distributions based on Ubuntu 20.04 LTS, Ubuntu 22.04 LTS, and Ubuntu 24.04 LTS are supported.
+  - _Recommendation: Linux Mint 22, based on Ubuntu 24.04 LTS._
 - **Hard Drive Storage**: Must be `≥ 35` GB.
 - **Base Memory/RAM**: Must be `≥ 6000` MB.
 - **Number of Processors**: Must be `≥ 2` processors.
@@ -17,7 +17,7 @@ The automation tool can be used in virtual machines and physical machines with t
 > If any pods stay in a pending or crash loop state after installing the RIC and running the testbed, then limited resources may be the cause.
 
 ### Virtual Machine Preferences
-For users using a virtual machine, e.g., VirtualBox, may consider the following configuration parameters to improve performance.
+For users using a virtual machine, e.g., VirtualBox, the following configuration parameters may be considered to improve performance.
 - **System**
   - **Extended Features**: Ensure that `Enable I/O APIC` is checked to improve interrupt handling.
   - **Extended Features**: Check `Enable PAE/NX` and if possible, also check `Enable Nested VT-x/AMD-V`.
@@ -34,13 +34,13 @@ For users using a virtual machine, e.g., VirtualBox, may consider the following 
 ## Installation Guide
 Run the Update Manager to get packages up-to-date, then reboot.
 ```console
-sudo apt-get update -y && sudo apt-get upgrade -y
+sudo apt-get update && sudo apt-get upgrade -y
 ```
 
-If using VirtualBox, install the Guest Additions with the following commands, then reboot.
+If using VirtualBox, insert the Guest Additions CD image then install the Guest Additions with the following commands, and reboot.
 ```console
 sudo apt-get install -y dkms build-essential linux-headers-generic linux-headers-$(uname -r)
-mkdir /media/cdrom
+sudo mkdir /media/cdrom
 sudo mount /dev/cdrom /media/cdrom
 cd /media/cdrom
 sudo ./VBoxLinuxAdditions.run
@@ -50,20 +50,24 @@ sudo adduser $USER vboxsf
 Next, install Git and clone the O-RAN-Testbed repository over HTTPS.
 ```console
 sudo apt-get install -y git
-git clone https://github.com/usnistgov/O-RAN-Testbed-Automation.git
+git clone https://github.com/USNISTGOV/O-RAN-Testbed-Automation.git
+cd O-RAN-Testbed-Automation
 ```
+Alternatively, clone the repository using SSH: `git clone git@github.com:USNISTGOV/O-RAN-Testbed-Automation.git`
 
-> Alternatively, the repository may be cloned over SSH.
+> _**Recommendation:** Increase the file descriptor limits set by the system with the following command, then reboot._
 > ```console
-> git clone git@github.com:usnistgov/O-RAN-Testbed-Automation.git
+> sudo ./RAN_Intelligent_Controller/additional_scripts/increase_file_limit_system.sh
 > ```
+
+#
 
 Begin the installation process, recommended to be run as your current user rather than as root:
 ```console
 ./full_install.sh
 ```
 > [!TIP]
-> Since `set -e` is set, the scripts will terminate upon reaching an error so that it can be corrected before trying again. Since the scripts are idempotent they will only restart the incomplete steps of the installation process unless specified otherwise. Please be patient until an error is reached or the testbed installation is successful.
+> Due to `set -e`, the scripts will halt upon encountering an error so that it can be corrected before trying again. Since the scripts are idempotent, only the incomplete steps of the installation process will be executed unless specified otherwise. Please be patient until an error occurs or the testbed installation completes successfully.
 ```
 ################################################################################
 # Successfully installed the 5G Core, gNodeB, UE, and RIC.                     #
@@ -88,7 +92,7 @@ by the NIST Wireless Networks Division [[3]][nist-wnd], as part of their
 Open RAN Research Program [[4]][nist-oran].  Contacts for this software:
 
 - Simeon J. Wuthier, @Simewu
-- Peng Liu, @fjcintron
+- Peng Liu, @pengnist
 - Kyehwan Lee, @kyehwanlee
 - Fernando J. Cintrón, @fjcintron
 
@@ -113,6 +117,6 @@ Open RAN Research Program [[4]][nist-oran].  Contacts for this software:
 [gh-ota]: https://github.com/USNISTGOV/O-RAN-Testbed-Automation
 [nist-wnd]: https://www.nist.gov/ctl/Wireless-Networks-Division
 [nist-oran]: https://www.nist.gov/programs-projects/Open-RAN-Research-NIST
-[gh-nsd]: NIST%20Software%20Disclaimer.md
-[gh-cpd]: NIST%20Commercial%20Product%20Disclaimer.md
-[gh-license]: LICENSE
+[gh-nsd]: ./NIST%20Software%20Disclaimer.md
+[gh-cpd]: ./NIST%20Commercial%20Product%20Disclaimer.md
+[gh-license]: ./LICENSE

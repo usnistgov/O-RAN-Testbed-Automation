@@ -30,6 +30,67 @@
 
 echo "# Script: $(realpath $0)..."
 
+# *** Start of determining if the current Ubuntu version is supported by KubeArmor
+if [ -f /etc/upstream-release/lsb-release ]; then
+    UBUNTU_RELEASE=$(cat /etc/upstream-release/lsb-release | grep 'DISTRIB_RELEASE' | sed 's/.*=\s*//')
+else
+    UBUNTU_RELEASE=$(lsb_release -sr)
+fi
+SUPPORT_MATRIX=$(curl -fs https://raw.githubusercontent.com/kubearmor/KubeArmor/refs/heads/main/getting-started/support_matrix.md)
+if [ $? -ne 0 ]; then
+    echo "Failed to fetch the support matrix for KubeArmor. Please replace variable \"SUPPORT_MATRIX\" with the correct URL, then try again. Exiting."
+    exit 1
+fi
+if ! echo "$SUPPORT_MATRIX" | grep -q "Ubuntu.*$UBUNTU_RELEASE"; then
+    echo "KubeArmor has made it clear that Ubuntu $UBUNTU_RELEASE is not supported."
+    echo "However, you can try to install it and see if it works by commenting out this check in the beginning of the file."
+    echo "Exiting."
+    exit 1
+fi
+# *** End of determining if the current Ubuntu version is supported by KubeArmor
+
+SELINUX_OR_APPARMOR_ENABLED=false
+# Check if SELinux is installed and active
+if command -v sestatus >/dev/null 2>&1; then
+    selinux_status=$(sestatus | grep "SELinux status" | awk '{print $3}')
+    if [ "$selinux_status" != "disabled" ]; then
+        SELINUX_OR_APPARMOR_ENABLED=true
+    else
+        echo "SELinux is installed but disabled. Activating now..."
+        sudo selinux-activate
+        if [ $? -eq 0 ]; then
+            echo "SELinux has been activated. Please reboot your system before rerunning this script."
+            exit 0
+        else
+            echo "Failed to activate SELinux. Please check your system configuration."
+            exit 1
+        fi
+    fi
+fi
+# Check if AppArmor is installed and active only if SELinux is not enabled
+if ! $SELINUX_OR_APPARMOR_ENABLED && command -v aa-status >/dev/null 2>&1; then
+    apparmor_status=$(aa-status | grep "apparmor module is loaded")
+    if [ -n "$apparmor_status" ]; then
+        SELINUX_OR_APPARMOR_ENABLED=true
+    else
+        echo "AppArmor is installed but not active. Activating now..."
+        sudo systemctl enable apparmor
+        sudo systemctl start apparmor
+        if systemctl is-active --quiet apparmor; then
+            echo "AppArmor has been activated."
+            SELINUX_OR_APPARMOR_ENABLED=true
+        else
+            echo "Failed to activate AppArmor. Please check your system configuration."
+            exit 1
+        fi
+    fi
+fi
+if ! $SELINUX_OR_APPARMOR_ENABLED; then
+    echo "No security mechanisms (SELinux or AppArmor) are enabled on this system."
+    exit 1
+fi
+echo "Security mechanism is enabled. Proceeding with the script..."
+
 # Function to wait for pods to be in a running state
 wait_for_pods_running () {
     local EXPECTED_COUNT="$1"
@@ -80,7 +141,12 @@ curl -sfL http://get.kubearmor.io/ | sudo sh -s -- -b /usr/local/bin
 echo "Waiting for KubeArmor to initialize..."
 wait_for_pods_running 1 kubearmor
 
-echo "KubeArmor Successfully Installed. Adding configurations..."
+echo "KubeArmor Successfully Installed."
+
+echo "Labeling all pods with appliedsecuritypolicy for security policy selectors..."
+kubectl label pods --all appliedsecuritypolicy=true --overwrite -n ricinfra || true
+kubectl label pods --all appliedsecuritypolicy=true --overwrite -n ricplt || true
+kubectl label pods --all appliedsecuritypolicy=true --overwrite -n ricxapp || true
 
 cat <<EOF | kubectl apply -f -
 apiVersion: security.kubearmor.com/v1
@@ -88,7 +154,9 @@ kind: KubeArmorPolicy
 metadata:
   name: block-pkg-mgmt-tools-exec
 spec:
-  selector: {}  # Empty selector to apply to all pods
+  selector:
+    matchLabels:
+      appliedsecuritypolicy: "true"
   process:
     matchPaths:
     - path: /usr/bin/apt
@@ -103,7 +171,9 @@ kind: KubeArmorPolicy
 metadata:
   name: block-service-access-token-access
 spec:
-  selector: {}  # Empty selector to apply to all pods
+  selector:
+    matchLabels:
+      appliedsecuritypolicy: "true"
   file:
     matchDirectories:
     - dir: /run/secrets/kubernetes.io/serviceaccount/
@@ -112,4 +182,31 @@ spec:
     Block
 EOF
 
-echo "KubeArmor initialized successfully."
+echo "Waiting for KubeArmor (apparmor-containerd, controller, operator, and relay) to initialize..."
+wait_for_pods_running 4 kubearmor
+
+karmor probe
+
+echo
+echo "List of applied policies:"
+kubectl get kubearmorpolicies -A
+echo
+
+if echo "$(karmor probe)" | grep -q "Container Security:\s*true"; then
+    echo "Successfully enabled container security."
+else
+    echo "ERROR: Container security is not enabled."
+    exit 1
+fi
+
+
+
+
+# Retrieve the current AppArmor profile status of the init process
+# current_profile=$(cat /proc/1/attr/current)
+# if [[ "$current_profile" == "unconfined" ]]; then
+#     echo "ERROR: The process is unconfined, so no AppArmor profile is active."
+#     exit 1
+# else
+#     echo "The process is confined under the profile: $current_profile"
+# fi

@@ -30,12 +30,31 @@
 
 echo "# Script: $(realpath $0)..."
 
-echo "Installing KubeArmor..."
-helm repo add kubearmor https://kubearmor.github.io/charts
-helm repo update
-helm upgrade --install kubearmor-operator kubearmor/kubearmor-operator -n kubearmor --create-namespace
-kubectl apply -f https://raw.githubusercontent.com/kubearmor/KubeArmor/main/pkg/KubeArmorOperator/config/samples/sample-config.yml
+echo "Currently active SELinux policy modules:"
+sudo semodule -l
 
-echo "KubeArmor Successfully Installed."
-echo "Please give several minutes for KubeArmor to initialize, then terminate and initialize all other pods."
-echo "Check the status with: kubectl get pods -A"
+echo "Collecting SELinux denials..."
+
+# Prompt the user to name the SELinux policy module
+read -p "Enter a unique name for the SELinux policy module (i.e. what you did and want to allow the system to no longer enforce): " module_name
+
+if [[ -z "$module_name" || ! "$module_name" =~ ^[a-zA-Z0-9_]+$ ]]; then
+  echo "Invalid or no module name entered. Names must be non-empty and can only contain letters, numbers, and underscores."
+  exit 1
+fi
+
+# Generate the policy module with the given name
+sudo ausearch -m avc -ts recent --raw | audit2allow -M "${module_name}"
+
+echo "Installing the generated SELinux policy module named ${module_name}."
+mkdir -p $HOME/selinux_modules
+sudo semodule -i ${module_name}.pp
+
+read -p "Are you ready to set SELinux to enforcing mode? (y/n): " response
+if [[ "$response" == "y" || "$response" == "yes" ]]; then
+  sudo setenforce 1
+  sudo sed -i 's/^SELINUX=permissive$/SELINUX=enforcing/' /etc/selinux/config
+  echo "SELinux has been set to enforcing mode."
+else
+  echo "SELinux remains in permissive mode. Run this script again when ready to switch to enforcing mode."
+fi

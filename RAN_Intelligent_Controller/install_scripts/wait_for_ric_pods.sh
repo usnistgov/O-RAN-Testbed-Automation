@@ -96,8 +96,9 @@ wait_for_all_pods_running () {
                     # Extract the base name by removing the last two dash-separated fields
                     BASE_NAME=$(get_base_name "$POD_NAME" "$NODE_NAME")
                     if echo $RUNNING_PODS | grep -q $BASE_NAME; then
-                        echo "Force deleting terminating pod $POD as a fully ready counterpart exists."
-                        kubectl delete pod $POD -n $NAMESPACE --grace-period=0 --force --wait=false
+                        echo "Force deleting terminating pod $POD in 5 seconds, as a fully ready counterpart exists."
+                        sleep 5
+                        kubectl delete pod $POD -n $NAMESPACE --grace-period=0 --force --wait=false || true
                     fi
                 done
 

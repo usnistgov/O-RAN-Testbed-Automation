@@ -43,12 +43,16 @@ if [[ -z "$module_name" || ! "$module_name" =~ ^[a-zA-Z0-9_]+$ ]]; then
   exit 1
 fi
 
-# Generate the policy module with the given name
+# Generate the policy module with the given name and save it in the home directory
+mkdir -p $HOME/selinux_modules
+PWD_DIR=$(pwd)
+cd $HOME/selinux_modules
 sudo ausearch -m avc -ts recent --raw | audit2allow -M "${module_name}"
+cd $PWD_DIR
+
 
 echo "Installing the generated SELinux policy module named ${module_name}."
-mkdir -p $HOME/selinux_modules
-sudo semodule -i ${module_name}.pp
+sudo semodule -i $HOME/selinux_modules/${module_name}.pp
 
 read -p "Are you ready to set SELinux to enforcing mode? (y/n): " response
 if [[ "$response" == "y" || "$response" == "yes" ]]; then

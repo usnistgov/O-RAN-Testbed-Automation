@@ -41,7 +41,7 @@ else
     sudo chown -R $USER:$USER logs
     sudo rm -rf logs/gnb.log
     sudo setsid srsRAN_Project/build/apps/gnb/gnb -c configs/gnb.yaml </dev/null >logs/gnb_stdout.txt 2>&1 &
-    sleep 1
+    sleep 5
     ./is_running.sh
     sudo chown -R $USER:$USER logs
 fi

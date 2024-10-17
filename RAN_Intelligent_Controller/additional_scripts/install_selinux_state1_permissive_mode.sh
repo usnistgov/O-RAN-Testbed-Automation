@@ -87,11 +87,14 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-echo "Configuring SELinux to start in permissive mode on system boot..."
-sudo sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
-if [ $? -ne 0 ]; then
-    echo "Failed to configure SELinux to start in permissive mode on system boot. Exiting."
-    exit 1
+echo "Checking current SELinux mode..."
+CURRENT_MODE=$(getenforce)
+if [ "$CURRENT_MODE" != "Permissive" ]; then
+    echo "SELinux is not in permissive mode. Configuring to start in permissive mode on system boot..."
+    sudo sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
+    sudo setenforce 0
+else
+    echo "SELinux is already in permissive mode."
 fi
 
 echo "SELinux installation and configuration complete. Please reboot your system."

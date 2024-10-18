@@ -30,7 +30,6 @@
 
 echo "# Script: $(realpath $0)..."
 
-# *** Start of determining if the current Ubuntu version is supported by KubeArmor
 if [ -f /etc/upstream-release/lsb-release ]; then
     UBUNTU_RELEASE=$(cat /etc/upstream-release/lsb-release | grep 'DISTRIB_RELEASE' | sed 's/.*=\s*//')
 else
@@ -38,16 +37,22 @@ else
 fi
 SUPPORT_MATRIX=$(curl -fs https://raw.githubusercontent.com/kubearmor/KubeArmor/refs/heads/main/getting-started/support_matrix.md)
 if [ $? -ne 0 ]; then
-    echo "Failed to fetch the support matrix for KubeArmor. Please replace variable \"SUPPORT_MATRIX\" with the correct URL, then try again. Exiting."
-    exit 1
+    echo "Failed to fetch the support matrix for KubeArmor (used to verify if this OS version is supported by KubeArmor)."
+    read -p "Do you want to proceed anyway? (y/n): " proceed
+    if [[ $proceed != "y" && $proceed != "yes" ]]; then
+        echo "Exiting."
+        exit 1
+    fi
 fi
 if ! echo "$SUPPORT_MATRIX" | grep -q "Ubuntu.*$UBUNTU_RELEASE"; then
-    echo "KubeArmor has made it clear that Ubuntu $UBUNTU_RELEASE is not supported."
-    echo "However, you can try to install it and see if it works by commenting out this check in the beginning of the file."
-    echo "Exiting."
-    exit 1
+    echo "KubeArmor has not mentioned that Ubuntu $UBUNTU_RELEASE is supported."
+    echo "However, you can try to install it and see if it works."
+    read -p "Do you want to proceed anyway? (y/n): " proceed
+    if [[ $proceed != "y" && $proceed != "yes" ]]; then
+        echo "Exiting."
+        exit 1
+    fi
 fi
-# *** End of determining if the current Ubuntu version is supported by KubeArmor
 
 SELINUX_OR_APPARMOR_ENABLED=false
 # Check if SELinux is installed and active
@@ -183,7 +188,7 @@ spec:
 EOF
 
 echo "Waiting for KubeArmor (apparmor-containerd, controller, operator, and relay) to initialize..."
-wait_for_pods_running 4 kubearmor
+wait_for_pods_running 3 kubearmor # If unsupported OS, apparmor-containerd may not start, so wait for 3/4 pods
 
 karmor probe
 
@@ -198,9 +203,6 @@ else
     echo "ERROR: Container security is not enabled."
     exit 1
 fi
-
-
-
 
 # Retrieve the current AppArmor profile status of the init process
 # current_profile=$(cat /proc/1/attr/current)

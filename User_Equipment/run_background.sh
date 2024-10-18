@@ -41,7 +41,7 @@ else
         exit 1
     fi
     echo "Starting srsue in background..."
-    sudo setsid ./srsRAN_4G/build/srsue/src/srsue --config_file configs/ue.conf </dev/null >logs/ue_stdout.txt 2>&1 &
+    sudo setsid bash -c 'stdbuf -oL -eL srsRAN_4G/build/srsue/src/srsue --config_file configs/ue.conf > logs/ue_stdout.txt 2>&1' </dev/null &
     sleep 1
     ./is_running.sh
     sudo chown -R $USER:$USER logs

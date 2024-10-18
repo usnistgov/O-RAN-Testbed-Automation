@@ -47,7 +47,7 @@ sudo ./VBoxLinuxAdditions.run
 sudo adduser $USER vboxsf
 ``` 
 
-Next, install Git and clone the O-RAN-Testbed repository over HTTPS.
+Next, install Git and clone the O-RAN-Testbed-Automation repository over HTTPS.
 ```console
 sudo apt-get install -y git
 git clone https://github.com/USNISTGOV/O-RAN-Testbed-Automation.git

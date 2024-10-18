@@ -80,13 +80,6 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-echo "Setting SELinux to permissive mode..."
-sudo setenforce 0
-if [ $? -ne 0 ]; then
-    echo "Failed to set SELinux to permissive mode. Exiting."
-    exit 1
-fi
-
 echo "Checking current SELinux mode..."
 CURRENT_MODE=$(getenforce)
 if [ "$CURRENT_MODE" != "Permissive" ]; then

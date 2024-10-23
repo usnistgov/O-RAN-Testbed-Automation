@@ -153,7 +153,10 @@ kubectl label pods --all appliedsecuritypolicy=true --overwrite -n ricinfra || t
 kubectl label pods --all appliedsecuritypolicy=true --overwrite -n ricplt || true
 kubectl label pods --all appliedsecuritypolicy=true --overwrite -n ricxapp || true
 
-cat <<EOF | kubectl apply -f -
+KUBEARMOR_DIR=$HOME/.kube/kubearmor_configs
+mkdir -p $KUBEARMOR_DIR
+
+cat <<EOF > $KUBEARMOR_DIR/block-pkg-mgmt-tools-exec.yaml
 apiVersion: security.kubearmor.com/v1
 kind: KubeArmorPolicy
 metadata:
@@ -169,8 +172,10 @@ spec:
   action:
     Block
 EOF
+kubectl apply -f $KUBEARMOR_DIR/block-pkg-mgmt-tools-exec.yaml
 
-cat <<EOF | kubectl apply -f -
+
+cat <<EOF > $KUBEARMOR_DIR/block-service-access-token-access.yaml
 apiVersion: security.kubearmor.com/v1
 kind: KubeArmorPolicy
 metadata:
@@ -186,9 +191,30 @@ spec:
   action:
     Block
 EOF
+kubectl apply -f $KUBEARMOR_DIR/block-service-access-token-access.yaml
+
+
+cat <<EOF > $KUBEARMOR_DIR/block-all-other-network-traffic.yaml
+apiVersion: security.kubearmor.com/v1
+kind: KubeArmorPolicy
+metadata:
+  name: block-all-other-network-traffic
+spec:
+  selector:
+    matchLabels:
+      appliedsecuritypolicy: "true"
+  network:
+    matchProtocols:
+    - protocol: ICMP
+    - protocol: TCP
+    - protocol: UDP
+  action:
+    Block
+EOF
+kubectl apply -f $KUBEARMOR_DIR/block-all-other-network-traffic.yaml
 
 echo "Waiting for KubeArmor (apparmor-containerd, controller, operator, and relay) to initialize..."
-wait_for_pods_running 3 kubearmor # If unsupported OS, apparmor-containerd may not start, so wait for 3/4 pods
+wait_for_pods_running 4 kubearmor
 
 karmor probe
 

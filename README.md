@@ -1,5 +1,5 @@
 # Automation Tool for Deploying 5G O-RAN Testbeds
-A set of installation scripts designed to automate the deployment and configuration of a 5G Open Radio Access Network (O-RAN) testbed based upon the blueprints described in [[1]][nist-tn]. The tool simplifies setting up the 5G testbed components, 5G Core, gNodeB (Radio Unit (RU), Distributed Unit (DU), Centralized Unit (CU)), User Equipment (UE), and RAN Intelligent Controller (RIC). These scripts facilitate reducing the complexity and time required to operationalize the testbeds described in the report above.
+A set of installation scripts designed to automate the deployment and configuration of a 5G Open Radio Access Network (O-RAN) testbed—on both bare metal and virtualized environments, based upon the blueprints described in [[1]][nist-tn]. The tool simplifies setting up the 5G testbed components, including 5G Core, gNodeB (Radio Unit (RU), Distributed Unit (DU), Centralized Unit (CU)), User Equipment (UE), and RAN Intelligent Controller (RIC). These scripts facilitate reducing the complexity and time required to operationalize the testbeds described in the report above.
 
 ## Setting Up the Testbed
 The automation tool can be used in virtual machines and physical machines with the minimum system requirements listed below. More details on the build options, including the configuration of physical hardware and individual software components are described in the report [[1]][nist-tn].
@@ -74,7 +74,7 @@ Begin the installation process, recommended to be run as your current user rathe
 ################################################################################
 ```
 
-After successful installation, verify that the configs/ files are generated for the 5G_Core, gNodeB, and User_Equipment using `./generate_configurations.sh`. Run the testbed with `./run.sh` to start the 5G Core and gNodeB as background processes, and the User Equipment in the foreground.
+After successful installation, verify that the configs/ files are generated for the 5G_Core, gNodeB, and User_Equipment using `./generate_configurations.sh`. Run the testbed with `./run.sh` to start the 5G Core and gNodeB as background processes, and the User Equipment in the foreground. Use `./is_running.sh` to check if the components are running, and `./stop.sh` to stop the components. The RIC starts automatically on boot and can be accessed with `./RAN_Intelligent_Controller/start_k9s.sh`.
 
 ```console
 Attaching UE...
@@ -110,6 +110,13 @@ Open RAN Research Program [[4]][nist-oran].  Contacts for this software:
 5. NIST Software Disclaimer. [NIST Software Disclaimer.md][gh-nsd]
 6. NIST Commercial Software Disclaimer. [NIST Commercial Product Disclaimer.md][gh-cpd]
 7. Fair Use and Licensing Statements of NIST Data/Works: [LICENSE][gh-license]
+
+#
+<p align="center">
+  <a href="https://www.nist.gov" target="_blank">
+    <img src="./NIST.png" alt="National Institute of Standards and Technology" width="85%"/>
+  </a>
+</p>
 
 <!-- References -->
 

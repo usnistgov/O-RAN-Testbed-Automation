@@ -1,0 +1,10 @@
+# Ignore testbed subdirectories
+/additional_scripts/pod_pcaps/
+/appmgr/
+/charts/
+/e2-interface/
+/hw-go/
+/logs/
+/ric-dep/
+/xApps/
+install_time.txt

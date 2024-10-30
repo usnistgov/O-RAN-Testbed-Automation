@@ -43,13 +43,13 @@ function force_delete_finalizers {
         echo "Processing resource type: $resource"
 
         # Get resources with finalizers and remove them
-        kubectl get "$resource" -n "$NAMESPACE" -o json 2>/dev/null | \
-        jq -r '.items[] | select(.metadata.finalizers | length > 0) | .metadata.name' | \
-        while read -r name; do
-            echo "Removing finalizers from $resource/$name"
-            kubectl patch "$resource" "$name" -n "$NAMESPACE" --type=merge \
-                -p '{"metadata":{"finalizers":[]}}' 2>/dev/null
-        done
+        kubectl get "$resource" -n "$NAMESPACE" -o json 2>/dev/null |
+            jq -r '.items[] | select(.metadata.finalizers | length > 0) | .metadata.name' |
+            while read -r name; do
+                echo "Removing finalizers from $resource/$name"
+                kubectl patch "$resource" "$name" -n "$NAMESPACE" --type=merge \
+                    -p '{"metadata":{"finalizers":[]}}' 2>/dev/null
+            done
     done
 }
 

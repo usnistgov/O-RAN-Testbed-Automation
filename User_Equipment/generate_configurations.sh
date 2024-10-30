@@ -31,7 +31,7 @@
 # Exit immediately if a command fails
 set -e
 
-if ! command -v yq &> /dev/null; then
+if ! command -v yq &>/dev/null; then
     YQ_PATH="https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64"
     sudo wget $YQ_PATH -O /usr/bin/yq
     sudo chmod +x /usr/bin/yq
@@ -59,7 +59,7 @@ update_conf() {
 
     # Ensure the section exists; if not, add it at the end
     if ! grep -q "^\[$SECTION\]" "$FILE_PATH"; then
-        echo -e "\n[$SECTION]" >> "$FILE_PATH"
+        echo -e "\n[$SECTION]" >>"$FILE_PATH"
     fi
     # Remove any existing entries of the property in the section (including commented ones)
     sed -i "/^\[$SECTION\]/,/^\s*\[/{/^[# ]*\s*$PROPERTY\s*=.*/d}" "$FILE_PATH"

@@ -36,7 +36,7 @@ if [ -f "srsRAN_4G/build/srsue/src/srsue" ]; then
     exit 0
 fi
 
-if ! command -v realpath &> /dev/null; then
+if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
     sudo apt-get install -y coreutils
 fi
@@ -183,11 +183,11 @@ cd $BASE_DIR
 # Calculate how long the script took to run
 INSTALL_END_TIME=$(date +%s)
 if [ -n "$INSTALL_START_TIME" ]; then
-  DURATION=$((INSTALL_END_TIME - INSTALL_START_TIME))
-  DURATION_MINUTES=$(echo "scale=5; $DURATION/ 60" | bc)
-  echo "The srsUE installation process took $DURATION_MINUTES minutes to complete."
-  mkdir -p logs
-  echo "$DURATION_MINUTES minutes" >> install_time.txt
+    DURATION=$((INSTALL_END_TIME - INSTALL_START_TIME))
+    DURATION_MINUTES=$(echo "scale=5; $DURATION/ 60" | bc)
+    echo "The srsUE installation process took $DURATION_MINUTES minutes to complete."
+    mkdir -p logs
+    echo "$DURATION_MINUTES minutes" >>install_time.txt
 fi
 
 echo "The User Equipment installation completed successfully."

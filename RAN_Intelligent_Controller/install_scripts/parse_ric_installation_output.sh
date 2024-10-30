@@ -30,6 +30,9 @@
 
 echo "# Script: $(realpath $0)..."
 
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+cd $(dirname "$SCRIPT_DIR")
+
 # Paths to the log files
 mkdir -p logs
 RIC_INSTALLATION_STDOUT="logs/ric_installation_stdout.txt"
@@ -42,7 +45,7 @@ fi
 
 # Initialize the JSON log file if it doesn't exist
 if [ ! -f "$RIC_INSTALLATION_LOG_JSON" ]; then
-    echo "{}" > "$RIC_INSTALLATION_LOG_JSON"
+    echo "{}" >"$RIC_INSTALLATION_LOG_JSON"
 fi
 
 # Use associative arrays to store statuses
@@ -66,7 +69,7 @@ while read -r LINE; do
         STATUS="failed"
         APP_STATUSES["$APP_NAME"]="$STATUS"
     fi
-done < "$RIC_INSTALLATION_STDOUT"
+done <"$RIC_INSTALLATION_STDOUT"
 
 # Read existing JSON data
 if [ -s "$RIC_INSTALLATION_LOG_JSON" ]; then
@@ -86,6 +89,6 @@ for APP in "${!APP_STATUSES[@]}"; do
 done
 
 # Write updated JSON data to file
-echo "$JSON_DATA" > "$RIC_INSTALLATION_LOG_JSON"
+echo "$JSON_DATA" >"$RIC_INSTALLATION_LOG_JSON"
 
 echo "$JSON_DATA" | jq

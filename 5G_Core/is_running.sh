@@ -31,7 +31,7 @@
 check_service() {
     local app_name="open5gs-$1"
     local service_name="$1"
-    if pgrep -x "$app_name" > /dev/null; then
+    if pgrep -x "$app_name" >/dev/null; then
         echo "$service_name: RUNNING"
     else
         if systemctl is-active --quiet "$app_name"; then

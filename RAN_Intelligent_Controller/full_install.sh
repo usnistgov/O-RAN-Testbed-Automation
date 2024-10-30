@@ -36,7 +36,7 @@ if ! command -v realpath &> /dev/null; then
 fi
 
 # Starts a script in background that calls `sudo -v` every minute to ensure that sudo stays active, ensuring the script runs without requiring user interaction
-sudo ls
+sudo ls &> /dev/null
 ./install_scripts/start_sudo_refresh.sh
 
 # Get the start timestamp in seconds

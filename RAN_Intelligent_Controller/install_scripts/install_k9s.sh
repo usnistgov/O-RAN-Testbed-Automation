@@ -56,4 +56,3 @@ sudo mv k9s /usr/local/bin
 rm k9s_Linux_amd64.tar.gz
 
 echo "K9s installation complete."
-

@@ -64,12 +64,27 @@ fi
 # Parse command line arguments
 while [[ "$#" -gt 0 ]]; do
     case $1 in
-        --imsi) IMSI="${2}"; shift ;;
-        --key) KEY="${2}"; shift ;;
-        --opc) OPC="${2}"; shift ;;
-        --apn) APN="${2}"; shift ;;
-        -h|--help) usage ;;
-        *) echo "Unknown parameter passed: $1"; usage ;;
+    --imsi)
+        IMSI="${2}"
+        shift
+        ;;
+    --key)
+        KEY="${2}"
+        shift
+        ;;
+    --opc)
+        OPC="${2}"
+        shift
+        ;;
+    --apn)
+        APN="${2}"
+        shift
+        ;;
+    -h | --help) usage ;;
+    *)
+        echo "Unknown parameter passed: $1"
+        usage
+        ;;
     esac
     shift
 done
@@ -99,4 +114,3 @@ if [ $? -eq 0 ]; then
 else
     echo "Failed to add subscriber to the database."
 fi
-

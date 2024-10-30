@@ -28,6 +28,19 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
+set -e
+
 echo "# Script: $(realpath $0)..."
 
-kubectl logs -l kubearmor-app=kubearmor -n kubearmor --follow
+CILIUM_POLICY_FILE="$HOME/.kube/cilium-policy.yaml"
+
+echo
+echo "The Cilium policy is located at: $CILIUM_POLICY_FILE"
+
+if ! kubectl apply -f $CILIUM_POLICY_FILE; then
+    echo "ERROR: Failed to apply Cilium NetworkPolicy. Please check the Cilium logs for errors."
+    exit 1
+fi
+
+echo
+echo "Cilium policies have been re-enabled."

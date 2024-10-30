@@ -1,0 +1,3 @@
+# Ignore testbed subdirectories
+/dep/
+install_time.txt

@@ -65,7 +65,7 @@ fi
 install_package() {
     local PACKAGE=$1
     local CMD=$2
-    if ! command -v $CMD &> /dev/null; then
+    if ! command -v $CMD &>/dev/null; then
         echo "$PACKAGE is not installed. Installing..."
         apt-get install -y $PACKAGE
     fi
@@ -95,7 +95,7 @@ echo "Installing apt-select..."
 pip install apt-select
 
 # Verify apt-select installation
-if ! command -v apt-select &> /dev/null; then
+if ! command -v apt-select &>/dev/null; then
     echo "Failed to install apt-select. Please check your Python/pip configuration."
     deactivate
     exit 1

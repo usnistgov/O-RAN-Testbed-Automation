@@ -33,10 +33,8 @@ echo "# Script: $(realpath $0)..."
 # Exit immediately if a command fails
 set -e
 
-if [ ! -f "full_install.sh" ]; then
-    echo "You must run this script from the main directory with full_install.sh"
-    exit 1
-fi
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+cd $(dirname "$SCRIPT_DIR")
 
 # Path to the output file
 mkdir -p logs
@@ -90,10 +88,10 @@ while true; do
         sudo chown $USER:$USER $OUTPUT_FILE
     fi
     # Check if kpm_sim is already running to avoid duplicate runs
-    if ! pgrep -f "kpm_sim $IP_e2term $PORT_e2term" > /dev/null; then
+    if ! pgrep -f "kpm_sim $IP_e2term $PORT_e2term" >/dev/null; then
         echo "Starting kpm_sim in the background, writing to $OUTPUT_FILE..."
-    	> "$OUTPUT_FILE" # Clears the content of the output file
-        sudo docker exec -i oransim kpm_sim $IP_e2term $PORT_e2term > $OUTPUT_FILE 2>&1 &
+        >"$OUTPUT_FILE" # Clears the content of the output file
+        sudo docker exec -i oransim kpm_sim $IP_e2term $PORT_e2term >$OUTPUT_FILE 2>&1 &
         sleep 2
     fi
 

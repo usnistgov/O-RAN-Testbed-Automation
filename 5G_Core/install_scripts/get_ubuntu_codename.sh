@@ -45,4 +45,3 @@ if [[ -z "$UBUNTU_CODENAME" ]]; then
 fi
 
 echo "$UBUNTU_CODENAME"
-

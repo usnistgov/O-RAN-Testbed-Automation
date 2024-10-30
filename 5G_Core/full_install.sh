@@ -37,7 +37,7 @@ if [ -f "open5gs/install/bin/open5gs-amfd" ] && [ -f "open5gs/install/bin/open5g
     exit 0
 fi
 
-if ! command -v realpath &> /dev/null; then
+if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
     sudo apt-get install -y coreutils
 fi
@@ -81,12 +81,12 @@ if [[ $installed_version == 4.4.* ]]; then
 else
     # Get the latest Ubuntu version supported by MongoDB 4.4
     case "$ubuntu_codename" in
-        "focal"|"bionic"|"xenial")
-            ubuntu_codename_mongodb="$ubuntu_codename"
-            ;;
-        *)
-            ubuntu_codename_mongodb="focal" # Default to the last supported version if the current one is too new
-            ;;
+    "focal" | "bionic" | "xenial")
+        ubuntu_codename_mongodb="$ubuntu_codename"
+        ;;
+    *)
+        ubuntu_codename_mongodb="focal" # Default to the last supported version if the current one is too new
+        ;;
     esac
 
     # Step 0: Ensure libssl is installed
@@ -115,7 +115,10 @@ else
 
         # Remove all installed MongoDB-related packages safely
         sudo apt-get purge -y mongodb-org mongodb-org-server mongodb-org-shell mongodb-org-mongos mongodb-org-tools \
-                             mongodb-server mongodb-server-core mongodb-clients || { echo "Failed to remove conflicting MongoDB packages"; exit 1; }
+            mongodb-server mongodb-server-core mongodb-clients || {
+            echo "Failed to remove conflicting MongoDB packages"
+            exit 1
+        }
 
         # Clean up MongoDB directories (data and logs)
         sudo rm -rf /var/lib/mongodb
@@ -130,10 +133,16 @@ else
 
     # Step 2: Installing MongoDB 4.4
     echo "Updating package lists..."
-    sudo apt-get update || { echo "Failed to update package lists"; exit 1; }
+    sudo apt-get update || {
+        echo "Failed to update package lists"
+        exit 1
+    }
 
     echo "Installing gnupg and curl if not already installed..."
-    sudo apt-get install -y gnupg curl || { echo "Failed to install GnuPG or curl"; exit 1; }
+    sudo apt-get install -y gnupg curl || {
+        echo "Failed to install GnuPG or curl"
+        exit 1
+    }
 
     # Preferred method: Try importing the MongoDB 4.4 public key using signed-by method
     echo "Attempting to import MongoDB 4.4 server public key using signed-by method..."
@@ -215,7 +224,7 @@ fi
 
 # Step 3: Setting up TUN device
 echo "Checking if TUN device ogstun exists..."
-if ! ip link show ogstun > /dev/null 2>&1; then
+if ! ip link show ogstun >/dev/null 2>&1; then
     echo "Creating TUN device..."
     sudo ip tuntap add name ogstun mode tun
 else
@@ -309,11 +318,11 @@ echo "LD_LIBRARY_PATH updated globally for all users."
 # Calculate how long the script took to run
 INSTALL_END_TIME=$(date +%s)
 if [ -n "$INSTALL_START_TIME" ]; then
-  DURATION=$((INSTALL_END_TIME - INSTALL_START_TIME))
-  DURATION_MINUTES=$(echo "scale=5; $DURATION/ 60" | bc)
-  echo "The Open5GS installation process took $DURATION_MINUTES minutes to complete."
-  mkdir -p logs
-  echo "$DURATION_MINUTES minutes" >> install_time.txt
+    DURATION=$((INSTALL_END_TIME - INSTALL_START_TIME))
+    DURATION_MINUTES=$(echo "scale=5; $DURATION/ 60" | bc)
+    echo "The Open5GS installation process took $DURATION_MINUTES minutes to complete."
+    mkdir -p logs
+    echo "$DURATION_MINUTES minutes" >>install_time.txt
 fi
 
 echo "The Open5GS installation completed successfully."

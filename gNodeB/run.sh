@@ -28,7 +28,7 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-if pgrep -x "gnb" > /dev/null; then
+if pgrep -x "gnb" >/dev/null; then
     echo "Already running gnb."
 else
     if [ ! -f "configs/gnb.yaml" ]; then
@@ -45,4 +45,3 @@ else
     ./is_running.sh
     sudo chown -R $USER:$USER logs
 fi
-

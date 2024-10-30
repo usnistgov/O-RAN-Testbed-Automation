@@ -33,10 +33,8 @@ echo "# Script: $(realpath $0)..."
 # Exit immediately if a command fails
 set -e
 
-if [ ! -f "full_install.sh" ]; then
-    echo "You must run this script from the main directory with full_install.sh"
-    exit 1
-fi
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+cd $(dirname "$SCRIPT_DIR")
 
 # Set docker to use Google's DNS servers, then restart docker
 sudo ./install_scripts/update_docker_dns.sh

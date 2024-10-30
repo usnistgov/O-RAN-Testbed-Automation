@@ -60,9 +60,8 @@ if grep -q "#CMD sleep 100000000000" "$FILE"; then
     echo "Replaced the commented command."
 else
     # The line is not found; append the new command at the end of the file
-    echo -e "\nCMD sleep 100000000000" >> "$FILE"
+    echo -e "\nCMD sleep 100000000000" >>"$FILE"
     echo "Appended the new command at the end of the file."
 fi
 
 echo "Revision completed."
-

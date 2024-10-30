@@ -31,7 +31,7 @@
 # Function to stop service
 stop_service() {
     local app_name="open5gs-$1"
-    if pgrep -x "$app_name" > /dev/null; then
+    if pgrep -x "$app_name" >/dev/null; then
         echo "Stopping $app_name..."
         sudo pkill -9 -x "$app_name"
     else

@@ -28,6 +28,8 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
+set -e
+
 echo "# Script: $(realpath $0)..."
 
-kubectl logs -l kubearmor-app=kubearmor -n kubearmor --follow
+kubectl exec -n kube-system -it $(kubectl get pods -n kube-system -l k8s-app=cilium -o jsonpath='{.items[0].metadata.name}') -- cilium status

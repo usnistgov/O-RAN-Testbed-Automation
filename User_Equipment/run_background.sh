@@ -33,7 +33,7 @@ if ! ip netns list | grep -q "^ue1$"; then
     sudo ip netns add ue1
 fi
 
-if pgrep -x "srsue" > /dev/null; then
+if pgrep -x "srsue" >/dev/null; then
     echo "Already running srsue."
 else
     if [ ! -f "configs/ue.conf" ]; then

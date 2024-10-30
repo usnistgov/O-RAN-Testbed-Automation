@@ -29,8 +29,10 @@ REM copyright protection within the United States.
 '
 
 : '
-REM This shell/batch script will download the 5G_Core, gNodeB, User_Equipment and RAN_Intelligent_Controller repositories for analyzing the source code without requiring a full testbed build and installation.
+REM This Linux shell/Windows batch script will download the 5G_Core, gNodeB, User_Equipment and RAN_Intelligent_Controller repositories for analyzing the source code without requiring a full testbed build and installation.
 '
+
+cd ..
 
 cd 5G_Core
 git clone https://github.com/open5gs/open5gs.git
@@ -58,4 +60,6 @@ cd ..
 
 echo "Repositories were cloned successfully."
 
-if [ "%OS%" == "Windows_NT" ]; then pause; fi
+: '
+PAUSE
+'

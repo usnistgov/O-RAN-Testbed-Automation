@@ -33,16 +33,14 @@ echo "# Script: $(realpath $0)..."
 # Exit immediately if a command fails
 set -e
 
-if [ ! -f "full_install.sh" ]; then
-    echo "You must run this script from the main directory with full_install.sh"
-    exit 1
-fi
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+cd $(dirname "$SCRIPT_DIR")
 
 cd xApps/hw-go
 
 echo "Creating and modifying the configuration file config/config-file_MODIFIED.json"
 # Check if jq is installed; if not, install it
-if ! command -v jq &> /dev/null; then
+if ! command -v jq &>/dev/null; then
     echo "Installing jq..."
     sudo apt-get update
     sudo apt-get install -y jq
@@ -54,7 +52,7 @@ if [ ! -f "config/config-file_MODIFIED.json" ]; then
     # Modify the required fields using jq and overwrite the original file
     jq '.containers[0].image.tag = "1.2" |
         .containers[0].image.registry = "example.com:80" |
-        .containers[0].image.name = "hw-go"' "$FILE" > tmp.$$.json && mv tmp.$$.json "$FILE"
+        .containers[0].image.name = "hw-go"' "$FILE" >tmp.$$.json && mv tmp.$$.json "$FILE"
 fi
 
 sudo docker build -t example.com:80/hw-go:1.2 .

@@ -193,7 +193,7 @@ function update_probes {
             }
         }
     }
-    ' "$FILE" > tmpfile && mv tmpfile "$FILE"
+    ' "$FILE" >tmpfile && mv tmpfile "$FILE"
 }
 
 # Call function to update probes

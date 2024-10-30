@@ -41,12 +41,10 @@ if ! systemctl is-active --quiet kubelet; then
     sudo systemctl start kubelet
 fi
 
-# Important: sudo systemctl status kube-apiserver
-
 TIMEOUT=600
 ELAPSED_TIME=0
 SLEEP_DURATION=5
-while ! kubectl get --raw="/api/v1/namespaces/kube-system/pods" > /dev/null 2>&1; do
+while ! kubectl get --raw="/api/v1/namespaces/kube-system/pods" >/dev/null 2>&1; do
     if [ $ELAPSED_TIME -ge $TIMEOUT ]; then
         echo "Timeout exceeded while waiting for the API server to respond."
         echo "Attempting to restart Kubernetes services..."

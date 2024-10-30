@@ -47,7 +47,7 @@ cd kpimon
 
 echo "Creating and modifying the configuration file xapp-descriptor/config_MODIFIED.json"
 # Check if jq is installed; if not, install it
-if ! command -v jq &> /dev/null; then
+if ! command -v jq &>/dev/null; then
     echo "Installing jq..."
     sudo apt-get update
     sudo apt-get install -y jq
@@ -59,7 +59,7 @@ if [ ! -f "xapp-descriptor/config_MODIFIED.json" ]; then
     # Modify the required fields using jq and overwrite the original file
     jq '.containers[0].image.tag = "1.0.0" |
         .containers[0].image.registry = "example.com:80" |
-        .containers[0].image.name = "kpimon"' "$FILE" > tmp.$$.json && mv tmp.$$.json "$FILE"
+        .containers[0].image.name = "kpimon"' "$FILE" >tmp.$$.json && mv tmp.$$.json "$FILE"
 fi
 
 # Create a backup of the original Dockerfile if it doesn't already exist

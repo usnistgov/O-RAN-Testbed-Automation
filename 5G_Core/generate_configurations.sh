@@ -28,9 +28,10 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
+# Exit immediately if a command fails
 set -e
 
-if ! command -v yq &> /dev/null; then
+if ! command -v yq &>/dev/null; then
     echo "Installing yq..."
     YQ_PATH="https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64"
     sudo wget $YQ_PATH -O /usr/bin/yq
@@ -41,8 +42,8 @@ fi
 echo "Parsing options.yaml..."
 # Check if the YAML file exists, if not, set and save default values
 if [ ! -f "options.yaml" ]; then
-    echo "plmn: 00101" > "options.yaml"
-    echo "tac: 7" >> "options.yaml"
+    echo "plmn: 00101" >"options.yaml"
+    echo "tac: 7" >>"options.yaml"
 fi
 # Read PLMN and TAC values from the YAML file using yq
 PLMN=$(yq eval '.plmn' options.yaml)
@@ -170,15 +171,15 @@ configure_ngap_server() {
     }
     /metrics:/ { in_ngap = 0; in_server = 0 } # Exit NGAP block upon reaching metrics
     { print } # Print all other lines as they are
-    ' $FILE_PATH > tmp.yaml && mv tmp.yaml $FILE_PATH
+    ' $FILE_PATH >tmp.yaml && mv tmp.yaml $FILE_PATH
 }
 
 # Set the following AMF IP, and it will be updated in the configuration file
 AMF_IP=$(get_configuration_ngap_server_ip)
 AMF_IP_BIND=$(get_primary_ip_for_network $AMF_IP)
 AMF_ADDRESSES_OUTPUT="configs/get_amf_address.txt"
-echo "$AMF_IP" > $AMF_ADDRESSES_OUTPUT
-echo "$AMF_IP_BIND" >> $AMF_ADDRESSES_OUTPUT
+echo "$AMF_IP" >$AMF_ADDRESSES_OUTPUT
+echo "$AMF_IP_BIND" >>$AMF_ADDRESSES_OUTPUT
 
 # Define Open5GS config paths and properties
 declare -A CONFIG_PATHS

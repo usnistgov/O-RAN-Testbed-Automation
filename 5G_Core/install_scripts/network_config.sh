@@ -37,7 +37,7 @@ IPv6_ADDR="2001:db8:cafe::1/48"
 IPv4_SUBNET="10.45.0.0/16"
 
 # Check if the tun interface already exists, if not, add it
-if ! ip link show $INTERFACE > /dev/null 2>&1; then
+if ! ip link show $INTERFACE >/dev/null 2>&1; then
     sudo ip tuntap add name $INTERFACE mode tun
 fi
 
@@ -61,11 +61,11 @@ sudo sysctl -w net.ipv4.ip_forward=1
 sudo sysctl -w net.ipv6.conf.all.forwarding=1
 
 # Check if the iptables MASQUERADE rule already exists, if not, add it
-if ! sudo iptables -t nat -C POSTROUTING -s $IPv4_SUBNET ! -o $INTERFACE -j MASQUERADE 2> /dev/null; then
+if ! sudo iptables -t nat -C POSTROUTING -s $IPv4_SUBNET ! -o $INTERFACE -j MASQUERADE 2>/dev/null; then
     sudo iptables -t nat -A POSTROUTING -s $IPv4_SUBNET ! -o $INTERFACE -j MASQUERADE
 fi
 
 # Check if the ip6tables MASQUERADE rule already exists, if not, add it
-if ! sudo ip6tables -t nat -C POSTROUTING -s $IPv6_SUBNET -o $INTERFACE -j MASQUERADE 2> /dev/null; then
-    sudo ip6tables -t nat -A POSTROUTING -s $IPv6_SUBNET -o $INTERFACE -j MASQUERADE 2> /dev/null
+if ! sudo ip6tables -t nat -C POSTROUTING -s $IPv6_SUBNET -o $INTERFACE -j MASQUERADE 2>/dev/null; then
+    sudo ip6tables -t nat -A POSTROUTING -s $IPv6_SUBNET -o $INTERFACE -j MASQUERADE 2>/dev/null
 fi

@@ -36,7 +36,7 @@ if [ -f "srsRAN_Project/build/apps/gnb/gnb" ]; then
     exit 0
 fi
 
-if ! command -v realpath &> /dev/null; then
+if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
     sudo apt-get install -y coreutils
 fi
@@ -112,7 +112,7 @@ echo "Building ZeroMQ libzmq..."
 # fi
 #rm -rf libzmq
 if [ ! -d libzmq ]; then
-	git clone https://github.com/zeromq/libzmq.git
+    git clone https://github.com/zeromq/libzmq.git
 fi
 cd libzmq
 ./autogen.sh
@@ -128,7 +128,7 @@ echo
 echo "Building ZeroMQ czmq..."
 #rm -rf czmq
 if [ ! -d czmq ]; then
-	git clone https://github.com/zeromq/czmq.git
+    git clone https://github.com/zeromq/czmq.git
 fi
 cd czmq
 ./autogen.sh
@@ -167,11 +167,11 @@ cd $baseDirectory
 # Calculate how long the script took to run
 INSTALL_END_TIME=$(date +%s)
 if [ -n "$INSTALL_START_TIME" ]; then
-  DURATION=$((INSTALL_END_TIME - INSTALL_START_TIME))
-  DURATION_MINUTES=$(echo "scale=5; $DURATION/ 60" | bc)
-  echo "The gNodeB installation process took $DURATION_MINUTES minutes to complete."
-  mkdir -p logs
-  echo "$DURATION_MINUTES minutes" >> install_time.txt
+    DURATION=$((INSTALL_END_TIME - INSTALL_START_TIME))
+    DURATION_MINUTES=$(echo "scale=5; $DURATION/ 60" | bc)
+    echo "The gNodeB installation process took $DURATION_MINUTES minutes to complete."
+    mkdir -p logs
+    echo "$DURATION_MINUTES minutes" >>install_time.txt
 fi
 
 echo "The gNodeB installation completed successfully."

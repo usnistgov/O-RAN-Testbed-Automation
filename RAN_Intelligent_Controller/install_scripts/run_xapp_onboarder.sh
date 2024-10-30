@@ -33,19 +33,17 @@ echo "# Script: $(realpath $0)..."
 # Exit immediately if a command fails
 set -e
 
-if [ ! -f "full_install.sh" ]; then
-    echo "You must run this script from the main directory with full_install.sh"
-    exit 1
-fi
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+cd $(dirname "$SCRIPT_DIR")
 
 # Ensure you're in the correct directory
 cd appmgr/xapp_orchestrater/dev/xapp_onboarder
 
 # Install prerequisites
-if ! command -v python3 &> /dev/null; then
+if ! command -v python3 &>/dev/null; then
     sudo apt-get install -y python3
 fi
-if ! command -v pip &> /dev/null; then
+if ! command -v pip &>/dev/null; then
     sudo apt-get install -y python3-pip
 fi
 if ! dpkg -l | grep -q python3-venv; then
@@ -64,6 +62,16 @@ else
         echo "Cleaning up previous virtual environment before creating a new one..."
         sudo rm -rf venv
     fi
+fi
+
+# Ensure that any old build directories are removed before creating a new one
+if [ -d build ]; then
+    echo "Cleaning up previous build..."
+    sudo rm -rf build
+fi
+if [ -d xapp_onboarder.egg-info ]; then
+    echo "Cleaning up previous xapp_onboarder.egg-info..."
+    sudo rm -rf xapp_onboarder.egg-info
 fi
 
 # Create a virtual environment and activate it
@@ -86,11 +94,39 @@ pip install --upgrade pip
 # Install dependencies ensuring there are no cached packages
 pip cache purge
 
-# Append 'setuptools' to the end of requirements.txt
-echo "setuptools" >> requirements.txt
-
-# Replace '==' with '>=' in requirements.txt
-sed -i 's/==/>=/g' requirements.txt
+# Update the requirements
+rm -rf requirements.txt
+cat <<EOF | sudo tee requirements.txt
+aniso8601==9.0.1
+attrs==24.2.0
+blinker==1.8.2
+certifi==2024.8.30
+chardet==5.2.0
+charset-normalizer==3.4.0
+click==8.1.7
+fire==0.7.0
+Flask==3.0.3
+flask-restx==1.3.0
+idna==3.10
+importlib_metadata==8.5.0
+importlib_resources==6.4.5
+itsdangerous==2.2.0
+Jinja2==3.1.4
+jsonschema==4.23.0
+jsonschema-specifications==2024.10.1
+MarkupSafe==3.0.2
+pyrsistent==0.20.0
+pytz==2024.2
+PyYAML==6.0.2
+referencing==0.35.1
+requests==2.32.3
+rpds-py==0.20.0
+six==1.16.0
+termcolor==2.5.0
+urllib3==2.2.3
+Werkzeug==3.0.6
+zipp==3.20.2
+EOF
 
 # In case dms_cli binary is already installed, it can be uninstalled using the following command
 #if pip show xapp_onboarder > /dev/null 2>&1; then
@@ -98,7 +134,8 @@ sed -i 's/==/>=/g' requirements.txt
 #fi
 
 # Install xapp_onboarder using the following command
-if ! pip show xapp_onboarder > /dev/null 2>&1; then
+if ! pip show xapp_onboarder >/dev/null 2>&1; then
+    echo
     echo "Installing..."
     pip install ./
 fi
@@ -124,7 +161,7 @@ echo "Symbolic link created for dms_cli at /usr/local/bin/dms_cli"
 
 cd ../../../../ # Main directory
 
-if ! curl -s $CHART_REPO_URL > /dev/null; then
+if ! curl -s $CHART_REPO_URL >/dev/null; then
     echo "Server at http://0.0.0.0:8090 is not running. Attempting to start..."
     sudo ./install_scripts/run_chart_museum.sh
 else

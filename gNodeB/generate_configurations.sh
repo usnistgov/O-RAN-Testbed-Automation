@@ -52,7 +52,7 @@ fi
 echo "PLMN value: $PLMN"
 echo "TAC value: $TAC"
 
-if ! command -v yq &> /dev/null; then
+if ! command -v yq &>/dev/null; then
     echo "Installing yq..."
     YQ_PATH="https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64"
     sudo wget $YQ_PATH -O /usr/bin/yq
@@ -88,7 +88,7 @@ prompt_for_e2term_ip() {
 }
 
 # Check if kubectl is installed
-if ! command -v kubectl &> /dev/null; then
+if ! command -v kubectl &>/dev/null; then
     echo "Could not find kubectl."
     IP_e2term=$(prompt_for_e2term_ip)
 else
@@ -128,7 +128,7 @@ prompt_for_addresses() {
 # Check if the file exists and has at least two lines
 if [[ -f "$FILE_PATH" ]]; then
     # Read the file and check for at least two non-empty lines
-    mapfile -t addresses < "$FILE_PATH"
+    mapfile -t addresses <"$FILE_PATH"
     if [[ ${#addresses[@]} -ge 2 ]] && [[ -n ${addresses[0]} ]] && [[ -n ${addresses[1]} ]]; then
         AMF_ADDR="${addresses[0]}"
         AMF_ADDR_BIND="${addresses[1]}"
@@ -199,7 +199,7 @@ update_yaml configs/gnb.yaml "ru_sdr" "srate" "23.04"
 update_yaml configs/gnb.yaml "ru_sdr" "tx_gain" "75"
 update_yaml configs/gnb.yaml "ru_sdr" "rx_gain" "75"
 update_yaml configs/gnb.yaml "ru_sdr" "clock" null # Handle null for clock
-update_yaml configs/gnb.yaml "ru_sdr" "sync" null # Handle null for sync
+update_yaml configs/gnb.yaml "ru_sdr" "sync" null  # Handle null for sync
 
 # Update configuration values for 5G cell parameters
 update_yaml configs/gnb.yaml "cell_cfg" "dl_arfcn" "368500" # NR ARFCN

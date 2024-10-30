@@ -41,11 +41,11 @@ run_in_background() {
     if [ -f "configs/${1%?}.yaml" ]; then
         config_file="-c $(pwd)/configs/${1%?}.yaml"
     fi
-    if pgrep -x "$app_name" > /dev/null; then
+    if pgrep -x "$app_name" >/dev/null; then
         echo "Already running $app_name."
     else
         echo "Starting $app_name in background..."
-        ./open5gs/install/bin/$app_name $config_file > /dev/null 2>&1 &
+        ./open5gs/install/bin/$app_name $config_file >/dev/null 2>&1 &
     fi
 }
 
@@ -55,7 +55,7 @@ run_in_terminal() {
     if [ -f "configs/${1%?}.yaml" ]; then
         config_file="-c $(pwd)/configs/${1%?}.yaml"
     fi
-    if pgrep -x "$app_name" > /dev/null; then
+    if pgrep -x "$app_name" >/dev/null; then
         echo "Already running $app_name."
     else
         echo "Starting $app_name in GNOME Terminal..."

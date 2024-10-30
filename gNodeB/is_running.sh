@@ -28,7 +28,7 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-if pgrep -x "gnb" > /dev/null; then
+if pgrep -x "gnb" >/dev/null; then
     echo "gNodeB: RUNNING"
 else
     echo "gNodeB: NOT RUNNING"

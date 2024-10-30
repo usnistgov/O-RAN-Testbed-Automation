@@ -28,41 +28,28 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
+echo "# Script: $(realpath $0)..."
+
 # Install Wireshark if not already installed
-if ! dpkg -s "wireshark" &> /dev/null; then
-    echo "Installing Wireshark..."
-    sudo apt-get update && sudo apt-get install -y wireshark
-fi
-
-# Add user to the Wireshark group if not already a member
-if ! groups $USER | grep -q '\bwireshark\b'; then
-    echo "Adding $USER to the Wireshark group..."
-    sudo usermod -a -G wireshark $USER
-fi
-
-# Set permissions for dumpcap
-if [[ $(getcap /usr/bin/dumpcap) != "/usr/bin/dumpcap cap_net_admin,cap_net_raw=eip" ]]; then
-    echo "Setting permissions for dumpcap..."
-    sudo chgrp wireshark /usr/bin/dumpcap
-    sudo chmod 750 /usr/bin/dumpcap
-    sudo setcap cap_net_raw,cap_net_admin=eip /usr/bin/dumpcap
-fi
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+sudo $SCRIPT_DIR/../../Additional_Scripts/./install_and_configure_wireshark.sh
 
 # Check if krew is installed
-if ! kubectl krew > /dev/null 2>&1; then
+if ! kubectl krew >/dev/null 2>&1; then
     echo "Krew is not installed. Installing Krew..."
     (
-      set -x; cd "$(mktemp -d)" &&
-      OS="$(uname | tr '[:upper:]' '[:lower:]')" &&
-      ARCH="$(uname -m | sed -e 's/x86_64/amd64/' -e 's/\(arm\)\(64\)\?.*/\1\2/' -e 's/aarch64$/arm64/')" &&
-      KREW="krew-${OS}_${ARCH}" &&
-      curl -fsSLO "https://github.com/kubernetes-sigs/krew/releases/latest/download/${KREW}.tar.gz" &&
-      tar zxvf "${KREW}.tar.gz" &&
-      ./"${KREW}" install krew
+        set -x
+        cd "$(mktemp -d)" &&
+            OS="$(uname | tr '[:upper:]' '[:lower:]')" &&
+            ARCH="$(uname -m | sed -e 's/x86_64/amd64/' -e 's/\(arm\)\(64\)\?.*/\1\2/' -e 's/aarch64$/arm64/')" &&
+            KREW="krew-${OS}_${ARCH}" &&
+            curl -fsSLO "https://github.com/kubernetes-sigs/krew/releases/latest/download/${KREW}.tar.gz" &&
+            tar zxvf "${KREW}.tar.gz" &&
+            ./"${KREW}" install krew
     )
     # Dynamically update the PATH for the current shell session
     export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
-    echo 'export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"' >> ~/.bashrc
+    echo 'export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"' >>~/.bashrc
     echo "Krew installation complete."
 fi
 
@@ -78,7 +65,7 @@ POD_INFO=($(kubectl get pods --all-namespaces --no-headers | awk '{print $1 ":" 
 echo
 echo "List of Kubernetes pods:"
 for i in "${!POD_INFO[@]}"; do
-    echo -e "  [$((i+1))]\t${POD_INFO[$i]}"
+    echo -e "  [$((i + 1))]\t${POD_INFO[$i]}"
 done
 echo
 read -p "Enter the pod number to capture packets from: " POD_CHOICE
@@ -87,7 +74,7 @@ if [[ ! "$POD_CHOICE" =~ ^[0-9]+$ ]]; then
     echo "Invalid input: Please enter a numeric value."
     exit 1
 fi
-POD_CHOICE_INDEX=$((POD_CHOICE-1))
+POD_CHOICE_INDEX=$((POD_CHOICE - 1))
 if [ $POD_CHOICE_INDEX -lt 0 ] || [ $POD_CHOICE_INDEX -ge ${#POD_INFO[@]} ]; then
     echo "Invalid pod number: Please enter a number between 1 and ${#POD_INFO[@]}."
     exit 1

@@ -176,8 +176,6 @@ sudo sed -i "/$HOSTNAME/d" /etc/hosts
 # Add the new entry to /etc/hosts
 echo "$IP_ADDRESS $HOSTNAME" | sudo tee -a /etc/hosts
 
-#printenv
-
 echo "### Docker version  = "${DOCKERV}
 echo "### k8s version     = "${KUBEV}
 echo "### helm version    = "${HELMV}
@@ -195,8 +193,7 @@ sudo mkdir -p /etc/apt/keyrings
 sudo curl -fsSL https://baltocdn.com/helm/signing.asc | gpg --dearmor | sudo tee /etc/apt/keyrings/helm-apt-keyring.gpg > /dev/null
 sudo echo "deb [signed-by=/etc/apt/keyrings/helm-apt-keyring.gpg] https://baltocdn.com/helm/stable/debian/ all main" | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list
 
-# If this errors you can remove Kubernetes with: sudo rm /etc/apt/sources.list.d/kubernetes.list
-# If this errors you can remove Helm with: sudo rm /etc/apt/sources.list.d/helm-stable-debian.list
+# If this errors you can remove Kubernetes with `sudo rm /etc/apt/sources.list.d/kubernetes.list` or remove Helm with `sudo rm /etc/apt/sources.list.d/helm-stable-debian.list`
 sudo apt-get update
 
 APTOPTS="--allow-downgrades --allow-change-held-packages --allow-unauthenticated --ignore-hold "
@@ -493,6 +490,11 @@ if command -v docker &> /dev/null; then
     fi
 fi
 
+if sudo systemctl is-active --quiet containerd; then
+    echo "Stopping containerd..."
+    sudo systemctl stop containerd
+fi
+
 # Stop, disable, and mask kubelet service if it's running
 if sudo systemctl is-active --quiet kubelet; then
     echo "Stopping, disabling, and masking kubelet service..."
@@ -504,8 +506,10 @@ fi
 
 # Reset Kubernetes using kubeadm if kubeadm is installed
 if command -v kubeadm &> /dev/null; then
+    echo "Unmounting /var/lib/kubelet mounts..."
+    mount | grep '/var/lib/kubelet' | awk '{print $3}' | xargs -r sudo umount -f
     echo "Resetting Kubernetes..."
-    echo "y" | sudo kubeadm reset -f
+    echo "y" | sudo kubeadm reset -f -v5
     echo "Kubernetes reset successfully."
 fi
 
@@ -592,6 +596,10 @@ sudo ip link delete flannel.1 2>/dev/null || true
 sudo ip link delete weave 2>/dev/null || true
 echo "Kubernetes is cleaned up."
 
+# -----------------------------------------------------------------------------
+# Kubernetes installation and configuration
+# -----------------------------------------------------------------------------
+
 echo
 echo
 echo "Installing Kubernetes..."
@@ -661,9 +669,6 @@ echo "Kubernetes components reinstalled and ready for initialization."
 
 mkdir -p $HOME/.kube
 sudo chown -R $USER:$USER $HOME/.kube/
-
-NODETYPE="master"
-if [ "$NODETYPE" == "master" ]; then # MASTER_NODE_COND
 
 if [[ ${KUBEVERSIONWITHOUTSUFFIX} == 1.13.* ]]; then
     cat <<EOF | tee $HOME/.kube/kube-config.yaml > /dev/null
@@ -759,34 +764,7 @@ kind: KubeProxyConfiguration
 mode: ipvs
 EOF
 fi
-# Consider adding the following before apiServerExtraArgs:
-# extraArgs:
-#   feature-gates: "APIPriorityAndFairness=true"
-#   enable-aggregator-routing: "true"
 
-# echo "Configuring Flannel CNI configurations..."
-# sudo mkdir -p /etc/cni/net.d
-# cat <<EOF | sudo tee /etc/cni/net.d/10-flannel.conflist > /dev/null
-# {
-#     "cniVersion": "0.4.0",
-#     "name": "flannel",
-#     "plugins": [
-#         {
-#             "type": "flannel",
-#             "delegate": {
-#                 "hairpinMode": true,
-#                 "isDefaultGateway": true
-#             }
-#         },
-#         {
-#             "type": "portmap",
-#             "capabilities": {
-#                 "portMappings": true
-#             }
-#         }
-#     ]
-# }
-# EOF
 if [ -f /etc/cni/net.d/10-flannel.conflist ]; then
     echo "Removing outdated  Flannel CNI configuration..."
     sudo rm -rf /etc/cni/net.d/10-flannel.conflist
@@ -874,50 +852,6 @@ fi
 if ! kubectl apply -f "$HOME/.kube/kube-proxy-rbac.yaml"; then
     echo "Failed to apply Kube-Proxy ClusterRoleBinding, skipping."
 fi
-
-# echo "Configuring RBAC for metrics-server..."
-# cat <<EOF > $HOME/.kube/metrics-server-rbac.yaml
-# apiVersion: rbac.authorization.k8s.io/v1
-# kind: ClusterRole
-# metadata:
-#   name: system:metrics-server
-# rules:
-# - apiGroups:
-#   - ""
-#   resources:
-#   - pods
-#   - nodes
-#   - nodes/stats
-#   - namespaces
-#   - configmaps
-#   verbs:
-#   - get
-#   - list
-#   - watch
-# ---
-# apiVersion: rbac.authorization.k8s.io/v1
-# kind: ClusterRoleBinding
-# metadata:
-#   name: system:metrics-server
-# roleRef:
-#   apiGroup: rbac.authorization.k8s.io
-#   kind: ClusterRole
-#   name: system:metrics-server
-# subjects:
-# - kind: ServiceAccount
-#   name: metrics-server
-#   namespace: kube-system
-# EOF
-
-# # Apply RBAC for metrics-server
-# if ! kubectl apply -f "$HOME/.kube/metrics-server-rbac.yaml"; then
-#     echo "Failed to apply RBAC for metrics-server, skipping."
-# fi
-
-# # Resource metrics enable commands like: kubectl top pod [pod_name] -n [namespace]
-# if ! kubectl apply -f "https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml"; then
-#     echo "Failed to apply resource metrics, skipping."
-# fi
 
 # Create local-storage storage class
 cat <<EOF > $HOME/.kube/local-storage-class.yaml
@@ -1010,9 +944,6 @@ if [ "$PV_NODE_NAME" == "$HOSTNAME" ]; then
 fi
 
 kubectl label --overwrite nodes "$PV_NODE_NAME" local-storage=enable
-
-echo "Done with master node setup"
-fi # MASTER_NODE_COND
 
 # If HELM_REPO_HOST is set, add it to /etc/hosts
 HELM_REPO_HOST="helm.ricinfra.local"

@@ -28,7 +28,7 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-if pgrep -x "srsue" > /dev/null; then
+if pgrep -x "srsue" >/dev/null; then
     echo "User Equipment: RUNNING"
 else
     echo "User Equipment: NOT RUNNING"

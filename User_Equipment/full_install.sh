@@ -31,14 +31,18 @@
 # Exit immediately if a command fails
 set -e
 
-if [ -f "srsRAN_4G/build/srsue/src/srsue" ]; then
-    echo "srsRAN_4G is already installed. Skipping."
-    exit 0
-fi
-
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
     sudo apt-get install -y coreutils
+fi
+
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+cd "$SCRIPT_DIR"
+
+# Check for srsue binary to determine if srsRAN_4G is already installed
+if [ -f "srsRAN_4G/build/srsue/src/srsue" ]; then
+    echo "srsRAN_4G is already installed. Skipping."
+    exit 0
 fi
 
 # Starts a script in background that calls `sudo -v` every minute to ensure that sudo stays active, ensuring the script runs without requiring user interaction

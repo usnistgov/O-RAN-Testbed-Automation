@@ -31,6 +31,24 @@
 # Exit immediately if a command fails
 set -e
 
+if ! command -v realpath &>/dev/null; then
+    echo "Package \"coreutils\" not found, installing..."
+    sudo apt-get install -y coreutils
+fi
+
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+cd "$SCRIPT_DIR"
+
+# Backward compatibility with previous installation structure
+if [ -d RAN_Intelligent_Controller/ric-dep ]; then
+    sudo mv RAN_Intelligent_Controller/ric-dep RAN_Intelligent_Controller/Near-Real-Time-RIC/ric-dep
+    sudo mv RAN_Intelligent_Controller/appmgr RAN_Intelligent_Controller/Near-Real-Time-RIC/appmgr || true
+    sudo mv RAN_Intelligent_Controller/e2-interface RAN_Intelligent_Controller/Near-Real-Time-RIC/e2-interface || true
+    sudo mv RAN_Intelligent_Controller/charts RAN_Intelligent_Controller/Near-Real-Time-RIC/charts || true
+    sudo mv RAN_Intelligent_Controller/xApps RAN_Intelligent_Controller/Near-Real-Time-RIC/xApps || true
+    sudo mv RAN_Intelligent_Controller/logs RAN_Intelligent_Controller/Near-Real-Time-RIC/logs || true
+fi
+# Check if the applications are already installed and ask the user if they should be reset
 Open5GS_Installed=false
 if [ -f "5G_Core/open5gs/install/bin/open5gs-amfd" ] && [ -f "5G_Core/open5gs/install/bin/open5gs-upfd" ]; then
     Open5GS_Installed=true
@@ -66,12 +84,14 @@ if [ "$Open5GS_Installed" = true ] || [ "$gNodeB_Installed" = true ] || [ "$UE_I
         sudo rm -rf User_Equipment/libzmq
         sudo rm -rf User_Equipment/logs
         sudo rm -rf User_Equipment/configs
-        sudo rm -rf RAN_Intelligent_Controller/ric-dep
-        sudo rm -rf RAN_Intelligent_Controller/appmgr
-        sudo rm -rf RAN_Intelligent_Controller/e2-interface
-        sudo rm -rf RAN_Intelligent_Controller/charts
-        sudo rm -rf RAN_Intelligent_Controller/xApps
-        sudo rm -rf RAN_Intelligent_Controller/logs
+        sudo rm -rf RAN_Intelligent_Controller/Near-Real-Time-RIC/ric-dep
+        sudo rm -rf RAN_Intelligent_Controller/Near-Real-Time-RIC/appmgr
+        sudo rm -rf RAN_Intelligent_Controller/Near-Real-Time-RIC/e2-interface
+        sudo rm -rf RAN_Intelligent_Controller/Near-Real-Time-RIC/charts
+        sudo rm -rf RAN_Intelligent_Controller/Near-Real-Time-RIC/xApps
+        sudo rm -rf RAN_Intelligent_Controller/Near-Real-Time-RIC/logs
+        sudo rm -rf RAN_Intelligent_Controller/Non-Real-Time-RIC/dep
+        sudo rm -rf RAN_Intelligent_Controller/Non-Real-Time-RIC/logs
         echo "Successfully removed previous installations."
     fi
 fi
@@ -118,12 +138,12 @@ cd ..
 echo
 echo
 echo "################################################################################"
-echo "# Installing RAN Intelligent Controller...                                     #"
+echo "# Installing Near Real-Time RAN Intelligent Controller...                      #"
 echo "################################################################################"
 echo
 echo
 
-cd RAN_Intelligent_Controller
+cd RAN_Intelligent_Controller/Near-Real-Time-RIC
 ./full_install.sh
 
 cd ..

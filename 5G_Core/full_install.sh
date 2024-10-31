@@ -31,15 +31,18 @@
 # Exit immediately if a command fails
 set -e
 
+if ! command -v realpath &>/dev/null; then
+    echo "Package \"coreutils\" not found, installing..."
+    sudo apt-get install -y coreutils
+fi
+
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+cd "$SCRIPT_DIR"
+
 # Check for open5gs-amfd and open5gs-upfd binaries to determine if Open5GS is already installed
 if [ -f "open5gs/install/bin/open5gs-amfd" ] && [ -f "open5gs/install/bin/open5gs-upfd" ]; then
     echo "Open5GS is already installed. Skipping."
     exit 0
-fi
-
-if ! command -v realpath &>/dev/null; then
-    echo "Package \"coreutils\" not found, installing..."
-    sudo apt-get install -y coreutils
 fi
 
 # Starts a script in background that calls `sudo -v` every minute to ensure that sudo stays active, ensuring the script runs without requiring user interaction

@@ -34,40 +34,40 @@ echo "# Script: $(realpath $0)..."
 IP_ADDRESS=$(hostname -I | awk '{print $1}')
 
 # Get the file path from the command line argument
-FILE=$1
+RECIPE_PATH=$1
 
 # Check if the file path is provided
-if [[ -z "$FILE" ]]; then
+if [[ -z "$RECIPE_PATH" ]]; then
     echo "Error: No file path provided."
     echo "Usage: $0 <path_to_yaml_file>"
     exit 1
 fi
 
 # Check if the file exists and is readable
-if [[ ! -f "$FILE" ]]; then
-    echo "Error: File '$FILE' does not exist."
+if [[ ! -f "$RECIPE_PATH" ]]; then
+    echo "Error: File '$RECIPE_PATH' does not exist."
     exit 1
 fi
 
-if [[ ! -r "$FILE" ]]; then
-    echo "Error: File '$FILE' is not readable."
+if [[ ! -r "$RECIPE_PATH" ]]; then
+    echo "Error: File '$RECIPE_PATH' is not readable."
     exit 1
 fi
 
 # Use sed to find and replace the IP addresses in the ricip and auxip fields
-sed -i "/extsvcplt:/,/^ *$/s/ricip: \".*\"/ricip: \"$IP_ADDRESS\"/" $FILE
-sed -i "/extsvcplt:/,/^ *$/s/auxip: \".*\"/auxip: \"$IP_ADDRESS\"/" $FILE
-echo "IP addresses updated to: $IP_ADDRESS in the file $FILE"
+sed -i "/extsvcplt:/,/^ *$/s/ricip: \".*\"/ricip: \"$IP_ADDRESS\"/" $RECIPE_PATH
+sed -i "/extsvcplt:/,/^ *$/s/auxip: \".*\"/auxip: \"$IP_ADDRESS\"/" $RECIPE_PATH
+echo "IP addresses updated to: $IP_ADDRESS in the file $RECIPE_PATH"
 
 # Update Prometheus URL in vespamgr to point to r4-infrastructure
 PROMETHEUS_NEW_URL="http://r4-infrastructure-prometheus-server.ricinfra"
 # Check if the prometheusurl is present
-if grep -q "prometheusurl:" $FILE; then
+if grep -q "prometheusurl:" $RECIPE_PATH; then
     # Proceed with updating if the key exists
-    sed -i "/vespamgr:/,/prometheusurl:/s|prometheusurl: .*|prometheusurl: \"$PROMETHEUS_NEW_URL\"|" $FILE
-    echo "Prometheus URL updated to $PROMETHEUS_NEW_URL in the file $FILE"
+    sed -i "/vespamgr:/,/prometheusurl:/s|prometheusurl: .*|prometheusurl: \"$PROMETHEUS_NEW_URL\"|" $RECIPE_PATH
+    echo "Prometheus URL updated to $PROMETHEUS_NEW_URL in the file $RECIPE_PATH"
 else
-    echo "No Prometheus URL found in the vespamgr section of $FILE"
+    echo "No Prometheus URL found in the vespamgr section of $RECIPE_PATH"
 fi
 
 # Function to add or update liveness and readiness probes
@@ -193,10 +193,10 @@ function update_probes {
             }
         }
     }
-    ' "$FILE" >tmpfile && mv tmpfile "$FILE"
+    ' "$RECIPE_PATH" >tmpfile && mv tmpfile "$RECIPE_PATH"
 }
 
 # Call function to update probes
 update_probes
 
-echo "Probes updated in the file $FILE"
+echo "Probes updated in the file $RECIPE_PATH"

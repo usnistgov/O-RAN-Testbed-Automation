@@ -28,12 +28,18 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-echo "--- Installing RIC with J-release ---"
+# Exit immediately if a command fails
+set -e
 
 if ! command -v realpath &> /dev/null; then
     echo "Package \"coreutils\" not found, installing..."
     sudo apt-get install -y coreutils
 fi
+
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+cd "$SCRIPT_DIR"
+
+echo "Installing Near-RT RIC with J-Release..."
 
 # Starts a script in background that calls `sudo -v` every minute to ensure that sudo stays active, ensuring the script runs without requiring user interaction
 sudo ls &> /dev/null
@@ -41,9 +47,6 @@ sudo ls &> /dev/null
 
 # Get the start timestamp in seconds
 INSTALL_START_TIME=$(date +%s)
-
-# Exit immediately if a command fails
-set -e
 
 BASE_DIR=$(pwd)
 sudo rm -rf logs/
@@ -99,6 +102,8 @@ fi
 if [ "$SHOULD_RESET_KUBE" = false ]; then
     echo "All kube-system pods are already running, skipping."
 else
+    cd $BASE_DIR
+    
     # Download ric-dep from gerrit
     if [ ! -d "ric-dep" ]; then
         git clone https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep -b j-release
@@ -112,15 +117,9 @@ else
     cd $BASE_DIR/ric-dep/bin/
 
     if ! ./install_k8s_and_helm.sh; then
-        echo "An error occured when running $(pwd)/install_k8s_and_helm.sh."
+        echo "An error occured when running $BASE_DIR/install_k8s_and_helm.sh."
         exit 1
     fi
-    # # If install_k8s_and_helm.sh was ran with sudo, then the following would be needed:
-    # sudo chown $USER:$USER /root/.kube/config
-    # mkdir -p $HOME/.kube
-    # sudo cp -f /etc/kubernetes/admin.conf $HOME/.kube/config
-    # sudo chown $USER:$USER $HOME/.kube/config
-    # echo "export KUBECONFIG=$HOME/.kube/config" >> $HOME/.bashrc
 
     echo "Disabling Kong Pod and Removing Ingress Files..."
     # Check if yq is installed, and install it if not
@@ -154,7 +153,7 @@ fi
 cd $BASE_DIR
 
 echo
-echo "Installing RIC Intelligent Controller..."
+echo "Installing Near-Real Time RAN Intelligent Controller..."
 # Determine if RAN Intelligent Controller pods should be reset
 SHOULD_RESET_RIC=false
 if [ ! -d "ric-dep" ]; then
@@ -179,11 +178,13 @@ else
     sudo ./install_scripts/delete_namespace.sh kubearmor ricinfra ricplt || true
 
     echo "Revising RIC Installation YAML File..."
-    RIC_YAML_FILE_PATH="ric-dep/RECIPE_EXAMPLE/example_recipe_latest_stable_MODIFIED.yaml"
-    sudo chown $USER:$USER "ric-dep/RECIPE_EXAMPLE/example_recipe_latest_stable.yaml"
-    sudo cp ric-dep/RECIPE_EXAMPLE/example_recipe_latest_stable.yaml $RIC_YAML_FILE_PATH
-    sudo chown $USER:$USER $RIC_YAML_FILE_PATH
-    sudo ./install_scripts/revise_example_recipe_latest_stable.yaml.sh $RIC_YAML_FILE_PATH
+    RIC_YAML_FILE_NAME="example_recipe_oran_j_release.yaml"
+    RIC_YAML_FILE_NAME_MODIFIED="example_recipe_oran_j_release_MODIFIED.yaml"
+
+    sudo chown $USER:$USER "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME"
+    sudo cp "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME" "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME_MODIFIED"
+    sudo chown $USER:$USER "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME_MODIFIED"
+    sudo ./install_scripts/revise_example_recipe_yaml.sh "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME_MODIFIED"
 
     # Wait for kube-apiserver to be ready, timeout of 30 minutes (1800 seconds) before restarting service
     echo "Waiting for the Kubernetes API server to become ready before installing near RT-RIC..."
@@ -194,14 +195,14 @@ else
 
     SUCCESS="false"
     while [ "$SUCCESS" != "true" ]; do
-        RIC_INSTALLATION_STDOUT="$(pwd)/logs/ric_installation_stdout.txt"
-        RIC_INSTALLATION_LOG_JSON="$(pwd)/logs/ric_installation_stdout_parsed.json"
+        RIC_INSTALLATION_STDOUT="$BASE_DIR/logs/ric_installation_stdout.txt"
+        RIC_INSTALLATION_LOG_JSON="$BASE_DIR/logs/ric_installation_stdout_parsed.json"
 
         echo
         echo
         echo "Installing near RT-RIC..."
         cd ric-dep/bin/
-        sudo ./install -f ../RECIPE_EXAMPLE/example_recipe_latest_stable.yaml 2>&1 | tee -a "$RIC_INSTALLATION_STDOUT"
+        sudo ./install -f "../RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME_MODIFIED" 2>&1 | tee -a "$RIC_INSTALLATION_STDOUT"
         cd $BASE_DIR
         echo "Parsing output to check for successful near RT-RIC installation..."
         ./install_scripts/parse_ric_installation_output.sh
@@ -364,4 +365,4 @@ if [ -n "$INSTALL_START_TIME" ]; then
   echo "$DURATION_MINUTES minutes" >> install_time.txt
 fi
 
-echo "The RAN Intelligent Controller installation completed successfully."
+echo "The Near-Real Time RAN Intelligent Controller installation completed successfully."

@@ -48,7 +48,7 @@ cd User_Equipment
 git clone https://github.com/srsran/srsRAN_4G.git
 cd ..
 
-cd RAN_Intelligent_Controller
+cd RAN_Intelligent_Controller/Near-Real-Time-RIC
 git clone https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep -b j-release
 git clone https://gerrit.o-ran-sc.org/r/sim/e2-interface
 git clone https://gerrit.o-ran-sc.org/r/ric-plt/appmgr
@@ -57,6 +57,9 @@ cd xApps
 git clone https://gerrit.o-ran-sc.org/r/ric-app/hw-go
 cd ..
 cd ..
+
+cd RAN_Intelligent_Controller/Non-Real-Time-RIC
+git clone --recursive https://gerrit.o-ran-sc.org/r/it/dep
 
 echo "Repositories were cloned successfully."
 

@@ -31,14 +31,18 @@
 # Exit immediately if a command fails
 set -e
 
-if [ -f "srsRAN_Project/build/apps/gnb/gnb" ]; then
-    echo "srsRAN_Project is already installed. Skipping."
-    exit 0
-fi
-
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
     sudo apt-get install -y coreutils
+fi
+
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+cd "$SCRIPT_DIR"
+
+# Check for gnb binary to determine if srsRAN_Project is already installed
+if [ -f "srsRAN_Project/build/apps/gnb/gnb" ]; then
+    echo "srsRAN_Project is already installed. Skipping."
+    exit 0
 fi
 
 # Starts a script in background that calls `sudo -v` every minute to ensure that sudo stays active, ensuring the script runs without requiring user interaction

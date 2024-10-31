@@ -65,7 +65,7 @@ if systemctl is-active --quiet apt-daily-upgrade.timer; then
     sudo systemctl disable apt-daily-upgrade.timer &>/dev/null && echo "Successfully disabled apt-daily-upgrade.timer service."
 fi
 
-ubuntu_codename=$(./install_scripts/get_ubuntu_codename.sh)
+UBUNTU_CODENAME=$(./install_scripts/get_ubuntu_codename.sh)
 
 echo "Cloning Open5GS..."
 if [ ! -d "open5gs" ]; then
@@ -75,17 +75,17 @@ cd open5gs
 
 echo "Starting installation of Open5GS..."
 
-installed_version=$(mongod --version 2>/dev/null | grep -oP "(?<=v)\d+\.\d+\.\d+") || true
-if [[ $installed_version == 4.4.* ]]; then
+INSTALLED_VERSION=$(mongod --version 2>/dev/null | grep -oP "(?<=v)\d+\.\d+\.\d+") || true
+if [[ $INSTALLED_VERSION == 4.4.* ]]; then
     echo "MongoDB version 4.4.x is already installed. Skipping MongoDB installation."
 else
     # Get the latest Ubuntu version supported by MongoDB 4.4
-    case "$ubuntu_codename" in
+    case "$UBUNTU_CODENAME" in
     "focal" | "bionic" | "xenial")
-        ubuntu_codename_mongodb="$ubuntu_codename"
+        UBUNTU_CODENAME_MONGODB="$UBUNTU_CODENAME"
         ;;
     *)
-        ubuntu_codename_mongodb="focal" # Default to the last supported version if the current one is too new
+        UBUNTU_CODENAME_MONGODB="focal" # Default to the last supported version if the current one is too new
         ;;
     esac
 
@@ -95,15 +95,15 @@ else
     if ! dpkg -s libssl1.1 >/dev/null 2>&1; then
         echo "libssl1.1 not found. Installing..."
         # Create a temporary directory and navigate to it
-        temp_dir=$(mktemp -d -t libssl-XXXXXXXX)
-        pushd "$temp_dir"
+        TEMP_DIR=$(mktemp -d -t libssl-XXXXXXXX)
+        pushd "$TEMP_DIR"
 
         wget http://nz2.archive.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.1f-1ubuntu2_amd64.deb
         sudo dpkg -i libssl1.1_1.1.1f-1ubuntu2_amd64.deb
 
         # Return to the original directory and remove the temporary directory
         popd
-        rm -rf "$temp_dir"
+        rm -rf "$TEMP_DIR"
     else
         echo "libssl1.1 is already installed."
     fi
@@ -128,7 +128,7 @@ else
     fi
 
     # If GPG step fails, try clearing MongoDB GPG key before proceeding:
-    # sudo apt-key del 656408E390CFB1F5
+    # sudo apt-key del [KEY_ID]
     # sudo rm /etc/apt/sources.list.d/mongodb-org-4.4.list
 
     # Step 2: Installing MongoDB 4.4
@@ -147,18 +147,12 @@ else
     # Preferred method: Try importing the MongoDB 4.4 public key using signed-by method
     echo "Attempting to import MongoDB 4.4 server public key using signed-by method..."
     if ! curl -fsSL https://www.mongodb.org/static/pgp/server-4.4.asc | sudo gpg --dearmor -o /usr/share/keyrings/mongodb-archive-keyring.gpg; then
-        echo "Failed to import MongoDB public key using the modern method. Trying apt-key as fallback..."
-
-        # Fallback 1: Use apt-key if modern method fails (deprecated method)
-        if ! wget -qO - https://www.mongodb.org/static/pgp/server-4.4.asc | sudo apt-key add -; then
-            echo "Failed to import MongoDB public key using apt-key."
-            exit 1
-        fi
-        echo "Adding MongoDB 4.4 repository using apt-key method..."
-        echo "deb [arch=amd64] https://repo.mongodb.org/apt/ubuntu $ubuntu_codename_mongodb/mongodb-org/4.4 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-4.4.list
+        rm -f /usr/share/keyrings/mongodb-archive-keyring.gpg
+        echo "Failed to import MongoDB public key. Please check your internet connection and try again. Exiting."
+        exit 1
     else
         echo "Successfully imported MongoDB public key using the signed-by method. Adding repository..."
-        echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/mongodb-archive-keyring.gpg] https://repo.mongodb.org/apt/ubuntu $ubuntu_codename_mongodb/mongodb-org/4.4 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-4.4.list
+        echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/mongodb-archive-keyring.gpg] https://repo.mongodb.org/apt/ubuntu $UBUNTU_CODENAME_MONGODB/mongodb-org/4.4 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-4.4.list
     fi
 
     # Update package lists after adding MongoDB repository

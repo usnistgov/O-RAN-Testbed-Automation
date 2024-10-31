@@ -89,7 +89,7 @@ echo "Using Python: $(which python)"
 echo "Using pip: $(which pip)"
 
 # Upgrade pip and install wheel
-pip install --upgrade pip
+pip install --upgrade pip setuptools wheel
 
 # Install dependencies ensuring there are no cached packages
 pip cache purge

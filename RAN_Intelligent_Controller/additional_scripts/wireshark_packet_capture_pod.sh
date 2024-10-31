@@ -49,7 +49,7 @@ if ! kubectl krew >/dev/null 2>&1; then
     )
     # Dynamically update the PATH for the current shell session
     export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
-    echo 'export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"' >>~/.bashrc
+    echo 'export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"' >>$HOME/.bashrc
     echo "Krew installation complete."
 fi
 

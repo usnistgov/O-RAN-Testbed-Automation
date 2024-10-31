@@ -42,8 +42,8 @@ fi
 echo "Downloading and extracting k9s..."
 
 # Create and navigate to the installation directory
-mkdir -p ~/k9s-installation
-cd ~/k9s-installation
+mkdir -p $HOME/k9s-installation
+cd $HOME/k9s-installation
 
 # Download and extract K9s
 curl -LO https://github.com/derailed/k9s/releases/latest/download/k9s_Linux_amd64.tar.gz

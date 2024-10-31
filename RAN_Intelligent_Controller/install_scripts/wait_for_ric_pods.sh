@@ -129,7 +129,7 @@ wait_for_all_pods_running() {
                         echo "$INTERVAL_UNTIL_PURGE minute$([ "$INTERVAL_UNTIL_PURGE" -ne 1 ] && echo s) passed since all pods were ready. Running purge script."
                         sudo ./install_scripts/purge_unready_pods.sh
 
-                        # First wait for the e2term pod to be ready with a timeout
+                        # Wait for the e2term pod to be ready with a timeout
                         POD_NAMES=$(kubectl get pods -n ricplt --no-headers | grep 'ricplt-e2term' | awk '{print $1}')
                         POD_COUNT=$(echo "$POD_NAMES" | grep -c '^')
                         if [ "$POD_COUNT" -eq 1 ]; then

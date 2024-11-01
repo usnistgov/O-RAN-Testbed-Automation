@@ -95,37 +95,41 @@ pip install --upgrade pip setuptools wheel
 pip cache purge
 
 # Update the requirements
-rm -rf requirements.txt
+if [ ! -f requirements.previous.txt ]; then
+    mv requirements.txt requirements.previous.txt
+else
+    rm -rf requirements.txt
+fi
 cat <<EOF | sudo tee requirements.txt
-aniso8601==9.0.1
-attrs==24.2.0
-blinker==1.8.2
-certifi==2024.8.30
-chardet==5.2.0
-charset-normalizer==3.4.0
-click==8.1.7
-fire==0.7.0
-Flask==3.0.3
-flask-restx==1.3.0
-idna==3.10
-importlib_metadata==8.5.0
-importlib_resources==6.4.5
-itsdangerous==2.2.0
-Jinja2==3.1.4
-jsonschema==4.23.0
-jsonschema-specifications==2024.10.1
-MarkupSafe==3.0.2
-pyrsistent==0.20.0
-pytz==2024.2
-PyYAML==6.0.2
-referencing==0.35.1
-requests==2.32.3
-rpds-py==0.20.0
-six==1.16.0
-termcolor==2.5.0
-urllib3==2.2.3
-Werkzeug==3.0.6
-zipp==3.20.2
+aniso8601~=9.0
+attrs~=24.2
+blinker~=1.8
+certifi~=2024.8
+chardet~=5.2
+charset-normalizer~=3.4
+click~=8.1
+fire~=0.7
+Flask~=3.0
+flask-restx~=1.3
+idna~=3.10
+importlib_metadata~=8.5
+importlib_resources~=6.4
+itsdangerous~=2.2
+Jinja2~=3.1
+jsonschema~=4.23
+jsonschema-specifications~=2023.12
+MarkupSafe~=2.1
+pyrsistent~=0.20
+pytz>=2024.2
+PyYAML~=6.0
+referencing~=0.35
+requests~=2.32
+rpds-py~=0.20
+six~=1.16
+termcolor~=2.4
+urllib3~=2.2
+Werkzeug~=3.0
+zipp~=3.20
 EOF
 
 # In case dms_cli binary is already installed, it can be uninstalled using the following command

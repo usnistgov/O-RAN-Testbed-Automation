@@ -29,13 +29,13 @@
 # copyright protection within the United States.
 
 echo "Running 5G Core components..."
-cd 5G_Core
+cd 5G_Core_Network
 ./run.sh
 cd ..
 
 echo
 echo "Running gNodeB..."
-cd gNodeB
+cd Next_Generation_Node_B
 ./run.sh
 cd ..
 

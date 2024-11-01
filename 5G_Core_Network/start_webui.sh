@@ -28,22 +28,20 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-echo "Stopping User Equipment..."
-cd User_Equipment
-sudo ./stop.sh
-cd ..
+if ! systemctl is-active --quiet "open5gs-webui"; then
+    echo "Starting webui service..."
+    sudo systemctl start open5gs-webui
+fi
+
+WEBUI_PORT=3000
+if ! curl -s localhost:$WEBUI_PORT > /dev/null; then
+	WEBUI_PORT=9999
+fi
+
+echo "Opening webui in browser..."
+firefox localhost:$WEBUI_PORT &
 
 echo
-echo "Stopping gNodeB..."
-cd Next_Generation_Node_B
-sudo ./stop.sh
-cd ..
-
-echo
-echo "Stopping 5G Core components..."
-cd 5G_Core_Network
-sudo ./stop.sh
-cd ..
-
-echo
-echo "The stop script completed successfully."
+echo "The login credentials are set to the following."
+echo "    - U: \"admin\""
+echo "    - P: \"1423\""

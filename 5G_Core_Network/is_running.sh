@@ -28,44 +28,23 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-echo "# Script: $(realpath $0)..."
+check_service() {
+    local APP_NAME="open5gs-$1"
+    local SERVICE_NAME="$1"
+    if pgrep -x "$APP_NAME" >/dev/null; then
+        echo "$SERVICE_NAME: RUNNING"
+    else
+        if systemctl is-active --quiet "$APP_NAME"; then
+            echo "$SERVICE_NAME: RUNNING"
+        else
+            echo "$SERVICE_NAME: NOT RUNNING"
+        fi
+    fi
+}
 
-# Define the interface and addresses
-INTERFACE="ogstun"
-IPv4_ADDR="10.45.0.1/16"
-IPv6_ADDR="2001:db8:cafe::1/48"
-IPv4_SUBNET="10.45.0.0/16"
+# Latest components (see https://open5gs.org/open5gs/docs/guide/01-quickstart/#:~:text=Starting%20and%20Stopping%20Open5GS)
+APPS=("mmed" "sgwcd" "smfd" "amfd" "sgwud" "upfd" "hssd" "pcrfd" "nrfd" "scpd" "seppd" "ausfd" "udmd" "pcfd" "nssfd" "bsfd" "udrd" "webui")
 
-# Check if the tun interface already exists, if not, add it
-if ! ip link show $INTERFACE >/dev/null 2>&1; then
-    sudo ip tuntap add name $INTERFACE mode tun
-fi
-
-# Check if the IPv4 address is already assigned, if not, add it
-if ! ip addr show $INTERFACE | grep -q $IPv4_ADDR; then
-    sudo ip addr add $IPv4_ADDR dev $INTERFACE
-fi
-
-# Check if the IPv6 address is already assigned, if not, add it
-if ! ip addr show $INTERFACE | grep -q $IPv6_ADDR; then
-    sudo ip addr add $IPv6_ADDR dev $INTERFACE
-fi
-
-# Bring the interface up if it's not already up
-if ! ip link show $INTERFACE | grep -q "state UP"; then
-    sudo ip link set $INTERFACE up
-fi
-
-# Enable IP forwarding
-sudo sysctl -w net.ipv4.ip_forward=1
-sudo sysctl -w net.ipv6.conf.all.forwarding=1
-
-# Check if the iptables MASQUERADE rule already exists, if not, add it
-if ! sudo iptables -t nat -C POSTROUTING -s $IPv4_SUBNET ! -o $INTERFACE -j MASQUERADE 2>/dev/null; then
-    sudo iptables -t nat -A POSTROUTING -s $IPv4_SUBNET ! -o $INTERFACE -j MASQUERADE
-fi
-
-# Check if the ip6tables MASQUERADE rule already exists, if not, add it
-if ! sudo ip6tables -t nat -C POSTROUTING -s $IPv6_SUBNET -o $INTERFACE -j MASQUERADE 2>/dev/null; then
-    sudo ip6tables -t nat -A POSTROUTING -s $IPv6_SUBNET -o $INTERFACE -j MASQUERADE 2>/dev/null
-fi
+for app in "${APPS[@]}"; do
+    check_service "$app"
+done

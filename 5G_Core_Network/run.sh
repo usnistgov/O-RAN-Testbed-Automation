@@ -28,23 +28,69 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-check_service() {
-    local app_name="open5gs-$1"
-    local service_name="$1"
-    if pgrep -x "$app_name" >/dev/null; then
-        echo "$service_name: RUNNING"
+if ! command -v realpath &>/dev/null; then
+    echo "Package \"coreutils\" not found, installing..."
+    sudo apt-get install -y coreutils
+fi
+
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+cd "$SCRIPT_DIR"
+
+if [ ! -f "configs/amf.yaml" ] || [ ! -f "configs/mme.yaml" ]; then
+    echo "Configurations were not found for Open5GS. Please run ./generate_configurations.sh first."
+    exit 1
+fi
+
+sudo ./install_scripts/network_config.sh
+
+run_in_background() {
+    local APP_NAME="open5gs-$1"
+    local CONFIG_FILE=""
+    if [ -f "configs/${1%?}.yaml" ]; then
+        CONFIG_FILE="-c $SCRIPT_DIR/configs/${1%?}.yaml"
+    fi
+    if pgrep -x "$APP_NAME" >/dev/null; then
+        echo "Already running $APP_NAME."
     else
-        if systemctl is-active --quiet "$app_name"; then
-            echo "$service_name: RUNNING"
-        else
-            echo "$service_name: NOT RUNNING"
-        fi
+        echo "Starting $APP_NAME in background..."
+        ./open5gs/install/bin/$APP_NAME $CONFIG_FILE >logs/$APP_NAME_stdout.txt 2>&1 &
+    fi
+}
+
+run_in_terminal() {
+    local APP_NAME="open5gs-$1"
+    local CONFIG_FILE=""
+    if [ -f "configs/${1%?}.yaml" ]; then
+        CONFIG_FILE="-c $SCRIPT_DIR/configs/${1%?}.yaml"
+    fi
+    if pgrep -x "$APP_NAME" >/dev/null; then
+        echo "Already running $APP_NAME."
+    else
+        echo "Starting $APP_NAME in GNOME Terminal..."
+        gnome-terminal -t "$APP_NAME Node" -- /bin/sh -c "./open5gs/install/bin/$APP_NAME $CONFIG_FILE"
     fi
 }
 
 # Latest components (see https://open5gs.org/open5gs/docs/guide/01-quickstart/#:~:text=Starting%20and%20Stopping%20Open5GS)
-apps=("mmed" "sgwcd" "smfd" "amfd" "sgwud" "upfd" "hssd" "pcrfd" "nrfd" "scpd" "seppd" "ausfd" "udmd" "pcfd" "nssfd" "bsfd" "udrd" "webui")
+APPS=("mmed" "sgwcd" "smfd" "amfd" "sgwud" "upfd" "hssd" "pcrfd" "nrfd" "scpd" "seppd" "ausfd" "udmd" "pcfd" "nssfd" "bsfd" "udrd" "webui")
 
-for app in "${apps[@]}"; do
-    check_service "$app"
-done
+# Check if the last application is 'webui'
+if [ "${APPS[-1]}" == "webui" ]; then
+    unset APPS[-1]
+    echo "Starting webui service..."
+    sudo systemctl start open5gs-webui
+fi
+
+if [[ $1 == "show" ]]; then
+    # Run in separate terminal windows
+    for APP in "${APPS[@]}"; do
+        run_in_terminal "$APP"
+    done
+else
+    # Run in background
+    for APP in "${APPS[@]}"; do
+        run_in_background "$APP"
+    done
+fi
+
+./is_running.sh

@@ -28,7 +28,25 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-sudo pkill -9 -x "srsue"
+UE_NUMBER=""
+if [ "$#" -eq 1 ]; then
+    UE_NUMBER=$1
+    if ! [[ $UE_NUMBER =~ ^[0-9]+$ ]]; then
+        echo "Error: UE number must be a number."
+        exit 1
+    fi
+    if [ $UE_NUMBER -lt 1 ]; then
+        echo "Error: UE number must be greater than or equal to 1."
+        exit 1
+    fi
+fi
+
+# If no UE number provided, kill all UEs
+if [ -z "$UE_NUMBER" ]; then
+    sudo pkill -9 -x "srsue"
+else
+    { sudo pkill -9 -f "srsue --config_file configs/ue$UE_NUMBER.conf" >/dev/null 2>&1; } 2>/dev/null
+fi
 
 sleep 1
 ./is_running.sh

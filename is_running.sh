@@ -29,18 +29,18 @@
 # copyright protection within the United States.
 
 echo "Checking status of 5G Core components..."
-cd 5G_Core
+cd 5G_Core_Network
 ./is_running.sh
 cd ..
 
+echo
 echo "Checking status of gNodeB..."
-cd gNodeB
+cd Next_Generation_Node_B
 ./is_running.sh
 cd ..
 
+echo
 echo "Checking status of User Equipment..."
 cd User_Equipment
 ./is_running.sh
 cd ..
-
-echo "Script completed successfully."

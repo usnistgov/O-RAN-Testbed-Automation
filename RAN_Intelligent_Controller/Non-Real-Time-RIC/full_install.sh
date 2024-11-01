@@ -91,7 +91,7 @@ if [ "$NONRTRIC_BRANCH" != "j-release" ]; then
     echo
     echo "Switching nonrtric branch to j-release..."
     sudo rm -rf nonrtric # It must be removed and re-cloned since it is not a submodule
-    git clone "https://gerrit.o-ran-sc.org/r/nonrtric" -b j-release
+    git clone https://gerrit.o-ran-sc.org/r/nonrtric -b j-release
 fi
 
 if [ ! -d ranpm ] || [ -z "$(ls -A ranpm)" ]; then

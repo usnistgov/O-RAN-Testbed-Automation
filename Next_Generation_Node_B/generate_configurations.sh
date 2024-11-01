@@ -31,10 +31,18 @@
 # Exit immediately if a command fails
 set -e
 
+if ! command -v realpath &>/dev/null; then
+    echo "Package \"coreutils\" not found, installing..."
+    sudo apt-get install -y coreutils
+fi
+
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+cd "$SCRIPT_DIR"
+
 # Define the path to the YAML file
-YAML_PATH="../5G_Core/options.yaml"
+YAML_PATH="../5G_Core_Network/options.yaml"
 if [ ! -f "$YAML_PATH" ]; then
-    echo "Configuration not found in $YAML_PATH, please generate the configuration for 5G_Core first."
+    echo "Configuration not found in $YAML_PATH, please generate the configuration for 5G_Core_Network first."
     exit 1
 fi
 # Read PLMN and TAC values from the YAML file using sed
@@ -42,11 +50,11 @@ PLMN=$(sed -n 's/^plmn: \([0-9]*\)/\1/p' "$YAML_PATH" | tr -d '[:space:]')
 TAC=$(sed -n 's/^tac: \([0-9]*\)/\1/p' "$YAML_PATH" | tr -d '[:space:]')
 # Check if PLMN and TAC values are found, if not, exit with an error message
 if [ -z "$PLMN" ]; then
-    echo "PLMN not configured in $YAML_PATH, please generate the configuration for 5G_Core first."
+    echo "PLMN not configured in $YAML_PATH, please generate the configuration for 5G_Core_Network first."
     exit 1
 fi
 if [ -z "$TAC" ]; then
-    echo "TAC not configured in $YAML_PATH, please generate the configuration for 5G_Core first."
+    echo "TAC not configured in $YAML_PATH, please generate the configuration for 5G_Core_Network first."
     exit 1
 fi
 echo "PLMN value: $PLMN"
@@ -116,11 +124,11 @@ echo "IP_e2term: $IP_e2term"
 echo "PORT_e2term: $PORT_e2term"
 
 echo "Fetching AMF addresses..."
-FILE_PATH="../5G_Core/configs/get_amf_address.txt"
+FILE_PATH="../5G_Core_Network/configs/get_amf_address.txt"
 
 prompt_for_addresses() {
     echo "Please enter the AMF address and the AMF binding address manually." >&2
-    echo "You can find this information in the 5G_Core/configs/get_amf_addresses.txt file in the first two lines, respectively." >&2
+    echo "You can find this information in the 5G_Core_Network/configs/get_amf_addresses.txt file in the first two lines, respectively." >&2
     read -p "Enter AMF Address: " AMF_ADDR
     read -p "Enter AMF Binding Address: " AMF_ADDR_BIND
 }

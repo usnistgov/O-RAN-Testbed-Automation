@@ -147,9 +147,9 @@ else
         exit 1
     }
 
-    # Preferred method: Try importing the MongoDB 4.4 public key using signed-by method
+    # Import the MongoDB 4.4 public key using signed-by method
     echo "Attempting to import MongoDB 4.4 server public key using signed-by method..."
-    if ! curl -fsSL https://www.mongodb.org/static/pgp/server-4.4.asc | sudo gpg --dearmor -o /usr/share/keyrings/mongodb-archive-keyring.gpg; then
+    if ! curl -fsSL https://www.mongodb.org/static/pgp/server-4.4.asc | sudo gpg --dearmor --yes -o /usr/share/keyrings/mongodb-archive-keyring.gpg; then
         rm -f /usr/share/keyrings/mongodb-archive-keyring.gpg
         echo "Failed to import MongoDB public key. Please check your internet connection and try again. Exiting."
         exit 1

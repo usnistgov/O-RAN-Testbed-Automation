@@ -30,6 +30,14 @@
 
 echo "# Script: $(realpath $0)..."
 
+if ! command -v realpath &>/dev/null; then
+    echo "Package \"coreutils\" not found, installing..."
+    sudo apt-get install -y coreutils
+fi
+
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+cd $(dirname "$SCRIPT_DIR")
+
 DBCTL_DIR="./open5gs/misc/db/open5gs-dbctl"
 
 # Default values as specified in your documentation

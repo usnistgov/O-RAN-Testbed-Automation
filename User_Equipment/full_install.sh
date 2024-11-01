@@ -109,10 +109,10 @@ echo "Building ZeroMQ libzmq..."
 #     sudo apt-get install -y libzmq3-dev
 # fi
 # rm -rf libzmq
-if [ -d ../gNodeB/libzmq ]; then
+if [ -d ../Next_Generation_Node_B/libzmq ]; then
     if [ ! -L libzmq ]; then
         echo "Found gNodeB library. Creating libqmz link instead."
-        ln -s ../gNodeB/libzmq libzmq
+        ln -s ../Next_Generation_Node_B/libzmq libzmq
     else
         echo "Link to libqmz already created."
     fi
@@ -135,10 +135,10 @@ echo
 echo
 echo "Building ZeroMQ czmq..."
 #rm -rf czmq
-if [ -d ../gNodeB/czmq ]; then
+if [ -d ../Next_Generation_Node_B/czmq ]; then
     if [ ! -L czmq ]; then
         echo "Found gNodeB library. Creating czmq link instead."
-        ln -s ../gNodeB/czmq czmq
+        ln -s ../Next_Generation_Node_B/czmq czmq
     else
         echo "Link to czmq already created."
     fi

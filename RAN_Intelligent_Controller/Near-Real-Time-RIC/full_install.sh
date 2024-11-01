@@ -121,7 +121,6 @@ else
         exit 1
     fi
 
-    echo "Disabling Kong Pod and Removing Ingress Files..."
     # Check if yq is installed, and install it if not
     if ! command -v yq &> /dev/null; then
         echo "Installing yq..."
@@ -131,7 +130,7 @@ else
         # Uninstall with: sudo rm -rf /usr/bin/yq
     fi
 
-    # Disabling kong pod
+    echo "Disabling Kong Pod and Removing Ingress Files..."
     cd $BASE_DIR/ric-dep/helm/infrastructure/
     yq '.kong.enabled = false' -i values.yaml
     yq '.kong.enabled' values.yaml

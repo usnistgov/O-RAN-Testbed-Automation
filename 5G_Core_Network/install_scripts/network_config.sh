@@ -28,61 +28,50 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-if [ ! -f "configs/amf.yaml" ] || [ ! -f "configs/mme.yaml" ]; then
-    echo "Configurations were not found for Open5GS. Please run ./generate_configurations.sh first."
-    exit 1
+echo "# Script: $(realpath $0)..."
+
+# Define the interface and addresses
+INTERFACE="ogstun"
+IPv4_ADDR="10.45.0.1/16"
+IPv6_ADDR="2001:db8:cafe::1/48"
+IPv4_SUBNET="10.45.0.0/16"
+
+# Check if the tun interface already exists, if not, add it
+if ! ip link show $INTERFACE >/dev/null 2>&1; then
+    echo "Adding TUN interface $INTERFACE..."
+    sudo ip tuntap add name $INTERFACE mode tun
 fi
 
-sudo ./install_scripts/network_config.sh
-
-run_in_background() {
-    local app_name="open5gs-$1"
-    local config_file=""
-    if [ -f "configs/${1%?}.yaml" ]; then
-        config_file="-c $(pwd)/configs/${1%?}.yaml"
-    fi
-    if pgrep -x "$app_name" >/dev/null; then
-        echo "Already running $app_name."
-    else
-        echo "Starting $app_name in background..."
-        ./open5gs/install/bin/$app_name $config_file >/dev/null 2>&1 &
-    fi
-}
-
-run_in_terminal() {
-    local app_name="open5gs-$1"
-    local config_file=""
-    if [ -f "configs/${1%?}.yaml" ]; then
-        config_file="-c $(pwd)/configs/${1%?}.yaml"
-    fi
-    if pgrep -x "$app_name" >/dev/null; then
-        echo "Already running $app_name."
-    else
-        echo "Starting $app_name in GNOME Terminal..."
-        gnome-terminal -t "$app_name Node" -- /bin/sh -c "./open5gs/install/bin/$app_name $config_file"
-    fi
-}
-
-# Latest components (see https://open5gs.org/open5gs/docs/guide/01-quickstart/#:~:text=Starting%20and%20Stopping%20Open5GS)
-apps=("mmed" "sgwcd" "smfd" "amfd" "sgwud" "upfd" "hssd" "pcrfd" "nrfd" "scpd" "seppd" "ausfd" "udmd" "pcfd" "nssfd" "bsfd" "udrd" "webui")
-
-# Check if the last application is 'webui'
-if [ "${apps[-1]}" == "webui" ]; then
-    unset apps[-1]
-    echo "Starting webui service..."
-    sudo systemctl start open5gs-webui
+# Check if the IPv4 address is already assigned, if not, add it
+if ! ip addr show $INTERFACE | grep -q $IPv4_ADDR; then
+    echo "Adding IPv4 address $IPv4_ADDR to $INTERFACE..."
+    sudo ip addr add $IPv4_ADDR dev $INTERFACE
 fi
 
-if [[ $1 == "show" ]]; then
-    # Run in separate terminal windows
-    for app in "${apps[@]}"; do
-        run_in_terminal "$app"
-    done
-else
-    # Run in background
-    for app in "${apps[@]}"; do
-        run_in_background "$app"
-    done
+# Check if the IPv6 address is already assigned, if not, add it
+if ! ip addr show $INTERFACE | grep -q $IPv6_ADDR; then
+    echo "Adding IPv6 address $IPv6_ADDR to $INTERFACE..."
+    sudo ip addr add $IPv6_ADDR dev $INTERFACE
 fi
 
-./is_running.sh
+# Bring the interface up if it's not already up
+if ! ip link show $INTERFACE | grep -q "state UP"; then
+    echo "Bringing up $INTERFACE..."
+    sudo ip link set $INTERFACE up
+fi
+
+# Enable IP forwarding
+sudo sysctl -w net.ipv4.ip_forward=1
+sudo sysctl -w net.ipv6.conf.all.forwarding=1
+
+# Check if the iptables MASQUERADE rule already exists, if not, add it
+if ! sudo iptables -t nat -C POSTROUTING -s $IPv4_SUBNET ! -o $INTERFACE -j MASQUERADE 2>/dev/null; then
+    echo "Adding iptables MASQUERADE rule for IPv4..."
+    sudo iptables -t nat -A POSTROUTING -s $IPv4_SUBNET ! -o $INTERFACE -j MASQUERADE
+fi
+
+# Check if the ip6tables MASQUERADE rule already exists, if not, add it
+if ! sudo ip6tables -t nat -C POSTROUTING -s $IPv6_SUBNET -o $INTERFACE -j MASQUERADE 2>/dev/null; then
+    echo "Adding ip6tables MASQUERADE rule for IPv6..."
+    sudo ip6tables -t nat -A POSTROUTING -s $IPv6_SUBNET -o $INTERFACE -j MASQUERADE 2>/dev/null
+fi

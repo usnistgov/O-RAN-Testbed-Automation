@@ -31,6 +31,14 @@
 # Exit immediately if a command fails
 set -e
 
+if ! command -v realpath &>/dev/null; then
+    echo "Package \"coreutils\" not found, installing..."
+    sudo apt-get install -y coreutils
+fi
+
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+cd "$SCRIPT_DIR"
+
 if ! command -v yq &>/dev/null; then
     echo "Installing yq..."
     YQ_PATH="https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64"
@@ -57,34 +65,21 @@ echo "MNC (Mobile Network Code): $PLMN_MNC"
 echo "TAC value: $TAC"
 
 echo "Creating configs directory..."
-mkdir -p configs
+rm -rf configs
+mkdir configs
 
 APPS=("mmed" "sgwcd" "smfd" "amfd" "sgwud" "upfd" "hssd" "pcrfd" "nrfd" "scpd" "seppd" "ausfd" "udmd" "pcfd" "nssfd" "bsfd" "udrd" "webui")
 
-# Backup original files
-if [ ! -f configs/amf_original.yaml ]; then
-    echo "Backing up 5G Core configuration files..."
-    for APP in "${APPS[@]}"; do
-        CONFIG_FILE="${APP%?}"
-        if [[ "${APP: -1}" != "d" ]]; then
-            CONFIG_FILE="$APP"
-        fi
-        if [ -f "open5gs/install/etc/open5gs/${CONFIG_FILE}.yaml" ]; then
-            cp "open5gs/install/etc/open5gs/${CONFIG_FILE}.yaml" "configs/${CONFIG_FILE}_original.yaml"
-        elif [ -f "open5gs/install/etc/open5gs/${CONFIG_FILE}1.yaml" ]; then
-            cp "open5gs/install/etc/open5gs/${CONFIG_FILE}1.yaml" "configs/${CONFIG_FILE}_original.yaml"
-        fi
-    done
-fi
-
-# Restore original files
+echo "Fetching 5G Core configuration files..."
 for APP in "${APPS[@]}"; do
     CONFIG_FILE="${APP%?}"
     if [[ "${APP: -1}" != "d" ]]; then
         CONFIG_FILE="$APP"
     fi
-    if [ -f "configs/${CONFIG_FILE}_original.yaml" ]; then
-        cp "configs/${CONFIG_FILE}_original.yaml" "configs/${CONFIG_FILE}.yaml"
+    if [ -f "open5gs/install/etc/open5gs/${CONFIG_FILE}.yaml" ]; then
+        cp "open5gs/install/etc/open5gs/${CONFIG_FILE}.yaml" "configs/${CONFIG_FILE}.yaml"
+    elif [ -f "open5gs/install/etc/open5gs/${CONFIG_FILE}1.yaml" ]; then
+        cp "open5gs/install/etc/open5gs/${CONFIG_FILE}1.yaml" "configs/${CONFIG_FILE}.yaml"
     fi
 done
 
@@ -223,6 +218,7 @@ sudo sysctl -w net.ipv6.conf.all.forwarding=1
 ### Add NAT Rule
 sudo iptables -t nat -A POSTROUTING -s 10.45.0.0/16 ! -o ogstun -j MASQUERADE
 sudo ip6tables -t nat -A POSTROUTING -s 2001:db8:cafe::/48 ! -o ogstun -j MASQUERADE
+echo "By default, Ubuntu enables a firewall that blocks the UE from accessing the internet. Disabling the firewall..."
 sudo ufw status
 sudo ufw disable
 sudo ufw status
@@ -230,7 +226,14 @@ sudo ufw status
 mkdir -p logs
 sudo chown $USER:$USER -R logs
 
+echo "Registering UE 1..."
 ./install_scripts/register_subscriber.sh --imsi 001010123456780 --key 00112233445566778899aabbccddeeff --opc 63BFA50EE6523365FF14C1F45F88737D --apn srsapn
+
+echo "Registering UE 2..."
+./install_scripts/register_subscriber.sh --imsi 001010123456790 --key 00112233445566778899aabbccddef00 --opc 63BFA50EE6523365FF14C1F45F88737D --apn srsapn
+
+echo "Registering UE 3..."
+./install_scripts/register_subscriber.sh --imsi 001010123456791 --key 00112233445566778899aabbccddef01 --opc 63BFA50EE6523365FF14C1F45F88737D --apn srsapn
 
 # Restart Open5GS services to apply changes
 echo "To apply changed, stop and start the following:"

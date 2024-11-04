@@ -28,20 +28,28 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
+if ! command -v realpath &>/dev/null; then
+    echo "Package \"coreutils\" not found, installing..."
+    sudo apt-get install -y coreutils
+fi
+
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+cd "$SCRIPT_DIR"
+
+# Function to handle graceful shutdown
+graceful_shutdown() {
+    echo "Shutting down gNodeB gracefully..."
+    ./stop.sh
+    exit
+}
+trap graceful_shutdown SIGINT
+
 if pgrep -x "gnb" >/dev/null; then
     echo "Already running gnb."
 else
-    if [ ! -f "configs/gnb.yaml" ]; then
-        echo "Configuration was not found for gNodeB. Please run ./generate_configurations.sh first."
-        exit 1
-    fi
-
-    echo "Starting gnb in background..."
+    echo "Starting gnb..."
     mkdir -p logs
     sudo chown -R $USER:$USER logs
-    sudo rm -rf logs/gnb.log
-    sudo setsid bash -c 'stdbuf -oL -eL srsRAN_Project/build/apps/gnb/gnb -c configs/gnb.yaml > logs/gnb_stdout.txt 2>&1' </dev/null &
-    sleep 5
-    ./is_running.sh
-    sudo chown -R $USER:$USER logs
+    sudo rm -rf /tmp/gnb.log
+    srsRAN_Project/build/apps/gnb/gnb -c configs/gnb.yaml
 fi

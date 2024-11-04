@@ -28,7 +28,39 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-sudo pkill -9 -x "gnb"
+if ! command -v realpath &>/dev/null; then
+    echo "Package \"coreutils\" not found, installing..."
+    sudo apt-get install -y coreutils
+fi
 
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+cd "$SCRIPT_DIR"
+
+# Check if the gNodeB is already stopped
+if $(./is_running.sh | grep -q "gNodeB: NOT RUNNING"); then
+    ./is_running.sh
+    exit 0
+fi
+
+# Send a graceful shutdown signal to the gNodeB process
+sudo pkill -f "gnb" >/dev/null 2>&1 &
+
+# Wait for the process to terminate gracefully
+COUNT=0
+MAX_COUNT=10
 sleep 1
-./is_running.sh
+while [ $COUNT -lt $MAX_COUNT ]; do
+    IS_RUNNING=$(./is_running.sh)
+    echo "$IS_RUNNING ($COUNT / $MAX_COUNT)"
+    if echo "$IS_RUNNING" | grep -q "gNodeB: NOT RUNNING"; then
+        echo "The gNodeB has stopped gracefully."
+        ./is_running.sh
+        exit 0
+    fi
+    COUNT=$((COUNT + 1))
+    sleep 2
+done
+
+# If the process is still running after 20 seconds, send a forceful kill signal
+echo "The gNodeB did not stop in time, sending forceful kill signal..."
+sudo pkill -9 -f "gnb" >/dev/null 2>&1 &

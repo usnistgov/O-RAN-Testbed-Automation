@@ -56,7 +56,7 @@ if [ ! -f "configs/ue1.conf" ]; then
     exit 1
 fi
 echo "Starting srsue in background..."
-sudo setsid bash -c "stdbuf -oL -eL $SCRIPT_DIR/run.sh $UE_NUMBER > logs/ue${UE_NUMBER}_stdout.txt 2>&1" </dev/null &
+sudo setsid bash -c "stdbuf -oL -eL \"$SCRIPT_DIR/run.sh\" $UE_NUMBER > logs/ue${UE_NUMBER}_stdout.txt 2>&1" </dev/null &
 sleep 1
 ATTEMPT_COUNTER=0
 MAX_ATTEMPTS=60

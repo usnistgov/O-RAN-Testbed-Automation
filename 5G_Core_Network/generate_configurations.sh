@@ -67,19 +67,36 @@ echo "TAC value: $TAC"
 echo "Creating configs directory..."
 rm -rf configs
 mkdir configs
+rm -rf logs
 
 APPS=("mmed" "sgwcd" "smfd" "amfd" "sgwud" "upfd" "hssd" "pcrfd" "nrfd" "scpd" "seppd" "ausfd" "udmd" "pcfd" "nssfd" "bsfd" "udrd" "webui")
 
 echo "Fetching 5G Core configuration files..."
 for APP in "${APPS[@]}"; do
-    CONFIG_FILE="${APP%?}"
     if [[ "${APP: -1}" != "d" ]]; then
         CONFIG_FILE="$APP"
+    else # Remove the last character
+        CONFIG_FILE="${APP%?}"
     fi
-    if [ -f "open5gs/install/etc/open5gs/${CONFIG_FILE}.yaml" ]; then
-        cp "open5gs/install/etc/open5gs/${CONFIG_FILE}.yaml" "configs/${CONFIG_FILE}.yaml"
-    elif [ -f "open5gs/install/etc/open5gs/${CONFIG_FILE}1.yaml" ]; then
-        cp "open5gs/install/etc/open5gs/${CONFIG_FILE}1.yaml" "configs/${CONFIG_FILE}.yaml"
+    if [ "$CONFIG_FILE" == "webui" ]; then
+        continue
+    elif [ "$CONFIG_FILE" == "sepp" ]; then
+        if [ -f "open5gs/install/etc/open5gs/${CONFIG_FILE}1.yaml" ] && [ -f "open5gs/install/etc/open5gs/${CONFIG_FILE}2.yaml" ]; then
+            cp "open5gs/install/etc/open5gs/${CONFIG_FILE}1.yaml" "configs/${CONFIG_FILE}1.yaml"
+            cp "open5gs/install/etc/open5gs/${CONFIG_FILE}2.yaml" "configs/${CONFIG_FILE}2.yaml"
+        else
+            echo "Configuration files not found for $APP."
+            echo "Please ensure that the $CONFIG_FILE configuration files are present in the open5gs/install/etc/open5gs directory."
+            exit 1
+        fi
+    else
+        if [ -f "open5gs/install/etc/open5gs/${CONFIG_FILE}.yaml" ]; then
+            cp "open5gs/install/etc/open5gs/${CONFIG_FILE}.yaml" "configs/${CONFIG_FILE}.yaml"
+        else
+            echo "Configuration file not found for $APP."
+            echo "Please ensure that the $CONFIG_FILE configuration file is present in the open5gs/install/etc/open5gs directory."
+            exit 1
+        fi
     fi
 done
 
@@ -118,14 +135,15 @@ configure_plmn_tac() {
 
 # Function to set the logging path, disable timestamp for stderr to avoid duplicate timestamps in journalctl
 configure_logging() {
-    local FILE_PATH=$1
-    echo "Configuring logging in $FILE_PATH"
+    local FILE_PATH="$1"
+    echo "Configuring logging in \"$FILE_PATH\""
 
-    sed -i "/logger:/a \ \ default:\n    timestamp: false" $FILE_PATH
-    sed -i "/file:/a \ \ \ \ timestamp: true" $FILE_PATH
+    sed -i "/logger:/a \ \ default:\n    timestamp: false" "$FILE_PATH"
+    sed -i "/file:/a \ \ \ \ timestamp: true" "$FILE_PATH"
 
     # Replace the logger file path to output to the logs/ directory
-    sed -i "s|path: $(pwd)/open5gs/install/var/log/open5gs/|path: $(pwd)/logs/|g" $FILE_PATH
+    sed -i "s|path: $SCRIPT_DIR/open5gs/install/var/log/open5gs/|path: $SCRIPT_DIR/logs/|g" "$FILE_PATH"
+
 }
 
 # Function to get the primary IP for the network segment by resetting the last octet to 1
@@ -194,9 +212,10 @@ done
 
 # Configure logging for all components
 for APP in "${APPS[@]}"; do
-    CONFIG_FILE="${APP%?}"
     if [[ "${APP: -1}" != "d" ]]; then
         CONFIG_FILE="$APP"
+    else # Remove the last character
+        CONFIG_FILE="${APP%?}"
     fi
     if [ -f "configs/${CONFIG_FILE}.yaml" ]; then
         configure_logging "configs/${CONFIG_FILE}.yaml"
@@ -227,13 +246,13 @@ mkdir -p logs
 sudo chown $USER:$USER -R logs
 
 echo "Registering UE 1..."
-./install_scripts/register_subscriber.sh --imsi 001010123456780 --key 00112233445566778899aabbccddeeff --opc 63BFA50EE6523365FF14C1F45F88737D --apn srsapn
+./install_scripts/register_subscriber.sh --imsi 001010123456780 --key 00112233445566778899AABBCCDDEEFF --opc 63BFA50EE6523365FF14C1F45F88737D --apn srsapn
 
 echo "Registering UE 2..."
-./install_scripts/register_subscriber.sh --imsi 001010123456790 --key 00112233445566778899aabbccddef00 --opc 63BFA50EE6523365FF14C1F45F88737D --apn srsapn
+./install_scripts/register_subscriber.sh --imsi 001010123456790 --key 00112233445566778899AABBCCDDEF00 --opc 63BFA50EE6523365FF14C1F45F88737D --apn srsapn
 
 echo "Registering UE 3..."
-./install_scripts/register_subscriber.sh --imsi 001010123456791 --key 00112233445566778899aabbccddef01 --opc 63BFA50EE6523365FF14C1F45F88737D --apn srsapn
+./install_scripts/register_subscriber.sh --imsi 001010123456791 --key 00112233445566778899AABBCCDDEF01 --opc 63BFA50EE6523365FF14C1F45F88737D --apn srsapn
 
 # Restart Open5GS services to apply changes
 echo "To apply changed, stop and start the following:"

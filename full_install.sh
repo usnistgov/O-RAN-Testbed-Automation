@@ -43,52 +43,52 @@ cd "$SCRIPT_DIR"
 sudo ./Additional_Scripts/migrate_to_new_version.sh
 
 # Check if the applications are already installed and ask the user if they should be reset
-Open5GS_Installed=false
+OPEN5GS_INSTALLED=false
 if [ -f "5G_Core_Network/open5gs/install/bin/open5gs-amfd" ] && [ -f "5G_Core_Network/open5gs/install/bin/open5gs-upfd" ]; then
-    Open5GS_Installed=true
+    OPEN5GS_INSTALLED=true
 fi
-gNodeB_Installed=false
+GNODEB_INSTALLED=false
 if [ -f "Next_Generation_Node_B/srsRAN_Project/build/apps/gnb/gnb" ]; then
-    gNodeB_Installed=true
+    GNODEB_INSTALLED=true
 fi
-UE_Installed=false
+UE_INSTALLED=false
 if [ -f "User_Equipment/srsRAN_4G/build/srsue/src/srsue" ]; then
-    UE_Installed=true
+    UE_INSTALLED=true
 fi
 # If any of them are installed then ask the user if they should be reset
-if [ "$Open5GS_Installed" = true ] || [ "$gNodeB_Installed" = true ] || [ "$UE_Installed" = true ]; then
+if [ "$OPEN5GS_INSTALLED" = true ] || [ "$GNODEB_INSTALLED" = true ] || [ "$UE_INSTALLED" = true ]; then
     echo
     echo "Previous installations were found, do you want to keep the old installations? (y/n)"
-    read -r keep
+    read -r KEEP_OLD_DIRS
     # Only allow case insensitive y, yes, n, and no
-    if [ "$keep" != "y" ] && [ "$keep" != "yes" ] && [ "$keep" != "n" ] && [ "$keep" != "no" ]; then
+    if [ "$KEEP_OLD_DIRS" != "y" ] && [ "$KEEP_OLD_DIRS" != "yes" ] && [ "$KEEP_OLD_DIRS" != "n" ] && [ "$KEEP_OLD_DIRS" != "no" ]; then
         echo "Invalid input. Exiting."
         exit 1
     fi
-    if [ "$keep" = "n" ] || [ "$keep" = "no" ]; then
+    if [ "$KEEP_OLD_DIRS" = "n" ] || [ "$KEEP_OLD_DIRS" = "no" ]; then
         sudo rm -rf 5G_Core_Network/open5gs
         sudo rm -rf 5G_Core_Network/logs
         sudo rm -rf 5G_Core_Network/configs
         sudo rm -rf 5G_Core_Network/install_time.txt
-        sudo rm -rf Next_Generation_Node_B/srsRAN_Project
-        sudo rm -rf Next_Generation_Node_B/czmq
-        sudo rm -rf Next_Generation_Node_B/libzmq
-        sudo rm -rf Next_Generation_Node_B/logs
-        sudo rm -rf Next_Generation_Node_B/configs
-        sudo rm -rf Next_Generation_Node_B/install_time.txt
         sudo rm -rf User_Equipment/srsRAN_4G
         sudo rm -rf User_Equipment/czmq
         sudo rm -rf User_Equipment/libzmq
         sudo rm -rf User_Equipment/logs
         sudo rm -rf User_Equipment/configs
         sudo rm -rf User_Equipment/install_time.txt
-        sudo rm -rf RAN_Intelligent_Controller/Near-Real-Time-RIC/ric-dep
-        sudo rm -rf RAN_Intelligent_Controller/Near-Real-Time-RIC/appmgr
-        sudo rm -rf RAN_Intelligent_Controller/Near-Real-Time-RIC/e2-interface
-        sudo rm -rf RAN_Intelligent_Controller/Near-Real-Time-RIC/charts
-        sudo rm -rf RAN_Intelligent_Controller/Near-Real-Time-RIC/xApps
-        sudo rm -rf RAN_Intelligent_Controller/Near-Real-Time-RIC/logs
-        sudo rm -rf RAN_Intelligent_Controller/Near-Real-Time-RIC/install_time.txt
+        sudo rm -rf Next_Generation_Node_B/srsRAN_Project
+        sudo rm -rf Next_Generation_Node_B/czmq
+        sudo rm -rf Next_Generation_Node_B/libzmq
+        sudo rm -rf Next_Generation_Node_B/logs
+        sudo rm -rf Next_Generation_Node_B/configs
+        sudo rm -rf Next_Generation_Node_B/install_time.txt
+        sudo rm -rf RAN_Intelligent_Controllers/Near-Real-Time-RIC/ric-dep
+        sudo rm -rf RAN_Intelligent_Controllers/Near-Real-Time-RIC/appmgr
+        sudo rm -rf RAN_Intelligent_Controllers/Near-Real-Time-RIC/e2-interface
+        sudo rm -rf RAN_Intelligent_Controllers/Near-Real-Time-RIC/charts
+        sudo rm -rf RAN_Intelligent_Controllers/Near-Real-Time-RIC/xApps
+        sudo rm -rf RAN_Intelligent_Controllers/Near-Real-Time-RIC/logs
+        sudo rm -rf RAN_Intelligent_Controllers/Near-Real-Time-RIC/install_time.txt
         echo "Successfully removed previous installations."
     fi
 fi
@@ -109,19 +109,6 @@ cd ..
 echo
 echo
 echo "################################################################################"
-echo "# Installing Next Generation Node B...                                         #"
-echo "################################################################################"
-echo
-echo
-
-cd Next_Generation_Node_B
-./full_install.sh
-
-cd ..
-
-echo
-echo
-echo "################################################################################"
 echo "# Installing User Equipment...                                                 #"
 echo "################################################################################"
 echo
@@ -135,12 +122,25 @@ cd ..
 echo
 echo
 echo "################################################################################"
+echo "# Installing Next Generation Node B...                                         #"
+echo "################################################################################"
+echo
+echo
+
+cd Next_Generation_Node_B
+./full_install.sh
+
+cd ..
+
+echo
+echo
+echo "################################################################################"
 echo "# Installing Near Real-Time RAN Intelligent Controller...                      #"
 echo "################################################################################"
 echo
 echo
 
-cd RAN_Intelligent_Controller/Near-Real-Time-RIC
+cd RAN_Intelligent_Controllers/Near-Real-Time-RIC
 ./full_install.sh
 
 cd ../..

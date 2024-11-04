@@ -45,7 +45,7 @@ cd 5G_Core_Network
 cd ..
 
 echo
-echo "Generating Configuration for gNodeB..."
+echo "Generating Configuration for Next Generation Node B..."
 cd Next_Generation_Node_B
 ./generate_configurations.sh
 cd ..

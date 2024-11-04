@@ -34,12 +34,21 @@ if ! systemctl is-active --quiet "open5gs-webui"; then
 fi
 
 WEBUI_PORT=3000
-if ! curl -s localhost:$WEBUI_PORT > /dev/null; then
-	WEBUI_PORT=9999
+if ! curl -s localhost:$WEBUI_PORT >/dev/null; then
+    WEBUI_PORT=9999
 fi
 
-echo "Opening webui in browser..."
-firefox localhost:$WEBUI_PORT &
+if command -v google-chrome &>/dev/null; then
+    echo "Opening the WebUI in Google Chrome..."
+    google-chrome "http://localhost:$WEBUI_PORT" >/dev/null 2>&1 &
+    sleep 3
+elif command -v firefox &>/dev/null; then
+    echo "Opening the WebUI in Firefox..."
+    firefox "http://localhost:$WEBUI_PORT" >/dev/null 2>&1 &
+    sleep 3
+else
+    echo "No supported browser detected. Visit http://localhost:$WEBUI_PORT to access the WebUI."
+fi
 
 echo
 echo "The login credentials are set to the following."

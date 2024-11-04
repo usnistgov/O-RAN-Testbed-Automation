@@ -28,66 +28,63 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-if [ "$EUID" -ne 0 ]; then
-    echo "Please run this script as root or use sudo."
-    exit 1
-fi
-
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
     sudo apt-get install -y coreutils
 fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
-cd $(dirname "$SCRIPT_DIR")
+cd "$(dirname "$SCRIPT_DIR")"
 
-# -----------------------------------------------------------------------------
-# Migration from commit 310ca91b9f5f83a0d0b94affebfdc940005daf1a
-# -----------------------------------------------------------------------------
+if [ -d 5G_Core/open5gs ] || [ -d gNodeB/srsRAN_Project ] || [ -d RAN_Intelligent_Controller/ric-dep ]; then
+    echo
+    echo
+    echo "################################################################################"
+    echo "# Migrating from commit 310ca91b9f5f83a0d0b94affebfdc940005daf1a               #"
+    echo "################################################################################"
+    echo
+    echo
 
-if [ -d 5G_Core/open5gs ]; then
-    echo "Updating 5G Core directory structure..."
-    sudo mv 5G_Core/logs 5G_Core_Network || true
-    sudo mv 5G_Core/open5gs 5G_Core_Network || true
-    sudo mv 5G_Core/install_time.txt 5G_Core_Network || true
-    sudo rm -rf 5G_Core/configs
-    sudo rm -rf 5G_Core_Network/configs
-    sudo rm -rf 5G_Core_Network/open5gs/build
-    sudo rm -rf 5G_Core_Network/open5gs/install
-    if [ -z "$(ls -A 5G_Core)" ]; then
+    if [ -d 5G_Core/open5gs ]; then
+        echo "Updating 5G Core directory structure..."
+        sudo rm -rf 5G_Core/configs
+        sudo mv 5G_Core/* 5G_Core_Network
+        sudo rm -rf 5G_Core_Network/configs
+        sudo rm -rf 5G_Core_Network/open5gs/build
+        sudo rm -rf 5G_Core_Network/open5gs/install
         sudo rm -rf 5G_Core
     fi
-    echo "The 5G Core needs to be reinstalled with 5G_Core_Network/full_install.sh."
-fi
-if [ -d gNodeB/srsRAN_Project ]; then
-    echo "Updating gNodeB directory structure..."
-    sudo mv gNodeB/configs Next_Generation_Node_B || true
-    if [ -d gNodeB/czmq ]; then
-        sudo mv gNodeB/czmq Next_Generation_Node_B
-        echo "Updating gNodeB czmq link in UE..."
-        sudo rm -rf User_Equipment/czmq
-        ln -s ../Next_Generation_Node_B/czmq User_Equipment/czmq
-    fi
-    if [ -d gNodeB/libzmq ]; then
-        sudo mv gNodeB/libzmq Next_Generation_Node_B
-        echo "Updating gNodeB libzmq link in UE..."
-        sudo rm -rf User_Equipment/libzmq
-        ln -s ../Next_Generation_Node_B/libzmq User_Equipment/libzmq
-    fi
-    sudo mv gNodeB/logs Next_Generation_Node_B || true
-    sudo mv gNodeB/srsRAN_Project Next_Generation_Node_B || true
-    sudo mv gNodeB/install_time.txt Next_Generation_Node_B || true
-    if [ -z "$(ls -A gNodeB)" ]; then
+    if [ -d gNodeB/srsRAN_Project ]; then
+        echo "Updating gNodeB directory structure..."
+        sudo mv gNodeB/* Next_Generation_Node_B
+        # Move czmq and libzmq directories to User_Equipment
+        if [ -d Next_Generation_Node_B/czmq ]; then
+            sudo rm -rf User_Equipment/czmq
+            mv Next_Generation_Node_B/czmq User_Equipment
+        fi
+        if [ -d Next_Generation_Node_B/libzmq ]; then
+            sudo rm -rf User_Equipment/libzmq
+            mv Next_Generation_Node_B/libzmq User_Equipment
+        fi
+        # Link czmq and libzmq directories from User_Equipment to Next_Generation_Node_B
+        if [ -d User_Equipment/czmq ]; then
+            echo "Updating gNodeB czmq link in UE..."
+            sudo rm -rf Next_Generation_Node_B/czmq
+            ln -s ../User_Equipment/czmq Next_Generation_Node_B/czmq
+        fi
+        if [ -d User_Equipment/libzmq ]; then
+            echo "Updating gNodeB libzmq link in UE..."
+            sudo rm -rf Next_Generation_Node_B/libzmq
+            ln -s ../User_Equipment/libzmq Next_Generation_Node_B/libzmq
+        fi
         sudo rm -rf gNodeB
     fi
-fi
-if [ -d RAN_Intelligent_Controller/ric-dep ]; then
-    echo "Updating RIC directory structure..."
-    sudo mv RAN_Intelligent_Controller/ric-dep RAN_Intelligent_Controller/Near-Real-Time-RIC
-    sudo mv RAN_Intelligent_Controller/appmgr RAN_Intelligent_Controller/Near-Real-Time-RIC || true
-    sudo mv RAN_Intelligent_Controller/e2-interface RAN_Intelligent_Controller/Near-Real-Time-RIC || true
-    sudo mv RAN_Intelligent_Controller/charts RAN_Intelligent_Controller/Near-Real-Time-RIC || true
-    sudo mv RAN_Intelligent_Controller/xApps RAN_Intelligent_Controller/Near-Real-Time-RIC || true
-    sudo mv RAN_Intelligent_Controller/logs RAN_Intelligent_Controller/Near-Real-Time-RIC || true
-    sudo mv RAN_Intelligent_Controller/install_time.txt RAN_Intelligent_Controller/Near-Real-Time-RIC || true
+    if [ -d RAN_Intelligent_Controller/ric-dep ]; then
+        echo "Updating RIC directory structure..."
+        sudo mv RAN_Intelligent_Controller/* RAN_Intelligent_Controllers/Near-Real-Time-RIC
+        sudo rm -rf RAN_Intelligent_Controller
+    fi
+    echo "The 5G Core needs to be reinstalled with ./5G_Core_Network/full_install.sh."
+    echo "Successfully migrated from commit 310ca91b9f5f83a0d0b94affebfdc940005daf1a to the new version."
+    echo
 fi

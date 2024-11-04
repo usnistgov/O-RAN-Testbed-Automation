@@ -68,24 +68,11 @@ if ! command -v yq &>/dev/null; then
     # Uninstall with: sudo rm -rf /usr/bin/yq
 fi
 
-baseDirectory=$(pwd)
-
 echo "Restoring gNodeB configuration file..."
 rm -rf configs
 mkdir configs
+rm -rf logs
 cp srsRAN_Project/configs/gnb_rf_b200_tdd_n78_20mhz.yml configs/gnb.yaml
-
-echo
-echo
-echo "Fetching e2term port"
-INSIDE_CLUSTER="yes"
-# echo "Are you connecting to the e2term from inside the Kubernetes cluster? [yes/no]"
-# read -p "Enter choice (yes/no): " INSIDE_CLUSTER
-if [ "$INSIDE_CLUSTER" = "yes" ]; then
-    PORT_e2term=36422
-else
-    PORT_e2term=32222
-fi
 
 # Function to prompt user for IP address
 prompt_for_e2term_ip() {
@@ -95,33 +82,52 @@ prompt_for_e2term_ip() {
     echo "$USER_IP"
 }
 
-# Check if kubectl is installed
-if ! command -v kubectl &>/dev/null; then
-    echo "Could not find kubectl."
-    IP_e2term=$(prompt_for_e2term_ip)
-else
-    SERVICE_INFO=$(kubectl get service -n ricplt | grep service-ricplt-e2term-sctp)
+ENABLE_E2_TERM="true"
+if [ ! -d "../RAN_Intelligent_Controllers/Near-Real-Time-RIC" ]; then
+    echo "Could not find the Near-Real-Time-RIC directory. Disabling E2 termination support."
+    ENABLE_E2_TERM="false"
+fi
 
-    # Check if SERVICE_INFO is empty
-    if [ -z "$SERVICE_INFO" ]; then
-        echo "No service found or kubectl command failed."
-        IP_e2term=$(prompt_for_e2term_ip)
+if [ "$ENABLE_E2_TERM" = "true" ]; then
+    echo "Fetching E2 termination service IP address..."
+
+    INSIDE_CLUSTER="true"
+    # echo "Are you connecting to the e2term from inside the Kubernetes cluster? [yes/no]"
+    # read -p "Enter choice (yes/no): " INSIDE_CLUSTER
+    if [ "$INSIDE_CLUSTER" = "yes" ]; then
+        PORT_E2TERM=36422
     else
-        # Use awk to extract the IP and the correct port based on the connection context
-        IP_e2term=$(echo "$SERVICE_INFO" | awk '{print $3}')
-        if [ "$INSIDE_CLUSTER" = "yes" ]; then
-            PORT_e2term=$(echo "$SERVICE_INFO" | awk '{print $5}' | cut -d ':' -f1)
-        else
-            PORT_e2term=$(echo "$SERVICE_INFO" | awk '{print $5}' | cut -d ':' -f2)
-        fi
+        PORT_E2TERM=32222
+    fi
 
-        if [ -z "$IP_e2term" ] || [ "$IP_e2term" == "<none>" ]; then
-            IP_e2term=$(prompt_for_e2term_ip)
+    # Check if kubectl is installed
+    if ! command -v kubectl &>/dev/null; then
+        echo "Could not find kubectl."
+        IP_E2TERM=$(prompt_for_e2term_ip)
+    else
+        SERVICE_INFO=$(kubectl get service -n ricplt | grep service-ricplt-e2term-sctp)
+
+        # Check if SERVICE_INFO is empty
+        if [ -z "$SERVICE_INFO" ]; then
+            echo "No service found or kubectl command failed."
+            IP_E2TERM=$(prompt_for_e2term_ip)
+        else
+            # Use awk to extract the IP and the correct port based on the connection context
+            IP_E2TERM=$(echo "$SERVICE_INFO" | awk '{print $3}')
+            if [ "$INSIDE_CLUSTER" = "true" ]; then
+                PORT_E2TERM=$(echo "$SERVICE_INFO" | awk '{print $5}' | cut -d ':' -f1)
+            else
+                PORT_E2TERM=$(echo "$SERVICE_INFO" | awk '{print $5}' | cut -d ':' -f2)
+            fi
+
+            if [ -z "$IP_E2TERM" ] || [ "$IP_E2TERM" == "<none>" ]; then
+                IP_E2TERM=$(prompt_for_e2term_ip)
+            fi
         fi
     fi
+    echo "IP_E2TERM: $IP_E2TERM"
+    echo "PORT_E2TERM: $PORT_E2TERM"
 fi
-echo "IP_e2term: $IP_e2term"
-echo "PORT_e2term: $PORT_e2term"
 
 echo "Fetching AMF addresses..."
 FILE_PATH="../5G_Core_Network/configs/get_amf_address.txt"
@@ -153,10 +159,6 @@ fi
 
 echo "AMF Address: $AMF_ADDR"
 echo "AMF Binding Address: $AMF_ADDR_BIND"
-
-echo
-echo
-echo "Configuring gNodeB..."
 
 # Function to update or add YAML configuration properties using yq
 update_yaml() {
@@ -196,18 +198,26 @@ update_yaml() {
 
 mkdir -p logs
 
+DEVICE_ARGS=""
+DEVICE_ARGS+="tx_port0=tcp://127.0.0.1:2000,rx_port0=tcp://127.0.0.1:2001,base_srate=23.04e6"
+# DEVICE_ARGS="" # Multiple RF devices:
+# DEVICE_ARGS+="tx_port0=tcp://127.0.0.1:2100,rx_port0=tcp://127.0.0.1:2101,"
+# DEVICE_ARGS+="tx_port1=tcp://127.0.0.1:2200,rx_port1=tcp://127.0.0.1:2201,"
+# DEVICE_ARGS+="tx_port2=tcp://127.0.0.1:2300,rx_port2=tcp://127.0.0.1:2301,"
+# DEVICE_ARGS+="base_srate=23.04e6"
+
 # Update configuration values for AMF connection
 update_yaml configs/gnb.yaml "cu_cp.amf" "addr" "$AMF_ADDR"
 update_yaml configs/gnb.yaml "cu_cp.amf" "bind_addr" "$AMF_ADDR_BIND"
 
 # Update configuration values for RF front-end device
 update_yaml configs/gnb.yaml "ru_sdr" "device_driver" "zmq"
-update_yaml configs/gnb.yaml "ru_sdr" "device_args" "tx_port=tcp://127.0.0.1:2000,rx_port=tcp://127.0.0.1:2001,base_srate=23.04e6"
+update_yaml configs/gnb.yaml "ru_sdr" "device_args" "$DEVICE_ARGS"
 update_yaml configs/gnb.yaml "ru_sdr" "srate" "23.04"
 update_yaml configs/gnb.yaml "ru_sdr" "tx_gain" "75"
 update_yaml configs/gnb.yaml "ru_sdr" "rx_gain" "75"
-update_yaml configs/gnb.yaml "ru_sdr" "clock" null # Handle null for clock
-update_yaml configs/gnb.yaml "ru_sdr" "sync" null  # Handle null for sync
+update_yaml configs/gnb.yaml "ru_sdr" "clock" null
+update_yaml configs/gnb.yaml "ru_sdr" "sync" null
 
 # Update configuration values for 5G cell parameters
 update_yaml configs/gnb.yaml "cell_cfg" "dl_arfcn" "368500" # NR ARFCN
@@ -218,25 +228,42 @@ update_yaml configs/gnb.yaml "cell_cfg" "plmn" $PLMN
 update_yaml configs/gnb.yaml "cell_cfg" "tac" $TAC
 
 # Update configuration values to connect RIC by e2 interface
-update_yaml configs/gnb.yaml "e2" "enable_du_e2" "true"
-update_yaml configs/gnb.yaml "e2" "e2sm_kpm_enabled" "true"
-update_yaml configs/gnb.yaml "e2" "addr" "$IP_e2term"
-update_yaml configs/gnb.yaml "e2" "bind_addr" "$IP_e2term"
-update_yaml configs/gnb.yaml "e2" "port" "$PORT_e2term"
+if [ "$ENABLE_E2_TERM" = "true" ]; then
+    update_yaml configs/gnb.yaml "e2" "enable_cu_e2" "true"
+    update_yaml configs/gnb.yaml "e2" "enable_du_e2" "true"
+    update_yaml configs/gnb.yaml "e2" "e2sm_kpm_enabled" "true"
+    update_yaml configs/gnb.yaml "e2" "e2sm_rc_enabled" "true"
+    update_yaml configs/gnb.yaml "e2" "addr" "$IP_E2TERM"
+    update_yaml configs/gnb.yaml "e2" "bind_addr" "$IP_E2TERM"
+    update_yaml configs/gnb.yaml "e2" "port" "$PORT_E2TERM"
+else
+    update_yaml configs/gnb.yaml "e2" "enable_cu_e2" "false"
+    update_yaml configs/gnb.yaml "e2" "enable_du_e2" "false"
+    update_yaml configs/gnb.yaml "e2" "e2sm_kpm_enabled" "false"
+    update_yaml configs/gnb.yaml "e2" "e2sm_rc_enabled" "false"
+    update_yaml configs/gnb.yaml "e2" "addr" null
+    update_yaml configs/gnb.yaml "e2" "bind_addr" null
+    update_yaml configs/gnb.yaml "e2" "port" null
+fi
 
 # Update configuration values for CU and other settings
 update_yaml configs/gnb.yaml "cu_cp" "inactivity_timer" "7200"
 update_yaml configs/gnb.yaml "log" "filename" "logs/gnb.log"
 update_yaml configs/gnb.yaml "log" "all_level" "info"
 update_yaml configs/gnb.yaml "log" "hex_max_size" "0"
+
 update_yaml configs/gnb.yaml "pcap" "mac_enable" "false"
-update_yaml configs/gnb.yaml "pcap" "mac_filename" "logs/gnb_mac.pcap"
 update_yaml configs/gnb.yaml "pcap" "ngap_enable" "false"
+update_yaml configs/gnb.yaml "pcap" "e2ap_enable" "false"
+# Uncomment for log files:
+# update_yaml configs/gnb.yaml "pcap" "mac_enable" "true"
+# update_yaml configs/gnb.yaml "pcap" "ngap_enable" "true"
+# update_yaml configs/gnb.yaml "pcap" "e2ap_enable" "true"
+update_yaml configs/gnb.yaml "pcap" "mac_filename" "logs/gnb_mac.pcap"
 update_yaml configs/gnb.yaml "pcap" "ngap_filename" "logs/gnb_ngap.pcap"
-update_yaml configs/gnb.yaml "pcap" "e2ap_enable" "true"
 update_yaml configs/gnb.yaml "pcap" "e2ap_filename" "logs/gnb_e2ap.pcap"
-update_yaml configs/gnb.yaml "metrics" "rlc_json_enable" "1"
-update_yaml configs/gnb.yaml "metrics" "rlc_report_period" "1000"
+# update_yaml configs/gnb.yaml "metrics" "rlc_json_enable" "1"
+# update_yaml configs/gnb.yaml "metrics" "rlc_report_period" "1000"
 
 # Update configuration values for PDCCH and PRACH
 update_yaml configs/gnb.yaml "cell_cfg.pdcch.common" "ss0_index" "0"

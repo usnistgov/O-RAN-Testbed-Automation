@@ -1,17 +1,20 @@
 ## Next Generation Node B
 
-The Next Generation Node B (gNodeB) is a base station based on [srsRAN_Project][srsran-srsran], and is configured to connect to the 5G Core Network and provide a connection to the User Equipments.
+The Next Generation Node B (gNodeB) is a base station configured with the srsRAN project [[1]][srsran-srsran], connecting User Equipments (UEs) to the 5G Core Network.
 
 ## Usage
-- Compile the gNodeB with `./full_install.sh`.
-- Generate the configuration files with `./generate_configurations.sh`.
-  - The script fetches the address of the 5G Core Network's AMF and the SCTP address from the Near Real-Time RAN Intelligent Controller's E2 Terminator. If either are not found, the script will prompt the user to enter the address manually.
-  - To view or modify the configuration file, navigate to the `configs` directory.
-- Run the gNodeB with `./run_foreground.sh`, or as a background process with `./run.sh`, where the output is redirected to `logs/gnb_stdout.txt`.
-- Stop the gNodeB with `./stop.sh`.
-- Check if the gNodeB is running with `./is_running.sh`.
-- Access the log files by navigating to the `logs` directory.
+- **Compile**: Use `./full_install.sh` to build the gNodeB.
+- **Generate Configurations**: Use `./generate_configurations.sh` to create configuration files.
+  - The script automatically retrieves the 5G Core Network's AMF address and the SCTP address from the Near Real-Time RAN Intelligent Controller's E2 Terminator. If either are not found, the script will prompt the user to enter the address manually.
+  - Configuration files can be accessed and modified in the `configs` directory.
+- **Start the gNodeB**: Use `./run.sh` to start the gNodeB, or `./run_background.sh` to run it as a background process where the output is redirected to `logs/gnb_stdout.txt`.
+- **Stop the gNodeB**: Terminate the gNodeB with `./stop.sh`.
+- **Status**: Check if the gNodeB is running with `./is_running.sh`. The output will display the running status.
+- **Logs**: Access logs by navigating to the `logs` directory.
+
+## References
+1. srsRAN Project Documentation. Software Radio Systems. [https://docs.srsran.com/projects/project/en/latest/index.html][srsran-gnb]
 
 <!-- References -->
 
-[srsran-gnb]: https://docs.srsran.com/projects/project/en/latest/knowledge_base/source/oran_gnb/source/index.html
+[srsran-gnb]: https://docs.srsran.com/projects/project/en/latest/index.html

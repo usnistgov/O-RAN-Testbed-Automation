@@ -81,12 +81,12 @@ install_package python3-pip pip3
 install_package python3-venv python3-venv
 
 # Save the current directory and create a temporary directory
-CURRENT_DIR=$(pwd)
-WORKDIR=$(mktemp -d)
-cd "$WORKDIR"
+BACKUP_DIR=$(pwd)
+WORK_DIR=$(mktemp -d)
+cd "$WORK_DIR"
 
 # Create and activate a Python virtual environment
-VENV_DIR="$WORKDIR/venv"
+VENV_DIR="$WORK_DIR/venv"
 python3 -m venv "$VENV_DIR"
 source "$VENV_DIR/bin/activate"
 
@@ -142,9 +142,9 @@ if [ -n "$BEST_MIRROR" ]; then
     fi
 
     # Replace the original sources.list with the new one
-    if [ -f "$WORKDIR/sources.list" ]; then
+    if [ -f "$WORK_DIR/sources.list" ]; then
         echo "Updating sources.list to use the fastest mirror..."
-        mv "$WORKDIR/sources.list" /etc/apt/sources.list
+        mv "$WORK_DIR/sources.list" /etc/apt/sources.list
     else
         echo "No sources.list was generated. Check apt-select output for errors."
         deactivate
@@ -152,8 +152,8 @@ if [ -n "$BEST_MIRROR" ]; then
     fi
 
     # Clean up and restore original directory
-    cd "$CURRENT_DIR"
-    rm -rf "$WORKDIR"
+    cd "$BACKUP_DIR"
+    rm -rf "$WORK_DIR"
 
     apt-get update -y
     echo "The sources.list has been updated with sources from $BEST_MIRROR."

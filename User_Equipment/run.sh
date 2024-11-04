@@ -56,41 +56,49 @@ if [ ! -f "configs/ue1.conf" ]; then
     exit 1
 fi
 
+# Function to handle graceful shutdown
+graceful_shutdown() {
+    echo "Shutting down UE $UE_NUMBER gracefully..."
+    ./stop.sh
+    exit
+}
+trap graceful_shutdown SIGINT
+
 UE_OPC="63BFA50EE6523365FF14C1F45F88737D"
+UE_APN="srsapn"
+UE_TX_PORT=2001
+UE_RX_PORT=2000
 if [ $UE_NUMBER -eq 1 ]; then # Following the blueprint for UE 1: https://doi.org/10.6028/NIST.TN.2311
     UE_IMEI="353490069873319"
     UE_IMSI="001010123456780"
-    UE_KEY="00112233445566778899aabbccddeeff"
-    UE_TX_PORT=2101
-    UE_RX_PORT=2100
+    UE_KEY="00112233445566778899AABBCCDDEEFF"
+    # UE_TX_PORT=2101
+    # UE_RX_PORT=2100
     UE_NAMESPACE="ue1"
 
 elif [ $UE_NUMBER -eq 2 ]; then # Following the blueprint for UE 2: https://doi.org/10.6028/NIST.TN.2311
     UE_IMEI="353490069873318"
     UE_IMSI="001010123456790"
-    UE_KEY="00112233445566778899aabbccddef00"
-    UE_TX_PORT=2201
-    UE_RX_PORT=2200
+    UE_KEY="00112233445566778899AABBCCDDEF00"
+    # UE_TX_PORT=2201
+    # UE_RX_PORT=2200
     UE_NAMESPACE="ue2"
 
 elif [ $UE_NUMBER -eq 3 ]; then # Following the blueprint for UE 3: https://doi.org/10.6028/NIST.TN.2311
     UE_IMEI="353490069873312"
     UE_IMSI="001010123456791"
-    UE_KEY="00112233445566778899aabbccddef01"
-    UE_TX_PORT=2301
-    UE_RX_PORT=2300
+    UE_KEY="00112233445566778899AABBCCDDEF01"
+    # UE_TX_PORT=2301
+    # UE_RX_PORT=2300
     UE_NAMESPACE="ue3"
 
 elif [ $UE_NUMBER -gt 3 ]; then # Dynamic configurations for UE 4 and beyond
     UE_OFFSET=$((UE_NUMBER - 3))
-    DECIMAL_IMEI=$((16#353490069873319 + $UE_OFFSET))
-    DECIMAL_IMSI=$((16#001010123456791 + $UE_OFFSET))
-    DECIMAL_KEY_POST=$((16#899AABBCCDDEF01 + $UE_OFFSET))
-    UE_IMEI=$(printf '%X' $DECIMAL_IMEI)
-    UE_IMSI=$(printf '%X' $DECIMAL_IMSI)
-    UE_KEY="00112233445566778$(printf '%X' $DECIMAL_KEY_POST)"
-    UE_TX_PORT="$((23 + $UE_OFFSET))01"
-    UE_RX_PORT="$((23 + $UE_OFFSET))00"
+    UE_IMEI=$(printf '%d' $((353490069873319 + UE_OFFSET)))
+    UE_IMSI=$(printf '%015d' $((1010123456781 + UE_OFFSET)))
+    UE_KEY="00112233445566778$(printf '%X' $((16#899AABBCCDDEF01 + UE_OFFSET)))"
+    # UE_TX_PORT="$((23 + $UE_OFFSET))01"
+    # UE_RX_PORT="$((23 + $UE_OFFSET))00"
     UE_NAMESPACE="ue$UE_NUMBER"
 fi
 
@@ -146,9 +154,8 @@ fi
 
 if [ $UE_NUMBER -gt 3 ]; then
     echo "UE is greater than registered subscribers, registering UE $UE_NUMBER..."
-    # path is $SCRIPT_DIR's parent directory with /5G
     REGISTRATION_DIR=$(dirname "$SCRIPT_DIR")/5G_Core_Network/install_scripts
-    $REGISTRATION_DIR/./register_subscriber.sh --imsi $UE_IMSI --key $UE_KEY --opc $UE_OPC --apn srsapn
+    "$REGISTRATION_DIR/./register_subscriber.sh" --imsi "$UE_IMSI" --key "$UE_KEY" --opc "$UE_OPC" --apn "$UE_APN"
 fi
 
 if ! ip netns list | grep -q "^$UE_NAMESPACE$"; then
@@ -163,6 +170,6 @@ else
         echo "Configuration was not found for srsUE. Please run ./generate_configurations.sh first."
         exit 1
     fi
-    echo "Starting srsue..."
+    echo "Starting srsue (ue$UE_NUMBER)..."
     sudo ./srsRAN_4G/build/srsue/src/srsue --config_file "$UE_CONF_PATH"
 fi

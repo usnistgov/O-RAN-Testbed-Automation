@@ -29,13 +29,13 @@ REM copyright protection within the United States.
 '
 
 : '
-REM This Linux shell/Windows batch script will download the 5G_Core_Network, gNodeB, User_Equipment and RAN_Intelligent_Controller repositories for analyzing the source code without requiring a full testbed build and installation.
+REM This Linux shell/Windows batch script will download the 5G_Core_Network, gNodeB, User_Equipment and RAN_Intelligent_Controllers repositories for analyzing the source code without requiring a full testbed build and installation.
 '
 
 cd ..
 
 cd 5G_Core_Network
-git clone https://github.com/open5gs/open5gs.git
+git clone https://github.com/open5gs/open5gs.git open5gs
 cd ..
 
 cd Next_Generation_Node_B
@@ -48,7 +48,7 @@ cd User_Equipment
 git clone https://github.com/srsran/srsRAN_4G.git
 cd ..
 
-cd RAN_Intelligent_Controller/Near-Real-Time-RIC
+cd RAN_Intelligent_Controllers/Near-Real-Time-RIC
 git clone https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep -b j-release
 git clone https://gerrit.o-ran-sc.org/r/sim/e2-interface
 git clone https://gerrit.o-ran-sc.org/r/ric-plt/appmgr
@@ -58,9 +58,8 @@ git clone https://gerrit.o-ran-sc.org/r/ric-app/hw-go
 cd ..
 cd ..
 
-cd RAN_Intelligent_Controller/Non-Real-Time-RIC
+cd RAN_Intelligent_Controllers/Non-Real-Time-RIC
 git clone https://gerrit.o-ran-sc.org/r/it/dep
-git clone "https://gerrit.o-ran-sc.org/r/nonrtric" -b j-release dep/nonrtric_new
 git clone https://gerrit.o-ran-sc.org/r/nonrtric/plt/ranpm -b j-release dep/ranpm
 git clone https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep -b j-release dep/ric-dep
 git clone https://github.com/onap/multicloud-k8s.git dep/smo-install/multicloud-k8s

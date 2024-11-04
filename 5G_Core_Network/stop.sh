@@ -28,31 +28,34 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-# Function to stop service
-stop_service() {
-    local app_name="open5gs-$1"
-    if pgrep -x "$app_name" >/dev/null; then
-        echo "Stopping $app_name..."
-        sudo pkill -9 -x "$app_name"
-    else
-        echo "Stopping $app_name..."
-        sudo systemctl stop "$app_name.service" 2>/dev/null
-    fi
-}
-
-# Latest components (see https://open5gs.org/open5gs/docs/guide/01-quickstart/#:~:text=Starting%20and%20Stopping%20Open5GS)
-apps=("mmed" "sgwcd" "smfd" "amfd" "sgwud" "upfd" "hssd" "pcrfd" "nrfd" "scpd" "seppd" "ausfd" "udmd" "pcfd" "nssfd" "bsfd" "udrd" "webui")
-
-# Check if sudo is needed and prompt if it is not already running as root
-if [[ $(id -u) -ne 0 ]]; then
-    echo "Some operations require root privileges..."
-    # Try to elevate privileges
-    sudo echo "Privileges elevated successfully."
+if ! command -v realpath &>/dev/null; then
+    echo "Package \"coreutils\" not found, installing..."
+    sudo apt-get install -y coreutils
 fi
 
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+cd "$SCRIPT_DIR"
+
+# Latest components (see https://open5gs.org/open5gs/docs/guide/01-quickstart/#:~:text=Starting%20and%20Stopping%20Open5GS)
+APPS=("mmed" "sgwcd" "smfd" "amfd" "sgwud" "upfd" "hssd" "pcrfd" "nrfd" "scpd" "seppd" "ausfd" "udmd" "pcfd" "nssfd" "bsfd" "udrd" "webui")
+
 # Iterate through each application and stop if running
-for app in "${apps[@]}"; do
-    stop_service "$app"
+for APP in "${APPS[@]}"; do
+    if [ "$APP" != "webui" ]; then
+        sudo pkill -x "open5gs-$APP" && echo "Component open5gs-$APP has stopped gracefully."
+    else
+        sudo systemctl stop "open5gs-$APP.service" 2>/dev/null
+    fi
+done
+
+# Iterate through each application and stop if running
+for APP in "${APPS[@]}"; do
+    if [ "$APP" != "webui" ]; then
+        if pgrep -x "open5gs-$APP" >/dev/null; then
+            echo "Stopping open5gs-$APP..."
+            sudo pkill -9 -x "open5gs-$APP"
+        fi
+    fi
 done
 
 ./is_running.sh

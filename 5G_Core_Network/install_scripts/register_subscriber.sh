@@ -36,7 +36,7 @@ if ! command -v realpath &>/dev/null; then
 fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
-cd $(dirname "$SCRIPT_DIR")
+cd "$(dirname "$SCRIPT_DIR")"
 
 DBCTL_DIR="./open5gs/misc/db/open5gs-dbctl"
 

@@ -40,35 +40,95 @@ if [ ! -f "configs/amf.yaml" ] || [ ! -f "configs/mme.yaml" ]; then
     echo "Configurations were not found for Open5GS. Please run ./generate_configurations.sh first."
     exit 1
 fi
+mkdir -p logs
 
 sudo ./install_scripts/network_config.sh
 
 run_in_background() {
     local APP_NAME="open5gs-$1"
-    local CONFIG_FILE=""
-    if [ -f "configs/${1%?}.yaml" ]; then
-        CONFIG_FILE="-c $SCRIPT_DIR/configs/${1%?}.yaml"
+    if [ "$1" == "seppd" ]; then
+        local SEPP1_RUNNING=$(pgrep -f "$APP_NAME.*sepp1.yaml")
+        local SEPP2_RUNNING=$(pgrep -f "$APP_NAME.*sepp2.yaml")
+        if [ -z "$SEPP1_RUNNING" ]; then
+            CONFIG_FILE_1="$SCRIPT_DIR/configs/sepp1.yaml"
+            if [ ! -f "$CONFIG_FILE_1" ]; then
+                echo "Configuration file not found: $CONFIG_FILE_1"
+                exit 1
+            fi
+            echo "Starting $APP_NAME 1 in background..."
+            ./open5gs/install/bin/$APP_NAME -c $CONFIG_FILE_1 >/dev/null 2>&1 &
+            #./open5gs/install/bin/$APP_NAME -c $CONFIG_FILE_1 >logs/${1}_1_stdout.txt 2>&1 &
+        else
+            echo "Already running $APP_NAME 1."
+        fi
+        if [ -z "$SEPP2_RUNNING" ]; then
+            CONFIG_FILE_2="$SCRIPT_DIR/configs/sepp2.yaml"
+            if [ ! -f "$CONFIG_FILE_2" ]; then
+                echo "Configuration file not found: $CONFIG_FILE_2"
+                exit 1
+            fi
+            echo "Starting $APP_NAME 2 in background..."
+            ./open5gs/install/bin/$APP_NAME -c $CONFIG_FILE_2 >/dev/null 2>&1 &
+            #./open5gs/install/bin/$APP_NAME -c $CONFIG_FILE_2 >logs/${1}_2_stdout.txt 2>&1 &
+        else
+            echo "Already running $APP_NAME 2."
+        fi
+        return
     fi
     if pgrep -x "$APP_NAME" >/dev/null; then
         echo "Already running $APP_NAME."
-    else
-        echo "Starting $APP_NAME in background..."
-        ./open5gs/install/bin/$APP_NAME $CONFIG_FILE >logs/$APP_NAME_stdout.txt 2>&1 &
+        return
     fi
+    local CONFIG_FILE="$SCRIPT_DIR/configs/${1%?}.yaml"
+    if [ ! -f "$CONFIG_FILE" ]; then
+        echo "Configuration file not found: $CONFIG_FILE"
+        exit 1
+    fi
+    echo "Starting $APP_NAME in background..."
+    ./open5gs/install/bin/$APP_NAME -c "$CONFIG_FILE" >/dev/null 2>&1 &
+    #./open5gs/install/bin/$APP_NAME -c "$CONFIG_FILE" >logs/${1}_stdout.txt 2>&1 &
 }
 
 run_in_terminal() {
     local APP_NAME="open5gs-$1"
-    local CONFIG_FILE=""
-    if [ -f "configs/${1%?}.yaml" ]; then
-        CONFIG_FILE="-c $SCRIPT_DIR/configs/${1%?}.yaml"
+    if [ "$1" == "seppd" ]; then
+        local SEPP1_RUNNING=$(pgrep -f "$APP_NAME.*sepp1.yaml")
+        local SEPP2_RUNNING=$(pgrep -f "$APP_NAME.*sepp2.yaml")
+        if [ -z "$SEPP1_RUNNING" ]; then
+            CONFIG_FILE_1="$SCRIPT_DIR/configs/sepp1.yaml"
+            if [ ! -f "$CONFIG_FILE_1" ]; then
+                echo "Configuration file not found: $CONFIG_FILE_1"
+                exit 1
+            fi
+            echo "Starting $APP_NAME 1 in GNOME Terminal..."
+            gnome-terminal -t "$APP_NAME 1 Node" -- /bin/sh -c "./open5gs/install/bin/$APP_NAME -c $CONFIG_FILE_1"
+        else
+            echo "Already running $APP_NAME 1."
+        fi
+        if [ -z "$SEPP2_RUNNING" ]; then
+            CONFIG_FILE_2="$SCRIPT_DIR/configs/sepp2.yaml"
+            if [ ! -f "$CONFIG_FILE_2" ]; then
+                echo "Configuration file not found: $CONFIG_FILE_2"
+                exit 1
+            fi
+            echo "Starting $APP_NAME 2 in GNOME Terminal..."
+            gnome-terminal -t "$APP_NAME 2 Node" -- /bin/sh -c "./open5gs/install/bin/$APP_NAME -c $CONFIG_FILE_2"
+        else
+            echo "Already running $APP_NAME 2."
+        fi
+        return
     fi
     if pgrep -x "$APP_NAME" >/dev/null; then
         echo "Already running $APP_NAME."
-    else
-        echo "Starting $APP_NAME in GNOME Terminal..."
-        gnome-terminal -t "$APP_NAME Node" -- /bin/sh -c "./open5gs/install/bin/$APP_NAME $CONFIG_FILE"
+        return
     fi
+    local CONFIG_FILE="$SCRIPT_DIR/configs/${1%?}.yaml"
+    if [ ! -f "$CONFIG_FILE" ]; then
+        echo "Configuration file not found: $CONFIG_FILE"
+        exit 1
+    fi
+    echo "Starting $APP_NAME in GNOME Terminal..."
+    gnome-terminal -t "$APP_NAME Node" -- /bin/sh -c "./open5gs/install/bin/$APP_NAME -c $CONFIG_FILE"
 }
 
 # Latest components (see https://open5gs.org/open5gs/docs/guide/01-quickstart/#:~:text=Starting%20and%20Stopping%20Open5GS)

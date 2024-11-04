@@ -28,6 +28,14 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
+if ! command -v realpath &>/dev/null; then
+    echo "Package \"coreutils\" not found, installing..."
+    sudo apt-get install -y coreutils
+fi
+
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+cd "$SCRIPT_DIR"
+
 RUNNING_UE_NUMBERS=()
 
 # Attempt to extract the UE number from the configuration file path

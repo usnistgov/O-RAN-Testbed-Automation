@@ -41,12 +41,11 @@ cd "$SCRIPT_DIR"
 
 # Check for srsue binary to determine if srsRAN_4G is already installed
 if [ -f "srsRAN_4G/build/srsue/src/srsue" ]; then
-    echo "srsRAN_4G is already installed. Skipping."
+    echo "srsRAN_4G is already installed, skipping."
     exit 0
 fi
 
-# Starts a script in background that calls `sudo -v` every minute to ensure that sudo stays active, ensuring the script runs without requiring user interaction
-sudo ls
+# Run a sudo command every minute to ensure script execution without user interaction
 ./install_scripts/start_sudo_refresh.sh
 
 # Get the start timestamp in seconds
@@ -68,22 +67,20 @@ if systemctl is-active --quiet apt-daily-upgrade.timer; then
     sudo systemctl disable apt-daily-upgrade.timer &>/dev/null && echo "Successfully disabled apt-daily-upgrade.timer service."
 fi
 
-BASE_DIR=$(pwd)
-
 echo "Installing User Equipment..."
 
 sudo apt-get update
 
-sudo apt-get install libuhd-dev -y
-sudo apt-get install uhd-host -y
-sudo apt-get install libdw-dev libbfd-dev libdwarf-dev -y
-sudo apt-get install libgtest-dev -y
-sudo apt-get install libmbedtls-dev -y
-sudo apt-get install libfftw3-dev -y
-sudo apt-get install libyaml-cpp-dev -y
+sudo apt-get install -y libuhd-dev
+sudo apt-get install -y uhd-host
+sudo apt-get install -y libdw-dev libbfd-dev libdwarf-dev
+sudo apt-get install -y libgtest-dev
+sudo apt-get install -y libmbedtls-dev
+sudo apt-get install -y libfftw3-dev
+sudo apt-get install -y libyaml-cpp-dev
 
-sudo apt-get install build-essential cmake libtool libfftw3-dev libmbedtls-dev libboost-program-options-dev libconfig++-dev libsctp-dev -y
-sudo apt-get install libfftw3-dev libmbedtls-dev -y
+sudo apt-get install -y build-essential cmake libtool libfftw3-dev libmbedtls-dev libboost-program-options-dev libconfig++-dev libsctp-dev
+sudo apt-get install -y libfftw3-dev libmbedtls-dev
 
 # Enable SCTP
 sudo apt-get install -y libsctp-dev
@@ -100,21 +97,16 @@ else
     echo "SCTP module loaded successfully."
 fi
 
-cd $BASE_DIR
+cd "$SCRIPT_DIR"
 
 echo
-echo
 echo "Building ZeroMQ libzmq..."
-# if ! sudo apt-get install -y libzmq3; then
-#     sudo apt-get install -y libzmq3-dev
-# fi
-# rm -rf libzmq
 if [ -d ../Next_Generation_Node_B/libzmq ]; then
     if [ ! -L libzmq ]; then
-        echo "Found gNodeB library. Creating libqmz link instead."
+        echo "Found gNodeB library. Creating libzmq link instead."
         ln -s ../Next_Generation_Node_B/libzmq libzmq
     else
-        echo "Link to libqmz already created."
+        echo "Link to libzmq already created."
     fi
 else
     if [ ! -d libzmq ]; then
@@ -129,12 +121,10 @@ else
     cd ..
 fi
 
-cd $BASE_DIR
+cd "$SCRIPT_DIR"
 
 echo
-echo
 echo "Building ZeroMQ czmq..."
-#rm -rf czmq
 if [ -d ../Next_Generation_Node_B/czmq ]; then
     if [ ! -L czmq ]; then
         echo "Found gNodeB library. Creating czmq link instead."
@@ -155,11 +145,11 @@ else
     cd ..
 fi
 
-cd $BASE_DIR
+cd "$SCRIPT_DIR"
 
 echo
 echo
-echo "Compiling and Installing srsRAN..."
+echo "Compiling and Installing srsRAN_4G..."
 if [ ! -d "srsRAN_4G" ]; then
     echo "Cloning srsRAN_4G..."
     git clone https://github.com/srsran/srsRAN_4G.git
@@ -167,19 +157,18 @@ fi
 cd srsRAN_4G
 echo
 echo
-echo "Building srsRAN..."
+echo "Building srsRAN_4G..."
 # rm -rf build
 mkdir -p build
 cd build
-#cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_CXX_FLAGS="-Wno-error=array-bounds" ../ # Enable debugging info
-cmake .. -DCMAKE_CXX_FLAGS="-Wno-error=array-bounds"
-
+SUPPRESS_WARNINGS="-Wno-error=array-bounds -Wno-error=unused-but-set-variable -Wno-error=unused-function -Wno-error=unused-parameter -Wno-error=unused-result -Wno-error=unused-variable -Wno-error=all"
+cmake .. -DCMAKE_CXX_FLAGS="$SUPPRESS_WARNINGS"
 make clean
 make -j$(nproc)
 sudo make -j$(nproc) install
 echo "srsRAN_4G was installed successfully."
 
-cd $BASE_DIR
+cd "$SCRIPT_DIR"
 
 # Stop the sudo timeout refresher, it is no longer necessary to run
 ./install_scripts/stop_sudo_refresh.sh

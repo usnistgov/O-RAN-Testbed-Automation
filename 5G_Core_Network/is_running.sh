@@ -28,16 +28,24 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
+if ! command -v realpath &>/dev/null; then
+    echo "Package \"coreutils\" not found, installing..."
+    sudo apt-get install -y coreutils
+fi
+
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+cd "$SCRIPT_DIR"
+
 check_service() {
-    local APP_NAME="open5gs-$1"
-    local SERVICE_NAME="$1"
-    if pgrep -x "$APP_NAME" >/dev/null; then
-        echo "$SERVICE_NAME: RUNNING"
+    local SEARCH_PATTERN="open5gs-$1"
+    local DISPLAY_NAME="$2"
+    if pgrep -f "$SEARCH_PATTERN" >/dev/null; then
+        echo "$DISPLAY_NAME: RUNNING"
     else
-        if systemctl is-active --quiet "$APP_NAME"; then
-            echo "$SERVICE_NAME: RUNNING"
+        if systemctl is-active --quiet "$SEARCH_PATTERN"; then
+            echo "$DISPLAY_NAME: RUNNING"
         else
-            echo "$SERVICE_NAME: NOT RUNNING"
+            echo "$DISPLAY_NAME: NOT RUNNING"
         fi
     fi
 }
@@ -45,6 +53,11 @@ check_service() {
 # Latest components (see https://open5gs.org/open5gs/docs/guide/01-quickstart/#:~:text=Starting%20and%20Stopping%20Open5GS)
 APPS=("mmed" "sgwcd" "smfd" "amfd" "sgwud" "upfd" "hssd" "pcrfd" "nrfd" "scpd" "seppd" "ausfd" "udmd" "pcfd" "nssfd" "bsfd" "udrd" "webui")
 
-for app in "${APPS[@]}"; do
-    check_service "$app"
+for APP in "${APPS[@]}"; do
+    if [ "$APP" == "seppd" ]; then
+        check_service "seppd.*sepp1.yaml" "seppd_1"
+        check_service "seppd.*sepp2.yaml" "seppd_2"
+    else
+        check_service "$APP" "$APP"
+    fi
 done

@@ -1,20 +1,20 @@
 ## 5G Core Network
 
-The 5G Core Network is a standalone 5G network based on the architecture defined by 3GPP in TS 23.501 and TS 23.502, and is implemented using the [Open5GS][open5gs-open5gs] software.
+The 5G Core Network operates as a standalone network based on the 3GPP specifications TS 23.501 and TS 23.502, implemented using the Open5GS software [[1]][open5gs-open5gs].
 
 ## Usage
-- Compile the 5G Core with `./full_install.sh`.
-- Generate the configuration files with `./generate_configurations.sh`.
-  - To view or modify the configuration files, navigate to the `configs` directory.
-- Run the 5G Core with `./run.sh`.
+- **Compile**: Use `./full_install.sh` to build the 5G Core.
+- **Generate Configurations**: Use `./generate_configurations.sh` to create configuration files.
+  - Configuration files can be accessed and modified in the `configs` directory.
+- **Start the 5G Core Network**: Use `./run.sh` to start the 5G Core components.
   - To start each component in its own gnome-terminal instance, use `./run.sh show`.
-- Stop the 5G Core with `./stop.sh`.
-- Check if the 5G Core is running with `./is_running.sh`.
-- Access the log files by navigating to the `logs` directory.
+- **Stop the Network**: Terminate the network operation with `./stop.sh`.
+- **Status**: Check if the 5G Core is running with `./is_running.sh`. The output will display which components are running.
+- **Logs**: Access logs by navigating to the `logs` directory.
 
 ### Custom PLMN and TAC Identifiers
-To select a different PLMN and TAC ID, modify the contents of `5G_Core_Network/options.yaml`, then apply the changes with:
-```
+Modify the `5G_Core_Network/options.yaml` for different PLMN and TAC IDs, then apply changes with the following.
+```console
 ./generate_configurations.sh
 ./stop.sh
 ./run.sh
@@ -24,13 +24,16 @@ cd ../5G_Core_Network
 ```
 
 ## Accessing Subscriber Data
-The WebUI hosts a web interface to access subscriber data. To access the WebUI, navigate to `http://localhost:9999` in a web browser, or run `start_webui.sh` to open Firefox at the address.
+The WebUI hosts a web interface to access subscriber data. To access the WebUI, navigate to `http://localhost:9999` in a web browser, or run `start_webui.sh` to open it in Chrome or Firefox automatically.
 
-To create subscriber entries from the terminal, use the following (default values are for UE 1).
+To create subscriber entries from command line, use the following.
 ```console
 ./install_scripts/register_subscriber.sh --imsi 001010123456780 --key 00112233445566778899aabbccddeeff --opc 63BFA50EE6523365FF14C1F45F88737D --apn srsapn
 ```
 
+## References
+1. Open Source implementation for 5G Core and EPC. Open5GS. [https://open5gs.org/][open5gs-open5gs]
+
 <!-- References -->
 
-[open5gs-open5gs]: https://open5gs.org/
+[open5gs-open5gs]: https://open5gs.org

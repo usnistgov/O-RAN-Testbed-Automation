@@ -41,12 +41,11 @@ cd "$SCRIPT_DIR"
 
 # Check for gnb binary to determine if srsRAN_Project is already installed
 if [ -f "srsRAN_Project/build/apps/gnb/gnb" ]; then
-    echo "srsRAN_Project is already installed. Skipping."
+    echo "srsRAN_Project is already installed, skipping."
     exit 0
 fi
 
-# Starts a script in background that calls `sudo -v` every minute to ensure that sudo stays active, ensuring the script runs without requiring user interaction
-sudo ls
+# Run a sudo command every minute to ensure script execution without user interaction
 ./install_scripts/start_sudo_refresh.sh
 
 # Get the start timestamp in seconds
@@ -67,8 +66,6 @@ if systemctl is-active --quiet apt-daily-upgrade.timer; then
     sudo systemctl stop apt-daily-upgrade.timer &>/dev/null && echo "Successfully stopped apt-daily-upgrade.timer service."
     sudo systemctl disable apt-daily-upgrade.timer &>/dev/null && echo "Successfully disabled apt-daily-upgrade.timer service."
 fi
-
-baseDirectory=$(pwd)
 
 if [ ! -d "srsRAN_Project" ]; then
     echo "Cloning srsRAN_Project..."
@@ -106,40 +103,53 @@ else
     echo "SCTP module loaded successfully."
 fi
 
-cd $baseDirectory
+cd "$SCRIPT_DIR"
 
-echo
 echo
 echo "Building ZeroMQ libzmq..."
-# if ! sudo apt-get install -y libzmq3; then
-#     sudo apt-get install -y libzmq3-dev
-# fi
-#rm -rf libzmq
-if [ ! -d libzmq ]; then
-    git clone https://github.com/zeromq/libzmq.git
+if [ -d ../User_Equipment/libzmq ]; then
+    if [ ! -L libzmq ]; then
+        echo "Found UE library. Creating libzmq link instead."
+        ln -s ../User_Equipment/libzmq libzmq
+    else
+        echo "Link to libzmq already created."
+    fi
+else
+    if [ ! -d libzmq ]; then
+        git clone https://github.com/zeromq/libzmq.git
+    fi
+    cd libzmq
+    ./autogen.sh
+    ./configure
+    make -j$(nproc)
+    sudo make install
+    sudo ldconfig
+    cd ..
 fi
-cd libzmq
-./autogen.sh
-./configure
-make -j$(nproc)
-sudo make install
-sudo ldconfig
 
-cd $baseDirectory
+cd "$SCRIPT_DIR"
 
-echo
 echo
 echo "Building ZeroMQ czmq..."
-#rm -rf czmq
-if [ ! -d czmq ]; then
-    git clone https://github.com/zeromq/czmq.git
+if [ -d ../User_Equipment/czmq ]; then
+    if [ ! -L czmq ]; then
+        echo "Found UE library. Creating czmq link instead."
+        ln -s ../User_Equipment/czmq czmq
+    else
+        echo "Link to czmq already created."
+    fi
+else
+    if [ ! -d czmq ]; then
+        git clone https://github.com/zeromq/czmq.git
+    fi
+    cd czmq
+    ./autogen.sh
+    ./configure
+    make -j$(nproc)
+    sudo make install
+    sudo ldconfig
+    cd ..
 fi
-cd czmq
-./autogen.sh
-./configure
-make -j$(nproc)
-sudo make install
-sudo ldconfig
 
 # Verify ZeroMQ installation
 if ! pkg-config --exists libzmq; then
@@ -149,21 +159,24 @@ else
     echo "ZeroMQ installed successfully."
 fi
 
-cd $baseDirectory
+cd "$SCRIPT_DIR"
 
-echo "Compiling and Installing srsRAN..."
+echo
+echo
+echo "Compiling and Installing srsRAN_Project..."
 cd srsRAN_Project
 # rm -rf build
 mkdir -p build
 cd build
-#cmake .. -DENABLE_EXPORT=ON -DENABLE_ZEROMQ=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo ../ # Enable debugging info
-cmake .. -DENABLE_EXPORT=ON -DENABLE_ZEROMQ=ON
+SUPPRESS_WARNINGS="-Wno-error=unused-but-set-variable -Wno-error=unused-function -Wno-error=unused-parameter -Wno-error=unused-result -Wno-error=unused-variable -Wno-error=all"
+cmake .. -DENABLE_EXPORT=ON -DENABLE_ZEROMQ=ON -DCMAKE_CXX_FLAGS="$SUPPRESS_WARNINGS"
 make clean
+# Remove -Werror from the flags.make files to prevent the build from failing due to warnings
 make -j$(nproc)
-#sudo make test -j$(nproc)
+# sudo make test -j$(nproc)
 sudo make -j$(nproc) install
 
-cd $baseDirectory
+cd "$SCRIPT_DIR"
 
 # Stop the sudo timeout refresher, it is no longer necessary to run
 ./install_scripts/stop_sudo_refresh.sh

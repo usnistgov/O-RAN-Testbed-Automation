@@ -41,12 +41,11 @@ cd "$SCRIPT_DIR"
 
 # Check for open5gs-amfd and open5gs-upfd binaries to determine if Open5GS is already installed
 if [ -f "open5gs/install/bin/open5gs-amfd" ] && [ -f "open5gs/install/bin/open5gs-upfd" ]; then
-    echo "Open5GS is already installed. Skipping."
+    echo "Open5GS is already installed, skipping."
     exit 0
 fi
 
-# Starts a script in background that calls `sudo -v` every minute to ensure that sudo stays active, ensuring the script runs without requiring user interaction
-sudo ls
+# Run a sudo command every minute to ensure script execution without user interaction
 ./install_scripts/start_sudo_refresh.sh
 
 # Get the start timestamp in seconds
@@ -72,15 +71,15 @@ UBUNTU_CODENAME=$(./install_scripts/get_ubuntu_codename.sh)
 
 echo "Cloning Open5GS..."
 if [ ! -d "open5gs" ]; then
-    git clone https://github.com/open5gs/open5gs.git
+    git clone https://github.com/open5gs/open5gs.git open5gs
 fi
-cd open5gs
+cd $SCRIPT_DIR/open5gs
 
 echo "Starting installation of Open5GS..."
 
 INSTALLED_VERSION=$(mongod --version 2>/dev/null | grep -oP "(?<=v)\d+\.\d+\.\d+") || true
 if [[ $INSTALLED_VERSION == 4.4.* ]]; then
-    echo "MongoDB version 4.4.x is already installed. Skipping MongoDB installation."
+    echo "MongoDB version 4.4.x is already installed, skipping."
 else
     # Get the latest Ubuntu version supported by MongoDB 4.4
     case "$UBUNTU_CODENAME" in
@@ -92,8 +91,6 @@ else
         ;;
     esac
 
-    # Step 0: Ensure libssl is installed
-    CURRENT_DIR=$(pwd)
     # Check if libssl1.1 is installed
     if ! dpkg -s libssl1.1 >/dev/null 2>&1; then
         echo "libssl1.1 not found. Installing..."
@@ -253,7 +250,7 @@ rm -rf build
 # Check if Open5GS has already been built and installed
 if [ ! -d "build" ]; then
     echo "Compiling Open5GS with Meson..."
-    meson build --prefix=$(pwd)/install
+    meson build --prefix="$(pwd)/install"
 else
     echo "Open5GS build directory already exists."
 fi
@@ -262,52 +259,51 @@ echo "Building Open5GS..."
 ninja -C build
 
 cd build
-#echo "Running test programs..."
-#meson test -v
+# echo "Running test programs..."
+# meson test -v
 echo "Installing Open5GS..."
 ninja install
 
 echo "Installation complete. Open5GS has been installed."
 
-cd ../.. # Main directory with open5gs
-CURRENT_DIR=$(pwd)
+cd "$SCRIPT_DIR"
 
 echo "Installing WebUI for Subscriber Registration..."
 sudo ./install_scripts/install_webui.sh
 
 # Define library paths
-LIB_SBI_PATH="$CURRENT_DIR/open5gs/build/lib/sbi"
-LIB_PROTO_PATH="$CURRENT_DIR/open5gs/build/lib/proto"
-LIB_CORE_PATH="$CURRENT_DIR/open5gs/install/lib/x86_64-linux-gnu"
+LIB_SBI_PATH="${SCRIPT_DIR}/open5gs/build/lib/sbi"
+LIB_PROTO_PATH="${SCRIPT_DIR}/open5gs/build/lib/proto"
+LIB_CORE_PATH="${SCRIPT_DIR}/open5gs/install/lib/x86_64-linux-gnu"
 
 # Create a new script in /etc/profile.d/ to update LD_LIBRARY_PATH for all users
 create_ld_script() {
-    local lib_path=$1
-    local script_path="/etc/profile.d/open5gs_ld_library_path.sh"
+    local LIB_DIR=$1
+    local LD_SCRIPT_DIR="/etc/profile.d/open5gs_ld_library_path.sh"
 
     # Check if script exists and create if not
-    if [[ ! -f $script_path ]]; then
-        sudo sh -c "echo '#!/bin/bash' > $script_path"
-        sudo sh -c "echo 'export LD_LIBRARY_PATH=' >> $script_path"
-        sudo chmod +x $script_path
+    if [[ ! -f "$LD_SCRIPT_DIR" ]]; then
+        sudo sh -c "echo '#!/bin/bash' > \"$LD_SCRIPT_DIR\""
+        sudo sh -c "echo 'export LD_LIBRARY_PATH=' >> \"$LD_SCRIPT_DIR\""
+        sudo chmod +x "$LD_SCRIPT_DIR"
     fi
 
     # Check if path is already added to avoid duplicates
-    if ! sudo grep -q "$lib_path" $script_path; then
-        sudo sed -i "/^export LD_LIBRARY_PATH=/ s|$|:$lib_path|" $script_path
+    if ! sudo grep -q "$LIB_DIR" "$LD_SCRIPT_DIR"; then
+        sudo sed -i "/^export LD_LIBRARY_PATH=/ s|$|:\"$LIB_DIR\"|" "$LD_SCRIPT_DIR"
     fi
 }
 
 # Update LD_LIBRARY_PATH with all necessary library paths
-create_ld_script $LIB_SBI_PATH
-create_ld_script $LIB_PROTO_PATH
-create_ld_script $LIB_CORE_PATH
+create_ld_script "$LIB_SBI_PATH"
+create_ld_script "$LIB_PROTO_PATH"
+create_ld_script "$LIB_CORE_PATH"
 
 # Also update LD_LIBRARY_PATH for the current shell session
-export LD_LIBRARY_PATH=$LIB_SBI_PATH:$LIB_PROTO_PATH:$LIB_CORE_PATH:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH="${LIB_SBI_PATH}:${LIB_PROTO_PATH}:${LIB_CORE_PATH}:${LD_LIBRARY_PATH}"
 
 # Inform the user about changes
-echo "LD_LIBRARY_PATH updated globally for all users."
+echo "Updated LD_LIBRARY_PATH = $LD_LIBRARY_PATH"
 
 # Stop the sudo timeout refresher, it is no longer necessary to run
 ./install_scripts/stop_sudo_refresh.sh

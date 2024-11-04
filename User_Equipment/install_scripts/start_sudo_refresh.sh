@@ -30,10 +30,9 @@
 
 echo "# Script: $(realpath $0)..."
 
-if [ ! -f "full_install.sh" ]; then
-    echo "You must run this script from the main directory with full_install.sh"
-    exit 0
-fi
+sudo ls &>/dev/null
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+cd "$(dirname "$SCRIPT_DIR")"
 
 # Check if the user is not root
 if [ "$USER" != "root" ]; then

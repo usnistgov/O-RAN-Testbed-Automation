@@ -70,7 +70,7 @@ Begin the installation process, recommended to be run as your current user rathe
 > Due to `set -e`, the scripts will halt upon encountering an error so that it can be corrected before trying again. Since the scripts are idempotent, only the incomplete steps of the installation process will be executed unless specified otherwise. Please be patient until an error occurs or the testbed installation completes successfully.
 ```
 ################################################################################
-# Successfully installed the 5G Core, gNodeB, UE, and RIC.                     #
+# Successfully installed the 5G Core, UE, gNodeB, and RIC.                     #
 ################################################################################
 ```
 

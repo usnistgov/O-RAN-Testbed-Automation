@@ -91,7 +91,7 @@ wait_for_all_pods_running() {
             trap '' SIGINT
             sudo k9s -A || exec "$K9S_SCRIPT_PATH" || true
             echo
-            echo "Resuming parent script (ignoring CTRL+C input for 5 seconds)..."
+            echo "Resuming parent script (ignoring Ctrl+C input for 5 seconds)..."
             sleep 5
             trap - SIGINT
             echo "Resumed parent script."

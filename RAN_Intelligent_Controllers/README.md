@@ -1,22 +1,22 @@
 ## Near Real-Time RAN Intelligent Controller (Near-RT RIC)
 
-**Purpose**: Enables dynamic management and optimization of Radio Access Networks (RAN).
+**Purpose**: Enable dynamic management and optimization of Radio Access Networks (RAN).
 
-**Design**: Developed by the O-RAN Alliance's Working Group 3 (WG3) [[1]][oran-wg3].
+**Design**: Conceptualized by the O-RAN Alliance's Working Group 3 (WG3) [[1]][oran-wg3].
 
-**Implementation**: Implemented by the O-RAN Software Community [[2]][oransc-nearrtric].
+**Implementation**: Implemented by the O-RAN Software Community Near-RT RIC Group [[2]][oransc-nearrtric] and the Linux Foundation.
 
-**Functionality**: Hosts xApps that provide real-time analytics and decision-making capabilities for RAN operations, functioning within a time frame of 10 ms to 1 second.
+**Functionality**: Hosts xApps that provide real-time analytics and decision-making capabilities for RAN operations, functioning in a closed-loop with actions executed within a time frame of 10 ms to 1 second.
 
-## Non Real-Time RAN Intelligent Controller (Non-RT RIC)
+## Non-Real-Time RAN Intelligent Controller (Non-RT RIC)
 
-**Purpose**: Facilitates strategic RAN planning and policy management.
+**Purpose**: Facilitate strategic RAN planning and policy management.
 
 **Design**: Conceptualized by the O-RAN Alliance's Working Group 2 (WG2) [[3]][oran-wg2].
 
-**Implementation**: Implemented by the O-RAN Software Community [[4]][oransc-nonrtric].
+**Implementation**: Implemented by the O-RAN Software Community Non-RT RIC Group [[4]][oransc-nonrtric] and the Linux Foundation.
 
-**Functionality**: Hosts rApps that support RAN policy enforcement and long-term network management and optimization, functioning within a time frame of 1 second to 10 seconds.
+**Functionality**: Hosts rApps that support RAN policy enforcement and long-term network management and optimization, functioning in a closed-loop with actions executed within a time frame of 1 second to 10 seconds.
 
 ## References
 1. Working Group 3: Near-Real-time RAN Intelligent Controller and E2 Interface Workgroup. O-RAN Alliance. [https://public.o-ran.org/display/WG3/Introduction][oran-wg3]

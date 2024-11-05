@@ -112,6 +112,4 @@ if [[ $PARAMS != *onlyinstall* ]]; then
     else
         echo "No supported browser detected. Visit http://localhost:$CONTROL_PANEL_PORT to access the control panel."
     fi
-else
-    echo "The control panel has been installed. Run this script without the \"onlyinstall\" argument to start the control panel."
 fi

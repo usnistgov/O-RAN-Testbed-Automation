@@ -77,7 +77,7 @@ fi
 # Instructions are from: https://lf-o-ran-sc.atlassian.net/wiki/spaces/RICNR/pages/15075609/Release+J+-+Run+in+Kubernetes
 if [ ! -d dep ]; then
     echo
-    echo "Cloning non-RT RIC dependencies..."
+    echo "Cloning Non-RT RIC dependencies..."
     git clone https://gerrit.o-ran-sc.org/r/it/dep
 fi
 
@@ -178,7 +178,7 @@ if ! command -v kubecolor &>/dev/null; then
 fi
 
 echo
-echo "Installing Non Real-Time RAN Intelligent Controller..."
+echo "Installing Non-Real-Time RAN Intelligent Controller..."
 # Determine if RAN Intelligent Controller pods should be reset by checking if any of the nonrtric pods are not running
 SHOULD_RESET_NONRTRIC=false
 if [ "$SHOULD_RESET_NONRTRIC" = false ]; then
@@ -234,7 +234,7 @@ cd "$SCRIPT_DIR"
 
 echo
 echo "Waiting for Non-RT RIC pods before installing control panel..."
-sudo ./install_scripts/wait_for_nontrric_pods.sh
+sudo ./install_scripts/wait_for_nonrtric_pods.sh
 ./start_control_panel.sh
 
 # Stop the sudo timeout refresher, it is no longer necessary to run
@@ -250,4 +250,4 @@ if [ -n "$INSTALL_START_TIME" ]; then
     echo "$DURATION_MINUTES minutes" >>install_time.txt
 fi
 
-echo "The Non Real-Time RAN Intelligent Controller installation completed successfully."
+echo "The Non-Real-Time RAN Intelligent Controller installation completed successfully."

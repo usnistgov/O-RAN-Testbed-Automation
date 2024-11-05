@@ -53,11 +53,13 @@ sudo apt-get install -y git
 git clone https://github.com/USNISTGOV/O-RAN-Testbed-Automation.git
 cd O-RAN-Testbed-Automation
 ```
-Alternatively, clone the repository using SSH: `git clone git@github.com:USNISTGOV/O-RAN-Testbed-Automation.git`
+Alternatively, you may clone the repository using SSH: `git clone git@github.com:USNISTGOV/O-RAN-Testbed-Automation.git`
 
-> _**Recommendation:** Increase the file descriptor limits set by the system with the following command, then reboot._
+---
+
+> _**Recommendation:** Before beginning, increase the file descriptor limits set by the system with the following command, then reboot._
 > ```console
-> sudo ./Additional_Scripts/increase_file_limit_system.sh
+> sudo ./Additional_Scripts/increase_file_descriptor_limits.sh
 > ```
 
 #
@@ -74,7 +76,7 @@ Begin the installation process, recommended to be run as your current user rathe
 ################################################################################
 ```
 
-After successful installation, verify that the configs/ files are generated for the 5G Core, gNodeB, and UE using `./generate_configurations.sh`. Run the testbed with `./run.sh` to start the 5G Core and gNodeB as background processes, and the UE in the foreground. Use `./is_running.sh` to check if the components are running, and `./stop.sh` to stop the components. The RIC starts automatically on boot and can be accessed with `k9s -A`.
+After successful installation, verify that the configs/ files are generated for the 5G Core, gNodeB, and UE using `./generate_configurations.sh`. Run the testbed with `./run.sh` to start the 5G Core and gNodeB as background processes, and the UE in the foreground. Use `./is_running.sh` to check if the components are running, and `./stop.sh` to stop the components.
 
 ```console
 Attaching UE...
@@ -84,6 +86,8 @@ RRC Connected
 PDU Session Establishment successful. IP: 10.45.0.2
 RRC NR reconfiguration successful.
 ```
+
+The RIC starts automatically on boot and can be accessed with `k9s -A`. For more information about a specific component, refer to the README.md files in the respective subdirectories.
 
 ## Contact Information
 

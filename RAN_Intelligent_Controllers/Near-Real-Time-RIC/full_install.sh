@@ -199,8 +199,8 @@ else
     sudo chown $USER:$USER "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME_MODIFIED"
     sudo ./install_scripts/revise_example_recipe_yaml.sh "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME_MODIFIED"
 
-    # Wait for kube-apiserver to be ready before installing near RT-RIC
-    echo "Waiting for the Kubernetes API server to become ready before installing near RT-RIC..."
+    # Wait for kube-apiserver to be ready before installing Near-RT RIC
+    echo "Waiting for the Kubernetes API server to become ready before installing Near-RT RIC..."
     sudo ./install_scripts/wait_for_kubectl.sh
 
     # Run the installation command
@@ -213,11 +213,11 @@ else
 
         echo
         echo
-        echo "Installing near RT-RIC..."
+        echo "Installing Near-RT RIC..."
         cd ric-dep/bin/
         sudo ./install -f "../RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME_MODIFIED" 2>&1 | tee -a "$RIC_INSTALLATION_STDOUT"
         cd "$SCRIPT_DIR"
-        echo "Parsing output to check for successful near RT-RIC installation..."
+        echo "Parsing output to check for successful Near-RT RIC installation..."
         ./install_scripts/parse_ric_installation_output.sh
 
         # The $RIC_INSTALLATION_LOG_JSON file should have the following output:

@@ -94,6 +94,7 @@ EOF
         echo "Using Cilium Helm version ${CILIUM_HELM_VERSION} for installation..."
 
         cilium install --version ${CILIUM_HELM_VERSION} --namespace kube-system --values $CILIUM_INITIAL_VALUES_FILE
+        cilium hubble enable
     fi
 
     while ! cilium status --wait; do

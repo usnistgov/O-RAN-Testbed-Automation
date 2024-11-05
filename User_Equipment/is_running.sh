@@ -28,8 +28,34 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-if pgrep -x "srsue" > /dev/null; then
-    echo "User Equipment: RUNNING"
+if ! command -v realpath &>/dev/null; then
+    echo "Package \"coreutils\" not found, installing..."
+    sudo apt-get install -y coreutils
+fi
+
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+cd "$SCRIPT_DIR"
+
+RUNNING_UE_NUMBERS=()
+
+# Attempt to extract the UE number from the configuration file path
+while read -r line; do
+    UE_NUMBER=$(echo "$line" | grep -oP "configs/ue\K\d+\.conf" | sed 's/.conf//')
+    if [[ -n $UE_NUMBER ]]; then
+        # Add to array only if not already present
+        if [[ ! " ${RUNNING_UE_NUMBERS[@]} " =~ " ue$UE_NUMBER " ]]; then
+            RUNNING_UE_NUMBERS+=("ue$UE_NUMBER")
+        fi
+    fi
+done < <(pgrep -af "srsue --config_file" | grep "configs/ue")
+
+# Check if the UE is running
+if [ ${#RUNNING_UE_NUMBERS[@]} -gt 0 ]; then
+    echo "User Equipment: RUNNING (${RUNNING_UE_NUMBERS[*]})"
 else
-    echo "User Equipment: NOT RUNNING"
+    if pgrep -x "srsue" >/dev/null; then
+        echo "User Equipment: RUNNING"
+    else
+        echo "User Equipment: NOT RUNNING"
+    fi
 fi

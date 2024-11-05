@@ -28,19 +28,27 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-echo "Checking status of 5G Core components..."
-cd 5G_Core
-./is_running.sh
-cd ..
+if ! command -v realpath &>/dev/null; then
+    echo "Package \"coreutils\" not found, installing..."
+    sudo apt-get install -y coreutils
+fi
 
-echo "Checking status of gNodeB..."
-cd gNodeB
-./is_running.sh
-cd ..
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+cd "$SCRIPT_DIR"
 
 echo "Checking status of User Equipment..."
 cd User_Equipment
 ./is_running.sh
 cd ..
 
-echo "Script completed successfully."
+echo
+echo "Checking status of gNodeB..."
+cd Next_Generation_Node_B
+./is_running.sh
+cd ..
+
+echo
+echo "Checking status of 5G Core components..."
+cd 5G_Core_Network
+./is_running.sh
+cd ..

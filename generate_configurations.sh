@@ -31,14 +31,22 @@
 # Exit immediately if a command fails
 set -e
 
+if ! command -v realpath &>/dev/null; then
+    echo "Package \"coreutils\" not found, installing..."
+    sudo apt-get install -y coreutils
+fi
+
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+cd "$SCRIPT_DIR"
+
 echo "Generating Configurations for 5G Core components..."
-cd 5G_Core
+cd 5G_Core_Network
 ./generate_configurations.sh
 cd ..
 
 echo
-echo "Generating Configuration for gNodeB..."
-cd gNodeB
+echo "Generating Configuration for Next Generation Node B..."
+cd Next_Generation_Node_B
 ./generate_configurations.sh
 cd ..
 

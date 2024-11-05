@@ -1,5 +1,5 @@
 # Automation Tool for Deploying 5G O-RAN Testbeds
-A set of installation scripts designed to automate the deployment and configuration of a 5G Open Radio Access Network (O-RAN) testbed, on both bare metal and virtualized environments, based upon the blueprints described in [[1]][nist-tn]. The tool simplifies setting up the 5G testbed components, including 5G Core, gNodeB (Radio Unit (RU), Distributed Unit (DU), Centralized Unit (CU)), User Equipment (UE), and RAN Intelligent Controller (RIC). These scripts facilitate reducing the complexity and time required to operationalize the testbeds described in the report above.
+These installation scripts automate the deployment and configuration of a 5G Open Radio Access Network (O-RAN) testbed on both bare metal and virtualized environments, based upon the blueprints described in [[1]][nist-tn]. The tool simplifies setting up the 5G testbed components, including the 5G Core; Next Generation Node B (gNodeB) composed of Radio Unit (RU), Distributed Unit (DU), and Centralized Unit (CU); User Equipment (UE); and RAN Intelligent Controller (RIC), thereby reducing the complexity and time required to operationalize the testbeds described in the report above.
 
 ## Setting Up the Testbed
 The automation tool can be used in virtual machines and physical machines with the minimum system requirements listed below. More details on the build options, including the configuration of physical hardware and individual software components are described in the report [[1]][nist-tn].
@@ -53,11 +53,13 @@ sudo apt-get install -y git
 git clone https://github.com/USNISTGOV/O-RAN-Testbed-Automation.git
 cd O-RAN-Testbed-Automation
 ```
-Alternatively, clone the repository using SSH: `git clone git@github.com:USNISTGOV/O-RAN-Testbed-Automation.git`
+Alternatively, you may clone the repository using SSH: `git clone git@github.com:USNISTGOV/O-RAN-Testbed-Automation.git`
 
-> _**Recommendation:** Increase the file descriptor limits set by the system with the following command, then reboot._
+---
+
+> _**Recommendation:** Before beginning, increase the file descriptor limits set by the system with the following command, then reboot._
 > ```console
-> sudo ./RAN_Intelligent_Controller/additional_scripts/increase_file_limit_system.sh
+> sudo ./Additional_Scripts/increase_file_descriptor_limits.sh
 > ```
 
 #
@@ -70,11 +72,11 @@ Begin the installation process, recommended to be run as your current user rathe
 > Due to `set -e`, the scripts will halt upon encountering an error so that it can be corrected before trying again. Since the scripts are idempotent, only the incomplete steps of the installation process will be executed unless specified otherwise. Please be patient until an error occurs or the testbed installation completes successfully.
 ```
 ################################################################################
-# Successfully installed the 5G Core, gNodeB, UE, and RIC.                     #
+# Successfully installed the 5G Core, UE, gNodeB, and RIC.                     #
 ################################################################################
 ```
 
-After successful installation, verify that the configs/ files are generated for the 5G_Core, gNodeB, and User_Equipment using `./generate_configurations.sh`. Run the testbed with `./run.sh` to start the 5G Core and gNodeB as background processes, and the User Equipment in the foreground. Use `./is_running.sh` to check if the components are running, and `./stop.sh` to stop the components. The RIC starts automatically on boot and can be accessed with `./RAN_Intelligent_Controller/start_k9s.sh`.
+After successful installation, verify that the configs/ files are generated for the 5G Core, gNodeB, and UE using `./generate_configurations.sh`. Run the testbed with `./run.sh` to start the 5G Core and gNodeB as background processes, and the UE in the foreground. Use `./is_running.sh` to check if the components are running, and `./stop.sh` to stop the components.
 
 ```console
 Attaching UE...
@@ -84,6 +86,8 @@ RRC Connected
 PDU Session Establishment successful. IP: 10.45.0.2
 RRC NR reconfiguration successful.
 ```
+
+The RIC starts automatically on boot and can be accessed with `k9s -A`. For more information about a specific component, refer to the README.md files in the respective subdirectories.
 
 ## Contact Information
 

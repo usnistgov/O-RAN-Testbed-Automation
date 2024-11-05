@@ -28,6 +28,14 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
+if ! command -v realpath &>/dev/null; then
+    echo "Package \"coreutils\" not found, installing..."
+    sudo apt-get install -y coreutils
+fi
+
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+cd "$SCRIPT_DIR"
+
 echo "Stopping User Equipment..."
 cd User_Equipment
 sudo ./stop.sh
@@ -35,15 +43,12 @@ cd ..
 
 echo
 echo "Stopping gNodeB..."
-cd gNodeB
+cd Next_Generation_Node_B
 sudo ./stop.sh
 cd ..
 
 echo
 echo "Stopping 5G Core components..."
-cd 5G_Core
+cd 5G_Core_Network
 sudo ./stop.sh
 cd ..
-
-echo
-echo "The stop script completed successfully."

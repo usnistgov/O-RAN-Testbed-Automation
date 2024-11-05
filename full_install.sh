@@ -31,47 +31,64 @@
 # Exit immediately if a command fails
 set -e
 
-Open5GS_Installed=false
-if [ -f "5G_Core/open5gs/install/bin/open5gs-amfd" ] && [ -f "5G_Core/open5gs/install/bin/open5gs-upfd" ]; then
-    Open5GS_Installed=true
+if ! command -v realpath &>/dev/null; then
+    echo "Package \"coreutils\" not found, installing..."
+    sudo apt-get install -y coreutils
 fi
-gNodeB_Installed=false
-if [ -f "gNodeB/srsRAN_Project/build/apps/gnb/gnb" ]; then
-    gNodeB_Installed=true
+
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+cd "$SCRIPT_DIR"
+
+# Ensure backward compatibility with previous installations
+sudo ./Additional_Scripts/migrate_to_new_version.sh
+
+# Check if the applications are already installed and ask the user if they should be reset
+OPEN5GS_INSTALLED=false
+if [ -f "5G_Core_Network/open5gs/install/bin/open5gs-amfd" ] && [ -f "5G_Core_Network/open5gs/install/bin/open5gs-upfd" ]; then
+    OPEN5GS_INSTALLED=true
 fi
-UE_Installed=false
+GNODEB_INSTALLED=false
+if [ -f "Next_Generation_Node_B/srsRAN_Project/build/apps/gnb/gnb" ]; then
+    GNODEB_INSTALLED=true
+fi
+UE_INSTALLED=false
 if [ -f "User_Equipment/srsRAN_4G/build/srsue/src/srsue" ]; then
-    UE_Installed=true
+    UE_INSTALLED=true
 fi
 # If any of them are installed then ask the user if they should be reset
-if [ "$Open5GS_Installed" = true ] || [ "$gNodeB_Installed" = true ] || [ "$UE_Installed" = true ]; then
+if [ "$OPEN5GS_INSTALLED" = true ] || [ "$GNODEB_INSTALLED" = true ] || [ "$UE_INSTALLED" = true ]; then
+    echo
     echo "Previous installations were found, do you want to keep the old installations? (y/n)"
-    read -r keep
+    read -r KEEP_OLD_DIRS
     # Only allow case insensitive y, yes, n, and no
-    if [ "$keep" != "y" ] && [ "$keep" != "yes" ] && [ "$keep" != "n" ] && [ "$keep" != "no" ]; then
+    if [ "$KEEP_OLD_DIRS" != "y" ] && [ "$KEEP_OLD_DIRS" != "yes" ] && [ "$KEEP_OLD_DIRS" != "n" ] && [ "$KEEP_OLD_DIRS" != "no" ]; then
         echo "Invalid input. Exiting."
         exit 1
     fi
-    if [ "$keep" = "n" ] || [ "$keep" = "no" ]; then
-        sudo rm -rf 5G_Core/open5gs
-        sudo rm -rf 5G_Core/logs
-        sudo rm -rf 5G_Core/configs
-        sudo rm -rf gNodeB/srsRAN_Project
-        sudo rm -rf gNodeB/czmq
-        sudo rm -rf gNodeB/libzmq
-        sudo rm -rf gNodeB/logs
-        sudo rm -rf gNodeB/configs
+    if [ "$KEEP_OLD_DIRS" = "n" ] || [ "$KEEP_OLD_DIRS" = "no" ]; then
+        sudo rm -rf 5G_Core_Network/open5gs
+        sudo rm -rf 5G_Core_Network/logs
+        sudo rm -rf 5G_Core_Network/configs
+        sudo rm -rf 5G_Core_Network/install_time.txt
         sudo rm -rf User_Equipment/srsRAN_4G
         sudo rm -rf User_Equipment/czmq
         sudo rm -rf User_Equipment/libzmq
         sudo rm -rf User_Equipment/logs
         sudo rm -rf User_Equipment/configs
-        sudo rm -rf RAN_Intelligent_Controller/ric-dep
-        sudo rm -rf RAN_Intelligent_Controller/appmgr
-        sudo rm -rf RAN_Intelligent_Controller/e2-interface
-        sudo rm -rf RAN_Intelligent_Controller/charts
-        sudo rm -rf RAN_Intelligent_Controller/xApps
-        sudo rm -rf RAN_Intelligent_Controller/logs
+        sudo rm -rf User_Equipment/install_time.txt
+        sudo rm -rf Next_Generation_Node_B/srsRAN_Project
+        sudo rm -rf Next_Generation_Node_B/czmq
+        sudo rm -rf Next_Generation_Node_B/libzmq
+        sudo rm -rf Next_Generation_Node_B/logs
+        sudo rm -rf Next_Generation_Node_B/configs
+        sudo rm -rf Next_Generation_Node_B/install_time.txt
+        sudo rm -rf RAN_Intelligent_Controllers/Near-Real-Time-RIC/ric-dep
+        sudo rm -rf RAN_Intelligent_Controllers/Near-Real-Time-RIC/appmgr
+        sudo rm -rf RAN_Intelligent_Controllers/Near-Real-Time-RIC/e2-interface
+        sudo rm -rf RAN_Intelligent_Controllers/Near-Real-Time-RIC/charts
+        sudo rm -rf RAN_Intelligent_Controllers/Near-Real-Time-RIC/xApps
+        sudo rm -rf RAN_Intelligent_Controllers/Near-Real-Time-RIC/logs
+        sudo rm -rf RAN_Intelligent_Controllers/Near-Real-Time-RIC/install_time.txt
         echo "Successfully removed previous installations."
     fi
 fi
@@ -84,20 +101,7 @@ echo "##########################################################################
 echo
 echo
 
-cd 5G_Core
-./full_install.sh
-
-cd ..
-
-echo
-echo
-echo "################################################################################"
-echo "# Installing gNodeB...                                                         #"
-echo "################################################################################"
-echo
-echo
-
-cd gNodeB
+cd 5G_Core_Network
 ./full_install.sh
 
 cd ..
@@ -118,15 +122,28 @@ cd ..
 echo
 echo
 echo "################################################################################"
-echo "# Installing RAN Intelligent Controller...                                     #"
+echo "# Installing Next Generation Node B...                                         #"
 echo "################################################################################"
 echo
 echo
 
-cd RAN_Intelligent_Controller
+cd Next_Generation_Node_B
 ./full_install.sh
 
 cd ..
+
+echo
+echo
+echo "################################################################################"
+echo "# Installing Near Real-Time RAN Intelligent Controller...                      #"
+echo "################################################################################"
+echo
+echo
+
+cd RAN_Intelligent_Controllers/Near-Real-Time-RIC
+./full_install.sh
+
+cd ../..
 
 echo
 echo
@@ -136,9 +153,9 @@ echo "##########################################################################
 echo
 echo
 
-cd 5G_Core
+cd 5G_Core_Network
 ./generate_configurations.sh
-cd ../gNodeB
+cd ../Next_Generation_Node_B
 ./generate_configurations.sh
 cd ../User_Equipment
 ./generate_configurations.sh

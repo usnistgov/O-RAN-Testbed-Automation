@@ -30,6 +30,7 @@ REM copyright protection within the United States.
 
 : '
 REM This Linux shell/Windows batch script will download the 5G_Core_Network, gNodeB, User_Equipment and RAN_Intelligent_Controllers repositories for analyzing the source code without requiring a full testbed build and installation.
+@echo off
 '
 
 cd ..
@@ -57,6 +58,7 @@ cd xApps
 git clone https://gerrit.o-ran-sc.org/r/ric-app/hw-go
 cd ..
 cd ..
+cd ..
 
 cd RAN_Intelligent_Controllers/Non-Real-Time-RIC
 git clone https://gerrit.o-ran-sc.org/r/it/dep
@@ -66,6 +68,9 @@ git clone https://github.com/onap/multicloud-k8s.git dep/smo-install/multicloud-
 git clone https://gerrit.onap.org/r/oom dep/smo-install/onap_oom
 
 git clone https://gerrit.o-ran-sc.org/r/portal/nonrtric-controlpanel
+cd ..
+cd ..
+
 echo "Repositories were cloned successfully."
 
 : '

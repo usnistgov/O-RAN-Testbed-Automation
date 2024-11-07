@@ -94,10 +94,10 @@ EOF
         echo "Using Cilium Helm version ${CILIUM_HELM_VERSION} for installation..."
 
         cilium install --version ${CILIUM_HELM_VERSION} --namespace kube-system --values $CILIUM_INITIAL_VALUES_FILE
-        cilium hubble enable
     fi
 
     while ! cilium status --wait; do
+        echo "Continuing to wait for Cilium to be ready..."
         sleep 5
     done
 
@@ -136,6 +136,7 @@ EOF
 
         echo "Validating that the node has been successfully migrated..."
         while ! cilium status --wait; do
+            echo "Continuing to wait for Cilium to be ready..."
             sleep 5
         done
         kubectl get -o wide node $NODE
@@ -148,10 +149,11 @@ EOF
     done
 
     while ! cilium status --wait; do
+        echo "Continuing to wait for Cilium to be ready..."
         sleep 5
     done
 
-    cilium install --values $CILIUM_INITIAL_VALUES_FILE --dry-run-helm-values --set operator.unmanagedPodWatcher.restart=true --set cni.customConf=false --set policyEnforcementMode=default --set bpf.hostLegacyRouting=false >$CILIUM_FINAL_VALUES_FILE
+    cilium install --values $CILIUM_INITIAL_VALUES_FILE --dry-run-helm-values --set operator.unmanagedPodWatcher.restart=true --set cni.customConf=false --set policyEnforcementMode=default --set bpf.hostLegacyRouting=false --set hubble.enabled=true >$CILIUM_FINAL_VALUES_FILE
 
     echo
     echo "Diffing initial and final Cilium Helm values..."
@@ -163,6 +165,7 @@ EOF
 
     kubectl -n kube-system rollout restart daemonset cilium
     while ! cilium status --wait; do
+        echo "Continuing to wait for Cilium to be ready..."
         sleep 5
     done
 
@@ -200,6 +203,9 @@ else
     echo "Cilium is already installed, skipping."
 fi
 
+echo "Ensuring permissions for $USER in ~/.kube directory..."
+sudo chown --recursive $USER:$USER ~/.kube
+
 echo
 echo "Deleting all existing CiliumNetworkPolicies..."
 kubectl delete cnp --all-namespaces --all || true
@@ -209,10 +215,7 @@ kubectl delete cnp --all-namespaces --all || true
 # -----------------------------------------------------------------------------
 
 echo
-echo "Labeling xApps with org=ric for security policy selectors..."
-kubectl label pods --all -n ricxapp org=ric --overwrite || true
-# Remove label with: kubectl label pods --all -n ricxapp org-
-
+echo "Writing Cilium NetworkPolicy to $CILIUM_POLICY_FILE..."
 CILIUM_POLICY_FILE="$HOME/.kube/cilium-policy.yaml"
 cat <<EOF | sudo tee $CILIUM_POLICY_FILE
 apiVersion: "cilium.io/v2"
@@ -223,15 +226,49 @@ metadata:
 spec:
   endpointSelector:
     matchLabels:
-      org: "ric"
+      "k8s:io.kubernetes.pod.namespace": ricxapp
   ingress:
     - fromEndpoints:
       - matchLabels:
-          org: "ric"
+          "k8s:io.kubernetes.pod.namespace": kube-system
+      - matchLabels:
+          "k8s:io.kubernetes.pod.namespace": ricxapp
+      - matchLabels:
+          "k8s:io.kubernetes.pod.namespace": ricplt
   egress:
     - toEndpoints:
       - matchLabels:
-          org: "ric"
+          "k8s:io.kubernetes.pod.namespace": kube-system
+      - matchLabels:
+          "k8s:io.kubernetes.pod.namespace": ricxapp
+      - matchLabels:
+          "k8s:io.kubernetes.pod.namespace": ricplt
+---
+apiVersion: "cilium.io/v2"
+kind: CiliumNetworkPolicy
+metadata:
+  name: isolate-ric-communication
+  namespace: ricplt
+spec:
+  endpointSelector:
+    matchLabels:
+      "k8s:io.kubernetes.pod.namespace": ricplt
+  ingress:
+    - fromEndpoints:
+      - matchLabels:
+          "k8s:io.kubernetes.pod.namespace": kube-system
+      - matchLabels:
+          "k8s:io.kubernetes.pod.namespace": ricplt
+      - matchLabels:
+          "k8s:io.kubernetes.pod.namespace": ricxapp
+  egress:
+    - toEndpoints:
+      - matchLabels:
+          "k8s:io.kubernetes.pod.namespace": kube-system
+      - matchLabels:
+          "k8s:io.kubernetes.pod.namespace": ricplt
+      - matchLabels:
+          "k8s:io.kubernetes.pod.namespace": ricxapp
 EOF
 
 echo
@@ -309,6 +346,13 @@ EOF
 else
     echo "Namespace '$NAMESPACE' does not exist, skipping Role and RoleBinding creation."
 fi
+
+echo "Restarting kubelet service..."
+sudo systemctl restart kubelet
+while ! cilium status --wait; do
+    echo "Continuing to wait for Cilium to be ready..."
+    sleep 5
+done
 
 echo
 echo "Successfully installed, configured, and enabled policy enforcement with Cilium and hardened the xApp namespace."

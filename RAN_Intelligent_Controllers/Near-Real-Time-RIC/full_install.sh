@@ -129,17 +129,17 @@ else
         # Uninstall with: sudo rm -rf /usr/bin/yq
     fi
 
-    echo "Disabling Kong Pod and Removing Ingress Files..."
-    cd "$SCRIPT_DIR/ric-dep/helm/infrastructure"
-    yq '.kong.enabled = false' -i values.yaml
-    yq '.kong.enabled' values.yaml
-    # Removing Ingress files
-    cd "$SCRIPT_DIR/ric-dep/helm/appmgr/templates"
-    rm -rf ingress-appmgr.yaml
-    cd "$SCRIPT_DIR/ric-dep/helm/e2mgr/templates"
-    rm -rf ingress-e2mgr.yaml
-    cd "$SCRIPT_DIR/ric-dep/helm/a1mediator/templates"
-    rm -rf ingress-a1mediator.yaml
+    # echo "Disabling Kong Pod and Removing Ingress Files..."
+    # cd "$SCRIPT_DIR/ric-dep/helm/infrastructure"
+    # yq '.kong.enabled = false' -i values.yaml
+    # yq '.kong.enabled' values.yaml
+    # # Removing Ingress files
+    # cd "$SCRIPT_DIR/ric-dep/helm/appmgr/templates"
+    # rm -rf ingress-appmgr.yaml
+    # cd "$SCRIPT_DIR/ric-dep/helm/e2mgr/templates"
+    # rm -rf ingress-e2mgr.yaml
+    # cd "$SCRIPT_DIR/ric-dep/helm/a1mediator/templates"
+    # rm -rf ingress-a1mediator.yaml
 
     echo
     echo

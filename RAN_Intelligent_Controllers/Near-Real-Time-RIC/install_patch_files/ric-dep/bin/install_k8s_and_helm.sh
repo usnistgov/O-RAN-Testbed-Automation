@@ -130,7 +130,7 @@ sudo apt-get install -y libsctp1 lksctp-tools
 # The version will be dynamically completed rather than hardcoding in the version
 KUBEV="1.29"
 KUBECNIV="0.7"
-HELMV="3.5"
+HELMV="3.16"
 DOCKERV="20.10"
 
 # Fetch the Ubuntu release version regardless of the derivative distro

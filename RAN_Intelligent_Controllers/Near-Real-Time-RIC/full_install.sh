@@ -115,6 +115,9 @@ else
 
     cd "$SCRIPT_DIR/ric-dep/bin/"
 
+    # Remove any expired keys from apt-get update
+    sudo ./install_scripts/remove_any_expired_apt_keys.sh
+
     if ! ./install_k8s_and_helm.sh; then
         echo "An error occured when running $SCRIPT_DIR/install_k8s_and_helm.sh."
         exit 1

@@ -42,6 +42,9 @@ cd "$SCRIPT_DIR"
 # Ensure backward compatibility with previous installations
 sudo ./Additional_Scripts/migrate_to_new_version.sh
 
+# Remove any expired keys from apt-get update
+sudo ./Additional_Scripts/remove_any_expired_apt_keys.sh
+
 # Check if the applications are already installed and ask the user if they should be reset
 OPEN5GS_INSTALLED=false
 if [ -f "5G_Core_Network/open5gs/install/bin/open5gs-amfd" ] && [ -f "5G_Core_Network/open5gs/install/bin/open5gs-upfd" ]; then

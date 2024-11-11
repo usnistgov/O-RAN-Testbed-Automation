@@ -152,7 +152,7 @@ else
     cd "$SCRIPT_DIR/dep/ric-dep/bin/"
 
     # Remove any expired keys from apt-get update
-    sudo ./install_scripts/remove_any_expired_apt_keys.sh
+    sudo "$SCRIPT_DIR/install_scripts/./remove_any_expired_apt_keys.sh"
 
     if ! ./install_k8s_and_helm.sh; then
         echo "An error occured when running $(pwd)/install_k8s_and_helm.sh."
@@ -168,10 +168,13 @@ fi
 
 cd "$SCRIPT_DIR"
 
+# Ensure docker is configured properly
+sudo ./install_scripts/enable_docker_build_kit.sh
+
 # Optionally, install kubecolor for a formatted kubectl output
 sudo ./install_scripts/wait_for_kubectl.sh
 if ! command -v kubecolor &>/dev/null; then
-    sudo apt update || true
+    sudo apt-get update || true
     echo "Installing kubecolor..."
     if sudo apt-get install -y kubecolor; then
         command -v kubecolor >/dev/null 2>&1 && alias kubectl="kubecolor"

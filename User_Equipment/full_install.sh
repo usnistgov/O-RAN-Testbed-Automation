@@ -67,21 +67,28 @@ if systemctl is-active --quiet apt-daily-upgrade.timer; then
     sudo systemctl disable apt-daily-upgrade.timer &>/dev/null && echo "Successfully disabled apt-daily-upgrade.timer service."
 fi
 
+echo "Updating package lists..."
+if ! sudo apt-get update; then
+    sudo "$SCRIPT_DIR/install_scripts/./remove_any_expired_apt_keys.sh"
+    echo "Trying to update package lists again..."
+    if ! sudo apt-get update; then
+        echo "Failed to update package lists"
+        exit 1
+    fi
+fi
+
 echo "Installing User Equipment..."
 
-sudo apt-get update
+# Code from (https://docs.srsran.com/projects/4g/en/latest/general/source/1_installation.html#installation-from-source):
+sudo apt-get install -y build-essential cmake libfftw3-dev libmbedtls-dev libboost-program-options-dev libconfig++-dev libsctp-dev
 
+sudo apt-get install -y libboost-all-dev
 sudo apt-get install -y libuhd-dev
 sudo apt-get install -y uhd-host
 sudo apt-get install -y libdw-dev libbfd-dev libdwarf-dev
-sudo apt-get install -y libgtest-dev
-sudo apt-get install -y libmbedtls-dev
-sudo apt-get install -y libfftw3-dev
 sudo apt-get install -y libyaml-cpp-dev
-
-sudo apt-get install -y build-essential cmake libtool libfftw3-dev libmbedtls-dev libboost-program-options-dev libconfig++-dev libsctp-dev
-sudo apt-get install -y libfftw3-dev libmbedtls-dev
-
+sudo apt-get install -y libgtest-dev
+sudo apt-get install -y libtool
 # Enable SCTP
 sudo apt-get install -y libsctp-dev
 # Check if SCTP is available and load it if necessary

@@ -100,7 +100,7 @@ wait_for_all_pods_running() {
         fi
 
         # Check if the API server is not up, and wait for that first
-        if [ ! $(kubectl get --raw="/api/v1/namespaces/kube-system/pods" >/dev/null 2>&1) ]; then
+        if ! kubectl get --raw="/api/v1/namespaces/kube-system/pods" >/dev/null 2>&1; then
             sudo ./install_scripts/wait_for_kubectl.sh
         fi
     done

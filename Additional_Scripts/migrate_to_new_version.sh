@@ -84,6 +84,11 @@ if [ -d 5G_Core/open5gs ] || [ -d gNodeB/srsRAN_Project ] || [ -d RAN_Intelligen
         sudo mv RAN_Intelligent_Controller/* RAN_Intelligent_Controllers/Near-Real-Time-RIC
         sudo rm -rf RAN_Intelligent_Controller
     fi
+
+    echo "Ensuring the apt keys are not expired..."
+    sudo ./Additional_Scripts/remove_any_expired_apt_keys.sh
+
+    echo
     echo "The 5G Core needs to be reinstalled with ./5G_Core_Network/full_install.sh."
     echo "Successfully migrated from commit 310ca91b9f5f83a0d0b94affebfdc940005daf1a to the new version."
     echo

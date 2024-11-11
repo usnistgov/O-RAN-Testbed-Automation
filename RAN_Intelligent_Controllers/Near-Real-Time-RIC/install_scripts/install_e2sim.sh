@@ -47,7 +47,7 @@ cd e2-interface/e2sim/
 
 mkdir -p build
 cd build/
-cmake .. && make package && cmake .. -DDEV_PKG=1 && make package
+cmake .. && make -j$(nproc) package && cmake .. -DDEV_PKG=1 && make -j$(nproc) package
 cp *.deb ../e2sm_examples/kpm_e2sm/
 cd ../
 sudo docker build -t oransim:0.0.999 . -f Dockerfile_kpm_MODIFIED

@@ -39,6 +39,7 @@ if echo "$OUTPUT" | grep -iq "EXPKEYSIG"; then
 
     if [ -n "$KEYS" ]; then
         for KEY in $KEYS; do
+            echo
             echo "Invalid key detected: $KEY"
             # Determine the keyring file to be modified
             KEYRING_PATH=""
@@ -73,6 +74,8 @@ if echo "$OUTPUT" | grep -iq "EXPKEYSIG"; then
 
             if [ -z "$FILES_LIST" ]; then
                 echo "No corresponding .list files found to remove for key: $KEY"
+            else
+                echo "Successfully removed expired key $KEY and corresponding .list files."
             fi
         done
     else

@@ -3,6 +3,7 @@
 The 5G Core Network operates as a standalone network based on the 3GPP specifications TS 23.501 [[1]][ts3144-3gpp] and TS 23.502 [[2]][ts3145-3gpp], implemented using the Open5GS software [[3]][open5gs-open5gs]. The 5G Core Network consists of the MME, SGWC, SMF, AMF, SGWU, UPF, HSS, PCRF, NRF, SCP, SEPP 1, SEPP 2, AUSF, UDM, PCF, NSSF, BSF, and UDR.
 
 ## Usage
+
 - **Compile**: Use `./full_install.sh` to build the 5G Core.
 - **Generate Configurations**: Use `./generate_configurations.sh` to create configuration files.
   - Configuration files can be accessed and modified in the `configs` directory.
@@ -13,7 +14,9 @@ The 5G Core Network operates as a standalone network based on the 3GPP specifica
 - **Logs**: Access logs by navigating to the `logs` directory.
 
 ### Custom PLMN and TAC Identifiers
+
 Modify the `5G_Core_Network/options.yaml` for different PLMN and TAC IDs, then apply changes with the following.
+
 ```console
 ./generate_configurations.sh
 ./stop.sh
@@ -24,9 +27,11 @@ cd ../5G_Core_Network
 ```
 
 ## Accessing Subscriber Data
+
 The WebUI hosts a web interface to access subscriber data. To access the WebUI, navigate to `http://localhost:9999` in a web browser, or run `start_webui.sh` to open it in Chrome or Firefox automatically.
 
 Alternatively, to create subscriber entries from command line, use the following.
+
 ```console
 ./install_scripts/register_subscriber.sh --imsi 001010123456780 --key 00112233445566778899AABBCCDDEEFF --opc 63BFA50EE6523365FF14C1F45F88737D --apn srsapn
 ```
@@ -69,7 +74,7 @@ By default, the configuration process automatically creates subscriber entries f
     <td>ue2</td>
     <td>ue3</td>
   </tr>
-  <tr>
+  <!-- <tr>
     <td>TX Port</td>
     <td>2101</td>
     <td>2201</td>
@@ -80,13 +85,14 @@ By default, the configuration process automatically creates subscriber entries f
     <td>2100</td>
     <td>2200</td>
     <td>2300</td>
-  </tr>
+  </tr> -->
 </tbody>
 </table>
 
 For more information on the subscriber data, refer to the blueprint [[4]][nist-tn] and the User_Eqiupment README document.
 
 ## References
+
 1. 3GPP TS 23.501: System Architecture for the 5G System. [https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=3144][ts3144-3gpp]
 2. 3GPP TS 23.502: Procedures for the 5G System. [https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=3145][ts3145-3gpp]
 3. Open Source implementation for 5G Core and EPC. Open5GS. [https://open5gs.org/][open5gs-open5gs]

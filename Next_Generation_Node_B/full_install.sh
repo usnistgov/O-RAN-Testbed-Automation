@@ -72,19 +72,28 @@ if [ ! -d "srsRAN_Project" ]; then
     git clone https://github.com/srsran/srsRAN_Project.git
 fi
 
+echo "Updating package lists..."
+if ! sudo apt-get update; then
+    sudo "$SCRIPT_DIR/install_scripts/./remove_any_expired_apt_keys.sh"
+    echo "Trying to update package lists again..."
+    if ! sudo apt-get update; then
+        echo "Failed to update package lists"
+        exit 1
+    fi
+fi
+
 echo
 echo
 echo "Installing gNodeB..."
 
-sudo apt-get update
-sudo apt-get install -y build-essential autoconf automake libtool libboost-program-options-dev libconfig++-dev
-sudo apt-get install -y cmake make gcc g++ pkg-config libgtest-dev
+# Code from (https://docs.srsran.com/projects/project/en/latest/user_manuals/source/installation.html#manual-installation-dependencies):
+sudo apt-get install -y build-essential cmake libfftw3-dev libmbedtls-dev libboost-program-options-dev libconfig++-dev libsctp-dev
+
+sudo apt-get install -y autoconf automake libtool
 sudo apt-get install -y libuhd-dev
 sudo apt-get install -y uhd-host
 sudo apt-get install -y libdw-dev libbfd-dev libdwarf-dev
 sudo apt-get install -y libgtest-dev
-sudo apt-get install -y libmbedtls-dev
-sudo apt-get install -y libfftw3-dev
 sudo apt-get install -y libyaml-cpp-dev
 sudo apt-get install -y timelimit
 

@@ -19,6 +19,7 @@
 **Functionality**: Hosts rApps that support RAN policy enforcement and long-term network management and optimization, functioning in a closed-loop with actions executed within a time frame of 1 second to 10 seconds.
 
 ## References
+
 1. Working Group 3: Near-Real-time RAN Intelligent Controller and E2 Interface Workgroup. O-RAN Alliance. [https://public.o-ran.org/display/WG3/Introduction][oran-wg3]
 2. Near Realtime RAN Intelligent Controller. O-RAN Software Community. [https://docs.o-ran-sc.org/en/latest/projects.html#near-realtime-ran-intelligent-controller-ric][oransc-nearrtric]
 3. Working Group 2: Non-Real-time RAN Intelligent Controller and A1. O-RAN Alliance. [https://public.o-ran.org/display/WG2/Introduction][oran-wg2]

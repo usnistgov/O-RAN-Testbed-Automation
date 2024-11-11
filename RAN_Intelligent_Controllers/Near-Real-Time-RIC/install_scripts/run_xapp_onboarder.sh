@@ -94,7 +94,7 @@ pip install --upgrade pip setuptools wheel
 # Install dependencies ensuring there are no cached packages
 pip cache purge
 
-# Update the requirements
+echo "Updating requirements.txt before xapp_onboarder installation..."
 if [ ! -f requirements.previous.txt ]; then
     mv requirements.txt requirements.previous.txt
 else

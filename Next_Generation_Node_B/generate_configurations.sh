@@ -60,12 +60,9 @@ fi
 echo "PLMN value: $PLMN"
 echo "TAC value: $TAC"
 
+# Check if the YAML editor is installed, and install it if not
 if ! command -v yq &>/dev/null; then
-    echo "Installing yq..."
-    YQ_PATH="https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64"
-    sudo wget $YQ_PATH -O /usr/bin/yq
-    sudo chmod +x /usr/bin/yq
-    # Uninstall with: sudo rm -rf /usr/bin/yq
+    sudo "$SCRIPT_DIR/install_scripts/./install_yq.sh"
 fi
 
 echo "Restoring gNodeB configuration file..."
@@ -221,6 +218,8 @@ update_yaml configs/gnb.yaml "ru_sdr" "sync" null
 
 # Update configuration values for 5G cell parameters
 update_yaml configs/gnb.yaml "cell_cfg" "dl_arfcn" "368500" # NR ARFCN
+update_yaml configs/gnb.yaml "cell_cfg" "nof_antennas_dl" "1"
+update_yaml configs/gnb.yaml "cell_cfg" "nof_antennas_ul" "1"
 update_yaml configs/gnb.yaml "cell_cfg" "band" "3"
 update_yaml configs/gnb.yaml "cell_cfg" "channel_bandwidth_MHz" "20"
 update_yaml configs/gnb.yaml "cell_cfg" "common_scs" "15"

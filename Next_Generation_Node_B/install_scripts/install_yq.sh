@@ -28,35 +28,76 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-# Exit immediately if a command fails
-set -e
+echo "# Script: $(realpath $0)..."
 
-if ! systemctl is-active --quiet kubelet; then
-    echo "Kubernetes service was not running, starting..."
-    sudo systemctl start kubelet
+# Uninstall yq with: sudo rm -rf /usr/bin/yq
+if command -v yq &>/dev/null; then
+    echo "Already installed yq, skipping."
+    exit 0
 fi
 
-TIMEOUT=600
-ELAPSED_TIME=0
-SLEEP_DURATION=5
-while ! kubectl get --raw="/api/v1/namespaces/kube-system/pods" >/dev/null 2>&1; do
-    if [ $ELAPSED_TIME -ge $TIMEOUT ]; then
-        echo "Timeout exceeded while waiting for the API server to respond."
-        echo "Attempting to restart Kubernetes services..."
-        # Restart Kubernetes services or any other commands to recover the situation
-        sudo systemctl restart kubelet
-        sleep $SLEEP_DURATION
-        ELAPSED_TIME=$SLEEP_DURATION
-        echo "Services restarted. Continuing to wait for API server readiness..."
+echo "Installing yq..."
+
+# Determine the processor architecture
+ARCH_SUFFIX=""
+case $(uname -m) in
+"x86_64")
+    ARCH_SUFFIX="linux_amd64"
+    ;;
+"aarch64")
+    ARCH_SUFFIX="linux_arm64"
+    ;;
+"armv7l" | "armv6l")
+    ARCH_SUFFIX="linux_arm"
+    ;;
+"i386" | "i686")
+    ARCH_SUFFIX="linux_386"
+    ;;
+"ppc64le")
+    ARCH_SUFFIX="linux_ppc64le"
+    ;;
+"s390x")
+    ARCH_SUFFIX="linux_s390x"
+    ;;
+"mips")
+    ARCH_SUFFIX="linux_mips"
+    ;;
+"mips64")
+    ARCH_SUFFIX="linux_mips64"
+    ;;
+"mips64el" | "mips64le")
+    ARCH_SUFFIX="linux_mips64le"
+    ;;
+"mipsel" | "mipsle")
+    ARCH_SUFFIX="linux_mipsle"
+    ;;
+*)
+    echo "Unsupported architecture for yq: $(uname -m)"
+    exit 1
+    ;;
+esac
+
+YQ_URL="https://github.com/mikefarah/yq/releases/latest/download/yq_${ARCH_SUFFIX}.tar.gz"
+
+# Create a temporary directory for the download
+TEMP_DIR=$(mktemp -d)
+TEMP_PATH="$TEMP_DIR/yq.tar.gz"
+
+echo "Downloading yq from $YQ_URL..."
+HTTP_STATUS=$(curl -L -w "%{http_code}" -o "$TEMP_PATH" "$YQ_URL")
+if [ "$HTTP_STATUS" -eq 200 ]; then
+    echo "Extracting yq..."
+    tar -xzf "$TEMP_PATH" -C "$TEMP_DIR"
+    if [ -f "$TEMP_DIR/./yq_$ARCH_SUFFIX" ]; then
+        sudo mv "$TEMP_DIR/./yq_$ARCH_SUFFIX" /usr/local/bin/yq
+        sudo chmod +x /usr/local/bin/yq
+        echo "Successfully installed yq."
     else
-        echo "Waiting for API server to respond..."
-        if ! systemctl is-active --quiet kubelet; then
-            echo "Kubernetes service was not running, starting..."
-            sudo systemctl start kubelet
-        fi
-        kubectl get pods --namespace=kube-system || true
-        kubectl get nodes || true
-        sleep $SLEEP_DURATION
-        ELAPSED_TIME=$(($ELAPSED_TIME + $SLEEP_DURATION))
+        echo "Failed to extract yq from the tar.gz."
+        exit 1
     fi
-done
+else
+    sudo rm -rf "$TEMP_DIR"
+    echo "Failed to download yq for the architecture: ${ARCH_SUFFIX}, HTTP status was $HTTP_STATUS."
+    exit 1
+fi

@@ -30,29 +30,74 @@
 
 echo "# Script: $(realpath $0)..."
 
-# Exit immediately if a command fails
-set -e
-
-# Check if k9s is already installed
-if command -v k9s &>/dev/null; then
-    echo "Already installed k9s, skipping."
+# Uninstall yq with: sudo rm -rf /usr/bin/yq
+if command -v yq &>/dev/null; then
+    echo "Already installed yq, skipping."
     exit 0
 fi
 
-echo "Downloading and extracting k9s..."
+echo "Installing yq..."
 
-# Create and navigate to the installation directory
-mkdir -p "$HOME/k9s-installation"
-cd "$HOME/k9s-installation"
+# Determine the processor architecture
+ARCH_SUFFIX=""
+case $(uname -m) in
+"x86_64")
+    ARCH_SUFFIX="linux_amd64"
+    ;;
+"aarch64")
+    ARCH_SUFFIX="linux_arm64"
+    ;;
+"armv7l" | "armv6l")
+    ARCH_SUFFIX="linux_arm"
+    ;;
+"i386" | "i686")
+    ARCH_SUFFIX="linux_386"
+    ;;
+"ppc64le")
+    ARCH_SUFFIX="linux_ppc64le"
+    ;;
+"s390x")
+    ARCH_SUFFIX="linux_s390x"
+    ;;
+"mips")
+    ARCH_SUFFIX="linux_mips"
+    ;;
+"mips64")
+    ARCH_SUFFIX="linux_mips64"
+    ;;
+"mips64el" | "mips64le")
+    ARCH_SUFFIX="linux_mips64le"
+    ;;
+"mipsel" | "mipsle")
+    ARCH_SUFFIX="linux_mipsle"
+    ;;
+*)
+    echo "Unsupported architecture for yq: $(uname -m)"
+    exit 1
+    ;;
+esac
 
-# Download and extract K9s
-curl -LO https://github.com/derailed/k9s/releases/latest/download/k9s_Linux_amd64.tar.gz
-tar xf k9s_Linux_amd64.tar.gz
+YQ_URL="https://github.com/mikefarah/yq/releases/latest/download/yq_${ARCH_SUFFIX}.tar.gz"
 
-# Move the binary to a system path
-sudo mv k9s /usr/local/bin
+# Create a temporary directory for the download
+TEMP_DIR=$(mktemp -d)
+TEMP_PATH="$TEMP_DIR/yq.tar.gz"
 
-# Cleanup the downloaded archive
-rm k9s_Linux_amd64.tar.gz
-
-echo "K9s installation complete."
+echo "Downloading yq from $YQ_URL..."
+HTTP_STATUS=$(curl -L -w "%{http_code}" -o "$TEMP_PATH" "$YQ_URL")
+if [ "$HTTP_STATUS" -eq 200 ]; then
+    echo "Extracting yq..."
+    tar -xzf "$TEMP_PATH" -C "$TEMP_DIR"
+    if [ -f "$TEMP_DIR/./yq_$ARCH_SUFFIX" ]; then
+        sudo mv "$TEMP_DIR/./yq_$ARCH_SUFFIX" /usr/local/bin/yq
+        sudo chmod +x /usr/local/bin/yq
+        echo "Successfully installed yq."
+    else
+        echo "Failed to extract yq from the tar.gz."
+        exit 1
+    fi
+else
+    sudo rm -rf "$TEMP_DIR"
+    echo "Failed to download yq for the architecture: ${ARCH_SUFFIX}, HTTP status was $HTTP_STATUS."
+    exit 1
+fi

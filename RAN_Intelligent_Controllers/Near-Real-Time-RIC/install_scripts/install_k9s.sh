@@ -45,14 +45,41 @@ echo "Downloading and extracting k9s..."
 mkdir -p "$HOME/k9s-installation"
 cd "$HOME/k9s-installation"
 
-# Download and extract K9s
-curl -LO https://github.com/derailed/k9s/releases/latest/download/k9s_Linux_amd64.tar.gz
-tar xf k9s_Linux_amd64.tar.gz
+# Determine the processor architecture
+ARCH_SUFFIX=""
+case $(uname -m) in
+"x86_64")
+    ARCH_SUFFIX="Linux_amd64"
+    ;;
+"aarch64")
+    ARCH_SUFFIX="Linux_arm64"
+    ;;
+"armv7l")
+    ARCH_SUFFIX="Linux_armv7"
+    ;;
+"ppc64le")
+    ARCH_SUFFIX="Linux_ppc64le"
+    ;;
+"s390x")
+    ARCH_SUFFIX="Linux_s390x"
+    ;;
+*)
+    echo "Unsupported architecture: $(uname -m)"
+    ;;
+esac
 
-# Move the binary to a system path
-sudo mv k9s /usr/local/bin
+# Construct the download URL using the determined architecture suffix
+DOWNLOAD_URL="https://github.com/derailed/k9s/releases/latest/download/k9s_${ARCH_SUFFIX}.tar.gz"
 
-# Cleanup the downloaded archive
-rm k9s_Linux_amd64.tar.gz
-
-echo "K9s installation complete."
+# Download and check if the curl command was successful
+if curl -fLO "$DOWNLOAD_URL"; then
+    tar -xzf k9s_${ARCH_SUFFIX}.tar.gz
+    sudo mv k9s /usr/local/bin
+    rm k9s_${ARCH_SUFFIX}.tar.gz
+    echo "Successfully installed k9s."
+else
+    echo "Failed to download k9s for the architecture: ${ARCH_SUFFIX}"
+    # Clean up the installation directory if the download fails
+    cd ..
+    rm -rf "$HOME/k9s-installation"
+fi

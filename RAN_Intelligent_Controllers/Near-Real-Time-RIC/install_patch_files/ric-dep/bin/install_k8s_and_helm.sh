@@ -130,7 +130,7 @@ sudo apt-get install -y libsctp1 lksctp-tools
 # The version will be dynamically completed rather than hardcoding in the version
 KUBEV="1.29"
 KUBECNIV="0.7"
-HELMV="3.5"
+HELMV="3.16"
 DOCKERV="20.10"
 
 # Fetch the Ubuntu release version regardless of the derivative distro
@@ -443,7 +443,11 @@ sudo tee /etc/docker/daemon.json >/dev/null <<EOF
   "log-opts": {
     "max-size": "100m"
   },
-  "storage-driver": "overlay2"
+  "storage-driver": "overlay2",
+  "features": {
+    "buildkit": true
+  },
+  "max-concurrent-downloads": 10
 }
 EOF
 
@@ -903,17 +907,47 @@ echo
 echo
 echo "Installing Helm ${HELMVERSIONWITHOUTSUFFIX}..."
 
+# Determine the processor architecture
+ARCH_SUFFIX=""
+case $(uname -m) in
+"x86_64")
+    ARCH_SUFFIX="amd64"
+    ;;
+"aarch64")
+    ARCH_SUFFIX="arm64"
+    ;;
+"armv7l" | "armv6l")
+    ARCH_SUFFIX="arm"
+    ;;
+"i386" | "i686")
+    ARCH_SUFFIX="386"
+    ;;
+"ppc64le")
+    ARCH_SUFFIX="ppc64le"
+    ;;
+"s390x")
+    ARCH_SUFFIX="s390x"
+    ;;
+"riscv64")
+    ARCH_SUFFIX="riscv64"
+    ;;
+*)
+    echo "Unsupported architecture for Helm: $(uname -m)"
+    exit 1
+    ;;
+esac
+
 # Create a temporary directory for the Helm installation process
 TEMP_DIR="$(mktemp -d)"
 
 # Download the Helm tarball if not already present
-if [ ! -e "${TEMP_DIR}/helm-v${HELMVERSIONWITHOUTSUFFIX}-linux-amd64.tar.gz" ]; then
-    wget -P "${TEMP_DIR}" "https://get.helm.sh/helm-v${HELMVERSIONWITHOUTSUFFIX}-linux-amd64.tar.gz"
+if [ ! -e "${TEMP_DIR}/helm-v${HELMVERSIONWITHOUTSUFFIX}-linux-${ARCH_SUFFIX}.tar.gz" ]; then
+    wget -P "${TEMP_DIR}" "https://get.helm.sh/helm-v${HELMVERSIONWITHOUTSUFFIX}-linux-${ARCH_SUFFIX}.tar.gz"
 fi
 
 # Extract Helm and move it to /usr/local/bin
-tar -xvf "${TEMP_DIR}/helm-v${HELMVERSIONWITHOUTSUFFIX}-linux-amd64.tar.gz" -C "${TEMP_DIR}"
-sudo mv "${TEMP_DIR}/linux-amd64/helm" /usr/local/bin/helm
+tar -xvf "${TEMP_DIR}/helm-v${HELMVERSIONWITHOUTSUFFIX}-linux-${ARCH_SUFFIX}.tar.gz" -C "${TEMP_DIR}"
+sudo mv "${TEMP_DIR}/linux-${ARCH_SUFFIX}/helm" /usr/local/bin/helm
 sudo chmod +x /usr/local/bin/helm
 
 # Clean up temporary directory

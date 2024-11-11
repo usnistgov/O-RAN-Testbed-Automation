@@ -35,6 +35,14 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
+if ! command -v realpath &>/dev/null; then
+    echo "Package \"coreutils\" not found, installing..."
+    sudo apt-get install -y coreutils
+fi
+
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+cd "$SCRIPT_DIR"
+
 echo "Optimizing Ubuntu apt sources (/etc/apt/sources.list) to get faster download rates..."
 
 # Number of times to measure apt sources, a higher value will give better results but take longer
@@ -55,10 +63,14 @@ else
     fi
 fi
 
-# Update package lists
-if ! apt-get update -y; then
-    echo "Failed to update package lists. Please check your network or sources.list file."
-    exit 1
+echo "Updating package lists..."
+if ! sudo apt-get update; then
+    sudo ./remove_any_expired_apt_keys.sh
+    echo "Trying to update package lists again..."
+    if ! sudo apt-get update; then
+        echo "Failed to update package lists"
+        exit 1
+    fi
 fi
 
 # Function to check and install a package
@@ -155,7 +167,7 @@ if [ -n "$BEST_MIRROR" ]; then
     cd "$BACKUP_DIR"
     rm -rf "$WORK_DIR"
 
-    apt-get update -y
+    sudo apt-get update
     echo "The sources.list has been updated with sources from $BEST_MIRROR."
 else
     echo "Failed to determine a fast mirror. Not updating sources.list."

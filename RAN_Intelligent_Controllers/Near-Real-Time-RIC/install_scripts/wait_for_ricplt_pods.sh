@@ -41,10 +41,12 @@ wait_for_all_pods_running() {
     local NAMESPACES=("$@")
     local ALL_PODS_RUNNING=0
     local NODE_NAME=$(kubectl get nodes -o jsonpath='{.items[0].metadata.name}')
+    local ALREADY_TERMINATED_E2TERM=0
 
     echo "Initiating wait for all pods to be in 'Running' or 'Completed' state across specified namespaces."
 
     while [ $ALL_PODS_RUNNING -eq 0 ]; do
+        echo
         kubectl get pods -A || true
         ALL_PODS_RUNNING=1 # Assume all pods are running until proven otherwise
         for NAMESPACE in "${NAMESPACES[@]}"; do
@@ -85,6 +87,27 @@ wait_for_all_pods_running() {
         fi
 
         echo "    Press \"k\" to start the k9s pod manager application."
+
+        # Check if the e2term pod is the only one not ready, and prompt the user to restart it
+        local PRINTED_E2TERM_MSG=0
+        local NOT_READY_PODS=""
+        if [ $ALREADY_TERMINATED_E2TERM -eq 0 ]; then
+            POD_STATUS=$(kubectl get pods -n ricplt --no-headers 2>/dev/null)
+            NOT_READY_PODS=$(echo "$POD_STATUS" | awk '{
+                split($2, arr, "/");
+                if ($3 == "Terminating") next;
+                if ($3 != "Running" && $3 != "Completed" || ($3 == "Running" && arr[1] != arr[2])) {
+                    print $1;
+                }
+            }')
+            NUM_NOT_READY=$(echo "$NOT_READY_PODS" | wc -l)
+            if [[ $NUM_NOT_READY -eq 1 ]] && echo "$NOT_READY_PODS" | grep -q "ricplt-e2term"; then
+                echo "    Press \"r\" to restart the e2term pod, since it is the only ricplt pod not ready."
+                PRINTED_E2TERM_MSG=1
+            fi
+        fi
+
+        # Read a single character of input with a timeout of 5 seconds
         read -t 5 -n 1 key || true
         if [ "$key" == "k" ]; then
             K9S_SCRIPT_PATH="$(dirname "$SCRIPT_DIR")/./start_k9s.sh"
@@ -95,19 +118,31 @@ wait_for_all_pods_running() {
             sleep 5
             trap - SIGINT
             echo "Resumed parent script."
+
+        # Restart the e2term pod if it is the only one not ready, and the user presses "r"
+        elif [ "$PRINTED_E2TERM_MSG" -eq 1 ] && [ "$key" == "r" ]; then
+            echo
+            echo "Sending signal to restart the e2term pod..."
+            POD_NAME=$(echo "$NOT_READY_PODS" | grep "ricplt-e2term")
+            kubectl delete pod $POD_NAME -n ricplt >/dev/null 2>&1 &
+            ALREADY_TERMINATED_E2TERM=1
+            PRINTED_E2TERM_MSG=0
+            sleep 3
+            echo "Successfully sent signal to restart the e2term pod."
+            echo
+
         elif [ ! -z "$key" ]; then
             sleep 5
         fi
 
         # Check if the API server is not up, and wait for that first
-        if [ ! $(kubectl get --raw="/api/v1/namespaces/kube-system/pods" >/dev/null 2>&1) ]; then
+        if ! kubectl get --raw="/api/v1/namespaces/kube-system/pods" >/dev/null 2>&1; then
             sudo ./install_scripts/wait_for_kubectl.sh
         fi
     done
 }
 
 KUBEVERSION=$(kubectl version | awk '/Server Version:/ {print $3}' | sed 's/v//')
-# Fetch the Helm version
 HELMVERSION=$(helm version --short | sed 's/.*v\([0-9]\).*/\1/')
 
 # Remaining taints may prevent the RIC components from initializing

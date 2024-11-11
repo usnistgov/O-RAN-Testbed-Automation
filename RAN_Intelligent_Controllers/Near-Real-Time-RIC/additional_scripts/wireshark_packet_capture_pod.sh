@@ -32,12 +32,14 @@ echo "# Script: $(realpath $0)..."
 
 # Install Wireshark if not already installed
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
-sudo "$SCRIPT_DIR/../../../Additional_Scripts/./install_and_configure_wireshark.sh"
+cd "$SCRIPT_DIR"
+
+sudo ./install_and_configure_wireshark.sh
 
 # Check if krew is installed
 if ! kubectl krew >/dev/null 2>&1; then
     echo "Krew is not installed. Installing Krew..."
-    (
+    ( # Code from (https://krew.sigs.k8s.io/docs/user-guide/setup/install/#bash):
         set -x
         cd "$(mktemp -d)" &&
             OS="$(uname | tr '[:upper:]' '[:lower:]')" &&

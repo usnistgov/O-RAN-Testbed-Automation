@@ -39,11 +39,9 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
+# Check if the YAML editor is installed, and install it if not
 if ! command -v yq &>/dev/null; then
-    YQ_PATH="https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64"
-    sudo wget $YQ_PATH -O /usr/bin/yq
-    sudo chmod +x /usr/bin/yq
-    # Uninstall with: sudo rm -rf /usr/bin/yq
+    sudo "$SCRIPT_DIR/install_scripts/./install_yq.sh"
 fi
 
 echo "Downloading configuration file example..."

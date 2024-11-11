@@ -127,12 +127,14 @@ IP_HTTP_e2term=$(echo $LINE | awk '{print $3}')
 PORT_HTTP_e2term=$(echo $LINE | awk '{print $5}' | sed 's/\/.*//' | cut -d: -f2)
 echo "$IP_HTTP_e2term:$PORT_HTTP_e2term"
 
-response=$(curl -X GET $IP_HTTP_e2term:$PORT_HTTP_e2term/v1/nodeb/states 2>/dev/null)
+RESPONSE=$(curl -X GET $IP_HTTP_e2term:$PORT_HTTP_e2term/v1/nodeb/states 2>/dev/null)
 
 # Verify if the connectionStatus is "CONNECTED"
-status=$(echo "$response" | jq -r '.[].connectionStatus' | grep "CONNECTED" || true)
-if [[ $status == "CONNECTED" ]]; then
-    echo "$response" | jq
+STATUS=$(echo "$RESPONSE" | jq -r '.[].connectionStatus' | grep "CONNECTED" || true)
+if [[ $STATUS == "CONNECTED" ]]; then
+    sleep 0.5
+    echo "$RESPONSE" | jq
+    sleep 0.5
     echo "Successfully connected the E2 simulator and RIC cluster."
 else
     echo "Connection between E2 simulator and RIC cluster is pending."

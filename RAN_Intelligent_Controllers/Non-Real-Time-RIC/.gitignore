@@ -1,5 +1,0 @@
-# Ignore testbed subdirectories
-/dep/
-/logs/
-/nonrtric-controlpanel/
-install_time.txt

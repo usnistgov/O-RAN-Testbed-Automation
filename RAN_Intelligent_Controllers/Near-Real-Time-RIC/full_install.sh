@@ -115,31 +115,30 @@ else
 
     cd "$SCRIPT_DIR/ric-dep/bin/"
 
+    # Remove any expired keys from apt-get update
+    sudo "$SCRIPT_DIR/install_scripts/./remove_any_expired_apt_keys.sh"
+
     if ! ./install_k8s_and_helm.sh; then
         echo "An error occured when running $SCRIPT_DIR/install_k8s_and_helm.sh."
         exit 1
     fi
 
-    # Check if yq is installed, and install it if not
+    # Check if the YAML editor is installed, and install it if not
     if ! command -v yq &>/dev/null; then
-        echo "Installing yq..."
-        YQ_PATH="https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64"
-        sudo wget $YQ_PATH -O /usr/bin/yq
-        sudo chmod +x /usr/bin/yq
-        # Uninstall with: sudo rm -rf /usr/bin/yq
+        sudo "$SCRIPT_DIR/install_scripts/./install_yq.sh"
     fi
 
-    echo "Disabling Kong Pod and Removing Ingress Files..."
-    cd "$SCRIPT_DIR/ric-dep/helm/infrastructure"
-    yq '.kong.enabled = false' -i values.yaml
-    yq '.kong.enabled' values.yaml
-    # Removing Ingress files
-    cd "$SCRIPT_DIR/ric-dep/helm/appmgr/templates"
-    rm -rf ingress-appmgr.yaml
-    cd "$SCRIPT_DIR/ric-dep/helm/e2mgr/templates"
-    rm -rf ingress-e2mgr.yaml
-    cd "$SCRIPT_DIR/ric-dep/helm/a1mediator/templates"
-    rm -rf ingress-a1mediator.yaml
+    # echo "Disabling Kong Pod and Removing Ingress Files..."
+    # cd "$SCRIPT_DIR/ric-dep/helm/infrastructure"
+    # yq '.kong.enabled = false' -i values.yaml
+    # yq '.kong.enabled' values.yaml
+    # # Removing Ingress files
+    # cd "$SCRIPT_DIR/ric-dep/helm/appmgr/templates"
+    # rm -rf ingress-appmgr.yaml
+    # cd "$SCRIPT_DIR/ric-dep/helm/e2mgr/templates"
+    # rm -rf ingress-e2mgr.yaml
+    # cd "$SCRIPT_DIR/ric-dep/helm/a1mediator/templates"
+    # rm -rf ingress-a1mediator.yaml
 
     echo
     echo
@@ -150,10 +149,13 @@ fi
 
 cd "$SCRIPT_DIR"
 
+# Ensure docker is configured properly
+sudo ./install_scripts/enable_docker_build_kit.sh
+
 # Optionally, install kubecolor for a formatted kubectl output
 sudo ./install_scripts/wait_for_kubectl.sh
 if ! command -v kubecolor &>/dev/null; then
-    sudo apt update || true
+    sudo apt-get update || true
     echo "Installing kubecolor..."
     if sudo apt-get install -y kubecolor; then
         command -v kubecolor >/dev/null 2>&1 && alias kubectl="kubecolor"
@@ -304,6 +306,15 @@ sudo ./install_scripts/run_chart_museum.sh
 
 echo
 echo "Waiting for RIC pods before running e2sim..."
+# Remove the unnecessary tiller-secret-generator pod if it has completed
+CMD="kubectl get pods -n ricinfra --no-headers | grep 'tiller-secret-generator' | awk '{print \$1, \$3}'"
+POD_INFO=$(eval $CMD)
+POD_NAME=$(echo $POD_INFO | awk '{print $1}')
+POD_STATUS=$(echo $POD_INFO | awk '{print $2}')
+if [ "$POD_STATUS" == "Completed" ]; then
+    echo "Cleaning up pod $POD_NAME..."
+    kubectl delete pod $POD_NAME -n ricinfra
+fi
 sudo ./install_scripts/wait_for_ricplt_pods.sh
 
 sudo ./install_scripts/run_e2sim_and_connect_to_ric.sh

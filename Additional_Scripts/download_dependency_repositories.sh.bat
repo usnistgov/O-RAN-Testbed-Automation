@@ -39,14 +39,14 @@ cd 5G_Core_Network
 git clone https://github.com/open5gs/open5gs.git open5gs
 cd ..
 
-cd User_Equipment
-git clone https://github.com/srsran/srsRAN_4G.git
+cd Next_Generation_Node_B
+git clone https://github.com/srsran/srsRAN_Project.git
 git clone https://github.com/zeromq/libzmq.git
 git clone https://github.com/zeromq/czmq.git
 cd ..
 
-cd Next_Generation_Node_B
-git clone https://github.com/srsran/srsRAN_Project.git
+cd User_Equipment
+git clone https://github.com/srsran/srsRAN_4G.git
 cd ..
 
 cd RAN_Intelligent_Controllers/Near-Real-Time-RIC
@@ -57,6 +57,17 @@ mkdir xApps
 cd xApps
 git clone https://gerrit.o-ran-sc.org/r/ric-app/hw-go
 cd ..
+cd ..
+cd ..
+
+cd RAN_Intelligent_Controllers/Non-Real-Time-RIC
+git clone https://gerrit.o-ran-sc.org/r/it/dep
+git clone https://gerrit.o-ran-sc.org/r/nonrtric/plt/ranpm -b j-release dep/ranpm
+git clone https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep -b j-release dep/ric-dep
+git clone https://github.com/onap/multicloud-k8s.git dep/smo-install/multicloud-k8s
+git clone https://gerrit.onap.org/r/oom dep/smo-install/onap_oom
+
+git clone https://gerrit.o-ran-sc.org/r/portal/nonrtric-controlpanel
 cd ..
 cd ..
 

@@ -34,4 +34,4 @@ if [ ! $(command -v k9s) ]; then
 fi
 
 echo "The Kubernetes cluster manager is starting up..."
-sudo k9s -A
+k9s -A

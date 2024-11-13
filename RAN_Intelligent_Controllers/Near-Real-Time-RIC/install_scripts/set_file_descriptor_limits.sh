@@ -30,8 +30,7 @@
 
 echo "# Script: $(realpath $0)..."
 
-echo "Updating system-wide file descriptor limits..."
-# Update sysctl settings immediately
+echo "Updating file descriptor limits..."
 sudo sysctl -w fs.file-max=1000000
 sudo sysctl -w fs.inotify.max_user_watches=524288
 sudo sysctl -w fs.inotify.max_user_instances=512
@@ -52,4 +51,4 @@ if [ -n "$PIDS" ]; then
     done
 fi
 
-echo "System limits updated. Reboot or restart your services to ensure all limits are fully applied."
+echo "File descriptor limits updated. Reboot or restart your services to ensure all limits are fully applied."

@@ -84,7 +84,7 @@ fi
 if ! helm version &>/dev/null; then
     SHOULD_RESET_KUBE=true
 fi
-# Check if any of the kube-system pods are not running
+echo "Checking if any of the kube-system pods are not running..."
 if [ "$SHOULD_RESET_KUBE" = false ]; then
     POD_NAMES=("coredns" "etcd" "kube-apiserver" "kube-controller" "kube-proxy" "kube-scheduler")
     ALL_PODS=$(kubectl get pods -n kube-system --no-headers 2>/dev/null) || true
@@ -92,7 +92,9 @@ if [ "$SHOULD_RESET_KUBE" = false ]; then
         # Check for at least one pod with the part of the name matching and in 'RUNNING' or 'COMPLETED' status
         if ! echo "$ALL_PODS" | grep -e "$POD_NAME" | awk '{print $3}' | grep -q -e "Running" -e "Completed"; then
             SHOULD_RESET_KUBE=true
-            echo "Reset required: No $POD_NAME pod in RUNNING or COMPLETED state."
+            echo "    $POD_NAME is not running."
+        else
+            echo "    $POD_NAME is running."
         fi
     done
 fi
@@ -102,6 +104,7 @@ if [ "$SHOULD_RESET_KUBE" = false ]; then
     echo
 else
     cd "$SCRIPT_DIR"
+    echo "At least one kube-system pod is not running, resetting Kubernetes..."
 
     # Download ric-dep from gerrit
     if [ ! -d "ric-dep" ]; then
@@ -118,6 +121,9 @@ else
     # Remove any expired keys from apt-get update
     sudo "$SCRIPT_DIR/install_scripts/./remove_any_expired_apt_keys.sh"
 
+    # Increase the file descriptor limits of the system
+    sudo "$SCRIPT_DIR/install_scripts/./set_file_descriptor_limits.sh"
+
     if ! ./install_k8s_and_helm.sh; then
         echo "An error occured when running $SCRIPT_DIR/install_k8s_and_helm.sh."
         exit 1
@@ -128,17 +134,17 @@ else
         sudo "$SCRIPT_DIR/install_scripts/./install_yq.sh"
     fi
 
-    # echo "Disabling Kong Pod and Removing Ingress Files..."
-    # cd "$SCRIPT_DIR/ric-dep/helm/infrastructure"
-    # yq '.kong.enabled = false' -i values.yaml
-    # yq '.kong.enabled' values.yaml
-    # # Removing Ingress files
-    # cd "$SCRIPT_DIR/ric-dep/helm/appmgr/templates"
-    # rm -rf ingress-appmgr.yaml
-    # cd "$SCRIPT_DIR/ric-dep/helm/e2mgr/templates"
-    # rm -rf ingress-e2mgr.yaml
-    # cd "$SCRIPT_DIR/ric-dep/helm/a1mediator/templates"
-    # rm -rf ingress-a1mediator.yaml
+    echo "Disabling Kong Pod and Removing Ingress Files..."
+    cd "$SCRIPT_DIR/ric-dep/helm/infrastructure"
+    yq '.kong.enabled = false' -i values.yaml
+    yq '.kong.enabled' values.yaml
+    # Removing Ingress files
+    cd "$SCRIPT_DIR/ric-dep/helm/appmgr/templates"
+    rm -rf ingress-appmgr.yaml
+    cd "$SCRIPT_DIR/ric-dep/helm/e2mgr/templates"
+    rm -rf ingress-e2mgr.yaml
+    cd "$SCRIPT_DIR/ric-dep/helm/a1mediator/templates"
+    rm -rf ingress-a1mediator.yaml
 
     echo
     echo
@@ -160,7 +166,7 @@ if ! command -v kubecolor &>/dev/null; then
     if sudo apt-get install -y kubecolor; then
         command -v kubecolor >/dev/null 2>&1 && alias kubectl="kubecolor"
     else
-        echo "Failed to install kubecolor, skipping."
+        echo "Skipping optional kubecolor installation."
     fi
 fi
 
@@ -171,15 +177,17 @@ SHOULD_RESET_RIC=false
 if [ ! -d "ric-dep" ]; then
     SHOULD_RESET_RIC=true
 fi
-# Check if any of the ricplt pods are not running
+echo "Checking if any of the ricplt pods are not running..."
 if [ "$SHOULD_RESET_RIC" = false ]; then
     POD_NAMES=("ricplt-a1mediator" "ricplt-alarmmanager" "ricplt-appmgr" "ricplt-e2mgr" "ricplt-e2term" "ricplt-o1mediator" "ricplt-rtmgr" "ricplt-submgr" "ricplt-vespamgr" "r4-infrastructure-prometheus-alertmanager" "r4-infrastructure-prometheus-server")
-    ALL_PODS=$(kubectl get pods -n ricplt --no-headers)
+    ALL_PODS=$(kubectl get pods -n ricplt --no-headers 2>/dev/null) || true
     for POD_NAME in "${POD_NAMES[@]}"; do
         # Check for at least one pod with the part of the name matching and in 'RUNNING' or 'COMPLETED' status
         if ! echo "$ALL_PODS" | grep -e "$POD_NAME" | awk '{print $3}' | grep -q -e "Running" -e "Completed"; then
             SHOULD_RESET_RIC=true
-            echo "Reset required: No $POD_NAME pod in RUNNING or COMPLETED state."
+            echo "    $POD_NAME is not running."
+        else
+            echo "    $POD_NAME is running."
         fi
     done
 fi
@@ -188,8 +196,7 @@ if [ "$SHOULD_RESET_RIC" = false ]; then
     echo "All ricplt pods are already running, skipping."
     echo
 else
-    echo
-    echo "Resetting the Near-Real Time RAN Intelligent Controller..."
+    echo "At least one ricplt pod is not running, resetting Near-RT RIC pods..."
     sudo ./install_scripts/delete_namespace.sh kubearmor ricinfra ricplt || true
 
     echo "Revising RIC Installation YAML File..."

@@ -89,7 +89,7 @@ By default, the configuration process automatically creates subscriber entries f
 </tbody>
 </table>
 
-For more information on the subscriber data, refer to the blueprint [[4]][nist-tn] and the User_Eqiupment README document.
+For more information on the subscriber data, refer to the blueprint [[4]][nist-tn] and the User_Equipment README document.
 
 ## References
 

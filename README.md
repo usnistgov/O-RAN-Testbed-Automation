@@ -45,7 +45,7 @@ Run the Update Manager to get packages up-to-date, then reboot.
 sudo apt-get update && sudo apt-get upgrade -y
 ```
 
-If using VirtualBox, insert the Guest Additions CD image then install the Guest Additions with the following commands, and reboot.
+If using VirtualBox, insert the Guest Additions CD image and install the Guest Additions with the on-screen prompt or the following commands, then reboot.
 
 ```console
 sudo apt-get install -y dkms build-essential linux-headers-generic linux-headers-$(uname -r)
@@ -67,14 +67,6 @@ cd O-RAN-Testbed-Automation
 Alternatively, you may clone the repository using SSH: `git clone git@github.com:USNISTGOV/O-RAN-Testbed-Automation.git`
 
 ---
-
-> _**Recommendation:** Before beginning, increase the file descriptor limits set by the system with the following command, then reboot._
->
-> ```console
-> sudo ./Additional_Scripts/increase_file_descriptor_limits.sh
-> ```
-
-## <!-- HR 1 -->
 
 Begin the installation process, recommended to be run as your current user rather than as root:
 

@@ -32,7 +32,6 @@ set -e
 
 echo "# Script: $(realpath $0)..."
 
-
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 SCRIPT_PARENT_DIR=$(dirname "$SCRIPT_DIR")
 

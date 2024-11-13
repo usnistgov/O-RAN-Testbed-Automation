@@ -121,7 +121,7 @@ SHOULD_RESET_KUBE=false
 if ! helm version &>/dev/null; then
     SHOULD_RESET_KUBE=true
 fi
-# Check if any of the kube-system pods are not running
+echo "Checking if any of the kube-system pods are not running..."
 if [ "$SHOULD_RESET_KUBE" = false ]; then
     POD_NAMES=("coredns" "etcd" "kube-apiserver" "kube-controller" "kube-proxy" "kube-scheduler")
     ALL_PODS=$(kubectl get pods -n kube-system --no-headers 2>/dev/null) || true
@@ -129,7 +129,9 @@ if [ "$SHOULD_RESET_KUBE" = false ]; then
         # Check for at least one pod with the part of the name matching and in 'RUNNING' or 'COMPLETED' status
         if ! echo "$ALL_PODS" | grep -e "$POD_NAME" | awk '{print $3}' | grep -q -e "Running" -e "Completed"; then
             SHOULD_RESET_KUBE=true
-            echo "Reset required: No $POD_NAME pod in RUNNING or COMPLETED state."
+            echo "    $POD_NAME is not running."
+        else
+            echo "    $POD_NAME is running."
         fi
     done
 fi
@@ -139,6 +141,8 @@ if [ "$SHOULD_RESET_KUBE" = false ]; then
     echo "All kube-system pods are already running, skipping."
     echo
 else
+    echo "At least one kube-system pod is not running, resetting Kubernetes..."
+
     # Download ric-dep from gerrit
     if [ ! -d "ric-dep" ]; then
         git clone https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep -b j-release
@@ -189,15 +193,19 @@ fi
 echo
 echo "Installing Non-Real-Time RAN Intelligent Controller..."
 # Determine if RAN Intelligent Controller pods should be reset by checking if any of the nonrtric pods are not running
+echo "Checking if any of the nonrtric pods are not running..."
 SHOULD_RESET_NONRTRIC=false
 if [ "$SHOULD_RESET_NONRTRIC" = false ]; then
     POD_NAMES=("a1-sim-osc" "a1-sim-std" "a1-sim-std2" "a1controller" "capifcore" "db" "dmaapadapterservice" "dmaapmediatorservice" "helmmanager" "informationservice" "orufhrecovery" "policymanagementservice" "ransliceassurance" "rappcatalogueenhancedservice" "rappcatalogueservice" "rappmanager" "servicemanager")
-    ALL_PODS=$(kubectl get pods -n nonrtric --no-headers)
+    ALL_PODS=$(kubectl get pods -n nonrtric --no-headers 2>/dev/null) || true
+
     for POD_NAME in "${POD_NAMES[@]}"; do
         # Check for at least one pod with the part of the name matching and in 'RUNNING' or 'COMPLETED' status
         if ! echo "$ALL_PODS" | grep -e "^$POD_NAME" | awk '{print $3}' | grep -q -e "Running" -e "Completed"; then
             SHOULD_RESET_NONRTRIC=true
-            echo "Reset required: No $POD_NAME pod in RUNNING or COMPLETED state."
+            echo "    $POD_NAME is not running."
+        else
+            echo "    $POD_NAME is running."
         fi
     done
 fi
@@ -206,8 +214,10 @@ if [ "$SHOULD_RESET_NONRTRIC" = false ]; then
     echo "All nonrtric pods are already running, skipping."
     echo
 else
-    echo "Revising Non-RT RIC Installation YAML File..."
+    echo "At least one nonrtric pod is not running, resetting Non-RT RIC pods..."
     cd "$SCRIPT_DIR"
+
+    # Revise the YAML file for the Non-RT RIC pods
     RIC_YAML_FILE_PATH="dep/RECIPE_EXAMPLE/NONRTRIC/example_recipe.yaml"
     RIC_YAML_FILE_PATH_MODIFIED="dep/RECIPE_EXAMPLE/NONRTRIC/example_recipe_MODIFIED.yaml"
     sudo chown $USER:$USER $RIC_YAML_FILE_PATH

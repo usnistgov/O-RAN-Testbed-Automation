@@ -118,6 +118,9 @@ else
     # Remove any expired keys from apt-get update
     sudo "$SCRIPT_DIR/install_scripts/./remove_any_expired_apt_keys.sh"
 
+    # Increase the file descriptor limits of the system
+    sudo "$SCRIPT_DIR/install_scripts/./set_file_descriptor_limits.sh"
+
     if ! ./install_k8s_and_helm.sh; then
         echo "An error occured when running $SCRIPT_DIR/install_k8s_and_helm.sh."
         exit 1
@@ -128,17 +131,17 @@ else
         sudo "$SCRIPT_DIR/install_scripts/./install_yq.sh"
     fi
 
-    # echo "Disabling Kong Pod and Removing Ingress Files..."
-    # cd "$SCRIPT_DIR/ric-dep/helm/infrastructure"
-    # yq '.kong.enabled = false' -i values.yaml
-    # yq '.kong.enabled' values.yaml
-    # # Removing Ingress files
-    # cd "$SCRIPT_DIR/ric-dep/helm/appmgr/templates"
-    # rm -rf ingress-appmgr.yaml
-    # cd "$SCRIPT_DIR/ric-dep/helm/e2mgr/templates"
-    # rm -rf ingress-e2mgr.yaml
-    # cd "$SCRIPT_DIR/ric-dep/helm/a1mediator/templates"
-    # rm -rf ingress-a1mediator.yaml
+    echo "Disabling Kong Pod and Removing Ingress Files..."
+    cd "$SCRIPT_DIR/ric-dep/helm/infrastructure"
+    yq '.kong.enabled = false' -i values.yaml
+    yq '.kong.enabled' values.yaml
+    # Removing Ingress files
+    cd "$SCRIPT_DIR/ric-dep/helm/appmgr/templates"
+    rm -rf ingress-appmgr.yaml
+    cd "$SCRIPT_DIR/ric-dep/helm/e2mgr/templates"
+    rm -rf ingress-e2mgr.yaml
+    cd "$SCRIPT_DIR/ric-dep/helm/a1mediator/templates"
+    rm -rf ingress-a1mediator.yaml
 
     echo
     echo
@@ -160,7 +163,7 @@ if ! command -v kubecolor &>/dev/null; then
     if sudo apt-get install -y kubecolor; then
         command -v kubecolor >/dev/null 2>&1 && alias kubectl="kubecolor"
     else
-        echo "Failed to install kubecolor, skipping."
+        echo "Skipping optional kubecolor installation."
     fi
 fi
 

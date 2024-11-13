@@ -28,10 +28,41 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-if [ ! $(command -v k9s) ]; then
-    echo "Installing k9s..."
-    sudo ./install_scripts/install_k9s.sh
+echo "# Script: $(realpath $0)..."
+
+echo
+echo "Currently active SELinux policy modules:"
+sudo semodule -l | awk '{print $1}' | awk '{print length, $0}' | sort -nr | cut -d " " -f2 | awk '{printf "%s ", $0}'
+
+echo
+echo
+echo "Collecting SELinux denials..."
+
+# Prompt the user to name the SELinux policy module
+read -p "Enter a unique name for the SELinux policy module (i.e. what you did and want to allow the system to no longer enforce, or type \"\" to skip): " module_name
+
+if [[ ! -z "$module_name" ]]; then
+    if [[ ! "$module_name" =~ ^[a-zA-Z0-9_]+$ ]]; then
+        echo "Invalid or no module name entered. Names must be non-empty and can only contain letters, numbers, and underscores."
+        exit 1
+    fi
+
+    # Generate the policy module with the given name and save it in the home directory
+    mkdir -p $HOME/selinux_modules
+    BACKUP_DIR=$(pwd)
+    cd "$HOME/selinux_modules"
+    sudo ausearch -m avc -ts recent --raw | audit2allow -M "${module_name}"
+    cd "$BACKUP_DIR"
+
+    echo "Installing the generated SELinux policy module named ${module_name}."
+    sudo semodule -i $HOME/selinux_modules/${module_name}.pp
 fi
 
-echo "The Kubernetes cluster manager is starting up..."
-k9s -A
+read -p "Are you ready to set SELinux to enforcing mode? (y/n): " response
+if [[ "$response" == "y" || "$response" == "yes" ]]; then
+    sudo setenforce 1
+    sudo sed -i 's/^SELINUX=permissive$/SELINUX=enforcing/' /etc/selinux/config
+    echo "SELinux has been set to enforcing mode."
+else
+    echo "SELinux remains in permissive mode. Run this script again when ready to switch to enforcing mode."
+fi

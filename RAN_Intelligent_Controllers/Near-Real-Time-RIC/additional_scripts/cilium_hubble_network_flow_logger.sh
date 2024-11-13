@@ -32,11 +32,15 @@ set -e
 
 echo "# Script: $(realpath $0)..."
 
+
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 SCRIPT_PARENT_DIR=$(dirname "$SCRIPT_DIR")
 
 LOG_FILE_PATH="$SCRIPT_PARENT_DIR/logs/cilium_hubble.log"
-LOG_DYNAMIC_FILE_PATH="$SCRIPT_PARENT_DIR/logs/cilium_hubble_dynamic.log"
+#LOG_DYNAMIC_FILE_PATH="$SCRIPT_PARENT_DIR/logs/cilium_hubble_dynamic.log"
+
+echo "Usage: $0 [log]"
+echo "  log: Log the network flows to $LOG_FILE_PATH"
 
 if ! cilium status | grep -q hubble-ui; then
     echo "Enabling hubble ui..."
@@ -56,10 +60,7 @@ if ! command -v hubble &>/dev/null; then
     rm hubble-linux-${HUBBLE_ARCH}.tar.gz{,.sha256sum}
 fi
 
-if [ "$1" == "show" ]; then
-
-    cilium hubble ui
-elif [ "$1" == "log" ]; then
+if [ "$1" == "log" ]; then
     # More information about Hubble export configuration can be found at: https://docs.cilium.io/en/latest/observability/hubble/configuration/export/
 
     # Enable Hubble export statistics
@@ -76,7 +77,7 @@ elif [ "$1" == "log" ]; then
     cilium config set hubble-export-file-compress false
 
     # Enable Hubble export statistics
-    # cilium config set hubble.export.dynamic.enabled true LOG_DYNAMIC_FILE_PATH
+    # cilium config set hubble.export.dynamic.enabled true #
     # cilium config set hubble.export.dynamic.config.content[0].filePath "$LOG_FILE_PATH"
 
     echo "Restarting Cilium to apply Hubble export configuration..."
@@ -87,7 +88,5 @@ elif [ "$1" == "log" ]; then
     done
     cilium config view | grep hubble
 else
-    echo "Usage: $0 [show|log]"
-    echo "  show: Show hubble ui dashboard"
-    echo "  log: Log the network flows to $LOG_FILE_PATH"
+    cilium hubble ui
 fi

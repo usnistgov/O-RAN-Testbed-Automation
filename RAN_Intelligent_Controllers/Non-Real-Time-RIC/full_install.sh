@@ -154,6 +154,9 @@ else
     # Remove any expired keys from apt-get update
     sudo "$SCRIPT_DIR/install_scripts/./remove_any_expired_apt_keys.sh"
 
+    # Increase the file descriptor limits of the system
+    sudo "$SCRIPT_DIR/install_scripts/./set_file_descriptor_limits.sh"
+
     if ! ./install_k8s_and_helm.sh; then
         echo "An error occured when running $(pwd)/install_k8s_and_helm.sh."
         exit 1
@@ -179,7 +182,7 @@ if ! command -v kubecolor &>/dev/null; then
     if sudo apt-get install -y kubecolor; then
         command -v kubecolor >/dev/null 2>&1 && alias kubectl="kubecolor"
     else
-        echo "Failed to install kubecolor, skipping."
+        echo "Skipping optional kubecolor installation."
     fi
 fi
 

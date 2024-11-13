@@ -30,26 +30,4 @@
 
 echo "# Script: $(realpath $0)..."
 
-echo "Updating system-wide file descriptor limits..."
-# Update sysctl settings immediately
-sudo sysctl -w fs.file-max=1000000
-sudo sysctl -w fs.inotify.max_user_watches=524288
-sudo sysctl -w fs.inotify.max_user_instances=512
-
-# Update security limits if not already set
-if ! grep -q "* soft nofile" /etc/security/limits.conf; then
-    sudo echo "* soft nofile 1000000" >>/etc/security/limits.conf
-fi
-if ! grep -q "* hard nofile" /etc/security/limits.conf; then
-    sudo echo "* hard nofile 1000000" >>/etc/security/limits.conf
-fi
-
-# Apply file descriptor limits to all running shell sessions
-PIDS=$(pgrep -x bash)
-if [ -n "$PIDS" ]; then
-    for PID in $PIDS; do
-        sudo prlimit --pid "$PID" --nofile=1000000:1000000
-    done
-fi
-
-echo "System limits updated. Reboot or restart your services to ensure all limits are fully applied."
+kubectl logs -l kubearmor-app=kubearmor -n kubearmor --follow

@@ -28,10 +28,27 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-if [ ! $(command -v k9s) ]; then
-    echo "Installing k9s..."
-    sudo ./install_scripts/install_k9s.sh
+echo "# Script: $(realpath $0)..."
+
+echo "Updating file descriptor limits..."
+sudo sysctl -w fs.file-max=1000000
+sudo sysctl -w fs.inotify.max_user_watches=524288
+sudo sysctl -w fs.inotify.max_user_instances=512
+
+# Update security limits if not already set
+if ! grep -q "* soft nofile" /etc/security/limits.conf; then
+    sudo echo "* soft nofile 1000000" >>/etc/security/limits.conf
+fi
+if ! grep -q "* hard nofile" /etc/security/limits.conf; then
+    sudo echo "* hard nofile 1000000" >>/etc/security/limits.conf
 fi
 
-echo "The Kubernetes cluster manager is starting up..."
-k9s -A
+# Apply file descriptor limits to all running shell sessions
+PIDS=$(pgrep -x bash)
+if [ -n "$PIDS" ]; then
+    for PID in $PIDS; do
+        sudo prlimit --pid "$PID" --nofile=1000000:1000000
+    done
+fi
+
+echo "File descriptor limits updated. Reboot or restart your services to ensure all limits are fully applied."

@@ -34,6 +34,8 @@ echo "# Script: $(realpath $0)..."
 
 sudo ls &>/dev/null
 
+DRAIN_NODES="false"
+
 # Check if Cilium CLI is installed
 if ! cilium status &>/dev/null; then
     CILIUM_CLI_VERSION="latest" # "v0.16.19"
@@ -121,11 +123,13 @@ spec:
 EOF
 
     for NODE in $(kubectl get nodes -o jsonpath='{.items[*].metadata.name}'); do
-        echo "Cordoning node $NODE..."
+        echo "Cordoning node $NODE (i.e., marking node as unschedulable)..."
         kubectl cordon $NODE
 
-        echo "Draining node $NODE..."
-        kubectl drain --ignore-daemonsets $NODE --delete-emptydir-data
+        if [ "$DRAIN_NODES" = "true" ]; then
+            echo "Draining node $NODE..."
+            kubectl drain $NODE --ignore-daemonsets --delete-emptydir-data # --force --skip-wait-for-delete-timeout 60
+        fi
 
         echo "Labeling node $NODE for migration..."
         kubectl label node $NODE --overwrite "io.cilium.migration/cilium-default=true"
@@ -347,8 +351,27 @@ else
     echo "Namespace '$NAMESPACE' does not exist, skipping Role and RoleBinding creation."
 fi
 
-echo "Restarting kubelet service..."
-sudo systemctl restart kubelet
+if [ "$DRAIN_NODES" != "true" ]; then
+    echo "Restarting deployments to apply Cilium enforcement..."
+    NAMESPACES=$(kubectl get ns --no-headers | awk '{print $1}')
+    # Iterate through each namespace and restart its deployments
+    for NAMESPACE in $NAMESPACES; do
+        DEPLOYMENTS=$(kubectl get deployments -n "$NAMESPACE" --no-headers | awk '{print $1}')
+        if [ -z "$DEPLOYMENTS" ]; then
+            echo "No deployments found in namespace $NAMESPACE."
+        else
+            # Restart each deployment
+            for DEPLOYMENT in $DEPLOYMENTS; do
+                echo "Restarting deployment $DEPLOYMENT in namespace $NAMESPACE..."
+                kubectl rollout restart deployment "$DEPLOYMENT" -n "$NAMESPACE"
+            done
+        fi
+    done
+else
+    echo "Restarting kubelet service..."
+    sudo systemctl restart kubelet
+fi
+
 while ! cilium status --wait; do
     echo "Continuing to wait for Cilium to be ready..."
     sleep 5
@@ -356,3 +379,4 @@ done
 
 echo
 echo "Successfully installed, configured, and enabled policy enforcement with Cilium and hardened the xApp namespace."
+echo "You may now reboot the system to clean up terminating pods."

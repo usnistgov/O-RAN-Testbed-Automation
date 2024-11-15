@@ -30,14 +30,18 @@
 
 echo "# Script: $(realpath $0)..."
 
-POLICy_NAMES=$(kubectl get cnp --all-namespaces -o jsonpath='{.items[*].metadata.name}')
-POLICY_NAMESPACES=$(kubectl get cnp --all-namespaces -o jsonpath='{.items[*].metadata.namespace}')
+#!/bin/bash
 
-for i in "${!POLICy_NAMES[@]}"; do
-    policy="${POLICy_NAMES[$i]}"
-    namespace="${POLICY_NAMESPACES[$i]}"
-    echo "Deleting policy $policy in namespace $namespace..."
-    kubectl delete cnp "$policy" -n "$namespace"
+# Read policy names and namespaces into arrays
+read -a POLICY_NAMES <<< $(kubectl get cnp --all-namespaces -o jsonpath='{.items[*].metadata.name}')
+read -a POLICY_NAMESPACES <<< $(kubectl get cnp --all-namespaces -o jsonpath='{.items[*].metadata.namespace}')
+
+# Loop through the arrays using indices
+for i in "${!POLICY_NAMES[@]}"; do
+    POLICY="${POLICY_NAMES[$i]}"
+    NAMESPACE="${POLICY_NAMESPACES[$i]}"
+    echo "Deleting policy $POLICY in namespace $NAMESPACE..."
+    kubectl delete cnp "$POLICY" -n "$NAMESPACE"
 done
 
 echo

@@ -66,6 +66,7 @@ wait_for_all_pods_running() {
             echo "$POD_STATUS" | awk '{
                 split($2, arr, "/");
                 if ($3 == "Terminating") next;
+                if ($1 ~ /^oran-nonrtric-kong/) next; # Skip kong check
                 if ($3 != "Running" && $3 != "Completed") exit 1;
                 if ($3 == "Running" && arr[1] != arr[2]) exit 1
             }' || {

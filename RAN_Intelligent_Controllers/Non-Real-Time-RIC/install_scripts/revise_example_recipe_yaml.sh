@@ -72,15 +72,21 @@ update_yaml() {
     fi
 }
 
+# Guide from the RIC Non-RT RIC wiki:
+# https://lf-o-ran-sc.atlassian.net/wiki/spaces/RICNR/pages/15075609/Release+J+-+Run+in+Kubernetes
+
 update_yaml $RECIPE_PATH '.nonrtric.installPms' 'true'
 update_yaml $RECIPE_PATH '.nonrtric.installA1controller' 'true'
 update_yaml $RECIPE_PATH '.nonrtric.installA1simulator' 'true'
-update_yaml $RECIPE_PATH '.nonrtric.installControlpanel' 'false'
-update_yaml $RECIPE_PATH '.nonrtric.installInformationservice' 'true'
+update_yaml $RECIPE_PATH '.nonrtric.installControlpanel' 'false' # Required to be false to enable Ranpm
+update_yaml $RECIPE_PATH '.nonrtric.installInformationservice' 'false' # Required to be false to enable Ranpm
 update_yaml $RECIPE_PATH '.nonrtric.installRappcatalogueservice' 'true'
 update_yaml $RECIPE_PATH '.nonrtric.installRappcatalogueenhancedservice' 'true'
-update_yaml $RECIPE_PATH '.nonrtric.installNonrtricgateway' 'false'
+
+# If installNonrtricgateway is true, then installKong must be true
+update_yaml $RECIPE_PATH '.nonrtric.installNonrtricgateway' 'true'
 update_yaml $RECIPE_PATH '.nonrtric.installKong' 'true'
+
 update_yaml $RECIPE_PATH '.nonrtric.installDmaapadapterservice' 'true'
 update_yaml $RECIPE_PATH '.nonrtric.installDmaapmediatorservice' 'true'
 update_yaml $RECIPE_PATH '.nonrtric.installHelmmanager' 'true'

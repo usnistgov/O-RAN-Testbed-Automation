@@ -98,7 +98,7 @@ EOF
         cilium install --version ${CILIUM_HELM_VERSION} --namespace kube-system --values $CILIUM_INITIAL_VALUES_FILE
     fi
 
-    while ! cilium status --wait; do
+    until cilium status --wait; do
         echo "Continuing to wait for Cilium to be ready..."
         sleep 5
     done
@@ -139,7 +139,7 @@ EOF
         kubectl -n kube-system rollout status ds/cilium -w
 
         echo "Validating that the node has been successfully migrated..."
-        while ! cilium status --wait; do
+        until cilium status --wait; do
             echo "Continuing to wait for Cilium to be ready..."
             sleep 5
         done
@@ -152,7 +152,7 @@ EOF
         kubectl uncordon $NODE
     done
 
-    while ! cilium status --wait; do
+    until cilium status --wait; do
         echo "Continuing to wait for Cilium to be ready..."
         sleep 5
     done
@@ -168,7 +168,7 @@ EOF
     cilium upgrade --namespace kube-system cilium cilium/cilium --values $CILIUM_FINAL_VALUES_FILE
 
     kubectl -n kube-system rollout restart daemonset cilium
-    while ! cilium status --wait; do
+    until cilium status --wait; do
         echo "Continuing to wait for Cilium to be ready..."
         sleep 5
     done
@@ -372,7 +372,7 @@ else
     sudo systemctl restart kubelet
 fi
 
-while ! cilium status --wait; do
+until cilium status --wait; do
     echo "Continuing to wait for Cilium to be ready..."
     sleep 5
 done

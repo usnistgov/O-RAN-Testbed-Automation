@@ -956,7 +956,7 @@ rm -rf "${TEMP_DIR}"
 # Remove any old Helm configurations
 rm -rf "$HOME/.helm"
 
-while ! helm version; do
+until helm version; do
     echo "Waiting for Helm to be ready"
     sleep 15
 done

@@ -81,7 +81,7 @@ if [ "$1" == "log" ]; then
 
     echo "Restarting Cilium to apply Hubble export configuration..."
     kubectl -n kube-system rollout status ds/cilium
-    while ! cilium status --wait; do
+    until cilium status --wait; do
         echo "Continuing to wait for Cilium to be ready..."
         sleep 5
     done

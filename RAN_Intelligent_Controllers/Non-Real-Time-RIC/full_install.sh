@@ -151,7 +151,7 @@ else
     if [ ! -f "ric-dep/bin/install_k8s_and_helm.previous.sh" ]; then
         cp ric-dep/bin/install_k8s_and_helm.sh ric-dep/bin/install_k8s_and_helm.previous.sh
     fi
-    cp "$SCRIPT_DIR/install_patch_files/ric-dep/bin/install_k8s_and_helm.sh" ric-dep/bin/install_k8s_and_helm.sh
+    cp "$SCRIPT_DIR/install_patch_files/dep/ric-dep/bin/install_k8s_and_helm.sh" ric-dep/bin/install_k8s_and_helm.sh
 
     cd "$SCRIPT_DIR/dep/ric-dep/bin/"
 
@@ -175,8 +175,58 @@ fi
 
 cd "$SCRIPT_DIR"
 
+# Check if istioctl exists and is a broken link
+if command -v istioctl &>/dev/null; then
+    ISTIOCTL_PATH=$(command -v istioctl)
+    if [ ! -e "$ISTIOCTL_PATH" ]; then
+        sudo rm "$ISTIOCTL_PATH"
+        hash -d istioctl 2>/dev/null || true
+    fi
+fi
+if ! command -v istioctl &>/dev/null; then
+    echo "Downloading and Installing Istio..."
+    mkdir -p istio
+    cd istio
+    ISTIO_DIR=$(find . -maxdepth 1 -type d -name "istio-*" | sort -V | tail -n1)
+    if [ -z "$ISTIO_DIR" ]; then
+        echo "Downloading Istio..."
+        curl -L https://istio.io/downloadIstio | ISTIO_VERSION=$(curl -sL https://api.github.com/repos/istio/istio/releases/latest | grep -Po '"tag_name": "\K.*?(?=")') sh -
+        ISTIO_DIR=$(find . -maxdepth 1 -type d -name "istio-*" | sort -V | tail -n1)
+    fi
+    if [ -d "$ISTIO_DIR" ]; then
+        cd "$ISTIO_DIR"
+    else
+        echo "The Istio directory was not found."
+        exit 1
+    fi
+    if [ -f bin/istioctl ]; then
+        sudo ln -s "$(pwd)/bin/istioctl" /usr/local/bin/istioctl
+        echo "Successfully installed Istio."
+    else
+        echo "Binary for istioctl not found."
+        exit 1
+    fi
+    cd "$SCRIPT_DIR"
+fi
+
+if ! kubectl get pods -n istio-system | grep -q 'istiod-'; then
+    if kubectl taint nodes --all node-role.kubernetes.io/control-plane- &>/dev/null; then
+        echo "Successfully removed taint from control-plane."
+    fi
+    if kubectl taint nodes --all node-role.kubernetes.io/master- &>/dev/null; then
+        echo "Successfully removed taint removed from master."
+    fi
+    echo "Installing Istio to the cluster..."
+    istioctl install -y
+fi
+
+cd "$SCRIPT_DIR"
+
 # Ensure docker is configured properly
 sudo ./install_scripts/enable_docker_build_kit.sh
+if ! command -v docker-compose &>/dev/null; then
+    ./install_scripts/install_docker_compose.sh
+fi
 
 # Optionally, install kubecolor for a formatted kubectl output
 sudo ./install_scripts/wait_for_kubectl.sh
@@ -190,13 +240,33 @@ if ! command -v kubecolor &>/dev/null; then
     fi
 fi
 
+if ! command -v jq >/dev/null 2>&1; then
+    echo "Installing jq to process JSON files..."
+    sudo apt-get install -y jq
+fi
+
+if ! command -v envsubst &>/dev/null; then
+    echo "Installing envsubst..."
+    # Code from https://github.com/a8m/envsubst
+    curl -L https://github.com/a8m/envsubst/releases/download/v1.2.0/envsubst-$(uname -s)-$(uname -m) -o envsubst
+    chmod +x envsubst
+    sudo mv envsubst /usr/local/bin
+fi
+
+if ! command -v keytool &>/dev/null; then
+    echo "Installing openjdk-11-jre-headless..."
+    sudo add-apt-repository -y ppa:openjdk-r/ppa
+    sudo apt-get update
+    sudo apt-get install -y openjdk-11-jre-headless
+fi
+
 echo
 echo "Installing Non-Real-Time RAN Intelligent Controller..."
 # Determine if RAN Intelligent Controller pods should be reset by checking if any of the nonrtric pods are not running
 echo "Checking if any of the nonrtric pods are not running..."
 SHOULD_RESET_NONRTRIC=false
 if [ "$SHOULD_RESET_NONRTRIC" = false ]; then
-    POD_NAMES=("a1-sim-osc" "a1-sim-std" "a1-sim-std2" "a1controller" "capifcore" "db" "dmaapadapterservice" "dmaapmediatorservice" "helmmanager" "informationservice" "orufhrecovery" "policymanagementservice" "ransliceassurance" "rappcatalogueenhancedservice" "rappcatalogueservice" "rappmanager" "servicemanager")
+    POD_NAMES=("a1-sim-osc" "a1-sim-std" "a1-sim-std2" "a1controller" "capifcore" "db" "dmaapadapterservice" "dmaapmediatorservice" "helmmanager" "orufhrecovery" "policymanagementservice" "ransliceassurance" "rappcatalogueenhancedservice" "rappcatalogueservice" "rappmanager" "servicemanager")
     ALL_PODS=$(kubectl get pods -n nonrtric --no-headers 2>/dev/null) || true
 
     for POD_NAME in "${POD_NAMES[@]}"; do
@@ -244,17 +314,56 @@ if kubectl taint nodes --all node-role.kubernetes.io/master- &>/dev/null; then
     echo "Successfully removed taint removed from master."
 fi
 
+echo
+echo "Installing k9s..."
+sudo ./install_scripts/install_k9s.sh
+
+echo
+echo "Waiting for Non-RT RIC pods before installing RANPM..."
+sudo ./install_scripts/wait_for_nonrtric_pods.sh
+
+echo "Installing RANPM..."
+
+cd "$SCRIPT_DIR/dep/ranpm/install"
+
+echo "Patching install-nrt.sh..."
+if [ ! -f install-nrt.original.sh ]; then
+    cp install-nrt.sh install-nrt.original.sh
+fi
+cp "$SCRIPT_DIR/install_patch_files/dep/ranpm/install/install-nrt.sh" install-nrt.sh
+
+# Guide from https://lf-o-ran-sc.atlassian.net/wiki/spaces/RICNR/pages/128483338/Release+J+-+Run+in+Kubernetes+-+Additional+instructions+for+RANPM+Installation
+
+echo "EXIT EARLY"
+exit 0
+
+echo "Installing the main parts of the ranpm setup..."
+sudo "$SCRIPT_DIR/install_scripts/./install_yq.sh"
+./install-nrt.sh
+
+echo "Installing the producer for influx db..."
+./install-pm-log.sh
+
+echo "Setting up an alternative job to produce data stored in influx db..."
+./install-pm-influx-job.sh
+
+echo "Installing a skeleton rApp-placeholder that subscribes and print out received data..."
+./install-pm-rapp.sh
+
+echo "OKAY READY TO PROCEED"
+exit 0
+
 # echo "Installing the control panel..."
 # cd "$SCRIPT_DIR/dep/nonrtric_j_release/test/auto-test"
 # https://docs.o-ran-sc.org/projects/o-ran-sc-portal-nonrtric-controlpanel/en/latest/developer-guide.html
 
 cd "$SCRIPT_DIR"
-./start_control_panel.sh onlyinstall
+#./start_control_panel.sh onlyinstall
 
 echo
 echo "Waiting for Non-RT RIC pods before installing control panel..."
 sudo ./install_scripts/wait_for_nonrtric_pods.sh
-./start_control_panel.sh
+#./start_control_panel.sh
 
 # Stop the sudo timeout refresher, it is no longer necessary to run
 ./install_scripts/stop_sudo_refresh.sh

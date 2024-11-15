@@ -1,5 +1,6 @@
 # Ignore testbed subdirectories
 /dep/
+/istio/
 /logs/
 /nonrtric-controlpanel/
 install_time.txt

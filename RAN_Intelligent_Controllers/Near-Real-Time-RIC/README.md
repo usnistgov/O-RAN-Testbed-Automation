@@ -7,7 +7,7 @@ This automation tool is based on the J-Release of the Near-RT RIC. More informat
 ## Usage
 
 - **Installation Process**: Use `./full_install.sh` to get the Near-RT RIC running on the host machine. The installation process consists of the following steps.
-  - Installs Docker, Kubernetes, and Helm if they are not already installed.
+  - Installs Docker, Kubernetes, and Helm if not previously installed.
   - Uses Helm to install the RIC components.
   - Builds, installs, and configures the E2 Simulator (e2sim).
   - Connects the e2term pod to e2sim within the Near-RT RIC.

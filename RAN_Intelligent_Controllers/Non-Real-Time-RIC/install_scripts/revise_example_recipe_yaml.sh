@@ -78,22 +78,19 @@ update_yaml() {
 update_yaml $RECIPE_PATH '.nonrtric.installPms' 'true'
 update_yaml $RECIPE_PATH '.nonrtric.installA1controller' 'true'
 update_yaml $RECIPE_PATH '.nonrtric.installA1simulator' 'true'
-update_yaml $RECIPE_PATH '.nonrtric.installControlpanel' 'false' # Required to be false to enable Ranpm
-update_yaml $RECIPE_PATH '.nonrtric.installInformationservice' 'false' # Required to be false to enable Ranpm
+update_yaml $RECIPE_PATH '.nonrtric.installControlpanel' 'true'
+update_yaml $RECIPE_PATH '.nonrtric.installInformationservice' 'true'
 update_yaml $RECIPE_PATH '.nonrtric.installRappcatalogueservice' 'true'
 update_yaml $RECIPE_PATH '.nonrtric.installRappcatalogueenhancedservice' 'true'
-
-# If installNonrtricgateway is true, then installKong must be true
 update_yaml $RECIPE_PATH '.nonrtric.installNonrtricgateway' 'true'
-update_yaml $RECIPE_PATH '.nonrtric.installKong' 'true'
-
+update_yaml $RECIPE_PATH '.nonrtric.installKong' 'false'
 update_yaml $RECIPE_PATH '.nonrtric.installDmaapadapterservice' 'true'
 update_yaml $RECIPE_PATH '.nonrtric.installDmaapmediatorservice' 'true'
 update_yaml $RECIPE_PATH '.nonrtric.installHelmmanager' 'true'
 update_yaml $RECIPE_PATH '.nonrtric.installOrufhrecovery' 'true'
 update_yaml $RECIPE_PATH '.nonrtric.installRansliceassurance' 'true'
 update_yaml $RECIPE_PATH '.nonrtric.installCapifcore' 'true'
-update_yaml $RECIPE_PATH '.nonrtric.installServicemanager' 'true'
+update_yaml $RECIPE_PATH '.nonrtric.installServicemanager' 'false'
 update_yaml $RECIPE_PATH '.nonrtric.installRanpm' 'false'
 update_yaml $RECIPE_PATH '.nonrtric.installrAppmanager' 'true'
 update_yaml $RECIPE_PATH '.nonrtric.installDmeParticipant' 'false'

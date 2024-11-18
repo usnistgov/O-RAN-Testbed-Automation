@@ -83,6 +83,12 @@ fi
 
 cd "$SCRIPT_DIR/dep/"
 
+# if [ ! -d nonrtric_j_release ] || [ -z "$(ls -A nonrtric_j_release)" ]; then
+#     [ -d nonrtric_j_release ] && rm -rf nonrtric_j_release # Remove the directory if it is empty
+#     echo
+#     echo "Cloning J-release: dep/nonrtric_j_release..."
+#     git clone https://gerrit.o-ran-sc.org/r/nonrtric/plt/ranpm -b j-release nonrtric_j_release
+# fi
 if [ ! -d ranpm ] || [ -z "$(ls -A ranpm)" ]; then
     [ -d ranpm ] && rm -rf ranpm # Remove the directory if it is empty
     echo
@@ -325,6 +331,26 @@ if [ "$POD_STATUS" == "Completed" ]; then
     echo "Cleaning up pod $POD_NAME..."
     kubectl delete pod $POD_NAME -n nonrtric
 fi
+
+# echo "Installing RANPM..."
+# cd "$SCRIPT_DIR/dep/ranpm/install"
+# echo "Patching install-nrt.sh..."
+# if [ ! -f install-nrt.original.sh ]; then
+#     cp install-nrt.sh install-nrt.original.sh
+# fi
+# cp "$SCRIPT_DIR/install_patch_files/dep/ranpm/install/install-nrt.sh" install-nrt.sh
+# # Guide from https://lf-o-ran-sc.atlassian.net/wiki/spaces/RICNR/pages/128483338/Release+J+-+Run+in+Kubernetes+-+Additional+instructions+for+RANPM+Installation
+# echo "Installing the main parts of the ranpm setup..."
+# sudo "$SCRIPT_DIR/install_scripts/./install_yq.sh"
+# ./install-nrt.sh
+# echo "Installing the producer for influx db..."
+# ./install-pm-log.sh
+# echo "Setting up an alternative job to produce data stored in influx db..."
+# ./install-pm-influx-job.sh
+# echo "Installing a skeleton rApp-placeholder that subscribes and print out received data..."
+# ./install-pm-rapp.sh
+
+# Guide from https://lf-o-ran-sc.atlassian.net/wiki/spaces/RICNR/pages/128483338/Release+J+-+Run+in+Kubernetes+-+Additional+instructions+for+RANPM+Installation
 
 cd "$SCRIPT_DIR"
 

@@ -78,7 +78,7 @@ echo
 echo "Installing Docker, Kubernetes, and Helm..."
 # Determine if Kubernetes should be reset
 SHOULD_RESET_KUBE=false
-if [ ! -d "ric-dep" ]; then
+if [ ! -d "ric-dep" ] && [ ! -d "../Non-Real-Time-RIC/dep/ric-dep" ]; then
     SHOULD_RESET_KUBE=true
 fi
 if ! helm version &>/dev/null; then

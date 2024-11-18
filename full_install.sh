@@ -164,5 +164,5 @@ cd ..
 echo
 echo
 echo "################################################################################"
-echo "# Successfully installed the RIC, 5G Core, gNodeB, and UE.                     #"
+echo "# Successfully installed the Near-RT RIC, 5G Core, gNodeB, and UE.             #"
 echo "################################################################################"

@@ -28,21 +28,8 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-echo "# Script: $(realpath $0)..."
-
-#!/bin/bash
-
-# Read policy names and namespaces into arrays
-read -a POLICY_NAMES <<<$(kubectl get cnp --all-namespaces -o jsonpath='{.items[*].metadata.name}')
-read -a POLICY_NAMESPACES <<<$(kubectl get cnp --all-namespaces -o jsonpath='{.items[*].metadata.namespace}')
-
-# Loop through the arrays using indices
-for i in "${!POLICY_NAMES[@]}"; do
-    POLICY="${POLICY_NAMES[$i]}"
-    NAMESPACE="${POLICY_NAMESPACES[$i]}"
-    echo "Deleting policy $POLICY in namespace $NAMESPACE..."
-    kubectl delete cnp "$POLICY" -n "$NAMESPACE"
-done
-
-echo
-echo "Cilium policies have been deleted. Run ./cilium_enable_policies.sh to re-enable them."
+if ps aux | grep "localhost:4200" | grep -v grep >/dev/null; then
+    echo "control_panel: RUNNING"
+else
+    echo "control_panel: NOT RUNNING"
+fi

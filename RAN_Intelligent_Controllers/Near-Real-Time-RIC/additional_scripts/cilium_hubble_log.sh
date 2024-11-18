@@ -35,17 +35,8 @@ echo "# Script: $(realpath $0)..."
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 SCRIPT_PARENT_DIR=$(dirname "$SCRIPT_DIR")
 
-LOG_FILE_PATH="$SCRIPT_PARENT_DIR/logs/cilium_hubble.log"
-#LOG_DYNAMIC_FILE_PATH="$SCRIPT_PARENT_DIR/logs/cilium_hubble_dynamic.log"
-
-echo "Usage: $0 [log]"
-echo "  log: Log the network flows to $LOG_FILE_PATH"
-
-if ! cilium status | grep -q hubble-ui; then
-    echo "Enabling hubble ui..."
-    cilium hubble enable --ui
-    cilium status --wait
-fi
+LOG_DIR="$SCRIPT_PARENT_DIR/logs/cilium"
+mkdir -p "$LOG_DIR"
 
 # If command hubble doesn't exist
 if ! command -v hubble &>/dev/null; then
@@ -59,33 +50,34 @@ if ! command -v hubble &>/dev/null; then
     rm hubble-linux-${HUBBLE_ARCH}.tar.gz{,.sha256sum}
 fi
 
-if [ "$1" == "log" ]; then
-    # More information about Hubble export configuration can be found at: https://docs.cilium.io/en/latest/observability/hubble/configuration/export/
+echo "Waiting for Cilium to be ready..."
+until cilium status --wait; do
+    echo "Continuing to wait for Cilium to be ready..."
+    sleep 5
+done
 
-    # Enable Hubble export statistics
-    cilium config set hubble.export.static.enabled true
-    # File path to write Hubble export logs to
-    cilium config set hubble.export.filePath "$LOG_FILE_PATH"
-    # Field mask to specify which fields to include in the Hubble export logs
-    cilium config set hubble.export.static.fieldMask "{time,source.namespace,source.pod_name,destination.namespace,destination.pod_name,l4,IP,node_name,is_reply,verdict,drop_reason_desc}"
-    # Size in MB at which to rotate the Hubble export file
-    cilium config set hubble.export.fileMaxSizeMb 100
-    # Number of rotated Hubble export files to keep
-    cilium config set hubble.export.fileMaxBackups 10
-    # Compress rotated Hubble export files
-    cilium config set hubble-export-file-compress false
+# More information about Hubble export configuration can be found at: https://docs.cilium.io/en/latest/observability/hubble/configuration/export/
+echo
+echo "Patching Cilium Helm chart to enable Hubble export configuration..."
+helm upgrade cilium cilium/cilium --version 1.10.5 \
+    --namespace kube-system \
+    --reuse-values \
+    --set hubble.ui.enabled=false \
+    --set hubble.export.static.enabled=true \
+    --set hubble.export.static.filePath="/var/run/cilium/hubble/events.log" \
+    --set hubble.export.static.fileMaxSizeMb=100 \
+    --set hubble.export.static.fileMaxBackups=10 \
+    --set hubble.export.static.fileCompress=false
 
-    # Enable Hubble export statistics
-    # cilium config set hubble.export.dynamic.enabled true #
-    # cilium config set hubble.export.dynamic.config.content[0].filePath "$LOG_FILE_PATH"
 
-    echo "Restarting Cilium to apply Hubble export configuration..."
-    kubectl -n kube-system rollout status ds/cilium
-    until cilium status --wait; do
-        echo "Continuing to wait for Cilium to be ready..."
-        sleep 5
-    done
-    cilium config view | grep hubble
-else
-    cilium hubble ui
-fi
+echo "Checking the rollout status of Cilium..."
+kubectl -n kube-system rollout status ds/cilium
+
+echo "Waiting for Cilium to be ready..."
+until cilium status --wait; do
+    echo "Continuing to wait for Cilium to be ready..."
+    sleep 5
+done
+
+echo "Current Hubble configuration:"
+cilium config view | grep hubble

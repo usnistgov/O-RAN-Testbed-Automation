@@ -31,6 +31,8 @@
 # Exit immediately if a command fails
 set -e
 
+MOCK_MODE=true
+
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
     sudo apt-get install -y coreutils
@@ -39,17 +41,12 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-PARAMS=""
-for VAR in "$@"; do
-    PARAMS="$PARAMS $VAR"
-done
-
 if ! command -v docker-compose &>/dev/null; then
     ./install_scripts/install_docker_compose.sh
 fi
 
 if [ ! -d nonrtric-controlpanel ]; then
-    git clone https://gerrit.o-ran-sc.org/r/portal/nonrtric-controlpanel
+    git clone https://gerrit.o-ran-sc.org/r/portal/nonrtric-controlpanel -b master
 fi
 cd nonrtric-controlpanel
 if ! sudo docker ps -a | grep -q nonrtric-controlpanel || ! sudo docker ps -a | grep -q nonrtric-gateway; then
@@ -66,50 +63,53 @@ if ! sudo docker ps -a | grep -q nonrtric-controlpanel || ! sudo docker ps -a | 
 fi
 
 cd webapp-frontend
+# Disable Angular CLI analytics to prevent prompting during installation
+export NG_CLI_ANALYTICS=ci
+unset NODE_OPTIONS
 
-if ! command -v npm &>/dev/null; then
-    echo
-    echo "Installing npm..."
-    sudo apt-get install -y npm
+if ! command -v nvm &>/dev/null; then
+    # Code from: https://github.com/nvm-sh/nvm
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+    export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
+    source ~/.bashrc
 fi
-if ! command -v ng &>/dev/null; then
+if ! command -v node &>/dev/null || [[ $(node -v) != v14.21.3 ]]; then
+    echo "Setting node version..."
+    nvm install 14.21.3
+    nvm use 14.21.3
+fi
+if ! command -v ng &>/dev/null && [ ! -f "./ng" ]; then
     echo
     echo "Installing Angular CLI..."
-    export NG_CLI_ANALYTICS=ci # Disable Angular CLI analytics
-    sudo npm install -g @angular/cli
+    npm install @angular/cli@9.1.13 --loglevel=error
 fi
+# sudo rm -rf node_modules/
 if [ ! -d "$SCRIPT_DIR/nonrtric-controlpanel/webapp-frontend/node_modules" ]; then
-    echo
-    echo "Installing control panel dependencies..."
-    # TODO: Fix the deprecated dependencies in the control panel
-    npm install --force
+    npm install --legacy-peer-deps --loglevel=error
     echo
 fi
 
-if [[ $PARAMS != *onlyinstall* ]]; then
-    mkdir -p "$SCRIPT_DIR/logs"
-    export NODE_OPTIONS=--openssl-legacy-provider
-    npm start &>"$SCRIPT_DIR/logs/controlpanel_stdout.txt" &
+mkdir -p "$SCRIPT_DIR/logs"
 
-    # Mock example instead of using the real backend
-    # export NODE_OPTIONS=--openssl-legacy-provider
-    # npm run start:mock &>"$SCRIPT_DIR/logs/controlpanel_stdout.txt" &
-    # firefox localhost:4200
-
-    CONTROL_PANEL_PORT=4200
-    if ! curl -s localhost:$CONTROL_PANEL_PORT >/dev/null; then
-        CONTROL_PANEL_PORT=8080
-    fi
-
-    if command -v google-chrome &>/dev/null; then
-        echo "Opening the control panel in Google Chrome..."
-        google-chrome "http://localhost:$CONTROL_PANEL_PORT" >/dev/null 2>&1 &
-        sleep 3
-    elif command -v firefox &>/dev/null; then
-        echo "Opening the control panel in Firefox..."
-        firefox "http://localhost:$CONTROL_PANEL_PORT" >/dev/null 2>&1 &
-        sleep 3
-    else
-        echo "No supported browser detected. Visit http://localhost:$CONTROL_PANEL_PORT to access the control panel."
-    fi
+if [ "$MOCK_MODE" = true ]; then
+    ./ng serve --configuration=mock 2>&1 | tee "$SCRIPT_DIR/logs/controlpanel_stdout.txt" &
+else
+    ./ng serve --proxy-config proxy.conf.json 2>&1 | tee "$SCRIPT_DIR/logs/controlpanel_stdout.txt" &
 fi
+
+echo "Waiting for the control panel to start..."
+until curl -s -o /dev/null -w "%{http_code}" localhost:4200 | grep -q "200"; do
+    sleep 3
+done
+
+if command -v google-chrome &>/dev/null; then
+    echo "Opening the control panel in Google Chrome..."
+    nohup google-chrome "http://localhost:4200" >/dev/null 2>&1 &
+elif command -v firefox &>/dev/null; then
+    echo "Opening the control panel in Firefox..."
+    nohup firefox "http://localhost:4200" >/dev/null 2>&1 &
+else
+    echo "No supported browser detected. Visit http://localhost:4200 to access the control panel."
+fi
+sleep 10

@@ -10,7 +10,7 @@
 
 ## Non-Real-Time RAN Intelligent Controller (Non-RT RIC)
 
-**Purpose**: Facilitate strategic RAN planning and policy management.
+**Purpose**: Facilitate strategic long-term planning and policy management in Radio Access Networks (RAN).
 
 **Design**: Conceptualized by the O-RAN Alliance's Working Group 2 (WG2) [[3]][oran-wg2].
 

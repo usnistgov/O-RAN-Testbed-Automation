@@ -28,39 +28,48 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-set -e
-
 echo "# Script: $(realpath $0)..."
 
-sudo ls &>/dev/null
+echo "This script will install Cilium and migrate all nodes to Cilium for network policy enforcement (replacing the existing network plugin, e.g., Flannel)."
+echo "Since this is a disruptive operation, it is recommended to back up your Kubernetes cluster before proceeding."
+read -p "Would you like to proceed? (y/n): " -r REPLY
+
+if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    echo "Exiting script."
+    exit 1
+fi
 
 DRAIN_NODES="false"
+sudo ls &>/dev/null
 
-# Check if Cilium CLI is installed
-if ! cilium status &>/dev/null; then
-    CILIUM_CLI_VERSION="latest" # "v0.16.19"
-    if [ "$CILIUM_CLI_VERSION" = "latest" ]; then
-        CILIUM_CLI_VERSION=$(curl -s https://api.github.com/repos/cilium/cilium-cli/releases/latest | grep tag_name | cut -d '"' -f 4)
-    fi
-    CILIUM_MIGRATION_VALUES_FILE="$HOME/.kube/cilium-values-migration.yaml"
-    CILIUM_INITIAL_VALUES_FILE="$HOME/.kube/cilium-values-initial.yaml"
-    CILIUM_FINAL_VALUES_FILE="$HOME/.kube/cilium-values-final.yaml"
-    if ! command -v cilium &>/dev/null; then
-        echo "Installing Cilium CLI version ${CILIUM_CLI_VERSION}..."
-        CLI_ARCH="amd64"
-        if [ "$(uname -m)" = "aarch64" ]; then
-            CLI_ARCH="arm64"
-        fi
-        DOWNLOAD_URL="https://github.com/cilium/cilium-cli/releases/download/${CILIUM_CLI_VERSION}/cilium-linux-${CLI_ARCH}.tar.gz"
-        echo "Cilium CLI Download URL: ${DOWNLOAD_URL}"
-        curl -L --fail --remote-name "${DOWNLOAD_URL}"
-        curl -L --fail --remote-name "${DOWNLOAD_URL}.sha256sum"
-        sha256sum --check cilium-linux-${CLI_ARCH}.tar.gz.sha256sum
-        sudo tar xzvf cilium-linux-${CLI_ARCH}.tar.gz -C /usr/local/bin
-        rm cilium-linux-${CLI_ARCH}.tar.gz cilium-linux-${CLI_ARCH}.tar.gz.sha256sum
-    fi
+if cilium status &>/dev/null; then
+    echo "Cilium is already installed. Uninstalling Cilium first..."
+    cilium uninstall
+fi
 
-    cat <<EOF | sudo tee $CILIUM_MIGRATION_VALUES_FILE
+CILIUM_CLI_VERSION="latest" # "v0.16.19"
+if [ "$CILIUM_CLI_VERSION" = "latest" ]; then
+    CILIUM_CLI_VERSION=$(curl -s https://api.github.com/repos/cilium/cilium-cli/releases/latest | grep tag_name | cut -d '"' -f 4)
+fi
+CILIUM_MIGRATION_VALUES_FILE="$HOME/.kube/cilium-values-migration.yaml"
+CILIUM_INITIAL_VALUES_FILE="$HOME/.kube/cilium-values-initial.yaml"
+CILIUM_FINAL_VALUES_FILE="$HOME/.kube/cilium-values-final.yaml"
+if ! command -v cilium &>/dev/null; then
+    echo "Installing Cilium CLI version ${CILIUM_CLI_VERSION}..."
+    CLI_ARCH="amd64"
+    if [ "$(uname -m)" = "aarch64" ]; then
+        CLI_ARCH="arm64"
+    fi
+    DOWNLOAD_URL="https://github.com/cilium/cilium-cli/releases/download/${CILIUM_CLI_VERSION}/cilium-linux-${CLI_ARCH}.tar.gz"
+    echo "Cilium CLI Download URL: ${DOWNLOAD_URL}"
+    curl -L --fail --remote-name "${DOWNLOAD_URL}"
+    curl -L --fail --remote-name "${DOWNLOAD_URL}.sha256sum"
+    sha256sum --check cilium-linux-${CLI_ARCH}.tar.gz.sha256sum
+    sudo tar xzvf cilium-linux-${CLI_ARCH}.tar.gz -C /usr/local/bin
+    rm cilium-linux-${CLI_ARCH}.tar.gz cilium-linux-${CLI_ARCH}.tar.gz.sha256sum
+fi
+
+cat <<EOF | sudo tee $CILIUM_MIGRATION_VALUES_FILE
 operator:
   unmanagedPodWatcher:
     restart: false # Migration: Don't restart unmigrated pods
@@ -81,31 +90,31 @@ sctp:
   enabled: true # It is important to  enable SCTP support for gNodeB to connect
 EOF
 
-    echo
-    echo "Generating initial Cilium Helm values..."
-    cilium install --values $CILIUM_MIGRATION_VALUES_FILE --dry-run-helm-values >$CILIUM_INITIAL_VALUES_FILE
+echo
+echo "Generating initial Cilium Helm values..."
+cilium install --values $CILIUM_MIGRATION_VALUES_FILE --dry-run-helm-values >$CILIUM_INITIAL_VALUES_FILE
 
-    if ! helm repo list | grep -q "cilium"; then
-        echo "Adding Cilium Helm repository..."
-        helm repo add cilium https://helm.cilium.io
-        helm repo update
-    fi
+if ! helm repo list | grep -q "cilium"; then
+    echo "Adding Cilium Helm repository..."
+    helm repo add cilium https://helm.cilium.io
+    helm repo update
+fi
 
-    if ! cilium status &>/dev/null; then
-        CILIUM_HELM_VERSION=$(helm search repo cilium --versions | grep "^cilium/cilium\\s" | head -1 | awk '{print $2}')
-        echo "Using Cilium Helm version ${CILIUM_HELM_VERSION} for installation..."
+if ! cilium status &>/dev/null; then
+    CILIUM_HELM_VERSION=$(helm search repo cilium --versions | grep "^cilium/cilium\\s" | head -1 | awk '{print $2}')
+    echo "Using Cilium Helm version ${CILIUM_HELM_VERSION} for installation..."
 
-        cilium install --version ${CILIUM_HELM_VERSION} --namespace kube-system --values $CILIUM_INITIAL_VALUES_FILE
-    fi
+    cilium install --version ${CILIUM_HELM_VERSION} --namespace kube-system --values $CILIUM_INITIAL_VALUES_FILE
+fi
 
-    until cilium status --wait; do
-        echo "Continuing to wait for Cilium to be ready..."
-        sleep 5
-    done
+until cilium status --wait; do
+    echo "Continuing to wait for Cilium to be ready..."
+    sleep 5
+done
 
-    echo
-    echo "Creating a per-node config to instruct Cilium to take over CNI networking on the node..."
-    cat <<EOF | kubectl apply --server-side -f -
+echo
+echo "Creating a per-node config to instruct Cilium to take over CNI networking on the node..."
+cat <<EOF | kubectl apply --server-side -f -
 apiVersion: cilium.io/v2
 kind: CiliumNodeConfig
 metadata:
@@ -122,90 +131,86 @@ spec:
     cni-exclusive: "true"
 EOF
 
-    for NODE in $(kubectl get nodes -o jsonpath='{.items[*].metadata.name}'); do
-        echo "Cordoning node $NODE (i.e., marking node as unschedulable)..."
-        kubectl cordon $NODE
+for NODE in $(kubectl get nodes -o jsonpath='{.items[*].metadata.name}'); do
+    echo "Cordoning node $NODE (i.e., marking node as unschedulable)..."
+    kubectl cordon $NODE
 
-        if [ "$DRAIN_NODES" = "true" ]; then
-            echo "Draining node $NODE..."
-            kubectl drain $NODE --ignore-daemonsets --delete-emptydir-data # --force --skip-wait-for-delete-timeout 60
-        fi
-
-        echo "Labeling node $NODE for migration..."
-        kubectl label node $NODE --overwrite "io.cilium.migration/cilium-default=true"
-
-        echo "Restarting Cilium DaemonSet..."
-        kubectl -n kube-system delete pod --field-selector spec.nodeName=$NODE -l k8s-app=cilium
-        kubectl -n kube-system rollout status ds/cilium -w
-
-        echo "Validating that the node has been successfully migrated..."
-        until cilium status --wait; do
-            echo "Continuing to wait for Cilium to be ready..."
-            sleep 5
-        done
-        kubectl get -o wide node $NODE
-        kubectl -n kube-system run --attach --rm --restart=Never verify-network \
-            --overrides='{"spec": {"nodeName": "'$NODE'", "tolerations": [{"operator": "Exists"}]}}' \
-            --image ghcr.io/nicolaka/netshoot:v0.8 -- /bin/bash -c 'ip -br addr && curl -s -k https://$KUBERNETES_SERVICE_HOST/healthz && echo'
-
-        echo "Uncordoning node $NODE..."
-        kubectl uncordon $NODE
-    done
-
-    until cilium status --wait; do
-        echo "Continuing to wait for Cilium to be ready..."
-        sleep 5
-    done
-
-    cilium install --values $CILIUM_INITIAL_VALUES_FILE --dry-run-helm-values --set operator.unmanagedPodWatcher.restart=true --set cni.customConf=false --set policyEnforcementMode=default --set bpf.hostLegacyRouting=false --set hubble.enabled=true >$CILIUM_FINAL_VALUES_FILE
-
-    echo
-    echo "Diffing initial and final Cilium Helm values..."
-    diff $CILIUM_INITIAL_VALUES_FILE $CILIUM_FINAL_VALUES_FILE || true
-
-    echo
-    echo "Upgrading Cilium with final Helm values..."
-    cilium upgrade --namespace kube-system cilium cilium/cilium --values $CILIUM_FINAL_VALUES_FILE
-
-    kubectl -n kube-system rollout restart daemonset cilium
-    until cilium status --wait; do
-        echo "Continuing to wait for Cilium to be ready..."
-        sleep 5
-    done
-
-    echo
-    echo "Deleting the per-node configuration..."
-    kubectl delete -n kube-system ciliumnodeconfig cilium-default
-
-    echo
-    echo "Migration complete. Removing previous network plugin..."
-
-    # Check for and remove conflicting VXLAN configurations
-    if ip link show type vxlan | grep -q "flannel.1"; then
-        echo "Removing conflicting VXLAN configuration..."
-        kubectl delete daemonset kube-flannel-ds -n kube-flannel
-        sudo ip link delete flannel.1
-        if [ -f /etc/cni/net.d/10-flannel.conflist ]; then
-            sudo rm -f /etc/cni/net.d/10-flannel.conflist
-        fi
-        if [ -f /etc/cni/net.d/10-flannel.conf ]; then
-            sudo rm -f /etc/cni/net.d/10-flannel.conf
-        fi
-        if [ -f /etc/cni/net.d/10-flannel.conflist.cilium_bak ]; then
-            sudo rm -f /etc/cni/net.d/10-flannel.conflist.cilium_bak
-        fi
-        if kubectl get ds -n kube-system cilium &>/dev/null; then
-            echo "Restarting Cilium DaemonSet..."
-            kubectl rollout restart daemonset cilium -n kube-system
-        fi
-        kubectl rollout restart deployment coredns -n kube-system
+    if [ "$DRAIN_NODES" = "true" ]; then
+        echo "Draining node $NODE..."
+        kubectl drain $NODE --ignore-daemonsets --delete-emptydir-data # --force --skip-wait-for-delete-timeout 60
     fi
-    echo
-    echo "Successfully installed Cilium and migrated node to Cilium."
-else
-    echo
-    echo "Cilium is already installed, skipping."
+
+    echo "Labeling node $NODE for migration..."
+    kubectl label node $NODE --overwrite "io.cilium.migration/cilium-default=true"
+
+    echo "Restarting Cilium DaemonSet..."
+    kubectl -n kube-system delete pod --field-selector spec.nodeName=$NODE -l k8s-app=cilium
+    kubectl -n kube-system rollout status ds/cilium -w --timeout=3600s
+
+    echo "Validating that the node has been successfully migrated..."
+    until cilium status --wait; do
+        echo "Continuing to wait for Cilium to be ready..."
+        sleep 5
+    done
+    kubectl get -o wide node $NODE
+    kubectl -n kube-system run --attach --rm --restart=Never verify-network \
+        --overrides='{"spec": {"nodeName": "'$NODE'", "tolerations": [{"operator": "Exists"}]}}' \
+        --image ghcr.io/nicolaka/netshoot:v0.8 -- /bin/bash -c 'ip -br addr && curl -s -k https://$KUBERNETES_SERVICE_HOST/healthz && echo'
+
+    echo "Uncordoning node $NODE..."
+    kubectl uncordon $NODE
+done
+
+until cilium status --wait; do
+    echo "Continuing to wait for Cilium to be ready..."
+    sleep 5
+done
+
+cilium install --values $CILIUM_INITIAL_VALUES_FILE --dry-run-helm-values --set operator.unmanagedPodWatcher.restart=true --set cni.customConf=false --set policyEnforcementMode=default --set bpf.hostLegacyRouting=false --set hubble.enabled=true >$CILIUM_FINAL_VALUES_FILE
+
+echo
+echo "Diffing initial and final Cilium Helm values..."
+diff $CILIUM_INITIAL_VALUES_FILE $CILIUM_FINAL_VALUES_FILE || true
+
+echo
+echo "Upgrading Cilium with final Helm values..."
+cilium upgrade --namespace kube-system cilium cilium/cilium --values $CILIUM_FINAL_VALUES_FILE
+
+kubectl -n kube-system rollout restart daemonset cilium
+until cilium status --wait; do
+    echo "Continuing to wait for Cilium to be ready..."
+    sleep 5
+done
+
+echo
+echo "Deleting the per-node configuration..."
+kubectl delete -n kube-system ciliumnodeconfig cilium-default
+
+echo
+echo "Migration complete. Removing previous network plugin..."
+
+# Check for and remove conflicting VXLAN configurations
+if ip link show type vxlan | grep -q "flannel.1"; then
+    echo "Removing conflicting VXLAN configuration..."
+    kubectl delete daemonset kube-flannel-ds -n kube-flannel
+    sudo ip link delete flannel.1
+    if [ -f /etc/cni/net.d/10-flannel.conflist ]; then
+        sudo rm -f /etc/cni/net.d/10-flannel.conflist
+    fi
+    if [ -f /etc/cni/net.d/10-flannel.conf ]; then
+        sudo rm -f /etc/cni/net.d/10-flannel.conf
+    fi
+    if [ -f /etc/cni/net.d/10-flannel.conflist.cilium_bak ]; then
+        sudo rm -f /etc/cni/net.d/10-flannel.conflist.cilium_bak
+    fi
+    if kubectl get ds -n kube-system cilium &>/dev/null; then
+        echo "Restarting Cilium DaemonSet..."
+        kubectl rollout restart daemonset cilium -n kube-system
+    fi
+    kubectl rollout restart deployment coredns -n kube-system
 fi
+echo
+echo "Successfully installed Cilium and migrated node to Cilium."
 
 echo "Ensuring permissions for $USER in ~/.kube directory..."
 sudo chown --recursive $USER:$USER ~/.kube
@@ -378,5 +383,8 @@ until cilium status --wait; do
 done
 
 echo
-echo "Successfully installed, configured, and enabled policy enforcement with Cilium and hardened the xApp namespace."
-echo "You may now reboot the system to clean up terminating pods."
+echo
+echo "################################################################################"
+echo "# Successfully installed, configured, and enabled Cilium pod enforcement.      #"
+echo "# If not all pods are managed by Cilium in "cilium status" then please reboot. #"
+echo "################################################################################"

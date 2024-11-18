@@ -86,7 +86,7 @@ wait_for_all_pods_running() {
             break
         fi
 
-        echo "    Press \"k\" to start the k9s pod manager application."
+        echo "    You may press \"k\" to start the interactive k9s pod manager (then use Ctrl+C to return to this script)."
 
         # Check if the e2term pod is the only one not ready, and prompt the user to restart it
         local PRINTED_E2TERM_MSG=0
@@ -114,8 +114,8 @@ wait_for_all_pods_running() {
             trap '' SIGINT
             sudo k9s -A || exec "$K9S_SCRIPT_PATH" || true
             echo
-            echo "Resuming parent script (ignoring Ctrl+C input for 5 seconds)..."
-            sleep 5
+            echo "Resuming parent script (ignoring Ctrl+C input for 8 seconds)..."
+            sleep 8
             trap - SIGINT
             echo "Resumed parent script."
 

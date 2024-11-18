@@ -45,6 +45,7 @@ wait_for_all_pods_running() {
     echo "Initiating wait for all pods to be in 'Running' or 'Completed' state across specified namespaces."
 
     while [ $ALL_PODS_RUNNING -eq 0 ]; do
+        echo
         kubectl get pods -A || true
         ALL_PODS_RUNNING=1 # Assume all pods are running until proven otherwise
         for NAMESPACE in "${NAMESPACES[@]}"; do
@@ -85,15 +86,15 @@ wait_for_all_pods_running() {
             break
         fi
 
-        echo "    Press \"k\" to start the k9s pod manager application."
+        echo "    You may press \"k\" to start the interactive k9s pod manager (then use Ctrl+C to return to this script)."
         read -t 5 -n 1 key || true
         if [ "$key" == "k" ]; then
             K9S_SCRIPT_PATH="$(dirname "$SCRIPT_DIR")/./start_k9s.sh"
             trap '' SIGINT
             sudo k9s -A || exec "$K9S_SCRIPT_PATH" || true
             echo
-            echo "Resuming parent script (ignoring Ctrl+C input for 5 seconds)..."
-            sleep 5
+            echo "Resuming parent script (ignoring Ctrl+C input for 8 seconds)..."
+            sleep 8
             trap - SIGINT
             echo "Resumed parent script."
         elif [ ! -z "$key" ]; then

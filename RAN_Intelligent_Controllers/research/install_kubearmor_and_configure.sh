@@ -38,8 +38,8 @@ fi
 SUPPORT_MATRIX=$(curl -fs https://raw.githubusercontent.com/kubearmor/KubeArmor/refs/heads/main/getting-started/support_matrix.md)
 if [ $? -ne 0 ]; then
     echo "Failed to fetch the support matrix for KubeArmor (used to verify if this OS version is supported by KubeArmor)."
-    read -p "Do you want to proceed anyway? (y/n): " proceed
-    if [[ $proceed != "y" && $proceed != "yes" ]]; then
+    read -p "Do you want to proceed anyway? (y/n): " PROCEED
+    if [[ $PROCEED != "y" && $PROCEED != "yes" ]]; then
         echo "Exiting."
         exit 1
     fi
@@ -47,8 +47,8 @@ fi
 if ! echo "$SUPPORT_MATRIX" | grep -q "Ubuntu.*$UBUNTU_RELEASE"; then
     echo "KubeArmor has not mentioned that Ubuntu $UBUNTU_RELEASE is supported."
     echo "However, you can try to install it and see if it works."
-    read -p "Do you want to proceed anyway? (y/n): " proceed
-    if [[ $proceed != "y" && $proceed != "yes" ]]; then
+    read -p "Do you want to proceed anyway? (y/n): " PROCEED
+    if [[ $PROCEED != "y" && $PROCEED != "yes" ]]; then
         echo "Exiting."
         exit 1
     fi
@@ -57,8 +57,8 @@ fi
 SELINUX_OR_APPARMOR_ENABLED=false
 # Check if SELinux is installed and active
 if command -v sestatus >/dev/null 2>&1; then
-    selinux_status=$(sestatus | grep "SELinux status" | awk '{print $3}')
-    if [ "$selinux_status" != "disabled" ]; then
+    SELINUX_STATUS=$(sestatus | grep "SELinux status" | awk '{print $3}')
+    if [ "$SELINUX_STATUS" != "disabled" ]; then
         SELINUX_OR_APPARMOR_ENABLED=true
     else
         echo "SELinux is installed but disabled. Activating now..."
@@ -74,8 +74,8 @@ if command -v sestatus >/dev/null 2>&1; then
 fi
 # Check if AppArmor is installed and active only if SELinux is not enabled
 if ! $SELINUX_OR_APPARMOR_ENABLED && command -v aa-status >/dev/null 2>&1; then
-    apparmor_status=$(aa-status | grep "apparmor module is loaded")
-    if [ -n "$apparmor_status" ]; then
+    APPARMOR_STATUS=$(aa-status | grep "apparmor module is loaded")
+    if [ -n "$APPARMOR_STATUS" ]; then
         SELINUX_OR_APPARMOR_ENABLED=true
     else
         echo "AppArmor is installed but not active. Activating now..."
@@ -228,10 +228,10 @@ else
 fi
 
 # Retrieve the current AppArmor profile status of the init process
-# current_profile=$(cat /proc/1/attr/current)
-# if [[ "$current_profile" == "unconfined" ]]; then
+# CURRENT_PROFILE=$(cat /proc/1/attr/current)
+# if [[ "$CURRENT_PROFILE" == "unconfined" ]]; then
 #     echo "ERROR: The process is unconfined, so no AppArmor profile is active."
 #     exit 1
 # else
-#     echo "The process is confined under the profile: $current_profile"
+#     echo "The process is confined under the profile: $CURRENT_PROFILE"
 # fi

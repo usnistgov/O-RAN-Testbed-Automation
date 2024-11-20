@@ -16,7 +16,7 @@ Before beginning the installation and setup of the testbed, verify that your sys
 - **Base Memory/RAM**: Must be `≥ 6000` MB.
 - **Number of Processors**: Must be `≥ 2` processors.
   - _Recommendation: Between `6-8` processors for optimal performance._
-- **Internet Connectivity**: Ensure a stable internet connection throughout the installation, otherwise the process may fail and require restarting.
+- **Internet Connectivity**: A stable internet connection must be maintained during the installation otherwise the process may fail and require restarting.
 
 ### Virtual Machine Preferences
 

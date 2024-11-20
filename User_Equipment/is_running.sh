@@ -39,8 +39,8 @@ cd "$SCRIPT_DIR"
 RUNNING_UE_NUMBERS=()
 
 # Attempt to extract the UE number from the configuration file path
-while read -r line; do
-    UE_NUMBER=$(echo "$line" | grep -oP "configs/ue\K\d+\.conf" | sed 's/.conf//')
+while read -r LINE; do
+    UE_NUMBER=$(echo "$LINE" | grep -oP "configs/ue\K\d+\.conf" | sed 's/.conf//')
     if [[ -n $UE_NUMBER ]]; then
         # Add to array only if not already present
         if [[ ! " ${RUNNING_UE_NUMBERS[@]} " =~ " ue$UE_NUMBER " ]]; then

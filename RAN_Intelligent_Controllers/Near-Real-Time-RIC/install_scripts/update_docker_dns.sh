@@ -50,11 +50,11 @@ if [ -f "$DOCKER_CONFIG" ]; then
     if grep -q '"dns"' $DOCKER_CONFIG; then
         # DNS settings exist, update them
         echo "Updating DNS settings in Docker configuration..."
-        jq '.dns = $newVal' --argjson newVal "$DNS_SERVERS" $DOCKER_CONFIG >temp.json && mv temp.json $DOCKER_CONFIG
+        jq '.dns = $NEW_VALUE' --argjson NEW_VALUE "$DNS_SERVERS" $DOCKER_CONFIG >temp.json && mv temp.json $DOCKER_CONFIG
     else
         # DNS settings do not exist, add them
         echo "Adding DNS settings to Docker configuration..."
-        jq '. + {"dns": $newVal}' --argjson newVal "$DNS_SERVERS" $DOCKER_CONFIG >temp.json && mv temp.json $DOCKER_CONFIG
+        jq '. + {"dns": $NEW_VALUE}' --argjson NEW_VALUE "$DNS_SERVERS" $DOCKER_CONFIG >temp.json && mv temp.json $DOCKER_CONFIG
     fi
 else
     # Docker configuration file does not exist, create it with DNS settings

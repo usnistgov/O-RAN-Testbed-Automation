@@ -87,8 +87,8 @@ wait_for_all_pods_running() {
         fi
 
         echo "    You may press \"k\" to start the interactive k9s pod manager (then use Ctrl+C to return to this script)."
-        read -t 5 -n 1 key || true
-        if [ "$key" == "k" ]; then
+        read -t 5 -n 1 KEY || true
+        if [ "$KEY" == "k" ]; then
             K9S_SCRIPT_PATH="$(dirname "$SCRIPT_DIR")/./start_k9s.sh"
             trap '' SIGINT
             sudo k9s -A || exec "$K9S_SCRIPT_PATH" || true
@@ -97,7 +97,7 @@ wait_for_all_pods_running() {
             sleep 8
             trap - SIGINT
             echo "Resumed parent script."
-        elif [ ! -z "$key" ]; then
+        elif [ ! -z "$KEY" ]; then
             sleep 5
         fi
 

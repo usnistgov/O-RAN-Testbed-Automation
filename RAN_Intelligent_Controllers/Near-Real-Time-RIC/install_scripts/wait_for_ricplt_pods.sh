@@ -108,8 +108,8 @@ wait_for_all_pods_running() {
         fi
 
         # Read a single character of input with a timeout of 5 seconds
-        read -t 5 -n 1 key || true
-        if [ "$key" == "k" ]; then
+        read -t 5 -n 1 KEY || true
+        if [ "$KEY" == "k" ]; then
             K9S_SCRIPT_PATH="$(dirname "$SCRIPT_DIR")/./start_k9s.sh"
             trap '' SIGINT
             sudo k9s -A || exec "$K9S_SCRIPT_PATH" || true
@@ -120,18 +120,18 @@ wait_for_all_pods_running() {
             echo "Resumed parent script."
 
         # Restart the e2term pod if it is the only one not ready, and the user presses "r"
-        elif [ "$PRINTED_E2TERM_MSG" -eq 1 ] && [ "$key" == "r" ]; then
+        elif [ "$PRINTED_E2TERM_MSG" -eq 1 ] && [ "$KEY" == "r" ]; then
             echo
             echo "Sending signal to restart the e2term pod..."
             POD_NAME=$(echo "$NOT_READY_PODS" | grep "ricplt-e2term")
-            kubectl delete pod $POD_NAME -n ricplt >/dev/null 2>&1 &
+            kubectl delete pod "$POD_NAME" -n ricplt >/dev/null 2>&1 &
             ALREADY_TERMINATED_E2TERM=1
             PRINTED_E2TERM_MSG=0
             sleep 3
             echo "Successfully sent signal to restart the e2term pod."
             echo
 
-        elif [ ! -z "$key" ]; then
+        elif [ ! -z "$KEY" ]; then
             sleep 5
         fi
 

@@ -30,6 +30,13 @@
 
 echo "# Script: $(realpath $0)..."
 
+ENABLE_HUBBLE_LOGGING="true"
+# ENABLE_HUBBLE_LOGGING="false"
+DRAIN_NODES="false"
+
+echo "Hubble enabled: $ENABLE_HUBBLE_LOGGING"
+echo "Drain nodes:    $DRAIN_NODES"
+echo
 echo "This script will install Cilium and migrate all nodes to Cilium for network policy enforcement (replacing the existing network plugin, e.g., Flannel)."
 echo "Since this is a disruptive operation, it is recommended to back up your Kubernetes cluster before proceeding."
 read -p "Would you like to proceed? (y/n): " -r REPLY
@@ -39,7 +46,6 @@ if [[ ! $REPLY =~ ^[Yy]$ ]]; then
     exit 1
 fi
 
-DRAIN_NODES="false"
 sudo ls &>/dev/null
 
 if cilium status &>/dev/null; then
@@ -166,7 +172,18 @@ until cilium status --wait; do
     sleep 5
 done
 
-cilium install --values $CILIUM_INITIAL_VALUES_FILE --dry-run-helm-values --set operator.unmanagedPodWatcher.restart=true --set cni.customConf=false --set policyEnforcementMode=default --set bpf.hostLegacyRouting=false --set hubble.enabled=true >$CILIUM_FINAL_VALUES_FILE
+HUBBLE_PARAMETERS=""
+if [ "$ENABLE_HUBBLE_LOGGING" = "true" ]; then
+    HUBBLE_PARAMETERS+="--set hubble.enabled=true"
+    # HUBBLE_PARAMETERS+=" --set hubble.ui.enabled=false"
+    # HUBBLE_PARAMETERS+=" --set hubble.export.static.enabled=true"
+    # HUBBLE_PARAMETERS+=" --set hubble.export.static.filePath=\"/var/run/cilium/hubble/events.log\""
+    # HUBBLE_PARAMETERS+=" --set hubble.export.static.fileMaxSizeMb=10"
+    # HUBBLE_PARAMETERS+=" --set hubble.export.static.fileMaxBackups=10"
+    # HUBBLE_PARAMETERS+=" --set hubble.export.static.fileCompress=false"
+fi
+
+cilium install --values $CILIUM_INITIAL_VALUES_FILE --dry-run-helm-values --set operator.unmanagedPodWatcher.restart=true --set cni.customConf=false --set policyEnforcementMode=default --set bpf.hostLegacyRouting=false $HUBBLE_PARAMETERS >$CILIUM_FINAL_VALUES_FILE
 
 echo
 echo "Diffing initial and final Cilium Helm values..."
@@ -181,6 +198,22 @@ until cilium status --wait; do
     echo "Continuing to wait for Cilium to be ready..."
     sleep 5
 done
+
+if [ "$ENABLE_HUBBLE_LOGGING" = "true" ]; then
+    # If command hubble doesn't exist, install hubble
+    if ! command -v hubble &>/dev/null; then
+        echo "Hubble command not found. Installing hubble..."
+        HUBBLE_VERSION=$(curl -s https://raw.githubusercontent.com/cilium/hubble/master/stable.txt)
+        HUBBLE_ARCH=amd64
+        if [ "$(uname -m)" = "aarch64" ]; then HUBBLE_ARCH=arm64; fi
+        curl -L --fail --remote-name-all https://github.com/cilium/hubble/releases/download/$HUBBLE_VERSION/hubble-linux-${HUBBLE_ARCH}.tar.gz{,.sha256sum}
+        sha256sum --check hubble-linux-${HUBBLE_ARCH}.tar.gz.sha256sum
+        sudo tar xzvfC hubble-linux-${HUBBLE_ARCH}.tar.gz /usr/local/bin
+        rm hubble-linux-${HUBBLE_ARCH}.tar.gz{,.sha256sum}
+    fi
+    echo "Enabling hubble..."
+    cilium hubble enable
+fi
 
 echo
 echo "Deleting the per-node configuration..."
@@ -386,5 +419,6 @@ echo
 echo
 echo "################################################################################"
 echo "# Successfully installed, configured, and enabled Cilium pod enforcement.      #"
-echo "# If not all pods are managed by Cilium in "cilium status" then please reboot. #"
+echo "# If not all pods are managed by Cilium in 'cilium status' then please wait    #"
+echo "# for the pods to be running, then reboot the system and check again.          #"
 echo "################################################################################"

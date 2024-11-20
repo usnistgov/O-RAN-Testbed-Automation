@@ -39,15 +39,15 @@ fi
 # Function to force delete finalizers
 function force_delete_finalizers {
     echo "Attempting to remove finalizers from all remaining resources in $NAMESPACE..."
-    kubectl api-resources --verbs=list --namespaced -o name | while read -r resource; do
-        echo "Processing resource type: $resource"
+    kubectl api-resources --verbs=list --namespaced -o name | while read -r RESOURCE; do
+        echo "Processing resource type: $RESOURCE"
 
         # Get resources with finalizers and remove them
-        kubectl get "$resource" -n "$NAMESPACE" -o json 2>/dev/null |
+        kubectl get "$RESOURCE" -n "$NAMESPACE" -o json 2>/dev/null |
             jq -r '.items[] | select(.metadata.finalizers | length > 0) | .metadata.name' |
-            while read -r name; do
-                echo "Removing finalizers from $resource/$name"
-                kubectl patch "$resource" "$name" -n "$NAMESPACE" --type=merge \
+            while read -r NAME; do
+                echo "Removing finalizers from $RESOURCE/$NAME"
+                kubectl patch "$RESOURCE" "$NAME" -n "$NAMESPACE" --type=merge \
                     -p '{"metadata":{"finalizers":[]}}' 2>/dev/null
             done
     done
@@ -62,19 +62,14 @@ for NAMESPACE in "$@"; do
         continue
     fi
 
-    # Handle kubearmor namespace resource deletion
-    if [ "$NAMESPACE" == "kubearmor" ]; then
-        kubectl delete daemonsets,replicasets,services,deployments,pods,rc --all -n kubearmor
-    fi
-
     # Removing any stuck finalizers
     echo "Checking for stuck resources and removing finalizers..."
     force_delete_finalizers
 
     # Delete all resources within the namespace
     echo "Deleting all resources in the namespace $NAMESPACE..."
-    for resource in $(kubectl api-resources --verbs=delete --namespaced -o name); do
-        kubectl delete "$resource" --all -n "$NAMESPACE" --grace-period=0 --force 2>/dev/null
+    for RESOURCE in $(kubectl api-resources --verbs=delete --namespaced -o name); do
+        kubectl delete "$RESOURCE" --all -n "$NAMESPACE" --grace-period=0 --force 2>/dev/null
     done
 
     # Deleting the namespace

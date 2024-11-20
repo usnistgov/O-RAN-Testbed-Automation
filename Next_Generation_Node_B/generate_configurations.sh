@@ -139,10 +139,10 @@ prompt_for_addresses() {
 # Check if the file exists and has at least two lines
 if [[ -f "$FILE_PATH" ]]; then
     # Read the file and check for at least two non-empty lines
-    mapfile -t addresses <"$FILE_PATH"
-    if [[ ${#addresses[@]} -ge 2 ]] && [[ -n ${addresses[0]} ]] && [[ -n ${addresses[1]} ]]; then
-        AMF_ADDR="${addresses[0]}"
-        AMF_ADDR_BIND="${addresses[1]}"
+    mapfile -t ADDRESSES <"$FILE_PATH"
+    if [[ ${#ADDRESSES[@]} -ge 2 ]] && [[ -n ${ADDRESSES[0]} ]] && [[ -n ${ADDRESSES[1]} ]]; then
+        AMF_ADDR="${ADDRESSES[0]}"
+        AMF_ADDR_BIND="${ADDRESSES[1]}"
     else
         echo
         echo "AMF address file exists but does not contain valid data."
@@ -176,10 +176,10 @@ update_yaml() {
     fi
     # If the PROPERTY is nested (contains dots), handle it properly
     if [[ "$PROPERTY" == *.* ]]; then
-        local parent_property=$(echo "$PROPERTY" | cut -d '.' -f 1)
-        local nested_property=$(echo "$PROPERTY" | cut -d '.' -f 2-)
+        local PARENT_PROPERTY=$(echo "$PROPERTY" | cut -d '.' -f 1)
+        local NESTED_PROPERTY=$(echo "$PROPERTY" | cut -d '.' -f 2-)
 
-        yq eval -i ".${SECTION}.${parent_property}.${nested_property} = \"$VALUE\"" "$FILE_PATH"
+        yq eval -i ".${SECTION}.${PARENT_PROPERTY}.${NESTED_PROPERTY} = \"$VALUE\"" "$FILE_PATH"
     else
         # If the value is numeric or boolean, don't quote it
         # PLMN should always be treated as a string

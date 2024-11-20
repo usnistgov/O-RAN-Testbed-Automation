@@ -202,8 +202,8 @@ CONFIG_PATHS["configs/upf.yaml"]="gtpu.server.address"
 mkdir -p logs
 
 for FILE in "${!CONFIG_PATHS[@]}"; do
-    for property in ${CONFIG_PATHS[$FILE]}; do
-        update_yaml $AMF_IP $FILE $property
+    for PROPERTY in ${CONFIG_PATHS[$FILE]}; do
+        update_yaml $AMF_IP $FILE $PROPERTY
     done
 done
 

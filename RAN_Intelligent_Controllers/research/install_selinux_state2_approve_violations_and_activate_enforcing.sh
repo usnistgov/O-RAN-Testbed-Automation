@@ -39,10 +39,10 @@ echo
 echo "Collecting SELinux denials..."
 
 # Prompt the user to name the SELinux policy module
-read -p "Enter a unique name for the SELinux policy module (i.e. what you did and want to allow the system to no longer enforce, or type \"\" to skip): " module_name
+read -p "Enter a unique name for the SELinux policy module (i.e. what you did and want to allow the system to no longer enforce, or type \"\" to skip): " MODULE_NAME
 
-if [[ ! -z "$module_name" ]]; then
-    if [[ ! "$module_name" =~ ^[a-zA-Z0-9_]+$ ]]; then
+if [[ ! -z "$MODULE_NAME" ]]; then
+    if [[ ! "$MODULE_NAME" =~ ^[a-zA-Z0-9_]+$ ]]; then
         echo "Invalid or no module name entered. Names must be non-empty and can only contain letters, numbers, and underscores."
         exit 1
     fi
@@ -51,15 +51,15 @@ if [[ ! -z "$module_name" ]]; then
     mkdir -p $HOME/selinux_modules
     BACKUP_DIR=$(pwd)
     cd "$HOME/selinux_modules"
-    sudo ausearch -m avc -ts recent --raw | audit2allow -M "${module_name}"
+    sudo ausearch -m avc -ts recent --raw | audit2allow -M "${MODULE_NAME}"
     cd "$BACKUP_DIR"
 
-    echo "Installing the generated SELinux policy module named ${module_name}."
-    sudo semodule -i $HOME/selinux_modules/${module_name}.pp
+    echo "Installing the generated SELinux policy module named ${MODULE_NAME}."
+    sudo semodule -i $HOME/selinux_modules/${MODULE_NAME}.pp
 fi
 
-read -p "Are you ready to set SELinux to enforcing mode? (y/n): " response
-if [[ "$response" == "y" || "$response" == "yes" ]]; then
+read -p "Are you ready to set SELinux to enforcing mode? (y/n): " RESPONSE
+if [[ "$RESPONSE" == "y" || "$RESPONSE" == "yes" ]]; then
     sudo setenforce 1
     sudo sed -i 's/^SELINUX=permissive$/SELINUX=enforcing/' /etc/selinux/config
     echo "SELinux has been set to enforcing mode."

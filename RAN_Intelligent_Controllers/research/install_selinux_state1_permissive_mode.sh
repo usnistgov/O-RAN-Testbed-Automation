@@ -32,8 +32,8 @@ echo "# Script: $(realpath $0)..."
 
 # Check if SELinux is already installed and active
 if command -v sestatus >/dev/null 2>&1; then
-    selinux_status=$(sestatus | grep "SELinux status" | awk '{print $3}')
-    if [ "$selinux_status" = "enabled" ]; then
+    SELINUX_STATUS=$(sestatus | grep "SELinux status" | awk '{print $3}')
+    if [ "$SELINUX_STATUS" = "enabled" ]; then
         echo "Setting SELinux to permissive mode..."
         sudo setenforce 0
         if [ $? -ne 0 ]; then

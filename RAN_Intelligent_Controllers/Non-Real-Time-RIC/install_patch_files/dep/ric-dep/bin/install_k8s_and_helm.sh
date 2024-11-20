@@ -383,9 +383,9 @@ if [ ! -z "$ZRAM_DEVICES" ]; then
         sudo swapoff "$ZRAM_DEVICE_PATH"
     done
     # Disable zram services if they exist
-    systemctl list-units --type=service | grep zram | cut -d' ' -f1 | while read -r service; do
-        echo "Disabling zram service $service"
-        sudo systemctl disable --now "$service"
+    systemctl list-units --type=service | grep zram | cut -d' ' -f1 | while read -r SERVICE; do
+        echo "Disabling zram service $SERVICE"
+        sudo systemctl disable --now "$SERVICE"
     done
 else
     echo "No zram devices currently active."
@@ -529,13 +529,13 @@ if command -v kubeadm &>/dev/null; then
 fi
 
 # Stop Kubernetes services using systemd
-services=("kube-apiserver" "kube-controller-manager" "kube-scheduler" "etcd")
-for service in "${services[@]}"; do
-    if systemctl is-active --quiet $service; then
-        echo "Stopping $service..."
-        sudo systemctl stop $service || true
+SERVICES=("kube-apiserver" "kube-controller-manager" "kube-scheduler" "etcd")
+for SERVICE in "${SERVICES[@]}"; do
+    if systemctl is-active --quiet $SERVICE; then
+        echo "Stopping $SERVICE..."
+        sudo systemctl stop $SERVICE || true
     else
-        echo "$service is not active."
+        echo "$SERVICE is not active."
     fi
 done
 
@@ -546,21 +546,21 @@ if [ ! -z "$(sudo docker ps -a -q)" ]; then
 fi
 
 # Kill stubborn Kubernetes processes more carefully
-processes=("kubelet" "kube-control" "kube-schedul" "kube-apiserver" "etcd")
-for process in "${processes[@]}"; do
-    while pgrep $process >/dev/null; do
-        echo "Terminating $process..."
-        sudo pkill -9 $process || true
+PROCESSES=("kubelet" "kube-control" "kube-schedul" "kube-apiserver" "etcd")
+for PROCESS in "${PROCESSES[@]}"; do
+    while pgrep "$PROCESS" >/dev/null; do
+        echo "Terminating $PROCESS..."
+        sudo pkill -9 "$PROCESS" || true
         sleep 1
     done
 done
 
 # Check and free ports, check which process is using a port with: ss -tulpn | grep :PORTNUMBER
-ports=(6443 10250 10257 10259 2379 2380)
-for port in "${ports[@]}"; do
-    if sudo ss -tulpn | grep ":$port" >/dev/null; then
-        echo "Freeing port $port..."
-        sudo fuser -k $port/tcp || true
+PORTS=(6443 10250 10257 10259 2379 2380)
+for PORT in "${PORTS[@]}"; do
+    if sudo ss -tulpn | grep ":$PORT" >/dev/null; then
+        echo "Freeing port $PORT..."
+        sudo fuser -k $PORT/tcp || true
     fi
 done
 

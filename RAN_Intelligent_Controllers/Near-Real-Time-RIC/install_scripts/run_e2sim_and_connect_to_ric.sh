@@ -70,12 +70,12 @@ export CHART_REPO_URL=http://0.0.0.0:8090
 while true; do
     if [ -z "$LINE" ]; then
         LINE=$(kubectl get svc -n ricplt | grep $SERVICE_NAME) || ""
-        IP_e2term=$(echo $LINE | awk '{print $3}')
-        PORT_e2term=$(echo $LINE | awk '{print $5}' | sed 's/:.*//')
-        echo "IP for $SERVICE_NAME: $IP_e2term"
-        echo "PORT for $SERVICE_NAME: $PORT_e2term"
+        IP_E2TERM=$(echo $LINE | awk '{print $3}')
+        PORT_E2TERM=$(echo $LINE | awk '{print $5}' | sed 's/:.*//')
+        echo "IP for $SERVICE_NAME: $IP_E2TERM"
+        echo "PORT for $SERVICE_NAME: $PORT_E2TERM"
     fi
-    if [ -z "$IP_e2term" ] || [ -z "$PORT_e2term" ]; then
+    if [ -z "$IP_E2TERM" ] || [ -z "$PORT_E2TERM" ]; then
         echo "Could not find service $SERVICE_NAME. IP or PORT is missing. Services:"
         kubectl get svc -n ricplt
         echo "Retrying in 8 seconds..."
@@ -88,10 +88,10 @@ while true; do
         sudo chown $USER:$USER $OUTPUT_FILE
     fi
     # Check if kpm_sim is already running to avoid duplicate runs
-    if ! pgrep -f "kpm_sim $IP_e2term $PORT_e2term" >/dev/null; then
+    if ! pgrep -f "kpm_sim $IP_E2TERM $PORT_E2TERM" >/dev/null; then
         echo "Starting kpm_sim in the background, writing to $OUTPUT_FILE..."
         >"$OUTPUT_FILE" # Clears the content of the output file
-        sudo docker exec -i oransim kpm_sim $IP_e2term $PORT_e2term >$OUTPUT_FILE 2>&1 &
+        sudo docker exec -i oransim kpm_sim $IP_E2TERM $PORT_E2TERM >$OUTPUT_FILE 2>&1 &
         sleep 2
     fi
 
@@ -123,11 +123,11 @@ done
 
 SERVICE_NAME="service-ricplt-e2mgr-http"
 LINE=$(kubectl get svc -n ricplt | grep $SERVICE_NAME) || ""
-IP_HTTP_e2term=$(echo $LINE | awk '{print $3}')
-PORT_HTTP_e2term=$(echo $LINE | awk '{print $5}' | sed 's/\/.*//' | cut -d: -f2)
-echo "$IP_HTTP_e2term:$PORT_HTTP_e2term"
+IP_HTTP_E2TERM=$(echo $LINE | awk '{print $3}')
+PORT_HTTP_E2TERM=$(echo $LINE | awk '{print $5}' | sed 's/\/.*//' | cut -d: -f2)
+echo "$IP_HTTP_E2TERM:$PORT_HTTP_E2TERM"
 
-RESPONSE=$(curl -X GET $IP_HTTP_e2term:$PORT_HTTP_e2term/v1/nodeb/states 2>/dev/null)
+RESPONSE=$(curl -X GET $IP_HTTP_E2TERM:$PORT_HTTP_E2TERM/v1/nodeb/states 2>/dev/null)
 
 # Verify if the connectionStatus is "CONNECTED"
 STATUS=$(echo "$RESPONSE" | jq -r '.[].connectionStatus' | grep "CONNECTED" || true)

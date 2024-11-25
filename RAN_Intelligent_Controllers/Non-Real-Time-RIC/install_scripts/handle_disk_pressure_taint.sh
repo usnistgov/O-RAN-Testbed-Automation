@@ -30,40 +30,42 @@
 
 echo "# Script: $(realpath $0)..."
 
-# Exit immediately if a command fails
-set -e
+# If the disk-pressure taint is not present then skip
+if ! kubectl describe nodes | grep Taints | grep -q "disk-pressure"; then
+    echo "No disk-pressure taint found on any nodes, skipping."
+    exit 0
+fi
 
-# Set DNS servers
-DNS_SERVERS='["8.8.8.8", "8.8.4.4"]'
+# Get a list of nodes with the disk-pressure taint
+AFFECTED_NODES=$(kubectl get nodes -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.spec.taints[*].key}{"\t"}{.spec.taints[*].effect}{"\n"}' | grep "disk-pressure" | cut -f1)
+if [ -z "$AFFECTED_NODES" ]; then
+    echo "No nodes with disk-pressure taint found, skipping."
+    exit 0
+fi
 
-# Docker daemon configuration file
-DOCKER_CONFIG="/etc/docker/daemon.json"
+# Remove the disk-pressure taint from each affected node
+for NODE in $AFFECTED_NODES; do
+    echo "Removing taint disk-pressure from $NODE..."
+    if ! kubectl taint nodes $NODE node.kubernetes.io/disk-pressure- --overwrite; then
+        echo "Failed to remove taint from $NODE. Check your permissions or connectivity."
+    fi
+done
 
-if [ "$EUID" -ne 0 ]; then
-    echo "Please run this script as root or use sudo."
+sleep 1
+
+# Check if the taint was successfully removed from each affected node
+TAINT_REMOVAL_FAILED=0
+for NODE in $AFFECTED_NODES; do
+    if kubectl describe node $NODE | grep -q "node.kubernetes.io/disk-pressure"; then
+        echo "Error: Taint disk-pressure is still present on $NODE."
+        TAINT_REMOVAL_FAILED=1
+    else
+        echo "Taint: disk-pressure was successfully removed from $NODE."
+    fi
+done
+
+# If any taint removal failed
+if [ $TAINT_REMOVAL_FAILED -eq 1 ]; then
+    echo "ERROR: Disk-pressure taint is active. Please ensure sufficient RAM and disk space is available."
     exit 1
 fi
-
-# Check if Docker daemon configuration file exists
-if [ -f "$DOCKER_CONFIG" ]; then
-    # Check if DNS settings are already configured
-    if grep -q '"dns"' $DOCKER_CONFIG; then
-        # DNS settings exist, update them
-        echo "Updating DNS settings in Docker configuration..."
-        jq '.dns = $NEW_VALUE' --argjson NEW_VALUE "$DNS_SERVERS" $DOCKER_CONFIG >temp.json && mv temp.json $DOCKER_CONFIG
-    else
-        # DNS settings do not exist, add them
-        echo "Adding DNS settings to Docker configuration..."
-        jq '. + {"dns": $NEW_VALUE}' --argjson NEW_VALUE "$DNS_SERVERS" $DOCKER_CONFIG >temp.json && mv temp.json $DOCKER_CONFIG
-    fi
-else
-    # Docker configuration file does not exist, create it with DNS settings
-    echo "Creating Docker configuration file with DNS settings..."
-    echo "{\"dns\": $DNS_SERVERS}" >$DOCKER_CONFIG
-fi
-
-# Restart Docker service to apply changes
-echo "Restarting Docker service..."
-systemctl restart docker
-
-echo "Docker DNS configuration updated successfully."

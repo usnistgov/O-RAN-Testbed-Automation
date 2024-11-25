@@ -35,8 +35,8 @@ set -e
 
 # Function to check if a specific port is already used
 function is_port_in_use {
-    local port=$1
-    if ss -tulpn | grep -q ":${port} "; then
+    local PORT=$1
+    if ss -tulpn | grep -q ":${PORT} "; then
         return 0 # Port is in use
     else
         return 1 # Port is not in use

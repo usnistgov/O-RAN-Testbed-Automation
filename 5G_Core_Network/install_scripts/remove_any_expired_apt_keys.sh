@@ -43,9 +43,9 @@ if echo "$OUTPUT" | grep -iq "EXPKEYSIG"; then
             echo "Invalid key detected: $KEY"
             # Determine the keyring file to be modified
             KEYRING_PATH=""
-            for file in /etc/apt/keyrings/*.gpg; do
-                if sudo gpg --no-default-keyring --keyring "$file" --list-keys | grep -q "$KEY"; then
-                    KEYRING_PATH="$file"
+            for FILE in /etc/apt/keyrings/*.gpg; do
+                if sudo gpg --no-default-keyring --keyring "$FILE" --list-keys | grep -q "$KEY"; then
+                    KEYRING_PATH="$FILE"
                     break
                 fi
             done

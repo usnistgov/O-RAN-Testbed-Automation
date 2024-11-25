@@ -66,8 +66,8 @@ export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
 POD_INFO=($(kubectl get pods --all-namespaces --no-headers | awk '{print $1 ":" $2}'))
 echo
 echo "List of Kubernetes pods:"
-for i in "${!POD_INFO[@]}"; do
-    echo -e "  [$((i + 1))]\t${POD_INFO[$i]}"
+for INDEX in "${!POD_INFO[@]}"; do
+    echo -e "  [$((INDEX + 1))]\t${POD_INFO[$INDEX]}"
 done
 echo
 read -p "Enter the pod number to capture packets from: " POD_CHOICE

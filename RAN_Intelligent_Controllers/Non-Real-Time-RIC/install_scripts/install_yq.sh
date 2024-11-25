@@ -30,40 +30,74 @@
 
 echo "# Script: $(realpath $0)..."
 
-# Exit immediately if a command fails
-set -e
-
-# Set DNS servers
-DNS_SERVERS='["8.8.8.8", "8.8.4.4"]'
-
-# Docker daemon configuration file
-DOCKER_CONFIG="/etc/docker/daemon.json"
-
-if [ "$EUID" -ne 0 ]; then
-    echo "Please run this script as root or use sudo."
-    exit 1
+# Uninstall yq with: sudo rm -rf /usr/bin/yq
+if command -v yq &>/dev/null; then
+    echo "Already installed yq, skipping."
+    exit 0
 fi
 
-# Check if Docker daemon configuration file exists
-if [ -f "$DOCKER_CONFIG" ]; then
-    # Check if DNS settings are already configured
-    if grep -q '"dns"' $DOCKER_CONFIG; then
-        # DNS settings exist, update them
-        echo "Updating DNS settings in Docker configuration..."
-        jq '.dns = $NEW_VALUE' --argjson NEW_VALUE "$DNS_SERVERS" $DOCKER_CONFIG >temp.json && mv temp.json $DOCKER_CONFIG
+echo "Installing yq..."
+
+# Determine the processor architecture
+ARCH_SUFFIX=""
+case $(uname -m) in
+"x86_64")
+    ARCH_SUFFIX="linux_amd64"
+    ;;
+"aarch64")
+    ARCH_SUFFIX="linux_arm64"
+    ;;
+"armv7l" | "armv6l")
+    ARCH_SUFFIX="linux_arm"
+    ;;
+"i386" | "i686")
+    ARCH_SUFFIX="linux_386"
+    ;;
+"ppc64le")
+    ARCH_SUFFIX="linux_ppc64le"
+    ;;
+"s390x")
+    ARCH_SUFFIX="linux_s390x"
+    ;;
+"mips")
+    ARCH_SUFFIX="linux_mips"
+    ;;
+"mips64")
+    ARCH_SUFFIX="linux_mips64"
+    ;;
+"mips64el" | "mips64le")
+    ARCH_SUFFIX="linux_mips64le"
+    ;;
+"mipsel" | "mipsle")
+    ARCH_SUFFIX="linux_mipsle"
+    ;;
+*)
+    echo "Unsupported architecture for yq: $(uname -m)"
+    exit 1
+    ;;
+esac
+
+YQ_URL="https://github.com/mikefarah/yq/releases/latest/download/yq_${ARCH_SUFFIX}.tar.gz"
+
+# Create a temporary directory for the download
+TEMP_DIR=$(mktemp -d)
+TEMP_PATH="$TEMP_DIR/yq.tar.gz"
+
+echo "Downloading yq from $YQ_URL..."
+HTTP_STATUS=$(curl -L -w "%{http_code}" -o "$TEMP_PATH" "$YQ_URL")
+if [ "$HTTP_STATUS" -eq 200 ]; then
+    echo "Extracting yq..."
+    tar -xzf "$TEMP_PATH" -C "$TEMP_DIR"
+    if [ -f "$TEMP_DIR/./yq_$ARCH_SUFFIX" ]; then
+        sudo mv "$TEMP_DIR/./yq_$ARCH_SUFFIX" /usr/local/bin/yq
+        sudo chmod +x /usr/local/bin/yq
+        echo "Successfully installed yq."
     else
-        # DNS settings do not exist, add them
-        echo "Adding DNS settings to Docker configuration..."
-        jq '. + {"dns": $NEW_VALUE}' --argjson NEW_VALUE "$DNS_SERVERS" $DOCKER_CONFIG >temp.json && mv temp.json $DOCKER_CONFIG
+        echo "Failed to extract yq from the tar.gz."
+        exit 1
     fi
 else
-    # Docker configuration file does not exist, create it with DNS settings
-    echo "Creating Docker configuration file with DNS settings..."
-    echo "{\"dns\": $DNS_SERVERS}" >$DOCKER_CONFIG
+    sudo rm -rf "$TEMP_DIR"
+    echo "Failed to download yq for the architecture: ${ARCH_SUFFIX}, HTTP status was $HTTP_STATUS."
+    exit 1
 fi
-
-# Restart Docker service to apply changes
-echo "Restarting Docker service..."
-systemctl restart docker
-
-echo "Docker DNS configuration updated successfully."

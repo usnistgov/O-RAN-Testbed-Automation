@@ -75,7 +75,7 @@ if [ ! -f "$HEURISTIC_PROTOS_PATH" ]; then
 fi
 
 # DLT to User ID mappings
-declare -A dlt_to_user_id=(
+declare -A DLT_TO_USER_ID=(
     [147]=0
     [148]=1
     [149]=2
@@ -98,7 +98,7 @@ declare -A dlt_to_user_id=(
 function update_dlt_user() {
     local DLT=$1
     local PROTOCOL=$2
-    local USER_ID=${dlt_to_user_id[$DLT]}
+    local USER_ID=${DLT_TO_USER_ID[$DLT]}
     local ENTRY="\"User $USER_ID (DLT=$DLT)\",\"$PROTOCOL\",\"0\",\"\",\"0\",\"\""
 
     # Check if the entry already exists in the file

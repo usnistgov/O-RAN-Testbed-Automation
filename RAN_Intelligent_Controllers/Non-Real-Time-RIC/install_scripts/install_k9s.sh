@@ -33,37 +33,53 @@ echo "# Script: $(realpath $0)..."
 # Exit immediately if a command fails
 set -e
 
-# Set DNS servers
-DNS_SERVERS='["8.8.8.8", "8.8.4.4"]'
-
-# Docker daemon configuration file
-DOCKER_CONFIG="/etc/docker/daemon.json"
-
-if [ "$EUID" -ne 0 ]; then
-    echo "Please run this script as root or use sudo."
-    exit 1
+# Check if k9s is already installed
+if command -v k9s &>/dev/null; then
+    echo "Already installed k9s, skipping."
+    exit 0
 fi
 
-# Check if Docker daemon configuration file exists
-if [ -f "$DOCKER_CONFIG" ]; then
-    # Check if DNS settings are already configured
-    if grep -q '"dns"' $DOCKER_CONFIG; then
-        # DNS settings exist, update them
-        echo "Updating DNS settings in Docker configuration..."
-        jq '.dns = $NEW_VALUE' --argjson NEW_VALUE "$DNS_SERVERS" $DOCKER_CONFIG >temp.json && mv temp.json $DOCKER_CONFIG
-    else
-        # DNS settings do not exist, add them
-        echo "Adding DNS settings to Docker configuration..."
-        jq '. + {"dns": $NEW_VALUE}' --argjson NEW_VALUE "$DNS_SERVERS" $DOCKER_CONFIG >temp.json && mv temp.json $DOCKER_CONFIG
-    fi
+echo "Downloading and extracting k9s..."
+
+# Create and navigate to the installation directory
+mkdir -p "$HOME/k9s-installation"
+cd "$HOME/k9s-installation"
+
+# Determine the processor architecture
+ARCH_SUFFIX=""
+case $(uname -m) in
+"x86_64")
+    ARCH_SUFFIX="Linux_amd64"
+    ;;
+"aarch64")
+    ARCH_SUFFIX="Linux_arm64"
+    ;;
+"armv7l")
+    ARCH_SUFFIX="Linux_armv7"
+    ;;
+"ppc64le")
+    ARCH_SUFFIX="Linux_ppc64le"
+    ;;
+"s390x")
+    ARCH_SUFFIX="Linux_s390x"
+    ;;
+*)
+    echo "Unsupported architecture: $(uname -m)"
+    ;;
+esac
+
+# Construct the download URL using the determined architecture suffix
+DOWNLOAD_URL="https://github.com/derailed/k9s/releases/latest/download/k9s_${ARCH_SUFFIX}.tar.gz"
+
+# Download and check if the curl command was successful
+if curl -fLO "$DOWNLOAD_URL"; then
+    tar -xzf k9s_${ARCH_SUFFIX}.tar.gz
+    sudo mv k9s /usr/local/bin
+    rm k9s_${ARCH_SUFFIX}.tar.gz
+    echo "Successfully installed k9s."
 else
-    # Docker configuration file does not exist, create it with DNS settings
-    echo "Creating Docker configuration file with DNS settings..."
-    echo "{\"dns\": $DNS_SERVERS}" >$DOCKER_CONFIG
+    echo "Failed to download k9s for the architecture: ${ARCH_SUFFIX}"
+    # Clean up the installation directory if the download fails
+    cd ..
+    rm -rf "$HOME/k9s-installation"
 fi
-
-# Restart Docker service to apply changes
-echo "Restarting Docker service..."
-systemctl restart docker
-
-echo "Docker DNS configuration updated successfully."

@@ -1,6 +1,6 @@
 ## 5G Core Network
 
-The 5G Core Network operates as a standalone network based on the 3GPP specifications TS 23.501 [[1]][ts3144-3gpp] and TS 23.502 [[2]][ts3145-3gpp], implemented using the Open5GS software [[3]][open5gs-open5gs]. The 5G Core Network consists of the MME, SGWC, SMF, AMF, SGWU, UPF, HSS, PCRF, NRF, SCP, SEPP 1, SEPP 2, AUSF, UDM, PCF, NSSF, BSF, and UDR.
+The 5G Core Network operates as a standalone network based on the 3GPP specifications TS 23.501 [[1]][ts3144-3gpp] and TS 23.502 [[2]][ts3145-3gpp], implemented using the Open5GS software [[3]][open5gs-open5gs]. The 5G Core Network consists of the Mobility Management Entity (MME), Serving Gateway Control (SGWC), Session Management Function (SMF), Access and Mobility Management Function (AMF), Serving Gateway User Plane (SGWU), User Plane Function (UPF), Home Subscriber Server (HSS), Policy Control and Charging Rules Function (PCRF), Network Repository Function (NRF), Security Capability Proxy (SCP), Security Edge Protection Proxy 1 & 2 (SEPP 1, SEPP 2), Authentication Server Function (AUSF), Unified Data Management (UDM), Policy Control Function (PCF), Network Slice Selection Function (NSSF), Binding Support Function (BSF), and Unified Data Repository (UDR).
 
 ## Usage
 

@@ -34,12 +34,12 @@ kubectl get services -n ricplt | grep service-ricplt-appmgr
 
 # Fetch the service information using kubectl and grep, and extract the appmgr IP and port
 LINE=$(kubectl get services -n ricplt | grep service-ricplt-appmgr-http)
-IP_appmgr=$(echo $LINE | awk '{print $3}')
-PORT_appmgr=$(echo $LINE | awk '{print $5}' | sed 's/\/.*//')
+IP_APPMGR=$(echo $LINE | awk '{print $3}')
+PORT_APPMGR=$(echo $LINE | awk '{print $5}' | sed 's/\/.*//')
 
 # Print the result
-echo "https://$IP_appmgr:$PORT_appmgr"
+echo "https://$IP_APPMGR:$PORT_APPMGR"
 
-curl http://$IP_appmgr:$PORT_appmgr/ric/v1/xapps | jq .
+curl http://$IP_APPMGR:$PORT_APPMGR/ric/v1/xapps | jq .
 
 kubectl get pod -n ricxapp

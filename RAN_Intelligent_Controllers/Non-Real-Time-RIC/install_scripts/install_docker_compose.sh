@@ -28,42 +28,27 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-echo "# Script: $(realpath $0)..."
+# if docker-compose -v &>/dev/null; then
+#     echo
+#     echo "Uninstalling docker-compose..."
+#     sudo rm -f /usr/local/bin/docker-compose
+#     sudo rm -f /usr/bin/docker-compose
+# fi
 
-# Exit immediately if a command fails
-set -e
-
-# Set DNS servers
-DNS_SERVERS='["8.8.8.8", "8.8.4.4"]'
-
-# Docker daemon configuration file
-DOCKER_CONFIG="/etc/docker/daemon.json"
-
-if [ "$EUID" -ne 0 ]; then
-    echo "Please run this script as root or use sudo."
-    exit 1
-fi
-
-# Check if Docker daemon configuration file exists
-if [ -f "$DOCKER_CONFIG" ]; then
-    # Check if DNS settings are already configured
-    if grep -q '"dns"' $DOCKER_CONFIG; then
-        # DNS settings exist, update them
-        echo "Updating DNS settings in Docker configuration..."
-        jq '.dns = $NEW_VALUE' --argjson NEW_VALUE "$DNS_SERVERS" $DOCKER_CONFIG >temp.json && mv temp.json $DOCKER_CONFIG
+if ! command -v docker-compose &>/dev/null; then
+    echo "Installing docker-compose..."
+    curl -SL https://github.com/docker/compose/releases/download/v2.30.1/docker-compose-linux-x86_64 -o docker-compose
+    sudo mv docker-compose /usr/local/bin/docker-compose || true
+    sudo chmod +x /usr/local/bin/docker-compose
+    sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose || true
+    if sudo usermod -aG docker $USER; then
+        echo "Successfully added $USER to the docker group."
+        exec sg docker "$0" "$@" || true
     else
-        # DNS settings do not exist, add them
-        echo "Adding DNS settings to Docker configuration..."
-        jq '. + {"dns": $NEW_VALUE}' --argjson NEW_VALUE "$DNS_SERVERS" $DOCKER_CONFIG >temp.json && mv temp.json $DOCKER_CONFIG
+        echo "Failed to add $USER to the docker group."
+        exit 1
     fi
+    sudo systemctl restart docker || true
 else
-    # Docker configuration file does not exist, create it with DNS settings
-    echo "Creating Docker configuration file with DNS settings..."
-    echo "{\"dns\": $DNS_SERVERS}" >$DOCKER_CONFIG
+    echo "Already installed docker-compose."
 fi
-
-# Restart Docker service to apply changes
-echo "Restarting Docker service..."
-systemctl restart docker
-
-echo "Docker DNS configuration updated successfully."

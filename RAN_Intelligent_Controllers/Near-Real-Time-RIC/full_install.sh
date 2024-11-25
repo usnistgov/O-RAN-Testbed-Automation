@@ -78,7 +78,7 @@ echo
 echo "Installing Docker, Kubernetes, and Helm..."
 # Determine if Kubernetes should be reset
 SHOULD_RESET_KUBE=false
-if [ ! -d "ric-dep" ]; then
+if [ ! -d "ric-dep" ] && [ ! -d "../Non-Real-Time-RIC/dep/ric-dep" ]; then
     SHOULD_RESET_KUBE=true
 fi
 if ! helm version &>/dev/null; then
@@ -197,7 +197,7 @@ if [ "$SHOULD_RESET_RIC" = false ]; then
     echo
 else
     echo "At least one ricplt pod is not running, resetting Near-RT RIC pods..."
-    sudo ./install_scripts/delete_namespace.sh kubearmor ricinfra ricplt || true
+    sudo ./install_scripts/delete_namespace.sh ricinfra ricplt || true
 
     echo "Revising RIC Installation YAML File..."
     RIC_YAML_FILE_NAME="example_recipe_oran_j_release.yaml"
@@ -260,9 +260,9 @@ else
         done
         JQ_FILTER="${JQ_FILTER%,}]" # Remove the trailing comma and close the array
         # Use jq to check that all specified components are deployed
-        SUCCESS="$(jq --argjson components "$JQ_FILTER" '
-            . as $data |
-            $components | all(. as $c | $data[$c] == "deployed")
+        SUCCESS="$(jq --argjson COMPONENTS "$JQ_FILTER" '
+            . as $DATA |
+            $COMPONENTS | all(. as $COMPONENT | $DATA[$COMPONENT] == "deployed")
         ' "$RIC_INSTALLATION_LOG_JSON")"
         if [ "$SUCCESS" != "true" ]; then
             echo "ERROR: RIC installation was not successful. Waiting for API server to be available then retrying..."

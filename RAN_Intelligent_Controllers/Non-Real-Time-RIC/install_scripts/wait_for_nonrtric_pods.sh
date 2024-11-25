@@ -41,7 +41,6 @@ wait_for_all_pods_running() {
     local NAMESPACES=("$@")
     local ALL_PODS_RUNNING=0
     local NODE_NAME=$(kubectl get nodes -o jsonpath='{.items[0].metadata.name}')
-    local ALREADY_TERMINATED_E2TERM=0
 
     echo "Initiating wait for all pods to be in 'Running' or 'Completed' state across specified namespaces."
 
@@ -68,6 +67,7 @@ wait_for_all_pods_running() {
             echo "$POD_STATUS" | awk '{
                 split($2, arr, "/");
                 if ($3 == "Terminating") next;
+                if ($1 ~ /^oran-nonrtric-kong/) next; # Skip kong check
                 if ($3 != "Running" && $3 != "Completed") exit 1;
                 if ($3 == "Running" && arr[1] != arr[2]) exit 1
             }' || {
@@ -87,27 +87,6 @@ wait_for_all_pods_running() {
         fi
 
         echo "    You may press \"k\" to start the interactive k9s pod manager (then use Ctrl+C to return to this script)."
-
-        # Check if the e2term pod is the only one not ready, and prompt the user to restart it
-        local PRINTED_E2TERM_MSG=0
-        local NOT_READY_PODS=""
-        if [ $ALREADY_TERMINATED_E2TERM -eq 0 ]; then
-            POD_STATUS=$(kubectl get pods -n ricplt --no-headers 2>/dev/null)
-            NOT_READY_PODS=$(echo "$POD_STATUS" | awk '{
-                split($2, arr, "/");
-                if ($3 == "Terminating") next;
-                if ($3 != "Running" && $3 != "Completed" || ($3 == "Running" && arr[1] != arr[2])) {
-                    print $1;
-                }
-            }')
-            NUM_NOT_READY=$(echo "$NOT_READY_PODS" | wc -l)
-            if [[ $NUM_NOT_READY -eq 1 ]] && echo "$NOT_READY_PODS" | grep -q "ricplt-e2term"; then
-                echo "    Press \"r\" to restart the e2term pod, since it is the only ricplt pod not ready."
-                PRINTED_E2TERM_MSG=1
-            fi
-        fi
-
-        # Read a single character of input with a timeout of 5 seconds
         read -t 5 -n 1 KEY || true
         if [ "$KEY" == "k" ]; then
             K9S_SCRIPT_PATH="$(dirname "$SCRIPT_DIR")/./start_k9s.sh"
@@ -118,19 +97,6 @@ wait_for_all_pods_running() {
             sleep 8
             trap - SIGINT
             echo "Resumed parent script."
-
-        # Restart the e2term pod if it is the only one not ready, and the user presses "r"
-        elif [ "$PRINTED_E2TERM_MSG" -eq 1 ] && [ "$KEY" == "r" ]; then
-            echo
-            echo "Sending signal to restart the e2term pod..."
-            POD_NAME=$(echo "$NOT_READY_PODS" | grep "ricplt-e2term")
-            kubectl delete pod "$POD_NAME" -n ricplt >/dev/null 2>&1 &
-            ALREADY_TERMINATED_E2TERM=1
-            PRINTED_E2TERM_MSG=0
-            sleep 3
-            echo "Successfully sent signal to restart the e2term pod."
-            echo
-
         elif [ ! -z "$KEY" ]; then
             sleep 5
         fi
@@ -142,11 +108,9 @@ wait_for_all_pods_running() {
     done
 }
 
-KUBEVERSION=$(kubectl version | awk '/Server Version:/ {print $3}' | sed 's/v//')
-HELMVERSION=$(helm version --short | sed 's/.*v\([0-9]\).*/\1/')
-
 # Remaining taints may prevent the RIC components from initializing
 # Check for remaining taints with: kubectl describe nodes | grep Taints
+KUBEVERSION=$(kubectl version | awk '/Server Version:/ {print $3}' | sed 's/v//')
 if [[ ${KUBEVERSION} == 1.28.* ]]; then
     echo "Attempting to remove any remaining taints from control-plane..."
     kubectl taint nodes --all node-role.kubernetes.io/control-plane- || true
@@ -158,23 +122,6 @@ fi
 # Wait for essential system pods and RIC components to be ready
 echo "Waiting for essential system pods and RIC components to be ready..."
 
-# Check if the version is not 2
-if [ "$HELMVERSION" != "2" ]; then
-    echo "Helm version $HELMVERSION is in use"
-    wait_for_all_pods_running "kube-flannel" "ricplt"
-else
-    echo "Helm version 2 is in use."
-    wait_for_all_pods_running "kube-flannel" "ricinfra" "ricplt"
-fi
-
-# Remove the unnecessary tiller-secret-generator pod if it has completed
-CMD="kubectl get pods -n ricinfra --no-headers | grep 'tiller-secret-generator' | awk '{print \$1, \$3}'"
-POD_INFO=$(eval $CMD)
-POD_NAME=$(echo $POD_INFO | awk '{print $1}')
-POD_STATUS=$(echo $POD_INFO | awk '{print $2}')
-if [ "$POD_STATUS" == "Completed" ]; then
-    echo "Cleaning up pod $POD_NAME..."
-    kubectl delete pod $POD_NAME -n ricinfra
-fi
+wait_for_all_pods_running "kube-flannel" "nonrtric"
 
 echo "All required pods are now running."

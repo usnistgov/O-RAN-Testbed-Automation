@@ -79,6 +79,8 @@ if [ ! -d dep ]; then
     echo
     echo "Cloning Non-RT RIC dependencies..."
     git clone https://gerrit.o-ran-sc.org/r/it/dep
+    cd dep # Ensure that the components are cloned
+    git restore --source=HEAD :/
 fi
 
 cd "$SCRIPT_DIR/dep/"
@@ -331,6 +333,19 @@ cd "$SCRIPT_DIR"
 echo
 echo "Installing and running the control panel..."
 ./run_control_panel.sh
+
+echo
+echo "Ensuring the Non-RT RIC pods are still ready..."
+sudo ./install_scripts/wait_for_nonrtric_pods.sh
+
+echo
+echo "Testing the Non-RT RIC functionality..."
+if ! ./run_tests.sh; then
+    echo "Some of the Non-RT RIC tests failed. Try running the tests again with \"./run_tests.sh\"."
+else
+    echo "Successfully passed the tests; the Non-RT RIC is functional."
+fi
+echo
 
 # Stop the sudo timeout refresher, it is no longer necessary to run
 ./install_scripts/stop_sudo_refresh.sh

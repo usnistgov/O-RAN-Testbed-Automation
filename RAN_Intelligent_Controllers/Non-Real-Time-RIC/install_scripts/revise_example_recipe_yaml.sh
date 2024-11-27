@@ -72,7 +72,7 @@ update_yaml() {
     fi
 }
 
-# Guide from the RIC Non-RT RIC wiki:
+# Guide from the Non-RT RIC wiki:
 # https://lf-o-ran-sc.atlassian.net/wiki/spaces/RICNR/pages/15075609/Release+J+-+Run+in+Kubernetes
 
 update_yaml $RECIPE_PATH '.nonrtric.installPms' 'true'

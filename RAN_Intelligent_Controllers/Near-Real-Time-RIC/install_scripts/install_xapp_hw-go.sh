@@ -55,6 +55,15 @@ if [ ! -f "config/config-file_MODIFIED.json" ]; then
         .containers[0].image.name = "hw-go"' "$FILE" >tmp.$$.json && mv tmp.$$.json "$FILE"
 fi
 
+# Check if the Dockerfile contains the correct RMR version; if not, update it.
+# This ensures that within the hw-go pod, /usr/local/lib/librmr_si.so doesn't
+# contain the rmr_free_consts memory leak bug, that was fixed in PR 7209:
+# https://gerrit.o-ran-sc.org/r/c/ric-plt/xapp-frame-py/+/7209
+if grep -q "4.7.0" Dockerfile; then
+    echo "Updating RMR from version 4.7.0 to 4.9.4 in hw-go Dockerfile..."
+    sed -i 's/4.7.0/4.9.4/g' Dockerfile
+fi
+
 sudo docker build -t example.com:80/hw-go:1.2 .
 
 if [ "$CHART_REPO_URL" != "http://0.0.0.0:8090" ]; then

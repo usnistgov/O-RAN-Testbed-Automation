@@ -1,0 +1,232 @@
+#!/bin/bash
+#
+# NIST-developed software is provided by NIST as a public service. You may use,
+# copy, and distribute copies of the software in any medium, provided that you
+# keep intact this entire notice. You may improve, modify, and create derivative
+# works of the software or any portion of the software, and you may copy and
+# distribute such modifications or works. Modified works should carry a notice
+# stating that you changed the software and should note the date and nature of
+# any such change. Please explicitly acknowledge the National Institute of
+# Standards and Technology as the source of the software.
+#
+# NIST-developed software is expressly provided "AS IS." NIST MAKES NO WARRANTY
+# OF ANY KIND, EXPRESS, IMPLIED, IN FACT, OR ARISING BY OPERATION OF LAW,
+# INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTY OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT, AND DATA ACCURACY. NIST
+# NEITHER REPRESENTS NOR WARRANTS THAT THE OPERATION OF THE SOFTWARE WILL BE
+# UNINTERRUPTED OR ERROR-FREE, OR THAT ANY DEFECTS WILL BE CORRECTED. NIST DOES
+# NOT WARRANT OR MAKE ANY REPRESENTATIONS REGARDING THE USE OF THE SOFTWARE OR
+# THE RESULTS THEREOF, INCLUDING BUT NOT LIMITED TO THE CORRECTNESS, ACCURACY,
+# RELIABILITY, OR USEFULNESS OF THE SOFTWARE.
+#
+# You are solely responsible for determining the appropriateness of using and
+# distributing the software and you assume all risks associated with its use,
+# including but not limited to the risks and costs of program errors, compliance
+# with applicable laws, damage to or loss of data, programs or equipment, and
+# the unavailability or interruption of operation. This software is not intended
+# to be used in any situation where a failure could cause risk of injury or
+# damage to property. The software developed by NIST employees is not subject to
+# copyright protection within the United States.
+
+################################################################################
+# There are xApps released by the srsRAN project that can be run in the RIC:
+# https://github.com/srsran/oran-sc-ric/tree/main/xApps/python
+# This script will ask the user to select an xApp to run, then install it on the
+# host machine and run it, using the Kubernetes e2mgr pod for RMR communication.
+################################################################################
+
+# Exit immediately if a command fails
+set -e
+
+if ! command -v realpath &>/dev/null; then
+    echo "Package \"coreutils\" not found, installing..."
+    sudo apt-get install -y coreutils
+fi
+
+echo "# Script: $(realpath $0)..."
+
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+cd "$SCRIPT_DIR"
+
+if ! command -v git &>/dev/null; then
+    echo
+    echo "Installing git..."
+    sudo apt-get update
+    sudo apt-get install -y git
+fi
+
+mkdir -p "$SCRIPT_DIR/srsran_xapps"
+cd "$SCRIPT_DIR/srsran_xapps"
+
+if [ ! -d oran-sc-ric ]; then
+    echo
+    echo "Cloning srsran/oran-sc-ric..."
+    git clone https://github.com/srsran/oran-sc-ric.git
+fi
+
+################################################################################
+# Ask the user to select an xApp to run
+################################################################################
+
+cd "$SCRIPT_DIR/srsran_xapps/oran-sc-ric/xApps/python"
+
+# Store all *.py files in the current directory into an array
+PYTHON_FILES=(*.py)
+if [ ${#PYTHON_FILES[@]} -eq 0 ]; then
+    echo "No Python files found in the current directory."
+    exit 1
+fi
+echo
+echo "List of available xApps to run:"
+INDEX=1
+for FILE in "${PYTHON_FILES[@]}"; do
+    echo "    $INDEX. $FILE"
+    ((INDEX++))
+done
+echo
+read -p "Please type the index of the xApp you wish to run: " USER_INPUT
+
+# Validate the input
+if ! [[ "$USER_INPUT" =~ ^[0-9]+$ ]] || [ "$USER_INPUT" -lt 1 ] || [ "$USER_INPUT" -gt ${#PYTHON_FILES[@]} ]; then
+    echo "Invalid selection. Please enter a number between 1 and ${#PYTHON_FILES[@]}."
+    exit 1
+fi
+
+SELECTED_XAPP_PATH="${PYTHON_FILES[$((USER_INPUT - 1))]}"
+echo "Selected xApp: $SELECTED_XAPP_PATH"
+echo
+
+################################################################################
+# Install the xapp-frame-py
+################################################################################
+
+cd "$SCRIPT_DIR/srsran_xapps"
+if [ ! -d ric-plt-xapp-frame-py ]; then
+    echo "Cloning o-ran-sc/ric-plt-xapp-frame-py..."
+    # The release J has a memory leak in get_constants(): https://gerrit.o-ran-sc.org/r/c/ric-plt/xapp-frame-py/+/7209
+    # git clone https://gerrit.o-ran-sc.org/r/ric-plt/xapp-frame-py --branch j-release ric-plt-xapp-frame-py
+    git clone https://gerrit.o-ran-sc.org/r/ric-plt/xapp-frame-py --branch master ric-plt-xapp-frame-py
+fi
+
+cd "$SCRIPT_DIR/srsran_xapps"
+
+# Install dependencies if not already installed
+if ! command -v python3.8 &>/dev/null; then
+    echo "Python 3.8 is not installed. Installing..."
+    sudo apt-get update
+    sudo apt-get install -y python3.8 python3.8-dev
+fi
+if ! command -v pip &>/dev/null; then
+    echo "Installing pip..."
+    sudo apt-get install -y python3-pip
+fi
+
+sudo apt-get install -y python3.8-venv
+
+# Create a virtual environment with Python 3.8 if it doesn't exist
+if [ ! -d "venv" ]; then
+    echo "Creating a new virtual environment with Python 3.8..."
+    python3.8 -m venv venv
+fi
+
+# Activate the virtual environment
+source venv/bin/activate
+
+# Ensure the virtual environment uses Python 3.8
+PYTHON_VERSION=$(python3.8 -c 'import sys; print(".".join(map(str, sys.version_info[:2])))')
+if [[ "$PYTHON_VERSION" != "3.8" ]]; then
+    echo "Virtual environment is not using Python 3.8. Exiting."
+    deactivate
+    exit 1
+fi
+
+################################################################################
+# Install libraries librmr_si.so and libriclibe2ap.so
+################################################################################
+
+RMR_VERSION=4.9.4
+E2AP_VERSION=1.1.0
+
+if ! command -v wget &>/dev/null; then
+    echo "Installing wget..."
+    sudo apt-get install -y wget
+fi
+if ! command -v gcc &>/dev/null; then
+    echo "Installing gcc..."
+    sudo apt-get install -y gcc
+fi
+if ! dpkg -s musl-dev &>/dev/null; then
+    echo "Installing musl-dev..."
+    sudo apt-get install -y musl-dev
+fi
+
+if [ ! -f /usr/local/lib/librmr_si.so ]; then
+    echo "Downloading librmr_si.so..."
+    PREV_DIR=$(pwd)
+    TEMP_DIR=$(mktemp -d)
+    cd $TEMP_DIR
+    wget -nv --content-disposition https://packagecloud.io/o-ran-sc/release/packages/debian/stretch/rmr_${RMR_VERSION}_amd64.deb/download.deb
+    wget -nv --content-disposition https://packagecloud.io/o-ran-sc/release/packages/debian/stretch/rmr-dev_${RMR_VERSION}_amd64.deb/download.deb
+    sudo dpkg -i rmr_${RMR_VERSION}_amd64.deb
+    sudo dpkg -i rmr-dev_${RMR_VERSION}_amd64.deb
+    LIB_PATH=$(dpkg -L rmr_${RMR_VERSION} | grep librmr_si.so | head -n 1)
+    if [ ! -f /usr/local/lib/librmr_si.so ]; then
+        if [ -n "$LIB_PATH" ] && [ -f "$LIB_PATH" ]; then
+            sudo cp "$LIB_PATH" /usr/local/lib/librmr_si.so
+        else
+            echo "librmr_si.so not found after package installation."
+            exit 1
+        fi
+    fi
+    cd $PREV_DIR
+    rm -rf $TEMP_DIR
+fi
+
+if [ ! -f /usr/local/lib/libriclibe2ap.so ]; then
+    echo "Downloading libriclibe2ap.so..."
+    PREV_DIR=$(pwd)
+    TEMP_DIR=$(mktemp -d)
+    cd $TEMP_DIR
+    wget -nv --content-disposition https://packagecloud.io/o-ran-sc/release/packages/debian/stretch/riclibe2ap_${E2AP_VERSION}_amd64.deb/download.deb
+    wget -nv --content-disposition https://packagecloud.io/o-ran-sc/release/packages/debian/stretch/riclibe2ap-dev_${E2AP_VERSION}_amd64.deb/download.deb
+    sudo dpkg -i riclibe2ap_${E2AP_VERSION}_amd64.deb
+    sudo dpkg -i riclibe2ap-dev_${E2AP_VERSION}_amd64.deb
+    LIB_PATH=$(dpkg -L riclibe2ap | grep libriclibe2ap.so | head -n 1)
+    if [ ! -f /usr/local/lib/libriclibe2ap.so ]; then
+        if [ -n "$LIB_PATH" ] && [ -f "$LIB_PATH" ]; then
+            sudo cp "$LIB_PATH" /usr/local/lib/libriclibe2ap.so
+        else
+            echo "libriclibe2ap.so not found after package installation."
+            exit 1
+        fi
+    fi
+    cd $PREV_DIR
+    rm -rf $TEMP_DIR
+fi
+
+# Add the library path to the bashrc file
+if ! grep -q 'export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH' ~/.bashrc; then
+    echo 'export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH' >>~/.bashrc
+fi
+source ~/.bashrc
+export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
+
+pip install --upgrade pip setuptools wheel
+pip install tox
+pip install certifi six python_dateutil setuptools urllib3 inotify_simple mdclogpy
+pip install asn1tools
+
+cd "$SCRIPT_DIR/srsran_xapps/ric-plt-xapp-frame-py"
+pip install -e .
+
+################################################################################
+# Run the xApp
+################################################################################
+
+cd "$SCRIPT_DIR/srsran_xapps"
+source venv/bin/activate
+
+cd oran-sc-ric/xApps/python
+echo
+echo "Running the selected xApp: $SELECTED_XAPP_PATH..."
+python3 "$SELECTED_XAPP_PATH"

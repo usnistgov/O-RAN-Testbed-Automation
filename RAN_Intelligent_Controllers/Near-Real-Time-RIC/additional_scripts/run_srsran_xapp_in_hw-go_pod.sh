@@ -50,6 +50,12 @@ if command -v kubectl &>/dev/null; then
         exit 1
     fi
 
+    SUBMGR_IP=$(kubectl get pods -A -o jsonpath='{.items[?(@.metadata.labels.app=="ricplt-submgr")].status.podIP}')
+    if [ -z "$SUBMGR_IP" ]; then
+        echo "No submgr pod found. Exiting."
+        exit 1
+    fi
+
     SCRIPT_NAME="$0"
     SCRIPT_PATH="$(realpath $SCRIPT_NAME)"
 
@@ -57,7 +63,7 @@ if command -v kubectl &>/dev/null; then
     kubectl cp "$SCRIPT_PATH" ricxapp/$POD_NAME:/run_srsran_xapp.sh
 
     echo "Running script in $POD_NAME..."
-    kubectl exec -it "$POD_NAME" -n ricxapp -- "./run_srsran_xapp.sh"
+    kubectl exec -it "$POD_NAME" -n ricxapp -- /bin/sh -c "./run_srsran_xapp.sh --submgr_ip=\"$SUBMGR_IP\""
 
     exit 0
 fi
@@ -126,6 +132,72 @@ fi
 
 SELECTED_XAPP_PATH="${PYTHON_FILES[$((USER_INPUT - 1))]}"
 echo "Selected xApp: $SELECTED_XAPP_PATH"
+echo
+
+################################################################################
+# Select an E2 node ID by fetching the list of connected E2 nodes from submgr
+################################################################################
+
+
+if ! command -v curl &>/dev/null; then
+    echo "Installing curl..."
+    apt-get install -y curl
+fi
+if ! command -v jq &>/dev/null; then
+    echo "Installing jq..."
+    apt-get install -y jq
+fi
+
+SUBMGR_IP="null"
+# Loop through the arguments
+for ARG in "$@"; do
+  if [[ $ARG == --submgr_ip=* ]]; then
+    SUBMGR_IP="${ARG#*=}"
+  fi
+done
+
+if [ "$SUBMGR_IP" = "null" ]; then
+    SUBMGR_IP=$(kubectl get pods -A -o jsonpath='{.items[?(@.metadata.labels.app=="ricplt-submgr")].status.podIP}')
+    if [ -z "$SUBMGR_IP" ]; then
+        echo "No submgr pod found. Exiting."
+        exit 1
+    fi
+fi
+
+# Get the list of E2 node IDs
+E2_IDS_JSON=$(curl -X GET "http://$SUBMGR_IP:8080/ric/v1/get_all_e2nodes")
+E2_IDS=($(echo $E2_IDS_JSON | jq -r '.[]'))
+NUM_E2_IDS=${#E2_IDS[@]}
+if [ $NUM_E2_IDS -eq 0 ]; then
+    echo "No E2 nodes found."
+    exit 1
+elif [ $NUM_E2_IDS -eq 1 ]; then
+    # If only one E2 node ID is found, store it in a variable
+    E2_NODE_ID=${E2_IDS[0]}
+    echo "Selected E2 Node ID: $E2_NODE_ID"
+else
+    # If more than one E2 node ID is found, let the user choose
+    echo
+    echo "List of available E2 Nodes:"
+    INDEX=1
+    for NODE_ID in "${E2_IDS[@]}"; do
+        echo "    $INDEX. $NODE_ID"
+        ((INDEX++))
+    done
+    echo
+    read -p "Please type the index of the E2 node you wish to use: " USER_INPUT
+
+    # Validate the input
+    if ! [[ "$USER_INPUT" =~ ^[0-9]+$ ]] || [ "$USER_INPUT" -lt 1 ] || [ "$USER_INPUT" -gt $NUM_E2_IDS ]; then
+        echo "Invalid selection. Please enter a number between 1 and $NUM_E2_IDS."
+        exit 1
+    fi
+
+    # Select the E2 node based on the user's input
+    E2_NODE_ID=${E2_IDS[$((USER_INPUT - 1))]}
+    echo "Selected E2 Node ID: $E2_NODE_ID"
+    echo
+fi
 echo
 
 ################################################################################
@@ -252,6 +324,55 @@ cd "$SCRIPT_DIR/srsran_xapps/ric-plt-xapp-frame-py"
 pip install -e .
 
 ################################################################################
+# Set the arguments for the selected xApp
+################################################################################
+
+# E2 Nodes (null if none)
+# SUBMGR_IP=$(kubectl get pods -A -o wide | grep submgr)
+# E2_IDS=$(curl -X GET "http://$SUBMGR_IP:8080/ric/v1/get_all_e2nodes")
+
+SELECTED_APP_ARGS=""
+if [ "$SELECTED_XAPP_PATH" = "kpm_mon_xapp.py" ]; then
+    # parser.add_argument("--config", type=str, default='', help="xApp config file path")
+    # parser.add_argument("--http_server_port", type=int, default=8092, help="HTTP server listen port")
+    # parser.add_argument("--rmr_port", type=int, default=4562, help="RMR port")
+    # parser.add_argument("--e2_node_id", type=str, default='gnbd_001_001_00019b_0', help="E2 Node ID")
+    # parser.add_argument("--ran_func_id", type=int, default=2, help="RAN function ID")
+    # parser.add_argument("--kpm_report_style", type=int, default=1, help="xApp config file path")
+    # parser.add_argument("--ue_ids", type=str, default='0', help="UE ID")
+    # parser.add_argument("--metrics", type=str, default='DRB.UEThpUl,DRB.UEThpDl', help="Metrics name as comma-separated string")
+    SELECTED_APP_ARGS=" --http_server_port=8080 --rmr_port=4560 --e2_node_id=$E2_NODE_ID --metrics=DRB.UEThpDl,DRB.UEThpUl --kpm_report_style=5"
+
+elif [ "$SELECTED_XAPP_PATH" = "simple_mon_xapp.py" ]; then
+    # parser.add_argument("--config", type=str, default='', help="xApp config file path")
+    # parser.add_argument("--http_server_port", type=int, default=8091, help="HTTP server listen port")
+    # parser.add_argument("--rmr_port", type=int, default=4561, help="RMR port")
+    # parser.add_argument("--e2_node_id", type=str, default='gnbd_001_001_00019b_0', help="E2 Node ID")
+    # parser.add_argument("--ran_func_id", type=int, default=2, help="RAN function ID")
+    # parser.add_argument("--metrics", type=str, default='DRB.UEThpDl', help="Metrics name as comma-separated string")
+    SELECTED_APP_ARGS=" --e2_node_id=$E2_NODE_ID --metrics=DRB.UEThpDl,DRB.UEThpUl"
+
+elif [ "$SELECTED_XAPP_PATH" = "simple_rc_xapp.py" ]; then
+    # parser.add_argument("--config", type=str, default='', help="xApp config file path")
+    # parser.add_argument("--http_server_port", type=int, default=8090, help="HTTP server listen port")
+    # parser.add_argument("--rmr_port", type=int, default=4560, help="RMR port")
+    # parser.add_argument("--e2_node_id", type=str, default='gnbd_001_001_00019b_0', help="E2 Node ID")
+    # parser.add_argument("--ran_func_id", type=int, default=3, help="E2SM RC RAN function ID")
+    # parser.add_argument("--ue_id", type=int, default=0, help="UE ID")
+    SELECTED_APP_ARGS=" --e2_node_id=$E2_NODE_ID --ue_id=0"
+
+elif [ "$SELECTED_XAPP_PATH" = "simple_ricsimple_xapp.py" ]; then
+    # parser.add_argument("--http_server_port", type=int, default=8090, help="HTTP server listen port")
+    # parser.add_argument("--rmr_port", type=int, default=4560, help="RMR port")
+    # parser.add_argument("--e2_node_id", type=str, default='gnbd_001_001_00019b_0', help="E2 Node ID")
+    # parser.add_argument("--ran_func_id", type=int, default=2, help="RAN function ID")
+    # parser.add_argument("--kpm_report_style", type=int, default=4, help="KPM Report Style ID")
+    # parser.add_argument("--ue_ids", type=str, default='0', help="UE ID")
+    # parser.add_argument("--metrics", type=str, default='DRB.RlcSduTransmittedVolumeDL', help="Metrics name as comma-separated string")
+    SELECTED_APP_ARGS=" --e2_node_id=$E2_NODE_ID --metrics=DRB.RlcSduTransmittedVolumeDL,DRB.RlcSduTransmittedVolumeUL --kpm_report_style=4"
+fi
+
+################################################################################
 # Run the xApp
 ################################################################################
 
@@ -260,5 +381,5 @@ source venv/bin/activate
 
 cd oran-sc-ric/xApps/python
 echo
-echo "Running the selected xApp: $SELECTED_XAPP_PATH..."
-python3 "$SELECTED_XAPP_PATH"
+echo "Running the selected xApp: \"$SELECTED_XAPP_PATH$SELECTED_APP_ARGS\""
+python3 "$SELECTED_XAPP_PATH" $SELECTED_APP_ARGS

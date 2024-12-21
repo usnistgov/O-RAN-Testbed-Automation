@@ -128,8 +128,8 @@ sudo apt-get install -y libsctp1 lksctp-tools
 # DOCKERV="20.10" #.21"
 
 # The version will be dynamically completed rather than hardcoding in the version
-KUBEV="1.29"
-KUBECNIV="0.7"
+KUBEV="1.31"
+KUBECNIV="1.3"
 HELMV="3.16"
 DOCKERV="20.10"
 
@@ -756,7 +756,6 @@ EOF
 
 else
     # In Kubernetes v1.20, the SCTPSupport feature gate reached General Availability (GA) and no longer needs to be specified.
-    # Despite this, specifying apiServerExtraArgs still allows kubeadm to initialize and acts as a backup
     cat <<EOF | tee "$HOME/.kube/kube-config.yaml" >/dev/null
 apiVersion: kubeadm.k8s.io/v1beta3
 kubernetesVersion: v${KUBEVERSIONWITHOUTSUFFIX}
@@ -767,8 +766,6 @@ apiServer:
     - '127.0.0.1'
     - ${HOSTNAME}
     - ${IP_ADDRESS}
-apiServerExtraArgs:
-  feature-gates: "SCTPSupport=true"
 networking:
   dnsDomain: cluster.local
   podSubnet: 10.244.0.0/16

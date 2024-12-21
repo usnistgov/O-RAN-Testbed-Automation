@@ -45,9 +45,9 @@ if ! command -v yq &>/dev/null; then
 fi
 
 echo "Downloading configuration file example..."
-rm -rf configs
-mkdir configs
-rm -rf logs
+rm -rf "$SCRIPT_DIR/configs"
+mkdir "$SCRIPT_DIR/configs"
+rm -rf "$SCRIPT_DIR/logs"
 wget https://raw.githubusercontent.com/srsran/srsRAN/master/srsue/ue.conf.example -O configs/ue1.conf
 
 # Function to update or add configuration properties in .conf files, considering sections and uncommenting if needed
@@ -68,7 +68,7 @@ update_conf() {
     sed -i "/^\[$SECTION\]/a $PROPERTY = $VALUE" "$FILE_PATH"
 }
 
-mkdir -p logs
+mkdir -p "$SCRIPT_DIR/logs"
 
 UE1_TX_PORT=2001 # 2101
 UE1_RX_PORT=2000 # 2100
@@ -96,25 +96,25 @@ update_conf configs/ue1.conf "rat.nr" "nof_prb" "106"
 update_conf configs/ue1.conf "pcap" "enable" "none"
 # Uncomment for log files:
 # update_conf configs/ue1.conf "pcap" "enable" "mac,mac_nr,nas"
-update_conf configs/ue1.conf "pcap" "mac_filename" "logs/ue1_mac.pcap"
-update_conf configs/ue1.conf "pcap" "mac_nr_filename" "logs/ue1_mac_nr.pcap"
-update_conf configs/ue1.conf "pcap" "nas_filename" "logs/ue1_nas.pcap"
+update_conf configs/ue1.conf "pcap" "mac_filename" "$SCRIPT_DIR/logs/ue1_mac.pcap"
+update_conf configs/ue1.conf "pcap" "mac_nr_filename" "$SCRIPT_DIR/logs/ue1_mac_nr.pcap"
+update_conf configs/ue1.conf "pcap" "nas_filename" "$SCRIPT_DIR/logs/ue1_nas.pcap"
 
 # Update configuration values for Logging
 update_conf configs/ue1.conf "log" "all_level" "info" #warning
 update_conf configs/ue1.conf "log" "phy_lib_level" "none"
 update_conf configs/ue1.conf "log" "all_hex_limit" "32"
-update_conf configs/ue1.conf "log" "filename" "logs/ue1.log"
+update_conf configs/ue1.conf "log" "filename" "$SCRIPT_DIR/logs/ue1.log"
 update_conf configs/ue1.conf "log" "file_max_size" "-1"
 
 # Update configuration values for Metrics
 update_conf configs/ue1.conf "general" "metrics_period_secs" "1"
 update_conf configs/ue1.conf "general" "metrics_csv_enable" "false"
-update_conf configs/ue1.conf "general" "metrics_csv_filename" "logs/ue1_metrics.csv"
+update_conf configs/ue1.conf "general" "metrics_csv_filename" "$SCRIPT_DIR/logs/ue1_metrics.csv"
 update_conf configs/ue1.conf "general" "metrics_json_enable" "false"
-update_conf configs/ue1.conf "general" "metrics_json_filename" "logs/ue_metrics.json"
+update_conf configs/ue1.conf "general" "metrics_json_filename" "$SCRIPT_DIR/logs/ue_metrics.json"
 update_conf configs/ue1.conf "general" "tracing_enable" "true"
-update_conf configs/ue1.conf "general" "tracing_filename" "logs/ue1_tracing.log"
+update_conf configs/ue1.conf "general" "tracing_filename" "$SCRIPT_DIR/logs/ue1_tracing.log"
 update_conf configs/ue1.conf "general" "tracing_buffcapacity" "1000000"
 
 # Update configuration values for USIM

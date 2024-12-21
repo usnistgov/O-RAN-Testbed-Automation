@@ -164,9 +164,12 @@ update_yaml() {
     local SECTION=$2
     local PROPERTY=$3
     local VALUE=$4
+    if [[ ! -z "$SECTION" ]]; then
+        SECTION=".$SECTION"
+    fi
     # Check if the value is specifically intended to be null
     if [[ "$VALUE" == "null" ]]; then
-        yq eval -i ".${SECTION}.${PROPERTY} = null" "$FILE_PATH"
+        yq eval -i "${SECTION}.${PROPERTY} = null" "$FILE_PATH"
         return
     fi
     # If value is empty or undefined, skip the update
@@ -179,21 +182,21 @@ update_yaml() {
         local PARENT_PROPERTY=$(echo "$PROPERTY" | cut -d '.' -f 1)
         local NESTED_PROPERTY=$(echo "$PROPERTY" | cut -d '.' -f 2-)
 
-        yq eval -i ".${SECTION}.${PARENT_PROPERTY}.${NESTED_PROPERTY} = \"$VALUE\"" "$FILE_PATH"
+        yq eval -i "${SECTION}.${PARENT_PROPERTY}.${NESTED_PROPERTY} = \"$VALUE\"" "$FILE_PATH"
     else
         # If the value is numeric or boolean, don't quote it
         # PLMN should always be treated as a string
         if [[ "$PROPERTY" == "plmn" || "$PROPERTY" == "plmn_list" ]]; then
-            yq eval -i ".${SECTION}.${PROPERTY} = \"$VALUE\"" "$FILE_PATH"
+            yq eval -i "${SECTION}.${PROPERTY} = \"$VALUE\"" "$FILE_PATH"
         elif [[ "$VALUE" =~ ^[0-9]+$ || "$VALUE" =~ ^[0-9]+\.[0-9]+$ || "$VALUE" =~ ^(true|false)$ ]]; then
-            yq eval -i ".${SECTION}.${PROPERTY} = ${VALUE}" "$FILE_PATH"
+            yq eval -i "${SECTION}.${PROPERTY} = ${VALUE}" "$FILE_PATH"
         else
-            yq eval -i ".${SECTION}.${PROPERTY} = \"$VALUE\"" "$FILE_PATH"
+            yq eval -i "${SECTION}.${PROPERTY} = \"$VALUE\"" "$FILE_PATH"
         fi
     fi
 }
 
-mkdir -p logs
+mkdir -p "$SCRIPT_DIR/logs"
 
 DEVICE_ARGS=""
 DEVICE_ARGS+="tx_port0=tcp://127.0.0.1:2000,rx_port0=tcp://127.0.0.1:2001,base_srate=23.04e6"
@@ -226,17 +229,28 @@ update_yaml configs/gnb.yaml "cell_cfg" "common_scs" "15"
 update_yaml configs/gnb.yaml "cell_cfg" "plmn" $PLMN
 update_yaml configs/gnb.yaml "cell_cfg" "tac" $TAC
 
+GNB_ID="411"
+RAN_NODE_NAME="gnbd_001_001_00019b"
+GNB_DU_ID="0"
+update_yaml configs/gnb.yaml "" "gnb_id" "$GNB_ID"
+update_yaml configs/gnb.yaml "" "gnb_id_bit_length" "22" # Supported: 22-32
+update_yaml configs/gnb.yaml "" "ran_node_name" "$RAN_NODE_NAME"
+update_yaml configs/gnb.yaml "" "gnb_du_id" "$GNB_DU_ID"
+update_yaml configs/gnb.yaml "" "du_multicell_enabled" "false"
+
 # Update configuration values to connect RIC by e2 interface
 if [ "$ENABLE_E2_TERM" = "true" ]; then
-    update_yaml configs/gnb.yaml "e2" "enable_cu_e2" "true"
     update_yaml configs/gnb.yaml "e2" "enable_du_e2" "true"
+    update_yaml configs/gnb.yaml "e2" "enable_cu_cp_e2" "false"
+    update_yaml configs/gnb.yaml "e2" "enable_cu_up_e2" "false"
     update_yaml configs/gnb.yaml "e2" "e2sm_kpm_enabled" "true"
     update_yaml configs/gnb.yaml "e2" "e2sm_rc_enabled" "true"
     update_yaml configs/gnb.yaml "e2" "addr" "$IP_E2TERM"
     update_yaml configs/gnb.yaml "e2" "bind_addr" "$IP_E2TERM"
     update_yaml configs/gnb.yaml "e2" "port" "$PORT_E2TERM"
 else
-    update_yaml configs/gnb.yaml "e2" "enable_cu_e2" "false"
+    update_yaml configs/gnb.yaml "e2" "enable_cu_cp_e2" "false"
+    update_yaml configs/gnb.yaml "e2" "enable_cu_up_e2" "false"
     update_yaml configs/gnb.yaml "e2" "enable_du_e2" "false"
     update_yaml configs/gnb.yaml "e2" "e2sm_kpm_enabled" "false"
     update_yaml configs/gnb.yaml "e2" "e2sm_rc_enabled" "false"
@@ -245,24 +259,58 @@ else
     update_yaml configs/gnb.yaml "e2" "port" null
 fi
 
-# Update configuration values for CU and other settings
+# Update configuration values for CU-CP
+update_yaml configs/gnb.yaml "cu_cp" "max_nof_dus" ""
+update_yaml configs/gnb.yaml "cu_cp" "max_nof_cu_ups" ""
+update_yaml configs/gnb.yaml "cu_cp" "max_nof_ues" ""
+update_yaml configs/gnb.yaml "cu_cp" "max_nof_drbs_per_ue" ""
 update_yaml configs/gnb.yaml "cu_cp" "inactivity_timer" "7200"
-update_yaml configs/gnb.yaml "log" "filename" "logs/gnb.log"
-update_yaml configs/gnb.yaml "log" "all_level" "info"
+update_yaml configs/gnb.yaml "cu_cp" "request_pdu_session_timeout" "3"
+
+# Update configuration values for gNodeB logging
+#update_yaml configs/gnb.yaml "log" "filename" "$SCRIPT_DIR/logs/gnb.log"
+update_yaml configs/gnb.yaml "log" "all_level" "warning"
 update_yaml configs/gnb.yaml "log" "hex_max_size" "0"
 
-update_yaml configs/gnb.yaml "pcap" "mac_enable" "false"
+# Packet capture for NGAP
 update_yaml configs/gnb.yaml "pcap" "ngap_enable" "false"
+update_yaml configs/gnb.yaml "pcap" "ngap_filename" "$SCRIPT_DIR/logs/gnb_ngap.pcap"
+# Packet capture for N3
+update_yaml configs/gnb.yaml "pcap" "n3_enable" "false"
+update_yaml configs/gnb.yaml "pcap" "n3_filename" "$SCRIPT_DIR/logs/gnb_n3.pcap"
+# Packet capture for E1AP
+update_yaml configs/gnb.yaml "pcap" "e1ap_enable" "false"
+update_yaml configs/gnb.yaml "pcap" "e1ap_filename" "$SCRIPT_DIR/logs/gnb_e1ap.pcap"
+# Packet capture for E2AP
 update_yaml configs/gnb.yaml "pcap" "e2ap_enable" "false"
-# Uncomment for log files:
-# update_yaml configs/gnb.yaml "pcap" "mac_enable" "true"
-# update_yaml configs/gnb.yaml "pcap" "ngap_enable" "true"
-# update_yaml configs/gnb.yaml "pcap" "e2ap_enable" "true"
-update_yaml configs/gnb.yaml "pcap" "mac_filename" "logs/gnb_mac.pcap"
-update_yaml configs/gnb.yaml "pcap" "ngap_filename" "logs/gnb_ngap.pcap"
-update_yaml configs/gnb.yaml "pcap" "e2ap_filename" "logs/gnb_e2ap.pcap"
-# update_yaml configs/gnb.yaml "metrics" "rlc_json_enable" "1"
-# update_yaml configs/gnb.yaml "metrics" "rlc_report_period" "1000"
+update_yaml configs/gnb.yaml "pcap" "e2ap_cu_cp_filename" "$SCRIPT_DIR/logs/gnb_e2ap_cu_cp.pcap"
+update_yaml configs/gnb.yaml "pcap" "e2ap_cu_up_filename" "$SCRIPT_DIR/logs/gnb_e2ap_cu_up.pcap"
+update_yaml configs/gnb.yaml "pcap" "e2ap_du_filename" "$SCRIPT_DIR/logs/gnb_e2ap_du.pcap"
+# Packet capture for F1AP
+update_yaml configs/gnb.yaml "pcap" "f1ap_enable" "false"
+update_yaml configs/gnb.yaml "pcap" "f1ap_filename" "$SCRIPT_DIR/logs/gnb_f1ap.pcap"
+# Packet capture for F1U
+update_yaml configs/gnb.yaml "pcap" "f1u_enable" "false"
+update_yaml configs/gnb.yaml "pcap" "f1u_filename" "$SCRIPT_DIR/logs/gnb_f1u.pcap"
+# Packet capture for RLC
+update_yaml configs/gnb.yaml "pcap" "rlc_enable" "false"
+update_yaml configs/gnb.yaml "pcap" "rlc_rb_type" "all" # Supported: [all, srb, drb]
+update_yaml configs/gnb.yaml "pcap" "rlc_filename" "$SCRIPT_DIR/logs/gnb_rlc.pcap"
+# Packet capture for MAC
+update_yaml configs/gnb.yaml "pcap" "mac_enable" "false"
+update_yaml configs/gnb.yaml "pcap" "mac_type" "udp" # Supported: [dlt, udp]
+update_yaml configs/gnb.yaml "pcap" "mac_filename" "$SCRIPT_DIR/logs/gnb_mac.pcap"
+
+# Update configuration for metrics
+update_yaml configs/gnb.yaml "metrics" "addr" "127.0.0.1"
+update_yaml configs/gnb.yaml "metrics" "port" "55555"
+update_yaml configs/gnb.yaml "metrics" "cu_cp_statistics_report_period" "1"
+update_yaml configs/gnb.yaml "metrics" "cu_up_statistics_report_period" "1"
+update_yaml configs/gnb.yaml "metrics" "pdcp_report_period" "0"
+update_yaml configs/gnb.yaml "metrics" "rlc_report_period" "1000" # Every second
+update_yaml configs/gnb.yaml "metrics" "enable_json_metrics" "false"
+update_yaml configs/gnb.yaml "metrics" "autostart_stdout_metrics" "false"
+update_yaml configs/gnb.yaml "metrics" "sched_report_period" "1000"
 
 # Update configuration values for PDCCH and PRACH
 update_yaml configs/gnb.yaml "cell_cfg.pdcch.common" "ss0_index" "0"

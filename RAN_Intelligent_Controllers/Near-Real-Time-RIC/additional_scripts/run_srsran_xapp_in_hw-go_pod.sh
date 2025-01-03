@@ -138,7 +138,6 @@ echo
 # Select an E2 node ID by fetching the list of connected E2 nodes from submgr
 ################################################################################
 
-
 if ! command -v curl &>/dev/null; then
     echo "Installing curl..."
     apt-get install -y curl
@@ -151,9 +150,9 @@ fi
 SUBMGR_IP="null"
 # Loop through the arguments
 for ARG in "$@"; do
-  if [[ $ARG == --submgr_ip=* ]]; then
-    SUBMGR_IP="${ARG#*=}"
-  fi
+    if [[ $ARG == --submgr_ip=* ]]; then
+        SUBMGR_IP="${ARG#*=}"
+    fi
 done
 
 if [ "$SUBMGR_IP" = "null" ]; then
@@ -166,6 +165,9 @@ fi
 
 # Get the list of E2 node IDs
 E2_IDS_JSON=$(curl -X GET "http://$SUBMGR_IP:8080/ric/v1/get_all_e2nodes")
+if [ "$E2_IDS_JSON" = "null" ]; then
+    E2_IDS_JSON="[0]" # Default E2_Node_ID
+fi
 E2_IDS=($(echo $E2_IDS_JSON | jq -r '.[]'))
 NUM_E2_IDS=${#E2_IDS[@]}
 if [ $NUM_E2_IDS -eq 0 ]; then

@@ -168,7 +168,7 @@ echo "Building srsRAN_4G..."
 # rm -rf build
 mkdir -p build
 cd build
-SUPPRESS_WARNINGS="-Wno-error=array-bounds -Wno-error=unused-but-set-variable -Wno-error=unused-function -Wno-error=unused-parameter -Wno-error=unused-result -Wno-error=unused-variable -Wno-error=all"
+SUPPRESS_WARNINGS="-Wno-error=array-bounds -Wno-error=unused-but-set-variable -Wno-error=unused-function -Wno-error=unused-parameter -Wno-error=unused-result -Wno-error=unused-variable -Wno-error=all -Wno-return-type"
 cmake .. -DCMAKE_CXX_FLAGS="$SUPPRESS_WARNINGS"
 make clean
 make -j$(nproc)

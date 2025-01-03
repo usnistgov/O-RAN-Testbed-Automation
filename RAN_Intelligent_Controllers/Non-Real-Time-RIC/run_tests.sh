@@ -53,6 +53,9 @@ if ! dpkg -l | grep -q python3-venv; then
     sudo apt-get install -y python3-venv
 fi
 
+mkdir -p "$SCRIPT_DIR/tests"
+cd "$SCRIPT_DIR/tests"
+
 # Create a virtual environment if it doesn't exist
 if [ ! -d "venv" ]; then
     echo "Creating a new virtual environment..."
@@ -104,4 +107,5 @@ if [ ! -f $REQ_HASH_FILE ] || [ "$(sha256sum requirements.txt | awk '{print $1}'
     sha256sum requirements.txt | awk '{print $1}' >$REQ_HASH_FILE
 fi
 
+cd "$SCRIPT_DIR"
 pytest tests/ -s

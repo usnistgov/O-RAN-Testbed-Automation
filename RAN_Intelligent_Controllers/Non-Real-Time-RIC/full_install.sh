@@ -89,13 +89,13 @@ if [ ! -d ranpm ] || [ -z "$(ls -A ranpm)" ]; then
     [ -d ranpm ] && rm -rf ranpm # Remove the directory if it is empty
     echo
     echo "Cloning J-release of dep/ranpm..."
-    git clone https://gerrit.o-ran-sc.org/r/nonrtric/plt/ranpm -b j-release ranpm
+    git clone https://gerrit.o-ran-sc.org/r/nonrtric/plt/ranpm -b master ranpm
 fi
 if [ ! -d ric-dep ] || [ -z "$(ls -A ric-dep)" ]; then
     [ -d ric-dep ] && rm -rf ric-dep # Remove the directory if it is empty
     echo
     echo "Cloning J-release of dep/ric-dep..."
-    git clone https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep -b j-release ric-dep
+    git clone https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep -b master ric-dep
 fi
 if [ ! -d smo-install/multicloud-k8s ] || [ -z "$(ls -A smo-install/multicloud-k8s)" ]; then
     [ -d smo-install/multicloud-k8s ] && rm -rf smo-install/multicloud-k8s # Remove the directory if it is empty
@@ -141,7 +141,7 @@ else
 
     # Download ric-dep from gerrit
     if [ ! -d "ric-dep" ]; then
-        git clone https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep -b j-release
+        git clone https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep -b master
     fi
     # Patch the install script and save a backup of the original
     if [ ! -f "ric-dep/bin/install_k8s_and_helm.previous.sh" ]; then
@@ -337,6 +337,10 @@ echo "Installing and running the control panel..."
 echo
 echo "Ensuring the Non-RT RIC pods are still ready..."
 sudo ./install_scripts/wait_for_nonrtric_pods.sh
+
+echo
+echo "Generating sample rApps..."
+./install_scripts/generate_sample_rapps.sh
 
 echo
 echo "Testing the Non-RT RIC functionality..."

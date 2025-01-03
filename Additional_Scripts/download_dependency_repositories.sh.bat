@@ -65,11 +65,13 @@ git clone https://gerrit.o-ran-sc.org/r/it/dep
 cd dep
 git restore --source=HEAD :/
 cd ..
-git clone https://gerrit.o-ran-sc.org/r/nonrtric/plt/ranpm -b j-release dep/ranpm
-git clone https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep -b j-release dep/ric-dep
+git clone https://gerrit.o-ran-sc.org/r/nonrtric/plt/ranpm -b master dep/ranpm
+git clone https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep -b master dep/ric-dep
 git clone https://github.com/onap/multicloud-k8s.git dep/smo-install/multicloud-k8s
 git clone https://gerrit.onap.org/r/oom dep/smo-install/onap_oom
-git clone https://gerrit.o-ran-sc.org/r/portal/nonrtric-controlpanel -b j-release
+git clone https://gerrit.o-ran-sc.org/r/portal/nonrtric-controlpanel -b master
+git clone https://gerrit.o-ran-sc.org/r/nonrtric/plt/rappmanager -b k-release
+mkdir rApps
 cd ..
 cd ..
 

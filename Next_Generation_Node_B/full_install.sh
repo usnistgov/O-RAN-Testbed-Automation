@@ -177,7 +177,7 @@ cd srsRAN_Project
 # rm -rf build
 mkdir -p build
 cd build
-SUPPRESS_WARNINGS="-Wno-error=array-bounds -Wno-error=unused-but-set-variable -Wno-error=unused-function -Wno-error=unused-parameter -Wno-error=unused-result -Wno-error=unused-variable -Wno-error=all"
+SUPPRESS_WARNINGS="-Wno-error=array-bounds -Wno-error=unused-but-set-variable -Wno-error=unused-function -Wno-error=unused-parameter -Wno-error=unused-result -Wno-error=unused-variable -Wno-error=all -Wno-return-type"
 cmake .. -DENABLE_EXPORT=ON -DENABLE_ZEROMQ=ON -DCMAKE_CXX_FLAGS="$SUPPRESS_WARNINGS"
 make clean
 # Remove -Werror from the flags.make files to prevent the build from failing due to warnings

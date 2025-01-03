@@ -62,9 +62,9 @@ echo "MNC (Mobile Network Code): $PLMN_MNC"
 echo "TAC value: $TAC"
 
 echo "Creating configs directory..."
-rm -rf configs
-mkdir configs
-rm -rf logs
+rm -rf "$SCRIPT_DIR/configs"
+mkdir "$SCRIPT_DIR/configs"
+rm -rf "$SCRIPT_DIR/logs"
 
 APPS=("mmed" "sgwcd" "smfd" "amfd" "sgwud" "upfd" "hssd" "pcrfd" "nrfd" "scpd" "seppd" "ausfd" "udmd" "pcfd" "nssfd" "bsfd" "udrd" "webui")
 
@@ -199,8 +199,6 @@ CONFIG_PATHS["configs/sgwu.yaml"]="gtpu.server.address"
 CONFIG_PATHS["configs/amf.yaml"]="ngap.server.address"
 CONFIG_PATHS["configs/upf.yaml"]="gtpu.server.address"
 
-mkdir -p logs
-
 for FILE in "${!CONFIG_PATHS[@]}"; do
     for PROPERTY in ${CONFIG_PATHS[$FILE]}; do
         update_yaml $AMF_IP $FILE $PROPERTY
@@ -239,8 +237,8 @@ sudo ufw status
 sudo ufw disable
 sudo ufw status
 
-mkdir -p logs
-sudo chown $USER:$USER -R logs
+mkdir -p "$SCRIPT_DIR/logs"
+sudo chown $USER:$USER -R "$SCRIPT_DIR/logs"
 
 echo "Registering UE 1..."
 ./install_scripts/register_subscriber.sh --imsi 001010123456780 --key 00112233445566778899AABBCCDDEEFF --opc 63BFA50EE6523365FF14C1F45F88737D --apn srsapn

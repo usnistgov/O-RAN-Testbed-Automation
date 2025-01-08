@@ -34,6 +34,11 @@ import os
 import pytest
 import requests
 
+global rapp_id, rapp_file_name
+rapp_id = "icsconsumer2"
+#rapp_file_name = "rapp-hello-world.csar"
+rapp_file_name = "rapp-simple-ics-consumer.csar"
+
 config.load_kube_config()
 v1 = client.CoreV1Api()
 
@@ -87,13 +92,12 @@ def remove_test_rapp_if_exists(rapp_id, file_name):
 # Test the creation of a testing rApp
 ################################################################################
 def test_rapp_creation():
-    global rappmgr_ip, rappmgr_port, rapp_id
-    rapp_id = "testing_rapp_id2"
-    remove_test_rapp_if_exists(rapp_id, "rapp-hello-world.csar")
+    global rappmgr_ip, rappmgr_port, rapp_id, rapp_file_name
+    remove_test_rapp_if_exists(rapp_id, rapp_file_name)
 
     print("Creating testing rApp...")
     rapp_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "rApps")
-    rapp_binary_path = os.path.join(rapp_dir, "rapp-hello-world.csar")
+    rapp_binary_path = os.path.join(rapp_dir, rapp_file_name)
 
     with open(rapp_binary_path, 'rb') as file:
         files = {'file': (rapp_binary_path, file, 'application/octet-stream')}
@@ -102,33 +106,55 @@ def test_rapp_creation():
     print(f'Console command: curl -X POST http://{rappmgr_ip}:{rappmgr_port}/rapps/{rapp_id} -F "file=@{rapp_binary_path}"')
     assert create_rapp.status_code == 202, f'Create rApp status code: {create_rapp.status_code}'
 
-# ################################################################################
-# # Test the priming of a testing rApp
-# ################################################################################
-# def test_rapp_priming():
-#     global rappmgr_ip, rappmgr_port, rapp_id
-#     remove_test_rapp_if_exists(rapp_id)
+##################################################################################
+# Test the fetching of the rApp information
+##################################################################################
+def test_rapp_info():
+    global rappmgr_ip, rappmgr_port, rapp_id, rapp_file_name
+    service_status = requests.get(f'http://{rappmgr_ip}:{rappmgr_port}/rapps/{rapp_id}')
+    print(f'Console command: curl -X GET http://{rappmgr_ip}:{rappmgr_port}/rapps/{rapp_id}')
+    assert service_status.status_code == 200, f'Service status code: {service_status.status_code}'
+    
+    json_response = json.loads(service_status.text)
+    assert type(json_response) is dict, f'Response is not a dictionary: {service_status.text}'
+    print(f'rApp information: {json_response}')
 
-#     print("Priming testing rApp...")
-#     data = {
-#         "primeOrder": "PRIME"
-#     }
+    assert "name" in json_response, f'rApp name not found: {json_response}'
+    assert json_response["name"] == rapp_id, f'rApp name mismatch: {json_response}'
 
-#     prime_rapp = requests.put(f'http://{rappmgr_ip}:{rappmgr_port}/rapps/{rapp_id}', headers={'Content-Type': 'application/json'}, data=json.dumps(data))
-#     print(f'Console command: curl -X PUT http://{rappmgr_ip}:{rappmgr_port}/rapps/{rapp_id} -H "Content-Type: application/json" -d "{json.dumps(data)}"')
-#     assert prime_rapp.status_code == 200, f'Priming rApp status code: {prime_rapp.status_code}'
+    assert "packageName" in json_response, f'rApp package name not found: {json_response}'
+    assert json_response["packageName"] == rapp_file_name, f'rApp package name mismatch: {json_response}'
 
+    assert "state" in json_response, f'rApp state not found: {json_response}'
+    assert json_response["state"] == "COMMISSIONED", f'rApp state mismatch: {json_response}'
 
 # ################################################################################
 # # Test that the rApp Manager status is success
 # ################################################################################
-# def test_rapps_list():
-#     global rappmgr_ip, rappmgr_port
-#     service_status = requests.get(f'http://{rappmgr_ip}:{rappmgr_port}/rapps')
-#     print(f'Console command: curl -X GET http://{rappmgr_ip}:{rappmgr_port}/rapps')
-#     assert service_status.status_code == 200, f'Service status code: {service_status.status_code}'
+def test_rapps_list():
+    global rappmgr_ip, rappmgr_port
+    service_status = requests.get(f'http://{rappmgr_ip}:{rappmgr_port}/rapps')
+    print(f'Console command: curl -X GET http://{rappmgr_ip}:{rappmgr_port}/rapps')
+    assert service_status.status_code == 200, f'Service status code: {service_status.status_code}'
     
-#     json_response = json.loads(service_status.text)
-#     assert type(json_response) is list, f'Response is not a list: {service_status.text}'
-#     print(f'Available rApps: {json_response}')
+    json_response = json.loads(service_status.text)
+    assert type(json_response) is list, f'Response is not a list: {service_status.text}'
+    print(f'Available rApps: {json_response}')
+
+# ################################################################################
+# # Test the priming of a testing rApp
+# ################################################################################
+def test_rapp_priming():
+    global rappmgr_ip, rappmgr_port, rapp_id, rapp_file_name
+    #remove_test_rapp_if_exists(rapp_id, rapp_file_name)
+
+    print("Priming testing rApp...")
+    data = {
+        "primeOrder": "PRIME"
+    }
+
+    prime_rapp = requests.put(f'http://{rappmgr_ip}:{rappmgr_port}/rapps/{rapp_id}', headers={'Content-Type': 'application/json'}, data=json.dumps(data))
+    print(f'Console command: curl -X PUT http://{rappmgr_ip}:{rappmgr_port}/rapps/{rapp_id} -H "Content-Type: application/json" -d \'{json.dumps(data)}\'')    
+    assert prime_rapp.status_code == 200, f'Priming rApp status code: {prime_rapp.status_code}'
+
 

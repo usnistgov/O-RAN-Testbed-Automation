@@ -332,7 +332,7 @@ cd "$SCRIPT_DIR"
 
 echo
 echo "Installing and running the control panel..."
-./run_control_panel.sh
+./run_control_panel.sh mock
 
 echo
 echo "Ensuring the Non-RT RIC pods are still ready..."

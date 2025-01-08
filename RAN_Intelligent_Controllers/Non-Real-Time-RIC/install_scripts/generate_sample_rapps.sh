@@ -38,12 +38,12 @@ cd "$PARENT_DIR"
 set -e
 
 if [ ! -d "rappmanager" ]; then
-  git clone https://gerrit.o-ran-sc.org/r/nonrtric/plt/rappmanager -b k-release
+    git clone https://gerrit.o-ran-sc.org/r/nonrtric/plt/rappmanager -b k-release
 fi
 
 cd rappmanager/sample-rapp-generator
 if [ ! -f generate.previous.sh ]; then
-  mv generate.sh generate.previous.sh
+    mv generate.sh generate.previous.sh
 fi
 cp "$PARENT_DIR/install_patch_files/rappmanager/sample-rapp-generator/generate.sh" .
 
@@ -52,53 +52,95 @@ mkdir -p rApps
 
 cd rappmanager/sample-rapp-generator
 
-echo
-echo "Generating Hello World rApp binary (rapp-hello-world.csar)..."
-./generate.sh rapp-hello-world
-echo "Moving rApp binary to rApps directory..."
-cp rapp-hello-world.csar "$PARENT_DIR/rApps"
+if [ -d rapp-hello-world ]; then
+    echo
+    echo "Generating Hello World rApp binary (rapp-hello-world.csar)..."
+    ./generate.sh rapp-hello-world
+    echo "Moving rApp binary to rApps directory..."
+    cp rapp-hello-world.csar "$PARENT_DIR/rApps"
+else
+    echo "Could not find rappmanager/sample-rapp-generator/rapp-hello-world, skipping."
+fi
 
-echo
-echo "Generating Hello World SME Invoker rApp binary (rapp-hello-world-sme-invoker.csar)..."
-./generate.sh rapp-hello-world-sme-invoker
-echo "Moving rApp binary to rApps directory..."
-cp rapp-hello-world-sme-invoker.csar "$PARENT_DIR/rApps"
+if [ -d rapp-hello-world-sme-invoker ]; then
+    echo
+    echo "Generating Hello World SME Invoker rApp binary (rapp-hello-world-sme-invoker.csar)..."
+    ./generate.sh rapp-hello-world-sme-invoker
+    echo "Moving rApp binary to rApps directory..."
+    cp rapp-hello-world-sme-invoker.csar "$PARENT_DIR/rApps"
+else
+    echo "Could not find rappmanager/sample-rapp-generator/rapp-hello-world-sme-invoker, skipping."
+fi
 
-echo
-echo "Generating KServe rApp binary (rapp-kserve.csar)..."
-./generate.sh rapp-kserve
-echo "Moving rApp binary to rApps directory..."
-cp rapp-kserve.csar "$PARENT_DIR/rApps"
+if [ -d rapp-kserve ]; then
+    echo
+    echo "Generating KServe rApp binary (rapp-kserve.csar)..."
+    ./generate.sh rapp-kserve
+    echo "Moving rApp binary to rApps directory..."
+    cp rapp-kserve.csar "$PARENT_DIR/rApps"
+else
+    echo "Could not find rappmanager/sample-rapp-generator/rapp-kserve, skipping."
+fi
 
-echo
-echo "Generating Sample ICS Consumer rApp binary (rapp-sample-ics-consumer.csar)..."
-./generate.sh rapp-sample-ics-consumer
-echo "Moving rApp binary to rApps directory..."
-cp rapp-sample-ics-consumer.csar "$PARENT_DIR/rApps"
+if [ -d rapp-sample-ics-consumer ]; then
+    echo
+    echo "Generating Sample ICS Consumer rApp binary (rapp-sample-ics-consumer.csar)..."
+    ./generate.sh rapp-sample-ics-consumer
+    echo "Moving rApp binary to rApps directory..."
+    cp rapp-sample-ics-consumer.csar "$PARENT_DIR/rApps"
+else
+    echo "Could not find rappmanager/sample-rapp-generator/rapp-sample-ics-consumer, skipping."
+fi
 
-echo
-echo "Generating Sample ICS Producer rApp binary (rapp-sample-ics-producer.csar)..."
-./generate.sh rapp-sample-ics-producer
-echo "Moving rApp binary to rApps directory..."
-cp rapp-sample-ics-producer.csar "$PARENT_DIR/rApps"
+if [ -d rapp-sample-ics-producer ]; then
+    echo
+    echo "Generating Sample ICS Producer rApp binary (rapp-sample-ics-producer.csar)..."
+    ./generate.sh rapp-sample-ics-producer
+    echo "Moving rApp binary to rApps directory..."
+    cp rapp-sample-ics-producer.csar "$PARENT_DIR/rApps"
+else
+    echo "Could not find rappmanager/sample-rapp-generator/rapp-sample-ics-producer, skipping."
+fi
 
-echo
-echo "Generating Simple ICS Consumer rApp binary (rapp-simple-ics-consumer.csar)..."
-./generate.sh rapp-simple-ics-consumer
-echo "Moving rApp binary to rApps directory..."
-cp rapp-simple-ics-consumer.csar "$PARENT_DIR/rApps"
+if [ -d rapp-simple-ics-consumer ]; then
+    echo
+    echo "Generating Simple ICS Consumer rApp binary (rapp-simple-ics-consumer.csar)..."
+    ./generate.sh rapp-simple-ics-consumer
+    echo "Moving rApp binary to rApps directory..."
+    cp rapp-simple-ics-consumer.csar "$PARENT_DIR/rApps"
+else
+    echo "Could not find rappmanager/sample-rapp-generator/rapp-simple-ics-consumer, skipping."
+fi
 
-echo
-echo "Generating Simple ICS Producer rApp binary (rapp-simple-ics-producer.csar)..."
-./generate.sh rapp-simple-ics-producer
-echo "Moving rApp binary to rApps directory..."
-cp rapp-simple-ics-producer.csar "$PARENT_DIR/rApps"
+if [ -d rapp-simple-ics-producer ]; then
+    echo
+    echo "Generating Simple ICS Producer rApp binary (rapp-simple-ics-producer.csar)..."
+    ./generate.sh rapp-simple-ics-producer
+    echo "Moving rApp binary to rApps directory..."
+    cp rapp-simple-ics-producer.csar "$PARENT_DIR/rApps"
+else
+    echo "Could not find rappmanager/sample-rapp-generator/rapp-simple-ics-producer, skipping."
+fi
 
-echo
-echo "Generating rApp All binary (rapp-all.csar)..."
-./generate.sh rapp-all
-echo "Moving rApp binary to rApps directory..."
-cp rapp-all.csar "$PARENT_DIR/rApps"
+if [ -d rapp-simple-ics-consumer ]; then
+    echo
+    echo "Generating Simple ICS Producer Consumer rApp binary (rapp-simple-ics-consumer.csar)..."
+    ./generate.sh rapp-simple-ics-consumer
+    echo "Moving rApp binary to rApps directory..."
+    cp rapp-simple-ics-consumer.csar "$PARENT_DIR/rApps"
+else
+    echo "Could not find rappmanager/sample-rapp-generator/rapp-simple-ics-consumer, skipping."
+fi
+
+if [ -d rapp-all ]; then
+    echo
+    echo "Generating rApp All binary (rapp-all.csar)..."
+    ./generate.sh rapp-all
+    echo "Moving rApp binary to rApps directory..."
+    cp rapp-all.csar "$PARENT_DIR/rApps"
+else
+    echo "Could not find rappmanager/sample-rapp-generator/rapp-all, skipping."
+fi
 
 echo
 echo "Successfully generated sample rApp binaries."

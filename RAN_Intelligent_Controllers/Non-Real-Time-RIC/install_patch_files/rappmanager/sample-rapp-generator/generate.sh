@@ -19,18 +19,18 @@
 #
 
 if [[ $# -ne 1 ]]; then
-  echo "USAGE: $0 <rApp-resource-folder-name>"
-  exit 1
+    echo "USAGE: $0 <rApp-resource-folder-name>"
+    exit 1
 fi
 
 if ! command -v zip &>/dev/null; then
-  echo "Zip command not found. Please install zip to proceed."
-  exit 1
+    echo "Zip command not found. Please install zip to proceed."
+    exit 1
 fi
 
 if ! command -v helm &>/dev/null; then
-  echo "Helm command not found. Please install helm to proceed."
-  exit 1
+    echo "Helm command not found. Please install helm to proceed."
+    exit 1
 fi
 
 DIRECTORY=${1%/}
@@ -39,32 +39,32 @@ HELM_DIR="$DIRECTORY/Artifacts/Deployment/HELM"
 EXCLUDE_DIRS=()
 
 checkHelmPackage() {
-  if [ -d "$HELM_DIR" ]; then
-    for dir in "$HELM_DIR"/*/; do
-      if [ -d "$dir" ]; then
-        HELM_PACKAGE_NAME=$(basename "$dir")
-        pushd "$HELM_DIR"
-        helm package "$HELM_PACKAGE_NAME"
-        popd
-        EXCLUDE_DIRS+=("*/$HELM_PACKAGE_NAME/*")
-      fi
-    done
-  else
-    echo "Helm directory $HELM_DIR doesn't exist."
-  fi
+    if [ -d "$HELM_DIR" ]; then
+        for dir in "$HELM_DIR"/*/; do
+            if [ -d "$dir" ]; then
+                HELM_PACKAGE_NAME=$(basename "$dir")
+                pushd "$HELM_DIR"
+                helm package "$HELM_PACKAGE_NAME"
+                popd
+                EXCLUDE_DIRS+=("*/$HELM_PACKAGE_NAME/*")
+            fi
+        done
+    else
+        echo "Helm directory $HELM_DIR doesn't exist."
+    fi
 }
 
 if [ -d "$DIRECTORY" ]; then
-  checkHelmPackage
-  rm -f $PACKAGENAME 2>/dev/null
-  pushd $DIRECTORY
-  if [ -z $EXCLUDE_DIRS ]; then
-    zip -r ../$PACKAGENAME *
-  else
-    zip -r ../$PACKAGENAME * $(printf " -x %s" "${EXCLUDE_DIRS[@]}")
-  fi
-  popd
-  echo -e "rApp package $PACKAGENAME generated."
+    checkHelmPackage
+    rm -f $PACKAGENAME 2>/dev/null
+    pushd $DIRECTORY
+    if [ -z $EXCLUDE_DIRS ]; then
+        zip -r ../$PACKAGENAME *
+    else
+        zip -r ../$PACKAGENAME * $(printf " -x %s" "${EXCLUDE_DIRS[@]}")
+    fi
+    popd
+    echo -e "rApp package $PACKAGENAME generated."
 else
-  echo "Directory $DIRECTORY doesn't exist."
+    echo "Directory $DIRECTORY doesn't exist."
 fi

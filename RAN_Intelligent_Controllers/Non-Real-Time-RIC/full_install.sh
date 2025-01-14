@@ -78,7 +78,7 @@ fi
 if [ ! -d dep ]; then
     echo
     echo "Cloning Non-RT RIC dependencies..."
-    git clone https://gerrit.o-ran-sc.org/r/it/dep
+    ./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/it/dep.git
     cd dep # Ensure that the components are cloned
     git restore --source=HEAD :/
 fi
@@ -88,26 +88,26 @@ cd "$SCRIPT_DIR/dep/"
 if [ ! -d ranpm ] || [ -z "$(ls -A ranpm)" ]; then
     [ -d ranpm ] && rm -rf ranpm # Remove the directory if it is empty
     echo
-    echo "Cloning J-release of dep/ranpm..."
-    git clone https://gerrit.o-ran-sc.org/r/nonrtric/plt/ranpm -b j-release ranpm
+    echo "Cloning selected release of dep/ranpm..."
+    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/nonrtric/plt/ranpm.git ranpm
 fi
 if [ ! -d ric-dep ] || [ -z "$(ls -A ric-dep)" ]; then
     [ -d ric-dep ] && rm -rf ric-dep # Remove the directory if it is empty
     echo
-    echo "Cloning J-release of dep/ric-dep..."
-    git clone https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep -b j-release ric-dep
+    echo "Cloning selected release of dep/ric-dep..."
+    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep.git ric-dep
 fi
 if [ ! -d smo-install/multicloud-k8s ] || [ -z "$(ls -A smo-install/multicloud-k8s)" ]; then
     [ -d smo-install/multicloud-k8s ] && rm -rf smo-install/multicloud-k8s # Remove the directory if it is empty
     echo
     echo "Cloning dep/smo-install/multicloud-k8s..."
-    git clone https://github.com/onap/multicloud-k8s.git smo-install/multicloud-k8s
+    ./../install_scripts/git_clone.sh https://github.com/onap/multicloud-k8s.git smo-install/multicloud-k8s
 fi
 if [ ! -d smo-install/onap_oom ] || [ -z "$(ls -A smo-install/onap_oom)" ]; then
     [ -d smo-install/onap_oom ] && rm -rf smo-install/onap_oom # Remove the directory if it is empty
     echo
     echo "Cloning dep/smo-install/onap_oom..."
-    git clone https://gerrit.onap.org/r/oom smo-install/onap_oom
+    ./../install_scripts/git_clone.sh https://gerrit.onap.org/r/oom.git smo-install/onap_oom
 fi
 
 echo
@@ -141,7 +141,7 @@ else
 
     # Download ric-dep from gerrit
     if [ ! -d "ric-dep" ]; then
-        git clone https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep -b j-release
+        ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep.git ric-dep
     fi
     # Patch the install script and save a backup of the original
     if [ ! -f "ric-dep/bin/install_k8s_and_helm.previous.sh" ]; then
@@ -332,11 +332,15 @@ cd "$SCRIPT_DIR"
 
 echo
 echo "Installing and running the control panel..."
-./run_control_panel.sh
+./run_control_panel.sh mock
 
 echo
 echo "Ensuring the Non-RT RIC pods are still ready..."
 sudo ./install_scripts/wait_for_nonrtric_pods.sh
+
+echo
+echo "Generating sample rApps..."
+./install_scripts/generate_sample_rapps.sh
 
 echo
 echo "Testing the Non-RT RIC functionality..."

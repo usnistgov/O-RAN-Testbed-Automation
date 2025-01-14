@@ -71,7 +71,7 @@ UBUNTU_CODENAME=$(./install_scripts/get_ubuntu_codename.sh)
 
 echo "Cloning Open5GS..."
 if [ ! -d "open5gs" ]; then
-    git clone https://github.com/open5gs/open5gs.git open5gs
+    ./install_scripts/git_clone.sh https://github.com/open5gs/open5gs.git
 fi
 cd $SCRIPT_DIR/open5gs
 

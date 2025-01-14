@@ -28,84 +28,54 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-# Exit immediately if a command fails
-set -e
+# This Linux shell/Windows batch script will download the 5G_Core_Network, gNodeB, User_Equipment and RAN_Intelligent_Controllers repositories for analyzing the source code without requiring a full testbed build and installation.
 
-# Set the current directory as the script directory
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
     sudo apt-get install -y coreutils
 fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
-cd "$SCRIPT_DIR"
+cd "$(dirname "$SCRIPT_DIR")"
 
-# Install dependencies if not already installed
-if ! command -v python3 &>/dev/null; then
-    echo "Python is not installed. Installing Python..."
-    sudo apt-get update
-    sudo apt-get install -y python3
-fi
-if ! command -v pip &>/dev/null; then
-    sudo apt-get install -y python3-pip
-fi
-if ! dpkg -l | grep -q python3-venv; then
-    sudo apt-get install -y python3-venv
-fi
+cd 5G_Core_Network
+./install_scripts/git_clone.sh https://github.com/open5gs/open5gs.git
+cd ..
 
-mkdir -p "$SCRIPT_DIR/tests"
-cd "$SCRIPT_DIR/tests"
+cd User_Equipment
+./install_scripts/git_clone.sh https://github.com/srsran/srsRAN_4G.git
+./install_scripts/git_clone.sh https://github.com/zeromq/libzmq.git
+./install_scripts/git_clone.sh https://github.com/zeromq/czmq.git
+cd ..
 
-# Create a virtual environment if it doesn't exist
-if [ ! -d "venv" ]; then
-    echo "Creating a new virtual environment..."
-    python3 -m venv venv
-fi
+cd Next_Generation_Node_B
+./install_scripts/git_clone.sh https://github.com/srsran/srsRAN_Project.git
+cd ..
 
-# Activate the virtual environment
-source venv/bin/activate
+cd RAN_Intelligent_Controllers/Near-Real-Time-RIC
+./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep.git
+./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/sim/e2-interface.git
+./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-plt/appmgr.git
+mkdir -p xApps
+cd xApps
+./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/hw-go.git
+cd ..
+cd ..
+cd ..
 
-# Ensure the virtual environment is activated before proceeding
-if [[ "$VIRTUAL_ENV" == "" ]]; then
-    echo "Virtual environment not activated. Exiting."
-    exit 1
-fi
+cd RAN_Intelligent_Controllers/Non-Real-Time-RIC
+./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/it/dep.git
+cd dep
+git restore --source=HEAD :/
+cd ..
+./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/nonrtric/plt/ranpm.git dep/ranpm
+./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep.git dep/ric-dep
+./install_scripts/git_clone.sh https://github.com/onap/multicloud-k8s.git dep/smo-install/multicloud-k8s
+./install_scripts/git_clone.sh https://gerrit.onap.org/r/oom.git dep/smo-install/onap_oom
+./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/portal/nonrtric-controlpanel.git
+./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/nonrtric/plt/rappmanager.git
+mkdir -p rApps
+cd ..
+cd ..
 
-# Create the requirements.txt file if it doesn't exist already
-if [ ! -f requirements.txt ]; then
-    cat <<EOF | tee "requirements.txt" >/dev/null
-cachetools==5.5.0
-certifi==2024.8.30
-charset-normalizer==3.4.0
-durationpy==0.9
-google-auth==2.36.0
-idna==3.10
-iniconfig==2.0.0
-kubernetes==31.0.0
-oauthlib==3.2.2
-packaging==24.2
-pluggy==1.5.0
-pyasn1==0.6.1
-pyasn1_modules==0.4.1
-pytest==8.3.3
-python-dateutil==2.9.0.post0
-PyYAML==6.0.2
-requests==2.32.3
-requests-oauthlib==2.0.0
-rsa==4.9
-six==1.16.0
-urllib3==2.2.3
-websocket-client==1.8.0
-EOF
-fi
-
-# Check if requirements need to be installed by comparing the hash of the requirements file
-REQ_HASH_FILE=".requirements_hash"
-if [ ! -f $REQ_HASH_FILE ] || [ "$(sha256sum requirements.txt | awk '{print $1}')" != "$(cat $REQ_HASH_FILE)" ]; then
-    echo "Requirements changed. Installing packages..."
-    pip install -r requirements.txt
-    sha256sum requirements.txt | awk '{print $1}' >$REQ_HASH_FILE
-fi
-
-cd "$SCRIPT_DIR"
-pytest tests/ -s
+echo "Repositories were cloned successfully."

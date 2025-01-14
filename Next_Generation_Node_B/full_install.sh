@@ -69,7 +69,7 @@ fi
 
 if [ ! -d "srsRAN_Project" ]; then
     echo "Cloning srsRAN_Project..."
-    git clone https://github.com/srsran/srsRAN_Project.git
+    ./install_scripts/git_clone.sh https://github.com/srsran/srsRAN_Project.git
 fi
 
 echo "Updating package lists..."
@@ -87,7 +87,7 @@ echo
 echo "Installing gNodeB..."
 
 # Code from (https://docs.srsran.com/projects/project/en/latest/user_manuals/source/installation.html#manual-installation-dependencies):
-sudo apt-get install -y build-essential cmake libfftw3-dev libmbedtls-dev libboost-program-options-dev libconfig++-dev libsctp-dev
+sudo apt-get install -y cmake make gcc g++ pkg-config libfftw3-dev libmbedtls-dev libsctp-dev libyaml-cpp-dev libgtest-dev
 
 sudo apt-get install -y autoconf automake libtool
 sudo apt-get install -y libuhd-dev
@@ -125,7 +125,7 @@ if [ -d ../User_Equipment/libzmq ]; then
     fi
 else
     if [ ! -d libzmq ]; then
-        git clone https://github.com/zeromq/libzmq.git
+        ./install_scripts/git_clone.sh https://github.com/zeromq/libzmq.git
     fi
     cd libzmq
     ./autogen.sh
@@ -149,7 +149,7 @@ if [ -d ../User_Equipment/czmq ]; then
     fi
 else
     if [ ! -d czmq ]; then
-        git clone https://github.com/zeromq/czmq.git
+        ./install_scripts/git_clone.sh https://github.com/zeromq/czmq.git
     fi
     cd czmq
     ./autogen.sh
@@ -177,7 +177,7 @@ cd srsRAN_Project
 # rm -rf build
 mkdir -p build
 cd build
-SUPPRESS_WARNINGS="-Wno-error=array-bounds -Wno-error=unused-but-set-variable -Wno-error=unused-function -Wno-error=unused-parameter -Wno-error=unused-result -Wno-error=unused-variable -Wno-error=all"
+SUPPRESS_WARNINGS="-Wno-error=array-bounds -Wno-error=unused-but-set-variable -Wno-error=unused-function -Wno-error=unused-parameter -Wno-error=unused-result -Wno-error=unused-variable -Wno-error=all -Wno-return-type"
 cmake .. -DENABLE_EXPORT=ON -DENABLE_ZEROMQ=ON -DCMAKE_CXX_FLAGS="$SUPPRESS_WARNINGS"
 make clean
 # Remove -Werror from the flags.make files to prevent the build from failing due to warnings

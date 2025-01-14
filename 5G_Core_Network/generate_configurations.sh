@@ -71,40 +71,84 @@ APPS=("mmed" "sgwcd" "smfd" "amfd" "sgwud" "upfd" "hssd" "pcrfd" "nrfd" "scpd" "
 echo "Fetching 5G Core configuration files..."
 for APP in "${APPS[@]}"; do
     if [[ "${APP: -1}" != "d" ]]; then
-        CONFIG_FILE="$APP"
+        APP_NAME="$APP"
     else # Remove the last character
-        CONFIG_FILE="${APP%?}"
+        APP_NAME="${APP%?}"
     fi
-    if [ "$CONFIG_FILE" == "webui" ]; then
+    if [ "$APP_NAME" == "webui" ]; then
         continue
-    elif [ "$CONFIG_FILE" == "sepp" ]; then
-        if [ -f "open5gs/install/etc/open5gs/${CONFIG_FILE}1.yaml" ] && [ -f "open5gs/install/etc/open5gs/${CONFIG_FILE}2.yaml" ]; then
-            cp "open5gs/install/etc/open5gs/${CONFIG_FILE}1.yaml" "configs/${CONFIG_FILE}1.yaml"
-            cp "open5gs/install/etc/open5gs/${CONFIG_FILE}2.yaml" "configs/${CONFIG_FILE}2.yaml"
+    elif [ "$APP_NAME" == "sepp" ]; then
+        if [ -f "open5gs/install/etc/open5gs/${APP_NAME}1.yaml" ] && [ -f "open5gs/install/etc/open5gs/${APP_NAME}2.yaml" ]; then
+            cp "open5gs/install/etc/open5gs/${APP_NAME}1.yaml" "configs/${APP_NAME}1.yaml"
+            cp "open5gs/install/etc/open5gs/${APP_NAME}2.yaml" "configs/${APP_NAME}2.yaml"
         else
             echo "Configuration files not found for $APP."
-            echo "Please ensure that the $CONFIG_FILE configuration files are present in the open5gs/install/etc/open5gs directory."
+            echo "Please ensure that the $APP_NAME configuration files are present in the open5gs/install/etc/open5gs directory."
             exit 1
         fi
     else
-        if [ -f "open5gs/install/etc/open5gs/${CONFIG_FILE}.yaml" ]; then
-            cp "open5gs/install/etc/open5gs/${CONFIG_FILE}.yaml" "configs/${CONFIG_FILE}.yaml"
+        if [ -f "open5gs/install/etc/open5gs/${APP_NAME}.yaml" ]; then
+            cp "open5gs/install/etc/open5gs/${APP_NAME}.yaml" "configs/${APP_NAME}.yaml"
         else
             echo "Configuration file not found for $APP."
-            echo "Please ensure that the $CONFIG_FILE configuration file is present in the open5gs/install/etc/open5gs directory."
+            echo "Please ensure that the $APP_NAME configuration file is present in the open5gs/install/etc/open5gs directory."
             exit 1
         fi
     fi
 done
 
-# Function to update YAML configuration files
-update_yaml() {
-    local IP=$1
-    local FILE_PATH=$2
-    local PROPERTY=$3
-    echo "Updating $FILE_PATH for $PROPERTY to $IP"
+# Construct all app names, not including trailing "d" and distinguishing between SEPP instances
+APP_NAMES=()
+for APP in "${APPS[@]}"; do
+    if [[ $APP == "seppd" ]]; then
+        continue
+    fi
+    APP_NAME="${APP%?}"
+    if [[ $APP == *d ]]; then
+        APP_NAMES+=("$APP_NAME")
+    else
+        APP_NAMES+=("$APP")
+    fi
+done
+APP_NAMES+=("sepp1" "sepp2")
 
-    sed -i "s/\($PROPERTY: \).*/\1$IP/" $FILE_PATH
+# Function to update or add YAML configuration properties using yq
+update_yaml() {
+    echo "update_yaml($1, $2, $3, $4)"
+    local FILE_PATH=$1
+    local SECTION=$2
+    local PROPERTY=$3
+    local VALUE=$4
+    if [[ ! -z "$SECTION" ]]; then
+        SECTION=".$SECTION"
+    fi
+    # Check if the value is specifically intended to be null
+    if [[ "$VALUE" == "null" ]]; then
+        yq eval -i "${SECTION}.${PROPERTY} = null" "$FILE_PATH"
+        return
+    fi
+    # If value is empty or undefined, skip the update
+    if [[ -z "$VALUE" ]]; then
+        echo "Skipping empty value for $SECTION.$PROPERTY"
+        return
+    fi
+    # If the PROPERTY is nested (contains dots), handle it properly
+    if [[ "$PROPERTY" == *.* ]]; then
+        local PARENT_PROPERTY=$(echo "$PROPERTY" | cut -d '.' -f 1)
+        local NESTED_PROPERTY=$(echo "$PROPERTY" | cut -d '.' -f 2-)
+
+        yq eval -i "${SECTION}.${PARENT_PROPERTY}.${NESTED_PROPERTY} = \"$VALUE\"" "$FILE_PATH"
+    else
+        # If the value is numeric or boolean, don't quote it
+        # PLMN should always be treated as a string
+        if [[ "$PROPERTY" == "plmn" || "$PROPERTY" == "plmn_list" ]]; then
+            yq eval -i "${SECTION}.${PROPERTY} = \"$VALUE\"" "$FILE_PATH"
+        elif [[ "$VALUE" =~ ^[0-9]+$ || "$VALUE" =~ ^[0-9]+\.[0-9]+$ || "$VALUE" =~ ^(true|false)$ ]]; then
+            yq eval -i "${SECTION}.${PROPERTY} = ${VALUE}" "$FILE_PATH"
+        else
+            yq eval -i "${SECTION}.${PROPERTY} = \"$VALUE\"" "$FILE_PATH"
+        fi
+    fi
 }
 
 # Function to configure PLMN and TAC in the MME and AMF configurations
@@ -132,15 +176,15 @@ configure_plmn_tac() {
 
 # Function to set the logging path, disable timestamp for stderr to avoid duplicate timestamps in journalctl
 configure_logging() {
-    local FILE_PATH="$1"
-    echo "Configuring logging in \"$FILE_PATH\""
+    local LOG_PATH="$1"
+    local CONFIG_PATH="$2"
 
-    sed -i "/logger:/a \ \ default:\n    timestamp: false" "$FILE_PATH"
-    sed -i "/file:/a \ \ \ \ timestamp: true" "$FILE_PATH"
+    # Update the logger default and file timestamp settings
+    update_yaml "$CONFIG_PATH" "logger.default" "timestamp" "false"
+    update_yaml "$CONFIG_PATH" "logger.file" "timestamp" "true"
 
-    # Replace the logger file path to output to the logs/ directory
-    sed -i "s|path: $SCRIPT_DIR/open5gs/install/var/log/open5gs/|path: $SCRIPT_DIR/logs/|g" "$FILE_PATH"
-
+    # Replace the logger file path to output to the local logs/ directory
+    update_yaml "$CONFIG_PATH" "logger.file" "path" "$SCRIPT_DIR/$LOG_PATH"
 }
 
 # Function to get the primary IP for the network segment by resetting the last octet to 1
@@ -191,29 +235,16 @@ AMF_ADDRESSES_OUTPUT="configs/get_amf_address.txt"
 echo "$AMF_IP" >$AMF_ADDRESSES_OUTPUT
 echo "$AMF_IP_BIND" >>$AMF_ADDRESSES_OUTPUT
 
-# Define Open5GS config paths and properties
-declare -A CONFIG_PATHS
-CONFIG_PATHS=()
-CONFIG_PATHS["configs/mme.yaml"]="s1ap.server.address gtpc.server.address"
-CONFIG_PATHS["configs/sgwu.yaml"]="gtpu.server.address"
-CONFIG_PATHS["configs/amf.yaml"]="ngap.server.address"
-CONFIG_PATHS["configs/upf.yaml"]="gtpu.server.address"
-
-for FILE in "${!CONFIG_PATHS[@]}"; do
-    for PROPERTY in ${CONFIG_PATHS[$FILE]}; do
-        update_yaml $AMF_IP $FILE $PROPERTY
-    done
-done
+update_yaml "configs/mme.yaml" "s1ap.server" "address" "$AMF_IP"
+update_yaml "configs/mme.yaml" "gtpc.server" "address" "$AMF_IP"
+update_yaml "configs/sgwu.yaml" "gtpu.server" "address" "$AMF_IP"
+update_yaml "configs/amf.yaml" "ngap.server" "address" "$AMF_IP"
+update_yaml "configs/upf.yaml" "gtpu.server" "address" "$AMF_IP"
 
 # Configure logging for all components
-for APP in "${APPS[@]}"; do
-    if [[ "${APP: -1}" != "d" ]]; then
-        CONFIG_FILE="$APP"
-    else # Remove the last character
-        CONFIG_FILE="${APP%?}"
-    fi
-    if [ -f "configs/${CONFIG_FILE}.yaml" ]; then
-        configure_logging "configs/${CONFIG_FILE}.yaml"
+for APP_NAME in "${APP_NAMES[@]}"; do
+    if [ -f "configs/${APP_NAME}.yaml" ]; then
+        configure_logging "logs/${APP_NAME}.txt" "configs/${APP_NAME}.yaml"
     fi
 done
 
@@ -235,7 +266,7 @@ sudo ip6tables -t nat -A POSTROUTING -s 2001:db8:cafe::/48 ! -o ogstun -j MASQUE
 echo "By default, Ubuntu enables a firewall that blocks the UE from accessing the internet. Disabling the firewall..."
 sudo ufw status
 sudo ufw disable
-sudo ufw status
+sudo ufw status || true
 
 mkdir -p "$SCRIPT_DIR/logs"
 sudo chown $USER:$USER -R "$SCRIPT_DIR/logs"

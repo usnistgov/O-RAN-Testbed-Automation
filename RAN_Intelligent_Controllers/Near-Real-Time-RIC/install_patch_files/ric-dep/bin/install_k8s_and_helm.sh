@@ -114,7 +114,7 @@ done
 echo "Installing prerequisites..."
 sudo apt-get update || true
 sudo apt-get install -y curl wget gnupg2 software-properties-common lsb-release net-tools iproute2 iputils-ping
-sudo apt-get install -y kmod # Part of 'kmod'
+sudo apt-get install -y kmod
 sudo apt-get install -y gawk sed
 sudo apt-get install -y iptables
 sudo apt-get install -y ipvsadm

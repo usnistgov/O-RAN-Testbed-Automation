@@ -28,84 +28,53 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-# Exit immediately if a command fails
-set -e
+# This script updates the commit hash for each repository in the JSON file. It respects the first field in each repository's entry, which is the branch name. If the branch name is "", it fetches the default branch's latest commit hash instead.
 
-# Set the current directory as the script directory
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
     sudo apt-get install -y coreutils
 fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
-cd "$SCRIPT_DIR"
+cd "$(dirname "$SCRIPT_DIR")"
 
-# Install dependencies if not already installed
-if ! command -v python3 &>/dev/null; then
-    echo "Python is not installed. Installing Python..."
-    sudo apt-get update
-    sudo apt-get install -y python3
-fi
-if ! command -v pip &>/dev/null; then
-    sudo apt-get install -y python3-pip
-fi
-if ! dpkg -l | grep -q python3-venv; then
-    sudo apt-get install -y python3-venv
+if ! command -v jq &>/dev/null; then
+    echo "Installing jq..."
+    sudo apt-get install -y jq
 fi
 
-mkdir -p "$SCRIPT_DIR/tests"
-cd "$SCRIPT_DIR/tests"
+JSON_FILE="commit_hashes.json"
+JSON_CONTENTS=$(jq '.' "$JSON_FILE")
 
-# Create a virtual environment if it doesn't exist
-if [ ! -d "venv" ]; then
-    echo "Creating a new virtual environment..."
-    python3 -m venv venv
-fi
+# Go through each repository and update the commit hash
+for REPOSITORY in $(jq 'keys[]' "$JSON_FILE" | tr -d '"'); do
+    BRANCH=$(jq -r ".\"$REPOSITORY\"[0]" "$JSON_FILE")
+    PREV_COMMIT_HASH=$(jq -r ".\"$REPOSITORY\"[1]" "$JSON_FILE")
 
-# Activate the virtual environment
-source venv/bin/activate
+    if [[ -z "$BRANCH" ]]; then
+        # Fetch the default branch's latest commit
+        echo "Updating commit hash for $REPOSITORY..."
+        COMMIT_HASH=$(git ls-remote "$REPOSITORY" HEAD | awk '{ print $1 }')
+    else
+        # Fetch the specified branch's latest commit
+        echo "Updating commit hash for $REPOSITORY on branch $BRANCH..."
+        COMMIT_HASH=$(git ls-remote "$REPOSITORY" "refs/heads/$BRANCH" | awk '{ print $1 }')
+    fi
 
-# Ensure the virtual environment is activated before proceeding
-if [[ "$VIRTUAL_ENV" == "" ]]; then
-    echo "Virtual environment not activated. Exiting."
-    exit 1
-fi
+    if [[ -n "$COMMIT_HASH" ]]; then
+        # Update the commit hash in the JSON structure
+        JSON_CONTENTS=$(echo "$JSON_CONTENTS" | jq ".\"$REPOSITORY\"[1] = \"$COMMIT_HASH\"")
+        echo "    $COMMIT_HASH"
+    else
+        echo "    Failed to retrieve commit hash, skipping."
+        echo
+    fi
+done
 
-# Create the requirements.txt file if it doesn't exist already
-if [ ! -f requirements.txt ]; then
-    cat <<EOF | tee "requirements.txt" >/dev/null
-cachetools==5.5.0
-certifi==2024.8.30
-charset-normalizer==3.4.0
-durationpy==0.9
-google-auth==2.36.0
-idna==3.10
-iniconfig==2.0.0
-kubernetes==31.0.0
-oauthlib==3.2.2
-packaging==24.2
-pluggy==1.5.0
-pyasn1==0.6.1
-pyasn1_modules==0.4.1
-pytest==8.3.3
-python-dateutil==2.9.0.post0
-PyYAML==6.0.2
-requests==2.32.3
-requests-oauthlib==2.0.0
-rsa==4.9
-six==1.16.0
-urllib3==2.2.3
-websocket-client==1.8.0
-EOF
-fi
+# Format the JSON for easier reading
+FORMATTED_JSON_CONTENTS=$(echo "$JSON_CONTENTS" | sed -e ':a' -e 'N' -e '$!ba' -e 's/\[\n    /[/g')
+FORMATTED_JSON_CONTENTS=$(echo "$FORMATTED_JSON_CONTENTS" | sed -e ':a' -e 'N' -e '$!ba' -e 's/,\n    /, /g')
+FORMATTED_JSON_CONTENTS=$(echo "$FORMATTED_JSON_CONTENTS" | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n  ]/]/g')
 
-# Check if requirements need to be installed by comparing the hash of the requirements file
-REQ_HASH_FILE=".requirements_hash"
-if [ ! -f $REQ_HASH_FILE ] || [ "$(sha256sum requirements.txt | awk '{print $1}')" != "$(cat $REQ_HASH_FILE)" ]; then
-    echo "Requirements changed. Installing packages..."
-    pip install -r requirements.txt
-    sha256sum requirements.txt | awk '{print $1}' >$REQ_HASH_FILE
-fi
-
-cd "$SCRIPT_DIR"
-pytest tests/ -s
+echo "$FORMATTED_JSON_CONTENTS" >"$JSON_FILE"
+echo "Successfully updated commit hashes."

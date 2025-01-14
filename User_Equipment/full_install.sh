@@ -117,7 +117,7 @@ if [ -d ../Next_Generation_Node_B/libzmq ]; then
     fi
 else
     if [ ! -d libzmq ]; then
-        git clone https://github.com/zeromq/libzmq.git
+        ./install_scripts/git_clone.sh https://github.com/zeromq/libzmq.git
     fi
     cd libzmq
     ./autogen.sh
@@ -141,7 +141,7 @@ if [ -d ../Next_Generation_Node_B/czmq ]; then
     fi
 else
     if [ ! -d czmq ]; then
-        git clone https://github.com/zeromq/czmq.git
+        ./install_scripts/git_clone.sh https://github.com/zeromq/czmq.git
     fi
     cd czmq
     ./autogen.sh
@@ -159,7 +159,7 @@ echo
 echo "Compiling and Installing srsRAN_4G..."
 if [ ! -d "srsRAN_4G" ]; then
     echo "Cloning srsRAN_4G..."
-    git clone https://github.com/srsran/srsRAN_4G.git
+    ./install_scripts/git_clone.sh https://github.com/srsran/srsRAN_4G.git
 fi
 cd srsRAN_4G
 echo
@@ -168,7 +168,7 @@ echo "Building srsRAN_4G..."
 # rm -rf build
 mkdir -p build
 cd build
-SUPPRESS_WARNINGS="-Wno-error=array-bounds -Wno-error=unused-but-set-variable -Wno-error=unused-function -Wno-error=unused-parameter -Wno-error=unused-result -Wno-error=unused-variable -Wno-error=all"
+SUPPRESS_WARNINGS="-Wno-error=array-bounds -Wno-error=unused-but-set-variable -Wno-error=unused-function -Wno-error=unused-parameter -Wno-error=unused-result -Wno-error=unused-variable -Wno-error=all -Wno-return-type"
 cmake .. -DCMAKE_CXX_FLAGS="$SUPPRESS_WARNINGS"
 make clean
 make -j$(nproc)

@@ -95,10 +95,13 @@ RRC NR reconfiguration successful.
 
 The RIC starts automatically on boot and can be accessed with `k9s -A`. For more information about a specific component, refer to the README.md files in the respective subdirectories.
 
+## Software Versioning
+
+For stability of the software dependencies, all `git clone` commands are first routed through `commit_hashes.json` to get the branch/commit hash of each dependency. This file can be updated with the latest hashes by running `./Additional_Scripts/update_commit_hashes.sh`. For information about the automation tool versions, please see the releases page [[2]][gh-ota].
+
 ## Contact Information
 
-USNISTGOV/O-RAN-Testbed-Automation [[2]][gh-ota] is developed and maintained
-by the NIST Wireless Networks Division [[3]][nist-wnd], as part of their Open RAN Research Program [[4]][nist-oran].  Contacts for this software:
+USNISTGOV/O-RAN-Testbed-Automation is developed and maintained by the NIST Wireless Networks Division [[3]][nist-wnd], as part of their Open RAN Research Program [[4]][nist-oran].  Contacts for this software:
 
 - Simeon J. Wuthier, @Simewu
 - Peng Liu, @pengnist
@@ -113,13 +116,13 @@ by the NIST Wireless Networks Division [[3]][nist-wnd], as part of their Open RA
 
 ## References
 
-1. Liu, Peng, Lee, Kyehwan, Cintrón, Fernando J., Wuthier, Simeon, Savaliya, Bhadresh, Montgomery, Douglas, Rouil, Richard (2024). Blueprint for Deploying 5G O-RAN Testbeds: A Guide to Using Diverse O-RAN Software Stacks. National Institute of Standards and Technology. [https://doi.org/10.6028/NIST.TN.2311][nist-tn]
-2. National Institute of Standards and Technology. GitHub. [https://github.com/USNISTGOV/O-RAN-Testbed-Automation][gh-ota]
-3. Wireless Networks Division. National Institute of Standards and Technology. [https://www.nist.gov/ctl/Wireless-Networks-Division][nist-wnd]
-4. Open RAN Research at NIST. National Institute of Standards and Technology. [https://www.nist.gov/programs-projects/Open-RAN-Research-NIST][nist-oran]
-5. NIST Software Disclaimer. [NIST Software Disclaimer.md][gh-nsd]
-6. NIST Commercial Software Disclaimer. [NIST Commercial Product Disclaimer.md][gh-cpd]
-7. Fair Use and Licensing Statements of NIST Data/Works: [LICENSE][gh-license]
+1. Liu, Peng, Lee, Kyehwan, Cintrón, Fernando J., Wuthier, Simeon, Savaliya, Bhadresh, Montgomery, Douglas, Rouil, Richard (2024). Blueprint for Deploying 5G O-RAN Testbeds: A Guide to Using Diverse O-RAN Software Stacks. National Institute of Standards and Technology. [https://doi.org/10.6028/NIST.TN.2311][nist-tn].
+2. Releases, Automation Tool for Deploying 5G O-RAN Testbeds. GitHub. [https://github.com/USNISTGOV/O-RAN-Testbed-Automation/releases][gh-ota].
+3. Wireless Networks Division. National Institute of Standards and Technology. [https://www.nist.gov/ctl/Wireless-Networks-Division][nist-wnd].
+4. Open RAN Research at NIST. National Institute of Standards and Technology. [https://www.nist.gov/programs-projects/Open-RAN-Research-NIST][nist-oran].
+5. NIST Software Disclaimer. [NIST Software Disclaimer.md][gh-nsd].
+6. NIST Commercial Software Disclaimer. [NIST Commercial Product Disclaimer.md][gh-cpd].
+7. Fair Use and Licensing Statements of NIST Data/Works: [LICENSE][gh-license].
 
 ## <!-- HR 2 -->
 
@@ -132,7 +135,7 @@ by the NIST Wireless Networks Division [[3]][nist-wnd], as part of their Open RA
 <!-- References -->
 
 [nist-tn]: https://doi.org/10.6028/NIST.TN.2311
-[gh-ota]: https://github.com/USNISTGOV/O-RAN-Testbed-Automation
+[gh-ota]: https://github.com/USNISTGOV/O-RAN-Testbed-Automation/releases
 [nist-wnd]: https://www.nist.gov/ctl/Wireless-Networks-Division
 [nist-oran]: https://www.nist.gov/programs-projects/Open-RAN-Research-NIST
 [gh-nsd]: ./NIST%20Software%20Disclaimer.md

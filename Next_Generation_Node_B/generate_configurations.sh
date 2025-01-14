@@ -229,6 +229,15 @@ update_yaml configs/gnb.yaml "cell_cfg" "common_scs" "15"
 update_yaml configs/gnb.yaml "cell_cfg" "plmn" $PLMN
 update_yaml configs/gnb.yaml "cell_cfg" "tac" $TAC
 
+# Update configuration values for PDCCH and PRACH
+update_yaml configs/gnb.yaml "cell_cfg.pdcch.common" "ss0_index" "0"
+update_yaml configs/gnb.yaml "cell_cfg.pdcch.common" "coreset0_index" "12"
+update_yaml configs/gnb.yaml "cell_cfg.pdcch.dedicated" "ss2_type" "common"
+update_yaml configs/gnb.yaml "cell_cfg.pdcch.dedicated" "dci_format_0_1_and_1_1" "false"
+update_yaml configs/gnb.yaml "cell_cfg.prach" "prach_config_index" "1"
+update_yaml configs/gnb.yaml "cell_cfg.pdsch" "mcs_table" "qam64"
+update_yaml configs/gnb.yaml "cell_cfg.pusch" "mcs_table" "qam64"
+
 GNB_ID="411"
 RAN_NODE_NAME="gnbd_001_001_00019b"
 GNB_DU_ID="0"
@@ -236,7 +245,6 @@ update_yaml configs/gnb.yaml "" "gnb_id" "$GNB_ID"
 update_yaml configs/gnb.yaml "" "gnb_id_bit_length" "22" # Supported: 22-32
 update_yaml configs/gnb.yaml "" "ran_node_name" "$RAN_NODE_NAME"
 update_yaml configs/gnb.yaml "" "gnb_du_id" "$GNB_DU_ID"
-update_yaml configs/gnb.yaml "" "du_multicell_enabled" "false"
 
 # Update configuration values to connect RIC by e2 interface
 if [ "$ENABLE_E2_TERM" = "true" ]; then
@@ -311,13 +319,6 @@ update_yaml configs/gnb.yaml "metrics" "rlc_report_period" "1000" # Every second
 update_yaml configs/gnb.yaml "metrics" "enable_json_metrics" "false"
 update_yaml configs/gnb.yaml "metrics" "autostart_stdout_metrics" "false"
 update_yaml configs/gnb.yaml "metrics" "sched_report_period" "1000"
-
-# Update configuration values for PDCCH and PRACH
-update_yaml configs/gnb.yaml "cell_cfg.pdcch.common" "ss0_index" "0"
-update_yaml configs/gnb.yaml "cell_cfg.pdcch.common" "coreset0_index" "12"
-update_yaml configs/gnb.yaml "cell_cfg.pdcch.dedicated" "ss2_type" "common"
-update_yaml configs/gnb.yaml "cell_cfg.pdcch.dedicated" "dci_format_0_1_and_1_1" "false"
-update_yaml configs/gnb.yaml "cell_cfg.prach" "prach_config_index" "1"
 
 # For ZeroMQ, change otw_format from sc12 --> null
 update_yaml configs/gnb.yaml "ru_sdr" "otw_format" null

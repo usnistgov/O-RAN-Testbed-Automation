@@ -31,7 +31,11 @@
 # Exit immediately if a command fails
 set -e
 
-MOCK_MODE=true
+if [ "$1" = "mock" ]; then
+    MOCK_MODE=true
+else
+    MOCK_MODE=false
+fi
 
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
@@ -46,7 +50,7 @@ if ! command -v docker-compose &>/dev/null; then
 fi
 
 if [ ! -d nonrtric-controlpanel ]; then
-    git clone https://gerrit.o-ran-sc.org/r/portal/nonrtric-controlpanel -b master
+    ./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/portal/nonrtric-controlpanel.git nonrtric-controlpanel
 fi
 cd nonrtric-controlpanel
 if ! sudo docker ps -a | grep -q nonrtric-controlpanel || ! sudo docker ps -a | grep -q nonrtric-gateway; then

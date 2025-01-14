@@ -50,7 +50,7 @@ if ! command -v docker-compose &>/dev/null; then
 fi
 
 if [ ! -d nonrtric-controlpanel ]; then
-    git clone https://gerrit.o-ran-sc.org/r/portal/nonrtric-controlpanel -b master
+    ./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/portal/nonrtric-controlpanel.git nonrtric-controlpanel
 fi
 cd nonrtric-controlpanel
 if ! sudo docker ps -a | grep -q nonrtric-controlpanel || ! sudo docker ps -a | grep -q nonrtric-gateway; then

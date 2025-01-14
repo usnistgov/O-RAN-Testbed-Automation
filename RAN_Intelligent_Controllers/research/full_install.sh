@@ -83,22 +83,22 @@ fi
 
 cd "$SCRIPT_DIR/dep/"
 
-# if [ ! -d nonrtric_j_release ] || [ -z "$(ls -A nonrtric_j_release)" ]; then
-#     [ -d nonrtric_j_release ] && rm -rf nonrtric_j_release # Remove the directory if it is empty
+# if [ ! -d nonrtric_selected_release ] || [ -z "$(ls -A nonrtric_selected_release)" ]; then
+#     [ -d nonrtric_selected_release ] && rm -rf nonrtric_selected_release # Remove the directory if it is empty
 #     echo
-#     echo "Cloning J-release: dep/nonrtric_j_release..."
-#     git clone https://gerrit.o-ran-sc.org/r/nonrtric/plt/ranpm -b j-release nonrtric_j_release
+#     echo "Cloning selected release of dep/nonrtric..."
+#     git clone https://gerrit.o-ran-sc.org/r/nonrtric/plt/ranpm -b j-release nonrtric_selected_release
 # fi
 if [ ! -d ranpm ] || [ -z "$(ls -A ranpm)" ]; then
     [ -d ranpm ] && rm -rf ranpm # Remove the directory if it is empty
     echo
-    echo "Cloning J-release of dep/ranpm..."
+    echo "Cloning selected release of dep/ranpm..."
     git clone https://gerrit.o-ran-sc.org/r/nonrtric/plt/ranpm -b j-release ranpm
 fi
 if [ ! -d ric-dep ] || [ -z "$(ls -A ric-dep)" ]; then
     [ -d ric-dep ] && rm -rf ric-dep # Remove the directory if it is empty
     echo
-    echo "Cloning J-release of dep/ric-dep..."
+    echo "Cloning selected release of dep/ric-dep..."
     git clone https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep -b j-release ric-dep
 fi
 if [ ! -d smo-install/multicloud-k8s ] || [ -z "$(ls -A smo-install/multicloud-k8s)" ]; then

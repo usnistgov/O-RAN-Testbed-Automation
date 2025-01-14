@@ -38,7 +38,7 @@ cd "$PARENT_DIR"
 set -e
 
 if [ ! -d "rappmanager" ]; then
-    git clone https://gerrit.o-ran-sc.org/r/nonrtric/plt/rappmanager -b k-release
+    ./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/nonrtric/plt/rappmanager.git rappmanager
 fi
 
 cd rappmanager/sample-rapp-generator

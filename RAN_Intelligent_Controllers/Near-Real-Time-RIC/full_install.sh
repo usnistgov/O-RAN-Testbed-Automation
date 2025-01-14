@@ -39,7 +39,7 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-echo "Installing Near-RT RIC with J-Release..."
+echo "Installing Near-RT RIC with selected release..."
 
 # Run a sudo command every minute to ensure script execution without user interaction
 ./install_scripts/start_sudo_refresh.sh
@@ -108,7 +108,7 @@ else
 
     # Download ric-dep from gerrit
     if [ ! -d "ric-dep" ]; then
-        git clone https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep -b j-release
+        ./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep.git ric-dep
     fi
     # Patch the install script and save a backup of the original
     if [ ! -f "ric-dep/bin/install_k8s_and_helm.previous.sh" ]; then
@@ -300,7 +300,7 @@ if [ "$(sudo docker ps -aq -f name=^/oransim$ | wc -l)" -ge 1 ] && [ -d "e2-inte
     echo
 else
     if [ ! -d "e2-interface" ]; then
-        git clone https://gerrit.o-ran-sc.org/r/sim/e2-interface
+        ./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/sim/e2-interface.git
     fi
     sudo ./install_scripts/install_e2sim.sh
 fi
@@ -335,7 +335,7 @@ echo
 echo "Installing the xApp Onboarder (dms_cli)..."
 # Download appmgr from gerrit
 if [ ! -d "appmgr" ]; then
-    git clone https://gerrit.o-ran-sc.org/r/ric-plt/appmgr
+    ./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-plt/appmgr.git
 fi
 sudo ./install_scripts/run_xapp_onboarder.sh
 
@@ -344,7 +344,7 @@ mkdir -p xApps
 cd xApps
 if [ ! -d "hw-go" ]; then
     echo "Cloning Hello World xApp..."
-    git clone https://gerrit.o-ran-sc.org/r/ric-app/hw-go
+    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/hw-go.git
 fi
 cd ..
 

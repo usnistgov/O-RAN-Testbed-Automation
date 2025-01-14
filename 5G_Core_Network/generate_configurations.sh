@@ -266,7 +266,7 @@ sudo ip6tables -t nat -A POSTROUTING -s 2001:db8:cafe::/48 ! -o ogstun -j MASQUE
 echo "By default, Ubuntu enables a firewall that blocks the UE from accessing the internet. Disabling the firewall..."
 sudo ufw status
 sudo ufw disable
-sudo ufw status
+sudo ufw status || true
 
 mkdir -p "$SCRIPT_DIR/logs"
 sudo chown $USER:$USER -R "$SCRIPT_DIR/logs"

@@ -1,5 +1,5 @@
 {
-  "https://github.com/open5gs/open5gs.git": ["", "13585a34e3d5505dd86d2cdf78c91829f3936851"],
+  "https://github.com/open5gs/open5gs.git": ["", "9c370ff89a5fb7dc4e970d60836fd27135ee4187"],
   "https://github.com/srsran/srsRAN_4G.git": ["", "ec29b0c1ff79cebcbe66caa6d6b90778261c42b8"],
   "https://github.com/zeromq/libzmq.git": ["", "34f7fa22022bed9e0e390ed3580a1c83ac4a2834"],
   "https://github.com/zeromq/czmq.git": ["", "5b5c640248dfb6e9a9a612cfad16d8c019e5702c"],
@@ -11,7 +11,7 @@
   "https://gerrit.o-ran-sc.org/r/it/dep": ["master", "656c16d717812040d2132ad4245c8e49675e8a29"],
   "https://gerrit.o-ran-sc.org/r/nonrtric/plt/ranpm": ["master", "dbb29d3eb620b0ed223510590030a9a4a3c73d50"],
   "https://github.com/onap/multicloud-k8s.git": ["", "8bea0a13c223aff43f98f0cb6426379bb23e8894"],
-  "https://gerrit.onap.org/r/oom": ["", "7c1a102b5ba91490e6d9e5b3d419a2f2cdc91d4b"],
+  "https://gerrit.onap.org/r/oom": ["", "4885be4c0fde704fd1c56df408871be0647b6e4f"],
   "https://gerrit.o-ran-sc.org/r/portal/nonrtric-controlpanel": ["master", "15bdaf8f25dca54e3a52ad30d69fa2eb1d59ce48"],
   "https://gerrit.o-ran-sc.org/r/nonrtric/plt/rappmanager": ["j-release", "ffd5b45b53572ae42fbc22510bcbe3ad8883b86f"]
 }

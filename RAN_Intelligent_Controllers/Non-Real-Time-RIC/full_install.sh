@@ -247,7 +247,7 @@ fi
 
 if ! command -v envsubst &>/dev/null; then
     echo "Installing envsubst..."
-    # Code from https://github.com/a8m/envsubst
+    # Code from (https://github.com/a8m/envsubst):
     curl -L https://github.com/a8m/envsubst/releases/download/v1.2.0/envsubst-$(uname -s)-$(uname -m) -o envsubst
     chmod +x envsubst
     sudo mv envsubst /usr/local/bin
@@ -329,28 +329,6 @@ fi
 echo
 echo "Waiting for Non-RT RIC pods..."
 sudo ./install_scripts/wait_for_nonrtric_pods.sh
-
-# Remove the oran-nonrtric-kong-init-migrations pod if it has completed
-CMD="kubectl get pods -n nonrtric --no-headers | grep 'oran-nonrtric-kong-init-migrations' | awk '{print \$1, \$3}'"
-POD_INFO=$(eval $CMD)
-POD_NAME=$(echo $POD_INFO | awk '{print $1}')
-POD_STATUS=$(echo $POD_INFO | awk '{print $2}')
-if [ "$POD_STATUS" == "Completed" ]; then
-    echo "Cleaning up pod $POD_NAME..."
-    kubectl delete pod $POD_NAME -n nonrtric
-fi
-
-# Initialize the Kong database with the necessary schema and configurations
-CMD="kubectl get pods -n nonrtric --no-headers | grep 'oran-nonrtric-kong' | awk '{print \$1, \$3}'"
-POD_INFO=$(eval $CMD)
-if [ ! -z "$POD_INFO" ]; then
-    POD_NAME=$(echo $POD_INFO | awk '{print $1}')
-    POD_STATUS=$(echo $POD_INFO | awk '{print $2}')
-    if [ ! "$POD_STATUS" == "Running" ]; then
-        echo "Cleaning up pod $POD_NAME..."
-        kubectl exec -n nonrtric -c wait-for-db $POD_NAME -- kong migrations bootstrap
-    fi
-fi
 
 cd "$SCRIPT_DIR"
 

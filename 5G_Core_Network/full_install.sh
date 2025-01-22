@@ -243,7 +243,14 @@ sudo ip link set ogstun up
 
 # Step 4: Building Open5GS
 echo "Installing dependencies for building Open5GS..."
-sudo apt-get install -y python3-pip python3-setuptools python3-wheel ninja-build build-essential flex bison git cmake libsctp-dev libgnutls28-dev libgcrypt-dev libssl-dev libidn11-dev libmongoc-dev libbson-dev libyaml-dev libnghttp2-dev libmicrohttpd-dev libcurl4-gnutls-dev libnghttp2-dev libtins-dev libtalloc-dev meson
+
+# Code from (https://open5gs.org/open5gs/docs/guide/02-building-open5gs-from-sources#building-open5gs):
+sudo apt-get install -y python3-pip python3-setuptools python3-wheel ninja-build build-essential flex bison git cmake libsctp-dev libgnutls28-dev libgcrypt-dev libssl-dev libmongoc-dev libbson-dev libyaml-dev libnghttp2-dev libmicrohttpd-dev libcurl4-gnutls-dev libnghttp2-dev libtins-dev libtalloc-dev meson
+if apt-cache show libidn-dev >/dev/null 2>&1; then
+    sudo apt-get install -y --no-install-recommends libidn-dev
+else
+    sudo apt-get install -y --no-install-recommends libidn11-dev
+fi
 
 rm -rf build
 

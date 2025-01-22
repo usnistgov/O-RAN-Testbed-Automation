@@ -66,7 +66,7 @@ if ! command -v jq &>/dev/null; then
 fi
 
 # First check the directory containing install_scripts/, otherwise, use the home directory
-if -f "$PARENT_DIR/commit_hashes.json"; then
+if [ -f "$PARENT_DIR/commit_hashes.json" ]; then
     JSON_FILE="$PARENT_DIR/commit_hashes.json"
 else
     JSON_FILE="$HOME_DIR/commit_hashes.json"

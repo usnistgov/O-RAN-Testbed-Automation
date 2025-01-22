@@ -42,6 +42,22 @@ cd "$SCRIPT_DIR"
 # Ensure backward compatibility with previous installations
 sudo ./Additional_Scripts/migrate_to_new_version.sh
 
+# Loop over all arguments to set KEEP_OLD_DIRS based on -y or -n
+KEEP_OLD_DIRS=""
+for arg in "$@"; do
+    case $arg in
+    -y | --yes)
+        KEEP_OLD_DIRS="y"
+        break
+        ;;
+    -n | --no)
+        if [ "$KEEP_OLD_DIRS" != "y" ]; then
+            KEEP_OLD_DIRS="n"
+        fi
+        ;;
+    esac
+done
+
 # Check if the applications are already installed and ask the user if they should be reset
 OPEN5GS_INSTALLED=false
 if [ -f "5G_Core_Network/open5gs/install/bin/open5gs-amfd" ] && [ -f "5G_Core_Network/open5gs/install/bin/open5gs-upfd" ]; then
@@ -55,17 +71,27 @@ UE_INSTALLED=false
 if [ -f "User_Equipment/srsRAN_4G/build/srsue/src/srsue" ]; then
     UE_INSTALLED=true
 fi
+
 # If any of them are installed then ask the user if they should be reset
-if [ "$OPEN5GS_INSTALLED" = true ] || [ "$GNODEB_INSTALLED" = true ] || [ "$UE_INSTALLED" = true ]; then
+if [[ "$OPEN5GS_INSTALLED" = true || "$GNODEB_INSTALLED" = true || "$UE_INSTALLED" = true ]]; then
     echo
-    echo "Previous installations were found, do you want to keep the old installations? (y/n)"
-    read -r KEEP_OLD_DIRS
-    # Only allow case insensitive y, yes, n, and no
-    if [ "$KEEP_OLD_DIRS" != "y" ] && [ "$KEEP_OLD_DIRS" != "yes" ] && [ "$KEEP_OLD_DIRS" != "n" ] && [ "$KEEP_OLD_DIRS" != "no" ]; then
-        echo "Invalid input. Exiting."
-        exit 1
+    if [ -z "$KEEP_OLD_DIRS" ]; then
+        echo "Previous installations were found, do you want to keep the old installations? (y/n)"
+        read -r KEEP_OLD_DIRS
+        # Normalize input to lowercase and only accept inputs: y, yes, n, no
+        KEEP_OLD_DIRS=$(echo "$KEEP_OLD_DIRS" | tr '[:upper:]' '[:lower:]')
+        if [[ "$KEEP_OLD_DIRS" != "y" && "$KEEP_OLD_DIRS" != "yes" && "$KEEP_OLD_DIRS" != "n" && "$KEEP_OLD_DIRS" != "no" ]]; then
+            echo "Invalid input. Exiting."
+            exit 1
+        fi
+    else
+        if [[ "$KEEP_OLD_DIRS" == "n" || "$KEEP_OLD_DIRS" == "no" ]]; then
+            echo "Previous installations were found, removing the old installations."
+        else
+            echo "Previous installations were found, keeping the old installations."
+        fi
     fi
-    if [ "$KEEP_OLD_DIRS" = "n" ] || [ "$KEEP_OLD_DIRS" = "no" ]; then
+    if [[ "$KEEP_OLD_DIRS" = "n" || "$KEEP_OLD_DIRS" = "no" ]]; then
         sudo rm -rf 5G_Core_Network/open5gs
         sudo rm -rf 5G_Core_Network/logs
         sudo rm -rf 5G_Core_Network/configs

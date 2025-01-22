@@ -57,6 +57,7 @@ fi
 
 CURRENT_DIR=$(pwd)
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
+PARENT_DIR=$(dirname "$SCRIPT_DIR")
 HOME_DIR=$(dirname "$(dirname "$SCRIPT_DIR")")
 
 if ! command -v jq &>/dev/null; then
@@ -64,7 +65,12 @@ if ! command -v jq &>/dev/null; then
     sudo apt-get install -y jq
 fi
 
-JSON_FILE="$HOME_DIR/commit_hashes.json"
+# First check the directory containing install_scripts/, otherwise, use the home directory
+if [ -f "$PARENT_DIR/commit_hashes.json" ]; then
+    JSON_FILE="$PARENT_DIR/commit_hashes.json"
+else
+    JSON_FILE="$HOME_DIR/commit_hashes.json"
+fi
 
 cd "$CURRENT_DIR"
 

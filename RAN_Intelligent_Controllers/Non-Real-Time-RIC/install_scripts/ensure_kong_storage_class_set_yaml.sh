@@ -28,56 +28,42 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-# This script will download the 5G_Core_Network, gNodeB, User_Equipment and RAN_Intelligent_Controllers repositories for analyzing the source code without requiring a full testbed build and installation.
-
 echo "# Script: $(realpath $0)..."
-
-if ! command -v realpath &>/dev/null; then
-    echo "Package \"coreutils\" not found, installing..."
-    sudo apt-get install -y coreutils
-fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$(dirname "$SCRIPT_DIR")"
 
-cd 5G_Core_Network
-./install_scripts/git_clone.sh https://github.com/open5gs/open5gs.git
-cd ..
+# Get the file path from the command line argument
+KONG_CONFIG_PATH=$1
 
-cd User_Equipment
-./install_scripts/git_clone.sh https://github.com/srsran/srsRAN_4G.git
-./install_scripts/git_clone.sh https://github.com/zeromq/libzmq.git
-./install_scripts/git_clone.sh https://github.com/zeromq/czmq.git
-cd ..
+# Check if the file path is provided
+if [[ -z "$KONG_CONFIG_PATH" ]]; then
+    echo "Error: No file path provided."
+    echo "Usage: $0 <path_to_yaml_file>"
+    exit 1
+fi
 
-cd Next_Generation_Node_B
-./install_scripts/git_clone.sh https://github.com/srsran/srsRAN_Project.git
-cd ..
+# Check if the file exists and is readable
+if [[ ! -f "$KONG_CONFIG_PATH" ]]; then
+    echo "Error: File '$KONG_CONFIG_PATH' does not exist."
+    exit 1
+fi
 
-cd RAN_Intelligent_Controllers/Near-Real-Time-RIC
-./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep.git
-./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/sim/e2-interface.git
-./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-plt/appmgr.git
-mkdir -p xApps
-cd xApps
-./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/hw-go.git
-cd ..
-cd ..
-cd ..
+if [[ ! -r "$KONG_CONFIG_PATH" ]]; then
+    echo "Error: File '$KONG_CONFIG_PATH' is not readable."
+    exit 1
+fi
 
-cd RAN_Intelligent_Controllers/Non-Real-Time-RIC
-./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/it/dep.git
-cd dep
-git restore --source=HEAD :/
-cd ..
-./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/nonrtric/plt/ranpm.git dep/ranpm
-./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep.git dep/ric-dep
-./install_scripts/git_clone.sh https://github.com/onap/multicloud-k8s.git dep/smo-install/multicloud-k8s
-./install_scripts/git_clone.sh https://gerrit.onap.org/r/oom.git dep/smo-install/onap_oom
-./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/portal/nonrtric-controlpanel.git
-./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/nonrtric/plt/rappmanager.git
-mkdir -p rApps
-cd ..
-cd ..
+# Check if the YAML editor is installed, and install it if not
+if ! command -v yq &>/dev/null; then
+    sudo ./install_scripts/install_yq.sh
+fi
 
-echo "Repositories were cloned successfully."
+CURRENT_STORAGE_CLASS=$(yq eval '.postgresql.primary.persistence.storageClass' "$KONG_CONFIG_PATH")
+
+if [ -z "$CURRENT_STORAGE_CLASS" ] || [ "$CURRENT_STORAGE_CLASS" == "null" ]; then
+    echo "Default storage class for Kong was not set, setting..."
+    yq eval '.postgresql.primary.persistence.storageClass = "standard"' -i "$KONG_CONFIG_PATH"
+else
+    echo "Storage class is already set to $CURRENT_STORAGE_CLASS. No changes made."
+fi

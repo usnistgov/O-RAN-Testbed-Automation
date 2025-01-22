@@ -40,6 +40,9 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
+# Run a sudo command every minute to ensure script execution without user interaction
+./install_scripts/start_sudo_refresh.sh
+
 # Install dependencies if not already installed
 if ! command -v python3 &>/dev/null; then
     echo "Python is not installed. Installing Python..."
@@ -108,4 +111,8 @@ if [ ! -f $REQ_HASH_FILE ] || [ "$(sha256sum requirements.txt | awk '{print $1}'
 fi
 
 cd "$SCRIPT_DIR"
+
 pytest tests/ -s
+
+# Stop the sudo timeout refresher, it is no longer necessary to run
+./install_scripts/stop_sudo_refresh.sh

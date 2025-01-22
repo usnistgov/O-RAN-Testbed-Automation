@@ -28,9 +28,7 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-# This script will download the 5G_Core_Network, gNodeB, User_Equipment and RAN_Intelligent_Controllers repositories for analyzing the source code without requiring a full testbed build and installation.
-
-echo "# Script: $(realpath $0)..."
+# This script updates the commit hash for each repository in the JSON file. It respects the first field in each repository's entry, which is the branch name. If the branch name is "", it fetches the default branch's latest commit hash instead.
 
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
@@ -40,44 +38,43 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$(dirname "$SCRIPT_DIR")"
 
-cd 5G_Core_Network
-./install_scripts/git_clone.sh https://github.com/open5gs/open5gs.git
-cd ..
+if ! command -v jq &>/dev/null; then
+    echo "Installing jq..."
+    sudo apt-get install -y jq
+fi
 
-cd User_Equipment
-./install_scripts/git_clone.sh https://github.com/srsran/srsRAN_4G.git
-./install_scripts/git_clone.sh https://github.com/zeromq/libzmq.git
-./install_scripts/git_clone.sh https://github.com/zeromq/czmq.git
-cd ..
+JSON_FILE="commit_hashes.json"
+JSON_CONTENTS=$(jq '.' "$JSON_FILE")
 
-cd Next_Generation_Node_B
-./install_scripts/git_clone.sh https://github.com/srsran/srsRAN_Project.git
-cd ..
+# Go through each repository and update the commit hash
+for REPOSITORY in $(jq 'keys[]' "$JSON_FILE" | tr -d '"'); do
+    BRANCH=$(jq -r ".\"$REPOSITORY\"[0]" "$JSON_FILE")
+    PREV_COMMIT_HASH=$(jq -r ".\"$REPOSITORY\"[1]" "$JSON_FILE")
 
-cd RAN_Intelligent_Controllers/Near-Real-Time-RIC
-./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep.git
-./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/sim/e2-interface.git
-./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-plt/appmgr.git
-mkdir -p xApps
-cd xApps
-./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/hw-go.git
-cd ..
-cd ..
-cd ..
+    if [[ -z "$BRANCH" ]]; then
+        # Fetch the default branch's latest commit
+        echo "Updating commit hash for $REPOSITORY..."
+        COMMIT_HASH=$(git ls-remote "$REPOSITORY" HEAD | awk '{ print $1 }')
+    else
+        # Fetch the specified branch's latest commit
+        echo "Updating commit hash for $REPOSITORY on branch $BRANCH..."
+        COMMIT_HASH=$(git ls-remote "$REPOSITORY" "refs/heads/$BRANCH" | awk '{ print $1 }')
+    fi
 
-cd RAN_Intelligent_Controllers/Non-Real-Time-RIC
-./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/it/dep.git
-cd dep
-git restore --source=HEAD :/
-cd ..
-./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/nonrtric/plt/ranpm.git dep/ranpm
-./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep.git dep/ric-dep
-./install_scripts/git_clone.sh https://github.com/onap/multicloud-k8s.git dep/smo-install/multicloud-k8s
-./install_scripts/git_clone.sh https://gerrit.onap.org/r/oom.git dep/smo-install/onap_oom
-./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/portal/nonrtric-controlpanel.git
-./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/nonrtric/plt/rappmanager.git
-mkdir -p rApps
-cd ..
-cd ..
+    if [[ -n "$COMMIT_HASH" ]]; then
+        # Update the commit hash in the JSON structure
+        JSON_CONTENTS=$(echo "$JSON_CONTENTS" | jq ".\"$REPOSITORY\"[1] = \"$COMMIT_HASH\"")
+        echo "    $COMMIT_HASH"
+    else
+        echo "    Failed to retrieve commit hash, skipping."
+        echo
+    fi
+done
 
-echo "Repositories were cloned successfully."
+# Format the JSON for easier reading
+FORMATTED_JSON_CONTENTS=$(echo "$JSON_CONTENTS" | sed -e ':a' -e 'N' -e '$!ba' -e 's/\[\n    /[/g')
+FORMATTED_JSON_CONTENTS=$(echo "$FORMATTED_JSON_CONTENTS" | sed -e ':a' -e 'N' -e '$!ba' -e 's/,\n    /, /g')
+FORMATTED_JSON_CONTENTS=$(echo "$FORMATTED_JSON_CONTENTS" | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n  ]/]/g')
+
+echo "$FORMATTED_JSON_CONTENTS" >"$JSON_FILE"
+echo "Successfully updated commit hashes."

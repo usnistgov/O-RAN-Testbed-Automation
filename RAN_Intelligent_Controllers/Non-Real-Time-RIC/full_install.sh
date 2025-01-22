@@ -287,7 +287,7 @@ else
     echo "At least one nonrtric pod is not running, resetting Non-RT RIC pods..."
     cd "$SCRIPT_DIR"
 
-    # Revise the YAML file for the Non-RT RIC pods
+    echo "Revising the YAML file for the Non-RT RIC pods..."
     RIC_YAML_FILE_PATH="dep/RECIPE_EXAMPLE/NONRTRIC/example_recipe.yaml"
     RIC_YAML_FILE_PATH_MODIFIED="dep/RECIPE_EXAMPLE/NONRTRIC/example_recipe_MODIFIED.yaml"
     sudo chown $USER:$USER $RIC_YAML_FILE_PATH
@@ -295,7 +295,19 @@ else
     sudo chown $USER:$USER $RIC_YAML_FILE_PATH_MODIFIED
     sudo "$SCRIPT_DIR/install_scripts/./revise_example_recipe_yaml.sh" "$RIC_YAML_FILE_PATH_MODIFIED"
 
+    echo "Setting default storage class for Kong..."
+    KONG_YAML_FILE_PATH="dep/nonrtric/helm/kongstorage/kongvalues.yaml"
+    KONG_YAML_FILE_PATH_BACKUP="dep/nonrtric/helm/kongstorage/kongvalues.original.yaml"
+    sudo chown $USER:$USER $KONG_YAML_FILE_PATH
+    if [ ! -f "$KONG_YAML_FILE_PATH_BACKUP" ]; then
+        sudo cp $KONG_YAML_FILE_PATH $KONG_YAML_FILE_PATH_BACKUP
+        sudo chown $USER:$USER $KONG_YAML_FILE_PATH_BACKUP
+    fi
+    sudo "$SCRIPT_DIR/install_scripts/./ensure_kong_storage_class_set_yaml.sh" "$KONG_YAML_FILE_PATH"
+
     cd "$SCRIPT_DIR/dep/"
+
+    echo "Deploying Non-RT RIC..."
     sudo ./bin/deploy-nonrtric -f ./RECIPE_EXAMPLE/NONRTRIC/example_recipe_MODIFIED.yaml
     echo "Successfully installed Non-RT RIC pods."
 fi
@@ -328,11 +340,23 @@ if [ "$POD_STATUS" == "Completed" ]; then
     kubectl delete pod $POD_NAME -n nonrtric
 fi
 
+# Initialize the Kong database with the necessary schema and configurations
+CMD="kubectl get pods -n nonrtric --no-headers | grep 'oran-nonrtric-kong' | awk '{print \$1, \$3}'"
+POD_INFO=$(eval $CMD)
+if [ ! -z "$POD_INFO" ]; then
+    POD_NAME=$(echo $POD_INFO | awk '{print $1}')
+    POD_STATUS=$(echo $POD_INFO | awk '{print $2}')
+    if [ ! "$POD_STATUS" == "Running" ]; then
+        echo "Cleaning up pod $POD_NAME..."
+        kubectl exec -n nonrtric -c wait-for-db $POD_NAME -- kong migrations bootstrap
+    fi
+fi
+
 cd "$SCRIPT_DIR"
 
 echo
 echo "Installing and running the control panel..."
-./run_control_panel.sh mock
+./run_control_panel.sh
 
 echo
 echo "Ensuring the Non-RT RIC pods are still ready..."
@@ -345,7 +369,9 @@ echo "Generating sample rApps..."
 echo
 echo "Testing the Non-RT RIC functionality..."
 if ! ./run_tests.sh; then
-    echo "Some of the Non-RT RIC tests failed. Try running the tests again with \"./run_tests.sh\"."
+    echo "Some of the Non-RT RIC tests failed. Wairing for pods, then retrying..."
+    sudo ./install_scripts/wait_for_nonrtric_pods.sh
+    ./run_tests.sh
 else
     echo "Successfully passed the tests; the Non-RT RIC is functional."
 fi

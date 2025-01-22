@@ -94,7 +94,7 @@ while true; do
         echo "Test successful: RRC NR reconfiguration successful."
         break
     fi
-    ELAPSED_TIME=$(( $(date +%s) - START_TIME ))
+    ELAPSED_TIME=$(($(date +%s) - START_TIME))
     if [ $ELAPSED_TIME -ge $TIMEOUT_DURATION ]; then
         echo "Timeout reached: Test did not confirm successful UE connection within the 30 minutes."
         ./stop.sh

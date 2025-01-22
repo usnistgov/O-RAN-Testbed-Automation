@@ -1,0 +1,10 @@
+{
+  "https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep": ["", "33b5940a15ea852d47f73521295eef53d295b7fd"],
+  "https://gerrit.o-ran-sc.org/r/ric-plt/appmgr": ["", "4c05932dce72e98db23eaff2b72b58816e1f2d55"],
+  "https://gerrit.o-ran-sc.org/r/it/dep": ["", "656c16d717812040d2132ad4245c8e49675e8a29"],
+  "https://gerrit.o-ran-sc.org/r/nonrtric/plt/ranpm": ["", "dbb29d3eb620b0ed223510590030a9a4a3c73d50"],
+  "https://github.com/onap/multicloud-k8s.git": ["", "8bea0a13c223aff43f98f0cb6426379bb23e8894"],
+  "https://gerrit.onap.org/r/oom": ["", "a839fbfe4fcde58fa31c02d89782b25412c404f2"],
+  "https://gerrit.o-ran-sc.org/r/portal/nonrtric-controlpanel": ["master", "15bdaf8f25dca54e3a52ad30d69fa2eb1d59ce48"],
+  "https://gerrit.o-ran-sc.org/r/nonrtric/plt/rappmanager": ["", "835ea1ab66130ef8bc7a6b8136f060780d7db831"]
+}

@@ -52,95 +52,59 @@ mkdir -p rApps
 
 cd rappmanager/sample-rapp-generator
 
-if [ -d rapp-hello-world ]; then
-    echo
-    echo "Generating Hello World rApp binary (rapp-hello-world.csar)..."
-    ./generate.sh rapp-hello-world
-    echo "Moving rApp binary to rApps directory..."
-    cp rapp-hello-world.csar "$PARENT_DIR/rApps"
-else
-    echo "Could not find rappmanager/sample-rapp-generator/rapp-hello-world, skipping."
-fi
+RAPPS=("rapp-hello-world" "rapp-hello-world-sme-invoker" "rapp-kserve" "rapp-sample-ics-consumer" "rapp-sample-ics-producer" "rapp-simple-ics-consumer" "rapp-simple-ics-producer" "rapp-simple-ics-consumer" "rapp-all")
 
-if [ -d rapp-hello-world-sme-invoker ]; then
-    echo
-    echo "Generating Hello World SME Invoker rApp binary (rapp-hello-world-sme-invoker.csar)..."
-    ./generate.sh rapp-hello-world-sme-invoker
-    echo "Moving rApp binary to rApps directory..."
-    cp rapp-hello-world-sme-invoker.csar "$PARENT_DIR/rApps"
-else
-    echo "Could not find rappmanager/sample-rapp-generator/rapp-hello-world-sme-invoker, skipping."
-fi
+INTERFACE=$(ip route | grep default | awk '{print $5}' | head -n 1)
+IP_ADDRESS=$(ip addr show $INTERFACE | grep 'inet ' | awk '{print $2}' | cut -d/ -f1)
 
-if [ -d rapp-kserve ]; then
-    echo
-    echo "Generating KServe rApp binary (rapp-kserve.csar)..."
-    ./generate.sh rapp-kserve
-    echo "Moving rApp binary to rApps directory..."
-    cp rapp-kserve.csar "$PARENT_DIR/rApps"
-else
-    echo "Could not find rappmanager/sample-rapp-generator/rapp-kserve, skipping."
-fi
+# Iterate over each rApp
+for RAPP in "${RAPPS[@]}"; do
+    if [ -d "$RAPP" ]; then
+        echo
+        echo "Configuring then generating ${RAPP} rApp binary (${RAPP}.csar)..."
 
-if [ -d rapp-sample-ics-consumer ]; then
-    echo
-    echo "Generating Sample ICS Consumer rApp binary (rapp-sample-ics-consumer.csar)..."
-    ./generate.sh rapp-sample-ics-consumer
-    echo "Moving rApp binary to rApps directory..."
-    cp rapp-sample-ics-consumer.csar "$PARENT_DIR/rApps"
-else
-    echo "Could not find rappmanager/sample-rapp-generator/rapp-sample-ics-consumer, skipping."
-fi
+        # Configure the rApp by setting the Chart Museum post charts URI
+        ASD_YAML="$RAPP/Definitions/asd.yaml"
+        if [ -f $ASD_YAML ]; then
+            PRODUCER_URI_EXISTS=$(yq eval '.topology_template.node_templates.applicationServiceDescriptor.artifacts.producer.properties.target_server_uri' "$ASD_YAML")
+            if [ "$PRODUCER_URI_EXISTS" != "null" ]; then
+                yq eval ".topology_template.node_templates.applicationServiceDescriptor.artifacts.producer.properties.target_server_uri = \"http://$IP_ADDRESS:8879/charts/api/charts\"" -i "$ASD_YAML"
+                echo "    Configured producer of rApp asd.yaml."
+            fi
 
-if [ -d rapp-sample-ics-producer ]; then
-    echo
-    echo "Generating Sample ICS Producer rApp binary (rapp-sample-ics-producer.csar)..."
-    ./generate.sh rapp-sample-ics-producer
-    echo "Moving rApp binary to rApps directory..."
-    cp rapp-sample-ics-producer.csar "$PARENT_DIR/rApps"
-else
-    echo "Could not find rappmanager/sample-rapp-generator/rapp-sample-ics-producer, skipping."
-fi
+            CONSUMER_URI_EXISTS=$(yq eval '.topology_template.node_templates.applicationServiceDescriptor.artifacts.consumer.properties.target_server_uri' "$ASD_YAML")
+            if [ "$CONSUMER_URI_EXISTS" != "null" ]; then
+                yq eval ".topology_template.node_templates.applicationServiceDescriptor.artifacts.consumer.properties.target_server_uri = \"http://$IP_ADDRESS:8879/charts/api/charts\"" -i "$ASD_YAML"
+                echo "    Configured consumer of rApp asd.yaml."
+            fi
 
-if [ -d rapp-simple-ics-consumer ]; then
-    echo
-    echo "Generating Simple ICS Consumer rApp binary (rapp-simple-ics-consumer.csar)..."
-    ./generate.sh rapp-simple-ics-consumer
-    echo "Moving rApp binary to rApps directory..."
-    cp rapp-simple-ics-consumer.csar "$PARENT_DIR/rApps"
-else
-    echo "Could not find rappmanager/sample-rapp-generator/rapp-simple-ics-consumer, skipping."
-fi
+            # Check for any remaining variables to set
+            if grep -q "UPDATE_THIS_CHART_MUSEUM_POST_CHARTS_URI" "$ASD_YAML"; then
+                sed -i "s|UPDATE_THIS_CHART_MUSEUM_POST_CHARTS_URI|http://$IP_ADDRESS:8879/charts/api/charts|g" "$ASD_YAML"
+                echo "    Configured remaining URIs of rApp asd.yaml."
+            fi
+        fi
+        K8S_INSTANCE_JSON="$RAPP/Files/Acm/instances/k8s-instance.json"
+        if [ -f $K8S_INSTANCE_JSON ]; then
 
-if [ -d rapp-simple-ics-producer ]; then
-    echo
-    echo "Generating Simple ICS Producer rApp binary (rapp-simple-ics-producer.csar)..."
-    ./generate.sh rapp-simple-ics-producer
-    echo "Moving rApp binary to rApps directory..."
-    cp rapp-simple-ics-producer.csar "$PARENT_DIR/rApps"
-else
-    echo "Could not find rappmanager/sample-rapp-generator/rapp-simple-ics-producer, skipping."
-fi
+            # Check for any variables to set
+            if grep -q "UPDATE_THIS_CHART_MUSEUM_GET_CHARTS_URI" "$K8S_INSTANCE_JSON"; then
+                sed -i "s|UPDATE_THIS_CHART_MUSEUM_GET_CHARTS_URI|http://$IP_ADDRESS:8879/charts/api/charts|g" "$K8S_INSTANCE_JSON"
+                echo "    Configured URIs of rApp k8s-instance.json."
+            fi
+            if grep -q "UPDATE_THIS_MACHINE_IP" "$K8S_INSTANCE_JSON"; then
+                sed -i "s|UPDATE_THIS_MACHINE_IP|$IP_ADDRESS|g" "$K8S_INSTANCE_JSON"
+                echo "    Configured machine IP of rApp k8s-instance.json."
+            fi
+        fi
 
-if [ -d rapp-simple-ics-consumer ]; then
-    echo
-    echo "Generating Simple ICS Producer Consumer rApp binary (rapp-simple-ics-consumer.csar)..."
-    ./generate.sh rapp-simple-ics-consumer
-    echo "Moving rApp binary to rApps directory..."
-    cp rapp-simple-ics-consumer.csar "$PARENT_DIR/rApps"
-else
-    echo "Could not find rappmanager/sample-rapp-generator/rapp-simple-ics-consumer, skipping."
-fi
-
-if [ -d rapp-all ]; then
-    echo
-    echo "Generating rApp All binary (rapp-all.csar)..."
-    ./generate.sh rapp-all
-    echo "Moving rApp binary to rApps directory..."
-    cp rapp-all.csar "$PARENT_DIR/rApps"
-else
-    echo "Could not find rappmanager/sample-rapp-generator/rapp-all, skipping."
-fi
+        ./generate.sh "$RAPP"
+        echo "Moving rApp binary to rApps directory..."
+        cp "${RAPP}.csar" "$PARENT_DIR/rApps"
+    else
+        echo "Could not find rappmanager/sample-rapp-generator/${RAPP}, skipping."
+    fi
+done
 
 echo
 echo "Successfully generated sample rApp binaries."

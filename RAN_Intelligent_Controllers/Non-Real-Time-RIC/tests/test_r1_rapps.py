@@ -35,7 +35,7 @@ import pytest
 import requests
 
 global rapp_id, rapp_file_name
-rapp_id = "icsconsumer2"
+rapp_id = "icsconsumer"
 #rapp_file_name = "rapp-hello-world.csar"
 rapp_file_name = "rapp-simple-ics-consumer.csar"
 
@@ -96,7 +96,12 @@ def test_rapp_creation():
     remove_test_rapp_if_exists(rapp_id, rapp_file_name)
 
     print("Creating testing rApp...")
-    rapp_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "rApps")
+    rapp_dir_original = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "rApps")
+    rapp_dir = "/"
+    
+    os.system(f'sudo rm -rf {os.path.join(rapp_dir, rapp_file_name)}')
+    os.system(f'sudo cp {os.path.join(rapp_dir_original, rapp_file_name)} {rapp_dir}')
+
     rapp_binary_path = os.path.join(rapp_dir, rapp_file_name)
 
     with open(rapp_binary_path, 'rb') as file:
@@ -105,6 +110,9 @@ def test_rapp_creation():
 
     print(f'Console command: curl -X POST http://{rappmgr_ip}:{rappmgr_port}/rapps/{rapp_id} -F "file=@{rapp_binary_path}"')
     assert create_rapp.status_code == 202, f'Create rApp status code: {create_rapp.status_code}'
+
+    # Clean up the testing rApp file
+    # os.system(f'sudo rm -rf {os.path.join(rapp_dir, rapp_file_name)}')
 
 ##################################################################################
 # Test the fetching of the rApp information
@@ -128,9 +136,9 @@ def test_rapp_info():
     assert "state" in json_response, f'rApp state not found: {json_response}'
     assert json_response["state"] == "COMMISSIONED", f'rApp state mismatch: {json_response}'
 
-# ################################################################################
-# # Test that the rApp Manager status is success
-# ################################################################################
+################################################################################
+# Test that the rApp Manager status is success
+################################################################################
 def test_rapps_list():
     global rappmgr_ip, rappmgr_port
     service_status = requests.get(f'http://{rappmgr_ip}:{rappmgr_port}/rapps')
@@ -141,20 +149,18 @@ def test_rapps_list():
     assert type(json_response) is list, f'Response is not a list: {service_status.text}'
     print(f'Available rApps: {json_response}')
 
-# ################################################################################
-# # Test the priming of a testing rApp
-# ################################################################################
-# def test_rapp_priming():
-#     global rappmgr_ip, rappmgr_port, rapp_id, rapp_file_name
-#     #remove_test_rapp_if_exists(rapp_id, rapp_file_name)
+################################################################################
+# Test the priming of a testing rApp
+################################################################################
+def test_rapp_priming():
+    global rappmgr_ip, rappmgr_port, rapp_id, rapp_file_name
+    #remove_test_rapp_if_exists(rapp_id, rapp_file_name)
 
-#     print("Priming testing rApp...")
-#     data = {
-#         "primeOrder": "PRIME"
-#     }
+    print("Priming testing rApp...")
+    data = {
+        "primeOrder": "PRIME"
+    }
 
-#     prime_rapp = requests.put(f'http://{rappmgr_ip}:{rappmgr_port}/rapps/{rapp_id}', headers={'Content-Type': 'application/json'}, data=json.dumps(data))
-#     print(f'Console command: curl -X PUT http://{rappmgr_ip}:{rappmgr_port}/rapps/{rapp_id} -H "Content-Type: application/json" -d \'{json.dumps(data)}\'')    
-#     assert prime_rapp.status_code == 200, f'Priming rApp status code: {prime_rapp.status_code}'
-
-
+    #prime_rapp = requests.put(f'http://{rappmgr_ip}:{rappmgr_port}/rapps/{rapp_id}', headers={'Content-Type': 'application/json'}, data=json.dumps(data))
+    print(f'Console command: curl -X PUT http://{rappmgr_ip}:{rappmgr_port}/rapps/{rapp_id} -H "Content-Type: application/json" -d \'{json.dumps(data)}\'')    
+    #assert prime_rapp.status_code == 200, f'Priming rApp status code: {prime_rapp.status_code}'

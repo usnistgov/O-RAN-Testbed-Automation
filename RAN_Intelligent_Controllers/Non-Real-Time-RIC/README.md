@@ -12,7 +12,7 @@ This automation tool is based on the J-Release of the Non-RT RIC. More informati
   - Waits for the pods to be ready.
   - Builds and runs the control panel.
   - Opens the browser to the control panel's web interface.
-- **Control Panel Access**: Access the control panel at `http://localhost:4200` in a web browser. Start with `./run_control_panel.sh`, stop with `./stop_control_panel.sh`, and check status with `./control_panel_is_running.sh`. To serve as a proof-of-concept, the control panel starts in mock mode, but can be switched to real mode by setting MOCK_MODE=false in the run_control_panel.sh script.
+- **Control Panel Access**: Access the control panel at `http://localhost:4200` in a web browser. Start with `./run_control_panel.sh`, stop with `./stop_control_panel.sh`, and check status with `./control_panel_is_running.sh`. Optionally, the mock control panel can be ran by instead running `./run_control_panel.sh mock`.
 - **Status**: Check on the pod statuses of the Non-RT RIC components with `kubectl get pods -A`, or by running the interactive pod manager (K9s) with `k9s -A` or `./start_k9s.sh`.
 - **Logs**: From within K9s, use the `Arrow Keys` to highlight a pod, `Enter` to view the logs for the pod, `w` to wrap text, `Esc` to go back, `Ctrl+k` to restart a pod that isn't responding, and `s` to open a command line shell in the pod. The control panel output is displayed in the terminal and in `logs/controlpanel_stdout.txt`.
 

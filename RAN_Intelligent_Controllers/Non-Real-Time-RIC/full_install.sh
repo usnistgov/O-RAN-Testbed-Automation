@@ -347,7 +347,7 @@ echo "Generating sample rApps..."
 echo
 echo "Testing the Non-RT RIC functionality..."
 if ! ./run_tests.sh; then
-    echo "Some of the Non-RT RIC tests failed. Wairing for pods, then retrying..."
+    echo "Some of the Non-RT RIC tests failed. Waiting for pods, then retrying..."
     sudo ./install_scripts/wait_for_nonrtric_pods.sh
     ./run_tests.sh
 else

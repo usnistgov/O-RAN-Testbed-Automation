@@ -131,7 +131,6 @@ sudo apt-get install -y libsctp1 lksctp-tools
 KUBEV="1.31"
 KUBECNIV="1.3"
 HELMV="3.16"
-DOCKERV="20.10"
 
 # Fetch the Ubuntu release version regardless of the derivative distro
 if [ -f /etc/upstream-release/lsb-release ]; then
@@ -140,9 +139,39 @@ else
     UBUNTU_RELEASE=$(lsb_release -sr)
 fi
 
-# Set the default DOCKERV for Ubuntu 24.*
-if [[ ${UBUNTU_RELEASE} == 24.* ]]; then
-    DOCKERV="24.0"
+USE_DOCKER_CE=1
+if [ "$USE_DOCKER_CE" -eq 0 ]; then # Use docker.io
+    DOCKERV="20.10"
+    # Select a compatible Docker version for Ubuntu 24.*
+    if [[ ${UBUNTU_RELEASE} == 24.* ]]; then
+        DOCKERV="24.0"
+    fi
+
+else # Use docker.ce
+    DOCKERV="27.5"
+    UBUNTU_CODENAME=$(grep -oP '^UBUNTU_CODENAME=\K.*' /etc/os-release 2>/dev/null)
+    # If not found, try to extract VERSION_CODENAME as a fallback
+    if [[ -z "$UBUNTU_CODENAME" ]]; then
+        UBUNTU_CODENAME=$(grep -oP '^VERSION_CODENAME=\K.*' /etc/os-release 2>/dev/null)
+    fi
+    # Check if UBUNTU_CODENAME is still empty
+    if [[ -z "$UBUNTU_CODENAME" ]]; then
+        echo "Error: Ubuntu codename not found in /etc/os-release."
+        exit 1
+    fi
+
+    # Code from (https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository):
+    sudo apt-get update
+    sudo apt-get install -y ca-certificates curl
+    sudo install -m 0755 -d /etc/apt/keyrings
+    sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+    sudo chmod a+r /etc/apt/keyrings/docker.asc
+    # Add the repository to Apt sources:
+    echo \
+        "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+      $UBUNTU_CODENAME stable" |
+        sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
+    sudo apt-get update
 fi
 
 # Parsing command-line options
@@ -210,7 +239,11 @@ sudo apt-get update
 APTOPTS="--allow-downgrades --allow-change-held-packages --allow-unauthenticated --ignore-hold "
 
 # Dynamically fetch the latest versions based on the available packages
-DOCKERVERSION=$(get_latest_package_version "docker.io" "${DOCKERV}")
+if [ "$USE_DOCKER_CE" -eq 0 ]; then
+    DOCKERVERSION=$(get_latest_package_version "docker.io" "${DOCKERV}")
+else
+    DOCKERVERSION=$(get_latest_package_version "docker-ce" "${DOCKERV}")
+fi
 KUBEVERSION=$(get_latest_package_version "kubeadm" "${KUBEV}")
 CNIVERSION=$(get_latest_package_version "kubernetes-cni" "${KUBECNIV}")
 HELMVERSION=$(get_latest_package_version "helm" "${HELMV}")
@@ -423,14 +456,18 @@ if sudo systemctl is-enabled --quiet docker.service; then
 fi
 
 # Uninstall Docker packages and clean up
-sudo apt-get purge -y --allow-change-held-packages docker docker-engine docker.io containerd runc || true
+sudo apt-get purge -y --allow-change-held-packages docker docker-engine docker-ce docker.io containerd runc || true
 sudo rm -rf /var/lib/docker /etc/docker
 sudo apt-get autoremove -y
 
 # Install Docker with the specified or latest available version
 echo "Installing Docker..."
 if ! command -v docker &>/dev/null; then
-    sudo apt-get install -y $APTOPTS "docker.io=$DOCKERVERSION"
+    if [ "$USE_DOCKER_CE" -eq 0 ]; then
+        sudo apt-get install -y $APTOPTS "docker.io=$DOCKERVERSION"
+    else
+        sudo apt-get install -y $APTOPTS "docker-ce=$DOCKERVERSION"
+    fi
 fi
 
 # Configure Docker daemon

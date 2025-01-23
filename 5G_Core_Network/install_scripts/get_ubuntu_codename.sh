@@ -28,8 +28,6 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-echo "# Script: $(realpath $0)..."
-
 # Try to extract UBUNTU_CODENAME from /etc/os-release
 UBUNTU_CODENAME=$(grep -oP '^UBUNTU_CODENAME=\K.*' /etc/os-release 2>/dev/null)
 

@@ -86,6 +86,13 @@ echo
 echo
 echo "Installing Next Generation Node B..."
 export DEBIAN_FRONTEND=noninteractive
+# Modifies the needrestart configuration to suppress interactive prompts
+if [ -f "/etc/needrestart/needrestart.conf" ]; then
+    if ! grep -q "^\$nrconf{restart} = 'a';$" "/etc/needrestart/needrestart.conf"; then
+        sudo sed -i "/\$nrconf{restart} = /c\$nrconf{restart} = 'a';" "/etc/needrestart/needrestart.conf"
+        echo "Modified needrestart configuration to auto-restart services."
+    fi
+fi
 export NEEDRESTART_SUSPEND=1
 
 # Code from (https://docs.srsran.com/projects/project/en/latest/user_manuals/source/installation.html#manual-installation-dependencies):

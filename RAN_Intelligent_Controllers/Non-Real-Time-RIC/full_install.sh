@@ -41,6 +41,13 @@ cd "$SCRIPT_DIR"
 
 echo "Installing Non Real-Time RAN Intelligent Controller..."
 export DEBIAN_FRONTEND=noninteractive
+# Modifies the needrestart configuration to suppress interactive prompts
+if [ -f "/etc/needrestart/needrestart.conf" ]; then
+    if ! grep -q "^\$nrconf{restart} = 'a';$" "/etc/needrestart/needrestart.conf"; then
+        sudo sed -i "/\$nrconf{restart} = /c\$nrconf{restart} = 'a';" "/etc/needrestart/needrestart.conf"
+        echo "Modified needrestart configuration to auto-restart services."
+    fi
+fi
 export NEEDRESTART_SUSPEND=1
 
 # Run a sudo command every minute to ensure script execution without user interaction

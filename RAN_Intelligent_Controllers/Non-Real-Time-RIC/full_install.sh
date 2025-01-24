@@ -39,7 +39,8 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-echo "Installing Non-RT RIC..."
+echo "Installing Non Real-Time RAN Intelligent Controller..."
+export DEBIAN_FRONTEND=noninteractive
 
 # Run a sudo command every minute to ensure script execution without user interaction
 ./install_scripts/start_sudo_refresh.sh

@@ -39,7 +39,8 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-echo "Installing Near-RT RIC with selected release..."
+echo "Installing Near Real-Time RAN Intelligent Controller..."
+export DEBIAN_FRONTEND=noninteractive
 
 # Run a sudo command every minute to ensure script execution without user interaction
 ./install_scripts/start_sudo_refresh.sh
@@ -160,6 +161,7 @@ sudo ./install_scripts/enable_docker_build_kit.sh
 
 echo
 echo "Installing Near-Real Time RAN Intelligent Controller..."
+
 # Determine if RAN Intelligent Controller pods should be reset
 SHOULD_RESET_RIC=false
 if [ ! -d "ric-dep" ]; then

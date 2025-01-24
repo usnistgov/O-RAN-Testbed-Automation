@@ -84,7 +84,8 @@ fi
 
 echo
 echo
-echo "Installing gNodeB..."
+echo "Installing Next Generation Node B..."
+export DEBIAN_FRONTEND=noninteractive
 
 # Code from (https://docs.srsran.com/projects/project/en/latest/user_manuals/source/installation.html#manual-installation-dependencies):
 sudo apt-get install -y cmake make gcc g++ pkg-config libfftw3-dev libmbedtls-dev libsctp-dev libyaml-cpp-dev libgtest-dev

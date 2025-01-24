@@ -9,7 +9,7 @@
 # any such change. Please explicitly acknowledge the National Institute of
 # Standards and Technology as the source of the software.
 #
-# NIST-developed software is expressly provided 'AS IS.' NIST MAKES NO WARRANTY
+# NIST-developed software is expressly provided "AS IS." NIST MAKES NO WARRANTY
 # OF ANY KIND, EXPRESS, IMPLIED, IN FACT, OR ARISING BY OPERATION OF LAW,
 # INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTY OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT, AND DATA ACCURACY. NIST
@@ -30,45 +30,20 @@
 
 echo "# Script: $(realpath $0)..."
 
-SCRIPT_DIR=$(dirname "$(realpath "$0")")
-PARENT_DIR=$(dirname "$SCRIPT_DIR")
-cd "$PARENT_DIR"
-
-# Exit immediately if a command fails
-set -e
-
-cd "$PARENT_DIR/rappmanager/scripts/install"
-echo "Patching sample rApps..."
-./patch-sample-rapps.sh
-
-cd "$PARENT_DIR/rappmanager/sample-rapp-generator"
-if [ ! -f generate.previous.sh ]; then
-    mv generate.sh generate.previous.sh
-fi
-cp "$PARENT_DIR/install_patch_files/rappmanager/sample-rapp-generator/generate.sh" .
-
-cd "$PARENT_DIR"
-mkdir -p rApps
-
-cd rappmanager/sample-rapp-generator
-
-RAPPS=("rapp-hello-world" "rapp-hello-world-sme-invoker" "rapp-kserve" "rapp-sample-ics-consumer" "rapp-sample-ics-producer" "rapp-simple-ics-consumer" "rapp-simple-ics-producer" "rapp-simple-ics-consumer" "rapp-all")
-
-INTERFACE=$(ip route | grep default | awk '{print $5}' | head -n 1)
-IP_ADDRESS=$(ip addr show $INTERFACE | grep 'inet ' | awk '{print $2}' | cut -d/ -f1)
-
-# Iterate over each rApp
-for RAPP in "${RAPPS[@]}"; do
-    if [ -d "$RAPP" ]; then
-        echo
-        echo "Configuring then generating ${RAPP} rApp binary (${RAPP}.csar)..."
-        ./generate.sh "$RAPP"
-        echo "Moving rApp binary to rApps directory..."
-        cp "${RAPP}.csar" "$PARENT_DIR/rApps"
+ATTEMPTS=0
+MAX_ATTEMPTS=10
+while ((ATTEMPTS++ < MAX_ATTEMPTS)); do
+    echo "Attempting to disable ufw..."
+    if output=$(sudo ufw disable 2>&1); then
+        echo "ufw disabled successfully."
+        break
     else
-        echo "Could not find rappmanager/sample-rapp-generator/${RAPP}, skipping."
+        echo "    Failed to disable ufw: $output"
+        if (( ATTEMPTS == MAX_ATTEMPTS )); then
+            echo "Tried to disable the firewall for $MAX_ATTEMPTS attempts but could not, skipping."
+            exit 0
+        fi
+        echo "    Retrying in 10 seconds..."
+        sleep 10
     fi
 done
-
-echo
-echo "Successfully generated sample rApp binaries."

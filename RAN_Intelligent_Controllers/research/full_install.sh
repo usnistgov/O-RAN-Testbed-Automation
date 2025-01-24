@@ -232,18 +232,6 @@ if ! command -v docker-compose &>/dev/null; then
     ./install_scripts/install_docker_compose.sh
 fi
 
-# Optionally, install kubecolor for a formatted kubectl output
-sudo ./install_scripts/wait_for_kubectl.sh
-if ! command -v kubecolor &>/dev/null; then
-    sudo apt-get update || true
-    echo "Installing kubecolor..."
-    if sudo apt-get install -y kubecolor; then
-        command -v kubecolor >/dev/null 2>&1 && alias kubectl="kubecolor"
-    else
-        echo "Skipping optional kubecolor installation."
-    fi
-fi
-
 if ! command -v jq >/dev/null 2>&1; then
     echo "Installing jq to process JSON files..."
     sudo apt-get install -y jq

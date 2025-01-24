@@ -158,18 +158,6 @@ cd "$SCRIPT_DIR"
 # Ensure docker is configured properly
 sudo ./install_scripts/enable_docker_build_kit.sh
 
-# Optionally, install kubecolor for a formatted kubectl output
-sudo ./install_scripts/wait_for_kubectl.sh
-if ! command -v kubecolor &>/dev/null; then
-    sudo apt-get update || true
-    echo "Installing kubecolor..."
-    if sudo apt-get install -y kubecolor; then
-        command -v kubecolor >/dev/null 2>&1 && alias kubectl="kubecolor"
-    else
-        echo "Skipping optional kubecolor installation."
-    fi
-fi
-
 echo
 echo "Installing Near-Real Time RAN Intelligent Controller..."
 # Determine if RAN Intelligent Controller pods should be reset

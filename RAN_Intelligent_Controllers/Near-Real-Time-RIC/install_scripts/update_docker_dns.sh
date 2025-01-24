@@ -34,7 +34,12 @@ echo "# Script: $(realpath $0)..."
 set -e
 
 # Set DNS servers
-DNS_SERVERS='["8.8.8.8", "8.8.4.4"]'
+DNS_SERVERS=$(grep 'nameserver' /run/systemd/resolve/resolv.conf | awk '{print $2}' | jq -R . | jq -s .)
+
+if [ -z "$(echo $DNS_SERVERS | jq '. | select(length > 0)')" ]; then
+    echo "Could not find DNS servers in /run/systemd/resolve/resolv.conf, defaulting Google DNS..."
+    DNS_SERVERS='["8.8.8.8", "8.8.4.4"]'
+fi
 
 # Docker daemon configuration file
 DOCKER_CONFIG="/etc/docker/daemon.json"

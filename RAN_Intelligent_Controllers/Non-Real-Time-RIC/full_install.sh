@@ -79,8 +79,10 @@ if [ ! -d dep ]; then
     echo
     echo "Cloning Non-RT RIC dependencies..."
     ./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/it/dep.git
-    cd dep # Ensure that the components are cloned
-    git restore --source=HEAD :/
+fi
+
+if [ ! -d "rappmanager" ]; then
+    ./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/nonrtric/plt/rappmanager.git rappmanager
 fi
 
 cd "$SCRIPT_DIR/dep/"
@@ -183,41 +185,28 @@ if command -v istioctl &>/dev/null; then
         hash -d istioctl 2>/dev/null || true
     fi
 fi
-if ! command -v istioctl &>/dev/null; then
-    echo "Downloading and Installing Istio..."
-    mkdir -p istio
-    cd istio
-    ISTIO_DIR=$(find . -maxdepth 1 -type d -name "istio-*" | sort -V | tail -n1)
-    if [ -z "$ISTIO_DIR" ]; then
-        echo "Downloading Istio..."
-        curl -L https://istio.io/downloadIstio | ISTIO_VERSION=$(curl -sL https://api.github.com/repos/istio/istio/releases/latest | grep -Po '"tag_name": "\K.*?(?=")') sh -
-        ISTIO_DIR=$(find . -maxdepth 1 -type d -name "istio-*" | sort -V | tail -n1)
-    fi
-    if [ -d "$ISTIO_DIR" ]; then
-        cd "$ISTIO_DIR"
-    else
-        echo "The Istio directory was not found."
-        exit 1
-    fi
-    if [ -f bin/istioctl ]; then
-        sudo ln -s "$(pwd)/bin/istioctl" /usr/local/bin/istioctl
-        echo "Successfully installed Istio."
-    else
-        echo "Binary for istioctl not found."
-        exit 1
-    fi
-    cd "$SCRIPT_DIR"
+
+# Some of the O-SC scripts use snap for dependency installations. Overwrite snap function calls to avoid errors:
+snap() { echo "Ignoring snap command: $*"; }
+export -f snap
+
+if ! kubectl get ns kserve-test > /dev/null 2>&1; then
+    echo "Installing ChartMuseum and creating Kserve namespace from O-SC..."
+    cd "$SCRIPT_DIR/rappmanager/scripts/install"
+    ./install-base.sh
 fi
 
 if ! kubectl get pods -n istio-system | grep -q 'istiod-'; then
+    echo "Installing Istio and Kserve from O-SC..."
+    cd "$SCRIPT_DIR/rappmanager/scripts/install"
+    ./install-kserve.sh
+
     if kubectl taint nodes --all node-role.kubernetes.io/control-plane- &>/dev/null; then
         echo "Successfully removed taint from control-plane."
     fi
     if kubectl taint nodes --all node-role.kubernetes.io/master- &>/dev/null; then
         echo "Successfully removed taint removed from master."
     fi
-    echo "Installing Istio to the cluster..."
-    istioctl install -y
 fi
 
 cd "$SCRIPT_DIR"
@@ -226,18 +215,6 @@ cd "$SCRIPT_DIR"
 sudo ./install_scripts/enable_docker_build_kit.sh
 if ! command -v docker-compose &>/dev/null; then
     ./install_scripts/install_docker_compose.sh
-fi
-
-# Optionally, install kubecolor for a formatted kubectl output
-sudo ./install_scripts/wait_for_kubectl.sh
-if ! command -v kubecolor &>/dev/null; then
-    sudo apt-get update || true
-    echo "Installing kubecolor..."
-    if sudo apt-get install -y kubecolor; then
-        command -v kubecolor >/dev/null 2>&1 && alias kubectl="kubecolor"
-    else
-        echo "Skipping optional kubecolor installation."
-    fi
 fi
 
 if ! command -v jq >/dev/null 2>&1; then
@@ -312,6 +289,18 @@ else
     echo "Successfully installed Non-RT RIC pods."
 fi
 
+cd "$SCRIPT_DIR/rappmanager/scripts/install"
+# The ACM components are necessary for rApp instantiation to avoid error: "Unable to create automation composition"
+if ! kubectl get pods -n default | grep -q 'policy-clamp-runtime-acm'; then
+    echo "Installing ACM Components from O-SC..."
+    ./install-acm.sh
+fi
+echo "Patching Kserve from O-SC..."
+./patch-kserve.sh
+
+# Stop overwriting snap function calls, since the O-SC script calls are complete
+unset -f snap
+
 cd "$SCRIPT_DIR"
 sudo ./install_scripts/wait_for_kubectl.sh
 kubectl get pods -A || true
@@ -348,6 +337,7 @@ echo
 echo "Testing the Non-RT RIC functionality..."
 if ! ./run_tests.sh; then
     echo "Some of the Non-RT RIC tests failed. Waiting for pods, then retrying..."
+    sleep 30
     sudo ./install_scripts/wait_for_nonrtric_pods.sh
     ./run_tests.sh
 else

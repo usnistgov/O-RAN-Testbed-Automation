@@ -41,6 +41,7 @@ cd "$SCRIPT_DIR"
 
 echo "Installing Near Real-Time RAN Intelligent Controller..."
 export DEBIAN_FRONTEND=noninteractive
+export NEEDRESTART_SUSPEND=1
 
 # Run a sudo command every minute to ensure script execution without user interaction
 ./install_scripts/start_sudo_refresh.sh

@@ -79,6 +79,7 @@ fi
 
 echo "Installing User Equipment..."
 export DEBIAN_FRONTEND=noninteractive
+export NEEDRESTART_SUSPEND=1
 
 # Code from (https://docs.srsran.com/projects/4g/en/latest/general/source/1_installation.html#installation-from-source):
 sudo apt-get install -y build-essential cmake libfftw3-dev libmbedtls-dev libboost-program-options-dev libconfig++-dev libsctp-dev

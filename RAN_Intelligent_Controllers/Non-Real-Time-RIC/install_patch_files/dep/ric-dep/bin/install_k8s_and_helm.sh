@@ -204,6 +204,7 @@ if [[ ${HELMV} == 2.* ]]; then
 fi
 
 export DEBIAN_FRONTEND=noninteractive
+export NEEDRESTART_SUSPEND=1
 
 # Update /etc/hosts to include the user's IP address
 # Check if the IP address and hostname are not empty
@@ -499,6 +500,10 @@ if dockerd --help | grep --quiet -- "--validate"; then
 else
     echo "Skipping Docker configuration validation (unsupported flag)."
 fi
+
+echo "Ensure Docker group exists and add user to the group before starting Docker service..."
+sudo groupadd -f docker
+sudo usermod -aG docker $USER
 
 # Enable and attempt to start Docker service with retries
 echo "Enabling and starting Docker service..."

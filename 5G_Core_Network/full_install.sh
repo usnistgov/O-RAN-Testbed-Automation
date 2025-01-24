@@ -77,6 +77,7 @@ cd $SCRIPT_DIR/open5gs
 
 echo "Starting installation of Open5GS..."
 export DEBIAN_FRONTEND=noninteractive
+export NEEDRESTART_SUSPEND=1
 
 INSTALLED_VERSION=$(mongod --version 2>/dev/null | grep -oP "(?<=v)\d+\.\d+\.\d+") || true
 if [[ $INSTALLED_VERSION == 4.4.* ]]; then

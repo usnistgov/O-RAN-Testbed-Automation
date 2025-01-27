@@ -31,6 +31,16 @@
 # Exit immediately if a command fails
 set -e
 
+export DEBIAN_FRONTEND=noninteractive
+# Modifies the needrestart configuration to suppress interactive prompts
+if [ -f "/etc/needrestart/needrestart.conf" ]; then
+    if ! grep -q "^\$nrconf{restart} = 'a';$" "/etc/needrestart/needrestart.conf"; then
+        sudo sed -i "/\$nrconf{restart} = /c\$nrconf{restart} = 'a';" "/etc/needrestart/needrestart.conf"
+        echo "Modified needrestart configuration to auto-restart services."
+    fi
+fi
+export NEEDRESTART_SUSPEND=1
+
 sudo apt-get update
 sudo apt-get upgrade -y
 sudo apt-get install -y git

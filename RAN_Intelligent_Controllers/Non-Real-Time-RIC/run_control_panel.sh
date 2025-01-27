@@ -128,6 +128,9 @@ if ! command -v nvm &>/dev/null; then
     curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
     export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
+    if [ ! -f ~/.bashrc ]; then
+        touch ~/.bashrc
+    fi
     source ~/.bashrc
 fi
 if ! command -v node &>/dev/null || [[ $(node -v) != v14.21.3 ]]; then

@@ -30,6 +30,16 @@
 
 # This script updates the commit hash for each repository in the JSON file. It respects the first field in each repository's entry, which is the branch name. If the branch name is "", it fetches the default branch's latest commit hash instead.
 
+export DEBIAN_FRONTEND=noninteractive
+# Modifies the needrestart configuration to suppress interactive prompts
+if [ -f "/etc/needrestart/needrestart.conf" ]; then
+    if ! grep -q "^\$nrconf{restart} = 'a';$" "/etc/needrestart/needrestart.conf"; then
+        sudo sed -i "/\$nrconf{restart} = /c\$nrconf{restart} = 'a';" "/etc/needrestart/needrestart.conf"
+        echo "Modified needrestart configuration to auto-restart services."
+    fi
+fi
+export NEEDRESTART_SUSPEND=1
+
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
     sudo apt-get install -y coreutils
@@ -75,6 +85,8 @@ done
 FORMATTED_JSON_CONTENTS=$(echo "$JSON_CONTENTS" | sed -e ':a' -e 'N' -e '$!ba' -e 's/\[\n    /[/g')
 FORMATTED_JSON_CONTENTS=$(echo "$FORMATTED_JSON_CONTENTS" | sed -e ':a' -e 'N' -e '$!ba' -e 's/,\n    /, /g')
 FORMATTED_JSON_CONTENTS=$(echo "$FORMATTED_JSON_CONTENTS" | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n  ]/]/g')
+
+./Additional_Scripts/generate_download_dependency_repositories.bat.sh
 
 echo "$FORMATTED_JSON_CONTENTS" >"$JSON_FILE"
 echo "Successfully updated commit hashes."

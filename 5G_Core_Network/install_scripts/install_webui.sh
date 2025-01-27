@@ -36,7 +36,14 @@ curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg 
 
 NODE_MAJOR=20
 
-echo "deb [arch=amd64,arm64 signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
+if ! echo "deb [arch=amd64,arm64 signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list; then
+    echo "Failed to add the repository. Running the NodeSource setup script..."
+    (
+        echo '#!/bin/bash'
+        echo 'umask 0002'
+        curl -fsSL https://deb.nodesource.com/setup_$NODE_MAJOR.x
+    ) | sudo bash -
+fi
 
 sudo apt-get update
 

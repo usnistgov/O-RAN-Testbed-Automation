@@ -11,7 +11,7 @@
   "https://gerrit.o-ran-sc.org/r/it/dep": ["master", "656c16d717812040d2132ad4245c8e49675e8a29"],
   "https://gerrit.o-ran-sc.org/r/nonrtric/plt/ranpm": ["master", "dbb29d3eb620b0ed223510590030a9a4a3c73d50"],
   "https://github.com/onap/multicloud-k8s.git": ["", "8bea0a13c223aff43f98f0cb6426379bb23e8894"],
-  "https://gerrit.onap.org/r/oom": ["", "a839fbfe4fcde58fa31c02d89782b25412c404f2"],
+  "https://gerrit.onap.org/r/oom": ["", "d4e203103dd1508ea174bec1a07a97ac1fc12b67"],
   "https://gerrit.o-ran-sc.org/r/portal/nonrtric-controlpanel": ["master", "15bdaf8f25dca54e3a52ad30d69fa2eb1d59ce48"],
   "https://gerrit.o-ran-sc.org/r/nonrtric/plt/rappmanager": ["j-release", "ffd5b45b53572ae42fbc22510bcbe3ad8883b86f"]
 }

@@ -34,7 +34,7 @@ set -e
 sudo systemctl restart kubelet
 
 # Code from (https://github.com/o-ran-sc/nonrtric-plt-rappmanager/blob/master/scripts/install/install-base.sh):
-ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null && pwd)"
 CM_VERSION="v0.16.1"
 CM_PORT="8879"
 HELM_LOCAL_REPO="$ROOT_DIR/chartstorage"

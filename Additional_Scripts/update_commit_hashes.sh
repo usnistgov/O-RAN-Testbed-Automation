@@ -58,8 +58,13 @@ JSON_CONTENTS=$(jq '.' "$JSON_FILE")
 
 # Go through each repository and update the commit hash
 for REPOSITORY in $(jq 'keys[]' "$JSON_FILE" | tr -d '"'); do
-    BRANCH=$(jq -r ".\"$REPOSITORY\"[0]" "$JSON_FILE")
-    PREV_COMMIT_HASH=$(jq -r ".\"$REPOSITORY\"[1]" "$JSON_FILE")
+    if [[ "$REPOSITORY" != *".git" ]]; then
+        REPOSITORY_NEW="${REPOSITORY}.git"
+        JSON_CONTENTS=$(jq ".[\"$REPOSITORY_NEW\"] = .[\"$REPOSITORY\"] | del(.[\"$REPOSITORY\"])" <<<"$JSON_CONTENTS")
+        REPOSITORY="$REPOSITORY_NEW"
+    fi
+    BRANCH=$(jq -r ".[\"$REPOSITORY\"][0]" <<<"$JSON_CONTENTS")
+    PREV_COMMIT_HASH=$(jq -r ".[\"$REPOSITORY\"][1]" <<<"$JSON_CONTENTS")
 
     if [[ -z "$BRANCH" ]]; then
         # Fetch the default branch's latest commit
@@ -73,7 +78,7 @@ for REPOSITORY in $(jq 'keys[]' "$JSON_FILE" | tr -d '"'); do
 
     if [[ -n "$COMMIT_HASH" ]]; then
         # Update the commit hash in the JSON structure
-        JSON_CONTENTS=$(echo "$JSON_CONTENTS" | jq ".\"$REPOSITORY\"[1] = \"$COMMIT_HASH\"")
+        JSON_CONTENTS=$(jq ".[\"$REPOSITORY\"][1] = \"$COMMIT_HASH\"" <<<"$JSON_CONTENTS")
         echo "    $COMMIT_HASH"
     else
         echo "    Failed to retrieve commit hash, skipping."

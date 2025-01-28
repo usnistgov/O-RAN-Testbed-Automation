@@ -39,7 +39,7 @@ while ((ATTEMPTS++ < MAX_ATTEMPTS)); do
         break
     else
         echo "    Failed to disable ufw: $output"
-        if (( ATTEMPTS == MAX_ATTEMPTS )); then
+        if ((ATTEMPTS == MAX_ATTEMPTS)); then
             echo "Tried to disable the firewall for $MAX_ATTEMPTS attempts but could not, skipping."
             exit 0
         fi

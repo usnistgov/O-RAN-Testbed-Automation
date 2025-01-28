@@ -199,7 +199,7 @@ fi
 snap() { echo "Ignoring snap command: $*"; }
 export -f snap
 
-if ! kubectl get ns kserve-test > /dev/null 2>&1; then
+if ! kubectl get ns kserve-test >/dev/null 2>&1; then
     echo "Installing ChartMuseum and creating Kserve namespace from O-SC..."
     cd "$SCRIPT_DIR/rappmanager/scripts/install"
     ./install-base.sh

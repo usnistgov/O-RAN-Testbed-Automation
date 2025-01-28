@@ -143,17 +143,22 @@ else
         sudo "$SCRIPT_DIR/install_scripts/./install_yq.sh"
     fi
 
-    echo "Disabling Kong Pod and Removing Ingress Files..."
-    cd "$SCRIPT_DIR/ric-dep/helm/infrastructure"
-    yq '.kong.enabled = false' -i values.yaml
-    yq '.kong.enabled' values.yaml
-    # Removing Ingress files
-    cd "$SCRIPT_DIR/ric-dep/helm/appmgr/templates"
-    rm -rf ingress-appmgr.yaml
-    cd "$SCRIPT_DIR/ric-dep/helm/e2mgr/templates"
-    rm -rf ingress-e2mgr.yaml
-    cd "$SCRIPT_DIR/ric-dep/helm/a1mediator/templates"
-    rm -rf ingress-a1mediator.yaml
+    # If kong gives troubles in Release I or Release J then it can be disabled with the following code.
+    # cd "$SCRIPT_DIR/ric-dep"
+    # CURRENT_RIC_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+    # if [ "$CURRENT_RIC_BRANCH" = "i-release" ] || [ "$CURRENT_RIC_BRANCH" = "j-release" ]; then
+    #     echo "Disabling Kong Pod and Removing Ingress Files..."
+    #     cd "$SCRIPT_DIR/ric-dep/helm/infrastructure"
+    #     yq '.kong.enabled = false' -i values.yaml
+    #     yq '.kong.enabled' values.yaml
+    #     # Removing Ingress files
+    #     cd "$SCRIPT_DIR/ric-dep/helm/appmgr/templates"
+    #     rm -rf ingress-appmgr.yaml
+    #     cd "$SCRIPT_DIR/ric-dep/helm/e2mgr/templates"
+    #     rm -rf ingress-e2mgr.yaml
+    #     cd "$SCRIPT_DIR/ric-dep/helm/a1mediator/templates"
+    #     rm -rf ingress-a1mediator.yaml
+    # fi
 
     echo
     echo

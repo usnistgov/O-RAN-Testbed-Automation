@@ -11,9 +11,14 @@ pipeline {
             }
         }
 
-        stage('git update') {
+        stage('running') {
             steps {
-                git url: 'https://gitlab.nist.gov/gitlab/kyehwanl/o-ran-testbed-init', branch: 'main'
+                sh '''
+                ls -htrl
+                WORK_DIR=$(pwd)
+                $WORK_DIR/Additional_Scripts/update_commit_hashes.sh  
+                echo y | $WORK_DIR/full_install.sh
+                '''
             }
         }
 

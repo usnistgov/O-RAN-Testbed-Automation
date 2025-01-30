@@ -93,3 +93,14 @@ if [ -d 5G_Core/open5gs ] || [ -d gNodeB/srsRAN_Project ] || [ -d RAN_Intelligen
     echo "Successfully migrated from commit 310ca91b9f5f83a0d0b94affebfdc940005daf1a to the new version."
     echo
 fi
+
+echo "Updating package lists..."
+cd $SCRIPT_DIR
+if ! sudo apt-get update; then
+    sudo ./remove_any_expired_apt_keys.sh
+    echo "Trying to update package lists again..."
+    if ! sudo apt-get update; then
+        echo "Failed to update package lists"
+        exit 1
+    fi
+fi

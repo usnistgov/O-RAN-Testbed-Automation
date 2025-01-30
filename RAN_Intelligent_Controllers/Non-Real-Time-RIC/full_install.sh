@@ -184,7 +184,9 @@ cd "$SCRIPT_DIR"
 
 echo
 echo "Installing k9s..."
-sudo ./install_scripts/install_k9s.sh
+if ! sudo ./install_scripts/install_k9s.sh; then
+    echo "Could not install k9s at the moment, skipping."
+fi
 
 # Check if istioctl exists and is a broken link
 if command -v istioctl &>/dev/null; then

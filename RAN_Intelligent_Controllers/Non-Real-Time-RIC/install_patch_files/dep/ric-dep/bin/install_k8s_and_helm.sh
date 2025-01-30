@@ -639,7 +639,7 @@ fi
 # Remove containerd containers and images if crictl is installed
 if command -v crictl &>/dev/null; then
     echo "Removing all containerd containers and images..."
-    sudo crictl stopp $(sudo crictl pods -q 2>/dev/null || true) || true
+    sudo crictl stop $(sudo crictl pods -q 2>/dev/null || true) || true
     sudo crictl rmp $(sudo crictl pods -q 2>/dev/null || true) || true
     sudo crictl rm $(sudo crictl ps -a -q 2>/dev/null || true) || true
     sudo crictl rmi $(sudo crictl images -q 2>/dev/null || true) || true

@@ -95,7 +95,7 @@ if [ ! -f "$BUILDX_PATH" ]; then
             sudo chmod +x "$BUILDX_PATH"
             echo "Docker Buildx installed successfully."
         else
-            echo "Failed to download Docker Buildx, HTTP status was $HTTP_STATUS."
+            echo "Failed to download Docker Buildx, HTTP status was $HTTP_STATUS. Skipping."
             rm -f "$BUILDX_PATH"
         fi
     fi

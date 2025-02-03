@@ -207,39 +207,12 @@ get_configuration_ngap_server_ip() {
     fi
 }
 
-# Function to configure NGAP server addresses in the AMF config and store them in a file for gNodeB
-configure_ngap_server() {
-    local NGAP_IP=$1
-    local NGAP_PORT=$2
-    local FILE_PATH="configs/amf.yaml"
-
-    echo "Configuring NGAP server addresses in $FILE_PATH"
-    # Use awk to process multi-line patterns, replacing address and adding port
-    awk -v ip="$NGAP_IP" -v port="$NGAP_PORT" '
-    /ngap:/ { print; in_ngap = 1; next } # Enter NGAP block
-    in_ngap && /server:/ { print; in_server = 1; next } # Enter server block within NGAP
-    in_server && /- address:/ { # Find the address line within server block
-        print "      - address: " ip;
-        print "        port: " port; # Insert port on new line
-        next;
-    }
-    /metrics:/ { in_ngap = 0; in_server = 0 } # Exit NGAP block upon reaching metrics
-    { print } # Print all other lines as they are
-    ' $FILE_PATH >tmp.yaml && mv tmp.yaml $FILE_PATH
-}
-
 # Set the following AMF IP, and it will be updated in the configuration file
 AMF_IP=$(get_configuration_ngap_server_ip)
 AMF_IP_BIND=$(get_primary_ip_for_network $AMF_IP)
 AMF_ADDRESSES_OUTPUT="configs/get_amf_address.txt"
 echo "$AMF_IP" >$AMF_ADDRESSES_OUTPUT
 echo "$AMF_IP_BIND" >>$AMF_ADDRESSES_OUTPUT
-
-update_yaml "configs/mme.yaml" "s1ap.server" "address" "$AMF_IP"
-update_yaml "configs/mme.yaml" "gtpc.server" "address" "$AMF_IP"
-update_yaml "configs/sgwu.yaml" "gtpu.server" "address" "$AMF_IP"
-update_yaml "configs/amf.yaml" "ngap.server" "address" "$AMF_IP"
-update_yaml "configs/upf.yaml" "gtpu.server" "address" "$AMF_IP"
 
 # Configure logging for all components
 for APP_NAME in "${APP_NAMES[@]}"; do
@@ -251,21 +224,16 @@ done
 # Configure the PLMN and TAC to match regulatory requirements
 configure_plmn_tac $PLMN_MCC $PLMN_MNC $TAC
 
-# If necessary, configure AMF specific address in amf.yaml
-if [ "$AMF_IP" != "$(get_configuration_ngap_server_ip)" ]; then
-    configure_ngap_server $AMF_IP "38412"
-fi
-
 # Add route for the UE to have WAN connectivity
 ### Enable IPv4/IPv6 Forwarding
 sudo sysctl -w net.ipv4.ip_forward=1
 sudo sysctl -w net.ipv6.conf.all.forwarding=1
 ### Add NAT Rule
-sudo iptables -t nat -A POSTROUTING -s 10.45.0.0/16 ! -o ogstun -j MASQUERADE
-sudo ip6tables -t nat -A POSTROUTING -s 2001:db8:cafe::/48 ! -o ogstun -j MASQUERADE
+sudo iptables --wait -t nat -A POSTROUTING -s 10.45.0.0/16 ! -o ogstun -j MASQUERADE
+sudo ip6tables --wait -t nat -A POSTROUTING -s 2001:db8:cafe::/48 ! -o ogstun -j MASQUERADE
 echo "By default, Ubuntu enables a firewall that blocks the UE from accessing the internet. Disabling the firewall..."
-sudo ufw status
-sudo ufw disable
+sudo ufw status || true
+sudo ./install_scripts/disable_firewall.sh
 sudo ufw status || true
 
 mkdir -p "$SCRIPT_DIR/logs"

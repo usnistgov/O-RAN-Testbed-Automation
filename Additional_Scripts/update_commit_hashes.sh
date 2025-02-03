@@ -30,6 +30,16 @@
 
 # This script updates the commit hash for each repository in the JSON file. It respects the first field in each repository's entry, which is the branch name. If the branch name is "", it fetches the default branch's latest commit hash instead.
 
+export DEBIAN_FRONTEND=noninteractive
+# Modifies the needrestart configuration to suppress interactive prompts
+if [ -f "/etc/needrestart/needrestart.conf" ]; then
+    if ! grep -q "^\$nrconf{restart} = 'a';$" "/etc/needrestart/needrestart.conf"; then
+        sudo sed -i "/\$nrconf{restart} = /c\$nrconf{restart} = 'a';" "/etc/needrestart/needrestart.conf"
+        echo "Modified needrestart configuration to auto-restart services."
+    fi
+fi
+export NEEDRESTART_SUSPEND=1
+
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
     sudo apt-get install -y coreutils
@@ -48,8 +58,13 @@ JSON_CONTENTS=$(jq '.' "$JSON_FILE")
 
 # Go through each repository and update the commit hash
 for REPOSITORY in $(jq 'keys[]' "$JSON_FILE" | tr -d '"'); do
-    BRANCH=$(jq -r ".\"$REPOSITORY\"[0]" "$JSON_FILE")
-    PREV_COMMIT_HASH=$(jq -r ".\"$REPOSITORY\"[1]" "$JSON_FILE")
+    if [[ "$REPOSITORY" != *".git" ]]; then
+        REPOSITORY_NEW="${REPOSITORY}.git"
+        JSON_CONTENTS=$(jq ".[\"$REPOSITORY_NEW\"] = .[\"$REPOSITORY\"] | del(.[\"$REPOSITORY\"])" <<<"$JSON_CONTENTS")
+        REPOSITORY="$REPOSITORY_NEW"
+    fi
+    BRANCH=$(jq -r ".[\"$REPOSITORY\"][0]" <<<"$JSON_CONTENTS")
+    PREV_COMMIT_HASH=$(jq -r ".[\"$REPOSITORY\"][1]" <<<"$JSON_CONTENTS")
 
     if [[ -z "$BRANCH" ]]; then
         # Fetch the default branch's latest commit
@@ -63,7 +78,7 @@ for REPOSITORY in $(jq 'keys[]' "$JSON_FILE" | tr -d '"'); do
 
     if [[ -n "$COMMIT_HASH" ]]; then
         # Update the commit hash in the JSON structure
-        JSON_CONTENTS=$(echo "$JSON_CONTENTS" | jq ".\"$REPOSITORY\"[1] = \"$COMMIT_HASH\"")
+        JSON_CONTENTS=$(jq ".[\"$REPOSITORY\"][1] = \"$COMMIT_HASH\"" <<<"$JSON_CONTENTS")
         echo "    $COMMIT_HASH"
     else
         echo "    Failed to retrieve commit hash, skipping."
@@ -75,6 +90,8 @@ done
 FORMATTED_JSON_CONTENTS=$(echo "$JSON_CONTENTS" | sed -e ':a' -e 'N' -e '$!ba' -e 's/\[\n    /[/g')
 FORMATTED_JSON_CONTENTS=$(echo "$FORMATTED_JSON_CONTENTS" | sed -e ':a' -e 'N' -e '$!ba' -e 's/,\n    /, /g')
 FORMATTED_JSON_CONTENTS=$(echo "$FORMATTED_JSON_CONTENTS" | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n  ]/]/g')
+
+./Additional_Scripts/generate_download_dependency_repositories.bat.sh
 
 echo "$FORMATTED_JSON_CONTENTS" >"$JSON_FILE"
 echo "Successfully updated commit hashes."

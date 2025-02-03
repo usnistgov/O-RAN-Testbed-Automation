@@ -104,7 +104,7 @@ update_conf configs/ue1.conf "pcap" "nas_filename" "$SCRIPT_DIR/logs/ue1_nas.pca
 update_conf configs/ue1.conf "log" "all_level" "info" #warning
 update_conf configs/ue1.conf "log" "phy_lib_level" "none"
 update_conf configs/ue1.conf "log" "all_hex_limit" "32"
-update_conf configs/ue1.conf "log" "filename" "$SCRIPT_DIR/logs/ue1.log"
+update_conf configs/ue1.conf "log" "filename" "$SCRIPT_DIR/logs/ue1.txt"
 update_conf configs/ue1.conf "log" "file_max_size" "-1"
 
 # Update configuration values for Metrics
@@ -114,7 +114,7 @@ update_conf configs/ue1.conf "general" "metrics_csv_filename" "$SCRIPT_DIR/logs/
 update_conf configs/ue1.conf "general" "metrics_json_enable" "false"
 update_conf configs/ue1.conf "general" "metrics_json_filename" "$SCRIPT_DIR/logs/ue_metrics.json"
 update_conf configs/ue1.conf "general" "tracing_enable" "true"
-update_conf configs/ue1.conf "general" "tracing_filename" "$SCRIPT_DIR/logs/ue1_tracing.log"
+update_conf configs/ue1.conf "general" "tracing_filename" "$SCRIPT_DIR/logs/ue1_tracing.txt"
 update_conf configs/ue1.conf "general" "tracing_buffcapacity" "1000000"
 
 # Update configuration values for USIM

@@ -122,8 +122,17 @@ if [ "$ENABLE_E2_TERM" = "true" ]; then
             fi
         fi
     fi
+    # Calculate the bind address based on the IP address
+    # if [[ "$IP_E2TERM" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    #     # Extract the first three octets and append .1
+    #     IP_E2TERM_BIND=$(echo "$IP_E2TERM" | cut -d '.' -f1-3).1
+    # else
+    #     IP_E2TERM_BIND=$IP_E2TERM
+    # fi
+    IP_E2TERM_BIND=$IP_E2TERM
     echo "IP_E2TERM: $IP_E2TERM"
     echo "PORT_E2TERM: $PORT_E2TERM"
+    echo "IP_E2TERM_BIND: $IP_E2TERM_BIND"
 fi
 
 echo "Fetching AMF addresses..."
@@ -254,7 +263,7 @@ if [ "$ENABLE_E2_TERM" = "true" ]; then
     update_yaml configs/gnb.yaml "e2" "e2sm_kpm_enabled" "true"
     update_yaml configs/gnb.yaml "e2" "e2sm_rc_enabled" "true"
     update_yaml configs/gnb.yaml "e2" "addr" "$IP_E2TERM"
-    update_yaml configs/gnb.yaml "e2" "bind_addr" "$IP_E2TERM"
+    update_yaml configs/gnb.yaml "e2" "bind_addr" "$IP_E2TERM_BIND"
     update_yaml configs/gnb.yaml "e2" "port" "$PORT_E2TERM"
 else
     update_yaml configs/gnb.yaml "e2" "enable_cu_cp_e2" "false"
@@ -276,8 +285,8 @@ update_yaml configs/gnb.yaml "cu_cp" "inactivity_timer" "7200"
 update_yaml configs/gnb.yaml "cu_cp" "request_pdu_session_timeout" "3"
 
 # Update configuration values for gNodeB logging
-#update_yaml configs/gnb.yaml "log" "filename" "$SCRIPT_DIR/logs/gnb.log"
-update_yaml configs/gnb.yaml "log" "all_level" "warning"
+update_yaml configs/gnb.yaml "log" "filename" "$SCRIPT_DIR/logs/gnb.log"
+update_yaml configs/gnb.yaml "log" "all_level" "info"
 update_yaml configs/gnb.yaml "log" "hex_max_size" "0"
 
 # Packet capture for NGAP

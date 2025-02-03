@@ -145,9 +145,9 @@ else
         update_conf "$UE_CONF_PATH" "pcap" "mac_filename" "logs/ue${UE_NUMBER}_mac.pcap"
         update_conf "$UE_CONF_PATH" "pcap" "mac_nr_filename" "logs/ue${UE_NUMBER}_mac_nr.pcap"
         update_conf "$UE_CONF_PATH" "pcap" "nas_filename" "logs/ue${UE_NUMBER}_nas.pcap"
-        update_conf "$UE_CONF_PATH" "log" "filename" "logs/ue${UE_NUMBER}.log"
+        update_conf "$UE_CONF_PATH" "log" "filename" "logs/ue${UE_NUMBER}.txt"
         update_conf "$UE_CONF_PATH" "general" "metrics_csv_filename" "logs/ue${UE_NUMBER}_metrics.csv"
-        update_conf "$UE_CONF_PATH" "general" "tracing_filename" "logs/ue${UE_NUMBER}_tracing.log"
+        update_conf "$UE_CONF_PATH" "general" "tracing_filename" "logs/ue${UE_NUMBER}_tracing.txt"
         echo "Successfully created configuration file \"$UE_CONF_PATH\"."
     fi
 fi

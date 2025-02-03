@@ -28,28 +28,22 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-if ! command -v realpath &>/dev/null; then
-    echo "Package \"coreutils\" not found, installing..."
-    sudo apt-get install -y coreutils
-fi
+echo "# Script: $(realpath $0)..."
 
-SCRIPT_DIR=$(dirname "$(realpath "$0")")
-cd "$SCRIPT_DIR"
-
-# Function to handle graceful shutdown
-graceful_shutdown() {
-    echo "Shutting down gNodeB gracefully..."
-    ./stop.sh
-    exit
-}
-trap graceful_shutdown SIGINT
-
-if pgrep -x "gnb" >/dev/null; then
-    echo "Already running gnb."
-else
-    echo "Starting gnb..."
-    mkdir -p logs
-    sudo chown -R $USER:$USER logs
-    sudo rm -rf /logs/gnb.log
-    srsRAN_Project/build/apps/gnb/gnb -c configs/gnb.yaml # cell_cfg prach --ports 0 1 2
-fi
+ATTEMPTS=0
+MAX_ATTEMPTS=10
+while ((ATTEMPTS++ < MAX_ATTEMPTS)); do
+    echo "Attempting to disable ufw..."
+    if output=$(sudo ufw disable 2>&1); then
+        echo "ufw disabled successfully."
+        break
+    else
+        echo "    Failed to disable ufw: $output"
+        if ((ATTEMPTS == MAX_ATTEMPTS)); then
+            echo "Tried to disable the firewall for $MAX_ATTEMPTS attempts but could not, skipping."
+            exit 0
+        fi
+        echo "    Retrying in 10 seconds..."
+        sleep 10
+    fi
+done

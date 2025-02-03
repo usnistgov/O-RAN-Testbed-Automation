@@ -78,6 +78,15 @@ if ! sudo apt-get update; then
 fi
 
 echo "Installing User Equipment..."
+export DEBIAN_FRONTEND=noninteractive
+# Modifies the needrestart configuration to suppress interactive prompts
+if [ -f "/etc/needrestart/needrestart.conf" ]; then
+    if ! grep -q "^\$nrconf{restart} = 'a';$" "/etc/needrestart/needrestart.conf"; then
+        sudo sed -i "/\$nrconf{restart} = /c\$nrconf{restart} = 'a';" "/etc/needrestart/needrestart.conf"
+        echo "Modified needrestart configuration to auto-restart services."
+    fi
+fi
+export NEEDRESTART_SUSPEND=1
 
 # Code from (https://docs.srsran.com/projects/4g/en/latest/general/source/1_installation.html#installation-from-source):
 sudo apt-get install -y build-essential cmake libfftw3-dev libmbedtls-dev libboost-program-options-dev libconfig++-dev libsctp-dev

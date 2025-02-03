@@ -37,11 +37,11 @@ cd "$PARENT_DIR"
 # Exit immediately if a command fails
 set -e
 
-if [ ! -d "rappmanager" ]; then
-    ./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/nonrtric/plt/rappmanager.git rappmanager
-fi
+cd "$PARENT_DIR/rappmanager/scripts/install"
+echo "Patching sample rApps..."
+./patch-sample-rapps.sh
 
-cd rappmanager/sample-rapp-generator
+cd "$PARENT_DIR/rappmanager/sample-rapp-generator"
 if [ ! -f generate.previous.sh ]; then
     mv generate.sh generate.previous.sh
 fi
@@ -62,42 +62,6 @@ for RAPP in "${RAPPS[@]}"; do
     if [ -d "$RAPP" ]; then
         echo
         echo "Configuring then generating ${RAPP} rApp binary (${RAPP}.csar)..."
-
-        # Configure the rApp by setting the Chart Museum post charts URI
-        ASD_YAML="$RAPP/Definitions/asd.yaml"
-        if [ -f $ASD_YAML ]; then
-            PRODUCER_URI_EXISTS=$(yq eval '.topology_template.node_templates.applicationServiceDescriptor.artifacts.producer.properties.target_server_uri' "$ASD_YAML")
-            if [ "$PRODUCER_URI_EXISTS" != "null" ]; then
-                yq eval ".topology_template.node_templates.applicationServiceDescriptor.artifacts.producer.properties.target_server_uri = \"http://$IP_ADDRESS:8879/charts/api/charts\"" -i "$ASD_YAML"
-                echo "    Configured producer of rApp asd.yaml."
-            fi
-
-            CONSUMER_URI_EXISTS=$(yq eval '.topology_template.node_templates.applicationServiceDescriptor.artifacts.consumer.properties.target_server_uri' "$ASD_YAML")
-            if [ "$CONSUMER_URI_EXISTS" != "null" ]; then
-                yq eval ".topology_template.node_templates.applicationServiceDescriptor.artifacts.consumer.properties.target_server_uri = \"http://$IP_ADDRESS:8879/charts/api/charts\"" -i "$ASD_YAML"
-                echo "    Configured consumer of rApp asd.yaml."
-            fi
-
-            # Check for any remaining variables to set
-            if grep -q "UPDATE_THIS_CHART_MUSEUM_POST_CHARTS_URI" "$ASD_YAML"; then
-                sed -i "s|UPDATE_THIS_CHART_MUSEUM_POST_CHARTS_URI|http://$IP_ADDRESS:8879/charts/api/charts|g" "$ASD_YAML"
-                echo "    Configured remaining URIs of rApp asd.yaml."
-            fi
-        fi
-        K8S_INSTANCE_JSON="$RAPP/Files/Acm/instances/k8s-instance.json"
-        if [ -f $K8S_INSTANCE_JSON ]; then
-
-            # Check for any variables to set
-            if grep -q "UPDATE_THIS_CHART_MUSEUM_GET_CHARTS_URI" "$K8S_INSTANCE_JSON"; then
-                sed -i "s|UPDATE_THIS_CHART_MUSEUM_GET_CHARTS_URI|http://$IP_ADDRESS:8879/charts/api/charts|g" "$K8S_INSTANCE_JSON"
-                echo "    Configured URIs of rApp k8s-instance.json."
-            fi
-            if grep -q "UPDATE_THIS_MACHINE_IP" "$K8S_INSTANCE_JSON"; then
-                sed -i "s|UPDATE_THIS_MACHINE_IP|$IP_ADDRESS|g" "$K8S_INSTANCE_JSON"
-                echo "    Configured machine IP of rApp k8s-instance.json."
-            fi
-        fi
-
         ./generate.sh "$RAPP"
         echo "Moving rApp binary to rApps directory..."
         cp "${RAPP}.csar" "$PARENT_DIR/rApps"

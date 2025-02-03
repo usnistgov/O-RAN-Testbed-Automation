@@ -33,6 +33,16 @@ set -e
 
 sudo systemctl restart kubelet
 
+# Code from (https://github.com/o-ran-sc/nonrtric-plt-rappmanager/blob/master/scripts/install/install-base.sh):
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null && pwd)"
+CM_VERSION="v0.16.1"
+CM_PORT="8879"
+HELM_LOCAL_REPO="$ROOT_DIR/chartstorage"
+
+echo
+echo "Starting ChartMuseum on port $CM_PORT..."
+nohup chartmuseum --port=$CM_PORT --storage="local" --context-path=/charts --storage-local-rootdir=$HELM_LOCAL_REPO >/dev/null 2>&1 &
+
 echo "Waiting for Kubernetes API server..."
 sudo ./install_scripts/wait_for_kubectl.sh
 

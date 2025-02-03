@@ -53,26 +53,20 @@ if [ ! -d nonrtric-controlpanel ]; then
     ./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/portal/nonrtric-controlpanel.git nonrtric-controlpanel
 fi
 
+# Check if the YAML editor is installed, and install it if not
+if ! command -v yq &>/dev/null; then
+    sudo "$SCRIPT_DIR/install_scripts/./install_yq.sh"
+fi
+
+# Fetch the addresses of the policy management service and information service
 SERVICE_INFO_PMS=$(kubectl get service -n nonrtric | grep policymanagementservice)
-# Check if SERVICE_INFO_PMS is empty
 if [ ! -z "$SERVICE_INFO_PMS" ]; then
-    # Check if the YAML editor is installed, and install it if not
-    if ! command -v yq &>/dev/null; then
-        sudo "$SCRIPT_DIR/install_scripts/./install_yq.sh"
-    fi
-    # Use awk to extract the IP and the correct port based on the connection context
     IP_PMS=$(echo "$SERVICE_INFO_PMS" | awk '{print $3}')
     PORT_PMS=$(echo "$SERVICE_INFO_PMS" | awk '{split($5, a, /[:/]/); print a[1]}')
 fi
 
 SERVICE_INFO_ICS=$(kubectl get service -n nonrtric | grep informationservice)
-# Check if SERVICE_INFO_ICS is empty
 if [ ! -z "$SERVICE_INFO_ICS" ]; then
-    # Check if the YAML editor is installed, and install it if not
-    if ! command -v yq &>/dev/null; then
-        sudo "$SCRIPT_DIR/install_scripts/./install_yq.sh"
-    fi
-    # Use awk to extract the IP and the correct port based on the connection context
     IP_ICS=$(echo "$SERVICE_INFO_ICS" | awk '{print $3}')
     PORT_ICS=$(echo "$SERVICE_INFO_ICS" | awk '{split($5, a, /[:/]/); print a[1]}')
 fi
@@ -82,12 +76,12 @@ if [ ! -z "$IP_PMS" ] && [ ! -z "$PORT_PMS" ]; then
     A1_POLICY_URI_EXISTS=$(yq eval '.spring.cloud.gateway.routes[0].id' "$YAML_CONFIG_PATH")
     if [ "$A1_POLICY_URI_EXISTS" != "null" ]; then
         yq eval ".spring.cloud.gateway.routes[0].uri = \"http://$IP_PMS:$PORT_PMS\"" -i "$YAML_CONFIG_PATH"
-        echo "    Configured A1-Policy route of control panel to http://$IP_PMS:$PORT_PMS."
+        echo "Configured A1-Policy route of control panel to http://$IP_PMS:$PORT_PMS."
     fi
     JSON_CONFIG_PATH="$SCRIPT_DIR/nonrtric-controlpanel/webapp-frontend/proxy.conf.json"
     if jq -e '.["/a1-policy"].target' "$JSON_CONFIG_PATH" >/dev/null; then
         jq --arg newUrl "http://$IP_PMS:$PORT_PMS" '.["/a1-policy"].target = $newUrl' "$JSON_CONFIG_PATH" >temp.json && mv temp.json "$JSON_CONFIG_PATH"
-        echo "    Configured A1-Policy proxy target to http://$IP_PMS:$PORT_PMS."
+        echo "Configured A1-Policy proxy target to http://$IP_PMS:$PORT_PMS."
     fi
 fi
 
@@ -96,16 +90,16 @@ if [ ! -z "$IP_ICS" ] && [ ! -z "$PORT_ICS" ]; then
     A1_EL_URI_EXISTS=$(yq eval '.spring.cloud.gateway.routes[1].id' "$YAML_CONFIG_PATH")
     if [ "$A1_EL_URI_EXISTS" != "null" ]; then
         yq eval ".spring.cloud.gateway.routes[1].uri = \"http://$IP_ICS:$PORT_ICS\"" -i "$YAML_CONFIG_PATH"
-        echo "    Configured A1-EI route of control panel to http://$IP_ICS:$PORT_ICS."
+        echo "Configured A1-EI route of control panel to http://$IP_ICS:$PORT_ICS."
     fi
     JSON_CONFIG_PATH="$SCRIPT_DIR/nonrtric-controlpanel/webapp-frontend/proxy.conf.json"
     if jq -e '.["/data-producer"].target' "$JSON_CONFIG_PATH" >/dev/null; then
         jq --arg newUrl "http://$IP_ICS:$PORT_ICS" '.["/data-producer"].target = $newUrl' "$JSON_CONFIG_PATH" >temp.json && mv temp.json "$JSON_CONFIG_PATH"
-        echo "    Configured /data-producer proxy target to http://$IP_ICS:$PORT_ICS."
+        echo "Configured /data-producer proxy target to http://$IP_ICS:$PORT_ICS."
     fi
     if jq -e '.["/data-consumer"].target' "$JSON_CONFIG_PATH" >/dev/null; then
         jq --arg newUrl "http://$IP_ICS:$PORT_ICS" '.["/data-consumer"].target = $newUrl' "$JSON_CONFIG_PATH" >temp.json && mv temp.json "$JSON_CONFIG_PATH"
-        echo "    Configured /data-consumer proxy target to http://$IP_ICS:$PORT_ICS."
+        echo "Configured /data-consumer proxy target to http://$IP_ICS:$PORT_ICS."
     fi
 fi
 
@@ -134,6 +128,9 @@ if ! command -v nvm &>/dev/null; then
     curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
     export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
+    if [ ! -f ~/.bashrc ]; then
+        touch ~/.bashrc
+    fi
     source ~/.bashrc
 fi
 if ! command -v node &>/dev/null || [[ $(node -v) != v14.21.3 ]]; then

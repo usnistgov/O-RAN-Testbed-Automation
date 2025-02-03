@@ -67,8 +67,6 @@ if systemctl is-active --quiet apt-daily-upgrade.timer; then
     sudo systemctl disable apt-daily-upgrade.timer &>/dev/null && echo "Successfully disabled apt-daily-upgrade.timer service."
 fi
 
-UBUNTU_CODENAME=$(./install_scripts/get_ubuntu_codename.sh)
-
 echo "Cloning Open5GS..."
 if [ ! -d "open5gs" ]; then
     ./install_scripts/git_clone.sh https://github.com/open5gs/open5gs.git
@@ -76,145 +74,28 @@ fi
 cd $SCRIPT_DIR/open5gs
 
 echo "Starting installation of Open5GS..."
-
-INSTALLED_VERSION=$(mongod --version 2>/dev/null | grep -oP "(?<=v)\d+\.\d+\.\d+") || true
-if [[ $INSTALLED_VERSION == 4.4.* ]]; then
-    echo "MongoDB version 4.4.x is already installed, skipping."
-else
-    # Get the latest Ubuntu version supported by MongoDB 4.4
-    case "$UBUNTU_CODENAME" in
-    "focal" | "bionic" | "xenial")
-        UBUNTU_CODENAME_MONGODB="$UBUNTU_CODENAME"
-        ;;
-    *)
-        UBUNTU_CODENAME_MONGODB="focal" # Default to the last supported version if the current one is too new
-        ;;
-    esac
-
-    # Check if libssl1.1 is installed
-    if ! dpkg -s libssl1.1 >/dev/null 2>&1; then
-        echo "libssl1.1 not found. Installing..."
-        # Create a temporary directory and navigate to it
-        TEMP_DIR=$(mktemp -d -t libssl-XXXXXXXX)
-        pushd "$TEMP_DIR"
-
-        wget http://nz2.archive.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.1f-1ubuntu2_amd64.deb
-        sudo dpkg -i libssl1.1_1.1.1f-1ubuntu2_amd64.deb
-
-        # Return to the original directory and remove the temporary directory
-        popd
-        rm -rf "$TEMP_DIR"
-    else
-        echo "libssl1.1 is already installed."
-    fi
-
-    # Step 1: Uninstall any conflicting MongoDB version
-    echo "Checking for existing MongoDB installations..."
-    if dpkg -l | grep -qE "(mongodb-org|mongodb-server|mongodb-server-core)"; then
-        echo "Removing conflicting MongoDB packages..."
-
-        # Remove all installed MongoDB-related packages safely
-        sudo apt-get purge -y mongodb-org mongodb-org-server mongodb-org-shell mongodb-org-mongos mongodb-org-tools \
-            mongodb-server mongodb-server-core mongodb-clients || {
-            echo "Failed to remove conflicting MongoDB packages"
-            exit 1
-        }
-
-        # Clean up MongoDB directories (data and logs)
-        sudo rm -rf /var/lib/mongodb
-        sudo rm -rf /var/log/mongodb
-    else
-        echo "No conflicting MongoDB installations found."
-    fi
-
-    # Step 2: Installing MongoDB 4.4
-    echo "Updating package lists..."
-    if ! sudo apt-get update; then
-        sudo "$SCRIPT_DIR/install_scripts/./remove_any_expired_apt_keys.sh"
-        echo "Trying to update package lists again..."
-        if ! sudo apt-get update; then
-            echo "Failed to update package lists"
-            exit 1
-        fi
-    fi
-
-    echo "Installing gnupg and curl if not already installed..."
-    sudo apt-get install -y gnupg curl || {
-        echo "Failed to install GnuPG or curl"
-        exit 1
-    }
-
-    # Import the MongoDB 4.4 public key using signed-by method
-    echo "Attempting to import MongoDB 4.4 server public key using signed-by method..."
-    if ! curl -fsSL https://www.mongodb.org/static/pgp/server-4.4.asc | sudo gpg --dearmor --yes -o /usr/share/keyrings/mongodb-archive-keyring.gpg; then
-        rm -f /usr/share/keyrings/mongodb-archive-keyring.gpg
-        echo "Failed to import MongoDB public key. Please check your internet connection and try again. Exiting."
-        exit 1
-    else
-        echo "Successfully imported MongoDB public key using the signed-by method. Adding repository..."
-        echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/mongodb-archive-keyring.gpg] https://repo.mongodb.org/apt/ubuntu $UBUNTU_CODENAME_MONGODB/mongodb-org/4.4 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-4.4.list
-    fi
-
-    # Update package lists after adding MongoDB repository
-    while sudo fuser /var/lib/dpkg/lock /var/lib/apt/lists/lock /var/cache/apt/archives/lock >/dev/null 2>&1; do
-        echo "Waiting for the apt lock to be released..."
-        sleep 5
-    done
-
-    echo "Updating package lists after adding MongoDB repository..."
-    if ! sudo apt-get update; then
-        echo "Failed to update package lists after adding MongoDB repository."
-        exit 1
-    fi
-
-    echo "Attempting to install MongoDB 4.4..."
-    if ! sudo apt-get install -y --allow-change-held-packages mongodb-org=4.4.* mongodb-org-server=4.4.* mongodb-org-shell=4.4.* mongodb-org-mongos=4.4.* mongodb-org-tools=4.4.*; then
-        echo "Initial MongoDB installation failed. Attempting to fix broken installations..."
-        sudo apt-get --fix-broken install
-        sudo apt-get autoremove -y
-        sudo apt-get clean
-        echo "Trying to install MongoDB 4.4 again..."
-        if ! sudo apt-get install -y --allow-change-held-packages mongodb-org=4.4.* mongodb-org-server=4.4.* mongodb-org-shell=4.4.* mongodb-org-mongos=4.4.* mongodb-org-tools=4.4.*; then
-            echo "Failed to install MongoDB 4.4 after attempting repairs. Exiting script."
-            exit 1
-        fi
+export DEBIAN_FRONTEND=noninteractive
+# Modifies the needrestart configuration to suppress interactive prompts
+if [ -f "/etc/needrestart/needrestart.conf" ]; then
+    if ! grep -q "^\$nrconf{restart} = 'a';$" "/etc/needrestart/needrestart.conf"; then
+        sudo sed -i "/\$nrconf{restart} = /c\$nrconf{restart} = 'a';" "/etc/needrestart/needrestart.conf"
+        echo "Modified needrestart configuration to auto-restart services."
     fi
 fi
+export NEEDRESTART_SUSPEND=1
 
-echo "Attempting to install mongosh..."
-if ! sudo apt-get install -y mongosh; then
-    echo "Failed to install mongosh. Attempting to fix broken installations..."
-    sudo apt-get --fix-broken install
-    sudo apt-get autoremove -y
-    sudo apt-get clean
-    echo "Trying to install mongosh again..."
-    if ! sudo apt-get install -y mongosh; then
-        echo "Failed to install mongosh after attempting repairs. Exiting script."
-        exit 1
-    fi
+sudo "$SCRIPT_DIR/./install_scripts/install_mongodb.sh"
+
+# Check and create the open5gs user and group if they don't exist
+if ! getent passwd open5gs >/dev/null; then
+    sudo useradd -r -M -s /bin/false open5gs
+    echo "User 'open5gs' created."
 fi
-
-echo "Pinning MongoDB 4.4 packages to prevent automatic updates..."
-echo "mongodb-org hold" | sudo dpkg --set-selections
-echo "mongodb-org-server hold" | sudo dpkg --set-selections
-echo "mongodb-org-shell hold" | sudo dpkg --set-selections
-echo "mongodb-org-mongos hold" | sudo dpkg --set-selections
-echo "mongodb-org-tools hold" | sudo dpkg --set-selections
-
-echo "Checking MongoDB service..."
-if ! sudo systemctl is-active --quiet mongod; then
-    echo "Starting MongoDB service..."
-    sudo systemctl start mongod
-else
-    echo "MongoDB service is already running."
+if ! getent group open5gs >/dev/null; then
+    sudo groupadd open5gs
+    echo "Group 'open5gs' created."
 fi
-
-if ! sudo systemctl is-enabled --quiet mongod; then
-    echo "Enabling MongoDB service to start on boot..."
-    sudo systemctl enable mongod
-else
-    echo "MongoDB service is already enabled to start on boot."
-fi
+sudo usermod -a -G open5gs open5gs
 
 # Step 3: Setting up TUN device
 echo "Checking if TUN device ogstun exists..."

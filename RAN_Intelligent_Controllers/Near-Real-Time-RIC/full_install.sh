@@ -39,7 +39,16 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-echo "Installing Near-RT RIC with selected release..."
+echo "Installing Near Real-Time RAN Intelligent Controller..."
+export DEBIAN_FRONTEND=noninteractive
+# Modifies the needrestart configuration to suppress interactive prompts
+if [ -f "/etc/needrestart/needrestart.conf" ]; then
+    if ! grep -q "^\$nrconf{restart} = 'a';$" "/etc/needrestart/needrestart.conf"; then
+        sudo sed -i "/\$nrconf{restart} = /c\$nrconf{restart} = 'a';" "/etc/needrestart/needrestart.conf"
+        echo "Modified needrestart configuration to auto-restart services."
+    fi
+fi
+export NEEDRESTART_SUSPEND=1
 
 # Run a sudo command every minute to ensure script execution without user interaction
 ./install_scripts/start_sudo_refresh.sh
@@ -134,17 +143,22 @@ else
         sudo "$SCRIPT_DIR/install_scripts/./install_yq.sh"
     fi
 
-    echo "Disabling Kong Pod and Removing Ingress Files..."
-    cd "$SCRIPT_DIR/ric-dep/helm/infrastructure"
-    yq '.kong.enabled = false' -i values.yaml
-    yq '.kong.enabled' values.yaml
-    # Removing Ingress files
-    cd "$SCRIPT_DIR/ric-dep/helm/appmgr/templates"
-    rm -rf ingress-appmgr.yaml
-    cd "$SCRIPT_DIR/ric-dep/helm/e2mgr/templates"
-    rm -rf ingress-e2mgr.yaml
-    cd "$SCRIPT_DIR/ric-dep/helm/a1mediator/templates"
-    rm -rf ingress-a1mediator.yaml
+    # If kong gives troubles in Release I or Release J then it can be disabled with the following code.
+    # cd "$SCRIPT_DIR/ric-dep"
+    # CURRENT_RIC_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+    # if [ "$CURRENT_RIC_BRANCH" = "i-release" ] || [ "$CURRENT_RIC_BRANCH" = "j-release" ]; then
+    #     echo "Disabling Kong Pod and Removing Ingress Files..."
+    #     cd "$SCRIPT_DIR/ric-dep/helm/infrastructure"
+    #     yq '.kong.enabled = false' -i values.yaml
+    #     yq '.kong.enabled' values.yaml
+    #     # Removing Ingress files
+    #     cd "$SCRIPT_DIR/ric-dep/helm/appmgr/templates"
+    #     rm -rf ingress-appmgr.yaml
+    #     cd "$SCRIPT_DIR/ric-dep/helm/e2mgr/templates"
+    #     rm -rf ingress-e2mgr.yaml
+    #     cd "$SCRIPT_DIR/ric-dep/helm/a1mediator/templates"
+    #     rm -rf ingress-a1mediator.yaml
+    # fi
 
     echo
     echo
@@ -158,20 +172,9 @@ cd "$SCRIPT_DIR"
 # Ensure docker is configured properly
 sudo ./install_scripts/enable_docker_build_kit.sh
 
-# Optionally, install kubecolor for a formatted kubectl output
-sudo ./install_scripts/wait_for_kubectl.sh
-if ! command -v kubecolor &>/dev/null; then
-    sudo apt-get update || true
-    echo "Installing kubecolor..."
-    if sudo apt-get install -y kubecolor; then
-        command -v kubecolor >/dev/null 2>&1 && alias kubectl="kubecolor"
-    else
-        echo "Skipping optional kubecolor installation."
-    fi
-fi
-
 echo
 echo "Installing Near-Real Time RAN Intelligent Controller..."
+
 # Determine if RAN Intelligent Controller pods should be reset
 SHOULD_RESET_RIC=false
 if [ ! -d "ric-dep" ]; then
@@ -289,7 +292,9 @@ cd "$SCRIPT_DIR"
 
 echo
 echo "Installing k9s..."
-sudo ./install_scripts/install_k9s.sh
+if ! sudo ./install_scripts/install_k9s.sh; then
+    echo "Could not install k9s at the moment, skipping."
+fi
 
 echo
 echo "Building and Installing the E2 Simulator..."

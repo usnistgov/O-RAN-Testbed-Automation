@@ -65,13 +65,13 @@ sudo sysctl -w net.ipv4.ip_forward=1
 sudo sysctl -w net.ipv6.conf.all.forwarding=1
 
 # Check if the iptables MASQUERADE rule already exists, if not, add it
-if ! sudo iptables -t nat -C POSTROUTING -s $IPv4_SUBNET ! -o $INTERFACE -j MASQUERADE 2>/dev/null; then
+if ! sudo iptables --wait -t nat -C POSTROUTING -s $IPv4_SUBNET ! -o $INTERFACE -j MASQUERADE 2>/dev/null; then
     echo "Adding iptables MASQUERADE rule for IPv4..."
-    sudo iptables -t nat -A POSTROUTING -s $IPv4_SUBNET ! -o $INTERFACE -j MASQUERADE
+    sudo iptables --wait -t nat -A POSTROUTING -s $IPv4_SUBNET ! -o $INTERFACE -j MASQUERADE
 fi
 
 # Check if the ip6tables MASQUERADE rule already exists, if not, add it
-if ! sudo ip6tables -t nat -C POSTROUTING -s $IPv6_SUBNET -o $INTERFACE -j MASQUERADE 2>/dev/null; then
+if ! sudo ip6tables --wait -t nat -C POSTROUTING -s $IPv6_SUBNET -o $INTERFACE -j MASQUERADE 2>/dev/null; then
     echo "Adding ip6tables MASQUERADE rule for IPv6..."
-    sudo ip6tables -t nat -A POSTROUTING -s $IPv6_SUBNET -o $INTERFACE -j MASQUERADE 2>/dev/null
+    sudo ip6tables --wait -t nat -A POSTROUTING -s $IPv6_SUBNET -o $INTERFACE -j MASQUERADE 2>/dev/null
 fi

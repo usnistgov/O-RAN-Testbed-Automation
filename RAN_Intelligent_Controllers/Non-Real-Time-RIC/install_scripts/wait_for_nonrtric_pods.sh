@@ -124,17 +124,6 @@ echo "Waiting for essential system pods and RIC components to be ready..."
 
 wait_for_all_pods_running "kube-flannel" "nonrtric"
 
-# Remove the oran-nonrtric-kong-init-migrations pod if it has completed
-POD_INFO=$(kubectl get pods -n nonrtric --no-headers | grep 'oran-nonrtric-kong-init-migrations' | awk '{print $1, $3}')
-if [ ! -z "$POD_INFO" ]; then
-    POD_NAME=$(echo $POD_INFO | awk '{print $1}')
-    POD_STATUS=$(echo $POD_INFO | awk '{print $2}')
-    if [ "$POD_STATUS" == "Completed" ]; then
-        echo "Cleaning up pod $POD_NAME..."
-        kubectl delete pod $POD_NAME -n nonrtric
-    fi
-fi
-
 # Initialize the Kong database with the necessary schema and configurations
 POD_INFO=$(kubectl get pods -n nonrtric --no-headers | grep 'oran-nonrtric-kong' | awk '{print $1, $3}')
 if [ ! -z "$POD_INFO" ]; then

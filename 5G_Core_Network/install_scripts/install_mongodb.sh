@@ -234,10 +234,3 @@ if ! sudo systemctl is-enabled --quiet mongod; then
 else
     echo "MongoDB service is already enabled to start on boot."
 fi
-
-# Wait for MongoDB to start properly
-until mongo --eval "print('wait for mongo')" &>/dev/null; do
-    echo 'Waiting for MongoDB to start...'
-    sleep 1
-done
-echo 'MongoDB is up and running!'

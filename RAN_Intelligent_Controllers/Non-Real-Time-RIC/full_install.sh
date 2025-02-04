@@ -92,6 +92,10 @@ if [ ! -d dep ]; then
     git restore --source=HEAD :/
 fi
 
+if [ ! -d "rappmanager" ]; then
+    ./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/nonrtric/plt/rappmanager.git rappmanager
+fi
+
 cd "$SCRIPT_DIR/dep/"
 
 if [ ! -d ranpm ] || [ -z "$(ls -A ranpm)" ]; then

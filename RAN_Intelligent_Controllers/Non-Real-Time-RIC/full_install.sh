@@ -93,6 +93,7 @@ if [ ! -d dep ]; then
 fi
 
 if [ ! -d "rappmanager" ]; then
+    cd "$SCRIPT_DIR"
     ./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/nonrtric/plt/rappmanager.git rappmanager
 fi
 

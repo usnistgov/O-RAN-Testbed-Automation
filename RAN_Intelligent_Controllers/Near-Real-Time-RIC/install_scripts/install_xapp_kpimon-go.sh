@@ -32,13 +32,14 @@ echo "# Script: $(realpath $0)..."
 
 # Exit immediately if a command fails
 set -e
+set -x
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$(dirname "$SCRIPT_DIR")"
 
-cd xApps/hw-go
+cd xApps/kpimon-go
 
-echo "Creating and modifying the configuration file config/config-file_MODIFIED.json"
+echo "Creating and modifying the configuration file deploy/config_MODIFIED.json"
 # Check if jq is installed; if not, install it
 if ! command -v jq &>/dev/null; then
     echo "Installing jq..."
@@ -46,36 +47,27 @@ if ! command -v jq &>/dev/null; then
     sudo apt-get install -y jq
 fi
 
-if [ ! -f "config/config-file_MODIFIED.json" ]; then
-    FILE="config/config-file_MODIFIED.json"
-    cp config/config-file.json $FILE
+if [ ! -f "deploy/config_MODIFIED.json" ]; then
+    FILE="deploy/config_MODIFIED.json"
+    cp deploy/config.json $FILE
     # Modify the required fields using jq and overwrite the original file
     jq '.containers[0].image.tag = "1.2" |
         .containers[0].image.registry = "example.com:80" |
-        .containers[0].image.name = "hw-go"' "$FILE" >tmp.$$.json && mv tmp.$$.json "$FILE"
+        .containers[0].image.name = "kpimon-go"' "$FILE" >tmp.$$.json && mv tmp.$$.json "$FILE"
 fi
 
-# Check if the Dockerfile contains the correct RMR version; if not, update it.
-# This ensures that within the hw-go pod, /usr/local/lib/librmr_si.so doesn't
-# contain the rmr_free_consts memory leak bug, that was fixed in PR 7209:
-# https://gerrit.o-ran-sc.org/r/c/ric-plt/xapp-frame-py/+/7209
-if grep -q "4.7.0" Dockerfile; then
-    echo "Updating RMR from version 4.7.0 to 4.9.4 in hw-go Dockerfile..."
-    sed -i 's/4.7.0/4.9.4/g' Dockerfile
-fi
-
-sudo docker build -t example.com:80/hw-go:1.2 .
+sudo docker build -t example.com:80/kpimon-go:1.2 .
 
 if [ "$CHART_REPO_URL" != "http://0.0.0.0:8090" ]; then
     export CHART_REPO_URL=http://0.0.0.0:8090
 fi
 
-sudo docker save -o hw-go.tar example.com:80/hw-go:1.2
+sudo docker save -o kpimon-go.tar example.com:80/kpimon-go:1.2
 
-sudo ctr -n=k8s.io image import hw-go.tar
+sudo ctr -n=k8s.io image import kpimon-go.tar
 
 # Run the dms_cli onboard command and capture the output
-OUTPUT=$(dms_cli onboard ./config/config-file_MODIFIED.json ./config/schema.json)
+OUTPUT=$(dms_cli onboard ./deploy/config_MODIFIED.json ./deploy/schema.json)
 echo $OUTPUT
 if echo "$OUTPUT" | grep -q '"status": "Created"'; then
     echo "Onboarding successful: status is 'Created'."
@@ -91,18 +83,18 @@ if ! kubectl get namespace ricxapp &>/dev/null; then
 fi
 
 # Check if the xApp is already installed and uninstall it if necessary
-if dms_cli get_charts_list | grep -q 'hw-go'; then
-    echo "Uninstalling application 'hw-go'..."
-    UNINSTALL_OUTPUT=$(dms_cli uninstall hw-go ricxapp 2>&1) || true
+if dms_cli get_charts_list | grep -q 'kpimon-go'; then
+    echo "Uninstalling application 'kpimon-go'..."
+    UNINSTALL_OUTPUT=$(dms_cli uninstall kpimon-go ricxapp 2>&1) || true
     if echo "$UNINSTALL_OUTPUT" | grep -q 'release: not found\|No Xapp to uninstall' || true; then
-        echo "Application hw-go not found or already uninstalled."
+        echo "Application kpimon-go not found or already uninstalled."
     else
         echo "$UNINSTALL_OUTPUT"
     fi
 fi
 
-echo "Installing application 'hw-go'..."
-OUTPUT=$(dms_cli install hw-go 1.0.0 ricxapp || echo "Failed to install hw-go xApp with dms_cli.")
+echo "Installing application 'kpimon-go'..."
+OUTPUT=$(dms_cli install kpimon-go 1.0.0 ricxapp) || echo "Failed to install kpimon-go xApp with dms_cli."
 echo "$OUTPUT"
 if [[ "$OUTPUT" == *"status: OK"* ]]; then
     echo "Application successfully installed."

@@ -142,7 +142,6 @@ function generate_commands() {
     done
 
     echo "$BACK_COMMAND" >>download_dependency_repositories.bat
-
     echo "" >>download_dependency_repositories.bat
 }
 
@@ -164,7 +163,6 @@ generate_commands "https://gerrit.onap.org/r/oom.git" "RAN_Intelligent_Controlle
 generate_commands "https://gerrit.o-ran-sc.org/r/portal/nonrtric-controlpanel.git" "RAN_Intelligent_Controllers\\Non-Real-Time-RIC" "nonrtric-controlpanel"
 generate_commands "https://gerrit.o-ran-sc.org/r/nonrtric/plt/rappmanager.git" "RAN_Intelligent_Controllers\\Non-Real-Time-RIC" "rappmanager"
 
-echo "" >>download_dependency_repositories.bat
 echo "cd RAN_Intelligent_Controllers\\Non-Real-Time-RIC" >>download_dependency_repositories.bat
 echo "mkdir rApps" >>download_dependency_repositories.bat
 echo "cd ..\\.." >>download_dependency_repositories.bat

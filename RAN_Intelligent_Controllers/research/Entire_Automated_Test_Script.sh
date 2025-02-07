@@ -45,47 +45,88 @@ sudo apt-get update
 sudo apt-get upgrade -y
 sudo apt-get install -y git
 
-rm -rf O-RAN-Testbed-Automation
-git clone https://github.com/USNISTGOV/O-RAN-Testbed-Automation.git
-cd O-RAN-Testbed-Automation
+# rm -rf O-RAN-Testbed-Init
+if [ ! -d O-RAN-Testbed-Init ]; then
+    git clone https://github.com/Simewu/O-RAN-Testbed-Init.git
+fi
+cd O-RAN-Testbed-Init
 
-# rm -rf o-ran-testbed-init
-# git clone https://gitlab.nist.gov/gitlab/wnd-oran/o-ran-testbed-init.git
+# # rm -rf O-RAN-Testbed-Automation
+# if [ ! -d O-RAN-Testbed-Automation ]; then
+#     git clone https://github.com/USNISTGOV/O-RAN-Testbed-Automation.git
+# fi
+# cd O-RAN-Testbed-Automation
+
+# # rm -rf o-ran-testbed-init
+# if [ ! -d o-ran-testbed-init ]; then
+#     git clone https://gitlab.nist.gov/gitlab/wnd-oran/o-ran-testbed-init.git
+# fi
 # cd o-ran-testbed-init
 
 # Update the commit hashes so that we're testing the latest version of each dependency
 ./Additional_Scripts/update_commit_hashes.sh
 
-# This will take a few hours to complete:
+# Install the testbed
 ./full_install.sh -y
 
+# Ensure that the components are stopped before running the tests
+./stop.sh
+
+echo
+echo "Running tests for 5G_Core_Network..."
+cd 5G_Core_Network/open5gs/build
+if ! meson test -v; then
+    echo "The Open5GS test cases failed."
+    exit 1
+fi
+cd ../../..
+
+echo
+echo "Running tests for Next_Generation_Node_B..."
 cd Next_Generation_Node_B/srsRAN_Project/build
 if ! make test; then
-    echo "The srsRAN_Project component test cases failed."
-    exit 1
+    if ! ctest --rerun-failed --output-on-failure; then
+        echo "The srsRAN_Project test cases failed."
+        exit 1
+    fi
 fi
 cd ../../..
 
+echo
+echo "Running tests for User_Equipment..."
 cd User_Equipment/srsRAN_4G/build
 if ! make test; then
-    echo "The srsRAN_4G component test cases failed."
-    exit 1
+    if ! ctest --rerun-failed --output-on-failure; then
+        echo "The srsRAN_4G test cases failed."
+        exit 1
+    fi
 fi
 cd ../../..
 
+echo
+echo "Waiting for Near-RT RIC to be ready..."
+cd RAN_Intelligent_Controllers/Near-Real-Time-RIC/install_scripts
+./wait_for_ricplt_pods.sh
+cd ../../..
+
+./generate_configurations.sh
+
+echo
+echo "Starting the testbed components..."
 cd 5G_Core_Network
 ./run.sh
 cd ..
+sleep 10
 
 cd Next_Generation_Node_B
 ./run_background.sh
 cd ..
+sleep 10
 
 cd User_Equipment
 ./run_background.sh
 cd ..
-
-sleep 30
+sleep 10
 
 if ./is_running.sh | grep -q "NOT RUNNING"; then
     echo "One or more components failed to start."

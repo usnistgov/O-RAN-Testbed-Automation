@@ -39,7 +39,7 @@ if exist "5G_Core_Network\open5gs" rmdir /s /q "5G_Core_Network\open5gs"
 cd 5G_Core_Network
 git clone https://github.com/open5gs/open5gs.git
 cd open5gs
-git checkout 81f69b436c5b48c38b7547d198e74e04e7677773
+git checkout 056b50c9c8cf2b69e3a057d9aedde3b00634b6ca
 cd ..\..
 
 if exist "User_Equipment\srsRAN_4G" rmdir /s /q "User_Equipment\srsRAN_4G"
@@ -131,7 +131,7 @@ if exist "RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\smo-install\onap_oom
 cd RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\smo-install
 git clone https://gerrit.onap.org/r/oom.git
 cd onap_oom
-git checkout 8009e77c8cdc3e33a7063df176eb9d0f0b805014
+git checkout 06bbffdd910c94e5e45e69f17e06ce8a7c61dd6a
 cd ..\..\..\..\..
 
 if exist "RAN_Intelligent_Controllers\Non-Real-Time-RIC\nonrtric-controlpanel" rmdir /s /q "RAN_Intelligent_Controllers\Non-Real-Time-RIC\nonrtric-controlpanel"
@@ -147,7 +147,6 @@ git clone https://gerrit.o-ran-sc.org/r/nonrtric/plt/rappmanager.git
 cd rappmanager
 git checkout ffd5b45b53572ae42fbc22510bcbe3ad8883b86f
 cd ..\..\..
-
 
 cd RAN_Intelligent_Controllers\Non-Real-Time-RIC
 mkdir rApps

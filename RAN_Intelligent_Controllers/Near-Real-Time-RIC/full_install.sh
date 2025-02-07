@@ -351,6 +351,10 @@ if [ ! -d "hw-go" ]; then
     echo "Cloning Hello World xApp..."
     ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/hw-go.git
 fi
+if [ ! -d "kpimon-go" ]; then
+    echo "Cloning KPI Monitor xApp..."
+    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/kpimon-go.git
+fi
 cd ..
 
 echo "Building and Installing Hello World xApp..."
@@ -360,6 +364,8 @@ if [ -d "xApps/hw-go" ] && kubectl get pods -n ricxapp | grep -q "ricxapp-hw-go.
 else
     sudo ./install_scripts/install_xapp_hw-go.sh
 fi
+
+#sudo ./install_scripts/install_xapp_kpimon-go.sh
 
 # Wait until the xApp is successfully deployed
 while true; do

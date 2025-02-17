@@ -11,7 +11,7 @@ requirements.txt
 /rApps/
 install_time.txt
 
-# Ignore additional Python filesW
+# Ignore additional Python files
 __pycache__/
 *.py[cod]
 *$py.class

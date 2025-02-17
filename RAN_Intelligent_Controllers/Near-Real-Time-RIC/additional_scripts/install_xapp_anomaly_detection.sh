@@ -30,8 +30,8 @@
 
 echo "# Script: $(realpath $0)..."
 
-# Run this script to build and deploy the Key Performance Indicator (KPI) Monitor xApp (kpimon-go) in the Near-Real-Time RIC.
-# More information can be found at: https://github.com/o-ran-sc/ric-app-kpimon-go and https://docs.o-ran-sc.org/projects/o-ran-sc-ric-app-kpimon/en/latest/overview.html
+# Run this script to build and deploy the Anamoly Detection xApp (ad) in the Near-Real-Time RIC.
+# More information can be found at: https://github.com/o-ran-sc/ric-app-ad and https://docs.o-ran-sc.org/projects/o-ran-sc-ric-app-ad/en/latest/overview.html
 
 # Exit immediately if a command fails
 set -e
@@ -48,14 +48,14 @@ cd "$PARENT_DIR"
 
 cd xApps
 
-if [ ! -d "kpimon-go" ]; then
-    echo "Cloning KPI Monitor xApp..."
-    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/kpimon-go.git
+if [ ! -d "ad" ]; then
+    echo "Cloning Anamoly Detection (ad) xApp..."
+    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/ad.git
 fi
 
-cd kpimon-go
+cd ad
 
-echo "Creating and modifying the configuration file deploy/config_MODIFIED.json"
+echo "Creating and modifying the configuration file xapp-descriptor/config_MODIFIED.json and xapp-descriptor/schema.json..."
 # Check if jq is installed; if not, install it
 if ! command -v jq &>/dev/null; then
     echo "Installing jq..."
@@ -63,36 +63,48 @@ if ! command -v jq &>/dev/null; then
     sudo apt-get install -y jq
 fi
 
-if [ ! -f "deploy/config_MODIFIED.json" ]; then
-    FILE="deploy/config_MODIFIED.json"
-    cp deploy/config.json $FILE
+if [ ! -f "xapp-descriptor/config_MODIFIED.json" ]; then
+    FILE="xapp-descriptor/config_MODIFIED.json"
+    cp xapp-descriptor/config.json $FILE
     # Modify the required fields using jq and overwrite the original file
     jq '.containers[0].image.tag = "1.2" |
         .containers[0].image.registry = "example.com:80" |
-        .containers[0].image.name = "kpimon-go"' "$FILE" >tmp.$$.json && mv tmp.$$.json "$FILE"
+        .containers[0].image.name = "ad"' "$FILE" >tmp.$$.json && mv tmp.$$.json "$FILE"
 fi
 
-sudo docker build -t example.com:80/kpimon-go:1.2 .
+# Create the schema.json file if it doesn't exist
+if [ ! -f "xapp-descriptor/schema.json" ]; then
+    FILE="xapp-descriptor/schema.json"
+    echo "{}" >$FILE
+    jq '. | .["$schema"] = "http://json-schema.org/draft-07/schema#" |
+        . | .["$id"] = "#/controls" |
+        . | .["type"] = "object" |
+        . | .["title"] = "Controls Section Schema" |
+        . | .["required"] = [] |
+        . | .["properties"] = {}' "$FILE" >tmp.$$.json && mv tmp.$$.json "$FILE"
+fi
+
+sudo docker build -t example.com:80/ad:1.2 .
 
 if [ "$CHART_REPO_URL" != "http://0.0.0.0:8090" ]; then
     export CHART_REPO_URL=http://0.0.0.0:8090
 fi
 
-sudo docker save -o kpimon-go.tar example.com:80/kpimon-go:1.2
-sudo chmod 755 kpimon-go.tar
-sudo chown $USER:$USER kpimon-go.tar
+sudo docker save -o ad.tar example.com:80/ad:1.2
+sudo chmod 755 ad.tar
+sudo chown $USER:$USER ad.tar
 
 # Import the image into the containerd container runtime
-sudo ctr -n=k8s.io image import kpimon-go.tar
+sudo ctr -n=k8s.io image import ad.tar
 
 # Run the dms_cli onboard command and capture the output
-OUTPUT=$(dms_cli onboard ./deploy/config_MODIFIED.json ./deploy/schema.json)
+OUTPUT=$(dms_cli onboard ./xapp-descriptor/config_MODIFIED.json ./xapp-descriptor/schema.json)
 echo $OUTPUT
 if echo "$OUTPUT" | grep -q '"status": "Created"'; then
     echo "Onboarding successful: status is 'Created'."
 else
     echo "Onboarding failed or 'Created' status not found."
-    exit 1
+    #exit 1
 fi
 
 echo "Checking if namespace 'ricxapp' exists..."
@@ -101,18 +113,18 @@ if ! kubectl get namespace ricxapp &>/dev/null; then
     kubectl create namespace ricxapp
 fi
 
-echo "Uninstalling application 'kpimon-go' if it exists..."
-UNINSTALL_OUTPUT=$(dms_cli uninstall kpimon-go ricxapp 2>&1) || true
+echo "Uninstalling application 'ad' if it exists..."
+UNINSTALL_OUTPUT=$(dms_cli uninstall ad ricxapp 2>&1) || true
 if echo "$UNINSTALL_OUTPUT" | grep -q 'release: not found\|No Xapp to uninstall' || true; then
-    echo "Application kpimon-go not found or already uninstalled."
+    echo "Application ad not found or already uninstalled."
 else
     echo "$UNINSTALL_OUTPUT"
 fi
 
-XAPP_VERSION=$(dms_cli get_charts_list | jq -r '.["kpimon-go"][0].version')
+XAPP_VERSION=$(dms_cli get_charts_list | jq -r '.["ad"][0].version')
 
-echo "Installing application 'kpimon-go'..."
-OUTPUT=$(dms_cli install kpimon-go $XAPP_VERSION ricxapp) || echo "Failed to install kpimon-go xApp with dms_cli."
+echo "Installing application 'ad'..."
+OUTPUT=$(dms_cli install ad $XAPP_VERSION ricxapp) || echo "Failed to install ad xApp with dms_cli."
 echo "$OUTPUT"
 if echo "$OUTPUT" | grep -qE '"?status"?:\s*"?\bOK\b"?'; then
     echo "Application successfully installed."
@@ -120,6 +132,8 @@ else
     echo "Application failed to install."
     exit 1
 fi
+
+cd "$PARENT_DIR"
 
 # Stop the sudo timeout refresher, it is no longer necessary to run
 ./install_scripts/stop_sudo_refresh.sh

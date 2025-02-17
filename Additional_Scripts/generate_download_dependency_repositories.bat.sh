@@ -163,7 +163,14 @@ echo "mkdir xApps" >>download_dependency_repositories.bat
 echo "cd ..\\.." >>download_dependency_repositories.bat
 echo "" >>download_dependency_repositories.bat
 generate_commands "https://gerrit.o-ran-sc.org/r/ric-app/hw-go.git" "RAN_Intelligent_Controllers\\Near-Real-Time-RIC\\xApps" "hw-go"
+generate_commands "https://gerrit.o-ran-sc.org/r/ric-app/hw-python.git" "RAN_Intelligent_Controllers\\Near-Real-Time-RIC\\xApps" "hw-python"
+generate_commands "https://gerrit.o-ran-sc.org/r/ric-app/hw-rust.git" "RAN_Intelligent_Controllers\\Near-Real-Time-RIC\\xApps" "hw-rust"
 generate_commands "https://gerrit.o-ran-sc.org/r/ric-app/kpimon-go.git" "RAN_Intelligent_Controllers\\Near-Real-Time-RIC\\xApps" "kpimon-go"
+generate_commands "https://gerrit.o-ran-sc.org/r/ric-app/ad-cell.git" "RAN_Intelligent_Controllers\\Near-Real-Time-RIC\\xApps" "ad-cell"
+generate_commands "https://gerrit.o-ran-sc.org/r/ric-app/ad.git" "RAN_Intelligent_Controllers\\Near-Real-Time-RIC\\xApps" "ad"
+generate_commands "https://gerrit.o-ran-sc.org/r/ric-app/qp.git" "RAN_Intelligent_Controllers\\Near-Real-Time-RIC\\xApps" "qp"
+generate_commands "https://gerrit.o-ran-sc.org/r/ric-app/rc.git" "RAN_Intelligent_Controllers\\Near-Real-Time-RIC\\xApps" "rc"
+generate_commands "https://gerrit.o-ran-sc.org/r/ric-app/ts.git" "RAN_Intelligent_Controllers\\Near-Real-Time-RIC\\xApps" "ts"
 
 generate_commands "https://gerrit.o-ran-sc.org/r/it/dep.git" "RAN_Intelligent_Controllers\\Non-Real-Time-RIC" "dep"
 generate_commands "https://gerrit.o-ran-sc.org/r/nonrtric/plt/ranpm.git" "RAN_Intelligent_Controllers\\Non-Real-Time-RIC\\dep" "ranpm"

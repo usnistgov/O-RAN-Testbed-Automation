@@ -112,11 +112,63 @@ git checkout 3a0d348e429ea0f3f3d2a1d5eb54ec8758d1a262
 cd ..\..\..\..
 
 cd %~dp0..
+if exist "RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps\hw-python" rmdir /s /q "RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps\hw-python"
+cd RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps
+git clone https://gerrit.o-ran-sc.org/r/ric-app/hw-python.git
+cd ..\..\..
+
+cd %~dp0..
+if exist "RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps\hw-rust" rmdir /s /q "RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps\hw-rust"
+cd RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps
+git clone https://gerrit.o-ran-sc.org/r/ric-app/hw-rust.git
+cd ..\..\..
+
+cd %~dp0..
 if exist "RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps\kpimon-go" rmdir /s /q "RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps\kpimon-go"
 cd RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps
 git clone https://gerrit.o-ran-sc.org/r/ric-app/kpimon-go.git
 cd kpimon-go
 git checkout 8bbbbbb90093db01f88820de755bce0ee2189c88
+cd ..\..\..\..
+
+cd %~dp0..
+if exist "RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps\ad-cell" rmdir /s /q "RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps\ad-cell"
+cd RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps
+git clone https://gerrit.o-ran-sc.org/r/ric-app/ad-cell.git
+cd ad-cell
+git checkout f1338a030f6c2c5a6ab2a970c0fe964c92aafa8f
+cd ..\..\..\..
+
+cd %~dp0..
+if exist "RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps\ad" rmdir /s /q "RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps\ad"
+cd RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps
+git clone https://gerrit.o-ran-sc.org/r/ric-app/ad.git
+cd ad
+git checkout f9f97b8c682d890395e3de5a56450ebb04a5630b
+cd ..\..\..\..
+
+cd %~dp0..
+if exist "RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps\qp" rmdir /s /q "RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps\qp"
+cd RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps
+git clone https://gerrit.o-ran-sc.org/r/ric-app/qp.git
+cd qp
+git checkout 47a35cafc3f90aed8b6fa711c37b131f06061ca6
+cd ..\..\..\..
+
+cd %~dp0..
+if exist "RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps\rc" rmdir /s /q "RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps\rc"
+cd RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps
+git clone https://gerrit.o-ran-sc.org/r/ric-app/rc.git
+cd rc
+git checkout a2282eedc9e32f60298bf530456ad367bef0824b
+cd ..\..\..\..
+
+cd %~dp0..
+if exist "RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps\ts" rmdir /s /q "RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps\ts"
+cd RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps
+git clone https://gerrit.o-ran-sc.org/r/ric-app/ts.git
+cd ts
+git checkout 19e169b2e81a0dbaf3d9dc526de0415cc995ee8b
 cd ..\..\..\..
 
 cd %~dp0..

@@ -348,12 +348,40 @@ echo
 mkdir -p xApps
 cd xApps
 if [ ! -d "hw-go" ]; then
-    echo "Cloning Hello World xApp..."
+    echo "Cloning Hello World Go (hw-go) xApp..."
     ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/hw-go.git
 fi
+if [ ! -d "hw-python" ]; then
+    echo "Cloning the Hello World Python (hw-python) xApp..."
+    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/hw-python.git
+fi
+if [ ! -d "hw-rust" ]; then
+    echo "Cloning the Hello World Rust (hw-rust) xApp..."
+    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/hw-rust.git
+fi
 if [ ! -d "kpimon-go" ]; then
-    echo "Cloning KPI Monitor xApp..."
+    echo "Cloning KPI Monitor (kpimon) xApp..."
     ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/kpimon-go.git
+fi
+if [ ! -d "ad-cell" ]; then
+    echo "Cloning 5G Cell Anamoly Detection (ad-cell) xApp..."
+    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/ad-cell.git
+fi
+if [ ! -d "ad" ]; then
+    echo "Cloning Anamoly Detection (ad) xApp..."
+    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/ad.git
+fi
+if [ ! -d "qp" ]; then
+    echo "Cloning Quality of Experience (QoE) Predictor (qp) xApp..."
+    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/qp.git
+fi
+if [ ! -d "rc" ]; then
+    echo "Cloning RIC Control xApp (rc)..."
+    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/rc.git
+fi
+if [ ! -d "ts" ]; then
+    echo "Cloning Traffic Steering xApp (trafficxapp)..."
+    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/ts.git
 fi
 cd ..
 

@@ -234,7 +234,10 @@ cd "$SCRIPT_DIR/srsran_xapps"
 # Install dependencies if not already installed
 if ! command -v python3.8 &>/dev/null; then
     echo "Python 3.8 is not installed. Installing..."
-    apt-get update
+    apt update
+    apt install -y software-properties-common
+    add-apt-repository ppa:deadsnakes/ppa -y
+    apt update
     apt-get install -y python3.8 python3.8-dev
 fi
 if ! command -v pip &>/dev/null; then

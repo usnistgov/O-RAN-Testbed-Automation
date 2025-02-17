@@ -99,6 +99,9 @@ function generate_commands() {
     local BRANCH=$(jq -r ".[\"$URL\"][0]" $JSON_FILE)
     local COMMIT=$(jq -r ".[\"$URL\"][1]" $JSON_FILE)
 
+    # Reset the current directory
+    echo "cd %~dp0.." >>download_dependency_repositories.bat
+
     # Generate commands for batch script
     echo "if exist \"$CLONE_PATH\\$SUBDIRECTORY\" rmdir /s /q \"$CLONE_PATH\\$SUBDIRECTORY\"" >>download_dependency_repositories.bat
     echo "cd $CLONE_PATH" >>download_dependency_repositories.bat
@@ -154,7 +157,14 @@ generate_commands "https://github.com/srsran/srsRAN_Project.git" "Next_Generatio
 generate_commands "https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep.git" "RAN_Intelligent_Controllers\\Near-Real-Time-RIC" "ric-dep"
 generate_commands "https://gerrit.o-ran-sc.org/r/sim/e2-interface.git" "RAN_Intelligent_Controllers\\Near-Real-Time-RIC" "e2-interface"
 generate_commands "https://gerrit.o-ran-sc.org/r/ric-plt/appmgr.git" "RAN_Intelligent_Controllers\\Near-Real-Time-RIC" "appmgr"
+
+echo "cd RAN_Intelligent_Controllers\\Near-Real-Time-RIC" >>download_dependency_repositories.bat
+echo "mkdir xApps" >>download_dependency_repositories.bat
+echo "cd ..\\.." >>download_dependency_repositories.bat
+echo "" >>download_dependency_repositories.bat
 generate_commands "https://gerrit.o-ran-sc.org/r/ric-app/hw-go.git" "RAN_Intelligent_Controllers\\Near-Real-Time-RIC\\xApps" "hw-go"
+generate_commands "https://gerrit.o-ran-sc.org/r/ric-app/kpimon-go.git" "RAN_Intelligent_Controllers\\Near-Real-Time-RIC\\xApps" "kpimon-go"
+
 generate_commands "https://gerrit.o-ran-sc.org/r/it/dep.git" "RAN_Intelligent_Controllers\\Non-Real-Time-RIC" "dep"
 generate_commands "https://gerrit.o-ran-sc.org/r/nonrtric/plt/ranpm.git" "RAN_Intelligent_Controllers\\Non-Real-Time-RIC\\dep" "ranpm"
 generate_commands "https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep.git" "RAN_Intelligent_Controllers\\Non-Real-Time-RIC\\dep" "ric-dep"
@@ -171,5 +181,4 @@ echo "echo Repositories were cloned successfully." >>download_dependency_reposit
 echo "pause" >>download_dependency_repositories.bat
 echo "" >>download_dependency_repositories.bat
 
-# Notify user
 echo "Windows batch file 'download_dependency_repositories.bat' has been generated."

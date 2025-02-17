@@ -61,9 +61,8 @@ cd RAN_Intelligent_Controllers/Near-Real-Time-RIC
 mkdir -p xApps
 cd xApps
 ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/hw-go.git
-cd ..
-cd ..
-cd ..
+./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/kpimon-go.git
+cd ../../..
 
 cd RAN_Intelligent_Controllers/Non-Real-Time-RIC
 ./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/it/dep.git
@@ -77,7 +76,6 @@ cd ..
 ./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/portal/nonrtric-controlpanel.git
 ./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/nonrtric/plt/rappmanager.git
 mkdir -p rApps
-cd ..
-cd ..
+cd ../..
 
 echo "Repositories were cloned successfully."

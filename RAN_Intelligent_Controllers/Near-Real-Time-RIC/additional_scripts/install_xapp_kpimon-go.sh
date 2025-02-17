@@ -30,14 +30,30 @@
 
 echo "# Script: $(realpath $0)..."
 
+# Run this script to build and deploy the Key Performance Indicator (KPI) Monitor xApp (kpimon-go) in the Near-Real-Time RIC.
+# More information can be found at: https://github.com/o-ran-sc/ric-app-kpimon-go and https://docs.o-ran-sc.org/projects/o-ran-sc-ric-app-kpimon/en/latest/overview.html
+
 # Exit immediately if a command fails
 set -e
-set -x
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
-cd "$(dirname "$SCRIPT_DIR")"
+PARENT_DIR=$(dirname "$SCRIPT_DIR")
+cd "$PARENT_DIR"
 
-cd xApps/kpimon-go
+# Run a sudo command every minute to ensure script execution without user interaction
+./install_scripts/start_sudo_refresh.sh
+
+./install_scripts/wait_for_ricplt_pods.sh
+./install_scripts/run_chart_museum.sh
+
+cd xApps
+
+if [ ! -d "kpimon-go" ]; then
+    echo "Cloning KPI Monitor xApp..."
+    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/kpimon-go.git
+fi
+
+cd kpimon-go
 
 echo "Creating and modifying the configuration file deploy/config_MODIFIED.json"
 # Check if jq is installed; if not, install it
@@ -63,7 +79,10 @@ if [ "$CHART_REPO_URL" != "http://0.0.0.0:8090" ]; then
 fi
 
 sudo docker save -o kpimon-go.tar example.com:80/kpimon-go:1.2
+sudo chmod 755 kpimon-go.tar
+sudo chown $USER:$USER kpimon-go.tar
 
+# Import the image into the containerd container runtime
 sudo ctr -n=k8s.io image import kpimon-go.tar
 
 # Run the dms_cli onboard command and capture the output
@@ -82,23 +101,25 @@ if ! kubectl get namespace ricxapp &>/dev/null; then
     kubectl create namespace ricxapp
 fi
 
-# Check if the xApp is already installed and uninstall it if necessary
-if dms_cli get_charts_list | grep -q 'kpimon-go'; then
-    echo "Uninstalling application 'kpimon-go'..."
-    UNINSTALL_OUTPUT=$(dms_cli uninstall kpimon-go ricxapp 2>&1) || true
-    if echo "$UNINSTALL_OUTPUT" | grep -q 'release: not found\|No Xapp to uninstall' || true; then
-        echo "Application kpimon-go not found or already uninstalled."
-    else
-        echo "$UNINSTALL_OUTPUT"
-    fi
+echo "Uninstalling application 'kpimon-go' if it exists..."
+UNINSTALL_OUTPUT=$(dms_cli uninstall kpimon-go ricxapp 2>&1) || true
+if echo "$UNINSTALL_OUTPUT" | grep -q 'release: not found\|No Xapp to uninstall' || true; then
+    echo "Application kpimon-go not found or already uninstalled."
+else
+    echo "$UNINSTALL_OUTPUT"
 fi
 
+XAPP_VERSION=$(dms_cli get_charts_list | jq -r '.["kpimon-go"][0].version')
+
 echo "Installing application 'kpimon-go'..."
-OUTPUT=$(dms_cli install kpimon-go 1.0.0 ricxapp) || echo "Failed to install kpimon-go xApp with dms_cli."
+OUTPUT=$(dms_cli install kpimon-go $XAPP_VERSION ricxapp) || echo "Failed to install kpimon-go xApp with dms_cli."
 echo "$OUTPUT"
-if [[ "$OUTPUT" == *"status: OK"* ]]; then
+if echo "$OUTPUT" | grep -qE '"?status"?:\s*"?\bOK\b"?'; then
     echo "Application successfully installed."
 else
     echo "Application failed to install."
     exit 1
 fi
+
+# Stop the sudo timeout refresher, it is no longer necessary to run
+./install_scripts/stop_sudo_refresh.sh

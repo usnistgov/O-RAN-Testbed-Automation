@@ -47,6 +47,8 @@ cd Next_Generation_Node_B
 ./run_background.sh
 cd ..
 
+sleep 5
+
 echo
 echo "Running User Equipment..."
 cd User_Equipment

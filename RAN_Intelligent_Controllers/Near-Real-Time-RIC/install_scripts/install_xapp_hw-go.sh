@@ -71,7 +71,10 @@ if [ "$CHART_REPO_URL" != "http://0.0.0.0:8090" ]; then
 fi
 
 sudo docker save -o hw-go.tar example.com:80/hw-go:1.2
+sudo chmod 755 hw-go.tar
+sudo chown $USER:$USER hw-go.tar
 
+# Import the image into the containerd container runtime
 sudo ctr -n=k8s.io image import hw-go.tar
 
 # Run the dms_cli onboard command and capture the output
@@ -90,21 +93,20 @@ if ! kubectl get namespace ricxapp &>/dev/null; then
     kubectl create namespace ricxapp
 fi
 
-# Check if the xApp is already installed and uninstall it if necessary
-if dms_cli get_charts_list | grep -q 'hw-go'; then
-    echo "Uninstalling application 'hw-go'..."
-    UNINSTALL_OUTPUT=$(dms_cli uninstall hw-go ricxapp 2>&1) || true
-    if echo "$UNINSTALL_OUTPUT" | grep -q 'release: not found\|No Xapp to uninstall' || true; then
-        echo "Application hw-go not found or already uninstalled."
-    else
-        echo "$UNINSTALL_OUTPUT"
-    fi
+echo "Uninstalling application 'hw-go' if it exists..."
+UNINSTALL_OUTPUT=$(dms_cli uninstall hw-go ricxapp 2>&1) || true
+if echo "$UNINSTALL_OUTPUT" | grep -q 'release: not found\|No Xapp to uninstall' || true; then
+    echo "Application hw-go not found or already uninstalled."
+else
+    echo "$UNINSTALL_OUTPUT"
 fi
 
+XAPP_VERSION=$(dms_cli get_charts_list | jq -r '.["hw-go"][0].version')
+
 echo "Installing application 'hw-go'..."
-OUTPUT=$(dms_cli install hw-go 1.0.0 ricxapp || echo "Failed to install hw-go xApp with dms_cli.")
+OUTPUT=$(dms_cli install hw-go $XAPP_VERSION ricxapp || echo "Failed to install hw-go xApp with dms_cli.")
 echo "$OUTPUT"
-if [[ "$OUTPUT" == *"status: OK"* ]]; then
+if echo "$OUTPUT" | grep -qE '"?status"?:\s*"?\bOK\b"?'; then
     echo "Application successfully installed."
 else
     echo "Application failed to install."

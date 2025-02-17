@@ -35,6 +35,7 @@ echo Script: %~f0...
 REM Change to the parent directory of the script
 cd %~dp0..
 
+cd %~dp0..
 if exist "5G_Core_Network\open5gs" rmdir /s /q "5G_Core_Network\open5gs"
 cd 5G_Core_Network
 git clone https://github.com/open5gs/open5gs.git
@@ -42,6 +43,7 @@ cd open5gs
 git checkout 056b50c9c8cf2b69e3a057d9aedde3b00634b6ca
 cd ..\..
 
+cd %~dp0..
 if exist "User_Equipment\srsRAN_4G" rmdir /s /q "User_Equipment\srsRAN_4G"
 cd User_Equipment
 git clone https://github.com/srsran/srsRAN_4G.git
@@ -49,6 +51,7 @@ cd srsRAN_4G
 git checkout ec29b0c1ff79cebcbe66caa6d6b90778261c42b8
 cd ..\..
 
+cd %~dp0..
 if exist "User_Equipment\libzmq" rmdir /s /q "User_Equipment\libzmq"
 cd User_Equipment
 git clone https://github.com/zeromq/libzmq.git
@@ -56,6 +59,7 @@ cd libzmq
 git checkout 34f7fa22022bed9e0e390ed3580a1c83ac4a2834
 cd ..\..
 
+cd %~dp0..
 if exist "User_Equipment\czmq" rmdir /s /q "User_Equipment\czmq"
 cd User_Equipment
 git clone https://github.com/zeromq/czmq.git
@@ -63,6 +67,7 @@ cd czmq
 git checkout 5b5c640248dfb6e9a9a612cfad16d8c019e5702c
 cd ..\..
 
+cd %~dp0..
 if exist "Next_Generation_Node_B\srsRAN_Project" rmdir /s /q "Next_Generation_Node_B\srsRAN_Project"
 cd Next_Generation_Node_B
 git clone https://github.com/srsran/srsRAN_Project.git
@@ -70,6 +75,7 @@ cd srsRAN_Project
 git checkout cc2869f967adfd8d33f9d1440839bf5f1b282998
 cd ..\..
 
+cd %~dp0..
 if exist "RAN_Intelligent_Controllers\Near-Real-Time-RIC\ric-dep" rmdir /s /q "RAN_Intelligent_Controllers\Near-Real-Time-RIC\ric-dep"
 cd RAN_Intelligent_Controllers\Near-Real-Time-RIC
 git clone https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep.git
@@ -77,6 +83,7 @@ cd ric-dep
 git checkout 505e5efb5f40706adccdfdc7a5289456cd01fe8a
 cd ..\..\..
 
+cd %~dp0..
 if exist "RAN_Intelligent_Controllers\Near-Real-Time-RIC\e2-interface" rmdir /s /q "RAN_Intelligent_Controllers\Near-Real-Time-RIC\e2-interface"
 cd RAN_Intelligent_Controllers\Near-Real-Time-RIC
 git clone https://gerrit.o-ran-sc.org/r/sim/e2-interface.git
@@ -84,6 +91,7 @@ cd e2-interface
 git checkout da6f82f286cdbb38af1178f82f85877b12c2f85b
 cd ..\..\..
 
+cd %~dp0..
 if exist "RAN_Intelligent_Controllers\Near-Real-Time-RIC\appmgr" rmdir /s /q "RAN_Intelligent_Controllers\Near-Real-Time-RIC\appmgr"
 cd RAN_Intelligent_Controllers\Near-Real-Time-RIC
 git clone https://gerrit.o-ran-sc.org/r/ric-plt/appmgr.git
@@ -91,6 +99,11 @@ cd appmgr
 git checkout 4c05932dce72e98db23eaff2b72b58816e1f2d55
 cd ..\..\..
 
+cd RAN_Intelligent_Controllers\Near-Real-Time-RIC
+mkdir xApps
+cd ..\..
+
+cd %~dp0..
 if exist "RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps\hw-go" rmdir /s /q "RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps\hw-go"
 cd RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps
 git clone https://gerrit.o-ran-sc.org/r/ric-app/hw-go.git
@@ -98,6 +111,15 @@ cd hw-go
 git checkout 3a0d348e429ea0f3f3d2a1d5eb54ec8758d1a262
 cd ..\..\..\..
 
+cd %~dp0..
+if exist "RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps\kpimon-go" rmdir /s /q "RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps\kpimon-go"
+cd RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps
+git clone https://gerrit.o-ran-sc.org/r/ric-app/kpimon-go.git
+cd kpimon-go
+git checkout 8bbbbbb90093db01f88820de755bce0ee2189c88
+cd ..\..\..\..
+
+cd %~dp0..
 if exist "RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep" rmdir /s /q "RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep"
 cd RAN_Intelligent_Controllers\Non-Real-Time-RIC
 git clone https://gerrit.o-ran-sc.org/r/it/dep.git
@@ -106,6 +128,7 @@ git checkout 60372089116269f82038c0fe38a02acbc51fb269
 git restore --source=HEAD :/
 cd ..\..\..
 
+cd %~dp0..
 if exist "RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\ranpm" rmdir /s /q "RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\ranpm"
 cd RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep
 git clone https://gerrit.o-ran-sc.org/r/nonrtric/plt/ranpm.git
@@ -113,6 +136,7 @@ cd ranpm
 git checkout dbb29d3eb620b0ed223510590030a9a4a3c73d50
 cd ..\..\..\..
 
+cd %~dp0..
 if exist "RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\ric-dep" rmdir /s /q "RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\ric-dep"
 cd RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep
 git clone https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep.git
@@ -120,6 +144,7 @@ cd ric-dep
 git checkout 505e5efb5f40706adccdfdc7a5289456cd01fe8a
 cd ..\..\..\..
 
+cd %~dp0..
 if exist "RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\smo-install\multicloud-k8s" rmdir /s /q "RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\smo-install\multicloud-k8s"
 cd RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\smo-install
 git clone https://github.com/onap/multicloud-k8s.git
@@ -127,6 +152,7 @@ cd multicloud-k8s
 git checkout 8bea0a13c223aff43f98f0cb6426379bb23e8894
 cd ..\..\..\..\..
 
+cd %~dp0..
 if exist "RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\smo-install\onap_oom" rmdir /s /q "RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\smo-install\onap_oom"
 cd RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\smo-install
 git clone https://gerrit.onap.org/r/oom.git
@@ -134,6 +160,7 @@ cd onap_oom
 git checkout 06bbffdd910c94e5e45e69f17e06ce8a7c61dd6a
 cd ..\..\..\..\..
 
+cd %~dp0..
 if exist "RAN_Intelligent_Controllers\Non-Real-Time-RIC\nonrtric-controlpanel" rmdir /s /q "RAN_Intelligent_Controllers\Non-Real-Time-RIC\nonrtric-controlpanel"
 cd RAN_Intelligent_Controllers\Non-Real-Time-RIC
 git clone https://gerrit.o-ran-sc.org/r/portal/nonrtric-controlpanel.git
@@ -141,6 +168,7 @@ cd nonrtric-controlpanel
 git checkout 15bdaf8f25dca54e3a52ad30d69fa2eb1d59ce48
 cd ..\..\..
 
+cd %~dp0..
 if exist "RAN_Intelligent_Controllers\Non-Real-Time-RIC\rappmanager" rmdir /s /q "RAN_Intelligent_Controllers\Non-Real-Time-RIC\rappmanager"
 cd RAN_Intelligent_Controllers\Non-Real-Time-RIC
 git clone https://gerrit.o-ran-sc.org/r/nonrtric/plt/rappmanager.git

@@ -223,14 +223,14 @@ echo
 if echo "$(karmor probe)" | grep -q "Container Security:\s*true"; then
     echo "Successfully enabled container security."
 else
-    echo "ERROR: Container security is not enabled."
+    echo "Error: Container security is not enabled."
     exit 1
 fi
 
 # Retrieve the current AppArmor profile status of the init process
 # CURRENT_PROFILE=$(cat /proc/1/attr/current)
 # if [[ "$CURRENT_PROFILE" == "unconfined" ]]; then
-#     echo "ERROR: The process is unconfined, so no AppArmor profile is active."
+#     echo "Error: The process is unconfined, so no AppArmor profile is active."
 #     exit 1
 # else
 #     echo "The process is confined under the profile: $CURRENT_PROFILE"

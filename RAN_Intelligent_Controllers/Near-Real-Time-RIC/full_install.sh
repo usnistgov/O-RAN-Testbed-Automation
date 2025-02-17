@@ -204,12 +204,12 @@ else
 
     echo "Revising RIC Installation YAML File..."
     RIC_YAML_FILE_NAME="example_recipe_oran_j_release.yaml"
-    RIC_YAML_FILE_NAME_MODIFIED="example_recipe_oran_j_release_MODIFIED.yaml"
+    RIC_YAML_FILE_NAME_UPDATED="example_recipe_oran_j_release_updated.yaml"
 
     sudo chown $USER:$USER "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME"
-    sudo cp "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME" "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME_MODIFIED"
-    sudo chown $USER:$USER "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME_MODIFIED"
-    sudo ./install_scripts/revise_example_recipe_yaml.sh "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME_MODIFIED"
+    sudo cp "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME" "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME_UPDATED"
+    sudo chown $USER:$USER "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME_UPDATED"
+    sudo ./install_scripts/revise_example_recipe_yaml.sh "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME_UPDATED"
 
     # Wait for kube-apiserver to be ready before installing Near-RT RIC
     echo "Waiting for the Kubernetes API server to become ready before installing Near-RT RIC..."
@@ -227,7 +227,7 @@ else
         echo
         echo "Installing Near-RT RIC..."
         cd ric-dep/bin/
-        sudo ./install -f "../RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME_MODIFIED" 2>&1 | tee -a "$RIC_INSTALLATION_STDOUT"
+        sudo ./install -f "../RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME_UPDATED" 2>&1 | tee -a "$RIC_INSTALLATION_STDOUT"
         cd "$SCRIPT_DIR"
         echo "Parsing output to check for successful Near-RT RIC installation..."
         ./install_scripts/parse_ric_installation_output.sh

@@ -55,7 +55,7 @@ fi
 
 cd ad-cell
 
-echo "Creating and modifying the configuration file init/config-file_MODIFIED.json..."
+echo "Creating and modifying the configuration file init/config-file_updated.json..."
 # Check if jq is installed; if not, install it
 if ! command -v jq &>/dev/null; then
     echo "Installing jq..."
@@ -63,8 +63,8 @@ if ! command -v jq &>/dev/null; then
     sudo apt-get install -y jq
 fi
 
-if [ ! -f "init/config-file_MODIFIED.json" ]; then
-    FILE="init/config-file_MODIFIED.json"
+if [ ! -f "init/config-file_updated.json" ]; then
+    FILE="init/config-file_updated.json"
     cp init/config-file.json $FILE
     # Modify the required fields using jq and overwrite the original file
     jq '.containers[0].image.tag = "1.2" |
@@ -86,7 +86,7 @@ sudo chown $USER:$USER ad-cell.tar
 sudo ctr -n=k8s.io image import ad-cell.tar
 
 # Run the dms_cli onboard command and capture the output
-OUTPUT=$(dms_cli onboard ./init/config-file_MODIFIED.json ./init/schema.json)
+OUTPUT=$(dms_cli onboard ./init/config-file_updated.json ./init/schema.json)
 echo $OUTPUT
 if echo "$OUTPUT" | grep -q '"status": "Created"'; then
     echo "Onboarding successful: status is 'Created'."
@@ -115,9 +115,9 @@ echo "Installing application 'ad-cell'..."
 OUTPUT=$(dms_cli install ad-cell $XAPP_VERSION ricxapp) || echo "Failed to install ad-cell xApp with dms_cli."
 echo "$OUTPUT"
 if echo "$OUTPUT" | grep -qE '"?status"?:\s*"?\bOK\b"?'; then
-    echo "Application successfully installed."
+    echo "Application successfully deployed."
 else
-    echo "Application failed to install."
+    echo "Application failed to deploy."
     exit 1
 fi
 
@@ -125,3 +125,11 @@ cd "$PARENT_DIR"
 
 # Stop the sudo timeout refresher, it is no longer necessary to run
 ./install_scripts/stop_sudo_refresh.sh
+
+echo
+echo
+echo "################################################################################"
+echo "# Successfully installed 5G Cell Anomaly Detection xApp (ad-cell)              #"
+echo "################################################################################"
+echo
+echo

@@ -225,8 +225,8 @@ update_yaml configs/gnb.yaml "ru_sdr" "device_args" "$DEVICE_ARGS"
 update_yaml configs/gnb.yaml "ru_sdr" "srate" "23.04"
 update_yaml configs/gnb.yaml "ru_sdr" "tx_gain" "75"
 update_yaml configs/gnb.yaml "ru_sdr" "rx_gain" "75"
-update_yaml configs/gnb.yaml "ru_sdr" "clock" null
-update_yaml configs/gnb.yaml "ru_sdr" "sync" null
+update_yaml configs/gnb.yaml "ru_sdr" "clock" "default"
+update_yaml configs/gnb.yaml "ru_sdr" "sync" "default"
 
 # Update configuration values for 5G cell parameters
 update_yaml configs/gnb.yaml "cell_cfg" "dl_arfcn" "368500" # NR ARFCN
@@ -329,8 +329,8 @@ update_yaml configs/gnb.yaml "metrics" "enable_json_metrics" "false"
 update_yaml configs/gnb.yaml "metrics" "autostart_stdout_metrics" "false"
 update_yaml configs/gnb.yaml "metrics" "sched_report_period" "1000"
 
-# For ZeroMQ, change otw_format from sc12 --> null
-update_yaml configs/gnb.yaml "ru_sdr" "otw_format" null
+# For ZeroMQ, change otw_format to default
+update_yaml configs/gnb.yaml "ru_sdr" "otw_format" "default"
 
 mkdir -p logs
 sudo chown $USER:$USER -R logs

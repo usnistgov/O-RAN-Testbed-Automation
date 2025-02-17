@@ -55,7 +55,7 @@ fi
 
 cd kpimon-go
 
-echo "Creating and modifying the configuration file deploy/config_MODIFIED.json"
+echo "Creating and modifying the configuration file deploy/config_updated.json"
 # Check if jq is installed; if not, install it
 if ! command -v jq &>/dev/null; then
     echo "Installing jq..."
@@ -63,8 +63,8 @@ if ! command -v jq &>/dev/null; then
     sudo apt-get install -y jq
 fi
 
-if [ ! -f "deploy/config_MODIFIED.json" ]; then
-    FILE="deploy/config_MODIFIED.json"
+if [ ! -f "deploy/config_updated.json" ]; then
+    FILE="deploy/config_updated.json"
     cp deploy/config.json $FILE
     # Modify the required fields using jq and overwrite the original file
     jq '.containers[0].image.tag = "1.2" |
@@ -86,7 +86,7 @@ sudo chown $USER:$USER kpimon-go.tar
 sudo ctr -n=k8s.io image import kpimon-go.tar
 
 # Run the dms_cli onboard command and capture the output
-OUTPUT=$(dms_cli onboard ./deploy/config_MODIFIED.json ./deploy/schema.json)
+OUTPUT=$(dms_cli onboard ./deploy/config_updated.json ./deploy/schema.json)
 echo $OUTPUT
 if echo "$OUTPUT" | grep -q '"status": "Created"'; then
     echo "Onboarding successful: status is 'Created'."
@@ -115,9 +115,9 @@ echo "Installing application 'kpimon-go'..."
 OUTPUT=$(dms_cli install kpimon-go $XAPP_VERSION ricxapp) || echo "Failed to install kpimon-go xApp with dms_cli."
 echo "$OUTPUT"
 if echo "$OUTPUT" | grep -qE '"?status"?:\s*"?\bOK\b"?'; then
-    echo "Application successfully installed."
+    echo "Application successfully deployed."
 else
-    echo "Application failed to install."
+    echo "Application failed to deploy."
     exit 1
 fi
 
@@ -125,3 +125,11 @@ cd "$PARENT_DIR"
 
 # Stop the sudo timeout refresher, it is no longer necessary to run
 ./install_scripts/stop_sudo_refresh.sh
+
+echo
+echo
+echo "################################################################################"
+echo "# Successfully installed KPI Monitor xApp (kpimon-go)                          #"
+echo "################################################################################"
+echo
+echo

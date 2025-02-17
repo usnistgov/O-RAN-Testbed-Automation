@@ -281,14 +281,14 @@ else
 
     # Revise the YAML file for the Non-RT RIC pods
     RIC_YAML_FILE_PATH="dep/RECIPE_EXAMPLE/NONRTRIC/example_recipe.yaml"
-    RIC_YAML_FILE_PATH_MODIFIED="dep/RECIPE_EXAMPLE/NONRTRIC/example_recipe_MODIFIED.yaml"
+    RIC_YAML_FILE_PATH_UPDATED="dep/RECIPE_EXAMPLE/NONRTRIC/example_recipe_updated.yaml"
     sudo chown $USER:$USER $RIC_YAML_FILE_PATH
-    sudo cp $RIC_YAML_FILE_PATH $RIC_YAML_FILE_PATH_MODIFIED
-    sudo chown $USER:$USER $RIC_YAML_FILE_PATH_MODIFIED
-    sudo "$SCRIPT_DIR/install_scripts/./revise_example_recipe_yaml.sh" "$RIC_YAML_FILE_PATH_MODIFIED"
+    sudo cp $RIC_YAML_FILE_PATH $RIC_YAML_FILE_PATH_UPDATED
+    sudo chown $USER:$USER $RIC_YAML_FILE_PATH_UPDATED
+    sudo "$SCRIPT_DIR/install_scripts/./revise_example_recipe_yaml.sh" "$RIC_YAML_FILE_PATH_UPDATED"
 
     cd "$SCRIPT_DIR/dep/"
-    sudo ./bin/deploy-nonrtric -f ./RECIPE_EXAMPLE/NONRTRIC/example_recipe_MODIFIED.yaml
+    sudo ./bin/deploy-nonrtric -f ./RECIPE_EXAMPLE/NONRTRIC/example_recipe_updated.yaml
     echo "Successfully installed Non-RT RIC pods."
 fi
 

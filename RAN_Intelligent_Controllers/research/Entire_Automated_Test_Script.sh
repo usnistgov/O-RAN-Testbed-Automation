@@ -69,15 +69,26 @@ cd O-RAN-Testbed-Init
 # Install the testbed
 ./full_install.sh -y
 
+echo
+echo "Installing all additional xApps..."
+cd RAN_Intelligent_Controllers/Near-Real-Time-RIC
+./additional_scripts/install_all_additional_xapps.sh
+cd ../..
+
 # Ensure that the components are stopped before running the tests
 ./stop.sh
+
+# Run a sudo command every minute to ensure script execution without user interaction
+./install_scripts/start_sudo_refresh.sh
 
 echo
 echo "Running tests for 5G_Core_Network..."
 cd 5G_Core_Network/open5gs/build
 if ! meson test -v; then
-    echo "The Open5GS test cases failed."
-    exit 1
+    if ! meson test -v; then
+        echo "The Open5GS test cases failed."
+        exit 1
+    fi
 fi
 cd ../../..
 
@@ -155,6 +166,9 @@ while true; do
 done
 
 ./stop.sh
+
+# Stop the sudo timeout refresher, it is no longer necessary to run
+./install_scripts/stop_sudo_refresh.sh
 
 echo "Successfully passed all tests! Pushing updated commit_hashes.json..."
 

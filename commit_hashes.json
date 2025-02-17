@@ -1,9 +1,9 @@
 {
-  "https://github.com/open5gs/open5gs.git": ["", "056b50c9c8cf2b69e3a057d9aedde3b00634b6ca"],
+  "https://github.com/open5gs/open5gs.git": ["", "ba05380f5b6ecb954f6991271bed163ade4de8d6"],
   "https://github.com/srsran/srsRAN_4G.git": ["", "ec29b0c1ff79cebcbe66caa6d6b90778261c42b8"],
   "https://github.com/zeromq/libzmq.git": ["", "34f7fa22022bed9e0e390ed3580a1c83ac4a2834"],
   "https://github.com/zeromq/czmq.git": ["", "5b5c640248dfb6e9a9a612cfad16d8c019e5702c"],
-  "https://github.com/srsran/srsRAN_Project.git": ["", "cc2869f967adfd8d33f9d1440839bf5f1b282998"],
+  "https://github.com/srsran/srsRAN_Project.git": ["", "a041e3162d7ea94a7963437f32df372fae5d21ea"],
   "https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep.git": ["j-release", "505e5efb5f40706adccdfdc7a5289456cd01fe8a"],
   "https://gerrit.o-ran-sc.org/r/sim/e2-interface.git": ["", "da6f82f286cdbb38af1178f82f85877b12c2f85b"],
   "https://gerrit.o-ran-sc.org/r/ric-plt/appmgr.git": ["", "4c05932dce72e98db23eaff2b72b58816e1f2d55"],
@@ -20,7 +20,7 @@
   "https://gerrit.o-ran-sc.org/r/it/dep.git": ["master", "60372089116269f82038c0fe38a02acbc51fb269"],
   "https://gerrit.o-ran-sc.org/r/nonrtric/plt/ranpm.git": ["master", "dbb29d3eb620b0ed223510590030a9a4a3c73d50"],
   "https://github.com/onap/multicloud-k8s.git": ["", "8bea0a13c223aff43f98f0cb6426379bb23e8894"],
-  "https://gerrit.onap.org/r/oom.git": ["", "06bbffdd910c94e5e45e69f17e06ce8a7c61dd6a"],
+  "https://gerrit.onap.org/r/oom.git": ["", "c6ddebbd61e755f078d97483a4efec6189e4d756"],
   "https://gerrit.o-ran-sc.org/r/portal/nonrtric-controlpanel.git": ["master", "15bdaf8f25dca54e3a52ad30d69fa2eb1d59ce48"],
   "https://gerrit.o-ran-sc.org/r/nonrtric/plt/rappmanager.git": ["j-release", "ffd5b45b53572ae42fbc22510bcbe3ad8883b86f"]
 }

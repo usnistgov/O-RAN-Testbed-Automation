@@ -40,7 +40,7 @@ if exist "5G_Core_Network\open5gs" rmdir /s /q "5G_Core_Network\open5gs"
 cd 5G_Core_Network
 git clone https://github.com/open5gs/open5gs.git
 cd open5gs
-git checkout 056b50c9c8cf2b69e3a057d9aedde3b00634b6ca
+git checkout ba05380f5b6ecb954f6991271bed163ade4de8d6
 cd ..\..
 
 cd %~dp0..
@@ -72,7 +72,7 @@ if exist "Next_Generation_Node_B\srsRAN_Project" rmdir /s /q "Next_Generation_No
 cd Next_Generation_Node_B
 git clone https://github.com/srsran/srsRAN_Project.git
 cd srsRAN_Project
-git checkout cc2869f967adfd8d33f9d1440839bf5f1b282998
+git checkout a041e3162d7ea94a7963437f32df372fae5d21ea
 cd ..\..
 
 cd %~dp0..
@@ -209,7 +209,7 @@ if exist "RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\smo-install\onap_oom
 cd RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\smo-install
 git clone https://gerrit.onap.org/r/oom.git
 cd onap_oom
-git checkout 06bbffdd910c94e5e45e69f17e06ce8a7c61dd6a
+git checkout c6ddebbd61e755f078d97483a4efec6189e4d756
 cd ..\..\..\..\..
 
 cd %~dp0..

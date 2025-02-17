@@ -55,7 +55,7 @@ fi
 
 cd ts
 
-echo "Creating and modifying the configuration file xapp-descriptor/config-file_MODIFIED.json"
+echo "Creating and modifying the configuration file xapp-descriptor/config-file_updated.json"
 # Check if jq is installed; if not, install it
 if ! command -v jq &>/dev/null; then
     echo "Installing jq..."
@@ -63,8 +63,8 @@ if ! command -v jq &>/dev/null; then
     sudo apt-get install -y jq
 fi
 
-if [ ! -f "xapp-descriptor/config-file_MODIFIED.json" ]; then
-    FILE="xapp-descriptor/config-file_MODIFIED.json"
+if [ ! -f "xapp-descriptor/config-file_updated.json" ]; then
+    FILE="xapp-descriptor/config-file_updated.json"
     cp xapp-descriptor/config-file.json $FILE
     # Modify the required fields using jq and overwrite the original file
     jq '.containers[0].image.tag = "1.2" |
@@ -86,7 +86,7 @@ sudo chown $USER:$USER trafficxapp.tar
 sudo ctr -n=k8s.io image import trafficxapp.tar
 
 # Run the dms_cli onboard command and capture the output
-OUTPUT=$(dms_cli onboard ./xapp-descriptor/config-file_MODIFIED.json ./xapp-descriptor/schema.json)
+OUTPUT=$(dms_cli onboard ./xapp-descriptor/config-file_updated.json ./xapp-descriptor/schema.json)
 echo $OUTPUT
 if echo "$OUTPUT" | grep -q '"status": "Created"'; then
     echo "Onboarding successful: status is 'Created'."
@@ -115,9 +115,9 @@ echo "Installing application 'trafficxapp'..."
 OUTPUT=$(dms_cli install trafficxapp $XAPP_VERSION ricxapp) || echo "Failed to install trafficxapp xApp with dms_cli."
 echo "$OUTPUT"
 if echo "$OUTPUT" | grep -qE '"?status"?:\s*"?\bOK\b"?'; then
-    echo "Application successfully installed."
+    echo "Application successfully deployed."
 else
-    echo "Application failed to install."
+    echo "Application failed to deploy."
     exit 1
 fi
 
@@ -125,3 +125,11 @@ cd "$PARENT_DIR"
 
 # Stop the sudo timeout refresher, it is no longer necessary to run
 ./install_scripts/stop_sudo_refresh.sh
+
+echo
+echo
+echo "################################################################################"
+echo "# Successfully installed Traffic Steering xApp (trafficxapp)                   #"
+echo "################################################################################"
+echo
+echo

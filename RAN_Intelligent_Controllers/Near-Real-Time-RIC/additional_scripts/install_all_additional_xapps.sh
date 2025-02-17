@@ -34,20 +34,13 @@ echo "# Script: $(realpath $0)..."
 set -e
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
-cd "$(dirname "$SCRIPT_DIR")"
+cd "$SCRIPT_DIR"
 
-# Set docker to use Google's DNS servers, then restart docker
-sudo ./install_scripts/update_docker_dns.sh
-
-sudo apt-get install -y cmake g++ libsctp-dev
-DOCKER_FILE_PATH="e2-interface/e2sim/Dockerfile_kpm_UPDATED"
-cp e2-interface/e2sim/Dockerfile_kpm $DOCKER_FILE_PATH
-sudo ./install_scripts/revise_e2sim_dockerfile.sh $DOCKER_FILE_PATH
-cd e2-interface/e2sim/
-
-mkdir -p build
-cd build/
-cmake .. && make -j$(nproc) package && cmake .. -DDEV_PKG=1 && make -j$(nproc) package
-cp *.deb ../e2sm_examples/kpm_e2sm/
-cd ../
-sudo docker build -t oransim:0.0.999 . -f Dockerfile_kpm_UPDATED
+./install_xapp_hw-python.sh
+./install_xapp_hw-rust.sh
+./install_xapp_kpi_monitor.sh
+./install_xapp_5g_cell_anomaly_detection.sh
+./install_xapp_anomaly_detection.sh
+./install_xapp_qoe_predictor.sh
+./install_xapp_ric_control.sh
+./install_xapp_traffic_steering.sh

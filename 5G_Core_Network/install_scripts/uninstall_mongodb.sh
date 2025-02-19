@@ -28,16 +28,46 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-echo -e "\nConnecting to Redis CLI within the Kubernetes pod..."
-echo -e "Below are some example commands to interact with the Redis database:\n"
-echo -e "  KEYS *\t\t\t\tLists all keys in the database"
-echo -e "  TYPE <key-name>\t\t\tDetermines the type of a key"
-echo -e "  GET <key-name>\t\t\tRetrieves the value of a specific key if it is a string"
-echo -e "  SMEMBERS <set-name>\t\t\tIf key is a set, lists all members of the set"
-echo -e "  LRANGE <list-name> 0 -1\t\tIf key is a list, lists all elements in the list"
-echo -e "  HGETALL <hash-key-name>\t\tIf key is a hash, retrieves all fields and values of the hash"
-echo -e "  ZRANGE <sorted-set-name> 0 -1 WITHSCORES\tIf key is a sorted set, lists all members with their scores"
-echo -e "  SCAN 0\t\t\t\tIteratively lists keys in the database in a cursor-based manner"
-echo -e "\nType 'exit' to leave the Redis CLI and return to your shell."
+# Don't exit immediately if a command fails
+set +e
 
-kubectl exec -n ricplt -it statefulset-ricplt-dbaas-server-0 -c container-ricplt-dbaas-redis -- redis-cli
+echo "# Script: $(realpath $0)..."
+
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+cd "$(dirname "$SCRIPT_DIR")"
+
+# Stop and disable the MongoDB service
+sudo systemctl stop mongod
+sudo systemctl disable mongod
+
+#!!!!!!!!!!!!!!!!!!TODO if mongodb was uninstalled after purge THEN it's okay to remove the other stuff, otherwise it's used by another dependency...
+
+# Uninstall the MongoDB packages
+sudo apt-get purge -y mongodb-org mongodb-org-server mongodb-org-shell mongodb-org-mongos mongodb-org-tools mongosh
+
+# Remove MongoDB and its user and group
+sudo userdel mongodb
+sudo groupdel mongodb
+
+# Remove MongoDB data and log directories
+sudo rm -rf /var/lib/mongodb
+sudo rm -rf /var/log/mongodb
+
+# Remove MongoDB configurations and system modifications
+sudo rm -rf /etc/mongod
+sudo rm /etc/apt/sources.list.d/mongodb-org-4.4.list
+sudo rm /etc/apt/sources.list.d/mongodb-org-5.0.list
+sudo rm /usr/share/keyrings/mongodb-archive-keyring.gpg
+
+# Unpin MongoDB packages
+echo "mongodb-org install" | sudo dpkg --set-selections
+echo "mongodb-org-database install" | sudo dpkg --set-selections
+echo "mongodb-org-server install" | sudo dpkg --set-selections
+echo "mongodb-mongosh install" | sudo dpkg --set-selections
+echo "mongodb-org-mongos install" | sudo dpkg --set-selections
+echo "mongodb-org-tools install" | sudo dpkg --set-selections
+
+sudo apt-get autoremove -y
+sudo apt-get clean
+
+sudo apt-get purge -y libssl1.1

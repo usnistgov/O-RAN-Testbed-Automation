@@ -39,9 +39,6 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-# Ensure backward compatibility with previous installations
-sudo ./Additional_Scripts/migrate_to_new_version.sh
-
 # Loop over all arguments to set KEEP_OLD_DIRS based on -y or -n
 KEEP_OLD_DIRS=""
 for arg in "$@"; do
@@ -118,6 +115,9 @@ if [[ "$OPEN5GS_INSTALLED" = true || "$GNODEB_INSTALLED" = true || "$UE_INSTALLE
         echo "Successfully removed previous installations."
     fi
 fi
+
+# Ensure backward compatibility with previous installations
+sudo ./Additional_Scripts/migrate_to_new_version.sh
 
 echo
 echo

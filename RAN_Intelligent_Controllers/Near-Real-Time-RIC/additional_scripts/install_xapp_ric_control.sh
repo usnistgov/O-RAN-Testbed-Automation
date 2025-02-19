@@ -67,18 +67,18 @@ if [ ! -f "xapp-descriptor/config_updated.json" ]; then
     FILE="xapp-descriptor/config_updated.json"
     cp xapp-descriptor/config.json $FILE
     # Modify the required fields using jq and overwrite the original file
-    jq '.containers[0].image.tag = "1.2" |
+    jq '.containers[0].image.tag = "latest" |
         .containers[0].image.registry = "example.com:80" |
         .containers[0].image.name = "rc"' "$FILE" >tmp.$$.json && mv tmp.$$.json "$FILE"
 fi
 
-sudo docker build -t example.com:80/rc:1.2 .
+sudo docker build -t example.com:80/rc:latest .
 
 if [ "$CHART_REPO_URL" != "http://0.0.0.0:8090" ]; then
     export CHART_REPO_URL=http://0.0.0.0:8090
 fi
 
-sudo docker save -o rc.tar example.com:80/rc:1.2
+sudo docker save -o rc.tar example.com:80/rc:latest
 sudo chmod 755 rc.tar
 sudo chown $USER:$USER rc.tar
 
@@ -131,5 +131,3 @@ echo
 echo "################################################################################"
 echo "# Successfully installed RIC Control xApp (rc)                                 #"
 echo "################################################################################"
-echo
-echo

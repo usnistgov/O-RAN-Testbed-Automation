@@ -28,16 +28,58 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-echo -e "\nConnecting to Redis CLI within the Kubernetes pod..."
-echo -e "Below are some example commands to interact with the Redis database:\n"
-echo -e "  KEYS *\t\t\t\tLists all keys in the database"
-echo -e "  TYPE <key-name>\t\t\tDetermines the type of a key"
-echo -e "  GET <key-name>\t\t\tRetrieves the value of a specific key if it is a string"
-echo -e "  SMEMBERS <set-name>\t\t\tIf key is a set, lists all members of the set"
-echo -e "  LRANGE <list-name> 0 -1\t\tIf key is a list, lists all elements in the list"
-echo -e "  HGETALL <hash-key-name>\t\tIf key is a hash, retrieves all fields and values of the hash"
-echo -e "  ZRANGE <sorted-set-name> 0 -1 WITHSCORES\tIf key is a sorted set, lists all members with their scores"
-echo -e "  SCAN 0\t\t\t\tIteratively lists keys in the database in a cursor-based manner"
-echo -e "\nType 'exit' to leave the Redis CLI and return to your shell."
+# Exit immediately if a command fails
+set -e
 
-kubectl exec -n ricplt -it statefulset-ricplt-dbaas-server-0 -c container-ricplt-dbaas-redis -- redis-cli
+UNINSTALL_MONGODB=1
+
+if ! command -v realpath &>/dev/null; then
+    echo "Package \"coreutils\" not found, installing..."
+    sudo apt-get install -y coreutils
+fi
+
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+cd "$SCRIPT_DIR"
+
+echo "Ensuring all Open5GS processes are stopped..."
+./stop.sh
+
+sudo "$SCRIPT_DIR/./install_scripts/uninstall_mongodb.sh"
+
+# Remove open5gs user and group
+sudo userdel open5gs
+sudo groupdel open5gs
+
+# Define library paths
+LIB_SBI_PATH="${SCRIPT_DIR}/open5gs/build/lib/sbi"
+LIB_PROTO_PATH="${SCRIPT_DIR}/open5gs/build/lib/proto"
+LIB_CORE_PATH="${SCRIPT_DIR}/open5gs/install/lib/x86_64-linux-gnu"
+
+# Remove the TUN Device
+sudo ip link delete ogstun
+
+# Uninstall Dependencies
+sudo apt-get purge -y python3-pip python3-setuptools python3-wheel ninja-build build-essential flex bison git cmake libsctp-dev libgnutls28-dev libgcrypt-dev libssl-dev libmongoc-dev libbson-dev libyaml-dev libmicrohttpd-dev libcurl4-gnutls-dev libnghttp2-dev libtins-dev libtalloc-dev meson
+sudo apt-get purge -y libidn-dev libidn11-dev
+
+sudo apt-get autoremove -y
+sudo apt-get clean
+
+sudo rm -rf open5gs/
+sudo rm -rf /var/log/open5gs
+sudo rm -rf logs/
+sudo rm -rf configs/
+sudo rm -rf install_time.txt
+
+#############!!!!!!!!!!!! TODO: continue uninstalling:
+
+# cd "$SCRIPT_DIR"
+
+# echo "Installing WebUI for Subscriber Registration..."
+# sudo ./install_scripts/install_webui.sh
+
+# Unset the LD_LIBRARY_PATH environment variable and script that sets it
+sudo rm /etc/profile.d/open5gs_ld_library_path.sh
+unset LD_LIBRARY_PATH
+
+echo "The Open5GS uninstallation completed successfully."

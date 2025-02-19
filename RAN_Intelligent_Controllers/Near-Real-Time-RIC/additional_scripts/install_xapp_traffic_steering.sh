@@ -67,18 +67,18 @@ if [ ! -f "xapp-descriptor/config-file_updated.json" ]; then
     FILE="xapp-descriptor/config-file_updated.json"
     cp xapp-descriptor/config-file.json $FILE
     # Modify the required fields using jq and overwrite the original file
-    jq '.containers[0].image.tag = "1.2" |
+    jq '.containers[0].image.tag = "latest" |
         .containers[0].image.registry = "example.com:80" |
         .containers[0].image.name = "trafficxapp"' "$FILE" >tmp.$$.json && mv tmp.$$.json "$FILE"
 fi
 
-sudo docker build -t example.com:80/trafficxapp:1.2 .
+sudo docker build -t example.com:80/trafficxapp:latest .
 
 if [ "$CHART_REPO_URL" != "http://0.0.0.0:8090" ]; then
     export CHART_REPO_URL=http://0.0.0.0:8090
 fi
 
-sudo docker save -o trafficxapp.tar example.com:80/trafficxapp:1.2
+sudo docker save -o trafficxapp.tar example.com:80/trafficxapp:latest
 sudo chmod 755 trafficxapp.tar
 sudo chown $USER:$USER trafficxapp.tar
 
@@ -131,5 +131,3 @@ echo
 echo "################################################################################"
 echo "# Successfully installed Traffic Steering xApp (trafficxapp)                   #"
 echo "################################################################################"
-echo
-echo

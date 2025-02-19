@@ -922,22 +922,6 @@ if ! kubectl apply -f "$HOME/.kube/kube-proxy-rbac.yaml"; then
     echo "Failed to apply Kube-Proxy ClusterRoleBinding, skipping."
 fi
 
-# Create local-storage storage class
-cat <<EOF >"$HOME/.kube/local-storage-class.yaml"
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: local-storage
-provisioner: kubernetes.io/no-provisioner
-volumeBindingMode: WaitForFirstConsumer
-EOF
-echo "Local storage class configuration file created."
-
-# Apply the local-storage storage class
-if ! kubectl apply -f "$HOME/.kube/local-storage-class.yaml"; then
-    echo "Failed to apply local storage class, skipping."
-fi
-
 # Check for node readiness for conditional taint removal
 echo "Waiting for essential system pods to be ready..."
 if [[ $KUBE_MAJOR -eq 1 && $KUBE_MINOR -ge 28 ]]; then

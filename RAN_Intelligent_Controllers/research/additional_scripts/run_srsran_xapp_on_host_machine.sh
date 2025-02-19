@@ -178,6 +178,19 @@ fi
 echo
 
 ################################################################################
+# Type the UE ID (RNTI) if needed
+################################################################################
+
+UE_ID=0 # 4601
+if [[ "$SELECTED_XAPP_PATH" == "kpm_mon_xapp.py" ]] || [[ "$SELECTED_XAPP_PATH" == "simple_mon_xapp.py" ]] || [[ "$SELECTED_XAPP_PATH" == "simple_ricsimple_xapp.py" ]]; then
+    echo "Please enter the UE ID (known as RNTI; from the srsue or srsgnb console, press 't' and then enter, type \"\" for 0): "
+    read -r UE_ID_INPUT
+    if [[ -n "$UE_ID_INPUT" ]]; then
+        UE_ID="$UE_ID_INPUT"
+    fi
+fi
+
+################################################################################
 # Install the xapp-frame-py
 ################################################################################
 
@@ -324,7 +337,7 @@ if [ "$SELECTED_XAPP_PATH" = "kpm_mon_xapp.py" ]; then
     # parser.add_argument("--kpm_report_style", type=int, default=1, help="xApp config file path")
     # parser.add_argument("--ue_ids", type=str, default='0', help="UE ID")
     # parser.add_argument("--metrics", type=str, default='DRB.UEThpUl,DRB.UEThpDl', help="Metrics name as comma-separated string")
-    SELECTED_APP_ARGS="--metrics=DRB.UEThpDl,DRB.UEThpUl --kpm_report_style=5 --http_server_port=$HTTP_SERVER_PORT --rmr_port=$RMR_PORT --e2_node_id=$E2_NODE_ID"
+    SELECTED_APP_ARGS="--ran_func_id 1 --metrics=DRB.UEThpDl,DRB.UEThpUl --kpm_report_style=4 --ue_ids $UE_ID --http_server_port=$HTTP_SERVER_PORT --rmr_port=$RMR_PORT --e2_node_id=$E2_NODE_ID"
 
 elif [ "$SELECTED_XAPP_PATH" = "simple_mon_xapp.py" ]; then
     # parser.add_argument("--config", type=str, default='', help="xApp config file path")
@@ -333,7 +346,7 @@ elif [ "$SELECTED_XAPP_PATH" = "simple_mon_xapp.py" ]; then
     # parser.add_argument("--e2_node_id", type=str, default='gnbd_001_001_00019b_0', help="E2 Node ID")
     # parser.add_argument("--ran_func_id", type=int, default=2, help="RAN function ID")
     # parser.add_argument("--metrics", type=str, default='DRB.UEThpDl', help="Metrics name as comma-separated string")
-    SELECTED_APP_ARGS="--metrics=DRB.UEThpDl,DRB.UEThpUl --http_server_port=$HTTP_SERVER_PORT --rmr_port=$RMR_PORT --e2_node_id=$E2_NODE_ID"
+    SELECTED_APP_ARGS="--ran_func_id 1 --metrics=DRB.UEThpDl,DRB.UEThpUl --http_server_port=$HTTP_SERVER_PORT --rmr_port=$RMR_PORT --e2_node_id=$E2_NODE_ID"
 
 elif [ "$SELECTED_XAPP_PATH" = "simple_rc_xapp.py" ]; then
     # parser.add_argument("--config", type=str, default='', help="xApp config file path")
@@ -342,7 +355,7 @@ elif [ "$SELECTED_XAPP_PATH" = "simple_rc_xapp.py" ]; then
     # parser.add_argument("--e2_node_id", type=str, default='gnbd_001_001_00019b_0', help="E2 Node ID")
     # parser.add_argument("--ran_func_id", type=int, default=3, help="E2SM RC RAN function ID")
     # parser.add_argument("--ue_id", type=int, default=0, help="UE ID")
-    SELECTED_APP_ARGS="--ue_id=0 --http_server_port=$HTTP_SERVER_PORT --rmr_port=$RMR_PORT --e2_node_id=$E2_NODE_ID"
+    SELECTED_APP_ARGS="--ran_func_id 1 --ue_id $UE_ID --http_server_port=$HTTP_SERVER_PORT --rmr_port=$RMR_PORT --e2_node_id=$E2_NODE_ID"
 
 elif [ "$SELECTED_XAPP_PATH" = "simple_ricsimple_xapp.py" ]; then
     # parser.add_argument("--http_server_port", type=int, default=8090, help="HTTP server listen port")
@@ -352,7 +365,7 @@ elif [ "$SELECTED_XAPP_PATH" = "simple_ricsimple_xapp.py" ]; then
     # parser.add_argument("--kpm_report_style", type=int, default=4, help="KPM Report Style ID")
     # parser.add_argument("--ue_ids", type=str, default='0', help="UE ID")
     # parser.add_argument("--metrics", type=str, default='DRB.RlcSduTransmittedVolumeDL', help="Metrics name as comma-separated string")
-    SELECTED_APP_ARGS="--metrics=DRB.RlcSduTransmittedVolumeDL,DRB.RlcSduTransmittedVolumeUL --kpm_report_style=4 --http_server_port=$HTTP_SERVER_PORT --rmr_port=$RMR_PORT --e2_node_id=$E2_NODE_ID"
+    SELECTED_APP_ARGS="--ran_func_id 1 --metrics=DRB.RlcSduTransmittedVolumeDL,DRB.RlcSduTransmittedVolumeUL --kpm_report_style=4 --ue_id $UE_ID --http_server_port=$HTTP_SERVER_PORT --rmr_port=$RMR_PORT --e2_node_id=$E2_NODE_ID"
 fi
 
 ################################################################################

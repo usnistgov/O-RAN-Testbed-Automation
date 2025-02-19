@@ -50,7 +50,7 @@ if [ ! -f "config/config-file_updated.json" ]; then
     FILE="config/config-file_updated.json"
     cp config/config-file.json $FILE
     # Modify the required fields using jq and overwrite the original file
-    jq '.containers[0].image.tag = "1.2" |
+    jq '.containers[0].image.tag = "latest" |
         .containers[0].image.registry = "example.com:80" |
         .containers[0].image.name = "hw-go"' "$FILE" >tmp.$$.json && mv tmp.$$.json "$FILE"
 fi
@@ -64,13 +64,13 @@ if grep -q "4.7.0" Dockerfile; then
     sed -i 's/4.7.0/4.9.4/g' Dockerfile
 fi
 
-sudo docker build -t example.com:80/hw-go:1.2 .
+sudo docker build -t example.com:80/hw-go:latest .
 
 if [ "$CHART_REPO_URL" != "http://0.0.0.0:8090" ]; then
     export CHART_REPO_URL=http://0.0.0.0:8090
 fi
 
-sudo docker save -o hw-go.tar example.com:80/hw-go:1.2
+sudo docker save -o hw-go.tar example.com:80/hw-go:latest
 sudo chmod 755 hw-go.tar
 sudo chown $USER:$USER hw-go.tar
 

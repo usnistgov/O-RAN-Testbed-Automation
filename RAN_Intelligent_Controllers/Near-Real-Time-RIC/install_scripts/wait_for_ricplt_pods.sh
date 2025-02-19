@@ -102,7 +102,7 @@ wait_for_all_pods_running() {
             }')
             NUM_NOT_READY=$(echo "$NOT_READY_PODS" | wc -l)
             if [[ $NUM_NOT_READY -eq 1 ]] && echo "$NOT_READY_PODS" | grep -q "ricplt-e2term"; then
-                echo "    Press \"r\" to restart the e2term pod, since it is the only ricplt pod not ready."
+                echo "    You may press \"r\" to restart the e2term pod, since it is the only ricplt pod not ready."
                 PRINTED_E2TERM_MSG=1
             fi
         fi

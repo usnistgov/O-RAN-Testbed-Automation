@@ -67,18 +67,18 @@ if [ ! -f "config/config-file_updated.json" ]; then
     FILE="config/config-file_updated.json"
     cp config/config-file.json $FILE
     # Modify the required fields using jq and overwrite the original file
-    jq '.containers[0].image.tag = "1.2" |
+    jq '.containers[0].image.tag = "latest" |
         .containers[0].image.registry = "example.com:80" |
         .containers[0].image.name = "hw-rust"' "$FILE" >tmp.$$.json && mv tmp.$$.json "$FILE"
 fi
 
-sudo docker build -t example.com:80/hw-rust:1.2 .
+sudo docker build -t example.com:80/hw-rust:latest .
 
 if [ "$CHART_REPO_URL" != "http://0.0.0.0:8090" ]; then
     export CHART_REPO_URL=http://0.0.0.0:8090
 fi
 
-sudo docker save -o hw-rust.tar example.com:80/hw-rust:1.2
+sudo docker save -o hw-rust.tar example.com:80/hw-rust:latest
 sudo chmod 755 hw-rust.tar
 sudo chown $USER:$USER hw-rust.tar
 
@@ -131,5 +131,3 @@ echo
 echo "################################################################################"
 echo "# Successfully installed Hello World Rust xApp (hw-rust)                       #"
 echo "################################################################################"
-echo
-echo

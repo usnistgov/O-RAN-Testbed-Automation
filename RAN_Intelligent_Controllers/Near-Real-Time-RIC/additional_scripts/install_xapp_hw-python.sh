@@ -67,18 +67,18 @@ if [ ! -f "init/config-file_updated.json" ]; then
     FILE="init/config-file_updated.json"
     cp init/config-file.json $FILE
     # Modify the required fields using jq and overwrite the original file
-    jq '.containers[0].image.tag = "1.2" |
+    jq '.containers[0].image.tag = "latest" |
         .containers[0].image.registry = "example.com:80" |
         .containers[0].image.name = "hw-python"' "$FILE" >tmp.$$.json && mv tmp.$$.json "$FILE"
 fi
 
-sudo docker build -t example.com:80/hw-python:1.2 .
+sudo docker build -t example.com:80/hw-python:latest .
 
 if [ "$CHART_REPO_URL" != "http://0.0.0.0:8090" ]; then
     export CHART_REPO_URL=http://0.0.0.0:8090
 fi
 
-sudo docker save -o hw-python.tar example.com:80/hw-python:1.2
+sudo docker save -o hw-python.tar example.com:80/hw-python:latest
 sudo chmod 755 hw-python.tar
 sudo chown $USER:$USER hw-python.tar
 
@@ -131,5 +131,3 @@ echo
 echo "################################################################################"
 echo "# Successfully installed Hello World Python xApp (hw-python)                   #"
 echo "################################################################################"
-echo
-echo

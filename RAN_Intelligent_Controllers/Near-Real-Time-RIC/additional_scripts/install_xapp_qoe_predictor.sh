@@ -67,12 +67,12 @@ if [ ! -f "xapp-descriptor/config_updated.json" ]; then
     FILE="xapp-descriptor/config_updated.json"
     cp xapp-descriptor/config.json $FILE
     # Modify the required fields using jq and overwrite the original file
-    jq '.containers[0].image.tag = "1.2" |
+    jq '.containers[0].image.tag = "latest" |
         .containers[0].image.registry = "example.com:80" |
         .containers[0].image.name = "ad"' "$FILE" >tmp.$$.json && mv tmp.$$.json "$FILE"
 fi
 
-# Create the schema.json file if it doesn't exist
+# Create the default schema.json if it doesn't exist
 if [ ! -f "xapp-descriptor/schema.json" ]; then
     FILE="xapp-descriptor/schema.json"
     echo "{}" >$FILE
@@ -84,13 +84,13 @@ if [ ! -f "xapp-descriptor/schema.json" ]; then
         . | .["properties"] = {}' "$FILE" >tmp.$$.json && mv tmp.$$.json "$FILE"
 fi
 
-sudo docker build -t example.com:80/qp:1.2 .
+sudo docker build -t example.com:80/qp:latest .
 
 if [ "$CHART_REPO_URL" != "http://0.0.0.0:8090" ]; then
     export CHART_REPO_URL=http://0.0.0.0:8090
 fi
 
-sudo docker save -o qp.tar example.com:80/qp:1.2
+sudo docker save -o qp.tar example.com:80/qp:latest
 sudo chmod 755 qp.tar
 sudo chown $USER:$USER qp.tar
 
@@ -143,5 +143,3 @@ echo
 echo "################################################################################"
 echo "# Successfully installed Quality of Experience (QoE) Predictor xApp (qp)       #"
 echo "################################################################################"
-echo
-echo

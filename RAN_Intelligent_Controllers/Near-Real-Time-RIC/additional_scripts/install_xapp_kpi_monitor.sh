@@ -55,6 +55,26 @@ fi
 
 cd kpimon-go
 
+# Get the IP of the InfluxDB service
+SERVICE_INFO=$(kubectl get service -n ricplt | grep r4-influxdb-influxdb)
+if [ -z "$SERVICE_INFO" ]; then
+    echo "No service found or kubectl command failed."
+    exit 1
+else
+    IP_INFLUXDB=$(echo "$SERVICE_INFO" | awk '{print $3}')
+fi
+
+# Replace "ricplt-influxdb.ricplt" with the InfluxDB IP in control/control.go
+if grep -q "ricplt-influxdb.ricplt" control/control.go; then
+    echo "Patching control/control.go to replace 'ricplt-influxdb.ricplt' with '$IP_INFLUXDB'..."
+    if [ ! -f "control/control.go.previous" ]; then
+        cp control/control.go control/control.go.previous
+    fi
+    sed -i "s/ricplt-influxdb.ricplt/$IP_INFLUXDB/g" control/control.go
+else
+    echo "No modification needed in control/control.go."
+fi
+
 echo "Creating and modifying the configuration file deploy/config_updated.json"
 # Check if jq is installed; if not, install it
 if ! command -v jq &>/dev/null; then
@@ -67,18 +87,18 @@ if [ ! -f "deploy/config_updated.json" ]; then
     FILE="deploy/config_updated.json"
     cp deploy/config.json $FILE
     # Modify the required fields using jq and overwrite the original file
-    jq '.containers[0].image.tag = "1.2" |
+    jq '.containers[0].image.tag = "latest" |
         .containers[0].image.registry = "example.com:80" |
         .containers[0].image.name = "kpimon-go"' "$FILE" >tmp.$$.json && mv tmp.$$.json "$FILE"
 fi
 
-sudo docker build -t example.com:80/kpimon-go:1.2 .
+sudo docker build -t example.com:80/kpimon-go:latest .
 
 if [ "$CHART_REPO_URL" != "http://0.0.0.0:8090" ]; then
     export CHART_REPO_URL=http://0.0.0.0:8090
 fi
 
-sudo docker save -o kpimon-go.tar example.com:80/kpimon-go:1.2
+sudo docker save -o kpimon-go.tar example.com:80/kpimon-go:latest
 sudo chmod 755 kpimon-go.tar
 sudo chown $USER:$USER kpimon-go.tar
 
@@ -131,5 +151,3 @@ echo
 echo "################################################################################"
 echo "# Successfully installed KPI Monitor xApp (kpimon-go)                          #"
 echo "################################################################################"
-echo
-echo

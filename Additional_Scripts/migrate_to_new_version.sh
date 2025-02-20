@@ -86,7 +86,7 @@ if [ -d 5G_Core/open5gs ] || [ -d gNodeB/srsRAN_Project ] || [ -d RAN_Intelligen
     fi
 
     echo "Ensuring the apt keys are not expired..."
-    sudo ./Additional_Scripts/remove_any_expired_apt_keys.sh
+    sudo ./Additional_Scripts/remove_expired_apt_keys.sh
 
     echo
     echo "The 5G Core needs to be reinstalled with ./5G_Core_Network/full_install.sh."
@@ -97,7 +97,7 @@ fi
 echo "Updating package lists..."
 cd $SCRIPT_DIR
 if ! sudo apt-get update; then
-    sudo ./remove_any_expired_apt_keys.sh
+    sudo ./remove_expired_apt_keys.sh
     echo "Trying to update package lists again..."
     if ! sudo apt-get update; then
         echo "Failed to update package lists"

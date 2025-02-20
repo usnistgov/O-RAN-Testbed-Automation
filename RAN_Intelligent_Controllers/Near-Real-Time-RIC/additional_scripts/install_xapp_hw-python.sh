@@ -30,15 +30,38 @@
 
 echo "# Script: $(realpath $0)..."
 
+# Run this script to build and deploy the Hello World Python xApp (hw-python) in the Near-Real-Time RIC.
+# More information can be found at: https://github.com/o-ran-sc/ric-app-hw-python
+
 # Exit immediately if a command fails
 set -e
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
-cd "$(dirname "$SCRIPT_DIR")"
+PARENT_DIR=$(dirname "$SCRIPT_DIR")
+cd "$PARENT_DIR"
 
-cd xApps/hw-go
+# Run a sudo command every minute to ensure script execution without user interaction
+./install_scripts/start_sudo_refresh.sh
 
-echo "Creating and modifying the configuration file config/config-file_updated.json"
+./install_scripts/wait_for_ricplt_pods.sh
+if [ "$CHART_REPO_URL" != "http://0.0.0.0:8090" ]; then
+    echo "Registering the Chart Museum URL..."
+    ./install_scripts/register_chart_museum_url.sh
+    export CHART_REPO_URL="http://0.0.0.0:8090"
+fi
+sudo ./install_scripts/run_chart_museum.sh
+
+mkdir -p xApps
+cd xApps
+
+if [ ! -d "hw-python" ]; then
+    echo "Cloning the Hello World Python xApp (hw-python)..."
+    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/hw-python.git
+fi
+
+cd hw-python
+
+echo "Creating and modifying the configuration file init/config-file_updated.json..."
 # Check if jq is installed; if not, install it
 if ! command -v jq &>/dev/null; then
     echo "Installing jq..."
@@ -46,39 +69,29 @@ if ! command -v jq &>/dev/null; then
     sudo apt-get install -y jq
 fi
 
-if [ ! -f "config/config-file_updated.json" ]; then
-    FILE="config/config-file_updated.json"
-    cp config/config-file.json $FILE
+if [ ! -f "init/config-file_updated.json" ]; then
+    FILE="init/config-file_updated.json"
+    cp init/config-file.json $FILE
     # Modify the required fields using jq and overwrite the original file
     jq '.containers[0].image.tag = "latest" |
         .containers[0].image.registry = "example.com:80" |
-        .containers[0].image.name = "hw-go"' "$FILE" >tmp.$$.json && mv tmp.$$.json "$FILE"
+        .containers[0].image.name = "hw-python"' "$FILE" >tmp.$$.json && mv tmp.$$.json "$FILE"
 fi
 
-# Check if the Dockerfile contains the correct RMR version; if not, update it.
-# This ensures that within the hw-go pod, /usr/local/lib/librmr_si.so doesn't
-# contain the rmr_free_consts memory leak bug, that was fixed in PR 7209:
-# https://gerrit.o-ran-sc.org/r/c/ric-plt/xapp-frame-py/+/7209
-if grep -q "4.7.0" Dockerfile; then
-    echo "Updating RMR from version 4.7.0 to 4.9.4 in hw-go Dockerfile..."
-    sed -i 's/4.7.0/4.9.4/g' Dockerfile
+if [ ! -f hw-python.tar ]; then
+    sudo docker build -t example.com:80/hw-python:latest .
+    sudo docker save -o hw-python.tar example.com:80/hw-python:latest
+    sudo chmod 755 hw-python.tar
+    sudo chown $USER:$USER hw-python.tar
+
+    # Import the image into the containerd container runtime
+    sudo ctr -n=k8s.io image import hw-python.tar
+else
+    echo "Hello World Python xApp (hw-python) is already built, skipping."
 fi
 
-sudo docker build -t example.com:80/hw-go:latest .
-
-if [ "$CHART_REPO_URL" != "http://0.0.0.0:8090" ]; then
-    export CHART_REPO_URL=http://0.0.0.0:8090
-fi
-
-sudo docker save -o hw-go.tar example.com:80/hw-go:latest
-sudo chmod 755 hw-go.tar
-sudo chown $USER:$USER hw-go.tar
-
-# Import the image into the containerd container runtime
-sudo ctr -n=k8s.io image import hw-go.tar
-
-echo "Onboarding the xApp (hw-go)..."
-OUTPUT=$(sudo dms_cli onboard ./config/config-file_updated.json ./config/schema.json)
+echo "Onboarding the Hello World Python xApp (hw-python)..."
+OUTPUT=$(sudo dms_cli onboard ./init/config-file_updated.json ./init/schema.json)
 echo $OUTPUT
 if echo "$OUTPUT" | grep -q '"status": "Created"'; then
     echo "Onboarding successful: status is 'Created'."
@@ -93,18 +106,18 @@ if ! kubectl get namespace ricxapp &>/dev/null; then
     kubectl create namespace ricxapp
 fi
 
-echo "Uninstalling application 'hw-go' if it exists..."
-UNINSTALL_OUTPUT=$(dms_cli uninstall hw-go ricxapp 2>&1) || true
+echo "Uninstalling application 'hw-python' if it exists..."
+UNINSTALL_OUTPUT=$(dms_cli uninstall hw-python ricxapp 2>&1) || true
 if echo "$UNINSTALL_OUTPUT" | grep -q 'release: not found\|No Xapp to uninstall' || true; then
-    echo "Application hw-go not found or already uninstalled."
+    echo "Application hw-python not found or already uninstalled."
 else
     echo "$UNINSTALL_OUTPUT"
 fi
 
-XAPP_VERSION=$(dms_cli get_charts_list | jq -r '.["hw-go"][0].version')
+XAPP_VERSION=$(dms_cli get_charts_list | jq -r '.["hw-python"][0].version')
 
-echo "Installing application 'hw-go'..."
-OUTPUT=$(dms_cli install hw-go $XAPP_VERSION ricxapp || echo "Failed to install hw-go xApp with dms_cli.")
+echo "Installing application 'hw-python'..."
+OUTPUT=$(dms_cli install hw-python $XAPP_VERSION ricxapp) || echo "Failed to install hw-python xApp with dms_cli."
 echo "$OUTPUT"
 if echo "$OUTPUT" | grep -qE '"?status"?:\s*"?\bOK\b"?'; then
     echo "Application successfully deployed."
@@ -112,3 +125,14 @@ else
     echo "Application failed to deploy."
     exit 1
 fi
+
+cd "$PARENT_DIR"
+
+# Stop the sudo timeout refresher, it is no longer necessary to run
+./install_scripts/stop_sudo_refresh.sh
+
+echo
+echo
+echo "################################################################################"
+echo "# Successfully installed Hello World Python xApp (hw-python)                   #"
+echo "################################################################################"

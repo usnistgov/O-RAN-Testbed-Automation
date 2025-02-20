@@ -86,7 +86,7 @@ wait_for_all_pods_running() {
             break
         fi
 
-        echo "    You may press \"k\" to start the interactive k9s pod manager (then use Ctrl+C to return to this script)."
+        echo "    Press \"k\" to start the interactive k9s pod manager (then use Ctrl+C to return to this script)."
 
         # Check if the e2term pod is the only one not ready, and prompt the user to restart it
         local PRINTED_E2TERM_MSG=0

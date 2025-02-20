@@ -31,7 +31,7 @@
 # Exit immediately if a command fails
 set -e
 
-echo "Updating etc/hosts in case of a changed local IP address..."
+echo "Ensuring etc/hosts has local IP address..."
 sudo ./install_scripts/update_host_address.sh
 
 # Kubelet does not support swap

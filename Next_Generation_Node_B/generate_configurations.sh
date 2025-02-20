@@ -225,8 +225,8 @@ update_yaml configs/gnb.yaml "ru_sdr" "device_args" "$DEVICE_ARGS"
 update_yaml configs/gnb.yaml "ru_sdr" "srate" "23.04"
 update_yaml configs/gnb.yaml "ru_sdr" "tx_gain" "75"
 update_yaml configs/gnb.yaml "ru_sdr" "rx_gain" "75"
-update_yaml configs/gnb.yaml "ru_sdr" "clock" null
-update_yaml configs/gnb.yaml "ru_sdr" "sync" null
+update_yaml configs/gnb.yaml "ru_sdr" "clock" "default"
+update_yaml configs/gnb.yaml "ru_sdr" "sync" "default"
 
 # Update configuration values for 5G cell parameters
 update_yaml configs/gnb.yaml "cell_cfg" "dl_arfcn" "368500" # NR ARFCN
@@ -248,7 +248,7 @@ update_yaml configs/gnb.yaml "cell_cfg.pdsch" "mcs_table" "qam64"
 update_yaml configs/gnb.yaml "cell_cfg.pusch" "mcs_table" "qam64"
 
 GNB_ID="411"
-RAN_NODE_NAME="gnbd_001_001_00019b"
+RAN_NODE_NAME="srsgnb01"
 GNB_DU_ID="0"
 update_yaml configs/gnb.yaml "" "gnb_id" "$GNB_ID"
 update_yaml configs/gnb.yaml "" "gnb_id_bit_length" "22" # Supported: 22-32
@@ -258,8 +258,8 @@ update_yaml configs/gnb.yaml "" "gnb_du_id" "$GNB_DU_ID"
 # Update configuration values to connect RIC by e2 interface
 if [ "$ENABLE_E2_TERM" = "true" ]; then
     update_yaml configs/gnb.yaml "e2" "enable_du_e2" "true"
-    update_yaml configs/gnb.yaml "e2" "enable_cu_cp_e2" "false"
-    update_yaml configs/gnb.yaml "e2" "enable_cu_up_e2" "false"
+    update_yaml configs/gnb.yaml "e2" "enable_cu_cp_e2" "true"
+    update_yaml configs/gnb.yaml "e2" "enable_cu_up_e2" "true"
     update_yaml configs/gnb.yaml "e2" "e2sm_kpm_enabled" "true"
     update_yaml configs/gnb.yaml "e2" "e2sm_rc_enabled" "true"
     update_yaml configs/gnb.yaml "e2" "addr" "$IP_E2TERM"
@@ -329,8 +329,8 @@ update_yaml configs/gnb.yaml "metrics" "enable_json_metrics" "false"
 update_yaml configs/gnb.yaml "metrics" "autostart_stdout_metrics" "false"
 update_yaml configs/gnb.yaml "metrics" "sched_report_period" "1000"
 
-# For ZeroMQ, change otw_format from sc12 --> null
-update_yaml configs/gnb.yaml "ru_sdr" "otw_format" null
+# For ZeroMQ, change otw_format to default
+update_yaml configs/gnb.yaml "ru_sdr" "otw_format" "default"
 
 mkdir -p logs
 sudo chown $USER:$USER -R logs

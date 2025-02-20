@@ -86,7 +86,22 @@ wait_for_all_pods_running() {
             break
         fi
 
-        echo "    You may press \"k\" to start the interactive k9s pod manager (then use Ctrl+C to return to this script)."
+        # Check if the Kong pod is not up, and allow the user to migrate the Kong database if needed
+        CAN_MIGRATE_DB=0
+        POD_INFO=$(echo $POD_STATUS | grep -oP 'oran-nonrtric-kong-[^\s]+ \S+ \S+' | awk '{print $1, $3}')
+        if [ ! -z "$POD_INFO" ]; then
+            POD_NAME=$(echo $POD_INFO | awk '{print $1}')
+            POD_STATUS=$(echo $POD_INFO | awk '{print $2}')
+            if [ ! "$POD_STATUS" == "Running" ]; then
+                CAN_MIGRATE_DB=1
+            fi
+        fi
+
+        if [ $CAN_MIGRATE_DB -eq 1 ]; then
+            echo "    Press \"b\" to bootstrap/initialize the Kong database with the necessary schema and configurations."
+        fi
+        echo "    Press \"k\" to start the interactive k9s pod manager (then use Ctrl+C to return to this script)."
+
         read -t 5 -n 1 KEY || true
         if [ "$KEY" == "k" ]; then
             K9S_SCRIPT_PATH="$(dirname "$SCRIPT_DIR")/./start_k9s.sh"
@@ -97,6 +112,13 @@ wait_for_all_pods_running() {
             sleep 8
             trap - SIGINT
             echo "Resumed parent script."
+
+        elif [ "$KEY" == "b" ]; then
+            echo
+            echo "Attempting to bootstrap the Kong database..."
+            kubectl exec -n nonrtric -c wait-for-db $POD_NAME -- kong migrations bootstrap || true
+            sleep 8
+
         elif [ ! -z "$KEY" ]; then
             sleep 5
         fi
@@ -130,7 +152,7 @@ if [ ! -z "$POD_INFO" ]; then
     POD_NAME=$(echo $POD_INFO | awk '{print $1}')
     POD_STATUS=$(echo $POD_INFO | awk '{print $2}')
     if [ ! "$POD_STATUS" == "Running" ]; then
-        echo "Cleaning up pod $POD_NAME..."
+        echo "Bootstrapping the Kong database..."
         kubectl exec -n nonrtric -c wait-for-db $POD_NAME -- kong migrations bootstrap
     fi
 fi

@@ -74,7 +74,7 @@ fi
 
 echo "Updating package lists..."
 if ! sudo apt-get update; then
-    sudo "$SCRIPT_DIR/install_scripts/./remove_any_expired_apt_keys.sh"
+    sudo "$SCRIPT_DIR/install_scripts/./remove_expired_apt_keys.sh"
     echo "Trying to update package lists again..."
     if ! sudo apt-get update; then
         echo "Failed to update package lists"

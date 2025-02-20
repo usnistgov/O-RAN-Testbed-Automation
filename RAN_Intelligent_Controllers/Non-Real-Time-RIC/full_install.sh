@@ -166,7 +166,7 @@ else
     cd "$SCRIPT_DIR/dep/ric-dep/bin/"
 
     # Remove any expired keys from apt-get update
-    sudo "$SCRIPT_DIR/install_scripts/./remove_any_expired_apt_keys.sh"
+    sudo "$SCRIPT_DIR/install_scripts/./remove_expired_apt_keys.sh"
 
     # Increase the file descriptor limits of the system
     sudo "$SCRIPT_DIR/install_scripts/./set_file_descriptor_limits.sh"
@@ -187,7 +187,9 @@ cd "$SCRIPT_DIR"
 
 echo
 echo "Installing k9s..."
-sudo ./install_scripts/install_k9s.sh
+if ! sudo ./install_scripts/install_k9s.sh; then
+    echo "Could not install k9s at the moment, skipping."
+fi
 
 # Check if istioctl exists and is a broken link
 if command -v istioctl &>/dev/null; then
@@ -242,18 +244,6 @@ if ! command -v docker-compose &>/dev/null; then
     ./install_scripts/install_docker_compose.sh
 fi
 
-# Optionally, install kubecolor for a formatted kubectl output
-sudo ./install_scripts/wait_for_kubectl.sh
-if ! command -v kubecolor &>/dev/null; then
-    sudo apt-get update || true
-    echo "Installing kubecolor..."
-    if sudo apt-get install -y kubecolor; then
-        command -v kubecolor >/dev/null 2>&1 && alias kubectl="kubecolor"
-    else
-        echo "Skipping optional kubecolor installation."
-    fi
-fi
-
 if ! command -v jq >/dev/null 2>&1; then
     echo "Installing jq to process JSON files..."
     sudo apt-get install -y jq
@@ -303,11 +293,11 @@ else
 
     echo "Revising the YAML file for the Non-RT RIC pods..."
     RIC_YAML_FILE_PATH="dep/RECIPE_EXAMPLE/NONRTRIC/example_recipe.yaml"
-    RIC_YAML_FILE_PATH_MODIFIED="dep/RECIPE_EXAMPLE/NONRTRIC/example_recipe_MODIFIED.yaml"
+    RIC_YAML_FILE_PATH_UPDATED="dep/RECIPE_EXAMPLE/NONRTRIC/example_recipe_updated.yaml"
     sudo chown $USER:$USER $RIC_YAML_FILE_PATH
-    sudo cp $RIC_YAML_FILE_PATH $RIC_YAML_FILE_PATH_MODIFIED
-    sudo chown $USER:$USER $RIC_YAML_FILE_PATH_MODIFIED
-    sudo "$SCRIPT_DIR/install_scripts/./revise_example_recipe_yaml.sh" "$RIC_YAML_FILE_PATH_MODIFIED"
+    sudo cp $RIC_YAML_FILE_PATH $RIC_YAML_FILE_PATH_UPDATED
+    sudo chown $USER:$USER $RIC_YAML_FILE_PATH_UPDATED
+    sudo "$SCRIPT_DIR/install_scripts/./revise_example_recipe_yaml.sh" "$RIC_YAML_FILE_PATH_UPDATED"
 
     echo "Setting default storage class for Kong..."
     KONG_YAML_FILE_PATH="dep/nonrtric/helm/kongstorage/kongvalues.yaml"
@@ -322,7 +312,7 @@ else
     cd "$SCRIPT_DIR/dep/"
 
     echo "Deploying Non-RT RIC..."
-    sudo ./bin/deploy-nonrtric -f ./RECIPE_EXAMPLE/NONRTRIC/example_recipe_MODIFIED.yaml
+    sudo ./bin/deploy-nonrtric -f ./RECIPE_EXAMPLE/NONRTRIC/example_recipe_updated.yaml
     echo "Successfully installed Non-RT RIC pods."
 fi
 
@@ -361,7 +351,8 @@ echo "Generating sample rApps..."
 echo
 echo "Testing the Non-RT RIC functionality..."
 if ! ./run_tests.sh; then
-    echo "Some of the Non-RT RIC tests failed. Wairing for pods, then retrying..."
+    echo "Some of the Non-RT RIC tests failed. Waiting for pods, then retrying..."
+    sleep 30
     sudo ./install_scripts/wait_for_nonrtric_pods.sh
     ./run_tests.sh
 else

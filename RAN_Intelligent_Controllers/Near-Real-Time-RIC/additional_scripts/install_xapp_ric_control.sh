@@ -30,15 +30,38 @@
 
 echo "# Script: $(realpath $0)..."
 
+# Run this script to build and deploy the RIC Control xApp (rc) in the Near-Real-Time RIC.
+# More information can be found at: https://github.com/o-ran-sc/ric-app-rc and https://docs.o-ran-sc.org/projects/o-ran-sc-ric-app-rc/en/latest/overview.html
+
 # Exit immediately if a command fails
 set -e
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
-cd "$(dirname "$SCRIPT_DIR")"
+PARENT_DIR=$(dirname "$SCRIPT_DIR")
+cd "$PARENT_DIR"
 
-cd xApps/hw-go
+# Run a sudo command every minute to ensure script execution without user interaction
+./install_scripts/start_sudo_refresh.sh
 
-echo "Creating and modifying the configuration file config/config-file_updated.json"
+./install_scripts/wait_for_ricplt_pods.sh
+if [ "$CHART_REPO_URL" != "http://0.0.0.0:8090" ]; then
+    echo "Registering the Chart Museum URL..."
+    ./install_scripts/register_chart_museum_url.sh
+    export CHART_REPO_URL="http://0.0.0.0:8090"
+fi
+sudo ./install_scripts/run_chart_museum.sh
+
+mkdir -p xApps
+cd xApps
+
+if [ ! -d "rc" ]; then
+    echo "Cloning RIC Control xApp (rc)..."
+    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/rc.git
+fi
+
+cd rc
+
+echo "Creating and modifying the configuration file xapp-descriptor/config_updated.json"
 # Check if jq is installed; if not, install it
 if ! command -v jq &>/dev/null; then
     echo "Installing jq..."
@@ -46,39 +69,29 @@ if ! command -v jq &>/dev/null; then
     sudo apt-get install -y jq
 fi
 
-if [ ! -f "config/config-file_updated.json" ]; then
-    FILE="config/config-file_updated.json"
-    cp config/config-file.json $FILE
+if [ ! -f "xapp-descriptor/config_updated.json" ]; then
+    FILE="xapp-descriptor/config_updated.json"
+    cp xapp-descriptor/config.json $FILE
     # Modify the required fields using jq and overwrite the original file
     jq '.containers[0].image.tag = "latest" |
         .containers[0].image.registry = "example.com:80" |
-        .containers[0].image.name = "hw-go"' "$FILE" >tmp.$$.json && mv tmp.$$.json "$FILE"
+        .containers[0].image.name = "rc"' "$FILE" >tmp.$$.json && mv tmp.$$.json "$FILE"
 fi
 
-# Check if the Dockerfile contains the correct RMR version; if not, update it.
-# This ensures that within the hw-go pod, /usr/local/lib/librmr_si.so doesn't
-# contain the rmr_free_consts memory leak bug, that was fixed in PR 7209:
-# https://gerrit.o-ran-sc.org/r/c/ric-plt/xapp-frame-py/+/7209
-if grep -q "4.7.0" Dockerfile; then
-    echo "Updating RMR from version 4.7.0 to 4.9.4 in hw-go Dockerfile..."
-    sed -i 's/4.7.0/4.9.4/g' Dockerfile
+if [ ! -f rc.tar]; then
+    sudo docker build -t example.com:80/rc:latest .
+    sudo docker save -o rc.tar example.com:80/rc:latest
+    sudo chmod 755 rc.tar
+    sudo chown $USER:$USER rc.tar
+
+    # Import the image into the containerd container runtime
+    sudo ctr -n=k8s.io image import rc.tar
+else
+    echo "RIC Control xApp (rc) is already built, skipping."
 fi
 
-sudo docker build -t example.com:80/hw-go:latest .
-
-if [ "$CHART_REPO_URL" != "http://0.0.0.0:8090" ]; then
-    export CHART_REPO_URL=http://0.0.0.0:8090
-fi
-
-sudo docker save -o hw-go.tar example.com:80/hw-go:latest
-sudo chmod 755 hw-go.tar
-sudo chown $USER:$USER hw-go.tar
-
-# Import the image into the containerd container runtime
-sudo ctr -n=k8s.io image import hw-go.tar
-
-echo "Onboarding the xApp (hw-go)..."
-OUTPUT=$(sudo dms_cli onboard ./config/config-file_updated.json ./config/schema.json)
+echo "Onboarding the RIC Control xApp (rc)..."
+OUTPUT=$(sudo dms_cli onboard ./xapp-descriptor/config_updated.json ./xapp-descriptor/schema.json)
 echo $OUTPUT
 if echo "$OUTPUT" | grep -q '"status": "Created"'; then
     echo "Onboarding successful: status is 'Created'."
@@ -93,18 +106,18 @@ if ! kubectl get namespace ricxapp &>/dev/null; then
     kubectl create namespace ricxapp
 fi
 
-echo "Uninstalling application 'hw-go' if it exists..."
-UNINSTALL_OUTPUT=$(dms_cli uninstall hw-go ricxapp 2>&1) || true
+echo "Uninstalling application 'rc' if it exists..."
+UNINSTALL_OUTPUT=$(dms_cli uninstall rc ricxapp 2>&1) || true
 if echo "$UNINSTALL_OUTPUT" | grep -q 'release: not found\|No Xapp to uninstall' || true; then
-    echo "Application hw-go not found or already uninstalled."
+    echo "Application rc not found or already uninstalled."
 else
     echo "$UNINSTALL_OUTPUT"
 fi
 
-XAPP_VERSION=$(dms_cli get_charts_list | jq -r '.["hw-go"][0].version')
+XAPP_VERSION=$(dms_cli get_charts_list | jq -r '.["rc"][0].version')
 
-echo "Installing application 'hw-go'..."
-OUTPUT=$(dms_cli install hw-go $XAPP_VERSION ricxapp || echo "Failed to install hw-go xApp with dms_cli.")
+echo "Installing application 'rc'..."
+OUTPUT=$(dms_cli install rc $XAPP_VERSION ricxapp) || echo "Failed to install rc xApp with dms_cli."
 echo "$OUTPUT"
 if echo "$OUTPUT" | grep -qE '"?status"?:\s*"?\bOK\b"?'; then
     echo "Application successfully deployed."
@@ -112,3 +125,14 @@ else
     echo "Application failed to deploy."
     exit 1
 fi
+
+cd "$PARENT_DIR"
+
+# Stop the sudo timeout refresher, it is no longer necessary to run
+./install_scripts/stop_sudo_refresh.sh
+
+echo
+echo
+echo "################################################################################"
+echo "# Successfully installed RIC Control xApp (rc)                                 #"
+echo "################################################################################"

@@ -1,9 +1,10 @@
 # Ignore testbed subdirectories
 /additional_scripts/pod_pcaps/
+/additional_scripts/srsran_xapps/
 /appmgr/
 /charts/
 /e2-interface/
-/hw-go/
+/influxdb/
 /logs/
 /ric-dep/
 /xApps/

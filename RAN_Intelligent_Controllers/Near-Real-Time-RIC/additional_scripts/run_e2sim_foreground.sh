@@ -30,42 +30,60 @@
 
 echo "# Script: $(realpath $0)..."
 
-# If the disk-pressure taint is not present then skip
-if ! kubectl describe nodes | grep Taints | grep -q "disk-pressure"; then
-    echo "No disk-pressure taint found on any nodes, skipping."
-    exit 0
+# Exit immediately if a command fails
+set -e
+
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+PARENT_DIR=$(dirname "$SCRIPT_DIR")
+cd "$PARENT_DIR"
+
+# Path to the output file
+mkdir -p logs
+OUTPUT_FILE="logs/e2sim_output.txt"
+
+# Stop the oransim container before starting it again
+if [ $(sudo docker ps -q -f name=^/oransim$ | wc -l) -eq 1 ]; then
+    echo "Restarting oransim container..."
+    sudo docker stop oransim
 fi
 
-# Get a list of nodes with the disk-pressure taint
-AFFECTED_NODES=$(kubectl get nodes -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.spec.taints[*].key}{"\t"}{.spec.taints[*].effect}{"\n"}' | grep "disk-pressure" | cut -f1)
-if [ -z "$AFFECTED_NODES" ]; then
-    echo "No nodes with disk-pressure taint found, skipping."
-    exit 0
+# Check if the container with the name 'oransim' is already running
+if [ $(sudo docker ps -q -f name=^/oransim$ | wc -l) -eq 1 ]; then
+    echo "Container 'oransim' is already running."
+elif [ $(sudo docker ps -aq -f name=^/oransim$ | wc -l) -eq 1 ]; then
+    echo "Container 'oransim' exists but is not running, starting container..."
+    rm -rf $OUTPUT_FILE
+    sudo docker start oransim
+else
+    echo "Starting a new container 'oransim'..."
+    rm -rf $OUTPUT_FILE
+    sudo docker run -d -it --name oransim oransim:0.0.999
 fi
 
-# Remove the disk-pressure taint from each affected node
-for NODE in $AFFECTED_NODES; do
-    echo "Removing taint disk-pressure from $NODE..."
-    if ! kubectl taint nodes $NODE node.kubernetes.io/disk-pressure- --overwrite; then
-        echo "Failed to remove taint from $NODE. Check your permissions or connectivity."
-    fi
-done
+# Get the IP and port of the E2 termination point inside the near Real Time RIC
+SERVICE_NAME="service-ricplt-e2term-sctp"
+LINE=$(kubectl get svc -n ricplt | grep $SERVICE_NAME) || ""
+IP_E2TERM=$(echo $LINE | awk '{print $3}')
+PORT_E2TERM=$(echo $LINE | awk '{print $5}' | sed 's/:.*//')
+echo "IP for $SERVICE_NAME: $IP_E2TERM"
+echo "PORT for $SERVICE_NAME: $PORT_E2TERM"
 
-sleep 1
-
-# Check if the taint was successfully removed from each affected node
-TAINT_REMOVAL_FAILED=0
-for NODE in $AFFECTED_NODES; do
-    if kubectl describe node $NODE | grep -q "node.kubernetes.io/disk-pressure"; then
-        echo "Error: Taint disk-pressure is still present on $NODE."
-        TAINT_REMOVAL_FAILED=1
-    else
-        echo "Taint: disk-pressure was successfully removed from $NODE."
-    fi
-done
-
-# If any taint removal failed
-if [ $TAINT_REMOVAL_FAILED -eq 1 ]; then
-    echo "Error: Disk-pressure taint is active. Please ensure sufficient RAM and disk space is available."
-    exit 1
+if [ -z "$IP_E2TERM" ] || [ -z "$PORT_E2TERM" ]; then
+    echo "Could not find service $SERVICE_NAME. IP or PORT is missing. Services:"
+    kubectl get svc -n ricplt
+    echo "Retrying in 8 seconds..."
+    sleep 8
+    continue
 fi
+# Create the log file if it does not exist
+if [ ! -f $OUTPUT_FILE ]; then
+    touch $OUTPUT_FILE
+    sudo chown $USER:$USER $OUTPUT_FILE
+fi
+
+if ! sudo docker exec oransim pgrep -f "kpm_sim" >/dev/null; then
+    echo "Stopping previous instance of kpm_sim..."
+    pkill -f kpm_sim || true
+fi
+
+sudo docker exec -i oransim kpm_sim $IP_E2TERM $PORT_E2TERM | tee -a $OUTPUT_FILE

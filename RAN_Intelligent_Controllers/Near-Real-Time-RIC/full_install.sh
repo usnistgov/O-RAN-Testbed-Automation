@@ -128,7 +128,7 @@ else
     cd "$SCRIPT_DIR/ric-dep/bin/"
 
     # Remove any expired keys from apt-get update
-    sudo "$SCRIPT_DIR/install_scripts/./remove_any_expired_apt_keys.sh"
+    sudo "$SCRIPT_DIR/install_scripts/./remove_expired_apt_keys.sh"
 
     # Increase the file descriptor limits of the system
     sudo "$SCRIPT_DIR/install_scripts/./set_file_descriptor_limits.sh"
@@ -204,16 +204,19 @@ else
 
     echo "Revising RIC Installation YAML File..."
     RIC_YAML_FILE_NAME="example_recipe_oran_j_release.yaml"
-    RIC_YAML_FILE_NAME_MODIFIED="example_recipe_oran_j_release_MODIFIED.yaml"
+    RIC_YAML_FILE_NAME_UPDATED="example_recipe_oran_j_release_updated.yaml"
 
     sudo chown $USER:$USER "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME"
-    sudo cp "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME" "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME_MODIFIED"
-    sudo chown $USER:$USER "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME_MODIFIED"
-    sudo ./install_scripts/revise_example_recipe_yaml.sh "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME_MODIFIED"
+    sudo cp "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME" "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME_UPDATED"
+    sudo chown $USER:$USER "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME_UPDATED"
+    sudo ./install_scripts/revise_example_recipe_yaml.sh "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME_UPDATED"
 
     # Wait for kube-apiserver to be ready before installing Near-RT RIC
     echo "Waiting for the Kubernetes API server to become ready before installing Near-RT RIC..."
     sudo ./install_scripts/wait_for_kubectl.sh
+
+    echo "Revising InfluxDB NFS Storage Class configuration..."
+    ./install_scripts/revise_influxdb_values_yaml.sh
 
     # Run the installation command
     mkdir -p "$SCRIPT_DIR/logs"
@@ -227,7 +230,7 @@ else
         echo
         echo "Installing Near-RT RIC..."
         cd ric-dep/bin/
-        sudo ./install -f "../RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME_MODIFIED" 2>&1 | tee -a "$RIC_INSTALLATION_STDOUT"
+        sudo ./install -f "../RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME_UPDATED" -c "influxdb" 2>&1 | tee -a "$RIC_INSTALLATION_STDOUT"
         cd "$SCRIPT_DIR"
         echo "Parsing output to check for successful Near-RT RIC installation..."
         ./install_scripts/parse_ric_installation_output.sh
@@ -268,7 +271,7 @@ else
             $COMPONENTS | all(. as $COMPONENT | $DATA[$COMPONENT] == "deployed")
         ' "$RIC_INSTALLATION_LOG_JSON")"
         if [ "$SUCCESS" != "true" ]; then
-            echo "ERROR: RIC installation was not successful. Waiting for API server to be available then retrying..."
+            echo "Error: RIC installation was not successful. Waiting for API server to be available then retrying..."
             sudo ./install_scripts/wait_for_kubectl.sh
         fi
     done
@@ -348,8 +351,40 @@ echo
 mkdir -p xApps
 cd xApps
 if [ ! -d "hw-go" ]; then
-    echo "Cloning Hello World xApp..."
+    echo "Cloning Hello World Go (hw-go) xApp..."
     ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/hw-go.git
+fi
+if [ ! -d "hw-python" ]; then
+    echo "Cloning the Hello World Python (hw-python) xApp..."
+    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/hw-python.git
+fi
+if [ ! -d "hw-rust" ]; then
+    echo "Cloning the Hello World Rust (hw-rust) xApp..."
+    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/hw-rust.git
+fi
+if [ ! -d "kpimon-go" ]; then
+    echo "Cloning KPI Monitor (kpimon) xApp..."
+    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/kpimon-go.git
+fi
+if [ ! -d "ad-cell" ]; then
+    echo "Cloning 5G Cell Anamoly Detection (ad-cell) xApp..."
+    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/ad-cell.git
+fi
+if [ ! -d "ad" ]; then
+    echo "Cloning Anamoly Detection (ad) xApp..."
+    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/ad.git
+fi
+if [ ! -d "qp" ]; then
+    echo "Cloning Quality of Experience (QoE) Predictor (qp) xApp..."
+    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/qp.git
+fi
+if [ ! -d "rc" ]; then
+    echo "Cloning RIC Control xApp (rc)..."
+    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/rc.git
+fi
+if [ ! -d "ts" ]; then
+    echo "Cloning Traffic Steering xApp (trafficxapp)..."
+    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/ts.git
 fi
 cd ..
 
@@ -380,7 +415,8 @@ while true; do
     # Check for disk-pressure taint on the node and warn the user if removing it fails
     if kubectl describe nodes | grep Taints | grep disk-pressure &>/dev/null; then
         if ! sudo ./install_scripts/handle_disk_pressure_taint.sh; then
-            echo "WARNING: Disk-pressure taint is preventing xApp deployment. Please ensure sufficient RAM and disk space is available."
+            echo "Warning: Disk-pressure taint is preventing xApp deployment. Please ensure sufficient RAM and disk space is available."
+            echo "Check the taints with: kubectl describe nodes | grep Taints"
             break
         fi
         echo "Disk-pressure taint handled, continuing to check deployment status..."

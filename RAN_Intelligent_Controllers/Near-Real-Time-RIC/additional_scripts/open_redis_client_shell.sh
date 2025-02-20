@@ -28,44 +28,16 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-echo "# Script: $(realpath $0)..."
+echo -e "\nConnecting to Redis CLI within the Kubernetes pod..."
+echo -e "Below are some example commands to interact with the Redis database:\n"
+echo -e "  KEYS *\t\t\t\tLists all keys in the database"
+echo -e "  TYPE <key-name>\t\t\tDetermines the type of a key"
+echo -e "  GET <key-name>\t\t\tRetrieves the value of a specific key if it is a string"
+echo -e "  SMEMBERS <set-name>\t\t\tIf key is a set, lists all members of the set"
+echo -e "  LRANGE <list-name> 0 -1\t\tIf key is a list, lists all elements in the list"
+echo -e "  HGETALL <hash-key-name>\t\tIf key is a hash, retrieves all fields and values of the hash"
+echo -e "  ZRANGE <sorted-set-name> 0 -1 WITHSCORES\tIf key is a sorted set, lists all members with their scores"
+echo -e "  SCAN 0\t\t\t\tIteratively lists keys in the database in a cursor-based manner"
+echo -e "\nType 'exit' to leave the Redis CLI and return to your shell."
 
-# If the disk-pressure taint is not present then skip
-if ! kubectl describe nodes | grep Taints | grep -q "disk-pressure"; then
-    echo "No disk-pressure taint found on any nodes, skipping."
-    exit 0
-fi
-
-# Get a list of nodes with the disk-pressure taint
-AFFECTED_NODES=$(kubectl get nodes -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.spec.taints[*].key}{"\t"}{.spec.taints[*].effect}{"\n"}' | grep "disk-pressure" | cut -f1)
-if [ -z "$AFFECTED_NODES" ]; then
-    echo "No nodes with disk-pressure taint found, skipping."
-    exit 0
-fi
-
-# Remove the disk-pressure taint from each affected node
-for NODE in $AFFECTED_NODES; do
-    echo "Removing taint disk-pressure from $NODE..."
-    if ! kubectl taint nodes $NODE node.kubernetes.io/disk-pressure- --overwrite; then
-        echo "Failed to remove taint from $NODE. Check your permissions or connectivity."
-    fi
-done
-
-sleep 1
-
-# Check if the taint was successfully removed from each affected node
-TAINT_REMOVAL_FAILED=0
-for NODE in $AFFECTED_NODES; do
-    if kubectl describe node $NODE | grep -q "node.kubernetes.io/disk-pressure"; then
-        echo "Error: Taint disk-pressure is still present on $NODE."
-        TAINT_REMOVAL_FAILED=1
-    else
-        echo "Taint: disk-pressure was successfully removed from $NODE."
-    fi
-done
-
-# If any taint removal failed
-if [ $TAINT_REMOVAL_FAILED -eq 1 ]; then
-    echo "Error: Disk-pressure taint is active. Please ensure sufficient RAM and disk space is available."
-    exit 1
-fi
+kubectl exec -n ricplt -it statefulset-ricplt-dbaas-server-0 -c container-ricplt-dbaas-redis -- redis-cli

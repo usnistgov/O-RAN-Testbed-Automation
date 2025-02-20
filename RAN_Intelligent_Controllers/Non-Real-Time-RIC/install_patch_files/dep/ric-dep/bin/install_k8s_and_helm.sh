@@ -292,8 +292,16 @@ echo "Kubernetes CNI version without suffix: ${CNIVERSIONWITHOUTSUFFIX}"
 echo
 echo
 
+# Set DNS servers
+DNS_SERVERS=$(grep 'nameserver' /run/systemd/resolve/resolv.conf | awk '{print $2}' | jq -R . | jq -s .)
+if [ -z "$(echo $DNS_SERVERS | jq '. | select(length > 0)')" ]; then
+    echo "Could not find DNS servers in /run/systemd/resolve/resolv.conf, defaulting Google DNS..."
+    DNS_SERVERS='["8.8.8.8", "8.8.4.4"]'
+fi
+DNS_SERVER=$(echo $DNS_SERVERS | jq -r '.[0]')
+
 # Check for internet connectivity
-if ping -c 1 8.8.8.8 &>/dev/null; then
+if ping -c 1 $DNS_SERVER &>/dev/null; then
     PUBLIC_IP=$(curl -s ifconfig.co)
 else
     echo "No internet connectivity detected. Cannot retrieve public IP."

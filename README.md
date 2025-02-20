@@ -11,16 +11,16 @@ The automation tool can be used in virtual machines and physical machines with t
 Before beginning the installation and setup of the testbed, verify that your system meets the following minimum specifications to prevent issues like pods remaining in pending or crash loop states, often due to insufficient resources.
 
 - **Operating System**: Linux distributions based on Ubuntu 20.04 LTS, Ubuntu 22.04 LTS, and Ubuntu 24.04 LTS are supported.
-  - _Recommendation: Linux Mint 22, based on Ubuntu 24.04 LTS._
+  - _Recommendation: Linux Mint 22 based on Ubuntu 24.04 LTS._
 - **Hard Drive Storage**: Must be `≥ 35` GB.
 - **Base Memory/RAM**: Must be `≥ 6000` MB.
 - **Number of Processors**: Must be `≥ 2` processors.
-  - _Recommendation: Between `6-8` processors for optimal performance._
+  - _Recommendation: Between `6-8` processors for improved performance._
 - **Internet Connectivity**: A stable internet connection must be maintained during the installation otherwise the process may fail and require restarting.
 
 ### Virtual Machine Preferences
 
-For users using a virtual machine, e.g., VirtualBox, the following configuration parameters may be considered to improve performance.
+For users using a virtual machine, e.g., VirtualBox, the following configuration parameters may be considered.
 
 - **System**
   - **Extended Features**: Ensure that `Enable I/O APIC` is checked to improve interrupt handling.

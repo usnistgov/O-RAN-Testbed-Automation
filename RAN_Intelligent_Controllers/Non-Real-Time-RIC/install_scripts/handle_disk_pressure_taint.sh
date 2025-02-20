@@ -66,6 +66,6 @@ done
 
 # If any taint removal failed
 if [ $TAINT_REMOVAL_FAILED -eq 1 ]; then
-    echo "ERROR: Disk-pressure taint is active. Please ensure sufficient RAM and disk space is available."
+    echo "Error: Disk-pressure taint is active. Please ensure sufficient RAM and disk space is available."
     exit 1
 fi

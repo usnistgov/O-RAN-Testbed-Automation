@@ -292,8 +292,16 @@ echo "Kubernetes CNI version without suffix: ${CNIVERSIONWITHOUTSUFFIX}"
 echo
 echo
 
+# Set DNS servers
+DNS_SERVERS=$(grep 'nameserver' /run/systemd/resolve/resolv.conf | awk '{print $2}' | jq -R . | jq -s .)
+if [ -z "$(echo $DNS_SERVERS | jq '. | select(length > 0)')" ]; then
+    echo "Could not find DNS servers in /run/systemd/resolve/resolv.conf, defaulting Google DNS..."
+    DNS_SERVERS='["8.8.8.8", "8.8.4.4"]'
+fi
+DNS_SERVER=$(echo $DNS_SERVERS | jq -r '.[0]')
+
 # Check for internet connectivity
-if ping -c 1 8.8.8.8 &>/dev/null; then
+if ping -c 1 $DNS_SERVER &>/dev/null; then
     PUBLIC_IP=$(curl -s ifconfig.co)
 else
     echo "No internet connectivity detected. Cannot retrieve public IP."
@@ -912,22 +920,6 @@ fi
 
 if ! kubectl apply -f "$HOME/.kube/kube-proxy-rbac.yaml"; then
     echo "Failed to apply Kube-Proxy ClusterRoleBinding, skipping."
-fi
-
-# Create local-storage storage class
-cat <<EOF >"$HOME/.kube/local-storage-class.yaml"
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: local-storage
-provisioner: kubernetes.io/no-provisioner
-volumeBindingMode: WaitForFirstConsumer
-EOF
-echo "Local storage class configuration file created."
-
-# Apply the local-storage storage class
-if ! kubectl apply -f "$HOME/.kube/local-storage-class.yaml"; then
-    echo "Failed to apply local storage class, skipping."
 fi
 
 # Check for node readiness for conditional taint removal

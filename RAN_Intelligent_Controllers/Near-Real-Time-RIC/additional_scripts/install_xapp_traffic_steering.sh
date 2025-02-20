@@ -30,15 +30,38 @@
 
 echo "# Script: $(realpath $0)..."
 
+# Run this script to build and deploy the Traffic Steering xApp (trafficxapp) in the Near-Real-Time RIC.
+# More information can be found at: https://github.com/o-ran-sc/ric-app-ts and https://docs.o-ran-sc.org/projects/o-ran-sc-ric-app-ts/en/latest/user-guide.html
+
 # Exit immediately if a command fails
 set -e
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
-cd "$(dirname "$SCRIPT_DIR")"
+PARENT_DIR=$(dirname "$SCRIPT_DIR")
+cd "$PARENT_DIR"
 
-cd xApps/hw-go
+# Run a sudo command every minute to ensure script execution without user interaction
+./install_scripts/start_sudo_refresh.sh
 
-echo "Creating and modifying the configuration file config/config-file_updated.json"
+./install_scripts/wait_for_ricplt_pods.sh
+if [ "$CHART_REPO_URL" != "http://0.0.0.0:8090" ]; then
+    echo "Registering the Chart Museum URL..."
+    ./install_scripts/register_chart_museum_url.sh
+    export CHART_REPO_URL="http://0.0.0.0:8090"
+fi
+sudo ./install_scripts/run_chart_museum.sh
+
+mkdir -p xApps
+cd xApps
+
+if [ ! -d "ts" ]; then
+    echo "Cloning Traffic Steering xApp (trafficxapp)..."
+    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/ts.git
+fi
+
+cd ts
+
+echo "Creating and modifying the configuration file xapp-descriptor/config-file_updated.json"
 # Check if jq is installed; if not, install it
 if ! command -v jq &>/dev/null; then
     echo "Installing jq..."
@@ -46,39 +69,29 @@ if ! command -v jq &>/dev/null; then
     sudo apt-get install -y jq
 fi
 
-if [ ! -f "config/config-file_updated.json" ]; then
-    FILE="config/config-file_updated.json"
-    cp config/config-file.json $FILE
+if [ ! -f "xapp-descriptor/config-file_updated.json" ]; then
+    FILE="xapp-descriptor/config-file_updated.json"
+    cp xapp-descriptor/config-file.json $FILE
     # Modify the required fields using jq and overwrite the original file
     jq '.containers[0].image.tag = "latest" |
         .containers[0].image.registry = "example.com:80" |
-        .containers[0].image.name = "hw-go"' "$FILE" >tmp.$$.json && mv tmp.$$.json "$FILE"
+        .containers[0].image.name = "trafficxapp"' "$FILE" >tmp.$$.json && mv tmp.$$.json "$FILE"
 fi
 
-# Check if the Dockerfile contains the correct RMR version; if not, update it.
-# This ensures that within the hw-go pod, /usr/local/lib/librmr_si.so doesn't
-# contain the rmr_free_consts memory leak bug, that was fixed in PR 7209:
-# https://gerrit.o-ran-sc.org/r/c/ric-plt/xapp-frame-py/+/7209
-if grep -q "4.7.0" Dockerfile; then
-    echo "Updating RMR from version 4.7.0 to 4.9.4 in hw-go Dockerfile..."
-    sed -i 's/4.7.0/4.9.4/g' Dockerfile
+if [ ! -f trafficxapp.tar]; then
+    sudo docker build -t example.com:80/trafficxapp:latest .
+    sudo docker save -o trafficxapp.tar example.com:80/trafficxapp:latest
+    sudo chmod 755 trafficxapp.tar
+    sudo chown $USER:$USER trafficxapp.tar
+
+    # Import the image into the containerd container runtime
+    sudo ctr -n=k8s.io image import trafficxapp.tar
+else
+    echo "Traffic Steering xApp (trafficxapp) is already built, skipping."
 fi
 
-sudo docker build -t example.com:80/hw-go:latest .
-
-if [ "$CHART_REPO_URL" != "http://0.0.0.0:8090" ]; then
-    export CHART_REPO_URL=http://0.0.0.0:8090
-fi
-
-sudo docker save -o hw-go.tar example.com:80/hw-go:latest
-sudo chmod 755 hw-go.tar
-sudo chown $USER:$USER hw-go.tar
-
-# Import the image into the containerd container runtime
-sudo ctr -n=k8s.io image import hw-go.tar
-
-echo "Onboarding the xApp (hw-go)..."
-OUTPUT=$(sudo dms_cli onboard ./config/config-file_updated.json ./config/schema.json)
+echo "Onboarding the Traffic Steering xApp (trafficxapp)..."
+OUTPUT=$(sudo dms_cli onboard ./xapp-descriptor/config-file_updated.json ./xapp-descriptor/schema.json)
 echo $OUTPUT
 if echo "$OUTPUT" | grep -q '"status": "Created"'; then
     echo "Onboarding successful: status is 'Created'."
@@ -93,18 +106,18 @@ if ! kubectl get namespace ricxapp &>/dev/null; then
     kubectl create namespace ricxapp
 fi
 
-echo "Uninstalling application 'hw-go' if it exists..."
-UNINSTALL_OUTPUT=$(dms_cli uninstall hw-go ricxapp 2>&1) || true
+echo "Uninstalling application 'trafficxapp' if it exists..."
+UNINSTALL_OUTPUT=$(dms_cli uninstall trafficxapp ricxapp 2>&1) || true
 if echo "$UNINSTALL_OUTPUT" | grep -q 'release: not found\|No Xapp to uninstall' || true; then
-    echo "Application hw-go not found or already uninstalled."
+    echo "Application trafficxapp not found or already uninstalled."
 else
     echo "$UNINSTALL_OUTPUT"
 fi
 
-XAPP_VERSION=$(dms_cli get_charts_list | jq -r '.["hw-go"][0].version')
+XAPP_VERSION=$(dms_cli get_charts_list | jq -r '.["trafficxapp"][0].version')
 
-echo "Installing application 'hw-go'..."
-OUTPUT=$(dms_cli install hw-go $XAPP_VERSION ricxapp || echo "Failed to install hw-go xApp with dms_cli.")
+echo "Installing application 'trafficxapp'..."
+OUTPUT=$(dms_cli install trafficxapp $XAPP_VERSION ricxapp) || echo "Failed to install trafficxapp xApp with dms_cli."
 echo "$OUTPUT"
 if echo "$OUTPUT" | grep -qE '"?status"?:\s*"?\bOK\b"?'; then
     echo "Application successfully deployed."
@@ -112,3 +125,14 @@ else
     echo "Application failed to deploy."
     exit 1
 fi
+
+cd "$PARENT_DIR"
+
+# Stop the sudo timeout refresher, it is no longer necessary to run
+./install_scripts/stop_sudo_refresh.sh
+
+echo
+echo
+echo "################################################################################"
+echo "# Successfully installed Traffic Steering xApp (trafficxapp)                   #"
+echo "################################################################################"

@@ -45,6 +45,4 @@ echo -e "  List tag values for a specific tag key:"
 echo -e "    influx query 'import \"influxdata/influxdb/schema\"; schema.tagValues(bucket: \"your-bucket\", tag: \"your-tag\")'"
 echo -e "\nType 'exit' to leave the InfluxDB CLI and return to your shell."
 
-
 kubectl exec -n ricplt -it r4-influxdb-influxdb2-0 -- /bin/sh
-

@@ -21,5 +21,5 @@
   "https://github.com/onap/multicloud-k8s.git": ["", "8bea0a13c223aff43f98f0cb6426379bb23e8894"],
   "https://gerrit.onap.org/r/oom.git": ["", "dc8cf1efa5e069173351ffcc8d065478fdeac3d5"],
   "https://gerrit.o-ran-sc.org/r/portal/nonrtric-controlpanel.git": ["master", "15bdaf8f25dca54e3a52ad30d69fa2eb1d59ce48"],
-  "https://gerrit.o-ran-sc.org/r/nonrtric/plt/rappmanager.git": ["j-release", "ffd5b45b53572ae42fbc22510bcbe3ad8883b86f"]
+  "https://gerrit.o-ran-sc.org/r/nonrtric/plt/rappmanager.git": ["k-release", "ffd5b45b53572ae42fbc22510bcbe3ad8883b86f"]
 }

@@ -44,12 +44,17 @@ cd "$PARENT_DIR"
 ./install_scripts/start_sudo_refresh.sh
 
 ./install_scripts/wait_for_ricplt_pods.sh
-./install_scripts/run_chart_museum.sh
+if [ "$CHART_REPO_URL" != "http://0.0.0.0:8090" ]; then
+    echo "Registering the Chart Museum URL..."
+    ./install_scripts/register_chart_museum_url.sh
+    export CHART_REPO_URL="http://0.0.0.0:8090"
+fi
+sudo ./install_scripts/run_chart_museum.sh
 
 cd xApps
 
 if [ ! -d "ad-cell" ]; then
-    echo "Cloning 5G Cell Anamoly Detection (ad-cell) xApp..."
+    echo "Cloning 5G Cell Anamoly Detection xApp (ad-cell)..."
     ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/ad-cell.git
 fi
 
@@ -72,18 +77,17 @@ if [ ! -f "init/config-file_updated.json" ]; then
         .containers[0].image.name = "ad-cell"' "$FILE" >tmp.$$.json && mv tmp.$$.json "$FILE"
 fi
 
-sudo docker build -t example.com:80/ad-cell:latest .
+if [ ! -f ad-cell.tar ]; then
+    sudo docker build -t example.com:80/ad-cell:latest .
+    sudo docker save -o ad-cell.tar example.com:80/ad-cell:latest
+    sudo chmod 755 ad-cell.tar
+    sudo chown $USER:$USER ad-cell.tar
 
-if [ "$CHART_REPO_URL" != "http://0.0.0.0:8090" ]; then
-    export CHART_REPO_URL=http://0.0.0.0:8090
+    # Import the image into the containerd container runtime
+    sudo ctr -n=k8s.io image import ad-cell.tar
+else
+    echo "5G Cell Anamoly Detection xApp (ad-cell) is already built, skipping."
 fi
-
-sudo docker save -o ad-cell.tar example.com:80/ad-cell:latest
-sudo chmod 755 ad-cell.tar
-sudo chown $USER:$USER ad-cell.tar
-
-# Import the image into the containerd container runtime
-sudo ctr -n=k8s.io image import ad-cell.tar
 
 # Run the dms_cli onboard command and capture the output
 OUTPUT=$(dms_cli onboard ./init/config-file_updated.json ./init/schema.json)

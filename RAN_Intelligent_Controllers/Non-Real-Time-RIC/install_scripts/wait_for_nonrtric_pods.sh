@@ -98,9 +98,9 @@ wait_for_all_pods_running() {
         fi
 
         if [ $CAN_MIGRATE_DB -eq 1 ]; then
-            echo "    You may press \"b\" to bootstrap/initialize the Kong database with the necessary schema and configurations."
+            echo "    Press \"b\" to bootstrap/initialize the Kong database with the necessary schema and configurations."
         fi
-        echo "    You may press \"k\" to start the interactive k9s pod manager (then use Ctrl+C to return to this script)."
+        echo "    Press \"k\" to start the interactive k9s pod manager (then use Ctrl+C to return to this script)."
 
         read -t 5 -n 1 KEY || true
         if [ "$KEY" == "k" ]; then

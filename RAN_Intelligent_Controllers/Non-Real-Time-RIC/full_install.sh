@@ -166,7 +166,7 @@ else
     cd "$SCRIPT_DIR/dep/ric-dep/bin/"
 
     # Remove any expired keys from apt-get update
-    sudo "$SCRIPT_DIR/install_scripts/./remove_any_expired_apt_keys.sh"
+    sudo "$SCRIPT_DIR/install_scripts/./remove_expired_apt_keys.sh"
 
     # Increase the file descriptor limits of the system
     sudo "$SCRIPT_DIR/install_scripts/./set_file_descriptor_limits.sh"

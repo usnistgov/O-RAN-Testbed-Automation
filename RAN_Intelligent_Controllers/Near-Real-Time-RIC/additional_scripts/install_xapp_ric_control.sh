@@ -44,7 +44,12 @@ cd "$PARENT_DIR"
 ./install_scripts/start_sudo_refresh.sh
 
 ./install_scripts/wait_for_ricplt_pods.sh
-./install_scripts/run_chart_museum.sh
+if [ "$CHART_REPO_URL" != "http://0.0.0.0:8090" ]; then
+    echo "Registering the Chart Museum URL..."
+    ./install_scripts/register_chart_museum_url.sh
+    export CHART_REPO_URL="http://0.0.0.0:8090"
+fi
+sudo ./install_scripts/run_chart_museum.sh
 
 cd xApps
 
@@ -72,18 +77,17 @@ if [ ! -f "xapp-descriptor/config_updated.json" ]; then
         .containers[0].image.name = "rc"' "$FILE" >tmp.$$.json && mv tmp.$$.json "$FILE"
 fi
 
-sudo docker build -t example.com:80/rc:latest .
+if [ ! -f rc.tar]; then
+    sudo docker build -t example.com:80/rc:latest .
+    sudo docker save -o rc.tar example.com:80/rc:latest
+    sudo chmod 755 rc.tar
+    sudo chown $USER:$USER rc.tar
 
-if [ "$CHART_REPO_URL" != "http://0.0.0.0:8090" ]; then
-    export CHART_REPO_URL=http://0.0.0.0:8090
+    # Import the image into the containerd container runtime
+    sudo ctr -n=k8s.io image import rc.tar
+else
+    echo "RIC Control xApp (rc) is already built, skipping."
 fi
-
-sudo docker save -o rc.tar example.com:80/rc:latest
-sudo chmod 755 rc.tar
-sudo chown $USER:$USER rc.tar
-
-# Import the image into the containerd container runtime
-sudo ctr -n=k8s.io image import rc.tar
 
 # Run the dms_cli onboard command and capture the output
 OUTPUT=$(dms_cli onboard ./xapp-descriptor/config_updated.json ./xapp-descriptor/schema.json)

@@ -80,7 +80,7 @@ if exist "RAN_Intelligent_Controllers\Near-Real-Time-RIC\ric-dep" rmdir /s /q "R
 cd RAN_Intelligent_Controllers\Near-Real-Time-RIC
 git clone https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep.git
 cd ric-dep
-git checkout 505e5efb5f40706adccdfdc7a5289456cd01fe8a
+git checkout master
 cd ..\..\..
 
 cd %~dp0..
@@ -193,7 +193,7 @@ if exist "RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\ric-dep" rmdir /s /q
 cd RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep
 git clone https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep.git
 cd ric-dep
-git checkout 505e5efb5f40706adccdfdc7a5289456cd01fe8a
+git checkout master
 cd ..\..\..\..
 
 cd %~dp0..

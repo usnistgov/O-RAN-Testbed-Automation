@@ -44,12 +44,17 @@ cd "$PARENT_DIR"
 ./install_scripts/start_sudo_refresh.sh
 
 ./install_scripts/wait_for_ricplt_pods.sh
-./install_scripts/run_chart_museum.sh
+if [ "$CHART_REPO_URL" != "http://0.0.0.0:8090" ]; then
+    echo "Registering the Chart Museum URL..."
+    ./install_scripts/register_chart_museum_url.sh
+    export CHART_REPO_URL="http://0.0.0.0:8090"
+fi
+sudo ./install_scripts/run_chart_museum.sh
 
 cd xApps
 
 if [ ! -d "kpimon-go" ]; then
-    echo "Cloning KPI Monitor (kpimon) xApp..."
+    echo "Cloning KPI Monitor xApp (kpimon-go)..."
     ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/kpimon-go.git
 fi
 
@@ -92,18 +97,17 @@ if [ ! -f "deploy/config_updated.json" ]; then
         .containers[0].image.name = "kpimon-go"' "$FILE" >tmp.$$.json && mv tmp.$$.json "$FILE"
 fi
 
-sudo docker build -t example.com:80/kpimon-go:latest .
+if [ ! -f kpimon-go.tar ]; then
+    sudo docker build -t example.com:80/kpimon-go:latest .
+    sudo docker save -o kpimon-go.tar example.com:80/kpimon-go:latest
+    sudo chmod 755 kpimon-go.tar
+    sudo chown $USER:$USER kpimon-go.tar
 
-if [ "$CHART_REPO_URL" != "http://0.0.0.0:8090" ]; then
-    export CHART_REPO_URL=http://0.0.0.0:8090
+    # Import the image into the containerd container runtime
+    sudo ctr -n=k8s.io image import kpimon-go.tar
+else
+    echo "KPI Monitor xApp (kpimon-go) is already built, skipping."
 fi
-
-sudo docker save -o kpimon-go.tar example.com:80/kpimon-go:latest
-sudo chmod 755 kpimon-go.tar
-sudo chown $USER:$USER kpimon-go.tar
-
-# Import the image into the containerd container runtime
-sudo ctr -n=k8s.io image import kpimon-go.tar
 
 # Run the dms_cli onboard command and capture the output
 OUTPUT=$(dms_cli onboard ./deploy/config_updated.json ./deploy/schema.json)

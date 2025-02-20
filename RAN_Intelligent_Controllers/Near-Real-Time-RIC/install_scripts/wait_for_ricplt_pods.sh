@@ -86,7 +86,7 @@ wait_for_all_pods_running() {
             break
         fi
 
-        echo "    You may press \"k\" to start the interactive k9s pod manager (then use Ctrl+C to return to this script)."
+        echo "    Press \"k\" to start the interactive k9s pod manager (then use Ctrl+C to return to this script)."
 
         # Check if the e2term pod is the only one not ready, and prompt the user to restart it
         local PRINTED_E2TERM_MSG=0
@@ -102,7 +102,7 @@ wait_for_all_pods_running() {
             }')
             NUM_NOT_READY=$(echo "$NOT_READY_PODS" | wc -l)
             if [[ $NUM_NOT_READY -eq 1 ]] && echo "$NOT_READY_PODS" | grep -q "ricplt-e2term"; then
-                echo "    You may press \"r\" to restart the e2term pod, since it is the only ricplt pod not ready."
+                echo "    Press \"r\" to restart the e2term pod, since it is the only ricplt pod not ready."
                 PRINTED_E2TERM_MSG=1
             fi
         fi

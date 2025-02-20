@@ -44,12 +44,17 @@ cd "$PARENT_DIR"
 ./install_scripts/start_sudo_refresh.sh
 
 ./install_scripts/wait_for_ricplt_pods.sh
-./install_scripts/run_chart_museum.sh
+if [ "$CHART_REPO_URL" != "http://0.0.0.0:8090" ]; then
+    echo "Registering the Chart Museum URL..."
+    ./install_scripts/register_chart_museum_url.sh
+    export CHART_REPO_URL="http://0.0.0.0:8090"
+fi
+sudo ./install_scripts/run_chart_museum.sh
 
 cd xApps
 
 if [ ! -d "hw-rust" ]; then
-    echo "Cloning the Hello World Rust xApp..."
+    echo "Cloning the Hello World Rust xApp (hw-rust)..."
     ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/hw-rust.git
 fi
 
@@ -72,18 +77,17 @@ if [ ! -f "config/config-file_updated.json" ]; then
         .containers[0].image.name = "hw-rust"' "$FILE" >tmp.$$.json && mv tmp.$$.json "$FILE"
 fi
 
-sudo docker build -t example.com:80/hw-rust:latest .
+if [ ! -f hw-rust.tar ]; then
+    sudo docker build -t example.com:80/hw-rust:latest .
+    sudo docker save -o hw-rust.tar example.com:80/hw-rust:latest
+    sudo chmod 755 hw-rust.tar
+    sudo chown $USER:$USER hw-rust.tar
 
-if [ "$CHART_REPO_URL" != "http://0.0.0.0:8090" ]; then
-    export CHART_REPO_URL=http://0.0.0.0:8090
+    # Import the image into the containerd container runtime
+    sudo ctr -n=k8s.io image import hw-rust.tar
+else
+    echo "Hello World Rust xApp (hw-rust) is already built, skipping."
 fi
-
-sudo docker save -o hw-rust.tar example.com:80/hw-rust:latest
-sudo chmod 755 hw-rust.tar
-sudo chown $USER:$USER hw-rust.tar
-
-# Import the image into the containerd container runtime
-sudo ctr -n=k8s.io image import hw-rust.tar
 
 # Run the dms_cli onboard command and capture the output
 OUTPUT=$(dms_cli onboard ./config/config-file_updated.json ./config/schema.json)

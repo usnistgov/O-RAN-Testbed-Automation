@@ -51,6 +51,7 @@ if [ "$CHART_REPO_URL" != "http://0.0.0.0:8090" ]; then
 fi
 sudo ./install_scripts/run_chart_museum.sh
 
+mkdir -p xApps
 cd xApps
 
 if [ ! -d "hw-rust" ]; then
@@ -89,8 +90,8 @@ else
     echo "Hello World Rust xApp (hw-rust) is already built, skipping."
 fi
 
-# Run the dms_cli onboard command and capture the output
-OUTPUT=$(dms_cli onboard ./config/config-file_updated.json ./config/schema.json)
+echo "Onboarding the Hello World Rust xApp (hw-rust)..."
+OUTPUT=$(sudo dms_cli onboard ./config/config-file_updated.json ./config/schema.json)
 echo $OUTPUT
 if echo "$OUTPUT" | grep -q '"status": "Created"'; then
     echo "Onboarding successful: status is 'Created'."

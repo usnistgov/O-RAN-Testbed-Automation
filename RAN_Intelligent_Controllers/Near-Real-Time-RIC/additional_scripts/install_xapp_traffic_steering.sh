@@ -51,6 +51,7 @@ if [ "$CHART_REPO_URL" != "http://0.0.0.0:8090" ]; then
 fi
 sudo ./install_scripts/run_chart_museum.sh
 
+mkdir -p xApps
 cd xApps
 
 if [ ! -d "ts" ]; then
@@ -89,8 +90,8 @@ else
     echo "Traffic Steering xApp (trafficxapp) is already built, skipping."
 fi
 
-# Run the dms_cli onboard command and capture the output
-OUTPUT=$(dms_cli onboard ./xapp-descriptor/config-file_updated.json ./xapp-descriptor/schema.json)
+echo "Onboarding the Traffic Steering xApp (trafficxapp)..."
+OUTPUT=$(sudo dms_cli onboard ./xapp-descriptor/config-file_updated.json ./xapp-descriptor/schema.json)
 echo $OUTPUT
 if echo "$OUTPUT" | grep -q '"status": "Created"'; then
     echo "Onboarding successful: status is 'Created'."

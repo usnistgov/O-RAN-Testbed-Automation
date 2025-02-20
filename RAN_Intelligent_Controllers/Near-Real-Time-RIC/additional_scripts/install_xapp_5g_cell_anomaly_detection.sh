@@ -51,6 +51,7 @@ if [ "$CHART_REPO_URL" != "http://0.0.0.0:8090" ]; then
 fi
 sudo ./install_scripts/run_chart_museum.sh
 
+mkdir -p xApps
 cd xApps
 
 if [ ! -d "ad-cell" ]; then
@@ -89,8 +90,8 @@ else
     echo "5G Cell Anamoly Detection xApp (ad-cell) is already built, skipping."
 fi
 
-# Run the dms_cli onboard command and capture the output
-OUTPUT=$(dms_cli onboard ./init/config-file_updated.json ./init/schema.json)
+echo "Onboarding the 5G Cell Anamoly Detection xApp (ad-cell)..."
+OUTPUT=$(sudo dms_cli onboard ./init/config-file_updated.json ./init/schema.json)
 echo $OUTPUT
 if echo "$OUTPUT" | grep -q '"status": "Created"'; then
     echo "Onboarding successful: status is 'Created'."

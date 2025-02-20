@@ -51,6 +51,7 @@ if [ "$CHART_REPO_URL" != "http://0.0.0.0:8090" ]; then
 fi
 sudo ./install_scripts/run_chart_museum.sh
 
+mkdir -p xApps
 cd xApps
 
 if [ ! -d "kpimon-go" ]; then
@@ -109,8 +110,8 @@ else
     echo "KPI Monitor xApp (kpimon-go) is already built, skipping."
 fi
 
-# Run the dms_cli onboard command and capture the output
-OUTPUT=$(dms_cli onboard ./deploy/config_updated.json ./deploy/schema.json)
+echo "Onboarding the KPI Monitor xApp (kpimon-go)..."
+OUTPUT=$(sudo dms_cli onboard ./deploy/config_updated.json ./deploy/schema.json)
 echo $OUTPUT
 if echo "$OUTPUT" | grep -q '"status": "Created"'; then
     echo "Onboarding successful: status is 'Created'."

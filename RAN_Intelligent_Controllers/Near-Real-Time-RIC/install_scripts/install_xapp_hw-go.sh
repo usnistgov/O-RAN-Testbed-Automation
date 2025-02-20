@@ -77,8 +77,8 @@ sudo chown $USER:$USER hw-go.tar
 # Import the image into the containerd container runtime
 sudo ctr -n=k8s.io image import hw-go.tar
 
-# Run the dms_cli onboard command and capture the output
-OUTPUT=$(dms_cli onboard ./config/config-file_updated.json ./config/schema.json)
+echo "Onboarding the xApp (hw-go)..."
+OUTPUT=$(sudo dms_cli onboard ./config/config-file_updated.json ./config/schema.json)
 echo $OUTPUT
 if echo "$OUTPUT" | grep -q '"status": "Created"'; then
     echo "Onboarding successful: status is 'Created'."

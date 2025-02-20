@@ -51,6 +51,7 @@ if [ "$CHART_REPO_URL" != "http://0.0.0.0:8090" ]; then
 fi
 sudo ./install_scripts/run_chart_museum.sh
 
+mkdir -p xApps
 cd xApps
 
 if [ ! -d "qp" ]; then
@@ -101,8 +102,8 @@ else
     echo "Quality of Experience (QoE) Predictor xApp (qp) is already built, skipping."
 fi
 
-# Run the dms_cli onboard command and capture the output
-OUTPUT=$(dms_cli onboard ./xapp-descriptor/config_updated.json ./xapp-descriptor/schema.json)
+echo "Onboarding the Quality of Experience (QoE) Predictor xApp (qp)..."
+OUTPUT=$(sudo dms_cli onboard ./xapp-descriptor/config_updated.json ./xapp-descriptor/schema.json)
 echo $OUTPUT
 if echo "$OUTPUT" | grep -q '"status": "Created"'; then
     echo "Onboarding successful: status is 'Created'."

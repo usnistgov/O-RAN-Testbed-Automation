@@ -81,6 +81,18 @@ else
     echo "No modification needed in control/control.go."
 fi
 
+# Replace the RAN Function ID from 2 to 0, since e2sim uses RAN Function ID 0
+if grep -qP "\bfuncId *= *int64\(2\)" control/control.go; then
+    echo "Patching control/control.go to replace 'funcId += int64(2)' with 'funcId += int64(0)'..."
+    if [ ! -f "control/control.go.previous" ]; then
+        cp control/control.go control/control.go.previous
+    fi
+    # Replace first occurrence of "funcId = int64(2)" to "funcId = int64(0)"
+    sed -i '0,/funcId *= *int64(2)/s/\(funcId *= *\)\(int64(2)\)/\1int64(0)/' control/control.go
+else
+    echo "No modification needed in control/control.go."
+fi
+
 echo "Creating and modifying the configuration file deploy/config_updated.json"
 # Check if jq is installed; if not, install it
 if ! command -v jq &>/dev/null; then

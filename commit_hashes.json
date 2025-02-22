@@ -3,7 +3,7 @@
   "https://github.com/srsran/srsRAN_4G.git": ["", "ec29b0c1ff79cebcbe66caa6d6b90778261c42b8"],
   "https://github.com/zeromq/libzmq.git": ["", "34f7fa22022bed9e0e390ed3580a1c83ac4a2834"],
   "https://github.com/zeromq/czmq.git": ["", "5b5c640248dfb6e9a9a612cfad16d8c019e5702c"],
-  "https://github.com/srsran/srsRAN_Project.git": ["", "a041e3162d7ea94a7963437f32df372fae5d21ea"],
+  "https://github.com/srsran/srsRAN_Project.git": ["", "cc2869f967adfd8d33f9d1440839bf5f1b282998"],
   "https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep.git": ["master", "33b5940a15ea852d47f73521295eef53d295b7fd"],
   "https://gerrit.o-ran-sc.org/r/sim/e2-interface.git": ["", "da6f82f286cdbb38af1178f82f85877b12c2f85b"],
   "https://gerrit.o-ran-sc.org/r/ric-plt/appmgr.git": ["", "4c05932dce72e98db23eaff2b72b58816e1f2d55"],

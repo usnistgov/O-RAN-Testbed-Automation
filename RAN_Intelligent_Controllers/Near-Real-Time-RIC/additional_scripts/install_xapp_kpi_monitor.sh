@@ -43,7 +43,6 @@ cd "$PARENT_DIR"
 # Run a sudo command every minute to ensure script execution without user interaction
 ./install_scripts/start_sudo_refresh.sh
 
-./install_scripts/wait_for_ricplt_pods.sh
 if [ "$CHART_REPO_URL" != "http://0.0.0.0:8090" ]; then
     echo "Registering the Chart Museum URL..."
     ./install_scripts/register_chart_museum_url.sh
@@ -81,14 +80,29 @@ else
     echo "No modification needed in control/control.go."
 fi
 
-# Replace the RAN Function ID from 2 to 0, since e2sim uses RAN Function ID 0
-if grep -qP "\bfuncId *= *int64\(2\)" control/control.go; then
-    echo "Patching control/control.go to replace 'funcId += int64(2)' with 'funcId += int64(0)'..."
+# Set the RAN Function ID if not set
+if [ -z "$RAN_FUNC_ID" ]; then
+    export RAN_FUNC_ID="4"
+fi
+
+# Replace the RAN Function ID to RAN_FUNC_ID
+if grep -qP "\bfuncId *= *int64\([0-9]+\)" control/control.go; then
+    echo "Patching control/control.go to replace 'funcId += int64(N)' with 'funcId += int64($RAN_FUNC_ID)'..."
     if [ ! -f "control/control.go.previous" ]; then
         cp control/control.go control/control.go.previous
     fi
-    # Replace first occurrence of "funcId = int64(2)" to "funcId = int64(0)"
-    sed -i '0,/funcId *= *int64(2)/s/\(funcId *= *\)\(int64(2)\)/\1int64(0)/' control/control.go
+    # Replace first occurrence of "funcId = int64(N)" to "funcId = int64(0)"
+    sed -i "0,/funcId *= *int64([0-9]\+)/s/\(funcId *= *\)\(int64([0-9]\+)\)/\1int64($RAN_FUNC_ID)/" control/control.go
+else
+    echo "No modification needed in control/control.go."
+fi
+# Replace .RanFunctionId == N in control/control.go
+if grep -q ".RanFunctionId == [0-9]\+" control/control.go; then
+    echo "Patching control/control.go to replace '.RanFunctionId == [0-9]\+' with '.RanFunctionId == $RAN_FUNC_ID'..."
+    if [ ! -f "control/control.go.previous" ]; then
+        cp control/control.go control/control.go.previous
+    fi
+    sed -i "s/.RanFunctionId == [0-9]\+/.RanFunctionId == $RAN_FUNC_ID/g" control/control.go
 else
     echo "No modification needed in control/control.go."
 fi
@@ -101,14 +115,13 @@ if ! command -v jq &>/dev/null; then
     sudo apt-get install -y jq
 fi
 
-if [ ! -f "deploy/config_updated.json" ]; then
-    FILE="deploy/config_updated.json"
-    cp deploy/config.json $FILE
-    # Modify the required fields using jq and overwrite the original file
-    jq '.containers[0].image.tag = "latest" |
-        .containers[0].image.registry = "example.com:80" |
-        .containers[0].image.name = "kpimon-go"' "$FILE" >tmp.$$.json && mv tmp.$$.json "$FILE"
-fi
+FILE="deploy/config_updated.json"
+sudo rm -rf $FILE
+cp deploy/config.json $FILE
+# Modify the required fields using jq and overwrite the original file
+jq '.containers[0].image.tag = "latest" |
+    .containers[0].image.registry = "example.com:80" |
+    .containers[0].image.name = "kpimon-go"' "$FILE" >tmp.$$.json && mv tmp.$$.json "$FILE"
 
 if [ ! -f kpimon-go.tar ]; then
     sudo docker build -t example.com:80/kpimon-go:latest .

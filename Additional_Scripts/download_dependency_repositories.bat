@@ -40,7 +40,7 @@ if exist "5G_Core_Network\open5gs" rmdir /s /q "5G_Core_Network\open5gs"
 cd 5G_Core_Network
 git clone https://github.com/open5gs/open5gs.git
 cd open5gs
-git checkout 6a2225bb680cd36cee8ea65ee8d4483c7988982a
+git checkout 1b21eba81ed7740317ec820ce96dda3b587ef4e9
 cd ..\..
 
 cd %~dp0..
@@ -72,7 +72,7 @@ if exist "Next_Generation_Node_B\srsRAN_Project" rmdir /s /q "Next_Generation_No
 cd Next_Generation_Node_B
 git clone https://github.com/srsran/srsRAN_Project.git
 cd srsRAN_Project
-git checkout a041e3162d7ea94a7963437f32df372fae5d21ea
+git checkout cc2869f967adfd8d33f9d1440839bf5f1b282998
 cd ..\..
 
 cd %~dp0..
@@ -209,7 +209,7 @@ if exist "RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\smo-install\onap_oom
 cd RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\smo-install
 git clone https://gerrit.onap.org/r/oom.git
 cd onap_oom
-git checkout dc8cf1efa5e069173351ffcc8d065478fdeac3d5
+git checkout 7fbf8ae171fa31a53918d3362d0b9c5d0940fc5d
 cd ..\..\..\..\..
 
 cd %~dp0..
@@ -225,7 +225,7 @@ if exist "RAN_Intelligent_Controllers\Non-Real-Time-RIC\rappmanager" rmdir /s /q
 cd RAN_Intelligent_Controllers\Non-Real-Time-RIC
 git clone https://gerrit.o-ran-sc.org/r/nonrtric/plt/rappmanager.git
 cd rappmanager
-git checkout ffd5b45b53572ae42fbc22510bcbe3ad8883b86f
+git checkout 688ab2c9ac9b1af06c30ddc28db9bcc5ecaaa096
 cd ..\..\..
 
 cd RAN_Intelligent_Controllers\Non-Real-Time-RIC

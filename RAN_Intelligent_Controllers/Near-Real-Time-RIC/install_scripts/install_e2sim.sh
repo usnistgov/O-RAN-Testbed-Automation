@@ -36,6 +36,11 @@ set -e
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$(dirname "$SCRIPT_DIR")"
 
+# Set the RAN Function ID if not set
+if [ -z "$RAN_FUNC_ID" ]; then
+    export RAN_FUNC_ID="4"
+fi
+
 # Set docker's DNS server then restart docker
 sudo ./install_scripts/update_docker_dns.sh
 

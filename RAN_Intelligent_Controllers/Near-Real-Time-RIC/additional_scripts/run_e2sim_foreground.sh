@@ -41,49 +41,6 @@ cd "$PARENT_DIR"
 mkdir -p logs
 OUTPUT_FILE="logs/e2sim_output.txt"
 
-# Stop the oransim container before starting it again
-if [ $(sudo docker ps -q -f name=^/oransim$ | wc -l) -eq 1 ]; then
-    echo "Restarting oransim container..."
-    sudo docker stop oransim
-fi
+./install_scripts/run_e2sim_and_connect_to_ric.sh
 
-# Check if the container with the name 'oransim' is already running
-if [ $(sudo docker ps -q -f name=^/oransim$ | wc -l) -eq 1 ]; then
-    echo "Container 'oransim' is already running."
-elif [ $(sudo docker ps -aq -f name=^/oransim$ | wc -l) -eq 1 ]; then
-    echo "Container 'oransim' exists but is not running, starting container..."
-    rm -rf $OUTPUT_FILE
-    sudo docker start oransim
-else
-    echo "Starting a new container 'oransim'..."
-    rm -rf $OUTPUT_FILE
-    sudo docker run -d -it --name oransim oransim:0.0.999
-fi
-
-# Get the IP and port of the E2 termination point inside the near Real Time RIC
-SERVICE_NAME="service-ricplt-e2term-sctp"
-LINE=$(kubectl get svc -n ricplt | grep $SERVICE_NAME) || ""
-IP_E2TERM=$(echo $LINE | awk '{print $3}')
-PORT_E2TERM=$(echo $LINE | awk '{print $5}' | sed 's/:.*//')
-echo "IP for $SERVICE_NAME: $IP_E2TERM"
-echo "PORT for $SERVICE_NAME: $PORT_E2TERM"
-
-if [ -z "$IP_E2TERM" ] || [ -z "$PORT_E2TERM" ]; then
-    echo "Could not find service $SERVICE_NAME. IP or PORT is missing. Services:"
-    kubectl get svc -n ricplt
-    echo "Retrying in 8 seconds..."
-    sleep 8
-    continue
-fi
-# Create the log file if it does not exist
-if [ ! -f $OUTPUT_FILE ]; then
-    touch $OUTPUT_FILE
-    sudo chown $USER:$USER $OUTPUT_FILE
-fi
-
-if ! sudo docker exec oransim pgrep -f "kpm_sim" >/dev/null; then
-    echo "Stopping previous instance of kpm_sim..."
-    pkill -f kpm_sim || true
-fi
-
-sudo docker exec -i oransim kpm_sim $IP_E2TERM $PORT_E2TERM | tee -a $OUTPUT_FILE
+tail +1f $OUTPUT_FILE

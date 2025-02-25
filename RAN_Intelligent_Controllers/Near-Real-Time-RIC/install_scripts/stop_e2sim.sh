@@ -38,12 +38,13 @@ cd "$SCRIPT_DIR"
 
 if ! sudo docker exec oransim pgrep -f "kpm_sim" >/dev/null; then
     echo "Stopping previous instance of kpm_sim..."
-    pkill -f kpm_sim || true
+    sudo docker exec oransim pkill -f kpm_sim || true
 fi
 
 if [ $(sudo docker ps -q -f name=^/oransim$ | wc -l) -eq 1 ]; then
     echo "Stopping oransim container..."
     sudo docker stop oransim
+    sudo docker rm oransim
 fi
 
 echo "E2 simulator stopped."

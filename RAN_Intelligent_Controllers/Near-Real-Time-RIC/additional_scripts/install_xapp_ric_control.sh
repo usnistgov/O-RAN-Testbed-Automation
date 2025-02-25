@@ -43,7 +43,6 @@ cd "$PARENT_DIR"
 # Run a sudo command every minute to ensure script execution without user interaction
 ./install_scripts/start_sudo_refresh.sh
 
-./install_scripts/wait_for_ricplt_pods.sh
 if [ "$CHART_REPO_URL" != "http://0.0.0.0:8090" ]; then
     echo "Registering the Chart Museum URL..."
     ./install_scripts/register_chart_museum_url.sh
@@ -69,14 +68,13 @@ if ! command -v jq &>/dev/null; then
     sudo apt-get install -y jq
 fi
 
-if [ ! -f "xapp-descriptor/config_updated.json" ]; then
-    FILE="xapp-descriptor/config_updated.json"
-    cp xapp-descriptor/config.json $FILE
-    # Modify the required fields using jq and overwrite the original file
-    jq '.containers[0].image.tag = "latest" |
-        .containers[0].image.registry = "example.com:80" |
-        .containers[0].image.name = "rc"' "$FILE" >tmp.$$.json && mv tmp.$$.json "$FILE"
-fi
+FILE="xapp-descriptor/config_updated.json"
+sudo rm -rf $FILE
+cp xapp-descriptor/config.json $FILE
+# Modify the required fields using jq and overwrite the original file
+jq '.containers[0].image.tag = "latest" |
+    .containers[0].image.registry = "example.com:80" |
+    .containers[0].image.name = "rc"' "$FILE" >tmp.$$.json && mv tmp.$$.json "$FILE"
 
 if [ ! -f rc.tar]; then
     sudo docker build -t example.com:80/rc:latest .

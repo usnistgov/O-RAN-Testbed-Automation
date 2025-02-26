@@ -73,13 +73,13 @@ echo
 echo "Installing all additional xApps..."
 cd RAN_Intelligent_Controllers/Near-Real-Time-RIC
 ./additional_scripts/install_all_additional_xapps.sh
+
+# Run a sudo command every minute to ensure script execution without user interaction
+./install_scripts/start_sudo_refresh.sh
 cd ../..
 
 # Ensure that the components are stopped before running the tests
 ./stop.sh
-
-# Run a sudo command every minute to ensure script execution without user interaction
-./install_scripts/start_sudo_refresh.sh
 
 echo
 echo "Running tests for 5G_Core_Network..."

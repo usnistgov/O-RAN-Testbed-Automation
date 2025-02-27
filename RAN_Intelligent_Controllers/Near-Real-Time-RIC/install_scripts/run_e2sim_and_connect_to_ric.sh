@@ -38,7 +38,7 @@ cd "$(dirname "$SCRIPT_DIR")"
 
 # Set the RAN Function ID if not set
 if [ -z "$RAN_FUNC_ID" ]; then
-    export RAN_FUNC_ID="4"
+    export RAN_FUNC_ID="2"
 fi
 
 # Path to the output file
@@ -46,9 +46,7 @@ mkdir -p logs
 OUTPUT_FILE="logs/e2sim_output.txt"
 
 # Stop the oransim container before starting it again
-if [ $(sudo docker ps -q -f name=^/oransim$ | wc -l) -eq 1 ]; then
-    ./install_scripts/stop_e2sim.sh
-fi
+./install_scripts/stop_e2sim.sh
 
 echo "Starting a new container 'oransim'..."
 rm -rf $OUTPUT_FILE

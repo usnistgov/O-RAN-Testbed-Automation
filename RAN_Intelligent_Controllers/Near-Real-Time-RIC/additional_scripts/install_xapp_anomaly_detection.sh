@@ -60,6 +60,40 @@ fi
 
 cd ad
 
+# Get the IP of the InfluxDB service
+SERVICE_INFO=$(kubectl get service -n ricplt | grep r4-influxdb-influxdb)
+if [ -z "$SERVICE_INFO" ]; then
+    echo "No service found or kubectl command failed."
+    exit 1
+else
+    IP_INFLUXDB=$(echo "$SERVICE_INFO" | awk '{print $3}')
+fi
+
+# Replace "ricplt-influxdb.ricplt" with the InfluxDB IP in src/ad_config.ini
+if grep -q "ricplt-influxdb.ricplt" src/ad_config.ini; then
+    echo "Patching src/ad_config.ini to replace 'ricplt-influxdb.ricplt' with '$IP_INFLUXDB'..."
+    if [ ! -f "src/ad_config_previous.ini" ]; then
+        cp src/ad_config.ini src/ad_config_previous.ini
+    fi
+    sed -i "s/ricplt-influxdb.ricplt/$IP_INFLUXDB/g" src/ad_config.ini
+else
+    echo "No modification needed in src/ad_config.ini."
+fi
+# Fix the username
+if grep -q "user *= *.*" src/ad_config.ini; then
+    echo "Patching src/ad_config.ini to change 'user = root'..."
+    sed -i "s/user *= *.*$/user = root/g" src/ad_config.ini
+else
+    echo "No modification needed in src/ad_config.ini for 'user = root'."
+fi
+# Fix the password
+if grep -q "password *= *.*" src/ad_config.ini; then
+    echo "Patching src/ad_config.ini to change 'password = root'..."
+    sed -i "s/password *= *.*$/password = root/g" src/ad_config.ini
+else
+    echo "No modification needed in src/ad_config.ini for 'password = root'."
+fi
+
 echo "Creating and modifying the configuration file xapp-descriptor/config_updated.json and xapp-descriptor/schema.json..."
 # Check if jq is installed; if not, install it
 if ! command -v jq &>/dev/null; then

@@ -33,6 +33,9 @@ echo "# Script: $(realpath $0)..."
 # Exit immediately if a command fails
 set -e
 
+# Upon exit, gracefully stop the E2 simulator
+trap './install_scripts/stop_e2sim.sh; exit' EXIT SIGINT SIGTERM
+
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$PARENT_DIR"

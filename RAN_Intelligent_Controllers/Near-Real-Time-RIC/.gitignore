@@ -8,4 +8,5 @@
 /logs/
 /ric-dep/
 /xApps/
+influxdb_auth_token.json
 install_time.txt

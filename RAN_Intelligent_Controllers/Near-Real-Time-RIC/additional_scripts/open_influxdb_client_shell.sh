@@ -34,15 +34,16 @@ echo -e "Below are some example commands to interact with the InfluxDB database:
 echo -e "  List all buckets:"
 echo -e "    influx bucket list"
 echo -e "  List last 10 data points from a measurement:"
-echo -e "    influx query 'from(bucket: \"your-bucket\") |> range(start: -1h) |> limit(n:10)'"
+echo -e "    influx query 'from(bucket: \"kpimon\") |> range(start: -1h) |> limit(n:10)'"
 echo -e "  List measurements in a bucket:"
-echo -e "    influx query 'import \"influxdata/influxdb/schema\"; schema.measurements(bucket: \"your-bucket\")'"
+echo -e "    influx query 'import \"influxdata/influxdb/schema\"; schema.measurements(bucket: \"kpimon\")'"
 echo -e "  List tag keys for a bucket:"
-echo -e "    influx query 'import \"influxdata/influxdb/schema\"; schema.tagKeys(bucket: \"your-bucket\")'"
+echo -e "    influx query 'import \"influxdata/influxdb/schema\"; schema.tagKeys(bucket: \"kpimon\")'"
 echo -e "  List field keys for a bucket:"
-echo -e "    influx query 'import \"influxdata/influxdb/schema\"; schema.fieldKeys(bucket: \"your-bucket\")'"
+echo -e "    influx query 'import \"influxdata/influxdb/schema\"; schema.fieldKeys(bucket: \"kpimon\")'"
 echo -e "  List tag values for a specific tag key:"
-echo -e "    influx query 'import \"influxdata/influxdb/schema\"; schema.tagValues(bucket: \"your-bucket\", tag: \"your-tag\")'"
+echo -e "    influx query 'import \"influxdata/influxdb/schema\"; schema.tagValues(bucket: \"kpimon\", tag: \"your-tag\")'"
 echo -e "\nType 'exit' to leave the InfluxDB CLI and return to your shell."
 
 kubectl exec -n ricplt -it r4-influxdb-influxdb2-0 -- /bin/sh
+

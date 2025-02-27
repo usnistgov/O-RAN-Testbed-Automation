@@ -41,10 +41,7 @@ if ! sudo docker exec oransim pgrep -f "kpm_sim" >/dev/null; then
     sudo docker exec oransim pkill -f kpm_sim || true
 fi
 
-if [ $(sudo docker ps -q -f name=^/oransim$ | wc -l) -eq 1 ]; then
-    echo "Stopping oransim container..."
-    sudo docker stop oransim
-    sudo docker rm oransim
-fi
+sudo docker stop oransim || true
+sudo docker rm oransim || true
 
 echo "E2 simulator stopped."

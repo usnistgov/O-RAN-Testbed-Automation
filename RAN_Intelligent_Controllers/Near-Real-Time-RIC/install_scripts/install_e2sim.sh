@@ -38,7 +38,7 @@ cd "$(dirname "$SCRIPT_DIR")"
 
 # Set the RAN Function ID if not set
 if [ -z "$RAN_FUNC_ID" ]; then
-    export RAN_FUNC_ID="4"
+    export RAN_FUNC_ID="2"
 fi
 
 # Set docker's DNS server then restart docker

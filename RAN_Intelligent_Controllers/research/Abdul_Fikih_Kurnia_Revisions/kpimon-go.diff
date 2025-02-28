@@ -1,0 +1,145 @@
+diff --git a/control/control.go b/control/control.go
+index 92b2098..012e155 100644
+--- a/control/control.go
++++ b/control/control.go
+@@ -36,6 +36,15 @@ type Control struct {
+ 	client influxdb2.Client     //client for influxdb
+ }
+ 
++type DBdetails struct {
++    bucket string
++    org    string
++    token  string
++    url    string
++}
++
++var myDB DBdetails
++
+ var (
+ 	timeToWait           = "w10ms"
+ 	subsequentActionType = "continue"
+@@ -68,24 +77,57 @@ func (c Control) Consume(msg *xapp.RMRParams) error {
+ }
+ 
+ func NewControl() Control {
+-	xapp.Logger.Info("In new control")
+-	create_db()
+-	xapp.Logger.Info("returning control")
+-	return Control{
+-		make(chan *xapp.RMRParams),
+-		influxdb2.NewClient("http://ricplt-influxdb.ricplt:8086", "client"),
+-	}
++    xapp.Logger.Info("In new control\n")
++    create_db()
++    xapp.Logger.Info("returning control\n")
++    return Control{
++        make(chan *xapp.RMRParams),
++
++        //influxdb2.NewClient("http://ricplt-influxdb.ricplt:8086", "client"),
++        influxdb2.NewClient(myDB.url, myDB.token),
++
++    }
+ }
++
++
++// func NewControl() Control {
++// 	xapp.Logger.Info("In new control")
++// 	create_db()
++// 	xapp.Logger.Info("returning control")
++// 	return Control{
++// 		make(chan *xapp.RMRParams),
++// 		influxdb2.NewClient("http://ricplt-influxdb.ricplt:8086", "client"),
++// 	}
++// }
++
+ func create_db() {
+-	//Create a database named kpimon in influxDB
+-	xapp.Logger.Info("In create_db")
+-	_, err := http.Post("http://ricplt-influxdb.ricplt:8086/query?q=create%20database%20kpimon", "", nil)
+-	if err != nil {
+-		xapp.Logger.Error("Create database failed!")
+-	}
+-	xapp.Logger.Info("exiting create_db")
++    //Create a database named kpimon in influxDB
++    xapp.Logger.Info("In create_db\n")
++
++    //_, err := http.Post("http://ricplt-influxdb.ricplt:8086/query?q=create%20database%20kpimon", "", nil)
++    //if err != nil {
++    //    xapp.Logger.Error("Create database failed!")
++    //}
++
++    myDB.bucket = "kpimon" //from your influxdb UI
++    myDB.org = "influxdata"
++    myDB.token = "5LTgnfITa11w24CELs0wtwUPzT3VVdJX" // from your influxdb UI
++    myDB.url = "http://10.106.60.11:80"
++
++
++    xapp.Logger.Info("exiting create_db\n")
+ }
+ 
++// func create_db() {
++// 	//Create a database named kpimon in influxDB
++// 	xapp.Logger.Info("In create_db")
++// 	_, err := http.Post("http://ricplt-influxdb.ricplt:8086/query?q=create%20database%20kpimon", "", nil)
++// 	if err != nil {
++// 		xapp.Logger.Error("Create database failed!")
++// 	}
++// 	xapp.Logger.Info("exiting create_db")
++// }
++
+ func (c Control) getEnbList() ([]*xapp.RNIBNbIdentity, error) {
+ 	enbs, err := xapp.Rnib.GetListEnbIds()
+ 	if err != nil {
+@@ -542,6 +584,7 @@ func Test() (err error) {
+ 	}
+ 	defer C.e2sm_free_ric_indication_message(indicationmessage)
+ 	IndMsgType := int32(indicationmessage.indicationMessage_formats.present)
++	fmt.Printf("IndMsgType = %d\n", IndMsgType)
+ 	if IndMsgType == 1 { //parsing cell metrics
+ 		fmt.Printf(" parsing for cell metrics\n")
+ 		indMsgFormat1_C := *(**C.E2SM_KPM_IndicationMessage_Format1_t)(unsafe.Pointer(&indicationmessage.indicationMessage_formats.choice[0]))
+@@ -737,8 +780,8 @@ func (c *Control) handleIndication(params *xapp.RMRParams) (err error) {
+ 	           return
+ 	   }
+ 	*/
+-	//log.Printf("-----------RIC Indication Message-----------")
+-	//log.Printf("indicationMsg.IndMessage= %x",indicationMsg.IndMessage)
++	log.Printf("-----------RIC Indication Message-----------")
++	log.Printf("indicationMsg.IndMessage= %x",indicationMsg.IndMessage)
+ 	cptr2 := unsafe.Pointer(&indicationMsg.IndMessage[0])
+ 	indicationmessage := C.e2sm_decode_ric_indication_message(cptr2, C.size_t(len(indicationMsg.IndMessage)))
+ 	if indicationmessage == nil {
+@@ -945,7 +988,7 @@ func (c *Control) handleIndication(params *xapp.RMRParams) (err error) {
+ 	}
+ */
+ func (c *Control) writeUeMetrics_db(ueMetrics *map[string]interface{}) {
+-	writeAPI := c.client.WriteAPIBlocking("my-org", "kpimon")
++	writeAPI := c.client.WriteAPIBlocking("influxdata", "kpimon")
+ 	/*
+ 		ueMetricsJSON, err := json.Marshal(ueMetrics)
+ 		if err != nil {
+@@ -966,7 +1009,7 @@ func (c *Control) writeUeMetrics_db(ueMetrics *map[string]interface{}) {
+ }
+ 
+ func (c *Control) writeCellMetrics_db(cellMetrics *map[string]interface{}) {
+-	writeAPI := c.client.WriteAPIBlocking("my-org", "kpimon")
++	writeAPI := c.client.WriteAPIBlocking("influxdata", "kpimon")
+ 	/*
+ 		cellMetricsJSON, er := json.Marshal(cellMetrics)
+ 		if er != nil {
+diff --git a/deploy/config.json b/deploy/config.json
+index 6563e7c..fe02662 100644
+--- a/deploy/config.json
++++ b/deploy/config.json
+@@ -5,9 +5,9 @@
+     {
+       "name": "kpimon-go",
+       "image": {
+-        "registry": "nexus3.o-ran-sc.org:10004",
++        "registry": "127.0.0.1:5000",
+         "name": "o-ran-sc/ric-app-kpimon-go",
+-        "tag": "1.0.1"
++        "tag": "latest"
+       }
+     }
+   ],

@@ -1,0 +1,447 @@
+[1mdiff --git a/INFO.yaml b/INFO.yaml[m
+[1mold mode 100644[m
+[1mnew mode 100755[m
+[1mdiff --git a/e2sim/e2sm_examples/kpm_e2sm/reports.json b/e2sim/e2sm_examples/kpm_e2sm/reports.json[m
+[1mindex 26f3f6b..78b3f7b 100644[m
+[1m--- a/e2sim/e2sm_examples/kpm_e2sm/reports.json[m
+[1m+++ b/e2sim/e2sm_examples/kpm_e2sm/reports.json[m
+[36m@@ -11,3 +11,15 @@[m
+ {"cellMeasReport":{"du-id":1004,"measTimeStampRf":"2020-11-05T15:39:58.859766","cellMeasReportList":[{"nrCellIdentity":4,"throughput":0.3,"pdcpByteMeasReport":{"measPeriodPdcpBytes":10,"pdcpBytesDl":307.2,"pdcpBytesUl":307.2},"prbMeasReport":{"measPeriodPrb":10,"availPrbDl":250,"availPrbUl":250}}]}}[m
+ {"cellMeasReport":{"du-id":1003,"measTimeStampRf":"2020-11-05T15:39:58.859766","cellMeasReportList":[{"nrCellIdentity":3,"throughput":0.3,"pdcpByteMeasReport":{"measPeriodPdcpBytes":10,"pdcpBytesDl":307.2,"pdcpBytesUl":307.2},"prbMeasReport":{"measPeriodPrb":10,"availPrbDl":250,"availPrbUl":250}}]}}[m
+ {"cellMeasReport":{"du-id":1008,"measTimeStampRf":"2020-11-05T15:39:58.859766","cellMeasReportList":[{"nrCellIdentity":8,"throughput":0.3,"pdcpByteMeasReport":{"measPeriodPdcpBytes":10,"pdcpBytesDl":307.2,"pdcpBytesUl":307.2},"prbMeasReport":{"measPeriodPrb":10,"availPrbDl":250,"availPrbUl":250}}]}}[m
+[32m+[m[32m{"ueMeasReport":{"du-id":1002,"measTimeStampRf":"2020-11-05T15:39:58.858734","ueMeasReportList":[{"ue-id":"Pedestrian-11","nrCellIdentity":2,"targetTput":0.3,"servingCellRfReport":{"rsrp":74,"rsrq":65,"rssinr":113},"neighbourCellList":[{"nbCellIdentity":8,"nbCellRfReport":{"rsrp":67,"rsrq":65,"rssinr":112}},{"nbCellIdentity":7,"nbCellRfReport":{"rsrp":65,"rsrq":65,"rssinr":107}},{"nbCellIdentity":9,"nbCellRfReport":{"rsrp":64,"rsrq":65,"rssinr":106}},{"nbCellIdentity":1,"nbCellRfReport":{"rsrp":63,"rsrq":65,"rssinr":104}},{"nbCellIdentity":3,"nbCellRfReport":{"rsrp":62,"rsrq":65,"rssinr":101}},{"nbCellIdentity":10,"nbCellRfReport":{"rsrp":61,"rsrq":65,"rssinr":100}},{"nbCellIdentity":6,"nbCellRfReport":{"rsrp":59,"rsrq":65,"rssinr":95}}],"throughput":0.3,"prb_usage":23}]}}[m
+[32m+[m[32m{"ueMeasReport":{"du-id":1005,"measTimeStampRf":"2020-11-05T15:39:58.858734","ueMeasReportList":[{"ue-id":"Pedestrian-14","nrCellIdentity":5,"targetTput":0.3,"servingCellRfReport":{"rsrp":74,"rsrq":65,"rssinr":113},"neighbourCellList":[{"nbCellIdentity":6,"nbCellRfReport":{"rsrp":67,"rsrq":65,"rssinr":112}},{"nbCellIdentity":1,"nbCellRfReport":{"rsrp":64,"rsrq":65,"rssinr":106}},{"nbCellIdentity":4,"nbCellRfReport":{"rsrp":61,"rsrq":65,"rssinr":100}},{"nbCellIdentity":7,"nbCellRfReport":{"rsrp":61,"rsrq":65,"rssinr":99}},{"nbCellIdentity":2,"nbCellRfReport":{"rsrp":58,"rsrq":65,"rssinr":94}},{"nbCellIdentity":3,"nbCellRfReport":{"rsrp":58,"rsrq":65,"rssinr":94}},{"nbCellIdentity":8,"nbCellRfReport":{"rsrp":56,"rsrq":65,"rssinr":90}}],"throughput":0.3,"prb_usage":23}]}}[m
+[32m+[m[32m{"ueMeasReport":{"du-id":1002,"measTimeStampRf":"2020-11-05T15:39:58.858734","ueMeasReportList":[{"ue-id":"Pedestrian-11","nrCellIdentity":2,"targetTput":0.3,"servingCellRfReport":{"rsrp":74,"rsrq":65,"rssinr":113},"neighbourCellList":[{"nbCellIdentity":8,"nbCellRfReport":{"rsrp":67,"rsrq":65,"rssinr":112}},{"nbCellIdentity":7,"nbCellRfReport":{"rsrp":65,"rsrq":65,"rssinr":107}},{"nbCellIdentity":9,"nbCellRfReport":{"rsrp":64,"rsrq":65,"rssinr":106}},{"nbCellIdentity":1,"nbCellRfReport":{"rsrp":63,"rsrq":65,"rssinr":104}},{"nbCellIdentity":3,"nbCellRfReport":{"rsrp":62,"rsrq":65,"rssinr":101}},{"nbCellIdentity":10,"nbCellRfReport":{"rsrp":61,"rsrq":65,"rssinr":100}},{"nbCellIdentity":6,"nbCellRfReport":{"rsrp":59,"rsrq":65,"rssinr":95}}],"throughput":0.3,"prb_usage":23}]}}[m
+[32m+[m[32m{"ueMeasReport":{"du-id":1005,"measTimeStampRf":"2020-11-05T15:39:58.858734","ueMeasReportList":[{"ue-id":"Pedestrian-14","nrCellIdentity":5,"targetTput":0.3,"servingCellRfReport":{"rsrp":74,"rsrq":65,"rssinr":113},"neighbourCellList":[{"nbCellIdentity":6,"nbCellRfReport":{"rsrp":67,"rsrq":65,"rssinr":112}},{"nbCellIdentity":1,"nbCellRfReport":{"rsrp":64,"rsrq":65,"rssinr":106}},{"nbCellIdentity":4,"nbCellRfReport":{"rsrp":61,"rsrq":65,"rssinr":100}},{"nbCellIdentity":7,"nbCellRfReport":{"rsrp":61,"rsrq":65,"rssinr":99}},{"nbCellIdentity":2,"nbCellRfReport":{"rsrp":58,"rsrq":65,"rssinr":94}},{"nbCellIdentity":3,"nbCellRfReport":{"rsrp":58,"rsrq":65,"rssinr":94}},{"nbCellIdentity":8,"nbCellRfReport":{"rsrp":56,"rsrq":65,"rssinr":90}}],"throughput":0.3,"prb_usage":23}]}}[m
+[32m+[m[32m{"ueMeasReport":{"du-id":1002,"measTimeStampRf":"2020-11-05T15:39:58.858734","ueMeasReportList":[{"ue-id":"Pedestrian-11","nrCellIdentity":2,"targetTput":0.3,"servingCellRfReport":{"rsrp":74,"rsrq":65,"rssinr":113},"neighbourCellList":[{"nbCellIdentity":8,"nbCellRfReport":{"rsrp":67,"rsrq":65,"rssinr":112}},{"nbCellIdentity":7,"nbCellRfReport":{"rsrp":65,"rsrq":65,"rssinr":107}},{"nbCellIdentity":9,"nbCellRfReport":{"rsrp":64,"rsrq":65,"rssinr":106}},{"nbCellIdentity":1,"nbCellRfReport":{"rsrp":63,"rsrq":65,"rssinr":104}},{"nbCellIdentity":3,"nbCellRfReport":{"rsrp":62,"rsrq":65,"rssinr":101}},{"nbCellIdentity":10,"nbCellRfReport":{"rsrp":61,"rsrq":65,"rssinr":100}},{"nbCellIdentity":6,"nbCellRfReport":{"rsrp":59,"rsrq":65,"rssinr":95}}],"throughput":0.3,"prb_usage":23}]}}[m
+[32m+[m[32m{"ueMeasReport":{"du-id":1005,"measTimeStampRf":"2020-11-05T15:39:58.858734","ueMeasReportList":[{"ue-id":"Pedestrian-14","nrCellIdentity":5,"targetTput":0.3,"servingCellRfReport":{"rsrp":74,"rsrq":65,"rssinr":113},"neighbourCellList":[{"nbCellIdentity":6,"nbCellRfReport":{"rsrp":67,"rsrq":65,"rssinr":112}},{"nbCellIdentity":1,"nbCellRfReport":{"rsrp":64,"rsrq":65,"rssinr":106}},{"nbCellIdentity":4,"nbCellRfReport":{"rsrp":61,"rsrq":65,"rssinr":100}},{"nbCellIdentity":7,"nbCellRfReport":{"rsrp":61,"rsrq":65,"rssinr":99}},{"nbCellIdentity":2,"nbCellRfReport":{"rsrp":58,"rsrq":65,"rssinr":94}},{"nbCellIdentity":3,"nbCellRfReport":{"rsrp":58,"rsrq":65,"rssinr":94}},{"nbCellIdentity":8,"nbCellRfReport":{"rsrp":56,"rsrq":65,"rssinr":90}}],"throughput":0.3,"prb_usage":23}]}}[m
+[32m+[m[32m{"ueMeasReport":{"du-id":1002,"measTimeStampRf":"2020-11-05T15:39:58.858734","ueMeasReportList":[{"ue-id":"Pedestrian-11","nrCellIdentity":2,"targetTput":0.3,"servingCellRfReport":{"rsrp":74,"rsrq":65,"rssinr":113},"neighbourCellList":[{"nbCellIdentity":8,"nbCellRfReport":{"rsrp":67,"rsrq":65,"rssinr":112}},{"nbCellIdentity":7,"nbCellRfReport":{"rsrp":65,"rsrq":65,"rssinr":107}},{"nbCellIdentity":9,"nbCellRfReport":{"rsrp":64,"rsrq":65,"rssinr":106}},{"nbCellIdentity":1,"nbCellRfReport":{"rsrp":63,"rsrq":65,"rssinr":104}},{"nbCellIdentity":3,"nbCellRfReport":{"rsrp":62,"rsrq":65,"rssinr":101}},{"nbCellIdentity":10,"nbCellRfReport":{"rsrp":61,"rsrq":65,"rssinr":100}},{"nbCellIdentity":6,"nbCellRfReport":{"rsrp":59,"rsrq":65,"rssinr":95}}],"throughput":0.3,"prb_usage":23}]}}[m
+[32m+[m[32m{"ueMeasReport":{"du-id":1005,"measTimeStampRf":"2020-11-05T15:39:58.858734","ueMeasReportList":[{"ue-id":"Pedestrian-14","nrCellIdentity":5,"targetTput":0.3,"servingCellRfReport":{"rsrp":74,"rsrq":65,"rssinr":113},"neighbourCellList":[{"nbCellIdentity":6,"nbCellRfReport":{"rsrp":67,"rsrq":65,"rssinr":112}},{"nbCellIdentity":1,"nbCellRfReport":{"rsrp":64,"rsrq":65,"rssinr":106}},{"nbCellIdentity":4,"nbCellRfReport":{"rsrp":61,"rsrq":65,"rssinr":100}},{"nbCellIdentity":7,"nbCellRfReport":{"rsrp":61,"rsrq":65,"rssinr":99}},{"nbCellIdentity":2,"nbCellRfReport":{"rsrp":58,"rsrq":65,"rssinr":94}},{"nbCellIdentity":3,"nbCellRfReport":{"rsrp":58,"rsrq":65,"rssinr":94}},{"nbCellIdentity":8,"nbCellRfReport":{"rsrp":56,"rsrq":65,"rssinr":90}}],"throughput":0.3,"prb_usage":23}]}}[m
+[32m+[m[32m{"ueMeasReport":{"du-id":1002,"measTimeStampRf":"2020-11-05T15:39:58.858734","ueMeasReportList":[{"ue-id":"Pedestrian-11","nrCellIdentity":2,"targetTput":0.3,"servingCellRfReport":{"rsrp":74,"rsrq":65,"rssinr":113},"neighbourCellList":[{"nbCellIdentity":8,"nbCellRfReport":{"rsrp":67,"rsrq":65,"rssinr":112}},{"nbCellIdentity":7,"nbCellRfReport":{"rsrp":65,"rsrq":65,"rssinr":107}},{"nbCellIdentity":9,"nbCellRfReport":{"rsrp":64,"rsrq":65,"rssinr":106}},{"nbCellIdentity":1,"nbCellRfReport":{"rsrp":63,"rsrq":65,"rssinr":104}},{"nbCellIdentity":3,"nbCellRfReport":{"rsrp":62,"rsrq":65,"rssinr":101}},{"nbCellIdentity":10,"nbCellRfReport":{"rsrp":61,"rsrq":65,"rssinr":100}},{"nbCellIdentity":6,"nbCellRfReport":{"rsrp":59,"rsrq":65,"rssinr":95}}],"throughput":0.3,"prb_usage":23}]}}[m
+[32m+[m[32m{"ueMeasReport":{"du-id":1005,"measTimeStampRf":"2020-11-05T15:39:58.858734","ueMeasReportList":[{"ue-id":"Pedestrian-14","nrCellIdentity":5,"targetTput":0.3,"servingCellRfReport":{"rsrp":74,"rsrq":65,"rssinr":113},"neighbourCellList":[{"nbCellIdentity":6,"nbCellRfReport":{"rsrp":67,"rsrq":65,"rssinr":112}},{"nbCellIdentity":1,"nbCellRfReport":{"rsrp":64,"rsrq":65,"rssinr":106}},{"nbCellIdentity":4,"nbCellRfReport":{"rsrp":61,"rsrq":65,"rssinr":100}},{"nbCellIdentity":7,"nbCellRfReport":{"rsrp":61,"rsrq":65,"rssinr":99}},{"nbCellIdentity":2,"nbCellRfReport":{"rsrp":58,"rsrq":65,"rssinr":94}},{"nbCellIdentity":3,"nbCellRfReport":{"rsrp":58,"rsrq":65,"rssinr":94}},{"nbCellIdentity":8,"nbCellRfReport":{"rsrp":56,"rsrq":65,"rssinr":90}}],"throughput":0.3,"prb_usage":23}]}}[m
+[32m+[m[32m{"ueMeasReport":{"du-id":1002,"measTimeStampRf":"2020-11-05T15:39:58.858734","ueMeasReportList":[{"ue-id":"Pedestrian-11","nrCellIdentity":2,"targetTput":0.3,"servingCellRfReport":{"rsrp":74,"rsrq":65,"rssinr":113},"neighbourCellList":[{"nbCellIdentity":8,"nbCellRfReport":{"rsrp":67,"rsrq":65,"rssinr":112}},{"nbCellIdentity":7,"nbCellRfReport":{"rsrp":65,"rsrq":65,"rssinr":107}},{"nbCellIdentity":9,"nbCellRfReport":{"rsrp":64,"rsrq":65,"rssinr":106}},{"nbCellIdentity":1,"nbCellRfReport":{"rsrp":63,"rsrq":65,"rssinr":104}},{"nbCellIdentity":3,"nbCellRfReport":{"rsrp":62,"rsrq":65,"rssinr":101}},{"nbCellIdentity":10,"nbCellRfReport":{"rsrp":61,"rsrq":65,"rssinr":100}},{"nbCellIdentity":6,"nbCellRfReport":{"rsrp":59,"rsrq":65,"rssinr":95}}],"throughput":0.3,"prb_usage":23}]}}[m
+[32m+[m[32m{"ueMeasReport":{"du-id":1005,"measTimeStampRf":"2020-11-05T15:39:58.858734","ueMeasReportList":[{"ue-id":"Pedestrian-14","nrCellIdentity":5,"targetTput":0.3,"servingCellRfReport":{"rsrp":74,"rsrq":65,"rssinr":113},"neighbourCellList":[{"nbCellIdentity":6,"nbCellRfReport":{"rsrp":67,"rsrq":65,"rssinr":112}},{"nbCellIdentity":1,"nbCellRfReport":{"rsrp":64,"rsrq":65,"rssinr":106}},{"nbCellIdentity":4,"nbCellRfReport":{"rsrp":61,"rsrq":65,"rssinr":100}},{"nbCellIdentity":7,"nbCellRfReport":{"rsrp":61,"rsrq":65,"rssinr":99}},{"nbCellIdentity":2,"nbCellRfReport":{"rsrp":58,"rsrq":65,"rssinr":94}},{"nbCellIdentity":3,"nbCellRfReport":{"rsrp":58,"rsrq":65,"rssinr":94}},{"nbCellIdentity":8,"nbCellRfReport":{"rsrp":56,"rsrq":65,"rssinr":90}}],"throughput":0.3,"prb_usage":23}]}}[m
+[1mdiff --git a/e2sim/e2sm_examples/kpm_e2sm/src/kpm/encode_kpm.cpp b/e2sim/e2sm_examples/kpm_e2sm/src/kpm/encode_kpm.cpp[m
+[1mindex 7ab086c..4c79c95 100755[m
+[1m--- a/e2sim/e2sm_examples/kpm_e2sm/src/kpm/encode_kpm.cpp[m
+[1m+++ b/e2sim/e2sm_examples/kpm_e2sm/src/kpm/encode_kpm.cpp[m
+[36m@@ -238,56 +238,131 @@[m [mvoid kpm_report_indication_header_initialized(E2SM_KPM_IndicationHeader_t* ihead[m
+ void ue_meas_kpm_report_indication_message_initialized([m
+     E2SM_KPM_IndicationMessage_t* indicationmessage, uint8_t* nrcellid_buf, uint8_t* crnti_buf,[m
+     const uint8_t* serving_buf, const uint8_t* neighbor_buf) {[m
+[31m-  [m
+[32m+[m
+[32m+[m[32m  // Allocate memory for MeasurementRecord[m
+   MeasurementRecord_t* measDataItem_record = (MeasurementRecord_t*)calloc(1, sizeof(MeasurementRecord_t));[m
+[31m-  for (size_t i = 0; i < NUMBER_MEASUREMENTS; i++)[m
+[31m-  {[m
+[32m+[m[32m  if (!measDataItem_record) {[m
+[32m+[m[32m    LOG_I("Memory allocation for measDataItem_record failed");[m
+[32m+[m[32m    exit(1);[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  // Populate MeasurementRecord with MeasurementRecordItems[m
+[32m+[m[32m  for (size_t i = 0; i < NUMBER_MEASUREMENTS; i++) {[m
+     MeasurementRecordItem_t* measDataRecordItem = (MeasurementRecordItem_t*)calloc(1, sizeof(MeasurementRecordItem_t));[m
+[32m+[m[32m    if (!measDataRecordItem) {[m
+[32m+[m[32m      LOG_I("Memory allocation for measDataRecordItem failed");[m
+[32m+[m[32m      exit(1);[m
+[32m+[m[32m    }[m
+[32m+[m[41m    [m
+     measDataRecordItem->present = MeasurementRecordItem_PR_integer;[m
+     measDataRecordItem->choice.integer = 1;[m
+ [m
+[31m-    ASN_SEQUENCE_ADD(&measDataItem_record->list, measDataRecordItem);[m
+[32m+[m[32m    if (ASN_SEQUENCE_ADD(&measDataItem_record->list, measDataRecordItem) != 0) {[m
+[32m+[m[32m      LOG_I("ASN_SEQUENCE_ADD failed for MeasurementRecordItem");[m
+[32m+[m[32m      exit(1);[m
+[32m+[m[32m    }[m
+   }[m
+ [m
+[32m+[m[32m  // Allocate memory for MeasurementDataItem and set its fields[m
+   MeasurementDataItem_t* measDataItem = (MeasurementDataItem_t*)calloc(1, sizeof(MeasurementDataItem_t));[m
+[32m+[m[32m  if (!measDataItem) {[m
+[32m+[m[32m    LOG_I("Memory allocation for measDataItem failed");[m
+[32m+[m[32m    exit(1);[m
+[32m+[m[32m  }[m
+   measDataItem->measRecord = *measDataItem_record;[m
+   measDataItem->incompleteFlag = (long*)calloc(1, sizeof(long));[m
+[32m+[m[32m  if (!measDataItem->incompleteFlag) {[m
+[32m+[m[32m    LOG_I("Memory allocation for incompleteFlag failed");[m
+[32m+[m[32m    exit(1);[m
+[32m+[m[32m  }[m
+   *measDataItem->incompleteFlag = 0;[m
+ [m
+[32m+[m[32m  // Allocate memory for MeasurementData and add MeasurementDataItem[m
+   MeasurementData_t* measData = (MeasurementData_t*)calloc(1, sizeof(MeasurementData_t));[m
+[31m-  ASN_SEQUENCE_ADD(&measData->list, measDataItem);[m
+[32m+[m[32m  if (!measData) {[m
+[32m+[m[32m    LOG_I("Memory allocation for measData failed");[m
+[32m+[m[32m    exit(1);[m
+[32m+[m[32m  }[m
+[32m+[m[32m  if (ASN_SEQUENCE_ADD(&measData->list, measDataItem) != 0) {[m
+[32m+[m[32m    LOG_I("ASN_SEQUENCE_ADD failed for MeasurementDataItem");[m
+[32m+[m[32m    exit(1);[m
+[32m+[m[32m  }[m
+ [m
+[32m+[m[32m  // Allocate memory for MeasurementInfoList and populate it[m
+   MeasurementInfoList_t* measList = (MeasurementInfoList_t*)calloc(1, sizeof(MeasurementInfoList_t));[m
+[31m-  for (size_t i = 0; i < NUMBER_MEASUREMENTS; i++)[m
+[31m-  {[m
+[32m+[m[32m  if (!measList) {[m
+[32m+[m[32m    LOG_I("Memory allocation for measList failed");[m
+[32m+[m[32m    exit(1);[m
+[32m+[m[32m  }[m
+[32m+[m[32m  for (size_t i = 0; i < NUMBER_MEASUREMENTS; i++) {[m
+     MeasurementLabel_t* measLabel = (MeasurementLabel_t*)calloc(1, sizeof(MeasurementLabel_t));[m
+[32m+[m[32m    if (!measLabel) {[m
+[32m+[m[32m      LOG_I("Memory allocation for measLabel failed");[m
+[32m+[m[32m      exit(1);[m
+[32m+[m[32m    }[m
+     measLabel->noLabel = (long *)calloc(1, sizeof(long));[m
+[32m+[m[32m    if (!measLabel->noLabel) {[m
+[32m+[m[32m      LOG_I("Memory allocation for noLabel failed");[m
+[32m+[m[32m      exit(1);[m
+[32m+[m[32m    }[m
+     *measLabel->noLabel = 0;[m
+ [m
+     LabelInfoItem_t* labelItem = (LabelInfoItem_t*)calloc(1, sizeof(LabelInfoItem_t));[m
+[32m+[m[32m    if (!labelItem) {[m
+[32m+[m[32m      LOG_I("Memory allocation for labelItem failed");[m
+[32m+[m[32m      exit(1);[m
+[32m+[m[32m    }[m
+     labelItem->measLabel = *measLabel;[m
+ [m
+     LabelInfoList_t* labelList = (LabelInfoList_t*)calloc(1, sizeof(LabelInfoList_t));[m
+[31m-    ASN_SEQUENCE_ADD(&labelList->list, labelItem);[m
+[32m+[m[32m    if (!labelList) {[m
+[32m+[m[32m      LOG_I("Memory allocation for labelList failed");[m
+[32m+[m[32m      exit(1);[m
+[32m+[m[32m    }[m
+[32m+[m[32m    if (ASN_SEQUENCE_ADD(&labelList->list, labelItem) != 0) {[m
+[32m+[m[32m      LOG_I("ASN_SEQUENCE_ADD failed for LabelInfoItem");[m
+[32m+[m[32m      exit(1);[m
+[32m+[m[32m    }[m
+ [m
+     MeasurementType_t measType;[m
+     measType.present = MeasurementType_PR_measID;[m
+     uint8_t* metrics = (uint8_t *)performance_measurements[i];[m
+[31m-    measType.choice.measName.buf = (uint8_t*)calloc(1, strlen((char*)metrics));[m
+[32m+[m[32m    measType.choice.measName.buf = (uint8_t*)calloc(strlen((char*)metrics) + 1, sizeof(uint8_t));[m
+[32m+[m[32m    if (!measType.choice.measName.buf) {[m
+[32m+[m[32m      LOG_I("Memory allocation for measName.buf failed");[m
+[32m+[m[32m      exit(1);[m
+[32m+[m[32m    }[m
+     memcpy(measType.choice.measName.buf, metrics, strlen((char*)metrics));[m
+     measType.choice.measName.size = strlen((char*)metrics);[m
+ [m
+     MeasurementInfoItem_t* measItem = (MeasurementInfoItem_t*)calloc(1, sizeof(MeasurementInfoItem_t));[m
+[32m+[m[32m    if (!measItem) {[m
+[32m+[m[32m      LOG_I("Memory allocation for measItem failed");[m
+[32m+[m[32m      exit(1);[m
+[32m+[m[32m    }[m
+     measItem->measType = measType;[m
+     measItem->labelInfoList = *labelList;[m
+[32m+[m
+     if (labelList) free(labelList);[m
+[31m-    [m
+[31m-    ASN_SEQUENCE_ADD(&measList->list, measItem);[m
+[32m+[m
+[32m+[m[32m    if (ASN_SEQUENCE_ADD(&measList->list, measItem) != 0) {[m
+[32m+[m[32m      LOG_I("ASN_SEQUENCE_ADD failed for MeasurementInfoItem");[m
+[32m+[m[32m      exit(1);[m
+[32m+[m[32m    }[m
+   }[m
+[31m-  [m
+[32m+[m
+[32m+[m[32m  // Allocate memory for E2SM_KPM_IndicationMessage_Format1 and set its fields[m
+   E2SM_KPM_IndicationMessage_Format1_t* format = (E2SM_KPM_IndicationMessage_Format1_t*)calloc([m
+       1, sizeof(E2SM_KPM_IndicationMessage_Format1_t));[m
+[32m+[m[32m  if (!format) {[m
+[32m+[m[32m    LOG_I("Memory allocation for E2SM_KPM_IndicationMessage_Format1 failed");[m
+[32m+[m[32m    exit(1);[m
+[32m+[m[32m  }[m
+   format->granulPeriod = (GranularityPeriod_t*)calloc(1, sizeof(GranularityPeriod_t));[m
+[32m+[m[32m  if (!format->granulPeriod) {[m
+[32m+[m[32m    LOG_I("Memory allocation for granulPeriod failed");[m
+[32m+[m[32m    exit(1);[m
+[32m+[m[32m  }[m
+   *format->granulPeriod = 1;[m
+   format->measData = *measData;[m
+   format->measInfoList = measList;[m
+[36m@@ -298,22 +373,116 @@[m [mvoid ue_meas_kpm_report_indication_message_initialized([m
+   indicationmessage->indicationMessage_formats.present = pres;[m
+   indicationmessage->indicationMessage_formats.choice.indicationMessage_Format1 = format;[m
+ [m
+[31m-  char error_buf[300] = {[m
+[31m-      0,[m
+[31m-  };[m
+[32m+[m[32m  char error_buf[300] = {0};[m
+   size_t errlen = 0;[m
+ [m
+[31m-  int ret = asn_check_constraints(&asn_DEF_E2SM_KPM_IndicationMessage, indicationmessage, error_buf,[m
+[31m-                                  &errlen);[m
+[32m+[m[32m  // Perform constraint check[m
+[32m+[m[32m  // LOG_I("print asn def %s", asn_DEF_E2SM_KPM_IndicationMessage.name);[m
+[32m+[m[32m  // LOG_I("print indication message %s", indicationmessage->indicationMessage_formats.choice.indicationMessage_Format1->measData.list.array[0]->measRecord.list.array[0]->choice.integer);[m
+[32m+[m[32m  // LOG_I("print error buf %s", error_buf);[m[41m [m
+ [m
+[31m-  if (ret) {[m
+[31m-    LOG_I("Constraint validation of indication message failed: %s", error_buf);[m
+[31m-    exit(1);[m
+[31m-  }[m
+[32m+[m[32m  // int ret = asn_check_constraints(&asn_DEF_E2SM_KPM_IndicationMessage, indicationmessage, error_buf, &errlen);[m
+[32m+[m[32m  // if (ret) {[m
+[32m+[m[32m  //   LOG_I("Constraint validation of indication message failed: %s", error_buf);[m
+[32m+[m[32m  //   exit(1);[m
+[32m+[m[32m  // } else {[m
+[32m+[m[32m  //   LOG_I("Constraint validation of indication message succeeded");[m
+[32m+[m[32m  // }[m
+ [m
+[32m+[m[32m  // Optional: Print the encoded message for debugging purposes[m
+   // xer_fprint(stderr, &asn_DEF_E2SM_KPM_IndicationMessage, indicationmessage);[m
+ }[m
+ [m
+[32m+[m[32m// void ue_meas_kpm_report_indication_message_initialized([m
+[32m+[m[32m//     E2SM_KPM_IndicationMessage_t* indicationmessage, uint8_t* nrcellid_buf, uint8_t* crnti_buf,[m
+[32m+[m[32m//     const uint8_t* serving_buf, const uint8_t* neighbor_buf) {[m
+[32m+[m[41m  [m
+[32m+[m[32m//   MeasurementRecord_t* measDataItem_record = (MeasurementRecord_t*)calloc(1, sizeof(MeasurementRecord_t));[m
+[32m+[m
+[32m+[m[32m//   if (!measDataItem_record) {[m
+[32m+[m[32m//     LOG_I("Memory allocation for measDataItem_record failed");[m
+[32m+[m[32m//     exit(1);[m
+[32m+[m[32m//   }[m
+[32m+[m
+[32m+[m[32m//   for (size_t i = 0; i < NUMBER_MEASUREMENTS; i++)[m
+[32m+[m[32m//   {[m
+[32m+[m[32m//     MeasurementRecordItem_t* measDataRecordItem = (MeasurementRecordItem_t*)calloc(1, sizeof(MeasurementRecordItem_t));[m
+[32m+[m[32m//     if (!measDataRecordItem) {[m
+[32m+[m[32m//         LOG_I("Memory allocation for measDataRecordItem failed");[m
+[32m+[m[32m//         exit(1);[m
+[32m+[m[32m//     }[m
+[32m+[m
+[32m+[m[32m//     measDataRecordItem->present = MeasurementRecordItem_PR_integer;[m
+[32m+[m[32m//     measDataRecordItem->choice.integer = 1;[m
+[32m+[m
+[32m+[m[32m//     ASN_SEQUENCE_ADD(&measDataItem_record->list, measDataRecordItem);[m
+[32m+[m[32m//   }[m
+[32m+[m
+[32m+[m[32m//   MeasurementDataItem_t* measDataItem = (MeasurementDataItem_t*)calloc(1, sizeof(MeasurementDataItem_t));[m
+[32m+[m[32m//   measDataItem->measRecord = *measDataItem_record;[m
+[32m+[m[32m//   measDataItem->incompleteFlag = (long*)calloc(1, sizeof(long));[m
+[32m+[m[32m//   *measDataItem->incompleteFlag = 0;[m
+[32m+[m
+[32m+[m[32m//   MeasurementData_t* measData = (MeasurementData_t*)calloc(1, sizeof(MeasurementData_t));[m
+[32m+[m[32m//   ASN_SEQUENCE_ADD(&measData->list, measDataItem);[m
+[32m+[m
+[32m+[m[32m//   MeasurementInfoList_t* measList = (MeasurementInfoList_t*)calloc(1, sizeof(MeasurementInfoList_t));[m
+[32m+[m[32m//   for (size_t i = 0; i < NUMBER_MEASUREMENTS; i++)[m
+[32m+[m[32m//   {[m
+[32m+[m[32m//     MeasurementLabel_t* measLabel = (MeasurementLabel_t*)calloc(1, sizeof(MeasurementLabel_t));[m
+[32m+[m[32m//     measLabel->noLabel = (long *)calloc(1, sizeof(long));[m
+[32m+[m[32m//     *measLabel->noLabel = 0;[m
+[32m+[m
+[32m+[m[32m//     LabelInfoItem_t* labelItem = (LabelInfoItem_t*)calloc(1, sizeof(LabelInfoItem_t));[m
+[32m+[m[32m//     labelItem->measLabel = *measLabel;[m
+[32m+[m
+[32m+[m[32m//     LabelInfoList_t* labelList = (LabelInfoList_t*)calloc(1, sizeof(LabelInfoList_t));[m
+[32m+[m[32m//     ASN_SEQUENCE_ADD(&labelList->list, labelItem);[m
+[32m+[m
+[32m+[m[32m//     MeasurementType_t measType;[m
+[32m+[m[32m//     measType.present = MeasurementType_PR_measID;[m
+[32m+[m[32m//     uint8_t* metrics = (uint8_t *)performance_measurements[i];[m
+[32m+[m[32m//     measType.choice.measName.buf = (uint8_t*)calloc(1, strlen((char*)metrics));[m
+[32m+[m[32m//     memcpy(measType.choice.measName.buf, metrics, strlen((char*)metrics));[m
+[32m+[m[32m//     measType.choice.measName.size = strlen((char*)metrics);[m
+[32m+[m
+[32m+[m[32m//     MeasurementInfoItem_t* measItem = (MeasurementInfoItem_t*)calloc(1, sizeof(MeasurementInfoItem_t));[m
+[32m+[m[32m//     measItem->measType = measType;[m
+[32m+[m[32m//     measItem->labelInfoList = *labelList;[m
+[32m+[m[32m//     if (labelList) free(labelList);[m
+[32m+[m[41m    [m
+[32m+[m[32m//     ASN_SEQUENCE_ADD(&measList->list, measItem);[m
+[32m+[m[32m//   }[m
+[32m+[m[41m  [m
+[32m+[m[32m//   E2SM_KPM_IndicationMessage_Format1_t* format = (E2SM_KPM_IndicationMessage_Format1_t*)calloc([m
+[32m+[m[32m//       1, sizeof(E2SM_KPM_IndicationMessage_Format1_t));[m
+[32m+[m[32m//   format->granulPeriod = (GranularityPeriod_t*)calloc(1, sizeof(GranularityPeriod_t));[m
+[32m+[m[32m//   *format->granulPeriod = 1;[m
+[32m+[m[32m//   format->measData = *measData;[m
+[32m+[m[32m//   format->measInfoList = measList;[m
+[32m+[m
+[32m+[m[32m//   E2SM_KPM_IndicationMessage__indicationMessage_formats_PR pres =[m
+[32m+[m[32m//       E2SM_KPM_IndicationMessage__indicationMessage_formats_PR_indicationMessage_Format1;[m
+[32m+[m
+[32m+[m[32m//   indicationmessage->indicationMessage_formats.present = pres;[m
+[32m+[m[32m//   indicationmessage->indicationMessage_formats.choice.indicationMessage_Format1 = format;[m
+[32m+[m
+[32m+[m[32m//   char error_buf[300] = {[m
+[32m+[m[32m//       0,[m
+[32m+[m[32m//   };[m
+[32m+[m[32m//   size_t errlen = 0;[m
+[32m+[m
+[32m+[m[32m//   int ret = asn_check_constraints(&asn_DEF_E2SM_KPM_IndicationMessage, indicationmessage, error_buf,[m
+[32m+[m[32m//                                   &errlen);[m
+[32m+[m
+[32m+[m[32m//   if (ret) {[m
+[32m+[m[32m//     LOG_I("Constraint validation of indication message failed: %s", error_buf);[m
+[32m+[m[32m//     exit(1);[m
+[32m+[m[32m//   }[m
+[32m+[m
+[32m+[m[32m//   // xer_fprint(stderr, &asn_DEF_E2SM_KPM_IndicationMessage, indicationmessage);[m
+[32m+[m[32m// }[m
+[32m+[m
+ void cell_meas_kpm_report_indication_message_style_1_initialized([m
+     E2SM_KPM_IndicationMessage_t* indicationmessage, long fiveqi, long dl_prb_usage,[m
+     long ul_prb_usage, uint8_t* nrcellid_buf, long* dl_prbs, long* ul_prbs) {[m
+[1mdiff --git a/e2sim/e2sm_examples/kpm_e2sm/src/kpm/kpm_callbacks.cpp b/e2sim/e2sm_examples/kpm_e2sm/src/kpm/kpm_callbacks.cpp[m
+[1mindex 2c94856..4d5d782 100755[m
+[1m--- a/e2sim/e2sm_examples/kpm_e2sm/src/kpm/kpm_callbacks.cpp[m
+[1m+++ b/e2sim/e2sm_examples/kpm_e2sm/src/kpm/kpm_callbacks.cpp[m
+[36m@@ -101,7 +101,8 @@[m [mint main(int argc, char* argv[]) {[m
+   memcpy(ranfunc_ostr->buf,e2smbuffer,er.encoded);[m
+ [m
+   const char* func_id_str = std::getenv("RAN_FUNC_ID");[m
+[31m-  ::gFuncId = func_id_str == nullptr ? 0 : std::stoi(func_id_str);[m
+[32m+[m[32m  /*::gFuncId = func_id_str == nullptr ? 0 : std::stoi(func_id_str);*/[m
+[32m+[m[32m  ::gFuncId = 2;[m
+ [m
+   e2sim.register_e2sm(gFuncId, ranfunc_ostr);[m
+   e2sim.register_subscription_callback(gFuncId, &callback_kpm_subscription_request);[m
+[36m@@ -139,7 +140,7 @@[m [mvoid run_report_loop(long requestorId, long instanceId, long ranFunctionId, long[m
+   std::streambuf *input_filebuf = &reports_json;[m
+ [m
+   std::unique_ptr<viavi::RICTesterReceiver> viavi_connector;[m
+[31m-  if (!reports_json.open("/playpen/src/reports.json", std::ios::in)) {[m
+[32m+[m[32m  if (!reports_json.open("/playpen/src/reports_file_full.json", std::ios::in)) {[m
+     std::cerr << "Can't open reports.json, enabling VIAVI connector instead..." << endl;[m
+ 	viavi_connector.reset(new viavi::RICTesterReceiver {3001, nullptr});[m
+ 	input_filebuf = viavi_connector->get_data_filebuf();[m
+[36m@@ -318,12 +319,17 @@[m [mvoid run_report_loop(long requestorId, long instanceId, long ranFunctionId, long[m
+ [m
+ 			uint8_t *cuupname_buf = (uint8_t*)"GNBCUUP5";	  [m
+ 			[m
+[32m+[m			[32mLOG_I("Encoding UE indication message step 1");[m
+ 			[m
+ 			E2SM_KPM_IndicationMessage_t *ind_msg_cucp_ue =[m
+ 				(E2SM_KPM_IndicationMessage_t*)calloc(1,sizeof(E2SM_KPM_IndicationMessage_t));[m
+ 			[m
+[32m+[m			[32mLOG_I("Print Indication Message KPM UE %d", &ind_msg_cucp_ue);[m
+[32m+[m[41m			[m
+ 			ue_meas_kpm_report_indication_message_initialized(ind_msg_cucp_ue, nrcellid_buf, crnti_buf, serving_buf, neighbor_buf);[m
+ 			[m
+[32m+[m			[32mLOG_I("Encoding UE indication message step 2");[m
+[32m+[m
+ 			uint8_t e2sm_message_buf_cucp_ue[8192] = {0, };[m
+ 			size_t e2sm_message_buf_size_cucp_ue = 8192;[m
+ 			[m
+[36m@@ -334,6 +340,8 @@[m [mvoid run_report_loop(long requestorId, long instanceId, long ranFunctionId, long[m
+ 										&asn_DEF_E2SM_KPM_IndicationMessage,[m
+ 										ind_msg_cucp_ue, e2sm_message_buf_cucp_ue, e2sm_message_buf_size_cucp_ue);[m
+ 			[m
+[32m+[m			[32mLOG_I("Encoding UE indication message step 3");[m
+[32m+[m
+ 			if(er_message_cucp_ue.encoded == -1) {[m
+ 				LOG_I("Failed to serialize message data. Detail: %s.\n", asn_DEF_E2SM_KPM_IndicationMessage.name);[m
+ 				exit(1);[m
+[1mdiff --git a/e2sim/src/messagerouting/e2ap_message_handler.cpp b/e2sim/src/messagerouting/e2ap_message_handler.cpp[m
+[1mindex 7b712a7..05a8d78 100755[m
+[1m--- a/e2sim/src/messagerouting/e2ap_message_handler.cpp[m
+[1m+++ b/e2sim/src/messagerouting/e2ap_message_handler.cpp[m
+[36m@@ -46,13 +46,13 @@[m [mvoid e2ap_handle_sctp_data(int& socket_fd, sctp_buffer_t& data, bool xmlenc, E2S[m
+       break;[m
+   }[m
+ [m
+[31m-  int procedureCode = e2ap_asn1c_get_procedureCode(pdu);[m
+[31m-  int index = (int)pdu->present;[m
+[31m-[m
+[31m-  LOG_D("Unpacked E2AP-PDU: index = %d, procedureCode = %d", index, procedureCode);[m
+[31m-[m
+[31m-  switch (procedureCode) {[m
+[31m-    case ProcedureCode_id_E2setup:[m
+[32m+[m[32m  int procedureCode = e2ap_asn1c_get_procedureCode(pdu);[m[41m[m
+[32m+[m[32m  int index = (int)pdu->present;[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m  LOG_D("Unpacked E2AP-PDU: index = %d, procedureCode = %d", index, procedureCode);[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m  switch (procedureCode) {[m[41m[m
+[32m+[m[32m    case ProcedureCode_id_E2setup:[m[41m[m
+       LOG_I("Received a message of E2 setup procedure");[m
+       switch (index) {[m
+         case E2AP_PDU_PR_initiatingMessage:[m
+[36m@@ -94,26 +94,26 @@[m [mvoid e2ap_handle_sctp_data(int& socket_fd, sctp_buffer_t& data, bool xmlenc, E2S[m
+       break;[m
+ [m
+     case ProcedureCode_id_RICsubscription:  // RIC SUBSCRIPTION = 201[m
+[31m-      LOG_I("Received a message of RIC subscription procedure");[m
+[31m-      switch (index) {[m
+[31m-        case E2AP_PDU_PR_initiatingMessage: {  // initiatingMessage[m
+[31m-          long func_id = encoding::get_function_id_from_subscription(pdu);[m
+[31m-          LOG_I("Received RIC subscription request for function with ID %d", func_id);[m
+[31m-[m
+[31m-          try {[m
+[31m-            SubscriptionCallback cb;[m
+[31m-            cb = e2sim->get_subscription_callback(func_id);[m
+[31m-            LOG_I("Calling callback subscription function to handle subscription request to function with ID %d", func_id);[m
+[31m-            cb(pdu);[m
+[31m-          } catch (const std::out_of_range& e) {[m
+[31m-            LOG_E("No RAN Function with this ID exists\n");[m
+[31m-          }[m
+[31m-[m
+[31m-          break;[m
+[31m-        }[m
+[31m-[m
+[31m-        case E2AP_PDU_PR_successfulOutcome:[m
+[31m-          LOG_I("Received RIC-SUBSCRIPTION-RESPONSE");[m
+[32m+[m[32m      LOG_I("Received a message of RIC subscription procedure");[m[41m[m
+[32m+[m[32m      switch (index) {[m[41m[m
+[32m+[m[32m        case E2AP_PDU_PR_initiatingMessage: {  // initiatingMessage[m[41m[m
+[32m+[m[32m          long func_id = encoding::get_function_id_from_subscription(pdu);[m[41m[m
+[32m+[m[32m          LOG_I("Received RIC subscription request for function with ID %d", func_id);[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m          try {[m[41m[m
+[32m+[m[32m            SubscriptionCallback cb;[m[41m[m
+[32m+[m[32m            cb = e2sim->get_subscription_callback(func_id);[m[41m[m
+[32m+[m[32m            LOG_I("Calling callback subscription function to handle subscription request to function with ID %d", func_id);[m[41m[m
+[32m+[m[32m            cb(pdu);[m[41m[m
+[32m+[m[32m          } catch (const std::out_of_range& e) {[m[41m[m
+[32m+[m[32m            LOG_E("No RAN Function with this ID exists\n");[m[41m[m
+[32m+[m[32m          }[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m          break;[m[41m[m
+[32m+[m[32m        }[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m        case E2AP_PDU_PR_successfulOutcome:[m[41m[m
+[32m+[m[32m          LOG_I("Received RIC-SUBSCRIPTION-RESPONSE");[m[41m[m
+           break;[m
+ [m
+         case E2AP_PDU_PR_unsuccessfulOutcome:[m
+[36m@@ -191,6 +191,27 @@[m [mvoid e2ap_handle_sctp_data(int& socket_fd, sctp_buffer_t& data, bool xmlenc, E2S[m
+       }[m
+       break;[m
+ [m
+[32m+[m[32m    case ProcedureCode_id_RICcontrol:[m[41m[m
+[32m+[m[32m      LOG_I("Received a message of RIC control procedure");[m[41m[m
+[32m+[m[32m      switch (index) {[m[41m[m
+[32m+[m[32m        case E2AP_PDU_PR_initiatingMessage:[m[41m[m
+[32m+[m[32m          LOG_I("Received RIC-CONTROL-REQUEST")[m[41m[m
+[32m+[m[32m          break;[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m        case E2AP_PDU_PR_successfulOutcome:[m[41m[m
+[32m+[m[32m          LOG_I("Received RIC-CONTROL-SUCCESS")[m[41m[m
+[32m+[m[32m          break;[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m        case E2AP_PDU_PR_unsuccessfulOutcome:[m[41m[m
+[32m+[m[32m          LOG_I("Received RIC-CONTROL-FAILURE")[m[41m[m
+[32m+[m[32m          break;[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m        default:[m[41m[m
+[32m+[m[32m          LOG_E("Invalid message index=%d in E2AP-PDU %d", index, (int)ProcedureCode_id_RICcontrol);[m[41m[m
+[32m+[m[32m          break;[m[41m[m
+[32m+[m[32m      }[m[41m[m
+[32m+[m[32m      break;[m[41m[m
+[32m+[m[41m[m
+     default:[m
+       LOG_E("No available handler for procedureCode=%d", procedureCode);[m
+       break;[m

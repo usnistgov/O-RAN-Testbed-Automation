@@ -148,6 +148,13 @@ if ! sudo apt-get install -y mongosh; then
     fi
     # Add the MongoDB 5.0 repository
     echo "deb [ arch=$(dpkg --print-architecture) ] https://repo.mongodb.org/apt/ubuntu $UBUNTU_CODENAME/mongodb-org/5.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-5.0.list
+
+    # Update package lists after adding MongoDB repository
+    while sudo fuser /var/lib/dpkg/lock /var/lib/apt/lists/lock /var/cache/apt/archives/lock >/dev/null 2>&1; do
+        echo "Waiting for the apt lock to be released..."
+        sleep 5
+    done
+
     sudo apt-get update
     if ! sudo apt-get install -y mongodb-mongosh; then
         echo "Failed to install mongosh even from MongoDB 5.0 repository. Attempting to fix broken installations..."
@@ -156,6 +163,8 @@ if ! sudo apt-get install -y mongosh; then
         sudo apt-get clean
         echo "Trying to install mongosh again..."
         if ! sudo apt-get install -y mongodb-mongosh; then
+            echo "An error occured. Running dpkg --configure -a to ensure all packages are properly configured..."
+            sudo dpkg --configure -a || true
             echo "Failed to install mongosh after attempting repairs. Exiting script."
             exit 1
         fi

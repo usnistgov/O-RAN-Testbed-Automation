@@ -52,7 +52,7 @@ sudo ./install_scripts/run_chart_museum.sh
 
 if [ ! -f influxdb_auth_token.json ]; then
     echo "Creating an InfluxDB token to influxdb_auth_token.json..."
-    kubectl exec -it r4-influxdb-influxdb2-0 --namespace ricplt -- influx auth create --org influxdata --all-access --json > influxdb_auth_token.json
+    kubectl exec -it r4-influxdb-influxdb2-0 --namespace ricplt -- influx auth create --org influxdata --all-access --json >influxdb_auth_token.json
 fi
 INFLUXDB_TOKEN=$(jq -r '.token' influxdb_auth_token.json)
 

@@ -84,6 +84,11 @@ run_in_background() {
         echo "Configuration file not found: $CONFIG_FILE"
         exit 1
     fi
+
+    # Remove the log file if it exists before starting the application
+    LOG_PATH=$(yq eval '.logger.file.path' "$CONFIG_FILE")
+    rm -f "$LOG_PATH"
+
     echo "Starting $APP_NAME in background..."
     ./open5gs/install/bin/$APP_NAME -c "$CONFIG_FILE" >/dev/null 2>&1 &
     #./open5gs/install/bin/$APP_NAME -c "$CONFIG_FILE" >logs/${1}_stdout.txt 2>&1 &
@@ -127,6 +132,11 @@ run_in_terminal() {
         echo "Configuration file not found: $CONFIG_FILE"
         exit 1
     fi
+
+    # Remove the log file if it exists before starting the application
+    LOG_PATH=$(yq eval '.logger.file.path' "$CONFIG_FILE")
+    rm -f "$LOG_PATH"
+
     echo "Starting $APP_NAME in GNOME Terminal..."
     gnome-terminal -t "$APP_NAME Node" -- /bin/sh -c "./open5gs/install/bin/$APP_NAME -c $CONFIG_FILE"
 }

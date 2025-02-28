@@ -34,16 +34,47 @@ echo "# Script: $(realpath $0)..."
 set -e
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
-cd "$SCRIPT_DIR"
+PARENT_DIR=$(dirname "$SCRIPT_DIR")
+cd "$PARENT_DIR"
 
-if ! sudo docker exec oransim pgrep -f "kpm_sim" >/dev/null; then
-    echo "Stopping previous instance of kpm_sim..."
-    pkill -f kpm_sim || true
+if [ "$CHART_REPO_URL" != "http://0.0.0.0:8090" ]; then
+    echo "Registering the Chart Museum URL..."
+    ./install_scripts/register_chart_museum_url.sh
+    export CHART_REPO_URL="http://0.0.0.0:8090"
+fi
+sudo ./install_scripts/run_chart_museum.sh
+
+mkdir -p xApps
+cd xApps
+
+if [ ! -d "kpimon-go" ]; then
+    echo "KPI Monitor xApp (kpimon-go) not found. Please install it first."
+    exit 1
 fi
 
-if [ $(sudo docker ps -q -f name=^/oransim$ | wc -l) -eq 1 ]; then
-    echo "Stopping oransim container..."
-    sudo docker stop oransim
+cd kpimon-go
+
+echo "Uninstalling application 'kpimon-go' if it exists..."
+UNINSTALL_OUTPUT=$(dms_cli uninstall kpimon-go ricxapp 2>&1) || true
+if echo "$UNINSTALL_OUTPUT" | grep -q 'release: not found\|No Xapp to uninstall' || true; then
+    echo "Application kpimon-go not found or already uninstalled."
+else
+    echo "$UNINSTALL_OUTPUT"
 fi
 
-echo "E2 simulator stopped."
+XAPP_VERSION=$(dms_cli get_charts_list | jq -r '.["kpimon-go"][0].version')
+
+echo "Installing application 'kpimon-go'..."
+OUTPUT=$(dms_cli install kpimon-go $XAPP_VERSION ricxapp) || echo "Failed to install kpimon-go xApp with dms_cli."
+echo "$OUTPUT"
+if echo "$OUTPUT" | grep -qE '"?status"?:\s*"?\bOK\b"?'; then
+    echo "Application successfully deployed."
+else
+    echo "Application failed to deploy."
+    exit 1
+fi
+
+cd "$PARENT_DIR"
+kubectl get pods -n ricxapp
+
+echo "Successfully restarted the KPI Monitor xApp (kpimon-go)."

@@ -28,21 +28,37 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+PARENT_DIR=$(dirname "$SCRIPT_DIR")
+cd "$PARENT_DIR"
+
+if [ ! -f influxdb_auth_token.json ]; then
+    echo "Creating an InfluxDB token to influxdb_auth_token.json..."
+    kubectl exec -it r4-influxdb-influxdb2-0 --namespace ricplt -- influx auth create --org influxdata --all-access --json >influxdb_auth_token.json
+fi
+INFLUXDB_TOKEN=$(jq -r '.token' influxdb_auth_token.json)
+
+# Export the InfluxDB token for use in the InfluxDB CLI
+kubectl exec -n ricplt -it r4-influxdb-influxdb2-0 -- /bin/sh -c "export TOKEN='$INFLUXDB_TOKEN'"
+# Delete existing data point
+# kubectl exec -n ricplt -it r4-influxdb-influxdb2-0 -- /bin/sh -c "influx delete --bucket \"kpimon\" --org \"influxdata\" --start '1970-01-01T00:00:00Z' --stop \"$(date --utc +%Y-%m-%dT%H:%M:%SZ)\" --predicate '_measurement=\"test_measurement\"'"
+# Write data point with:
+# kubectl exec -n ricplt -it r4-influxdb-influxdb2-0 -- /bin/sh -c "influx write --bucket \"kpimon\" --org \"influxdata\" --precision s \"test_measurement,host=server01 value=0.64 $(date +%s)\""
+
 echo -e "\nConnecting to InfluxDB CLI within the Kubernetes pod..."
-echo -e "Once inside the pod, type 'influx' to start the InfluxDB CLI."
 echo -e "Below are some example commands to interact with the InfluxDB database:\n"
 echo -e "  List all buckets:"
-echo -e "    influx bucket list"
-echo -e "  List last 10 data points from a measurement:"
-echo -e "    influx query 'from(bucket: \"your-bucket\") |> range(start: -1h) |> limit(n:10)'"
+echo -e "    influx bucket list --org influxdata --token \$TOKEN"
+echo -e "  List data points from a measurement in last 24 hours:"
+echo -e "    influx query 'from(bucket: \"kpimon\") |> range(start: -24h)' --org influxdata --token \$TOKEN"
 echo -e "  List measurements in a bucket:"
-echo -e "    influx query 'import \"influxdata/influxdb/schema\"; schema.measurements(bucket: \"your-bucket\")'"
+echo -e "    influx query 'from(bucket: \"kpimon\") |> range(start: -1h) |> keep(columns: [\"_measurement\"]) |> distinct(column: \"_measurement\")' --org influxdata --token \$TOKEN"
 echo -e "  List tag keys for a bucket:"
-echo -e "    influx query 'import \"influxdata/influxdb/schema\"; schema.tagKeys(bucket: \"your-bucket\")'"
+echo -e "    influx query 'from(bucket: \"kpimon\") |> range(start: -1h) |> keys()' --org influxdata --token \$TOKEN"
 echo -e "  List field keys for a bucket:"
-echo -e "    influx query 'import \"influxdata/influxdb/schema\"; schema.fieldKeys(bucket: \"your-bucket\")'"
+echo -e "    influx query 'from(bucket: \"kpimon\") |> range(start: -1h) |> keep(columns: [\"_field\"]) |> distinct(column: \"_field\")' --org influxdata --token \$TOKEN"
 echo -e "  List tag values for a specific tag key:"
-echo -e "    influx query 'import \"influxdata/influxdb/schema\"; schema.tagValues(bucket: \"your-bucket\", tag: \"your-tag\")'"
-echo -e "\nType 'exit' to leave the InfluxDB CLI and return to your shell."
+echo -e "    influx query 'import \"influxdata/influxdb/schema\"; schema.tagValues(bucket: \"kpimon\", tag: \"your-tag\")' --org influxdata --token \$TOKEN"
+echo -e "\nType 'exit' twice to leave the InfluxDB CLI and return to your shell."
 
 kubectl exec -n ricplt -it r4-influxdb-influxdb2-0 -- /bin/sh

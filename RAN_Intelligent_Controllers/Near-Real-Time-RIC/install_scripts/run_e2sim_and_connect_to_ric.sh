@@ -36,34 +36,23 @@ set -e
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$(dirname "$SCRIPT_DIR")"
 
+# Set the RAN Function ID if not set
+if [ -z "$RAN_FUNC_ID" ]; then
+    export RAN_FUNC_ID="2"
+fi
+
 # Path to the output file
 mkdir -p logs
 OUTPUT_FILE="logs/e2sim_output.txt"
 
-# Optionally, stop the oransim container before starting it again
-# if [ $(sudo docker ps -q -f name=^/oransim$ | wc -l) -eq 1 ]; then
-#     echo "Restarting oransim container..."
-#     sudo docker stop oransim
-# fi
+# Stop the oransim container before starting it again
+./install_scripts/stop_e2sim.sh
 
-# Check if the container with the name 'oransim' is already running
-if [ $(sudo docker ps -q -f name=^/oransim$ | wc -l) -eq 1 ]; then
-    echo "Container 'oransim' is already running."
-elif [ $(sudo docker ps -aq -f name=^/oransim$ | wc -l) -eq 1 ]; then
-    echo "Container 'oransim' exists but is not running, starting container..."
-    rm -rf $OUTPUT_FILE
-    sudo docker start oransim
-else
-    echo "Starting a new container 'oransim'..."
-    rm -rf $OUTPUT_FILE
-    sudo docker run -d -it --name oransim oransim:0.0.999
-fi
+echo "Starting a new container 'oransim'..."
+rm -rf $OUTPUT_FILE
+sudo docker run -d -it --name oransim -e RAN_FUNC_ID="$RAN_FUNC_ID" -v "$(pwd)/logs:/app/logs" oransim:0.0.999
+
 kubectl get svc -n ricplt | grep e2term-sctp || true
-
-if sudo docker exec oransim pgrep -f "kpm_sim" >/dev/null; then
-    echo "Stopping previous instance of kpm_sim..."
-    sudo docker exec oransim pkill -f kpm_sim || true
-fi
 
 # Get the IP and port of the E2 termination point inside the near Real Time RIC
 SERVICE_NAME="service-ricplt-e2term-sctp"
@@ -99,12 +88,13 @@ while true; do
     if ! sudo docker exec oransim pgrep -f "kpm_sim" >/dev/null; then
         echo "Starting kpm_sim in the background, writing to $OUTPUT_FILE..."
         >"$OUTPUT_FILE" # Clears the content of the output file
-        sudo docker exec -i oransim kpm_sim $IP_E2TERM $PORT_E2TERM >>$OUTPUT_FILE 2>&1 &
+        sudo docker exec oransim mkdir -p /app/logs
+        sudo docker exec -i oransim sh -c "nohup kpm_sim $IP_E2TERM $PORT_E2TERM >> /app/logs/e2sim_output.txt 2>&1 &"
         sleep 2
     fi
 
-    if ! grep -q "</E2AP-PDU>" $OUTPUT_FILE; then
-        # Alternatively, wait for SETUP-RESPONSE-SUCCESS: if ! grep -q SETUP-RESPONSE-SUCCESS $OUTPUT_FILE; then
+    if ! grep -q SETUP-RESPONSE-SUCCESS $OUTPUT_FILE; then
+        # Alternatively, wait for </E2AP-PDU>: if ! grep -q "</E2AP-PDU>" $OUTPUT_FILE; then
         echo "Waiting for connection between E2 Simulator and RIC, please be patient for all pods to be ready... $ATTEMPTS/$MAX_ATTEMPTS"
         sleep 5
     else

@@ -56,7 +56,7 @@ metadata:
   name: influxdb-local-pv
 spec:
   capacity:
-    storage: 50Gi
+    storage: 2Gi
   volumeMode: Filesystem
   accessModes:
     - ReadWriteOnce
@@ -88,7 +88,7 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 50Gi
+      storage: 2Gi
 EOF
 kubectl apply -f "$HOME/.kube/influxdb-pvc.yaml"
 
@@ -119,7 +119,7 @@ yq e '.fullnameOverride = "r4-influxdb-influxdb2"' -i $INFLUXDB_VALUES_PATH
 yq e '.persistence.enabled = true' -i $INFLUXDB_VALUES_PATH
 yq e '.persistence.storageClassName = "local-storage"' -i $INFLUXDB_VALUES_PATH
 yq e '.persistence.accessMode = "ReadWriteOnce"' -i $INFLUXDB_VALUES_PATH
-yq e '.persistence.size = "50Gi"' -i $INFLUXDB_VALUES_PATH
+yq e '.persistence.size = "2Gi"' -i $INFLUXDB_VALUES_PATH
 yq e '.persistence.useExisting = true' -i $INFLUXDB_VALUES_PATH
 yq e '.persistence.name = "r4-influxdb-influxdb2"' -i $INFLUXDB_VALUES_PATH
 
@@ -131,6 +131,6 @@ yq e '.fullnameOverride = "r4-influxdb-influxdb2"' -i $INFLUXDB_VALUES_PATH
 yq e '.persistence.enabled = true' -i $INFLUXDB_VALUES_PATH2
 yq e '.persistence.storageClassName = "local-storage"' -i $INFLUXDB_VALUES_PATH2
 yq e '.persistence.accessMode = "ReadWriteOnce"' -i $INFLUXDB_VALUES_PATH2
-yq e '.persistence.size = "50Gi"' -i $INFLUXDB_VALUES_PATH2
+yq e '.persistence.size = "2Gi"' -i $INFLUXDB_VALUES_PATH2
 yq e '.persistence.useExisting = true' -i $INFLUXDB_VALUES_PATH2
 yq e '.persistence.name = "r4-influxdb-influxdb2"' -i $INFLUXDB_VALUES_PATH2

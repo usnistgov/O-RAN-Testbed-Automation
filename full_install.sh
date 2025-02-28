@@ -111,6 +111,9 @@ if [[ "$OPEN5GS_INSTALLED" = true || "$GNODEB_INSTALLED" = true || "$UE_INSTALLE
         sudo rm -rf RAN_Intelligent_Controllers/Near-Real-Time-RIC/charts
         sudo rm -rf RAN_Intelligent_Controllers/Near-Real-Time-RIC/xApps
         sudo rm -rf RAN_Intelligent_Controllers/Near-Real-Time-RIC/logs
+        sudo rm -rf RAN_Intelligent_Controllers/Near-Real-Time-RIC/influxdb
+        sudo rm -rf RAN_Intelligent_Controllers/Near-Real-Time-RIC/influxdb_auth_token.json
+        sudo rm -rf RAN_Intelligent_Controllers/Near-Real-Time-RIC/additional_scripts/pod_pcaps
         sudo rm -rf RAN_Intelligent_Controllers/Near-Real-Time-RIC/install_time.txt
         echo "Successfully removed previous installations."
     fi

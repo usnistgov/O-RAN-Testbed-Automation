@@ -43,13 +43,18 @@ cd "$PARENT_DIR"
 # Run a sudo command every minute to ensure script execution without user interaction
 ./install_scripts/start_sudo_refresh.sh
 
-./install_scripts/wait_for_ricplt_pods.sh
 if [ "$CHART_REPO_URL" != "http://0.0.0.0:8090" ]; then
     echo "Registering the Chart Museum URL..."
     ./install_scripts/register_chart_museum_url.sh
     export CHART_REPO_URL="http://0.0.0.0:8090"
 fi
 sudo ./install_scripts/run_chart_museum.sh
+
+if [ ! -f influxdb_auth_token.json ]; then
+    echo "Creating an InfluxDB token to influxdb_auth_token.json..."
+    kubectl exec -it r4-influxdb-influxdb2-0 --namespace ricplt -- influx auth create --org influxdata --all-access --json >influxdb_auth_token.json
+fi
+INFLUXDB_TOKEN=$(jq -r '.token' influxdb_auth_token.json)
 
 mkdir -p xApps
 cd xApps
@@ -61,6 +66,30 @@ fi
 
 cd kpimon-go
 
+################################################################################
+# Patching the KPI Monitor xApp (kpimon-go) control/control.go file            #
+################################################################################
+
+if [ ! -f "control/control.go.previous" ]; then
+    echo "Backing up control/control.go to control/control.go.previous..."
+    cp control/control.go control/control.go.previous
+fi
+
+# Replace my-org with influxdata in control/control.go
+if grep -q '"my-org"' control/control.go; then
+    echo "Replacing \"my-org\" with \"influxdata\"..."
+    sed -i 's/"my-org"/"influxdata"/g' control/control.go
+fi
+
+# Comment out create_db() function call since it will be created here:
+if grep -qE '^[[:space:]]*create_db\(\)' control/control.go; then
+    echo "Commenting out create_db() function call..."
+    sed -i '/^[[:space:]]*create_db()/s/^/\/\/ /' control/control.go
+fi
+# Create the bucket here instead of in the control.go file:
+echo "Creating the 'kpimon' bucket in the 'influxdata' organization if it does not exist..."
+kubectl exec -n ricplt -it r4-influxdb-influxdb2-0 -- influx bucket create --org influxdata --name kpimon --json || true
+
 # Get the IP of the InfluxDB service
 SERVICE_INFO=$(kubectl get service -n ricplt | grep r4-influxdb-influxdb)
 if [ -z "$SERVICE_INFO" ]; then
@@ -70,13 +99,45 @@ else
     IP_INFLUXDB=$(echo "$SERVICE_INFO" | awk '{print $3}')
 fi
 
-# Replace "ricplt-influxdb.ricplt" with the InfluxDB IP in control/control.go
-if grep -q "ricplt-influxdb.ricplt" control/control.go; then
-    echo "Patching control/control.go to replace 'ricplt-influxdb.ricplt' with '$IP_INFLUXDB'..."
-    if [ ! -f "control/control.go.previous" ]; then
+# Set influxdb2.NewClient("$IP_INFLUXDB", "$INFLUXDB_TOKEN")
+if grep -q "influxdb2.NewClient(" control/control.go; then
+    echo "Patching control/control.go to replace 'influxdb2.NewClient(' with the new client call..."
+    if [ ! -f "src/control/control.go.previous" ]; then
         cp control/control.go control/control.go.previous
     fi
+    sed -i "s|influxdb2.NewClient([^)]*)|influxdb2.NewClient(\"$IP_INFLUXDB\", \"$INFLUXDB_TOKEN\")|g" control/control.go
+else
+    echo "No modification needed in control/control.go."
+fi
+
+# In case the previous replacement failed, replace "ricplt-influxdb.ricplt" with the InfluxDB IP in control/control.go
+if grep -q "ricplt-influxdb.ricplt" control/control.go; then
+    echo "Patching control/control.go to replace 'ricplt-influxdb.ricplt' with '$IP_INFLUXDB'..."
+
     sed -i "s/ricplt-influxdb.ricplt/$IP_INFLUXDB/g" control/control.go
+else
+    echo "No modification needed in control/control.go."
+fi
+
+# Set the RAN Function ID if not set
+if [ -z "$RAN_FUNC_ID" ]; then
+    export RAN_FUNC_ID="2"
+fi
+
+# Replace the RAN Function ID to RAN_FUNC_ID
+if grep -qP "\bfuncId *= *int64\([0-9]+\)" control/control.go; then
+    echo "Patching control/control.go to replace 'funcId += int64(N)' with 'funcId += int64($RAN_FUNC_ID)'..."
+
+    # Replace first occurrence of "funcId = int64(N)" to "funcId = int64($RAN_FUNC_ID)"
+    sed -i "0,/funcId *= *int64([0-9]\+)/s/\(funcId *= *\)\(int64([0-9]\+)\)/\1int64($RAN_FUNC_ID)/" control/control.go
+else
+    echo "No modification needed in control/control.go."
+fi
+# Replace .RanFunctionId == N in control/control.go
+if grep -q ".RanFunctionId == [0-9]\+" control/control.go; then
+    echo "Patching control/control.go to replace '.RanFunctionId == [0-9]\+' with '.RanFunctionId == $RAN_FUNC_ID'..."
+
+    sed -i "s/.RanFunctionId == [0-9]\+/.RanFunctionId == $RAN_FUNC_ID/g" control/control.go
 else
     echo "No modification needed in control/control.go."
 fi
@@ -89,14 +150,13 @@ if ! command -v jq &>/dev/null; then
     sudo apt-get install -y jq
 fi
 
-if [ ! -f "deploy/config_updated.json" ]; then
-    FILE="deploy/config_updated.json"
-    cp deploy/config.json $FILE
-    # Modify the required fields using jq and overwrite the original file
-    jq '.containers[0].image.tag = "latest" |
-        .containers[0].image.registry = "example.com:80" |
-        .containers[0].image.name = "kpimon-go"' "$FILE" >tmp.$$.json && mv tmp.$$.json "$FILE"
-fi
+FILE="deploy/config_updated.json"
+sudo rm -rf $FILE
+cp deploy/config.json $FILE
+# Modify the required fields using jq and overwrite the original file
+jq '.containers[0].image.tag = "latest" |
+    .containers[0].image.registry = "example.com:80" |
+    .containers[0].image.name = "kpimon-go"' "$FILE" >tmp.$$.json && mv tmp.$$.json "$FILE"
 
 if [ ! -f kpimon-go.tar ]; then
     sudo docker build -t example.com:80/kpimon-go:latest .

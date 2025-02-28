@@ -1,11 +1,11 @@
 {
-  "https://github.com/open5gs/open5gs.git": ["", "6a2225bb680cd36cee8ea65ee8d4483c7988982a"],
+  "https://github.com/open5gs/open5gs.git": ["", "1b21eba81ed7740317ec820ce96dda3b587ef4e9"],
   "https://github.com/srsran/srsRAN_4G.git": ["", "ec29b0c1ff79cebcbe66caa6d6b90778261c42b8"],
   "https://github.com/zeromq/libzmq.git": ["", "34f7fa22022bed9e0e390ed3580a1c83ac4a2834"],
   "https://github.com/zeromq/czmq.git": ["", "5b5c640248dfb6e9a9a612cfad16d8c019e5702c"],
   "https://github.com/srsran/srsRAN_Project.git": ["", "cc2869f967adfd8d33f9d1440839bf5f1b282998"],
   "https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep.git": ["master", "33b5940a15ea852d47f73521295eef53d295b7fd"],
-  "https://gerrit.o-ran-sc.org/r/sim/e2-interface.git": ["", "da6f82f286cdbb38af1178f82f85877b12c2f85b"],
+  "https://gerrit.o-ran-sc.org/r/sim/e2-interface.git": ["k-release", "da6f82f286cdbb38af1178f82f85877b12c2f85b"],
   "https://gerrit.o-ran-sc.org/r/ric-plt/appmgr.git": ["", "4c05932dce72e98db23eaff2b72b58816e1f2d55"],
   "https://gerrit.o-ran-sc.org/r/ric-app/hw-go.git": ["master", "3a0d348e429ea0f3f3d2a1d5eb54ec8758d1a262"],
   "https://github.com/o-ran-sc/ric-app-hw-python.git": ["master", "a6d00525aa2f62f2457d84731da2b7d89e0b1013"],
@@ -19,7 +19,7 @@
   "https://gerrit.o-ran-sc.org/r/it/dep.git": ["master", "60372089116269f82038c0fe38a02acbc51fb269"],
   "https://gerrit.o-ran-sc.org/r/nonrtric/plt/ranpm.git": ["master", "dbb29d3eb620b0ed223510590030a9a4a3c73d50"],
   "https://github.com/onap/multicloud-k8s.git": ["", "8bea0a13c223aff43f98f0cb6426379bb23e8894"],
-  "https://gerrit.onap.org/r/oom.git": ["", "dc8cf1efa5e069173351ffcc8d065478fdeac3d5"],
+  "https://gerrit.onap.org/r/oom.git": ["", "7fbf8ae171fa31a53918d3362d0b9c5d0940fc5d"],
   "https://gerrit.o-ran-sc.org/r/portal/nonrtric-controlpanel.git": ["master", "15bdaf8f25dca54e3a52ad30d69fa2eb1d59ce48"],
-  "https://gerrit.o-ran-sc.org/r/nonrtric/plt/rappmanager.git": ["k-release", "ffd5b45b53572ae42fbc22510bcbe3ad8883b86f"]
+  "https://gerrit.o-ran-sc.org/r/nonrtric/plt/rappmanager.git": ["k-release", "688ab2c9ac9b1af06c30ddc28db9bcc5ecaaa096"]
 }

@@ -33,17 +33,15 @@ echo "# Script: $(realpath $0)..."
 # Exit immediately if a command fails
 set -e
 
-# Upon exit, gracefully stop the E2 simulator
-trap './install_scripts/stop_e2sim.sh; exit' EXIT SIGINT SIGTERM
-
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
-PARENT_DIR=$(dirname "$SCRIPT_DIR")
-cd "$PARENT_DIR"
+cd "$SCRIPT_DIR"
 
-# Path to the output file
-mkdir -p logs
-OUTPUT_FILE="logs/e2sim_output.txt"
+if ! sudo docker exec oransim pgrep -f "kpm_sim" >/dev/null; then
+    echo "Stopping previous instance of kpm_sim..."
+    sudo docker exec oransim pkill -f kpm_sim || true
+fi
 
-./install_scripts/run_e2sim_and_connect_to_ric.sh
+sudo docker stop oransim || true
+sudo docker rm oransim || true
 
-tail +1f $OUTPUT_FILE
+echo "E2 simulator stopped."

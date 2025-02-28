@@ -46,14 +46,13 @@ if ! command -v jq &>/dev/null; then
     sudo apt-get install -y jq
 fi
 
-if [ ! -f "config/config-file_updated.json" ]; then
-    FILE="config/config-file_updated.json"
-    cp config/config-file.json $FILE
-    # Modify the required fields using jq and overwrite the original file
-    jq '.containers[0].image.tag = "latest" |
-        .containers[0].image.registry = "example.com:80" |
-        .containers[0].image.name = "hw-go"' "$FILE" >tmp.$$.json && mv tmp.$$.json "$FILE"
-fi
+FILE="config/config-file_updated.json"
+sudo rm -rf $FILE
+cp config/config-file.json $FILE
+# Modify the required fields using jq and overwrite the original file
+jq '.containers[0].image.tag = "latest" |
+    .containers[0].image.registry = "example.com:80" |
+    .containers[0].image.name = "hw-go"' "$FILE" >tmp.$$.json && mv tmp.$$.json "$FILE"
 
 # Check if the Dockerfile contains the correct RMR version; if not, update it.
 # This ensures that within the hw-go pod, /usr/local/lib/librmr_si.so doesn't

@@ -70,6 +70,13 @@ cd kpimon-go
 # Patching the KPI Monitor xApp (kpimon-go) control/control.go file            #
 ################################################################################
 
+if [ ! -f "e2sm/wrapper.c.previous" ]; then
+    echo "Backing up e2sm/wrapper.c to e2sm/wrapper.c.previous..."
+    cp e2sm/wrapper.c e2sm/wrapper.c.previous
+fi
+echo "Copying the e2sm/wrapper.c file from the install_patch_files directory..."
+cp ../../install_patch_files/xApps/kpimon-go/e2sm/wrapper.c e2sm/wrapper.c
+
 if [ ! -f "control/control.go.previous" ]; then
     echo "Backing up control/control.go to control/control.go.previous..."
     cp control/control.go control/control.go.previous

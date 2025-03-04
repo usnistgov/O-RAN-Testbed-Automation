@@ -53,7 +53,7 @@ ranCellUeKpi_t buildRanCellUeKpi(const char *hex_values)
 
         if (rval.code == RC_OK)
         {
-                printf("[INFO] E2SM KPM RAN Function Description decode successfull rval.code = %d \n", rval.code);
+                printf("[INFO] E2SM KPM RAN Function Description decode successful rval.code = %d \n", rval.code);
 
                 // asn_fprint(stdout, &asn_DEF_E2SM_KPM_RANfunction_Description, e2smKpmRanFunctDescrip);
 
@@ -68,7 +68,7 @@ ranCellUeKpi_t buildRanCellUeKpi(const char *hex_values)
                                         size_t bufsize = e2smKpmRanFunctDescrip->ric_ReportStyle_List->list.array[i]->measInfo_Action_List.list.array[j]->measName.size;
                                         // name_format1[j] = (char *)malloc(bufsize);
                                         // name_format1[j] = e2smKpmRanFunctDescrip->ric_ReportStyle_List->list.array[i]->measInfo_Action_List.list.array[j]->measName.buf;
-                                        name_format1[j] = (char *)malloc(bufsize + 1); // +1 for null terminator
+                                        name_format1[j] = (char *)malloc(bufsize + 1); // For null terminator
                                         memcpy(name_format1[j], e2smKpmRanFunctDescrip->ric_ReportStyle_List->list.array[i]->measInfo_Action_List.list.array[j]->measName.buf, bufsize);
                                         name_format1[j][bufsize] = '\0';
                                 }
@@ -83,7 +83,7 @@ ranCellUeKpi_t buildRanCellUeKpi(const char *hex_values)
                                         size_t bufsize = e2smKpmRanFunctDescrip->ric_ReportStyle_List->list.array[i]->measInfo_Action_List.list.array[j]->measName.size;
                                         // name_format3[j] = (char *)malloc(bufsize);
                                         // name_format3[j] = e2smKpmRanFunctDescrip->ric_ReportStyle_List->list.array[i]->measInfo_Action_List.list.array[j]->measName.buf;
-                                        name_format3[j] = (char *)malloc(bufsize + 1); // +1 for null terminator
+                                        name_format3[j] = (char *)malloc(bufsize + 1); // For null terminator
                                         memcpy(name_format3[j], e2smKpmRanFunctDescrip->ric_ReportStyle_List->list.array[i]->measInfo_Action_List.list.array[j]->measName.buf, bufsize);
                                         name_format3[j][bufsize] = '\0';
                                 }
@@ -101,6 +101,7 @@ ranCellUeKpi_t buildRanCellUeKpi(const char *hex_values)
         res.cellKpiSize = sz1;
         return res;
 }
+
 void freeMemorydRanCellUeKpi(ranCellUeKpi_t res)
 {
         if (res.cellKpi != NULL)
@@ -174,7 +175,7 @@ struct encode_act_Def_result encode_action_Definition(const char *hex_values, in
 
         if (rval.code == RC_OK)
         {
-                printf("[INFO] E2SM KPM RAN Function Description decode successfull rval.code = %d \n", rval.code);
+                printf("[INFO] E2SM KPM RAN Function Description decode successful rval.code = %d \n", rval.code);
 
                 // asn_fprint(stdout, &asn_DEF_E2SM_KPM_RANfunction_Description, e2smKpmRanFunctDescrip);
 
@@ -194,13 +195,13 @@ struct encode_act_Def_result encode_action_Definition(const char *hex_values, in
                                         }
                                         else
                                         {
-                                                fprintf(stderr, "Null pointer encountered for measID at index %d\n", j);
+                                                fprintf(stderr, "Null pointer encountered for id_format1: measID at index %d\n", j);
                                                 id_format1[j] = -1;
                                         }
                                         size_t bufsize = e2smKpmRanFunctDescrip->ric_ReportStyle_List->list.array[i]->measInfo_Action_List.list.array[j]->measName.size;
                                         // name_format1[j] = (char *)malloc(bufsize);
                                         // name_format1[j] = e2smKpmRanFunctDescrip->ric_ReportStyle_List->list.array[i]->measInfo_Action_List.list.array[j]->measName.buf;
-                                        name_format1[j] = (char *)malloc(bufsize + 1); // +1 for null terminator
+                                        name_format1[j] = (char *)malloc(bufsize + 1); // For null terminator
                                         memcpy(name_format1[j], e2smKpmRanFunctDescrip->ric_ReportStyle_List->list.array[i]->measInfo_Action_List.list.array[j]->measName.buf, bufsize);
                                         name_format1[j][bufsize] = '\0';
                                 }
@@ -219,13 +220,13 @@ struct encode_act_Def_result encode_action_Definition(const char *hex_values, in
                                         }
                                         else
                                         {
-                                                fprintf(stderr, "Null pointer encountered for measID at index %d\n", j);
+                                                fprintf(stderr, "Null pointer encountered for id_format3: measID at index %d\n", j);
                                                 id_format3[j] = -1;
                                         }
                                         size_t bufsize = e2smKpmRanFunctDescrip->ric_ReportStyle_List->list.array[i]->measInfo_Action_List.list.array[j]->measName.size;
                                         // name_format3[j] = (char *)malloc(bufsize);
                                         // name_format3[j] = e2smKpmRanFunctDescrip->ric_ReportStyle_List->list.array[i]->measInfo_Action_List.list.array[j]->measName.buf;
-                                        name_format3[j] = (char *)malloc(bufsize + 1); // +1 for null terminator
+                                        name_format3[j] = (char *)malloc(bufsize + 1); // For null terminator
                                         memcpy(name_format3[j], e2smKpmRanFunctDescrip->ric_ReportStyle_List->list.array[i]->measInfo_Action_List.list.array[j]->measName.buf, bufsize);
                                         name_format3[j][bufsize] = '\0';
                                 }
@@ -237,28 +238,46 @@ struct encode_act_Def_result encode_action_Definition(const char *hex_values, in
                 printf("[INFO] E2SM KPM RAN Function Description decode failed rval.code = %d \n", rval.code);
                 // Don't forget to free the allocated memory when done
                 if (hex_buffer)
+                {
                         free(hex_buffer);
+                        hex_buffer = NULL;
+                }
                 if (id_format1)
+                {
                         free(id_format1);
+                        id_format1 = NULL;
+                }
                 if (name_format1)
                 {
                         for (int i = 0; i < sz1; i++)
                         {
-                                free(name_format1[i]);
+                                if (name_format1[i] != NULL)
+                                {
+                                        free(name_format1[i]);
+                                        name_format1[i] = NULL;
+                                }
                         }
                         free(name_format1);
+                        name_format1 = NULL;
                 }
                 if (id_format3)
+                {
                         free(id_format3);
+                        id_format3 = NULL;
+                }
                 if (name_format3)
                 {
                         for (int i = 0; i < sz3; i++)
                         {
-                                free(name_format3[i]);
+                                if (name_format3[i] != NULL)
+                                {
+                                        free(name_format3[i]);
+                                        name_format3[i] = NULL;
+                                }
                         }
                         free(name_format3);
+                        name_format3 = NULL;
                 }
-
                 return res;
         }
         printf("\n");
@@ -352,28 +371,46 @@ struct encode_act_Def_result encode_action_Definition(const char *hex_values, in
         ASN_STRUCT_FREE(asn_DEF_E2SM_KPM_RANfunction_Description, e2smKpmRanFunctDescrip);
 
         // Don't forget to free the allocated memory when done
-        free(name_format3);
         if (hex_buffer)
+        {
                 free(hex_buffer);
+                hex_buffer = NULL;
+        }
         if (id_format1)
+        {
                 free(id_format1);
+                id_format1 = NULL;
+        }
         if (name_format1)
         {
                 for (int i = 0; i < sz1; i++)
                 {
-                        free(name_format1[i]);
+                        if (name_format1[i] != NULL)
+                        {
+                                free(name_format1[i]);
+                                name_format1[i] = NULL;
+                        }
                 }
                 free(name_format1);
+                name_format1 = NULL;
         }
         if (id_format3)
+        {
                 free(id_format3);
+                id_format3 = NULL;
+        }
         if (name_format3)
         {
                 for (int i = 0; i < sz3; i++)
                 {
-                        free(name_format3[i]);
+                        if (name_format3[i] != NULL)
+                        {
+                                free(name_format3[i]);
+                                name_format3[i] = NULL;
+                        }
                 }
                 free(name_format3);
+                name_format3 = NULL;
         }
 
         switch (determine)
@@ -534,7 +571,7 @@ size_t e2sm_encode_ric_action_definition_format1_by_name(unsigned char *buf, siz
                 if (r==-1)
                          fprintf(stderr, "failed asn_fprint\n");
                 else
-                         fprintf(stderr, "successfull asn_fprint\n");
+                         fprintf(stderr, "successful asn_fprint\n");
                 */
 
                 return encode_result.encoded;
@@ -672,7 +709,7 @@ size_t e2sm_encode_ric_action_definition_format1_by_id(unsigned char *buf, size_
                 if (r==-1)
                          fprintf(stderr, "failed asn_fprint\n");
                 else
-                         fprintf(stderr, "successfull asn_fprint\n");
+                         fprintf(stderr, "successful asn_fprint\n");
                 */
 
                 return encode_result.encoded;
@@ -764,7 +801,6 @@ size_t e2sm_encode_ric_action_definition_format3_by_name(unsigned char *buf, siz
         else
         {
                 fprintf(stderr, "successfully\n");
-
                 // xer_fprint(stdout, &asn_DEF_E2SM_KPM_ActionDefinition, actionDef);
                 /*
                 FILE *fp = fopen("sandeep.bin", "wb");
@@ -783,7 +819,7 @@ size_t e2sm_encode_ric_action_definition_format3_by_name(unsigned char *buf, siz
                 if (r==-1)
                          fprintf(stderr, "failed asn_fprint\n");
                 else
-                         fprintf(stderr, "successfull asn_fprint\n");
+                         fprintf(stderr, "successful asn_fprint\n");
                 */
                 return encode_result.encoded;
         }
@@ -891,7 +927,7 @@ size_t e2sm_encode_ric_action_definition_format3_by_id(unsigned char *buf, size_
                 if (r==-1)
                          fprintf(stderr, "failed asn_fprint\n");
                 else
-                         fprintf(stderr, "successfull asn_fprint\n");
+                         fprintf(stderr, "successful asn_fprint\n");
                 */
                 return encode_result.encoded;
         }
@@ -1014,7 +1050,7 @@ ssize_t e2sm_encode_ric_action_definition(void *buffer, size_t buf_size, long ac
         while(index < action_Def_count) {
                 MeasurementInfoItem_t *infoItem = (MeasurementInfoItem_t *)calloc(1, sizeof(MeasurementInfoItem_t));
                 // if(!infoItem) {
-                // 	fprintf(stderr, "alloc Measurement Info Item failed\n");
+                //     fprintf(stderr, "alloc Measurement Info Item failed\n");
                 //     ASN_STRUCT_FREE(asn_DEF_E2SM_KPM_ActionDefinition, actionDef);
                 // return -1;
                 // }

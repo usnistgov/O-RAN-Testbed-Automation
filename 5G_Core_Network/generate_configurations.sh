@@ -207,7 +207,20 @@ get_configuration_ngap_server_ip() {
     fi
 }
 
-# Set the following AMF IP, and it will be updated in the configuration file
+# Uncomment to set the AMF address to the host IP address
+# # Function to set the ngap_server configuration IP
+# set_configuration_ngap_server_ip() {
+#     local FILE_PATH="configs/amf.yaml"
+#     local IP_ADDRESS=$1
+#     # Use yq to parse the YAML file and update the IP address
+#     yq e -i ".amf.ngap.server[0].address = \"$IP_ADDRESS\"" "$FILE_PATH"
+# }
+#
+# # Set the AMF IP to the local IP address
+# IP_ADDRESS=$(hostname -I | awk '{print $1}')
+# set_configuration_ngap_server_ip $IP_ADDRESS
+
+# Get the following AMF IP, and it will be updated in the configuration file
 AMF_IP=$(get_configuration_ngap_server_ip)
 AMF_IP_BIND=$(get_primary_ip_for_network $AMF_IP)
 AMF_ADDRESSES_OUTPUT="configs/get_amf_address.txt"

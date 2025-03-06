@@ -196,7 +196,7 @@ struct encode_act_Def_result encode_action_Definition(const char *hex_values, in
                                         else
                                         {
                                                 fprintf(stderr, "Null pointer encountered for id_format1: measID at index %d\n", j);
-                                                id_format1[j] = -1;
+                                                id_format1[j] = j + 1; // = -1;
                                         }
                                         size_t bufsize = e2smKpmRanFunctDescrip->ric_ReportStyle_List->list.array[i]->measInfo_Action_List.list.array[j]->measName.size;
                                         // name_format1[j] = (char *)malloc(bufsize);
@@ -221,7 +221,7 @@ struct encode_act_Def_result encode_action_Definition(const char *hex_values, in
                                         else
                                         {
                                                 fprintf(stderr, "Null pointer encountered for id_format3: measID at index %d\n", j);
-                                                id_format3[j] = -1;
+                                                id_format3[j] = j + 1; // = -1;
                                         }
                                         size_t bufsize = e2smKpmRanFunctDescrip->ric_ReportStyle_List->list.array[i]->measInfo_Action_List.list.array[j]->measName.size;
                                         // name_format3[j] = (char *)malloc(bufsize);

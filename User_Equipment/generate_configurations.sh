@@ -68,78 +68,76 @@ update_conf() {
     sed -i "/^\[$SECTION\]/a $PROPERTY = $VALUE" "$FILE_PATH"
 }
 
-mkdir -p "$SCRIPT_DIR/logs"
-
 UE1_TX_PORT=2001 # 2101
 UE1_RX_PORT=2000 # 2100
 
 # Update configuration values for RF front-end device
-update_conf configs/ue1.conf "rf" "device_name" "zmq"
-update_conf configs/ue1.conf "rf" "device_args" "tx_port=tcp://127.0.0.1:$UE1_TX_PORT,rx_port=tcp://127.0.0.1:$UE1_RX_PORT,base_srate=23.04e6"
-update_conf configs/ue1.conf "rf" "nof_antennas" "1"
-update_conf configs/ue1.conf "rf" "tx_gain" "50"
-update_conf configs/ue1.conf "rf" "rx_gain" "40"
-update_conf configs/ue1.conf "rf" "srate" "23.04e6"
-update_conf configs/ue1.conf "rf" "freq_offset" "0"
+update_conf "configs/ue1.conf" "rf" "device_name" "zmq"
+update_conf "configs/ue1.conf" "rf" "device_args" "tx_port=tcp://127.0.0.1:$UE1_TX_PORT,rx_port=tcp://127.0.0.1:$UE1_RX_PORT,base_srate=23.04e6"
+update_conf "configs/ue1.conf" "rf" "nof_antennas" "1"
+update_conf "configs/ue1.conf" "rf" "tx_gain" "50"
+update_conf "configs/ue1.conf" "rf" "rx_gain" "40"
+update_conf "configs/ue1.conf" "rf" "srate" "23.04e6"
+update_conf "configs/ue1.conf" "rf" "freq_offset" "0"
 
 # Update configuration values for RAT (EUTRA)
-update_conf configs/ue1.conf "rat.eutra" "nof_carriers" "0" # Disabled EUTRA (LTE) since we are using NR (5G)
-update_conf configs/ue1.conf "rat.eutra" "dl_earfcn" "2850"
+update_conf "configs/ue1.conf" "rat.eutra" "nof_carriers" "0" # Disabled EUTRA (LTE) since we are using NR (5G)
+update_conf "configs/ue1.conf" "rat.eutra" "dl_earfcn" "2850"
 
 # Update configuration values for RAT (NR)
-update_conf configs/ue1.conf "rat.nr" "nof_carriers" "1"
-update_conf configs/ue1.conf "rat.nr" "bands" "3"
-update_conf configs/ue1.conf "rat.nr" "max_nof_prb" "106"
-update_conf configs/ue1.conf "rat.nr" "nof_prb" "106"
+update_conf "configs/ue1.conf" "rat.nr" "nof_carriers" "1"
+update_conf "configs/ue1.conf" "rat.nr" "bands" "3"
+update_conf "configs/ue1.conf" "rat.nr" "max_nof_prb" "106"
+update_conf "configs/ue1.conf" "rat.nr" "nof_prb" "106"
 
 # Update configuration values for PCAP
-update_conf configs/ue1.conf "pcap" "enable" "none"
+update_conf "configs/ue1.conf" "pcap" "enable" "none"
 # Uncomment for log files:
-# update_conf configs/ue1.conf "pcap" "enable" "mac,mac_nr,nas"
-update_conf configs/ue1.conf "pcap" "mac_filename" "$SCRIPT_DIR/logs/ue1_mac.pcap"
-update_conf configs/ue1.conf "pcap" "mac_nr_filename" "$SCRIPT_DIR/logs/ue1_mac_nr.pcap"
-update_conf configs/ue1.conf "pcap" "nas_filename" "$SCRIPT_DIR/logs/ue1_nas.pcap"
+# update_conf "configs/ue1.conf" "pcap" "enable" "mac,mac_nr,nas"
+update_conf "configs/ue1.conf" "pcap" "mac_filename" "$SCRIPT_DIR/logs/ue1_mac.pcap"
+update_conf "configs/ue1.conf" "pcap" "mac_nr_filename" "$SCRIPT_DIR/logs/ue1_mac_nr.pcap"
+update_conf "configs/ue1.conf" "pcap" "nas_filename" "$SCRIPT_DIR/logs/ue1_nas.pcap"
 
 # Update configuration values for Logging
-update_conf configs/ue1.conf "log" "all_level" "info" #warning
-update_conf configs/ue1.conf "log" "phy_lib_level" "none"
-update_conf configs/ue1.conf "log" "all_hex_limit" "32"
-update_conf configs/ue1.conf "log" "filename" "$SCRIPT_DIR/logs/ue1.txt"
-update_conf configs/ue1.conf "log" "file_max_size" "-1"
+update_conf "configs/ue1.conf" "log" "all_level" "info" #warning
+update_conf "configs/ue1.conf" "log" "phy_lib_level" "none"
+update_conf "configs/ue1.conf" "log" "all_hex_limit" "32"
+update_conf "configs/ue1.conf" "log" "filename" "$SCRIPT_DIR/logs/ue1.txt"
+update_conf "configs/ue1.conf" "log" "file_max_size" "-1"
 
 # Update configuration values for Metrics
-update_conf configs/ue1.conf "general" "metrics_period_secs" "1"
-update_conf configs/ue1.conf "general" "metrics_csv_enable" "false"
-update_conf configs/ue1.conf "general" "metrics_csv_filename" "$SCRIPT_DIR/logs/ue1_metrics.csv"
-update_conf configs/ue1.conf "general" "metrics_json_enable" "false"
-update_conf configs/ue1.conf "general" "metrics_json_filename" "$SCRIPT_DIR/logs/ue_metrics.json"
-update_conf configs/ue1.conf "general" "tracing_enable" "true"
-update_conf configs/ue1.conf "general" "tracing_filename" "$SCRIPT_DIR/logs/ue1_tracing.txt"
-update_conf configs/ue1.conf "general" "tracing_buffcapacity" "1000000"
+update_conf "configs/ue1.conf" "general" "metrics_period_secs" "1"
+update_conf "configs/ue1.conf" "general" "metrics_csv_enable" "false"
+update_conf "configs/ue1.conf" "general" "metrics_csv_filename" "$SCRIPT_DIR/logs/ue1_metrics.csv"
+update_conf "configs/ue1.conf" "general" "metrics_json_enable" "false"
+update_conf "configs/ue1.conf" "general" "metrics_json_filename" "$SCRIPT_DIR/logs/ue_metrics.json"
+update_conf "configs/ue1.conf" "general" "tracing_enable" "true"
+update_conf "configs/ue1.conf" "general" "tracing_filename" "$SCRIPT_DIR/logs/ue1_tracing.txt"
+update_conf "configs/ue1.conf" "general" "tracing_buffcapacity" "1000000"
 
 # Update configuration values for USIM
-update_conf configs/ue1.conf "usim" "mode" "soft"
-update_conf configs/ue1.conf "usim" "algo" "milenage"
-update_conf configs/ue1.conf "usim" "opc" "63BFA50EE6523365FF14C1F45F88737D"
-update_conf configs/ue1.conf "usim" "k" "00112233445566778899aabbccddeeff"
-update_conf configs/ue1.conf "usim" "imsi" "001010123456780"
-update_conf configs/ue1.conf "usim" "imei" "353490069873319"
+update_conf "configs/ue1.conf" "usim" "mode" "soft"
+update_conf "configs/ue1.conf" "usim" "algo" "milenage"
+update_conf "configs/ue1.conf" "usim" "opc" "63BFA50EE6523365FF14C1F45F88737D"
+update_conf "configs/ue1.conf" "usim" "k" "00112233445566778899aabbccddeeff"
+update_conf "configs/ue1.conf" "usim" "imsi" "001010123456780"
+update_conf "configs/ue1.conf" "usim" "imei" "353490069873319"
 
 # Update configuration values for RRC
-update_conf configs/ue1.conf "rrc" "release" "15"
-update_conf configs/ue1.conf "rrc" "ue_category" "4"
+update_conf "configs/ue1.conf" "rrc" "release" "15"
+update_conf "configs/ue1.conf" "rrc" "ue_category" "4"
 
 # Update configuration values for NAS
-update_conf configs/ue1.conf "nas" "apn" "srsapn"
-update_conf configs/ue1.conf "nas" "apn_protocol" "ipv4"
+update_conf "configs/ue1.conf" "nas" "apn" "srsapn"
+update_conf "configs/ue1.conf" "nas" "apn_protocol" "ipv4"
 
 # Update configuration values for Gateway
-update_conf configs/ue1.conf "gw" "netns" "ue1"
-update_conf configs/ue1.conf "gw" "ip_devname" "tun_srsue"
-update_conf configs/ue1.conf "gw" "ip_netmask" "255.255.255.0"
+update_conf "configs/ue1.conf" "gw" "netns" "ue1"
+update_conf "configs/ue1.conf" "gw" "ip_devname" "tun_srsue"
+update_conf "configs/ue1.conf" "gw" "ip_netmask" "255.255.255.0"
 
 # Update configuration values for GUI
-update_conf configs/ue1.conf "gui" "enable" "false"
+update_conf "configs/ue1.conf" "gui" "enable" "false"
 
 mkdir -p logs
 sudo chown $USER:$USER -R logs

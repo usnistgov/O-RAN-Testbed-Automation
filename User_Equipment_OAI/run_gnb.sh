@@ -39,4 +39,4 @@ cd "$SCRIPT_DIR"
 cd "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build"
 
 # Code from (https://github.com/OPENAIRINTERFACE/openairinterface5g/blob/develop/radio/rfsimulator/README.md#5g-case):
-sudo ./nr-softmodem -O ../../../targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band78.fr1.106PRB.usrpb210.conf --rfsim --rfsimulator.serveraddr server
+sudo ./nr-softmodem -O "$SCRIPT_DIR/configs/gnb.conf" --rfsim --rfsimulator.serveraddr server --gNBs.[0].min_rxtxtime 6

@@ -60,6 +60,49 @@ fi
 
 cd ad
 
+################################################################################
+# Patching the Anamoly Detection xApp (ad) to enable its functionality         #
+################################################################################
+
+INFLUXDB_TOKEN_PATH="$PARENT_DIR/influxdb_auth_token.json"
+if [ ! -f "$INFLUXDB_TOKEN_PATH" ]; then
+    echo "Creating an InfluxDB token to influxdb_auth_token.json..."
+    kubectl exec -it r4-influxdb-influxdb2-0 --namespace ricplt -- influx auth create --org influxdata --all-access --json >"$INFLUXDB_TOKEN_PATH"
+fi
+INFLUXDB_TOKEN=$(jq -r '.token' "$INFLUXDB_TOKEN_PATH")
+
+if [ ! -f "src/ad_config.previous.ini" ]; then
+    echo "Patching src/ad_config.ini..."
+    cp src/ad_config.ini src/ad_config.previous.ini
+fi
+if [ ! -f "src/database.previous.py" ]; then
+    echo "Patching src/database.py..."
+    cp src/database.py src/database.previous.py
+fi
+if [ ! -f "src/insert.previous.py" ]; then
+    echo "Patching src/insert.py..."
+    cp src/insert.py src/insert.previous.py
+fi
+if [ ! -f "setup.py.previous" ]; then
+    echo "Patching setup.py..."
+    cp setup.py setup.py.previous
+fi
+
+cp "$PARENT_DIR/install_patch_files/xApps/ad/src/ad_config.ini" src/ad_config.ini
+cp "$PARENT_DIR/install_patch_files/xApps/ad/src/database.py" src/database.py
+cp "$PARENT_DIR/install_patch_files/xApps/ad/src/insert.py" src/insert.py
+cp "$PARENT_DIR/install_patch_files/xApps/ad/setup.py" setup.py
+
+# Set the token in src/ad_config.ini
+if grep -q "token *= *.*" src/ad_config.ini; then
+    echo "Patching src/ad_config.ini to change 'token = $INFLUXDB_TOKEN'..."
+    sed -i "s/token *= *.*$/token = $INFLUXDB_TOKEN/g" src/ad_config.ini
+else
+    echo "Could not find 'token = *' in src/ad_config.ini"
+fi
+
+echo "Patch completed for Anamoly Detection xApp (ad)."
+
 echo "Creating and modifying the configuration file xapp-descriptor/config_updated.json and xapp-descriptor/schema.json..."
 # Check if jq is installed; if not, install it
 if ! command -v jq &>/dev/null; then
@@ -73,7 +116,7 @@ sudo rm -rf $FILE
 cp xapp-descriptor/config.json $FILE
 # Modify the required fields using jq and overwrite the original file
 jq '.containers[0].image.tag = "latest" |
-    .containers[0].image.registry = "example.com:80" |
+    .containers[0].image.registry = "127.0.0.1:80" |
     .containers[0].image.name = "ad"' "$FILE" >tmp.$$.json && mv tmp.$$.json "$FILE"
 
 # Create the default schema.json if it doesn't exist
@@ -89,8 +132,8 @@ if [ ! -f "xapp-descriptor/schema.json" ]; then
 fi
 
 if [ ! -f ad.tar ]; then
-    sudo docker build -t example.com:80/ad:latest .
-    sudo docker save -o ad.tar example.com:80/ad:latest
+    sudo docker build -t 127.0.0.1:80/ad:latest .
+    sudo docker save -o ad.tar 127.0.0.1:80/ad:latest
     sudo chmod 755 ad.tar
     sudo chown $USER:$USER ad.tar
 
@@ -135,6 +178,10 @@ else
     echo "Application failed to deploy."
     exit 1
 fi
+
+# echo "Inserting data into the InfluxDB..."
+# POD_NAME=$(kubectl get pods --all-namespaces | grep ricxapp-ad | awk '{print $2}')
+# kubectl exec -n ricxapp -it $POD_NAME -- /bin/sh -c "python3 /src/insert.py"
 
 cd "$PARENT_DIR"
 

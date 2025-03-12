@@ -73,12 +73,12 @@ sudo rm -rf $FILE
 cp xapp-descriptor/config-file.json $FILE
 # Modify the required fields using jq and overwrite the original file
 jq '.containers[0].image.tag = "latest" |
-    .containers[0].image.registry = "example.com:80" |
+    .containers[0].image.registry = "127.0.0.1:80" |
     .containers[0].image.name = "trafficxapp"' "$FILE" >tmp.$$.json && mv tmp.$$.json "$FILE"
 
 if [ ! -f trafficxapp.tar]; then
-    sudo docker build -t example.com:80/trafficxapp:latest .
-    sudo docker save -o trafficxapp.tar example.com:80/trafficxapp:latest
+    sudo docker build -t 127.0.0.1:80/trafficxapp:latest .
+    sudo docker save -o trafficxapp.tar 127.0.0.1:80/trafficxapp:latest
     sudo chmod 755 trafficxapp.tar
     sudo chown $USER:$USER trafficxapp.tar
 

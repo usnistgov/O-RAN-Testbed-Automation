@@ -49,7 +49,7 @@ fi
 FILE="config/config-file_updated.json"
 sudo rm -rf $FILE
 cp config/config-file.json $FILE
-# Modify the required fields using jq and overwrite the original file
+# Modify the required fields using jq and overwrite the original file, following the NIST TN 2311 blueprint
 jq '.containers[0].image.tag = "latest" |
     .containers[0].image.registry = "example.com:80" |
     .containers[0].image.name = "hw-go"' "$FILE" >tmp.$$.json && mv tmp.$$.json "$FILE"

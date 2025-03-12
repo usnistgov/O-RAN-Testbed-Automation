@@ -60,6 +60,56 @@ fi
 
 cd ad-cell
 
+################################################################################
+# Patching the 5G Cell Anamoly Detection xApp (ad-cell)                        #
+################################################################################
+
+INFLUXDB_TOKEN_PATH="$PARENT_DIR/influxdb_auth_token.json"
+if [ ! -f "$INFLUXDB_TOKEN_PATH" ]; then
+    echo "Creating an InfluxDB token to influxdb_auth_token.json..."
+    kubectl exec -it r4-influxdb-influxdb2-0 --namespace ricplt -- influx auth create --org influxdata --all-access --json >"$INFLUXDB_TOKEN_PATH"
+fi
+INFLUXDB_TOKEN=$(jq -r '.token' "$INFLUXDB_TOKEN_PATH")
+
+if [ ! -f "src/configuration/config.previous.ini" ]; then
+    echo "Patching src/configuration/config.ini..."
+    cp src/configuration/config.ini src/configuration/config.previous.ini
+fi
+
+# Set the InfluxDB URL in src/ad_config.ini
+if grep -q "INFLUX_URL *= *.*" src/configuration/config.ini; then
+    echo "Patching src/configuration/config.ini to change 'INFLUX_URL = $INFLUXDB_TOKEN'..."
+    sed -i "s/INFLUX_URL *= *.*$/INFLUX_URL = http:\/\/r4-influxdb-influxdb2.ricplt:80/g" src/configuration/config.ini
+else
+    echo "Could not find 'INFLUX_URL = *' in src/configuration/config.ini."
+fi
+
+# Set the token in src/ad_config.ini
+if grep -q "INFLUX_TOKEN *= *.*" src/configuration/config.ini; then
+    echo "Patching src/configuration/config.ini to change 'INFLUX_TOKEN = $INFLUXDB_TOKEN'..."
+    sed -i "s/INFLUX_TOKEN *= *.*$/INFLUX_TOKEN = $INFLUXDB_TOKEN/g" src/configuration/config.ini
+else
+    echo "Could not find 'INFLUX_TOKEN = *' in src/configuration/config.ini."
+fi
+
+# Set the bucket in src/ad_config.ini
+if grep -q "INFLUX_BUCKET *= *.*" src/configuration/config.ini; then
+    echo "Patching src/configuration/config.ini to change 'INFLUX_BUCKET = $INFLUXDB_TOKEN'..."
+    sed -i "s/INFLUX_BUCKET *= *.*$/INFLUX_BUCKET = kpimon/g" src/configuration/config.ini
+else
+    echo "Could not find 'INFLUX_BUCKET = *' in src/configuration/config.ini."
+fi
+
+# Set the org in src/ad_config.ini
+if grep -q "INFLUX_ORG *= *.*" src/configuration/config.ini; then
+    echo "Patching src/configuration/config.ini to change 'INFLUX_ORG = $INFLUXDB_TOKEN'..."
+    sed -i "s/INFLUX_ORG *= *.*$/INFLUX_ORG = influxdata/g" src/configuration/config.ini
+else
+    echo "Could not find 'INFLUX_ORG = *' in src/configuration/config.ini."
+fi
+
+echo "Patch completed for 5G Cell Anamoly Detection xApp (ad-cell)."
+
 echo "Creating and modifying the configuration file init/config-file_updated.json..."
 # Check if jq is installed; if not, install it
 if ! command -v jq &>/dev/null; then
@@ -73,12 +123,12 @@ sudo rm -rf $FILE
 cp init/config-file.json $FILE
 # Modify the required fields using jq and overwrite the original file
 jq '.containers[0].image.tag = "latest" |
-    .containers[0].image.registry = "example.com:80" |
+    .containers[0].image.registry = "127.0.0.1:80" |
     .containers[0].image.name = "ad-cell"' "$FILE" >tmp.$$.json && mv tmp.$$.json "$FILE"
 
 if [ ! -f ad-cell.tar ]; then
-    sudo docker build -t example.com:80/ad-cell:latest .
-    sudo docker save -o ad-cell.tar example.com:80/ad-cell:latest
+    sudo docker build -t 127.0.0.1:80/ad-cell:latest .
+    sudo docker save -o ad-cell.tar 127.0.0.1:80/ad-cell:latest
     sudo chmod 755 ad-cell.tar
     sudo chown $USER:$USER ad-cell.tar
 

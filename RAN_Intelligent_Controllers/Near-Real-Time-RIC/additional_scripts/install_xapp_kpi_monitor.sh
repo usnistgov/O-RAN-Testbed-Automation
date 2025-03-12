@@ -50,12 +50,6 @@ if [ "$CHART_REPO_URL" != "http://0.0.0.0:8090" ]; then
 fi
 sudo ./install_scripts/run_chart_museum.sh
 
-if [ ! -f influxdb_auth_token.json ]; then
-    echo "Creating an InfluxDB token to influxdb_auth_token.json..."
-    kubectl exec -it r4-influxdb-influxdb2-0 --namespace ricplt -- influx auth create --org influxdata --all-access --json >influxdb_auth_token.json
-fi
-INFLUXDB_TOKEN=$(jq -r '.token' influxdb_auth_token.json)
-
 mkdir -p xApps
 cd xApps
 
@@ -67,8 +61,22 @@ fi
 cd kpimon-go
 
 ################################################################################
-# Patching the KPI Monitor xApp (kpimon-go) control/control.go file            #
+# Patching the KPI Monitor xApp (kpimon-go) to enable its functionality        #
 ################################################################################
+
+INFLUXDB_TOKEN_PATH="$PARENT_DIR/influxdb_auth_token.json"
+if [ ! -f "$INFLUXDB_TOKEN_PATH" ]; then
+    echo "Creating an InfluxDB token to influxdb_auth_token.json..."
+    kubectl exec -it r4-influxdb-influxdb2-0 --namespace ricplt -- influx auth create --org influxdata --all-access --json >"$INFLUXDB_TOKEN_PATH"
+fi
+INFLUXDB_TOKEN=$(jq -r '.token' "$INFLUXDB_TOKEN_PATH")
+
+if [ ! -f "e2sm/wrapper.c.previous" ]; then
+    echo "Backing up e2sm/wrapper.c to e2sm/wrapper.c.previous..."
+    cp e2sm/wrapper.c e2sm/wrapper.c.previous
+fi
+echo "Copying the e2sm/wrapper.c file from the install_patch_files directory..."
+cp ../../install_patch_files/xApps/kpimon-go/e2sm/wrapper.c e2sm/wrapper.c
 
 if [ ! -f "control/control.go.previous" ]; then
     echo "Backing up control/control.go to control/control.go.previous..."
@@ -90,31 +98,22 @@ fi
 echo "Creating the 'kpimon' bucket in the 'influxdata' organization if it does not exist..."
 kubectl exec -n ricplt -it r4-influxdb-influxdb2-0 -- influx bucket create --org influxdata --name kpimon --json || true
 
-# Get the IP of the InfluxDB service
-SERVICE_INFO=$(kubectl get service -n ricplt | grep r4-influxdb-influxdb)
-if [ -z "$SERVICE_INFO" ]; then
-    echo "No service found or kubectl command failed."
-    exit 1
-else
-    IP_INFLUXDB=$(echo "$SERVICE_INFO" | awk '{print $3}')
-fi
-
-# Set influxdb2.NewClient("$IP_INFLUXDB", "$INFLUXDB_TOKEN")
+# Set influxdb2.NewClient("http://r4-influxdb-influxdb2.ricplt:80", "$INFLUXDB_TOKEN")
 if grep -q "influxdb2.NewClient(" control/control.go; then
     echo "Patching control/control.go to replace 'influxdb2.NewClient(' with the new client call..."
     if [ ! -f "src/control/control.go.previous" ]; then
         cp control/control.go control/control.go.previous
     fi
-    sed -i "s|influxdb2.NewClient([^)]*)|influxdb2.NewClient(\"$IP_INFLUXDB\", \"$INFLUXDB_TOKEN\")|g" control/control.go
+    sed -i "s|influxdb2.NewClient([^)]*)|influxdb2.NewClient(\"http://r4-influxdb-influxdb2.ricplt:80\", \"$INFLUXDB_TOKEN\")|g" control/control.go
 else
     echo "No modification needed in control/control.go."
 fi
 
 # In case the previous replacement failed, replace "ricplt-influxdb.ricplt" with the InfluxDB IP in control/control.go
 if grep -q "ricplt-influxdb.ricplt" control/control.go; then
-    echo "Patching control/control.go to replace 'ricplt-influxdb.ricplt' with '$IP_INFLUXDB'..."
+    echo "Patching control/control.go to replace 'ricplt-influxdb.ricplt' with 'r4-influxdb-influxdb2.ricplt'..."
 
-    sed -i "s/ricplt-influxdb.ricplt/$IP_INFLUXDB/g" control/control.go
+    sed -i "s/ricplt-influxdb.ricplt:8086/r4-influxdb-influxdb2.ricplt:80/g" control/control.go
 else
     echo "No modification needed in control/control.go."
 fi
@@ -142,6 +141,8 @@ else
     echo "No modification needed in control/control.go."
 fi
 
+echo "Patch completed for KPI Monitor xApp (kpimon-go)."
+
 echo "Creating and modifying the configuration file deploy/config_updated.json"
 # Check if jq is installed; if not, install it
 if ! command -v jq &>/dev/null; then
@@ -155,12 +156,12 @@ sudo rm -rf $FILE
 cp deploy/config.json $FILE
 # Modify the required fields using jq and overwrite the original file
 jq '.containers[0].image.tag = "latest" |
-    .containers[0].image.registry = "example.com:80" |
+    .containers[0].image.registry = "127.0.0.1:80" |
     .containers[0].image.name = "kpimon-go"' "$FILE" >tmp.$$.json && mv tmp.$$.json "$FILE"
 
 if [ ! -f kpimon-go.tar ]; then
-    sudo docker build -t example.com:80/kpimon-go:latest .
-    sudo docker save -o kpimon-go.tar example.com:80/kpimon-go:latest
+    sudo docker build -t 127.0.0.1:80/kpimon-go:latest .
+    sudo docker save -o kpimon-go.tar 127.0.0.1:80/kpimon-go:latest
     sudo chmod 755 kpimon-go.tar
     sudo chown $USER:$USER kpimon-go.tar
 

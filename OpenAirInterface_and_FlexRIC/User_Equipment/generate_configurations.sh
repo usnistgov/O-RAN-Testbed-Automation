@@ -39,8 +39,32 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
+# Function to update or add configuration properties in .conf files, considering sections and uncommenting if needed
+update_conf() {
+    echo "update_conf($1, $2, $3)"
+    local FILE_PATH="$1"
+    local PROPERTY="$2"
+    local VALUE="$3"
+
+    # Check if the property exists in the file, and update or append it accordingly
+    if grep -q "^\s*$PROPERTY\s*=" "$FILE_PATH"; then
+        # Update existing property's value
+        sed -i "s|^\(\s*$PROPERTY\s*=\).*|\1 $VALUE;|" "$FILE_PATH"
+    else
+        # Append new property-value pair if it does not exist
+        echo "$PROPERTY = $VALUE;" >>"$FILE_PATH"
+    fi
+}
+
+# Function to comment out a line in a file
+comment_out() {
+    local FILE_PATH="$1"
+    local STRING="$2"
+    sed -i "s|^\(\s*\)$STRING|#\1$STRING|" "$FILE_PATH"
+}
+
 # Define the path to the YAML file
-YAML_PATH="../5G_Core_Network/options.yaml"
+YAML_PATH="../../5G_Core_Network/options.yaml"
 if [ ! -f "$YAML_PATH" ]; then
     echo "Configuration not found in $YAML_PATH, please generate the configuration for 5G_Core_Network first."
     exit 1
@@ -80,58 +104,60 @@ fi
 echo "Saving configuration file example..."
 rm -rf "$SCRIPT_DIR/configs"
 mkdir "$SCRIPT_DIR/configs"
-rm -rf "$SCRIPT_DIR/logs"
 
 cp openairinterface5g/targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band78.fr1.106PRB.usrpb210.conf "$SCRIPT_DIR/configs/gnb.conf"
 
-USE_OSC_NEARRTRIC="true"
-if [ ! -d "../RAN_Intelligent_Controllers/Near-Real-Time-RIC" ]; then
-    echo "Could not find the O-SC Near-Real-Time-RIC directory. Disabling E2 termination support."
-    USE_OSC_NEARRTRIC="false"
-fi
+# USE_OSC_NEARRTRIC="true"
+# if [ ! -d "../RAN_Intelligent_Controllers/Near-Real-Time-RIC" ]; then
+#     echo "Could not find the O-SC Near-Real-Time-RIC directory. Disabling E2 termination support."
+#     USE_OSC_NEARRTRIC="false"
+# fi
 
-if [ "$USE_OSC_NEARRTRIC" = "true" ]; then
-    echo "Fetching E2 termination service IP address..."
+# if [ "$USE_OSC_NEARRTRIC" = "true" ]; then
+#     echo "Fetching E2 termination service IP address..."
 
-    INSIDE_CLUSTER="no"
-    # echo "Are you connecting to the e2term from inside the Kubernetes cluster? [yes/no]"
-    # read -p "Enter choice (yes/no): " INSIDE_CLUSTER
-    if [ "$INSIDE_CLUSTER" = "yes" ]; then
-        PORT_E2TERM=36422
-    else
-        PORT_E2TERM=32222
-    fi
+#     INSIDE_CLUSTER="yes"
+#     # echo "Are you connecting to the e2term from inside the Kubernetes cluster? [yes/no]"
+#     # read -p "Enter choice (yes/no): " INSIDE_CLUSTER
+#     if [ "$INSIDE_CLUSTER" = "yes" ]; then
+#         PORT_E2TERM=36422
+#     else
+#         PORT_E2TERM=32222
+#     fi
 
-    # Check if kubectl is installed
-    if command -v kubectl &>/dev/null; then
-        SERVICE_INFO=$(kubectl get service -n ricplt | grep service-ricplt-e2term-sctp)
+#     # Check if kubectl is installed
+#     if command -v kubectl &>/dev/null; then
+#         SERVICE_INFO=$(kubectl get service -n ricplt | grep service-ricplt-e2term-sctp)
 
-        # Check if SERVICE_INFO is empty
-        if [ -z "$SERVICE_INFO" ]; then
-            echo "No service found or kubectl command failed."
-            IP_E2TERM=$(prompt_for_e2term_ip)
-        else
-            # Use awk to extract the IP and the correct port based on the connection context
-            IP_E2TERM=$(echo "$SERVICE_INFO" | awk '{print $3}')
-            if [ "$INSIDE_CLUSTER" = "true" ]; then
-                PORT_E2TERM=$(echo "$SERVICE_INFO" | awk '{print $5}' | cut -d ':' -f1)
-            else
-                PORT_E2TERM=$(echo "$SERVICE_INFO" | awk '{print $5}' | cut -d ':' -f2)
-            fi
+#         # Check if SERVICE_INFO is empty
+#         if [ -z "$SERVICE_INFO" ]; then
+#             echo "No service found or kubectl command failed."
+#             IP_E2TERM=$(prompt_for_e2term_ip)
+#         else
+#             # Use awk to extract the IP and the correct port based on the connection context
+#             IP_E2TERM=$(echo "$SERVICE_INFO" | awk '{print $3}')
+#             if [ "$INSIDE_CLUSTER" = "yes" ]; then
+#                 PORT_E2TERM=$(echo "$SERVICE_INFO" | awk '{print $5}' | cut -d ':' -f1)
+#             else
+#                 PORT_E2TERM=$(echo "$SERVICE_INFO" | awk '{print $5}' | cut -d ':' -f2)
+#             fi
 
-            if [ -z "$IP_E2TERM" ] || [ "$IP_E2TERM" == "<none>" ]; then
-                IP_E2TERM=$(prompt_for_e2term_ip)
-            fi
-        fi
-    fi
-    IP_E2TERM_BIND=$IP_E2TERM
-    echo "IP_E2TERM: $IP_E2TERM"
-    echo "PORT_E2TERM: $PORT_E2TERM"
-    echo "IP_E2TERM_BIND: $IP_E2TERM_BIND"
-fi
+#             if [ -z "$IP_E2TERM" ] || [ "$IP_E2TERM" == "<none>" ]; then
+#                 IP_E2TERM=$(prompt_for_e2term_ip)
+#             fi
+#         fi
+#     fi
+#     IP_E2TERM_BIND=$IP_E2TERM
+#     echo "IP_E2TERM: $IP_E2TERM"
+#     echo "PORT_E2TERM: $PORT_E2TERM"
+#     echo "IP_E2TERM_BIND: $IP_E2TERM_BIND"
+
+#     update_conf "configs/gnb.conf" "near_ric_ip_addr" "\"$IP_E2TERM\""
+#     comment_out "configs/gnb.conf" "sm_dir ="
+# fi
 
 echo "Fetching AMF addresses..."
-FILE_PATH="../5G_Core_Network/configs/get_amf_address.txt"
+FILE_PATH="../../5G_Core_Network/configs/get_amf_address.txt"
 
 prompt_for_addresses() {
     echo "Please enter the AMF address and the AMF binding address manually." >&2
@@ -160,23 +186,6 @@ fi
 
 echo "AMF Address: $AMF_ADDR"
 echo "AMF Binding Address: $AMF_ADDR_BIND"
-
-# Function to update or add configuration properties in .conf files, considering sections and uncommenting if needed
-update_conf() {
-    echo "update_conf($1, $2, $3)"
-    local FILE_PATH="$1"
-    local PROPERTY="$2"
-    local VALUE="$3"
-
-    # Check if the property exists in the file, and update or append it accordingly
-    if grep -q "^\s*$PROPERTY\s*=" "$FILE_PATH"; then
-        # Update existing property's value
-        sed -i "s|^\(\s*$PROPERTY\s*=\).*|\1 $VALUE;|" "$FILE_PATH"
-    else
-        # Append new property-value pair if it does not exist
-        echo "$PROPERTY = $VALUE;" >>"$FILE_PATH"
-    fi
-}
 
 # Update configuration values for RF front-end device
 update_conf "configs/gnb.conf" "amf_ip_address" "({ ipv4 = \"$AMF_ADDR\"; })"
@@ -243,8 +252,5 @@ for UE_NUMBER in {1..3}; do
     # Allows the UE to select the appropriate network slice, which provides different QoS.
     update_conf "configs/ue$UE_NUMBER.conf" "nssai_sst" "1"
 done
-
-mkdir -p logs
-sudo chown $USER:$USER -R logs
 
 echo "Successfully configured the UE. The configuration file is located in the configs/ directory."

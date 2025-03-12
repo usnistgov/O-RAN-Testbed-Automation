@@ -88,7 +88,7 @@ fi
 if [ "$ENABLE_E2_TERM" = "true" ]; then
     echo "Fetching E2 termination service IP address..."
 
-    INSIDE_CLUSTER="no"
+    INSIDE_CLUSTER="yes"
     # echo "Are you connecting to the e2term from inside the Kubernetes cluster? [yes/no]"
     # read -p "Enter choice (yes/no): " INSIDE_CLUSTER
     if [ "$INSIDE_CLUSTER" = "yes" ]; then
@@ -111,10 +111,10 @@ if [ "$ENABLE_E2_TERM" = "true" ]; then
         else
             # Use awk to extract the IP and the correct port based on the connection context
             IP_E2TERM=$(echo "$SERVICE_INFO" | awk '{print $3}')
-            if [ "$INSIDE_CLUSTER" = "true" ]; then
-                PORT_E2TERM=$(echo "$SERVICE_INFO" | awk '{print $5}' | cut -d ':' -f1)
+            if [ "$INSIDE_CLUSTER" = "yes" ]; then
+                PORT_E2TERM=$(echo "$SERVICE_INFO" | awk '{print $5}' | cut -d ':' -f1 | cut -d '/' -f1)
             else
-                PORT_E2TERM=$(echo "$SERVICE_INFO" | awk '{print $5}' | cut -d ':' -f2)
+                PORT_E2TERM=$(echo "$SERVICE_INFO" | awk '{print $5}' | cut -d ':' -f2 | cut -d '/' -f1)
             fi
 
             if [ -z "$IP_E2TERM" ] || [ "$IP_E2TERM" == "<none>" ]; then

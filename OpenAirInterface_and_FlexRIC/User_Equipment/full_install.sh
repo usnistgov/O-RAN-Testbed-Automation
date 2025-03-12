@@ -53,36 +53,13 @@ fi
 # Get the start timestamp in seconds
 INSTALL_START_TIME=$(date +%s)
 
-sudo rm -rf logs/
-
-# Prevent the unattended-upgrades service from creating dpkg locks that would error the script
-if systemctl is-active --quiet unattended-upgrades; then
-    sudo systemctl stop unattended-upgrades &>/dev/null && echo "Successfully stopped unattended-upgrades service."
-    sudo systemctl disable unattended-upgrades &>/dev/null && echo "Successfully disabled unattended-upgrades service."
-fi
-if systemctl is-active --quiet apt-daily.timer; then
-    sudo systemctl stop apt-daily.timer &>/dev/null && echo "Successfully stopped apt-daily.timer service."
-    sudo systemctl disable apt-daily.timer &>/dev/null && echo "Successfully disabled apt-daily.timer service."
-fi
-if systemctl is-active --quiet apt-daily-upgrade.timer; then
-    sudo systemctl stop apt-daily-upgrade.timer &>/dev/null && echo "Successfully stopped apt-daily-upgrade.timer service."
-    sudo systemctl disable apt-daily-upgrade.timer &>/dev/null && echo "Successfully disabled apt-daily-upgrade.timer service."
-fi
-
 if [ ! -d "openairinterface5g" ]; then
     echo "Cloning openairinterface5g..."
     ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/oai/openairinterface5g.git openairinterface5g
 fi
 
 echo "Updating package lists..."
-if ! sudo apt-get update; then
-    sudo "$SCRIPT_DIR/install_scripts/./remove_expired_apt_keys.sh"
-    echo "Trying to update package lists again..."
-    if ! sudo apt-get update; then
-        echo "Failed to update package lists"
-        exit 1
-    fi
-fi
+sudo apt-get update
 
 echo
 echo
@@ -124,7 +101,6 @@ if [ -n "$INSTALL_START_TIME" ]; then
     DURATION=$((INSTALL_END_TIME - INSTALL_START_TIME))
     DURATION_MINUTES=$(echo "scale=5; $DURATION/ 60" | bc)
     echo "The gNodeB installation process took $DURATION_MINUTES minutes to complete."
-    mkdir -p logs
     echo "$DURATION_MINUTES minutes" >>install_time.txt
 fi
 

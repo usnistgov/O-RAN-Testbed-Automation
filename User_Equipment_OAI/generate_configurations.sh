@@ -174,7 +174,7 @@ update_conf() {
         sed -i "s|^\(\s*$PROPERTY\s*=\).*|\1 $VALUE;|" "$FILE_PATH"
     else
         # Append new property-value pair if it does not exist
-        echo "$PROPERTY = $VALUE;" >> "$FILE_PATH"
+        echo "$PROPERTY = $VALUE;" >>"$FILE_PATH"
     fi
 }
 
@@ -229,19 +229,19 @@ for UE_NUMBER in {1..3}; do
     fi
 
     # Unique identifier for the UE within the mobile network. Used by the network to identify the UE during authentication. It ensures that the UE is correctly identified by the network.
-    update_conf "configs/ue$UE_NUMBER.conf" "imsi" "\"$UE_IMSI\"";
-    
+    update_conf "configs/ue$UE_NUMBER.conf" "imsi" "\"$UE_IMSI\""
+
     # Cryptographic key shared between the UE and the network, used for encryption during the authentication process.
-    update_conf "configs/ue$UE_NUMBER.conf" "key" "\"$UE_KEY\"";
+    update_conf "configs/ue$UE_NUMBER.conf" "key" "\"$UE_KEY\""
 
     # Operator key for the Milenage Authentication and Key Agreement algorithm used for encryption during the authentication process.
-    update_conf "configs/ue$UE_NUMBER.conf" "opc" "\"$UE_OPC\"";
+    update_conf "configs/ue$UE_NUMBER.conf" "opc" "\"$UE_OPC\""
 
     # Specifies the name of the data network the UE wishes to connect to, similar to an APN in 4G networks.
-    update_conf "configs/ue$UE_NUMBER.conf" "dnn" "\"$UE_APN\"";
+    update_conf "configs/ue$UE_NUMBER.conf" "dnn" "\"$UE_APN\""
 
     # Allows the UE to select the appropriate network slice, which provides different QoS.
-    update_conf "configs/ue$UE_NUMBER.conf" "nssai_sst" "1";
+    update_conf "configs/ue$UE_NUMBER.conf" "nssai_sst" "1"
 done
 
 mkdir -p logs

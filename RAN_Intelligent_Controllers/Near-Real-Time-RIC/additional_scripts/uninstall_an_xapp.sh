@@ -33,48 +33,45 @@ echo "# Script: $(realpath $0)..."
 # Exit immediately if a command fails
 set -e
 
-SCRIPT_DIR=$(dirname "$(realpath "$0")")
-PARENT_DIR=$(dirname "$SCRIPT_DIR")
-cd "$PARENT_DIR"
+CHARTS_OUTPUT=$(dms_cli get_charts_list)
 
-if [ "$CHART_REPO_URL" != "http://0.0.0.0:8090" ]; then
-    echo "Registering the Chart Museum URL..."
-    ./install_scripts/register_chart_museum_url.sh
-    export CHART_REPO_URL="http://0.0.0.0:8090"
-fi
-sudo ./install_scripts/run_chart_museum.sh
+echo
+kubectl get pods -n ricxapp || true
+echo
 
-mkdir -p xApps
-cd xApps
+echo "List of available xApps to uninstall:"
 
-if [ ! -d "kpimon-go" ]; then
-    echo "KPI Monitor xApp (kpimon-go) not found. Please install it first."
-    exit 1
-fi
+# Parse the list of installed xApps and versions into an array
+XAPP_LIST=$(echo "$CHARTS_OUTPUT" | jq -r '. | to_entries[] | "\(.key) \(.value[].version)"')
+IFS=$'\n' XAPP_NAMES=($XAPP_LIST) # Convert the string to an array
+unset IFS
 
-cd kpimon-go
+# Display the list of installed xApps
+COUNTER=1
+for XAPP in "${XAPP_NAMES[@]}"; do
+    echo -e "    $COUNTER. \t$XAPP"
+    let COUNTER++
+done
 
-echo "Uninstalling application 'kpimon-go' if it exists..."
-UNINSTALL_OUTPUT=$(dms_cli uninstall kpimon-go ricxapp 2>&1) || true
-if echo "$UNINSTALL_OUTPUT" | grep -q 'release: not found\|No Xapp to uninstall' || true; then
-    echo "Application kpimon-go not found or already uninstalled."
+echo -n "Please select an xApp to uninstall (between 1 and ${#XAPP_NAMES[@]}): "
+read USER_CHOICE
+
+# Validate user input and uninstall the selected xApp
+if [[ $USER_CHOICE =~ ^[0-9]+$ ]] && [ $USER_CHOICE -ge 1 ] && [ $USER_CHOICE -le ${#XAPP_NAMES[@]} ]; then
+    SELECTED_XAPP=$(echo "${XAPP_NAMES[$USER_CHOICE - 1]}" | awk '{print $1}')
+    SELECTED_VERSION=$(echo "${XAPP_NAMES[$USER_CHOICE - 1]}" | awk '{print $2}')
+
+    echo "Uninstalling $SELECTED_XAPP version $SELECTED_VERSION..."
+    UNINSTALL_OUTPUT=$(dms_cli uninstall "$SELECTED_XAPP" ricxapp --version "$SELECTED_VERSION" 2>&1) || true
+
+    if echo "$UNINSTALL_OUTPUT" | grep -q 'release: not found\|No XAPP to uninstall'; then
+        echo "Application $SELECTED_XAPP not found or already uninstalled."
+    else
+        echo "$UNINSTALL_OUTPUT"
+        kubectl get pods -n ricxapp || true
+        echo
+        echo "Successfully uninstalled $SELECTED_XAPP version $SELECTED_VERSION."
+    fi
 else
-    echo "$UNINSTALL_OUTPUT"
+    echo "Invalid input. Exiting."
 fi
-
-XAPP_VERSION=$(dms_cli get_charts_list | jq -r '.["kpimon-go"][0].version')
-
-echo "Installing application 'kpimon-go'..."
-OUTPUT=$(dms_cli install kpimon-go $XAPP_VERSION ricxapp) || echo "Failed to install kpimon-go xApp with dms_cli."
-echo "$OUTPUT"
-if echo "$OUTPUT" | grep -qE '"?status"?:\s*"?\bOK\b"?'; then
-    echo "Application successfully deployed."
-else
-    echo "Application failed to deploy."
-    exit 1
-fi
-
-cd "$PARENT_DIR"
-kubectl get pods -n ricxapp
-
-echo "Successfully restarted the KPI Monitor xApp (kpimon-go)."

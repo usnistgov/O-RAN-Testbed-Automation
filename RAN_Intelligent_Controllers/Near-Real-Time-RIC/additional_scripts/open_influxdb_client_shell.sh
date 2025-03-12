@@ -38,14 +38,13 @@ if [ ! -f influxdb_auth_token.json ]; then
 fi
 INFLUXDB_TOKEN=$(jq -r '.token' influxdb_auth_token.json)
 
-# Export the InfluxDB token for use in the InfluxDB CLI
-kubectl exec -n ricplt -it r4-influxdb-influxdb2-0 -- /bin/sh -c "export TOKEN='$INFLUXDB_TOKEN'"
 # Delete existing data point
 # kubectl exec -n ricplt -it r4-influxdb-influxdb2-0 -- /bin/sh -c "influx delete --bucket \"kpimon\" --org \"influxdata\" --start '1970-01-01T00:00:00Z' --stop \"$(date --utc +%Y-%m-%dT%H:%M:%SZ)\" --predicate '_measurement=\"test_measurement\"'"
 # Write data point with:
 # kubectl exec -n ricplt -it r4-influxdb-influxdb2-0 -- /bin/sh -c "influx write --bucket \"kpimon\" --org \"influxdata\" --precision s \"test_measurement,host=server01 value=0.64 $(date +%s)\""
 
 echo -e "\nConnecting to InfluxDB CLI within the Kubernetes pod..."
+echo -e "Please run: export TOKEN=\"$INFLUXDB_TOKEN\"\n"
 echo -e "Below are some example commands to interact with the InfluxDB database:\n"
 echo -e "  List all buckets:"
 echo -e "    influx bucket list --org influxdata --token \$TOKEN"
@@ -61,4 +60,5 @@ echo -e "  List tag values for a specific tag key:"
 echo -e "    influx query 'import \"influxdata/influxdb/schema\"; schema.tagValues(bucket: \"kpimon\", tag: \"your-tag\")' --org influxdata --token \$TOKEN"
 echo -e "\nType 'exit' twice to leave the InfluxDB CLI and return to your shell."
 
-kubectl exec -n ricplt -it r4-influxdb-influxdb2-0 -- /bin/sh
+# Export the InfluxDB token for use in the InfluxDB CLI
+kubectl exec -n ricplt -it r4-influxdb-influxdb2-0 -- /bin/sh -c "export TOKEN=\"$INFLUXDB_TOKEN\" && /bin/sh"

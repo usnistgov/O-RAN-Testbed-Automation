@@ -73,12 +73,12 @@ sudo rm -rf $FILE
 cp config/config-file.json $FILE
 # Modify the required fields using jq and overwrite the original file
 jq '.containers[0].image.tag = "latest" |
-    .containers[0].image.registry = "example.com:80" |
+    .containers[0].image.registry = "127.0.0.1:80" |
     .containers[0].image.name = "hw-rust"' "$FILE" >tmp.$$.json && mv tmp.$$.json "$FILE"
 
 if [ ! -f hw-rust.tar ]; then
-    sudo docker build -t example.com:80/hw-rust:latest .
-    sudo docker save -o hw-rust.tar example.com:80/hw-rust:latest
+    sudo docker build -t 127.0.0.1:80/hw-rust:latest .
+    sudo docker save -o hw-rust.tar 127.0.0.1:80/hw-rust:latest
     sudo chmod 755 hw-rust.tar
     sudo chown $USER:$USER hw-rust.tar
 

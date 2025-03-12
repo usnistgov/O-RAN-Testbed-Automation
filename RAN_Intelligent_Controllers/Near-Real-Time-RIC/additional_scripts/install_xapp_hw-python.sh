@@ -73,12 +73,12 @@ sudo rm -rf $FILE
 cp init/config-file.json $FILE
 # Modify the required fields using jq and overwrite the original file
 jq '.containers[0].image.tag = "latest" |
-    .containers[0].image.registry = "example.com:80" |
+    .containers[0].image.registry = "127.0.0.1:80" |
     .containers[0].image.name = "hw-python"' "$FILE" >tmp.$$.json && mv tmp.$$.json "$FILE"
 
 if [ ! -f hw-python.tar ]; then
-    sudo docker build -t example.com:80/hw-python:latest .
-    sudo docker save -o hw-python.tar example.com:80/hw-python:latest
+    sudo docker build -t 127.0.0.1:80/hw-python:latest .
+    sudo docker save -o hw-python.tar 127.0.0.1:80/hw-python:latest
     sudo chmod 755 hw-python.tar
     sudo chown $USER:$USER hw-python.tar
 

@@ -17,11 +17,14 @@ This automation tool is based on the K-Release of the Near-RT RIC. More informat
 - **Status**: Check on a pod's status with `kubectl get pods -A`, or by running the interactive pod manager (K9s) with `k9s -A` or `./start_k9s.sh`.
 - **Logs**: From within K9s, use the `Arrow Keys` to highlight a pod, `Enter` to view the logs for the pod, `w` to wrap text, `Esc` to go back, `Ctrl+k` to restart a pod that isn't responding, and `s` to open a command line shell in the pod.
 
-## Installing xApps
+## Installing an xApp
 By default, the Hello World Go xApp (hw-go) is installed automatically. Additional xApps can be installed to extend the functionality of the Near-RT RIC. For convenience, installation scripts for the following xApps are included:
 
 - **KPI Monitoring xApp (kpimon)**:
   - Install with `./additional_scripts/install_xapp_kpi_monitor.sh`.
+  - Patched to connect to the InfluxDB pod and write metrics to its database.
+    - Upon initialization, the xApp will only connect to pre-existing E2 nodes, therefore, you can restart the xApp by running the install script again which will establish connections to any new E2 nodes.
+    - Metrics will be stored in the InfluxDB pod under `bucket=kpimon, org=influxdata`. Access this data by opening the InfluxDB Client with `./additional_scripts/open_influxdb_client_shell.sh`.
   - More information can be found in the documentation [[4]][kpimon-go-docs] and code [[5]][kpimon-go-code].
   - For information about using the KPI monitor, please refer to [[6]][abdul-kpimon-go].
 - **5G Cell Anomaly Detection xApp (ad-cell)**:
@@ -29,15 +32,11 @@ By default, the Hello World Go xApp (hw-go) is installed automatically. Addition
   - More information can be found in the documentation [[7]][ad-cell-docs] and code [[8]][ad-cell-code].
 - **Anomaly Detection xApp (ad)**:
   - Install with `./additional_scripts/install_xapp_anomaly_detection.sh`.
+  - Patched to support InfluxDB version 2.X instead of InfluxDB 1.X.
   - More information can be found in the documentation [[9]][ad-docs] and code [[10]][ad-code].
-- **Hello World Python xApp (hw-python)**:
-  - Install with `./additional_scripts/install_xapp_hw-python.sh`.
-  - More information can be found in the code [[11]][hw-python-code].
-- **Hello World Rust xApp (hw-rust)**:
-  - Install with `./additional_scripts/install_xapp_hw-rust.sh`.
-  - More information can be found in the code [[12]][hw-rust-code].
 - **Quality of Experience Predictor xApp (qp)**:
   - Install with `./additional_scripts/install_xapp_qoe_predictor.sh`.
+  - Patched to support InfluxDB version 2.X instead of InfluxDB 1.X.
   - More information can be found in the documentation [[13]][qp-docs] and code [[14]][qp-code].
 - **RIC Control xApp (rc)**:
   - Install with `./additional_scripts/install_xapp_ric_control.sh`.
@@ -45,6 +44,16 @@ By default, the Hello World Go xApp (hw-go) is installed automatically. Addition
 - **Traffic Steering xApp (trafficxapp)**:
   - Install with `./additional_scripts/install_xapp_traffic_steering.sh`.
   - More information can be found in the documentation [[17]][trafficxapp-docs] and code [[18]][trafficxapp-code].
+- **Hello World Python xApp (hw-python)**:
+  - Install with `./additional_scripts/install_xapp_hw-python.sh`.
+  - More information can be found in the code [[11]][hw-python-code].
+- **Hello World Rust xApp (hw-rust)**:
+  - Install with `./additional_scripts/install_xapp_hw-rust.sh`.
+  - More information can be found in the code [[12]][hw-rust-code].
+
+## Uninstalling an xApp
+To uninstall an xApp, run `./additional_scripts/uninstall_an_xapp.sh` which will prompt the user to select an xApp to uninstall.
+Alternatively, xApps can be uninstalled manually by fetching list of xApps with `dms_cli get_charts_list`, then uninstalling one with `dms_cli uninstall "NAME_OF_XAPP" ricxapp`.
 
 ## References
 

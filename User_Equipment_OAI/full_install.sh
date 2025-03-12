@@ -109,7 +109,7 @@ echo "Compiling and Installing Open Air Interface gNB..."
 cd "$SCRIPT_DIR/openairinterface5g/cmake_targets"
 ./build_oai -I
 
-# Build OAI gNB
+# Build OAI 5G UE and gNB
 cd "$SCRIPT_DIR/openairinterface5g/cmake_targets"
 ./build_oai --ninja --nrUE --gNB -C -w SIMU # -w USRP
 

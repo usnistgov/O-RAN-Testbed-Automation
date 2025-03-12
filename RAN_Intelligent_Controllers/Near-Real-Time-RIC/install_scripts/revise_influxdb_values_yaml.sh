@@ -39,6 +39,9 @@ cd $PARENT_DIR
 
 INFLUXDB_PATH="$PARENT_DIR/influxdb"
 
+sudo rm -rf influxdb_auth_token.json
+sudo rm -rf "$INFLUXDB_PATH"
+
 if ! kubectl get ns ricplt >/dev/null 2>&1; then
     kubectl create ns ricplt
 fi
@@ -46,7 +49,7 @@ fi
 # Create the directory for InfluxDB storage and set permissions
 mkdir -p "$INFLUXDB_PATH"
 sudo chown -R nobody:nogroup "$INFLUXDB_PATH"
-sudo chmod 755 "$INFLUXDB_PATH"
+sudo chmod 775 "$INFLUXDB_PATH"
 
 # Create and apply PersistentVolume for InfluxDB
 cat <<EOF >"$HOME/.kube/influxdb-pv.yaml"

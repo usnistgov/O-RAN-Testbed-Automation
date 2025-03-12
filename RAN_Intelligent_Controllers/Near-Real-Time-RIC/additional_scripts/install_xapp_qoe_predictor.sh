@@ -60,6 +60,52 @@ fi
 
 cd qp
 
+################################################################################
+# Patching the Quality of Experience (QoE) Predictor xApp (qp)                 #
+################################################################################
+
+INFLUXDB_TOKEN_PATH="$PARENT_DIR/influxdb_auth_token.json"
+if [ ! -f "$INFLUXDB_TOKEN_PATH" ]; then
+    echo "Creating an InfluxDB token to influxdb_auth_token.json..."
+    kubectl exec -it r4-influxdb-influxdb2-0 --namespace ricplt -- influx auth create --org influxdata --all-access --json >"$INFLUXDB_TOKEN_PATH"
+fi
+INFLUXDB_TOKEN=$(jq -r '.token' "$INFLUXDB_TOKEN_PATH")
+
+if [ ! -f "insert.py" ]; then
+    echo "Patching insert.py..."
+    cp insert.py insert.previous.py
+fi
+
+if [ ! -f "setup.py" ]; then
+    echo "Patching setup.py..."
+    cp setup.py setup.previous.py
+fi
+
+if [ ! -f "src/database.py" ]; then
+    echo "Patching src/database.py..."
+    cp src/database.py src/database.previous.py
+fi
+
+if [ ! -f "src/qp_config.ini" ]; then
+    echo "Patching src/qp_config.ini..."
+    cp src/qp_config.ini src/qp_config.previous.ini
+fi
+
+cp "$PARENT_DIR/install_patch_files/xApps/qp/insert.py" insert.py
+cp "$PARENT_DIR/install_patch_files/xApps/qp/setup.py" setup.py
+cp "$PARENT_DIR/install_patch_files/xApps/qp/src/database.py" src/database.py
+cp "$PARENT_DIR/install_patch_files/xApps/qp/src/qp_config.ini" src/qp_config.ini
+
+# Set the token in src/qp_config.ini
+if grep -q "token *= *.*" src/qp_config.ini; then
+    echo "Patching src/qp_config.ini to change 'token = $INFLUXDB_TOKEN'..."
+    sed -i "s/token *= *.*$/token = $INFLUXDB_TOKEN/g" src/qp_config.ini
+else
+    echo "Could not find 'token = *' in src/qp_config.ini"
+fi
+
+echo "Patch completed for Quality of Experience (QoE) Predictor xApp (qp)."
+
 echo "Creating and modifying the configuration file xapp-descriptor/config_updated.json and xapp-descriptor/schema.json..."
 # Check if jq is installed; if not, install it
 if ! command -v jq &>/dev/null; then
@@ -73,8 +119,8 @@ sudo rm -rf $FILE
 cp xapp-descriptor/config.json $FILE
 # Modify the required fields using jq and overwrite the original file
 jq '.containers[0].image.tag = "latest" |
-    .containers[0].image.registry = "example.com:80" |
-    .containers[0].image.name = "ad"' "$FILE" >tmp.$$.json && mv tmp.$$.json "$FILE"
+    .containers[0].image.registry = "127.0.0.1:80" |
+    .containers[0].image.name = "qp"' "$FILE" >tmp.$$.json && mv tmp.$$.json "$FILE"
 
 # Create the default schema.json if it doesn't exist
 if [ ! -f "xapp-descriptor/schema.json" ]; then
@@ -88,9 +134,9 @@ if [ ! -f "xapp-descriptor/schema.json" ]; then
         . | .["properties"] = {}' "$FILE" >tmp.$$.json && mv tmp.$$.json "$FILE"
 fi
 
-if [ ! -f qp.tar]; then
-    sudo docker build -t example.com:80/qp:latest .
-    sudo docker save -o qp.tar example.com:80/qp:latest
+if [ ! -f qp.tar ]; then
+    sudo docker build -t 127.0.0.1:80/qp:latest .
+    sudo docker save -o qp.tar 127.0.0.1:80/qp:latest
     sudo chmod 755 qp.tar
     sudo chown $USER:$USER qp.tar
 

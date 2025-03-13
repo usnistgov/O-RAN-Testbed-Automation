@@ -42,14 +42,14 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
 if [ ! -d "openairinterface5g" ]; then
-    if [ -d "../Next_Generation_Node_B/openairinterface5g" ]; then
+    if [ -d "../User_Equipment/openairinterface5g" ]; then
         echo "Creating symbolic link to openairinterface5g..."
-        ln -s "../Next_Generation_Node_B/openairinterface5g" openairinterface5g
+        ln -s "../User_Equipment/openairinterface5g" openairinterface5g
     fi
 fi
 
 # Check for gnb binary to determine if srsRAN_Project is already installed
-if [ -f "openairinterface5g/cmake_targets/ran_build/build/nr-uesoftmodem" ]; then
+if [ -f "openairinterface5g/cmake_targets/ran_build/build/nr-softmodem" ]; then
     echo "Open Air Interface UE and gNB are already installed, skipping."
     exit 0
 fi

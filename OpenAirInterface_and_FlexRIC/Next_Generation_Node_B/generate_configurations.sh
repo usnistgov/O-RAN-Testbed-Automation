@@ -106,64 +106,94 @@ rm -rf "$SCRIPT_DIR/configs"
 mkdir "$SCRIPT_DIR/configs"
 rm -rf "$SCRIPT_DIR/logs"
 
-for UE_NUMBER in {1..3}; do
-    cp openairinterface5g/targets/PROJECTS/GENERIC-NR-5GC/CONF/ue.conf "configs/ue$UE_NUMBER.conf"
+cp openairinterface5g/targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band78.fr1.106PRB.usrpb210.conf "$SCRIPT_DIR/configs/gnb.conf"
 
-    UE_OPC="63BFA50EE6523365FF14C1F45F88737D"
-    UE_APN="srsapn"
-    UE_TX_PORT=2001
-    UE_RX_PORT=2000
-    if [ $UE_NUMBER -eq 1 ]; then # Following the blueprint for UE 1: https://doi.org/10.6028/NIST.TN.2311
-        UE_IMEI="353490069873319"
-        UE_IMSI="001010123456780"
-        UE_KEY="00112233445566778899AABBCCDDEEFF"
-        # UE_TX_PORT=2101
-        # UE_RX_PORT=2100
-        UE_NAMESPACE="ue1"
+# USE_OSC_NEARRTRIC="true"
+# if [ ! -d "../RAN_Intelligent_Controllers/Near-Real-Time-RIC" ]; then
+#     echo "Could not find the O-SC Near-Real-Time-RIC directory. Disabling E2 termination support."
+#     USE_OSC_NEARRTRIC="false"
+# fi
 
-    elif [ $UE_NUMBER -eq 2 ]; then # Following the blueprint for UE 2: https://doi.org/10.6028/NIST.TN.2311
-        UE_IMEI="353490069873318"
-        UE_IMSI="001010123456790"
-        UE_KEY="00112233445566778899AABBCCDDEF00"
-        # UE_TX_PORT=2201
-        # UE_RX_PORT=2200
-        UE_NAMESPACE="ue2"
+# if [ "$USE_OSC_NEARRTRIC" = "true" ]; then
+#     echo "Fetching E2 termination service IP address..."
 
-    elif [ $UE_NUMBER -eq 3 ]; then # Following the blueprint for UE 3: https://doi.org/10.6028/NIST.TN.2311
-        UE_IMEI="353490069873312"
-        UE_IMSI="001010123456791"
-        UE_KEY="00112233445566778899AABBCCDDEF01"
-        # UE_TX_PORT=2301
-        # UE_RX_PORT=2300
-        UE_NAMESPACE="ue3"
+#     INSIDE_CLUSTER="yes"
+#     # echo "Are you connecting to the e2term from inside the Kubernetes cluster? [yes/no]"
+#     # read -p "Enter choice (yes/no): " INSIDE_CLUSTER
+#     if [ "$INSIDE_CLUSTER" = "yes" ]; then
+#         PORT_E2TERM=36422
+#     else
+#         PORT_E2TERM=32222
+#     fi
 
-    elif [ $UE_NUMBER -gt 3 ]; then # Dynamic configurations for UE 4 and beyond
-        UE_OFFSET=$((UE_NUMBER - 3))
-        UE_IMEI=$(printf '%d' $((353490069873319 + UE_OFFSET)))
-        UE_IMSI=$(printf '%015d' $((1010123456781 + UE_OFFSET)))
-        UE_KEY="00112233445566778$(printf '%X' $((16#899AABBCCDDEF01 + UE_OFFSET)))"
-        # UE_TX_PORT="$((23 + $UE_OFFSET))01"
-        # UE_RX_PORT="$((23 + $UE_OFFSET))00"
-        UE_NAMESPACE="ue$UE_NUMBER"
+#     # Check if kubectl is installed
+#     if command -v kubectl &>/dev/null; then
+#         SERVICE_INFO=$(kubectl get service -n ricplt | grep service-ricplt-e2term-sctp)
+
+#         # Check if SERVICE_INFO is empty
+#         if [ -z "$SERVICE_INFO" ]; then
+#             echo "No service found or kubectl command failed."
+#             IP_E2TERM=$(prompt_for_e2term_ip)
+#         else
+#             # Use awk to extract the IP and the correct port based on the connection context
+#             IP_E2TERM=$(echo "$SERVICE_INFO" | awk '{print $3}')
+#             if [ "$INSIDE_CLUSTER" = "yes" ]; then
+#                 PORT_E2TERM=$(echo "$SERVICE_INFO" | awk '{print $5}' | cut -d ':' -f1)
+#             else
+#                 PORT_E2TERM=$(echo "$SERVICE_INFO" | awk '{print $5}' | cut -d ':' -f2)
+#             fi
+
+#             if [ -z "$IP_E2TERM" ] || [ "$IP_E2TERM" == "<none>" ]; then
+#                 IP_E2TERM=$(prompt_for_e2term_ip)
+#             fi
+#         fi
+#     fi
+#     IP_E2TERM_BIND=$IP_E2TERM
+#     echo "IP_E2TERM: $IP_E2TERM"
+#     echo "PORT_E2TERM: $PORT_E2TERM"
+#     echo "IP_E2TERM_BIND: $IP_E2TERM_BIND"
+
+#     update_conf "configs/gnb.conf" "near_ric_ip_addr" "\"$IP_E2TERM\""
+#     comment_out "configs/gnb.conf" "sm_dir ="
+# fi
+
+echo "Fetching AMF addresses..."
+FILE_PATH="../../5G_Core_Network/configs/get_amf_address.txt"
+
+prompt_for_addresses() {
+    echo "Please enter the AMF address and the AMF binding address manually." >&2
+    echo "You can find this information in the 5G_Core_Network/configs/get_amf_addresses.txt file in the first two lines, respectively." >&2
+    read -p "Enter AMF Address: " AMF_ADDR
+    read -p "Enter AMF Binding Address: " AMF_ADDR_BIND
+}
+
+# Check if the file exists and has at least two lines
+if [[ -f "$FILE_PATH" ]]; then
+    # Read the file and check for at least two non-empty lines
+    mapfile -t ADDRESSES <"$FILE_PATH"
+    if [[ ${#ADDRESSES[@]} -ge 2 ]] && [[ -n ${ADDRESSES[0]} ]] && [[ -n ${ADDRESSES[1]} ]]; then
+        AMF_ADDR="${ADDRESSES[0]}"
+        AMF_ADDR_BIND="${ADDRESSES[1]}"
+    else
+        echo
+        echo "AMF address file exists but does not contain valid data."
+        prompt_for_addresses
     fi
+else
+    echo
+    echo "Open5GS was not configured."
+    prompt_for_addresses
+fi
 
-    # Unique identifier for the UE within the mobile network. Used by the network to identify the UE during authentication. It ensures that the UE is correctly identified by the network.
-    update_conf "configs/ue$UE_NUMBER.conf" "imsi" "\"$UE_IMSI\""
+echo "AMF Address: $AMF_ADDR"
+echo "AMF Binding Address: $AMF_ADDR_BIND"
 
-    # Cryptographic key shared between the UE and the network, used for encryption during the authentication process.
-    update_conf "configs/ue$UE_NUMBER.conf" "key" "\"$UE_KEY\""
-
-    # Operator key for the Milenage Authentication and Key Agreement algorithm used for encryption during the authentication process.
-    update_conf "configs/ue$UE_NUMBER.conf" "opc" "\"$UE_OPC\""
-
-    # Specifies the name of the data network the UE wishes to connect to, similar to an APN in 4G networks.
-    update_conf "configs/ue$UE_NUMBER.conf" "dnn" "\"$UE_APN\""
-
-    # Allows the UE to select the appropriate network slice, which provides different QoS.
-    update_conf "configs/ue$UE_NUMBER.conf" "nssai_sst" "1"
-done
-
-cp openairinterface5g/targets/PROJECTS/GENERIC-NR-5GC/CONF/channelmod_rfsimu_LEO_satellite.conf "$SCRIPT_DIR/configs/channelmod_rfsimu_LEO_satellite.conf"
+# Update configuration values for RF front-end device
+update_conf "configs/gnb.conf" "amf_ip_address" "({ ipv4 = \"$AMF_ADDR\"; })"
+update_conf "configs/gnb.conf" "GNB_IPV4_ADDRESS_FOR_NG_AMF" "\"$AMF_ADDR_BIND/24\""
+update_conf "configs/gnb.conf" "GNB_IPV4_ADDRESS_FOR_NGU" "\"$AMF_ADDR_BIND/24\""
+update_conf "configs/gnb.conf" "tracking_area_code" "$TAC"
+update_conf "configs/gnb.conf" "plmn_list" "({ mcc = $MCC; mnc = $MNC; mnc_length = $MNC_LENGTH; snssaiList = ({ sst = 1; }) })"
 
 mkdir -p "$SCRIPT_DIR/logs"
 sudo chown $USER:$USER -R "$SCRIPT_DIR/logs"

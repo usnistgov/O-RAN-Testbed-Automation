@@ -39,5 +39,5 @@ cd "$SCRIPT_DIR"
 if pgrep -x "gnb" >/dev/null; then
     echo "gNodeB: RUNNING"
 else
-    echo "gNodeB: NOT RUNNING"
+    echo "gNodeB: NOT_RUNNING"
 fi

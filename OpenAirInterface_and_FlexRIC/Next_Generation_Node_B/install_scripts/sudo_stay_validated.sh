@@ -28,44 +28,10 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-if ! command -v realpath &>/dev/null; then
-    echo "Package \"coreutils\" not found, installing..."
-    sudo apt-get install -y coreutils
-fi
+echo "# Script: $(realpath $0)..."
 
-SCRIPT_DIR=$(dirname "$(realpath "$0")")
-cd "$SCRIPT_DIR"
-
-UE_NUMBER=1
-if [ "$#" -eq 1 ]; then
-    UE_NUMBER=$1
-fi
-
-if ! [[ $UE_NUMBER =~ ^[0-9]+$ ]]; then
-    echo "Error: UE number must be a number."
-    exit 1
-fi
-
-if [ $UE_NUMBER -lt 1 ]; then
-    echo "Error: UE number must be greater than or equal to 1."
-    exit 1
-fi
-
-if [ ! -f "configs/ue1.conf" ]; then
-    echo "Configuration was not found for srsUE. Please run ./generate_configurations.sh first."
-    exit 1
-fi
-echo "Starting srsue in background..."
-mkdir -p logs
-sudo chown -R $USER:$USER logs
-sudo rm -rf logs/ue${UE_NUMBER}_stdout.txt
-
-sudo setsid bash -c "stdbuf -oL -eL \"$SCRIPT_DIR/run.sh\" $UE_NUMBER > logs/ue${UE_NUMBER}_stdout.txt 2>&1" </dev/null &
-sleep 1
-ATTEMPT_COUNTER=0
-MAX_ATTEMPTS=60
-while ! ./is_running.sh | grep -q "ue$UE_NUMBER" && [ $ATTEMPT_COUNTER -lt $MAX_ATTEMPTS ]; do
-    sleep 1
-    ATTEMPT_COUNTER=$((ATTEMPT_COUNTER + 1))
+# Simple script to keep sudo active by refreshing it every minute
+while true; do
+    sudo -v
+    sleep 60
 done
-./is_running.sh

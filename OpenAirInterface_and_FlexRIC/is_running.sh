@@ -36,7 +36,25 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-cd "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build"
+echo "Checking status of User Equipment..."
+cd User_Equipment
+./is_running.sh
+cd ..
 
-# Code from (https://github.com/OPENAIRINTERFACE/openairinterface5g/blob/develop/radio/rfsimulator/README.md#5g-case):
-sudo ./nr-softmodem -O "$SCRIPT_DIR/configs/gnb.conf" --rfsim --rfsimulator.serveraddr server --gNBs.[0].min_rxtxtime 6
+echo
+echo "Checking status of gNodeB..."
+cd Next_Generation_Node_B
+./is_running.sh
+cd ..
+
+echo
+echo "Checking status of 5G Core components..."
+cd 5G_Core_Network
+./is_running.sh
+cd ..
+
+echo
+echo "Checking status of FlexRIC..."
+cd RAN_Intelligent_Controllers/Near-Real-Time-RIC
+./is_running.sh
+cd ..

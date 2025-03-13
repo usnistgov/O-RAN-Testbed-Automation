@@ -36,27 +36,8 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-UE_NUMBER=1
-if [ "$#" -eq 1 ]; then
-    UE_NUMBER=$1
+if pgrep -x "nr-softmodem" >/dev/null; then
+    echo "gNodeB: RUNNING"
+else
+    echo "gNodeB: NOT_RUNNING"
 fi
-
-if ! [[ $UE_NUMBER =~ ^[0-9]+$ ]]; then
-    echo "Error: UE number must be a number."
-    exit 1
-fi
-
-if [ $UE_NUMBER -lt 1 ]; then
-    echo "Error: UE number must be greater than or equal to 1."
-    exit 1
-fi
-
-if [ ! -f "configs/ue1.conf" ]; then
-    echo "Configuration was not found for srsUE. Please run ./generate_configurations.sh first."
-    exit 1
-fi
-
-cd "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build"
-
-# Code from (https://github.com/OPENAIRINTERFACE/openairinterface5g/blob/develop/radio/rfsimulator/README.md#5g-case):
-sudo ./nr-uesoftmodem -O "$SCRIPT_DIR/configs/ue$UE_NUMBER.conf" --rfsim --rfsimulator.serveraddr 127.0.0.1 -r 106 --numerology 1 --band 78 -C 3619200000

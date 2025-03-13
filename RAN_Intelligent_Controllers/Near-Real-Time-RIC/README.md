@@ -53,7 +53,7 @@ By default, the Hello World Go xApp (hw-go) is installed automatically. Addition
 
 ## Uninstalling an xApp
 To uninstall an xApp, run `./additional_scripts/uninstall_an_xapp.sh` which will prompt the user to select an xApp to uninstall.
-Alternatively, xApps can be uninstalled manually by fetching list of xApps with `dms_cli get_charts_list`, then uninstalling one with `dms_cli uninstall "NAME_OF_XAPP" ricxapp`.
+Alternatively, xApps can be uninstalled manually by fetching the list of xApps with `dms_cli get_charts_list` and uninstalling an xApp with `dms_cli uninstall "NAME_OF_XAPP" ricxapp`.
 
 ## References
 

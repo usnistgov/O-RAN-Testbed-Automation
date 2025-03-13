@@ -40,7 +40,7 @@ cd "$SCRIPT_DIR"
 trap 'stty sane; exit' EXIT SIGINT SIGTERM
 
 # Check if the FlexRIC is already stopped
-if $(./is_running.sh | grep -q "FlexRIC: NOT RUNNING"); then
+if $(./is_running.sh | grep -q "FlexRIC: NOT_RUNNING"); then
     ./is_running.sh
     exit 0
 fi
@@ -55,7 +55,7 @@ sleep 1
 while [ $COUNT -lt $MAX_COUNT ]; do
     IS_RUNNING=$(./is_running.sh)
     echo "$IS_RUNNING ($COUNT / $MAX_COUNT)"
-    if echo "$IS_RUNNING" | grep -q "FlexRIC: NOT RUNNING"; then
+    if echo "$IS_RUNNING" | grep -q "FlexRIC: NOT_RUNNING"; then
         echo "The FlexRIC has stopped gracefully."
         ./is_running.sh
         exit 0

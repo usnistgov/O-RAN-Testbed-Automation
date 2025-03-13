@@ -24,7 +24,6 @@ import pandas as pd
 from database import DATABASE
 from configparser import ConfigParser
 
-
 class INSERTDATA(DATABASE):
 
     def __init__(self):
@@ -78,14 +77,12 @@ class INSERTDATA(DATABASE):
             )
             time.sleep(0.7)
 
-
 def populatedb():
     # inintiate connection and create database UEDATA
     db = INSERTDATA()
     df = pd.read_csv("ue.csv")
     while True:
         db.assign_timestamp(df)
-
 
 if __name__ == "__main__":
     populatedb()

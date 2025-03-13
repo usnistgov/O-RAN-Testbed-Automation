@@ -36,36 +36,52 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-UE_NUMBER=1
-if [ "$#" -eq 1 ]; then
-    UE_NUMBER=$1
-fi
+# Upon exit, gracefully stop all components and fix console in case it breaks
+trap './stop.sh; stty sane; exit' EXIT SIGINT SIGTERM
 
-if ! [[ $UE_NUMBER =~ ^[0-9]+$ ]]; then
-    echo "Error: UE number must be a number."
-    exit 1
-fi
+echo "Running 5G Core components..."
+cd 5G_Core_Network
+./run.sh
+cd ..
 
-if [ $UE_NUMBER -lt 1 ]; then
-    echo "Error: UE number must be greater than or equal to 1."
-    exit 1
-fi
-
-if [ ! -f "configs/ue1.conf" ]; then
-    echo "Configuration was not found for srsUE. Please run ./generate_configurations.sh first."
-    exit 1
-fi
-echo "Starting srsue in background..."
-mkdir -p logs
-sudo chown -R $USER:$USER logs
-sudo rm -rf logs/ue${UE_NUMBER}_stdout.txt
-
-sudo setsid bash -c "stdbuf -oL -eL \"$SCRIPT_DIR/run.sh\" $UE_NUMBER > logs/ue${UE_NUMBER}_stdout.txt 2>&1" </dev/null &
-sleep 1
-ATTEMPT_COUNTER=0
-MAX_ATTEMPTS=60
-while ! ./is_running.sh | grep -q "ue$UE_NUMBER" && [ $ATTEMPT_COUNTER -lt $MAX_ATTEMPTS ]; do
-    sleep 1
-    ATTEMPT_COUNTER=$((ATTEMPT_COUNTER + 1))
+echo -n "Waiting for AMF to be ready"
+attempt=0
+while [ ! -f 5G_Core_Network/logs/amf.txt ] || ! grep -q "NF registered" 5G_Core_Network/logs/amf.txt; do
+    echo -n "."
+    sleep 0.5
+    attempt=$((attempt + 1))
+    if [ $attempt -ge 120 ]; then
+        echo "5G Core components did not start after 60 seconds, exiting..."
+        exit 1
+    fi
 done
-./is_running.sh
+echo -e "\nAMF is ready."
+
+
+echo
+echo "Running FlexRIC..."
+cd RAN_Intelligent_Controllers/Near-Real-Time-RIC
+./run_background.sh
+cd ..
+
+echo
+echo "Running gNodeB..."
+cd Next_Generation_Node_B
+./run_background.sh
+
+attempt=0
+while $(./is_running.sh | grep -q "NOT_RUNNING"); do
+    sleep 0.5
+    attempt=$((attempt + 1))
+    if [ $attempt -ge 120 ]; then
+        echo "gNodeB did not start after 60 seconds, exiting..."
+        exit 1
+    fi
+done
+cd ..
+
+echo
+echo "Running User Equipment..."
+cd User_Equipment
+./run.sh
+cd ..

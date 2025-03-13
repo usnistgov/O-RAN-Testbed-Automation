@@ -47,10 +47,10 @@ else
     echo "Starting gnb in background..."
     mkdir -p logs
     sudo chown -R $USER:$USER logs
-    sudo rm -rf logs/gnb.txt
+    sudo rm -rf logs/gnb_stdout.txt
     sudo setsid bash -c 'stdbuf -oL -eL srsRAN_Project/build/apps/gnb/gnb -c configs/gnb.yaml > logs/gnb_stdout.txt 2>&1' </dev/null &
 
-    while $(./is_running.sh | grep -q "NOT RUNNING"); do
+    while $(./is_running.sh | grep -q "NOT_RUNNING"); do
         sleep 1
         if grep -q " gNB started " logs/gnb_stdout.txt; then
             break
@@ -61,5 +61,4 @@ else
     done
 
     ./is_running.sh
-    sudo chown -R $USER:$USER logs
 fi

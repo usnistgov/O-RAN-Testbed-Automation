@@ -42,6 +42,4 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 
 cd "$SCRIPT_DIR/flexric"
 
-echo "$SCRIPT_DIR/configs/flexric.conf"
-cat "$SCRIPT_DIR/configs/flexric.conf"
 ./build/examples/ric/nearRT-RIC -c "../configs/flexric.conf"

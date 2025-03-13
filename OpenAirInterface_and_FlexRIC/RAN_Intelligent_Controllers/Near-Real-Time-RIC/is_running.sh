@@ -39,5 +39,5 @@ cd "$SCRIPT_DIR"
 if pgrep -x "nearRT-RIC" >/dev/null; then
     echo "FlexRIC: RUNNING"
 else
-    echo "FlexRIC: NOT RUNNING"
+    echo "FlexRIC: NOT_RUNNING"
 fi

@@ -60,9 +60,12 @@ update_conf() {
 echo "Saving configuration file example..."
 rm -rf "$SCRIPT_DIR/configs"
 mkdir "$SCRIPT_DIR/configs"
+rm -rf "$SCRIPT_DIR/logs"
 
 cp flexric/flexric.conf "$SCRIPT_DIR/configs/flexric.conf"
-
 update_conf "configs/flexric.conf" "XAPP" "DB_NAME" "xapp_db1"
+
+mkdir -p "$SCRIPT_DIR/logs"
+sudo chown $USER:$USER -R "$SCRIPT_DIR/logs"
 
 echo "Successfully configured the FlexRIC. The configuration file is located in the configs/ directory."

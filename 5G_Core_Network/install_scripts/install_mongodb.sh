@@ -139,7 +139,7 @@ else
 fi
 
 echo "Attempting to install mongosh..."
-if ! sudo apt-get install -y mongosh; then
+if ! sudo apt-get install -y --allow-change-held-packages mongosh; then
     echo "Failed initial attempt to install mongosh. Adding MongoDB 5.0 repository for mongosh..."
     # Import the MongoDB 5.0 public key
     if ! curl -fsSL https://www.mongodb.org/static/pgp/server-5.0.asc | sudo apt-key add -; then
@@ -156,13 +156,13 @@ if ! sudo apt-get install -y mongosh; then
     done
 
     sudo apt-get update
-    if ! sudo apt-get install -y mongodb-mongosh; then
+    if ! sudo apt-get install -y --allow-change-held-packages mongodb-mongosh; then
         echo "Failed to install mongosh even from MongoDB 5.0 repository. Attempting to fix broken installations..."
         sudo apt-get --fix-broken install
         sudo apt-get autoremove -y
         sudo apt-get clean
         echo "Trying to install mongosh again..."
-        if ! sudo apt-get install -y mongodb-mongosh; then
+        if ! sudo apt-get install -y --allow-change-held-packages mongodb-mongosh; then
             echo "An error occured. Running dpkg --configure -a to ensure all packages are properly configured..."
             sudo dpkg --configure -a || true
             echo "Failed to install mongosh after attempting repairs. Exiting script."

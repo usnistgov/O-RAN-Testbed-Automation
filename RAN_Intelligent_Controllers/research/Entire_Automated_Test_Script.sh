@@ -139,7 +139,7 @@ cd User_Equipment
 cd ..
 sleep 10
 
-if ./is_running.sh | grep -q "NOT RUNNING"; then
+if ./is_running.sh | grep -q "NOT_RUNNING"; then
     echo "One or more components failed to start."
     exit 1
 fi

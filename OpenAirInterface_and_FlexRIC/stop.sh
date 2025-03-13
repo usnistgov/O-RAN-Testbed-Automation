@@ -36,36 +36,25 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-UE_NUMBER=1
-if [ "$#" -eq 1 ]; then
-    UE_NUMBER=$1
-fi
+echo "Stopping User Equipment..."
+cd User_Equipment
+sudo ./stop.sh
+cd ..
 
-if ! [[ $UE_NUMBER =~ ^[0-9]+$ ]]; then
-    echo "Error: UE number must be a number."
-    exit 1
-fi
+echo
+echo "Stopping gNodeB..."
+cd Next_Generation_Node_B
+sudo ./stop.sh
+cd ..
 
-if [ $UE_NUMBER -lt 1 ]; then
-    echo "Error: UE number must be greater than or equal to 1."
-    exit 1
-fi
+echo
+echo "Stopping 5G Core components..."
+cd 5G_Core_Network
+sudo ./stop.sh
+cd ..
 
-if [ ! -f "configs/ue1.conf" ]; then
-    echo "Configuration was not found for srsUE. Please run ./generate_configurations.sh first."
-    exit 1
-fi
-echo "Starting srsue in background..."
-mkdir -p logs
-sudo chown -R $USER:$USER logs
-sudo rm -rf logs/ue${UE_NUMBER}_stdout.txt
-
-sudo setsid bash -c "stdbuf -oL -eL \"$SCRIPT_DIR/run.sh\" $UE_NUMBER > logs/ue${UE_NUMBER}_stdout.txt 2>&1" </dev/null &
-sleep 1
-ATTEMPT_COUNTER=0
-MAX_ATTEMPTS=60
-while ! ./is_running.sh | grep -q "ue$UE_NUMBER" && [ $ATTEMPT_COUNTER -lt $MAX_ATTEMPTS ]; do
-    sleep 1
-    ATTEMPT_COUNTER=$((ATTEMPT_COUNTER + 1))
-done
-./is_running.sh
+echo
+echo "Stopping FlexRIC components..."
+cd RAN_Intelligent_Controllers/Near-Real-Time-RIC
+sudo ./stop.sh
+cd ..

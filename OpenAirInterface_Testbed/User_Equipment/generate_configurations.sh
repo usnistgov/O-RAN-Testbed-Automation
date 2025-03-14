@@ -161,7 +161,7 @@ for UE_NUMBER in {1..3}; do
 
     # Allows the UE to select the appropriate network slice, which provides different QoS.
     update_conf "configs/ue$UE_NUMBER.conf" "nssai_sst" "1"
-    
+
     # Ensures the PDU Session Establishment is successful (either setting to 0xFFFFFF or commenting it out).
     update_conf "configs/ue$UE_NUMBER.conf" "nssai_sd" "0xFFFFFF"
     comment_out "configs/ue$UE_NUMBER.conf" "nssai_sd"

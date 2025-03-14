@@ -56,7 +56,6 @@ cd User_Equipment
 ./generate_configurations.sh
 cd ..
 
-
 echo
 echo "Generating Configuration for FlexRIC..."
 cd RAN_Intelligent_Controllers/Near-Real-Time-RIC

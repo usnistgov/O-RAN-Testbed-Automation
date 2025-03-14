@@ -40,7 +40,7 @@ if exist "5G_Core_Network\open5gs" rmdir /s /q "5G_Core_Network\open5gs"
 cd 5G_Core_Network
 git clone https://github.com/open5gs/open5gs.git
 cd open5gs
-git checkout 1b21eba81ed7740317ec820ce96dda3b587ef4e9
+git checkout e3dd98cd291fba233a46adb2881213fc6e38b924
 cd ..\..
 
 cd %~dp0..
@@ -176,7 +176,7 @@ if exist "RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep" rmdir /s /q "RAN_In
 cd RAN_Intelligent_Controllers\Non-Real-Time-RIC
 git clone https://gerrit.o-ran-sc.org/r/it/dep.git
 cd dep
-git checkout 60372089116269f82038c0fe38a02acbc51fb269
+git checkout cdb4ba3d9d5a86cda7b68d70c2ea0cb891d38471
 git restore --source=HEAD :/
 cd ..\..\..
 
@@ -185,7 +185,7 @@ if exist "RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\ranpm" rmdir /s /q "
 cd RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep
 git clone https://gerrit.o-ran-sc.org/r/nonrtric/plt/ranpm.git
 cd ranpm
-git checkout dbb29d3eb620b0ed223510590030a9a4a3c73d50
+git checkout cfb34a99dc39c0ef22d5b1aab884483338ffed95
 cd ..\..\..\..
 
 cd %~dp0..
@@ -209,7 +209,7 @@ if exist "RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\smo-install\onap_oom
 cd RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\smo-install
 git clone https://gerrit.onap.org/r/oom.git
 cd onap_oom
-git checkout 7fbf8ae171fa31a53918d3362d0b9c5d0940fc5d
+git checkout 60c14232c92f4e04c53d1a75a76c3f17bb32d0e2
 cd ..\..\..\..\..
 
 cd %~dp0..

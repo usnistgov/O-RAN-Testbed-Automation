@@ -59,10 +59,10 @@ fi
 echo "Starting User Equipment in background..."
 mkdir -p logs
 sudo chown -R $USER:$USER logs
-sudo rm -rf logs/ue${UE_NUMBER}_stdout.txt
+>logs/ue${UE_NUMBER}_stdout.txt
 
 cd "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build"
-sudo setsid bash -c "stdbuf -oL -eL sudo sudo ./nr-uesoftmodem -O "$SCRIPT_DIR/configs/ue$UE_NUMBER.conf" --rfsim --rfsimulator.serveraddr 127.0.0.1 -r 106 --numerology 1 --band 78 -C 3619200000 > \"$SCRIPT_DIR/logs/ue${UE_NUMBER}_stdout.txt\" 2>&1" </dev/null &
+sudo setsid bash -c "stdbuf -oL -eL ./nr-uesoftmodem -O "$SCRIPT_DIR/configs/ue$UE_NUMBER.conf" --rfsim --rfsimulator.serveraddr 127.0.0.1 -r 106 --numerology 1 --band 78 -C 3619200000 > \"$SCRIPT_DIR/logs/ue${UE_NUMBER}_stdout.txt\" 2>&1" </dev/null &
 cd "$SCRIPT_DIR"
 
 ATTEMPT=0

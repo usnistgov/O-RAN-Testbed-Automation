@@ -58,7 +58,7 @@ fi
 echo "Starting User Equipment in background..."
 mkdir -p logs
 sudo chown -R $USER:$USER logs
-sudo rm -rf logs/ue${UE_NUMBER}_stdout.txt
+>logs/ue${UE_NUMBER}_stdout.txt
 
 sudo setsid bash -c "stdbuf -oL -eL \"$SCRIPT_DIR/run.sh\" $UE_NUMBER > logs/ue${UE_NUMBER}_stdout.txt 2>&1" </dev/null &
 sleep 1

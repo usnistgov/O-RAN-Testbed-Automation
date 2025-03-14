@@ -145,4 +145,3 @@ USNISTGOV/O-RAN-Testbed-Automation is developed and maintained by the NIST Wirel
 [gh-nsd]: ./NIST%20Software%20Disclaimer.md
 [gh-cpd]: ./NIST%20Commercial%20Product%20Disclaimer.md
 [gh-license]: ./LICENSE
-

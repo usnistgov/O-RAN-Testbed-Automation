@@ -31,5 +31,5 @@
 if ps aux | grep "localhost:4200" | grep -v grep >/dev/null; then
     echo "control_panel: RUNNING"
 else
-    echo "control_panel: NOT RUNNING"
+    echo "control_panel: NOT_RUNNING"
 fi

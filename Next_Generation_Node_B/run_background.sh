@@ -44,22 +44,28 @@ else
         exit 1
     fi
 
-    echo "Starting gnb in background..."
+    echo "Starting gNodeB in background..."
     mkdir -p logs
     sudo chown -R $USER:$USER logs
-    sudo rm -rf logs/gnb.txt
+    >logs/gnb.log
+    >gnb_stdout.txt
     sudo setsid bash -c 'stdbuf -oL -eL srsRAN_Project/build/apps/gnb/gnb -c configs/gnb.yaml > logs/gnb_stdout.txt 2>&1' </dev/null &
 
-    while $(./is_running.sh | grep -q "NOT RUNNING"); do
-        sleep 1
+    ATTEMPT=0
+    while [ ! -f Next_Generation_Node_B/logs/gnb_stdout.txt ] || ! grep -q "gNB started" Next_Generation_Node_B/logs/gnb_stdout.txt; do
+        sleep 0.5
+        ATTEMPT=$((ATTEMPT + 1))
+        if [ $ATTEMPT -ge 120 ]; then
+            echo "gNodeB did not start after 60 seconds, exiting..."
+            exit 1
+        fi
         if grep -q " gNB started " logs/gnb_stdout.txt; then
             break
-        elif grep -q "Error" logs/gnb_stdout.txt; then
+        elif [ $(grep -q "Error" logs/gnb_stdout.txt) ] || [ $(grep -q "srsRAN ERROR:" logs/gnb_stdout.txt) ]; then
             echo "Error starting gNodeB. Check logs/gnb_stdout.txt for more information."
             exit 1
         fi
     done
 
     ./is_running.sh
-    sudo chown -R $USER:$USER logs
 fi

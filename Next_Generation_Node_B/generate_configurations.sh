@@ -88,7 +88,7 @@ fi
 if [ "$ENABLE_E2_TERM" = "true" ]; then
     echo "Fetching E2 termination service IP address..."
 
-    INSIDE_CLUSTER="true"
+    INSIDE_CLUSTER="yes"
     # echo "Are you connecting to the e2term from inside the Kubernetes cluster? [yes/no]"
     # read -p "Enter choice (yes/no): " INSIDE_CLUSTER
     if [ "$INSIDE_CLUSTER" = "yes" ]; then
@@ -111,10 +111,10 @@ if [ "$ENABLE_E2_TERM" = "true" ]; then
         else
             # Use awk to extract the IP and the correct port based on the connection context
             IP_E2TERM=$(echo "$SERVICE_INFO" | awk '{print $3}')
-            if [ "$INSIDE_CLUSTER" = "true" ]; then
-                PORT_E2TERM=$(echo "$SERVICE_INFO" | awk '{print $5}' | cut -d ':' -f1)
+            if [ "$INSIDE_CLUSTER" = "yes" ]; then
+                PORT_E2TERM=$(echo "$SERVICE_INFO" | awk '{print $5}' | cut -d ':' -f1 | cut -d '/' -f1)
             else
-                PORT_E2TERM=$(echo "$SERVICE_INFO" | awk '{print $5}' | cut -d ':' -f2)
+                PORT_E2TERM=$(echo "$SERVICE_INFO" | awk '{print $5}' | cut -d ':' -f2 | cut -d '/' -f1)
             fi
 
             if [ -z "$IP_E2TERM" ] || [ "$IP_E2TERM" == "<none>" ]; then
@@ -216,121 +216,126 @@ DEVICE_ARGS+="tx_port0=tcp://127.0.0.1:2000,rx_port0=tcp://127.0.0.1:2001,base_s
 # DEVICE_ARGS+="base_srate=23.04e6"
 
 # Update configuration values for AMF connection
-update_yaml configs/gnb.yaml "cu_cp.amf" "addr" "$AMF_ADDR"
-update_yaml configs/gnb.yaml "cu_cp.amf" "bind_addr" "$AMF_ADDR_BIND"
+update_yaml "configs/gnb.yaml" "cu_cp.amf" "addr" "$AMF_ADDR"
+update_yaml "configs/gnb.yaml" "cu_cp.amf" "bind_addr" "$AMF_ADDR_BIND"
 
 # Update configuration values for RF front-end device
-update_yaml configs/gnb.yaml "ru_sdr" "device_driver" "zmq"
-update_yaml configs/gnb.yaml "ru_sdr" "device_args" "$DEVICE_ARGS"
-update_yaml configs/gnb.yaml "ru_sdr" "srate" "23.04"
-update_yaml configs/gnb.yaml "ru_sdr" "tx_gain" "75"
-update_yaml configs/gnb.yaml "ru_sdr" "rx_gain" "75"
-update_yaml configs/gnb.yaml "ru_sdr" "clock" "default"
-update_yaml configs/gnb.yaml "ru_sdr" "sync" "default"
+update_yaml "configs/gnb.yaml" "ru_sdr" "device_driver" "zmq"
+update_yaml "configs/gnb.yaml" "ru_sdr" "device_args" "$DEVICE_ARGS"
+update_yaml "configs/gnb.yaml" "ru_sdr" "srate" "23.04"
+update_yaml "configs/gnb.yaml" "ru_sdr" "tx_gain" "75"
+update_yaml "configs/gnb.yaml" "ru_sdr" "rx_gain" "75"
+update_yaml "configs/gnb.yaml" "ru_sdr" "clock" "default"
+update_yaml "configs/gnb.yaml" "ru_sdr" "sync" "default"
 
 # Update configuration values for 5G cell parameters
-update_yaml configs/gnb.yaml "cell_cfg" "dl_arfcn" "368500" # NR ARFCN
-update_yaml configs/gnb.yaml "cell_cfg" "nof_antennas_dl" "1"
-update_yaml configs/gnb.yaml "cell_cfg" "nof_antennas_ul" "1"
-update_yaml configs/gnb.yaml "cell_cfg" "band" "3"
-update_yaml configs/gnb.yaml "cell_cfg" "channel_bandwidth_MHz" "20"
-update_yaml configs/gnb.yaml "cell_cfg" "common_scs" "15"
-update_yaml configs/gnb.yaml "cell_cfg" "plmn" $PLMN
-update_yaml configs/gnb.yaml "cell_cfg" "tac" $TAC
+update_yaml "configs/gnb.yaml" "cell_cfg" "dl_arfcn" "368500" # NR ARFCN
+update_yaml "configs/gnb.yaml" "cell_cfg" "nof_antennas_dl" "1"
+update_yaml "configs/gnb.yaml" "cell_cfg" "nof_antennas_ul" "1"
+update_yaml "configs/gnb.yaml" "cell_cfg" "band" "3"
+update_yaml "configs/gnb.yaml" "cell_cfg" "channel_bandwidth_MHz" "20"
+update_yaml "configs/gnb.yaml" "cell_cfg" "common_scs" "15"
+update_yaml "configs/gnb.yaml" "cell_cfg" "plmn" $PLMN
+update_yaml "configs/gnb.yaml" "cell_cfg" "tac" $TAC
 
 # Update configuration values for PDCCH and PRACH
-update_yaml configs/gnb.yaml "cell_cfg.pdcch.common" "ss0_index" "0"
-update_yaml configs/gnb.yaml "cell_cfg.pdcch.common" "coreset0_index" "12"
-update_yaml configs/gnb.yaml "cell_cfg.pdcch.dedicated" "ss2_type" "common"
-update_yaml configs/gnb.yaml "cell_cfg.pdcch.dedicated" "dci_format_0_1_and_1_1" "false"
-update_yaml configs/gnb.yaml "cell_cfg.prach" "prach_config_index" "1"
-update_yaml configs/gnb.yaml "cell_cfg.pdsch" "mcs_table" "qam64"
-update_yaml configs/gnb.yaml "cell_cfg.pusch" "mcs_table" "qam64"
+update_yaml "configs/gnb.yaml" "cell_cfg.pdcch.common" "ss0_index" "0"
+update_yaml "configs/gnb.yaml" "cell_cfg.pdcch.common" "coreset0_index" "12"
+update_yaml "configs/gnb.yaml" "cell_cfg.pdcch.dedicated" "ss2_type" "common"
+update_yaml "configs/gnb.yaml" "cell_cfg.pdcch.dedicated" "dci_format_0_1_and_1_1" "false"
+update_yaml "configs/gnb.yaml" "cell_cfg.prach" "prach_config_index" "1"
+update_yaml "configs/gnb.yaml" "cell_cfg.pdsch" "mcs_table" "qam64"
+update_yaml "configs/gnb.yaml" "cell_cfg.pusch" "mcs_table" "qam64"
 
 GNB_ID="411"
 RAN_NODE_NAME="srsgnb01"
 GNB_DU_ID="0"
-update_yaml configs/gnb.yaml "" "gnb_id" "$GNB_ID"
-update_yaml configs/gnb.yaml "" "gnb_id_bit_length" "22" # Supported: 22-32
-update_yaml configs/gnb.yaml "" "ran_node_name" "$RAN_NODE_NAME"
-update_yaml configs/gnb.yaml "" "gnb_du_id" "$GNB_DU_ID"
+update_yaml "configs/gnb.yaml" "" "gnb_id" "$GNB_ID"
+update_yaml "configs/gnb.yaml" "" "gnb_id_bit_length" "22" # Supported: 22-32
+update_yaml "configs/gnb.yaml" "" "ran_node_name" "$RAN_NODE_NAME"
+update_yaml "configs/gnb.yaml" "" "gnb_du_id" "$GNB_DU_ID"
 
 # Update configuration values to connect RIC by e2 interface
 if [ "$ENABLE_E2_TERM" = "true" ]; then
-    update_yaml configs/gnb.yaml "e2" "enable_du_e2" "true"
-    update_yaml configs/gnb.yaml "e2" "enable_cu_cp_e2" "false"
-    update_yaml configs/gnb.yaml "e2" "enable_cu_up_e2" "false"
-    update_yaml configs/gnb.yaml "e2" "e2sm_kpm_enabled" "true"
-    update_yaml configs/gnb.yaml "e2" "e2sm_rc_enabled" "true"
-    update_yaml configs/gnb.yaml "e2" "addr" "$IP_E2TERM"
-    update_yaml configs/gnb.yaml "e2" "bind_addr" "$IP_E2TERM_BIND"
-    update_yaml configs/gnb.yaml "e2" "port" "$PORT_E2TERM"
+    update_yaml "configs/gnb.yaml" "e2" "enable_du_e2" "true"
+    update_yaml "configs/gnb.yaml" "e2" "enable_cu_cp_e2" "true"
+    update_yaml "configs/gnb.yaml" "e2" "enable_cu_up_e2" "false"
+    update_yaml "configs/gnb.yaml" "e2" "e2sm_kpm_enabled" "true"
+    update_yaml "configs/gnb.yaml" "e2" "e2sm_rc_enabled" "true"
+    update_yaml "configs/gnb.yaml" "e2" "addr" "$IP_E2TERM"
+    update_yaml "configs/gnb.yaml" "e2" "bind_addr" "$IP_E2TERM_BIND"
+    update_yaml "configs/gnb.yaml" "e2" "port" "$PORT_E2TERM"
 else
-    update_yaml configs/gnb.yaml "e2" "enable_cu_cp_e2" "false"
-    update_yaml configs/gnb.yaml "e2" "enable_cu_up_e2" "false"
-    update_yaml configs/gnb.yaml "e2" "enable_du_e2" "false"
-    update_yaml configs/gnb.yaml "e2" "e2sm_kpm_enabled" "false"
-    update_yaml configs/gnb.yaml "e2" "e2sm_rc_enabled" "false"
-    update_yaml configs/gnb.yaml "e2" "addr" null
-    update_yaml configs/gnb.yaml "e2" "bind_addr" null
-    update_yaml configs/gnb.yaml "e2" "port" null
+    update_yaml "configs/gnb.yaml" "e2" "enable_cu_cp_e2" "false"
+    update_yaml "configs/gnb.yaml" "e2" "enable_cu_up_e2" "false"
+    update_yaml "configs/gnb.yaml" "e2" "enable_du_e2" "false"
+    update_yaml "configs/gnb.yaml" "e2" "e2sm_kpm_enabled" "false"
+    update_yaml "configs/gnb.yaml" "e2" "e2sm_rc_enabled" "false"
+    update_yaml "configs/gnb.yaml" "e2" "addr" null
+    update_yaml "configs/gnb.yaml" "e2" "bind_addr" null
+    update_yaml "configs/gnb.yaml" "e2" "port" null
 fi
 
 # Update configuration values for CU-CP
-update_yaml configs/gnb.yaml "cu_cp" "max_nof_dus" ""
-update_yaml configs/gnb.yaml "cu_cp" "max_nof_cu_ups" ""
-update_yaml configs/gnb.yaml "cu_cp" "max_nof_ues" ""
-update_yaml configs/gnb.yaml "cu_cp" "max_nof_drbs_per_ue" ""
-update_yaml configs/gnb.yaml "cu_cp" "inactivity_timer" "7200"
-update_yaml configs/gnb.yaml "cu_cp" "request_pdu_session_timeout" "3"
+update_yaml "configs/gnb.yaml" "cu_cp" "max_nof_dus" ""
+update_yaml "configs/gnb.yaml" "cu_cp" "max_nof_cu_ups" ""
+update_yaml "configs/gnb.yaml" "cu_cp" "max_nof_ues" ""
+update_yaml "configs/gnb.yaml" "cu_cp" "max_nof_drbs_per_ue" ""
+update_yaml "configs/gnb.yaml" "cu_cp" "inactivity_timer" "7200"
+update_yaml "configs/gnb.yaml" "cu_cp" "request_pdu_session_timeout" "3"
 
 # Update configuration values for gNodeB logging
-update_yaml configs/gnb.yaml "log" "filename" "$SCRIPT_DIR/logs/gnb.log"
-update_yaml configs/gnb.yaml "log" "all_level" "info"
-update_yaml configs/gnb.yaml "log" "hex_max_size" "0"
+update_yaml "configs/gnb.yaml" "log" "filename" "$SCRIPT_DIR/logs/gnb.log"
+update_yaml "configs/gnb.yaml" "log" "all_level" "info"
+update_yaml "configs/gnb.yaml" "log" "hex_max_size" "0"
 
 # Packet capture for NGAP
-update_yaml configs/gnb.yaml "pcap" "ngap_enable" "false"
-update_yaml configs/gnb.yaml "pcap" "ngap_filename" "$SCRIPT_DIR/logs/gnb_ngap.pcap"
+update_yaml "configs/gnb.yaml" "pcap" "ngap_enable" "false"
+update_yaml "configs/gnb.yaml" "pcap" "ngap_filename" "$SCRIPT_DIR/logs/gnb_ngap.pcap"
 # Packet capture for N3
-update_yaml configs/gnb.yaml "pcap" "n3_enable" "false"
-update_yaml configs/gnb.yaml "pcap" "n3_filename" "$SCRIPT_DIR/logs/gnb_n3.pcap"
+update_yaml "configs/gnb.yaml" "pcap" "n3_enable" "false"
+update_yaml "configs/gnb.yaml" "pcap" "n3_filename" "$SCRIPT_DIR/logs/gnb_n3.pcap"
 # Packet capture for E1AP
-update_yaml configs/gnb.yaml "pcap" "e1ap_enable" "false"
-update_yaml configs/gnb.yaml "pcap" "e1ap_filename" "$SCRIPT_DIR/logs/gnb_e1ap.pcap"
+update_yaml "configs/gnb.yaml" "pcap" "e1ap_enable" "false"
+update_yaml "configs/gnb.yaml" "pcap" "e1ap_filename" "$SCRIPT_DIR/logs/gnb_e1ap.pcap"
 # Packet capture for E2AP
-update_yaml configs/gnb.yaml "pcap" "e2ap_enable" "false"
-update_yaml configs/gnb.yaml "pcap" "e2ap_cu_cp_filename" "$SCRIPT_DIR/logs/gnb_e2ap_cu_cp.pcap"
-update_yaml configs/gnb.yaml "pcap" "e2ap_cu_up_filename" "$SCRIPT_DIR/logs/gnb_e2ap_cu_up.pcap"
-update_yaml configs/gnb.yaml "pcap" "e2ap_du_filename" "$SCRIPT_DIR/logs/gnb_e2ap_du.pcap"
+update_yaml "configs/gnb.yaml" "pcap" "e2ap_enable" "false"
+update_yaml "configs/gnb.yaml" "pcap" "e2ap_cu_cp_filename" "$SCRIPT_DIR/logs/gnb_e2ap_cu_cp.pcap"
+update_yaml "configs/gnb.yaml" "pcap" "e2ap_cu_up_filename" "$SCRIPT_DIR/logs/gnb_e2ap_cu_up.pcap"
+update_yaml "configs/gnb.yaml" "pcap" "e2ap_du_filename" "$SCRIPT_DIR/logs/gnb_e2ap_du.pcap"
 # Packet capture for F1AP
-update_yaml configs/gnb.yaml "pcap" "f1ap_enable" "false"
-update_yaml configs/gnb.yaml "pcap" "f1ap_filename" "$SCRIPT_DIR/logs/gnb_f1ap.pcap"
+update_yaml "configs/gnb.yaml" "pcap" "f1ap_enable" "false"
+update_yaml "configs/gnb.yaml" "pcap" "f1ap_filename" "$SCRIPT_DIR/logs/gnb_f1ap.pcap"
 # Packet capture for F1U
-update_yaml configs/gnb.yaml "pcap" "f1u_enable" "false"
-update_yaml configs/gnb.yaml "pcap" "f1u_filename" "$SCRIPT_DIR/logs/gnb_f1u.pcap"
+update_yaml "configs/gnb.yaml" "pcap" "f1u_enable" "false"
+update_yaml "configs/gnb.yaml" "pcap" "f1u_filename" "$SCRIPT_DIR/logs/gnb_f1u.pcap"
 # Packet capture for RLC
-update_yaml configs/gnb.yaml "pcap" "rlc_enable" "false"
-update_yaml configs/gnb.yaml "pcap" "rlc_rb_type" "all" # Supported: [all, srb, drb]
-update_yaml configs/gnb.yaml "pcap" "rlc_filename" "$SCRIPT_DIR/logs/gnb_rlc.pcap"
+update_yaml "configs/gnb.yaml" "pcap" "rlc_enable" "false"
+update_yaml "configs/gnb.yaml" "pcap" "rlc_rb_type" "all" # Supported: [all, srb, drb]
+update_yaml "configs/gnb.yaml" "pcap" "rlc_filename" "$SCRIPT_DIR/logs/gnb_rlc.pcap"
 # Packet capture for MAC
-update_yaml configs/gnb.yaml "pcap" "mac_enable" "false"
-update_yaml configs/gnb.yaml "pcap" "mac_type" "udp" # Supported: [dlt, udp]
-update_yaml configs/gnb.yaml "pcap" "mac_filename" "$SCRIPT_DIR/logs/gnb_mac.pcap"
+update_yaml "configs/gnb.yaml" "pcap" "mac_enable" "false"
+update_yaml "configs/gnb.yaml" "pcap" "mac_type" "udp" # Supported: [dlt, udp]
+update_yaml "configs/gnb.yaml" "pcap" "mac_filename" "$SCRIPT_DIR/logs/gnb_mac.pcap"
 
 # Update configuration for metrics
-update_yaml configs/gnb.yaml "metrics" "addr" "127.0.0.1"
-update_yaml configs/gnb.yaml "metrics" "port" "55555"
-update_yaml configs/gnb.yaml "metrics" "cu_cp_statistics_report_period" "1"
-update_yaml configs/gnb.yaml "metrics" "cu_up_statistics_report_period" "1"
-update_yaml configs/gnb.yaml "metrics" "pdcp_report_period" "0"
-update_yaml configs/gnb.yaml "metrics" "rlc_report_period" "1000" # Every second
-update_yaml configs/gnb.yaml "metrics" "enable_json_metrics" "false"
-update_yaml configs/gnb.yaml "metrics" "autostart_stdout_metrics" "false"
-update_yaml configs/gnb.yaml "metrics" "sched_report_period" "1000"
+update_yaml "configs/gnb.yaml" "metrics" "addr" "127.0.0.1"
+update_yaml "configs/gnb.yaml" "metrics" "port" "55555"
+update_yaml "configs/gnb.yaml" "metrics" "cu_cp_statistics_report_period" "1"
+update_yaml "configs/gnb.yaml" "metrics" "cu_up_statistics_report_period" "1"
+update_yaml "configs/gnb.yaml" "metrics" "pdcp_report_period" "0"
+update_yaml "configs/gnb.yaml" "metrics" "rlc_report_period" "1000" # Every second
+update_yaml "configs/gnb.yaml" "metrics" "enable_json_metrics" "false"
+update_yaml "configs/gnb.yaml" "metrics" "autostart_stdout_metrics" "false"
+update_yaml "configs/gnb.yaml" "metrics" "sched_report_period" "1000"
 
 # For ZeroMQ, change otw_format to default
-update_yaml configs/gnb.yaml "ru_sdr" "otw_format" "default"
+update_yaml "configs/gnb.yaml" "ru_sdr" "otw_format" "default"
+
+if [ $(nproc) -lt 4 ]; then
+    echo "The number of threads is less than 4. Setting nof_non_rt_threads to $(nproc)."
+    update_yaml "configs/gnb.yaml" "expert_execution.threads.non_rt" "nof_non_rt_threads" "$(nproc)"
+fi
 
 mkdir -p logs
 sudo chown $USER:$USER -R logs

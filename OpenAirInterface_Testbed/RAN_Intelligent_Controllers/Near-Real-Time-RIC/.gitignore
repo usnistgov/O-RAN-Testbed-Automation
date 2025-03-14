@@ -1,0 +1,5 @@
+# Ignore testbed subdirectories
+/flexric/
+/logs/
+/swig/
+install_time.txt

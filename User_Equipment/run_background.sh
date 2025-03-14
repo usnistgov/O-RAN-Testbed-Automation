@@ -55,14 +55,22 @@ if [ ! -f "configs/ue1.conf" ]; then
     echo "Configuration was not found for srsUE. Please run ./generate_configurations.sh first."
     exit 1
 fi
-echo "Starting srsue in background..."
+echo "Starting User Equipment in background..."
+mkdir -p logs
+sudo chown -R $USER:$USER logs
+>logs/ue${UE_NUMBER}_stdout.txt
+
 sudo setsid bash -c "stdbuf -oL -eL \"$SCRIPT_DIR/run.sh\" $UE_NUMBER > logs/ue${UE_NUMBER}_stdout.txt 2>&1" </dev/null &
 sleep 1
-ATTEMPT_COUNTER=0
-MAX_ATTEMPTS=60
-while ! ./is_running.sh | grep -q "ue$UE_NUMBER" && [ $ATTEMPT_COUNTER -lt $MAX_ATTEMPTS ]; do
-    sleep 1
-    ATTEMPT_COUNTER=$((ATTEMPT_COUNTER + 1))
+
+ATTEMPT=0
+while ! ./is_running.sh | grep -q "ue$UE_NUMBER" do
+    sleep 0.5
+    ATTEMPT=$((ATTEMPT + 1))
+    if [ $ATTEMPT -ge 120 ]; then
+        echo "gNodeB did not start after 60 seconds, exiting..."
+        exit 1
+    fi
 done
+
 ./is_running.sh
-sudo chown -R $USER:$USER logs

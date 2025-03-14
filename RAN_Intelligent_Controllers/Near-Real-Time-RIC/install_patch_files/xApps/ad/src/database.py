@@ -20,14 +20,11 @@ from influxdb_client.client.write_api import SYNCHRONOUS
 from configparser import ConfigParser
 from mdclogpy import Logger
 
-
 logger = Logger(name=__name__)
-
 
 class DATABASE(object):
     r"""DATABASE takes an input as database name. It creates a client connection
       to influxDB and It reads/ writes UE data for a given dabtabase and a measurement.
-
 
     Parameters
     ----------
@@ -173,7 +170,6 @@ class DATABASE(object):
                 self.ue = cfg.get(section, "ue")
                 self.anomaly = cfg.get(section, "anomaly")
                 self.a1_param = cfg.get(section, "a1_param")
-
 
 class DUMMY(DATABASE):
 

@@ -24,7 +24,6 @@ import time
 
 logger = Logger(name=__name__)
 
-
 class DATABASE(object):
 
     def __init__(
@@ -151,7 +150,6 @@ class DATABASE(object):
                 self.servcell = cfg.get(section, "servcell")
                 self.ue = cfg.get(section, "ue")
                 self.cid = cfg.get(section, "cid")
-
 
 class DUMMY(DATABASE):
 

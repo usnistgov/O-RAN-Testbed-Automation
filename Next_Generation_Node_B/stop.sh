@@ -37,7 +37,7 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
 # Check if the gNodeB is already stopped
-if $(./is_running.sh | grep -q "gNodeB: NOT RUNNING"); then
+if $(./is_running.sh | grep -q "gNodeB: NOT_RUNNING"); then
     ./is_running.sh
     exit 0
 fi
@@ -52,7 +52,7 @@ sleep 1
 while [ $COUNT -lt $MAX_COUNT ]; do
     IS_RUNNING=$(./is_running.sh)
     echo "$IS_RUNNING ($COUNT / $MAX_COUNT)"
-    if echo "$IS_RUNNING" | grep -q "gNodeB: NOT RUNNING"; then
+    if echo "$IS_RUNNING" | grep -q "gNodeB: NOT_RUNNING"; then
         echo "The gNodeB has stopped gracefully."
         ./is_running.sh
         exit 0

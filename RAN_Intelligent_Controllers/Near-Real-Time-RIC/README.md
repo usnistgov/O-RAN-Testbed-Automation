@@ -37,23 +37,23 @@ By default, the Hello World Go xApp (hw-go) is installed automatically. Addition
 - **Quality of Experience Predictor xApp (qp)**:
   - Install with `./additional_scripts/install_xapp_qoe_predictor.sh`.
   - Patched to support InfluxDB version 2.X instead of InfluxDB 1.X.
-  - More information can be found in the documentation [[13]][qp-docs] and code [[14]][qp-code].
+  - More information can be found in the documentation [[11]][qp-docs] and code [[12]][qp-code].
 - **RIC Control xApp (rc)**:
   - Install with `./additional_scripts/install_xapp_ric_control.sh`.
-  - More information can be found in the documentation [[15]][rc-docs] and code [[16]][rc-code].
+  - More information can be found in the documentation [[13]][rc-docs] and code [[14]][rc-code].
 - **Traffic Steering xApp (trafficxapp)**:
   - Install with `./additional_scripts/install_xapp_traffic_steering.sh`.
-  - More information can be found in the documentation [[17]][trafficxapp-docs] and code [[18]][trafficxapp-code].
+  - More information can be found in the documentation [[15]][trafficxapp-docs] and code [[16]][trafficxapp-code].
 - **Hello World Python xApp (hw-python)**:
   - Install with `./additional_scripts/install_xapp_hw-python.sh`.
-  - More information can be found in the code [[11]][hw-python-code].
+  - More information can be found in the code [[17]][hw-python-code].
 - **Hello World Rust xApp (hw-rust)**:
   - Install with `./additional_scripts/install_xapp_hw-rust.sh`.
-  - More information can be found in the code [[12]][hw-rust-code].
+  - More information can be found in the code [[18]][hw-rust-code].
 
 ## Uninstalling an xApp
 To uninstall an xApp, run `./additional_scripts/uninstall_an_xapp.sh` which will prompt the user to select an xApp to uninstall.
-Alternatively, xApps can be uninstalled manually by fetching list of xApps with `dms_cli get_charts_list`, then uninstalling one with `dms_cli uninstall "NAME_OF_XAPP" ricxapp`.
+Alternatively, xApps can be uninstalled manually by fetching the list of xApps with `dms_cli get_charts_list` and uninstalling an xApp with `dms_cli uninstall "NAME_OF_XAPP" ricxapp`.
 
 ## References
 
@@ -67,15 +67,14 @@ Alternatively, xApps can be uninstalled manually by fetching list of xApps with 
 8. 5G Cell AD xApp project page. O-RAN Software Community. [https://github.com/o-ran-sc/ric-app-ad-cell][ad-cell-code]
 9. AD xApp documentation. O-RAN Software Community. [https://docs.o-ran-sc.org/projects/o-ran-sc-ric-app-ad/en/latest/overview.html][ad-docs]
 10. AD xApp project page. O-RAN Software Community. [https://github.com/o-ran-sc/ric-app-ad][ad-code]
-11. HW Python xApp project page. O-RAN Software Community. [https://github.com/o-ran-sc/ric-app-hw-python][hw-python-code]
-12. HW Rust xApp project page. O-RAN Software Community. [https://github.com/o-ran-sc/ric-app-hw-rust][hw-rust-code]
-13. QoE Predictor xApp documentation. O-RAN Software Community. [https://docs.o-ran-sc.org/projects/o-ran-sc-ric-app-qp/en/latest/overview.html][qp-docs]
-14. QoE Predictor xApp project page. O-RAN Software Community. [https://github.com/o-ran-sc/ric-app-qp][qp-code]
-15. RIC Control xApp documentation. O-RAN Software Community. [https://docs.o-ran-sc.org/projects/o-ran-sc-ric-app-rc/en/latest/overview.html][rc-docs]
-16. RIC Control xApp project page. O-RAN Software Community. [https://github.com/o-ran-sc/ric-app-rc][rc-code]
-17. Traffic Steering xApp documentation. O-RAN Software Community. [https://docs.o-ran-sc.org/projects/o-ran-sc-ric-app-ts/en/latest/user-guide.html][trafficxapp-docs]
-18. Traffic Steering xApp project page. O-RAN Software Community. [https://github.com/o-ran-sc/ric-app-ts][trafficxapp-code]
-
+11. QoE Predictor xApp documentation. O-RAN Software Community. [https://docs.o-ran-sc.org/projects/o-ran-sc-ric-app-qp/en/latest/overview.html][qp-docs]
+12. QoE Predictor xApp project page. O-RAN Software Community. [https://github.com/o-ran-sc/ric-app-qp][qp-code]
+13. RIC Control xApp documentation. O-RAN Software Community. [https://docs.o-ran-sc.org/projects/o-ran-sc-ric-app-rc/en/latest/overview.html][rc-docs]
+14. RIC Control xApp project page. O-RAN Software Community. [https://github.com/o-ran-sc/ric-app-rc][rc-code]
+15. Traffic Steering xApp documentation. O-RAN Software Community. [https://docs.o-ran-sc.org/projects/o-ran-sc-ric-app-ts/en/latest/user-guide.html][trafficxapp-docs]
+16. Traffic Steering xApp project page. O-RAN Software Community. [https://github.com/o-ran-sc/ric-app-ts][trafficxapp-code]
+17. HW Python xApp project page. O-RAN Software Community. [https://github.com/o-ran-sc/ric-app-hw-python][hw-python-code]
+18. HW Rust xApp project page. O-RAN Software Community. [https://github.com/o-ran-sc/ric-app-hw-rust][hw-rust-code]
 <!-- References -->
 
 [oran-wg3]: https://public.o-ran.org/display/WG3/Introduction
@@ -88,11 +87,11 @@ Alternatively, xApps can be uninstalled manually by fetching list of xApps with 
 [ad-cell-docs]: https://docs.o-ran-sc.org/projects/o-ran-sc-ric-app-ad/en/latest/overview.html
 [ad-code]: https://github.com/o-ran-sc/ric-app-ad
 [ad-docs]: https://docs.o-ran-sc.org/projects/o-ran-sc-ric-app-ad/en/latest/overview.html
-[hw-python-code]: https://github.com/o-ran-sc/ric-app-hw-python
-[hw-rust-code]: https://github.com/o-ran-sc/ric-app-hw-rust
 [qp-code]: https://github.com/o-ran-sc/ric-app-qp
 [qp-docs]: https://docs.o-ran-sc.org/projects/o-ran-sc-ric-app-qp/en/latest/overview.html
 [rc-code]: https://github.com/o-ran-sc/ric-app-rc
 [rc-docs]: https://docs.o-ran-sc.org/projects/o-ran-sc-ric-app-rc/en/latest/overview.html
 [trafficxapp-code]: https://github.com/o-ran-sc/ric-app-ts
 [trafficxapp-docs]: https://docs.o-ran-sc.org/projects/o-ran-sc-ric-app-ts/en/latest/user-guide.html
+[hw-python-code]: https://github.com/o-ran-sc/ric-app-hw-python
+[hw-rust-code]: https://github.com/o-ran-sc/ric-app-hw-rust

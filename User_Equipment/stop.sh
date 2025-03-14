@@ -50,7 +50,7 @@ if [ "$#" -eq 1 ]; then
 fi
 
 # Check if the UE is already stopped
-if $(./is_running.sh | grep -q "User Equipment: NOT RUNNING"); then
+if $(./is_running.sh | grep -q "User Equipment: NOT_RUNNING"); then
     ./is_running.sh
     exit 0
 fi
@@ -70,7 +70,7 @@ while [ $COUNT -lt $MAX_COUNT ]; do
     IS_RUNNING=$(./is_running.sh)
     echo "$IS_RUNNING ($COUNT / $MAX_COUNT)"
     if [ -z "$UE_NUMBER" ]; then
-        if echo "$IS_RUNNING" | grep -q "User Equipment: NOT RUNNING"; then
+        if echo "$IS_RUNNING" | grep -q "User Equipment: NOT_RUNNING"; then
             echo "The User Equipment has stopped gracefully."
             ./is_running.sh
             exit 0

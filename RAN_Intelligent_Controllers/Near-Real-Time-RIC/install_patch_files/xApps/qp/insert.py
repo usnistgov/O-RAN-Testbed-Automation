@@ -24,7 +24,6 @@ import pandas as pd
 from src.database import DATABASE
 from configparser import ConfigParser
 
-
 class INSERTDATA(DATABASE):
 
     def __init__(self):
@@ -60,7 +59,6 @@ class INSERTDATA(DATABASE):
             )
             time.sleep(0.4)
 
-
 def populatedb():
     # inintiate connection and create database UEDATA
     db = INSERTDATA()
@@ -68,7 +66,6 @@ def populatedb():
     print("Writinig data into influxDB")
     while True:
         db.assign_timestamp(df)
-
 
 if __name__ == "__main__":
     populatedb()

@@ -45,7 +45,7 @@ check_service() {
         if systemctl is-active --quiet "$SEARCH_PATTERN"; then
             echo "$DISPLAY_NAME: RUNNING"
         else
-            echo "$DISPLAY_NAME: NOT RUNNING"
+            echo "$DISPLAY_NAME: NOT_RUNNING"
         fi
     fi
 }

@@ -56,6 +56,6 @@ else
     if pgrep -x "srsue" >/dev/null; then
         echo "User Equipment: RUNNING"
     else
-        echo "User Equipment: NOT RUNNING"
+        echo "User Equipment: NOT_RUNNING"
     fi
 fi

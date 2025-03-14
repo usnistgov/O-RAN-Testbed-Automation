@@ -1,0 +1,5 @@
+# Ignore testbed subdirectories
+/logs/
+/openairinterface5g/
+openairinterface5g
+install_time.txt

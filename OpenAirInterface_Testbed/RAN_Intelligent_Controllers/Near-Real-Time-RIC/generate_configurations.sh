@@ -28,6 +28,9 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
+# Exit immediately if a command fails
+set -e
+
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
     sudo apt-get install -y coreutils
@@ -36,51 +39,44 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-# Upon exit, gracefully stop all components and fix console in case it breaks
-trap './stop.sh; stty sane; exit' EXIT SIGINT SIGTERM
+# Function to update or add configuration properties in .conf files, considering sections and uncommenting if needed
+update_conf() {
+    echo "update_conf($1, $2, $3, $4)"
+    local FILE_PATH="$1"
+    local SECTION="$2"
+    local PROPERTY="$3"
+    local VALUE="$4"
 
-echo "Running 5G Core components..."
-cd 5G_Core_Network
-./run.sh
-cd ..
-
-echo -n "Waiting for AMF to be ready"
-ATTEMPT=0
-while [ ! -f 5G_Core_Network/logs/amf.txt ] || ! grep -q "NF registered" 5G_Core_Network/logs/amf.txt; do
-    echo -n "."
-    sleep 0.5
-    ATTEMPT=$((ATTEMPT + 1))
-    if [ $ATTEMPT -ge 120 ]; then
-        echo "5G Core components did not start after 60 seconds, exiting..."
-        exit 1
+    # Ensure the section exists; if not, add it at the end
+    if ! grep -q "^\[$SECTION\]" "$FILE_PATH"; then
+        echo -e "\n[$SECTION]" >>"$FILE_PATH"
     fi
-done
-echo -e "\nAMF is ready."
+    # Remove any existing entries of the property in the section (including commented ones)
+    sed -i "/^\[$SECTION\]/,/^\s*\[/{/^[# ]*\s*$PROPERTY\s*=.*/d}" "$FILE_PATH"
+    # Append the new property=value after the section header
+    sed -i "/^\[$SECTION\]/a $PROPERTY = $VALUE" "$FILE_PATH"
+}
 
-echo
-echo "Running gNodeB..."
-cd Next_Generation_Node_B
-./run_background.sh
-cd ..
+echo "Saving configuration file example..."
+rm -rf "$SCRIPT_DIR/configs"
+mkdir "$SCRIPT_DIR/configs"
+rm -rf "$SCRIPT_DIR/logs"
 
-ATTEMPT=0
-while [ ! -f Next_Generation_Node_B/logs/gnb_stdout.txt ] || ! grep -q "gNB started" Next_Generation_Node_B/logs/gnb_stdout.txt; do
-    sleep 0.5
-    ATTEMPT=$((ATTEMPT + 1))
-    if [ $ATTEMPT -ge 120 ]; then
-        echo "gNodeB did not start after 60 seconds, exiting..."
-        exit 1
-    fi
-    if grep -q " gNB started " logs/gnb_stdout.txt; then
-        break
-    elif [ grep -q "Error" logs/gnb_stdout.txt ] || [ grep -q "srsRAN ERROR:" logs/gnb_stdout.txt ]; then
-        echo "Error starting gNodeB. Check logs/gnb_stdout.txt for more information."
-        exit 1
-    fi
-done
+if [ -f /usr/local/etc/flexric/flexric.conf ]; then
+    cp /usr/local/etc/flexric/flexric.conf "$SCRIPT_DIR/configs/flexric.conf"
+else
+    cp flexric/flexric.conf "$SCRIPT_DIR/configs/flexric.conf"
+fi
 
-echo
-echo "Running User Equipment..."
-cd User_Equipment
-./run.sh
-cd ..
+update_conf "configs/flexric.conf" "XAPP" "DB_NAME" "xapp_db1"
+
+# # supported name = NearRT_RIC, E2_Agent, E2_Proxy_Agent, xApp
+# Name = "NearRT_RIC"
+# NearRT_RIC_IP = "127.0.0.1"
+# E2_Port = 36421
+# E42_Port = 36422
+
+# Configure the xApps:
+#wget -O "$SCRIPT_DIR/configs/xapp_oran_sm.conf" "https://gitlab.eurecom.fr/mosaic5g/flexric/-/raw/br-flexric/conf_files/xapp_oran_sm.conf"
+
+echo "Successfully configured the FlexRIC. The configuration file is located in the configs/ directory."

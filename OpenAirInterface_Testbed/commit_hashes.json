@@ -1,0 +1,5 @@
+{
+  "https://gitlab.eurecom.fr/oai/openairinterface5g.git": ["develop", "0515cf98b3a176d59a37f071977150abd2c6b37a"],
+  "https://github.com/swig/swig.git": ["master", "138507624bd1e0de72adff1b12a788e74133f94e"],
+  "https://gitlab.eurecom.fr/mosaic5g/flexric.git": ["dev", "beabdd072ca9e381d4d27c9fbc6bb19382817489"]
+}

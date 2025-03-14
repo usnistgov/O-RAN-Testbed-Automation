@@ -332,6 +332,11 @@ update_yaml "configs/gnb.yaml" "metrics" "sched_report_period" "1000"
 # For ZeroMQ, change otw_format to default
 update_yaml "configs/gnb.yaml" "ru_sdr" "otw_format" "default"
 
+if [ $(nproc) -lt 4 ]; then
+    echo "The number of threads is less than 4. Setting nof_non_rt_threads to $(nproc)."
+    update_yaml "configs/gnb.yaml" "expert_execution.threads.non_rt" "nof_non_rt_threads" "$(nproc)"
+fi
+
 mkdir -p logs
 sudo chown $USER:$USER -R logs
 

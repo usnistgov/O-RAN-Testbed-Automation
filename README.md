@@ -1,6 +1,6 @@
 # Automation Tool for Deploying 5G O-RAN Testbeds
 
-These installation scripts automate the deployment and configuration of a 5G Open Radio Access Network (O-RAN) testbed on both bare metal and virtualized environments, based upon the blueprints described in [[1]][nist-tn]. The tool simplifies setting up the 5G testbed components, including the 5G Core; Next Generation Node B (gNodeB) composed of Radio Unit (RU), Distributed Unit (DU), and Centralized Unit (CU); User Equipment (UE); and RAN Intelligent Controller (RIC), thereby reducing the complexity and time required to operationalize the testbeds described in the report above.
+Based on the blueprints described in NIST TN 2311 [[1]][nist-tn], this automation tool facilitates the deployment and configuration of 5G Open Radio Access Network (O-RAN) testbeds. Designed to operate in both bare metal and virtualized environments, it simplifies setting up the components required for a 5G O-RAN testbed, including the 5G Core; Next Generation Node B (gNodeB) composed of Radio Unit (RU), Distributed Unit (DU), and Centralized Unit (CU); User Equipment (UE); RAN Intelligent Controller (RIC); and a series of xApps that can be installed in the RIC. This reduces the complexity and time required to operationalize the testbeds described in the report above, and enables more efficient testing and validation to facilitate research and development in 5G technologies.
 
 ## Setting Up the Testbed
 
@@ -11,9 +11,9 @@ The automation tool can be used in virtual machines and physical machines with t
 Before beginning the installation and setup of the testbed, verify that your system meets the following minimum specifications to prevent issues like pods remaining in pending or crash loop states, often due to insufficient resources.
 
 - **Operating System**: Linux distributions based on Ubuntu 20.04 LTS, Ubuntu 22.04 LTS, and Ubuntu 24.04 LTS are supported.
-  - _Recommendation: Linux Mint 22 based on Ubuntu 24.04 LTS._
+  - _Recommendation: Linux Mint 21.1 based on Ubuntu 22.04 LTS._
 - **Hard Drive Storage**: Must be `≥ 35` GB.
-- **Base Memory/RAM**: Must be `≥ 6000` MB.
+- **Base Memory/RAM**: Must be `≥ 6144` MB.
 - **Number of Processors**: Must be `≥ 2` processors.
   - _Recommendation: Between `6-8` processors for improved performance._
 - **Internet Connectivity**: A stable internet connection must be maintained during the installation otherwise the process may fail and require restarting.
@@ -97,7 +97,11 @@ The RIC starts automatically on boot and can be accessed with `k9s -A`. For more
 
 ## Software Versioning
 
-For stability of the software dependencies, all `git clone` commands are first routed through `commit_hashes.json` to get the branch/commit hash of each dependency. This file can be updated with the latest hashes by running `./Additional_Scripts/update_commit_hashes.sh`. For information about the automation tool versions, please see the releases page [[2]][gh-ota].
+For stability of software dependencies, all `git clone` calls are first routed through `commit_hashes.json` to get the branch/commit hash to use for each repository git clone. This file can be updated manually, or by running `./Additional_Scripts/update_commit_hashes.sh` to fetch the latest commit hashes. For information about the automation tool versions, please see the releases page [[2]][gh-ota].
+
+## Alternative Testbeds
+
+As an alternative, the testbed by OpenAirInterface can be installed from the `OpenAirInterface_Testbed` directory. This installs the 5G Core Network by Open5GS, gNodeB by OpenAirInterface, 5G UE by OpenAirInterface, and FlexRIC by Mosaic5G. For more information, please visit the README.md documents within the respective directories.
 
 ## Contact Information
 

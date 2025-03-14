@@ -28,59 +28,19 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
+# Exit immediately if a command fails
+set -e
+
+# Guide: https://gitlab.eurecom.fr/mosaic5g/flexric
+
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
     sudo apt-get install -y coreutils
 fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
-cd "$SCRIPT_DIR"
+PARENT_DIR=$(dirname "$SCRIPT_DIR")
 
-# Upon exit, gracefully stop all components and fix console in case it breaks
-trap './stop.sh; stty sane; exit' EXIT SIGINT SIGTERM
+cd "$PARENT_DIR/flexric/"
 
-echo "Running 5G Core components..."
-cd 5G_Core_Network
-./run.sh
-cd ..
-
-echo -n "Waiting for AMF to be ready"
-ATTEMPT=0
-while [ ! -f 5G_Core_Network/logs/amf.txt ] || ! grep -q "NF registered" 5G_Core_Network/logs/amf.txt; do
-    echo -n "."
-    sleep 0.5
-    ATTEMPT=$((ATTEMPT + 1))
-    if [ $ATTEMPT -ge 120 ]; then
-        echo "5G Core components did not start after 60 seconds, exiting..."
-        exit 1
-    fi
-done
-echo -e "\nAMF is ready."
-
-echo
-echo "Running gNodeB..."
-cd Next_Generation_Node_B
-./run_background.sh
-cd ..
-
-ATTEMPT=0
-while [ ! -f Next_Generation_Node_B/logs/gnb_stdout.txt ] || ! grep -q "gNB started" Next_Generation_Node_B/logs/gnb_stdout.txt; do
-    sleep 0.5
-    ATTEMPT=$((ATTEMPT + 1))
-    if [ $ATTEMPT -ge 120 ]; then
-        echo "gNodeB did not start after 60 seconds, exiting..."
-        exit 1
-    fi
-    if grep -q " gNB started " logs/gnb_stdout.txt; then
-        break
-    elif [ grep -q "Error" logs/gnb_stdout.txt ] || [ grep -q "srsRAN ERROR:" logs/gnb_stdout.txt ]; then
-        echo "Error starting gNodeB. Check logs/gnb_stdout.txt for more information."
-        exit 1
-    fi
-done
-
-echo
-echo "Running User Equipment..."
-cd User_Equipment
-./run.sh
-cd ..
+./build/examples/xApp/c/monitor/xapp_kpm_moni -c ../configs/xapp_oran_sm.conf

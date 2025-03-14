@@ -36,51 +36,43 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-# Upon exit, gracefully stop all components and fix console in case it breaks
-trap './stop.sh; stty sane; exit' EXIT SIGINT SIGTERM
+UE_NUMBER=1
+if [ "$#" -eq 1 ]; then
+    UE_NUMBER=$1
+fi
 
-echo "Running 5G Core components..."
-cd 5G_Core_Network
-./run.sh
-cd ..
+if ! [[ $UE_NUMBER =~ ^[0-9]+$ ]]; then
+    echo "Error: UE number must be a number."
+    exit 1
+fi
 
-echo -n "Waiting for AMF to be ready"
+if [ $UE_NUMBER -lt 1 ]; then
+    echo "Error: UE number must be greater than or equal to 1."
+    exit 1
+fi
+
+if [ ! -f "configs/ue$UE_NUMBER.conf" ]; then
+    echo "Configuration was not found for srsUE. Please run ./generate_configurations.sh first."
+    exit 1
+fi
+
+echo "Starting User Equipment in background..."
+mkdir -p logs
+sudo chown -R $USER:$USER logs
+sudo rm -rf logs/ue${UE_NUMBER}_stdout.txt
+
+cd "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build"
+sudo setsid bash -c "stdbuf -oL -eL sudo sudo ./nr-uesoftmodem -O "$SCRIPT_DIR/configs/ue$UE_NUMBER.conf" --rfsim --rfsimulator.serveraddr 127.0.0.1 -r 106 --numerology 1 --band 78 -C 3619200000 > \"$SCRIPT_DIR/logs/ue${UE_NUMBER}_stdout.txt\" 2>&1" </dev/null &
+cd "$SCRIPT_DIR"
+
 ATTEMPT=0
-while [ ! -f 5G_Core_Network/logs/amf.txt ] || ! grep -q "NF registered" 5G_Core_Network/logs/amf.txt; do
-    echo -n "."
+while $(./is_running.sh | grep -q "NOT_RUNNING"); do
     sleep 0.5
     ATTEMPT=$((ATTEMPT + 1))
     if [ $ATTEMPT -ge 120 ]; then
-        echo "5G Core components did not start after 60 seconds, exiting..."
-        exit 1
-    fi
-done
-echo -e "\nAMF is ready."
-
-echo
-echo "Running gNodeB..."
-cd Next_Generation_Node_B
-./run_background.sh
-cd ..
-
-ATTEMPT=0
-while [ ! -f Next_Generation_Node_B/logs/gnb_stdout.txt ] || ! grep -q "gNB started" Next_Generation_Node_B/logs/gnb_stdout.txt; do
-    sleep 0.5
-    ATTEMPT=$((ATTEMPT + 1))
-    if [ $ATTEMPT -ge 120 ]; then
-        echo "gNodeB did not start after 60 seconds, exiting..."
-        exit 1
-    fi
-    if grep -q " gNB started " logs/gnb_stdout.txt; then
-        break
-    elif [ grep -q "Error" logs/gnb_stdout.txt ] || [ grep -q "srsRAN ERROR:" logs/gnb_stdout.txt ]; then
-        echo "Error starting gNodeB. Check logs/gnb_stdout.txt for more information."
+        echo "UE did not start after 60 seconds, exiting..."
         exit 1
     fi
 done
 
-echo
-echo "Running User Equipment..."
-cd User_Equipment
-./run.sh
-cd ..
+./is_running.sh

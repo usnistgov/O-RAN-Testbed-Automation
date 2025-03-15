@@ -69,6 +69,7 @@ echo "Restoring gNodeB configuration file..."
 rm -rf configs
 mkdir configs
 rm -rf logs
+mkdir logs
 cp srsRAN_Project/configs/gnb_rf_b200_tdd_n78_20mhz.yml configs/gnb.yaml
 
 # Function to prompt user for IP address
@@ -336,8 +337,5 @@ if [ $(nproc) -lt 4 ]; then
     echo "The number of threads is less than 4. Setting nof_non_rt_threads to $(nproc)."
     update_yaml "configs/gnb.yaml" "expert_execution.threads.non_rt" "nof_non_rt_threads" "$(nproc)"
 fi
-
-mkdir -p logs
-sudo chown $USER:$USER -R logs
 
 echo "Successfully configured the gNodeB. The configuration file is located in the configs/ directory."

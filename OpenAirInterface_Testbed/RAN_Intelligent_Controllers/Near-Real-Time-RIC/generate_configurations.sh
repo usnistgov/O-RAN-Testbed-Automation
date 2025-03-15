@@ -58,9 +58,10 @@ update_conf() {
 }
 
 echo "Saving configuration file example..."
-rm -rf "$SCRIPT_DIR/configs"
-mkdir "$SCRIPT_DIR/configs"
-rm -rf "$SCRIPT_DIR/logs"
+rm -rf configs
+mkdir configs
+rm -rf logs
+mkdir logs
 
 if [ -f /usr/local/etc/flexric/flexric.conf ]; then
     cp /usr/local/etc/flexric/flexric.conf "$SCRIPT_DIR/configs/flexric.conf"
@@ -69,14 +70,5 @@ else
 fi
 
 update_conf "configs/flexric.conf" "XAPP" "DB_NAME" "xapp_db1"
-
-# # supported name = NearRT_RIC, E2_Agent, E2_Proxy_Agent, xApp
-# Name = "NearRT_RIC"
-# NearRT_RIC_IP = "127.0.0.1"
-# E2_Port = 36421
-# E42_Port = 36422
-
-# Configure the xApps:
-#wget -O "$SCRIPT_DIR/configs/xapp_oran_sm.conf" "https://gitlab.eurecom.fr/mosaic5g/flexric/-/raw/br-flexric/conf_files/xapp_oran_sm.conf"
 
 echo "Successfully configured the FlexRIC. The configuration file is located in the configs/ directory."

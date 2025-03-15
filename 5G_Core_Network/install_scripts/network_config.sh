@@ -30,48 +30,41 @@
 
 echo "# Script: $(realpath $0)..."
 
-# Define the interface and addresses
-INTERFACE="ogstun"
-IPv4_ADDR="10.45.0.1/16"
-IPv6_ADDR="2001:db8:cafe::1/48"
-IPv4_SUBNET="10.45.0.0/16"
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+PARENT_DIR=$(dirname "$SCRIPT_DIR")
+cd "$PARENT_DIR"
 
 # Check if the tun interface already exists, if not, add it
-if ! ip link show $INTERFACE >/dev/null 2>&1; then
-    echo "Adding TUN interface $INTERFACE..."
-    sudo ip tuntap add name $INTERFACE mode tun
+if ! ip link show ogstun >/dev/null 2>&1; then
+    echo "Adding TUN interface ogstun..."
+    sudo ip tuntap add name ogstun mode tun
+fi
+if ! ip link show ogstun2 >/dev/null 2>&1; then
+    echo "Adding TUN interface ogstun2..."
+    sudo ip tuntap add name ogstun2 mode tun
+fi
+if ! ip link show ogstun3 >/dev/null 2>&1; then
+    echo "Adding TUN interface ogstun3..."
+    sudo ip tuntap add name ogstun3 mode tun
 fi
 
-# Check if the IPv4 address is already assigned, if not, add it
-if ! ip addr show $INTERFACE | grep -q $IPv4_ADDR; then
-    echo "Adding IPv4 address $IPv4_ADDR to $INTERFACE..."
-    sudo ip addr add $IPv4_ADDR dev $INTERFACE
-fi
-
-# Check if the IPv6 address is already assigned, if not, add it
-if ! ip addr show $INTERFACE | grep -q $IPv6_ADDR; then
-    echo "Adding IPv6 address $IPv6_ADDR to $INTERFACE..."
-    sudo ip addr add $IPv6_ADDR dev $INTERFACE
-fi
-
-# Bring the interface up if it's not already up
-if ! ip link show $INTERFACE | grep -q "state UP"; then
-    echo "Bringing up $INTERFACE..."
-    sudo ip link set $INTERFACE up
-fi
+echo "Running Open5GS netconf.sh script..."
+cd open5gs/misc
+sudo ./netconf.sh
+cd ..
 
 # Enable IP forwarding
 sudo sysctl -w net.ipv4.ip_forward=1
 sudo sysctl -w net.ipv6.conf.all.forwarding=1
 
 # Check if the iptables MASQUERADE rule already exists, if not, add it
-if ! sudo iptables --wait -t nat -C POSTROUTING -s $IPv4_SUBNET ! -o $INTERFACE -j MASQUERADE 2>/dev/null; then
+if ! sudo iptables --wait -t nat -C POSTROUTING -s 10.45.0.0/16 ! -o ogstun -j MASQUERADE 2>/dev/null; then
     echo "Adding iptables MASQUERADE rule for IPv4..."
-    sudo iptables --wait -t nat -A POSTROUTING -s $IPv4_SUBNET ! -o $INTERFACE -j MASQUERADE
+    sudo iptables --wait -t nat -A POSTROUTING -s 10.45.0.0/16 ! -o ogstun -j MASQUERADE
 fi
 
 # Check if the ip6tables MASQUERADE rule already exists, if not, add it
-if ! sudo ip6tables --wait -t nat -C POSTROUTING -s $IPv6_SUBNET -o $INTERFACE -j MASQUERADE 2>/dev/null; then
+if ! sudo ip6tables --wait -t nat -C POSTROUTING -s cafe::/64 -o ogstun -j MASQUERADE 2>/dev/null; then
     echo "Adding ip6tables MASQUERADE rule for IPv6..."
-    sudo ip6tables --wait -t nat -A POSTROUTING -s $IPv6_SUBNET -o $INTERFACE -j MASQUERADE 2>/dev/null
+    sudo ip6tables --wait -t nat -A POSTROUTING -s cafe::/64 -o ogstun -j MASQUERADE 2>/dev/null
 fi

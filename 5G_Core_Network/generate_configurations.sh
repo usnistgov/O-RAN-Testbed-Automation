@@ -39,6 +39,14 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
+# If EXPOSE_AMF_OVER_HOSTNAME is false, AMF will use 127.0.0.1, otherwise, it will use the hostname IP
+EXPOSE_AMF_OVER_HOSTNAME=true
+
+# Set IS_OPEN5GS_ON_HOST if Open5GS will run on the host machine, otherwise, set it to false
+if [ "$EXPOSE_AMF_OVER_HOSTNAME" = true ]; then
+    IS_OPEN5GS_ON_HOST=true
+fi
+
 # Check if the YAML editor is installed, and install it if not
 if ! command -v yq &>/dev/null; then
     sudo "$SCRIPT_DIR/install_scripts/./install_yq.sh"
@@ -62,9 +70,10 @@ echo "MNC (Mobile Network Code): $PLMN_MNC"
 echo "TAC value: $TAC"
 
 echo "Creating configs directory..."
-rm -rf "$SCRIPT_DIR/configs"
-mkdir "$SCRIPT_DIR/configs"
-rm -rf "$SCRIPT_DIR/logs"
+rm -rf configs
+mkdir configs
+rm -rf logs
+mkdir logs
 
 APPS=("mmed" "sgwcd" "smfd" "amfd" "sgwud" "upfd" "hssd" "pcrfd" "nrfd" "scpd" "seppd" "ausfd" "udmd" "pcfd" "nssfd" "bsfd" "udrd" "webui")
 
@@ -217,17 +226,23 @@ set_configuration_ngap_and_gptu_server_ip() {
     yq e -i ".upf.gtpu.server[0].address = \"$IP_ADDRESS\"" "$UPF_FILE_PATH"
 }
 
-# To expose the core network to the external network, set EXPOSE_CORE_EXTERNALLY to true
-EXPOSE_CORE_EXTERNALLY=false
-
-if [ "$EXPOSE_CORE_EXTERNALLY" = true ]; then
+AMF_IP_BIND=""
+if [ "$EXPOSE_AMF_OVER_HOSTNAME" = true ]; then
     IP_ADDRESS=$(hostname -I | awk '{print $1}')
     set_configuration_ngap_and_gptu_server_ip $IP_ADDRESS
+    # Need an address for the gNodeB to bind to that is not the host IP.
+    if [ "$IS_OPEN5GS_ON_HOST" = true ]; then
+        AMF_IP_BIND="10.45.0.1"
+    else
+        AMF_IP_BIND=$IP_ADDRESS
+    fi
 fi
 
 # Get the following AMF IP, and it will be updated in the configuration file
 AMF_IP=$(get_configuration_ngap_server_ip)
-AMF_IP_BIND=$(get_primary_ip_for_network $AMF_IP)
+if [ -z "$AMF_IP_BIND" ]; then
+    AMF_IP_BIND=$(get_primary_ip_for_network $AMF_IP)
+fi
 AMF_ADDRESSES_OUTPUT="configs/get_amf_address.txt"
 echo "$AMF_IP" >$AMF_ADDRESSES_OUTPUT
 echo "$AMF_IP_BIND" >>$AMF_ADDRESSES_OUTPUT
@@ -253,9 +268,6 @@ echo "By default, Ubuntu enables a firewall that blocks the UE from accessing th
 sudo ufw status || true
 sudo ./install_scripts/disable_firewall.sh
 sudo ufw status || true
-
-mkdir -p "$SCRIPT_DIR/logs"
-sudo chown $USER:$USER -R "$SCRIPT_DIR/logs"
 
 echo "Registering UE 1..."
 ./install_scripts/register_subscriber.sh --imsi 001010123456780 --key 00112233445566778899AABBCCDDEEFF --opc 63BFA50EE6523365FF14C1F45F88737D --apn srsapn

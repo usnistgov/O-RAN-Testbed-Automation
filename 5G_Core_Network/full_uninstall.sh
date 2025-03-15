@@ -28,6 +28,11 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
+# Don't exit immediately if a command fails
+set +e
+
+echo "# Script: $(realpath $0)..."
+
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
     sudo apt-get install -y coreutils
@@ -36,28 +41,43 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-# Latest components (see https://open5gs.org/open5gs/docs/guide/01-quickstart/#:~:text=Starting%20and%20Stopping%20Open5GS)
-APPS=("mmed" "sgwcd" "smfd" "amfd" "sgwud" "upfd" "hssd" "pcrfd" "nrfd" "scpd" "seppd" "ausfd" "udmd" "pcfd" "nssfd" "bsfd" "udrd" "webui")
+echo "Stopping all Open5GS processes..."
+./stop.sh
 
-# Iterate through each application and stop if running
-for APP in "${APPS[@]}"; do
-    if [ "$APP" != "webui" ]; then
-        sudo pkill -x "open5gs-$APP" && echo "Component open5gs-$APP has stopped gracefully."
-    else
-        sudo systemctl stop "open5gs-$APP.service" 2>/dev/null
-    fi
-done
+echo "Reverting network configurations..."
+./install_scripts/revert_network_config.sh
 
-# Iterate through each application and stop if running
-for APP in "${APPS[@]}"; do
-    if [ "$APP" != "webui" ]; then
-        if pgrep -x "open5gs-$APP" >/dev/null; then
-            echo "Stopping open5gs-$APP..."
-            sudo pkill -9 -x "open5gs-$APP"
-        fi
-    fi
-done
+sudo apt-get remove --purge -y open5gs || true
 
-./is_running.sh
+sudo ./install_scripts/uninstall_mongodb.sh
 
-sudo ./install_scripts/revert_network_config.sh
+echo "Removing Open5GS user and group..."
+sudo userdel open5gs
+sudo groupdel open5gs
+
+echo "Removing Open5GS installation directory..."
+sudo rm -rf open5gs/
+sudo rm -rf /var/log/open5gs
+
+echo "Uninstalling Node.js and Open5GS WebUI..."
+sudo apt-get remove --purge -y nodejs
+sudo rm -f /etc/apt/keyrings/nodesource.gpg
+sudo rm -f /etc/apt/sources.list.d/nodesource.list
+
+echo "Performing general system cleanup..."
+sudo apt-get autoremove -y
+sudo apt-get autoclean
+
+echo "Unsetting LD_LIBRARY_PATH..."
+sudo rm -f /etc/profile.d/open5gs_ld_library_path.sh
+unset LD_LIBRARY_PATH
+
+sudo rm -rf logs/
+sudo rm -rf configs/
+sudo rm -rf install_time.txt
+
+echo
+echo
+echo "################################################################################"
+echo "# Successfully uninstalled 5G Core                                             #"
+echo "################################################################################"

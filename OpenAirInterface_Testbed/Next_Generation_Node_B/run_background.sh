@@ -46,11 +46,10 @@ else
 
     echo "Starting gNodeB in background..."
     mkdir -p logs
-    sudo chown -R $USER:$USER logs
     >logs/gnb_stdout.txt
 
     cd "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build"
-    sudo setsid bash -c "stdbuf -oL -eL sudo ./nr-softmodem -O \"$SCRIPT_DIR/configs/gnb.conf\" --rfsim --rfsimulator.serveraddr server --gNBs.[0].min_rxtxtime 6 > \"$SCRIPT_DIR/logs/gnb_stdout.txt\" 2>&1" </dev/null &
+    sudo setsid bash -c "stdbuf -oL -eL ./nr-softmodem -O \"$SCRIPT_DIR/configs/gnb.conf\" --rfsim --rfsimulator.serveraddr server --gNBs.[0].min_rxtxtime 6 > \"$SCRIPT_DIR/logs/gnb_stdout.txt\" 2>&1" </dev/null &
 
     cd "$SCRIPT_DIR"
 

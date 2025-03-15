@@ -102,9 +102,10 @@ if ! command -v yq &>/dev/null; then
 fi
 
 echo "Saving configuration file example..."
-rm -rf "$SCRIPT_DIR/configs"
-mkdir "$SCRIPT_DIR/configs"
-rm -rf "$SCRIPT_DIR/logs"
+rm -rf configs
+mkdir configs
+rm -rf logs
+mkdir logs
 
 for UE_NUMBER in {1..3}; do
     cp openairinterface5g/targets/PROJECTS/GENERIC-NR-5GC/CONF/ue.conf "configs/ue$UE_NUMBER.conf"
@@ -168,8 +169,5 @@ for UE_NUMBER in {1..3}; do
 done
 
 cp openairinterface5g/targets/PROJECTS/GENERIC-NR-5GC/CONF/channelmod_rfsimu_LEO_satellite.conf "$SCRIPT_DIR/configs/channelmod_rfsimu_LEO_satellite.conf"
-
-mkdir -p "$SCRIPT_DIR/logs"
-sudo chown $USER:$USER -R "$SCRIPT_DIR/logs"
 
 echo "Successfully configured the UE. The configuration file is located in the configs/ directory."

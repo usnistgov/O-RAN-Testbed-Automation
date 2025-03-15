@@ -1,4 +1,5 @@
 # Ignore testbed subdirectories
+/configs/
 /logs/
 /openairinterface5g/
 openairinterface5g

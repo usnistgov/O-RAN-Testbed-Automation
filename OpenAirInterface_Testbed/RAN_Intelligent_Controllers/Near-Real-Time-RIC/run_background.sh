@@ -46,11 +46,10 @@ else
 
     echo "Starting flexric in background..."
     mkdir -p logs
-    sudo chown -R $USER:$USER logs
     >logs/flexric_stdout.txt
 
     cd "$SCRIPT_DIR/flexric"
-    sudo setsid bash -c "stdbuf -oL -eL ./build/examples/ric/nearRT-RIC -c \"../configs/flexric.conf\" > ../logs/flexric_stdout.txt 2>&1" </dev/null &
+    setsid bash -c "stdbuf -oL -eL ./build/examples/ric/nearRT-RIC -c \"../configs/flexric.conf\" > ../logs/flexric_stdout.txt 2>&1" </dev/null &
 
     cd "$SCRIPT_DIR"
     while $(./is_running.sh | grep -q "NOT_RUNNING"); do

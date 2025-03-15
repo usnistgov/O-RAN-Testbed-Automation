@@ -28,6 +28,9 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
+# Don't exit immediately if a command fails
+set +e
+
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
     sudo apt-get install -y coreutils
@@ -36,28 +39,36 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-# Latest components (see https://open5gs.org/open5gs/docs/guide/01-quickstart/#:~:text=Starting%20and%20Stopping%20Open5GS)
-APPS=("mmed" "sgwcd" "smfd" "amfd" "sgwud" "upfd" "hssd" "pcrfd" "nrfd" "scpd" "seppd" "ausfd" "udmd" "pcfd" "nssfd" "bsfd" "udrd" "webui")
+echo "Uninstalling ZeroMQ libzmq..."
+if [ -d libzmq ]; then
+    cd libzmq
+    sudo make uninstall
+    cd ..
+fi
+sudo rm -rf libzmq
 
-# Iterate through each application and stop if running
-for APP in "${APPS[@]}"; do
-    if [ "$APP" != "webui" ]; then
-        sudo pkill -x "open5gs-$APP" && echo "Component open5gs-$APP has stopped gracefully."
-    else
-        sudo systemctl stop "open5gs-$APP.service" 2>/dev/null
-    fi
-done
+echo "Uninstalling ZeroMQ czmq..."
+if [ -d czmq ]; then
+    cd czmq
+    sudo make uninstall
+    cd ..
+fi
+sudo rm -rf czmq
 
-# Iterate through each application and stop if running
-for APP in "${APPS[@]}"; do
-    if [ "$APP" != "webui" ]; then
-        if pgrep -x "open5gs-$APP" >/dev/null; then
-            echo "Stopping open5gs-$APP..."
-            sudo pkill -9 -x "open5gs-$APP"
-        fi
-    fi
-done
+echo "Uninstalling srsRAN_Project..."
+if [ -d srsRAN_Project/build ]; then
+    cd srsRAN_Project/build
+    sudo make uninstall &>/dev/null
+    cd ../..
+fi
+sudo rm -rf srsRAN_Project
 
-./is_running.sh
+sudo rm -rf logs/
+sudo rm -rf configs/
+sudo rm -rf install_time.txt
 
-sudo ./install_scripts/revert_network_config.sh
+echo
+echo
+echo "################################################################################"
+echo "# Successfully uninstalled Next Generation Node B                              #"
+echo "################################################################################"

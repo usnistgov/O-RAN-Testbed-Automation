@@ -171,7 +171,6 @@ else
         exit 1
     fi
     mkdir -p logs
-    sudo chown -R $USER:$USER logs
     >logs/ue${UE_NUMBER}_stdout.txt
     echo "Starting srsue (ue$UE_NUMBER)..."
     sudo ./srsRAN_4G/build/srsue/src/srsue --config_file "$UE_CONF_PATH"

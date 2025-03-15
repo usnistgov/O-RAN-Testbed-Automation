@@ -28,6 +28,21 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
+# Exit immediately if a command fails
+set -e
+
+clear
+echo "This script will remove Open5GS, srsRAN_Project, srsRAN_4G, and the Near-RT RIC by removing Docker and Kubernetes."
+echo "This is a destructive operation and may result in data loss."
+echo "Please ensure you have backed up any necessary data before proceeding."
+echo
+echo "Do you want to proceed? (yes/no)"
+read -r PROCEED
+if [ "$PROCEED" != "yes" ]; then
+    echo "Exiting script."
+    exit 0
+fi
+
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
     sudo apt-get install -y coreutils
@@ -36,28 +51,52 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-# Latest components (see https://open5gs.org/open5gs/docs/guide/01-quickstart/#:~:text=Starting%20and%20Stopping%20Open5GS)
-APPS=("mmed" "sgwcd" "smfd" "amfd" "sgwud" "upfd" "hssd" "pcrfd" "nrfd" "scpd" "seppd" "ausfd" "udmd" "pcfd" "nssfd" "bsfd" "udrd" "webui")
+echo
+echo
+echo "################################################################################"
+echo "# Uninstalling 5G Core...                                                        #"
+echo "################################################################################"
+echo
+echo
 
-# Iterate through each application and stop if running
-for APP in "${APPS[@]}"; do
-    if [ "$APP" != "webui" ]; then
-        sudo pkill -x "open5gs-$APP" && echo "Component open5gs-$APP has stopped gracefully."
-    else
-        sudo systemctl stop "open5gs-$APP.service" 2>/dev/null
-    fi
-done
+cd 5G_Core_Network
+./full_uninstall.sh
 
-# Iterate through each application and stop if running
-for APP in "${APPS[@]}"; do
-    if [ "$APP" != "webui" ]; then
-        if pgrep -x "open5gs-$APP" >/dev/null; then
-            echo "Stopping open5gs-$APP..."
-            sudo pkill -9 -x "open5gs-$APP"
-        fi
-    fi
-done
+cd ..
 
-./is_running.sh
+echo
+echo
+echo "################################################################################"
+echo "# Uninstalling User Equipment...                                                 #"
+echo "################################################################################"
+echo
+echo
 
-sudo ./install_scripts/revert_network_config.sh
+cd User_Equipment
+./full_uninstall.sh
+
+cd ..
+
+echo
+echo
+echo "################################################################################"
+echo "# Uninstalling Next Generation Node B...                                         #"
+echo "################################################################################"
+echo
+echo
+
+cd Next_Generation_Node_B
+./full_uninstall.sh
+
+cd ..
+
+echo
+echo
+echo "################################################################################"
+echo "# Uninstalling Near Real-Time RAN Intelligent Controller...                      #"
+echo "################################################################################"
+echo
+echo
+
+cd RAN_Intelligent_Controllers/Near-Real-Time-RIC
+./full_uninstall.sh bypass_confirmation

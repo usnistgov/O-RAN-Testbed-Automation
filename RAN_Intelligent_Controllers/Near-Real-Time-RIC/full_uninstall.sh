@@ -37,19 +37,20 @@ if ! command -v realpath &>/dev/null; then
 fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
-PARENT_DIR=$(dirname "$SCRIPT_DIR")
-cd "$PARENT_DIR"
+cd "$SCRIPT_DIR"
 
-clear
-echo "This script will remove Docker and Kubernetes from the system."
-echo "This is a destructive operation and may result in data loss."
-echo "Please ensure you have backed up any necessary data before proceeding."
-echo
-echo "Do you want to proceed? (yes/no)"
-read -r PROCEED
-if [ "$PROCEED" != "yes" ]; then
-    echo "Exiting script."
-    exit 0
+if [ "$1" != "bypass_confirmation" ]; then
+    clear
+    echo "This script will remove Docker and Kubernetes from the system."
+    echo "This is a destructive operation and may result in data loss."
+    echo "Please ensure you have backed up any necessary data before proceeding."
+    echo
+    echo "Do you want to proceed? (yes/no)"
+    read -r PROCEED
+    if [ "$PROCEED" != "yes" ]; then
+        echo "Exiting script."
+        exit 0
+    fi
 fi
 
 echo "Uninstalling Near Real-Time RAN Intelligent Controller..."
@@ -92,8 +93,6 @@ if ! systemctl is-active --quiet chrony; then
 fi
 
 ./install_scripts/stop_e2sim.sh
-
-sudo rm -rf logs/
 
 echo
 echo
@@ -240,11 +239,19 @@ sudo rm -rf ~/.kube
 echo
 echo "Kubernetes is cleaned up."
 
-cd "$PARENT_DIR"
-sudo rm -rf influxdb
-sudo rm -rf e2-interface
-sudo rm -rf charts
+echo "Performing general system cleanup..."
+sudo apt-get autoremove -y
+sudo apt-get autoclean
+
+cd "$SCRIPT_DIR"
+sudo rm -rf additional_scripts/pod_pcaps
 sudo rm -rf appmgr
+sudo rm -rf charts
+sudo rm -rf e2-interface
+sudo rm -rf influxdb
+sudo rm -rf influxdb_auth_token.json
+sudo rm -rf install_time.txt
+sudo rm -rf logs/
 sudo rm -rf ric-dep
 sudo rm -rf xApps
 

@@ -337,7 +337,6 @@ sudo ./install_scripts/run_e2sim_and_connect_to_ric.sh
 echo "Restoring ownership of directories and files created while in root..."
 sudo chown $USER:$USER logs/e2sim_output.txt
 sudo chown -R $USER:$USER charts || true
-sudo chown -R $USER:$USER logs || true
 
 echo
 echo "Installing the xApp Onboarder (dms_cli)..."

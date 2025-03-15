@@ -102,9 +102,10 @@ if ! command -v yq &>/dev/null; then
 fi
 
 echo "Saving configuration file example..."
-rm -rf "$SCRIPT_DIR/configs"
-mkdir "$SCRIPT_DIR/configs"
-rm -rf "$SCRIPT_DIR/logs"
+rm -rf configs
+mkdir configs
+rm -rf logs
+mkdir logs
 
 cp openairinterface5g/targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band78.fr1.106PRB.usrpb210.conf "$SCRIPT_DIR/configs/gnb.conf"
 
@@ -145,8 +146,5 @@ update_conf "configs/gnb.conf" "GNB_IPV4_ADDRESS_FOR_NG_AMF" "\"$AMF_ADDR_BIND/2
 update_conf "configs/gnb.conf" "GNB_IPV4_ADDRESS_FOR_NGU" "\"$AMF_ADDR_BIND/24\""
 update_conf "configs/gnb.conf" "tracking_area_code" "$TAC"
 update_conf "configs/gnb.conf" "plmn_list" "({ mcc = $MCC; mnc = $MNC; mnc_length = $MNC_LENGTH; snssaiList = ({ sst = 1; }) })"
-
-mkdir -p "$SCRIPT_DIR/logs"
-sudo chown $USER:$USER -R "$SCRIPT_DIR/logs"
 
 echo "Successfully configured the UE. The configuration file is located in the configs/ directory."

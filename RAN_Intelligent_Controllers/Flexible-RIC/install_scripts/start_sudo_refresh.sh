@@ -28,50 +28,17 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-# Exit immediately if a command fails
-set -e
+echo "# Script: $(realpath $0)..."
 
-if ! command -v realpath &>/dev/null; then
-    echo "Package \"coreutils\" not found, installing..."
-    sudo apt-get install -y coreutils
-fi
-
+sudo ls &>/dev/null
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
-cd "$SCRIPT_DIR"
+cd "$(dirname "$SCRIPT_DIR")"
 
-UE_NUMBER=1
-if [ "$#" -eq 1 ]; then
-    UE_NUMBER=$1
+# Check if the user is not root
+if [ "$USER" != "root" ]; then
+    # Start the sudo-stay-validated.sh script in the background
+    nohup ./install_scripts/sudo_stay_validated.sh >/dev/null 2>&1 &
+    echo "Sudo refresh process started with PID $!"
+else
+    echo "You are root, no need to refresh sudo timeout."
 fi
-
-if ! [[ $UE_NUMBER =~ ^[0-9]+$ ]]; then
-    echo "Error: UE number must be a number."
-    exit 1
-fi
-
-if [ $UE_NUMBER -lt 1 ]; then
-    echo "Error: UE number must be greater than or equal to 1."
-    exit 1
-fi
-
-if [ ! -f "configs/ue1.conf" ]; then
-    echo "Configuration was not found for srsUE. Please run ./generate_configurations.sh first."
-    exit 1
-fi
-echo "Starting User Equipment in background..."
-mkdir -p logs
->logs/ue${UE_NUMBER}_stdout.txt
-
-sudo setsid bash -c "stdbuf -oL -eL \"$SCRIPT_DIR/run.sh\" $UE_NUMBER > logs/ue${UE_NUMBER}_stdout.txt 2>&1" </dev/null &
-
-ATTEMPT=0
-while ! ./is_running.sh | grep -q "ue$UE_NUMBER" do
-    sleep 0.5
-    ATTEMPT=$((ATTEMPT + 1))
-    if [ $ATTEMPT -ge 120 ]; then
-        echo "gNodeB did not start after 60 seconds, exiting..."
-        exit 1
-    fi
-done
-
-./is_running.sh

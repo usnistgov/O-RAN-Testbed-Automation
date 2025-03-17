@@ -49,7 +49,7 @@ cd ..
 
 echo
 echo "Checking status of FlexRIC..."
-cd RAN_Intelligent_Controllers/Near-Real-Time-RIC
+cd RAN_Intelligent_Controllers/Flexible-RIC
 ./is_running.sh
 cd ../..
 

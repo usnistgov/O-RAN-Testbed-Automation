@@ -49,7 +49,7 @@ cd ..
 
 echo
 echo "Stopping FlexRIC components..."
-cd RAN_Intelligent_Controllers/Near-Real-Time-RIC
+cd RAN_Intelligent_Controllers/Flexible-RIC
 sudo ./stop.sh
 cd ../..
 

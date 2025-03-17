@@ -28,8 +28,10 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-# Exit immediately if a command fails
-set -e
+# Don't exit immediately if a command fails
+set +e
+
+echo "# Script: $(realpath $0)..."
 
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
@@ -39,39 +41,43 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-UE_NUMBER=1
-if [ "$#" -eq 1 ]; then
-    UE_NUMBER=$1
-fi
+echo "Stopping all Open5GS processes..."
+./stop.sh
 
-if ! [[ $UE_NUMBER =~ ^[0-9]+$ ]]; then
-    echo "Error: UE number must be a number."
-    exit 1
-fi
+echo "Reverting network configurations..."
+./install_scripts/revert_network_config.sh
 
-if [ $UE_NUMBER -lt 1 ]; then
-    echo "Error: UE number must be greater than or equal to 1."
-    exit 1
-fi
+sudo apt-get remove --purge -y open5gs || true
 
-if [ ! -f "configs/ue1.conf" ]; then
-    echo "Configuration was not found for srsUE. Please run ./generate_configurations.sh first."
-    exit 1
-fi
-echo "Starting User Equipment in background..."
-mkdir -p logs
->logs/ue${UE_NUMBER}_stdout.txt
+sudo ./install_scripts/uninstall_mongodb.sh
 
-sudo setsid bash -c "stdbuf -oL -eL \"$SCRIPT_DIR/run.sh\" $UE_NUMBER > logs/ue${UE_NUMBER}_stdout.txt 2>&1" </dev/null &
+echo "Removing Open5GS user and group..."
+sudo userdel open5gs
+sudo groupdel open5gs
 
-ATTEMPT=0
-while ! ./is_running.sh | grep -q "ue$UE_NUMBER" do
-    sleep 0.5
-    ATTEMPT=$((ATTEMPT + 1))
-    if [ $ATTEMPT -ge 120 ]; then
-        echo "gNodeB did not start after 60 seconds, exiting..."
-        exit 1
-    fi
-done
+echo "Removing Open5GS installation directory..."
+sudo rm -rf open5gs/
+sudo rm -rf /var/log/open5gs
 
-./is_running.sh
+echo "Uninstalling Node.js and Open5GS WebUI..."
+sudo apt-get remove --purge -y nodejs
+sudo rm -f /etc/apt/keyrings/nodesource.gpg
+sudo rm -f /etc/apt/sources.list.d/nodesource.list
+
+echo "Performing general system cleanup..."
+sudo apt-get autoremove -y
+sudo apt-get autoclean
+
+echo "Unsetting LD_LIBRARY_PATH..."
+sudo rm -f /etc/profile.d/open5gs_ld_library_path.sh
+unset LD_LIBRARY_PATH
+
+sudo rm -rf logs/
+sudo rm -rf configs/
+sudo rm -rf install_time.txt
+
+echo
+echo
+echo "################################################################################"
+echo "# Successfully uninstalled 5G Core                                             #"
+echo "################################################################################"

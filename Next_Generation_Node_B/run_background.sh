@@ -28,6 +28,9 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
+# Exit immediately if a command fails
+set -e
+
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
     sudo apt-get install -y coreutils
@@ -46,10 +49,9 @@ else
 
     echo "Starting gNodeB in background..."
     mkdir -p logs
-    sudo chown -R $USER:$USER logs
     >logs/gnb.log
-    >gnb_stdout.txt
-    sudo setsid bash -c 'stdbuf -oL -eL srsRAN_Project/build/apps/gnb/gnb -c configs/gnb.yaml > logs/gnb_stdout.txt 2>&1' </dev/null &
+    >logs/gnb_stdout.txt
+    setsid bash -c 'stdbuf -oL -eL srsRAN_Project/build/apps/gnb/gnb -c configs/gnb.yaml > logs/gnb_stdout.txt 2>&1' </dev/null &
 
     ATTEMPT=0
     while [ ! -f Next_Generation_Node_B/logs/gnb_stdout.txt ] || ! grep -q "gNB started" Next_Generation_Node_B/logs/gnb_stdout.txt; do

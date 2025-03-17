@@ -58,6 +58,6 @@ cd ..
 
 echo
 echo "Generating Configuration for FlexRIC..."
-cd RAN_Intelligent_Controllers/Near-Real-Time-RIC
+cd RAN_Intelligent_Controllers/Flexible-RIC
 ./generate_configurations.sh
 cd ../..

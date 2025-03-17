@@ -59,3 +59,5 @@ for APP in "${APPS[@]}"; do
 done
 
 ./is_running.sh
+
+sudo ./install_scripts/revert_network_config.sh

@@ -12,7 +12,8 @@ The Near-RT RIC, conceptualized by the O-RAN Alliance's Working Group 3 (WG3) [[
 - **Status**: Check if the Near-RT RIC is running with `./is_running.sh`.
 - **Logs**: Access logs by navigating to the `logs` directory.
 
-## Installing an xApp
+## Running an xApp
+
 This implementation of the Near-RT RIC showcases two xApps.
 
 - **KPI Monitoring xApp (xapp_kpm_moni)**:
@@ -31,4 +32,3 @@ This implementation of the Near-RT RIC showcases two xApps.
 [oran-wg3]: https://public.o-ran.org/display/WG3/Introduction
 [publication-nearrtric]: https://dl.acm.org/doi/10.1145/3485983.3494870
 [mosaic5g-nearrtric]: https://gitlab.eurecom.fr/mosaic5g/flexric
-

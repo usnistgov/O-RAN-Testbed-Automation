@@ -1,6 +1,6 @@
 # Ignore testbed subdirectories
 /configs/
+/flexric/
 /logs/
-/openairinterface5g/
-openairinterface5g
+/swig/
 install_time.txt

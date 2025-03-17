@@ -46,7 +46,7 @@ cd ..
 
 echo
 echo "Running FlexRIC..."
-cd RAN_Intelligent_Controllers/Near-Real-Time-RIC
+cd RAN_Intelligent_Controllers/Flexible-RIC
 ./run_background.sh
 cd ../..
 

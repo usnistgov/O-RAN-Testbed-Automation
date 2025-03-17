@@ -33,14 +33,11 @@ set +e
 
 echo "# Script: $(realpath $0)..."
 
-SCRIPT_DIR=$(dirname "$(realpath "$0")")
-cd "$(dirname "$SCRIPT_DIR")"
-
 # Stop and disable the MongoDB service
-sudo systemctl stop mongod
-sudo systemctl disable mongod
-
-#!!!!!!!!!!!!!!!!!!TODO if mongodb was uninstalled after purge THEN it's okay to remove the other stuff, otherwise it's used by another dependency...
+if systemctl is-active --quiet mongod; then
+    sudo systemctl stop mongod
+    sudo systemctl disable mongod
+fi
 
 # Uninstall the MongoDB packages
 sudo apt-get purge -y mongodb-org mongodb-org-server mongodb-org-shell mongodb-org-mongos mongodb-org-tools mongosh
@@ -69,5 +66,3 @@ echo "mongodb-org-tools install" | sudo dpkg --set-selections
 
 sudo apt-get autoremove -y
 sudo apt-get clean
-
-sudo apt-get purge -y libssl1.1

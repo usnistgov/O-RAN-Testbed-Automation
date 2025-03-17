@@ -18,6 +18,7 @@ This automation tool is based on the K-Release of the Near-RT RIC. More informat
 - **Logs**: From within K9s, use the `Arrow Keys` to highlight a pod, `Enter` to view the logs for the pod, `w` to wrap text, `Esc` to go back, `Ctrl+k` to restart a pod that isn't responding, and `s` to open a command line shell in the pod.
 
 ## Installing an xApp
+
 By default, the Hello World Go xApp (hw-go) is installed automatically. Additional xApps can be installed to extend the functionality of the Near-RT RIC. For convenience, installation scripts for the following xApps are included:
 
 - **KPI Monitoring xApp (kpimon)**:
@@ -25,18 +26,18 @@ By default, the Hello World Go xApp (hw-go) is installed automatically. Addition
   - Patched to connect to the InfluxDB pod and write metrics to its database.
     - Upon initialization, the xApp will only connect to pre-existing E2 nodes, therefore, you can restart the xApp by running the install script again which will establish connections to any new E2 nodes.
     - Metrics will be stored in the InfluxDB pod under `bucket=kpimon, org=influxdata`. Access this data by opening the InfluxDB Client with `./additional_scripts/open_influxdb_client_shell.sh`.
+  - Information about the xApp's debugging and usage can be found at [[6]][abdul-kpimon-go].
   - More information can be found in the documentation [[4]][kpimon-go-docs] and code [[5]][kpimon-go-code].
-  - For information about using the KPI monitor, please refer to [[6]][abdul-kpimon-go].
 - **5G Cell Anomaly Detection xApp (ad-cell)**:
   - Install with `./additional_scripts/install_xapp_5g_cell_anomaly_detection.sh`.
   - More information can be found in the documentation [[7]][ad-cell-docs] and code [[8]][ad-cell-code].
 - **Anomaly Detection xApp (ad)**:
   - Install with `./additional_scripts/install_xapp_anomaly_detection.sh`.
-  - Patched to support InfluxDB version 2.X instead of InfluxDB 1.X.
+  - Patched to support InfluxDB version 2._X_ instead of InfluxDB 1._X_.
   - More information can be found in the documentation [[9]][ad-docs] and code [[10]][ad-code].
 - **Quality of Experience Predictor xApp (qp)**:
   - Install with `./additional_scripts/install_xapp_qoe_predictor.sh`.
-  - Patched to support InfluxDB version 2.X instead of InfluxDB 1.X.
+  - Patched to support InfluxDB version 2._X_ instead of InfluxDB 1._X_.
   - More information can be found in the documentation [[11]][qp-docs] and code [[12]][qp-code].
 - **RIC Control xApp (rc)**:
   - Install with `./additional_scripts/install_xapp_ric_control.sh`.
@@ -52,6 +53,7 @@ By default, the Hello World Go xApp (hw-go) is installed automatically. Addition
   - More information can be found in the code [[18]][hw-rust-code].
 
 ## Uninstalling an xApp
+
 To uninstall an xApp, run `./additional_scripts/uninstall_an_xapp.sh` which will prompt the user to select an xApp to uninstall.
 Alternatively, xApps can be uninstalled manually by fetching the list of xApps with `dms_cli get_charts_list` and uninstalling an xApp with `dms_cli uninstall "NAME_OF_XAPP" ricxapp`.
 
@@ -75,6 +77,7 @@ Alternatively, xApps can be uninstalled manually by fetching the list of xApps w
 16. Traffic Steering xApp project page. O-RAN Software Community. [https://github.com/o-ran-sc/ric-app-ts][trafficxapp-code]
 17. HW Python xApp project page. O-RAN Software Community. [https://github.com/o-ran-sc/ric-app-hw-python][hw-python-code]
 18. HW Rust xApp project page. O-RAN Software Community. [https://github.com/o-ran-sc/ric-app-hw-rust][hw-rust-code]
+
 <!-- References -->
 
 [oran-wg3]: https://public.o-ran.org/display/WG3/Introduction

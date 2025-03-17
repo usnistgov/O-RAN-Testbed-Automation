@@ -31,52 +31,16 @@
 # Exit immediately if a command fails
 set -e
 
+# Guide: https://gitlab.eurecom.fr/mosaic5g/flexric
+
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
     sudo apt-get install -y coreutils
 fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
-cd "$SCRIPT_DIR"
+PARENT_DIR=$(dirname "$SCRIPT_DIR")
 
-# Function to update or add configuration properties in .conf files, considering sections and uncommenting if needed
-update_conf() {
-    echo "update_conf($1, $2, $3, $4)"
-    local FILE_PATH="$1"
-    local SECTION="$2"
-    local PROPERTY="$3"
-    local VALUE="$4"
+cd "$PARENT_DIR/flexric/"
 
-    # Ensure the section exists; if not, add it at the end
-    if ! grep -q "^\[$SECTION\]" "$FILE_PATH"; then
-        echo -e "\n[$SECTION]" >>"$FILE_PATH"
-    fi
-    # Remove any existing entries of the property in the section (including commented ones)
-    sed -i "/^\[$SECTION\]/,/^\s*\[/{/^[# ]*\s*$PROPERTY\s*=.*/d}" "$FILE_PATH"
-    # Append the new property=value after the section header
-    sed -i "/^\[$SECTION\]/a $PROPERTY = $VALUE" "$FILE_PATH"
-}
-
-echo "Saving configuration file example..."
-rm -rf "$SCRIPT_DIR/configs"
-mkdir "$SCRIPT_DIR/configs"
-rm -rf "$SCRIPT_DIR/logs"
-
-if [ -f /usr/local/etc/flexric/flexric.conf ]; then
-    cp /usr/local/etc/flexric/flexric.conf "$SCRIPT_DIR/configs/flexric.conf"
-else
-    cp flexric/flexric.conf "$SCRIPT_DIR/configs/flexric.conf"
-fi
-
-update_conf "configs/flexric.conf" "XAPP" "DB_NAME" "xapp_db1"
-
-# # supported name = NearRT_RIC, E2_Agent, E2_Proxy_Agent, xApp
-# Name = "NearRT_RIC"
-# NearRT_RIC_IP = "127.0.0.1"
-# E2_Port = 36421
-# E42_Port = 36422
-
-# Configure the xApps:
-#wget -O "$SCRIPT_DIR/configs/xapp_oran_sm.conf" "https://gitlab.eurecom.fr/mosaic5g/flexric/-/raw/br-flexric/conf_files/xapp_oran_sm.conf"
-
-echo "Successfully configured the FlexRIC. The configuration file is located in the configs/ directory."
+./build/examples/xApp/c/kpm_rc/xapp_kpm_rc

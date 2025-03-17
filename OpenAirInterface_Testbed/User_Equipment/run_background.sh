@@ -58,7 +58,6 @@ fi
 
 echo "Starting User Equipment in background..."
 mkdir -p logs
-sudo chown -R $USER:$USER logs
 >logs/ue${UE_NUMBER}_stdout.txt
 
 cd "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build"

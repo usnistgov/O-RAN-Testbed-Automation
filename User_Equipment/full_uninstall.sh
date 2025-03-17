@@ -28,8 +28,8 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-# Exit immediately if a command fails
-set -e
+# Don't exit immediately if a command fails
+set +e
 
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
@@ -39,39 +39,36 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-UE_NUMBER=1
-if [ "$#" -eq 1 ]; then
-    UE_NUMBER=$1
+echo "Uninstalling ZeroMQ libzmq..."
+if [ -d libzmq ]; then
+    cd libzmq
+    sudo make uninstall
+    cd ..
 fi
+sudo rm -rf libzmq
 
-if ! [[ $UE_NUMBER =~ ^[0-9]+$ ]]; then
-    echo "Error: UE number must be a number."
-    exit 1
+echo "Uninstalling ZeroMQ czmq..."
+if [ -d czmq ]; then
+    cd czmq
+    sudo make uninstall
+    cd ..
 fi
+sudo rm -rf czmq
 
-if [ $UE_NUMBER -lt 1 ]; then
-    echo "Error: UE number must be greater than or equal to 1."
-    exit 1
+echo "Uninstalling srsRAN_4G..."
+if [ -d srsRAN_4G/build ]; then
+    cd srsRAN_4G/build
+    sudo make uninstall
+    cd ../..
 fi
+sudo rm -rf srsRAN_4G
 
-if [ ! -f "configs/ue1.conf" ]; then
-    echo "Configuration was not found for srsUE. Please run ./generate_configurations.sh first."
-    exit 1
-fi
-echo "Starting User Equipment in background..."
-mkdir -p logs
->logs/ue${UE_NUMBER}_stdout.txt
+sudo rm -rf logs/
+sudo rm -rf configs/
+sudo rm -rf install_time.txt
 
-sudo setsid bash -c "stdbuf -oL -eL \"$SCRIPT_DIR/run.sh\" $UE_NUMBER > logs/ue${UE_NUMBER}_stdout.txt 2>&1" </dev/null &
-
-ATTEMPT=0
-while ! ./is_running.sh | grep -q "ue$UE_NUMBER" do
-    sleep 0.5
-    ATTEMPT=$((ATTEMPT + 1))
-    if [ $ATTEMPT -ge 120 ]; then
-        echo "gNodeB did not start after 60 seconds, exiting..."
-        exit 1
-    fi
-done
-
-./is_running.sh
+echo
+echo
+echo "################################################################################"
+echo "# Successfully uninstalled User Equipment                                      #"
+echo "################################################################################"

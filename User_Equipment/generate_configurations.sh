@@ -45,9 +45,10 @@ if ! command -v yq &>/dev/null; then
 fi
 
 echo "Downloading configuration file example..."
-rm -rf "$SCRIPT_DIR/configs"
-mkdir "$SCRIPT_DIR/configs"
-rm -rf "$SCRIPT_DIR/logs"
+rm -rf configs
+mkdir configs
+rm -rf logs
+mkdir logs
 wget https://raw.githubusercontent.com/srsran/srsRAN/master/srsue/ue.conf.example -O configs/ue1.conf
 
 # Function to update or add configuration properties in .conf files, considering sections and uncommenting if needed
@@ -138,8 +139,5 @@ update_conf "configs/ue1.conf" "gw" "ip_netmask" "255.255.255.0"
 
 # Update configuration values for GUI
 update_conf "configs/ue1.conf" "gui" "enable" "false"
-
-mkdir -p logs
-sudo chown $USER:$USER -R logs
 
 echo "Successfully configured the UE. The configuration file is located in the configs/ directory."

@@ -36,26 +36,37 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-if pgrep -x "nearRT-RIC" >/dev/null; then
-    echo "Already running flexric."
-else
-    if [ ! -f "configs/flexric.conf" ]; then
-        echo "Configuration was not found for gNodeB. Please run ./generate_configurations.sh first."
-        exit 1
-    fi
+# Upon exit, restore the terminal to a sane state
+trap 'stty sane; exit' EXIT SIGINT SIGTERM
 
-    echo "Starting flexric in background..."
-    mkdir -p logs
-    sudo chown -R $USER:$USER logs
-    >logs/flexric_stdout.txt
-
-    cd "$SCRIPT_DIR/flexric"
-    sudo setsid bash -c "stdbuf -oL -eL ./build/examples/ric/nearRT-RIC -c \"../configs/flexric.conf\" > ../logs/flexric_stdout.txt 2>&1" </dev/null &
-
-    cd "$SCRIPT_DIR"
-    while $(./is_running.sh | grep -q "NOT_RUNNING"); do
-        sleep 1
-    done
-
+# Check if the FlexRIC is already stopped
+if $(./is_running.sh | grep -q "FlexRIC: NOT_RUNNING"); then
     ./is_running.sh
+    exit 0
 fi
+
+# Send a graceful shutdown signal to the FlexRIC process
+sudo pkill -f "nearRT-RIC" >/dev/null 2>&1 &
+
+# Wait for the process to terminate gracefully
+COUNT=0
+MAX_COUNT=10
+sleep 1
+while [ $COUNT -lt $MAX_COUNT ]; do
+    IS_RUNNING=$(./is_running.sh)
+    echo "$IS_RUNNING ($COUNT / $MAX_COUNT)"
+    if echo "$IS_RUNNING" | grep -q "FlexRIC: NOT_RUNNING"; then
+        echo "The FlexRIC has stopped gracefully."
+        ./is_running.sh
+        exit 0
+    fi
+    COUNT=$((COUNT + 1))
+    sleep 2
+done
+
+# If the process is still running after 20 seconds, send a forceful kill signal
+echo "The FlexRIC did not stop in time, sending forceful kill signal..."
+sudo pkill -9 -f "nearRT-RIC" >/dev/null 2>&1 &
+
+sleep 2
+./is_running.sh

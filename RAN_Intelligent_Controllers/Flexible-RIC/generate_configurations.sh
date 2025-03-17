@@ -39,39 +39,41 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-UE_NUMBER=1
-if [ "$#" -eq 1 ]; then
-    UE_NUMBER=$1
-fi
+# Function to update or add configuration properties in .conf files, considering sections and uncommenting if needed
+update_conf() {
+    echo "update_conf($1, $2, $3, $4)"
+    local FILE_PATH="$1"
+    local SECTION="$2"
+    local PROPERTY="$3"
+    local VALUE="$4"
 
-if ! [[ $UE_NUMBER =~ ^[0-9]+$ ]]; then
-    echo "Error: UE number must be a number."
-    exit 1
-fi
-
-if [ $UE_NUMBER -lt 1 ]; then
-    echo "Error: UE number must be greater than or equal to 1."
-    exit 1
-fi
-
-if [ ! -f "configs/ue1.conf" ]; then
-    echo "Configuration was not found for srsUE. Please run ./generate_configurations.sh first."
-    exit 1
-fi
-echo "Starting User Equipment in background..."
-mkdir -p logs
->logs/ue${UE_NUMBER}_stdout.txt
-
-sudo setsid bash -c "stdbuf -oL -eL \"$SCRIPT_DIR/run.sh\" $UE_NUMBER > logs/ue${UE_NUMBER}_stdout.txt 2>&1" </dev/null &
-
-ATTEMPT=0
-while ! ./is_running.sh | grep -q "ue$UE_NUMBER" do
-    sleep 0.5
-    ATTEMPT=$((ATTEMPT + 1))
-    if [ $ATTEMPT -ge 120 ]; then
-        echo "gNodeB did not start after 60 seconds, exiting..."
-        exit 1
+    # Ensure the section exists; if not, add it at the end
+    if ! grep -q "^\[$SECTION\]" "$FILE_PATH"; then
+        echo -e "\n[$SECTION]" >>"$FILE_PATH"
     fi
-done
+    # Remove any existing entries of the property in the section (including commented ones)
+    sed -i "/^\[$SECTION\]/,/^\s*\[/{/^[# ]*\s*$PROPERTY\s*=.*/d}" "$FILE_PATH"
+    # Append the new property=value after the section header
+    sed -i "/^\[$SECTION\]/a $PROPERTY = $VALUE" "$FILE_PATH"
+}
 
-./is_running.sh
+echo "Saving configuration file example..."
+rm -rf configs
+mkdir configs
+
+# Only remove the logs if not running
+RUNNING_STATUS=$(./is_running.sh)
+if [[ $RUNNING_STATUS != *": RUNNING"* ]]; then
+    rm -rf logs
+    mkdir logs
+fi
+
+if [ -f /usr/local/etc/flexric/flexric.conf ]; then
+    cp /usr/local/etc/flexric/flexric.conf "$SCRIPT_DIR/configs/flexric.conf"
+else
+    cp flexric/flexric.conf "$SCRIPT_DIR/configs/flexric.conf"
+fi
+
+update_conf "configs/flexric.conf" "XAPP" "DB_NAME" "xapp_db1"
+
+echo "Successfully configured the FlexRIC. The configuration file is located in the configs/ directory."

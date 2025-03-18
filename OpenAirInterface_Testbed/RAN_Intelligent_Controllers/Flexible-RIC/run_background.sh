@@ -28,18 +28,33 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-# Exit immediately if a command fails
-set -e
-
-# Guide: https://gitlab.eurecom.fr/mosaic5g/flexric
-
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
     sudo apt-get install -y coreutils
 fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
+cd "$SCRIPT_DIR"
 
-cd "$SCRIPT_DIR/flexric"
+if pgrep -x "nearRT-RIC" >/dev/null; then
+    echo "Already running flexric."
+else
+    if [ ! -f "configs/ric.conf" ]; then
+        echo "Configuration was not found for gNodeB. Please run ./generate_configurations.sh first."
+        exit 1
+    fi
 
-./build/examples/ric/nearRT-RIC -c "../configs/flexric.conf"
+    echo "Starting flexric in background..."
+    mkdir -p logs
+    >logs/flexric_stdout.txt
+
+    cd "$SCRIPT_DIR/flexric"
+    setsid bash -c "stdbuf -oL -eL ./build/examples/ric/nearRT-RIC -c \"../configs/ric.conf\" > ../logs/flexric_stdout.txt 2>&1" </dev/null &
+
+    cd "$SCRIPT_DIR"
+    while $(./is_running.sh | grep -q "NOT_RUNNING"); do
+        sleep 1
+    done
+
+    ./is_running.sh
+fi

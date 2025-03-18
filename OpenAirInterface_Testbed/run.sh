@@ -53,7 +53,7 @@ cd ../..
 echo
 echo -n "Waiting for AMF to be ready"
 attempt=0
-while [ ! -f 5G_Core_Network/logs/amf.txt ] || ! grep -q "NF registered" 5G_Core_Network/logs/amf.txt; do
+while [ ! -f 5G_Core_Network/logs/amf.log ] || ! grep -q "NF registered" 5G_Core_Network/logs/amf.log; do
     echo -n "."
     sleep 0.5
     attempt=$((attempt + 1))

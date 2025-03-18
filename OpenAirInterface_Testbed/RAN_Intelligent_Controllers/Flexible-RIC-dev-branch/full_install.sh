@@ -56,17 +56,7 @@ INSTALL_START_TIME=$(date +%s)
 echo "Installing dependencies..."
 sudo apt-get update || true
 sudo apt-get install -y build-essential
-
-GCC_VERSION=$(gcc -v 2>&1 | grep "gcc version" | awk '{print $3}')
-if [[ -z "$GCC_VERSION" || "$GCC_VERSION" == 11.* ]]; then
-    echo "Installing GCC 13..."
-    sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
-    sudo apt-get update
-    sudo apt-get install -y gcc-13 g++-13
-    sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 100
-    sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-13 100
-fi
-
+sudo apt-get install -y gcc-10 g++-10
 sudo apt-get install -y libsctp-dev python3 cmake-curses-gui libpcre2-dev python3-dev
 
 if [ ! -d "swig" ]; then
@@ -100,9 +90,9 @@ cd flexric
 sudo rm -rf build
 mkdir build
 cd build
-#cmake .. -DE2AP_VERSION=E2AP_V1 -DKPM_VERSION=KPM_V2_01
-cmake .. -DE2AP_VERSION=E2AP_V2 -DKPM_VERSION=KPM_V2_03
-#cmake .. -DE2AP_VERSION=E2AP_V3 -DKPM_VERSION=KPM_V3_00
+#CC=gcc-10 CXX=g++-10 cmake .. -DE2AP_VERSION=E2AP_V1 -DKPM_VERSION=KPM_V2_01
+#CC=gcc-10 CXX=g++-10 cmake .. -DE2AP_VERSION=E2AP_V2 -DKPM_VERSION=KPM_V2_03
+CC=gcc-10 CXX=g++-10 cmake .. -DE2AP_VERSION=E2AP_V3 -DKPM_VERSION=KPM_V3_00
 make -j$(nproc)
 
 echo "Installing FlexRIC..."

@@ -255,7 +255,7 @@ echo "$AMF_IP_BIND" >>$AMF_ADDRESSES_OUTPUT
 # Configure logging for all components
 for APP_NAME in "${APP_NAMES[@]}"; do
     if [ -f "configs/${APP_NAME}.yaml" ]; then
-        configure_logging "logs/${APP_NAME}.txt" "configs/${APP_NAME}.yaml"
+        configure_logging "logs/${APP_NAME}.log" "configs/${APP_NAME}.yaml"
     fi
 done
 

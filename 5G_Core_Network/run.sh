@@ -106,8 +106,7 @@ run_in_terminal() {
                 exit 1
             fi
             echo "Starting $APP_NAME 1 in GNOME Terminal..."
-            ./open5gs/install/bin/$APP_NAME -c $CONFIG_FILE_1
-            #gnome-terminal -t "$APP_NAME 1 Node" -- /bin/sh -c "./open5gs/install/bin/$APP_NAME -c $CONFIG_FILE_1"
+            gnome-terminal -t "$APP_NAME 1 Node" -- /bin/sh -c "./open5gs/install/bin/$APP_NAME -c $CONFIG_FILE_1"
         else
             echo "Already running $APP_NAME 1."
         fi
@@ -139,7 +138,7 @@ run_in_terminal() {
     rm -f "$LOG_PATH"
 
     echo "Starting $APP_NAME in GNOME Terminal..."
-    gnome-terminal -t "$APP_NAME Node" -- /bin/sh -c "./open5gs/install/bin/$APP_NAME -c $CONFIG_FILE || read -rsp $'Press enter to continue...\n'"
+    gnome-terminal -t "$APP_NAME Node" -- /bin/sh -c "./open5gs/install/bin/$APP_NAME -c $CONFIG_FILE"
 }
 
 # Latest components (see https://open5gs.org/open5gs/docs/guide/01-quickstart/#:~:text=Starting%20and%20Stopping%20Open5GS)

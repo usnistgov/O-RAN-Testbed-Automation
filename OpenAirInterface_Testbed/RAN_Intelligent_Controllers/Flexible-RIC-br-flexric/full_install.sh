@@ -31,7 +31,7 @@
 # Exit immediately if a command fails
 set -e
 
-# Guide: https://gitlab.eurecom.fr/mosaic5g/flexric
+# If using this br-flexric branch, set the commit_hashes.json file to a compatible OpenAirInterface version: "https://gitlab.eurecom.fr/oai/openairinterface5g.git": ["develop", "NOT e15fa14c5758d74dde78d6c01b8eaf1d7cc07261"],
 
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
@@ -57,7 +57,8 @@ echo "Installing dependencies..."
 sudo apt-get update || true
 sudo apt-get install -y build-essential
 sudo apt-get install -y gcc-10 g++-10
-sudo apt-get install -y libsctp-dev python3 cmake-curses-gui libpcre2-dev python3-dev
+sudo apt-get install -y libsctp-dev python3 cmake-curses-gui python3-dev pkg-config libconfig-dev libconfig++-dev
+sudo apt-get install -y libmysqlclient-dev mysql-server
 
 if [ ! -d "swig" ]; then
     echo "Cloning SWIG..."
@@ -72,7 +73,7 @@ if ! command -v swig &>/dev/null; then
     make -j$(nproc)
 
     echo "Installing SWIG..."
-    make install
+    sudo make install
     cd ..
 else
     echo "SWIG is already installed, skipping."
@@ -90,9 +91,7 @@ cd flexric
 sudo rm -rf build
 mkdir build
 cd build
-#CC=gcc-10 CXX=g++-10 cmake .. -DE2AP_VERSION=E2AP_V1 -DKPM_VERSION=KPM_V2_01
-#CC=gcc-10 CXX=g++-10 cmake .. -DE2AP_VERSION=E2AP_V2 -DKPM_VERSION=KPM_V2_03
-CC=gcc-10 CXX=g++-10 cmake .. -DE2AP_VERSION=E2AP_V3 -DKPM_VERSION=KPM_V3_00
+CC=gcc-10 CXX=g++-10 cmake .. -DE2AP_VERSION=E2AP_V3 -DKPM_VERSION=KPM_V3_00 -DXAPP_DB=MYSQL_XAPP
 make -j$(nproc)
 
 echo "Installing FlexRIC..."

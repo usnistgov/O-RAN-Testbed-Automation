@@ -28,6 +28,9 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
+# Exit immediately if a command fails
+set -e
+
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
     sudo apt-get install -y coreutils
@@ -36,25 +39,46 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-if pgrep -x "nearRT-RIC" >/dev/null; then
-    echo "Already running flexric."
-else
-    if [ ! -f "configs/flexric.conf" ]; then
-        echo "Configuration was not found for gNodeB. Please run ./generate_configurations.sh first."
-        exit 1
+# Function to update or add configuration properties in .conf files, considering sections and uncommenting if needed
+update_conf() {
+    echo "update_conf($1, $2, $3, $4)"
+    local FILE_PATH="$1"
+    local SECTION="$2"
+    local PROPERTY="$3"
+    local VALUE="$4"
+
+    # Ensure the section exists; if not, add it at the end
+    if ! grep -q "^\[$SECTION\]" "$FILE_PATH"; then
+        echo -e "\n[$SECTION]" >>"$FILE_PATH"
     fi
+    # Remove any existing entries of the property in the section (including commented ones)
+    sed -i "/^\[$SECTION\]/,/^\s*\[/{/^[# ]*\s*$PROPERTY\s*=.*/d}" "$FILE_PATH"
+    # Append the new property=value after the section header
+    sed -i "/^\[$SECTION\]/a $PROPERTY = $VALUE" "$FILE_PATH"
+}
 
-    echo "Starting flexric in background..."
-    mkdir -p logs
-    >logs/flexric_stdout.txt
+echo "Saving configuration file example..."
+rm -rf configs
+mkdir configs
 
-    cd "$SCRIPT_DIR/flexric"
-    setsid bash -c "stdbuf -oL -eL ./build/examples/ric/nearRT-RIC -c \"../configs/flexric.conf\" > ../logs/flexric_stdout.txt 2>&1" </dev/null &
-
-    cd "$SCRIPT_DIR"
-    while $(./is_running.sh | grep -q "NOT_RUNNING"); do
-        sleep 1
-    done
-
-    ./is_running.sh
+# Only remove the logs if not running
+RUNNING_STATUS=$(./is_running.sh)
+if [[ $RUNNING_STATUS != *": RUNNING"* ]]; then
+    rm -rf logs
+    mkdir logs
 fi
+
+if [ -f /usr/local/etc/flexric/ric.conf ]; then
+    cp /usr/local/etc/flexric/ric.conf "$SCRIPT_DIR/configs/ric.conf"
+else
+    cp flexric/ric.conf "$SCRIPT_DIR/configs/ric.conf"
+fi
+
+if [ -f /usr/local/etc/flexric/xapp_oran_sm.conf ]; then
+    cp /usr/local/etc/flexric/xapp_oran_sm.conf "$SCRIPT_DIR/configs/xapp_oran_sm.conf"
+
+    echo "Updating xApp configuration file to disable the database usage..."
+    sed -i '/xApp_DB = {/,/}/s/enable = "[^"]*"/enable = "OFF"/' "$SCRIPT_DIR/configs/xapp_oran_sm.conf"
+fi
+
+echo "Successfully configured the FlexRIC. The configuration file is located in the configs/ directory."

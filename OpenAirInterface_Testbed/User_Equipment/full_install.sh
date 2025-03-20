@@ -65,6 +65,16 @@ if [ ! -d "openairinterface5g" ]; then
     ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/oai/openairinterface5g.git openairinterface5g
 fi
 
+# Modify CMakeLists.txt to set E2AP_VERSION to E2AP_V3 and KPM_VERSION to KPM_V3_00 (must match FlexRIC)
+if [ -f "openairinterface5g/CMakeLists.txt" ]; then
+    echo "Modifying CMakeLists.txt to set E2AP_VERSION to E2AP_V3..."
+    sed -i 's/set(E2AP_VERSION "[^"]*"/set(E2AP_VERSION "E2AP_V3"/' openairinterface5g/CMakeLists.txt
+fi
+if [ -f "openairinterface5g/CMakeLists.txt" ]; then
+    echo "Modifying CMakeLists.txt to set KPM_VERSION to KPM_V3_00..."
+    sed -i 's/set(KPM_VERSION "[^"]*"/set(KPM_VERSION "KPM_V3_00"/' openairinterface5g/CMakeLists.txt
+fi
+
 # Add support for Linux Mint 20, 21, and 22 to OpenAirInterface
 if grep -q "Linux Mint" /etc/os-release; then
     echo

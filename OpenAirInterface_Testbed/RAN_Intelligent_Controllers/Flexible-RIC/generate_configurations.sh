@@ -68,12 +68,12 @@ if [[ $RUNNING_STATUS != *": RUNNING"* ]]; then
     mkdir logs
 fi
 
-if [ -f /usr/local/etc/flexric/ric.conf ]; then
-    cp /usr/local/etc/flexric/ric.conf "$SCRIPT_DIR/configs/ric.conf"
+if [ -f /usr/local/etc/flexric/flexric.conf ]; then
+    cp /usr/local/etc/flexric/flexric.conf "$SCRIPT_DIR/configs/flexric.conf"
 else
-    cp flexric/ric.conf "$SCRIPT_DIR/configs/ric.conf"
+    cp flexric/flexric.conf "$SCRIPT_DIR/configs/flexric.conf"
 fi
 
-#update_conf "configs/ric.conf" "XAPP" "DB_NAME" "xapp_db1"
+update_conf "configs/flexric.conf" "XAPP" "DB_NAME" "xapp_db1"
 
 echo "Successfully configured the FlexRIC. The configuration file is located in the configs/ directory."

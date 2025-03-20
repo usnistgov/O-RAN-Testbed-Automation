@@ -39,7 +39,7 @@ cd "$SCRIPT_DIR"
 if pgrep -x "nearRT-RIC" >/dev/null; then
     echo "Already running flexric."
 else
-    if [ ! -f "configs/ric.conf" ]; then
+    if [ ! -f "configs/flexric.conf" ]; then
         echo "Configuration was not found for gNodeB. Please run ./generate_configurations.sh first."
         exit 1
     fi
@@ -49,7 +49,7 @@ else
     >logs/flexric_stdout.txt
 
     cd "$SCRIPT_DIR/flexric"
-    setsid bash -c "stdbuf -oL -eL ./build/examples/ric/nearRT-RIC -c \"../configs/ric.conf\" > ../logs/flexric_stdout.txt 2>&1" </dev/null &
+    setsid bash -c "stdbuf -oL -eL ./build/examples/ric/nearRT-RIC -c \"../configs/flexric.conf\" > ../logs/flexric_stdout.txt 2>&1" </dev/null &
 
     cd "$SCRIPT_DIR"
     while $(./is_running.sh | grep -q "NOT_RUNNING"); do

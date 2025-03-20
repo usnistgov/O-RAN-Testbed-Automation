@@ -55,6 +55,7 @@ if [ -d flexric/build ]; then
 fi
 sudo rm -rf flexric
 sudo rm -rf /usr/local/lib/flexric/
+sudo rm -rf /usr/local/etc/flexric/
 
 sudo rm -rf logs/
 sudo rm -rf configs/

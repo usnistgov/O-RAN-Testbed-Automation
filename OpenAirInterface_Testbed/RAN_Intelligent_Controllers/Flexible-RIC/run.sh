@@ -42,4 +42,4 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 
 cd "$SCRIPT_DIR/flexric"
 
-./build/examples/ric/nearRT-RIC -c "../configs/ric.conf"
+./build/examples/ric/nearRT-RIC -c "../configs/flexric.conf"

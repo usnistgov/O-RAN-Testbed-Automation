@@ -39,78 +39,8 @@ if ! command -v realpath &>/dev/null; then
 fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
-cd "$SCRIPT_DIR"
+PARENT_DIR=$(dirname "$SCRIPT_DIR")
 
-# Check for gnb binary to determine if srsRAN_Project is already installed
-if [ -f "flexric/build/examples/ric/nearRT-RIC" ]; then
-    echo "FlexRIC is already installed, skipping."
-    exit 0
-fi
+cd "$PARENT_DIR/flexric/"
 
-# Run a sudo command every minute to ensure script execution without user interaction
-./install_scripts/start_sudo_refresh.sh
-
-# Get the start timestamp in seconds
-INSTALL_START_TIME=$(date +%s)
-
-echo "Installing dependencies..."
-sudo apt-get update || true
-sudo apt-get install -y build-essential
-sudo apt-get install -y gcc-10 g++-10
-sudo apt-get install -y libsctp-dev python3 cmake-curses-gui libpcre2-dev python3-dev
-
-if [ ! -d "swig" ]; then
-    echo "Cloning SWIG..."
-    ./install_scripts/git_clone.sh https://github.com/swig/swig.git
-fi
-
-if ! command -v swig &>/dev/null; then
-    echo "Building SWIG..."
-    cd swig
-    ./autogen.sh
-    ./configure --prefix=/usr/
-    make -j$(nproc)
-
-    echo "Installing SWIG..."
-    sudo make install
-    cd ..
-else
-    echo "SWIG is already installed, skipping."
-fi
-
-cd "$SCRIPT_DIR"
-
-if [ ! -d "flexric" ]; then
-    echo "Cloning Flexible RAN Intelligent Controller (FlexRIC)..."
-    ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/mosaic5g/flexric.git
-fi
-
-echo "Building FlexRIC..."
-cd flexric
-sudo rm -rf build
-mkdir build
-cd build
-CC=gcc-10 CXX=g++-10 cmake .. -DE2AP_VERSION=E2AP_V3 -DKPM_VERSION=KPM_V3_00
-make -j$(nproc)
-
-echo "Installing FlexRIC..."
-sudo make install
-
-#ctest -j8 --output-on-failure
-
-cd "$SCRIPT_DIR"
-
-# Stop the sudo timeout refresher, it is no longer necessary to run
-./install_scripts/stop_sudo_refresh.sh
-
-# Calculate how long the script took to run
-INSTALL_END_TIME=$(date +%s)
-if [ -n "$INSTALL_START_TIME" ]; then
-    DURATION=$((INSTALL_END_TIME - INSTALL_START_TIME))
-    DURATION_MINUTES=$(echo "scale=5; $DURATION/ 60" | bc)
-    echo "The gNodeB installation process took $DURATION_MINUTES minutes to complete."
-    mkdir -p logs
-    echo "$DURATION_MINUTES minutes" >>install_time.txt
-fi
-
-echo "The FlexRIC installation completed successfully."
+./build/examples/xApp/c/monitor/xapp_gtp_mac_rlc_pdcp_moni

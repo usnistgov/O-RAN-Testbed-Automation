@@ -35,13 +35,11 @@ echo Script: %~f0...
 
 REM Change to the parent directory of the script
 cd %~dp0..
-
-cd %~dp0..
 if exist "5G_Core_Network\open5gs" rmdir /s /q "5G_Core_Network\open5gs"
 cd 5G_Core_Network
 git clone https://github.com/open5gs/open5gs.git
 cd open5gs
-git checkout e3dd98cd291fba233a46adb2881213fc6e38b924
+git checkout a5510f1870e2753c69fe28a9aa98ef2964c999cc
 cd ..\..
 
 cd %~dp0..
@@ -237,7 +235,7 @@ if exist "OpenAirInterface_Testbed\5G_Core_Network\open5gs" rmdir /s /q "OpenAir
 cd OpenAirInterface_Testbed\5G_Core_Network
 git clone https://github.com/open5gs/open5gs.git
 cd open5gs
-git checkout e3dd98cd291fba233a46adb2881213fc6e38b924
+git checkout a5510f1870e2753c69fe28a9aa98ef2964c999cc
 cd ..\..\..
 
 cd %~dp0..
@@ -245,7 +243,7 @@ if exist "OpenAirInterface_Testbed\User_Equipment\openairinterface5g" rmdir /s /
 cd OpenAirInterface_Testbed\User_Equipment
 git clone https://gitlab.eurecom.fr/oai/openairinterface5g.git
 cd openairinterface5g
-git checkout 60b0c1827dbda37e1b2d0dfc91227d6ce9826827
+git checkout 82fb9fcc7c0c5576007fcdb0521e84809751d57e
 cd ..\..\..
 
 cd OpenAirInterface_Testbed\Next_Generation_Node_B
@@ -257,7 +255,7 @@ if exist "OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC\swig
 cd OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC
 git clone https://github.com/swig/swig.git
 cd swig
-git checkout e0ecea47b122f8ca57fa12c1848e001dfd7f38b1
+git checkout 0cc821269c7b688ffe26133cf19a6a85491a1ed2
 cd ..\..\..\..
 
 cd %~dp0..
@@ -265,7 +263,7 @@ if exist "OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC\flex
 cd OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC
 git clone https://gitlab.eurecom.fr/mosaic5g/flexric.git
 cd flexric
-git checkout 736508123fe4b5dc3db83fb5baf5f0a8e9b04fe8
+git checkout 5d733c87566bb63aee64780cdf6275602347255a
 cd ..\..\..\..
 
 

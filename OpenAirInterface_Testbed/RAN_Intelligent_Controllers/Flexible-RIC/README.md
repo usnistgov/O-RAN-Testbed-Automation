@@ -14,12 +14,16 @@ The Near-RT RIC, conceptualized by the O-RAN Alliance's Working Group 3 (WG3) [[
 
 ## Running an xApp
 
-This implementation of the Near-RT RIC showcases two xApps.
+This installation of the Near-RT RIC supports four xApps.
 
-- **KPI Monitoring xApp (xapp_kpm_moni)**:
-  - Run with `./additional_scripts/run_xapp_kpi_monitor.sh`.
+- **KPI Monitor xApp (xapp_kpm_moni)**:
+  - Run with `./additional_scripts/run_xapp_kpm_moni.sh`.
+- **MAC + RLC + PDCP + GTP Monitor xApp (xapp_gtp_mac_rlc_pdcp_moni)**:
+  - Run with `./additional_scripts/run_xapp_gtp_mac_rlc_pdcp_moni.sh`.
 - **RIC Control xApp (xapp_kpm_rc)**:
-  - Run with `./additional_scripts/run_xapp_ric_control.sh`.
+  - Run with `./additional_scripts/run_xapp_kpm_rc.sh`.
+- **RIC Control Monitor xApp (xapp_rc_moni)**:
+  - Run with `./additional_scripts/run_xapp_rc_moni.sh`.
 
 ## References
 

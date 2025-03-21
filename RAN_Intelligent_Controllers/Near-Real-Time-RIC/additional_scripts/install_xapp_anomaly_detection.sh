@@ -150,7 +150,7 @@ if echo "$OUTPUT" | grep -q '"status": "Created"'; then
     echo "Onboarding successful: status is 'Created'."
 else
     echo "Onboarding failed or 'Created' status not found."
-    #exit 1
+    exit 1
 fi
 
 echo "Checking if namespace 'ricxapp' exists..."

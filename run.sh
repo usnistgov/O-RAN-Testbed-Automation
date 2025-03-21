@@ -66,22 +66,6 @@ cd Next_Generation_Node_B
 ./run_background.sh
 cd ..
 
-ATTEMPT=0
-while [ ! -f Next_Generation_Node_B/logs/gnb_stdout.txt ] || ! grep -q "gNB started" Next_Generation_Node_B/logs/gnb_stdout.txt; do
-    sleep 0.5
-    ATTEMPT=$((ATTEMPT + 1))
-    if [ $ATTEMPT -ge 120 ]; then
-        echo "gNodeB did not start after 60 seconds, exiting..."
-        exit 1
-    fi
-    if grep -q " gNB started " logs/gnb_stdout.txt; then
-        break
-    elif [ grep -q "Error" logs/gnb_stdout.txt ] || [ grep -q "srsRAN ERROR:" logs/gnb_stdout.txt ]; then
-        echo "Error starting gNodeB. Check logs/gnb_stdout.txt for more information."
-        exit 1
-    fi
-done
-
 echo
 echo "Running User Equipment..."
 cd User_Equipment

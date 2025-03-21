@@ -75,7 +75,25 @@ if [ -f "openairinterface5g/CMakeLists.txt" ]; then
     sed -i 's/set(KPM_VERSION "[^"]*"/set(KPM_VERSION "KPM_V3_00"/' openairinterface5g/CMakeLists.txt
 fi
 
-# Add support for Linux Mint 20, 21, and 22 to OpenAirInterface
+# Apply patches to OpenAirInterface to add support for RSRP in the KPI report
+if [ ! -f "openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c.previous" ]; then
+    cp openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c.previous
+    echo
+    echo "Patching ran_func_kpm.c..."
+    cd openairinterface5g
+    git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/openairinterface/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c.patch"
+    cd ..
+fi
+if [ ! -f "openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c.previous" ]; then
+    cp openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c.previous
+    echo
+    echo "Patching ran_func_kpm_subs.c..."
+    cd openairinterface5g
+    git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/openairinterface/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c.patch"
+    cd ..
+fi
+
+# If using Linux Mint, attempt to add support for Linux Mint 20, 21, and 22 to OpenAirInterface
 if grep -q "Linux Mint" /etc/os-release; then
     echo
     echo "Linux Mint detected, attempting to patching OpenAirInterface to support Linux Mint 20, 21, and 22..."

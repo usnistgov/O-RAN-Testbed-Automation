@@ -68,6 +68,25 @@ echo
 echo "Running gNodeB..."
 cd Next_Generation_Node_B
 ./run_background.sh
+
+echo -en "\nWaiting for gNodeB to be ready"
+ATTEMPT=0
+while [ ! -f logs/gnb_stdout.txt ] || ! grep -q "TYPE <CTRL-C> TO TERMINATE" logs/gnb_stdout.txt; do
+    echo -n "."
+    sleep 0.5
+    ATTEMPT=$((ATTEMPT + 1))
+    if [ $ATTEMPT -ge 120 ]; then
+        echo "gNodeB did not start after 60 seconds, exiting..."
+        exit 1
+    fi
+    if grep -q "TYPE <CTRL-C> TO TERMINATE" logs/gnb_stdout.txt; then
+        break
+    elif $(./is_running.sh | grep -q "NOT_RUNNING"); then
+        echo "Error starting gNodeB. Check logs/gnb_stdout.txt for more information."
+        exit 1
+    fi
+done
+echo -e "\ngNodeB is ready."
 cd ..
 
 echo

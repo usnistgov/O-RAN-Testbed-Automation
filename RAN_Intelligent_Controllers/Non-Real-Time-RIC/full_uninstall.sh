@@ -53,7 +53,7 @@ if [ "$1" != "bypass_confirmation" ]; then
     fi
 fi
 
-echo "Uninstalling Near Real-Time RAN Intelligent Controller..."
+echo "Uninstalling Non Real-Time RAN Intelligent Controller..."
 export DEBIAN_FRONTEND=noninteractive
 # Modifies the needrestart configuration to suppress interactive prompts
 if [ -f "/etc/needrestart/needrestart.conf" ]; then
@@ -297,5 +297,5 @@ sudo rm -rf xApps
 echo
 echo
 echo "################################################################################"
-echo "# Successfully uninstalled the Near-Real Time RAN Intelligent Controller       #"
+echo "# Successfully uninstalled the Non-Real Time RAN Intelligent Controller       #"
 echo "################################################################################"

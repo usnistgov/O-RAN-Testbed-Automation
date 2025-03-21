@@ -39,16 +39,16 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
+echo "Uninstalling Swig..."
 if [ -d swig ]; then
-    echo "Uninstalling Swig..."
     cd swig
     sudo make uninstall
     cd ..
 fi
 sudo rm -rf swig
 
+echo "Uninstalling FlexRIC..."
 if [ -d flexric/build ]; then
-    echo "Uninstalling FlexRIC..."
     cd flexric/build
     sudo make uninstall
     cd ../..

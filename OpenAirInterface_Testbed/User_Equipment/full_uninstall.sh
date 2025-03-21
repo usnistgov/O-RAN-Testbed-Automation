@@ -39,31 +39,34 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-echo "Uninstalling Swig..."
-if [ -d swig ]; then
-    cd swig
-    sudo make uninstall
-    cd ..
-fi
-sudo rm -rf swig
-
-echo "Uninstalling FlexRIC..."
-if [ -d flexric/build ]; then
-    cd flexric/build
-    sudo make uninstall
+if [ -d openairinterface5g ]; then
+    cd "openairinterface5g/cmake_targets"
+    ./build_oai -C --clean-kernel
     cd ../..
 fi
-sudo rm -rf flexric
-sudo rm -rf /usr/local/lib/flexric/
-sudo rm -rf /usr/local/etc/flexric/
+sudo rm -rf openairinterface5g
 
 sudo rm -rf logs/
 sudo rm -rf configs/
 sudo rm -rf install_time.txt
 
+cd ../Next_Generation_Node_B
+
+if [ -d openairinterface5g ]; then
+    cd "openairinterface5g/cmake_targets"
+    ./build_oai -C --clean-kernel
+    cd ../..
+fi
+sudo rm -rf openairinterface5g
+
+sudo rm -rf logs/
+sudo rm -rf configs/
+sudo rm -rf install_time.txt
+
+cd "$SCRIPT_DIR"
 
 echo
 echo
 echo "################################################################################"
-echo "# Successfully uninstalled FlexRIC                                             #"
+echo "# Successfully uninstalled OpenAirInterface UE and gNodeB                      #"
 echo "################################################################################"

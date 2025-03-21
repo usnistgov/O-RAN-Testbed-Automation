@@ -95,13 +95,41 @@ RRC NR reconfiguration successful.
 
 The RIC starts automatically on boot and can be accessed with `k9s -A`. For more information about a specific component, refer to the README.md files in the respective subdirectories.
 
-## Software Versioning
+## Supported Testbed Open-Source Components
 
-For stability of software dependencies, all `git clone` calls are first routed through `commit_hashes.json` to get the branch/commit hash to use for each repository git clone. This file can be updated manually, or by running `./Additional_Scripts/update_commit_hashes.sh` to fetch the latest commit hashes. For information about the automation tool versions, please see the releases page [[2]][gh-ota].
+This automation tool supports the deployment of 5G O-RAN testbeds using open-source components in two main scenarios: srsRAN with O-RAN SC's Near-RT RIC, and OpenAirInterface with Mosaic5G's FlexRIC. The deployment scenario based on OpenAirInterface with FlexRIC can be installed from the `OpenAirInterface_Testbed` directory. Below is a list of the supported testbed open-source components.
 
-## Alternative Testbeds
+- CU/DU
+  - srsRAN_Project gNB: `v24.10.1`
+  - OpenAirInterface gNB: `v2025.w11`
+  - O-RAN SC E2 Simulator: `k-release`
+- RICs
+  - O-RAN SC Near-RT RIC: `k-release`
+    - xApps
+      - Hello World xApps (Go, Python, and Rust)
+      - KPI Monitor xApp
+      - 5G Cell Anomaly Detection xApp
+      - Anomaly Detection xApp
+      - Quality of Experience Predictor xApp
+      - RIC Control xApp
+      - Traffic Steering xApp
+  - FlexRIC: `v2.2.0`
+    - xApps
+      - KPI Monitor xApp
+      - MAC + RLC + PDCP + GTP Monitor xApp
+      - RIC Control xApp
+      - RIC Control Monitor xApp
+  - O-RAN SC Non-RT RIC: `k-release`
+    - Minimal prototype; currently lacking rApp support.
+- 5G Core
+  - Open5GS: `v2.7.2`
+- UEs
+  - srsRAN_4G: `v23.11`
+  - OpenAirInterface 5G UE: `v2025.w11`
 
-As an alternative, the testbed by OpenAirInterface can be installed from the `OpenAirInterface_Testbed` directory. This installs the 5G Core Network by Open5GS, gNodeB by OpenAirInterface, 5G UE by OpenAirInterface, and FlexRIC by Mosaic5G. For more information, please visit the README.md documents within the respective directories.
+### Software Versioning
+
+For stability of software dependencies, all `git clone` calls are routed through `commit_hashes.json` which specifies a branch and/or commit hash for each repository. This file can be updated manually, or with `./Additional_Scripts/update_commit_hashes.sh` to fetch the latest commit hashes. For information about the automation tool versions, please see the releases page [[2]][gh-ota].
 
 ## Contact Information
 

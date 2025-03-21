@@ -28,41 +28,21 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-# Don't exit immediately if a command fails
-set +e
-
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
     sudo apt-get install -y coreutils
 fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
-cd "$SCRIPT_DIR"
 
-if [ -d swig ]; then
-    echo "Uninstalling Swig..."
-    cd swig
-    sudo make uninstall
-    cd ..
+#!/bin/bash
+
+if ! command -v gdb &>/dev/null; then
+    echo "Installing GNU Debugger..."
+    sudo apt update
+    sudo apt-get install -y gdb
 fi
-sudo rm -rf swig
 
-if [ -d flexric/build ]; then
-    echo "Uninstalling FlexRIC..."
-    cd flexric/build
-    sudo make uninstall
-    cd ../..
-fi
-sudo rm -rf flexric
-sudo rm -rf /usr/local/lib/flexric/
-sudo rm -rf /usr/local/etc/flexric/
+cd "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build"
 
-sudo rm -rf logs/
-sudo rm -rf configs/
-sudo rm -rf install_time.txt
-
-echo
-echo
-echo "################################################################################"
-echo "# Successfully uninstalled FlexRIC                                             #"
-echo "################################################################################"
+sudo gdb --args ./nr-softmodem -O "$SCRIPT_DIR/configs/gnb.conf" --rfsim --rfsimulator.serveraddr server --gNBs.[0].min_rxtxtime 6

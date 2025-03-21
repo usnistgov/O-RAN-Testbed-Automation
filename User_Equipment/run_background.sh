@@ -65,7 +65,7 @@ mkdir -p logs
 sudo setsid bash -c "stdbuf -oL -eL \"$SCRIPT_DIR/run.sh\" $UE_NUMBER > logs/ue${UE_NUMBER}_stdout.txt 2>&1" </dev/null &
 
 ATTEMPT=0
-while ! ./is_running.sh | grep -q "ue$UE_NUMBER" do
+while ! ./is_running.sh | grep -q "ue$UE_NUMBER"; do
     sleep 0.5
     ATTEMPT=$((ATTEMPT + 1))
     if [ $ATTEMPT -ge 120 ]; then

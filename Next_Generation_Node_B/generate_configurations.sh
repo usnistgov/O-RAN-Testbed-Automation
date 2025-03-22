@@ -68,8 +68,13 @@ fi
 echo "Restoring gNodeB configuration file..."
 rm -rf configs
 mkdir configs
-rm -rf logs
-mkdir logs
+
+# Only remove the logs if is not running
+RUNNING_STATUS=$(./is_running.sh)
+if [[ $RUNNING_STATUS != *": RUNNING"* ]]; then
+    rm -rf logs
+    mkdir logs
+fi
 cp srsRAN_Project/configs/gnb_rf_b200_tdd_n78_20mhz.yml configs/gnb.yaml
 
 ENABLE_E2_TERM="true"

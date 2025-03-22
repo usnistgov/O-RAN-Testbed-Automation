@@ -111,7 +111,7 @@ if [[ "$OPEN5GS_INSTALLED" = true || "$GNODEB_INSTALLED" = true || "$UE_INSTALLE
 fi
 
 # Ensure backward compatibility with previous installations
-# sudo ./Additional_Scripts/migrate_to_new_version.sh
+sudo ./../Additional_Scripts/migrate_to_new_version.sh
 
 echo
 echo

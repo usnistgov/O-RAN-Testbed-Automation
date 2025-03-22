@@ -6,15 +6,15 @@ index 80579e1754..b3c14d6dd7 100644
    return meas_record;
  }
  
-+// Added for research purposes
++// Added metric for research purposes only
 +static meas_record_lst_t fill_RSRP(__attribute__((unused))uint32_t gran_period_ms, cudu_ue_info_pair_t ue_info, const size_t ue_idx)
 +{
 +  meas_record_lst_t meas_record = {0};
 +
-+  meas_record.value = INTEGER_MEAS_VALUE;
++  meas_record.value = REAL_MEAS_VALUE;
 +
-+  // Get the value of RSRP
-+  meas_record.int_val = ue_info.ue->mac_stats.cumul_rsrp/ue_info.ue->mac_stats.num_rsrp_meas;  // [dBm]
++  // Calculate the average value of RSRP
++  meas_record.real_val = (double)ue_info.ue->mac_stats.cumul_rsrp / ue_info.ue->mac_stats.num_rsrp_meas;  // [dBm]
 +
 +  return meas_record;
 +}

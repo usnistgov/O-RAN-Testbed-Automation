@@ -94,3 +94,7 @@ echo "Running User Equipment..."
 cd User_Equipment
 ./run_background.sh
 cd ..
+
+cd RAN_Intelligent_Controllers/Flexible-RIC/additional_scripts
+./run_xapp_kpm_moni.sh
+cd ../../..

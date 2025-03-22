@@ -47,8 +47,13 @@ fi
 echo "Downloading configuration file example..."
 rm -rf configs
 mkdir configs
-rm -rf logs
-mkdir logs
+
+# Only remove the logs if is not running
+RUNNING_STATUS=$(./is_running.sh)
+if [[ $RUNNING_STATUS != *": RUNNING"* ]]; then
+    rm -rf logs
+    mkdir logs
+fi
 wget https://raw.githubusercontent.com/srsran/srsRAN/master/srsue/ue.conf.example -O configs/ue1.conf
 
 # Function to update or add configuration properties in .conf files, considering sections and uncommenting if needed

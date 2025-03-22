@@ -94,6 +94,20 @@ if [ -d 5G_Core/open5gs ] || [ -d gNodeB/srsRAN_Project ] || [ -d RAN_Intelligen
     echo
 fi
 
+if [ -d OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Near-Real-Time-RIC ]; then
+    echo
+    echo
+    echo "################################################################################"
+    echo "# Migrating from commit 630c2f212bb7ddd748fdf94013bec163b4b8d647               #"
+    echo "################################################################################"
+    echo
+    echo
+    sudo mv OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Near-Real-Time-RIC/* OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC
+    sudo rm -rf OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Near-Real-Time-RIC
+    echo "Successfully migrated from commit 630c2f212bb7ddd748fdf94013bec163b4b8d647 to the new version."
+    echo
+fi
+
 echo "Updating package lists..."
 cd $SCRIPT_DIR
 if ! sudo apt-get update; then

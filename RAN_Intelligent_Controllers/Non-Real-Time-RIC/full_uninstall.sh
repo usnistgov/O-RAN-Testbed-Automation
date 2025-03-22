@@ -92,7 +92,11 @@ if ! systemctl is-active --quiet chrony; then
     sudo systemctl start chrony && echo "Chrony service started."
 fi
 
-./install_scripts/stop_e2sim.sh
+./stop_control_panel.sh
+echo "Uninstalling Node.js used by the Control Panel..."
+sudo apt-get remove --purge -y nodejs
+sudo rm -f /etc/apt/keyrings/nodesource.gpg
+sudo rm -f /etc/apt/sources.list.d/nodesource.list
 
 echo
 echo
@@ -283,16 +287,12 @@ sudo apt-get autoremove -y
 sudo apt-get autoclean
 
 cd "$SCRIPT_DIR"
-sudo rm -rf additional_scripts/pod_pcaps
-sudo rm -rf appmgr
-sudo rm -rf charts
-sudo rm -rf e2-interface
-sudo rm -rf influxdb
-sudo rm -rf influxdb_auth_token.json
+sudo rm -rf dep
+sudo rm -rf nonrtric-controlpanel
+sudo rm -rf rappmanager
+sudo rm -rf rApps
 sudo rm -rf install_time.txt
 sudo rm -rf logs/
-sudo rm -rf ric-dep
-sudo rm -rf xApps
 
 echo
 echo

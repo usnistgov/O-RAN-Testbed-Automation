@@ -4,7 +4,7 @@ The 5G Core Network operates as a standalone network based on the 3GPP specifica
 
 ## Usage
 
-- **Compile**: Use `./full_install.sh` to build the 5G Core.
+- **Compile**: Use `./full_install.sh` to build and install the 5G Core components.
 - **Generate Configurations**: Use `./generate_configurations.sh` to create configuration files.
   - Configuration files can be accessed and modified in the `configs` directory.
 - **Start the 5G Core Network**: Use `./run.sh` to start the 5G Core components.
@@ -12,6 +12,7 @@ The 5G Core Network operates as a standalone network based on the 3GPP specifica
 - **Stop the Network**: Terminate the network operation with `./stop.sh`.
 - **Status**: Check if the 5G Core is running with `./is_running.sh`. The output will display which components are running.
 - **Logs**: Access logs by navigating to the `logs` directory.
+- **Uninstall**: Use `./uninstall.sh` to remove the 5G Core software.
 
 ### Custom PLMN and TAC Identifiers
 

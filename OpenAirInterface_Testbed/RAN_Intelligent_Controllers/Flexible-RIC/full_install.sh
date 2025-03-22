@@ -85,6 +85,16 @@ if [ ! -d "flexric" ]; then
     ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/mosaic5g/flexric.git
 fi
 
+# Apply patch to FlexRIC to add support for RSRP in the KPI report
+if [ ! -f "flexric/examples/xApp/c/monitor/xapp_kpm_moni.c.previous" ]; then
+    cp flexric/examples/xApp/c/monitor/xapp_kpm_moni.c flexric/examples/xApp/c/monitor/xapp_kpm_moni.c.previous
+    echo
+    echo "Patching xapp_kpm_moni.c..."
+    cd flexric
+    git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni.c.patch"
+    cd ..
+fi
+
 echo "Building FlexRIC..."
 cd flexric
 sudo rm -rf build

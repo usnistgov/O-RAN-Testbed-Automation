@@ -4,7 +4,7 @@ The Next Generation Node B (gNodeB) is a 5G base station configured with OpenAir
 
 ## Usage
 
-- **Compile**: Use `./full_install.sh` to build the gNodeB.
+- **Compile**: Use `./full_install.sh` to build and install the gNodeB software.
 - **Generate Configurations**: Use `./generate_configurations.sh` to create configuration files.
   - The script automatically retrieves the 5G Core Network's AMF address. If it is not found locally, the script will prompt the user to enter the address manually.
   - Configuration files can be accessed and modified in the `configs` directory.
@@ -12,6 +12,7 @@ The Next Generation Node B (gNodeB) is a 5G base station configured with OpenAir
 - **Stop the gNodeB**: Terminate the gNodeB with `./stop.sh`.
 - **Status**: Check if the gNodeB is running with `./is_running.sh`.
 - **Logs**: Access logs by navigating to the `logs` directory.
+- **Uninstall**: Use `./uninstall.sh` to remove the gNodeB/UE software.
 
 ## References
 

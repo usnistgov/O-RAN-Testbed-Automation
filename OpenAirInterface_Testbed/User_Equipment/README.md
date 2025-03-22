@@ -4,13 +4,14 @@ The following scripts operationalize a 5G User Equipment (UE) configured with Op
 
 ## Usage
 
-- **Compile**: Use `./full_install.sh` to build the UE software.
+- **Compile**: Use `./full_install.sh` to build and install the UE software.
 - **Generate Configurations**: Use `./generate_configurations.sh` to create configuration files.
   - Configuration files can be accessed and modified in the `configs` directory.
 - **Start the UE**: Use `./run.sh` to start the UE, or `./run_background.sh` to run it as a background process where the output is redirected to `logs/ue1_stdout.txt`.
 - **Stop the UE**: Terminate the UE with `./stop.sh`.
 - **Status**: Check is a UE is running with `./is_running.sh`.
 - **Logs**: Access logs by navigating to the `logs` directory.
+- **Uninstall**: Use `./uninstall.sh` to remove the UE/gNodeB software.
 
 ## References
 

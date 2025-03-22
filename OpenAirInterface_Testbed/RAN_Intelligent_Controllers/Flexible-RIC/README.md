@@ -4,22 +4,28 @@ The Near-RT RIC, conceptualized by the O-RAN Alliance's Working Group 3 (WG3) [[
 
 ## Usage
 
-- **Compile**: Use `./full_install.sh` to build the Near-RT RIC software.
+- **Compile**: Use `./full_install.sh` to build and install the Near-RT RIC software.
 - **Generate Configurations**: Use `./generate_configurations.sh` to create configuration files.
   - Configuration files can be accessed and modified in the `configs` directory.
 - **Start the Near-RT RIC**: Use `./run.sh` to start the Near-RT RIC application.
 - **Stop the Near-RT RIC**: Terminate the Near-RT RIC with `./stop.sh`.
 - **Status**: Check if the Near-RT RIC is running with `./is_running.sh`.
 - **Logs**: Access logs by navigating to the `logs` directory.
+- **Uninstall**: Use `./uninstall.sh` to remove the Near-RT RIC software.
 
 ## Running an xApp
 
-This implementation of the Near-RT RIC showcases two xApps.
+This installation of the Near-RT RIC supports four xApps.
 
-- **KPI Monitoring xApp (xapp_kpm_moni)**:
-  - Run with `./additional_scripts/run_xapp_kpi_monitor.sh`.
+- **KPI Monitor xApp (xapp_kpm_moni)**:
+  - Run with `./additional_scripts/run_xapp_kpm_moni.sh`.
+  - Patched to include SSB RSRP metric in KPIs.
+- **MAC + RLC + PDCP + GTP Monitor xApp (xapp_gtp_mac_rlc_pdcp_moni)**:
+  - Run with `./additional_scripts/run_xapp_gtp_mac_rlc_pdcp_moni.sh`.
 - **RIC Control xApp (xapp_kpm_rc)**:
-  - Run with `./additional_scripts/run_xapp_ric_control.sh`.
+  - Run with `./additional_scripts/run_xapp_kpm_rc.sh`.
+- **RIC Control Monitor xApp (xapp_rc_moni)**:
+  - Run with `./additional_scripts/run_xapp_rc_moni.sh`.
 
 ## References
 

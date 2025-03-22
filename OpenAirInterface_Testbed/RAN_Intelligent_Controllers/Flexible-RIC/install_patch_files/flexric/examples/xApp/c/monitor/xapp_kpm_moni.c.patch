@@ -1,0 +1,13 @@
+diff --git a/examples/xApp/c/monitor/xapp_kpm_moni.c b/examples/xApp/c/monitor/xapp_kpm_moni.c
+index 5fa00cc2..560f7c65 100644
+--- a/examples/xApp/c/monitor/xapp_kpm_moni.c
++++ b/examples/xApp/c/monitor/xapp_kpm_moni.c
+@@ -109,6 +109,8 @@ void log_real_value(byte_array_t name, meas_record_lst_t meas_record)
+     printf("DRB.UEThpDl = %.2f [kbps]\n", meas_record.real_val);
+   } else if (cmp_str_ba("DRB.UEThpUl", name) == 0) {
+     printf("DRB.UEThpUl = %.2f [kbps]\n", meas_record.real_val);
++  } else if (cmp_str_ba("RSRP", name) == 0) {
++    printf("RSRP = %.2f [dBm]\n", meas_record.real_val);
+   } else {
+     printf("Measurement Name not yet supported\n");
+   }

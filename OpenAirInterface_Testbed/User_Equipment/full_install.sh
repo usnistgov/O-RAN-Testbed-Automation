@@ -65,7 +65,35 @@ if [ ! -d "openairinterface5g" ]; then
     ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/oai/openairinterface5g.git openairinterface5g
 fi
 
-# Add support for Linux Mint 20, 21, and 22 to OpenAirInterface
+# Modify CMakeLists.txt to set E2AP_VERSION to E2AP_V3 and KPM_VERSION to KPM_V3_00 (must match FlexRIC)
+if [ -f "openairinterface5g/CMakeLists.txt" ]; then
+    echo "Modifying CMakeLists.txt to set E2AP_VERSION to E2AP_V3..."
+    sed -i 's/set(E2AP_VERSION "[^"]*"/set(E2AP_VERSION "E2AP_V3"/' openairinterface5g/CMakeLists.txt
+fi
+if [ -f "openairinterface5g/CMakeLists.txt" ]; then
+    echo "Modifying CMakeLists.txt to set KPM_VERSION to KPM_V3_00..."
+    sed -i 's/set(KPM_VERSION "[^"]*"/set(KPM_VERSION "KPM_V3_00"/' openairinterface5g/CMakeLists.txt
+fi
+
+# Apply patches to OpenAirInterface to add support for RSRP in the KPI report
+if [ ! -f "openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c.previous" ]; then
+    cp openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c.previous
+    echo
+    echo "Patching ran_func_kpm.c..."
+    cd openairinterface5g
+    git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/openairinterface/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c.patch"
+    cd ..
+fi
+if [ ! -f "openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c.previous" ]; then
+    cp openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c.previous
+    echo
+    echo "Patching ran_func_kpm_subs.c..."
+    cd openairinterface5g
+    git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/openairinterface/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c.patch"
+    cd ..
+fi
+
+# If using Linux Mint, attempt to add support for Linux Mint 20, 21, and 22 to OpenAirInterface
 if grep -q "Linux Mint" /etc/os-release; then
     echo
     echo "Linux Mint detected, attempting to patching OpenAirInterface to support Linux Mint 20, 21, and 22..."
@@ -91,6 +119,17 @@ if [ -f "/etc/needrestart/needrestart.conf" ]; then
     fi
 fi
 export NEEDRESTART_SUSPEND=1
+
+# Check if GCC 13 is installed, if not, install it and set it as the default
+GCC_VERSION=$(gcc -v 2>&1 | grep "gcc version" | awk '{print $3}')
+if [[ -z "$GCC_VERSION" || ! "$GCC_VERSION" == 13.* ]]; then
+    echo "Installing GCC 13..."
+    sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+    sudo apt-get update
+    sudo apt-get install -y gcc-13 g++-13
+    sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 100
+    sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-13 100
+fi
 
 cd "$SCRIPT_DIR"
 

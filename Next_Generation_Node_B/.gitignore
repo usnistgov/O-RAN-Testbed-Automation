@@ -7,3 +7,4 @@
 czmq
 install_time.txt
 libzmq
+!install_patch_files/

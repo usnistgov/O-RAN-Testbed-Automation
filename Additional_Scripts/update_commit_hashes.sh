@@ -49,6 +49,8 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$(dirname "$SCRIPT_DIR")"
 
 if ! command -v jq &>/dev/null; then
+    sudo apt-get update
+
     echo "Installing jq..."
     sudo apt-get install -y jq
 fi

@@ -39,6 +39,10 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
+# There are two types of RSRP measurements: SSB and CSI
+# If using MIMO, then USE_SSB_RSRP must be set to false (https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/develop/doc/RUNMODEM.md#5g-gnb-mimo-configuration)
+USE_SSB_RSRP="true"
+
 # Function to update or add configuration properties in .conf files, considering sections and uncommenting if needed
 update_conf() {
     echo "update_conf($1, $2, $3)"
@@ -104,8 +108,13 @@ fi
 echo "Saving configuration file example..."
 rm -rf configs
 mkdir configs
-rm -rf logs
-mkdir logs
+
+# Only remove the logs if not running
+RUNNING_STATUS=$(./is_running.sh)
+if [[ $RUNNING_STATUS != *": RUNNING"* ]]; then
+    rm -rf logs
+    mkdir logs
+fi
 
 cp openairinterface5g/targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band78.fr1.106PRB.usrpb210.conf "$SCRIPT_DIR/configs/gnb.conf"
 
@@ -146,5 +155,11 @@ update_conf "configs/gnb.conf" "GNB_IPV4_ADDRESS_FOR_NG_AMF" "\"$AMF_ADDR_BIND/2
 update_conf "configs/gnb.conf" "GNB_IPV4_ADDRESS_FOR_NGU" "\"$AMF_ADDR_BIND/24\""
 update_conf "configs/gnb.conf" "tracking_area_code" "$TAC"
 update_conf "configs/gnb.conf" "plmn_list" "({ mcc = $MCC; mnc = $MNC; mnc_length = $MNC_LENGTH; snssaiList = ({ sst = 1; }) })"
+
+if [ "$USE_SSB_RSRP" = "true" ]; then
+    update_conf "configs/gnb.conf" "do_CSIRS" "0"
+else
+    update_conf "configs/gnb.conf" "do_CSIRS" "1"
+fi
 
 echo "Successfully configured the UE. The configuration file is located in the configs/ directory."

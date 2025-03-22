@@ -59,7 +59,7 @@ echo "Removing Open5GS installation directory..."
 sudo rm -rf open5gs/
 sudo rm -rf /var/log/open5gs
 
-echo "Uninstalling Node.js and Open5GS WebUI..."
+echo "Uninstalling Node.js used by Open5GS WebUI..."
 sudo apt-get remove --purge -y nodejs
 sudo rm -f /etc/apt/keyrings/nodesource.gpg
 sudo rm -f /etc/apt/sources.list.d/nodesource.list

@@ -4,7 +4,7 @@ The Next Generation Node B (gNodeB) is a 5G base station configured with srsRAN_
 
 ## Usage
 
-- **Compile**: Use `./full_install.sh` to build the gNodeB.
+- **Compile**: Use `./full_install.sh` to build and install the gNodeB software.
 - **Generate Configurations**: Use `./generate_configurations.sh` to create configuration files.
   - The script automatically retrieves the 5G Core Network's AMF address and the SCTP address from the Near Real-Time RAN Intelligent Controller's E2 Terminator. If either are not found locally, the script will prompt the user to enter the address manually.
   - Configuration files can be accessed and modified in the `configs` directory.
@@ -12,9 +12,10 @@ The Next Generation Node B (gNodeB) is a 5G base station configured with srsRAN_
 - **Stop the gNodeB**: Terminate the gNodeB with `./stop.sh`.
 - **Status**: Check if the gNodeB is running with `./is_running.sh`.
 - **Logs**: Access logs by navigating to the `logs` directory.
+- **Uninstall**: Use `./uninstall.sh` to remove the gNodeB software.
 
 > [!NOTE]
-> If the directory `RAN_Intelligent_Controllers/Near-Real-Time-RIC` is not found, then the `generate_configurations.sh` script will disable the E2 interface, so please delete this directory if you only want to use the UE, gNodeB, and 5G Core Network.
+> If the directory `RAN_Intelligent_Controllers/Near-Real-Time-RIC` is not found, then the `generate_configurations.sh` script will disable the E2 interface. Alternatively, if prompted to enter an E2 address, enter nothing ("") to disable the E2 interface in the gNodeB configuration.
 
 ## References
 

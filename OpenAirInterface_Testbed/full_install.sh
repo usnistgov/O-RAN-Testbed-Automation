@@ -101,17 +101,17 @@ if [[ "$OPEN5GS_INSTALLED" = true || "$GNODEB_INSTALLED" = true || "$UE_INSTALLE
         sudo rm -rf Next_Generation_Node_B/logs
         sudo rm -rf Next_Generation_Node_B/configs
         sudo rm -rf Next_Generation_Node_B/install_time.txt
-        sudo rm -rf RAN_Intelligent_Controllers/Near-Real-Time-RIC/flexric
-        sudo rm -rf RAN_Intelligent_Controllers/Near-Real-Time-RIC/swig
-        sudo rm -rf RAN_Intelligent_Controllers/Near-Real-Time-RIC/logs
-        sudo rm -rf RAN_Intelligent_Controllers/Near-Real-Time-RIC/configs
-        sudo rm -rf RAN_Intelligent_Controllers/Near-Real-Time-RIC/install_time.txt
+        sudo rm -rf RAN_Intelligent_Controllers/Flexible-RIC/flexric
+        sudo rm -rf RAN_Intelligent_Controllers/Flexible-RIC/swig
+        sudo rm -rf RAN_Intelligent_Controllers/Flexible-RIC/logs
+        sudo rm -rf RAN_Intelligent_Controllers/Flexible-RIC/configs
+        sudo rm -rf RAN_Intelligent_Controllers/Flexible-RIC/install_time.txt
         echo "Successfully removed previous installations."
     fi
 fi
 
 # Ensure backward compatibility with previous installations
-# sudo ./Additional_Scripts/migrate_to_new_version.sh
+sudo ./../Additional_Scripts/migrate_to_new_version.sh
 
 echo
 echo
@@ -159,7 +159,7 @@ echo "##########################################################################
 echo
 echo
 
-cd RAN_Intelligent_Controllers/Near-Real-Time-RIC
+cd RAN_Intelligent_Controllers/Flexible-RIC
 ./full_install.sh
 
 cd ../..
@@ -178,7 +178,7 @@ cd ../User_Equipment
 ./generate_configurations.sh
 cd ../Next_Generation_Node_B
 ./generate_configurations.sh
-cd ../RAN_Intelligent_Controllers/Near-Real-Time-RIC
+cd ../RAN_Intelligent_Controllers/Flexible-RIC
 ./generate_configurations.sh
 cd ../..
 

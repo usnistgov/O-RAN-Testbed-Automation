@@ -17,6 +17,7 @@ This automation tool is based on the K-Release of the Non-RT RIC. More informati
 - **Start the Non-RT RIC**: The Kubernetes pods start automatically on system boot, however, to ensure that all the components are running and properly configured, use `./run.sh`.
 - **Status**: Check on the pod statuses of the Non-RT RIC components with `kubectl get pods -A`, or by running the interactive pod manager (K9s) with `k9s -A` or `./start_k9s.sh`.
 - **Logs**: From within K9s, use the `Arrow Keys` to highlight a pod, `Enter` to view the logs for the pod, `w` to wrap text, `Esc` to go back, `Ctrl+k` to restart a pod that isn't responding, and `s` to open a command line shell in the pod. The control panel output is displayed in the terminal and in `logs/controlpanel_stdout.txt`.
+- **Uninstall**: Remove the Non-RT RIC with `./full_uninstall.sh`.
 
 ## References
 

@@ -10,6 +10,7 @@ requirements.txt
 /rappmanager/
 /rApps/
 install_time.txt
+!install_patch_files/
 
 # Ignore additional Python files
 __pycache__/

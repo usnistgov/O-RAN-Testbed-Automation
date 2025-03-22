@@ -104,8 +104,13 @@ fi
 echo "Saving configuration file example..."
 rm -rf configs
 mkdir configs
-rm -rf logs
-mkdir logs
+
+# Only remove the logs if not running
+RUNNING_STATUS=$(./is_running.sh)
+if [[ $RUNNING_STATUS != *": RUNNING"* ]]; then
+    rm -rf logs
+    mkdir logs
+fi
 
 for UE_NUMBER in {1..3}; do
     cp openairinterface5g/targets/PROJECTS/GENERIC-NR-5GC/CONF/ue.conf "configs/ue$UE_NUMBER.conf"

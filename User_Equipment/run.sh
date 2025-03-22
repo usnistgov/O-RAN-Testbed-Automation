@@ -28,6 +28,9 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
+# Exit immediately if a command fails
+set -e
+
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
     sudo apt-get install -y coreutils
@@ -145,9 +148,9 @@ else
         update_conf "$UE_CONF_PATH" "pcap" "mac_filename" "logs/ue${UE_NUMBER}_mac.pcap"
         update_conf "$UE_CONF_PATH" "pcap" "mac_nr_filename" "logs/ue${UE_NUMBER}_mac_nr.pcap"
         update_conf "$UE_CONF_PATH" "pcap" "nas_filename" "logs/ue${UE_NUMBER}_nas.pcap"
-        update_conf "$UE_CONF_PATH" "log" "filename" "logs/ue${UE_NUMBER}.txt"
+        update_conf "$UE_CONF_PATH" "log" "filename" "logs/ue${UE_NUMBER}.log"
         update_conf "$UE_CONF_PATH" "general" "metrics_csv_filename" "logs/ue${UE_NUMBER}_metrics.csv"
-        update_conf "$UE_CONF_PATH" "general" "tracing_filename" "logs/ue${UE_NUMBER}_tracing.txt"
+        update_conf "$UE_CONF_PATH" "general" "tracing_filename" "logs/ue${UE_NUMBER}_tracing.log"
         echo "Successfully created configuration file \"$UE_CONF_PATH\"."
     fi
 fi

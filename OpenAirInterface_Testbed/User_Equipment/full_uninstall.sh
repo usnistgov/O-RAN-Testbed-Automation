@@ -28,8 +28,8 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-# Exit immediately if a command fails
-set -e
+# Don't exit immediately if a command fails
+set +e
 
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
@@ -39,36 +39,34 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-# Function to update or add configuration properties in .conf files, considering sections and uncommenting if needed
-update_conf() {
-    echo "update_conf($1, $2, $3, $4)"
-    local FILE_PATH="$1"
-    local SECTION="$2"
-    local PROPERTY="$3"
-    local VALUE="$4"
-
-    # Ensure the section exists; if not, add it at the end
-    if ! grep -q "^\[$SECTION\]" "$FILE_PATH"; then
-        echo -e "\n[$SECTION]" >>"$FILE_PATH"
-    fi
-    # Remove any existing entries of the property in the section (including commented ones)
-    sed -i "/^\[$SECTION\]/,/^\s*\[/{/^[# ]*\s*$PROPERTY\s*=.*/d}" "$FILE_PATH"
-    # Append the new property=value after the section header
-    sed -i "/^\[$SECTION\]/a $PROPERTY = $VALUE" "$FILE_PATH"
-}
-
-echo "Saving configuration file example..."
-rm -rf configs
-mkdir configs
-rm -rf logs
-mkdir logs
-
-if [ -f /usr/local/etc/flexric/flexric.conf ]; then
-    cp /usr/local/etc/flexric/flexric.conf "$SCRIPT_DIR/configs/flexric.conf"
-else
-    cp flexric/flexric.conf "$SCRIPT_DIR/configs/flexric.conf"
+if [ -d openairinterface5g ]; then
+    cd "openairinterface5g/cmake_targets"
+    ./build_oai -C --clean-kernel
+    cd ../..
 fi
+sudo rm -rf openairinterface5g
 
-update_conf "configs/flexric.conf" "XAPP" "DB_NAME" "xapp_db1"
+sudo rm -rf logs/
+sudo rm -rf configs/
+sudo rm -rf install_time.txt
 
-echo "Successfully configured the FlexRIC. The configuration file is located in the configs/ directory."
+cd ../Next_Generation_Node_B
+
+if [ -d openairinterface5g ]; then
+    cd "openairinterface5g/cmake_targets"
+    ./build_oai -C --clean-kernel
+    cd ../..
+fi
+sudo rm -rf openairinterface5g
+
+sudo rm -rf logs/
+sudo rm -rf configs/
+sudo rm -rf install_time.txt
+
+cd "$SCRIPT_DIR"
+
+echo
+echo
+echo "################################################################################"
+echo "# Successfully uninstalled OpenAirInterface UE and gNodeB                      #"
+echo "################################################################################"

@@ -86,4 +86,21 @@ cd ..
 mkdir -p rApps
 cd ../..
 
+cd OpenAirInterface_Testbed/5G_Core_Network
+./install_scripts/git_clone.sh https://github.com/open5gs/open5gs.git
+cd ../..
+
+cd OpenAirInterface_Testbed/User_Equipment
+./install_scripts/git_clone.sh https://gitlab.eurecom.fr/oai/openairinterface5g.git
+cd ../..
+
+cd OpenAirInterface_Testbed/Next_Generation_Node_B
+ln -s "../User_Equipment/openairinterface5g" openairinterface5g
+cd ../..
+
+cd OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC
+./install_scripts/git_clone.sh https://github.com/swig/swig.git
+./install_scripts/git_clone.sh https://gitlab.eurecom.fr/mosaic5g/flexric.git
+cd ../..
+
 echo "Repositories were cloned successfully."

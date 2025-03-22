@@ -189,6 +189,32 @@ for PORT in "${PORTS[@]}"; do
     fi
 done
 
+# Uninstall Kubernetes packages
+if command -v kubernetes-cni &>/dev/null; then
+    echo "Uninstalling kubernetes-cni..."
+    sudo apt-mark unhold kubernetes-cni
+    sudo apt-get purge -y kubernetes-cni
+    sudo rm -f $(which kubernetes-cni)
+fi
+if command -v kubeadm &>/dev/null; then
+    echo "Uninstalling kubeadm..."
+    sudo apt-mark unhold kubeadm
+    sudo apt-get purge -y kubeadm
+    sudo rm -f $(which kubeadm)
+fi
+if command -v kubelet &>/dev/null; then
+    echo "Uninstalling kubelet..."
+    sudo apt-mark unhold kubelet
+    sudo apt-get purge -y kubelet
+    sudo rm -f $(which kubelet)
+fi
+if command -v kubectl &>/dev/null; then
+    echo "Uninstalling kubectl..."
+    sudo apt-mark unhold kubectl
+    sudo apt-get purge -y kubectl
+    sudo rm -f $(which kubectl)
+fi
+
 # Clean up Kubernetes directories
 sudo find /var/lib/kubelet -type d -exec umount {} \; 2>/dev/null || true
 sudo ipvsadm --clear || true
@@ -222,6 +248,19 @@ if command -v crictl &>/dev/null; then
 else
     echo "crictl not found; skipping containerd cleanup."
 fi
+
+if command -v k9s &>/dev/null; then
+    echo "Uninstalling k9s..."
+    sudo rm -f /usr/local/bin/k9s
+    echo "Successfully uninstalled k9s."
+else
+    echo "k9s is not installed, nothing to uninstall."
+fi
+if [ -d "$HOME/k9s-installation" ]; then
+    echo "Removing k9s temporary installation directory..."
+    rm -rf "$HOME/k9s-installation"
+fi
+rm -rf ~/.config/k9s
 
 # Reset iptables
 sudo iptables -F

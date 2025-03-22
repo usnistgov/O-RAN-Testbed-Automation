@@ -113,6 +113,17 @@ else
     echo "SCTP module loaded successfully."
 fi
 
+# Check if GCC 13 is installed, if not, install it and set it as the default
+GCC_VERSION=$(gcc -v 2>&1 | grep "gcc version" | awk '{print $3}')
+if [[ -z "$GCC_VERSION" || ! "$GCC_VERSION" == 13.* ]]; then
+    echo "Installing GCC 13..."
+    sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+    sudo apt-get update
+    sudo apt-get install -y gcc-13 g++-13
+    sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 100
+    sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-13 100
+fi
+
 cd "$SCRIPT_DIR"
 
 echo

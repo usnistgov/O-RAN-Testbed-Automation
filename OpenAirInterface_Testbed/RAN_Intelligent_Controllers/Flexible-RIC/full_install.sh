@@ -56,14 +56,7 @@ INSTALL_START_TIME=$(date +%s)
 echo "Installing dependencies..."
 sudo apt-get update || true
 sudo apt-get install -y build-essential
-
-echo "Installing GCC 13..."
-sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
-sudo apt-get update
-sudo apt-get install -y gcc-13 g++-13
-sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 100
-sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-13 100
-
+sudo apt-get install -y gcc-10 g++-10
 sudo apt-get install -y libsctp-dev python3 cmake-curses-gui libpcre2-dev python3-dev
 
 if [ ! -d "swig" ]; then
@@ -92,12 +85,22 @@ if [ ! -d "flexric" ]; then
     ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/mosaic5g/flexric.git
 fi
 
+# Apply patch to FlexRIC to add support for RSRP in the KPI report
+if [ ! -f "flexric/examples/xApp/c/monitor/xapp_kpm_moni.c.previous" ]; then
+    cp flexric/examples/xApp/c/monitor/xapp_kpm_moni.c flexric/examples/xApp/c/monitor/xapp_kpm_moni.c.previous
+    echo
+    echo "Patching xapp_kpm_moni.c..."
+    cd flexric
+    git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni.c.patch"
+    cd ..
+fi
+
 echo "Building FlexRIC..."
 cd flexric
 sudo rm -rf build
 mkdir build
 cd build
-cmake ..
+CC=gcc-10 CXX=g++-10 cmake .. -DE2AP_VERSION=E2AP_V3 -DKPM_VERSION=KPM_V3_00
 make -j$(nproc)
 
 echo "Installing FlexRIC..."

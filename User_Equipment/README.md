@@ -4,7 +4,7 @@ The User Equipment (UE) is a simulated device utilizing the srsRAN_4G software p
 
 ## Usage
 
-- **Compile**: Use `./full_install.sh` to build the UE software.
+- **Compile**: Use `./full_install.sh` to build and install the UE software.
 - **Generate Configurations**: Use `./generate_configurations.sh` to create configuration files.
   - Configuration files can be accessed and modified in the `configs` directory.
 - **Start the UE**: Use `./run.sh` to start the UE, or `./run_background.sh` to run it as a background process where the output is redirected to `logs/ue1_stdout.txt`.
@@ -13,6 +13,7 @@ The User Equipment (UE) is a simulated device utilizing the srsRAN_4G software p
   - To stop an individual UE, use `./stop.sh <N>`.
 - **Status**: Check running UEs with `./is_running.sh`. The output will display which UEs are running.
 - **Logs**: Access logs by navigating to the `logs` directory.
+- **Uninstall**: Use `./uninstall.sh` to remove the UE software.
 
 ## Multiple UEs
 
@@ -23,7 +24,7 @@ The `run.sh`, `run_background.sh` and `stop.sh` scripts can be given an optional
 - Key
 - Network namespace
 
-For UE 1, UE 2, and UE 3, the SIM subscriber information is pre-registered with the 5G Core Network. For `<N>` values greater than 3, the unique values are generated dynamically and automatically registered with the 5G Core Network, and stored in the `configs` directory as their own `ue<N>.conf` file. For more information about the parameter values, refer to the `run.sh` script source code.
+For UE 1, UE 2, and UE 3, the SIM subscriber information is pre-registered with the 5G Core Network. For `<N>` values greater than 3, the unique values are generated dynamically, registered with the 5G Core, and stored in the `configs` directory as their own `ue<N>.conf` file before starting the UE software. For more information about the parameter values, refer to the `run.sh` script source code.
 
 ## References
 

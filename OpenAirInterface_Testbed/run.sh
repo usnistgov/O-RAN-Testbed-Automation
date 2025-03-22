@@ -46,14 +46,14 @@ cd ..
 
 echo
 echo "Running FlexRIC..."
-cd RAN_Intelligent_Controllers/Near-Real-Time-RIC
+cd RAN_Intelligent_Controllers/Flexible-RIC
 ./run_background.sh
 cd ../..
 
 echo
 echo -n "Waiting for AMF to be ready"
 attempt=0
-while [ ! -f 5G_Core_Network/logs/amf.txt ] || ! grep -q "NF registered" 5G_Core_Network/logs/amf.txt; do
+while [ ! -f 5G_Core_Network/logs/amf.log ] || ! grep -q "NF registered" 5G_Core_Network/logs/amf.log; do
     echo -n "."
     sleep 0.5
     attempt=$((attempt + 1))
@@ -68,6 +68,25 @@ echo
 echo "Running gNodeB..."
 cd Next_Generation_Node_B
 ./run_background.sh
+
+echo -en "\nWaiting for gNodeB to be ready"
+ATTEMPT=0
+while [ ! -f logs/gnb_stdout.txt ] || ! grep -q "TYPE <CTRL-C> TO TERMINATE" logs/gnb_stdout.txt; do
+    echo -n "."
+    sleep 0.5
+    ATTEMPT=$((ATTEMPT + 1))
+    if [ $ATTEMPT -ge 120 ]; then
+        echo "gNodeB did not start after 60 seconds, exiting..."
+        exit 1
+    fi
+    if grep -q "TYPE <CTRL-C> TO TERMINATE" logs/gnb_stdout.txt; then
+        break
+    elif $(./is_running.sh | grep -q "NOT_RUNNING"); then
+        echo "Error starting gNodeB. Check logs/gnb_stdout.txt for more information."
+        exit 1
+    fi
+done
+echo -e "\ngNodeB is ready."
 cd ..
 
 echo
@@ -75,3 +94,7 @@ echo "Running User Equipment..."
 cd User_Equipment
 ./run_background.sh
 cd ..
+
+cd RAN_Intelligent_Controllers/Flexible-RIC/additional_scripts
+./run_xapp_kpm_moni.sh
+cd ../../..

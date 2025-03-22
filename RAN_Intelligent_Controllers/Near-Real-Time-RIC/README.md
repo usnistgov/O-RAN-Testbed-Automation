@@ -16,6 +16,7 @@ This automation tool is based on the K-Release of the Near-RT RIC. More informat
 - **Start the Near-RT RIC**: While the Kubernetes pods start automatically on system boot, the entire process of ensuring that the components are running, connected, and that the xApp is deployed can be re-executed with `./run.sh`.
 - **Status**: Check on a pod's status with `kubectl get pods -A`, or by running the interactive pod manager (K9s) with `k9s -A` or `./start_k9s.sh`.
 - **Logs**: From within K9s, use the `Arrow Keys` to highlight a pod, `Enter` to view the logs for the pod, `w` to wrap text, `Esc` to go back, `Ctrl+k` to restart a pod that isn't responding, and `s` to open a command line shell in the pod.
+- **Uninstall**: Remove the Near-RT RIC with `./full_uninstall.sh`.
 
 ## Installing an xApp
 
@@ -30,14 +31,17 @@ By default, the Hello World Go xApp (hw-go) is installed automatically. Addition
   - More information can be found in the documentation [[4]][kpimon-go-docs] and code [[5]][kpimon-go-code].
 - **5G Cell Anomaly Detection xApp (ad-cell)**:
   - Install with `./additional_scripts/install_xapp_5g_cell_anomaly_detection.sh`.
+  - As a prerequisite, the database must contain a sufficient amount of measurements.
   - More information can be found in the documentation [[7]][ad-cell-docs] and code [[8]][ad-cell-code].
 - **Anomaly Detection xApp (ad)**:
   - Install with `./additional_scripts/install_xapp_anomaly_detection.sh`.
   - Patched to support InfluxDB version 2._X_ instead of InfluxDB 1._X_.
+  - As a prerequisite, the database must contain a sufficient amount of measurements.
   - More information can be found in the documentation [[9]][ad-docs] and code [[10]][ad-code].
 - **Quality of Experience Predictor xApp (qp)**:
   - Install with `./additional_scripts/install_xapp_qoe_predictor.sh`.
   - Patched to support InfluxDB version 2._X_ instead of InfluxDB 1._X_.
+  - As a prerequisite, the database must contain a sufficient amount of measurements.
   - More information can be found in the documentation [[11]][qp-docs] and code [[12]][qp-code].
 - **RIC Control xApp (rc)**:
   - Install with `./additional_scripts/install_xapp_ric_control.sh`.

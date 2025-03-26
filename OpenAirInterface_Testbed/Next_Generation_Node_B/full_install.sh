@@ -107,8 +107,24 @@ if [ ! -f "openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs
     git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/openairinterface/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c.patch"
     cd ..
 fi
+if [ ! -f "openairinterface5g/openair2/LAYER2/NR_MAC_gNB/main.c.previous" ]; then
+    cp openairinterface5g/openair2/LAYER2/NR_MAC_gNB/main.c openairinterface5g/openair2/LAYER2/NR_MAC_gNB/main.c.previous
+    echo
+    echo "Patching main.c..."
+    cd openairinterface5g
+    git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/main.c.patch"
+    cd ..
+fi
+if [ ! -f "openairinterface5g/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.previous" ]; then
+    cp openairinterface5g/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h openairinterface5g/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.previous
+    echo
+    echo "Patching nr_mac_gNB.h..."
+    cd openairinterface5g
+    git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.patch"
+    cd ..
+fi
 
-# If using Linux Mint, attempt to add support for Linux Mint 20, 21, and 22 to OpenAirInterface
+# If using Linux Mint, add support for Linux Mint 20, 21, and 22 to OpenAirInterface
 if grep -q "Linux Mint" /etc/os-release; then
     echo
     echo "Linux Mint detected, attempting to patching OpenAirInterface to support Linux Mint 20, 21, and 22..."
@@ -144,6 +160,20 @@ if [[ -z "$GCC_VERSION" || ! "$GCC_VERSION" == 13.* ]]; then
     sudo apt-get install -y gcc-13 g++-13
     sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 100
     sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-13 100
+fi
+
+if ! command -v cmake &> /dev/null; then
+    echo "Installing CMake..."
+    sudo apt-get install -y cmake
+fi
+CMAKE_VERSION=$(cmake --version | head -n1 | awk '{print $3}')
+if [[ "$CMAKE_VERSION" == 3.16.* ]]; then
+    echo "Detected CMake 3.16. Updating CMake for compatibility with OpenAirInterface..."
+    # Add Kitware's APT repository
+    wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc | sudo apt-key add -
+    sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ focal main'
+    sudo apt update
+    sudo apt-get install -y cmake
 fi
 
 ADDITIONAL_FLAGS=""

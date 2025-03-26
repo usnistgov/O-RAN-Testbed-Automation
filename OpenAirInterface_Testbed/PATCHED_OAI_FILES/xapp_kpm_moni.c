@@ -123,12 +123,10 @@ void log_real_value(byte_array_t name, meas_record_lst_t meas_record)
     printf("RSRP = %.2f [dBm]\n", meas_record.real_val);
   } else if (cmp_str_ba("RSRQ", name) == 0) {
     printf("RSRQ = %.2f [dB]\n", meas_record.real_val);
-  } else if (cmp_str_ba("PUSCH_UESCHED_SNR", name) == 0) {
-    printf("PUSCH_UESCHED_SNR = %.2f [dB]\n", meas_record.real_val);
-  } else if (cmp_str_ba("PUCCH_UESCHED_SNR", name) == 0) {
-    printf("PUCCH_UESCHED_SNR = %.2f [dB]\n", meas_record.real_val);
-  } else if (cmp_str_ba("PUSCH_MACSTATS_SNR", name) == 0) {
-    printf("PUSCH_MACSTATS_SNR = %.2f [dB]\n", meas_record.real_val);
+  } else if (cmp_str_ba("PUSCH_SNR", name) == 0) {
+    printf("PUSCH_SNR = %.2f [dB]\n", meas_record.real_val);
+  } else if (cmp_str_ba("PUCCH_SNR", name) == 0) {
+    printf("PUCCH_SNR = %.2f [dB]\n", meas_record.real_val);
   } else {
     printf("Measurement Name not yet supported\n");
   }
@@ -319,7 +317,7 @@ kpm_act_def_t fill_report_style_4(ric_report_style_item_t const* report_item)
   act_def.frm_4.matching_cond_lst = calloc(act_def.frm_4.matching_cond_lst_len, sizeof(matching_condition_format_4_lst_t));
   assert(act_def.frm_4.matching_cond_lst != NULL && "Memory exhausted");
   // Filter connected UEs by S-NSSAI criteria
-  test_cond_type_e const type = S_NSSAI_TEST_COND_TYPE; // UL_RSSI_TEST_COND_TYPE
+  test_cond_type_e const type = S_NSSAI_TEST_COND_TYPE; // CQI_TEST_COND_TYPE
   test_cond_e const condition = EQUAL_TEST_COND; // GREATERTHAN_TEST_COND
   int const value = 1;
   act_def.frm_4.matching_cond_lst[0].test_info_lst = filter_predicate(type, condition, value);

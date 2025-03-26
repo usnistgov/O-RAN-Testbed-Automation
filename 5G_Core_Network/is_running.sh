@@ -28,6 +28,8 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
+INCLUDE_SEPP=false
+
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
     sudo apt-get install -y coreutils
@@ -55,8 +57,10 @@ APPS=("mmed" "sgwcd" "smfd" "amfd" "sgwud" "upfd" "hssd" "pcrfd" "nrfd" "scpd" "
 
 for APP in "${APPS[@]}"; do
     if [ "$APP" == "seppd" ]; then
-        check_service "seppd.*sepp1.yaml" "seppd_1"
-        check_service "seppd.*sepp2.yaml" "seppd_2"
+        if [ "$INCLUDE_SEPP" == true ]; then
+            check_service "seppd.*sepp1.yaml" "seppd_1"
+            check_service "seppd.*sepp2.yaml" "seppd_2"
+        fi
     else
         check_service "$APP" "$APP"
     fi

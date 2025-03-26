@@ -1,5 +1,5 @@
 diff --git a/examples/xApp/c/monitor/xapp_kpm_moni.c b/examples/xApp/c/monitor/xapp_kpm_moni.c
-index 5fa00cc2..e24039a4 100644
+index 5fa00cc2..2b965e7d 100644
 --- a/examples/xApp/c/monitor/xapp_kpm_moni.c
 +++ b/examples/xApp/c/monitor/xapp_kpm_moni.c
 @@ -95,6 +95,16 @@ void log_int_value(byte_array_t name, meas_record_lst_t meas_record)
@@ -19,7 +19,7 @@ index 5fa00cc2..e24039a4 100644
    } else {
      printf("Measurement Name not yet supported\n");
    }
-@@ -109,6 +119,16 @@ void log_real_value(byte_array_t name, meas_record_lst_t meas_record)
+@@ -109,6 +119,14 @@ void log_real_value(byte_array_t name, meas_record_lst_t meas_record)
      printf("DRB.UEThpDl = %.2f [kbps]\n", meas_record.real_val);
    } else if (cmp_str_ba("DRB.UEThpUl", name) == 0) {
      printf("DRB.UEThpUl = %.2f [kbps]\n", meas_record.real_val);
@@ -27,12 +27,10 @@ index 5fa00cc2..e24039a4 100644
 +    printf("RSRP = %.2f [dBm]\n", meas_record.real_val);
 +  } else if (cmp_str_ba("RSRQ", name) == 0) {
 +    printf("RSRQ = %.2f [dB]\n", meas_record.real_val);
-+  } else if (cmp_str_ba("PUSCH_UESCHED_SNR", name) == 0) {
-+    printf("PUSCH_UESCHED_SNR = %.2f [dB]\n", meas_record.real_val);
-+  } else if (cmp_str_ba("PUCCH_UESCHED_SNR", name) == 0) {
-+    printf("PUCCH_UESCHED_SNR = %.2f [dB]\n", meas_record.real_val);
-+  } else if (cmp_str_ba("PUSCH_MACSTATS_SNR", name) == 0) {
-+    printf("PUSCH_MACSTATS_SNR = %.2f [dB]\n", meas_record.real_val);
++  } else if (cmp_str_ba("PUSCH_SNR", name) == 0) {
++    printf("PUSCH_SNR = %.2f [dB]\n", meas_record.real_val);
++  } else if (cmp_str_ba("PUCCH_SNR", name) == 0) {
++    printf("PUCCH_SNR = %.2f [dB]\n", meas_record.real_val);
    } else {
      printf("Measurement Name not yet supported\n");
    }

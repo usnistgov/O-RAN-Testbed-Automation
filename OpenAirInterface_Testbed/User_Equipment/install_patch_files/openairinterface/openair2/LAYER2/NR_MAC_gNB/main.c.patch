@@ -1,0 +1,14 @@
+diff --git a/openair2/LAYER2/NR_MAC_gNB/main.c b/openair2/LAYER2/NR_MAC_gNB/main.c
+index a8fe8de79c..9f513a95c0 100644
+--- a/openair2/LAYER2/NR_MAC_gNB/main.c
++++ b/openair2/LAYER2/NR_MAC_gNB/main.c
+@@ -172,6 +172,9 @@ size_t dump_mac_stats(gNB_MAC_INST *gNB, char *output, size_t strlen, bool reset
+                        sched_ctrl->dl_bler_stats.bler,
+                        UE->current_DL_BWP.mcsTableIdx,
+                        sched_ctrl->dl_bler_stats.mcs);
++    // Save the previous RSRP values so that an xApp reading the data will have same values as gNB
++    stats->prev_num_rsrp_meas = stats->num_rsrp_meas;
++    stats->prev_cumul_rsrp = stats->cumul_rsrp;
+     if (reset_rsrp) {
+       stats->num_rsrp_meas = 0;
+       stats->cumul_rsrp = 0;

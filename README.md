@@ -48,12 +48,12 @@ UEs
 └── OpenAirInterface 5G UE: v2025.w11
 ```
 
-The components that have been verified to support or not support connectivity are as follows.
+The components that have been verified to support or not support connectivity are included below.
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: light)" srcset="./Images/Support_Light.svg">
     <source media="(prefers-color-scheme: dark)" srcset="./Images/Support_Dark.svg">
-    <img alt="Diagram of Supported and Unsupported Connections" width="95%">
+    <img alt="Diagram of Supported and Unsupported Connections" width="97%">
   </picture>
 </p>
 

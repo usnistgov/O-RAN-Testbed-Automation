@@ -31,6 +31,8 @@
 # Exit immediately if a command fails
 set -e
 
+CLEAN_INSTALL=false
+
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
     sudo apt-get install -y coreutils
@@ -39,17 +41,30 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
+if ! grep -q avx2 /proc/cpuinfo; then
+    echo "Warning: Support for AVX2 is not available on this machine. Errors may occur when building due to unsupported AVX instructions."
+    echo "To resolve this, please follow the instructions in the "Enabling VT-x/AMD-V for the AVX2 instruction set when building OpenAirInterface5G" section of the home directory README document."
+    echo
+    echo "Would you like to proceed with the installation? (y/n)"
+    read -r -n 1 -s CONTINUE
+    echo
+    if [ "$CONTINUE" != "y" ]; then
+        echo "Installation aborted."
+        exit 1
+    fi
+fi
+
 # Check if a symbolic link can be created to the openairinterface5g directory
 if [ ! -f "openairinterface5g/cmake_targets/build_oai" ]; then
+    sudo rm -rf openairinterface5g
     if [ -f "../Next_Generation_Node_B/openairinterface5g/cmake_targets/build_oai" ]; then
-        sudo rm -rf openairinterface5g
         echo "Creating symbolic link to openairinterface5g..."
         ln -s "../Next_Generation_Node_B/openairinterface5g" openairinterface5g
     fi
 fi
 
 # Check for UE binary to determine if srsRAN_Project is already installed
-if [ -f "openairinterface5g/cmake_targets/ran_build/build/nr-uesoftmodem" ]; then
+if [ "$CLEAN_INSTALL" = false ] && [ -f "openairinterface5g/cmake_targets/ran_build/build/nr-uesoftmodem" ]; then
     echo "Open Air Interface UE is already installed, skipping."
     exit 0
 fi
@@ -131,6 +146,12 @@ if [[ -z "$GCC_VERSION" || ! "$GCC_VERSION" == 13.* ]]; then
     sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-13 100
 fi
 
+ADDITIONAL_FLAGS=""
+# if clean install is true, add flag -C
+if [ "$CLEAN_INSTALL" = true ]; then
+    ADDITIONAL_FLAGS="-C"
+fi
+
 cd "$SCRIPT_DIR"
 
 echo
@@ -143,7 +164,7 @@ cd "$SCRIPT_DIR/openairinterface5g/cmake_targets"
 
 # Build OAI 5G UE
 cd "$SCRIPT_DIR/openairinterface5g/cmake_targets"
-./build_oai --ninja --nrUE -w SIMU # -w USRP
+./build_oai --ninja --nrUE -w SIMU $ADDITIONAL_FLAGS # -w USRP
 
 cd "$SCRIPT_DIR"
 

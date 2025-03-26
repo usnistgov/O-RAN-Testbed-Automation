@@ -1,13 +1,38 @@
 diff --git a/examples/xApp/c/monitor/xapp_kpm_moni.c b/examples/xApp/c/monitor/xapp_kpm_moni.c
-index 5fa00cc2..560f7c65 100644
+index 5fa00cc2..e24039a4 100644
 --- a/examples/xApp/c/monitor/xapp_kpm_moni.c
 +++ b/examples/xApp/c/monitor/xapp_kpm_moni.c
-@@ -109,6 +109,8 @@ void log_real_value(byte_array_t name, meas_record_lst_t meas_record)
+@@ -95,6 +95,16 @@ void log_int_value(byte_array_t name, meas_record_lst_t meas_record)
+     printf("DRB.PdcpSduVolumeDL = %d [kb]\n", meas_record.int_val);
+   } else if (cmp_str_ba("DRB.PdcpSduVolumeUL", name) == 0) {
+     printf("DRB.PdcpSduVolumeUL = %d [kb]\n", meas_record.int_val);
++  } else if (cmp_str_ba("N_RSRP_MEAS", name) == 0) {
++    printf("N_RSRP_MEAS = %d\n", meas_record.int_val);
++  } else if (cmp_str_ba("N_PRB", name) == 0) {
++    printf("N_PRB = %d\n", meas_record.int_val);
++  } else if (cmp_str_ba("RAW_RSSI", name) == 0) {
++    printf("RAW_RSSI = %d\n", meas_record.int_val);
++  } else if (cmp_str_ba("UL_RSSI", name) == 0) {
++    printf("UL_RSSI = %d\n", meas_record.int_val);
++  } else if (cmp_str_ba("CQI", name) == 0) {
++    printf("CQI = %d\n", meas_record.int_val);
+   } else {
+     printf("Measurement Name not yet supported\n");
+   }
+@@ -109,6 +119,16 @@ void log_real_value(byte_array_t name, meas_record_lst_t meas_record)
      printf("DRB.UEThpDl = %.2f [kbps]\n", meas_record.real_val);
    } else if (cmp_str_ba("DRB.UEThpUl", name) == 0) {
      printf("DRB.UEThpUl = %.2f [kbps]\n", meas_record.real_val);
 +  } else if (cmp_str_ba("RSRP", name) == 0) {
 +    printf("RSRP = %.2f [dBm]\n", meas_record.real_val);
++  } else if (cmp_str_ba("RSRQ", name) == 0) {
++    printf("RSRQ = %.2f [dB]\n", meas_record.real_val);
++  } else if (cmp_str_ba("PUSCH_UESCHED_SNR", name) == 0) {
++    printf("PUSCH_UESCHED_SNR = %.2f [dB]\n", meas_record.real_val);
++  } else if (cmp_str_ba("PUCCH_UESCHED_SNR", name) == 0) {
++    printf("PUCCH_UESCHED_SNR = %.2f [dB]\n", meas_record.real_val);
++  } else if (cmp_str_ba("PUSCH_MACSTATS_SNR", name) == 0) {
++    printf("PUSCH_MACSTATS_SNR = %.2f [dB]\n", meas_record.real_val);
    } else {
      printf("Measurement Name not yet supported\n");
    }

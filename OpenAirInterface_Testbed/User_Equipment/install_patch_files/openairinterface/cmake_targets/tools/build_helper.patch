@@ -18,7 +18,7 @@ index 3fc1db7b56..9f68588ea6 100755
 +        if [[ $OS_RELEASE == 22* ]]; then
 +            OS_DISTRO="ubuntu"
 +            OS_RELEASE="24.04"
-+        elif [[ $OS_RELEASE == 22* ]]; then
++        elif [[ $OS_RELEASE == 21* ]]; then
 +            OS_DISTRO="ubuntu"
 +            OS_RELEASE="22.04"
 +        elif [[ $OS_RELEASE == 20* ]]; then

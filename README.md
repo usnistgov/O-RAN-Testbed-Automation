@@ -48,6 +48,15 @@ UEs
 └── OpenAirInterface 5G UE: v2025.w11
 ```
 
+The components that have been verified to support or not support connectivity are as follows.
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: light)" srcset="./Images/Support_Light.svg">
+    <source media="(prefers-color-scheme: dark)" srcset="./Images/Support_Dark.svg">
+    <img alt="Diagram of Supported and Unsupported Connections" width="95%">
+  </picture>
+</p>
+
 ### Minimum System Requirements
 
 Before beginning the installation and setup of the testbed, verify that the system meets the following minimum specifications to prevent issues like pods remaining in pending or crash loop states if using an O-RAN SC RIC.
@@ -67,7 +76,7 @@ For users using a virtual machine, e.g., VirtualBox, the following configuration
 - **System**
   - **Extended Features**: Ensure that `Enable I/O APIC` is checked to improve interrupt handling.
   - **Extended Features**: Check `Enable PAE/NX` and if possible, also check `Enable Nested VT-x/AMD-V`.
-  - **Paravirtualization Interface**: If the host machine is a Mac choose `Default`, if Windows choose `Hyper-V`, and if Linux choose `KVM`.
+  - **Paravirtualization Interface**: Ensure that `Default` is selected.
   - **Hardware Virtualization**: Ensure that `Enabled Nested Paging` is checked.
 - **Display**
   - **Video Memory**: Set the slider to the maximum if using a Desktop environment.
@@ -75,6 +84,18 @@ For users using a virtual machine, e.g., VirtualBox, the following configuration
   - Check the SATA controller's `Solid-state Drive` option if using an SSD hard drive.
 - **Network**
   - **Attached to**: Select `NAT` to allow the components to communicate locally.
+
+<details>
+  <summary><b>Enabling VT-x/AMD-V for the AVX2 instruction set when building OpenAirInterface5G.</b></summary>
+  <hr>
+  When running a VM to build OpenAirInterface5G, compilation errors may occur if not using VT-x/AMD-V due to an unsupported AVX2 instruction set. In VirtualBox, the lower right corner will show a "V" icon if using VT-x/AMD-V, otherwise, it will show a turtle icon. Additionally, AVX2 support can be verified by checking that `cat /proc/cpuinfo | grep avx2` is not empty. The following steps can be taken to ensure that VT-x/AMD-V is enabled in a VirtualBox VM.
+
+  - **CPU Support**: Ensure that virtualization is supported by the CPU, and enabled in the BIOS.
+  - **Disable Hyper-V**: Hyper-V may prevent VT-x/AMD-V from being enabled. If using Windows, the following options should be unchecked in the "Turn Windows features on or off" settings: "Hyper-V", "Windows Hypervisor Platform", and "Virtual Machine Platform". If a change is made, a reboot is required.
+  - **VirtualBox**: From the VirtualBox Manager, select the VM and click the "Information" tab. Look for "Acceleration: VT-x/AMD-V".
+    - If the VM shows this but the AVX2 instruction set is still disabled (turtle icon), then disabling core isolation is a potential reason. Please exercise caution as it is not advised to disable core isolation. It can be disabled in the "Windows Security" settings by unchecking "Memory Integrity", and rebooting.
+  - If `cat /proc/cpuinfo | grep avx2` is not empty, then OpenAirInterface should be able to build without issues.
+</details>
 
 ---
 

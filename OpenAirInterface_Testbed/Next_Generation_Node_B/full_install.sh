@@ -31,6 +31,8 @@
 # Exit immediately if a command fails
 set -e
 
+CLEAN_INSTALL=false
+
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
     sudo apt-get install -y coreutils
@@ -39,17 +41,30 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
+if ! grep -q avx2 /proc/cpuinfo; then
+    echo "Warning: Support for AVX2 is not available on this machine. Errors may occur when building due to unsupported AVX instructions."
+    echo "To resolve this, please follow the instructions in the "Enabling VT-x/AMD-V for the AVX2 instruction set when building OpenAirInterface5G" section of the home directory README document."
+    echo
+    echo "Would you like to proceed with the installation? (y/n)"
+    read -r -n 1 -s CONTINUE
+    echo
+    if [ "$CONTINUE" != "y" ]; then
+        echo "Installation aborted."
+        exit 1
+    fi
+fi
+
 # Check if a symbolic link can be created to the openairinterface5g directory
 if [ ! -f "openairinterface5g/cmake_targets/build_oai" ]; then
+    sudo rm -rf openairinterface5g
     if [ -f "../User_Equipment/openairinterface5g/cmake_targets/build_oai" ]; then
-        sudo rm -rf openairinterface5g
         echo "Creating symbolic link to openairinterface5g..."
         ln -s "../User_Equipment/openairinterface5g" openairinterface5g
     fi
 fi
 
 # Check for gNB binary to determine if srsRAN_Project is already installed
-if [ -f "openairinterface5g/cmake_targets/ran_build/build/nr-softmodem" ]; then
+if [ "$CLEAN_INSTALL" = false ] && [ -f "openairinterface5g/cmake_targets/ran_build/build/nr-softmodem" ]; then
     echo "Open Air Interface gNB is already installed, skipping."
     exit 0
 fi
@@ -75,7 +90,25 @@ if [ -f "openairinterface5g/CMakeLists.txt" ]; then
     sed -i 's/set(KPM_VERSION "[^"]*"/set(KPM_VERSION "KPM_V3_00"/' openairinterface5g/CMakeLists.txt
 fi
 
-# Add support for Linux Mint 20, 21, and 22 to OpenAirInterface
+# Apply patches to OpenAirInterface to add support for RSRP in the KPI report
+if [ ! -f "openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c.previous" ]; then
+    cp openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c.previous
+    echo
+    echo "Patching ran_func_kpm.c..."
+    cd openairinterface5g
+    git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/openairinterface/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c.patch"
+    cd ..
+fi
+if [ ! -f "openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c.previous" ]; then
+    cp openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c.previous
+    echo
+    echo "Patching ran_func_kpm_subs.c..."
+    cd openairinterface5g
+    git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/openairinterface/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c.patch"
+    cd ..
+fi
+
+# If using Linux Mint, attempt to add support for Linux Mint 20, 21, and 22 to OpenAirInterface
 if grep -q "Linux Mint" /etc/os-release; then
     echo
     echo "Linux Mint detected, attempting to patching OpenAirInterface to support Linux Mint 20, 21, and 22..."
@@ -113,6 +146,12 @@ if [[ -z "$GCC_VERSION" || ! "$GCC_VERSION" == 13.* ]]; then
     sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-13 100
 fi
 
+ADDITIONAL_FLAGS=""
+# if clean install is true, add flag -C
+if [ "$CLEAN_INSTALL" = true ]; then
+    ADDITIONAL_FLAGS="-C"
+fi
+
 cd "$SCRIPT_DIR"
 
 echo
@@ -125,7 +164,7 @@ cd "$SCRIPT_DIR/openairinterface5g/cmake_targets"
 
 # Build OAI 5G gNB
 cd "$SCRIPT_DIR/openairinterface5g/cmake_targets"
-./build_oai --ninja --gNB --build-e2 -w SIMU # -w USRP
+./build_oai --ninja --gNB --build-e2 -w SIMU $ADDITIONAL_FLAGS # -w USRP
 
 cd "$SCRIPT_DIR"
 

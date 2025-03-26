@@ -1,5 +1,5 @@
 {
-  "https://github.com/open5gs/open5gs.git": ["", "a5510f1870e2753c69fe28a9aa98ef2964c999cc"],
+  "https://github.com/open5gs/open5gs.git": ["", "1d46a0e475f7224ea86ed051ab4d03e72081f58f"],
   "https://github.com/srsran/srsRAN_4G.git": ["", "ec29b0c1ff79cebcbe66caa6d6b90778261c42b8"],
   "https://github.com/zeromq/libzmq.git": ["", "34f7fa22022bed9e0e390ed3580a1c83ac4a2834"],
   "https://github.com/zeromq/czmq.git": ["", "5b5c640248dfb6e9a9a612cfad16d8c019e5702c"],

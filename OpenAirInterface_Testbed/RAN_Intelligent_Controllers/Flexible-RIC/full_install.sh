@@ -55,7 +55,7 @@ INSTALL_START_TIME=$(date +%s)
 
 echo "Installing dependencies..."
 sudo apt-get update || true
-sudo apt-get install -y build-essential
+sudo apt-get install -y build-essential automake
 sudo apt-get install -y gcc-10 g++-10
 sudo apt-get install -y libsctp-dev python3 cmake-curses-gui libpcre2-dev python3-dev
 

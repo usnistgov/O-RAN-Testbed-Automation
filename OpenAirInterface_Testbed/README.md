@@ -13,6 +13,9 @@ This testbed deployment consists of a 5G Core Network by Open5GS [[1]][open5gs-c
 - **Debugging Information**: Configuration files are in the `configs/` directory, and log files are located in the `logs/` directory for each component.
 
 > [!IMPORTANT]
+> It may be required for the AVX2 instruction set to be available on the host machine installing the testbed. Refer to the "Enabling VT-x/AMD-V for the AVX2 instruction set when building OpenAirInterface5G" section on the home directory README.md file for information on this.
+
+> [!NOTE]
 > OpenAirInterface's support for Linux Mint is currently limited. It is recommended to use Ubuntu.
 
 ## References

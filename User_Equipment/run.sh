@@ -105,6 +105,18 @@ elif [ $UE_NUMBER -gt 3 ]; then # Dynamic configurations for UE 4 and beyond
     UE_NAMESPACE="ue$UE_NUMBER"
 fi
 
+# Read the PLMN value from the 5G Core, and apply it to the beginning of the UE's IMSI
+YAML_PATH="../5G_Core_Network/options.yaml"
+if [ ! -f "$YAML_PATH" ]; then
+    echo "Configuration not found in $YAML_PATH, please generate the configuration for 5G_Core_Network first."
+    exit 1
+fi
+PLMN=$(sed -n 's/^plmn: \([0-9]*\)/\1/p' "$YAML_PATH" | tr -d '[:space:]')
+if [ ! -z "$PLMN" ]; then
+    PLMN_LENGTH=${#PLMN}
+    UE_IMSI="${PLMN}${UE_IMSI:$PLMN_LENGTH}"
+fi
+
 # echo "UE IMEI: $UE_IMEI"
 # echo "UE IMSI: $UE_IMSI"
 # echo "UE KEY: $UE_KEY"

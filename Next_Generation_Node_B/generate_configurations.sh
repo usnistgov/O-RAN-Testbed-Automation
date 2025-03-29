@@ -233,6 +233,8 @@ DEVICE_ARGS+="tx_port0=tcp://127.0.0.1:2000,rx_port0=tcp://127.0.0.1:2001,base_s
 # Update configuration values for AMF connection
 update_yaml "configs/gnb.yaml" "cu_cp.amf" "addr" "$AMF_ADDR"
 update_yaml "configs/gnb.yaml" "cu_cp.amf" "bind_addr" "$AMF_ADDR_BIND"
+update_yaml "configs/gnb.yaml" "cu_cp.amf.supported_tracking_areas[0]" "tac" $TAC
+update_yaml "configs/gnb.yaml" "cu_cp.amf.supported_tracking_areas[0].plmn_list[0]" "plmn" $PLMN
 
 # Update configuration values for RF front-end device
 update_yaml "configs/gnb.yaml" "ru_sdr" "device_driver" "zmq"

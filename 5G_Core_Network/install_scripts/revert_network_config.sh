@@ -30,47 +30,56 @@
 
 set -e
 
-SYSTEM=$(uname)
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+PARENT_DIR=$(dirname "$SCRIPT_DIR")
+cd "$PARENT_DIR"
 
-if [ "$SYSTEM" = "Linux" ]; then
-
-    # Remove sysctl settings
-    if [ -f /etc/sysctl.d/30-open5gs.conf ]; then
-        rm /etc/sysctl.d/30-open5gs.conf
-        sysctl -p
-    fi
-
-    # Remove IPv4 and IPv6 addresses from the interfaces
-    for INTERFACE in ogstun ogstun2 ogstun3; do
-        if ip link show $INTERFACE >/dev/null 2>&1; then
-            sudo ip addr flush dev $INTERFACE
-            ip link set $INTERFACE down
-            ip link del $INTERFACE
-        fi
-    done
-
-elif [ "$SYSTEM" = "Darwin" ]; then
-    # Remove all aliases from lo0
-    for i in $(seq 2 20) $(seq 50 50) $(seq 200 202) $(seq 250 252); do
-        ifconfig lo0 -alias 127.0.0.$i 2>/dev/null
-        ifconfig lo0 -alias 127.0.1.$i 2>/dev/null
-        ifconfig lo0 -alias 127.0.2.$i 2>/dev/null
-        ifconfig lo0 -alias 127.0.3.$i 2>/dev/null
-    done
-
-    # Disable PF and remove any Open5GS specific anchors
-    if [ -f /etc/pf.anchors/org.open5gs ]; then
-        pfctl -d
-        rm /etc/pf.anchors/org.open5gs
-        # Reload the default PF configuration
-        pfctl -f /etc/pf.conf
-        pfctl -e
-    fi
+if [ ! -f options.yaml ]; then
+    echo "File options.yaml does not exist. Please generate configurations first."
+    exit 1
 fi
 
+default_ogstun_ipv4=10.45.0.0/16
+default_ogstun_ipv6=2001:db8:cafe::/48
+default_ogstun2_ipv4=10.46.0.0/16
+default_ogstun2_ipv6=2001:db8:babe::/48
+default_ogstun3_ipv4=10.47.0.0/16
+default_ogstun3_ipv6=2001:db8:face::/48
+ogstun_ipv4=$(yq eval '.ogstun_ipv4' options.yaml)
+ogstun_ipv6=$(yq eval '.ogstun_ipv6' options.yaml)
+ogstun2_ipv4=$(yq eval '.ogstun2_ipv4' options.yaml)
+ogstun2_ipv6=$(yq eval '.ogstun2_ipv6' options.yaml)
+ogstun3_ipv4=$(yq eval '.ogstun3_ipv4' options.yaml)
+ogstun3_ipv6=$(yq eval '.ogstun3_ipv6' options.yaml)
+
+# Remove sysctl settings
+if [ -f /etc/sysctl.d/30-open5gs.conf ]; then
+    rm /etc/sysctl.d/30-open5gs.conf
+    sysctl -p
+fi
+
+# Remove IPv4 and IPv6 addresses from the interfaces
+for INTERFACE in ogstun ogstun2 ogstun3; do
+    if ip link show $INTERFACE >/dev/null 2>&1; then
+        sudo ip addr flush dev $INTERFACE
+        ip link set $INTERFACE down
+        ip link del $INTERFACE
+    fi
+done
+
 # Remove iptables and ip6tables MASQUERADE rules
-sudo iptables --wait -t nat -D POSTROUTING -s 10.45.0.0/16 ! -o ogstun -j MASQUERADE 2>/dev/null || true
-sudo ip6tables --wait -t nat -D POSTROUTING -s cafe::/64 -o ogstun -j MASQUERADE 2>/dev/null || true
+sudo iptables --wait -t nat -D POSTROUTING -s $default_ogstun_ipv4 ! -o ogstun -j MASQUERADE 2>/dev/null || true
+sudo ip6tables --wait -t nat -D POSTROUTING -s $default_ogstun_ipv6 -o ogstun -j MASQUERADE 2>/dev/null || true
+sudo iptables --wait -t nat -D POSTROUTING -s $default_ogstun2_ipv4 ! -o ogstun2 -j MASQUERADE 2>/dev/null || true
+sudo ip6tables --wait -t nat -D POSTROUTING -s $default_ogstun2_ipv6 -o ogstun -j2 MASQUERADE 2>/dev/null || true
+sudo iptables --wait -t nat -D POSTROUTING -s $default_ogstun3_ipv4 ! -o ogstun -j MASQUERADE 2>/dev/null || true
+sudo ip6tables --wait -t nat -D POSTROUTING -s $default_ogstun3_ipv6 -o ogstun -j MASQUERADE 2>/dev/null || true
+sudo iptables --wait -t nat -D POSTROUTING -s $ogstun_ipv4 ! -o ogstun -j MASQUERADE 2>/dev/null || true
+sudo ip6tables --wait -t nat -D POSTROUTING -s $ogstun_ipv6 -o ogstun -j MASQUERADE 2>/dev/null || true
+sudo iptables --wait -t nat -D POSTROUTING -s $ogstun2_ipv4 ! -o ogstun2 -j MASQUERADE 2>/dev/null || true
+sudo ip6tables --wait -t nat -D POSTROUTING -s $ogstun2_ipv6 -o ogstun -j2 MASQUERADE 2>/dev/null || true
+sudo iptables --wait -t nat -D POSTROUTING -s $ogstun3_ipv4 ! -o ogstun -j MASQUERADE 2>/dev/null || true
+sudo ip6tables --wait -t nat -D POSTROUTING -s $ogstun3_ipv6 -o ogstun -j MASQUERADE 2>/dev/null || true
 
 # Disable IP forwarding
 sudo sysctl -w net.ipv4.ip_forward=0 >/dev/null 2>&1

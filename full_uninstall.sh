@@ -51,6 +51,9 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
+echo "Stopping 5G Core Network, srsRAN_Project, and srsRAN_4G..."
+./stop.sh
+
 echo
 echo
 echo "################################################################################"
@@ -100,3 +103,6 @@ echo
 
 cd RAN_Intelligent_Controllers/Near-Real-Time-RIC
 ./full_uninstall.sh bypass_confirmation
+
+echo
+echo "To ensure components within the OpenAirInterface testbed are also uninstalled, run \"./OpenAirInterface_Testbed/full_uninstall.sh\"."

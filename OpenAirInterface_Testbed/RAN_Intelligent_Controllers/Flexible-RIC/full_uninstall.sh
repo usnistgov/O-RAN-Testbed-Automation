@@ -39,6 +39,9 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
+echo "Stopping Near-RT RIC..."
+./stop.sh
+
 if [ -d swig ]; then
     echo "Uninstalling Swig..."
     cd swig

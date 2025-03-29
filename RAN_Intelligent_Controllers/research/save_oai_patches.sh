@@ -28,19 +28,51 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-# Exit immediately if a command fails
-set -e
-
-# Guide: https://gitlab.eurecom.fr/mosaic5g/flexric
-
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
     sudo apt-get install -y coreutils
 fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
-PARENT_DIR=$(dirname "$SCRIPT_DIR")
+cd "$SCRIPT_DIR/../../OpenAirInterface_Testbed"
 
-cd "$PARENT_DIR/flexric/"
+cd User_Equipment/openairinterface5g
+git diff openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c >../install_patch_files/openairinterface/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c.patch
+git diff openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c >../install_patch_files/openairinterface/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c.patch
+git diff openair2/LAYER2/NR_MAC_gNB/main.c >../install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/main.c.patch
+git diff openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h >../install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.patch
+cp openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c "$SCRIPT_DIR/PATCHED_OAI_FILES"
+cp openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c "$SCRIPT_DIR/PATCHED_OAI_FILES"
+cp openair2/LAYER2/NR_MAC_gNB/main.c "$SCRIPT_DIR/PATCHED_OAI_FILES"
+cp openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h "$SCRIPT_DIR/PATCHED_OAI_FILES"
+cd ../..
 
-./build/examples/xApp/c/monitor/xapp_kpm_moni
+cd RAN_Intelligent_Controllers/Flexible-RIC/flexric/
+git diff examples/xApp/c/monitor/xapp_kpm_moni.c >../install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni.c.patch
+cp examples/xApp/c/monitor/xapp_kpm_moni.c ../../../PATCHED_OAI_FILES
+
+cd "$SCRIPT_DIR/../.."
+
+if [ ! -f "NIST Commercial Product Disclaimer.md" ]; then
+    echo "Wrong directory"
+    pwd
+    ls
+    exit
+fi
+
+# Apply global format
+
+if ! command -v shfmt &>/dev/null; then
+    echo "Package \"shfmt\" not found, installing..."
+    sudo apt-get install -y shfmt
+fi
+find . -type f -name "*.sh" -exec shfmt -i 4 -w {} +
+git restore *.previous.sh
+
+sudo apt-get install -y dos2unix
+find . -type f -exec dos2unix {} \;
+
+find . -exec chmod 775 {} \;
+chmod 644 "LICENSE"
+chmod 644 "NIST Commercial Product Disclaimer.md"
+chmod 644 "NIST Software Disclaimer.md"

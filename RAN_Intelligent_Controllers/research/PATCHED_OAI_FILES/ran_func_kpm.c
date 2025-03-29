@@ -438,14 +438,6 @@ static const char* kpm_meas_gnb[] = {
   "RRU.PrbTotDl",
   "RRU.PrbTotUl",
   "RSRP",
-  "RSRQ",
-  "N_RSRP_MEAS",
-  "N_PRB",
-  "PUSCH_SNR",
-  "PUCCH_SNR",
-  "RAW_RSSI",
-  "UL_RSSI",
-  "CQI",
   NULL,
 };
 

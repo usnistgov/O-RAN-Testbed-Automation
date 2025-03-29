@@ -34,6 +34,52 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$PARENT_DIR"
 
+if [ ! -f options.yaml ]; then
+    echo "File options.yaml does not exist. Please generate configurations first."
+    exit 1
+fi
+
+default_ogstun_ipv4=10.45.0.0/16
+default_ogstun_ipv6=2001:db8:cafe::/48
+default_ogstun2_ipv4=10.46.0.0/16
+default_ogstun2_ipv6=2001:db8:babe::/48
+default_ogstun3_ipv4=10.47.0.0/16
+default_ogstun3_ipv6=2001:db8:face::/48
+ogstun_ipv4=$(yq eval '.ogstun_ipv4' options.yaml)
+ogstun_ipv6=$(yq eval '.ogstun_ipv6' options.yaml)
+ogstun2_ipv4=$(yq eval '.ogstun2_ipv4' options.yaml)
+ogstun2_ipv6=$(yq eval '.ogstun2_ipv6' options.yaml)
+ogstun3_ipv4=$(yq eval '.ogstun3_ipv4' options.yaml)
+ogstun3_ipv6=$(yq eval '.ogstun3_ipv6' options.yaml)
+
+# Extract the first IPv4 address from a CIDR block by replacing the last octet with '.1'
+# For example, 10.45.0.0/16 --> 10.45.0.1/16
+grab_first_ipv4_address() {
+    local IP=$1
+    echo ${IP%.*}.1/${IP#*/}
+}
+
+# Extract the first IPv6 address from a CIDR block by replacing the suffix with '::1'.
+# For example, 2001:db8:cafe::/48 --> 2001:db8:cafe::1/48
+grab_first_ipv6_address() {
+    local IP=$1
+    echo ${IP%::*}::1/${IP#*/}
+}
+
+# Extract the first IPv4 and IPv6 addresses from the CIDR blocks
+default_ogstun_ipv4_1=$(grab_first_ipv4_address "$default_ogstun_ipv4")
+default_ogstun_ipv6_1=$(grab_first_ipv6_address "$default_ogstun_ipv6")
+default_ogstun2_ipv4_1=$(grab_first_ipv4_address "$default_ogstun2_ipv4")
+default_ogstun2_ipv6_1=$(grab_first_ipv6_address "$default_ogstun2_ipv6")
+default_ogstun3_ipv4_1=$(grab_first_ipv4_address "$default_ogstun3_ipv4")
+default_ogstun3_ipv6_1=$(grab_first_ipv6_address "$default_ogstun3_ipv6")
+ogstun_ipv4_1=$(grab_first_ipv4_address "$ogstun_ipv4")
+ogstun_ipv6_1=$(grab_first_ipv6_address "$ogstun_ipv6")
+ogstun2_ipv4_1=$(grab_first_ipv4_address "$ogstun2_ipv4")
+ogstun2_ipv6_1=$(grab_first_ipv6_address "$ogstun2_ipv6")
+ogstun3_ipv4_1=$(grab_first_ipv4_address "$ogstun3_ipv4")
+ogstun3_ipv6_1=$(grab_first_ipv6_address "$ogstun3_ipv6")
+
 # Check if the tun interface already exists, if not, add it
 if ! ip link show ogstun >/dev/null 2>&1; then
     echo "Adding TUN interface ogstun..."
@@ -48,7 +94,60 @@ if ! ip link show ogstun3 >/dev/null 2>&1; then
     sudo ip tuntap add name ogstun3 mode tun
 fi
 
-echo "Running Open5GS netconf.sh script..."
+echo "Checking and assigning IP addresses to TUN device..."
+if ! ip addr show ogstun | grep -q "$default_ogstun_ipv4_1"; then
+    sudo ip addr add $default_ogstun_ipv4_1 dev ogstun
+else
+    echo "IP address $default_ogstun_ipv4_1 already assigned to ogstun."
+fi
+
+if ! ip addr show ogstun | grep -q "$default_ogstun_ipv6_1"; then
+    sudo ip addr add $default_ogstun_ipv6_1 dev ogstun
+else
+    echo "IPv6 address $default_ogstun_ipv6_1 already assigned to ogstun."
+fi
+
+if [ ! -f open5gs/misc/netconf.sh ]; then
+    echo "File open5gs/misc/netconf.sh does not exist."
+    exit 1
+fi
+
+# Escape periods in the IPv4 addresses for sed
+default_ogstun_ipv4_esc=$(echo $default_ogstun_ipv4 | sed 's/\./\\./g')
+default_ogstun2_ipv4_esc=$(echo $default_ogstun2_ipv4 | sed 's/\./\\./g')
+default_ogstun3_ipv4_esc=$(echo $default_ogstun3_ipv4 | sed 's/\./\\./g')
+ogstun_ipv4_esc=$(echo $ogstun_ipv4 | sed 's/\./\\./g')
+ogstun2_ipv4_esc=$(echo $ogstun2_ipv4 | sed 's/\./\\./g')
+ogstun3_ipv4_esc=$(echo $ogstun3_ipv4 | sed 's/\./\\./g')
+default_ogstun_ipv4_1_esc=$(echo $default_ogstun_ipv4_1 | sed 's/\./\\./g')
+default_ogstun2_ipv4_1_esc=$(echo $default_ogstun2_ipv4_1 | sed 's/\./\\./g')
+default_ogstun3_ipv4_1_esc=$(echo $default_ogstun3_ipv4_1 | sed 's/\./\\./g')
+ogstun_ipv4_1_esc=$(echo $ogstun_ipv4_1 | sed 's/\./\\./g')
+ogstun2_ipv4_1_esc=$(echo $ogstun2_ipv4_1 | sed 's/\./\\./g')
+ogstun3_ipv4_1_esc=$(echo $ogstun3_ipv4_1 | sed 's/\./\\./g')
+
+if [ ! -f open5gs/misc/netconf.sh.previous ]; then
+    # Backup the original netconf.sh script
+    cp open5gs/misc/netconf.sh open5gs/misc/netconf.sh.previous
+else
+    # Restore the original netconf.sh script
+    cp open5gs/misc/netconf.sh.previous open5gs/misc/netconf.sh
+fi
+
+sed -i "s|$default_ogstun_ipv4_esc|$ogstun_ipv4_esc|g" open5gs/misc/netconf.sh
+sed -i "s|$default_ogstun_ipv6|$ogstun_ipv6|g" open5gs/misc/netconf.sh
+sed -i "s|$default_ogstun2_ipv4_esc|$ogstun2_ipv4_esc|g" open5gs/misc/netconf.sh
+sed -i "s|$default_ogstun2_ipv6|$ogstun2_ipv6|g" open5gs/misc/netconf.sh
+sed -i "s|$default_ogstun3_ipv4_esc|$ogstun3_ipv4_esc|g" open5gs/misc/netconf.sh
+sed -i "s|$default_ogstun3_ipv6|$ogstun3_ipv6|g" open5gs/misc/netconf.sh
+sed -i "s|$default_ogstun_ipv4_1_esc|$ogstun_ipv4_1_esc|g" open5gs/misc/netconf.sh
+sed -i "s|$default_ogstun_ipv6_1|$ogstun_ipv6_1|g" open5gs/misc/netconf.sh
+sed -i "s|$default_ogstun2_ipv4_1_esc|$ogstun2_ipv4_1_esc|g" open5gs/misc/netconf.sh
+sed -i "s|$default_ogstun2_ipv6_1|$ogstun2_ipv6_1|g" open5gs/misc/netconf.sh
+sed -i "s|$default_ogstun3_ipv4_1_esc|$ogstun3_ipv4_1_esc|g" open5gs/misc/netconf.sh
+sed -i "s|$default_ogstun3_ipv6_1|$ogstun3_ipv6_1|g" open5gs/misc/netconf.sh
+
+echo "Running patched Open5GS netconf.sh script..."
 cd open5gs/misc
 sudo ./netconf.sh
 cd ..
@@ -58,13 +157,15 @@ sudo sysctl -w net.ipv4.ip_forward=1
 sudo sysctl -w net.ipv6.conf.all.forwarding=1
 
 # Check if the iptables MASQUERADE rule already exists, if not, add it
-if ! sudo iptables --wait -t nat -C POSTROUTING -s 10.45.0.0/16 ! -o ogstun -j MASQUERADE 2>/dev/null; then
+if ! sudo iptables --wait -t nat -C POSTROUTING -s $default_ogstun_ipv4 ! -o ogstun -j MASQUERADE 2>/dev/null; then
     echo "Adding iptables MASQUERADE rule for IPv4..."
-    sudo iptables --wait -t nat -A POSTROUTING -s 10.45.0.0/16 ! -o ogstun -j MASQUERADE
+    sudo iptables --wait -t nat -A POSTROUTING -s $default_ogstun_ipv4 ! -o ogstun -j MASQUERADE
 fi
 
 # Check if the ip6tables MASQUERADE rule already exists, if not, add it
-if ! sudo ip6tables --wait -t nat -C POSTROUTING -s cafe::/64 -o ogstun -j MASQUERADE 2>/dev/null; then
+if ! sudo ip6tables --wait -t nat -C POSTROUTING -s $default_ogstun_ipv6 -o ogstun -j MASQUERADE 2>/dev/null; then
     echo "Adding ip6tables MASQUERADE rule for IPv6..."
-    sudo ip6tables --wait -t nat -A POSTROUTING -s cafe::/64 -o ogstun -j MASQUERADE 2>/dev/null
+    sudo ip6tables --wait -t nat -A POSTROUTING -s $default_ogstun_ipv6 -o ogstun -j MASQUERADE 2>/dev/null
 fi
+
+echo "Configured network settings for Open5GS."

@@ -28,8 +28,6 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-INCLUDE_SEPP=false
-
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
     sudo apt-get install -y coreutils
@@ -45,6 +43,8 @@ fi
 mkdir -p logs
 
 sudo ./install_scripts/network_config.sh
+
+INCLUDE_SEPP=$(yq eval '.include_sepp' options.yaml)
 
 run_in_background() {
     local APP_NAME="open5gs-$1"

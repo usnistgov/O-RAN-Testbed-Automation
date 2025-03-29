@@ -31,8 +31,6 @@
 # Exit immediately if a command fails
 set -e
 
-# Guide: https://gitlab.eurecom.fr/mosaic5g/flexric
-
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
     sudo apt-get install -y coreutils

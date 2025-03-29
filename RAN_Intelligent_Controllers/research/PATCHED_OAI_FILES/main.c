@@ -134,6 +134,11 @@ size_t dump_mac_stats(gNB_MAC_INST *gNB, char *output, size_t strlen, bool reset
     }
 
     bool in_sync = !sched_ctrl->ul_failure;
+
+    // Save the previous RSRP values so that querying them is synchronized with the gNB output:
+    stats->prev_num_rsrp_meas = stats->num_rsrp_meas;
+    stats->prev_cumul_rsrp = stats->cumul_rsrp;
+    
     output += snprintf(output,
                        end - output,
                        " %s PH %d dB PCMAX %d dBm, average RSRP %d (%d meas)\n",
@@ -172,9 +177,6 @@ size_t dump_mac_stats(gNB_MAC_INST *gNB, char *output, size_t strlen, bool reset
                        sched_ctrl->dl_bler_stats.bler,
                        UE->current_DL_BWP.mcsTableIdx,
                        sched_ctrl->dl_bler_stats.mcs);
-    // Save the previous RSRP values so that an xApp reading the data will have same values as gNB
-    stats->prev_num_rsrp_meas = stats->num_rsrp_meas;
-    stats->prev_cumul_rsrp = stats->cumul_rsrp;
     if (reset_rsrp) {
       stats->num_rsrp_meas = 0;
       stats->cumul_rsrp = 0;

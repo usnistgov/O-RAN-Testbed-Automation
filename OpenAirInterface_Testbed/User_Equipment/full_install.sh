@@ -162,7 +162,7 @@ if [[ -z "$GCC_VERSION" || ! "$GCC_VERSION" == 13.* ]]; then
     sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-13 100
 fi
 
-if ! command -v cmake &> /dev/null; then
+if ! command -v cmake &>/dev/null; then
     echo "Installing CMake..."
     sudo apt-get install -y cmake
 fi

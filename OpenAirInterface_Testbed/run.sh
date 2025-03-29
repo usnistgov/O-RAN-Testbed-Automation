@@ -96,7 +96,7 @@ cd User_Equipment
 
 echo -en "\nWaiting for UE to be ready"
 ATTEMPT=0
-while [ ! -f logs/ue1_stdout.txt ] || ! grep -q "Received PDU Session Establishment Accept" logs/ue1_stdout.txt; do
+while [ ! -f logs/ue1_stdout.txt ] || ! grep -q "TYPE <CTRL-C> TO TERMINATE" logs/ue1_stdout.txt; do
     echo -n "."
     sleep 0.5
     ATTEMPT=$((ATTEMPT + 1))
@@ -104,7 +104,7 @@ while [ ! -f logs/ue1_stdout.txt ] || ! grep -q "Received PDU Session Establishm
         echo "UE did not start after 60 seconds, exiting..."
         exit 1
     fi
-    if grep -q "Received PDU Session Establishment Accept" logs/ue1_stdout.txt; then
+    if grep -q "TYPE <CTRL-C> TO TERMINATE" logs/ue1_stdout.txt; then
         break
     elif $(./is_running.sh | grep -q "NOT_RUNNING"); then
         echo "Error starting UE. Check logs/ue1_stdout.txt for more information."

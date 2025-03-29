@@ -54,19 +54,40 @@ fi
 
 echo "Parsing options.yaml..."
 # Check if the YAML file exists, if not, set and save default values
+
 if [ ! -f "options.yaml" ]; then
-    echo "plmn: 00101" >"options.yaml"
+    echo "# Include the Security Edge Protection Proxies (SEPP1 and SEPP2)" >"options.yaml"
+    echo "include_sepp: false" >>"options.yaml"
+    echo "" >>"options.yaml"
+    echo "# Configure the MCC/MNC and TAC" >>"options.yaml"
+    echo "plmn: 00101" >>"options.yaml"
     echo "tac: 7" >>"options.yaml"
+    echo "" >>"options.yaml"
+    echo "# Configure the ogstun gateway address for UE traffic" >>"options.yaml"
+    echo "ogstun_ipv4: 10.45.0.0/16" >>"options.yaml"
+    echo "ogstun_ipv6: 2001:db8:cafe::/48" >>"options.yaml"
+    echo "" >>"options.yaml"
+    echo "ogstun2_ipv4: 10.46.0.0/16" >>"options.yaml"
+    echo "ogstun2_ipv6: 2001:db8:babe::/48" >>"options.yaml"
+    echo "" >>"options.yaml"
+    echo "ogstun3_ipv4: 10.47.0.0/16" >>"options.yaml"
+    echo "ogstun3_ipv6: 2001:db8:face::/48" >>"options.yaml"
 fi
 # Read PLMN and TAC values from the YAML file using yq
 PLMN=$(yq eval '.plmn' options.yaml)
 TAC=$(yq eval '.tac' options.yaml)
+
 # Parse Mobile Country Code (MCC) and Mobile Network Code (MNC) from PLMN
-PLMN_MCC=${PLMN:0:3}
-PLMN_MNC=${PLMN:3}
+MCC="${PLMN:0:3}"
+if [ ${#PLMN} -eq 5 ]; then
+    MNC="${PLMN:3:2}"
+elif [ ${#PLMN} -eq 6 ]; then
+    MNC="${PLMN:3:3}"
+fi
+MNC_LENGTH=${#MNC}
 echo "PLMN value: $PLMN"
-echo "MCC (Mobile Country Code): $PLMN_MCC"
-echo "MNC (Mobile Network Code): $PLMN_MNC"
+echo "MCC (Mobile Country Code): $MCC"
+echo "MNC (Mobile Network Code): $MNC"
 echo "TAC value: $TAC"
 
 echo "Creating configs directory..."
@@ -167,25 +188,25 @@ update_yaml() {
 
 # Function to configure PLMN and TAC in the MME and AMF configurations
 configure_plmn_tac() {
-    local PLMN_MCC=$1
-    local PLMN_MNC=$2
+    local MCC=$1
+    local MNC=$2
     local TAC=$3
-    local MME_CONFIG="configs/mme.yaml"
     local AMF_CONFIG="configs/amf.yaml"
     local NRF_CONFIG="configs/nrf.yaml"
+    local MME_CONFIG="configs/mme.yaml" # LTE
 
-    # Update MME and AMF configuration files
-    sed -i "s/^\(\s*mcc:\s*\).*/\1$PLMN_MCC/" $MME_CONFIG
-    sed -i "s/^\(\s*mnc:\s*\).*/\1$PLMN_MNC/" $MME_CONFIG
-    sed -i "s/^\(\s*tac:\s*\).*/\1$TAC/" $MME_CONFIG
-
-    sed -i "s/^\(\s*mcc:\s*\).*/\1$PLMN_MCC/" $AMF_CONFIG
-    sed -i "s/^\(\s*mnc:\s*\).*/\1$PLMN_MNC/" $AMF_CONFIG
+    # Update AMF, NRF, and MME configuration files
+    sed -i "s/^\(\s*mcc:\s*\).*/\1$MCC/" $AMF_CONFIG
+    sed -i "s/^\(\s*mnc:\s*\).*/\1$MNC/" $AMF_CONFIG
     sed -i "s/^\(\s*tac:\s*\).*/\1$TAC/" $AMF_CONFIG
 
-    sed -i "s/^\(\s*mcc:\s*\).*/\1$PLMN_MCC/" $NRF_CONFIG
-    sed -i "s/^\(\s*mnc:\s*\).*/\1$PLMN_MNC/" $NRF_CONFIG
+    sed -i "s/^\(\s*mcc:\s*\).*/\1$MCC/" $NRF_CONFIG
+    sed -i "s/^\(\s*mnc:\s*\).*/\1$MNC/" $NRF_CONFIG
     sed -i "s/^\(\s*tac:\s*\).*/\1$TAC/" $NRF_CONFIG
+
+    sed -i "s/^\(\s*mcc:\s*\).*/\1$MCC/" $MME_CONFIG
+    sed -i "s/^\(\s*mnc:\s*\).*/\1$MNC/" $MME_CONFIG
+    sed -i "s/^\(\s*tac:\s*\).*/\1$TAC/" $MME_CONFIG
 }
 
 # Function to set the logging path, disable timestamp for stderr to avoid duplicate timestamps in journalctl
@@ -211,12 +232,70 @@ set_configuration_ngap_and_gptu_server_ip() {
     yq e -i ".upf.gtpu.server[0].address = \"$IP_ADDRESS\"" "$UPF_FILE_PATH"
 }
 
+set_configuration_session_gateways() {
+    local SUBNET_IPV4=$1
+    local GATEWAY_IPV4=$2
+    local SUBNET_IPV6=$3
+    local GATEWAY_IPV6=$4
+
+    local SMF_FILE_PATH="configs/smf.yaml"
+    local UPF_FILE_PATH="configs/upf.yaml"
+
+    yq e -i ".upf.session[0].subnet = \"$SUBNET_IPV4\"" "$UPF_FILE_PATH"
+    yq e -i ".upf.session[0].gateway = \"$GATEWAY_IPV4\"" "$UPF_FILE_PATH"
+    yq e -i ".upf.session[1].subnet = \"$SUBNET_IPV6\"" "$UPF_FILE_PATH"
+    yq e -i ".upf.session[1].gateway = \"$GATEWAY_IPV6\"" "$UPF_FILE_PATH"
+
+    yq e -i ".smf.session[0].subnet = \"$SUBNET_IPV4\"" "$SMF_FILE_PATH"
+    yq e -i ".smf.session[0].gateway = \"$GATEWAY_IPV4\"" "$SMF_FILE_PATH"
+    yq e -i ".smf.session[1].subnet = \"$SUBNET_IPV6\"" "$SMF_FILE_PATH"
+    yq e -i ".smf.session[1].gateway = \"$GATEWAY_IPV6\"" "$SMF_FILE_PATH"
+}
+
+OGSTUN_IPV4=$(yq eval '.ogstun_ipv4' options.yaml)
+OGSTUN_IPV6=$(yq eval '.ogstun_ipv6' options.yaml)
+if [[ "$OGSTUN_IPV4" == "null" || -z "$OGSTUN_IPV4" ]]; then
+    echo "Missing parameter in options.yaml: ogstun_ipv4"
+    exit 1
+fi
+if [[ "$OGSTUN_IPV6" == "null" || -z "$OGSTUN_IPV6" ]]; then
+    echo "Missing parameter in options.yaml: ogstun_ipv6"
+    exit 1
+fi
+
+# Extract the first IPv4 address from a CIDR block by replacing the last octet with '.1'
+# For example, 10.45.0.0/16 --> 10.45.0.1/16
+grab_first_ipv4_address() {
+    local IP=$1
+    echo ${IP%.*}.1/${IP#*/}
+}
+
+# Extract the first IPv6 address from a CIDR block by replacing the suffix with '::1'.
+# For example, 2001:db8:cafe::/48 --> 2001:db8:cafe::1/48
+grab_first_ipv6_address() {
+    local IP=$1
+    echo ${IP%::*}::1/${IP#*/}
+}
+
+# Remove the CIDR suffix from an IP address
+# For example, 10.45.0.1/16 --> 10.45.0.1
+remove_cidr_suffix() {
+    local IP=$1
+    echo ${IP%/*}
+}
+
+# Extract the first IPv4 and IPv6 addresses from the CIDR blocks
+OGSTUN_IPV4_1=$(grab_first_ipv4_address "$OGSTUN_IPV4")
+OGSTUN_IPV6_1=$(grab_first_ipv6_address "$OGSTUN_IPV6")
+OGSTUN_IPV4_1_NO_CIDR=$(remove_cidr_suffix "$OGSTUN_IPV4_1")
+OGSTUN_IPV6_1_NO_CIDR=$(remove_cidr_suffix "$OGSTUN_IPV6_1")
+
 if [ "$EXPOSE_AMF_OVER_HOSTNAME" = true ]; then
     AMF_IP=$(hostname -I | awk '{print $1}')
     set_configuration_ngap_and_gptu_server_ip $AMF_IP
     # Need an address for the gNodeB to bind to that is not the host IP.
     if [ "$IS_OPEN5GS_ON_HOST" = true ]; then
-        AMF_IP_BIND="10.45.0.1"
+        AMF_IP_BIND=$OGSTUN_IPV4_1_NO_CIDR
     else
         AMF_IP_BIND=$AMF_IP
     fi
@@ -225,8 +304,9 @@ else
     AMF_IP_BIND="127.0.0.1"
 fi
 
-# Get the following AMF IP, and it will be updated in the configuration file
+set_configuration_session_gateways $OGSTUN_IPV4 $OGSTUN_IPV4_1_NO_CIDR $OGSTUN_IPV6 $OGSTUN_IPV6_1_NO_CIDR
 
+# Get the following AMF IP, and it will be updated in the configuration file
 AMF_ADDRESSES_OUTPUT="configs/get_amf_address.txt"
 echo "$AMF_IP" >$AMF_ADDRESSES_OUTPUT
 echo "$AMF_IP_BIND" >>$AMF_ADDRESSES_OUTPUT
@@ -239,28 +319,41 @@ for APP_NAME in "${APP_NAMES[@]}"; do
 done
 
 # Configure the PLMN and TAC to match regulatory requirements
-configure_plmn_tac $PLMN_MCC $PLMN_MNC $TAC
+configure_plmn_tac $MCC $MNC $TAC
 
-# Add route for the UE to have WAN connectivity
-### Enable IPv4/IPv6 Forwarding
+sudo ./install_scripts/network_config.sh
+
+# Enable IPv4/IPv6 Forwarding
 sudo sysctl -w net.ipv4.ip_forward=1
 sudo sysctl -w net.ipv6.conf.all.forwarding=1
-### Add NAT Rule
-sudo iptables --wait -t nat -A POSTROUTING -s 10.45.0.0/16 ! -o ogstun -j MASQUERADE
-sudo ip6tables --wait -t nat -A POSTROUTING -s 2001:db8:cafe::/48 ! -o ogstun -j MASQUERADE
+
 echo "By default, Ubuntu enables a firewall that blocks the UE from accessing the internet. Disabling the firewall..."
 sudo ufw status || true
 sudo ./install_scripts/disable_firewall.sh
 sudo ufw status || true
 
+# echo "Unregistering all subscribers in Open5GS database..."
+# ./install_scripts/unregister_all_subscribers.sh
+
+PLMN_LENGTH=${#PLMN}
+
+echo
 echo "Registering UE 1..."
-./install_scripts/register_subscriber.sh --imsi 001010123456780 --key 00112233445566778899AABBCCDDEEFF --opc 63BFA50EE6523365FF14C1F45F88737D --apn srsapn
+IMSI="001010123456780"
+IMSI="${PLMN}${IMSI:$PLMN_LENGTH}" # Ensure that the beginning of the IMSI is the correct PLMN
+./install_scripts/register_subscriber.sh --imsi $IMSI --key 00112233445566778899AABBCCDDEEFF --opc 63BFA50EE6523365FF14C1F45F88737D --apn srsapn
 
+echo
 echo "Registering UE 2..."
-./install_scripts/register_subscriber.sh --imsi 001010123456790 --key 00112233445566778899AABBCCDDEF00 --opc 63BFA50EE6523365FF14C1F45F88737D --apn srsapn
+IMSI="001010123456790"
+IMSI="${PLMN}${IMSI:$PLMN_LENGTH}" # Ensure that the beginning of the IMSI is the correct PLMN
+./install_scripts/register_subscriber.sh --imsi $IMSI --key 00112233445566778899AABBCCDDEF00 --opc 63BFA50EE6523365FF14C1F45F88737D --apn srsapn
 
+echo
 echo "Registering UE 3..."
-./install_scripts/register_subscriber.sh --imsi 001010123456791 --key 00112233445566778899AABBCCDDEF01 --opc 63BFA50EE6523365FF14C1F45F88737D --apn srsapn
+IMSI="001010123456791"
+IMSI="${PLMN}${IMSI:$PLMN_LENGTH}" # Ensure that the beginning of the IMSI is the correct PLMN
+./install_scripts/register_subscriber.sh --imsi $IMSI --key 00112233445566778899AABBCCDDEF01 --opc 63BFA50EE6523365FF14C1F45F88737D --apn srsapn
 
 # Restart Open5GS services to apply changes
 echo "To apply changed, stop and start the following:"

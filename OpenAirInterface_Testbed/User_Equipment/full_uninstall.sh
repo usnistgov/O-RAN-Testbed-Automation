@@ -39,6 +39,9 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
+echo "Stopping User Equipment..."
+./stop.sh
+
 if [ -d openairinterface5g ]; then
     cd "openairinterface5g/cmake_targets"
     ./build_oai -C --clean-kernel

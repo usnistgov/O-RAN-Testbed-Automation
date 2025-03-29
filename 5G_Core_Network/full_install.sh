@@ -97,32 +97,6 @@ if ! getent group open5gs >/dev/null; then
 fi
 sudo usermod -a -G open5gs open5gs
 
-# Step 3: Setting up TUN device
-echo "Checking if TUN device ogstun exists..."
-if ! ip link show ogstun >/dev/null 2>&1; then
-    echo "Creating TUN device..."
-    sudo ip tuntap add name ogstun mode tun
-else
-    echo "TUN device ogstun already exists."
-fi
-
-echo "Checking and assigning IP addresses to TUN device..."
-if ! ip addr show ogstun | grep -q "10.45.0.1/16"; then
-    sudo ip addr add 10.45.0.1/16 dev ogstun
-else
-    echo "IP address 10.45.0.1/16 already assigned to ogstun."
-fi
-
-if ! ip addr show ogstun | grep -q "2001:db8:cafe::1/48"; then
-    sudo ip addr add 2001:db8:cafe::1/48 dev ogstun
-else
-    echo "IPv6 address 2001:db8:cafe::1/48 already assigned to ogstun."
-fi
-
-echo "Setting TUN device up..."
-sudo ip link set ogstun up
-
-# Step 4: Building Open5GS
 echo "Installing dependencies for building Open5GS..."
 
 # Code from (https://open5gs.org/open5gs/docs/guide/02-building-open5gs-from-sources#building-open5gs):

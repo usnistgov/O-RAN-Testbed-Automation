@@ -14,11 +14,17 @@ The 5G Core Network operates as a standalone network based on the 3GPP specifica
 - **Logs**: Access logs by navigating to the `logs` directory.
 - **Uninstall**: Use `./uninstall.sh` to remove the 5G Core software.
 
+### Custom Gateway Address for UE Traffic
+
+To use a custom gateway address for UE traffic, edit the `ogstun_ipv4` and `ogstun_ipv6` fields in `5G_Core_Network/options.yaml`. Default subnets are 10.45.0.0/16 (IPv4) and 2001:db8:cafe::/48 (IPv6). Gateways are set to the first address in each subnet: 10.45.0.1 and 2001:db8:cafe::1, respectively. Apply changes with `./generate_configurations.sh`.
+
+
 ### Custom PLMN and TAC Identifiers
 
-Modify the `5G_Core_Network/options.yaml` for different PLMN and TAC IDs, then apply changes with the following.
+Modify the `5G_Core_Network/options.yaml` for different PLMN and TAC IDs, then apply changes with the following:
 
 ```console
+./install_scripts/unregister_all_subscribers.sh
 ./generate_configurations.sh
 ./stop.sh
 ./run.sh
@@ -37,7 +43,9 @@ Alternatively, to create subscriber entries from command line, use the following
 ./install_scripts/register_subscriber.sh --imsi 001010123456780 --key 00112233445566778899AABBCCDDEEFF --opc 63BFA50EE6523365FF14C1F45F88737D --apn srsapn
 ```
 
-By default, the configuration process automatically creates subscriber entries for UE 1, UE 2, and UE 3 based on the following table from the blueprint [[4]][nist-tn].
+Remove all registered subscribers with `./install_scripts/unregister_all_subscribers.sh`.
+
+By default, the configuration process automatically creates subscriber entries for UE 1, UE 2, and UE 3 based on the following table from the blueprint [[4]][nist-tn]. The IMSI values will be updated accordingly if the PLMN value is changed in options.yaml.
 
 <table><thead>
   <tr>

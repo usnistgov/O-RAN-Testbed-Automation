@@ -12,8 +12,22 @@ This testbed deployment consists of a 5G Core Network by Open5GS [[1]][open5gs-c
 - **Status**: Check which testbed components are running with `./is_running.sh`.
 - **Debugging Information**: Configuration files are in the `configs/` directory, and log files are located in the `logs/` directory for each component.
 
-> [!IMPORTANT]
-> OpenAirInterface's support for Linux Mint is currently limited. It is recommended to use Ubuntu.
+## Potential Cause for Build Errors
+It may be required for the AVX2 instruction set to be available on the host machine installing the OpenAirInterface testbed. 
+
+<details>
+  <summary><b>Enabling VT-x/AMD-V for the AVX2 instruction set</b></summary>
+  <hr>
+  When running a VM to build OpenAirInterface5G, compilation errors may occur if not using VT-x/AMD-V due to an unsupported AVX2 instruction set. In VirtualBox, the lower right corner will show a "V" icon if using VT-x/AMD-V, otherwise, it will show a turtle icon. Additionally, AVX2 support can be verified by checking that `cat /proc/cpuinfo | grep avx2` is not empty. The following steps can be taken to ensure that VT-x/AMD-V is enabled in a VirtualBox VM.
+  
+  - **CPU Virtualization Support**: Look up if the CPU model supports virtualization and ensure that it is enabled in the BIOS.
+  - **Disable Hyper-V**: Hyper-V may prevent VT-x/AMD-V from being enabled. If using Windows, the following options should be unchecked in the "Turn Windows features on or off" settings: "Hyper-V", "Windows Hypervisor Platform", and "Virtual Machine Platform". If a change is made, a reboot is required.
+  - **VirtualBox**: From the VirtualBox Manager, select the VM and click the "Information" tab. Look for "Acceleration: VT-x/AMD-V".
+    - If the VM shows this but the AVX2 instruction set is still disabled, then disabling core isolation is a potential reason. Please exercise extreme caution as it is not advised to disable core isolation. However, it can be disabled in the "Windows Security" settings by unchecking "Memory Integrity" and rebooting.
+  - If `cat /proc/cpuinfo | grep avx2` is not empty, then OpenAirInterface should be able to build without issues.
+</details>
+
+---
 
 ## References
 

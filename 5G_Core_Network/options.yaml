@@ -1,2 +1,16 @@
+# Include the Security Edge Protection Proxies (SEPP1 and SEPP2)
+include_sepp: false
+
+# Configure the MCC/MNC and TAC
 plmn: 00101
 tac: 7
+
+# Configure the ogstun gateway address for UE traffic
+ogstun_ipv4: 10.45.0.0/16
+ogstun_ipv6: 2001:db8:cafe::/48
+
+ogstun2_ipv4: 10.46.0.0/16
+ogstun2_ipv6: 2001:db8:babe::/48
+
+ogstun3_ipv4: 10.47.0.0/16
+ogstun3_ipv6: 2001:db8:face::/48

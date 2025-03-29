@@ -1,28 +1,27 @@
 diff --git a/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c b/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c
-index 80579e1754..b3c14d6dd7 100644
+index 80579e1754..93718e7e7b 100644
 --- a/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c
 +++ b/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c
-@@ -82,6 +82,19 @@ static meas_record_lst_t fill_DRB_PdcpSduVolumeUL(__attribute__((unused))uint32_
+@@ -82,6 +82,18 @@ static meas_record_lst_t fill_DRB_PdcpSduVolumeUL(__attribute__((unused))uint32_
    return meas_record;
  }
  
 +// Added metric for research purposes only
-+static meas_record_lst_t fill_RSRP(__attribute__((unused))uint32_t gran_period_ms, cudu_ue_info_pair_t ue_info, const size_t ue_idx)
++static meas_record_lst_t fill_RSRP(__attribute__((unused))uint32_t gran_period_ms, cudu_ue_info_pair_t ue_info, __attribute__((unused))const size_t ue_idx)
 +{
 +  meas_record_lst_t meas_record = {0};
 +
 +  meas_record.value = REAL_MEAS_VALUE;
 +
 +  // Calculate the average value of RSRP
-+  meas_record.real_val = (double)ue_info.ue->mac_stats.cumul_rsrp / ue_info.ue->mac_stats.num_rsrp_meas;  // [dBm]
-+
++  meas_record.real_val = ue_info.ue->mac_stats.prev_num_rsrp_meas > 0 ? (double)ue_info.ue->mac_stats.prev_cumul_rsrp / ue_info.ue->mac_stats.prev_num_rsrp_meas : 0.0;  // [dBm]
 +  return meas_record;
 +}
 +
  #if defined (NGRAN_GNB_DU)
  static uldlcounter_t last_rlc_pdu_total_bytes[MAX_MOBILES_PER_GNB] = {0};
  static uldlcounter_t last_total_prbs[MAX_MOBILES_PER_GNB] = {0};
-@@ -194,6 +207,7 @@ static meas_record_lst_t fill_RRU_PrbTotUl(__attribute__((unused))uint32_t gran_
+@@ -194,6 +206,7 @@ static meas_record_lst_t fill_RRU_PrbTotUl(__attribute__((unused))uint32_t gran_
  static kv_measure_t lst_measure[] = {
    {.key = "DRB.PdcpSduVolumeDL", .value = fill_DRB_PdcpSduVolumeDL }, 
    {.key = "DRB.PdcpSduVolumeUL", .value = fill_DRB_PdcpSduVolumeUL },

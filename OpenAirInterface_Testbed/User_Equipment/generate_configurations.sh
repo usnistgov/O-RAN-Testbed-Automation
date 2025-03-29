@@ -63,7 +63,7 @@ comment_out() {
     sed -i "s|^\(\s*\)$STRING|#\1$STRING|" "$FILE_PATH"
 }
 
-# Define the path to the YAML file
+# Define the path to the 5G Core YAML file
 YAML_PATH="../../5G_Core_Network/options.yaml"
 if [ ! -f "$YAML_PATH" ]; then
     echo "Configuration not found in $YAML_PATH, please generate the configuration for 5G_Core_Network first."
@@ -82,13 +82,14 @@ if [ -z "$TAC" ]; then
     exit 1
 fi
 
+# Parse Mobile Country Code (MCC) and Mobile Network Code (MNC) from PLMN
 MCC="${PLMN:0:3}"
-MNC="${PLMN:3:2}"
-if [ ${#MNC} -eq 2 ]; then
-    MNC_LENGTH=2
-else
-    MNC_LENGTH=3
+if [ ${#PLMN} -eq 5 ]; then
+    MNC="${PLMN:3:2}"
+elif [ ${#PLMN} -eq 6 ]; then
+    MNC="${PLMN:3:3}"
 fi
+MNC_LENGTH=${#MNC}
 
 echo "PLMN value: $PLMN"
 echo "TAC value: $TAC"

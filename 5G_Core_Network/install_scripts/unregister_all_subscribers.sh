@@ -28,17 +28,28 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-# Exit immediately if a command fails
-set -e
-
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
     sudo apt-get install -y coreutils
 fi
 
+echo "# Script: $(realpath $0)..."
+
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
-PARENT_DIR=$(dirname "$SCRIPT_DIR")
+cd "$(dirname "$SCRIPT_DIR")"
 
-cd "$PARENT_DIR/flexric/"
+DBCTL_DIR="./open5gs/misc/db/open5gs-dbctl"
 
-./build/examples/xApp/c/monitor/xapp_gtp_mac_rlc_pdcp_moni
+# Command to remove all subscribers using the open5gs-dbctl tool
+CMD="$DBCTL_DIR reset"
+
+echo "Running command: $CMD"
+$CMD
+
+# Check exit status of the command
+if [ $? -eq 0 ]; then
+    echo "Subscribers successfully removed from the database."
+    $DBCTL_DIR showpretty
+else
+    echo "Failed to remove subscribers from the database."
+fi

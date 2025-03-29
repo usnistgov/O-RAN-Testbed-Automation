@@ -31,16 +31,13 @@
 # Exit immediately if a command fails
 set -e
 
-# Guide: https://gitlab.eurecom.fr/mosaic5g/flexric
-
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
     sudo apt-get install -y coreutils
 fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
-PARENT_DIR=$(dirname "$SCRIPT_DIR")
 
-cd "$PARENT_DIR/flexric/"
+cd "$SCRIPT_DIR/flexric/"
 
 ./build/examples/xApp/c/monitor/xapp_kpm_moni

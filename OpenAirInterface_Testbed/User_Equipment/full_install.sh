@@ -31,6 +31,8 @@
 # Exit immediately if a command fails
 set -e
 
+CLEAN_INSTALL=false
+
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
     sudo apt-get install -y coreutils
@@ -39,17 +41,25 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
+if ! grep -q avx2 /proc/cpuinfo; then
+    echo "Warning: Support for AVX2 is not available on this machine. Errors may occur when building due to unsupported AVX instructions."
+    echo "Please consider following the instructions \"Enabling VT-x/AMD-V for the AVX2 instruction set\" in OpenAirInterface_Testbed/README.md."
+    echo
+    echo "Press any key to continue."
+    read -r -n 1 -s
+fi
+
 # Check if a symbolic link can be created to the openairinterface5g directory
 if [ ! -f "openairinterface5g/cmake_targets/build_oai" ]; then
+    sudo rm -rf openairinterface5g
     if [ -f "../Next_Generation_Node_B/openairinterface5g/cmake_targets/build_oai" ]; then
-        sudo rm -rf openairinterface5g
         echo "Creating symbolic link to openairinterface5g..."
         ln -s "../Next_Generation_Node_B/openairinterface5g" openairinterface5g
     fi
 fi
 
 # Check for UE binary to determine if srsRAN_Project is already installed
-if [ -f "openairinterface5g/cmake_targets/ran_build/build/nr-uesoftmodem" ]; then
+if [ "$CLEAN_INSTALL" = false ] && [ -f "openairinterface5g/cmake_targets/ran_build/build/nr-uesoftmodem" ]; then
     echo "Open Air Interface UE is already installed, skipping."
     exit 0
 fi
@@ -92,8 +102,24 @@ if [ ! -f "openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs
     git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/openairinterface/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c.patch"
     cd ..
 fi
+if [ ! -f "openairinterface5g/openair2/LAYER2/NR_MAC_gNB/main.c.previous" ]; then
+    cp openairinterface5g/openair2/LAYER2/NR_MAC_gNB/main.c openairinterface5g/openair2/LAYER2/NR_MAC_gNB/main.c.previous
+    echo
+    echo "Patching main.c..."
+    cd openairinterface5g
+    git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/main.c.patch"
+    cd ..
+fi
+if [ ! -f "openairinterface5g/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.previous" ]; then
+    cp openairinterface5g/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h openairinterface5g/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.previous
+    echo
+    echo "Patching nr_mac_gNB.h..."
+    cd openairinterface5g
+    git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.patch"
+    cd ..
+fi
 
-# If using Linux Mint, attempt to add support for Linux Mint 20, 21, and 22 to OpenAirInterface
+# If using Linux Mint, add support for Linux Mint 20, 21, and 22 to OpenAirInterface
 if grep -q "Linux Mint" /etc/os-release; then
     echo
     echo "Linux Mint detected, attempting to patching OpenAirInterface to support Linux Mint 20, 21, and 22..."
@@ -131,6 +157,26 @@ if [[ -z "$GCC_VERSION" || ! "$GCC_VERSION" == 13.* ]]; then
     sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-13 100
 fi
 
+if ! command -v cmake &>/dev/null; then
+    echo "Installing CMake..."
+    sudo apt-get install -y cmake
+fi
+CMAKE_VERSION=$(cmake --version | head -n1 | awk '{print $3}')
+if [[ "$CMAKE_VERSION" == 3.16.* ]]; then
+    echo "Detected CMake 3.16. Updating CMake for compatibility with OpenAirInterface..."
+    # Add Kitware's APT repository
+    wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc | sudo apt-key add -
+    sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ focal main'
+    sudo apt update
+    sudo apt-get install -y cmake
+fi
+
+ADDITIONAL_FLAGS=""
+# if clean install is true, add flag -C
+if [ "$CLEAN_INSTALL" = true ]; then
+    ADDITIONAL_FLAGS="-C"
+fi
+
 cd "$SCRIPT_DIR"
 
 echo
@@ -143,7 +189,7 @@ cd "$SCRIPT_DIR/openairinterface5g/cmake_targets"
 
 # Build OAI 5G UE
 cd "$SCRIPT_DIR/openairinterface5g/cmake_targets"
-./build_oai --ninja --nrUE -w SIMU # -w USRP
+./build_oai --ninja --nrUE -w SIMU $ADDITIONAL_FLAGS # -w USRP
 
 cd "$SCRIPT_DIR"
 

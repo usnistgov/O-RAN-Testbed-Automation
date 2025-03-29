@@ -21,7 +21,7 @@ This tool supports the deployment of 5G O-RAN testbeds using open-source compone
 ```text
 CU/DU
 ├── srsRAN_Project gNB: v24.10.1
-├── OpenAirInterface gNB: v2025.w11
+├── OpenAirInterface gNB: v2025.w12
 └── O-RAN SC E2 Simulator: k-release
 RICs
 ├── O-RAN SC Near-RT RIC: k-release
@@ -33,7 +33,7 @@ RICs
 │       ├── Quality of Experience Predictor xApp
 │       ├── RIC Control xApp
 │       └── Traffic Steering xApp
-├── FlexRIC: v2.2.0
+├── FlexRIC: v2.0.0
 │   └── xApps
 │       ├── KPI Monitor xApp
 │       ├── MAC + RLC + PDCP + GTP Monitor xApp
@@ -42,11 +42,20 @@ RICs
 └── O-RAN SC Non-RT RIC: k-release
     └── Minimal prototype with no rApp support.
 5G Core
-└── Open5GS: v2.7.2
+└── Open5GS: v2.7.4
 UEs
 ├── srsRAN_4G: v23.11
 └── OpenAirInterface 5G UE: v2025.w11
 ```
+
+The components that have been verified to support or not support connectivity are included below.
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: light)" srcset="./Images/Support_Light.svg">
+    <source media="(prefers-color-scheme: dark)" srcset="./Images/Support_Dark.svg">
+    <img alt="Diagram of Supported and Unsupported Connections" width="97%">
+  </picture>
+</p>
 
 ### Minimum System Requirements
 
@@ -65,10 +74,10 @@ Before beginning the installation and setup of the testbed, verify that the syst
 For users using a virtual machine, e.g., VirtualBox, the following configuration parameters may be considered.
 
 - **System**
-  - **Extended Features**: Ensure that `Enable I/O APIC` is checked to improve interrupt handling.
+  - **Extended Features**: Check `Enable I/O APIC` to improve interrupt handling.
   - **Extended Features**: Check `Enable PAE/NX` and if possible, also check `Enable Nested VT-x/AMD-V`.
-  - **Paravirtualization Interface**: If the host machine is a Mac choose `Default`, if Windows choose `Hyper-V`, and if Linux choose `KVM`.
-  - **Hardware Virtualization**: Ensure that `Enabled Nested Paging` is checked.
+  - **Paravirtualization Interface**: Select `Default`.
+  - **Hardware Virtualization**: Check `Enabled Nested Paging`.
 - **Display**
   - **Video Memory**: Set the slider to the maximum if using a Desktop environment.
 - **Storage**
@@ -157,9 +166,7 @@ DRB.UEThpUl = 0.00 [kbps]
 RRU.PrbTotDl = 15 [PRBs]
 RRU.PrbTotUl = 140 [PRBs]
 RSRP = -44.00 [dBm]
-[xApp]: E42 SUBSCRIPTION DELETE RESPONSE rx
-[xApp]: Sucessfully stopped 
-Test xApp run SUCCESSFULLY
+...
 ```
 For more information about a specific component, refer to the README.md files in the respective subdirectories.
 

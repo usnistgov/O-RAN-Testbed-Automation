@@ -74,6 +74,22 @@ update_conf() {
     sed -i "/^\[$SECTION\]/a $PROPERTY = $VALUE" "$FILE_PATH"
 }
 
+PLMN_LENGTH=${#PLMN}
+
+IMSI="001010123456780"
+
+# Read the PLMN value from the 5G Core, and apply it to the beginning of the UE's IMSI
+YAML_PATH="../5G_Core_Network/options.yaml"
+if [ ! -f "$YAML_PATH" ]; then
+    echo "Configuration not found in $YAML_PATH, please generate the configuration for 5G_Core_Network first."
+    exit 1
+fi
+PLMN=$(sed -n 's/^plmn: \([0-9]*\)/\1/p' "$YAML_PATH" | tr -d '[:space:]')
+if [ ! -z "$PLMN" ]; then
+    PLMN_LENGTH=${#PLMN}
+    IMSI="${PLMN}${IMSI:$PLMN_LENGTH}"
+fi
+
 UE1_TX_PORT=2001 # 2101
 UE1_RX_PORT=2000 # 2100
 
@@ -126,7 +142,7 @@ update_conf "configs/ue1.conf" "usim" "mode" "soft"
 update_conf "configs/ue1.conf" "usim" "algo" "milenage"
 update_conf "configs/ue1.conf" "usim" "opc" "63BFA50EE6523365FF14C1F45F88737D"
 update_conf "configs/ue1.conf" "usim" "k" "00112233445566778899aabbccddeeff"
-update_conf "configs/ue1.conf" "usim" "imsi" "001010123456780"
+update_conf "configs/ue1.conf" "usim" "imsi" "$IMSI"
 update_conf "configs/ue1.conf" "usim" "imei" "353490069873319"
 
 # Update configuration values for RRC

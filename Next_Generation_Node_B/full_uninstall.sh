@@ -39,6 +39,9 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
+echo "Stopping Next Generation Node B..."
+./stop.sh
+
 echo "Uninstalling ZeroMQ libzmq..."
 if [ -d libzmq ]; then
     cd libzmq

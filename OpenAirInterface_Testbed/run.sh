@@ -37,7 +37,7 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
 # Upon exit, gracefully stop all components and fix console in case it breaks
-trap './stop.sh; stty sane; exit' SIGINT SIGTERM
+trap 'trap - EXIT SIGINT SIGTERM; "$SCRIPT_DIR/./stop.sh"; stty sane; exit' EXIT SIGINT SIGTERM
 
 echo "Running 5G Core components..."
 cd 5G_Core_Network
@@ -93,8 +93,29 @@ echo
 echo "Running User Equipment..."
 cd User_Equipment
 ./run_background.sh
+
+echo -en "\nWaiting for UE to be ready"
+ATTEMPT=0
+while [ ! -f logs/ue1_stdout.txt ] || ! grep -q "TYPE <CTRL-C> TO TERMINATE" logs/ue1_stdout.txt; do
+    echo -n "."
+    sleep 0.5
+    ATTEMPT=$((ATTEMPT + 1))
+    if [ $ATTEMPT -ge 120 ]; then
+        echo "UE did not start after 60 seconds, exiting..."
+        exit 1
+    fi
+    if grep -q "TYPE <CTRL-C> TO TERMINATE" logs/ue1_stdout.txt; then
+        break
+    elif $(./is_running.sh | grep -q "NOT_RUNNING"); then
+        echo "Error starting UE. Check logs/ue1_stdout.txt for more information."
+        exit 1
+    fi
+done
+echo -e "\nUE is ready."
 cd ..
 
-cd RAN_Intelligent_Controllers/Flexible-RIC/additional_scripts
+echo
+echo "Running FlexRIC..."
+cd RAN_Intelligent_Controllers/Flexible-RIC
 ./run_xapp_kpm_moni.sh
-cd ../../..
+cd ../..

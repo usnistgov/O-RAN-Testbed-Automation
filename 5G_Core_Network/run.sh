@@ -44,34 +44,44 @@ mkdir -p logs
 
 sudo ./install_scripts/network_config.sh
 
+INCLUDE_SEPP=$(yq eval '.include_sepp' options.yaml)
+
 run_in_background() {
     local APP_NAME="open5gs-$1"
     if [ "$1" == "seppd" ]; then
-        local SEPP1_RUNNING=$(pgrep -f "$APP_NAME.*sepp1.yaml")
-        local SEPP2_RUNNING=$(pgrep -f "$APP_NAME.*sepp2.yaml")
-        if [ -z "$SEPP1_RUNNING" ]; then
-            CONFIG_FILE_1="$SCRIPT_DIR/configs/sepp1.yaml"
-            if [ ! -f "$CONFIG_FILE_1" ]; then
-                echo "Configuration file not found: $CONFIG_FILE_1"
-                exit 1
+        if [ "$INCLUDE_SEPP" == true ]; then
+            local SEPP1_RUNNING=$(pgrep -f "$APP_NAME.*sepp1.yaml")
+            local SEPP2_RUNNING=$(pgrep -f "$APP_NAME.*sepp2.yaml")
+            if [ -z "$SEPP1_RUNNING" ]; then
+                CONFIG_FILE_1="$SCRIPT_DIR/configs/sepp1.yaml"
+                if [ ! -f "$CONFIG_FILE_1" ]; then
+                    echo "Configuration file not found: $CONFIG_FILE_1"
+                    exit 1
+                fi
+                # Remove the log file if it exists before starting the application
+                LOG_PATH=$(yq eval '.logger.file.path' "$CONFIG_FILE_1")
+                rm -f "$LOG_PATH"
+                echo "Starting $APP_NAME 1 in background..."
+                ./open5gs/install/bin/$APP_NAME -c $CONFIG_FILE_1 >/dev/null 2>&1 &
+                #./open5gs/install/bin/$APP_NAME -c $CONFIG_FILE_1 >logs/${1}_1_stdout.txt 2>&1 &
+            else
+                echo "Already running $APP_NAME 1."
             fi
-            echo "Starting $APP_NAME 1 in background..."
-            ./open5gs/install/bin/$APP_NAME -c $CONFIG_FILE_1 >/dev/null 2>&1 &
-            #./open5gs/install/bin/$APP_NAME -c $CONFIG_FILE_1 >logs/${1}_1_stdout.txt 2>&1 &
-        else
-            echo "Already running $APP_NAME 1."
-        fi
-        if [ -z "$SEPP2_RUNNING" ]; then
-            CONFIG_FILE_2="$SCRIPT_DIR/configs/sepp2.yaml"
-            if [ ! -f "$CONFIG_FILE_2" ]; then
-                echo "Configuration file not found: $CONFIG_FILE_2"
-                exit 1
+            if [ -z "$SEPP2_RUNNING" ]; then
+                CONFIG_FILE_2="$SCRIPT_DIR/configs/sepp2.yaml"
+                if [ ! -f "$CONFIG_FILE_2" ]; then
+                    echo "Configuration file not found: $CONFIG_FILE_2"
+                    exit 1
+                fi
+                # Remove the log file if it exists before starting the application
+                LOG_PATH=$(yq eval '.logger.file.path' "$CONFIG_FILE_2")
+                rm -f "$LOG_PATH"
+                echo "Starting $APP_NAME 2 in background..."
+                ./open5gs/install/bin/$APP_NAME -c $CONFIG_FILE_2 >/dev/null 2>&1 &
+                #./open5gs/install/bin/$APP_NAME -c $CONFIG_FILE_2 >logs/${1}_2_stdout.txt 2>&1 &
+            else
+                echo "Already running $APP_NAME 2."
             fi
-            echo "Starting $APP_NAME 2 in background..."
-            ./open5gs/install/bin/$APP_NAME -c $CONFIG_FILE_2 >/dev/null 2>&1 &
-            #./open5gs/install/bin/$APP_NAME -c $CONFIG_FILE_2 >logs/${1}_2_stdout.txt 2>&1 &
-        else
-            echo "Already running $APP_NAME 2."
         fi
         return
     fi
@@ -97,29 +107,37 @@ run_in_background() {
 run_in_terminal() {
     local APP_NAME="open5gs-$1"
     if [ "$1" == "seppd" ]; then
-        local SEPP1_RUNNING=$(pgrep -f "$APP_NAME.*sepp1.yaml")
-        local SEPP2_RUNNING=$(pgrep -f "$APP_NAME.*sepp2.yaml")
-        if [ -z "$SEPP1_RUNNING" ]; then
-            CONFIG_FILE_1="$SCRIPT_DIR/configs/sepp1.yaml"
-            if [ ! -f "$CONFIG_FILE_1" ]; then
-                echo "Configuration file not found: $CONFIG_FILE_1"
-                exit 1
+        if [ "$INCLUDE_SEPP" == true ]; then
+            local SEPP1_RUNNING=$(pgrep -f "$APP_NAME.*sepp1.yaml")
+            local SEPP2_RUNNING=$(pgrep -f "$APP_NAME.*sepp2.yaml")
+            if [ -z "$SEPP1_RUNNING" ]; then
+                CONFIG_FILE_1="$SCRIPT_DIR/configs/sepp1.yaml"
+                if [ ! -f "$CONFIG_FILE_1" ]; then
+                    echo "Configuration file not found: $CONFIG_FILE_1"
+                    exit 1
+                fi
+                # Remove the log file if it exists before starting the application
+                LOG_PATH=$(yq eval '.logger.file.path' "$CONFIG_FILE")
+                rm -f "$LOG_PATH"
+                echo "Starting $APP_NAME 1 in GNOME Terminal..."
+                gnome-terminal -t "$APP_NAME 1 Node" -- /bin/sh -c "./open5gs/install/bin/$APP_NAME -c $CONFIG_FILE_1"
+            else
+                echo "Already running $APP_NAME 1."
             fi
-            echo "Starting $APP_NAME 1 in GNOME Terminal..."
-            gnome-terminal -t "$APP_NAME 1 Node" -- /bin/sh -c "./open5gs/install/bin/$APP_NAME -c $CONFIG_FILE_1"
-        else
-            echo "Already running $APP_NAME 1."
-        fi
-        if [ -z "$SEPP2_RUNNING" ]; then
-            CONFIG_FILE_2="$SCRIPT_DIR/configs/sepp2.yaml"
-            if [ ! -f "$CONFIG_FILE_2" ]; then
-                echo "Configuration file not found: $CONFIG_FILE_2"
-                exit 1
+            if [ -z "$SEPP2_RUNNING" ]; then
+                CONFIG_FILE_2="$SCRIPT_DIR/configs/sepp2.yaml"
+                if [ ! -f "$CONFIG_FILE_2" ]; then
+                    echo "Configuration file not found: $CONFIG_FILE_2"
+                    exit 1
+                fi
+                # Remove the log file if it exists before starting the application
+                LOG_PATH=$(yq eval '.logger.file.path' "$CONFIG_FILE")
+                rm -f "$LOG_PATH"
+                echo "Starting $APP_NAME 2 in GNOME Terminal..."
+                gnome-terminal -t "$APP_NAME 2 Node" -- /bin/sh -c "./open5gs/install/bin/$APP_NAME -c $CONFIG_FILE_2"
+            else
+                echo "Already running $APP_NAME 2."
             fi
-            echo "Starting $APP_NAME 2 in GNOME Terminal..."
-            gnome-terminal -t "$APP_NAME 2 Node" -- /bin/sh -c "./open5gs/install/bin/$APP_NAME -c $CONFIG_FILE_2"
-        else
-            echo "Already running $APP_NAME 2."
         fi
         return
     fi

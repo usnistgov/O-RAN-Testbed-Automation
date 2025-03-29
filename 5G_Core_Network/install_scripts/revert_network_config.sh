@@ -39,18 +39,42 @@ if [ ! -f options.yaml ]; then
     exit 1
 fi
 
-default_ogstun_ipv4=10.45.0.0/16
-default_ogstun_ipv6=2001:db8:cafe::/48
-default_ogstun2_ipv4=10.46.0.0/16
-default_ogstun2_ipv6=2001:db8:babe::/48
-default_ogstun3_ipv4=10.47.0.0/16
-default_ogstun3_ipv6=2001:db8:face::/48
-ogstun_ipv4=$(yq eval '.ogstun_ipv4' options.yaml)
-ogstun_ipv6=$(yq eval '.ogstun_ipv6' options.yaml)
-ogstun2_ipv4=$(yq eval '.ogstun2_ipv4' options.yaml)
-ogstun2_ipv6=$(yq eval '.ogstun2_ipv6' options.yaml)
-ogstun3_ipv4=$(yq eval '.ogstun3_ipv4' options.yaml)
-ogstun3_ipv6=$(yq eval '.ogstun3_ipv6' options.yaml)
+DEFAULT_OGSTUN_IPV4=10.45.0.0/16
+DEFAULT_OGSTUN_IPV6=2001:db8:cafe::/48
+DEFAULT_OGSTUN2_IPV4=10.46.0.0/16
+DEFAULT_OGSTUN2_IPV6=2001:db8:babe::/48
+DEFAULT_OGSTUN3_IPV4=10.47.0.0/16
+DEFAULT_OGSTUN3_IPV6=2001:db8:face::/48
+OGSTUN_IPV4=$(yq eval '.ogstun_ipv4' options.yaml)
+OGSTUN_IPV6=$(yq eval '.ogstun_ipv6' options.yaml)
+OGSTUN2_IPV4=$(yq eval '.ogstun2_ipv4' options.yaml)
+OGSTUN2_IPV6=$(yq eval '.ogstun2_ipv6' options.yaml)
+OGSTUN3_IPV4=$(yq eval '.ogstun3_ipv4' options.yaml)
+OGSTUN3_IPV6=$(yq eval '.ogstun3_ipv6' options.yaml)
+if [[ "$OGSTUN_IPV4" == "null" || -z "$OGSTUN_IPV4" ]]; then
+    echo "Missing parameter in options.yaml: ogstun_ipv4"
+    exit 1
+fi
+if [[ "$OGSTUN_IPV6" == "null" || -z "$OGSTUN_IPV6" ]]; then
+    echo "Missing parameter in options.yaml: ogstun_ipv6"
+    exit 1
+fi
+if [[ "$OGSTUN2_IPV4" == "null" || -z "$OGSTUN2_IPV4" ]]; then
+    echo "Missing parameter in options.yaml: ogstun2_ipv4"
+    exit 1
+fi
+if [[ "$OGSTUN2_IPV6" == "null" || -z "$OGSTUN2_IPV6" ]]; then
+    echo "Missing parameter in options.yaml: ogstun2_ipv6"
+    exit 1
+fi
+if [[ "$OGSTUN3_IPV4" == "null" || -z "$OGSTUN3_IPV4" ]]; then
+    echo "Missing parameter in options.yaml: ogstun3_ipv4"
+    exit 1
+fi
+if [[ "$OGSTUN3_IPV6" == "null" || -z "$OGSTUN3_IPV6" ]]; then
+    echo "Missing parameter in options.yaml: ogstun3_ipv6"
+    exit 1
+fi
 
 # Remove sysctl settings
 if [ -f /etc/sysctl.d/30-open5gs.conf ]; then
@@ -68,18 +92,18 @@ for INTERFACE in ogstun ogstun2 ogstun3; do
 done
 
 # Remove iptables and ip6tables MASQUERADE rules
-sudo iptables --wait -t nat -D POSTROUTING -s $default_ogstun_ipv4 ! -o ogstun -j MASQUERADE 2>/dev/null || true
-sudo ip6tables --wait -t nat -D POSTROUTING -s $default_ogstun_ipv6 -o ogstun -j MASQUERADE 2>/dev/null || true
-sudo iptables --wait -t nat -D POSTROUTING -s $default_ogstun2_ipv4 ! -o ogstun2 -j MASQUERADE 2>/dev/null || true
-sudo ip6tables --wait -t nat -D POSTROUTING -s $default_ogstun2_ipv6 -o ogstun -j2 MASQUERADE 2>/dev/null || true
-sudo iptables --wait -t nat -D POSTROUTING -s $default_ogstun3_ipv4 ! -o ogstun -j MASQUERADE 2>/dev/null || true
-sudo ip6tables --wait -t nat -D POSTROUTING -s $default_ogstun3_ipv6 -o ogstun -j MASQUERADE 2>/dev/null || true
-sudo iptables --wait -t nat -D POSTROUTING -s $ogstun_ipv4 ! -o ogstun -j MASQUERADE 2>/dev/null || true
-sudo ip6tables --wait -t nat -D POSTROUTING -s $ogstun_ipv6 -o ogstun -j MASQUERADE 2>/dev/null || true
-sudo iptables --wait -t nat -D POSTROUTING -s $ogstun2_ipv4 ! -o ogstun2 -j MASQUERADE 2>/dev/null || true
-sudo ip6tables --wait -t nat -D POSTROUTING -s $ogstun2_ipv6 -o ogstun -j2 MASQUERADE 2>/dev/null || true
-sudo iptables --wait -t nat -D POSTROUTING -s $ogstun3_ipv4 ! -o ogstun -j MASQUERADE 2>/dev/null || true
-sudo ip6tables --wait -t nat -D POSTROUTING -s $ogstun3_ipv6 -o ogstun -j MASQUERADE 2>/dev/null || true
+sudo iptables --wait -t nat -D POSTROUTING -s $DEFAULT_OGSTUN_IPV4 ! -o ogstun -j MASQUERADE 2>/dev/null || true
+sudo ip6tables --wait -t nat -D POSTROUTING -s $DEFAULT_OGSTUN_IPV6 -o ogstun -j MASQUERADE 2>/dev/null || true
+sudo iptables --wait -t nat -D POSTROUTING -s $DEFAULT_OGSTUN2_IPV4 ! -o ogstun2 -j MASQUERADE 2>/dev/null || true
+sudo ip6tables --wait -t nat -D POSTROUTING -s $DEFAULT_OGSTUN2_IPV6 -o ogstun -j2 MASQUERADE 2>/dev/null || true
+sudo iptables --wait -t nat -D POSTROUTING -s $DEFAULT_OGSTUN3_IPV4 ! -o ogstun -j MASQUERADE 2>/dev/null || true
+sudo ip6tables --wait -t nat -D POSTROUTING -s $DEFAULT_OGSTUN3_IPV6 -o ogstun -j MASQUERADE 2>/dev/null || true
+sudo iptables --wait -t nat -D POSTROUTING -s $OGSTUN_IPV4 ! -o ogstun -j MASQUERADE 2>/dev/null || true
+sudo ip6tables --wait -t nat -D POSTROUTING -s $OGSTUN_IPV6 -o ogstun -j MASQUERADE 2>/dev/null || true
+sudo iptables --wait -t nat -D POSTROUTING -s $OGSTUN2_IPV4 ! -o ogstun2 -j MASQUERADE 2>/dev/null || true
+sudo ip6tables --wait -t nat -D POSTROUTING -s $OGSTUN2_IPV6 -o ogstun -j2 MASQUERADE 2>/dev/null || true
+sudo iptables --wait -t nat -D POSTROUTING -s $OGSTUN3_IPV4 ! -o ogstun -j MASQUERADE 2>/dev/null || true
+sudo ip6tables --wait -t nat -D POSTROUTING -s $OGSTUN3_IPV6 -o ogstun -j MASQUERADE 2>/dev/null || true
 
 # Disable IP forwarding
 sudo sysctl -w net.ipv4.ip_forward=0 >/dev/null 2>&1

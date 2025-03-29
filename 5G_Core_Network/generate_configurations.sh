@@ -233,29 +233,35 @@ set_configuration_ngap_and_gptu_server_ip() {
 }
 
 set_configuration_session_gateways() {
-    local SUBNET_IPv4=$1
-    local GATEWAY_IPv4=$2
-    local SUBNET_IPv6=$3
-    local GATEWAY_IPv6=$4
+    local SUBNET_IPV4=$1
+    local GATEWAY_IPV4=$2
+    local SUBNET_IPV6=$3
+    local GATEWAY_IPV6=$4
 
     local SMF_FILE_PATH="configs/smf.yaml"
     local UPF_FILE_PATH="configs/upf.yaml"
 
-    yq e -i ".upf.session[0].subnet = \"$SUBNET_IPv4\"" "$UPF_FILE_PATH"
-    yq e -i ".upf.session[0].gateway = \"$GATEWAY_IPv4\"" "$UPF_FILE_PATH"
-    yq e -i ".upf.session[1].subnet = \"$SUBNET_IPv6\"" "$UPF_FILE_PATH"
-    yq e -i ".upf.session[1].gateway = \"$GATEWAY_IPv6\"" "$UPF_FILE_PATH"
+    yq e -i ".upf.session[0].subnet = \"$SUBNET_IPV4\"" "$UPF_FILE_PATH"
+    yq e -i ".upf.session[0].gateway = \"$GATEWAY_IPV4\"" "$UPF_FILE_PATH"
+    yq e -i ".upf.session[1].subnet = \"$SUBNET_IPV6\"" "$UPF_FILE_PATH"
+    yq e -i ".upf.session[1].gateway = \"$GATEWAY_IPV6\"" "$UPF_FILE_PATH"
 
-    yq e -i ".smf.session[0].subnet = \"$SUBNET_IPv4\"" "$SMF_FILE_PATH"
-    yq e -i ".smf.session[0].gateway = \"$GATEWAY_IPv4\"" "$SMF_FILE_PATH"
-    yq e -i ".smf.session[1].subnet = \"$SUBNET_IPv6\"" "$SMF_FILE_PATH"
-    yq e -i ".smf.session[1].gateway = \"$GATEWAY_IPv6\"" "$SMF_FILE_PATH"
+    yq e -i ".smf.session[0].subnet = \"$SUBNET_IPV4\"" "$SMF_FILE_PATH"
+    yq e -i ".smf.session[0].gateway = \"$GATEWAY_IPV4\"" "$SMF_FILE_PATH"
+    yq e -i ".smf.session[1].subnet = \"$SUBNET_IPV6\"" "$SMF_FILE_PATH"
+    yq e -i ".smf.session[1].gateway = \"$GATEWAY_IPV6\"" "$SMF_FILE_PATH"
 }
 
-default_ogstun_ipv4=10.45.0.0/16
-default_ogstun_ipv6=2001:db8:cafe::/48
-ogstun_ipv4=$(yq eval '.ogstun_ipv4' options.yaml)
-ogstun_ipv6=$(yq eval '.ogstun_ipv6' options.yaml)
+OGSTUN_IPV4=$(yq eval '.ogstun_ipv4' options.yaml)
+OGSTUN_IPV6=$(yq eval '.ogstun_ipv6' options.yaml)
+if [[ "$OGSTUN_IPV4" == "null" || -z "$OGSTUN_IPV4" ]]; then
+    echo "Missing parameter in options.yaml: ogstun_ipv4"
+    exit 1
+fi
+if [[ "$OGSTUN_IPV6" == "null" || -z "$OGSTUN_IPV6" ]]; then
+    echo "Missing parameter in options.yaml: ogstun_ipv6"
+    exit 1
+fi
 
 # Extract the first IPv4 address from a CIDR block by replacing the last octet with '.1'
 # For example, 10.45.0.0/16 --> 10.45.0.1/16
@@ -279,17 +285,17 @@ remove_cidr_suffix() {
 }
 
 # Extract the first IPv4 and IPv6 addresses from the CIDR blocks
-default_ogstun_ipv4_1=$(grab_first_ipv4_address "$default_ogstun_ipv4")
-default_ogstun_ipv6_1=$(grab_first_ipv6_address "$default_ogstun_ipv6")
-ogstun_ipv4_1=$(grab_first_ipv4_address "$ogstun_ipv4")
-ogstun_ipv6_1=$(grab_first_ipv6_address "$ogstun_ipv6")
+OGSTUN_IPV4_1=$(grab_first_ipv4_address "$OGSTUN_IPV4")
+OGSTUN_IPV6_1=$(grab_first_ipv6_address "$OGSTUN_IPV6")
+OGSTUN_IPV4_1_NO_CIDR=$(remove_cidr_suffix "$OGSTUN_IPV4_1")
+OGSTUN_IPV6_1_NO_CIDR=$(remove_cidr_suffix "$OGSTUN_IPV6_1")
 
 if [ "$EXPOSE_AMF_OVER_HOSTNAME" = true ]; then
     AMF_IP=$(hostname -I | awk '{print $1}')
     set_configuration_ngap_and_gptu_server_ip $AMF_IP
     # Need an address for the gNodeB to bind to that is not the host IP.
     if [ "$IS_OPEN5GS_ON_HOST" = true ]; then
-        AMF_IP_BIND=$ogstun_ipv4_1
+        AMF_IP_BIND=$OGSTUN_IPV4_1_NO_CIDR
     else
         AMF_IP_BIND=$AMF_IP
     fi
@@ -298,10 +304,7 @@ else
     AMF_IP_BIND="127.0.0.1"
 fi
 
-ogstun_ipv4_1_no_cidr=$(remove_cidr_suffix "$ogstun_ipv4_1")
-ogstun_ipv6_1_no_cidr=$(remove_cidr_suffix "$ogstun_ipv6_1")
-
-set_configuration_session_gateways $ogstun_ipv4 $ogstun_ipv4_1_no_cidr $ogstun_ipv6 $ogstun_ipv6_1_no_cidr
+set_configuration_session_gateways $OGSTUN_IPV4 $OGSTUN_IPV4_1_NO_CIDR $OGSTUN_IPV6 $OGSTUN_IPV6_1_NO_CIDR
 
 # Get the following AMF IP, and it will be updated in the configuration file
 AMF_ADDRESSES_OUTPUT="configs/get_amf_address.txt"

@@ -49,7 +49,10 @@ cd ../..
 
 cd RAN_Intelligent_Controllers/Flexible-RIC/flexric/
 git diff examples/xApp/c/monitor/xapp_kpm_moni.c >../install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni.c.patch
+git diff examples/xApp/c/monitor/CMakeLists.txt >../install_patch_files/flexric/examples/xApp/c/monitor/CMakeLists.txt.patch
+cp examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv.c ../install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv.c
 cp examples/xApp/c/monitor/xapp_kpm_moni.c ../../../PATCHED_OAI_FILES
+cp examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv.c ../../../PATCHED_OAI_FILES
 
 cd "$SCRIPT_DIR/../.."
 

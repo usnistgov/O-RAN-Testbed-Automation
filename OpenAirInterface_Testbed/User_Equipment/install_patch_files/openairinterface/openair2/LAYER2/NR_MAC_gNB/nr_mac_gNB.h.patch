@@ -1,8 +1,8 @@
 diff --git a/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h b/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h
-index 8b1bb3ec5c..51ae776d66 100644
+index 65812ae0f5..a2a2227dad 100644
 --- a/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h
 +++ b/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h
-@@ -722,6 +722,8 @@ typedef struct NR_mac_stats {
+@@ -729,6 +729,8 @@ typedef struct NR_mac_stats {
    uint32_t pucch0_DTX;
    int cumul_rsrp;
    uint8_t num_rsrp_meas;

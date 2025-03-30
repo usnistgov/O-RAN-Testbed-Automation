@@ -74,10 +74,10 @@ Before beginning the installation and setup of the testbed, verify that the syst
 For users using a virtual machine, e.g., VirtualBox, the following configuration parameters may be considered.
 
 - **System**
-  - **Extended Features**: Ensure that `Enable I/O APIC` is checked to improve interrupt handling.
+  - **Extended Features**: Check `Enable I/O APIC` to improve interrupt handling.
   - **Extended Features**: Check `Enable PAE/NX` and if possible, also check `Enable Nested VT-x/AMD-V`.
-  - **Paravirtualization Interface**: Ensure that `Default` is selected.
-  - **Hardware Virtualization**: Ensure that `Enabled Nested Paging` is checked.
+  - **Paravirtualization Interface**: Select `Default`.
+  - **Hardware Virtualization**: Check `Enabled Nested Paging`.
 - **Display**
   - **Video Memory**: Set the slider to the maximum if using a Desktop environment.
 - **Storage**

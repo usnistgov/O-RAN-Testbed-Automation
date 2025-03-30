@@ -43,15 +43,10 @@ cd "$SCRIPT_DIR"
 
 if ! grep -q avx2 /proc/cpuinfo; then
     echo "Warning: Support for AVX2 is not available on this machine. Errors may occur when building due to unsupported AVX instructions."
-    echo "To resolve this, please follow the instructions in the "Enabling VT-x/AMD-V for the AVX2 instruction set when building OpenAirInterface5G" section of the home directory README document."
+    echo "Please consider following the instructions \"Enabling VT-x/AMD-V for the AVX2 instruction set\" in OpenAirInterface_Testbed/README.md."
     echo
-    echo "Would you like to proceed with the installation? (y/n)"
-    read -r -n 1 -s CONTINUE
-    echo
-    if [ "$CONTINUE" != "y" ]; then
-        echo "Installation aborted."
-        exit 1
-    fi
+    echo "Press any key to continue."
+    read -r -n 1 -s
 fi
 
 # Check if a symbolic link can be created to the openairinterface5g directory

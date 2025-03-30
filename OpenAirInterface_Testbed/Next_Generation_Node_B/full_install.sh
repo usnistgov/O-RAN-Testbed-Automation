@@ -41,19 +41,6 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-if ! grep -q avx2 /proc/cpuinfo; then
-    echo "Warning: Support for AVX2 is not available on this machine. Errors may occur when building due to unsupported AVX instructions."
-    echo "To resolve this, please follow the instructions in the "Enabling VT-x/AMD-V for the AVX2 instruction set when building OpenAirInterface5G" section of the home directory README document."
-    echo
-    echo "Would you like to proceed with the installation? (y/n)"
-    read -r -n 1 -s CONTINUE
-    echo
-    if [ "$CONTINUE" != "y" ]; then
-        echo "Installation aborted."
-        exit 1
-    fi
-fi
-
 # Check if a symbolic link can be created to the openairinterface5g directory
 if [ ! -f "openairinterface5g/cmake_targets/build_oai" ]; then
     sudo rm -rf openairinterface5g

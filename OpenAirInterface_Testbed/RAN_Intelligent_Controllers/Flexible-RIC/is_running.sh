@@ -41,3 +41,15 @@ if pgrep -x "nearRT-RIC" >/dev/null; then
 else
     echo "FlexRIC: NOT_RUNNING"
 fi
+
+if systemctl is-active grafana-server &>/dev/null; then
+    if pgrep -f "grafana_host_kpi_metrics_over_http.py" >/dev/null; then
+        echo "Grafana: RUNNING (KPI_Metrics.csv)"
+    else
+        echo "Grafana: RUNNING"
+    fi
+else
+    if pgrep -f "grafana_host_kpi_metrics_over_http.py" >/dev/null; then
+        echo "Grafana: NOT_RUNNING (KPI_Metrics.csv)"
+    fi
+fi

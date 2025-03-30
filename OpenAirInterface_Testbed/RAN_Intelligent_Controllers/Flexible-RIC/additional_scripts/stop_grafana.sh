@@ -28,57 +28,35 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-echo "# Script: $(realpath $0)..."
-
-if ! command -v docker-compose &>/dev/null; then
-    echo "Installing docker-compose..."
-
-    ARCH=$(uname -m)
-    case $ARCH in
-    x86_64)
-        ARCH="linux-x86_64"
-        ;;
-    aarch64)
-        ARCH="linux-aarch64"
-        ;;
-    armv6l)
-        ARCH="linux-armv6"
-        ;;
-    armv7l)
-        ARCH="linux-armv7"
-        ;;
-    ppc64le)
-        ARCH="linux-ppc64le"
-        ;;
-    riscv64)
-        ARCH="linux-riscv64"
-        ;;
-    s390x)
-        ARCH="linux-s390x"
-        ;;
-    *)
-        echo "Unsupported architecture: $ARCH"
-        exit 1
-        ;;
-    esac
-    URL="https://github.com/docker/compose/releases/latest/download/docker-compose-$ARCH"
-    curl -SL $URL -o docker-compose
-    if [ $? -ne 0 ]; then
-        echo "Failed to download docker-compose. Please check your internet connection or the URL."
-        echo "URL: $URL"
-        exit 1
-    fi
-    sudo mv docker-compose /usr/local/bin/docker-compose || true
-    sudo chmod +x /usr/local/bin/docker-compose
-    sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose || true
-    if sudo usermod -aG docker $USER; then
-        echo "Successfully added $USER to the docker group."
-        exec sg docker "$0" "$@" || true
-    else
-        echo "Failed to add $USER to the docker group."
-        exit 1
-    fi
-    sudo systemctl restart docker || true
-else
-    echo "Already installed docker-compose."
+if ! command -v realpath &>/dev/null; then
+    echo "Package \"coreutils\" not found, installing..."
+    sudo apt-get install -y coreutils
 fi
+
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+PARENT_DIR=$(dirname "$SCRIPT_DIR")
+cd "$PARENT_DIR"
+
+# Upon exit, restore the terminal to a sane state
+trap 'stty sane; exit' EXIT SIGINT SIGTERM
+
+# Check if the components are already stopped
+if ! $(./is_running.sh | grep -q ": RUNNING"); then
+    ./is_running.sh
+    exit 0
+fi
+
+pkill -f "grafana_host_kpi_metrics_over_http.py" >/dev/null 2>&1 &
+
+# Stop Grafana server if it's running and disable it from auto-starting on boot
+if systemctl is-active grafana-server &>/dev/null; then
+    echo "Stopping Grafana server..."
+    sudo systemctl stop grafana-server
+fi
+if sudo systemctl is-enabled grafana-server &>/dev/null; then
+    echo "Disabling Grafana server auto-start..."
+    sudo systemctl disable grafana-server
+fi
+
+sleep 1
+./is_running.sh

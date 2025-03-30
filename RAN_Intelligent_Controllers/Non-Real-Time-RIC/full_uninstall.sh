@@ -98,6 +98,13 @@ sudo apt-get remove --purge -y nodejs
 sudo rm -f /etc/apt/keyrings/nodesource.gpg
 sudo rm -f /etc/apt/sources.list.d/nodesource.list
 
+if docker-compose -v &>/dev/null; then
+    echo "Uninstalling docker-compose..."
+    sudo rm -f /usr/local/bin/docker-compose
+    sudo rm -f /usr/bin/docker-compose
+    sudo rm -rf ~/.docker/compose
+fi
+
 echo
 echo
 echo "Stopping and removing existing Docker installations, then installing Docker $DOCKERVERSION..."

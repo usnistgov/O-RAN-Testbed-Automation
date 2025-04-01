@@ -65,8 +65,8 @@ if [ ! -f "$GRAFANA_LOG_FILE" ]; then
     echo "Creating Grafana log file at $GRAFANA_LOG_FILE..."
     sudo mkdir -p "$(dirname "$GRAFANA_LOG_FILE")"
     sudo touch "$GRAFANA_LOG_FILE"
-    sudo chown grafana:grafana "$GRAFANA_LOG_FILE"
-    sudo chmod g+r "$GRAFANA_LOG_FILE"
+    #sudo chown grafana:grafana "$GRAFANA_LOG_FILE"
+    #sudo chmod g+r "$GRAFANA_LOG_FILE"
 fi
 if ! command -v python3 &>/dev/null; then
     echo "Python3 not found, installing..."

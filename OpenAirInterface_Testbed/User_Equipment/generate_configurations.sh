@@ -154,6 +154,12 @@ for UE_NUMBER in {1..3}; do
         UE_NAMESPACE="ue$UE_NUMBER"
     fi
 
+    # Ensure that the beginning of the IMSI is the correct PLMN
+    if [ ! -z "$PLMN" ]; then
+        PLMN_LENGTH=${#PLMN}
+        UE_IMSI="${PLMN}${UE_IMSI:$PLMN_LENGTH}"
+    fi
+
     # Unique identifier for the UE within the mobile network. Used by the network to identify the UE during authentication. It ensures that the UE is correctly identified by the network.
     update_conf "configs/ue$UE_NUMBER.conf" "imsi" "\"$UE_IMSI\""
 

@@ -31,7 +31,7 @@
 # Exit immediately if a command fails
 set -e
 
-REBUILD="false"
+REBUILD="true"
 
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."

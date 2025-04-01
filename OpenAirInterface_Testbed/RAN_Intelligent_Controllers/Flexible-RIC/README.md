@@ -27,6 +27,9 @@ This installation of the Near-RT RIC supports four xApps.
 - **RIC Control Monitor xApp (xapp_rc_moni)**:
   - Run with `./additional_scripts/run_xapp_rc_moni.sh`.
 
+## KPI Monitor Visualization in Grafana
+!
+
 ## References
 
 1. Working Group 3: Near-Real-time RAN Intelligent Controller and E2 Interface Workgroup. O-RAN Alliance. [https://public.o-ran.org/display/WG3/Introduction][oran-wg3]

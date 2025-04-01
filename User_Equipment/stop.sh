@@ -76,7 +76,7 @@ while [ $COUNT -lt $MAX_COUNT ]; do
             exit 0
         fi
     else
-        if echo "$IS_RUNNING" | grep -q "ue$UE_NUMBER"; then
+        if ! echo "$IS_RUNNING" | grep -q "ue$UE_NUMBER"; then
             echo "The User Equipment $UE_NUMBER has stopped gracefully."
             ./is_running.sh
             exit 0

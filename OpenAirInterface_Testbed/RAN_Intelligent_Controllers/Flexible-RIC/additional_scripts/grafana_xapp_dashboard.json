@@ -1,4 +1,77 @@
 {
+  "__inputs": [
+    {
+      "name": "DS_YESOREYERAM-INFINITY-DATASOURCE",
+      "label": "yesoreyeram-infinity-datasource",
+      "description": "",
+      "type": "datasource",
+      "pluginId": "yesoreyeram-infinity-datasource",
+      "pluginName": "Infinity"
+    }
+  ],
+  "__elements": {},
+  "__requires": [
+    {
+      "type": "panel",
+      "id": "bargauge",
+      "name": "Bar gauge",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "gauge",
+      "name": "Gauge",
+      "version": ""
+    },
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "11.6.0"
+    },
+    {
+      "type": "panel",
+      "id": "histogram",
+      "name": "Histogram",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "stat",
+      "name": "Stat",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "text",
+      "name": "Text",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "timeseries",
+      "name": "Time series",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "trend",
+      "name": "Trend",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "xychart",
+      "name": "XY Chart",
+      "version": ""
+    },
+    {
+      "type": "datasource",
+      "id": "yesoreyeram-infinity-datasource",
+      "name": "Infinity",
+      "version": "3.2.0"
+    }
+  ],
   "annotations": {
     "list": [
       {
@@ -18,13 +91,255 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 2,
+  "id": null,
   "links": [],
   "panels": [
     {
+      "gridPos": {
+        "h": 5,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 10,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "<img src=\"http://localhost:3030/NIST.svg\" />",
+        "mode": "html"
+      },
+      "pluginVersion": "11.6.0",
+      "transparent": true,
+      "type": "text"
+    },
+    {
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
-        "uid": "aehfj9y358lj4e"
+        "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "super-light-yellow"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 3,
+        "x": 12,
+        "y": 0
+      },
+      "id": 16,
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.6.0",
+      "targets": [
+        {
+          "columns": [
+            {
+              "selector": "UE ID",
+              "text": "UE",
+              "type": "number"
+            }
+          ],
+          "filters": [],
+          "format": "table",
+          "global_query_id": "",
+          "parser": "backend",
+          "refId": "A",
+          "root_selector": "",
+          "source": "url",
+          "type": "csv",
+          "url": "",
+          "url_options": {
+            "data": "",
+            "method": "GET"
+          },
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+          }
+        }
+      ],
+      "title": "Currently Connected UEs",
+      "transformations": [
+        {
+          "id": "reduce",
+          "options": {
+            "labelsToFields": false,
+            "reducers": [
+              "range"
+            ]
+          }
+        }
+      ],
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed"
+          },
+          "decimals": 2,
+          "fieldMinMax": false,
+          "mappings": [],
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {
+                "color": "yellow"
+              },
+              {
+                "color": "purple",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "KBs"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Aggregate UE Downlink Throughput"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "light-blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Aggregate UE Uplink Throughput"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "super-light-red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 9,
+        "x": 15,
+        "y": 0
+      },
+      "id": 11,
+      "options": {
+        "displayMode": "lcd",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "sum"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
+      },
+      "pluginVersion": "11.6.0",
+      "targets": [
+        {
+          "columns": [
+            {
+              "selector": "DRB.UEThpDl",
+              "text": "Aggregate UE Downlink Throughput",
+              "type": "number"
+            },
+            {
+              "selector": "DRB.UEThpUl",
+              "text": "Aggregate UE Uplink Throughput",
+              "type": "number"
+            }
+          ],
+          "filters": [],
+          "format": "table",
+          "global_query_id": "",
+          "parser": "backend",
+          "refId": "A",
+          "root_selector": "",
+          "source": "url",
+          "type": "csv",
+          "url": "",
+          "url_options": {
+            "data": "",
+            "method": "GET"
+          },
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+          }
+        }
+      ],
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
       },
       "fieldConfig": {
         "defaults": {
@@ -49,7 +364,10 @@
             },
             "insertNulls": false,
             "lineInterpolation": "linear",
-            "lineWidth": 1,
+            "lineStyle": {
+              "fill": "solid"
+            },
+            "lineWidth": 2,
             "pointSize": 5,
             "scaleDistribution": {
               "type": "linear"
@@ -76,13 +394,29 @@
                 "value": 80
               }
             ]
-          }
+          },
+          "unit": "dBm"
         },
         "overrides": [
           {
             "matcher": {
               "id": "byName",
-              "options": "DRB.PdcpSduVolumeUL"
+              "options": "RSRQ"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "purple",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "N_RSRP_MEAS"
             },
             "properties": [
               {
@@ -93,16 +427,31 @@
                 }
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "RSRP"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "light-green",
+                  "mode": "fixed"
+                }
+              }
+            ]
           }
         ]
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
+        "h": 11,
+        "w": 6,
         "x": 0,
-        "y": 0
+        "y": 5
       },
-      "id": 2,
+      "id": 1,
       "options": {
         "legend": {
           "calcs": [],
@@ -126,19 +475,19 @@
               "type": "timestamp_epoch"
             },
             {
-              "selector": "DRB.PdcpSduVolumeDL",
-              "text": "DRB.PdcpSduVolumeDL",
+              "selector": "RSRP",
+              "text": "RSRP",
               "type": "number"
             },
             {
-              "selector": "DRB.PdcpSduVolumeUL",
-              "text": "DRB.PdcpSduVolumeUL",
-              "type": "number"
+              "selector": "UE ID",
+              "text": "UE_ID",
+              "type": "string"
             }
           ],
           "datasource": {
             "type": "yesoreyeram-infinity-datasource",
-            "uid": "aehfj9y358lj4e"
+            "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
           },
           "filters": [],
           "format": "table",
@@ -155,13 +504,33 @@
           }
         }
       ],
-      "title": "DRB.PdcpSduVolume",
+      "title": "Reference Signal Received Power (RSRP)",
+      "transformations": [
+        {
+          "id": "filterByValue",
+          "options": {
+            "filters": [
+              {
+                "config": {
+                  "id": "equal",
+                  "options": {
+                    "value": "${UE_Number}"
+                  }
+                },
+                "fieldName": "UE_ID"
+              }
+            ],
+            "match": "any",
+            "type": "include"
+          }
+        }
+      ],
       "type": "timeseries"
     },
     {
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
-        "uid": "aehfj9y358lj4e"
+        "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
       },
       "fieldConfig": {
         "defaults": {
@@ -201,7 +570,173 @@
               "mode": "off"
             }
           },
+          "fieldMinMax": false,
           "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "dB"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "RSRQ"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "light-green",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 6,
+        "x": 6,
+        "y": 5
+      },
+      "id": 18,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        },
+        "xField": "UNIX Epoch (ms)"
+      },
+      "pluginVersion": "11.6.0",
+      "targets": [
+        {
+          "columns": [
+            {
+              "selector": "Time ( UNIX ms )",
+              "text": "Timestamp",
+              "type": "timestamp_epoch"
+            },
+            {
+              "selector": "RSRQ",
+              "text": "RSRQ",
+              "type": "number"
+            },
+            {
+              "selector": "UE ID",
+              "text": "UE_ID",
+              "type": "string"
+            },
+            {
+              "selector": "Time ( UNIX ms )",
+              "text": "UNIX Epoch (ms)",
+              "type": "number"
+            }
+          ],
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+          },
+          "filters": [],
+          "format": "table",
+          "global_query_id": "",
+          "parser": "backend",
+          "refId": "A",
+          "root_selector": "",
+          "source": "url",
+          "type": "csv",
+          "url": "",
+          "url_options": {
+            "data": "",
+            "method": "GET"
+          }
+        }
+      ],
+      "title": "Reference Signal Received Quality (RSRQ)",
+      "transformations": [
+        {
+          "id": "filterByValue",
+          "options": {
+            "filters": [
+              {
+                "config": {
+                  "id": "equal",
+                  "options": {
+                    "value": "${UE_Number}"
+                  }
+                },
+                "fieldName": "UE_ID"
+              }
+            ],
+            "match": "any",
+            "type": "include"
+          }
+        }
+      ],
+      "type": "trend"
+    },
+    {
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -215,13 +750,29 @@
             ]
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "DRB.RlcSduDelayDl"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "light-blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
+        "h": 4,
+        "w": 6,
         "x": 12,
-        "y": 0
+        "y": 5
       },
       "id": 4,
       "options": {
@@ -250,11 +801,16 @@
               "selector": "DRB.RlcSduDelayDl",
               "text": "DRB.RlcSduDelayDl",
               "type": "number"
+            },
+            {
+              "selector": "UE ID",
+              "text": "UE_ID",
+              "type": "string"
             }
           ],
           "datasource": {
             "type": "yesoreyeram-infinity-datasource",
-            "uid": "aehfj9y358lj4e"
+            "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
           },
           "filters": [],
           "format": "table",
@@ -271,13 +827,33 @@
           }
         }
       ],
-      "title": "DRB.RlcSduDelayDl",
+      "title": "Delay Downlink",
+      "transformations": [
+        {
+          "id": "filterByValue",
+          "options": {
+            "filters": [
+              {
+                "config": {
+                  "id": "equal",
+                  "options": {
+                    "value": "${UE_Number}"
+                  }
+                },
+                "fieldName": "UE_ID"
+              }
+            ],
+            "match": "any",
+            "type": "include"
+          }
+        }
+      ],
       "type": "timeseries"
     },
     {
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
-        "uid": "aehfj9y358lj4e"
+        "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
       },
       "fieldConfig": {
         "defaults": {
@@ -302,7 +878,7 @@
             },
             "insertNulls": false,
             "lineInterpolation": "linear",
-            "lineWidth": 1,
+            "lineWidth": 2,
             "pointSize": 5,
             "scaleDistribution": {
               "type": "linear"
@@ -318,6 +894,7 @@
             }
           },
           "mappings": [],
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -341,7 +918,22 @@
               {
                 "id": "color",
                 "value": {
-                  "fixedColor": "blue",
+                  "fixedColor": "super-light-red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "DRB.UEThpDl"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "light-blue",
                   "mode": "fixed"
                 }
               }
@@ -350,10 +942,10 @@
         ]
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 8
+        "h": 9,
+        "w": 6,
+        "x": 18,
+        "y": 5
       },
       "id": 5,
       "options": {
@@ -387,11 +979,16 @@
               "selector": "DRB.UEThpUl",
               "text": "DRB.UEThpUl",
               "type": "number"
+            },
+            {
+              "selector": "UE ID",
+              "text": "UE_ID",
+              "type": "string"
             }
           ],
           "datasource": {
             "type": "yesoreyeram-infinity-datasource",
-            "uid": "aehfj9y358lj4e"
+            "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
           },
           "filters": [],
           "format": "table",
@@ -408,13 +1005,182 @@
           }
         }
       ],
-      "title": "DRB.UEThp",
+      "title": "Throughput Downlink / Uplink",
+      "transformations": [
+        {
+          "id": "filterByValue",
+          "options": {
+            "filters": [
+              {
+                "config": {
+                  "id": "equal",
+                  "options": {
+                    "value": "${UE_Number}"
+                  }
+                },
+                "fieldName": "UE_ID"
+              }
+            ],
+            "match": "any",
+            "type": "include"
+          }
+        }
+      ],
       "type": "timeseries"
     },
     {
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
-        "uid": "aehfj9y358lj4e"
+        "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "super-light-blue",
+            "mode": "fixed"
+          },
+          "custom": {
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          },
+          "decimals": 0,
+          "fieldMinMax": false,
+          "mappings": [],
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {
+                "color": "super-light-blue"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "KBs"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "RRU.PrbTotDl"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "light-blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 6,
+        "x": 12,
+        "y": 9
+      },
+      "id": 6,
+      "options": {
+        "bucketCount": 50,
+        "combine": false,
+        "legend": {
+          "calcs": [
+            "firstNotNull",
+            "lastNotNull",
+            "mean",
+            "stdDev"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.6.0",
+      "targets": [
+        {
+          "columns": [
+            {
+              "selector": "Time ( UNIX ms )",
+              "text": "Timestamp",
+              "type": "timestamp_epoch"
+            },
+            {
+              "selector": "RRU.PrbTotDl",
+              "text": "RRU.PrbTotDl",
+              "type": "number"
+            },
+            {
+              "selector": "UE ID",
+              "text": "UE_ID",
+              "type": "string"
+            }
+          ],
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+          },
+          "filters": [],
+          "format": "table",
+          "global_query_id": "",
+          "parser": "backend",
+          "refId": "A",
+          "root_selector": "",
+          "source": "url",
+          "type": "csv",
+          "url": "",
+          "url_options": {
+            "data": "",
+            "method": "GET"
+          }
+        }
+      ],
+      "title": "Histogram of PRB Downlink",
+      "transformations": [
+        {
+          "id": "filterByValue",
+          "options": {
+            "filters": [
+              {
+                "config": {
+                  "id": "equal",
+                  "options": {
+                    "value": "${UE_Number}"
+                  }
+                },
+                "fieldName": "UE_ID"
+              }
+            ],
+            "match": "any",
+            "type": "include"
+          }
+        }
+      ],
+      "type": "histogram"
+    },
+    {
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
       },
       "fieldConfig": {
         "defaults": {
@@ -439,7 +1205,7 @@
             },
             "insertNulls": false,
             "lineInterpolation": "linear",
-            "lineWidth": 1,
+            "lineWidth": 2,
             "pointSize": 5,
             "scaleDistribution": {
               "type": "linear"
@@ -455,6 +1221,7 @@
             }
           },
           "mappings": [],
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -468,15 +1235,46 @@
             ]
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "RRU.PrbTotUl"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "super-light-red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "RRU.PrbTotDl"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "light-blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 8
+        "h": 9,
+        "w": 6,
+        "x": 18,
+        "y": 14
       },
-      "id": 6,
+      "id": 15,
       "options": {
         "legend": {
           "calcs": [],
@@ -507,12 +1305,17 @@
             {
               "selector": "RRU.PrbTotUl",
               "text": "RRU.PrbTotUl",
+              "type": "number"
+            },
+            {
+              "selector": "UE ID",
+              "text": "UE_ID",
               "type": "string"
             }
           ],
           "datasource": {
             "type": "yesoreyeram-infinity-datasource",
-            "uid": "aehfj9y358lj4e"
+            "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
           },
           "filters": [],
           "format": "table",
@@ -529,18 +1332,38 @@
           }
         }
       ],
-      "title": "RRU.PrbTot",
+      "title": "Number of PRBs Downlink / Uplink",
+      "transformations": [
+        {
+          "id": "filterByValue",
+          "options": {
+            "filters": [
+              {
+                "config": {
+                  "id": "equal",
+                  "options": {
+                    "value": "${UE_Number}"
+                  }
+                },
+                "fieldName": "UE_ID"
+              }
+            ],
+            "match": "any",
+            "type": "include"
+          }
+        }
+      ],
       "type": "timeseries"
     },
     {
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
-        "uid": "aehfj9y358lj4e"
+        "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
       },
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
+            "mode": "palette-classic-by-name"
           },
           "custom": {
             "axisBorderShow": false,
@@ -548,32 +1371,21 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
+            "fillOpacity": 50,
             "hideFrom": {
               "legend": false,
               "tooltip": false,
               "viz": false
             },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
+            "pointShape": "circle",
+            "pointSize": {
+              "fixed": 5
+            },
+            "pointStrokeWidth": 2,
             "scaleDistribution": {
               "type": "linear"
             },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
+            "show": "points"
           },
           "mappings": [],
           "thresholds": {
@@ -614,7 +1426,7 @@
               {
                 "id": "color",
                 "value": {
-                  "fixedColor": "blue",
+                  "fixedColor": "light-purple",
                   "mode": "fixed"
                 }
               }
@@ -623,12 +1435,12 @@
         ]
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
+        "h": 9,
+        "w": 4,
         "x": 0,
         "y": 16
       },
-      "id": 1,
+      "id": 13,
       "options": {
         "legend": {
           "calcs": [],
@@ -636,6 +1448,23 @@
           "placement": "bottom",
           "showLegend": true
         },
+        "mapping": "auto",
+        "series": [
+          {
+            "x": {
+              "matcher": {
+                "id": "byName",
+                "options": "UNIX Epoch (ms)"
+              }
+            },
+            "y": {
+              "matcher": {
+                "id": "byName",
+                "options": "N_RSRP_MEAS"
+              }
+            }
+          }
+        ],
         "tooltip": {
           "hideZeros": false,
           "mode": "single",
@@ -643,6 +1472,7 @@
         }
       },
       "pluginVersion": "11.6.0",
+      "repeatDirection": "h",
       "targets": [
         {
           "columns": [
@@ -650,21 +1480,26 @@
               "selector": "Time ( UNIX ms )",
               "text": "Timestamp",
               "type": "timestamp_epoch"
-            },
-            {
-              "selector": "RSRP",
-              "text": "RSRP",
-              "type": "number"
             },
             {
               "selector": "N_RSRP_MEAS",
               "text": "N_RSRP_MEAS",
               "type": "number"
+            },
+            {
+              "selector": "UE ID",
+              "text": "UE_ID",
+              "type": "string"
+            },
+            {
+              "selector": "Time ( UNIX ms )",
+              "text": "UNIX Epoch (ms)",
+              "type": "number"
             }
           ],
           "datasource": {
             "type": "yesoreyeram-infinity-datasource",
-            "uid": "aehfj9y358lj4e"
+            "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
           },
           "filters": [],
           "format": "table",
@@ -681,13 +1516,33 @@
           }
         }
       ],
-      "title": "RSRP",
-      "type": "timeseries"
+      "title": "RSRP Measurement Count",
+      "transformations": [
+        {
+          "id": "filterByValue",
+          "options": {
+            "filters": [
+              {
+                "config": {
+                  "id": "equal",
+                  "options": {
+                    "value": "${UE_Number}"
+                  }
+                },
+                "fieldName": "UE_ID"
+              }
+            ],
+            "match": "any",
+            "type": "include"
+          }
+        }
+      ],
+      "type": "xychart"
     },
     {
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
-        "uid": "aehfj9y358lj4e"
+        "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
       },
       "fieldConfig": {
         "defaults": {
@@ -695,39 +1550,21 @@
             "mode": "palette-classic"
           },
           "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 0,
+            "fillOpacity": 80,
             "gradientMode": "none",
             "hideFrom": {
               "legend": false,
               "tooltip": false,
               "viz": false
             },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
             "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
             "stacking": {
               "group": "A",
               "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
             }
           },
           "mappings": [],
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -756,16 +1593,31 @@
                 }
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "N_PRB"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "super-light-purple",
+                  "mode": "fixed"
+                }
+              }
+            ]
           }
         ]
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
+        "h": 9,
+        "w": 4,
+        "x": 4,
         "y": 16
       },
-      "id": 7,
+      "id": 12,
       "options": {
         "legend": {
           "calcs": [],
@@ -789,14 +1641,19 @@
               "type": "timestamp_epoch"
             },
             {
-              "selector": "RSRQ",
-              "text": "RSRQ",
+              "selector": "N_PRB",
+              "text": "N_PRB",
               "type": "number"
+            },
+            {
+              "selector": "UE ID",
+              "text": "UD_ID",
+              "type": "string"
             }
           ],
           "datasource": {
             "type": "yesoreyeram-infinity-datasource",
-            "uid": "aehfj9y358lj4e"
+            "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
           },
           "filters": [],
           "format": "table",
@@ -813,18 +1670,38 @@
           }
         }
       ],
-      "title": "RSRQ",
-      "type": "timeseries"
+      "title": "RSRQ: PRB Count",
+      "transformations": [
+        {
+          "id": "filterByValue",
+          "options": {
+            "filters": [
+              {
+                "config": {
+                  "id": "equal",
+                  "options": {
+                    "value": "${UE_Number}"
+                  }
+                },
+                "fieldName": "UD_ID"
+              }
+            ],
+            "match": "any",
+            "type": "include"
+          }
+        }
+      ],
+      "type": "histogram"
     },
     {
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
-        "uid": "aehfj9y358lj4e"
+        "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
       },
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
+            "mode": "palette-classic-by-name"
           },
           "custom": {
             "axisBorderShow": false,
@@ -859,6 +1736,7 @@
               "mode": "off"
             }
           },
+          "fieldMinMax": false,
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -871,7 +1749,8 @@
                 "value": 80
               }
             ]
-          }
+          },
+          "unit": "dBm"
         },
         "overrides": [
           {
@@ -888,140 +1767,19 @@
                 }
               }
             ]
-          }
-        ]
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 24
-      },
-      "id": 8,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "11.6.0",
-      "targets": [
-        {
-          "columns": [
-            {
-              "selector": "Time ( UNIX ms )",
-              "text": "Timestamp",
-              "type": "timestamp_epoch"
-            },
-            {
-              "selector": "PUSCH_SNR",
-              "text": "PUSCH_SNR",
-              "type": "number"
-            },
-            {
-              "selector": "PUCCH_SNR",
-              "text": "PUCCH_SNR",
-              "type": "number"
-            }
-          ],
-          "datasource": {
-            "type": "yesoreyeram-infinity-datasource",
-            "uid": "aehfj9y358lj4e"
           },
-          "filters": [],
-          "format": "table",
-          "global_query_id": "",
-          "parser": "backend",
-          "refId": "A",
-          "root_selector": "",
-          "source": "url",
-          "type": "csv",
-          "url": "",
-          "url_options": {
-            "data": "",
-            "method": "GET"
-          }
-        }
-      ],
-      "title": "SNR",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "yesoreyeram-infinity-datasource",
-        "uid": "aehfj9y358lj4e"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": [
           {
             "matcher": {
               "id": "byName",
-              "options": "RSRQ"
+              "options": "RAW_RSSI"
             },
             "properties": [
               {
                 "id": "color",
                 "value": {
-                  "fixedColor": "purple",
-                  "mode": "fixed"
+                  "fixedColor": "light-purple",
+                  "mode": "fixed",
+                  "seriesBy": "last"
                 }
               }
             ]
@@ -1029,10 +1787,10 @@
         ]
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 24
+        "h": 9,
+        "w": 4,
+        "x": 8,
+        "y": 16
       },
       "id": 9,
       "options": {
@@ -1061,11 +1819,16 @@
               "selector": "RAW_RSSI",
               "text": "RAW_RSSI",
               "type": "number"
+            },
+            {
+              "selector": "UE ID",
+              "text": "UE_ID",
+              "type": "string"
             }
           ],
           "datasource": {
             "type": "yesoreyeram-infinity-datasource",
-            "uid": "aehfj9y358lj4e"
+            "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
           },
           "filters": [],
           "format": "table",
@@ -1082,23 +1845,499 @@
           }
         }
       ],
-      "title": "RAW_RSSI",
+      "title": "RSRQ: RSSI Value",
+      "transformations": [
+        {
+          "id": "filterByValue",
+          "options": {
+            "filters": [
+              {
+                "config": {
+                  "id": "equal",
+                  "options": {
+                    "value": "${UE_Number}"
+                  }
+                },
+                "fieldName": "UE_ID"
+              }
+            ],
+            "match": "any",
+            "type": "include"
+          }
+        }
+      ],
       "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic-by-name"
+          },
+          "custom": {
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          },
+          "fieldMinMax": false,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "KBs"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "RRU.PrbTotUl"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "super-light-red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 6,
+        "x": 12,
+        "y": 20
+      },
+      "id": 17,
+      "options": {
+        "bucketCount": 50,
+        "legend": {
+          "calcs": [
+            "firstNotNull",
+            "lastNotNull",
+            "mean",
+            "stdDev"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.6.0",
+      "targets": [
+        {
+          "columns": [
+            {
+              "selector": "Time ( UNIX ms )",
+              "text": "Timestamp",
+              "type": "timestamp_epoch"
+            },
+            {
+              "selector": "RRU.PrbTotUl",
+              "text": "RRU.PrbTotUl",
+              "type": "number"
+            },
+            {
+              "selector": "UE ID",
+              "text": "UE_ID",
+              "type": "string"
+            }
+          ],
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+          },
+          "filters": [],
+          "format": "table",
+          "global_query_id": "",
+          "parser": "backend",
+          "refId": "A",
+          "root_selector": "",
+          "source": "url",
+          "type": "csv",
+          "url": "",
+          "url_options": {
+            "data": "",
+            "method": "GET"
+          }
+        }
+      ],
+      "title": "Histogram of PRB Uplink",
+      "transformations": [
+        {
+          "id": "filterByValue",
+          "options": {
+            "filters": [
+              {
+                "config": {
+                  "id": "equal",
+                  "options": {
+                    "value": "${UE_Number}"
+                  }
+                },
+                "fieldName": "UE_ID"
+              }
+            ],
+            "match": "any",
+            "type": "include"
+          }
+        }
+      ],
+      "type": "histogram"
+    },
+    {
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "KBs"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "DRB.PdcpSduVolumeUL"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "super-light-red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "DRB.PdcpSduVolumeDL"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "light-blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 18,
+        "y": 23
+      },
+      "id": 2,
+      "maxPerRow": 12,
+      "options": {
+        "minVizHeight": 75,
+        "minVizWidth": 75,
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "sum"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "sizing": "auto"
+      },
+      "pluginVersion": "11.6.0",
+      "repeatDirection": "h",
+      "targets": [
+        {
+          "columns": [
+            {
+              "selector": "Time ( UNIX ms )",
+              "text": "Timestamp",
+              "type": "timestamp_epoch"
+            },
+            {
+              "selector": "DRB.PdcpSduVolumeDL",
+              "text": "DRB.PdcpSduVolumeDL",
+              "type": "number"
+            },
+            {
+              "selector": "DRB.PdcpSduVolumeUL",
+              "text": "DRB.PdcpSduVolumeUL",
+              "type": "number"
+            },
+            {
+              "selector": "UE ID",
+              "text": "UE_ID",
+              "type": "string"
+            }
+          ],
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+          },
+          "filters": [],
+          "format": "table",
+          "global_query_id": "",
+          "parser": "backend",
+          "refId": "A",
+          "root_selector": "",
+          "source": "url",
+          "type": "csv",
+          "url": "",
+          "url_options": {
+            "data": "",
+            "method": "GET"
+          }
+        }
+      ],
+      "title": "Volume Downlink / Uplink",
+      "transformations": [
+        {
+          "id": "filterByValue",
+          "options": {
+            "filters": [
+              {
+                "config": {
+                  "id": "equal",
+                  "options": {
+                    "value": "${UE_Number}"
+                  }
+                },
+                "fieldName": "UE_ID"
+              }
+            ],
+            "match": "any",
+            "type": "include"
+          }
+        }
+      ],
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-BlYlRd"
+          },
+          "fieldMinMax": true,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "dB"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 0,
+        "y": 25
+      },
+      "id": 14,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "mean"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.6.0",
+      "targets": [
+        {
+          "columns": [
+            {
+              "selector": "Time ( UNIX ms )",
+              "text": "Timestamp",
+              "type": "timestamp_epoch"
+            },
+            {
+              "selector": "PUSCH_SNR",
+              "text": "SNR (PUSCH)",
+              "type": "number"
+            },
+            {
+              "selector": "PUCCH_SNR",
+              "text": "SNR (PUCCH)",
+              "type": "number"
+            },
+            {
+              "selector": "UE ID",
+              "text": "UE_ID",
+              "type": "string"
+            }
+          ],
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+          },
+          "filters": [],
+          "format": "table",
+          "global_query_id": "",
+          "parser": "backend",
+          "refId": "A",
+          "root_selector": "",
+          "source": "url",
+          "type": "csv",
+          "url": "",
+          "url_options": {
+            "data": "",
+            "method": "GET"
+          }
+        }
+      ],
+      "title": "Signal-to-Noise Ratios",
+      "transformations": [
+        {
+          "id": "filterByValue",
+          "options": {
+            "filters": [
+              {
+                "config": {
+                  "id": "equal",
+                  "options": {
+                    "value": "${UE_Number}"
+                  }
+                },
+                "fieldName": "UE_ID"
+              }
+            ],
+            "match": "any",
+            "type": "include"
+          }
+        }
+      ],
+      "type": "stat"
     }
   ],
-  "preload": false,
   "schemaVersion": 41,
   "tags": [],
   "templating": {
-    "list": []
+    "list": [
+      {
+        "current": {},
+        "definition": "",
+        "name": "UE_Number",
+        "options": [],
+        "query": {
+          "infinityQuery": {
+            "columns": [
+              {
+                "selector": "UE ID",
+                "text": "UE_ID",
+                "type": "number"
+              }
+            ],
+            "computed_columns": [
+              {
+                "selector": "",
+                "text": "",
+                "type": "string"
+              }
+            ],
+            "filters": [],
+            "format": "table",
+            "parser": "backend",
+            "refId": "variable",
+            "root_selector": "",
+            "source": "url",
+            "type": "csv",
+            "url": "",
+            "url_options": {
+              "data": "",
+              "method": "GET"
+            }
+          },
+          "query": "",
+          "queryType": "infinity"
+        },
+        "refresh": 1,
+        "regex": "",
+        "type": "query"
+      }
+    ]
   },
   "time": {
-    "from": "2025-03-30T21:59:48.366Z",
-    "to": "2025-03-30T22:00:08.361Z"
+    "from": "2025-03-31T18:30:05.817Z",
+    "to": "2025-03-31T18:40:29.816Z"
   },
   "timepicker": {},
   "timezone": "browser",
   "title": "FlexRIC KPI Monitor",
   "uid": "cehfpz3fiuneoa",
-  "version": 6
+  "version": 14,
+  "weekStart": ""
 }

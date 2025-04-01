@@ -44,12 +44,12 @@ fi
 
 if systemctl is-active grafana-server &>/dev/null; then
     if pgrep -f "grafana_host_kpi_metrics_over_http.py" >/dev/null; then
-        echo "Grafana: RUNNING (KPI_Metrics.csv)"
+        echo "Grafana: RUNNING (with HTTP server)"
     else
         echo "Grafana: RUNNING"
     fi
 else
     if pgrep -f "grafana_host_kpi_metrics_over_http.py" >/dev/null; then
-        echo "Grafana: NOT_RUNNING (KPI_Metrics.csv)"
+        echo "Grafana: NOT_RUNNING (with HTTP server)"
     fi
 fi

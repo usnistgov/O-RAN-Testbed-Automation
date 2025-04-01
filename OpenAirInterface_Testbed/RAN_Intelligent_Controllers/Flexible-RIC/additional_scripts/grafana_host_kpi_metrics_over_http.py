@@ -4,22 +4,36 @@ import socketserver
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(script_dir)
-os.chdir(parent_dir)
+base_dir = os.path.dirname(os.path.dirname(os.path.dirname(parent_dir)))
 
 class SingleFileHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
-        if self.path.strip("/") != "KPI_Metrics.csv":
-            self.send_error(404, "File not found")
+        if self.path.strip('/') == 'KPI_Metrics.csv':
+            self.path = os.path.join(parent_dir, 'logs', 'KPI_Metrics.csv')
+        elif self.path.strip('/') == 'NIST.svg':
+            self.path = os.path.join(base_dir, 'Images', 'NIST_Dark.svg')
+        else:
+            self.send_error(404, f'File not found: {self.path}')
             return
-        self.path = os.path.join('logs', 'KPI_Metrics.csv')
+        
+        if not os.path.isfile(self.path):
+            self.send_error(404, f'File not found: {self.path}')
+            print(f"ERROR: Failed to find file at path: {self.path}")
+            raise Exception(f"File not found: {self.path}")
 
+        print(f"Serving file: {os.path.basename(self.path)}")
         return super().do_GET()
+
+    def translate_path(self, path):
+        return os.path.abspath(self.path)
 
 PORT = 3030
 
 class MyTCPServer(socketserver.TCPServer):
     allow_reuse_address = True
 
-with MyTCPServer(("", PORT), SingleFileHTTPRequestHandler) as httpd:
-    print(f"Serving http://localhost:{PORT}/KPI_Metrics.csv...")
+with MyTCPServer(('', PORT), SingleFileHTTPRequestHandler) as httpd:
+    print('Serving the following routes:')
+    print(f'    http://localhost:{PORT}/KPI_Metrics.csv...')
+    print(f'    http://localhost:{PORT}/NIST.png...')
     httpd.serve_forever()

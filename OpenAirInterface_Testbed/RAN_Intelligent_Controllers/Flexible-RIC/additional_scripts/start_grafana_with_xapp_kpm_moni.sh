@@ -42,24 +42,6 @@ cd "$PARENT_DIR"
 
 GRAFANA_LOG_FILE="$PARENT_DIR/logs/KPI_Metrics.csv"
 
-# Function to update or add configuration properties in .conf files, considering sections and uncommenting if needed
-update_conf_sudo() {
-    echo "update_conf($1, $2, $3, $4)"
-    local FILE_PATH="$1"
-    local SECTION="$2"
-    local PROPERTY="$3"
-    local VALUE="$4"
-
-    # Ensure the section exists; if not, add it at the end
-    if ! sudo grep -q "^\[$SECTION\]" "$FILE_PATH"; then
-        echo -e "\n[$SECTION]" | sudo tee -a "$FILE_PATH" >/dev/null
-    fi
-    # Remove any existing entries of the property in the section (including commented ones)
-    sudo sed -i "/^\[$SECTION\]/,/^\s*\[/{/^[# ]*\s*$PROPERTY\s*=.*/d}" "$FILE_PATH"
-    # Append the new property=value after the section header
-    sudo sed -i "/^\[$SECTION\]/a $PROPERTY = $VALUE" "$FILE_PATH"
-}
-
 if ! command -v grafana-server &>/dev/null; then
     echo "Grafana not found, installing..."
     # Code from (https://grafana.com/docs/grafana/latest/setup-grafana/installation/debian):
@@ -74,9 +56,9 @@ if ! command -v grafana-server &>/dev/null; then
 fi
 
 # Installing and configuring Grafana to use the CSV data source plugin
-if ! sudo grafana-cli plugins ls | grep -q marcusolsson-csv-datasource; then
+if ! sudo grafana-cli plugins ls | grep -q yesoreyeram-infinity-datasource; then
     echo "CSV data source plugin not found, installing..."
-    sudo grafana-cli plugins install marcusolsson-csv-datasource
+    sudo grafana-cli plugins install yesoreyeram-infinity-datasource
 fi
 
 if [ ! -f "$GRAFANA_LOG_FILE" ]; then
@@ -108,7 +90,7 @@ if ! systemctl is-active grafana-server &>/dev/null; then
     sudo systemctl start grafana-server
 else
     if $NEEDS_RESTART; then
-        echo "GRestarting Grafana server due to configuration changes..."
+        echo "Restarting Grafana server due to configuration changes..."
         sudo systemctl restart grafana-server
     fi
 fi
@@ -117,21 +99,18 @@ sleep 3
 if command -v google-chrome &>/dev/null; then
     echo "Opening Grafana in Google Chrome..."
     google-chrome "http://localhost:3000" >/dev/null 2>&1 &
-    sleep 1
 elif command -v firefox &>/dev/null; then
     echo "Opening Grafana in Firefox..."
     firefox "http://localhost:3000" >/dev/null 2>&1 &
-    sleep 1
 else
     echo "No supported browser detected. Visit http://localhost:3000 to access the WebUI."
 fi
 
 echo
-echo "The login credentials are set to the following."
+echo "The default login credentials are as follows."
 echo "    - U: \"admin\""
-echo "    - P: \"admin\" (default)"
-
-PARENT_DIR=$(dirname "$(realpath "$0")")
+echo "    - P: \"admin\""
+echo
 
 cd "$PARENT_DIR/flexric/"
 

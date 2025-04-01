@@ -51,31 +51,32 @@ cd RAN_Intelligent_Controllers/Flexible-RIC/flexric/
 git diff examples/xApp/c/monitor/xapp_kpm_moni.c >../install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni.c.patch
 git diff examples/xApp/c/monitor/CMakeLists.txt >../install_patch_files/flexric/examples/xApp/c/monitor/CMakeLists.txt.patch
 cp examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv.c ../install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv.c
-cp examples/xApp/c/monitor/xapp_kpm_moni.c ../../../PATCHED_OAI_FILES
-cp examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv.c ../../../PATCHED_OAI_FILES
+cp examples/xApp/c/monitor/xapp_kpm_moni.c "$SCRIPT_DIR/PATCHED_OAI_FILES"
+cp examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv.c "$SCRIPT_DIR/PATCHED_OAI_FILES"
+cp examples/xApp/c/monitor/CMakeLists.txt "$SCRIPT_DIR/PATCHED_OAI_FILES"
 
 cd "$SCRIPT_DIR/../.."
 
-if [ ! -f "NIST Commercial Product Disclaimer.md" ]; then
-    echo "Wrong directory"
-    pwd
-    ls
-    exit
-fi
+# if [ ! -f "NIST Commercial Product Disclaimer.md" ]; then
+#     echo "Wrong directory"
+#     pwd
+#     ls
+#     exit
+# fi
 
-# Apply global format
+# # Apply global format
 
-if ! command -v shfmt &>/dev/null; then
-    echo "Package \"shfmt\" not found, installing..."
-    sudo apt-get install -y shfmt
-fi
-find . -type f -name "*.sh" -exec shfmt -i 4 -w {} +
-git restore *.previous.sh
+# if ! command -v shfmt &>/dev/null; then
+#     echo "Package \"shfmt\" not found, installing..."
+#     sudo apt-get install -y shfmt
+# fi
+# find . -type f -name "*.sh" -exec shfmt -i 4 -w {} +
+# git restore *.previous.sh
 
-sudo apt-get install -y dos2unix
-find . -type f -exec dos2unix {} \;
+# sudo apt-get install -y dos2unix
+# find . -type f -exec dos2unix {} \;
 
-find . -exec chmod 775 {} \;
-chmod 644 "LICENSE"
-chmod 644 "NIST Commercial Product Disclaimer.md"
-chmod 644 "NIST Software Disclaimer.md"
+# find . -exec chmod 775 {} \;
+# chmod 644 "LICENSE"
+# chmod 644 "NIST Commercial Product Disclaimer.md"
+# chmod 644 "NIST Software Disclaimer.md"

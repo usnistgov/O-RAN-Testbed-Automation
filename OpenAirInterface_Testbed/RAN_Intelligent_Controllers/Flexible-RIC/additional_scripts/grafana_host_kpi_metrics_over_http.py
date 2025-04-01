@@ -35,5 +35,5 @@ class MyTCPServer(socketserver.TCPServer):
 with MyTCPServer(('', PORT), SingleFileHTTPRequestHandler) as httpd:
     print('Serving the following routes:')
     print(f'    http://localhost:{PORT}/KPI_Metrics.csv...')
-    print(f'    http://localhost:{PORT}/NIST.png...')
+    print(f'    http://localhost:{PORT}/NIST.svg...')
     httpd.serve_forever()

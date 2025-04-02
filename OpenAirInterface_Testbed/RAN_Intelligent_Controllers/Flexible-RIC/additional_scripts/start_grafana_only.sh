@@ -111,5 +111,3 @@ echo "    - P: \"admin\""
 echo
 
 cd "$PARENT_DIR/flexric/"
-
-./build/examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv "$GRAFANA_LOG_FILE" -c "../configs/flexric.conf"

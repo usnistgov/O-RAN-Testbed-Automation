@@ -34,42 +34,28 @@ if ! command -v realpath &>/dev/null; then
 fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
-cd "$SCRIPT_DIR"
+cd "$SCRIPT_DIR/../.."
 
-# Upon exit, restore the terminal to a sane state
-trap 'stty sane; exit' EXIT SIGINT SIGTERM
-
-# Check if the components are already stopped
-if ! $(./is_running.sh | grep -q ": RUNNING"); then
-    ./is_running.sh
-    exit 0
+if [ ! -f "NIST Commercial Product Disclaimer.md" ]; then
+    echo "Wrong directory"
+    pwd
+    ls
+    exit
 fi
 
-echo "Stopping xApps..."
-./additional_scripts/stop_xapps.sh
+# Apply global format
 
-# Send a graceful shutdown signal to the FlexRIC process
-sudo pkill -f "nearRT-RIC" >/dev/null 2>&1 &
+if ! command -v shfmt &>/dev/null; then
+    echo "Package \"shfmt\" not found, installing..."
+    sudo apt-get install -y shfmt
+fi
+find . -type f -name "*.sh" -exec shfmt -i 4 -w {} +
+git restore *.previous.sh
 
-# Wait for the process to terminate gracefully
-COUNT=0
-MAX_COUNT=10
-sleep 1
-while [ $COUNT -lt $MAX_COUNT ]; do
-    IS_RUNNING=$(./is_running.sh)
-    echo "$IS_RUNNING ($COUNT / $MAX_COUNT)"
-    if echo "$IS_RUNNING" | grep -q "FlexRIC: NOT_RUNNING"; then
-        echo "The FlexRIC has stopped gracefully."
-        ./is_running.sh
-        exit 0
-    fi
-    COUNT=$((COUNT + 1))
-    sleep 2
-done
+sudo apt-get install -y dos2unix
+find . -type f -exec dos2unix {} \;
 
-# If the process is still running after 20 seconds, send a forceful kill signal
-echo "The FlexRIC did not stop in time, sending forceful kill signal..."
-sudo pkill -9 -f "nearRT-RIC" >/dev/null 2>&1 &
-
-sleep 2
-./is_running.sh
+find . -exec chmod 775 {} \;
+chmod 644 "LICENSE"
+chmod 644 "NIST Commercial Product Disclaimer.md"
+chmod 644 "NIST Software Disclaimer.md"

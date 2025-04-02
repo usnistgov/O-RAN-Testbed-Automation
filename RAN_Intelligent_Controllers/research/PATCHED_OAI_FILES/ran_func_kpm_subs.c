@@ -91,7 +91,12 @@ static meas_record_lst_t fill_RSRP(__attribute__((unused))uint32_t gran_period_m
   meas_record.value = REAL_MEAS_VALUE;
 
   // Calculate the average value of RSRP
-  meas_record.real_val = ue_info.ue->mac_stats.prev_num_rsrp_meas > 0 ? (double)ue_info.ue->mac_stats.prev_cumul_rsrp / ue_info.ue->mac_stats.prev_num_rsrp_meas : 0.0;  // [dBm]
+  if (ue_info.ue->mac_stats.prev_num_rsrp_meas > 0) {
+    meas_record.real_val = (double)ue_info.ue->mac_stats.prev_cumul_rsrp / (double)ue_info.ue->mac_stats.prev_num_rsrp_meas; // [dBm]
+  } else {
+    meas_record.real_val = 0.0;
+  }
+  
   return meas_record;
 }
 

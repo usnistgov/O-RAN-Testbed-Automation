@@ -28,48 +28,27 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-if ! command -v realpath &>/dev/null; then
-    echo "Package \"coreutils\" not found, installing..."
-    sudo apt-get install -y coreutils
+if pgrep -f "xapp_kpm_moni_write_to_csv" >/dev/null; then
+    echo "Stopping xApp KPM Moni (CSV)..."
+    pkill -f "xapp_kpm_moni_write_to_csv"
 fi
 
-SCRIPT_DIR=$(dirname "$(realpath "$0")")
-cd "$SCRIPT_DIR"
-
-# Upon exit, restore the terminal to a sane state
-trap 'stty sane; exit' EXIT SIGINT SIGTERM
-
-# Check if the components are already stopped
-if ! $(./is_running.sh | grep -q ": RUNNING"); then
-    ./is_running.sh
-    exit 0
+if pgrep -f "xapp_kpm_moni " >/dev/null; then
+    echo "Stopping xApp KPM Moni..."
+    pkill -f "xapp_kpm_moni"
 fi
 
-echo "Stopping xApps..."
-./additional_scripts/stop_xapps.sh
+if pgrep -f "xapp_rc_moni" >/dev/null; then
+    echo "Stopping xApp RC Moni..."
+    pkill -f "xapp_rc_moni"
+fi
 
-# Send a graceful shutdown signal to the FlexRIC process
-sudo pkill -f "nearRT-RIC" >/dev/null 2>&1 &
+if pgrep -f "xapp_kpm_rc" >/dev/null; then
+    echo "Stopping xApp KPM RC..."
+    pkill -f "xapp_kpm_rc"
+fi
 
-# Wait for the process to terminate gracefully
-COUNT=0
-MAX_COUNT=10
-sleep 1
-while [ $COUNT -lt $MAX_COUNT ]; do
-    IS_RUNNING=$(./is_running.sh)
-    echo "$IS_RUNNING ($COUNT / $MAX_COUNT)"
-    if echo "$IS_RUNNING" | grep -q "FlexRIC: NOT_RUNNING"; then
-        echo "The FlexRIC has stopped gracefully."
-        ./is_running.sh
-        exit 0
-    fi
-    COUNT=$((COUNT + 1))
-    sleep 2
-done
-
-# If the process is still running after 20 seconds, send a forceful kill signal
-echo "The FlexRIC did not stop in time, sending forceful kill signal..."
-sudo pkill -9 -f "nearRT-RIC" >/dev/null 2>&1 &
-
-sleep 2
-./is_running.sh
+if pgrep -f "xapp_gtp_mac_rlc_pdcp_moni" >/dev/null; then
+    echo "Stopping xApp GTP MAC RLC PDCP Moni..."
+    pkill -f "xapp_gtp_mac_rlc_pdcp_moni"
+fi

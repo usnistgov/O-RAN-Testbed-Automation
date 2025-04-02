@@ -39,7 +39,7 @@ if exist "5G_Core_Network\open5gs" rmdir /s /q "5G_Core_Network\open5gs"
 cd 5G_Core_Network
 git clone https://github.com/open5gs/open5gs.git
 cd open5gs
-git checkout 33fb33be45fe178abd471785a89671b360b044dd
+git checkout 7dfd9a39649700c24c22f1978ed7a35541a72cca
 cd ..\..
 
 cd %~dp0..
@@ -235,7 +235,7 @@ if exist "OpenAirInterface_Testbed\5G_Core_Network\open5gs" rmdir /s /q "OpenAir
 cd OpenAirInterface_Testbed\5G_Core_Network
 git clone https://github.com/open5gs/open5gs.git
 cd open5gs
-git checkout 33fb33be45fe178abd471785a89671b360b044dd
+git checkout 7dfd9a39649700c24c22f1978ed7a35541a72cca
 cd ..\..\..
 
 cd %~dp0..

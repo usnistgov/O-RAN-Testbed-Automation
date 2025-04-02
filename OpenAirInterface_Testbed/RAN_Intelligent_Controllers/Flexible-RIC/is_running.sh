@@ -53,3 +53,23 @@ else
         echo "Grafana: NOT_RUNNING (with HTTP server)"
     fi
 fi
+
+if pgrep -f "xapp_kpm_moni_write_to_csv" >/dev/null; then
+    echo "xApp KPM Moni (CSV): RUNNING"
+fi
+
+if pgrep -f "xapp_kpm_moni " >/dev/null; then
+    echo "xApp KPM Moni: RUNNING"
+fi
+
+if pgrep -f "xapp_rc_moni" >/dev/null; then
+    echo "xApp RC Moni: RUNNING"
+fi
+
+if pgrep -f "xapp_kpm_rc" >/dev/null; then
+    echo "xApp KPM RC: RUNNING"
+fi
+
+if pgrep -f "xapp_gtp_mac_rlc_pdcp_moni" >/dev/null; then
+    echo "xApp GTP MAC RLC PDCP Moni: RUNNING"
+fi

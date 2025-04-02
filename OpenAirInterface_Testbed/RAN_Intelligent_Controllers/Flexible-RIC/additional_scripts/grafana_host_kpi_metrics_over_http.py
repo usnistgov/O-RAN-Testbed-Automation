@@ -24,8 +24,19 @@ class SingleFileHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         print(f"Serving file: {os.path.basename(self.path)}")
         return super().do_GET()
 
+    # Override to serve files from the correct directory
     def translate_path(self, path):
         return os.path.abspath(self.path)
+    
+    # Override to add headers to prevent caching of the files
+    def end_headers(self):
+        self.send_header('Cache-Control', 'no-store, must-revalidate')
+        self.send_header('Pragma', 'no-cache')
+        self.send_header('Expires', '0')
+        return super().end_headers()
+
+    
+
 
 PORT = 3030
 

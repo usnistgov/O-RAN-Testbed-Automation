@@ -56,27 +56,3 @@ cp examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv.c "$SCRIPT_DIR/PATCHED_OAI
 cp examples/xApp/c/monitor/CMakeLists.txt "$SCRIPT_DIR/PATCHED_OAI_FILES"
 
 cd "$SCRIPT_DIR/../.."
-
-# if [ ! -f "NIST Commercial Product Disclaimer.md" ]; then
-#     echo "Wrong directory"
-#     pwd
-#     ls
-#     exit
-# fi
-
-# # Apply global format
-
-# if ! command -v shfmt &>/dev/null; then
-#     echo "Package \"shfmt\" not found, installing..."
-#     sudo apt-get install -y shfmt
-# fi
-# find . -type f -name "*.sh" -exec shfmt -i 4 -w {} +
-# git restore *.previous.sh
-
-# sudo apt-get install -y dos2unix
-# find . -type f -exec dos2unix {} \;
-
-# find . -exec chmod 775 {} \;
-# chmod 644 "LICENSE"
-# chmod 644 "NIST Commercial Product Disclaimer.md"
-# chmod 644 "NIST Software Disclaimer.md"

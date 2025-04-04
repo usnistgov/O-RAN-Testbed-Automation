@@ -28,51 +28,41 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-if ! command -v realpath &>/dev/null; then
-    echo "Package \"coreutils\" not found, installing..."
-    sudo apt-get install -y coreutils
+echo "# Script: $(realpath $0)..."
+
+# Exit immediately if a command fails
+set -e
+
+UE_NUMBER=$1
+
+if [[ -z "$UE_NUMBER" ]]; then
+    echo "Error: No UE number provided."
+    echo "Usage: $0 <UE_NUMBER>"
+    exit 1
+fi
+if ! [[ $UE_NUMBER =~ ^[0-9]+$ ]]; then
+    echo "Error: UE number must be a number."
+    exit 1
 fi
 
-SCRIPT_DIR=$(dirname "$(realpath "$0")")
-cd "$SCRIPT_DIR"
+UE_NAMESPACE="ue$UE_NUMBER"
 
-# Upon exit, restore the terminal to a sane state
-trap 'stty sane; exit' EXIT SIGINT SIGTERM
+# Give the UE its own network namespace and configure it to access the host network
+NETWORK_INTEFACE=$(ip route | grep default | awk '{print $5}')
+UE_SUBNET_FIRST_3_OCTETS=10.201.$UE_NUMBER
 
-# Check if the components are already stopped
-if ! $(./is_running.sh | grep -q ": RUNNING"); then
-    ./is_running.sh
-    exit 0
-fi
-
-echo "Stopping xApps..."
-./additional_scripts/stop_xapps.sh
-
-# Prevent the subsequent command from requiring credential input
-sudo ls > /dev/null 2>&1
-
-# Send a graceful shutdown signal to the FlexRIC process
-sudo pkill -f "nearRT-RIC" >/dev/null 2>&1 &
-
-# Wait for the process to terminate gracefully
-COUNT=0
-MAX_COUNT=10
-sleep 1
-while [ $COUNT -lt $MAX_COUNT ]; do
-    IS_RUNNING=$(./is_running.sh)
-    echo "$IS_RUNNING ($COUNT / $MAX_COUNT)"
-    if echo "$IS_RUNNING" | grep -q "FlexRIC: NOT_RUNNING"; then
-        echo "The FlexRIC has stopped gracefully."
-        ./is_running.sh
-        exit 0
-    fi
-    COUNT=$((COUNT + 1))
-    sleep 2
-done
-
-# If the process is still running after 20 seconds, send a forceful kill signal
-echo "The FlexRIC did not stop in time, sending forceful kill signal..."
-sudo pkill -9 -f "nearRT-RIC" >/dev/null 2>&1 &
-
-sleep 2
-./is_running.sh
+# Code from (https://open-cells.com/index.php/2021/02/08/rf-simulator-1-enb-2-ues-all-in-one):
+sudo ip netns delete $UE_NAMESPACE || true
+sudo ip link delete v-eth$UE_NUMBER || true
+sudo ip netns add $UE_NAMESPACE 
+sudo ip link add v-eth$UE_NUMBER type veth peer name v-$UE_NAMESPACE
+sudo ip link set v-$UE_NAMESPACE netns $UE_NAMESPACE
+sudo ip addr add $UE_SUBNET_FIRST_3_OCTETS.1/24 dev v-eth$UE_NUMBER 
+sudo ip link set v-eth$UE_NUMBER up 
+sudo iptables -t nat -A POSTROUTING -s $UE_SUBNET_FIRST_3_OCTETS.0/24 -o $NETWORK_INTEFACE -j MASQUERADE 
+sudo iptables -A FORWARD -i $NETWORK_INTEFACE -o v-eth$UE_NUMBER -j ACCEPT 
+sudo iptables -A FORWARD -o $NETWORK_INTEFACE -i v-eth$UE_NUMBER -j ACCEPT
+sudo ip netns exec $UE_NAMESPACE ip link set dev lo up 
+sudo ip netns exec $UE_NAMESPACE ip addr add $UE_SUBNET_FIRST_3_OCTETS.2/24 dev v-$UE_NAMESPACE 
+sudo ip netns exec $UE_NAMESPACE ip link set v-$UE_NAMESPACE up 
+sudo ip netns exec $UE_NAMESPACE ip route add default via $UE_SUBNET_FIRST_3_OCTETS.1

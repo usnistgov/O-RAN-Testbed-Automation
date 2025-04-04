@@ -151,6 +151,8 @@ if [ $UE_NUMBER -gt 3 ]; then
     "$REGISTRATION_DIR/./register_subscriber.sh" --imsi "$UE_IMSI" --key "$UE_KEY" --opc "$UE_OPC" --apn "$UE_APN"
 fi
 
+HOSTNAME_IP=$(hostname -I | awk '{print $1}')
+
 if ./is_running.sh | grep -q "ue$UE_NUMBER"; then
     echo "Already running ue$UE_NUMBER."
 else
@@ -162,6 +164,9 @@ else
     >logs/ue${UE_NUMBER}_stdout.txt
     echo "Starting nr-uesoftmodem (ue$UE_NUMBER)..."
 
+    # Give the UE its own network namespace and configure it to access the host network
+    sudo ./install_scripts/setup_ue_namespace.sh "$UE_NUMBER"
+
     cd "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build"
-    sudo ./nr-uesoftmodem -O "../../../../configs/ue$UE_NUMBER.conf" --rfsim --rfsimulator.serveraddr 127.0.0.1 -r 106 --numerology 1 --band 78 -C 3619200000
+    sudo ./nr-uesoftmodem -O "../../../../configs/ue$UE_NUMBER.conf" --rfsim --rfsimulator.serveraddr $HOSTNAME_IP -r 106 --numerology 1 --band 78 -C 3619200000
 fi

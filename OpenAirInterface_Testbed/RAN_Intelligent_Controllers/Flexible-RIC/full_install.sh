@@ -91,7 +91,7 @@ if [ ! -f "flexric/examples/xApp/c/monitor/xapp_kpm_moni.c.previous" ]; then
     echo
     echo "Patching xapp_kpm_moni.c..."
     cd flexric
-    git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni.c.patch"
+    git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni.c.patch" || true
     cd ..
 fi
 
@@ -106,7 +106,7 @@ if [ ! -f "flexric/examples/xApp/c/monitor/CMakeLists.txt.previous" ]; then
     echo
     echo "Patching CMakeLists.txt..."
     cd flexric
-    git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/CMakeLists.txt.patch"
+    git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/CMakeLists.txt.patch" || true
     cd ..
 else
     echo "CMakeLists.txt is already patched, skipping."

@@ -34,45 +34,37 @@ if ! command -v realpath &>/dev/null; then
 fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
-cd "$SCRIPT_DIR"
+PARENT_DIR=$(dirname "$SCRIPT_DIR")
+cd "$PARENT_DIR"
 
-# Upon exit, restore the terminal to a sane state
-trap 'stty sane; exit' EXIT SIGINT SIGTERM
-
-# Check if the components are already stopped
-if ! $(./is_running.sh | grep -q ": RUNNING"); then
-    ./is_running.sh
-    exit 0
+UE_NUMBER=1
+if [ "$#" -eq 1 ]; then
+    UE_NUMBER=$1
+fi
+if ! [[ $UE_NUMBER =~ ^[0-9]+$ ]]; then
+    echo "Error: UE number must be a number."
+    exit 1
+fi
+if [ $UE_NUMBER -lt 1 ]; then
+    echo "Error: UE number must be greater than or equal to 1."
+    exit 1
 fi
 
-echo "Stopping xApps..."
-./additional_scripts/stop_xapps.sh
+if [ ! -f "configs/ue1.conf" ]; then
+    echo "Configuration was not found for nr-uesoftmodem. Please run ./generate_configurations.sh first."
+    exit 1
+fi
 
-# Prevent the subsequent command from requiring credential input
-sudo ls > /dev/null 2>&1
+UE_NAMESPACE="ue$UE_NUMBER"
 
-# Send a graceful shutdown signal to the FlexRIC process
-sudo pkill -f "nearRT-RIC" >/dev/null 2>&1 &
+# If the namespace doesn't exist
+if ! ip netns list | grep -q "$UE_NAMESPACE"; then
+    echo "Error: Namespace $UE_NAMESPACE does not exist. Please start the UE first with: ./run_background.sh $UE_NUMBER"
+    exit 1
+fi
 
-# Wait for the process to terminate gracefully
-COUNT=0
-MAX_COUNT=10
-sleep 1
-while [ $COUNT -lt $MAX_COUNT ]; do
-    IS_RUNNING=$(./is_running.sh)
-    echo "$IS_RUNNING ($COUNT / $MAX_COUNT)"
-    if echo "$IS_RUNNING" | grep -q "FlexRIC: NOT_RUNNING"; then
-        echo "The FlexRIC has stopped gracefully."
-        ./is_running.sh
-        exit 0
-    fi
-    COUNT=$((COUNT + 1))
-    sleep 2
-done
+echo "Opening shell in UE $UE_NUMBER namespace..."
 
-# If the process is still running after 20 seconds, send a forceful kill signal
-echo "The FlexRIC did not stop in time, sending forceful kill signal..."
-sudo pkill -9 -f "nearRT-RIC" >/dev/null 2>&1 &
+sudo ip netns exec $UE_NAMESPACE bash
 
-sleep 2
-./is_running.sh
+echo "Shell in UE $UE_NUMBER namespace closed."

@@ -96,12 +96,12 @@ sleep 3
 
 if command -v google-chrome &>/dev/null; then
     echo "Opening Grafana in Google Chrome..."
-    google-chrome "http://localhost:3000" >/dev/null 2>&1 &
+    google-chrome "http://localhost:3000/dashboards" >/dev/null 2>&1 &
 elif command -v firefox &>/dev/null; then
     echo "Opening Grafana in Firefox..."
-    firefox "http://localhost:3000" >/dev/null 2>&1 &
+    firefox "http://localhost:3000/dashboards" >/dev/null 2>&1 &
 else
-    echo "No supported browser detected. Visit http://localhost:3000 to access the WebUI."
+    echo "No supported browser detected. Visit http://localhost:3000/dashboards to access the WebUI."
 fi
 
 echo

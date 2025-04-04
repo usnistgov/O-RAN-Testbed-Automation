@@ -34,45 +34,68 @@ if ! command -v realpath &>/dev/null; then
 fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
-cd "$SCRIPT_DIR"
+PARENT_DIR=$(dirname "$SCRIPT_DIR")
+cd "$PARENT_DIR"
 
-# Upon exit, restore the terminal to a sane state
-trap 'stty sane; exit' EXIT SIGINT SIGTERM
-
-# Check if the components are already stopped
-if ! $(./is_running.sh | grep -q ": RUNNING"); then
-    ./is_running.sh
-    exit 0
+UE_NUMBER=$1
+if [[ -z "$UE_NUMBER" ]]; then
+    echo "Error: No UE number provided."
+    echo "Usage: $0 <UE_NUMBER>"
+    exit 1
+fi
+if ! [[ $UE_NUMBER =~ ^[0-9]+$ ]]; then
+    echo "Error: UE number must be a number."
+    exit 1
+fi
+if [ $UE_NUMBER -lt 1 ]; then
+    echo "Error: UE number must be greater than or equal to 1."
+    exit 1
 fi
 
-echo "Stopping xApps..."
-./additional_scripts/stop_xapps.sh
+if [ ! -f "configs/ue1.conf" ]; then
+    echo "Configuration was not found for nr-uesoftmodem. Please run ./generate_configurations.sh first."
+    exit 1
+fi
 
-# Prevent the subsequent command from requiring credential input
-sudo ls > /dev/null 2>&1
+UE_NAMESPACE="ue$UE_NUMBER"
 
-# Send a graceful shutdown signal to the FlexRIC process
-sudo pkill -f "nearRT-RIC" >/dev/null 2>&1 &
+# If the namespace doesn't exist
+if ! ip netns list | grep -q "$UE_NAMESPACE"; then
+    echo "Error: Namespace $UE_NAMESPACE does not exist. Please start the UE first with: ./run_background.sh $UE_NUMBER"
+    exit 1
+fi
 
-# Wait for the process to terminate gracefully
-COUNT=0
-MAX_COUNT=10
-sleep 1
-while [ $COUNT -lt $MAX_COUNT ]; do
-    IS_RUNNING=$(./is_running.sh)
-    echo "$IS_RUNNING ($COUNT / $MAX_COUNT)"
-    if echo "$IS_RUNNING" | grep -q "FlexRIC: NOT_RUNNING"; then
-        echo "The FlexRIC has stopped gracefully."
-        ./is_running.sh
-        exit 0
-    fi
-    COUNT=$((COUNT + 1))
-    sleep 2
-done
+# Extract the first IPv4 address from a CIDR block by replacing the last octet with '.1'
+# For example, 10.45.0.0/16 --> 10.45.0.1/16
+grab_first_ipv4_address() {
+    local IP=$1
+    echo ${IP%.*}.1/${IP#*/}
+}
 
-# If the process is still running after 20 seconds, send a forceful kill signal
-echo "The FlexRIC did not stop in time, sending forceful kill signal..."
-sudo pkill -9 -f "nearRT-RIC" >/dev/null 2>&1 &
+# Remove the CIDR suffix from an IP address
+# For example, 10.45.0.1/16 --> 10.45.0.1
+remove_cidr_suffix() {
+    local IP=$1
+    echo ${IP%/*}
+}
 
-sleep 2
-./is_running.sh
+LOG_FILE="logs/ue${UE_NUMBER}_stdout.txt"
+PDU_SESSION_IP=$(cat $LOG_FILE | grep "Received PDU Session Establishment Accept" | cut -d ':' -f2 | xargs)
+
+if [ -z "$PDU_SESSION_IP" ]; then
+    echo "Error: Unable to find PDU Session IP from the log file $LOG_FILE."
+    exit 1
+fi
+
+echo "Successfully found PDU Session IP: $PDU_SESSION_IP"
+
+# First make sure we can ping the 5G core
+sudo ip netns exec $UE_NAMESPACE ping -c 4 $PDU_SESSION_IP
+if [ $? -ne 0 ]; then
+    echo "Error: Unable to ping $PDU_SESSION_IP."
+    exit 1
+fi
+
+echo "Ping was successful to $PDU_SESSION_IP, proceeding with iperf traffic generation..."
+
+sudo ip netns exec ue$UE_NUMBER iperf -c $PDU_SESSION_IP -u -i 1 -b 1M -t 60

@@ -203,8 +203,8 @@ else
     sudo ./install_scripts/delete_namespace.sh ricinfra ricplt || true
 
     echo "Revising RIC Installation YAML File..."
-    RIC_YAML_FILE_NAME="example_recipe_oran_j_release.yaml"
-    RIC_YAML_FILE_NAME_UPDATED="example_recipe_oran_j_release_updated.yaml"
+    RIC_YAML_FILE_NAME="example_recipe_oran_k_release.yaml"
+    RIC_YAML_FILE_NAME_UPDATED="example_recipe_oran_k_release_updated.yaml"
 
     sudo chown $USER:$USER "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME"
     sudo cp "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME" "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME_UPDATED"
@@ -214,9 +214,6 @@ else
     # Wait for kube-apiserver to be ready before installing Near-RT RIC
     echo "Waiting for the Kubernetes API server to become ready before installing Near-RT RIC..."
     sudo ./install_scripts/wait_for_kubectl.sh
-
-    echo "Revising InfluxDB NFS Storage Class configuration..."
-    ./install_scripts/revise_influxdb_values_yaml.sh
 
     # Run the installation command
     mkdir -p "$SCRIPT_DIR/logs"
@@ -230,7 +227,7 @@ else
         echo
         echo "Installing Near-RT RIC..."
         cd ric-dep/bin/
-        sudo ./install -f "../RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME_UPDATED" -c "influxdb" 2>&1 | tee -a "$RIC_INSTALLATION_STDOUT"
+        sudo ./install -f "../RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME_UPDATED" 2>&1 | tee -a "$RIC_INSTALLATION_STDOUT"
         cd "$SCRIPT_DIR"
         echo "Parsing output to check for successful Near-RT RIC installation..."
         ./install_scripts/parse_ric_installation_output.sh

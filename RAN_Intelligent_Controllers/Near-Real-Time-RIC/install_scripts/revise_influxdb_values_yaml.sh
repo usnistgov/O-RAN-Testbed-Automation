@@ -51,6 +51,16 @@ mkdir -p "$INFLUXDB_PATH"
 sudo chown -R nobody:nogroup "$INFLUXDB_PATH"
 sudo chmod 775 "$INFLUXDB_PATH"
 
+# List all the kubectl nodes, and prepare the values string for nodeAffinity
+NODE_NAMES=($(kubectl get nodes --no-headers | awk '{print $1}'))
+NODE_VALUES=""
+if [ ${#NODE_NAMES[@]} -gt 0 ]; then
+    NODE_VALUES="              - \"${NODE_NAMES[0]}\""
+    for NODE_NAME in "${NODE_NAMES[@]:1}"; do
+        NODE_VALUES="$NODE_VALUES"$'\n'"              - \"$NODE_NAME\""
+    done
+fi
+
 # Create and apply PersistentVolume for InfluxDB
 cat <<EOF >"$HOME/.kube/influxdb-pv.yaml"
 apiVersion: v1
@@ -74,7 +84,7 @@ spec:
           - key: kubernetes.io/hostname
             operator: In
             values:
-              - "$(hostname)"
+$NODE_VALUES
 EOF
 kubectl apply -f "$HOME/.kube/influxdb-pv.yaml"
 

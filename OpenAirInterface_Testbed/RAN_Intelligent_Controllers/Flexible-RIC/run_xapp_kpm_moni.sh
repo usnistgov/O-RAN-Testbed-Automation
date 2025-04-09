@@ -40,4 +40,4 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 
 cd "$SCRIPT_DIR/flexric/"
 
-./build/examples/xApp/c/monitor/xapp_kpm_moni
+./build/examples/xApp/c/monitor/xapp_kpm_moni -c "../configs/flexric.conf"

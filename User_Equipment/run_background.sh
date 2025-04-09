@@ -43,12 +43,10 @@ UE_NUMBER=1
 if [ "$#" -eq 1 ]; then
     UE_NUMBER=$1
 fi
-
 if ! [[ $UE_NUMBER =~ ^[0-9]+$ ]]; then
     echo "Error: UE number must be a number."
     exit 1
 fi
-
 if [ $UE_NUMBER -lt 1 ]; then
     echo "Error: UE number must be greater than or equal to 1."
     exit 1

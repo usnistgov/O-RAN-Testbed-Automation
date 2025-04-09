@@ -57,7 +57,7 @@ echo "Stopping 5G Core Network, srsRAN_Project, and srsRAN_4G..."
 echo
 echo
 echo "################################################################################"
-echo "# Uninstalling 5G Core...                                                        #"
+echo "# Uninstalling 5G Core...                                                      #"
 echo "################################################################################"
 echo
 echo
@@ -70,7 +70,7 @@ cd ..
 echo
 echo
 echo "################################################################################"
-echo "# Uninstalling User Equipment...                                                 #"
+echo "# Uninstalling User Equipment...                                               #"
 echo "################################################################################"
 echo
 echo
@@ -83,7 +83,7 @@ cd ..
 echo
 echo
 echo "################################################################################"
-echo "# Uninstalling Next Generation Node B...                                         #"
+echo "# Uninstalling Next Generation Node B...                                       #"
 echo "################################################################################"
 echo
 echo
@@ -96,7 +96,7 @@ cd ..
 echo
 echo
 echo "################################################################################"
-echo "# Uninstalling Near Real-Time RAN Intelligent Controller...                      #"
+echo "# Uninstalling Near-Real-Time RAN Intelligent Controller...                    #"
 echo "################################################################################"
 echo
 echo

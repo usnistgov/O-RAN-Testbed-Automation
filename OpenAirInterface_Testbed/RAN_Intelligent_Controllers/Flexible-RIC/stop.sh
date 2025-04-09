@@ -39,11 +39,17 @@ cd "$SCRIPT_DIR"
 # Upon exit, restore the terminal to a sane state
 trap 'stty sane; exit' EXIT SIGINT SIGTERM
 
-# Check if the FlexRIC is already stopped
-if $(./is_running.sh | grep -q "FlexRIC: NOT_RUNNING"); then
+# Check if the components are already stopped
+if ! $(./is_running.sh | grep -q ": RUNNING"); then
     ./is_running.sh
     exit 0
 fi
+
+echo "Stopping xApps..."
+./additional_scripts/stop_xapps.sh
+
+# Prevent the subsequent command from requiring credential input
+sudo ls >/dev/null 2>&1
 
 # Send a graceful shutdown signal to the FlexRIC process
 sudo pkill -f "nearRT-RIC" >/dev/null 2>&1 &

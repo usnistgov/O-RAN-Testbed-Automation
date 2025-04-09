@@ -1,5 +1,5 @@
 {
-  "https://gitlab.eurecom.fr/oai/openairinterface5g.git": ["develop", "1d479b2aa9d0f506e6c745f05d8a9e45e77b4376"],
-  "https://github.com/swig/swig.git": ["master", "62d49257706de82bf760467d1ff03ba592dff138"],
-  "https://gitlab.eurecom.fr/mosaic5g/flexric.git": ["dev", "6bf36fe4b56d96406bb269469239cfe6a7d1eec2"]
+  "https://gitlab.eurecom.fr/oai/openairinterface5g.git": ["develop", "b5f7d22c028e3320b5ae350845fb51d13fcbf438"],
+  "https://github.com/swig/swig.git": ["master", "124d8a8c37a8047c1cb190db24893d3bf346bb2c"],
+  "https://gitlab.eurecom.fr/mosaic5g/flexric.git": ["dev", "2638b58e201ab15200d0e02c6225e9aac35ab51b"]
 }

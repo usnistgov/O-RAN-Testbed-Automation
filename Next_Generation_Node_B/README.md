@@ -6,7 +6,7 @@ The Next Generation Node B (gNodeB) is a 5G base station configured with srsRAN_
 
 - **Compile**: Use `./full_install.sh` to build and install the gNodeB software.
 - **Generate Configurations**: Use `./generate_configurations.sh` to create configuration files.
-  - The script automatically retrieves the 5G Core Network's AMF address and the SCTP address from the Near Real-Time RAN Intelligent Controller's E2 Terminator. If either are not found locally, the script will prompt the user to enter the address manually.
+  - The script automatically retrieves the 5G Core Network's AMF address and the SCTP address from the Near-Real-Time RAN Intelligent Controller's E2 Terminator. If either are not found locally, the script will prompt the user to enter the address manually.
   - Configuration files can be accessed and modified in the `configs` directory.
 - **Start the gNodeB**: Use `./run.sh` to start the gNodeB, or `./run_background.sh` to run it as a background process where the output is redirected to `logs/gnb_stdout.txt`.
 - **Stop the gNodeB**: Terminate the gNodeB with `./stop.sh`.

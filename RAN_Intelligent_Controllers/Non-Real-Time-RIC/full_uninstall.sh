@@ -53,7 +53,7 @@ if [ "$1" != "bypass_confirmation" ]; then
     fi
 fi
 
-echo "Uninstalling Non Real-Time RAN Intelligent Controller..."
+echo "Uninstalling Non-Real-Time RAN Intelligent Controller..."
 export DEBIAN_FRONTEND=noninteractive
 # Modifies the needrestart configuration to suppress interactive prompts
 if [ -f "/etc/needrestart/needrestart.conf" ]; then
@@ -83,13 +83,17 @@ fi
 
 # Ensure time synchronization is enabled using chrony
 if ! dpkg -s chrony &>/dev/null; then
-    sudo apt-get install -y chrony
+    sudo apt-get update
+    echo "Chrony is not installed, installing..."
+    sudo apt-get install -y chrony || true
 fi
 if ! systemctl is-enabled --quiet chrony; then
-    sudo systemctl enable chrony && echo "Chrony service enabled."
+    echo "Enabling Chrony service..."
+    sudo systemctl enable chrony || true
 fi
 if ! systemctl is-active --quiet chrony; then
-    sudo systemctl start chrony && echo "Chrony service started."
+    echo "Starting Chrony service..."
+    sudo systemctl start chrony || true
 fi
 
 ./stop_control_panel.sh
@@ -97,6 +101,13 @@ echo "Uninstalling Node.js used by the Control Panel..."
 sudo apt-get remove --purge -y nodejs
 sudo rm -f /etc/apt/keyrings/nodesource.gpg
 sudo rm -f /etc/apt/sources.list.d/nodesource.list
+
+if docker-compose -v &>/dev/null; then
+    echo "Uninstalling docker-compose..."
+    sudo rm -f /usr/local/bin/docker-compose
+    sudo rm -f /usr/bin/docker-compose
+    sudo rm -rf ~/.docker/compose
+fi
 
 echo
 echo
@@ -115,7 +126,7 @@ if sudo systemctl is-enabled --quiet docker.service; then
 fi
 
 # Uninstall Docker packages and clean up
-sudo apt-get purge -y --allow-change-held-packages docker docker-engine docker-ce docker.io containerd runc || true
+sudo apt-get remove --purge -y --allow-change-held-packages docker docker-engine docker-ce docker.io containerd runc || true
 sudo rm -rf /var/lib/docker /etc/docker
 sudo apt-get autoremove -y
 
@@ -197,25 +208,25 @@ done
 if command -v kubernetes-cni &>/dev/null; then
     echo "Uninstalling kubernetes-cni..."
     sudo apt-mark unhold kubernetes-cni
-    sudo apt-get purge -y kubernetes-cni
+    sudo apt-get remove --purge -y kubernetes-cni
     sudo rm -f $(which kubernetes-cni)
 fi
 if command -v kubeadm &>/dev/null; then
     echo "Uninstalling kubeadm..."
     sudo apt-mark unhold kubeadm
-    sudo apt-get purge -y kubeadm
+    sudo apt-get remove --purge -y kubeadm
     sudo rm -f $(which kubeadm)
 fi
 if command -v kubelet &>/dev/null; then
     echo "Uninstalling kubelet..."
     sudo apt-mark unhold kubelet
-    sudo apt-get purge -y kubelet
+    sudo apt-get remove --purge -y kubelet
     sudo rm -f $(which kubelet)
 fi
 if command -v kubectl &>/dev/null; then
     echo "Uninstalling kubectl..."
     sudo apt-mark unhold kubectl
-    sudo apt-get purge -y kubectl
+    sudo apt-get remove --purge -y kubectl
     sudo rm -f $(which kubectl)
 fi
 

@@ -18,6 +18,45 @@ This automation tool is based on the K-Release of the Near-RT RIC. More informat
 - **Logs**: From within K9s, use the `Arrow Keys` to highlight a pod, `Enter` to view the logs for the pod, `w` to wrap text, `Esc` to go back, `Ctrl+k` to restart a pod that isn't responding, and `s` to open a command line shell in the pod.
 - **Uninstall**: Remove the Near-RT RIC with `./full_uninstall.sh`.
 
+<details>
+  <summary><b>View the list of Kubernetes pods running after the Near-RT RIC is installed.</b></summary>
+  <hr>
+  
+```console
+$ kubectl get pods -A
+NAMESPACE      NAME                                                        READY   STATUS
+kube-flannel   kube-flannel-ds-rfsxv                                       1/1     Running
+kube-system    coredns-668d6bf9bc-hzjjt                                    1/1     Running
+kube-system    coredns-668d6bf9bc-pql2s                                    1/1     Running
+kube-system    etcd-vmware-022                                             1/1     Running
+kube-system    kube-apiserver-vmware-022                                   1/1     Running
+kube-system    kube-controller-manager-vmware-022                          1/1     Running
+kube-system    kube-proxy-7c6hq                                            1/1     Running
+kube-system    kube-scheduler-vmware-022                                   1/1     Running
+ricinfra       deployment-tiller-ricxapp-84b87b8c64-tjvkx                  1/1     Running
+ricplt         deployment-ricplt-a1mediator-78f79cbb6b-rchrz               1/1     Running
+ricplt         deployment-ricplt-alarmmanager-5b49476676-sfdfn             1/1     Running
+ricplt         deployment-ricplt-appmgr-5564b65869-zq5qt                   1/1     Running
+ricplt         deployment-ricplt-e2mgr-9b6b8f99f-g98jt                     1/1     Running
+ricplt         deployment-ricplt-e2term-alpha-f8f7d7855-zwdkp              1/1     Running
+ricplt         deployment-ricplt-o1mediator-bf4fb5758-5dp78                1/1     Running
+ricplt         deployment-ricplt-rtmgr-657457c4bb-5kk4j                    1/1     Running
+ricplt         deployment-ricplt-submgr-858956fbdc-zbbp8                   1/1     Running
+ricplt         deployment-ricplt-vespamgr-848f7bb874-l4kzc                 1/1     Running
+ricplt         r4-infrastructure-kong-79d7985749-tfsb2                     2/2     Running
+ricplt         r4-infrastructure-prometheus-alertmanager-b9cc56766-gqmt2   2/2     Running
+ricplt         r4-infrastructure-prometheus-server-6476958975-mtkz9        1/1     Running
+ricplt         statefulset-ricplt-dbaas-server-0                           1/1     Running
+ricxapp        ricxapp-hw-go-c84579888-rtjn9                               1/1     Running
+```
+  </pre>
+
+   _Note: Upon installing an xApp requiring InfluxDB, the pod "r4-influxdb-influxdb2-0" will also be installed._
+
+</details>
+
+---
+
 ## Installing an xApp
 
 By default, the Hello World Go xApp (hw-go) is installed automatically. Additional xApps can be installed to extend the functionality of the Near-RT RIC. For convenience, installation scripts for the following xApps are included:
@@ -61,6 +100,43 @@ By default, the Hello World Go xApp (hw-go) is installed automatically. Addition
 To uninstall an xApp, run `./additional_scripts/uninstall_an_xapp.sh` which will prompt the user to select an xApp to uninstall.
 Alternatively, xApps can be uninstalled manually by fetching the list of xApps with `dms_cli get_charts_list` and uninstalling an xApp with `dms_cli uninstall "NAME_OF_XAPP" ricxapp`.
 
+## Migration to Cilium
+
+The cluster is installed with Flannel as the default network plugin. There are several benefits of migrating to a security-enhanced network plugin like Cilium [[19]][cilium-io], for example, to monitor and regulate the network flows going in to and out of each pod using Hubble [[20]][cilium-hubble]. By default, pods are able to communicate with the internet, however, this can be restricted by applying Cilium policies.
+
+- **Install Cilium and Migrate Cluster Nodes**: Run `./additional_scripts/install_cilium_and_migrate_nodes.sh` to install Cilium and migrate each of the pods from current network plugin to Cilium, then apply policies that restrict the pods from communicating with the internet.
+  - For debugging purposes, the following files are generated in `$HOME/.kube/`:
+    - `cilium-values-migration.yaml`: Contains the Cilium configuration values during migration.
+    - `cilium-values-initial.yaml`: Contains the initial Cilium configuration values.
+    - `cilium-values-final.yaml`: Contains the final Cilium configuration values.
+- **Check Cilium Status**: Run `./additional_scripts/cilium_status.sh` to verify the status of Cilium. All indicators should display green.
+- **List Cilium Policies**: Run `./additional_scripts/cilium_list_policies.sh` to list currently-active Cilium policies.
+  - By default, the two policies are applied: `isolate-ric-communication` and `isolate-ricxapp-communication`. Both of them are defined in the YAML file: `$HOME/.kube/cilium-policy.yaml`.
+- **Disable Policies**: Run `./additional_scripts/cilium_disable_policies.sh` to disable the currently-active policies. After running the script, pods will have restored internet access.
+- **Enable Policies**: Run `./additional_scripts/cilium_enable_policies.sh` to re-enable the policies defined in `$HOME/.kube/cilium-policy.yaml`.
+- **Check Policy Enforcement**: Run `./additional_scripts/cilium_check_enforcement.sh` to check which pod labels are enforced by the policies.
+- **Visualize and Capture Network Flows**: Hubble can be used to monitor the network flows of the pods.
+  - Run `./additional_scripts/hubble_capture.sh` to capture the network flows. The output will be saved to `logs/hubble_captured_flows.csv` with the following columns:
+    - Timestamp (readable)
+    - UNIX Epoch (seconds)
+    - Summary
+    - Is Reply
+    - Source IP
+    - Destination IP
+    - Source Port
+    - Destination Port
+    - Source Pod
+    - Destination Pod
+    - Source Namespace
+    - Destination Namespace
+    - Protocol
+    - Layer 4
+  - Run `./additional_scripts/hubble_visualize.sh` to visualize the network flows using the Hubble UI.
+
+<p align="center">
+  <img src="../../Images/Cilium_Hubble_UI.png" alt="Hubble UI showing network flows" width="70%">
+</p>
+  
 ## References
 
 1. Working Group 3: Near-Real-time RAN Intelligent Controller and E2 Interface Workgroup. O-RAN Alliance. [https://public.o-ran.org/display/WG3/Introduction][oran-wg3]
@@ -81,6 +157,8 @@ Alternatively, xApps can be uninstalled manually by fetching the list of xApps w
 16. Traffic Steering xApp project page. O-RAN Software Community. [https://github.com/o-ran-sc/ric-app-ts][trafficxapp-code]
 17. HW Python xApp project page. O-RAN Software Community. [https://github.com/o-ran-sc/ric-app-hw-python][hw-python-code]
 18. HW Rust xApp project page. O-RAN Software Community. [https://github.com/o-ran-sc/ric-app-hw-rust][hw-rust-code]
+19. eBPF-based Networking, Observability, Security. Cilium. [https://cilium.io][cilium-io]
+20. Hubble - Network, Service & Security Observability for Kubernetes using eBPF. Hubble. [https://cilium.io/hubble][cilium-hubble]
 
 <!-- References -->
 
@@ -102,3 +180,4 @@ Alternatively, xApps can be uninstalled manually by fetching the list of xApps w
 [trafficxapp-docs]: https://docs.o-ran-sc.org/projects/o-ran-sc-ric-app-ts/en/latest/user-guide.html
 [hw-python-code]: https://github.com/o-ran-sc/ric-app-hw-python
 [hw-rust-code]: https://github.com/o-ran-sc/ric-app-hw-rust
+[cilium-io]: https://cilium.io

@@ -31,6 +31,8 @@
 # Exit immediately if a command fails
 set -e
 
+REBUILD="false"
+
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
     sudo apt-get install -y coreutils
@@ -40,7 +42,7 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
 # Check for gnb binary to determine if srsRAN_Project is already installed
-if [ -f "flexric/build/examples/ric/nearRT-RIC" ]; then
+if [ "$REBUILD" != "true" ] && [ -f "flexric/build/examples/ric/nearRT-RIC" ]; then
     echo "FlexRIC is already installed, skipping."
     exit 0
 fi
@@ -89,8 +91,25 @@ if [ ! -f "flexric/examples/xApp/c/monitor/xapp_kpm_moni.c.previous" ]; then
     echo
     echo "Patching xapp_kpm_moni.c..."
     cd flexric
-    git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni.c.patch"
+    git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni.c.patch" || true
     cd ..
+fi
+
+# Apply patch to add new xApp KPI monitor that logs output to logs/KPI_Monitor.csv
+if [ ! -f "flexric/examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv.c" ]; then
+    echo
+    echo "Adding xapp_kpm_moni_write_to_csv.c..."
+    cp "$SCRIPT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv.c" flexric/examples/xApp/c/monitor/
+fi
+if [ ! -f "flexric/examples/xApp/c/monitor/CMakeLists.txt.previous" ]; then
+    cp flexric/examples/xApp/c/monitor/CMakeLists.txt flexric/examples/xApp/c/monitor/CMakeLists.txt.previous
+    echo
+    echo "Patching CMakeLists.txt..."
+    cd flexric
+    git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/CMakeLists.txt.patch" || true
+    cd ..
+else
+    echo "CMakeLists.txt is already patched, skipping."
 fi
 
 echo "Building FlexRIC..."

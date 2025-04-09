@@ -55,13 +55,17 @@ sudo ./install_scripts/wait_for_kubectl.sh
 echo "Revising InfluxDB NFS Storage Class configuration..."
 ./install_scripts/revise_influxdb_values_yaml.sh
 
-RIC_YAML_FILE_NAME_UPDATED="example_recipe_oran_k_release_updated.yaml"
-RIC_INSTALLATION_STDOUT="$SCRIPT_DIR/logs/ric_influxdb_installation_stdout.txt"
-
 echo
 echo
 echo "Installing InfluxDB..."
 cd ric-dep/bin/
+
+RIC_YAML_FILE_NAME_UPDATED="example_recipe_latest_stable_updated.yaml"
+if [ ! -f "../RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME_UPDATED" ]; then
+    RIC_YAML_FILE_NAME_UPDATED="example_recipe_latest_stable.yaml"
+fi
+RIC_INSTALLATION_STDOUT="$SCRIPT_DIR/logs/ric_influxdb_installation_stdout.txt"
+
 echo
 echo
 echo "Please ignore \"Error: INSTALLATION FAILED: cannot re-use a name that is still in use\" as these pods are already installed."

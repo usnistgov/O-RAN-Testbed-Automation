@@ -60,6 +60,15 @@ sudo rm -rf flexric
 sudo rm -rf /usr/local/lib/flexric/
 sudo rm -rf /usr/local/etc/flexric/
 
+if command -v grafana-server &>/dev/null; then
+    echo "Uninstalling Grafana..."
+    sudo systemctl stop grafana-server
+    sudo apt-get remove --purge -y grafana
+    sudo rm -f /etc/apt/sources.list.d/grafana.list
+    sudo rm -rf /etc/apt/keyrings/grafana.gpg
+    sudo apt-get autoremove --purge -y
+fi
+
 sudo rm -rf logs/
 sudo rm -rf configs/
 sudo rm -rf install_time.txt

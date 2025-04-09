@@ -28,16 +28,46 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-# if docker-compose -v &>/dev/null; then
-#     echo
-#     echo "Uninstalling docker-compose..."
-#     sudo rm -f /usr/local/bin/docker-compose
-#     sudo rm -f /usr/bin/docker-compose
-# fi
+echo "# Script: $(realpath $0)..."
 
 if ! command -v docker-compose &>/dev/null; then
     echo "Installing docker-compose..."
-    curl -SL https://github.com/docker/compose/releases/download/v2.30.1/docker-compose-linux-x86_64 -o docker-compose
+
+    ARCH=$(uname -m)
+    case $ARCH in
+    x86_64)
+        ARCH="linux-x86_64"
+        ;;
+    aarch64)
+        ARCH="linux-aarch64"
+        ;;
+    armv6l)
+        ARCH="linux-armv6"
+        ;;
+    armv7l)
+        ARCH="linux-armv7"
+        ;;
+    ppc64le)
+        ARCH="linux-ppc64le"
+        ;;
+    riscv64)
+        ARCH="linux-riscv64"
+        ;;
+    s390x)
+        ARCH="linux-s390x"
+        ;;
+    *)
+        echo "Unsupported architecture: $ARCH"
+        exit 1
+        ;;
+    esac
+    URL="https://github.com/docker/compose/releases/latest/download/docker-compose-$ARCH"
+    curl -SL $URL -o docker-compose
+    if [ $? -ne 0 ]; then
+        echo "Failed to download docker-compose. Please check your internet connection or the URL."
+        echo "URL: $URL"
+        exit 1
+    fi
     sudo mv docker-compose /usr/local/bin/docker-compose || true
     sudo chmod +x /usr/local/bin/docker-compose
     sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose || true

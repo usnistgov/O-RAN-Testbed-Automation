@@ -40,18 +40,16 @@ UE_NUMBER=1
 if [ "$#" -eq 1 ]; then
     UE_NUMBER=$1
 fi
-
 if ! [[ $UE_NUMBER =~ ^[0-9]+$ ]]; then
     echo "Error: UE number must be a number."
     exit 1
 fi
-
 if [ $UE_NUMBER -lt 1 ]; then
     echo "Error: UE number must be greater than or equal to 1."
     exit 1
 fi
 
-if [ ! -f "configs/ue$UE_NUMBER.conf" ]; then
+if [ ! -f "configs/ue1.conf" ]; then
     echo "Configuration was not found for srsUE. Please run ./generate_configurations.sh first."
     exit 1
 fi
@@ -60,9 +58,7 @@ echo "Starting User Equipment in background..."
 mkdir -p logs
 >logs/ue${UE_NUMBER}_stdout.txt
 
-cd "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build"
-sudo setsid bash -c "stdbuf -oL -eL ./nr-uesoftmodem -O "$SCRIPT_DIR/configs/ue$UE_NUMBER.conf" --rfsim --rfsimulator.serveraddr 127.0.0.1 -r 106 --numerology 1 --band 78 -C 3619200000 > \"$SCRIPT_DIR/logs/ue${UE_NUMBER}_stdout.txt\" 2>&1" </dev/null &
-cd "$SCRIPT_DIR"
+sudo setsid bash -c "stdbuf -oL -eL \"$SCRIPT_DIR/run.sh\" $UE_NUMBER > logs/ue${UE_NUMBER}_stdout.txt 2>&1" </dev/null &
 
 ATTEMPT=0
 while $(./is_running.sh | grep -q "NOT_RUNNING"); do

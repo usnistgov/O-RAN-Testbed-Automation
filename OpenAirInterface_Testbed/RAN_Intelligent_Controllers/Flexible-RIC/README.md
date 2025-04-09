@@ -27,6 +27,31 @@ This installation of the Near-RT RIC supports four xApps.
 - **RIC Control Monitor xApp (xapp_rc_moni)**:
   - Run with `./additional_scripts/run_xapp_rc_moni.sh`.
 
+## KPI Monitor Visualization in Grafana
+
+After the KPI Monitor xApp subscribes to the E2 node, metrics of the gNodeB and UE are sent through the E2 interface and received by the xApp. An xApp has been made at `flexric/build/examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv` which writes the metrics to logs/KPI_Metrics.csv instead of printing them to the console. The Python server at `additional_scripts/grafana_host_kpi_metrics_over_http.py` will make this CSV file accessible at `http://localhost:3030/KPI_Metrics.csv`, and a Grafana dashboard has been created to consume this data and visualize it.
+
+- **Real-Time Metrics**: To start the xApp that generates `logs/KPI_Monitor.csv`, the Python server that hosts the file, and the Grafana server, run the following.
+  ```console
+  ./additional_scripts/start_grafana_with_xapp_kpm_moni.sh
+  ```
+
+- **Non-Real Time Metrics**: Since it is not a requirement for the xApp to actively write metrics to `logs/KPI_Monitor.csv`, the Python server and Grafana server can be started without the xApp by running the following.
+  ```console
+  ./additional_scripts/start_grafana_only.sh
+  ```
+  A sample KPI_Metrics.csv file has been provided, and can be applied with `cp additional_scripts/sample_KPI_Metrics.csv logs/KPI_Metrics.csv`.
+
+- **Initial Configuration**: The dashboard uses the Infinity plugin (yesoreyeram-infinity-datasource), which may require creating a data source under Connections → Data sources → Add data source → Infinity. Configure it under URL, Headers & Params → Base URL → Type "http://localhost:3030/KPI_Metrics.csv" → Save & test.
+
+- **Stop Grafana**: To stop the Grafana server, Python server, and xApp, use `./additional_scripts/stop_grafana.sh`.
+
+The Grafana dashboard is accessible at `http://localhost:3000` with the default username and password as "admin". To use the dashboard initial installation, import the following JSON file: `additional_scripts/grafana_xapp_dashboard.json` into the Grafana client by navigating to Dashboards → New → Import. Please note that the dashboard and the metrics provided with this software are still in development and therefore display inaccurate information. Below is a snapshot of the dashboard in its current state.
+
+<p align="center">
+  <img src="../../../Images/xApp_Dashboard.png" alt="Grafana dashboard of xApp KPI metrics" width="70%">
+</p>
+
 ## References
 
 1. Working Group 3: Near-Real-time RAN Intelligent Controller and E2 Interface Workgroup. O-RAN Alliance. [https://public.o-ran.org/display/WG3/Introduction][oran-wg3]

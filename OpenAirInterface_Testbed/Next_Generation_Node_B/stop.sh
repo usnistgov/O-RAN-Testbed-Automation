@@ -42,12 +42,15 @@ if $(./is_running.sh | grep -q "gNodeB: NOT_RUNNING"); then
     exit 0
 fi
 
+# Prevent the subsequent command from requiring credential input
+sudo ls >/dev/null 2>&1
+
 # Send a graceful shutdown signal to the gNodeB process
 sudo pkill -f "nr-softmodem" >/dev/null 2>&1 &
 
 # Wait for the process to terminate gracefully
 COUNT=0
-MAX_COUNT=10
+MAX_COUNT=5
 sleep 1
 while [ $COUNT -lt $MAX_COUNT ]; do
     IS_RUNNING=$(./is_running.sh)

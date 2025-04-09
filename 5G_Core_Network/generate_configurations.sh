@@ -39,14 +39,6 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-# If EXPOSE_AMF_OVER_HOSTNAME is false, AMF will use 127.0.0.5, otherwise, it will use the hostname IP
-EXPOSE_AMF_OVER_HOSTNAME=false
-
-# Set IS_OPEN5GS_ON_HOST if Open5GS will run on the host machine, otherwise, set it to false
-if [ "$EXPOSE_AMF_OVER_HOSTNAME" = true ]; then
-    IS_OPEN5GS_ON_HOST=true
-fi
-
 # Check if the YAML editor is installed, and install it if not
 if ! command -v yq &>/dev/null; then
     sudo "$SCRIPT_DIR/install_scripts/./install_yq.sh"
@@ -54,9 +46,13 @@ fi
 
 echo "Parsing options.yaml..."
 # Check if the YAML file exists, if not, set and save default values
-
 if [ ! -f "options.yaml" ]; then
-    echo "# Include the Security Edge Protection Proxies (SEPP1 and SEPP2)" >"options.yaml"
+    echo "# Upon modification, apply changes with ./generate_configurations.sh." >>"options.yaml"
+    echo "" >>"options.yaml"
+    echo "# If false, AMF will use the default 127.0.0.5, otherwise, it will use the hostname IP" >>"options.yaml"
+    echo "expose_amf_over_hostname: false" >>"options.yaml"
+    echo "" >>"options.yaml"
+    echo "# Include the Security Edge Protection Proxies (SEPP1 and SEPP2)" >>"options.yaml"
     echo "include_sepp: false" >>"options.yaml"
     echo "" >>"options.yaml"
     echo "# Configure the MCC/MNC and TAC" >>"options.yaml"
@@ -73,6 +69,22 @@ if [ ! -f "options.yaml" ]; then
     echo "ogstun3_ipv4: 10.47.0.0/16" >>"options.yaml"
     echo "ogstun3_ipv6: 2001:db8:face::/48" >>"options.yaml"
 fi
+
+# If expose_amf_over_hostname is false, AMF will use the default 127.0.0.5, otherwise, it will use the hostname IP
+EXPOSE_AMF_OVER_HOSTNAME=$(yq eval '.expose_amf_over_hostname' options.yaml)
+if [[ "$EXPOSE_AMF_OVER_HOSTNAME" == "null" || -z "$EXPOSE_AMF_OVER_HOSTNAME" ]]; then
+    echo "Missing parameter in options.yaml: expose_amf_over_hostname"
+    exit 1
+elif [[ "$EXPOSE_AMF_OVER_HOSTNAME" != "true" && "$EXPOSE_AMF_OVER_HOSTNAME" != "false" ]]; then
+    echo "Invalid value for expose_amf_over_hostname in options.yaml. Expected 'true' or 'false'."
+    exit 1
+fi
+
+# Set IS_OPEN5GS_ON_HOST if Open5GS will run on the host machine, otherwise, set it to false
+if [ "$EXPOSE_AMF_OVER_HOSTNAME" = true ]; then
+    IS_OPEN5GS_ON_HOST=true
+fi
+
 # Read PLMN and TAC values from the YAML file using yq
 PLMN=$(yq eval '.plmn' options.yaml)
 TAC=$(yq eval '.tac' options.yaml)
@@ -222,14 +234,26 @@ configure_logging() {
     update_yaml "$CONFIG_PATH" "logger.file" "path" "$SCRIPT_DIR/$LOG_PATH"
 }
 
+# In standalone mode, use AMF instead of MME
+STANDALONE_MODE="true"
+
 # Function to set the ngap_server configuration IP
-set_configuration_ngap_and_gptu_server_ip() {
-    local AMF_FILE_PATH="configs/amf.yaml"
-    local UPF_FILE_PATH="configs/upf.yaml"
+set_configuration_server_ips() {
     local IP_ADDRESS=$1
     # Use yq to parse the YAML file and update the IP address
-    yq e -i ".amf.ngap.server[0].address = \"$IP_ADDRESS\"" "$AMF_FILE_PATH"
-    yq e -i ".upf.gtpu.server[0].address = \"$IP_ADDRESS\"" "$UPF_FILE_PATH"
+    if [ "$STANDALONE_MODE" = true ]; then
+        # From (https://open5gs.org/open5gs/docs/guide/01-quickstart/#setup-a-5g-core):
+        local AMF_FILE_PATH="configs/amf.yaml"
+        local UPF_FILE_PATH="configs/upf.yaml"
+        yq e -i ".amf.ngap.server[0].address = \"$IP_ADDRESS\"" "$AMF_FILE_PATH"
+        yq e -i ".upf.gtpu.server[0].address = \"$IP_ADDRESS\"" "$UPF_FILE_PATH"
+    else
+        # From (https://open5gs.org/open5gs/docs/guide/01-quickstart/#setup-a-4g-5g-nsa-core):
+        local MME_FILE_PATH="configs/mme.yaml" # LTE
+        local SGWU_FILE_PATH="configs/sgwu.yaml"
+        yq e -i ".mme.s1ap.server[0].address = \"$IP_ADDRESS\"" "$MME_FILE_PATH"
+        yq e -i ".sgwu.gtpu.server[0].address = \"$IP_ADDRESS\"" "$SGWU_FILE_PATH"
+    fi
 }
 
 set_configuration_session_gateways() {
@@ -292,7 +316,7 @@ OGSTUN_IPV6_1_NO_CIDR=$(remove_cidr_suffix "$OGSTUN_IPV6_1")
 
 if [ "$EXPOSE_AMF_OVER_HOSTNAME" = true ]; then
     AMF_IP=$(hostname -I | awk '{print $1}')
-    set_configuration_ngap_and_gptu_server_ip $AMF_IP
+    set_configuration_server_ips $AMF_IP
     # Need an address for the gNodeB to bind to that is not the host IP.
     if [ "$IS_OPEN5GS_ON_HOST" = true ]; then
         AMF_IP_BIND=$OGSTUN_IPV4_1_NO_CIDR

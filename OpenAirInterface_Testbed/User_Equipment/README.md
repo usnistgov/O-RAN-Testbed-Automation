@@ -8,10 +8,23 @@ The following scripts operationalize a 5G User Equipment (UE) configured with Op
 - **Generate Configurations**: Use `./generate_configurations.sh` to create configuration files.
   - Configuration files can be accessed and modified in the `configs` directory.
 - **Start the UE**: Use `./run.sh` to start the UE, or `./run_background.sh` to run it as a background process where the output is redirected to `logs/ue1_stdout.txt`.
+  - To operate multiple UEs, execute `./run.sh <N>` or `./run_background.sh <N>`, where `<N>` is an identifying number for the UE. If the subscriber information for `<N>` is not registered with the 5G Core, the script will automatically generate and register the subscriber information before starting the UE.
 - **Stop the UE**: Terminate the UE with `./stop.sh`.
-- **Status**: Check is a UE is running with `./is_running.sh`.
+  - To stop an individual UE, use `./stop.sh <N>`.
+- **Status**: Check running UEs with `./is_running.sh`. The output will display which UEs are running.
 - **Logs**: Access logs by navigating to the `logs` directory.
 - **Uninstall**: Use `./uninstall.sh` to remove the UE/gNodeB software.
+
+## Multiple UEs
+
+The `run.sh`, `run_background.sh` and `stop.sh` scripts can be given an optional `<N>` argument (default: 1) to specify which UE to run or stop. Each UE is assigned the following unique parameters:
+
+- IMEI
+- IMSI
+- Key
+- Network namespace
+
+For UE 1, UE 2, and UE 3, the SIM subscriber information is pre-registered with the 5G Core Network. For `<N>` values greater than 3, the unique values are generated dynamically, registered with the 5G Core, and stored in the `configs` directory as their own `ue<N>.conf` file before starting the UE software. For more information about the parameter values, refer to the `run.sh` script source code.
 
 ## References
 

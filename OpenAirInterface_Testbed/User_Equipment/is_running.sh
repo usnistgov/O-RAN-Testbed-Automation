@@ -36,8 +36,26 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-if pgrep -x "nr-uesoftmodem" >/dev/null; then
-    echo "User Equipment: RUNNING"
+RUNNING_UE_NUMBERS=()
+
+# Attempt to extract the UE number from the configuration file path
+while read -r LINE; do
+    UE_NUMBER=$(echo "$LINE" | grep -oP "configs/ue\K\d+\.conf" | sed 's/.conf//')
+    if [[ -n $UE_NUMBER ]]; then
+        # Add to array only if not already present
+        if [[ ! " ${RUNNING_UE_NUMBERS[@]} " =~ " ue$UE_NUMBER " ]]; then
+            RUNNING_UE_NUMBERS+=("ue$UE_NUMBER")
+        fi
+    fi
+done < <(pgrep -af "nr-uesoftmodem -O " | grep "configs/ue")
+
+# Check if the UE is running
+if [ ${#RUNNING_UE_NUMBERS[@]} -gt 0 ]; then
+    echo "User Equipment: RUNNING (${RUNNING_UE_NUMBERS[*]})"
 else
-    echo "User Equipment: NOT_RUNNING"
+    if pgrep -x "srsue" >/dev/null; then
+        echo "User Equipment: RUNNING"
+    else
+        echo "User Equipment: NOT_RUNNING"
+    fi
 fi

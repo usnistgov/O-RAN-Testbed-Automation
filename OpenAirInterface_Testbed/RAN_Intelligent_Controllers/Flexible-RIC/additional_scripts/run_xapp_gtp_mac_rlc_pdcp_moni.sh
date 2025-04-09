@@ -41,4 +41,4 @@ PARENT_DIR=$(dirname "$SCRIPT_DIR")
 
 cd "$PARENT_DIR/flexric/"
 
-./build/examples/xApp/c/monitor/xapp_gtp_mac_rlc_pdcp_moni
+./build/examples/xApp/c/monitor/xapp_gtp_mac_rlc_pdcp_moni -c "../configs/flexric.conf"

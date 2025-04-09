@@ -71,7 +71,7 @@ else
         echo "Removing conflicting MongoDB packages..."
 
         # Remove all installed MongoDB-related packages
-        sudo apt-get purge -y mongodb-org mongodb-org-server mongodb-org-shell mongodb-org-mongos mongodb-org-tools \
+        sudo apt-get remove --purge -y mongodb-org mongodb-org-server mongodb-org-shell mongodb-org-mongos mongodb-org-tools \
             mongodb-server mongodb-server-core mongodb-clients || {
             echo "Failed to remove conflicting MongoDB packages"
             exit 1

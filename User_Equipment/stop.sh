@@ -55,6 +55,9 @@ if $(./is_running.sh | grep -q "User Equipment: NOT_RUNNING"); then
     exit 0
 fi
 
+# Prevent the subsequent command from requiring credential input
+sudo ls >/dev/null 2>&1
+
 # Send a graceful shutdown signal to the UE process
 if [ -z "$UE_NUMBER" ]; then
     sudo pkill -f "srsue" >/dev/null 2>&1 &
@@ -76,7 +79,7 @@ while [ $COUNT -lt $MAX_COUNT ]; do
             exit 0
         fi
     else
-        if echo "$IS_RUNNING" | grep -q "ue$UE_NUMBER"; then
+        if ! echo "$IS_RUNNING" | grep -q "ue$UE_NUMBER"; then
             echo "The User Equipment $UE_NUMBER has stopped gracefully."
             ./is_running.sh
             exit 0

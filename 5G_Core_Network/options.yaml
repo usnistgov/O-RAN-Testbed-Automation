@@ -1,3 +1,8 @@
+# Upon modification, apply changes with ./generate_configurations.sh.
+
+# If false, AMF will use the default 127.0.0.5, otherwise, it will use the hostname IP
+expose_amf_over_hostname: false
+
 # Include the Security Edge Protection Proxies (SEPP1 and SEPP2)
 include_sepp: false
 

@@ -28,6 +28,9 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
+# Upon exit, restore the terminal to a sane state
+trap 'stty sane; exit' EXIT SIGINT SIGTERM
+
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
     sudo apt-get install -y coreutils
@@ -36,34 +39,75 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
+UE_NUMBER=""
+if [ "$#" -eq 1 ]; then
+    UE_NUMBER=$1
+    if ! [[ $UE_NUMBER =~ ^[0-9]+$ ]]; then
+        echo "Error: UE number must be a number."
+        exit 1
+    fi
+    if [ $UE_NUMBER -lt 1 ]; then
+        echo "Error: UE number must be greater than or equal to 1."
+        exit 1
+    fi
+fi
+
 # Check if the UE is already stopped
 if $(./is_running.sh | grep -q "User Equipment: NOT_RUNNING"); then
     ./is_running.sh
     exit 0
 fi
 
+# Prevent the subsequent commands from requiring credential input
+sudo ls >/dev/null 2>&1
+
 # Send a graceful shutdown signal to the UE process
-sudo pkill -f "nr-uesoftmodem" >/dev/null 2>&1 &
+if [ -z "$UE_NUMBER" ]; then
+    sudo pkill -f "nr-uesoftmodem" >/dev/null 2>&1 &
+    # Revert all running UE namespaces if no UE number is provided
+    RUNNING_UE=$(./is_running.sh | grep -oP '(?<=User Equipment: RUNNING \().*(?=\))')
+    for UE in $RUNNING_UE; do
+        UE_NUM=$(echo "$UE" | grep -oP '(?<=ue)\d+')
+        sudo ./install_scripts/revert_ue_namespace.sh "$UE_NUM" &>/dev/null
+    done
+    stty sane
+else
+    sudo pkill -f "nr-uesoftmodem -O ../../../../configs/ue$UE_NUMBER.conf" >/dev/null 2>&1 &
+    sudo ./install_scripts/revert_ue_namespace.sh $UE_NUMBER
+fi
 
 # Wait for the process to terminate gracefully
 COUNT=0
-MAX_COUNT=10
+MAX_COUNT=5
 sleep 1
 while [ $COUNT -lt $MAX_COUNT ]; do
     IS_RUNNING=$(./is_running.sh)
     echo "$IS_RUNNING ($COUNT / $MAX_COUNT)"
-    if echo "$IS_RUNNING" | grep -q "User Equipment: NOT_RUNNING"; then
-        echo "The User Equipment has stopped gracefully."
-        ./is_running.sh
-        exit 0
+    if [ -z "$UE_NUMBER" ]; then
+        if echo "$IS_RUNNING" | grep -q "User Equipment: NOT_RUNNING"; then
+            echo "The User Equipment has stopped gracefully."
+            ./is_running.sh
+            exit 0
+        fi
+    else
+        if ! echo "$IS_RUNNING" | grep -q "ue$UE_NUMBER"; then
+            echo "The User Equipment $UE_NUMBER has stopped gracefully."
+            ./is_running.sh
+            exit 0
+        fi
     fi
     COUNT=$((COUNT + 1))
     sleep 2
 done
 
 # If the process is still running after 20 seconds, send a forceful kill signal
-echo "The User Equipment did not stop in time, sending forceful kill signal..."
-sudo pkill -9 -f "nr-uesoftmodem" >/dev/null 2>&1 &
+if [ -z "$UE_NUMBER" ]; then
+    echo "The User Equipment did not stop in time, sending forceful kill signal..."
+    sudo pkill -9 -f "nr-uesoftmodem" >/dev/null 2>&1 &
+else
+    echo "The User Equipment $UE_NUMBER did not stop in time, sending forceful kill signal..."
+    sudo pkill -9 -f "nr-uesoftmodem -O ../../../../configs/ue$UE_NUMBER.conf" >/dev/null 2>&1 &
+fi
 
 sleep 2
 ./is_running.sh

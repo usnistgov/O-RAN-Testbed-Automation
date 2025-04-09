@@ -39,7 +39,7 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-echo "Installing Near Real-Time RAN Intelligent Controller..."
+echo "Installing Near-Real-Time RAN Intelligent Controller..."
 export DEBIAN_FRONTEND=noninteractive
 # Modifies the needrestart configuration to suppress interactive prompts
 if [ -f "/etc/needrestart/needrestart.conf" ]; then
@@ -74,13 +74,17 @@ fi
 
 # Ensure time synchronization is enabled using chrony
 if ! dpkg -s chrony &>/dev/null; then
-    sudo apt-get install -y chrony
+    echo "Chrony is not installed, installing..."
+    sudo apt-get update
+    sudo apt-get install -y chrony || true
 fi
 if ! systemctl is-enabled --quiet chrony; then
-    sudo systemctl enable chrony && echo "Chrony service enabled."
+    echo "Enabling Chrony service..."
+    sudo systemctl enable chrony || true
 fi
 if ! systemctl is-active --quiet chrony; then
-    sudo systemctl start chrony && echo "Chrony service started."
+    echo "Starting Chrony service..."
+    sudo systemctl start chrony || true
 fi
 
 echo
@@ -203,8 +207,8 @@ else
     sudo ./install_scripts/delete_namespace.sh ricinfra ricplt || true
 
     echo "Revising RIC Installation YAML File..."
-    RIC_YAML_FILE_NAME="example_recipe_oran_k_release.yaml"
-    RIC_YAML_FILE_NAME_UPDATED="example_recipe_oran_k_release_updated.yaml"
+    RIC_YAML_FILE_NAME="example_recipe_latest_stable.yaml"
+    RIC_YAML_FILE_NAME_UPDATED="example_recipe_latest_stable_updated.yaml"
 
     sudo chown $USER:$USER "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME"
     sudo cp "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME" "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME_UPDATED"

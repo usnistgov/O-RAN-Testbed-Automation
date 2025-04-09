@@ -128,9 +128,9 @@ sudo apt-get install -y libsctp1 lksctp-tools
 # DOCKERV="20.10" #.21"
 
 # The version will be dynamically completed rather than hardcoding in the version
-KUBEV="1.31"
-KUBECNIV="1.3"
-HELMV="3.16"
+KUBEV="1.32"
+KUBECNIV="1.5"
+HELMV="3.17"
 
 # Fetch the Ubuntu release version regardless of the derivative distro
 if [ -f /etc/upstream-release/lsb-release ]; then
@@ -148,7 +148,7 @@ if [ "$USE_DOCKER_CE" -eq 0 ]; then # Use docker.io
     fi
 
 else # Use docker.ce
-    DOCKERV="27.5"
+    DOCKERV="28.0"
     UBUNTU_CODENAME=$(grep -oP '^UBUNTU_CODENAME=\K.*' /etc/os-release 2>/dev/null)
     # If not found, try to extract VERSION_CODENAME as a fallback
     if [[ -z "$UBUNTU_CODENAME" ]]; then
@@ -472,7 +472,7 @@ if sudo systemctl is-enabled --quiet docker.service; then
 fi
 
 # Uninstall Docker packages and clean up
-sudo apt-get purge -y --allow-change-held-packages docker docker-engine docker-ce docker.io containerd runc || true
+sudo apt-get remove --purge -y --allow-change-held-packages docker docker-engine docker-ce docker.io containerd runc || true
 sudo rm -rf /var/lib/docker /etc/docker
 sudo apt-get autoremove -y
 

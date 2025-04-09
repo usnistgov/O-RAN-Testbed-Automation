@@ -154,7 +154,7 @@ cd ..
 echo
 echo
 echo "################################################################################"
-echo "# Installing Near Real-Time RAN Intelligent Controller...                      #"
+echo "# Installing Near-Real-Time RAN Intelligent Controller...                      #"
 echo "################################################################################"
 echo
 echo

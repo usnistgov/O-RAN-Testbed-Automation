@@ -43,6 +43,11 @@ cd "$PARENT_DIR"
 # Run a sudo command every minute to ensure script execution without user interaction
 ./install_scripts/start_sudo_refresh.sh
 
+if ! kubectl get pods -n ricplt | grep r4-influxdb-influxdb2 &>/dev/null; then
+    echo "The InfluxDB pod is not running, installing it..."
+    ./install_scripts/install_influxdb_pod.sh
+fi
+
 if [ "$CHART_REPO_URL" != "http://0.0.0.0:8090" ]; then
     echo "Registering the Chart Museum URL..."
     ./install_scripts/register_chart_museum_url.sh

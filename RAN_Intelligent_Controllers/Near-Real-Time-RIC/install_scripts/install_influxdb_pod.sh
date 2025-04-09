@@ -28,6 +28,11 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
+echo "# Script: $(realpath $0)..."
+
+# Exit immediately if a command fails
+set -e
+
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
     sudo apt-get install -y coreutils
@@ -37,34 +42,52 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$PARENT_DIR"
 
-UE_NUMBER=1
-if [ "$#" -eq 1 ]; then
-    UE_NUMBER=$1
-fi
-if ! [[ $UE_NUMBER =~ ^[0-9]+$ ]]; then
-    echo "Error: UE number must be a number."
-    exit 1
-fi
-if [ $UE_NUMBER -lt 1 ]; then
-    echo "Error: UE number must be greater than or equal to 1."
-    exit 1
+# Check if the influxDB pod already exists: kubectl get pods -n ricplt | grep r4-influxdb-influxdb2
+if kubectl get pods -n ricplt | grep r4-influxdb-influxdb2 &>/dev/null; then
+    echo "The InfluxDB pod is already installed and running, skipping."
+    exit 0
 fi
 
-if [ ! -f "configs/ue1.conf" ]; then
-    echo "Configuration was not found for nr-uesoftmodem. Please run ./generate_configurations.sh first."
-    exit 1
+# Wait for kube-apiserver to be ready before installing Near-RT RIC
+echo "Waiting for the Kubernetes API server to become ready before installing Near-RT RIC..."
+sudo ./install_scripts/wait_for_kubectl.sh
+
+echo "Revising InfluxDB NFS Storage Class configuration..."
+./install_scripts/revise_influxdb_values_yaml.sh
+
+echo
+echo
+echo "Installing InfluxDB..."
+cd ric-dep/bin/
+
+RIC_YAML_FILE_NAME_UPDATED="example_recipe_latest_stable_updated.yaml"
+if [ ! -f "../RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME_UPDATED" ]; then
+    RIC_YAML_FILE_NAME_UPDATED="example_recipe_latest_stable.yaml"
+fi
+RIC_INSTALLATION_STDOUT="$SCRIPT_DIR/logs/ric_influxdb_installation_stdout.txt"
+
+echo
+echo
+echo "Please ignore \"Error: INSTALLATION FAILED: cannot re-use a name that is still in use\" as these pods are already installed."
+sudo ./install -f "../RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME_UPDATED" -c "influxdb" 2>&1 | tee -a "$RIC_INSTALLATION_STDOUT" || true
+cd "$PARENT_DIR"
+
+sudo ./install_scripts/wait_for_kubectl.sh
+
+kubectl get pods -A || true
+echo
+echo "Attempting to remove any remaining taints from control-plane/master..."
+# Remaining taints prevent the RIC components from initializing
+# Check for remaining taints with: kubectl describe nodes | grep Taints
+if kubectl taint nodes --all node-role.kubernetes.io/control-plane- &>/dev/null; then
+    echo "Successfully removed taint from control-plane."
+fi
+if kubectl taint nodes --all node-role.kubernetes.io/master- &>/dev/null; then
+    echo "Successfully removed taint removed from master."
 fi
 
-UE_NAMESPACE="ue$UE_NUMBER"
+echo "Waiting for all pods to be in the Running state before installation is complete..."
+./install_scripts/wait_for_ricplt_pods.sh
 
-# If the namespace doesn't exist
-if ! ip netns list | grep -q "$UE_NAMESPACE"; then
-    echo "Error: Namespace $UE_NAMESPACE does not exist. Please start the UE first with: ./run_background.sh $UE_NUMBER"
-    exit 1
-fi
-
-echo "Opening shell in UE $UE_NUMBER namespace..."
-
-sudo ip netns exec $UE_NAMESPACE bash
-
-echo "Shell in UE $UE_NUMBER namespace closed."
+echo
+echo "Successfully installed InfluxDB into Near-RT RIC."

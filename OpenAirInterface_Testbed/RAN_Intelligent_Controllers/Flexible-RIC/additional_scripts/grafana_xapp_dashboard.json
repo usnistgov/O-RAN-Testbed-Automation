@@ -1288,7 +1288,7 @@
         ]
       },
       "gridPos": {
-        "h": 4,
+        "h": 5,
         "w": 2,
         "x": 11,
         "y": 4
@@ -1439,7 +1439,7 @@
       },
       "gridPos": {
         "h": 5,
-        "w": 4,
+        "w": 7,
         "x": 13,
         "y": 4
       },
@@ -1759,8 +1759,8 @@
       },
       "gridPos": {
         "h": 5,
-        "w": 4,
-        "x": 13,
+        "w": 6,
+        "x": 11,
         "y": 9
       },
       "id": 4,
@@ -3168,13 +3168,13 @@
     ]
   },
   "time": {
-    "from": "now-15m",
-    "to": "now"
+    "from": "2025-03-31T18:30:05.817Z",
+    "to": "2025-03-31T18:40:06.817Z"
   },
   "timepicker": {},
   "timezone": "browser",
   "title": "FlexRIC KPI Monitor",
   "uid": "cehfpz3fiuneoa",
-  "version": 9,
+  "version": 2,
   "weekStart": ""
 }

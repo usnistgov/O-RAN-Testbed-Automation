@@ -59,7 +59,7 @@ if $(./is_running.sh | grep -q "User Equipment: NOT_RUNNING"); then
 fi
 
 # Prevent the subsequent commands from requiring credential input
-sudo ls > /dev/null 2>&1
+sudo ls >/dev/null 2>&1
 
 # Send a graceful shutdown signal to the UE process
 if [ -z "$UE_NUMBER" ]; then

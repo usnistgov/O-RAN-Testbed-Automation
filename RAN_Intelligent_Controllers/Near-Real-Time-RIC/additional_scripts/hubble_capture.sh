@@ -33,7 +33,7 @@ set -e
 echo "# Script: $(realpath $0)..."
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
-SCRIPT_PARENT_DIR=$(dirname "$SCRIPT_DIR")
+PARENT_DIR=$(dirname "$SCRIPT_DIR")
 
 # If command hubble doesn't exist
 if ! command -v hubble &>/dev/null; then
@@ -53,8 +53,8 @@ if ! command -v hubble &>/dev/null; then
     done
 fi
 
-LOG_PATH="$SCRIPT_PARENT_DIR/logs/captured_flows.csv"
-mkdir -p "$SCRIPT_PARENT_DIR/logs"
+LOG_PATH="$PARENT_DIR/logs/hubble_captured_flows.csv"
+mkdir -p "$PARENT_DIR/logs"
 
 if ! pgrep -f "cilium hubble port-forward" >/dev/null; then
     echo "Starting Hubble port-forward..."
@@ -63,8 +63,8 @@ fi
 
 if [ ! -f "$LOG_PATH" ]; then
     HEADER=""
-    HEADER+="Timestamp,"
-    HEADER+="Timestamp (seconds),"
+    HEADER+="Timestamp (readable),"
+    HEADER+="UNIX Epoch (seconds),"
     HEADER+="Summary,"
     HEADER+="Is Reply,"
     HEADER+="Source IP,"
@@ -80,7 +80,8 @@ if [ ! -f "$LOG_PATH" ]; then
     echo "$HEADER" >"$LOG_PATH"
 fi
 
-echo "Starting to observe flows..."
+echo
+echo "Starting to Observe Flows (Output File: logs/hubble_captured_flows.csv)..."
 #hubble observe --follow -o json | while read -r JSON; do
 hubble observe --namespace ricxapp --follow -o json | while read -r JSON; do
     TIMESTAMP=$(echo "$JSON" | jq -r '.flow.time')
@@ -90,7 +91,7 @@ hubble observe --namespace ricxapp --follow -o json | while read -r JSON; do
     LAYER4=$(echo "$JSON" | jq -cr ".flow.l4[\"$PROTOCOL\"]")
 
     LINE="\"$TIMESTAMP\","                                                           # Timestamp
-    LINE+="$SECONDS.$FRACTION,"                                                      # Timestamp (seconds)
+    LINE+="$SECONDS.$FRACTION,"                                                      # UNIX Epoch (seconds)
     LINE+="\"$(echo "$JSON" | jq -cr '.flow.Summary' | sed 's/"/'"'"'/g')\","        # Summary
     LINE+="$(echo "$JSON" | jq -r '.flow.is_reply'),"                                # Is Reply
     LINE+="$(echo "$JSON" | jq -r '.flow.IP.source'),"                               # Source IP

@@ -86,7 +86,7 @@ fi
 if [ "$ENABLE_E2_TERM" = "true" ]; then
     echo "Fetching E2 termination service IP address..."
     PORT_E2TERM=36422
-    
+
     # Check if kubectl is installed
     PROMPT_FOR_E2_ADDRESS="false"
     if ! command -v kubectl &>/dev/null; then

@@ -31,7 +31,7 @@
 echo "# Script: $(realpath $0)..."
 
 ENABLE_HUBBLE_LOGGING="true"
-# ENABLE_HUBBLE_LOGGING="false"
+
 DRAIN_NODES="false"
 
 echo "Hubble enabled: $ENABLE_HUBBLE_LOGGING"

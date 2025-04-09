@@ -65,13 +65,17 @@ fi
 
 # Ensure time synchronization is enabled using chrony
 if ! dpkg -s chrony &>/dev/null; then
-    sudo apt-get install -y chrony
+    sudo apt-get update
+    echo "Chrony is not installed, installing..."
+    sudo apt-get install -y chrony || true
 fi
 if ! systemctl is-enabled --quiet chrony; then
-    sudo systemctl enable chrony && echo "Chrony service enabled."
+    echo "Enabling Chrony service..."
+    sudo systemctl enable chrony || true
 fi
 if ! systemctl is-active --quiet chrony; then
-    sudo systemctl start chrony && echo "Chrony service started."
+    echo "Starting Chrony service..."
+    sudo systemctl start chrony || true
 fi
 
 # Instructions are from: https://lf-o-ran-sc.atlassian.net/wiki/spaces/RICNR/pages/15075609/Release+J+-+Run+in+Kubernetes

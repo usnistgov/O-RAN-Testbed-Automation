@@ -51,6 +51,7 @@ echo
 echo "Stopping FlexRIC components..."
 cd RAN_Intelligent_Controllers/Flexible-RIC
 sudo ./stop.sh
+sudo ./additional_scripts/stop_grafana.sh &>/dev/null
 cd ../..
 
 echo

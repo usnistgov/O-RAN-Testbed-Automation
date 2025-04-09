@@ -28,35 +28,19 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-set -e
-
 echo "# Script: $(realpath $0)..."
 
-SCRIPT_DIR=$(dirname "$(realpath "$0")")
-SCRIPT_PARENT_DIR=$(dirname "$SCRIPT_DIR")
+# Read policy names and namespaces into arrays
+read -a POLICY_NAMES <<<$(kubectl get cnp --all-namespaces -o jsonpath='{.items[*].metadata.name}')
+read -a POLICY_NAMESPACES <<<$(kubectl get cnp --all-namespaces -o jsonpath='{.items[*].metadata.namespace}')
 
-# If command hubble doesn't exist
-if ! command -v hubble &>/dev/null; then
-    echo "Hubble command not found. Installing hubble..."
-    HUBBLE_VERSION=$(curl -s https://raw.githubusercontent.com/cilium/hubble/master/stable.txt)
-    HUBBLE_ARCH=amd64
-    if [ "$(uname -m)" = "aarch64" ]; then HUBBLE_ARCH=arm64; fi
-    curl -L --fail --remote-name-all https://github.com/cilium/hubble/releases/download/$HUBBLE_VERSION/hubble-linux-${HUBBLE_ARCH}.tar.gz{,.sha256sum}
-    sha256sum --check hubble-linux-${HUBBLE_ARCH}.tar.gz.sha256sum
-    sudo tar xzvfC hubble-linux-${HUBBLE_ARCH}.tar.gz /usr/local/bin
-    rm hubble-linux-${HUBBLE_ARCH}.tar.gz{,.sha256sum}
-fi
-
-echo "Waiting for Cilium to be ready..."
-until cilium status --wait; do
-    echo "Continuing to wait for Cilium to be ready..."
-    sleep 5
+# Loop through the arrays using indices
+for i in "${!POLICY_NAMES[@]}"; do
+    POLICY="${POLICY_NAMES[$i]}"
+    NAMESPACE="${POLICY_NAMESPACES[$i]}"
+    echo "Deleting policy $POLICY in namespace $NAMESPACE..."
+    kubectl delete cnp "$POLICY" -n "$NAMESPACE"
 done
 
-if ! cilium status | grep -q hubble-ui; then
-    echo "Enabling hubble ui..."
-    cilium hubble enable --ui
-    cilium status --wait
-fi
-
-cilium hubble ui
+echo
+echo "Cilium policies have been deleted. Run ./cilium_enable_policies.sh to re-enable them."

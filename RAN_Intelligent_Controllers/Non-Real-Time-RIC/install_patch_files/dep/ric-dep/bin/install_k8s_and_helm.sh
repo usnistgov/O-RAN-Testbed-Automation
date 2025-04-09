@@ -128,9 +128,9 @@ sudo apt-get install -y libsctp1 lksctp-tools
 # DOCKERV="20.10" #.21"
 
 # The version will be dynamically completed rather than hardcoding in the version
-KUBEV="1.31"
-KUBECNIV="1.3"
-HELMV="3.16"
+KUBEV="1.32"
+KUBECNIV="1.5"
+HELMV="3.17"
 
 # Fetch the Ubuntu release version regardless of the derivative distro
 if [ -f /etc/upstream-release/lsb-release ]; then
@@ -148,7 +148,7 @@ if [ "$USE_DOCKER_CE" -eq 0 ]; then # Use docker.io
     fi
 
 else # Use docker.ce
-    DOCKERV="27.5"
+    DOCKERV="28.0"
     UBUNTU_CODENAME=$(grep -oP '^UBUNTU_CODENAME=\K.*' /etc/os-release 2>/dev/null)
     # If not found, try to extract VERSION_CODENAME as a fallback
     if [[ -z "$UBUNTU_CODENAME" ]]; then
@@ -472,7 +472,7 @@ if sudo systemctl is-enabled --quiet docker.service; then
 fi
 
 # Uninstall Docker packages and clean up
-sudo apt-get purge -y --allow-change-held-packages docker docker-engine docker-ce docker.io containerd runc || true
+sudo apt-get remove --purge -y --allow-change-held-packages docker docker-engine docker-ce docker.io containerd runc || true
 sudo rm -rf /var/lib/docker /etc/docker
 sudo apt-get autoremove -y
 
@@ -920,22 +920,6 @@ fi
 
 if ! kubectl apply -f "$HOME/.kube/kube-proxy-rbac.yaml"; then
     echo "Failed to apply Kube-Proxy ClusterRoleBinding, skipping."
-fi
-
-# Create local-storage storage class
-cat <<EOF >"$HOME/.kube/local-storage-class.yaml"
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: local-storage
-provisioner: kubernetes.io/no-provisioner
-volumeBindingMode: WaitForFirstConsumer
-EOF
-echo "Local storage class configuration file created."
-
-# Apply the local-storage storage class
-if ! kubectl apply -f "$HOME/.kube/local-storage-class.yaml"; then
-    echo "Failed to apply local storage class, skipping."
 fi
 
 # Check for node readiness for conditional taint removal

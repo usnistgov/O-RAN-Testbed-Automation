@@ -40,7 +40,7 @@ if systemctl is-active --quiet mongod; then
 fi
 
 # Uninstall the MongoDB packages
-sudo apt-get purge -y mongodb-org mongodb-org-server mongodb-org-shell mongodb-org-mongos mongodb-org-tools mongosh
+sudo apt-get remove --purge -y mongodb-org mongodb-org-server mongodb-org-shell mongodb-org-mongos mongodb-org-tools mongosh
 
 # Remove MongoDB and its user and group
 sudo userdel mongodb

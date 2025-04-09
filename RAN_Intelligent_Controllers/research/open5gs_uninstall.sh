@@ -59,8 +59,8 @@ LIB_CORE_PATH="${SCRIPT_DIR}/open5gs/install/lib/x86_64-linux-gnu"
 sudo ip link delete ogstun
 
 # Uninstall Dependencies
-sudo apt-get purge -y python3-pip python3-setuptools python3-wheel ninja-build build-essential flex bison git cmake libsctp-dev libgnutls28-dev libgcrypt-dev libssl-dev libmongoc-dev libbson-dev libyaml-dev libmicrohttpd-dev libcurl4-gnutls-dev libnghttp2-dev libtins-dev libtalloc-dev meson
-sudo apt-get purge -y libidn-dev libidn11-dev
+sudo apt-get remove --purge -y python3-pip python3-setuptools python3-wheel ninja-build build-essential flex bison git cmake libsctp-dev libgnutls28-dev libgcrypt-dev libssl-dev libmongoc-dev libbson-dev libyaml-dev libmicrohttpd-dev libcurl4-gnutls-dev libnghttp2-dev libtins-dev libtalloc-dev meson
+sudo apt-get remove --purge -y libidn-dev libidn11-dev
 
 sudo apt-get autoremove -y
 sudo apt-get clean

@@ -54,15 +54,15 @@ UE_SUBNET_FIRST_3_OCTETS=10.201.$UE_NUMBER
 # Code from (https://open-cells.com/index.php/2021/02/08/rf-simulator-1-enb-2-ues-all-in-one):
 sudo ip netns delete $UE_NAMESPACE || true
 sudo ip link delete v-eth$UE_NUMBER || true
-sudo ip netns add $UE_NAMESPACE 
+sudo ip netns add $UE_NAMESPACE
 sudo ip link add v-eth$UE_NUMBER type veth peer name v-$UE_NAMESPACE
 sudo ip link set v-$UE_NAMESPACE netns $UE_NAMESPACE
-sudo ip addr add $UE_SUBNET_FIRST_3_OCTETS.1/24 dev v-eth$UE_NUMBER 
-sudo ip link set v-eth$UE_NUMBER up 
-sudo iptables -t nat -A POSTROUTING -s $UE_SUBNET_FIRST_3_OCTETS.0/24 -o $NETWORK_INTEFACE -j MASQUERADE 
-sudo iptables -A FORWARD -i $NETWORK_INTEFACE -o v-eth$UE_NUMBER -j ACCEPT 
+sudo ip addr add $UE_SUBNET_FIRST_3_OCTETS.1/24 dev v-eth$UE_NUMBER
+sudo ip link set v-eth$UE_NUMBER up
+sudo iptables -t nat -A POSTROUTING -s $UE_SUBNET_FIRST_3_OCTETS.0/24 -o $NETWORK_INTEFACE -j MASQUERADE
+sudo iptables -A FORWARD -i $NETWORK_INTEFACE -o v-eth$UE_NUMBER -j ACCEPT
 sudo iptables -A FORWARD -o $NETWORK_INTEFACE -i v-eth$UE_NUMBER -j ACCEPT
-sudo ip netns exec $UE_NAMESPACE ip link set dev lo up 
-sudo ip netns exec $UE_NAMESPACE ip addr add $UE_SUBNET_FIRST_3_OCTETS.2/24 dev v-$UE_NAMESPACE 
-sudo ip netns exec $UE_NAMESPACE ip link set v-$UE_NAMESPACE up 
+sudo ip netns exec $UE_NAMESPACE ip link set dev lo up
+sudo ip netns exec $UE_NAMESPACE ip addr add $UE_SUBNET_FIRST_3_OCTETS.2/24 dev v-$UE_NAMESPACE
+sudo ip netns exec $UE_NAMESPACE ip link set v-$UE_NAMESPACE up
 sudo ip netns exec $UE_NAMESPACE ip route add default via $UE_SUBNET_FIRST_3_OCTETS.1

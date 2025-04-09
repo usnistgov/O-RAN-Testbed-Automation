@@ -43,7 +43,7 @@ if $(./is_running.sh | grep -q "gNodeB: NOT_RUNNING"); then
 fi
 
 # Prevent the subsequent command from requiring credential input
-sudo ls > /dev/null 2>&1
+sudo ls >/dev/null 2>&1
 
 # Send a graceful shutdown signal to the gNodeB process
 sudo pkill -f "gnb" >/dev/null 2>&1 &

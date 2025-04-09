@@ -39,7 +39,7 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-echo "Installing Near Real-Time RAN Intelligent Controller..."
+echo "Installing Near-Real-Time RAN Intelligent Controller..."
 export DEBIAN_FRONTEND=noninteractive
 # Modifies the needrestart configuration to suppress interactive prompts
 if [ -f "/etc/needrestart/needrestart.conf" ]; then
@@ -74,13 +74,17 @@ fi
 
 # Ensure time synchronization is enabled using chrony
 if ! dpkg -s chrony &>/dev/null; then
-    sudo apt-get install -y chrony
+    echo "Chrony is not installed, installing..."
+    sudo apt-get update
+    sudo apt-get install -y chrony || true
 fi
 if ! systemctl is-enabled --quiet chrony; then
-    sudo systemctl enable chrony && echo "Chrony service enabled."
+    echo "Enabling Chrony service..."
+    sudo systemctl enable chrony || true
 fi
 if ! systemctl is-active --quiet chrony; then
-    sudo systemctl start chrony && echo "Chrony service started."
+    echo "Starting Chrony service..."
+    sudo systemctl start chrony || true
 fi
 
 echo
@@ -203,8 +207,8 @@ else
     sudo ./install_scripts/delete_namespace.sh ricinfra ricplt || true
 
     echo "Revising RIC Installation YAML File..."
-    RIC_YAML_FILE_NAME="example_recipe_oran_j_release.yaml"
-    RIC_YAML_FILE_NAME_UPDATED="example_recipe_oran_j_release_updated.yaml"
+    RIC_YAML_FILE_NAME="example_recipe_latest_stable.yaml"
+    RIC_YAML_FILE_NAME_UPDATED="example_recipe_latest_stable_updated.yaml"
 
     sudo chown $USER:$USER "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME"
     sudo cp "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME" "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME_UPDATED"
@@ -214,9 +218,6 @@ else
     # Wait for kube-apiserver to be ready before installing Near-RT RIC
     echo "Waiting for the Kubernetes API server to become ready before installing Near-RT RIC..."
     sudo ./install_scripts/wait_for_kubectl.sh
-
-    echo "Revising InfluxDB NFS Storage Class configuration..."
-    ./install_scripts/revise_influxdb_values_yaml.sh
 
     # Run the installation command
     mkdir -p "$SCRIPT_DIR/logs"
@@ -230,7 +231,7 @@ else
         echo
         echo "Installing Near-RT RIC..."
         cd ric-dep/bin/
-        sudo ./install -f "../RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME_UPDATED" -c "influxdb" 2>&1 | tee -a "$RIC_INSTALLATION_STDOUT"
+        sudo ./install -f "../RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME_UPDATED" 2>&1 | tee -a "$RIC_INSTALLATION_STDOUT"
         cd "$SCRIPT_DIR"
         echo "Parsing output to check for successful Near-RT RIC installation..."
         ./install_scripts/parse_ric_installation_output.sh

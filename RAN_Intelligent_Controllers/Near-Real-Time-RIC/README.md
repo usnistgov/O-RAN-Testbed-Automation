@@ -102,16 +102,16 @@ Alternatively, xApps can be uninstalled manually by fetching the list of xApps w
 
 ## Migration to Cilium
 
-The cluster is installed with Flannel as the default network plugin. There are several benefits of migrating to a security-enhanced network plugin like Cilium [[19]][cilium-io], for example, to monitor and regulate the network flows going in to and out of each pod using Hubble [[20]][cilium-hubble]. By default, pods are able to communicate with the internet, however, this can be restricted by applying Cilium policies.
+The cluster is installed with Flannel as the default network plugin. There are several benefits of migrating to a security-enhanced network plugin like Cilium [[19]][cilium-io], for example, to monitor and regulate the network flows going in to and out of each pod using Cilium Hubble [[20]][cilium-hubble]. By default, pods can communicate with addresses outside the namespace (including the internet). Restricting this allows for better security and monitoring of the network flows. The following steps can be used to migrate the cluster to Cilium and apply policies that restrict communication.
 
-- **Install Cilium and Migrate Cluster Nodes**: Run `./additional_scripts/install_cilium_and_migrate_nodes.sh` to install Cilium and migrate each of the pods from current network plugin to Cilium, then apply policies that restrict the pods from communicating with the internet.
+- **Install Cilium and Migrate Cluster Nodes**: Run `./additional_scripts/install_cilium_and_migrate_nodes.sh` to install Cilium and migrate each of the pods from the current network plugin to Cilium, then apply policies that restrict the pods from communicating with addresses outside the namespace.
   - For debugging purposes, the following files are generated in `$HOME/.kube/`:
     - `cilium-values-migration.yaml`: Contains the Cilium configuration values during migration.
     - `cilium-values-initial.yaml`: Contains the initial Cilium configuration values.
     - `cilium-values-final.yaml`: Contains the final Cilium configuration values.
 - **Check Cilium Status**: Run `./additional_scripts/cilium_status.sh` to verify the status of Cilium. All indicators should display green.
 - **List Cilium Policies**: Run `./additional_scripts/cilium_list_policies.sh` to list currently-active Cilium policies.
-  - By default, the two policies are applied: `isolate-ric-communication` and `isolate-ricxapp-communication`. Both of them are defined in the YAML file: `$HOME/.kube/cilium-policy.yaml`.
+  - By default, the two policies are applied: `isolate-ric-communication` and `isolate-ricxapp-communication`. Both are defined in the YAML file: `$HOME/.kube/cilium-policy.yaml`.
 - **Disable Policies**: Run `./additional_scripts/cilium_disable_policies.sh` to disable the currently-active policies. After running the script, pods will have restored internet access.
 - **Enable Policies**: Run `./additional_scripts/cilium_enable_policies.sh` to re-enable the policies defined in `$HOME/.kube/cilium-policy.yaml`.
 - **Check Policy Enforcement**: Run `./additional_scripts/cilium_check_enforcement.sh` to check which pod labels are enforced by the policies.
@@ -181,3 +181,4 @@ The cluster is installed with Flannel as the default network plugin. There are s
 [hw-python-code]: https://github.com/o-ran-sc/ric-app-hw-python
 [hw-rust-code]: https://github.com/o-ran-sc/ric-app-hw-rust
 [cilium-io]: https://cilium.io
+[cilium-hubble]: https://cilium.io/hubble

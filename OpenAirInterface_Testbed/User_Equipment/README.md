@@ -17,14 +17,14 @@ The following scripts operationalize a 5G User Equipment (UE) configured with Op
 
 ## Multiple UEs
 
-The `run.sh`, `run_background.sh` and `stop.sh` scripts can be given an optional `<N>` argument (default: 1) to specify which UE to run or stop. Each UE is assigned the following unique parameters:
+The `run.sh`, `run_background.sh`, and `stop.sh` scripts can be given an optional `<N>` argument (default: 1) to specify which UE to run or stop. Each UE is assigned the following unique parameters:
 
 - IMEI
 - IMSI
 - Key
 - Network namespace
 
-For UE 1, UE 2, and UE 3, the SIM subscriber information is pre-registered with the 5G Core Network. For `<N>` values greater than 3, the unique values are generated dynamically, registered with the 5G Core, and stored in the `configs` directory as their own `ue<N>.conf` file before starting the UE software. For more information about the parameter values, refer to the `run.sh` script source code.
+For UE 1, UE 2, and UE 3, the SIM subscriber information is pre-registered with the 5G Core Network. For `<N>` values greater than 3, the unique values are generated dynamically, registered with the 5G Core, and stored in the `configs` directory as their own `ue<N>.conf` file before starting the UE software. For more information about the parameters refer to the `run.sh` script source code.
 
 ## References
 

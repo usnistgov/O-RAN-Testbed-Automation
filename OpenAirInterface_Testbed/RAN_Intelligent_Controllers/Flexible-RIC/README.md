@@ -1,6 +1,6 @@
 ## Flexible RAN Intelligent Controller (FlexRIC)
 
-The Near-RT RIC, conceptualized by the O-RAN Alliance's Working Group 3 (WG3) [[1]][oran-wg3] and implemented by Mosaic5G [[2]][publication-nearrtric][[3]][mosaic5g-nearrtric], enables dynamic management and optimization of Radio Access Networks (RAN).
+The Near-RT RIC, conceptualized by the O-RAN Alliance's Working Group 3 (WG3) [[1]][oran-wg3] and implemented by Mosaic5G [\[2][publication-nearrtric], [3\]][mosaic5g-nearrtric], enables dynamic management and optimization of Radio Access Networks (RAN).
 
 ## Usage
 
@@ -42,14 +42,14 @@ After the KPI Monitor xApp subscribes to the E2 node, metrics of the gNodeB and 
   ```
   A sample KPI_Metrics.csv file has been provided, and can be applied with `cp additional_scripts/sample_KPI_Metrics.csv logs/KPI_Metrics.csv`.
 
-- **Initial Configuration**: The dashboard uses the Infinity plugin (yesoreyeram-infinity-datasource), which may require creating a data source under Connections → Data sources → Add data source → Infinity. Configure it under URL, Headers & Params → Base URL → Type "http://localhost:3030/KPI_Metrics.csv" → Save & test.
+- **Initial Configuration**: The dashboard uses the Infinity plugin (yesoreyeram-infinity-datasource), which may require creating a data source under Connections → Data sources → Add data source → Infinity. Configure it under URL, Headers & Params → Base URL → Type "`http://localhost:3030/KPI_Metrics.csv`" → Save & test.
 
 - **Stop Grafana**: To stop the Grafana server, Python server, and xApp, use `./additional_scripts/stop_grafana.sh`.
 
-The Grafana dashboard is accessible at `http://localhost:3000` with the default username and password as "admin". To use the dashboard initial installation, import the following JSON file: `additional_scripts/grafana_xapp_dashboard.json` into the Grafana client by navigating to Dashboards → New → Import. Please note that the dashboard and the metrics provided with this software are still in development and therefore display inaccurate information. Below is a snapshot of the dashboard in its current state.
+The Grafana dashboard is accessible at `http://localhost:3000` with default credentials being "admin". Upon initial startup, import the following JSON file into the Grafana client by navigating to Dashboards → New → Import: `additional_scripts/grafana_xapp_dashboard.json`. Please note that the dashboard and the metrics provided with this software are still in development and therefore may display some inaccurate metrics. Below is a snapshot of the dashboard in its current state.
 
 <p align="center">
-  <img src="../../../Images/xApp_Dashboard.png" alt="Grafana dashboard of xApp KPI metrics" width="70%">
+  <img src="../../../Images/xApp_Dashboard.png" alt="Grafana dashboard of xApp KPI metrics" width="75%">
 </p>
 
 ## References

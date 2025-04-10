@@ -136,7 +136,9 @@ Begin the installation process, recommended to be run as the current user rather
 ################################################################################
 ```
 
-#### O-RAN SC Near-RT RIC and srsRAN Output
+<details>
+  <summary><b>O-RAN SC Near-RT RIC and srsRAN Output</b></summary>
+  <hr>
 
 Run the testbed with `./run.sh` to start the 5G Core and gNodeB as background processes, and the UE in the foreground. Use `./is_running.sh` to check if the components are running, and `./stop.sh` to stop the components. The RIC starts automatically on boot and can be accessed with `k9s -A`.
 
@@ -148,8 +150,13 @@ RRC Connected
 PDU Session Establishment successful. IP: 10.45.0.2
 RRC NR reconfiguration successful.
 ```
+</details>
 
-#### OpenAirInterface and FlexRIC Output
+---
+
+<details>
+  <summary><b>OpenAirInterface and FlexRIC Output</b></summary>
+  <hr>
 
 Run the testbed with `./run.sh` to start the 5G Core, FlexRIC, gNodeB, and UE as background processes, and the KPI monitoring xApp in the foreground. Use `./is_running.sh` to check if the components are running, and `./stop.sh` to stop the components.
 
@@ -167,6 +174,9 @@ RRU.PrbTotUl = 140 [PRBs]
 RSRP = -44.00 [dBm]
 ...
 ```
+</details>
+
+---
 
 ## Software Versioning
 

@@ -97,6 +97,14 @@ if ! systemctl is-active --quiet chrony; then
 fi
 
 ./stop_control_panel.sh
+
+cd "$SCRIPT_DIR"
+if [ -f dep/bin/undeploy-nonrtric ]; then
+    echo
+    echo "Running undeploy-nonrtric script to gracefully remove the Non-RT RIC pods..."
+    sudo ./dep/bin/undeploy-nonrtric || true
+fi
+
 echo "Uninstalling Node.js used by the Control Panel..."
 sudo apt-get remove --purge -y nodejs
 sudo rm -f /etc/apt/keyrings/nodesource.gpg
@@ -277,13 +285,31 @@ if [ -d "$HOME/k9s-installation" ]; then
 fi
 rm -rf ~/.config/k9s
 
-# Reset iptables
+echo "Uninstalling istioctl..."
+if command -v istioctl &>/dev/null; then
+    ISTIOCTL_PATH=$(command -v istioctl)
+    echo "Removing istioctl from $ISTIOCTL_PATH"
+    sudo rm -f "$ISTIOCTL_PATH"
+    hash -d istioctl 2>/dev/null || true
+else
+    echo "istioctl not found, nothing to uninstall."
+fi
+
+# Reset iptables: Flush all default chains
 sudo iptables -F
 sudo iptables -t nat -F
 sudo iptables -t mangle -F
-sudo iptables -X
-sudo iptables -t nat -X
-sudo iptables -t mangle -X
+# Reset iptables: Delete known custom chains safely
+for chain in FLANNEL-FWD FLANNEL-INGRESS FLANNEL-EGRESS; do
+    sudo iptables -D FORWARD -j $chain 2>/dev/null || true
+    sudo iptables -F $chain 2>/dev/null || true
+    sudo iptables -X $chain 2>/dev/null || true
+done
+# Reset iptables: Delete all remaining user-defined chains
+sudo iptables -X || true
+sudo iptables -t nat -X || true
+sudo iptables -t mangle -X || true
+# Reset iptables: Delete CNI interfaces
 echo "Removing CNI network interfaces..."
 sudo ip link delete cni0 2>/dev/null || true
 sudo ip link delete flannel.1 2>/dev/null || true
@@ -299,14 +325,19 @@ sudo apt-get autoclean
 
 cd "$SCRIPT_DIR"
 sudo rm -rf dep
+sudo rm -rf istio
 sudo rm -rf nonrtric-controlpanel
 sudo rm -rf rappmanager
 sudo rm -rf rApps
 sudo rm -rf install_time.txt
 sudo rm -rf logs/
+sudo rm -rf tests/__pycache__
+sudo rm -rf tests/venv
+sudo rm -rf tests/.requirements_hash.txt
+sudo rm -rf tests/requirements.txt
 
 echo
 echo
 echo "################################################################################"
-echo "# Successfully uninstalled the Non-Real Time RAN Intelligent Controller       #"
+echo "# Successfully uninstalled the Non-Real Time RAN Intelligent Controller        #"
 echo "################################################################################"

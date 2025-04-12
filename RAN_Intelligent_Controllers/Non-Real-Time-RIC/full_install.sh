@@ -74,22 +74,27 @@ fi
 
 # Ensure time synchronization is enabled using chrony
 if ! dpkg -s chrony &>/dev/null; then
-    sudo apt-get install -y chrony
+    echo "Chrony is not installed, installing..."
+    sudo apt-get update
+    sudo apt-get install -y chrony || true
 fi
 if ! systemctl is-enabled --quiet chrony; then
-    sudo systemctl enable chrony && echo "Chrony service enabled."
+    echo "Enabling Chrony service..."
+    sudo systemctl enable chrony || true
 fi
 if ! systemctl is-active --quiet chrony; then
-    sudo systemctl start chrony && echo "Chrony service started."
+    echo "Starting Chrony service..."
+    sudo systemctl start chrony || true
 fi
 
-# Instructions are from: https://lf-o-ran-sc.atlassian.net/wiki/spaces/RICNR/pages/15075609/Release+J+-+Run+in+Kubernetes
+# Instructions are from: https://lf-o-ran-sc.atlassian.net/wiki/spaces/RICNR/pages/86802787/Release+K+-+Run+in+Kubernetes
 if [ ! -d dep ]; then
     echo
     echo "Cloning Non-RT RIC dependencies..."
     ./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/it/dep.git
     cd dep # Ensure that the components are cloned
     git restore --source=HEAD :/
+    cd ..
 fi
 
 if [ ! -d "rappmanager" ]; then
@@ -216,7 +221,8 @@ if ! command -v istioctl &>/dev/null; then
         exit 1
     fi
     if [ -f bin/istioctl ]; then
-        sudo ln -s "$(pwd)/bin/istioctl" /usr/local/bin/istioctl
+        sudo rm -f /usr/local/bin/istioctl
+        sudo ln -sf "$(pwd)/bin/istioctl" /usr/local/bin/istioctl
         echo "Successfully installed Istio."
     else
         echo "Binary for istioctl not found."
@@ -311,8 +317,9 @@ else
 
     cd "$SCRIPT_DIR/dep/"
 
-    echo "Deploying Non-RT RIC..."
+    echo "Deploying Non-RT RIC pods..."
     sudo ./bin/deploy-nonrtric -f ./RECIPE_EXAMPLE/NONRTRIC/example_recipe_updated.yaml
+
     echo "Successfully installed Non-RT RIC pods."
 fi
 

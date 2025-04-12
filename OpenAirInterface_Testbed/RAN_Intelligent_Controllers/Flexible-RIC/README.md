@@ -46,7 +46,7 @@ After the KPI Monitor xApp subscribes to the E2 node, metrics of the gNodeB and 
 
 - **Stop Grafana**: To stop the Grafana server, Python server, and xApp, use `./additional_scripts/stop_grafana.sh`.
 
-The Grafana dashboard is accessible at `http://localhost:3000` with default credentials being "admin". Upon initial startup, import the following JSON file into the Grafana client by navigating to Dashboards → New → Import: `additional_scripts/grafana_xapp_dashboard.json`. Please note that the dashboard and the metrics provided with this software are still in development and therefore may display some inaccurate metrics. Below is a snapshot of the dashboard in its current state.
+The Grafana dashboard is accessible at `http://localhost:3000` with default credentials being "admin". Upon initial startup, import the following JSON file into the Grafana client by navigating to Dashboards → New → Import: `additional_scripts/grafana_xapp_dashboard.json`. Please note that the dashboard and the metrics provided with this software are still in development and therefore may display some inaccurate values. Below is a snapshot of the dashboard in its current state.
 
 <p align="center">
   <img src="../../../Images/xApp_Dashboard.png" alt="Grafana dashboard of xApp KPI metrics" width="75%">

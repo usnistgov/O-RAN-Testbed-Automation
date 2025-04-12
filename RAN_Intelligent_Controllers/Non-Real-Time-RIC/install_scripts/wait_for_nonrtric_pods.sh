@@ -157,4 +157,14 @@ if [ ! -z "$POD_INFO" ]; then
     fi
 fi
 
+# Remove the unnecessary tiller-secret-generator pod if it has completed
+CMD="kubectl get pods -n nonrtric --no-headers | grep 'oran-nonrtric-kong-init-migrations' | awk '{print \$1, \$3}'"
+POD_INFO=$(eval $CMD)
+POD_NAME=$(echo $POD_INFO | awk '{print $1}')
+POD_STATUS=$(echo $POD_INFO | awk '{print $2}')
+if [ "$POD_STATUS" == "Completed" ]; then
+    echo "Cleaning up pod $POD_NAME..."
+    kubectl delete pod $POD_NAME -n nonrtric
+fi
+
 echo "All required pods are now running."

@@ -31,7 +31,8 @@
 echo "# Script: $(realpath $0)..."
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
-cd "$(dirname "$SCRIPT_DIR")"
+PARENT_DIR=$(dirname "$SCRIPT_DIR")
+cd "$PARENT_DIR"
 
 # Get the file path from the command line argument
 KONG_CONFIG_PATH=$1
@@ -59,11 +60,13 @@ if ! command -v yq &>/dev/null; then
     sudo ./install_scripts/install_yq.sh
 fi
 
-CURRENT_STORAGE_CLASS=$(yq eval '.postgresql.primary.persistence.storageClass' "$KONG_CONFIG_PATH")
+# The following snippet is from https://lf-o-ran-sc.atlassian.net/wiki/spaces/RICNR/pages/86802787/Release+K+-+Run+in+Kubernetes:
+#     sed -i '/persistence:/,/existingClaim:/s/existingClaim: .*/enabled: false/' ./dep/nonrtric/helm/kongstorage/kongvalues.yaml && rm -rf ./dep/nonrtric/helm/kongstorage/templates
+# Below are the equivalent yq commands:
+echo "Removing existingClaim and setting persistence.enabled=false for Postgres..."
+yq eval 'del(.postgresql.primary.persistence.existingClaim)' -i "$KONG_CONFIG_PATH"
+yq eval '.postgresql.primary.persistence.enabled = false' -i "$KONG_CONFIG_PATH"
+sudo rm -rf "$PARENT_DIR/dep/nonrtric/helm/kongstorage/templates"
 
-if [ -z "$CURRENT_STORAGE_CLASS" ] || [ "$CURRENT_STORAGE_CLASS" == "null" ]; then
-    echo "Default storage class for Kong was not set, setting..."
-    yq eval '.postgresql.primary.persistence.storageClass = "standard"' -i "$KONG_CONFIG_PATH"
-else
-    echo "Storage class is already set to $CURRENT_STORAGE_CLASS. No changes made."
-fi
+# Disable volumePermissions for PostgreSQL since it is causing error "container's runAsUser breaks non-root policy":
+yq eval '.postgresql.volumePermissions.enabled = false' -i "$KONG_CONFIG_PATH"

@@ -100,31 +100,6 @@ static meas_record_lst_t fill_RSRP(__attribute__((unused))uint32_t gran_period_m
   return meas_record;
 }
 
-// Added metric for research purposes only
-static meas_record_lst_t fill_RSRQ(__attribute__((unused))uint32_t gran_period_ms, cudu_ue_info_pair_t ue_info, __attribute__((unused))const size_t ue_idx)
-{
-  meas_record_lst_t meas_record = {0};
-
-  meas_record.value = REAL_MEAS_VALUE;
-
-  // Retrieve the cumulative RSRP in dBm averaged over the number of measurements
-  double RSRP = ue_info.ue->mac_stats.prev_num_rsrp_meas > 0 ? (double)ue_info.ue->mac_stats.prev_cumul_rsrp / ue_info.ue->mac_stats.prev_num_rsrp_meas : 0.0;
-
-  // Retrieve the number of Resource Blocks over which RSSI is measured
-  double N = ue_info.ue->mac_stats.NPRB;
-
-  // Retrieve the raw RSSI value, adjust for the scaling factor
-  double RSSI_raw = ue_info.ue->UE_sched_ctrl.raw_rssi / 10.0;
-
-  // Convert RSSI to dBm by first averaging over N RBs, then converting to dBm if needed
-  double RSSI_avg = RSSI_raw / N;  // Assuming raw_rssi was a sum
-  double RSSI_dBm = 10 * log10(RSSI_avg);
-
-  // Calculate RSRQ using the formula: RSRQ = RSRP - RSSI_dBm
-  meas_record.real_val = RSRP - RSSI_dBm; // [dB]
-
-  return meas_record;
-}
 
 // Added metric for research purposes only
 static meas_record_lst_t fill_N_RSRP_MEAS(__attribute__((unused))uint32_t gran_period_ms, cudu_ue_info_pair_t ue_info, __attribute__((unused))const size_t ue_idx)
@@ -152,6 +127,51 @@ static meas_record_lst_t fill_N_PRB(__attribute__((unused))uint32_t gran_period_
   return meas_record;
 }
 
+// Added metric for research purposes only
+static meas_record_lst_t fill_RSSI(__attribute__((unused))uint32_t gran_period_ms, cudu_ue_info_pair_t ue_info, __attribute__((unused))const size_t ue_idx)
+{
+  meas_record_lst_t meas_record = {0};
+
+  meas_record.value = REAL_MEAS_VALUE;
+
+  // Retrieve the cumulative RSRP in dBm averaged over the number of measurements
+  double RSRP = ue_info.ue->mac_stats.prev_num_rsrp_meas > 0 ? (double)ue_info.ue->mac_stats.prev_cumul_rsrp / ue_info.ue->mac_stats.prev_num_rsrp_meas : 0.0;
+
+  // Retrieve the number of Resource Blocks over which RSSI is measured
+  double N = ue_info.ue->mac_stats.NPRB;
+
+
+  // RSRP (dBM) = RSSI - 10*log(12*N)
+  double RSSI = RSRP + 10 * log10(12 * N);
+
+  meas_record.real_val = RSSI;
+
+  return meas_record;
+}
+
+// Added metric for research purposes only
+static meas_record_lst_t fill_RSRQ(__attribute__((unused))uint32_t gran_period_ms, cudu_ue_info_pair_t ue_info, __attribute__((unused))const size_t ue_idx)
+{
+  meas_record_lst_t meas_record = {0};
+
+  meas_record.value = REAL_MEAS_VALUE;
+
+  // Retrieve the cumulative RSRP in dBm averaged over the number of measurements
+  double RSRP = ue_info.ue->mac_stats.prev_num_rsrp_meas > 0 ? (double)ue_info.ue->mac_stats.prev_cumul_rsrp / ue_info.ue->mac_stats.prev_num_rsrp_meas : 0.0;
+
+  // Retrieve the number of Resource Blocks over which RSSI is measured
+  double N = ue_info.ue->mac_stats.NPRB;
+
+  // RSRP (dBM) = RSSI - 10*log(12*N)
+  double RSSI = RSRP + 10 * log10(12 * N);
+
+  // RSRQ=(N*RSRP)/RSSI
+  double RSRQ = (N * RSRP) / RSSI;
+
+  meas_record.real_val = RSRQ;
+
+  return meas_record;
+}
 
 // Added metric for research purposes only
 static meas_record_lst_t fill_PUSCH_SNR(__attribute__((unused))uint32_t gran_period_ms, cudu_ue_info_pair_t ue_info, __attribute__((unused))const size_t ue_idx)
@@ -180,33 +200,7 @@ static meas_record_lst_t fill_PUCCH_SNR(__attribute__((unused))uint32_t gran_per
 }
 
 // Added metric for research purposes only
-static meas_record_lst_t fill_RAW_RSSI(__attribute__((unused))uint32_t gran_period_ms, cudu_ue_info_pair_t ue_info, __attribute__((unused))const size_t ue_idx)
-{
-  meas_record_lst_t meas_record = {0};
-
-  meas_record.value = INTEGER_MEAS_VALUE;
-
-  // Get the value of raw RSSI
-  meas_record.int_val = ue_info.ue->UE_sched_ctrl.raw_rssi;
-
-  return meas_record;
-}
-
-// Added metric for research purposes only
-static meas_record_lst_t fill_UL_RSSI(__attribute__((unused))uint32_t gran_period_ms, cudu_ue_info_pair_t ue_info, __attribute__((unused))const size_t ue_idx)
-{
-  meas_record_lst_t meas_record = {0};
-
-  meas_record.value = INTEGER_MEAS_VALUE;
-
-  // Get the value of UL RSSI
-  meas_record.int_val = ue_info.ue->UE_sched_ctrl.ul_rssi;
-
-  return meas_record;
-}
-
-// Added metric for research purposes only
-static meas_record_lst_t fill_CQI(__attribute__((unused))uint32_t gran_period_ms, cudu_ue_info_pair_t ue_info, __attribute__((unused))const size_t ue_idx)
+static meas_record_lst_t fill_CQI_SINGLE_CODEWORD(__attribute__((unused))uint32_t gran_period_ms, cudu_ue_info_pair_t ue_info, __attribute__((unused))const size_t ue_idx)
 {
   meas_record_lst_t meas_record = {0};
 
@@ -215,8 +209,18 @@ static meas_record_lst_t fill_CQI(__attribute__((unused))uint32_t gran_period_ms
   // Fetch the CQI value
   meas_record.int_val = ue_info.ue->UE_sched_ctrl.CSI_report.cri_ri_li_pmi_cqi_report.wb_cqi_1tb;
 
-  // Alternatively, use wb_cqi_2tb
-  // meas_record.int_val = ue_info.ue->UE_sched_ctrl.CSI_report.cri_ri_li_pmi_cqi_report.wb_cqi_2tb;
+  return meas_record;
+}
+
+// Added metric for research purposes only
+static meas_record_lst_t fill_CQI_DUAL_CODEWORD(__attribute__((unused))uint32_t gran_period_ms, cudu_ue_info_pair_t ue_info, __attribute__((unused))const size_t ue_idx)
+{
+  meas_record_lst_t meas_record = {0};
+
+  meas_record.value = INTEGER_MEAS_VALUE;
+
+  // Fetch the CQI value
+  meas_record.int_val = ue_info.ue->UE_sched_ctrl.CSI_report.cri_ri_li_pmi_cqi_report.wb_cqi_2tb;
 
   return meas_record;
 }
@@ -334,14 +338,14 @@ static kv_measure_t lst_measure[] = {
   {.key = "DRB.PdcpSduVolumeDL", .value = fill_DRB_PdcpSduVolumeDL }, 
   {.key = "DRB.PdcpSduVolumeUL", .value = fill_DRB_PdcpSduVolumeUL },
   {.key = "RSRP", .value = fill_RSRP },
-  {.key = "RSRQ", .value = fill_RSRQ },
   {.key = "N_RSRP_MEAS", .value = fill_N_RSRP_MEAS },
   {.key = "N_PRB", .value = fill_N_PRB },
+  {.key = "RSSI", .value = fill_RSSI },
+  {.key = "RSRQ", .value = fill_RSRQ },
   {.key = "PUSCH_SNR", .value = fill_PUSCH_SNR },
   {.key = "PUCCH_SNR", .value = fill_PUCCH_SNR },
-  {.key = "RAW_RSSI", .value = fill_RAW_RSSI },
-  {.key = "UL_RSSI", .value = fill_UL_RSSI },
-  {.key = "CQI", .value = fill_CQI },
+  {.key = "CQI_SINGLE_CODEWORD", .value = fill_CQI_SINGLE_CODEWORD },
+  {.key = "CQI_DUAL_CODEWORD", .value = fill_CQI_DUAL_CODEWORD },
 #if defined (NGRAN_GNB_DU)
   {.key = "DRB.RlcSduDelayDl", .value =  fill_DRB_RlcSduDelayDl }, 
   {.key = "DRB.UEThpDl", .value =  fill_DRB_UEThpDl }, 

@@ -655,17 +655,26 @@ else
     echo "crictl not found; skipping containerd cleanup."
 fi
 
-# Reset iptables
+# Reset iptables: Flush all default chains
 sudo iptables -F
 sudo iptables -t nat -F
 sudo iptables -t mangle -F
-sudo iptables -X
-sudo iptables -t nat -X
-sudo iptables -t mangle -X
+# Reset iptables: Delete known custom chains safely
+for chain in FLANNEL-FWD FLANNEL-INGRESS FLANNEL-EGRESS; do
+    sudo iptables -D FORWARD -j $chain 2>/dev/null || true
+    sudo iptables -F $chain 2>/dev/null || true
+    sudo iptables -X $chain 2>/dev/null || true
+done
+# Reset iptables: Delete all remaining user-defined chains
+sudo iptables -X || true
+sudo iptables -t nat -X || true
+sudo iptables -t mangle -X || true
+# Reset iptables: Delete CNI interfaces
 echo "Removing CNI network interfaces..."
 sudo ip link delete cni0 2>/dev/null || true
 sudo ip link delete flannel.1 2>/dev/null || true
 sudo ip link delete weave 2>/dev/null || true
+
 echo "Kubernetes is cleaned up."
 
 # -----------------------------------------------------------------------------

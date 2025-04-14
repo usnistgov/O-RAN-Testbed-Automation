@@ -53,7 +53,6 @@
 #include "NR_ServingCellConfig.h"
 #include "NR_ServingCellConfigCommon.h"
 #include "NR_TAG.h"
-#include "PHY/defs_common.h"
 #include "RRC/NR/MESSAGES/asn1_msg.h"
 #include "RRC/NR/nr_rrc_config.h"
 #include "assertions.h"
@@ -66,7 +65,6 @@
 #include "nr_pdcp/nr_pdcp_oai_api.h"
 #include "nr_rlc/nr_rlc_oai_api.h"
 #include "openair2/F1AP/f1ap_ids.h"
-#include "rlc.h"
 #include "seq_arr.h"
 #include "system.h"
 #include "time_meas.h"
@@ -309,7 +307,7 @@ void mac_top_init_gNB(ngran_node_t node_type,
       mac_rrc_init(RC.nrmac[i], node_type);
     }//END for (i = 0; i < RC.nb_nr_macrlc_inst; i++)
 
-    AssertFatal(rlc_module_init(1) == 0,"Could not initialize RLC layer\n");
+    AssertFatal(nr_rlc_module_init(1) == 0,"Could not initialize RLC layer\n");
 
     // These should be out of here later
     if (get_softmodem_params()->usim_test == 0 ) nr_pdcp_layer_init();

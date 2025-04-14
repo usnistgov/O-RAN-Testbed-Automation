@@ -55,7 +55,12 @@ git restore *.previous.sh
 sudo apt-get install -y dos2unix
 find . -type f -exec dos2unix {} \;
 
-find . -exec chmod 775 {} \;
+find . -type d -exec chmod 775 {} +
+find . -type f -exec chmod 664 {} +
+
 chmod 644 "LICENSE"
 chmod 644 "NIST Commercial Product Disclaimer.md"
 chmod 644 "NIST Software Disclaimer.md"
+
+find . -type f -exec chmod -x {} +
+find . -type f -name "*.sh" -exec chmod +x {} \;

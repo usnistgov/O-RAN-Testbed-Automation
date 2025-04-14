@@ -152,15 +152,12 @@ def test_rapps_list():
 ################################################################################
 # Test the priming of a testing rApp
 ################################################################################
-def test_rapp_priming():
-    global rappmgr_ip, rappmgr_port, rapp_id, rapp_file_name
-    #remove_test_rapp_if_exists(rapp_id, rapp_file_name)
+# def test_rapp_priming():
+#     global rappmgr_ip, rappmgr_port, rapp_id, rapp_file_name
+#     #remove_test_rapp_if_exists(rapp_id, rapp_file_name)
 
-    print("Priming testing rApp...")
-    data = {
-        "primeOrder": "PRIME"
-    }
+#     print("Priming testing rApp...")
 
-    #prime_rapp = requests.put(f'http://{rappmgr_ip}:{rappmgr_port}/rapps/{rapp_id}', headers={'Content-Type': 'application/json'}, data=json.dumps(data))
-    print(f'Console command: curl -X PUT http://{rappmgr_ip}:{rappmgr_port}/rapps/{rapp_id} -H "Content-Type: application/json" -d \'{json.dumps(data)}\'')    
-    #assert prime_rapp.status_code == 200, f'Priming rApp status code: {prime_rapp.status_code}'
+#     prime_rapp = requests.put(f'http://{rappmgr_ip}:{rappmgr_port}/rapps/{rapp_id}', headers={'Content-Type': 'application/json'}, data=json.dumps(data))
+#     print(f'Console command: curl -X PUT http://{rappmgr_ip}:{rappmgr_port}/rapps/{rapp_id} -H "Content-Type: application/json" -d \'{json.dumps(data)}\'')    
+#     assert prime_rapp.status_code == 200, f'Priming rApp status code: {prime_rapp.status_code}'

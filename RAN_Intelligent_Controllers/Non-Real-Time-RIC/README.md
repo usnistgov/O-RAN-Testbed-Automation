@@ -19,6 +19,54 @@ This automation tool is based on the K-Release of the Non-RT RIC. More informati
 - **Logs**: From within K9s, use the `Arrow Keys` to highlight a pod, `Enter` to view the logs for the pod, `w` to wrap text, `Esc` to go back, `Ctrl+k` to restart a pod that isn't responding, and `s` to open a command line shell in the pod. The control panel output is displayed in the terminal and in `logs/controlpanel_stdout.txt`.
 - **Uninstall**: Remove the Non-RT RIC with `./full_uninstall.sh`.
 
+
+<details>
+  <summary><b>View the list of Kubernetes pods running after the Non-RT RIC is installed.</b></summary>
+  <hr>
+  
+```console
+$ kubectl get pods -A
+NAMESPACE      NAME                                            READY   STATUS
+istio-system   istio-ingressgateway-75bddb84ff-fczl2           1/1     Running
+istio-system   istiod-f59bfc4b4-25dfc                          1/1     Running
+kube-flannel   kube-flannel-ds-fx6cm                           1/1     Running
+kube-system    coredns-668d6bf9bc-kzs28                        1/1     Running
+kube-system    coredns-668d6bf9bc-mpb9x                        1/1     Running
+kube-system    etcd-vmware-022                                 1/1     Running
+kube-system    kube-apiserver-vmware-022                       1/1     Running
+kube-system    kube-controller-manager-vmware-022              1/1     Running
+kube-system    kube-proxy-l6ncs                                1/1     Running
+kube-system    kube-scheduler-vmware-022                       1/1     Running
+nonrtric       a1-sim-osc-0                                    1/1     Running
+nonrtric       a1-sim-osc-1                                    1/1     Running
+nonrtric       a1-sim-std-0                                    1/1     Running
+nonrtric       a1-sim-std-1                                    1/1     Running
+nonrtric       a1-sim-std2-0                                   1/1     Running
+nonrtric       a1-sim-std2-1                                   1/1     Running
+nonrtric       a1controller-59675f9b55-fnjqp                   1/1     Running
+nonrtric       capifcore-58b5887dc9-56n74                      1/1     Running
+nonrtric       controlpanel-9d574cb44-dkrq6                    1/1     Running
+nonrtric       db-85c8fdc968-bftwp                             1/1     Running
+nonrtric       dmaapadapterservice-0                           1/1     Running
+nonrtric       dmaapmediatorservice-0                          1/1     Running
+nonrtric       helmmanager-0                                   1/1     Running
+nonrtric       informationservice-0                            1/1     Running
+nonrtric       nonrtricgateway-55476db4c5-g5ppr                1/1     Running
+nonrtric       oran-nonrtric-kong-86c9cb9f99-wvbhv             2/2     Running
+nonrtric       oran-nonrtric-postgresql-0                      1/1     Running
+nonrtric       orufhrecovery-55697f9666-h6lwn                  1/1     Running
+nonrtric       policymanagementservice-0                       1/1     Running
+nonrtric       ransliceassurance-7bfc6676fd-fk9qj              1/1     Running
+nonrtric       rappcatalogueenhancedservice-7795848b6c-v45fb   1/1     Running
+nonrtric       rappcatalogueservice-5cdb59b486-2hzb5           1/1     Running
+nonrtric       rappmanager-0                                   1/1     Running
+nonrtric       servicemanager-795d499bd-msl8n                  1/1     Running
+```
+  </pre>
+</details>
+
+---
+
 ## References
 
 1. Working Group 2: Non-Real-time RAN Intelligent Controller and A1 Interface Workgroup. O-RAN Alliance. [https://public.o-ran.org/display/WG2/Introduction][oran-wg2]

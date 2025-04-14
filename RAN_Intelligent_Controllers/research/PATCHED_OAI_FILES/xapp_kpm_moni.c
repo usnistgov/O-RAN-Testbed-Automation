@@ -101,12 +101,10 @@ void log_int_value(byte_array_t name, meas_record_lst_t meas_record)
     printf("N_RSRP_MEAS = %d\n", meas_record.int_val);
   } else if (cmp_str_ba("N_PRB", name) == 0) {
     printf("N_PRB = %d\n", meas_record.int_val);
-  } else if (cmp_str_ba("RAW_RSSI", name) == 0) {
-    printf("RAW_RSSI = %d\n", meas_record.int_val);
-  } else if (cmp_str_ba("UL_RSSI", name) == 0) {
-    printf("UL_RSSI = %d\n", meas_record.int_val);
-  } else if (cmp_str_ba("CQI", name) == 0) {
-    printf("CQI = %d\n", meas_record.int_val);
+  } else if (cmp_str_ba("CQI_SINGLE_CODEWORD", name) == 0) {
+    printf("CQI_SINGLE_CODEWORD = %d\n", meas_record.int_val);
+  } else if (cmp_str_ba("CQI_DUAL_CODEWORD", name) == 0) {
+    printf("CQI_DUAL_CODEWORD = %d\n", meas_record.int_val);
   } else {
     printf("Measurement Name not yet supported\n");
   }
@@ -123,6 +121,8 @@ void log_real_value(byte_array_t name, meas_record_lst_t meas_record)
     printf("DRB.UEThpUl = %.2f [kbps]\n", meas_record.real_val);
   } else if (cmp_str_ba("RSRP", name) == 0) {
     printf("RSRP = %.2f [dBm]\n", meas_record.real_val);
+  } else if (cmp_str_ba("RSSI", name) == 0) {
+    printf("RSSI = %.2f [dBm]\n", meas_record.real_val);
   } else if (cmp_str_ba("RSRQ", name) == 0) {
     printf("RSRQ = %.2f [dB]\n", meas_record.real_val);
   } else if (cmp_str_ba("PUSCH_SNR", name) == 0) {

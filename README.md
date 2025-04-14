@@ -150,6 +150,12 @@ RRC Connected
 PDU Session Establishment successful. IP: 10.45.0.2
 RRC NR reconfiguration successful.
 ```
+
+<b>Supplementary Network Monitoring, Visualization, and Control</b><p align="center">
+  <img src="Images/Cilium_Hubble_UI.png" alt="Hubble UI showing network flows" width="70%">
+</p>
+
+See <a href="RAN_Intelligent_Controllers/Near-Real-Time-RIC#migration-to-cilium">this section</a> for the set up guide.
 </details>
 
 ---
@@ -174,6 +180,12 @@ RRU.PrbTotUl = 140 [PRBs]
 RSRP = -44.00 [dBm]
 ...
 ```
+
+<b>Supplementary Dashboard for KPI Visualization</b><p align="center">
+  <img src="Images/xApp_Dashboard.png" alt="Grafana dashboard of xApp KPI metrics" width="75%">
+</p>
+
+See <a href="OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC#kpi-monitor-visualization-in-grafana">this section</a> for the set up guide.
 </details>
 
 ---
@@ -204,6 +216,7 @@ USNISTGOV/O-RAN-Testbed-Automation is developed and maintained by the NIST Wirel
 - Peng Liu, @pengnist
 - Kyehwan Lee, @kyehwanlee
 - Fernando J. Cintrón, @fjcintron
+- Doug Montgomery, @dougm-nist
 
 ## NIST Disclaimers
 

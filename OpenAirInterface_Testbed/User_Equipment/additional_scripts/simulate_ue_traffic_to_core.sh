@@ -89,13 +89,9 @@ fi
 
 echo "Successfully found PDU Session IP: $PDU_SESSION_IP"
 
-# First make sure we can ping the 5G core
-sudo ip netns exec $UE_NAMESPACE ping -c 4 $PDU_SESSION_IP
-if [ $? -ne 0 ]; then
-    echo "Error: Unable to ping $PDU_SESSION_IP."
-    exit 1
+if ! command -v iperf &>/dev/null; then
+    echo "Package \"iperf\" not found, installing..."
+    sudo apt-get install -y iperf
 fi
-
-echo "Ping was successful to $PDU_SESSION_IP, proceeding with iperf traffic generation..."
 
 sudo ip netns exec ue$UE_NUMBER iperf -c $PDU_SESSION_IP -u -i 1 -b 1M -t 60

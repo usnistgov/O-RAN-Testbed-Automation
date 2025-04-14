@@ -54,18 +54,6 @@
       "version": ""
     },
     {
-      "type": "panel",
-      "id": "trend",
-      "name": "Trend",
-      "version": ""
-    },
-    {
-      "type": "panel",
-      "id": "xychart",
-      "name": "XY Chart",
-      "version": ""
-    },
-    {
       "type": "datasource",
       "id": "yesoreyeram-infinity-datasource",
       "name": "Infinity",
@@ -153,8 +141,8 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 2,
-        "x": 11,
+        "w": 3,
+        "x": 10,
         "y": 0
       },
       "id": 21,
@@ -181,7 +169,7 @@
               "type": "number"
             },
             {
-              "selector": "Time ( UNIX ms )",
+              "selector": "Time (UNIX ms)",
               "text": "UNIX Epoch (ms)",
               "type": "timestamp_epoch"
             }
@@ -211,7 +199,7 @@
           "id": "groupToNestedTable",
           "options": {
             "fields": {
-              "Time ( UNIX ms )": {
+              "Time (UNIX ms)": {
                 "aggregations": [],
                 "operation": "groupby"
               },
@@ -340,7 +328,7 @@
               "type": "number"
             },
             {
-              "selector": "Time ( UNIX ms )",
+              "selector": "Time (UNIX ms)",
               "text": "UNIX Epoch (ms)",
               "type": "string"
             }
@@ -417,7 +405,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Aggregated UE DL Throughput (sum)"
+              "options": "Aggregated UE DL Throughput"
             },
             "properties": [
               {
@@ -432,7 +420,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Aggregated UE UL Throughput (sum)"
+              "options": "Aggregated UE UL Throughput"
             },
             "properties": [
               {
@@ -468,7 +456,7 @@
         "orientation": "horizontal",
         "reduceOptions": {
           "calcs": [
-            "sum"
+            "lastNotNull"
           ],
           "fields": "",
           "values": false
@@ -482,17 +470,17 @@
         {
           "columns": [
             {
-              "selector": "DRB.UEThpDl",
+              "selector": "DRB.UEThpDl (kbps)",
               "text": "Aggregated UE DL Throughput",
               "type": "number"
             },
             {
-              "selector": "DRB.UEThpUl",
+              "selector": "DRB.UEThpUl (kbps)",
               "text": "Aggregated UE UL Throughput",
               "type": "number"
             },
             {
-              "selector": "Time ( UNIX ms )",
+              "selector": "Time (UNIX ms)",
               "text": "UNIX Timestamp (ms)",
               "type": "string"
             }
@@ -518,6 +506,7 @@
       ],
       "transformations": [
         {
+          "disabled": true,
           "id": "groupBy",
           "options": {
             "fields": {
@@ -635,16 +624,6 @@
               }
             }
           }
-        },
-        {
-          "id": "reduce",
-          "options": {
-            "includeTimeField": false,
-            "mode": "reduceFields",
-            "reducers": [
-              "lastNotNull"
-            ]
-          }
         }
       ],
       "type": "bargauge"
@@ -659,6 +638,7 @@
           "color": {
             "mode": "thresholds"
           },
+          "fieldMinMax": false,
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -678,7 +658,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "DRB.PdcpSduVolumeUL"
+              "options": "DRB.PdcpSduVolumeUL (kb) (sum)"
             },
             "properties": [
               {
@@ -687,13 +667,17 @@
                   "fixedColor": "super-light-orange",
                   "mode": "fixed"
                 }
+              },
+              {
+                "id": "displayName",
+                "value": "DRB.PdcpSduVolumeUL"
               }
             ]
           },
           {
             "matcher": {
               "id": "byName",
-              "options": "DRB.PdcpSduVolumeDL"
+              "options": "DRB.PdcpSduVolumeDL (kb) (sum)"
             },
             "properties": [
               {
@@ -702,6 +686,10 @@
                   "fixedColor": "light-blue",
                   "mode": "fixed"
                 }
+              },
+              {
+                "id": "displayName",
+                "value": "DRB.PdcpSduVolumeDL"
               }
             ]
           }
@@ -713,7 +701,7 @@
         "x": 20,
         "y": 0
       },
-      "id": 28,
+      "id": 29,
       "maxPerRow": 12,
       "options": {
         "displayMode": "basic",
@@ -730,7 +718,7 @@
         "orientation": "horizontal",
         "reduceOptions": {
           "calcs": [
-            "sum"
+            "lastNotNull"
           ],
           "fields": "",
           "values": false
@@ -744,18 +732,18 @@
         {
           "columns": [
             {
-              "selector": "Time ( UNIX ms )",
+              "selector": "Time (UNIX ms)",
               "text": "Timestamp",
               "type": "timestamp_epoch"
             },
             {
-              "selector": "DRB.PdcpSduVolumeDL",
-              "text": "DRB.PdcpSduVolumeDL",
+              "selector": "DRB.PdcpSduVolumeDL (kb)",
+              "text": "DRB.PdcpSduVolumeDL (kb)",
               "type": "number"
             },
             {
-              "selector": "DRB.PdcpSduVolumeUL",
-              "text": "DRB.PdcpSduVolumeUL",
+              "selector": "DRB.PdcpSduVolumeUL (kb)",
+              "text": "DRB.PdcpSduVolumeUL (kb)",
               "type": "number"
             },
             {
@@ -786,6 +774,7 @@
       "title": "Aggregated UL/DL Volume",
       "transformations": [
         {
+          "disabled": true,
           "id": "filterByValue",
           "options": {
             "filters": [
@@ -804,13 +793,26 @@
           }
         },
         {
-          "id": "reduce",
+          "id": "groupBy",
           "options": {
-            "includeTimeField": false,
-            "mode": "reduceFields",
-            "reducers": [
-              "sum"
-            ]
+            "fields": {
+              "DRB.PdcpSduVolumeDL (kb)": {
+                "aggregations": [
+                  "sum"
+                ],
+                "operation": "aggregate"
+              },
+              "DRB.PdcpSduVolumeUL (kb)": {
+                "aggregations": [
+                  "sum"
+                ],
+                "operation": "aggregate"
+              },
+              "Timestamp": {
+                "aggregations": [],
+                "operation": "groupby"
+              }
+            }
           }
         },
         {
@@ -820,7 +822,7 @@
               "left": {
                 "matcher": {
                   "id": "byName",
-                  "options": "DRB.PdcpSduVolumeDL"
+                  "options": "DRB.PdcpSduVolumeDL (kb)"
                 }
               },
               "operator": "/",
@@ -841,7 +843,7 @@
               "left": {
                 "matcher": {
                   "id": "byName",
-                  "options": "DRB.PdcpSduVolumeUL"
+                  "options": "DRB.PdcpSduVolumeUL (kb)"
                 }
               },
               "operator": "/",
@@ -861,8 +863,8 @@
           "options": {
             "include": {
               "names": [
-                "DRB.PdcpSduVolumeDL / 8",
-                "DRB.PdcpSduVolumeUL / 8"
+                "DRB.PdcpSduVolumeDL (kb) (sum)",
+                "DRB.PdcpSduVolumeUL (kb) (sum)"
               ]
             }
           }
@@ -935,7 +937,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "RSRQ"
+              "options": "RSRQ (dB)"
             },
             "properties": [
               {
@@ -965,7 +967,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "RSRP"
+              "options": "RSRP (dBm)"
             },
             "properties": [
               {
@@ -1004,13 +1006,13 @@
         {
           "columns": [
             {
-              "selector": "Time ( UNIX ms )",
+              "selector": "Time (UNIX ms)",
               "text": "Timestamp",
               "type": "timestamp_epoch"
             },
             {
-              "selector": "RSRP",
-              "text": "RSRP",
+              "selector": "RSRP (dBm)",
+              "text": "RSRP (dBm)",
               "type": "number"
             },
             {
@@ -1077,21 +1079,32 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
-            "fillOpacity": 50,
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "points",
+            "fillOpacity": 0,
+            "gradientMode": "none",
             "hideFrom": {
               "legend": false,
               "tooltip": false,
               "viz": false
             },
-            "pointShape": "circle",
-            "pointSize": {
-              "fixed": 5
-            },
-            "pointStrokeWidth": 2,
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
             "scaleDistribution": {
               "type": "linear"
             },
-            "show": "points"
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "mappings": [],
           "thresholds": {
@@ -1111,7 +1124,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "RSRQ"
+              "options": "RSRQ (dB)"
             },
             "properties": [
               {
@@ -1154,23 +1167,6 @@
           "placement": "bottom",
           "showLegend": true
         },
-        "mapping": "auto",
-        "series": [
-          {
-            "x": {
-              "matcher": {
-                "id": "byName",
-                "options": "UNIX Epoch (ms)"
-              }
-            },
-            "y": {
-              "matcher": {
-                "id": "byName",
-                "options": "N_RSRP_MEAS"
-              }
-            }
-          }
-        ],
         "tooltip": {
           "hideZeros": false,
           "mode": "single",
@@ -1182,7 +1178,7 @@
         {
           "columns": [
             {
-              "selector": "Time ( UNIX ms )",
+              "selector": "Time (UNIX ms)",
               "text": "Timestamp",
               "type": "timestamp_epoch"
             },
@@ -1195,11 +1191,6 @@
               "selector": "UE ID",
               "text": "UE_ID",
               "type": "string"
-            },
-            {
-              "selector": "Time ( UNIX ms )",
-              "text": "UNIX Epoch (ms)",
-              "type": "number"
             }
           ],
           "datasource": {
@@ -1242,136 +1233,7 @@
           }
         }
       ],
-      "type": "xychart"
-    },
-    {
-      "datasource": {
-        "type": "yesoreyeram-infinity-datasource",
-        "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "DRB.RlcSduDelayDl"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "light-blue",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 2,
-        "x": 11,
-        "y": 4
-      },
-      "id": 29,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "percentChangeColorMode": "standard",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showPercentChange": false,
-        "textMode": "auto",
-        "wideLayout": true
-      },
-      "pluginVersion": "11.6.0",
-      "targets": [
-        {
-          "columns": [
-            {
-              "selector": "Time ( UNIX ms )",
-              "text": "Timestamp",
-              "type": "timestamp_epoch"
-            },
-            {
-              "selector": "CQI",
-              "text": "CQI",
-              "type": "number"
-            },
-            {
-              "selector": "UE ID",
-              "text": "UE_ID",
-              "type": "string"
-            }
-          ],
-          "datasource": {
-            "type": "yesoreyeram-infinity-datasource",
-            "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
-          },
-          "filters": [],
-          "format": "table",
-          "global_query_id": "",
-          "parser": "backend",
-          "refId": "A",
-          "root_selector": "",
-          "source": "url",
-          "type": "csv",
-          "url": "",
-          "url_options": {
-            "data": "",
-            "method": "GET"
-          }
-        }
-      ],
-      "title": "CQI",
-      "transformations": [
-        {
-          "id": "filterByValue",
-          "options": {
-            "filters": [
-              {
-                "config": {
-                  "id": "equal",
-                  "options": {
-                    "value": "${Selected_UE_ID}"
-                  }
-                },
-                "fieldName": "UE_ID"
-              }
-            ],
-            "match": "any",
-            "type": "include"
-          }
-        }
-      ],
-      "type": "stat"
+      "type": "timeseries"
     },
     {
       "datasource": {
@@ -1439,8 +1301,8 @@
       },
       "gridPos": {
         "h": 5,
-        "w": 7,
-        "x": 13,
+        "w": 6,
+        "x": 11,
         "y": 4
       },
       "id": 22,
@@ -1467,7 +1329,7 @@
               "type": "number"
             },
             {
-              "selector": "Time ( UNIX ms )",
+              "selector": "Time (UNIX ms)",
               "text": "UNIX Epoch (ms)",
               "type": "timestamp_epoch"
             }
@@ -1542,7 +1404,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "DRB.PdcpSduVolumeUL"
+              "options": "DRB.PdcpSduVolumeUL (kb) (sum)"
             },
             "properties": [
               {
@@ -1551,13 +1413,17 @@
                   "fixedColor": "super-light-orange",
                   "mode": "fixed"
                 }
+              },
+              {
+                "id": "displayName",
+                "value": "DRB.PdcpSduVolumeUL"
               }
             ]
           },
           {
             "matcher": {
               "id": "byName",
-              "options": "DRB.PdcpSduVolumeDL"
+              "options": "DRB.PdcpSduVolumeDL (kb) (sum)"
             },
             "properties": [
               {
@@ -1566,15 +1432,19 @@
                   "fixedColor": "light-blue",
                   "mode": "fixed"
                 }
+              },
+              {
+                "id": "displayName",
+                "value": "DRB.PdcpSduVolumeDL"
               }
             ]
           }
         ]
       },
       "gridPos": {
-        "h": 5,
-        "w": 4,
-        "x": 20,
+        "h": 4,
+        "w": 7,
+        "x": 17,
         "y": 4
       },
       "id": 2,
@@ -1594,7 +1464,7 @@
         "orientation": "horizontal",
         "reduceOptions": {
           "calcs": [
-            "sum"
+            "lastNotNull"
           ],
           "fields": "",
           "values": false
@@ -1608,18 +1478,18 @@
         {
           "columns": [
             {
-              "selector": "Time ( UNIX ms )",
+              "selector": "Time (UNIX ms)",
               "text": "Timestamp",
               "type": "timestamp_epoch"
             },
             {
-              "selector": "DRB.PdcpSduVolumeDL",
-              "text": "DRB.PdcpSduVolumeDL",
+              "selector": "DRB.PdcpSduVolumeDL (kb)",
+              "text": "DRB.PdcpSduVolumeDL (kb)",
               "type": "number"
             },
             {
-              "selector": "DRB.PdcpSduVolumeUL",
-              "text": "DRB.PdcpSduVolumeUL",
+              "selector": "DRB.PdcpSduVolumeUL (kb)",
+              "text": "DRB.PdcpSduVolumeUL (kb)",
               "type": "number"
             },
             {
@@ -1668,13 +1538,26 @@
           }
         },
         {
-          "id": "reduce",
+          "id": "groupBy",
           "options": {
-            "includeTimeField": false,
-            "mode": "reduceFields",
-            "reducers": [
-              "lastNotNull"
-            ]
+            "fields": {
+              "DRB.PdcpSduVolumeDL (kb)": {
+                "aggregations": [
+                  "sum"
+                ],
+                "operation": "aggregate"
+              },
+              "DRB.PdcpSduVolumeUL (kb)": {
+                "aggregations": [
+                  "sum"
+                ],
+                "operation": "aggregate"
+              },
+              "Timestamp": {
+                "aggregations": [],
+                "operation": "groupby"
+              }
+            }
           }
         }
       ],
@@ -1737,13 +1620,28 @@
               }
             ]
           },
-          "unit": "µs"
+          "unit": "Kbits"
         },
         "overrides": [
           {
             "matcher": {
               "id": "byName",
-              "options": "DRB.RlcSduDelayDl"
+              "options": "DRB.UEThpUl (kbps)"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "super-light-orange",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "DRB.UEThpDl (kbps)"
             },
             "properties": [
               {
@@ -1758,12 +1656,12 @@
         ]
       },
       "gridPos": {
-        "h": 5,
-        "w": 6,
-        "x": 11,
-        "y": 9
+        "h": 8,
+        "w": 7,
+        "x": 17,
+        "y": 8
       },
-      "id": 4,
+      "id": 5,
       "options": {
         "legend": {
           "calcs": [],
@@ -1782,13 +1680,18 @@
         {
           "columns": [
             {
-              "selector": "Time ( UNIX ms )",
+              "selector": "Time (UNIX ms)",
               "text": "Timestamp",
               "type": "timestamp_epoch"
             },
             {
-              "selector": "DRB.RlcSduDelayDl",
-              "text": "DRB.RlcSduDelayDl",
+              "selector": "DRB.UEThpDl (kbps)",
+              "text": "DRB.UEThpDl (kbps)",
+              "type": "number"
+            },
+            {
+              "selector": "DRB.UEThpUl (kbps)",
+              "text": "DRB.UEThpUl (kbps)",
               "type": "number"
             },
             {
@@ -1816,9 +1719,10 @@
           }
         }
       ],
-      "title": "Delay Downlink",
+      "title": "UE Throughput Downlink / Uplink",
       "transformations": [
         {
+          "disabled": true,
           "id": "filterByValue",
           "options": {
             "filters": [
@@ -1896,28 +1800,13 @@
               }
             ]
           },
-          "unit": "Kbits"
+          "unit": "µs"
         },
         "overrides": [
           {
             "matcher": {
               "id": "byName",
-              "options": "DRB.UEThpUl"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "super-light-orange",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "DRB.UEThpDl"
+              "options": "DRB.RlcSduDelayDl (μs)"
             },
             "properties": [
               {
@@ -1932,12 +1821,12 @@
         ]
       },
       "gridPos": {
-        "h": 7,
-        "w": 7,
-        "x": 17,
+        "h": 5,
+        "w": 6,
+        "x": 11,
         "y": 9
       },
-      "id": 5,
+      "id": 4,
       "options": {
         "legend": {
           "calcs": [],
@@ -1956,18 +1845,13 @@
         {
           "columns": [
             {
-              "selector": "Time ( UNIX ms )",
+              "selector": "Time (UNIX ms)",
               "text": "Timestamp",
               "type": "timestamp_epoch"
             },
             {
-              "selector": "DRB.UEThpDl",
-              "text": "DRB.UEThpDl",
-              "type": "number"
-            },
-            {
-              "selector": "DRB.UEThpUl",
-              "text": "DRB.UEThpUl",
+              "selector": "DRB.RlcSduDelayDl (μs)",
+              "text": "DRB.RlcSduDelayDl (μs)",
               "type": "number"
             },
             {
@@ -1995,10 +1879,9 @@
           }
         }
       ],
-      "title": "UE Throughput Downlink / Uplink",
+      "title": "Delay Downlink",
       "transformations": [
         {
-          "disabled": true,
           "id": "filterByValue",
           "options": {
             "filters": [
@@ -2075,13 +1958,14 @@
                 "value": 80
               }
             ]
-          }
+          },
+          "unit": "dBm"
         },
         "overrides": [
           {
             "matcher": {
               "id": "byName",
-              "options": "RSRQ"
+              "options": "RSRQ (dB)"
             },
             "properties": [
               {
@@ -2096,7 +1980,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "RAW_RSSI"
+              "options": "RSSI (dBm)"
             },
             "properties": [
               {
@@ -2136,13 +2020,13 @@
         {
           "columns": [
             {
-              "selector": "Time ( UNIX ms )",
+              "selector": "Time (UNIX ms)",
               "text": "Timestamp",
               "type": "timestamp_epoch"
             },
             {
-              "selector": "RAW_RSSI",
-              "text": "RAW_RSSI",
+              "selector": "RSSI (dBm)",
+              "text": "RSSI (dBm)",
               "type": "number"
             },
             {
@@ -2170,7 +2054,7 @@
           }
         }
       ],
-      "title": "Raw RSSI",
+      "title": "RSSI",
       "transformations": [
         {
           "id": "filterByValue",
@@ -2204,17 +2088,36 @@
             "mode": "palette-classic"
           },
           "custom": {
-            "fillOpacity": 80,
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
             "gradientMode": "none",
             "hideFrom": {
               "legend": false,
               "tooltip": false,
               "viz": false
             },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
             "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
             "stacking": {
               "group": "A",
               "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
             }
           },
           "mappings": [],
@@ -2236,7 +2139,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "RSRQ"
+              "options": "RSRQ (dB)"
             },
             "properties": [
               {
@@ -2276,22 +2179,13 @@
                 "readOnly": true
               }
             },
-            "properties": [
-              {
-                "id": "custom.hideFrom",
-                "value": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": true
-                }
-              }
-            ]
+            "properties": []
           }
         ]
       },
       "gridPos": {
         "h": 7,
-        "w": 5,
+        "w": 3,
         "x": 3,
         "y": 11
       },
@@ -2314,7 +2208,7 @@
         {
           "columns": [
             {
-              "selector": "Time ( UNIX ms )",
+              "selector": "Time (UNIX ms)",
               "text": "Timestamp",
               "type": "timestamp_epoch"
             },
@@ -2369,7 +2263,7 @@
           }
         }
       ],
-      "type": "histogram"
+      "type": "timeseries"
     },
     {
       "datasource": {
@@ -2427,13 +2321,14 @@
                 "value": 80
               }
             ]
-          }
+          },
+          "unit": "dB"
         },
         "overrides": [
           {
             "matcher": {
               "id": "byName",
-              "options": "RSRQ"
+              "options": "RSRQ (dB)"
             },
             "properties": [
               {
@@ -2449,8 +2344,8 @@
       },
       "gridPos": {
         "h": 7,
-        "w": 3,
-        "x": 8,
+        "w": 5,
+        "x": 6,
         "y": 11
       },
       "id": 18,
@@ -2465,32 +2360,26 @@
           "hideZeros": false,
           "mode": "single",
           "sort": "none"
-        },
-        "xField": "UNIX Epoch (ms)"
+        }
       },
       "pluginVersion": "11.6.0",
       "targets": [
         {
           "columns": [
             {
-              "selector": "Time ( UNIX ms )",
+              "selector": "Time (UNIX ms)",
               "text": "Timestamp",
               "type": "timestamp_epoch"
             },
             {
-              "selector": "RSRQ",
-              "text": "RSRQ",
+              "selector": "RSRQ (dB)",
+              "text": "RSRQ (dB)",
               "type": "number"
             },
             {
               "selector": "UE ID",
               "text": "UE_ID",
               "type": "string"
-            },
-            {
-              "selector": "Time ( UNIX ms )",
-              "text": "UNIX Epoch (ms)",
-              "type": "number"
             }
           ],
           "datasource": {
@@ -2512,7 +2401,7 @@
           }
         }
       ],
-      "title": "Raw RSRQ",
+      "title": "RSRQ",
       "transformations": [
         {
           "id": "filterByValue",
@@ -2533,7 +2422,7 @@
           }
         }
       ],
-      "type": "trend"
+      "type": "timeseries"
     },
     {
       "datasource": {
@@ -2581,7 +2470,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "RRU.PrbTotDl"
+              "options": "RRU.PrbTotDl (PRBs)"
             },
             "properties": [
               {
@@ -2620,13 +2509,13 @@
         {
           "columns": [
             {
-              "selector": "Time ( UNIX ms )",
+              "selector": "Time (UNIX ms)",
               "text": "Timestamp",
               "type": "timestamp_epoch"
             },
             {
-              "selector": "RRU.PrbTotDl",
-              "text": "RRU.PrbTotDl",
+              "selector": "RRU.PrbTotDl (PRBs)",
+              "text": "RRU.PrbTotDl (PRBs)",
               "type": "number"
             },
             {
@@ -2734,13 +2623,13 @@
               }
             ]
           },
-          "unit": "Kbits"
+          "unit": "PRBs"
         },
         "overrides": [
           {
             "matcher": {
               "id": "byName",
-              "options": "RRU.PrbTotUl"
+              "options": "RRU.PrbTotUl (PRBs)"
             },
             "properties": [
               {
@@ -2755,7 +2644,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "RRU.PrbTotDl"
+              "options": "RRU.PrbTotDl (PRBs)"
             },
             "properties": [
               {
@@ -2794,18 +2683,18 @@
         {
           "columns": [
             {
-              "selector": "Time ( UNIX ms )",
+              "selector": "Time (UNIX ms)",
               "text": "Timestamp",
               "type": "timestamp_epoch"
             },
             {
-              "selector": "RRU.PrbTotDl",
-              "text": "RRU.PrbTotDl",
+              "selector": "RRU.PrbTotDl (PRBs)",
+              "text": "RRU.PrbTotDl (PRBs)",
               "type": "number"
             },
             {
-              "selector": "RRU.PrbTotUl",
-              "text": "RRU.PrbTotUl",
+              "selector": "RRU.PrbTotUl (PRBs)",
+              "text": "RRU.PrbTotUl (PRBs)",
               "type": "number"
             },
             {
@@ -2914,17 +2803,17 @@
         {
           "columns": [
             {
-              "selector": "Time ( UNIX ms )",
+              "selector": "Time (UNIX ms)",
               "text": "Timestamp",
               "type": "timestamp_epoch"
             },
             {
-              "selector": "PUSCH_SNR",
+              "selector": "PUSCH_SNR (dB)",
               "text": "SNR (PUSCH)",
               "type": "number"
             },
             {
-              "selector": "PUCCH_SNR",
+              "selector": "PUCCH_SNR (dB)",
               "text": "SNR (PUCCH)",
               "type": "number"
             },
@@ -3020,7 +2909,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "RRU.PrbTotUl"
+              "options": "RRU.PrbTotUl (PRBs)"
             },
             "properties": [
               {
@@ -3059,13 +2948,13 @@
         {
           "columns": [
             {
-              "selector": "Time ( UNIX ms )",
+              "selector": "Time (UNIX ms)",
               "text": "Timestamp",
               "type": "timestamp_epoch"
             },
             {
-              "selector": "RRU.PrbTotUl",
-              "text": "RRU.PrbTotUl",
+              "selector": "RRU.PrbTotUl (PRBs)",
+              "text": "RRU.PrbTotUl (PRBs)",
               "type": "number"
             },
             {
@@ -3115,6 +3004,314 @@
         }
       ],
       "type": "histogram"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 24
+      },
+      "id": 30,
+      "panels": [],
+      "title": "Experimental Panels",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "fieldMinMax": false,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "deckbytes"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "DRB.PdcSduVolumeUL"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "super-light-orange",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "displayName",
+                "value": "DRB.PdcpSduVolumeUL"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "DRB.PdcSduVolumeDL"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "light-blue",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "displayName",
+                "value": "DRB.PdcpSduVolumeDL"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 20,
+        "y": 25
+      },
+      "id": 28,
+      "maxPerRow": 12,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.6.0",
+      "targets": [
+        {
+          "columns": [
+            {
+              "selector": "Time (UNIX ms)",
+              "text": "Timestamp",
+              "type": "timestamp_epoch"
+            },
+            {
+              "selector": "DRB.PdcpSduVolumeDL (kb)",
+              "text": "DRB.PdcpSduVolumeDL (kb)",
+              "type": "number"
+            },
+            {
+              "selector": "DRB.PdcpSduVolumeUL (kb)",
+              "text": "DRB.PdcpSduVolumeUL (kb)",
+              "type": "number"
+            },
+            {
+              "selector": "UE ID",
+              "text": "UE_ID",
+              "type": "string"
+            }
+          ],
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+          },
+          "filters": [],
+          "format": "table",
+          "global_query_id": "",
+          "parser": "backend",
+          "refId": "A",
+          "root_selector": "",
+          "source": "url",
+          "type": "csv",
+          "url": "",
+          "url_options": {
+            "data": "",
+            "method": "GET"
+          }
+        }
+      ],
+      "title": "Cumulative UL/DL Volume",
+      "transformations": [
+        {
+          "disabled": true,
+          "id": "filterByValue",
+          "options": {
+            "filters": [
+              {
+                "config": {
+                  "id": "equal",
+                  "options": {
+                    "value": "${Selected_UE_ID}"
+                  }
+                },
+                "fieldName": "UE_ID"
+              }
+            ],
+            "match": "any",
+            "type": "include"
+          }
+        },
+        {
+          "id": "groupBy",
+          "options": {
+            "fields": {
+              "DRB.PdcpSduVolumeDL (kb)": {
+                "aggregations": [
+                  "sum"
+                ],
+                "operation": "aggregate"
+              },
+              "DRB.PdcpSduVolumeUL (kb)": {
+                "aggregations": [
+                  "sum"
+                ],
+                "operation": "aggregate"
+              },
+              "Timestamp": {
+                "aggregations": [],
+                "operation": "groupby"
+              }
+            }
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "binary": {
+              "left": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "DRB.PdcpSduVolumeDL (kb)"
+                }
+              },
+              "operator": "/",
+              "right": {
+                "fixed": "8"
+              }
+            },
+            "mode": "binary",
+            "reduce": {
+              "reducer": "sum"
+            }
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "binary": {
+              "left": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "DRB.PdcpSduVolumeUL (kb)"
+                }
+              },
+              "operator": "/",
+              "right": {
+                "fixed": "8"
+              }
+            },
+            "mode": "binary",
+            "reduce": {
+              "include": [],
+              "reducer": "sum"
+            }
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "alias": "DRB.PdcSduVolumeDL",
+            "cumulative": {
+              "field": "DRB.PdcpSduVolumeDL (kb) (sum)",
+              "reducer": "sum"
+            },
+            "mode": "cumulativeFunctions",
+            "reduce": {
+              "reducer": "sum"
+            }
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "alias": "DRB.PdcSduVolumeUL",
+            "cumulative": {
+              "field": "DRB.PdcpSduVolumeUL (kb) (sum)",
+              "reducer": "sum"
+            },
+            "mode": "cumulativeFunctions",
+            "reduce": {
+              "reducer": "sum"
+            }
+          }
+        },
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "Timestamp",
+                "DRB.PdcSduVolumeDL",
+                "DRB.PdcSduVolumeUL"
+              ]
+            }
+          }
+        }
+      ],
+      "type": "timeseries"
     }
   ],
   "refresh": "auto",
@@ -3168,13 +3365,13 @@
     ]
   },
   "time": {
-    "from": "2025-03-31T18:30:05.817Z",
-    "to": "2025-03-31T18:40:06.817Z"
+    "from": "now-15m",
+    "to": "now"
   },
   "timepicker": {},
   "timezone": "browser",
   "title": "FlexRIC KPI Monitor",
-  "uid": "cehfpz3fiuneoa",
-  "version": 2,
+  "uid": "cehfpz3fiuneob",
+  "version": 7,
   "weekStart": ""
 }

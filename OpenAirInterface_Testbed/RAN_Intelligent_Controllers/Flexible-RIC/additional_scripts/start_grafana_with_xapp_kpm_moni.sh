@@ -36,6 +36,8 @@ if ! command -v realpath &>/dev/null; then
     sudo apt-get install -y coreutils
 fi
 
+echo "# Script: $(realpath $0)..."
+
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$PARENT_DIR"
@@ -110,6 +112,4 @@ echo "    - U: \"admin\""
 echo "    - P: \"admin\""
 echo
 
-cd "$PARENT_DIR/flexric/"
-
-./build/examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv "$GRAFANA_LOG_FILE" -c "../configs/flexric.conf"
+"$PARENT_DIR/additional_scripts/run_xapp_kpm_moni_write_to_csv.sh" "$GRAFANA_LOG_FILE"

@@ -31,7 +31,7 @@
 # Exit immediately if a command fails
 set -e
 
-REBUILD=false
+CLEAN_INSTALL=false
 
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
@@ -42,9 +42,13 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
 # Check for gnb binary to determine if srsRAN_Project is already installed
-if [ "$REBUILD" != "true" ] && [ -f "flexric/build/examples/ric/nearRT-RIC" ]; then
+if [ "$CLEAN_INSTALL" != "true" ] && [ -f "flexric/build/examples/ric/nearRT-RIC" ]; then
     echo "FlexRIC is already installed, skipping."
     exit 0
+fi
+# Remove the build directory if it exists and CLEAN_INSTALL is true
+if [ "$CLEAN_INSTALL" = "true" ] && [ -d "flexric/build" ]; then
+    rm -rf flexric/build
 fi
 
 # Run a sudo command every minute to ensure script execution without user interaction
@@ -96,11 +100,10 @@ if [ ! -f "flexric/examples/xApp/c/monitor/xapp_kpm_moni.c.previous" ]; then
 fi
 
 # Apply patch to add new xApp KPI monitor that logs output to logs/KPI_Monitor.csv
-if [ ! -f "flexric/examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv.c" ]; then
-    echo
-    echo "Adding xapp_kpm_moni_write_to_csv.c..."
-    cp "$SCRIPT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv.c" flexric/examples/xApp/c/monitor/
-fi
+echo
+echo "Adding xapp_kpm_moni_write_to_csv.c..."
+cp "$SCRIPT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv.c" flexric/examples/xApp/c/monitor/
+
 if [ ! -f "flexric/examples/xApp/c/monitor/CMakeLists.txt.previous" ]; then
     cp flexric/examples/xApp/c/monitor/CMakeLists.txt flexric/examples/xApp/c/monitor/CMakeLists.txt.previous
     echo
@@ -135,7 +138,7 @@ INSTALL_END_TIME=$(date +%s)
 if [ -n "$INSTALL_START_TIME" ]; then
     DURATION=$((INSTALL_END_TIME - INSTALL_START_TIME))
     DURATION_MINUTES=$(echo "scale=5; $DURATION/ 60" | bc)
-    echo "The gNodeB installation process took $DURATION_MINUTES minutes to complete."
+    echo "The FlexRIC installation process took $DURATION_MINUTES minutes to complete."
     mkdir -p logs
     echo "$DURATION_MINUTES minutes" >>install_time.txt
 fi

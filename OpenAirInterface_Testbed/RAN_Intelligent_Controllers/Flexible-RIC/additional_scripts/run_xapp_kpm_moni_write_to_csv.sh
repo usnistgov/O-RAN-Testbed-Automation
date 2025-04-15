@@ -38,14 +38,27 @@ fi
 
 echo "# Script: $(realpath $0)..."
 
+GRAFANA_LOG_FILE="$1"
+if [ -z "$GRAFANA_LOG_FILE" ]; then
+    echo "Usage: $0 <path_to_grafana_log_file>"
+    exit 1
+fi
+
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
 
 cd "$PARENT_DIR/flexric/"
+
+# Optionally, ensure that the output CSV file is empty before running the xApp)
+if [ ! -f "$GRAFANA_LOG_FILE" ]; then
+    touch "$GRAFANA_LOG_FILE"
+else
+    >"$GRAFANA_LOG_FILE"
+fi
 
 CONFIG_PATH=""
 if [ -f "../configs/flexric.conf" ]; then
     CONFIG_PATH="-c ../configs/flexric.conf"
 fi
 
-./build/examples/xApp/c/monitor/xapp_gtp_mac_rlc_pdcp_moni $CONFIG_PATH
+./build/examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv "$GRAFANA_LOG_FILE" $CONFIG_PATH

@@ -405,7 +405,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Aggregated UE DL Throughput"
+              "options": "Aggregated UE DL Throughput (sum)"
             },
             "properties": [
               {
@@ -414,13 +414,17 @@
                   "fixedColor": "light-blue",
                   "mode": "fixed"
                 }
+              },
+              {
+                "id": "displayName",
+                "value": "Aggregated UE DL Throughput"
               }
             ]
           },
           {
             "matcher": {
               "id": "byName",
-              "options": "Aggregated UE UL Throughput"
+              "options": "Aggregated UE UL Throughput (sum)"
             },
             "properties": [
               {
@@ -429,6 +433,10 @@
                   "fixedColor": "super-light-orange",
                   "mode": "fixed"
                 }
+              },
+              {
+                "id": "displayName",
+                "value": "Aggregated UE UL Throughput"
               }
             ]
           }
@@ -506,7 +514,6 @@
       ],
       "transformations": [
         {
-          "disabled": true,
           "id": "groupBy",
           "options": {
             "fields": {
@@ -3372,6 +3379,6 @@
   "timezone": "browser",
   "title": "FlexRIC KPI Monitor",
   "uid": "cehfpz3fiuneob",
-  "version": 7,
+  "version": 8,
   "weekStart": ""
 }

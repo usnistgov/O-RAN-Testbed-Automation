@@ -276,7 +276,7 @@ typedef struct {
   frame_type_t frame_type;
   NR_BCCH_BCH_Message_t *mib;
   NR_BCCH_DL_SCH_Message_t *sib1;
-  NR_BCCH_DL_SCH_Message_t *sib19;
+  seq_arr_t *du_SIBs;
   NR_ServingCellConfigCommon_t *ServingCellConfigCommon;
   /// pre-configured ServingCellConfig that is default for every UE
   NR_ServingCellConfig_t *pre_ServingCellConfig;
@@ -285,9 +285,9 @@ typedef struct {
   /// Outgoing BCCH pdu for PHY
   uint8_t sib1_bcch_pdu[NR_MAX_SIB_LENGTH / 8];
   int sib1_bcch_length;
-  /// used for sib19 data
-  uint8_t sib19_bcch_pdu[NR_MAX_SIB_LENGTH / 8];
-  int sib19_bcch_length;
+  /// used for otherSIB data
+  uint8_t other_sib_bcch_pdu[2][NR_MAX_SIB_LENGTH / 8];
+  int other_sib_bcch_length[2];
   /// Template for RA computations
   NR_RA_t ra[NR_NB_RA_PROC_MAX];
   /// VRB map for common channels
@@ -692,19 +692,6 @@ typedef struct {
 } NR_UE_sched_ctrl_t;
 
 typedef struct {
-  NR_SearchSpace_t *search_space;
-  NR_ControlResourceSet_t *coreset;
-
-  NR_sched_pdcch_t sched_pdcch;
-  NR_sched_pdsch_t sched_pdsch;
-
-  uint32_t num_total_bytes;
-
-  int cce_index;
-  uint8_t aggregation_level;
-} NR_UE_sched_osi_ctrl_t;
-
-typedef struct {
   uicc_t *uicc;
 } NRUEcontext_t;
 
@@ -740,6 +727,7 @@ typedef struct NR_mac_stats {
 typedef struct NR_bler_options {
   double upper;
   double lower;
+  uint8_t min_mcs;
   uint8_t max_mcs;
   uint8_t harq_round_max;
 } NR_bler_options_t;
@@ -785,6 +773,7 @@ typedef struct {
   float ul_thr_ue;
   float dl_thr_ue;
   long pdsch_HARQ_ACK_Codebook;
+  bool is_redcap;
 } NR_UE_info_t;
 
 typedef struct {
@@ -929,9 +918,8 @@ typedef struct gNB_MAC_INST_s {
 
   nr_mac_config_t radio_config;
 
-  NR_UE_sched_osi_ctrl_t *sched_osi;
   NR_UE_sched_ctrl_t *sched_ctrlCommon;
-
+  NR_sched_pdcch_t *sched_pdcch_otherSI;
   uint16_t cset0_bwp_start;
   uint16_t cset0_bwp_size;
   NR_Type0_PDCCH_CSS_config_t type0_PDCCH_CSS_config[64];
@@ -940,7 +928,6 @@ typedef struct gNB_MAC_INST_s {
   NR_bler_options_t dl_bler;
   NR_bler_options_t ul_bler;
   uint8_t min_grant_prb;
-  uint8_t min_grant_mcs;
   bool identity_pm;
   int precoding_matrix_size[NR_MAX_NB_LAYERS];
   int fapi_beam_index[MAX_NUM_OF_SSB];

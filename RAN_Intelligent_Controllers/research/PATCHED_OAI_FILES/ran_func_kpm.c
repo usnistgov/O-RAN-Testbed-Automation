@@ -426,6 +426,15 @@ static const char* kpm_meas_du[] = {
   "DRB.UEThpUl",
   "RRU.PrbTotDl",
   "RRU.PrbTotUl",
+  "RSRP",
+  "N_RSRP_MEAS",
+  "N_PRB",
+  "RSSI",
+  "RSRQ",
+  "PUSCH_SNR",
+  "PUCCH_SNR",
+  "CQI_SINGLE_CODEWORD",
+  "CQI_DUAL_CODEWORD",
   NULL,
 };
 

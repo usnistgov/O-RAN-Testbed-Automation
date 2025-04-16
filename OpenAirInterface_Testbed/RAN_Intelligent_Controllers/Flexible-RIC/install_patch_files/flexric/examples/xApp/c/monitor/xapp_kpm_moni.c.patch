@@ -12,17 +12,17 @@ index 5fa00cc2..5f83e771 100644
  uint64_t const period_ms = 1000;
  
 @@ -95,6 +97,14 @@ void log_int_value(byte_array_t name, meas_record_lst_t meas_record)
-     printf("DRB.PdcpSduVolumeDL = %d [kb]\n", meas_record.int_val);
+     printf("DRB.PdcpSduVolumeDL = %u [kb]\n", meas_record.int_val);
    } else if (cmp_str_ba("DRB.PdcpSduVolumeUL", name) == 0) {
-     printf("DRB.PdcpSduVolumeUL = %d [kb]\n", meas_record.int_val);
+     printf("DRB.PdcpSduVolumeUL = %u [kb]\n", meas_record.int_val);
 +  } else if (cmp_str_ba("N_RSRP_MEAS", name) == 0) {
-+    printf("N_RSRP_MEAS = %d\n", meas_record.int_val);
++    printf("N_RSRP_MEAS = %u\n", meas_record.int_val);
 +  } else if (cmp_str_ba("N_PRB", name) == 0) {
-+    printf("N_PRB = %d\n", meas_record.int_val);
++    printf("N_PRB = %u\n", meas_record.int_val);
 +  } else if (cmp_str_ba("CQI_SINGLE_CODEWORD", name) == 0) {
-+    printf("CQI_SINGLE_CODEWORD = %d\n", meas_record.int_val);
++    printf("CQI_SINGLE_CODEWORD = %u\n", meas_record.int_val);
 +  } else if (cmp_str_ba("CQI_DUAL_CODEWORD", name) == 0) {
-+    printf("CQI_DUAL_CODEWORD = %d\n", meas_record.int_val);
++    printf("CQI_DUAL_CODEWORD = %u\n", meas_record.int_val);
    } else {
      printf("Measurement Name not yet supported\n");
    }

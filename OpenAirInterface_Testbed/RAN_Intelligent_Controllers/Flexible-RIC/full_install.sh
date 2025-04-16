@@ -58,10 +58,12 @@ fi
 INSTALL_START_TIME=$(date +%s)
 
 echo "Installing dependencies..."
-sudo apt-get update || true
-sudo apt-get install -y build-essential automake
-sudo apt-get install -y gcc-10 g++-10
-sudo apt-get install -y libsctp-dev python3 cmake-curses-gui libpcre2-dev python3-dev
+if ! command -v gcc-10 &>/dev/null || ! command -v g++-10 &>/dev/null || ! command -v swig &>/dev/null; then
+    sudo apt-get update || true
+    sudo apt-get install -y build-essential automake
+    sudo apt-get install -y gcc-10 g++-10
+    sudo apt-get install -y libsctp-dev python3 cmake-curses-gui libpcre2-dev python3-dev
+fi
 
 if [ ! -d "swig" ]; then
     echo "Cloning SWIG..."
@@ -89,6 +91,17 @@ if [ ! -d "flexric" ]; then
     ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/mosaic5g/flexric.git
 fi
 
+# Apply patch to xApps to correct the type printing (as of commit hash 596a1ae67309618a74e09e56dff9a723ea7d99c5)
+if [ -f "install_patch_files/flexric/examples/xApp/c/fix_type_printing_in_c_xapps.patch" ]; then
+    echo
+    echo "Patching xApp type printing..."
+    cd flexric
+    git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/flexric/examples/xApp/c/fix_type_printing_in_c_xapps.patch" || true
+    cd ..
+else
+    echo "Patch for xApp type printing not found, skipping."
+fi
+
 # Apply patch to FlexRIC to add support for RSRP in the KPI report
 if [ ! -f "flexric/examples/xApp/c/monitor/xapp_kpm_moni.c.previous" ]; then
     cp flexric/examples/xApp/c/monitor/xapp_kpm_moni.c flexric/examples/xApp/c/monitor/xapp_kpm_moni.c.previous
@@ -103,7 +116,6 @@ fi
 echo
 echo "Adding xapp_kpm_moni_write_to_csv.c..."
 cp "$SCRIPT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv.c" flexric/examples/xApp/c/monitor/
-
 if [ ! -f "flexric/examples/xApp/c/monitor/CMakeLists.txt.previous" ]; then
     cp flexric/examples/xApp/c/monitor/CMakeLists.txt flexric/examples/xApp/c/monitor/CMakeLists.txt.previous
     echo

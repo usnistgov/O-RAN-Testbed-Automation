@@ -255,7 +255,7 @@ if exist "OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC\swig
 cd OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC
 git clone https://github.com/swig/swig.git
 cd swig
-git checkout 61f0bbe97debe5e28d49f6ca79a384bb65a0724e
+git checkout d96024bb0e3ee35f13349df0d004c5b4a5a9cfed
 cd ..\..\..\..
 
 cd %~dp0..

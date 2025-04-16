@@ -18,7 +18,6 @@ The 5G Core Network operates as a standalone network based on the 3GPP specifica
 
 To use a custom gateway address for UE traffic, edit the `ogstun_ipv4` and `ogstun_ipv6` fields in `5G_Core_Network/options.yaml`. Default subnets are 10.45.0.0/16 (IPv4) and 2001:db8:cafe::/48 (IPv6). Gateways are set to the first address in each subnet: 10.45.0.1 and 2001:db8:cafe::1, respectively. Apply changes with `./generate_configurations.sh`.
 
-
 ### Custom PLMN and TAC Identifiers
 
 Modify the `5G_Core_Network/options.yaml` for different PLMN and TAC IDs, then apply changes with the following:

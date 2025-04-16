@@ -1,20 +1,36 @@
 diff --git a/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c b/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c
-index c9620e871f..52b8efe9e1 100644
+index c9620e871f..e4454fb7ca 100644
 --- a/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c
 +++ b/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c
-@@ -437,6 +437,15 @@ static const char* kpm_meas_gnb[] = {
+@@ -426,6 +426,15 @@ static const char* kpm_meas_du[] = {
    "DRB.UEThpUl",
    "RRU.PrbTotDl",
    "RRU.PrbTotUl",
 +  "RSRP",
-+  "RSRQ",
 +  "N_RSRP_MEAS",
 +  "N_PRB",
++  "RSSI",
++  "RSRQ",
 +  "PUSCH_SNR",
 +  "PUCCH_SNR",
-+  "RAW_RSSI",
-+  "UL_RSSI",
-+  "CQI",
++  "CQI_SINGLE_CODEWORD",
++  "CQI_DUAL_CODEWORD",
+   NULL,
+ };
+ 
+@@ -437,6 +446,15 @@ static const char* kpm_meas_gnb[] = {
+   "DRB.UEThpUl",
+   "RRU.PrbTotDl",
+   "RRU.PrbTotUl",
++  "RSRP",
++  "N_RSRP_MEAS",
++  "N_PRB",
++  "RSSI",
++  "RSRQ",
++  "PUSCH_SNR",
++  "PUCCH_SNR",
++  "CQI_SINGLE_CODEWORD",
++  "CQI_DUAL_CODEWORD",
    NULL,
  };
  

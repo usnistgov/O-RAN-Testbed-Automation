@@ -1,0 +1,390 @@
+diff --git a/examples/xApp/c/ctrl/mac_ctrl.c b/examples/xApp/c/ctrl/mac_ctrl.c
+index c6580972..43aeee17 100644
+--- a/examples/xApp/c/ctrl/mac_ctrl.c
++++ b/examples/xApp/c/ctrl/mac_ctrl.c
+@@ -42,13 +42,13 @@ int main(int argc, char *argv[])
+ 
+   assert(nodes.len > 0);
+ 
+-  printf("Connected E2 nodes = %d\n", nodes.len);
++  printf("Connected E2 nodes = %u\n", nodes.len);
+ 
+   for (int i = 0; i < nodes.len; i++) {
+     e2_node_connected_xapp_t* n = &nodes.n[i];
+ 
+     for (size_t j = 0; j < n->len_rf; j++)
+-      printf("Registered node %d ran func id = %d \n ", i, n->rf[j].id);
++      printf("Registered node %d ran func id = %u \n ", i, n->rf[j].id);
+ 
+     if(n->id.type == ngran_gNB || n->id.type == ngran_gNB_DU){
+       mac_ctrl_req_data_t wr = {.hdr.dummy = 1, .msg.action = 42 };
+diff --git a/examples/xApp/c/helloworld/hw.c b/examples/xApp/c/helloworld/hw.c
+index 52c50aec..a2137bc5 100644
+--- a/examples/xApp/c/helloworld/hw.c
++++ b/examples/xApp/c/helloworld/hw.c
+@@ -42,11 +42,11 @@ int main(int argc, char *argv[])
+ 
+   assert(nodes.len > 0);
+ 
+-  printf("Connected E2 nodes = %d\n", nodes.len);
+-  for (size_t i = 0; i < nodes.len; i++) {
++  printf("Connected E2 nodes = %u\n", nodes.len);
++  for (int i = 0; i < nodes.len; i++) {
+     ngran_node_t ran_type = nodes.n[i].id.type;
+     if (NODE_IS_MONOLITHIC(ran_type))
+-      printf("E2 node %ld info: nb_id %d, mcc %d, mnc %d, mnc_digit_len %d, ran_type %s\n",
++      printf("E2 node %d info: nb_id %u, mcc %u, mnc %u, mnc_digit_len %u, ran_type %s\n",
+              i,
+              nodes.n[i].id.nb_id.nb_id,
+              nodes.n[i].id.plmn.mcc,
+@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
+              nodes.n[i].id.plmn.mnc_digit_len,
+              get_ngran_name(ran_type));
+     else
+-      printf("E2 node %ld info: nb_id %d, mcc %d, mnc %d, mnc_digit_len %d, ran_type %s, cu_du_id %lu\n",
++      printf("E2 node %d info: nb_id %u, mcc %u, mnc %u, mnc_digit_len %u, ran_type %s, cu_du_id %lu\n",
+              i,
+              nodes.n[i].id.nb_id.nb_id,
+              nodes.n[i].id.plmn.mcc,
+@@ -63,9 +63,9 @@ int main(int argc, char *argv[])
+              get_ngran_name(ran_type),
+              *nodes.n[i].id.cu_du_id);
+ 
+-    printf("E2 node %ld supported RAN function's IDs:", i);
++    printf("E2 node %zu supported RAN function's IDs:", i);
+     for (size_t j = 0; j < nodes.n[i].len_rf; j++)
+-      printf(", %d", nodes.n[i].rf[j].id);
++      printf(", %u", nodes.n[i].rf[j].id);
+     printf("\n");
+   }
+ 
+diff --git a/examples/xApp/c/keysight/xapp_keysight_kpm_rc.c b/examples/xApp/c/keysight/xapp_keysight_kpm_rc.c
+index 9898b6ea..aaa84b25 100644
+--- a/examples/xApp/c/keysight/xapp_keysight_kpm_rc.c
++++ b/examples/xApp/c/keysight/xapp_keysight_kpm_rc.c
+@@ -180,14 +180,14 @@ static void sm_cb_kpm_1(sm_ag_if_rd_t const *rd)
+           {
+             if (strcmp(meas_info_name_str, "RRU.PrbTotDl") == 0)
+             {
+-              printf("RRU.PrbTotDl = %d [%%]\n", msg_frm_1->meas_data_lst[j].meas_record_lst[z].int_val);
++              printf("RRU.PrbTotDl = %u [%%]\n", msg_frm_1->meas_data_lst[j].meas_record_lst[z].int_val);
+               lock_guard(&mtx);
+               last_prb_usage_dl = msg_frm_1->meas_data_lst[j].meas_record_lst[z].int_val;
+               prb_usage_all[counter_1-1] = msg_frm_1->meas_data_lst[j].meas_record_lst[z].int_val;
+             }
+             else if (strcmp(meas_info_name_str, "RRU.PrbTotUl") == 0)
+             {
+-              // printf("RRU.PrbTotUl = %d [%%]\n", msg_frm_1->meas_data_lst[j].meas_record_lst[z].int_val);
++              // printf("RRU.PrbTotUl = %u [%%]\n", msg_frm_1->meas_data_lst[j].meas_record_lst[z].int_val);
+             }
+             else
+             {
+@@ -296,15 +296,15 @@ static void sm_cb_kpm_3(sm_ag_if_rd_t const *rd)
+           {
+             if (strcmp(meas_info_name_str, "DRB.UEThpDl") == 0)
+             {
+-              printf("DRB.UEThpDl = %d [kb/s]\n", msg_frm_2->meas_data_lst[0].meas_record_lst[j].int_val);
++              printf("DRB.UEThpDl = %u [kb/s]\n", msg_frm_2->meas_data_lst[0].meas_record_lst[j].int_val);
+             }
+             else if (strcmp(meas_info_name_str, "DRB.UEThpUl") == 0)
+             {
+-              printf("DRB.UEThpUl = %d [kb/s]\n", msg_frm_2->meas_data_lst[0].meas_record_lst[j + msg_frm_2->meas_info_cond_ue_lst[i].ue_id_matched_lst_len].int_val);
++              printf("DRB.UEThpUl = %u [kb/s]\n", msg_frm_2->meas_data_lst[0].meas_record_lst[j + msg_frm_2->meas_info_cond_ue_lst[i].ue_id_matched_lst_len].int_val);
+             }
+             else if (strcmp(meas_info_name_str, "DRB.UEThpDl.QOS") == 0)
+             {
+-              printf("DRB.UEThpDl.QOS = %d [kb/s], with 5QI = %hhu\n", msg_frm_2->meas_data_lst[0].meas_record_lst[j].int_val, *msg_frm_2->meas_info_cond_ue_lst[i].matching_cond_lst[0].label_info_lst.fiveQI);
++              printf("DRB.UEThpDl.QOS = %ld [kb/s], with 5QI = %hhu\n", msg_frm_2->meas_data_lst[0].meas_record_lst[j].int_val, *msg_frm_2->meas_info_cond_ue_lst[i].matching_cond_lst[0].label_info_lst.fiveQI);
+               assert(num_matched_ues_dl >= 0 && num_matched_ues_dl < 5);
+ 
+               if (*msg_frm_2->meas_info_cond_ue_lst[i].matching_cond_lst[0].label_info_lst.fiveQI == 131){
+@@ -324,7 +324,7 @@ static void sm_cb_kpm_3(sm_ag_if_rd_t const *rd)
+             }
+             else if (strcmp(meas_info_name_str, "DRB.UEThpUl.QOS") == 0)
+             {
+-              // printf("DRB.UEThpUl.QOS = %d [kb/s], with 5QI = %hhu\n", msg_frm_2->meas_data_lst[0].meas_record_lst[j + msg_frm_2->meas_info_cond_ue_lst[i].ue_id_matched_lst_len].int_val, *msg_frm_2->meas_info_cond_ue_lst[i].matching_cond_lst[0].label_info_lst.fiveQI);
++              // printf("DRB.UEThpUl.QOS = %ld [kb/s], with 5QI = %hhu\n", msg_frm_2->meas_data_lst[0].meas_record_lst[j + msg_frm_2->meas_info_cond_ue_lst[i].ue_id_matched_lst_len].int_val, *msg_frm_2->meas_info_cond_ue_lst[i].matching_cond_lst[0].label_info_lst.fiveQI);
+             }
+             break;
+           }
+@@ -891,7 +891,7 @@ int main(int argc, char *argv[])
+   defer({ free_e2_node_arr_xapp(&nodes); });
+   assert(nodes.len > 0);
+ 
+-  printf("Connected E2 nodes = %d\n", nodes.len);
++  printf("Connected E2 nodes = %u\n", nodes.len);
+ 
+   pthread_mutexattr_t attr = {0};
+   int rc = pthread_mutex_init(&mtx, &attr);
+@@ -910,7 +910,7 @@ int main(int argc, char *argv[])
+   {
+ 
+     for (size_t j = 0; j < nodes.n[i].len_rf; j++)
+-      printf("Registered node ID %d ran func id = %d \n ", nodes.n[i].id.nb_id.nb_id, nodes.n[i].rf[j].id);
++      printf("Registered node ID %u ran func id = %u \n ", nodes.n[i].id.nb_id.nb_id, nodes.n[i].rf[j].id);
+ 
+     // RC REPORT Service Style 2: Call Process Outcome
+     rc_sub_data_t rc_sub = gen_rc_sub_style_2();
+diff --git a/examples/xApp/c/kpm_rc/xapp_kpm_rc.c b/examples/xApp/c/kpm_rc/xapp_kpm_rc.c
+index a091eefb..ef50042a 100644
+--- a/examples/xApp/c/kpm_rc/xapp_kpm_rc.c
++++ b/examples/xApp/c/kpm_rc/xapp_kpm_rc.c
+@@ -90,13 +90,13 @@ static
+ void log_int_value(byte_array_t name, meas_record_lst_t meas_record)
+ {
+   if (cmp_str_ba("RRU.PrbTotDl", name) == 0) {
+-    printf("RRU.PrbTotDl = %d [PRBs]\n", meas_record.int_val);
++    printf("RRU.PrbTotDl = %u [PRBs]\n", meas_record.int_val);
+   } else if (cmp_str_ba("RRU.PrbTotUl", name) == 0) {
+-    printf("RRU.PrbTotUl = %d [PRBs]\n", meas_record.int_val);
++    printf("RRU.PrbTotUl = %u [PRBs]\n", meas_record.int_val);
+   } else if (cmp_str_ba("DRB.PdcpSduVolumeDL", name) == 0) {
+-    printf("DRB.PdcpSduVolumeDL = %d [kb]\n", meas_record.int_val);
++    printf("DRB.PdcpSduVolumeDL = %u [kb]\n", meas_record.int_val);
+   } else if (cmp_str_ba("DRB.PdcpSduVolumeUL", name) == 0) {
+-    printf("DRB.PdcpSduVolumeUL = %d [kb]\n", meas_record.int_val);
++    printf("DRB.PdcpSduVolumeUL = %u [kb]\n", meas_record.int_val);
+   } else {
+     printf("Measurement Name not yet supported\n");
+   }
+@@ -538,7 +538,7 @@ int main(int argc, char* argv[])
+   e2_node_arr_xapp_t nodes = e2_nodes_xapp_api();
+   assert(nodes.len > 0);
+ 
+-  printf("[KPM RC]: Connected E2 nodes = %d\n", nodes.len);
++  printf("[KPM RC]: Connected E2 nodes = %u\n", nodes.len);
+ 
+   pthread_mutexattr_t attr = {0};
+   int rc = pthread_mutex_init(&mtx, &attr);
+diff --git a/examples/xApp/c/monitor/xapp_gtp_mac_rlc_pdcp_moni.c b/examples/xApp/c/monitor/xapp_gtp_mac_rlc_pdcp_moni.c
+index a9eaa1d5..a83c5738 100644
+--- a/examples/xApp/c/monitor/xapp_gtp_mac_rlc_pdcp_moni.c
++++ b/examples/xApp/c/monitor/xapp_gtp_mac_rlc_pdcp_moni.c
+@@ -115,7 +115,7 @@ int main(int argc, char *argv[])
+ 
+   assert(nodes.len > 0);
+ 
+-  printf("Connected E2 nodes = %d\n", nodes.len);
++  printf("Connected E2 nodes = %u\n", nodes.len);
+ 
+   // MAC indication
+   const char* i_0 = "1_ms";
+@@ -145,7 +145,7 @@ int main(int argc, char *argv[])
+   for (int i = 0; i < nodes.len; i++) {
+     e2_node_connected_xapp_t* n = &nodes.n[i];
+     for (size_t j = 0; j < n->len_rf; j++)
+-      printf("Registered node %d ran func id = %d \n ", i, n->rf[j].id);
++      printf("Registered node %d ran func id = %u \n ", i, n->rf[j].id);
+ 
+     if(n->id.type == ngran_gNB || n->id.type == ngran_eNB){
+       // MAC Control is not yet implemented in OAI RAN
+diff --git a/examples/xApp/c/monitor/xapp_kpm_moni.c b/examples/xApp/c/monitor/xapp_kpm_moni.c
+index 5fa00cc2..ab81af2f 100644
+--- a/examples/xApp/c/monitor/xapp_kpm_moni.c
++++ b/examples/xApp/c/monitor/xapp_kpm_moni.c
+@@ -88,13 +88,13 @@ static
+ void log_int_value(byte_array_t name, meas_record_lst_t meas_record)
+ {
+   if (cmp_str_ba("RRU.PrbTotDl", name) == 0) {
+-    printf("RRU.PrbTotDl = %d [PRBs]\n", meas_record.int_val);
++    printf("RRU.PrbTotDl = %u [PRBs]\n", meas_record.int_val);
+   } else if (cmp_str_ba("RRU.PrbTotUl", name) == 0) {
+-    printf("RRU.PrbTotUl = %d [PRBs]\n", meas_record.int_val);
++    printf("RRU.PrbTotUl = %u [PRBs]\n", meas_record.int_val);
+   } else if (cmp_str_ba("DRB.PdcpSduVolumeDL", name) == 0) {
+-    printf("DRB.PdcpSduVolumeDL = %d [kb]\n", meas_record.int_val);
++    printf("DRB.PdcpSduVolumeDL = %u [kb]\n", meas_record.int_val);
+   } else if (cmp_str_ba("DRB.PdcpSduVolumeUL", name) == 0) {
+-    printf("DRB.PdcpSduVolumeUL = %d [kb]\n", meas_record.int_val);
++    printf("DRB.PdcpSduVolumeUL = %u [kb]\n", meas_record.int_val);
+   } else {
+     printf("Measurement Name not yet supported\n");
+   }
+@@ -382,7 +382,7 @@ int main(int argc, char* argv[])
+ 
+   assert(nodes.len > 0);
+ 
+-  printf("Connected E2 nodes = %d\n", nodes.len);
++  printf("Connected E2 nodes = %u\n", nodes.len);
+ 
+   pthread_mutexattr_t attr = {0};
+   int rc = pthread_mutex_init(&mtx, &attr);
+diff --git a/examples/xApp/c/monitor/xapp_rc_moni.c b/examples/xApp/c/monitor/xapp_rc_moni.c
+index 284b2b20..a2aff9c1 100644
+--- a/examples/xApp/c/monitor/xapp_rc_moni.c
++++ b/examples/xApp/c/monitor/xapp_rc_moni.c
+@@ -244,7 +244,7 @@ void log_ind_1_1(const e2sm_rc_ind_hdr_frmt_1_t *hdr, const e2sm_rc_ind_msg_frmt
+       seq_ran_param_t* const ran_param_item = &msg->seq_ran_param[j];
+ 
+       log_ran_param_name_frmt_1(ran_param_item->ran_param_id);
+-      printf("RAN Parameter ID = %d\n", ran_param_item->ran_param_id);
++      printf("RAN Parameter ID = %u\n", ran_param_item->ran_param_id);
+ 
+       switch (ran_param_item->ran_param_val.type) {
+         case ELEMENT_KEY_FLAG_FALSE_RAN_PARAMETER_VAL_TYPE:
+@@ -299,7 +299,7 @@ void log_ind_1_2(const e2sm_rc_ind_hdr_frmt_1_t *hdr, const e2sm_rc_ind_msg_frmt
+         seq_ran_param_t* const ran_param_item = &ue_id_item->seq_ran_param[j];
+ 
+         log_ran_param_name_frmt_2(ran_param_item->ran_param_id);
+-        printf("RAN Parameter ID is: %d\n", ran_param_item->ran_param_id);
++        printf("RAN Parameter ID is: %u\n", ran_param_item->ran_param_id);
+ 
+         switch (ran_param_item->ran_param_val.type) {
+           case ELEMENT_KEY_FLAG_FALSE_RAN_PARAMETER_VAL_TYPE:
+@@ -640,7 +640,7 @@ int main(int argc, char* argv[])
+ 
+   assert(nodes.len > 0);
+ 
+-  printf("Connected E2 nodes = %d\n", nodes.len);
++  printf("Connected E2 nodes = %u\n", nodes.len);
+ 
+   pthread_mutexattr_t attr = {0};
+   int rc = pthread_mutex_init(&mtx, &attr);
+diff --git a/examples/xApp/c/slice/xapp_slice_moni_ctrl.c b/examples/xApp/c/slice/xapp_slice_moni_ctrl.c
+index 1540c05d..b591ee98 100644
+--- a/examples/xApp/c/slice/xapp_slice_moni_ctrl.c
++++ b/examples/xApp/c/slice/xapp_slice_moni_ctrl.c
+@@ -236,7 +236,7 @@ int main(int argc, char *argv[])
+   defer({ free_e2_node_arr_xapp(&nodes); });
+ 
+   assert(nodes.len > 0);
+-  printf("Connected E2 nodes len = %d\n", nodes.len);
++  printf("Connected E2 nodes len = %u\n", nodes.len);
+ 
+   // SLICE indication
+   const char* inter_t = "5_ms";
+@@ -250,7 +250,7 @@ int main(int argc, char *argv[])
+   for(size_t i = 0; i < nodes.len; ++i) {
+     e2_node_connected_xapp_t *n = &nodes.n[i];
+     for (size_t j = 0; j < n->len_rf; ++j)
+-      printf("Registered ran func id = %d \n ", n->rf[j].id);
++      printf("Registered ran func id = %u \n ", n->rf[j].id);
+ 
+     slice_handle[i] = report_sm_xapp_api(&nodes.n[i].id, SM_SLICE_ID, (void*)inter_t, sm_cb_slice);
+     assert(slice_handle[i].success == true);
+diff --git a/examples/xApp/c/tc/xapp_tc_all.c b/examples/xApp/c/tc/xapp_tc_all.c
+index 440fc1df..d93b7811 100644
+--- a/examples/xApp/c/tc/xapp_tc_all.c
++++ b/examples/xApp/c/tc/xapp_tc_all.c
+@@ -199,11 +199,11 @@ int main()
+ 
+   assert(nodes.len > 0);
+ 
+-  printf("Connected E2 nodes = %d\n", nodes.len );
++  printf("Connected E2 nodes = %u\n", nodes.len );
+ 
+   e2_node_connected_xapp_t* n = &nodes.n[0];
+   for(size_t i = 0; i < n->len_rf; ++i)
+-    printf("Registered ran func id = %d \n ", n->rf[i].id );
++    printf("Registered ran func id = %u \n ", n->rf[i].id );
+ 
+ 
+   const char* i = "5_ms";
+diff --git a/examples/xApp/c/tc/xapp_tc_codel.c b/examples/xApp/c/tc/xapp_tc_codel.c
+index 393a5cef..24ec17af 100644
+--- a/examples/xApp/c/tc/xapp_tc_codel.c
++++ b/examples/xApp/c/tc/xapp_tc_codel.c
+@@ -94,11 +94,11 @@ int main(int argc, char* argv[])
+ 
+   assert(nodes.len > 0);
+ 
+-  printf("Connected E2 nodes = %d\n", nodes.len );
++  printf("Connected E2 nodes = %u\n", nodes.len );
+ 
+   e2_node_connected_xapp_t* n = &nodes.n[0];
+   for(size_t i = 0; i < n->len_rf; ++i)
+-    printf("Registered ran func id = %d \n ", n->rf[i].id );
++    printf("Registered ran func id = %u \n ", n->rf[i].id );
+ 
+   uint32_t TC_SM_ID_TEST = 146;
+   // Pacer
+diff --git a/examples/xApp/c/tc/xapp_tc_ecn.c b/examples/xApp/c/tc/xapp_tc_ecn.c
+index fac428a0..fe65d0d7 100644
+--- a/examples/xApp/c/tc/xapp_tc_ecn.c
++++ b/examples/xApp/c/tc/xapp_tc_ecn.c
+@@ -89,11 +89,11 @@ int main(int argc, char *argv[])
+ 
+   assert(nodes.len > 0);
+ 
+-  printf("Connected E2 nodes = %d\n", nodes.len );
++  printf("Connected E2 nodes = %u\n", nodes.len );
+ 
+   e2_node_connected_xapp_t* n = &nodes.n[0];
+   for(size_t i = 0; i < n->len_rf; ++i)
+-    printf("Registered ran func id = %d \n ", n->rf[i].id );
++    printf("Registered ran func id = %u \n ", n->rf[i].id );
+ 
+  const int TC_SM_ID_TEST = 146;
+ 
+diff --git a/examples/xApp/c/tc/xapp_tc_osi_codel.c b/examples/xApp/c/tc/xapp_tc_osi_codel.c
+index 6fe70b40..8c0e2f69 100644
+--- a/examples/xApp/c/tc/xapp_tc_osi_codel.c
++++ b/examples/xApp/c/tc/xapp_tc_osi_codel.c
+@@ -94,11 +94,11 @@ int main(int argc, char* argv[])
+ 
+   assert(nodes.len > 0);
+ 
+-  printf("Connected E2 nodes = %d\n", nodes.len );
++  printf("Connected E2 nodes = %u\n", nodes.len );
+ 
+   e2_node_connected_xapp_t* n = &nodes.n[0];
+   for(size_t i = 0; i < n->len_rf; ++i)
+-    printf("Registered ran func id = %d \n ", n->rf[i].id );
++    printf("Registered ran func id = %u \n ", n->rf[i].id );
+ 
+   uint32_t TC_SM_ID_TEST = 146;
+   // Pacer
+diff --git a/examples/xApp/c/tc/xapp_tc_partition.c b/examples/xApp/c/tc/xapp_tc_partition.c
+index 7bb416a1..75b816cb 100644
+--- a/examples/xApp/c/tc/xapp_tc_partition.c
++++ b/examples/xApp/c/tc/xapp_tc_partition.c
+@@ -89,11 +89,11 @@ int main(int argc, char* argv[])
+ 
+   assert(nodes.len > 0);
+ 
+-  printf("Connected E2 nodes = %d\n", nodes.len );
++  printf("Connected E2 nodes = %u\n", nodes.len );
+ 
+   e2_node_connected_xapp_t* n = &nodes.n[0];
+   for(size_t i = 0; i < n->len_rf; ++i)
+-    printf("Registered ran func id = %d \n ", n->rf[i].id );
++    printf("Registered ran func id = %u \n ", n->rf[i].id );
+ 
+   const int TC_SM_ID_TEST = 146;
+ 
+diff --git a/examples/xApp/c/tc/xapp_tc_segregate.c b/examples/xApp/c/tc/xapp_tc_segregate.c
+index 6f7a9141..a0e4bfd4 100644
+--- a/examples/xApp/c/tc/xapp_tc_segregate.c
++++ b/examples/xApp/c/tc/xapp_tc_segregate.c
+@@ -90,11 +90,11 @@ int main(int argc, char* argv[])
+ 
+   assert(nodes.len > 0);
+ 
+-  printf("Connected E2 nodes = %d\n", nodes.len );
++  printf("Connected E2 nodes = %u\n", nodes.len );
+ 
+   e2_node_connected_t* n = &nodes.n[0];
+   for(size_t i = 0; i < n->len_rf; ++i)
+-    printf("Registered ran func id = %d \n ", n->ack_rf[i].id );
++    printf("Registered ran func id = %u \n ", n->ack_rf[i].id );
+ 
+  const int TC_SM_ID_TEST = 146;
+ 
+diff --git a/examples/xApp/c/tc/xapp_tc_shaper.c b/examples/xApp/c/tc/xapp_tc_shaper.c
+index 92a214f8..a6444eba 100644
+--- a/examples/xApp/c/tc/xapp_tc_shaper.c
++++ b/examples/xApp/c/tc/xapp_tc_shaper.c
+@@ -90,11 +90,11 @@ int main(int argc, char *argv[])
+ 
+   assert(nodes.len > 0);
+ 
+-  printf("Connected E2 nodes = %d\n", nodes.len );
++  printf("Connected E2 nodes = %u\n", nodes.len );
+ 
+   e2_node_connected_t* n = &nodes.n[0];
+   for(size_t i = 0; i < n->len_rf; ++i)
+-    printf("Registered ran func id = %d \n ", n->ack_rf[i].id );
++    printf("Registered ran func id = %u \n ", n->ack_rf[i].id );
+ 
+  const int TC_SM_ID_TEST = 146;
+ 

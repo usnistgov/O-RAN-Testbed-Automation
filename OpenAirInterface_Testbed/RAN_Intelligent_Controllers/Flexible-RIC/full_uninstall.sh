@@ -41,6 +41,7 @@ cd "$SCRIPT_DIR"
 
 echo "Stopping Near-RT RIC..."
 ./stop.sh
+./additional_scripts/stop_grafana.sh
 
 if [ -d swig ]; then
     echo "Uninstalling Swig..."

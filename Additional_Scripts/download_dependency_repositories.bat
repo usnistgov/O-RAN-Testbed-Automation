@@ -39,7 +39,7 @@ if exist "5G_Core_Network\open5gs" rmdir /s /q "5G_Core_Network\open5gs"
 cd 5G_Core_Network
 git clone https://github.com/open5gs/open5gs.git
 cd open5gs
-git checkout 9217889f8a958c7d7b822b97d8f0ba87c3b4a9f4
+git checkout 1182a99d041e3461b5493f2f800a434f41a9eee1
 cd ..\..
 
 cd %~dp0..
@@ -175,7 +175,7 @@ if exist "RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep" rmdir /s /q "RAN_In
 cd RAN_Intelligent_Controllers\Non-Real-Time-RIC
 git clone https://gerrit.o-ran-sc.org/r/it/dep.git
 cd dep
-git checkout cdb4ba3d9d5a86cda7b68d70c2ea0cb891d38471
+git checkout 5f4f598476b357cad58d25af1c7174f87407c088
 git restore --source=HEAD :/
 cd ..\..\..
 
@@ -208,7 +208,7 @@ if exist "RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\smo-install\onap_oom
 cd RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\smo-install
 git clone https://gerrit.onap.org/r/oom.git
 cd onap_oom
-git checkout 60c14232c92f4e04c53d1a75a76c3f17bb32d0e2
+git checkout 8eb517a47ef7ef0e4bdc00c881449a979f29fdf0
 cd ..\..\..\..\..
 
 cd %~dp0..
@@ -235,7 +235,7 @@ if exist "OpenAirInterface_Testbed\5G_Core_Network\open5gs" rmdir /s /q "OpenAir
 cd OpenAirInterface_Testbed\5G_Core_Network
 git clone https://github.com/open5gs/open5gs.git
 cd open5gs
-git checkout 9217889f8a958c7d7b822b97d8f0ba87c3b4a9f4
+git checkout 1182a99d041e3461b5493f2f800a434f41a9eee1
 cd ..\..\..
 
 cd %~dp0..
@@ -243,7 +243,7 @@ if exist "OpenAirInterface_Testbed\User_Equipment\openairinterface5g" rmdir /s /
 cd OpenAirInterface_Testbed\User_Equipment
 git clone https://gitlab.eurecom.fr/oai/openairinterface5g.git
 cd openairinterface5g
-git checkout b5f7d22c028e3320b5ae350845fb51d13fcbf438
+git checkout f3eb713084e4134ca265f1153b68a102714a319a
 cd ..\..\..
 
 cd OpenAirInterface_Testbed\Next_Generation_Node_B
@@ -255,7 +255,7 @@ if exist "OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC\swig
 cd OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC
 git clone https://github.com/swig/swig.git
 cd swig
-git checkout 124d8a8c37a8047c1cb190db24893d3bf346bb2c
+git checkout d96024bb0e3ee35f13349df0d004c5b4a5a9cfed
 cd ..\..\..\..
 
 cd %~dp0..
@@ -263,7 +263,7 @@ if exist "OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC\flex
 cd OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC
 git clone https://gitlab.eurecom.fr/mosaic5g/flexric.git
 cd flexric
-git checkout 2638b58e201ab15200d0e02c6225e9aac35ab51b
+git checkout 596a1ae67309618a74e09e56dff9a723ea7d99c5
 cd ..\..\..\..
 
 

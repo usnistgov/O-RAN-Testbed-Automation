@@ -40,7 +40,7 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
 # Upon exit, gracefully stop all components and fix console in case it breaks
-trap "\"$SCRIPT_DIR/./stop.sh\"; stty sane; exit" EXIT SIGINT SIGTERM
+trap "echo \"#################################  STOPPING... #################################\"; \"$SCRIPT_DIR/./stop.sh\"; stty sane; exit" EXIT SIGINT SIGTERM
 
 echo "Running 5G Core components..."
 cd 5G_Core_Network

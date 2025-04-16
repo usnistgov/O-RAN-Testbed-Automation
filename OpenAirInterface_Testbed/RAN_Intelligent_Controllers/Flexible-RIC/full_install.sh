@@ -31,7 +31,7 @@
 # Exit immediately if a command fails
 set -e
 
-REBUILD="false"
+CLEAN_INSTALL=false
 
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
@@ -42,9 +42,13 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
 # Check for gnb binary to determine if srsRAN_Project is already installed
-if [ "$REBUILD" != "true" ] && [ -f "flexric/build/examples/ric/nearRT-RIC" ]; then
+if [ "$CLEAN_INSTALL" != "true" ] && [ -f "flexric/build/examples/ric/nearRT-RIC" ]; then
     echo "FlexRIC is already installed, skipping."
     exit 0
+fi
+# Remove the build directory if it exists and CLEAN_INSTALL is true
+if [ "$CLEAN_INSTALL" = "true" ] && [ -d "flexric/build" ]; then
+    rm -rf flexric/build
 fi
 
 # Run a sudo command every minute to ensure script execution without user interaction
@@ -54,10 +58,12 @@ fi
 INSTALL_START_TIME=$(date +%s)
 
 echo "Installing dependencies..."
-sudo apt-get update || true
-sudo apt-get install -y build-essential automake
-sudo apt-get install -y gcc-10 g++-10
-sudo apt-get install -y libsctp-dev python3 cmake-curses-gui libpcre2-dev python3-dev
+if ! command -v gcc-10 &>/dev/null || ! command -v g++-10 &>/dev/null || ! command -v swig &>/dev/null; then
+    sudo apt-get update || true
+    sudo apt-get install -y build-essential automake
+    sudo apt-get install -y gcc-10 g++-10
+    sudo apt-get install -y libsctp-dev python3 cmake-curses-gui libpcre2-dev python3-dev
+fi
 
 if [ ! -d "swig" ]; then
     echo "Cloning SWIG..."
@@ -85,6 +91,17 @@ if [ ! -d "flexric" ]; then
     ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/mosaic5g/flexric.git
 fi
 
+# Apply patch to xApps to correct the type printing (as of commit hash 596a1ae67309618a74e09e56dff9a723ea7d99c5)
+if [ -f "install_patch_files/flexric/examples/xApp/c/fix_type_printing_in_c_xapps.patch" ]; then
+    echo
+    echo "Patching xApp type printing..."
+    cd flexric
+    git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/flexric/examples/xApp/c/fix_type_printing_in_c_xapps.patch" || true
+    cd ..
+else
+    echo "Patch for xApp type printing not found, skipping."
+fi
+
 # Apply patch to FlexRIC to add support for RSRP in the KPI report
 if [ ! -f "flexric/examples/xApp/c/monitor/xapp_kpm_moni.c.previous" ]; then
     cp flexric/examples/xApp/c/monitor/xapp_kpm_moni.c flexric/examples/xApp/c/monitor/xapp_kpm_moni.c.previous
@@ -96,11 +113,9 @@ if [ ! -f "flexric/examples/xApp/c/monitor/xapp_kpm_moni.c.previous" ]; then
 fi
 
 # Apply patch to add new xApp KPI monitor that logs output to logs/KPI_Monitor.csv
-if [ ! -f "flexric/examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv.c" ]; then
-    echo
-    echo "Adding xapp_kpm_moni_write_to_csv.c..."
-    cp "$SCRIPT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv.c" flexric/examples/xApp/c/monitor/
-fi
+echo
+echo "Adding xapp_kpm_moni_write_to_csv.c..."
+cp "$SCRIPT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv.c" flexric/examples/xApp/c/monitor/
 if [ ! -f "flexric/examples/xApp/c/monitor/CMakeLists.txt.previous" ]; then
     cp flexric/examples/xApp/c/monitor/CMakeLists.txt flexric/examples/xApp/c/monitor/CMakeLists.txt.previous
     echo
@@ -135,7 +150,7 @@ INSTALL_END_TIME=$(date +%s)
 if [ -n "$INSTALL_START_TIME" ]; then
     DURATION=$((INSTALL_END_TIME - INSTALL_START_TIME))
     DURATION_MINUTES=$(echo "scale=5; $DURATION/ 60" | bc)
-    echo "The gNodeB installation process took $DURATION_MINUTES minutes to complete."
+    echo "The FlexRIC installation process took $DURATION_MINUTES minutes to complete."
     mkdir -p logs
     echo "$DURATION_MINUTES minutes" >>install_time.txt
 fi

@@ -210,8 +210,7 @@ update_yaml() {
 
 mkdir -p "$SCRIPT_DIR/logs"
 
-DEVICE_ARGS=""
-DEVICE_ARGS+="tx_port0=tcp://127.0.0.1:2000,rx_port0=tcp://127.0.0.1:2001,base_srate=23.04e6"
+DEVICE_ARGS="tx_port0=tcp://127.0.0.1:2000,rx_port0=tcp://127.0.0.1:2001,base_srate=23.04e6"
 # DEVICE_ARGS="" # Multiple RF devices:
 # DEVICE_ARGS+="tx_port0=tcp://127.0.0.1:2100,rx_port0=tcp://127.0.0.1:2101,"
 # DEVICE_ARGS+="tx_port1=tcp://127.0.0.1:2200,rx_port1=tcp://127.0.0.1:2201,"

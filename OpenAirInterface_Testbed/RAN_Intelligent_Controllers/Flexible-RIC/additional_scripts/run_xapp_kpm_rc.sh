@@ -36,9 +36,16 @@ if ! command -v realpath &>/dev/null; then
     sudo apt-get install -y coreutils
 fi
 
+echo "# Script: $(realpath $0)..."
+
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
 
 cd "$PARENT_DIR/flexric/"
 
-./build/examples/xApp/c/kpm_rc/xapp_kpm_rc -c "../configs/flexric.conf"
+CONFIG_PATH=""
+if [ -f "../configs/flexric.conf" ]; then
+    CONFIG_PATH="-c ../configs/flexric.conf"
+fi
+
+./build/examples/xApp/c/kpm_rc/xapp_kpm_rc $CONFIG_PATH

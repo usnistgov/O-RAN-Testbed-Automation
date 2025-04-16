@@ -98,15 +98,23 @@ static log_ue_id log_ue_id_e2sm[END_UE_ID_E2SM] = {
     NULL,
 };
 
-static void csv_append_name_to_csv_header(byte_array_t name)
+static void csv_append_name_to_csv_header(byte_array_t name, byte_array_t unit)
 {
   size_t current_len = strlen(csv_header_buffer);
   size_t name_len = name.len;
+  size_t unit_len = unit.len;
 
   // Don't overflow the buffer
-  if (current_len + name_len + 1 < sizeof(csv_header_buffer))
+  if (current_len + name_len + unit_len + 4 < sizeof(csv_header_buffer)) // +4 for " ()", comma, and null terminator
   {
-    snprintf(csv_header_buffer + current_len, sizeof(csv_header_buffer) - current_len, "%.*s,", (int)name_len, name.buf);
+    if (unit.buf != NULL && unit_len > 0)
+    {
+      snprintf(csv_header_buffer + current_len, sizeof(csv_header_buffer) - current_len, "%.*s (%.*s),", (int)name_len, name.buf, (int)unit_len, unit.buf);
+    }
+    else
+    {
+      snprintf(csv_header_buffer + current_len, sizeof(csv_header_buffer) - current_len, "%.*s,", (int)name_len, name.buf);
+    }
   }
   else
   {
@@ -118,9 +126,8 @@ static void csv_append_int_to_csv_line(meas_record_lst_t meas_record)
 {
   size_t current_len = strlen(csv_line_buffer);
 
-  // Don't overflow the buffer
-  if (current_len < sizeof(csv_line_buffer) - 32)
-  { // reserve space for int/float
+  if (current_len + 32 < sizeof(csv_line_buffer)) // Reserve space for int/float and comma
+  {
     snprintf(csv_line_buffer + current_len, sizeof(csv_line_buffer) - current_len, "%d,", meas_record.int_val);
   }
   else
@@ -133,9 +140,8 @@ static void csv_append_real_to_csv_line(meas_record_lst_t meas_record)
 {
   size_t current_len = strlen(csv_line_buffer);
 
-  // Don't overflow the buffer
-  if (current_len < sizeof(csv_line_buffer) - 32)
-  { // reserve space for int/float
+  if (current_len + 32 < sizeof(csv_line_buffer)) // Reserve space for float and comma
+  {
     snprintf(csv_line_buffer + current_len, sizeof(csv_line_buffer) - current_len, "%.2f,", meas_record.real_val);
   }
   else
@@ -209,8 +215,39 @@ static void csv_prepend_timestamp()
 
 static void log_int_value(byte_array_t name, meas_record_lst_t meas_record)
 {
-  if (!csv_wrote_header)
-    csv_append_name_to_csv_header(name);
+  byte_array_t unit = {.buf = "", .len = 0};
+
+  if (!csv_wrote_header) {
+    if (cmp_str_ba("RRU.PrbTotDl", name) == 0) {
+      unit.buf = "PRBs";
+      unit.len = strlen("PRBs");
+    } else if (cmp_str_ba("RRU.PrbTotUl", name) == 0) {
+      unit.buf = "PRBs";
+      unit.len = strlen("PRBs");
+    } else if (cmp_str_ba("DRB.PdcpSduVolumeDL", name) == 0) {
+      unit.buf = "kb";
+      unit.len = strlen("kb");
+    } else if (cmp_str_ba("DRB.PdcpSduVolumeUL", name) == 0) {
+      unit.buf = "kb";
+      unit.len = strlen("kb");
+    } else if (cmp_str_ba("N_RSRP_MEAS", name) == 0) {
+      unit.buf = "";
+      unit.len = 0;
+    } else if (cmp_str_ba("N_PRB", name) == 0) {
+      unit.buf = "";
+      unit.len = 0;
+    } else if (cmp_str_ba("CQI_SINGLE_CODEWORD", name) == 0) {
+      unit.buf = "";
+      unit.len = 0;
+    } else if (cmp_str_ba("CQI_DUAL_CODEWORD", name) == 0) {
+      unit.buf = "";
+      unit.len = 0;
+    } else {
+      unit.buf = "";
+      unit.len = 0;
+    }
+    csv_append_name_to_csv_header(name, unit);
+  }
   csv_append_int_to_csv_line(meas_record);
   // if (cmp_str_ba("RRU.PrbTotDl", name) == 0) {
   //   printf("RRU.PrbTotDl = %d [PRBs]\n", meas_record.int_val);
@@ -236,8 +273,35 @@ static void log_int_value(byte_array_t name, meas_record_lst_t meas_record)
 
 static void log_real_value(byte_array_t name, meas_record_lst_t meas_record)
 {
-  if (!csv_wrote_header)
-    csv_append_name_to_csv_header(name);
+  if (!csv_wrote_header) {
+    byte_array_t unit = {.buf = "", .len = 0};
+    if (cmp_str_ba("DRB.RlcSduDelayDl", name) == 0) {
+      unit.buf = "μs";
+      unit.len = strlen("μs");
+    } else if (cmp_str_ba("DRB.UEThpDl", name) == 0) {
+      unit.buf = "kbps";
+      unit.len = strlen("kbps");
+    } else if (cmp_str_ba("DRB.UEThpUl", name) == 0) {
+      unit.buf = "kbps";
+      unit.len = strlen("kbps");
+    } else if (cmp_str_ba("RSRP", name) == 0) {
+      unit.buf = "dBm";
+      unit.len = strlen("dBm");
+    } else if (cmp_str_ba("RSSI", name) == 0) {
+      unit.buf = "dBm";
+      unit.len = strlen("dBm");
+    } else if (cmp_str_ba("RSRQ", name) == 0) {
+      unit.buf = "dB";
+      unit.len = strlen("dB");
+    } else if (cmp_str_ba("PUSCH_SNR", name) == 0) {
+      unit.buf = "dB";
+      unit.len = strlen("dB");
+    } else if (cmp_str_ba("PUCCH_SNR", name) == 0) {
+      unit.buf = "dB";
+      unit.len = strlen("dB");
+    }
+    csv_append_name_to_csv_header(name, unit);
+  }
   csv_append_real_to_csv_line(meas_record);
   // if (cmp_str_ba("DRB.RlcSduDelayDl", name) == 0) {
   //   printf("DRB.RlcSduDelayDl = %.2f [μs]\n", meas_record.real_val);
@@ -555,10 +619,12 @@ int main(int argc, char *argv[])
   }
 
   csv_wrote_header = false;
-  byte_array_t timestamp_name = {.buf = "Time ( UNIX ms )", .len = strlen("Time ( UNIX ms )")};
-  csv_append_name_to_csv_header(timestamp_name);
+  byte_array_t timestamp_name = {.buf = "Time", .len = strlen("Time")};
+  byte_array_t timestamp_unit = {.buf = "UNIX ms", .len = strlen("UNIX ms")};
+  csv_append_name_to_csv_header(timestamp_name, timestamp_unit);
   byte_array_t ue_id_name = {.buf = "UE ID", .len = strlen("UE ID")};
-  csv_append_name_to_csv_header(ue_id_name);
+  byte_array_t ue_id_unit = {.buf = "", .len = 0};
+  csv_append_name_to_csv_header(ue_id_name, ue_id_unit);
 
   csv_file_path = argv[1];
   printf("CSV file path provided: %s\n", csv_file_path);

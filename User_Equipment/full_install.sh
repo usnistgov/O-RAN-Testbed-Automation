@@ -205,7 +205,7 @@ INSTALL_END_TIME=$(date +%s)
 if [ -n "$INSTALL_START_TIME" ]; then
     DURATION=$((INSTALL_END_TIME - INSTALL_START_TIME))
     DURATION_MINUTES=$(echo "scale=5; $DURATION/ 60" | bc)
-    echo "The srsUE installation process took $DURATION_MINUTES minutes to complete."
+    echo "The User Equipment installation process took $DURATION_MINUTES minutes to complete."
     mkdir -p logs
     echo "$DURATION_MINUTES minutes" >>install_time.txt
 fi

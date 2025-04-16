@@ -38,17 +38,39 @@ PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$PARENT_DIR"
 
 UE_NUMBER=$1
+BANDWIDTH=${2:-1M}
+DURATION=${3:-60}
+
 if [[ -z "$UE_NUMBER" ]]; then
     echo "Error: No UE number provided."
-    echo "Usage: $0 <UE_NUMBER>"
+    echo "Usage: $0 <UE_NUMBER> [BANDWIDTH] [DURATION]"
+    echo "       BANDWIDTH is optional and can be specified in units [k, K, m, M]. Default is 1M."
+    echo "       DURATION is optional and specifies the duration in seconds. Default is 60."
     exit 1
 fi
+
 if ! [[ $UE_NUMBER =~ ^[0-9]+$ ]]; then
     echo "Error: UE number must be a number."
     exit 1
 fi
+
 if [ $UE_NUMBER -lt 1 ]; then
     echo "Error: UE number must be greater than or equal to 1."
+    exit 1
+fi
+
+if ! [[ $BANDWIDTH =~ ^[0-9]+[kKmM]$ ]]; then
+    echo "Error: BANDWIDTH must be a number followed by a unit [k, K, m, M]."
+    exit 1
+fi
+
+if ! [[ $DURATION =~ ^[0-9]+$ ]]; then
+    echo "Error: DURATION must be a positive integer."
+    exit 1
+fi
+
+if [ $DURATION -lt 1 ]; then
+    echo "Error: DURATION must be greater than or equal to 1."
     exit 1
 fi
 
@@ -89,13 +111,9 @@ fi
 
 echo "Successfully found PDU Session IP: $PDU_SESSION_IP"
 
-# First make sure we can ping the 5G core
-sudo ip netns exec $UE_NAMESPACE ping -c 4 $PDU_SESSION_IP
-if [ $? -ne 0 ]; then
-    echo "Error: Unable to ping $PDU_SESSION_IP."
-    exit 1
+if ! command -v iperf &>/dev/null; then
+    echo "Package \"iperf\" not found, installing..."
+    sudo apt-get install -y iperf
 fi
 
-echo "Ping was successful to $PDU_SESSION_IP, proceeding with iperf traffic generation..."
-
-sudo ip netns exec ue$UE_NUMBER iperf -c $PDU_SESSION_IP -u -i 1 -b 1M -t 60
+sudo ip netns exec ue$UE_NUMBER iperf -c $PDU_SESSION_IP -u -i 1 -b $BANDWIDTH -t $DURATION

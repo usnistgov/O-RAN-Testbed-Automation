@@ -78,7 +78,7 @@
   },
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "graphTooltip": 0,
+  "graphTooltip": 1,
   "id": null,
   "links": [],
   "panels": [
@@ -1065,6 +1065,24 @@
             "match": "any",
             "type": "include"
           }
+        },
+        {
+          "id": "filterByValue",
+          "options": {
+            "filters": [
+              {
+                "config": {
+                  "id": "equal",
+                  "options": {
+                    "value": "0"
+                  }
+                },
+                "fieldName": "RSRP (dBm)"
+              }
+            ],
+            "match": "any",
+            "type": "exclude"
+          }
         }
       ],
       "type": "timeseries"
@@ -1377,7 +1395,7 @@
           }
         }
       ],
-      "title": "RSRQ",
+      "title": "Ref. Signal Received Quality (RSRQ)",
       "transformations": [
         {
           "id": "filterByValue",
@@ -2687,7 +2705,7 @@
           }
         }
       ],
-      "title": "Histogram of PRBs Downlink",
+      "title": "Histogram of PRBs Downlink Since Last Sample",
       "transformations": [
         {
           "id": "filterByValue",
@@ -2866,7 +2884,7 @@
           }
         }
       ],
-      "title": "Number of PRBs Downlink / Uplink",
+      "title": "Number of PRBs Downlink / Uplink Since Last Sample",
       "transformations": [
         {
           "id": "filterByValue",
@@ -3126,7 +3144,7 @@
           }
         }
       ],
-      "title": "Histogram of PRBs Uplink",
+      "title": "Histogram of PRBs Uplink Since Last Sample",
       "transformations": [
         {
           "id": "filterByValue",
@@ -3207,7 +3225,7 @@
   "timepicker": {},
   "timezone": "browser",
   "title": "FlexRIC KPI Monitor",
-  "uid": "cehfpz3fiuneob",
-  "version": 14,
+  "uid": "ric_dashboard",
+  "version": 1,
   "weekStart": ""
 }

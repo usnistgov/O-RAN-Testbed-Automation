@@ -129,6 +129,10 @@ void log_real_value(byte_array_t name, meas_record_lst_t meas_record)
     printf("PUSCH_SNR = %.2f [dB]\n", meas_record.real_val);
   } else if (cmp_str_ba("PUCCH_SNR", name) == 0) {
     printf("PUCCH_SNR = %.2f [dB]\n", meas_record.real_val);
+  } else if (cmp_str_ba("PACKET_RETRANSMISISON_RATE", name) == 0) {
+    printf("PACKET_RETRANSMISISON_RATE = %.2f [%%]\n", meas_record.real_val);
+  } else if (cmp_str_ba("PACKET_DROP_RATE", name) == 0) {
+    printf("PACKET_DROP_RATE = %.2f [%%]\n", meas_record.real_val);
   } else {
     printf("Measurement Name not yet supported\n");
   }

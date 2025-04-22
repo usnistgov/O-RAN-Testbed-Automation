@@ -1,5 +1,5 @@
 diff --git a/examples/xApp/c/monitor/xapp_kpm_moni.c b/examples/xApp/c/monitor/xapp_kpm_moni.c
-index 5fa00cc2..5f83e771 100644
+index 5fa00cc2..4b85b0da 100644
 --- a/examples/xApp/c/monitor/xapp_kpm_moni.c
 +++ b/examples/xApp/c/monitor/xapp_kpm_moni.c
 @@ -32,6 +32,8 @@
@@ -11,10 +11,21 @@ index 5fa00cc2..5f83e771 100644
  static
  uint64_t const period_ms = 1000;
  
-@@ -95,6 +97,14 @@ void log_int_value(byte_array_t name, meas_record_lst_t meas_record)
-     printf("DRB.PdcpSduVolumeDL = %u [kb]\n", meas_record.int_val);
+@@ -88,13 +90,21 @@ static
+ void log_int_value(byte_array_t name, meas_record_lst_t meas_record)
+ {
+   if (cmp_str_ba("RRU.PrbTotDl", name) == 0) {
+-    printf("RRU.PrbTotDl = %d [PRBs]\n", meas_record.int_val);
++    printf("RRU.PrbTotDl = %u [PRBs]\n", meas_record.int_val);
+   } else if (cmp_str_ba("RRU.PrbTotUl", name) == 0) {
+-    printf("RRU.PrbTotUl = %d [PRBs]\n", meas_record.int_val);
++    printf("RRU.PrbTotUl = %u [PRBs]\n", meas_record.int_val);
+   } else if (cmp_str_ba("DRB.PdcpSduVolumeDL", name) == 0) {
+-    printf("DRB.PdcpSduVolumeDL = %d [kb]\n", meas_record.int_val);
++    printf("DRB.PdcpSduVolumeDL = %u [kb]\n", meas_record.int_val);
    } else if (cmp_str_ba("DRB.PdcpSduVolumeUL", name) == 0) {
-     printf("DRB.PdcpSduVolumeUL = %u [kb]\n", meas_record.int_val);
+-    printf("DRB.PdcpSduVolumeUL = %d [kb]\n", meas_record.int_val);
++    printf("DRB.PdcpSduVolumeUL = %u [kb]\n", meas_record.int_val);
 +  } else if (cmp_str_ba("N_RSRP_MEAS", name) == 0) {
 +    printf("N_RSRP_MEAS = %u\n", meas_record.int_val);
 +  } else if (cmp_str_ba("N_PRB", name) == 0) {
@@ -26,7 +37,7 @@ index 5fa00cc2..5f83e771 100644
    } else {
      printf("Measurement Name not yet supported\n");
    }
-@@ -109,6 +119,16 @@ void log_real_value(byte_array_t name, meas_record_lst_t meas_record)
+@@ -109,6 +119,20 @@ void log_real_value(byte_array_t name, meas_record_lst_t meas_record)
      printf("DRB.UEThpDl = %.2f [kbps]\n", meas_record.real_val);
    } else if (cmp_str_ba("DRB.UEThpUl", name) == 0) {
      printf("DRB.UEThpUl = %.2f [kbps]\n", meas_record.real_val);
@@ -40,10 +51,23 @@ index 5fa00cc2..5f83e771 100644
 +    printf("PUSCH_SNR = %.2f [dB]\n", meas_record.real_val);
 +  } else if (cmp_str_ba("PUCCH_SNR", name) == 0) {
 +    printf("PUCCH_SNR = %.2f [dB]\n", meas_record.real_val);
++  } else if (cmp_str_ba("PACKET_RETRANSMISISON_RATE", name) == 0) {
++    printf("PACKET_RETRANSMISISON_RATE = %.2f [%%]\n", meas_record.real_val);
++  } else if (cmp_str_ba("PACKET_DROP_RATE", name) == 0) {
++    printf("PACKET_DROP_RATE = %.2f [%%]\n", meas_record.real_val);
    } else {
      printf("Measurement Name not yet supported\n");
    }
-@@ -418,6 +438,8 @@ int main(int argc, char* argv[])
+@@ -382,7 +406,7 @@ int main(int argc, char* argv[])
+ 
+   assert(nodes.len > 0);
+ 
+-  printf("Connected E2 nodes = %d\n", nodes.len);
++  printf("Connected E2 nodes = %u\n", nodes.len);
+ 
+   pthread_mutexattr_t attr = {0};
+   int rc = pthread_mutex_init(&mtx, &attr);
+@@ -418,6 +442,8 @@ int main(int argc, char* argv[])
    ////////////
  
    sleep(10);

@@ -91,7 +91,8 @@ if [ ! -f "openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c.pr
     echo
     echo "Patching ran_func_kpm.c..."
     cd openairinterface5g
-    git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/openairinterface/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c.patch" || true
+    git restore openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c
+    git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/openairinterface/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c.patch"
     cd ..
 fi
 if [ ! -f "openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c.previous" ]; then
@@ -99,7 +100,8 @@ if [ ! -f "openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs
     echo
     echo "Patching ran_func_kpm_subs.c..."
     cd openairinterface5g
-    git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/openairinterface/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c.patch" || true
+    git restore openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c
+    git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/openairinterface/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c.patch"
     cd ..
 fi
 if [ ! -f "openairinterface5g/openair2/LAYER2/NR_MAC_gNB/main.c.previous" ]; then
@@ -107,7 +109,8 @@ if [ ! -f "openairinterface5g/openair2/LAYER2/NR_MAC_gNB/main.c.previous" ]; the
     echo
     echo "Patching main.c..."
     cd openairinterface5g
-    git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/main.c.patch" || true
+    git restore openair2/LAYER2/NR_MAC_gNB/main.c
+    git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/main.c.patch"
     cd ..
 fi
 if [ ! -f "openairinterface5g/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.previous" ]; then
@@ -115,7 +118,17 @@ if [ ! -f "openairinterface5g/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.previous" 
     echo
     echo "Patching nr_mac_gNB.h..."
     cd openairinterface5g
-    git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.patch" || true
+    git restore openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h
+    git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.patch"
+    cd ..
+fi
+if [ ! -f "openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c.previous" ]; then
+    cp openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c.previous
+    echo
+    echo "Patching gNB_scheduler_dlsch.c..."
+    cd openairinterface5g
+    git restore openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c
+    git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c.patch"
     cd ..
 fi
 
@@ -124,14 +137,12 @@ if grep -q "Linux Mint" /etc/os-release; then
     echo
     echo "Linux Mint detected, attempting to patching OpenAirInterface to support Linux Mint 20, 21, and 22..."
     cd openairinterface5g
-    git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/openairinterface/cmake_targets/tools/build_helper.patch" || true
+    git restore cmake_targets/tools/build_helper
+    git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/openairinterface/cmake_targets/tools/build_helper.patch"
     cd ..
     echo "Patching completed."
     echo
 fi
-
-echo "Updating package lists..."
-sudo apt-get update
 
 echo
 echo
@@ -159,6 +170,7 @@ fi
 
 if ! command -v cmake &>/dev/null; then
     echo "Installing CMake..."
+    sudo apt-get update
     sudo apt-get install -y cmake
 fi
 CMAKE_VERSION=$(cmake --version | head -n1 | awk '{print $3}')

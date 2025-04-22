@@ -31,7 +31,7 @@
 # Exit immediately if a command fails
 set -e
 
-CLEAN_INSTALL=false
+CLEAN_INSTALL=true
 
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
@@ -96,7 +96,8 @@ if [ -f "install_patch_files/flexric/examples/xApp/c/fix_type_printing_in_c_xapp
     echo
     echo "Patching xApp type printing..."
     cd flexric
-    git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/flexric/examples/xApp/c/fix_type_printing_in_c_xapps.patch" || true
+    git restore examples/xApp/c/*
+    git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/flexric/examples/xApp/c/fix_type_printing_in_c_xapps.patch"
     cd ..
 else
     echo "Patch for xApp type printing not found, skipping."
@@ -108,7 +109,8 @@ if [ ! -f "flexric/examples/xApp/c/monitor/xapp_kpm_moni.c.previous" ]; then
     echo
     echo "Patching xapp_kpm_moni.c..."
     cd flexric
-    git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni.c.patch" || true
+    git restore examples/xApp/c/monitor/xapp_kpm_moni.c
+    git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni.c.patch"
     cd ..
 fi
 
@@ -121,7 +123,8 @@ if [ ! -f "flexric/examples/xApp/c/monitor/CMakeLists.txt.previous" ]; then
     echo
     echo "Patching CMakeLists.txt..."
     cd flexric
-    git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/CMakeLists.txt.patch" || true
+    git restore examples/xApp/c/monitor/CMakeLists.txt
+    git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/CMakeLists.txt.patch"
     cd ..
 else
     echo "CMakeLists.txt is already patched, skipping."

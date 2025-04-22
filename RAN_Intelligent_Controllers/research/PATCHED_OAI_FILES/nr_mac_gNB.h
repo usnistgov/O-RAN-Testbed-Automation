@@ -498,6 +498,8 @@ typedef struct NR_UE_harq {
 
   /// sched_pdsch keeps information on MCS etc used for the initial transmission
   NR_sched_pdsch_t sched_pdsch;
+  // number of SDUs associated with this HARQ process
+  int num_sdus;
 } NR_UE_harq_t;
 
 //! fixme : need to enhace for the multiple TB CQI report
@@ -706,6 +708,7 @@ typedef struct NR_mac_dir_stats {
   uint32_t total_rbs_retx;
   uint32_t num_mac_sdu;
   uint32_t current_rbs;
+  uint32_t sdu_errors;
 } NR_mac_dir_stats_t;
 
 typedef struct NR_mac_stats {

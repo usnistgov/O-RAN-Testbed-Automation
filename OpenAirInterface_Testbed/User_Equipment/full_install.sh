@@ -86,7 +86,9 @@ if [ -f "openairinterface5g/CMakeLists.txt" ]; then
 fi
 
 # Apply patches to OpenAirInterface to add support for additional metrics in the KPI report
-cp openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c.previous
+if [ ! -f "openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c.previous" ]; then
+    cp openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c.previous
+fi
 echo
 echo "Patching ran_func_kpm.c..."
 cd openairinterface5g
@@ -94,7 +96,9 @@ git restore openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c
 git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/openairinterface/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c.patch"
 cd ..
 
-cp openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c.previous
+if [ ! -f "openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c.previous" ]; then
+    cp openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c.previous
+fi
 echo
 echo "Patching ran_func_kpm_subs.c..."
 cd openairinterface5g
@@ -102,7 +106,9 @@ git restore openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c
 git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/openairinterface/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c.patch"
 cd ..
 
-cp openairinterface5g/openair2/LAYER2/NR_MAC_gNB/main.c openairinterface5g/openair2/LAYER2/NR_MAC_gNB/main.c.previous
+if [ ! -f "openairinterface5g/openair2/LAYER2/NR_MAC_gNB/main.c.previous" ]; then
+    cp openairinterface5g/openair2/LAYER2/NR_MAC_gNB/main.c openairinterface5g/openair2/LAYER2/NR_MAC_gNB/main.c.previous
+fi
 echo
 echo "Patching main.c..."
 cd openairinterface5g
@@ -110,7 +116,9 @@ git restore openair2/LAYER2/NR_MAC_gNB/main.c
 git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/main.c.patch"
 cd ..
 
-cp openairinterface5g/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h openairinterface5g/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.previous
+if [ ! -f "openairinterface5g/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.previous" ]; then
+    cp openairinterface5g/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h openairinterface5g/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.previous
+fi
 echo
 echo "Patching nr_mac_gNB.h..."
 cd openairinterface5g
@@ -118,7 +126,9 @@ git restore openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h
 git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.patch"
 cd ..
 
-cp openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c.previous
+if [ ! -f "openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c.previous" ]; then
+    cp openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c.previous
+fi
 echo
 echo "Patching gNB_scheduler_dlsch.c..."
 cd openairinterface5g

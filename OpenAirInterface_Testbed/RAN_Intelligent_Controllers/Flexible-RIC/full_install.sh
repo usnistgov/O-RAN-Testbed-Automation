@@ -100,7 +100,9 @@ git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/flexric
 cd ..
 
 # Apply patch to FlexRIC to add support for RSRP in the KPI report
-cp flexric/examples/xApp/c/monitor/xapp_kpm_moni.c flexric/examples/xApp/c/monitor/xapp_kpm_moni.c.previous
+if [ ! -f "flexric/examples/xApp/c/monitor/xapp_kpm_moni.c.previous" ]; then
+    cp flexric/examples/xApp/c/monitor/xapp_kpm_moni.c flexric/examples/xApp/c/monitor/xapp_kpm_moni.c.previous
+fi
 echo
 echo "Patching xapp_kpm_moni.c..."
 cd flexric
@@ -113,7 +115,9 @@ echo "Adding xapp_kpm_moni_write_to_csv.c..."
 cp "$SCRIPT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv.c" flexric/examples/xApp/c/monitor/
 
 # Apply patch to add new xApp KPI monitor that logs output to logs/KPI_Monitor.csv
-cp flexric/examples/xApp/c/monitor/CMakeLists.txt flexric/examples/xApp/c/monitor/CMakeLists.txt.previous
+if [ ! -f "flexric/examples/xApp/c/monitor/CMakeLists.txt.previous" ]; then
+    cp flexric/examples/xApp/c/monitor/CMakeLists.txt flexric/examples/xApp/c/monitor/CMakeLists.txt.previous
+fi
 echo
 echo "Patching CMakeLists.txt..."
 cd flexric

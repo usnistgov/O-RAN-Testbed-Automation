@@ -21,7 +21,7 @@
       "type": "grafana",
       "id": "grafana",
       "name": "Grafana",
-      "version": "11.6.0+security-01"
+      "version": "11.6.1"
     },
     {
       "type": "panel",
@@ -99,7 +99,7 @@
         "content": "<img src=\"http://localhost:3030/NIST.svg\" />",
         "mode": "html"
       },
-      "pluginVersion": "11.6.0+security-01",
+      "pluginVersion": "11.6.1",
       "transparent": true,
       "type": "text"
     },
@@ -159,7 +159,7 @@
         },
         "showHeader": false
       },
-      "pluginVersion": "11.6.0+security-01",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "columns": [
@@ -318,7 +318,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "11.6.0+security-01",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "columns": [
@@ -458,7 +458,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.6.0+security-01",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "columns": [
@@ -613,7 +613,7 @@
         "sizing": "auto",
         "valueMode": "color"
       },
-      "pluginVersion": "11.6.0+security-01",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "columns": [
@@ -904,7 +904,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.6.0+security-01",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "columns": [
@@ -1094,7 +1094,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.6.0+security-01",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "columns": [
@@ -1268,7 +1268,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.6.0+security-01",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "columns": [
@@ -1358,13 +1358,13 @@
               }
             ]
           },
-          "unit": "Kbits"
+          "unit": "deckbytes"
         },
         "overrides": [
           {
             "matcher": {
               "id": "byName",
-              "options": "DRB.PdcpSduVolumeUL (kb) (sum)"
+              "options": "DRB.PdcpSduVolumeUL (kb) (sum) / 8"
             },
             "properties": [
               {
@@ -1376,14 +1376,14 @@
               },
               {
                 "id": "displayName",
-                "value": "Volume Uplink (DRB.PdcpSduVolumeUL)"
+                "value": "Volume UL (DRB.PdcpSduVolumeUL)"
               }
             ]
           },
           {
             "matcher": {
               "id": "byName",
-              "options": "DRB.PdcpSduVolumeDL (kb) (sum)"
+              "options": "DRB.PdcpSduVolumeDL (kb) (sum) / 8"
             },
             "properties": [
               {
@@ -1395,7 +1395,7 @@
               },
               {
                 "id": "displayName",
-                "value": "Volume Downlink (DRB.PdcpSduVolumeDL)"
+                "value": "Volume DL (DRB.PdcpSduVolumeDL)"
               }
             ]
           }
@@ -1433,7 +1433,7 @@
         "sizing": "auto",
         "valueMode": "color"
       },
-      "pluginVersion": "11.6.0+security-01",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "columns": [
@@ -1516,6 +1516,62 @@
                 "aggregations": [],
                 "operation": "groupby"
               }
+            }
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "alias": "",
+            "binary": {
+              "left": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "DRB.PdcpSduVolumeDL (kb) (sum)"
+                }
+              },
+              "operator": "/",
+              "right": {
+                "fixed": "8"
+              }
+            },
+            "mode": "binary",
+            "reduce": {
+              "reducer": "sum"
+            },
+            "replaceFields": false
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "binary": {
+              "left": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "DRB.PdcpSduVolumeUL (kb) (sum)"
+                }
+              },
+              "operator": "/",
+              "right": {
+                "fixed": "8"
+              }
+            },
+            "mode": "binary",
+            "reduce": {
+              "reducer": "sum"
+            }
+          }
+        },
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "Timestamp",
+                "DRB.PdcpSduVolumeDL (kb) (sum) / 8",
+                "DRB.PdcpSduVolumeUL (kb) (sum) / 8"
+              ]
             }
           }
         }
@@ -1619,7 +1675,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.6.0+security-01",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "columns": [
@@ -1794,7 +1850,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.6.0+security-01",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "columns": [
@@ -1982,7 +2038,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.6.0+security-01",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "columns": [
@@ -2156,7 +2212,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.6.0+security-01",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "columns": [
@@ -2303,7 +2359,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.6.0+security-01",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "columns": [
@@ -2443,7 +2499,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.6.0+security-01",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "columns": [
@@ -2558,7 +2614,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "11.6.0+security-01",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "columns": [
@@ -2741,7 +2797,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.6.0+security-01",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "columns": [
@@ -2901,7 +2957,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.6.0+security-01",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "columns": [
@@ -3073,7 +3129,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.6.0+security-01",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "columns": [
@@ -3213,7 +3269,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.6.0+security-01",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "columns": [
@@ -3387,7 +3443,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.6.0+security-01",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "columns": [
@@ -3561,7 +3617,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.6.0+security-01",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "columns": [
@@ -3722,7 +3778,7 @@
         "sizing": "auto",
         "valueMode": "color"
       },
-      "pluginVersion": "11.6.0+security-01",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "columns": [
@@ -3918,13 +3974,13 @@
     ]
   },
   "time": {
-    "from": "2025-04-23T14:45:48.274Z",
-    "to": "2025-04-23T14:46:07.273Z"
+    "from": "2025-04-24T00:45:40.347Z",
+    "to": "2025-04-24T00:49:51.347Z"
   },
   "timepicker": {},
   "timezone": "browser",
   "title": "FlexRIC KPI Monitor",
   "uid": "cehfpz3fiuneob",
-  "version": 18,
+  "version": 19,
   "weekStart": ""
 }

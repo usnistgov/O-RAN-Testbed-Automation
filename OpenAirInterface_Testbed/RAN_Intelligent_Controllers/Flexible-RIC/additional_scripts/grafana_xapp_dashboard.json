@@ -3709,7 +3709,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "DRB.PdcpSduVolumeUL (kb) (sum)"
+              "options": "DRB.PdcpSduVolumeUL (kb) (sum) / 8"
             },
             "properties": [
               {
@@ -3728,7 +3728,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "DRB.PdcpSduVolumeDL (kb) (sum)"
+              "options": "DRB.PdcpSduVolumeDL (kb) (sum) / 8"
             },
             "properties": [
               {
@@ -3747,7 +3747,7 @@
         ]
       },
       "gridPos": {
-        "h": 5,
+        "h": 4,
         "w": 6,
         "x": 18,
         "y": 25
@@ -3872,7 +3872,7 @@
               "left": {
                 "matcher": {
                   "id": "byName",
-                  "options": "DRB.PdcpSduVolumeDL (kb)"
+                  "options": "DRB.PdcpSduVolumeDL (kb) (sum)"
                 }
               },
               "operator": "/",
@@ -3893,7 +3893,7 @@
               "left": {
                 "matcher": {
                   "id": "byName",
-                  "options": "DRB.PdcpSduVolumeUL (kb)"
+                  "options": "DRB.PdcpSduVolumeUL (kb) (sum)"
                 }
               },
               "operator": "/",
@@ -3913,8 +3913,9 @@
           "options": {
             "include": {
               "names": [
-                "DRB.PdcpSduVolumeDL (kb) (sum)",
-                "DRB.PdcpSduVolumeUL (kb) (sum)"
+                "Timestamp",
+                "DRB.PdcpSduVolumeDL (kb) (sum) / 8",
+                "DRB.PdcpSduVolumeUL (kb) (sum) / 8"
               ]
             }
           }
@@ -3974,13 +3975,13 @@
     ]
   },
   "time": {
-    "from": "2025-04-24T00:45:40.347Z",
-    "to": "2025-04-24T00:49:51.347Z"
+    "from": "2025-04-24T20:10:50.446Z",
+    "to": "2025-04-24T20:13:33.446Z"
   },
   "timepicker": {},
   "timezone": "browser",
   "title": "FlexRIC KPI Monitor",
   "uid": "cehfpz3fiuneob",
-  "version": 19,
+  "version": 2,
   "weekStart": ""
 }

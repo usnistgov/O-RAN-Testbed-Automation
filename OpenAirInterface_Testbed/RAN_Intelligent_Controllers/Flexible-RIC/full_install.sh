@@ -115,6 +115,10 @@ echo
 echo "Adding xapp_kpm_moni_write_to_csv.c..."
 cp "$SCRIPT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv.c" flexric/examples/xApp/c/monitor/
 
+echo
+echo "Adding xapp_kpm_moni_write_to_influxdb.c..."
+cp "$SCRIPT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni_write_to_influxdb.c" flexric/examples/xApp/c/monitor/
+
 # Apply patch to add new xApp KPI monitor that logs output to logs/KPI_Monitor.csv
 if [ ! -f "flexric/examples/xApp/c/monitor/CMakeLists.txt.previous" ]; then
     cp flexric/examples/xApp/c/monitor/CMakeLists.txt flexric/examples/xApp/c/monitor/CMakeLists.txt.previous

@@ -1,8 +1,8 @@
 diff --git a/examples/xApp/c/monitor/CMakeLists.txt b/examples/xApp/c/monitor/CMakeLists.txt
-index b2148e05..d089e237 100644
+index b2148e05..2d387c6d 100644
 --- a/examples/xApp/c/monitor/CMakeLists.txt
 +++ b/examples/xApp/c/monitor/CMakeLists.txt
-@@ -80,3 +80,16 @@ target_link_libraries(xapp_rc_moni
+@@ -80,3 +80,30 @@ target_link_libraries(xapp_rc_moni
                       -lsctp
                       -ldl
                       )
@@ -13,6 +13,20 @@ index b2148e05..d089e237 100644
 +              )
 +
 +target_link_libraries(xapp_kpm_moni_write_to_csv
++                    PUBLIC
++                    e42_xapp
++                    -pthread
++                    -lsctp
++                    -ldl
++                    )
++
++
++add_executable(xapp_kpm_moni_write_to_influxdb 
++    xapp_kpm_moni_write_to_influxdb.c
++                ../../../../src/util/alg_ds/alg/defer.c
++              )
++
++target_link_libraries(xapp_kpm_moni_write_to_influxdb
 +                    PUBLIC
 +                    e42_xapp
 +                    -pthread

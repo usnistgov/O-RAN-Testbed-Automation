@@ -28,8 +28,8 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-# Exit immediately if a command fails
-set -e
+# Do not exit immediately if a command fails
+set +e
 
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
@@ -42,27 +42,22 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$PARENT_DIR"
 
-OUTPUT_CSV_PATH="$PARENT_DIR/logs/KPI_Metrics.csv"
+INFLUXDB_TOKEN_PATH="$PARENT_DIR/influxdb_auth_token.json"
 
-SCRIPT_DIR=$(dirname "$(realpath "$0")")
-PARENT_DIR=$(dirname "$SCRIPT_DIR")
+echo "Uninstalling InfluxDB 2.x..."
 
-cd "$PARENT_DIR/flexric/"
+sudo ./install_scripts/stop_influxdb_service.sh
 
-# Optionally, ensure that the output CSV file is empty before running the xApp)
-if [ ! -f "$OUTPUT_CSV_PATH" ]; then
-    touch "$OUTPUT_CSV_PATH"
-else
-    >"$OUTPUT_CSV_PATH"
+sudo apt remove -y influxdb
+sudo apt remove -y influxdb-client
+sudo apt remove -y influxdb2
+sudo apt autoclean -y && sudo apt autoremove -y
+
+sudo rm -rf /var/lib/influxdb/
+sudo rm -rf /var/log/influxdb/
+sudo rm -rf /etc/influxdb/
+sudo rm -rf ~/.influxdbv2/configs
+
+if [ -f "$INFLUXDB_TOKEN_PATH" ]; then
+    sudo rm -rf "$INFLUXDB_TOKEN_PATH"
 fi
-
-CONFIG_PATH=""
-if [ -f "../configs/flexric.conf" ]; then
-    CONFIG_PATH="-c ../configs/flexric.conf"
-fi
-
-echo
-echo "Output CSV path: $OUTPUT_CSV_PATH"
-echo
-
-./build/examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv "$OUTPUT_CSV_PATH" $CONFIG_PATH

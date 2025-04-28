@@ -42,7 +42,7 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$PARENT_DIR"
 
-GRAFANA_LOG_FILE="$PARENT_DIR/logs/KPI_Metrics.csv"
+OUTPUT_CSV_PATH="$PARENT_DIR/logs/KPI_Metrics.csv"
 
 if ! command -v grafana-server &>/dev/null; then
     echo "Grafana not found, installing..."
@@ -63,10 +63,10 @@ if ! sudo grafana-cli plugins ls | grep -q yesoreyeram-infinity-datasource; then
     sudo grafana-cli plugins install yesoreyeram-infinity-datasource
 fi
 
-if [ ! -f "$GRAFANA_LOG_FILE" ]; then
-    echo "Creating Grafana log file at $GRAFANA_LOG_FILE..."
-    sudo mkdir -p "$(dirname "$GRAFANA_LOG_FILE")"
-    touch "$GRAFANA_LOG_FILE"
+if [ ! -f "$OUTPUT_CSV_PATH" ]; then
+    echo "Creating Grafana log file at $OUTPUT_CSV_PATH..."
+    sudo mkdir -p "$(dirname "$OUTPUT_CSV_PATH")"
+    touch "$OUTPUT_CSV_PATH"
 fi
 if ! command -v python3 &>/dev/null; then
     echo "Python3 not found, installing..."
@@ -112,4 +112,4 @@ echo "    - U: \"admin\""
 echo "    - P: \"admin\""
 echo
 
-"$PARENT_DIR/additional_scripts/run_xapp_kpm_moni_write_to_csv.sh" "$GRAFANA_LOG_FILE"
+"$PARENT_DIR/additional_scripts/run_xapp_kpm_moni_write_to_csv.sh" "$OUTPUT_CSV_PATH"

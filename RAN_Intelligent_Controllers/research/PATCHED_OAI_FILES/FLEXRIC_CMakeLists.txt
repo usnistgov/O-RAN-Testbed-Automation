@@ -93,3 +93,17 @@ target_link_libraries(xapp_kpm_moni_write_to_csv
                     -lsctp
                     -ldl
                     )
+
+
+add_executable(xapp_kpm_moni_write_to_influxdb 
+    xapp_kpm_moni_write_to_influxdb.c
+                ../../../../src/util/alg_ds/alg/defer.c
+              )
+
+target_link_libraries(xapp_kpm_moni_write_to_influxdb
+                    PUBLIC
+                    e42_xapp
+                    -pthread
+                    -lsctp
+                    -ldl
+                    )

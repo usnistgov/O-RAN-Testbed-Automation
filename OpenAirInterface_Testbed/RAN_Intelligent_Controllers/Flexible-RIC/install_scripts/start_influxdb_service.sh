@@ -38,31 +38,19 @@ fi
 
 echo "# Script: $(realpath $0)..."
 
-SCRIPT_DIR=$(dirname "$(realpath "$0")")
-PARENT_DIR=$(dirname "$SCRIPT_DIR")
-cd "$PARENT_DIR"
-
-OUTPUT_CSV_PATH="$PARENT_DIR/logs/KPI_Metrics.csv"
-
-SCRIPT_DIR=$(dirname "$(realpath "$0")")
-PARENT_DIR=$(dirname "$SCRIPT_DIR")
-
-cd "$PARENT_DIR/flexric/"
-
-# Optionally, ensure that the output CSV file is empty before running the xApp)
-if [ ! -f "$OUTPUT_CSV_PATH" ]; then
-    touch "$OUTPUT_CSV_PATH"
-else
-    >"$OUTPUT_CSV_PATH"
+if systemctl is-active --quiet influxdb; then
+    echo "InfluxDB is already running."
+    exit 0
 fi
 
-CONFIG_PATH=""
-if [ -f "../configs/flexric.conf" ]; then
-    CONFIG_PATH="-c ../configs/flexric.conf"
+# Start the InfluxDB service manually
+sudo service influxdb start
+
+echo "InfluxDB status:"
+sudo systemctl status influxdb
+if [ $? -ne 0 ]; then
+    echo "Failed to start InfluxDB service."
+    exit 1
 fi
 
-echo
-echo "Output CSV path: $OUTPUT_CSV_PATH"
-echo
-
-./build/examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv "$OUTPUT_CSV_PATH" $CONFIG_PATH
+echo "InfluxDB service started."

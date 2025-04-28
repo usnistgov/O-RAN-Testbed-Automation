@@ -42,27 +42,56 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$PARENT_DIR"
 
-OUTPUT_CSV_PATH="$PARENT_DIR/logs/KPI_Metrics.csv"
+INFLUXDB_ORG="xapp-kpm-moni"
+INFLUXDB_BUCKET="xapp-kpm-moni"
+INFLUXDB_TOKEN_PATH="$PARENT_DIR/influxdb_auth_token.json"
 
-SCRIPT_DIR=$(dirname "$(realpath "$0")")
-PARENT_DIR=$(dirname "$SCRIPT_DIR")
+# Check that the xApp binary exists
+if [ ! -f "$PARENT_DIR/flexric/build/examples/xApp/c/monitor/xapp_kpm_moni_write_to_influxdb" ]; then
+    echo "xapp_kpm_moni_write_to_influxdb binary not found. Please build flexric first."
+    exit 1
+fi
+
+
+# Check if influxdb is even installed:
+if ! command -v influx &>/dev/null; then
+    echo "InfluxDB is not installed. Installing InfluxDB..."
+    ./install_scripts/install_influxdb.sh
+fi
+
+if ! systemctl is-active --quiet influxdb; then
+    echo "Starting InfluxDB service..."
+    ./install_scripts/start_influxdb_service.sh
+    sleep 5
+    # Check if the service is running
+    if ! systemctl is-active --quiet influxdb; then
+        echo "Failed to start InfluxDB service."
+        exit 1
+    fi
+    echo "InfluxDB service started."
+fi
+
+# Ensure that an InfluxDB token is created
+if [ -f "$INFLUXDB_TOKEN_PATH" ]; then
+    if [ ! -s "$INFLUXDB_TOKEN_PATH" ]; then
+        echo "Deleting empty InfluxDB token file..."
+        sudo rm -f "$INFLUXDB_TOKEN_PATH"
+    fi
+else
+    echo "InfluxDB token file does not exist."
+fi
+if [ ! -f "$INFLUXDB_TOKEN_PATH" ]; then
+    echo "Creating an InfluxDB token to influxdb_auth_token.json..."
+    influx auth create --all-access --json >"$INFLUXDB_TOKEN_PATH"
+fi
+INFLUXDB_TOKEN=$(jq -r '.token' "$INFLUXDB_TOKEN_PATH")
 
 cd "$PARENT_DIR/flexric/"
-
-# Optionally, ensure that the output CSV file is empty before running the xApp)
-if [ ! -f "$OUTPUT_CSV_PATH" ]; then
-    touch "$OUTPUT_CSV_PATH"
-else
-    >"$OUTPUT_CSV_PATH"
-fi
 
 CONFIG_PATH=""
 if [ -f "../configs/flexric.conf" ]; then
     CONFIG_PATH="-c ../configs/flexric.conf"
 fi
 
-echo
-echo "Output CSV path: $OUTPUT_CSV_PATH"
-echo
-
-./build/examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv "$OUTPUT_CSV_PATH" $CONFIG_PATH
+echo "Starting xApp KPM monitor..."
+./build/examples/xApp/c/monitor/xapp_kpm_moni_write_to_influxdb "$INFLUXDB_TOKEN" $CONFIG_PATH

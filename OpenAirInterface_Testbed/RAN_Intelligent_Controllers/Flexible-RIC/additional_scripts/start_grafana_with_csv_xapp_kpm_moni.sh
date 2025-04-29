@@ -42,8 +42,6 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$PARENT_DIR"
 
-GRAFANA_LOG_FILE="$PARENT_DIR/logs/KPI_Metrics.csv"
-
 if ! command -v grafana-server &>/dev/null; then
     echo "Grafana not found, installing..."
     # Code from (https://grafana.com/docs/grafana/latest/setup-grafana/installation/debian):
@@ -63,11 +61,6 @@ if ! sudo grafana-cli plugins ls | grep -q yesoreyeram-infinity-datasource; then
     sudo grafana-cli plugins install yesoreyeram-infinity-datasource
 fi
 
-if [ ! -f "$GRAFANA_LOG_FILE" ]; then
-    echo "Creating Grafana log file at $GRAFANA_LOG_FILE..."
-    sudo mkdir -p "$(dirname "$GRAFANA_LOG_FILE")"
-    touch "$GRAFANA_LOG_FILE"
-fi
 if ! command -v python3 &>/dev/null; then
     echo "Python3 not found, installing..."
     sudo apt-get install -y python3
@@ -98,12 +91,12 @@ sleep 3
 
 if command -v google-chrome &>/dev/null; then
     echo "Opening Grafana in Google Chrome..."
-    google-chrome "http://localhost:3000" >/dev/null 2>&1 &
+    google-chrome "http://localhost:3000/dashboards" >/dev/null 2>&1 &
 elif command -v firefox &>/dev/null; then
     echo "Opening Grafana in Firefox..."
-    firefox "http://localhost:3000" >/dev/null 2>&1 &
+    firefox "http://localhost:3000/dashboards" >/dev/null 2>&1 &
 else
-    echo "No supported browser detected. Visit http://localhost:3000 to access the WebUI."
+    echo "No supported browser detected. Visit http://localhost:3000/dashboards to access the WebUI."
 fi
 
 echo
@@ -112,4 +105,4 @@ echo "    - U: \"admin\""
 echo "    - P: \"admin\""
 echo
 
-cd "$PARENT_DIR/flexric/"
+"$PARENT_DIR/additional_scripts/run_xapp_kpm_moni_write_to_csv.sh"

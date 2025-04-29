@@ -101,6 +101,10 @@ void log_int_value(byte_array_t name, meas_record_lst_t meas_record)
     printf("N_RSRP_MEAS = %u\n", meas_record.int_val);
   } else if (cmp_str_ba("N_PRB", name) == 0) {
     printf("N_PRB = %u\n", meas_record.int_val);
+  } else if (cmp_str_ba("DRB.HarqMcsUl", name) == 0) {
+    printf("DRB.HarqMcsUl = %u\n", meas_record.int_val);
+  } else if (cmp_str_ba("DRB.HarqMcsDl", name) == 0) {
+    printf("DRB.HarqMcsDl = %u\n", meas_record.int_val);
   } else if (cmp_str_ba("CQI_SINGLE_CODEWORD", name) == 0) {
     printf("CQI_SINGLE_CODEWORD = %u\n", meas_record.int_val);
   } else if (cmp_str_ba("CQI_DUAL_CODEWORD", name) == 0) {
@@ -129,10 +133,18 @@ void log_real_value(byte_array_t name, meas_record_lst_t meas_record)
     printf("PUSCH_SNR = %.2f [dB]\n", meas_record.real_val);
   } else if (cmp_str_ba("PUCCH_SNR", name) == 0) {
     printf("PUCCH_SNR = %.2f [dB]\n", meas_record.real_val);
-  } else if (cmp_str_ba("PACKET_RETRANSMISISON_RATE", name) == 0) {
-    printf("PACKET_RETRANSMISISON_RATE = %.2f [%%]\n", meas_record.real_val);
-  } else if (cmp_str_ba("PACKET_DROP_RATE", name) == 0) {
-    printf("PACKET_DROP_RATE = %.2f [%%]\n", meas_record.real_val);
+  } else if (cmp_str_ba("DRB.HarqBlockErrorRateUl", name) == 0) {
+    printf("DRB.HarqBlockErrorRateUl = %.2f [%%]\n", meas_record.real_val);
+  } else if (cmp_str_ba("DRB.HarqBlockErrorRateDl", name) == 0) {
+    printf("DRB.HarqBlockErrorRateDl = %.2f [%%]\n", meas_record.real_val);
+  } else if (cmp_str_ba("DRB.MacSduRetransmissionRateUl", name) == 0) {
+    printf("DRB.MacSduRetransmissionRateUl = %.2f [%%]\n", meas_record.real_val);
+  } else if (cmp_str_ba("DRB.MacSduRetransmissionRateDl", name) == 0) {
+    printf("DRB.MacSduRetransmissionRateDl = %.2f [%%]\n", meas_record.real_val);
+  } else if (cmp_str_ba("DRB.MacSduErrorRateUl", name) == 0) {
+    printf("DRB.MacSduErrorRateUl = %.2f [%%]\n", meas_record.real_val);
+  } else if (cmp_str_ba("DRB.MacSduErrorRateDl", name) == 0) {
+    printf("DRB.MacSduErrorRateDl = %.2f [%%]\n", meas_record.real_val);
   } else {
     printf("Measurement Name not yet supported\n");
   }

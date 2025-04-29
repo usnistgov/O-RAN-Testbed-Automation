@@ -128,7 +128,6 @@ void influxdb_clear_bucket()
   printf("InfluxDB data cleared successfully up to %s.\n", current_time_iso);
 }
 
-
 void influxdb_write(char *line_protocol)
 {
   char cmd[2048];
@@ -147,17 +146,20 @@ void send_metrics_to_influxdb(uint64_t ue_id, int64_t timestamp_ms, char *fields
 {
   char line_protocol[1024];
 
-  // Remove trailing comma
+  // Ensure there's a trailing comma if not already present
   size_t len = strlen(fields_buffer);
-  if (len > 0 && fields_buffer[len - 1] == ',')
+  if (len > 0 && fields_buffer[len - 1] != ',')
   {
-    fields_buffer[len - 1] = '\0';
+    strcat(fields_buffer, ",");
   }
 
-  // Construct Line Protocol (measurement: kpm_measurements)
+  // Round down the timestamp to the nearest multiple of 1000 so that multiple UEs in the same window can share the same timestamp
+  timestamp_ms = timestamp_ms - (timestamp_ms % 1000);
+
+  // Construct Line Protocol (measurement: kpm_measurements) with UE_ID as a field
   snprintf(line_protocol, sizeof(line_protocol),
-           "kpm_measurements,ue_id=%" PRIu64 " %s %ld",
-           ue_id, fields_buffer, timestamp_ms);
+           "kpm_measurements %sUE_ID=%" PRIu64 "i %ld",
+           fields_buffer, ue_id, timestamp_ms);
 
   // Print metrics to the console
   printf("Metrics for UE ID %" PRIu64 ": %s (timestamp: %ld ms)\n", ue_id, fields_buffer, timestamp_ms);
@@ -165,7 +167,6 @@ void send_metrics_to_influxdb(uint64_t ue_id, int64_t timestamp_ms, char *fields
   // Send metrics to InfluxDB
   influxdb_write(line_protocol);
 }
-
 
 bool sanitize_metric_name(const byte_array_t *name, char *out, size_t out_size)
 {
@@ -407,15 +408,11 @@ static void log_kpm_measurements(kpm_ind_msg_format_1_t const *msg_frm_1)
     }
   }
 
-  if (!filter_invalid_sample && current_ue_id != 0)
+  if (!filter_invalid_sample)
   {
     // InfluxDB send:
     int64_t now_ms = time_now_us() / 1000;
     send_metrics_to_influxdb(current_ue_id, now_ms, influx_fields_buffer);
-  }
-  else
-  {
-    printf("Skipping invalid sample or missing UE ID\n");
   }
 
   filter_invalid_sample = false;

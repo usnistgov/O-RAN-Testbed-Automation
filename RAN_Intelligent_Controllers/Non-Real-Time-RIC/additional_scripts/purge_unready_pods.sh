@@ -1,0 +1,1 @@
+../../Near-Real-Time-RIC/additional_scripts/purge_unready_pods.sh

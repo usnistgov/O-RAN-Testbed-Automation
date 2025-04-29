@@ -1,5 +1,5 @@
 {
-  "https://github.com/open5gs/open5gs.git": ["", "1182a99d041e3461b5493f2f800a434f41a9eee1"],
+  "https://github.com/open5gs/open5gs.git": ["", "7b40d5a3f1080f088c653abfdc01f3adfac5d3cd"],
   "https://github.com/srsran/srsRAN_4G.git": ["", "ec29b0c1ff79cebcbe66caa6d6b90778261c42b8"],
   "https://github.com/zeromq/libzmq.git": ["", "34f7fa22022bed9e0e390ed3580a1c83ac4a2834"],
   "https://github.com/zeromq/czmq.git": ["", "5b5c640248dfb6e9a9a612cfad16d8c019e5702c"],
@@ -22,7 +22,7 @@
   "https://gerrit.onap.org/r/oom.git": ["", "8eb517a47ef7ef0e4bdc00c881449a979f29fdf0"],
   "https://gerrit.o-ran-sc.org/r/portal/nonrtric-controlpanel.git": ["master", "15bdaf8f25dca54e3a52ad30d69fa2eb1d59ce48"],
   "https://gerrit.o-ran-sc.org/r/nonrtric/plt/rappmanager.git": ["k-release", "688ab2c9ac9b1af06c30ddc28db9bcc5ecaaa096"],
-  "https://gitlab.eurecom.fr/oai/openairinterface5g.git": ["develop", "f3eb713084e4134ca265f1153b68a102714a319a"],
-  "https://github.com/swig/swig.git": ["master", "d96024bb0e3ee35f13349df0d004c5b4a5a9cfed"],
+  "https://gitlab.eurecom.fr/oai/openairinterface5g.git": ["develop", "acb982d0bd96b01dee84aea730f01dfff73875d0"],
+  "https://github.com/swig/swig.git": ["master", "e1cf7b37accc9f8ae248086194372f2a561e1195"],
   "https://gitlab.eurecom.fr/mosaic5g/flexric.git": ["dev", "596a1ae67309618a74e09e56dff9a723ea7d99c5"]
 }

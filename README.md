@@ -21,7 +21,7 @@ This tool supports the deployment of 5G O-RAN testbeds using open-source compone
 ```text
 CU/DU
 ├── srsRAN_Project gNB: v24.10.1
-├── OpenAirInterface gNB: v2025.w14
+├── OpenAirInterface gNB: v2025.w17
 └── O-RAN SC E2 Simulator: k-release
 RICs
 ├── O-RAN SC Near-RT RIC: k-release

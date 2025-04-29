@@ -64,4 +64,14 @@ cd ../..
 
 cd "$SCRIPT_DIR"
 
+echo
+echo
+echo
+echo
+echo "    SUCCESSFULLY PATCHED THE TESTBED FILES! ATTEMPTING TO PATCH GITLAB FILES..."
+echo
+echo
+echo
+echo
+
 ./apply_updates_from_parent_dir_ORAN_Testbed_Init.sh

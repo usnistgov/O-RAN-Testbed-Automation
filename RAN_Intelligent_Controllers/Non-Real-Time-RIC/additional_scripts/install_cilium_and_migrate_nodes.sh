@@ -1,0 +1,1 @@
+../../Near-Real-Time-RIC/additional_scripts/install_cilium_and_migrate_nodes.sh

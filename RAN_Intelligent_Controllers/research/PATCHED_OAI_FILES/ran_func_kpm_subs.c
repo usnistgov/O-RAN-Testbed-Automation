@@ -200,7 +200,58 @@ static meas_record_lst_t fill_PUCCH_SNR(__attribute__((unused))uint32_t gran_per
 }
 
 // Added metric for research purposes only
-static meas_record_lst_t fill_PACKET_RETRANSMISISON_RATE(__attribute__((unused))uint32_t gran_period_ms, cudu_ue_info_pair_t ue_info, __attribute__((unused))const size_t ue_idx)
+static meas_record_lst_t fill_MCS_UL(__attribute__((unused))uint32_t gran_period_ms, cudu_ue_info_pair_t ue_info, __attribute__((unused))const size_t ue_idx)
+{
+  meas_record_lst_t meas_record = {0};
+
+  meas_record.value = INTEGER_MEAS_VALUE;
+
+  // Fetch the MCS value
+  meas_record.int_val = ue_info.ue->UE_sched_ctrl.ul_bler_stats.mcs;
+
+  return meas_record;
+}
+
+// Added metric for research purposes only
+static meas_record_lst_t fill_MCS_DL(__attribute__((unused))uint32_t gran_period_ms, cudu_ue_info_pair_t ue_info, __attribute__((unused))const size_t ue_idx)
+{
+  meas_record_lst_t meas_record = {0};
+
+  meas_record.value = INTEGER_MEAS_VALUE;
+
+  // Fetch the MCS value
+  meas_record.int_val = ue_info.ue->UE_sched_ctrl.dl_bler_stats.mcs;
+  // Fetch the MCS table index
+  return meas_record;
+}
+// Added metric for research purposes only
+static meas_record_lst_t fill_BLER_UL(__attribute__((unused))uint32_t gran_period_ms, cudu_ue_info_pair_t ue_info, __attribute__((unused))const size_t ue_idx)
+{
+  meas_record_lst_t meas_record = {0};
+
+  meas_record.value = REAL_MEAS_VALUE;
+
+  // Calculate the Block Error Rate (BLER) for UL
+  meas_record.real_val = (double)ue_info.ue->UE_sched_ctrl.ul_bler_stats.bler;
+
+  return meas_record;
+}
+
+// Added metric for research purposes only
+static meas_record_lst_t fill_BLER_DL(__attribute__((unused))uint32_t gran_period_ms, cudu_ue_info_pair_t ue_info, __attribute__((unused))const size_t ue_idx)
+{
+  meas_record_lst_t meas_record = {0};
+
+  meas_record.value = REAL_MEAS_VALUE;
+
+  // Calculate the Block Error Rate (BLER) for DL
+  meas_record.real_val = (double)ue_info.ue->UE_sched_ctrl.dl_bler_stats.bler;
+
+  return meas_record;
+}
+
+// Added metric for research purposes only
+static meas_record_lst_t fill_DRB_MacSduRetransmissionRateDl(__attribute__((unused))uint32_t gran_period_ms, cudu_ue_info_pair_t ue_info, __attribute__((unused))const size_t ue_idx)
 {
   meas_record_lst_t meas_record = {0};
 
@@ -213,7 +264,7 @@ static meas_record_lst_t fill_PACKET_RETRANSMISISON_RATE(__attribute__((unused))
 }
 
 // Added metric for research purposes only
-static meas_record_lst_t fill_PACKET_DROP_RATE(__attribute__((unused))uint32_t gran_period_ms, cudu_ue_info_pair_t ue_info, __attribute__((unused))const size_t ue_idx)
+static meas_record_lst_t fill_DRB_MacSduErrorRateDl(__attribute__((unused))uint32_t gran_period_ms, cudu_ue_info_pair_t ue_info, __attribute__((unused))const size_t ue_idx)
 {
   meas_record_lst_t meas_record = {0};
 
@@ -221,6 +272,31 @@ static meas_record_lst_t fill_PACKET_DROP_RATE(__attribute__((unused))uint32_t g
 
   // Calculate the SDU-level packet drop rate (SDUs failed due to HARQ failures / total SDUs transmitted)
   meas_record.real_val = (double)ue_info.ue->mac_stats.dl.sdu_errors / (double)ue_info.ue->mac_stats.dl.num_mac_sdu;
+  return meas_record;
+}
+
+// Added metric for research purposes only
+static meas_record_lst_t fill_DRB_MacSduRetransmissionRateUl(__attribute__((unused))uint32_t gran_period_ms, cudu_ue_info_pair_t ue_info, __attribute__((unused))const size_t ue_idx)
+{
+  meas_record_lst_t meas_record = {0};
+
+  meas_record.value = REAL_MEAS_VALUE;
+
+  // Calculate the RB retransmission rate (RBs retransmitted / total RBs allocated for initial transmissions)
+  meas_record.real_val = (double)ue_info.ue->mac_stats.ul.total_rbs_retx / (double)ue_info.ue->mac_stats.ul.total_rbs;
+
+  return meas_record;
+}
+
+// Added metric for research purposes only
+static meas_record_lst_t fill_DRB_MacSduErrorRateUl(__attribute__((unused))uint32_t gran_period_ms, cudu_ue_info_pair_t ue_info, __attribute__((unused))const size_t ue_idx)
+{
+  meas_record_lst_t meas_record = {0};
+
+  meas_record.value = REAL_MEAS_VALUE;
+
+  // Calculate the SDU-level packet drop rate (SDUs failed due to HARQ failures / total SDUs transmitted)
+  meas_record.real_val = (double)ue_info.ue->mac_stats.ul.sdu_errors / (double)ue_info.ue->mac_stats.ul.num_mac_sdu;
   return meas_record;
 }
 
@@ -369,8 +445,14 @@ static kv_measure_t lst_measure[] = {
   {.key = "RSRQ", .value = fill_RSRQ },
   {.key = "PUSCH_SNR", .value = fill_PUSCH_SNR },
   {.key = "PUCCH_SNR", .value = fill_PUCCH_SNR },
-  {.key = "PACKET_RETRANSMISISON_RATE", .value = fill_PACKET_RETRANSMISISON_RATE },
-  {.key = "PACKET_DROP_RATE", .value = fill_PACKET_DROP_RATE },
+  {.key = "DRB.HarqMcsUl", .value = fill_MCS_UL },
+  {.key = "DRB.HarqMcsDl", .value = fill_MCS_DL },
+  {.key = "DRB.HarqBlockErrorRateUl", .value = fill_BLER_UL },
+  {.key = "DRB.HarqBlockErrorRateDl", .value = fill_BLER_DL },
+  {.key = "DRB.MacSduRetransmissionRateUl", .value = fill_DRB_MacSduRetransmissionRateUl },
+  {.key = "DRB.MacSduRetransmissionRateDl", .value = fill_DRB_MacSduRetransmissionRateDl },
+  {.key = "DRB.MacSduErrorRateUl", .value = fill_DRB_MacSduErrorRateUl },
+  {.key = "DRB.MacSduErrorRateDl", .value = fill_DRB_MacSduErrorRateDl },
   {.key = "CQI_SINGLE_CODEWORD", .value = fill_CQI_SINGLE_CODEWORD },
   {.key = "CQI_DUAL_CODEWORD", .value = fill_CQI_DUAL_CODEWORD },
 #if defined (NGRAN_GNB_DU)

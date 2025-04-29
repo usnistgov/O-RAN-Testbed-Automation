@@ -42,11 +42,24 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$PARENT_DIR"
 
-# Check that the xApp binary exists
-if [ ! -f "$PARENT_DIR/flexric/build/examples/xApp/c/monitor/xapp_kpm_moni_write_to_influxdb" ]; then
-    echo "xapp_kpm_moni_write_to_influxdb binary not found. Please build flexric first."
-    exit 1
+if ! command -v grafana-server &>/dev/null; then
+    echo "Grafana not found, installing..."
+    # Code from (https://grafana.com/docs/grafana/latest/setup-grafana/installation/debian):
+    sudo apt-get install -y apt-transport-https software-properties-common wget
+    sudo mkdir -p /etc/apt/keyrings/
+    wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | sudo tee /etc/apt/keyrings/grafana.gpg >/dev/null
+    echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
+    # Updates the list of available packages
+    sudo apt-get update
+    # Installs the latest OSS release:
+    sudo apt-get install -y grafana
 fi
+
+# # Installing and configuring Grafana to use the CSV data source plugin
+# if ! sudo grafana-cli plugins ls | grep -q bekaeljo15340f; then
+#     echo "CSV data source plugin not found, installing..."
+#     sudo grafana-cli plugins install bekaeljo15340f
+# fi
 
 INFLUXDB_ORG="xapp-kpm-moni"
 INFLUXDB_BUCKET="xapp-kpm-moni"
@@ -85,12 +98,35 @@ if [ ! -f "$INFLUXDB_TOKEN_PATH" ]; then
 fi
 INFLUXDB_TOKEN=$(jq -r '.token' "$INFLUXDB_TOKEN_PATH")
 
-cd "$PARENT_DIR/flexric/"
+if ! systemctl is-active grafana-server &>/dev/null; then
+    echo "Starting Grafana server..."
+    if [ "$(find /etc/systemd/system -type f -newer /run/systemd/system 2>/dev/null)" ]; then
+        echo "Detected changes in systemd service files. Reloading systemd daemon..."
+        sudo systemctl daemon-reload
+    fi
+    sudo systemctl start grafana-server
+else
+    if $NEEDS_RESTART; then
+        echo "Restarting Grafana server due to configuration changes..."
+        sudo systemctl restart grafana-server
+    fi
+fi
+sleep 3
 
-CONFIG_PATH=""
-if [ -f "../configs/flexric.conf" ]; then
-    CONFIG_PATH="-c ../configs/flexric.conf"
+if command -v google-chrome &>/dev/null; then
+    echo "Opening Grafana in Google Chrome..."
+    google-chrome "http://localhost:3000" >/dev/null 2>&1 &
+elif command -v firefox &>/dev/null; then
+    echo "Opening Grafana in Firefox..."
+    firefox "http://localhost:3000" >/dev/null 2>&1 &
+else
+    echo "No supported browser detected. Visit http://localhost:3000 to access the WebUI."
 fi
 
-echo "Starting xApp KPM monitor..."
-./build/examples/xApp/c/monitor/xapp_kpm_moni_write_to_influxdb "$INFLUXDB_TOKEN" $CONFIG_PATH
+echo
+echo "The default login credentials are as follows."
+echo "    - U: \"admin\""
+echo "    - P: \"admin\""
+echo
+
+cd "$PARENT_DIR/flexric/"

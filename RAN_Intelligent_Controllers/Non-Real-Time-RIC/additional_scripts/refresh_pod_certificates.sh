@@ -1,0 +1,1 @@
+../../Near-Real-Time-RIC/additional_scripts/refresh_pod_certificates.sh

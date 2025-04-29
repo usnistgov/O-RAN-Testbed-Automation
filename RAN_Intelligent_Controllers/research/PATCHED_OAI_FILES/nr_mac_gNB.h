@@ -179,6 +179,7 @@ typedef struct nr_mac_config_t {
   int32_t *bw_list;
   int num_agg_level_candidates[NUM_PDCCH_AGG_LEVELS];
   nr_redcap_config_t *redcap;
+  bool do_SINR;
 } nr_mac_config_t;
 
 typedef struct NR_preamble_ue {
@@ -539,6 +540,8 @@ typedef struct RSRP_report {
   uint8_t nr_reports;
   uint8_t resource_id[MAX_NR_OF_REPORTED_RS];
   int RSRP[MAX_NR_OF_REPORTED_RS];
+  // SINR index according to tables 10.1.16.1-1, 10.1.16.1-2
+  int SINR_index[MAX_NR_OF_REPORTED_RS];
 } RSRP_report_t;
 
 struct CSI_Report {
@@ -941,7 +944,7 @@ typedef struct gNB_MAC_INST_s {
   pthread_mutex_t sched_lock;
 
   mac_stats_t mac_stats;
-
+  uint64_t num_scheduled_prach_rx;
 } gNB_MAC_INST;
 
 #endif /*__LAYER2_NR_MAC_GNB_H__ */

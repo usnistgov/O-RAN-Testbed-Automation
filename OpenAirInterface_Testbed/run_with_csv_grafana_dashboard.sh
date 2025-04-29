@@ -121,5 +121,5 @@ cd ..
 echo
 echo "Running FlexRIC..."
 cd RAN_Intelligent_Controllers/Flexible-RIC/additional_scripts
-./start_grafana_with_xapp_kpm_moni.sh
+./start_grafana_with_csv_xapp_kpm_moni.sh
 cd ../..

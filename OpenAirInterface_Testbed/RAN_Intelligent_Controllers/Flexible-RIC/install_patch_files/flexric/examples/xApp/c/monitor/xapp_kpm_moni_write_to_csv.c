@@ -286,7 +286,7 @@ static void log_int_value(byte_array_t name, meas_record_lst_t meas_record)
     if (meas_record.int_val == 0)
     {
       filter_invalid_sample = true;
-      printf("\n\t!!! Invalid N_RSRP_MEAS value detected !!!\n\n");
+      printf("\n\tNumber of RSRP measurements was zero, skipping sample to avoid divide by zero.\n\n");
     }
   }
 }
@@ -439,7 +439,7 @@ static void log_kpm_measurements(kpm_ind_msg_format_1_t const *msg_frm_1)
   }
   write_csv_header_to_file();
 
-  if (!filter_invalid_sample && current_ue_id != 0)
+  if (!filter_invalid_sample)
   {
     csv_prepend_ue_id();
     csv_prepend_timestamp();

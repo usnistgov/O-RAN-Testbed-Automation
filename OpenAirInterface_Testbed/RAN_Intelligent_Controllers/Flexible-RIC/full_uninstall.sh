@@ -74,6 +74,14 @@ sudo rm -rf logs/
 sudo rm -rf configs/
 sudo rm -rf install_time.txt
 
+if [ -f influxdb_auth_token.json ]; then
+    echo "Uninstalling InfluxDB..."
+    ./install_scripts/uninstall_influxdb.sh
+
+    echo "Deleting InfluxDB auth token..."
+    sudo rm -f influxdb_auth_token.json
+fi
+
 echo
 echo
 echo "################################################################################"

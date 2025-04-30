@@ -189,7 +189,21 @@
           "url": "",
           "url_options": {
             "data": "",
-            "method": "GET"
+            "method": "GET",
+            "params": [
+              {
+                "key": "from",
+                "value": "$__from"
+              },
+              {
+                "key": "to",
+                "value": "$__to"
+              },
+              {
+                "key": "filter",
+                "value": "UE ID,Time (UNIX ms)"
+              }
+            ]
           }
         }
       ],
@@ -348,7 +362,21 @@
           "url": "",
           "url_options": {
             "data": "",
-            "method": "GET"
+            "method": "GET",
+            "params": [
+              {
+                "key": "from",
+                "value": "$__from"
+              },
+              {
+                "key": "to",
+                "value": "$__to"
+              },
+              {
+                "key": "filter",
+                "value": "UE ID,Time (UNIX ms)"
+              }
+            ]
           }
         }
       ],
@@ -488,7 +516,13 @@
           "url": "",
           "url_options": {
             "data": "",
-            "method": "GET"
+            "method": "GET",
+            "params": [
+              {
+                "key": "filter",
+                "value": "UE ID,Time (UNIX ms)"
+              }
+            ]
           }
         }
       ],
@@ -648,7 +682,21 @@
           "url": "",
           "url_options": {
             "data": "",
-            "method": "GET"
+            "method": "GET",
+            "params": [
+              {
+                "key": "from",
+                "value": "$__from"
+              },
+              {
+                "key": "to",
+                "value": "$__to"
+              },
+              {
+                "key": "filter",
+                "value": "DRB.UEThpDl (kbps),DRB.UEThpUl (kbps),Time (UNIX ms)"
+              }
+            ]
           }
         }
       ],
@@ -939,7 +987,21 @@
           "url": "",
           "url_options": {
             "data": "",
-            "method": "GET"
+            "method": "GET",
+            "params": [
+              {
+                "key": "from",
+                "value": "$__from"
+              },
+              {
+                "key": "to",
+                "value": "$__to"
+              },
+              {
+                "key": "filter",
+                "value": "Time (UNIX ms),RSRP (dBm),UE ID"
+              }
+            ]
           }
         }
       ],
@@ -1129,7 +1191,21 @@
           "url": "",
           "url_options": {
             "data": "",
-            "method": "GET"
+            "method": "GET",
+            "params": [
+              {
+                "key": "from",
+                "value": "$__from"
+              },
+              {
+                "key": "to",
+                "value": "$__to"
+              },
+              {
+                "key": "filter",
+                "value": "Time (UNIX ms),N_RSRP_MEAS,UE ID"
+              }
+            ]
           }
         }
       ],
@@ -1249,7 +1325,7 @@
         ]
       },
       "gridPos": {
-        "h": 8,
+        "h": 7,
         "w": 7,
         "x": 11,
         "y": 4
@@ -1308,7 +1384,21 @@
           "url": "",
           "url_options": {
             "data": "",
-            "method": "GET"
+            "method": "GET",
+            "params": [
+              {
+                "key": "from",
+                "value": "$__from"
+              },
+              {
+                "key": "to",
+                "value": "$__to"
+              },
+              {
+                "key": "filter",
+                "value": "Time (UNIX ms),DRB.UEThpDl (kbps),DRB.UEThpUl (kbps),UE ID"
+              }
+            ]
           }
         }
       ],
@@ -1473,7 +1563,21 @@
           "url": "",
           "url_options": {
             "data": "",
-            "method": "GET"
+            "method": "GET",
+            "params": [
+              {
+                "key": "from",
+                "value": "$__from"
+              },
+              {
+                "key": "to",
+                "value": "$__to"
+              },
+              {
+                "key": "filter",
+                "value": "Time (UNIX ms),DRB.PdcpSduVolumeDL (kb),DRB.PdcpSduVolumeUL (kb),UE ID"
+              }
+            ]
           }
         }
       ],
@@ -1656,8 +1760,8 @@
         ]
       },
       "gridPos": {
-        "h": 4,
-        "w": 6,
+        "h": 5,
+        "w": 3,
         "x": 18,
         "y": 8
       },
@@ -1710,11 +1814,282 @@
           "url": "",
           "url_options": {
             "data": "",
-            "method": "GET"
+            "method": "GET",
+            "params": [
+              {
+                "key": "from",
+                "value": "$__from"
+              },
+              {
+                "key": "to",
+                "value": "$__to"
+              },
+              {
+                "key": "filter",
+                "value": "Time (UNIX ms),DRB.RlcSduDelayDl (μs),UE ID"
+              }
+            ]
           }
         }
       ],
       "title": "Delay Downlink",
+      "transformations": [
+        {
+          "id": "filterByValue",
+          "options": {
+            "filters": [
+              {
+                "config": {
+                  "id": "equal",
+                  "options": {
+                    "value": "${Selected_UE_ID}"
+                  }
+                },
+                "fieldName": "UE_ID"
+              }
+            ],
+            "match": "any",
+            "type": "include"
+          }
+        }
+      ],
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineStyle": {
+              "fill": "solid"
+            },
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "max": 1,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 0.8
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "PACKET_RETRANSMISISON_RATE"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "orange",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "PACKET_DROP_RATE"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "DRB.HarqBlockErrorRateDl"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "light-blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "DRB.HarqBlockErrorRateUl"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "super-light-orange",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "DRB.MacSduErrorRateDl"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "light-blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "DRB.MacSduErrorRateUl"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "light-orange",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 3,
+        "x": 21,
+        "y": 8
+      },
+      "id": 33,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.6.1",
+      "targets": [
+        {
+          "columns": [
+            {
+              "selector": "Time (UNIX ms)",
+              "text": "Timestamp",
+              "type": "timestamp_epoch"
+            },
+            {
+              "selector": "DRB.MacSduErrorRateDl",
+              "text": "DRB.MacSduErrorRateDl",
+              "type": "number"
+            },
+            {
+              "selector": "DRB.MacSduErrorRateUl",
+              "text": "DRB.MacSduErrorRateUl",
+              "type": "number"
+            },
+            {
+              "selector": "UE ID",
+              "text": "UE_ID",
+              "type": "string"
+            }
+          ],
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+          },
+          "filters": [],
+          "format": "table",
+          "global_query_id": "",
+          "parser": "backend",
+          "refId": "A",
+          "root_selector": "",
+          "source": "url",
+          "type": "csv",
+          "url": "",
+          "url_options": {
+            "data": "",
+            "method": "GET",
+            "params": [
+              {
+                "key": "from",
+                "value": "$__from"
+              },
+              {
+                "key": "to",
+                "value": "$__to"
+              },
+              {
+                "key": "filter",
+                "value": "Time (UNIX ms),DRB.MacSduErrorRateDl,DRB.MacSduErrorRateUl,UE ID"
+              }
+            ]
+          }
+        }
+      ],
+      "title": "MAC SDU Error Rate (%)",
       "transformations": [
         {
           "id": "filterByValue",
@@ -1885,7 +2260,21 @@
           "url": "",
           "url_options": {
             "data": "",
-            "method": "GET"
+            "method": "GET",
+            "params": [
+              {
+                "key": "from",
+                "value": "$__from"
+              },
+              {
+                "key": "to",
+                "value": "$__to"
+              },
+              {
+                "key": "filter",
+                "value": "Time (UNIX ms),RSSI (dBm),UE ID"
+              }
+            ]
           }
         }
       ],
@@ -2073,7 +2462,21 @@
           "url": "",
           "url_options": {
             "data": "",
-            "method": "GET"
+            "method": "GET",
+            "params": [
+              {
+                "key": "from",
+                "value": "$__from"
+              },
+              {
+                "key": "to",
+                "value": "$__to"
+              },
+              {
+                "key": "filter",
+                "value": "Time (UNIX ms),N_PRB,UE ID"
+              }
+            ]
           }
         }
       ],
@@ -2193,10 +2596,10 @@
         ]
       },
       "gridPos": {
-        "h": 8,
+        "h": 7,
         "w": 7,
         "x": 11,
-        "y": 12
+        "y": 11
       },
       "id": 15,
       "options": {
@@ -2252,7 +2655,21 @@
           "url": "",
           "url_options": {
             "data": "",
-            "method": "GET"
+            "method": "GET",
+            "params": [
+              {
+                "key": "from",
+                "value": "$__from"
+              },
+              {
+                "key": "to",
+                "value": "$__to"
+              },
+              {
+                "key": "filter",
+                "value": "Time (UNIX ms),RRU.PrbTotDl (PRBs),RRU.PrbTotUl (PRBs),UE ID"
+              }
+            ]
           }
         }
       ],
@@ -2287,45 +2704,77 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "fixedColor": "super-light-blue",
-            "mode": "fixed"
+            "mode": "palette-classic"
           },
           "custom": {
-            "fillOpacity": 80,
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
             "gradientMode": "none",
             "hideFrom": {
               "legend": false,
               "tooltip": false,
               "viz": false
             },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
             "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
             "stacking": {
               "group": "A",
               "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
             }
           },
-          "decimals": 0,
-          "fieldMinMax": false,
           "mappings": [],
+          "min": 0,
           "thresholds": {
-            "mode": "percentage",
+            "mode": "absolute",
             "steps": [
               {
-                "color": "super-light-blue"
+                "color": "green"
               },
               {
                 "color": "red",
-                "value": 80
+                "value": 0.8
               }
             ]
           },
-          "unit": "PRBs"
+          "unit": "percentunit"
         },
         "overrides": [
           {
             "matcher": {
               "id": "byName",
-              "options": "RRU.PrbTotDl (PRBs)"
+              "options": "PACKET_RETRANSMISISON_RATE"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "orange",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "DRB.MacSduRetransmissionRateDl"
             },
             "properties": [
               {
@@ -2336,136 +2785,11 @@
                 }
               }
             ]
-          }
-        ]
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 6,
-        "x": 18,
-        "y": 12
-      },
-      "id": 6,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "11.6.1",
-      "targets": [
-        {
-          "columns": [
-            {
-              "selector": "Time (UNIX ms)",
-              "text": "Timestamp",
-              "type": "timestamp_epoch"
-            },
-            {
-              "selector": "RRU.PrbTotDl (PRBs)",
-              "text": "RRU.PrbTotDl (PRBs)",
-              "type": "number"
-            },
-            {
-              "selector": "UE ID",
-              "text": "UE_ID",
-              "type": "string"
-            }
-          ],
-          "datasource": {
-            "type": "yesoreyeram-infinity-datasource",
-            "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
           },
-          "filters": [],
-          "format": "table",
-          "global_query_id": "",
-          "parser": "backend",
-          "refId": "A",
-          "root_selector": "",
-          "source": "url",
-          "type": "csv",
-          "url": "",
-          "url_options": {
-            "data": "",
-            "method": "GET"
-          }
-        }
-      ],
-      "title": "Histogram of PRBs Downlink Since Last Sample",
-      "transformations": [
-        {
-          "id": "filterByValue",
-          "options": {
-            "filters": [
-              {
-                "config": {
-                  "id": "equal",
-                  "options": {
-                    "value": "${Selected_UE_ID}"
-                  }
-                },
-                "fieldName": "UE_ID"
-              }
-            ],
-            "match": "any",
-            "type": "include"
-          }
-        }
-      ],
-      "type": "histogram"
-    },
-    {
-      "datasource": {
-        "type": "yesoreyeram-infinity-datasource",
-        "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic-by-name"
-          },
-          "custom": {
-            "fillOpacity": 80,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineWidth": 1,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            }
-          },
-          "fieldMinMax": false,
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "PRB"
-        },
-        "overrides": [
           {
             "matcher": {
               "id": "byName",
-              "options": "RRU.PrbTotUl (PRBs)"
+              "options": "DRB.MacSduRetransmissionRateUl"
             },
             "properties": [
               {
@@ -2480,12 +2804,12 @@
         ]
       },
       "gridPos": {
-        "h": 4,
+        "h": 6,
         "w": 6,
         "x": 18,
-        "y": 16
+        "y": 13
       },
-      "id": 17,
+      "id": 32,
       "options": {
         "legend": {
           "calcs": [],
@@ -2509,8 +2833,13 @@
               "type": "timestamp_epoch"
             },
             {
-              "selector": "RRU.PrbTotUl (PRBs)",
-              "text": "RRU.PrbTotUl (PRBs)",
+              "selector": "DRB.MacSduRetransmissionRateDl",
+              "text": "DRB.MacSduRetransmissionRateDl",
+              "type": "number"
+            },
+            {
+              "selector": "DRB.MacSduRetransmissionRateUl",
+              "text": "DRB.MacSduRetransmissionRateUl",
               "type": "number"
             },
             {
@@ -2534,11 +2863,25 @@
           "url": "",
           "url_options": {
             "data": "",
-            "method": "GET"
+            "method": "GET",
+            "params": [
+              {
+                "key": "from",
+                "value": "$__from"
+              },
+              {
+                "key": "to",
+                "value": "$__to"
+              },
+              {
+                "key": "filter",
+                "value": "Time (UNIX ms),DRB.MacSduRetransmissionRateDl,DRB.MacSduRetransmissionRateUl,UE ID"
+              }
+            ]
           }
         }
       ],
-      "title": "Histogram of PRBs Uplink Since Last Sample",
+      "title": "MAC SDU Retransmission Rate (%)",
       "transformations": [
         {
           "id": "filterByValue",
@@ -2559,7 +2902,7 @@
           }
         }
       ],
-      "type": "histogram"
+      "type": "timeseries"
     },
     {
       "datasource": {
@@ -2601,7 +2944,7 @@
         "colorMode": "value",
         "graphMode": "area",
         "justifyMode": "auto",
-        "orientation": "auto",
+        "orientation": "horizontal",
         "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
@@ -2654,7 +2997,21 @@
           "url": "",
           "url_options": {
             "data": "",
-            "method": "GET"
+            "method": "GET",
+            "params": [
+              {
+                "key": "from",
+                "value": "$__from"
+              },
+              {
+                "key": "to",
+                "value": "$__to"
+              },
+              {
+                "key": "filter",
+                "value": "Time (UNIX ms),PUSCH_SNR (dB),PUCCH_SNR (dB),UE ID"
+              }
+            ]
           }
         }
       ],
@@ -2728,8 +3085,6 @@
             }
           },
           "mappings": [],
-          "max": 1,
-          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -2741,8 +3096,7 @@
                 "value": 0.8
               }
             ]
-          },
-          "unit": "percentunit"
+          }
         },
         "overrides": [
           {
@@ -2774,16 +3128,76 @@
                 }
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "DRB.HarqBlockErrorRateDl"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "light-blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "DRB.HarqBlockErrorRateUl"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "super-light-orange",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "DRB.HarqMcsDl"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "light-blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "DRB.HarqMcsUl"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "super-light-orange",
+                  "mode": "fixed"
+                }
+              }
+            ]
           }
         ]
       },
       "gridPos": {
-        "h": 4,
+        "h": 6,
         "w": 7,
         "x": 11,
-        "y": 20
+        "y": 18
       },
-      "id": 33,
+      "id": 36,
       "options": {
         "legend": {
           "calcs": [],
@@ -2807,8 +3221,13 @@
               "type": "timestamp_epoch"
             },
             {
-              "selector": "PACKET_DROP_RATE",
-              "text": "PACKET_DROP_RATE",
+              "selector": "DRB.HarqMcsDl",
+              "text": "DRB.HarqMcsDl",
+              "type": "number"
+            },
+            {
+              "selector": "DRB.HarqMcsUl",
+              "text": "DRB.HarqMcsUl",
               "type": "number"
             },
             {
@@ -2832,11 +3251,25 @@
           "url": "",
           "url_options": {
             "data": "",
-            "method": "GET"
+            "method": "GET",
+            "params": [
+              {
+                "key": "from",
+                "value": "$__from"
+              },
+              {
+                "key": "to",
+                "value": "$__to"
+              },
+              {
+                "key": "filter",
+                "value": "Time (UNIX ms),DRB.HarqMcsDl,DRB.HarqMcsUl,UE ID"
+              }
+            ]
           }
         }
       ],
-      "title": "MAC SDU Error Rate (%)",
+      "title": "Modulation and Coding Scheme (MCS)",
       "transformations": [
         {
           "id": "filterByValue",
@@ -2887,7 +3320,10 @@
             },
             "insertNulls": false,
             "lineInterpolation": "linear",
-            "lineWidth": 1,
+            "lineStyle": {
+              "fill": "solid"
+            },
+            "lineWidth": 2,
             "pointSize": 5,
             "scaleDistribution": {
               "type": "linear"
@@ -2903,7 +3339,6 @@
             }
           },
           "mappings": [],
-          "max": 1,
           "min": 0,
           "thresholds": {
             "mode": "absolute",
@@ -2934,16 +3369,91 @@
                 }
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "PACKET_DROP_RATE"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "DRB.HarqBlockErrorRateDl"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "light-blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "DRB.HarqBlockErrorRateUl"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "super-light-orange",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "DRB.MacSduErrorRateDl"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "light-blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "DRB.MacSduErrorRateUl"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "light-orange",
+                  "mode": "fixed"
+                }
+              }
+            ]
           }
         ]
       },
       "gridPos": {
-        "h": 4,
+        "h": 5,
         "w": 6,
         "x": 18,
-        "y": 20
+        "y": 19
       },
-      "id": 32,
+      "id": 37,
       "options": {
         "legend": {
           "calcs": [],
@@ -2967,8 +3477,13 @@
               "type": "timestamp_epoch"
             },
             {
-              "selector": "PACKET_RETRANSMISISON_RATE",
-              "text": "PACKET_RETRANSMISISON_RATE",
+              "selector": "DRB.HarqBlockErrorRateDl",
+              "text": "DRB.HarqBlockErrorRateDl",
+              "type": "number"
+            },
+            {
+              "selector": "DRB.HarqBlockErrorRateUl",
+              "text": "DRB.HarqBlockErrorRateUl",
               "type": "number"
             },
             {
@@ -2992,11 +3507,25 @@
           "url": "",
           "url_options": {
             "data": "",
-            "method": "GET"
+            "method": "GET",
+            "params": [
+              {
+                "key": "from",
+                "value": "$__from"
+              },
+              {
+                "key": "to",
+                "value": "$__to"
+              },
+              {
+                "key": "filter",
+                "value": "Time (UNIX ms),DRB.HarqBlockErrorRateDl,DRB.HarqBlockErrorRateUl,UE ID"
+              }
+            ]
           }
         }
       ],
-      "title": "MAC SDU Retransmission Rate (%)",
+      "title": "HARQ Block Error Rate",
       "transformations": [
         {
           "id": "filterByValue",
@@ -3164,7 +3693,21 @@
           "url": "",
           "url_options": {
             "data": "",
-            "method": "GET"
+            "method": "GET",
+            "params": [
+              {
+                "key": "from",
+                "value": "$__from"
+              },
+              {
+                "key": "to",
+                "value": "$__to"
+              },
+              {
+                "key": "filter",
+                "value": "Time (UNIX ms),RSRQ (dB),UE ID"
+              }
+            ]
           }
         }
       ],
@@ -3304,7 +3847,21 @@
           "url": "",
           "url_options": {
             "data": "",
-            "method": "GET"
+            "method": "GET",
+            "params": [
+              {
+                "key": "from",
+                "value": "$__from"
+              },
+              {
+                "key": "to",
+                "value": "$__to"
+              },
+              {
+                "key": "filter",
+                "value": "Time (UNIX ms),RSRQ (dB),UE ID"
+              }
+            ]
           }
         }
       ],
@@ -3478,7 +4035,21 @@
           "url": "",
           "url_options": {
             "data": "",
-            "method": "GET"
+            "method": "GET",
+            "params": [
+              {
+                "key": "from",
+                "value": "$__from"
+              },
+              {
+                "key": "to",
+                "value": "$__to"
+              },
+              {
+                "key": "filter",
+                "value": "Time (UNIX ms),CQI_SINGLE_CODEWORD,UE ID"
+              }
+            ]
           }
         }
       ],
@@ -3652,7 +4223,21 @@
           "url": "",
           "url_options": {
             "data": "",
-            "method": "GET"
+            "method": "GET",
+            "params": [
+              {
+                "key": "from",
+                "value": "$__from"
+              },
+              {
+                "key": "to",
+                "value": "$__to"
+              },
+              {
+                "key": "filter",
+                "value": "Time (UNIX ms),CQI_DUAL_CODEWORD,UE ID"
+              }
+            ]
           }
         }
       ],
@@ -3818,7 +4403,21 @@
           "url": "",
           "url_options": {
             "data": "",
-            "method": "GET"
+            "method": "GET",
+            "params": [
+              {
+                "key": "from",
+                "value": "$__from"
+              },
+              {
+                "key": "to",
+                "value": "$__to"
+              },
+              {
+                "key": "filter",
+                "value": "Time (UNIX ms),DRB.PdcpSduVolumeDL (kb),DRB.PdcpSduVolumeUL (kb),UE ID"
+              }
+            ]
           }
         }
       ],
@@ -3922,15 +4521,329 @@
         }
       ],
       "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "super-light-blue",
+            "mode": "fixed"
+          },
+          "custom": {
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          },
+          "decimals": 0,
+          "fieldMinMax": false,
+          "mappings": [],
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {
+                "color": "super-light-blue"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "PRBs"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "RRU.PrbTotDl (PRBs)"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "light-blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 29
+      },
+      "id": 6,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.6.1",
+      "targets": [
+        {
+          "columns": [
+            {
+              "selector": "Time (UNIX ms)",
+              "text": "Timestamp",
+              "type": "timestamp_epoch"
+            },
+            {
+              "selector": "RRU.PrbTotDl (PRBs)",
+              "text": "RRU.PrbTotDl (PRBs)",
+              "type": "number"
+            },
+            {
+              "selector": "UE ID",
+              "text": "UE_ID",
+              "type": "string"
+            }
+          ],
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+          },
+          "filters": [],
+          "format": "table",
+          "global_query_id": "",
+          "parser": "backend",
+          "refId": "A",
+          "root_selector": "",
+          "source": "url",
+          "type": "csv",
+          "url": "",
+          "url_options": {
+            "data": "",
+            "method": "GET",
+            "params": [
+              {
+                "key": "from",
+                "value": "$__from"
+              },
+              {
+                "key": "to",
+                "value": "$__to"
+              },
+              {
+                "key": "filter",
+                "value": "Time (UNIX ms),RRU.PrbTotDl (PRBs),UE ID"
+              }
+            ]
+          }
+        }
+      ],
+      "title": "Histogram of PRBs Downlink",
+      "transformations": [
+        {
+          "id": "filterByValue",
+          "options": {
+            "filters": [
+              {
+                "config": {
+                  "id": "equal",
+                  "options": {
+                    "value": "${Selected_UE_ID}"
+                  }
+                },
+                "fieldName": "UE_ID"
+              }
+            ],
+            "match": "any",
+            "type": "include"
+          }
+        }
+      ],
+      "type": "histogram"
+    },
+    {
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic-by-name"
+          },
+          "custom": {
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          },
+          "fieldMinMax": false,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "PRB"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "RRU.PrbTotUl (PRBs)"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "super-light-orange",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 33
+      },
+      "id": 17,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.6.1",
+      "targets": [
+        {
+          "columns": [
+            {
+              "selector": "Time (UNIX ms)",
+              "text": "Timestamp",
+              "type": "timestamp_epoch"
+            },
+            {
+              "selector": "RRU.PrbTotUl (PRBs)",
+              "text": "RRU.PrbTotUl (PRBs)",
+              "type": "number"
+            },
+            {
+              "selector": "UE ID",
+              "text": "UE_ID",
+              "type": "string"
+            }
+          ],
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+          },
+          "filters": [],
+          "format": "table",
+          "global_query_id": "",
+          "parser": "backend",
+          "refId": "A",
+          "root_selector": "",
+          "source": "url",
+          "type": "csv",
+          "url": "",
+          "url_options": {
+            "data": "",
+            "method": "GET",
+            "params": [
+              {
+                "key": "from",
+                "value": "$__from"
+              },
+              {
+                "key": "to",
+                "value": "$__to"
+              },
+              {
+                "key": "filter",
+                "value": "Time (UNIX ms),RRU.PrbTotUl (PRBs),UE ID"
+              }
+            ]
+          }
+        }
+      ],
+      "title": "Histogram of PRBs Uplink",
+      "transformations": [
+        {
+          "id": "filterByValue",
+          "options": {
+            "filters": [
+              {
+                "config": {
+                  "id": "equal",
+                  "options": {
+                    "value": "${Selected_UE_ID}"
+                  }
+                },
+                "fieldName": "UE_ID"
+              }
+            ],
+            "match": "any",
+            "type": "include"
+          }
+        }
+      ],
+      "type": "histogram"
     }
   ],
-  "refresh": "auto",
+  "refresh": "",
   "schemaVersion": 41,
   "tags": [],
   "templating": {
     "list": [
       {
         "current": {},
+        "datasource": {
+          "type": "yesoreyeram-infinity-datasource",
+          "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+        },
         "definition": "",
         "description": "",
         "includeAll": false,
@@ -3945,13 +4858,6 @@
                 "type": "number"
               }
             ],
-            "computed_columns": [
-              {
-                "selector": "",
-                "text": "",
-                "type": "string"
-              }
-            ],
             "filters": [],
             "format": "table",
             "parser": "backend",
@@ -3962,7 +4868,21 @@
             "url": "",
             "url_options": {
               "data": "",
-              "method": "GET"
+              "method": "GET",
+              "params": [
+                {
+                  "key": "from",
+                  "value": "$__from"
+                },
+                {
+                  "key": "to",
+                  "value": "$__to"
+                },
+                {
+                  "key": "filter",
+                  "value": "UE ID"
+                }
+              ]
             }
           },
           "query": "",
@@ -3975,13 +4895,13 @@
     ]
   },
   "time": {
-    "from": "2025-04-24T20:10:50.446Z",
-    "to": "2025-04-24T20:13:33.446Z"
+    "from": "2025-04-30T15:15:38.464Z",
+    "to": "2025-04-30T15:15:56.261Z"
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "FlexRIC KPI Monitor (CSV)",
-  "uid": "cehfpz3fiuneob",
-  "version": 2,
+  "title": "FlexRIC KPI Monitor",
+  "uid": "kpi_metrics001",
+  "version": 1,
   "weekStart": ""
 }

@@ -177,7 +177,6 @@ if ! command -v jq >/dev/null 2>&1; then
     sudo apt-get install -y jq
 fi
 
-
 echo
 echo "Installing A1 Simulators                           ..."
 # Determine if RAN Intelligent Controller pods should be reset by checking if any of the nonrtric pods are not running

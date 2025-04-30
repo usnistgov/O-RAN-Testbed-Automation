@@ -92,5 +92,4 @@ cp -r "$SCRIPT_DIR/../../OpenAirInterface_Testbed/User_Equipment/install_patch_f
 # git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c.patch"
 # cd ..
 
-
 echo "SUCCESS."

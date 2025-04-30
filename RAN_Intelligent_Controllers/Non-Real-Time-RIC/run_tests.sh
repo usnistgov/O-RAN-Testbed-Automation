@@ -74,6 +74,11 @@ if [[ "$VIRTUAL_ENV" == "" ]]; then
     exit 1
 fi
 
+if ! command -v pytest &>/dev/null; then
+    sudo rm -rf requirements.txt
+    sudo rm -rf .requirements_hash
+fi
+
 # Create the requirements.txt file if it doesn't exist already
 if [ ! -f requirements.txt ]; then
     cat <<EOF | tee "requirements.txt" >/dev/null

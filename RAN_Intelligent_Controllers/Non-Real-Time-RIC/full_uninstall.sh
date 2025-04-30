@@ -333,8 +333,8 @@ sudo rm -rf install_time.txt
 sudo rm -rf logs/
 sudo rm -rf tests/__pycache__
 sudo rm -rf tests/venv
-sudo rm -rf tests/.requirements_hash.txt
 sudo rm -rf tests/requirements.txt
+sudo rm -rf tests/.requirements_hash
 
 echo
 echo

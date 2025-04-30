@@ -59,7 +59,7 @@ mkdir -p logs
 >logs/ue${UE_NUMBER}_stdout.txt
 
 # Ensure the following command runs with sudo privileges
-sudo ls > /dev/null
+sudo ls >/dev/null
 
 sudo setsid bash -c "stdbuf -oL -eL \"$SCRIPT_DIR/run.sh\" $UE_NUMBER > logs/ue${UE_NUMBER}_stdout.txt 2>&1" </dev/null &
 

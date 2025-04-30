@@ -101,7 +101,7 @@ class SingleFileHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 self.cache.move_to_end(key)
 
                 elapsed = (time.perf_counter() - start_time) * 1000
-                print(f"CACHE HIT {elapsed:.2f} ms")
+                #print(f"CACHE HIT {elapsed:.2f} ms")
                 return
 
             # If no filters are provided, fall back to the default handler
@@ -171,7 +171,7 @@ class SingleFileHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 self.cache.popitem(last=False)
             
             elapsed = (time.perf_counter() - start_time) * 1000
-            print(f"{elapsed:.2f} ms")
+            #print(f"{elapsed:.2f} ms")
             return
 
         # NIST.svg handling stays the same
@@ -185,10 +185,10 @@ class SingleFileHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.send_error(404, f'File not found: {self.path}')
             raise Exception(f"File not found: {self.path}")
 
-        print(f"Serving file: {os.path.basename(self.path)}")
+        #print(f"Serving file: {os.path.basename(self.path)}")
         result = super().do_GET()
         elapsed = (time.perf_counter() - start_time) * 1000
-        print(f"{elapsed:.2f} ms")
+        #print(f"{elapsed:.2f} ms")
         return result
 
     # Override to serve files from the correct directory
@@ -208,9 +208,6 @@ class SingleFileHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         self.send_header('Access-Control-Allow-Methods', 'GET')
         self.send_header('Access-Control-Allow-Headers', 'Content-Type')
         return super().end_headers()
-
-    
-
 
 PORT = 3030
 

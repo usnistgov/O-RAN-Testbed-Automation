@@ -97,6 +97,8 @@ void log_int_value(byte_array_t name, meas_record_lst_t meas_record)
     printf("DRB.PdcpSduVolumeDL = %u [kb]\n", meas_record.int_val);
   } else if (cmp_str_ba("DRB.PdcpSduVolumeUL", name) == 0) {
     printf("DRB.PdcpSduVolumeUL = %u [kb]\n", meas_record.int_val);
+
+  // Added int metrics deviating from FlexRIC:
   } else if (cmp_str_ba("N_RSRP_MEAS", name) == 0) {
     printf("N_RSRP_MEAS = %u\n", meas_record.int_val);
   } else if (cmp_str_ba("N_PRB", name) == 0) {
@@ -123,6 +125,8 @@ void log_real_value(byte_array_t name, meas_record_lst_t meas_record)
     printf("DRB.UEThpDl = %.2f [kbps]\n", meas_record.real_val);
   } else if (cmp_str_ba("DRB.UEThpUl", name) == 0) {
     printf("DRB.UEThpUl = %.2f [kbps]\n", meas_record.real_val);
+
+  // Added float metrics deviating from FlexRIC:
   } else if (cmp_str_ba("RSRP", name) == 0) {
     printf("RSRP = %.2f [dBm]\n", meas_record.real_val);
   } else if (cmp_str_ba("RSSI", name) == 0) {

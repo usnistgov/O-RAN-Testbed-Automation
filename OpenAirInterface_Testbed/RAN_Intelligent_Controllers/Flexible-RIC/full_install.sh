@@ -97,7 +97,7 @@ echo "Patching xApp type printing..."
 cd flexric
 sudo rm -rf examples/xApp/c
 git restore examples/xApp/c/*
-git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/flexric/examples/xApp/c/fix_type_printing_in_c_xapps.patch"
+git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/flexric/examples/xApp/c/fix_type_printing_in_c_xapps.patch" || true
 cd ..
 
 # Apply patch to FlexRIC to add support for RSRP in the KPI report

@@ -1,5 +1,5 @@
 diff --git a/examples/xApp/c/monitor/xapp_kpm_moni.c b/examples/xApp/c/monitor/xapp_kpm_moni.c
-index 5fa00cc2..5f83e771 100644
+index 5fa00cc2..ef62de00 100644
 --- a/examples/xApp/c/monitor/xapp_kpm_moni.c
 +++ b/examples/xApp/c/monitor/xapp_kpm_moni.c
 @@ -32,6 +32,8 @@
@@ -11,14 +11,31 @@ index 5fa00cc2..5f83e771 100644
  static
  uint64_t const period_ms = 1000;
  
-@@ -95,6 +97,14 @@ void log_int_value(byte_array_t name, meas_record_lst_t meas_record)
-     printf("DRB.PdcpSduVolumeDL = %u [kb]\n", meas_record.int_val);
+@@ -88,13 +90,27 @@ static
+ void log_int_value(byte_array_t name, meas_record_lst_t meas_record)
+ {
+   if (cmp_str_ba("RRU.PrbTotDl", name) == 0) {
+-    printf("RRU.PrbTotDl = %d [PRBs]\n", meas_record.int_val);
++    printf("RRU.PrbTotDl = %u [PRBs]\n", meas_record.int_val);
+   } else if (cmp_str_ba("RRU.PrbTotUl", name) == 0) {
+-    printf("RRU.PrbTotUl = %d [PRBs]\n", meas_record.int_val);
++    printf("RRU.PrbTotUl = %u [PRBs]\n", meas_record.int_val);
+   } else if (cmp_str_ba("DRB.PdcpSduVolumeDL", name) == 0) {
+-    printf("DRB.PdcpSduVolumeDL = %d [kb]\n", meas_record.int_val);
++    printf("DRB.PdcpSduVolumeDL = %u [kb]\n", meas_record.int_val);
    } else if (cmp_str_ba("DRB.PdcpSduVolumeUL", name) == 0) {
-     printf("DRB.PdcpSduVolumeUL = %u [kb]\n", meas_record.int_val);
+-    printf("DRB.PdcpSduVolumeUL = %d [kb]\n", meas_record.int_val);
++    printf("DRB.PdcpSduVolumeUL = %u [kb]\n", meas_record.int_val);
++
++  // Added int metrics deviating from FlexRIC:
 +  } else if (cmp_str_ba("N_RSRP_MEAS", name) == 0) {
 +    printf("N_RSRP_MEAS = %u\n", meas_record.int_val);
 +  } else if (cmp_str_ba("N_PRB", name) == 0) {
 +    printf("N_PRB = %u\n", meas_record.int_val);
++  } else if (cmp_str_ba("DRB.HarqMcsUl", name) == 0) {
++    printf("DRB.HarqMcsUl = %u\n", meas_record.int_val);
++  } else if (cmp_str_ba("DRB.HarqMcsDl", name) == 0) {
++    printf("DRB.HarqMcsDl = %u\n", meas_record.int_val);
 +  } else if (cmp_str_ba("CQI_SINGLE_CODEWORD", name) == 0) {
 +    printf("CQI_SINGLE_CODEWORD = %u\n", meas_record.int_val);
 +  } else if (cmp_str_ba("CQI_DUAL_CODEWORD", name) == 0) {
@@ -26,10 +43,12 @@ index 5fa00cc2..5f83e771 100644
    } else {
      printf("Measurement Name not yet supported\n");
    }
-@@ -109,6 +119,16 @@ void log_real_value(byte_array_t name, meas_record_lst_t meas_record)
+@@ -109,6 +125,30 @@ void log_real_value(byte_array_t name, meas_record_lst_t meas_record)
      printf("DRB.UEThpDl = %.2f [kbps]\n", meas_record.real_val);
    } else if (cmp_str_ba("DRB.UEThpUl", name) == 0) {
      printf("DRB.UEThpUl = %.2f [kbps]\n", meas_record.real_val);
++
++  // Added float metrics deviating from FlexRIC:
 +  } else if (cmp_str_ba("RSRP", name) == 0) {
 +    printf("RSRP = %.2f [dBm]\n", meas_record.real_val);
 +  } else if (cmp_str_ba("RSSI", name) == 0) {
@@ -40,10 +59,31 @@ index 5fa00cc2..5f83e771 100644
 +    printf("PUSCH_SNR = %.2f [dB]\n", meas_record.real_val);
 +  } else if (cmp_str_ba("PUCCH_SNR", name) == 0) {
 +    printf("PUCCH_SNR = %.2f [dB]\n", meas_record.real_val);
++  } else if (cmp_str_ba("DRB.HarqBlockErrorRateUl", name) == 0) {
++    printf("DRB.HarqBlockErrorRateUl = %.2f [%%]\n", meas_record.real_val);
++  } else if (cmp_str_ba("DRB.HarqBlockErrorRateDl", name) == 0) {
++    printf("DRB.HarqBlockErrorRateDl = %.2f [%%]\n", meas_record.real_val);
++  } else if (cmp_str_ba("DRB.MacSduRetransmissionRateUl", name) == 0) {
++    printf("DRB.MacSduRetransmissionRateUl = %.2f [%%]\n", meas_record.real_val);
++  } else if (cmp_str_ba("DRB.MacSduRetransmissionRateDl", name) == 0) {
++    printf("DRB.MacSduRetransmissionRateDl = %.2f [%%]\n", meas_record.real_val);
++  } else if (cmp_str_ba("DRB.MacSduErrorRateUl", name) == 0) {
++    printf("DRB.MacSduErrorRateUl = %.2f [%%]\n", meas_record.real_val);
++  } else if (cmp_str_ba("DRB.MacSduErrorRateDl", name) == 0) {
++    printf("DRB.MacSduErrorRateDl = %.2f [%%]\n", meas_record.real_val);
    } else {
      printf("Measurement Name not yet supported\n");
    }
-@@ -418,6 +438,8 @@ int main(int argc, char* argv[])
+@@ -382,7 +422,7 @@ int main(int argc, char* argv[])
+ 
+   assert(nodes.len > 0);
+ 
+-  printf("Connected E2 nodes = %d\n", nodes.len);
++  printf("Connected E2 nodes = %u\n", nodes.len);
+ 
+   pthread_mutexattr_t attr = {0};
+   int rc = pthread_mutex_init(&mtx, &attr);
+@@ -418,6 +458,8 @@ int main(int argc, char* argv[])
    ////////////
  
    sleep(10);

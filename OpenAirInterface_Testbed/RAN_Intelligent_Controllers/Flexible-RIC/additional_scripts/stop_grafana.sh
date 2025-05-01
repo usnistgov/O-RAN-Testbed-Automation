@@ -51,10 +51,12 @@ pkill -9 -f "grafana_host_kpi_metrics_over_http.py"
 # Stop Grafana server if it's running and disable it from auto-starting on boot
 if systemctl is-active grafana-server &>/dev/null; then
     echo "Stopping Grafana server..."
+    set -x
     sudo systemctl stop grafana-server
 fi
 if sudo systemctl is-enabled grafana-server &>/dev/null; then
     echo "Disabling Grafana server auto-start..."
+    set -x
     sudo systemctl disable grafana-server
 fi
 

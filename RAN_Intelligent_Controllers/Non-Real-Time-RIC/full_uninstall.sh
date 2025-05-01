@@ -28,8 +28,8 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-# Exit immediately if a command fails
-set -e
+# Do not exit immediately if a command fails
+set +e
 
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
@@ -333,8 +333,8 @@ sudo rm -rf install_time.txt
 sudo rm -rf logs/
 sudo rm -rf tests/__pycache__
 sudo rm -rf tests/venv
-sudo rm -rf tests/.requirements_hash.txt
 sudo rm -rf tests/requirements.txt
+sudo rm -rf tests/.requirements_hash
 
 echo
 echo

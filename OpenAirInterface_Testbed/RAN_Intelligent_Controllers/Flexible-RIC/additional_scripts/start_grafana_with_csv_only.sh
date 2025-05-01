@@ -43,6 +43,7 @@ PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$PARENT_DIR"
 
 GRAFANA_LOG_FILE="$PARENT_DIR/logs/KPI_Metrics.csv"
+SERVER_LOG_FILE="$PARENT_DIR/logs/python_server.log"
 
 if ! command -v grafana-server &>/dev/null; then
     echo "Grafana not found, installing..."
@@ -68,6 +69,7 @@ if [ ! -f "$GRAFANA_LOG_FILE" ]; then
     sudo mkdir -p "$(dirname "$GRAFANA_LOG_FILE")"
     touch "$GRAFANA_LOG_FILE"
 fi
+
 if ! command -v python3 &>/dev/null; then
     echo "Python3 not found, installing..."
     sudo apt-get install -y python3
@@ -76,7 +78,8 @@ fi
 cd additional_scripts
 if ! pgrep -f "grafana_host_kpi_metrics_over_http.py" >/dev/null; then
     echo "Hosting file: http://localhost:3030/KPI_Metrics.csv"
-    nohup python3 grafana_host_kpi_metrics_over_http.py >"../logs/grafana_host_kpi_metrics_over_http.log" 2>&1 &
+    >"$SERVER_LOG_FILE" # Clear the log file
+    nohup python3 -u grafana_host_kpi_metrics_over_http.py >"$SERVER_LOG_FILE" 2>&1 &
 else
     echo "Already hosting file: http://localhost:3030/KPI_Metrics.csv"
 fi
@@ -98,12 +101,12 @@ sleep 3
 
 if command -v google-chrome &>/dev/null; then
     echo "Opening Grafana in Google Chrome..."
-    google-chrome "http://localhost:3000/dashboards" >/dev/null 2>&1 &
+    google-chrome "http://localhost:3000" >/dev/null 2>&1 &
 elif command -v firefox &>/dev/null; then
     echo "Opening Grafana in Firefox..."
-    firefox "http://localhost:3000/dashboards" >/dev/null 2>&1 &
+    firefox "http://localhost:3000" >/dev/null 2>&1 &
 else
-    echo "No supported browser detected. Visit http://localhost:3000/dashboards to access the WebUI."
+    echo "No supported browser detected. Visit http://localhost:3000 to access the WebUI."
 fi
 
 echo
@@ -112,4 +115,4 @@ echo "    - U: \"admin\""
 echo "    - P: \"admin\""
 echo
 
-"$PARENT_DIR/additional_scripts/run_xapp_kpm_moni_write_to_csv.sh" "$GRAFANA_LOG_FILE"
+cd "$PARENT_DIR/flexric/"

@@ -30,6 +30,7 @@
 
 # Exit immediately if a command fails
 set -e
+set -x
 
 if [ "$1" = "mock" ]; then
     MOCK_MODE=true
@@ -45,6 +46,15 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
+if ! command -v docker &>/dev/null; then
+    echo "Docker not found, installing..."
+    sudo apt-get update
+    sudo apt-get install -y docker.io
+    sudo systemctl start docker
+    sudo systemctl enable docker
+    sudo usermod -aG docker "$USER"
+fi
+
 if ! command -v docker-compose &>/dev/null; then
     ./install_scripts/install_docker_compose.sh
 fi
@@ -59,13 +69,13 @@ if ! command -v yq &>/dev/null; then
 fi
 
 # Fetch the addresses of the policy management service and information service
-SERVICE_INFO_PMS=$(kubectl get service -n nonrtric | grep policymanagementservice)
+SERVICE_INFO_PMS=$(kubectl get service -n nonrtric | grep policymanagementservice || echo "")
 if [ ! -z "$SERVICE_INFO_PMS" ]; then
     IP_PMS=$(echo "$SERVICE_INFO_PMS" | awk '{print $3}')
     PORT_PMS=$(echo "$SERVICE_INFO_PMS" | awk '{split($5, a, /[:/]/); print a[1]}')
 fi
 
-SERVICE_INFO_ICS=$(kubectl get service -n nonrtric | grep informationservice)
+SERVICE_INFO_ICS=$(kubectl get service -n nonrtric | grep informationservice || echo "")
 if [ ! -z "$SERVICE_INFO_ICS" ]; then
     IP_ICS=$(echo "$SERVICE_INFO_ICS" | awk '{print $3}')
     PORT_ICS=$(echo "$SERVICE_INFO_ICS" | awk '{split($5, a, /[:/]/); print a[1]}')

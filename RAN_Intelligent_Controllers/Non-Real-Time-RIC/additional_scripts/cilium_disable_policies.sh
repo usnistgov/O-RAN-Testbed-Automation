@@ -1,0 +1,1 @@
+../../Near-Real-Time-RIC/additional_scripts/cilium_disable_policies.sh

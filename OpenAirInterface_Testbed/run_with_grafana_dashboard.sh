@@ -121,5 +121,11 @@ cd ..
 echo
 echo "Running FlexRIC..."
 cd RAN_Intelligent_Controllers/Flexible-RIC/additional_scripts
-./start_grafana_with_xapp_kpm_moni.sh
+
+# Send metrics to CSV (Grafana dashboard provided)
+./start_grafana_with_csv_xapp_kpm_moni.sh
+
+# Send metrics to InfluxDB (Grafana dashboard not provided)
+#./start_grafana_with_influxdb_xapp_kpm_moni.sh
+
 cd ../..

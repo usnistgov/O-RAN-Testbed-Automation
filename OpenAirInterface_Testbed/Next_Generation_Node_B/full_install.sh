@@ -52,7 +52,7 @@ fi
 
 # Check for gNB binary to determine if srsRAN_Project is already installed
 if [ "$CLEAN_INSTALL" = false ] && [ -f "openairinterface5g/cmake_targets/ran_build/build/nr-softmodem" ]; then
-    echo "Open Air Interface gNB is already installed, skipping."
+    echo "OpenAirInterface gNB is already installed, skipping."
     exit 0
 fi
 
@@ -67,67 +67,12 @@ if [ ! -d "openairinterface5g" ]; then
     ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/oai/openairinterface5g.git openairinterface5g
 fi
 
-# Modify CMakeLists.txt to set E2AP_VERSION to E2AP_V3 and KPM_VERSION to KPM_V3_00 (must match FlexRIC)
-if [ -f "openairinterface5g/CMakeLists.txt" ]; then
-    echo "Modifying CMakeLists.txt to set E2AP_VERSION to E2AP_V3..."
-    sed -i 's/set(E2AP_VERSION "[^"]*"/set(E2AP_VERSION "E2AP_V3"/' openairinterface5g/CMakeLists.txt
-fi
-if [ -f "openairinterface5g/CMakeLists.txt" ]; then
-    echo "Modifying CMakeLists.txt to set KPM_VERSION to KPM_V3_00..."
-    sed -i 's/set(KPM_VERSION "[^"]*"/set(KPM_VERSION "KPM_V3_00"/' openairinterface5g/CMakeLists.txt
-fi
-
-# Apply patches to OpenAirInterface to add support for RSRP in the KPI report
-if [ ! -f "openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c.previous" ]; then
-    cp openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c.previous
-    echo
-    echo "Patching ran_func_kpm.c..."
-    cd openairinterface5g
-    git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/openairinterface/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c.patch" || true
-    cd ..
-fi
-if [ ! -f "openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c.previous" ]; then
-    cp openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c.previous
-    echo
-    echo "Patching ran_func_kpm_subs.c..."
-    cd openairinterface5g
-    git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/openairinterface/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c.patch" || true
-    cd ..
-fi
-if [ ! -f "openairinterface5g/openair2/LAYER2/NR_MAC_gNB/main.c.previous" ]; then
-    cp openairinterface5g/openair2/LAYER2/NR_MAC_gNB/main.c openairinterface5g/openair2/LAYER2/NR_MAC_gNB/main.c.previous
-    echo
-    echo "Patching main.c..."
-    cd openairinterface5g
-    git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/main.c.patch" || true
-    cd ..
-fi
-if [ ! -f "openairinterface5g/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.previous" ]; then
-    cp openairinterface5g/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h openairinterface5g/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.previous
-    echo
-    echo "Patching nr_mac_gNB.h..."
-    cd openairinterface5g
-    git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.patch" || true
-    cd ..
-fi
-
-# If using Linux Mint, add support for Linux Mint 20, 21, and 22 to OpenAirInterface
-if grep -q "Linux Mint" /etc/os-release; then
-    echo
-    echo "Linux Mint detected, attempting to patching OpenAirInterface to support Linux Mint 20, 21, and 22..."
-    cd openairinterface5g
-    git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/openairinterface/cmake_targets/tools/build_helper.patch" || true
-    cd ..
-    echo "Patching completed."
-    echo
-fi
-
-echo "Updating package lists..."
-sudo apt-get update
+echo "Patching OpenAirInterface..."
+./install_scripts/apply_patches.sh
 
 echo
 echo
-echo "Installing Open Air Interface Next Generation Node B..."
+echo "Installing OpenAirInterface Next Generation Node B..."
 export DEBIAN_FRONTEND=noninteractive
 # Modifies the needrestart configuration to suppress interactive prompts
 if [ -f "/etc/needrestart/needrestart.conf" ]; then
@@ -151,6 +96,7 @@ fi
 
 if ! command -v cmake &>/dev/null; then
     echo "Installing CMake..."
+    sudo apt-get update
     sudo apt-get install -y cmake
 fi
 CMAKE_VERSION=$(cmake --version | head -n1 | awk '{print $3}')
@@ -173,7 +119,7 @@ cd "$SCRIPT_DIR"
 
 echo
 echo
-echo "Compiling and Installing Open Air Interface gNB..."
+echo "Compiling and Installing OpenAirInterface gNB..."
 
 # Install OAI dependencies
 cd "$SCRIPT_DIR/openairinterface5g/cmake_targets"

@@ -28,7 +28,7 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-# Don't exit immediately if a command fails
+# Do not exit immediately if a command fails
 set +e
 
 if ! command -v realpath &>/dev/null; then
@@ -73,6 +73,14 @@ fi
 sudo rm -rf logs/
 sudo rm -rf configs/
 sudo rm -rf install_time.txt
+
+if [ -f influxdb_auth_token.json ]; then
+    echo "Uninstalling InfluxDB..."
+    ./install_scripts/uninstall_influxdb.sh
+
+    echo "Deleting InfluxDB auth token..."
+    sudo rm -f influxdb_auth_token.json
+fi
 
 echo
 echo

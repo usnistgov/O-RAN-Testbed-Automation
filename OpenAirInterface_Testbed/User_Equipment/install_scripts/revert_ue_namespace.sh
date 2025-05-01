@@ -30,7 +30,7 @@
 
 echo "# Script: $(realpath $0)..."
 
-# Don't exit immediately if a command fails
+# Do not exit immediately if a command fails
 set +e
 
 UE_NUMBER=$1

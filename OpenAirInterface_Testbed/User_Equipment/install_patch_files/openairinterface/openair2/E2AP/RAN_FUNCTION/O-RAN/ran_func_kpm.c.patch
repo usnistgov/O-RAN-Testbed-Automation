@@ -1,8 +1,8 @@
 diff --git a/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c b/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c
-index c9620e871f..e4454fb7ca 100644
+index c9620e871f..5cefdc122a 100644
 --- a/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c
 +++ b/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c
-@@ -426,6 +426,15 @@ static const char* kpm_meas_du[] = {
+@@ -426,6 +426,23 @@ static const char* kpm_meas_du[] = {
    "DRB.UEThpUl",
    "RRU.PrbTotDl",
    "RRU.PrbTotUl",
@@ -13,12 +13,20 @@ index c9620e871f..e4454fb7ca 100644
 +  "RSRQ",
 +  "PUSCH_SNR",
 +  "PUCCH_SNR",
++  "DRB.HarqMcsUl",
++  "DRB.HarqMcsDl",
++  "DRB.HarqBlockErrorRateUl",
++  "DRB.HarqBlockErrorRateDl",
++  "DRB.MacSduRetransmissionRateUl",
++  "DRB.MacSduRetransmissionRateDl",
++  "DRB.MacSduErrorRateUl",
++  "DRB.MacSduErrorRateDl",
 +  "CQI_SINGLE_CODEWORD",
 +  "CQI_DUAL_CODEWORD",
    NULL,
  };
  
-@@ -437,6 +446,15 @@ static const char* kpm_meas_gnb[] = {
+@@ -437,6 +454,23 @@ static const char* kpm_meas_gnb[] = {
    "DRB.UEThpUl",
    "RRU.PrbTotDl",
    "RRU.PrbTotUl",
@@ -29,6 +37,14 @@ index c9620e871f..e4454fb7ca 100644
 +  "RSRQ",
 +  "PUSCH_SNR",
 +  "PUCCH_SNR",
++  "DRB.HarqMcsUl",
++  "DRB.HarqMcsDl",
++  "DRB.HarqBlockErrorRateUl",
++  "DRB.HarqBlockErrorRateDl",
++  "DRB.MacSduRetransmissionRateUl",
++  "DRB.MacSduRetransmissionRateDl",
++  "DRB.MacSduErrorRateUl",
++  "DRB.MacSduErrorRateDl",
 +  "CQI_SINGLE_CODEWORD",
 +  "CQI_DUAL_CODEWORD",
    NULL,

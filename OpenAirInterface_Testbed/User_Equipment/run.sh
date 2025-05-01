@@ -164,6 +164,9 @@ else
     >logs/ue${UE_NUMBER}_stdout.txt
     echo "Starting nr-uesoftmodem (ue$UE_NUMBER)..."
 
+    # Ensure the following command runs with sudo privileges
+    sudo ls >/dev/null
+
     # Give the UE its own network namespace and configure it to access the host network
     sudo ./install_scripts/setup_ue_namespace.sh "$UE_NUMBER"
 

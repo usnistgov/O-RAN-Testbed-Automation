@@ -1,8 +1,8 @@
 diff --git a/openair2/LAYER2/NR_MAC_gNB/main.c b/openair2/LAYER2/NR_MAC_gNB/main.c
-index 1d9bb3245d..1049679ede 100644
+index 4d732bb3eb..cb8d364110 100644
 --- a/openair2/LAYER2/NR_MAC_gNB/main.c
 +++ b/openair2/LAYER2/NR_MAC_gNB/main.c
-@@ -132,6 +132,7 @@ size_t dump_mac_stats(gNB_MAC_INST *gNB, char *output, size_t strlen, bool reset
+@@ -135,6 +135,7 @@ size_t dump_mac_stats(gNB_MAC_INST *gNB, char *output, size_t strlen, bool reset
      }
  
      bool in_sync = !sched_ctrl->ul_failure;
@@ -10,7 +10,7 @@ index 1d9bb3245d..1049679ede 100644
      output += snprintf(output,
                         end - output,
                         " %s PH %d dB PCMAX %d dBm, average RSRP %d (%d meas)\n",
-@@ -171,6 +172,9 @@ size_t dump_mac_stats(gNB_MAC_INST *gNB, char *output, size_t strlen, bool reset
+@@ -174,6 +175,9 @@ size_t dump_mac_stats(gNB_MAC_INST *gNB, char *output, size_t strlen, bool reset
                         UE->current_DL_BWP.mcsTableIdx,
                         sched_ctrl->dl_bler_stats.mcs);
      if (reset_rsrp) {

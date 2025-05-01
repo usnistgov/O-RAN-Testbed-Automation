@@ -3,5 +3,6 @@
 /flexric/
 /logs/
 /swig/
+influxdb_auth_token.json
 install_time.txt
 !install_patch_files/

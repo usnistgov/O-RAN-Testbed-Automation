@@ -89,7 +89,7 @@ fi
 export NEEDRESTART_SUSPEND=1
 
 # Code from (https://docs.srsran.com/projects/4g/en/latest/general/source/1_installation.html#installation-from-source):
-sudo apt-get install -y build-essential cmake libfftw3-dev libmbedtls-dev libboost-program-options-dev libconfig++-dev libsctp-dev
+sudo apt-get install -y build-essential cmake cmake-data libfftw3-dev libmbedtls-dev libboost-program-options-dev libconfig++-dev libsctp-dev
 
 sudo apt-get install -y libboost-all-dev
 sudo apt-get install -y libuhd-dev

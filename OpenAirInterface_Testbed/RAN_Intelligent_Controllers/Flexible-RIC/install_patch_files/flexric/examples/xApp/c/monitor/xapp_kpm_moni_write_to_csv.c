@@ -217,32 +217,50 @@ static void log_int_value(byte_array_t name, meas_record_lst_t meas_record)
 {
   byte_array_t unit = {.buf = "", .len = 0};
 
-  if (!csv_wrote_header) {
-    if (cmp_str_ba("RRU.PrbTotDl", name) == 0) {
+  if (!csv_wrote_header)
+  {
+    if (cmp_str_ba("RRU.PrbTotDl", name) == 0)
+    {
       unit.buf = "PRBs";
       unit.len = strlen("PRBs");
-    } else if (cmp_str_ba("RRU.PrbTotUl", name) == 0) {
+    }
+    else if (cmp_str_ba("RRU.PrbTotUl", name) == 0)
+    {
       unit.buf = "PRBs";
       unit.len = strlen("PRBs");
-    } else if (cmp_str_ba("DRB.PdcpSduVolumeDL", name) == 0) {
+    }
+    else if (cmp_str_ba("DRB.PdcpSduVolumeDL", name) == 0)
+    {
       unit.buf = "kb";
       unit.len = strlen("kb");
-    } else if (cmp_str_ba("DRB.PdcpSduVolumeUL", name) == 0) {
+    }
+    else if (cmp_str_ba("DRB.PdcpSduVolumeUL", name) == 0)
+    {
       unit.buf = "kb";
       unit.len = strlen("kb");
-    } else if (cmp_str_ba("N_RSRP_MEAS", name) == 0) {
+    }
+    else if (cmp_str_ba("N_RSRP_MEAS", name) == 0)
+    {
       unit.buf = "";
       unit.len = 0;
-    } else if (cmp_str_ba("N_PRB", name) == 0) {
+    }
+    else if (cmp_str_ba("N_PRB", name) == 0)
+    {
       unit.buf = "";
       unit.len = 0;
-    } else if (cmp_str_ba("CQI_SINGLE_CODEWORD", name) == 0) {
+    }
+    else if (cmp_str_ba("CQI_SINGLE_CODEWORD", name) == 0)
+    {
       unit.buf = "";
       unit.len = 0;
-    } else if (cmp_str_ba("CQI_DUAL_CODEWORD", name) == 0) {
+    }
+    else if (cmp_str_ba("CQI_DUAL_CODEWORD", name) == 0)
+    {
       unit.buf = "";
       unit.len = 0;
-    } else {
+    }
+    else
+    {
       unit.buf = "";
       unit.len = 0;
     }
@@ -263,40 +281,59 @@ static void log_int_value(byte_array_t name, meas_record_lst_t meas_record)
   // }
 
   // If the measurement is N_RSRP_MEAS and the value is 0, the data is invalid
-  if (cmp_str_ba("N_RSRP_MEAS", name) == 0) {
-    if (meas_record.int_val == 0) {
+  if (cmp_str_ba("N_RSRP_MEAS", name) == 0)
+  {
+    if (meas_record.int_val == 0)
+    {
       filter_invalid_sample = true;
-      printf("\n\t!!! Invalid N_RSRP_MEAS value detected !!!\n\n");
+      printf("\n\tNumber of RSRP measurements was zero, skipping sample to avoid divide by zero.\n\n");
     }
   }
 }
 
 static void log_real_value(byte_array_t name, meas_record_lst_t meas_record)
 {
-  if (!csv_wrote_header) {
-    byte_array_t unit = {.buf = "", .len = 0};
-    if (cmp_str_ba("DRB.RlcSduDelayDl", name) == 0) {
+  byte_array_t unit = {.buf = "", .len = 0};
+
+  if (!csv_wrote_header)
+  {
+    if (cmp_str_ba("DRB.RlcSduDelayDl", name) == 0)
+    {
       unit.buf = "μs";
       unit.len = strlen("μs");
-    } else if (cmp_str_ba("DRB.UEThpDl", name) == 0) {
+    }
+    else if (cmp_str_ba("DRB.UEThpDl", name) == 0)
+    {
       unit.buf = "kbps";
       unit.len = strlen("kbps");
-    } else if (cmp_str_ba("DRB.UEThpUl", name) == 0) {
+    }
+    else if (cmp_str_ba("DRB.UEThpUl", name) == 0)
+    {
       unit.buf = "kbps";
       unit.len = strlen("kbps");
-    } else if (cmp_str_ba("RSRP", name) == 0) {
+    }
+    else if (cmp_str_ba("RSRP", name) == 0)
+    {
       unit.buf = "dBm";
       unit.len = strlen("dBm");
-    } else if (cmp_str_ba("RSSI", name) == 0) {
+    }
+    else if (cmp_str_ba("RSSI", name) == 0)
+    {
       unit.buf = "dBm";
       unit.len = strlen("dBm");
-    } else if (cmp_str_ba("RSRQ", name) == 0) {
+    }
+    else if (cmp_str_ba("RSRQ", name) == 0)
+    {
       unit.buf = "dB";
       unit.len = strlen("dB");
-    } else if (cmp_str_ba("PUSCH_SNR", name) == 0) {
+    }
+    else if (cmp_str_ba("PUSCH_SNR", name) == 0)
+    {
       unit.buf = "dB";
       unit.len = strlen("dB");
-    } else if (cmp_str_ba("PUCCH_SNR", name) == 0) {
+    }
+    else if (cmp_str_ba("PUCCH_SNR", name) == 0)
+    {
       unit.buf = "dB";
       unit.len = strlen("dB");
     }
@@ -402,11 +439,14 @@ static void log_kpm_measurements(kpm_ind_msg_format_1_t const *msg_frm_1)
   }
   write_csv_header_to_file();
 
-  if (!filter_invalid_sample) {
+  if (!filter_invalid_sample)
+  {
     csv_prepend_ue_id();
     csv_prepend_timestamp();
     write_csv_line_to_file();
-  } else {
+  }
+  else
+  {
     // Clear the line buffer for the next entry
     memset(csv_line_buffer, 0, sizeof(csv_line_buffer));
   }

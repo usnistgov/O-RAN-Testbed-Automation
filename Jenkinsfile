@@ -2,7 +2,7 @@ pipeline {
     agent none
     stages {
         stage('Testing Ubuntu 20') {
-            agent { label 'linux && vagrant && ubuntu24'  }
+            agent { label 'linux && vagrant && ubuntu20'  }
             steps {
                 sh '''
                 pwd && hostname

@@ -33,10 +33,7 @@ if ! systemctl is-active --quiet "open5gs-webui"; then
     sudo systemctl start open5gs-webui
 fi
 
-WEBUI_PORT=3000
-if ! curl -s localhost:$WEBUI_PORT >/dev/null; then
-    WEBUI_PORT=9999
-fi
+WEBUI_PORT=9999
 
 if command -v google-chrome &>/dev/null; then
     echo "Opening the WebUI in Google Chrome..."

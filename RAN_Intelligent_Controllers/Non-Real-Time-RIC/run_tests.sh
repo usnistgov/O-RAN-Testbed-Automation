@@ -117,7 +117,10 @@ fi
 
 cd "$SCRIPT_DIR"
 
-pytest tests/ -s
+if ! pytest tests/ -s; then
+    echo
+    echo "Non-RT RIC was successfully installed but the tests failed. You can re-run the tests with ./run_tests.sh."
+fi
 
 # Stop the sudo timeout refresher, it is no longer necessary to run
 ./install_scripts/stop_sudo_refresh.sh

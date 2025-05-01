@@ -32,16 +32,12 @@ import socketserver
 import urllib.parse
 import mmap
 import time
-from collections import OrderedDict
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(script_dir)
 base_dir = os.path.dirname(os.path.dirname(os.path.dirname(parent_dir)))
 
 class SingleFileHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
-    # Store the most recent unique requests in a cache
-    cache_size = 1
-    cache = OrderedDict()
 
     # Perform a binary search to find the offset in the mmap file where the timestamp is greater than or equal to the target timestamp.
     def find_offset(self, mmap_file: mmap.mmap, header_end_offset: int, target_timestamp: int):
@@ -65,6 +61,16 @@ class SingleFileHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 low = current_position + len(line)
             else:
                 high = mid
+        
+        # If the line is still less than the target timestamp, check the next line
+        mmap_file.seek(low)
+        candidate = mmap_file.readline()
+        try:
+            ts = int(candidate.split(b',',1)[0])
+        except:
+            ts = None
+        if ts is None or ts < target_timestamp:
+            return mmap_file.size()
         return low
 
     def do_GET(self):
@@ -89,20 +95,6 @@ class SingleFileHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             from_timestamp, to_timestamp = parse('from'), parse('to')
             filter_param = query.get('filter', [None])[0]
             filter_columns = filter_param.split(',') if filter_param else None
-            key = (from_timestamp, to_timestamp, filter_param)
-            # If cached, return the cached response
-            if key in self.cache:
-                data = self.cache[key]
-                self.send_response(200)
-                self.send_header('Content-Type', 'text/csv')
-                self.send_header('Content-Length', str(len(data)))
-                self.end_headers()
-                self.wfile.write(data)
-                self.cache.move_to_end(key)
-
-                elapsed = (time.perf_counter() - start_time) * 1000
-                #print(f"CACHE HIT {elapsed:.2f} ms")
-                return
 
             # If no filters are provided, fall back to the default handler
             if from_timestamp is None and to_timestamp is None and not filter_columns:
@@ -114,6 +106,18 @@ class SingleFileHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 mmap_file = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
                 header_end = mmap_file.find(b'\n') + 1
                 start = header_end if from_timestamp is None else self.find_offset(mmap_file, header_end, from_timestamp)
+
+                # If the start position is beyond the file size, return the header
+                if start >= mmap_file.size():
+                    header = mmap_file[:header_end]
+                    self.send_response(200)
+                    self.send_header('Content-Type',   'text/csv')
+                    self.send_header('Content-Length', str(len(header)))
+                    self.end_headers()
+                    self.wfile.write(header)
+                    mmap_file.close()
+                    return
+
                 mmap_file.seek(start)
 
                 # Always send the header row
@@ -164,11 +168,6 @@ class SingleFileHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.send_header('Content-Length', str(len(data)))
             self.end_headers()
             self.wfile.write(data)
-
-            self.cache[key] = data
-            # Evict oldest if over capacity
-            if len(self.cache) > self.cache_size:
-                self.cache.popitem(last=False)
             
             elapsed = (time.perf_counter() - start_time) * 1000
             #print(f"{elapsed:.2f} ms")

@@ -28,8 +28,8 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-# Exit immediately if a command fails
-set -e
+# Do not exit immediately if a command fails
+set +e
 
 clear
 echo "This script will remove Open5GS, srsRAN_Project, srsRAN_4G, and the Near-RT RIC by removing Docker and Kubernetes."

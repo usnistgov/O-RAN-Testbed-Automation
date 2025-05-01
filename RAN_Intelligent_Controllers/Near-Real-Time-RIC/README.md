@@ -102,7 +102,7 @@ Alternatively, xApps can be uninstalled manually by fetching the list of xApps w
 
 ## Migration to Cilium
 
-The cluster is installed with Flannel as the default network plugin. There are several benefits of migrating to a security-enhanced network plugin like Cilium [[19]][cilium-io], for example, to monitor and regulate the network flows going in to and out of each pod using Cilium Hubble [[20]][cilium-hubble]. By default, pods can communicate with addresses outside the namespace (including the internet). Restricting this allows for better security and monitoring of the network flows. The following steps can be used to migrate the cluster to Cilium and apply policies that restrict communication.
+The cluster is installed with Flannel as the default network plugin. There are several benefits of migrating to a security-enhanced network plugin like Cilium [[19]][cilium-io], for example, to monitor and regulate the network flows going in to and out of each pod using Cilium Hubble [[20]][cilium-hubble]. By default, pods can communicate with addresses outside the namespace (including the internet). Restricting this allows for better security and monitoring of the network flows. The following steps can be used to migrate the cluster to Cilium and apply policies that restrict such communications.
 
 - **Install Cilium and Migrate Cluster Nodes**: Run `./additional_scripts/install_cilium_and_migrate_nodes.sh` to install Cilium and migrate each of the pods from the current network plugin to Cilium, then apply policies that restrict the pods from communicating with addresses outside the namespace.
   - For debugging purposes, the following files are generated in `$HOME/.kube/`:

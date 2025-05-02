@@ -105,8 +105,8 @@
     },
     {
       "datasource": {
-        "type": "yesoreyeram-infinity-datasource",
-        "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+        "type": "datasource",
+        "uid": "-- Dashboard --"
       },
       "fieldConfig": {
         "defaults": {
@@ -162,53 +162,27 @@
       "pluginVersion": "11.6.1",
       "targets": [
         {
-          "columns": [
-            {
-              "selector": "UE ID",
-              "text": "UE_ID",
-              "type": "number"
-            },
-            {
-              "selector": "Time (UNIX ms)",
-              "text": "UNIX Epoch (ms)",
-              "type": "timestamp_epoch"
-            }
-          ],
           "datasource": {
-            "type": "yesoreyeram-infinity-datasource",
-            "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+            "type": "datasource",
+            "uid": "-- Dashboard --"
           },
-          "filters": [],
-          "format": "table",
-          "global_query_id": "",
-          "parser": "backend",
-          "refId": "A",
-          "root_selector": "",
-          "source": "url",
-          "type": "csv",
-          "url": "",
-          "url_options": {
-            "data": "",
-            "method": "GET",
-            "params": [
-              {
-                "key": "from",
-                "value": "$__from"
-              },
-              {
-                "key": "to",
-                "value": "$__to"
-              },
-              {
-                "key": "filter",
-                "value": "UE ID,Time (UNIX ms)"
-              }
-            ]
-          }
+          "panelId": 20,
+          "refId": "A"
         }
       ],
       "title": "UE IDs",
       "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "Time (UNIX ms)",
+                "UE ID"
+              ]
+            }
+          }
+        },
         {
           "id": "groupToNestedTable",
           "options": {
@@ -219,7 +193,7 @@
               },
               "UE ID": {
                 "aggregations": [
-                  "uniqueValues"
+                  "allValues"
                 ],
                 "operation": "aggregate"
               },
@@ -237,7 +211,7 @@
                 "aggregations": []
               }
             },
-            "showSubframeHeaders": true
+            "showSubframeHeaders": false
           }
         },
         {
@@ -246,7 +220,7 @@
             "includeTimeField": false,
             "mode": "reduceFields",
             "reducers": [
-              "lastNotNull"
+              "last"
             ]
           }
         },
@@ -257,22 +231,7 @@
             "format": "delimiter",
             "keepTime": false,
             "replace": true,
-            "source": "UE_ID (allValues)"
-          }
-        },
-        {
-          "id": "transpose",
-          "options": {}
-        },
-        {
-          "id": "filterFieldsByName",
-          "options": {
-            "byVariable": false,
-            "include": {
-              "names": [
-                "1"
-              ]
-            }
+            "source": "UE ID (allValues)"
           }
         }
       ],
@@ -338,22 +297,145 @@
         {
           "columns": [
             {
+              "selector": "Time (UNIX ms)",
+              "text": "",
+              "type": "timestamp_epoch"
+            },
+            {
               "selector": "UE ID",
-              "text": "UE",
+              "text": "",
+              "type": "string"
+            },
+            {
+              "selector": "DRB.PdcpSduVolumeDL (kb)",
+              "text": "",
               "type": "number"
             },
             {
-              "selector": "Time (UNIX ms)",
-              "text": "UNIX Epoch (ms)",
-              "type": "string"
+              "selector": "DRB.PdcpSduVolumeUL (kb)",
+              "text": "",
+              "type": "number"
+            },
+            {
+              "selector": "DRB.RlcSduDelayDl (μs)",
+              "text": "",
+              "type": "number"
+            },
+            {
+              "selector": "DRB.UEThpDl (kbps)",
+              "text": "",
+              "type": "number"
+            },
+            {
+              "selector": "DRB.UEThpUl (kbps)",
+              "text": "",
+              "type": "number"
+            },
+            {
+              "selector": "RRU.PrbTotDl (PRBs)",
+              "text": "",
+              "type": "number"
+            },
+            {
+              "selector": "RRU.PrbTotUl (PRBs)",
+              "text": "",
+              "type": "number"
+            },
+            {
+              "selector": "RSRP (dBm)",
+              "text": "",
+              "type": "number"
+            },
+            {
+              "selector": "N_RSRP_MEAS",
+              "text": "",
+              "type": "number"
+            },
+            {
+              "selector": "N_PRB",
+              "text": "",
+              "type": "number"
+            },
+            {
+              "selector": "RSSI (dBm)",
+              "text": "",
+              "type": "number"
+            },
+            {
+              "selector": "RSRQ (dB)",
+              "text": "",
+              "type": "number"
+            },
+            {
+              "selector": "PUSCH_SNR (dB)",
+              "text": "",
+              "type": "number"
+            },
+            {
+              "selector": "PUCCH_SNR (dB)",
+              "text": "",
+              "type": "number"
+            },
+            {
+              "selector": "DRB.HarqMcsUl",
+              "text": "",
+              "type": "number"
+            },
+            {
+              "selector": "DRB.HarqMcsDl",
+              "text": "",
+              "type": "number"
+            },
+            {
+              "selector": "DRB.HarqBlockErrorRateUl",
+              "text": "",
+              "type": "number"
+            },
+            {
+              "selector": "DRB.HarqBlockErrorRateDl",
+              "text": "",
+              "type": "number"
+            },
+            {
+              "selector": "DRB.MacSduRetransmissionRateUl",
+              "text": "",
+              "type": "number"
+            },
+            {
+              "selector": "DRB.MacSduRetransmissionRateDl",
+              "text": "",
+              "type": "number"
+            },
+            {
+              "selector": "DRB.MacSduErrorRateUl",
+              "text": "",
+              "type": "number"
+            },
+            {
+              "selector": "DRB.MacSduErrorRateDl",
+              "text": "",
+              "type": "number"
+            },
+            {
+              "selector": "CQI_SINGLE_CODEWORD",
+              "text": "",
+              "type": "number"
+            },
+            {
+              "selector": "CQI_DUAL_CODEWORD",
+              "text": "",
+              "type": "number"
             }
           ],
+          "csv_options": {
+            "skip_lines_with_error": true
+          },
           "datasource": {
             "type": "yesoreyeram-infinity-datasource",
             "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
           },
           "filters": [],
-          "format": "table",
+          "format": "timeseries",
           "global_query_id": "",
           "parser": "backend",
           "refId": "A",
@@ -372,10 +454,6 @@
               {
                 "key": "to",
                 "value": "$__to"
-              },
-              {
-                "key": "filter",
-                "value": "UE ID,Time (UNIX ms)"
               }
             ]
           }
@@ -387,7 +465,17 @@
           "id": "groupBy",
           "options": {
             "fields": {
+              "Time (UNIX ms)": {
+                "aggregations": [],
+                "operation": "groupby"
+              },
               "UE": {
+                "aggregations": [
+                  "count"
+                ],
+                "operation": "aggregate"
+              },
+              "UE ID": {
                 "aggregations": [
                   "count"
                 ],
@@ -405,8 +493,8 @@
     },
     {
       "datasource": {
-        "type": "yesoreyeram-infinity-datasource",
-        "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+        "type": "datasource",
+        "uid": "-- Dashboard --"
       },
       "description": "",
       "fieldConfig": {
@@ -432,7 +520,7 @@
               "viz": false
             },
             "insertNulls": false,
-            "lineInterpolation": "linear",
+            "lineInterpolation": "smooth",
             "lineWidth": 2,
             "pointSize": 5,
             "scaleDistribution": {
@@ -490,41 +578,12 @@
       "pluginVersion": "11.6.1",
       "targets": [
         {
-          "columns": [
-            {
-              "selector": "UE ID",
-              "text": "UE",
-              "type": "number"
-            },
-            {
-              "selector": "Time (UNIX ms)",
-              "text": "UNIX Epoch (ms)",
-              "type": "timestamp_epoch"
-            }
-          ],
           "datasource": {
-            "type": "yesoreyeram-infinity-datasource",
-            "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+            "type": "datasource",
+            "uid": "-- Dashboard --"
           },
-          "filters": [],
-          "format": "table",
-          "global_query_id": "",
-          "parser": "backend",
-          "refId": "A",
-          "root_selector": "",
-          "source": "url",
-          "type": "csv",
-          "url": "",
-          "url_options": {
-            "data": "",
-            "method": "GET",
-            "params": [
-              {
-                "key": "filter",
-                "value": "UE ID,Time (UNIX ms)"
-              }
-            ]
-          }
+          "panelId": 20,
+          "refId": "A"
         }
       ],
       "title": "UEs Over Time",
@@ -533,7 +592,17 @@
           "id": "groupBy",
           "options": {
             "fields": {
+              "Time (UNIX ms)": {
+                "aggregations": [],
+                "operation": "groupby"
+              },
               "UE": {
+                "aggregations": [
+                  "count"
+                ],
+                "operation": "aggregate"
+              },
+              "UE ID": {
                 "aggregations": [
                   "count"
                 ],
@@ -551,8 +620,8 @@
     },
     {
       "datasource": {
-        "type": "yesoreyeram-infinity-datasource",
-        "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+        "type": "datasource",
+        "uid": "-- Dashboard --"
       },
       "fieldConfig": {
         "defaults": {
@@ -580,7 +649,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Aggregated UE DL Throughput (sum)"
+              "options": "DRB.UEThpDl (kbps) (sum)"
             },
             "properties": [
               {
@@ -599,7 +668,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Aggregated UE UL Throughput (sum)"
+              "options": "DRB.UEThpUl (kbps) (sum)"
             },
             "properties": [
               {
@@ -651,54 +720,12 @@
       "pluginVersion": "11.6.1",
       "targets": [
         {
-          "columns": [
-            {
-              "selector": "DRB.UEThpDl (kbps)",
-              "text": "Aggregated UE DL Throughput",
-              "type": "number"
-            },
-            {
-              "selector": "DRB.UEThpUl (kbps)",
-              "text": "Aggregated UE UL Throughput",
-              "type": "number"
-            },
-            {
-              "selector": "Time (UNIX ms)",
-              "text": "UNIX Timestamp (ms)",
-              "type": "string"
-            }
-          ],
           "datasource": {
-            "type": "yesoreyeram-infinity-datasource",
-            "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+            "type": "datasource",
+            "uid": "-- Dashboard --"
           },
-          "filters": [],
-          "format": "table",
-          "global_query_id": "",
-          "parser": "backend",
-          "refId": "A",
-          "root_selector": "",
-          "source": "url",
-          "type": "csv",
-          "url": "",
-          "url_options": {
-            "data": "",
-            "method": "GET",
-            "params": [
-              {
-                "key": "from",
-                "value": "$__from"
-              },
-              {
-                "key": "to",
-                "value": "$__to"
-              },
-              {
-                "key": "filter",
-                "value": "DRB.UEThpDl (kbps),DRB.UEThpUl (kbps),Time (UNIX ms)"
-              }
-            ]
-          }
+          "panelId": 20,
+          "refId": "A"
         }
       ],
       "transformations": [
@@ -778,6 +805,22 @@
                 ],
                 "operation": "aggregate"
               },
+              "DRB.UEThpDl (kbps)": {
+                "aggregations": [
+                  "sum"
+                ],
+                "operation": "aggregate"
+              },
+              "DRB.UEThpUl (kbps)": {
+                "aggregations": [
+                  "sum"
+                ],
+                "operation": "aggregate"
+              },
+              "Time": {
+                "aggregations": [],
+                "operation": "groupby"
+              },
               "UE DL Throughput": {
                 "aggregations": [
                   "sum"
@@ -826,8 +869,8 @@
     },
     {
       "datasource": {
-        "type": "yesoreyeram-infinity-datasource",
-        "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+        "type": "datasource",
+        "uid": "-- Dashboard --"
       },
       "fieldConfig": {
         "defaults": {
@@ -926,58 +969,28 @@
       "pluginVersion": "11.6.1",
       "targets": [
         {
-          "columns": [
-            {
-              "selector": "Time (UNIX ms)",
-              "text": "Timestamp",
-              "type": "timestamp_epoch"
-            },
-            {
-              "selector": "RSRP (dBm)",
-              "text": "RSRP (dBm)",
-              "type": "number"
-            },
-            {
-              "selector": "UE ID",
-              "text": "UE_ID",
-              "type": "string"
-            }
-          ],
           "datasource": {
-            "type": "yesoreyeram-infinity-datasource",
-            "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+            "type": "datasource",
+            "uid": "-- Dashboard --"
           },
-          "filters": [],
-          "format": "table",
-          "global_query_id": "",
-          "parser": "backend",
-          "refId": "A",
-          "root_selector": "",
-          "source": "url",
-          "type": "csv",
-          "url": "",
-          "url_options": {
-            "data": "",
-            "method": "GET",
-            "params": [
-              {
-                "key": "from",
-                "value": "$__from"
-              },
-              {
-                "key": "to",
-                "value": "$__to"
-              },
-              {
-                "key": "filter",
-                "value": "Time (UNIX ms),RSRP (dBm),UE ID"
-              }
-            ]
-          }
+          "panelId": 20,
+          "refId": "A"
         }
       ],
       "title": "Reference Signal Received Power (RSRP)",
       "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "RSRP (dBm)",
+                "UE ID",
+                "Time (UNIX ms)"
+              ]
+            }
+          }
+        },
         {
           "id": "filterByValue",
           "options": {
@@ -989,7 +1002,7 @@
                     "value": "${Selected_UE_ID}"
                   }
                 },
-                "fieldName": "UE_ID"
+                "fieldName": "UE ID"
               }
             ],
             "match": "any",
@@ -1019,8 +1032,8 @@
     },
     {
       "datasource": {
-        "type": "yesoreyeram-infinity-datasource",
-        "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+        "type": "datasource",
+        "uid": "-- Dashboard --"
       },
       "fieldConfig": {
         "defaults": {
@@ -1115,58 +1128,28 @@
       "pluginVersion": "11.6.1",
       "targets": [
         {
-          "columns": [
-            {
-              "selector": "Time (UNIX ms)",
-              "text": "Timestamp",
-              "type": "timestamp_epoch"
-            },
-            {
-              "selector": "N_RSRP_MEAS",
-              "text": "N_RSRP_MEAS",
-              "type": "number"
-            },
-            {
-              "selector": "UE ID",
-              "text": "UE_ID",
-              "type": "string"
-            }
-          ],
           "datasource": {
-            "type": "yesoreyeram-infinity-datasource",
-            "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+            "type": "datasource",
+            "uid": "-- Dashboard --"
           },
-          "filters": [],
-          "format": "table",
-          "global_query_id": "",
-          "parser": "backend",
-          "refId": "A",
-          "root_selector": "",
-          "source": "url",
-          "type": "csv",
-          "url": "",
-          "url_options": {
-            "data": "",
-            "method": "GET",
-            "params": [
-              {
-                "key": "from",
-                "value": "$__from"
-              },
-              {
-                "key": "to",
-                "value": "$__to"
-              },
-              {
-                "key": "filter",
-                "value": "Time (UNIX ms),N_RSRP_MEAS,UE ID"
-              }
-            ]
-          }
+          "panelId": 20,
+          "refId": "A"
         }
       ],
       "title": "Num. RSRP Measurements",
       "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "N_RSRP_MEAS",
+                "UE ID",
+                "Time (UNIX ms)"
+              ]
+            }
+          }
+        },
         {
           "id": "filterByValue",
           "options": {
@@ -1178,7 +1161,7 @@
                     "value": "${Selected_UE_ID}"
                   }
                 },
-                "fieldName": "UE_ID"
+                "fieldName": "UE ID"
               }
             ],
             "match": "any",
@@ -1190,8 +1173,8 @@
     },
     {
       "datasource": {
-        "type": "yesoreyeram-infinity-datasource",
-        "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+        "type": "datasource",
+        "uid": "-- Dashboard --"
       },
       "fieldConfig": {
         "defaults": {
@@ -1303,63 +1286,30 @@
       "pluginVersion": "11.6.1",
       "targets": [
         {
-          "columns": [
-            {
-              "selector": "Time (UNIX ms)",
-              "text": "Timestamp",
-              "type": "timestamp_epoch"
-            },
-            {
-              "selector": "DRB.UEThpDl (kbps)",
-              "text": "DRB.UEThpDl (kbps)",
-              "type": "number"
-            },
-            {
-              "selector": "DRB.UEThpUl (kbps)",
-              "text": "DRB.UEThpUl (kbps)",
-              "type": "number"
-            },
-            {
-              "selector": "UE ID",
-              "text": "UE_ID",
-              "type": "string"
-            }
-          ],
           "datasource": {
-            "type": "yesoreyeram-infinity-datasource",
-            "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+            "type": "datasource",
+            "uid": "-- Dashboard --"
           },
-          "filters": [],
-          "format": "table",
-          "global_query_id": "",
-          "parser": "backend",
-          "refId": "A",
-          "root_selector": "",
-          "source": "url",
-          "type": "csv",
-          "url": "",
-          "url_options": {
-            "data": "",
-            "method": "GET",
-            "params": [
-              {
-                "key": "from",
-                "value": "$__from"
-              },
-              {
-                "key": "to",
-                "value": "$__to"
-              },
-              {
-                "key": "filter",
-                "value": "Time (UNIX ms),DRB.UEThpDl (kbps),DRB.UEThpUl (kbps),UE ID"
-              }
-            ]
-          }
+          "panelId": 20,
+          "refId": "A"
         }
       ],
-      "title": "User Equipment Throughput",
+      "title": "UE Throughput Downlink / Uplink",
       "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "DRB.UEThpDl (kbps)",
+                "N_RSRP_MEAS",
+                "Time (UNIX ms)",
+                "UE ID",
+                "DRB.UEThpUl (kbps)"
+              ]
+            }
+          }
+        },
         {
           "id": "filterByValue",
           "options": {
@@ -1371,7 +1321,7 @@
                     "value": "${Selected_UE_ID}"
                   }
                 },
-                "fieldName": "UE_ID"
+                "fieldName": "UE ID"
               }
             ],
             "match": "any",
@@ -1383,8 +1333,8 @@
     },
     {
       "datasource": {
-        "type": "yesoreyeram-infinity-datasource",
-        "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+        "type": "datasource",
+        "uid": "-- Dashboard --"
       },
       "fieldConfig": {
         "defaults": {
@@ -1481,58 +1431,28 @@
       "pluginVersion": "11.6.1",
       "targets": [
         {
-          "columns": [
-            {
-              "selector": "Time (UNIX ms)",
-              "text": "Timestamp",
-              "type": "timestamp_epoch"
-            },
-            {
-              "selector": "DRB.RlcSduDelayDl (μs)",
-              "text": "DRB.RlcSduDelayDl (μs)",
-              "type": "number"
-            },
-            {
-              "selector": "UE ID",
-              "text": "UE_ID",
-              "type": "string"
-            }
-          ],
           "datasource": {
-            "type": "yesoreyeram-infinity-datasource",
-            "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+            "type": "datasource",
+            "uid": "-- Dashboard --"
           },
-          "filters": [],
-          "format": "table",
-          "global_query_id": "",
-          "parser": "backend",
-          "refId": "A",
-          "root_selector": "",
-          "source": "url",
-          "type": "csv",
-          "url": "",
-          "url_options": {
-            "data": "",
-            "method": "GET",
-            "params": [
-              {
-                "key": "from",
-                "value": "$__from"
-              },
-              {
-                "key": "to",
-                "value": "$__to"
-              },
-              {
-                "key": "filter",
-                "value": "Time (UNIX ms),DRB.RlcSduDelayDl (μs),UE ID"
-              }
-            ]
-          }
+          "panelId": 20,
+          "refId": "A"
         }
       ],
       "title": "Delay Downlink",
       "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "DRB.RlcSduDelayDl (μs)",
+                "Time (UNIX ms)",
+                "UE ID"
+              ]
+            }
+          }
+        },
         {
           "id": "filterByValue",
           "options": {
@@ -1544,7 +1464,7 @@
                     "value": "${Selected_UE_ID}"
                   }
                 },
-                "fieldName": "UE_ID"
+                "fieldName": "UE ID"
               }
             ],
             "match": "any",
@@ -1556,8 +1476,8 @@
     },
     {
       "datasource": {
-        "type": "yesoreyeram-infinity-datasource",
-        "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+        "type": "datasource",
+        "uid": "-- Dashboard --"
       },
       "fieldConfig": {
         "defaults": {
@@ -1684,63 +1604,29 @@
       "pluginVersion": "11.6.1",
       "targets": [
         {
-          "columns": [
-            {
-              "selector": "Time (UNIX ms)",
-              "text": "Timestamp",
-              "type": "timestamp_epoch"
-            },
-            {
-              "selector": "DRB.MacSduRetransmissionRateDl",
-              "text": "DRB.MacSduRetransmissionRateDl",
-              "type": "number"
-            },
-            {
-              "selector": "DRB.MacSduRetransmissionRateUl",
-              "text": "DRB.MacSduRetransmissionRateUl",
-              "type": "number"
-            },
-            {
-              "selector": "UE ID",
-              "text": "UE_ID",
-              "type": "string"
-            }
-          ],
           "datasource": {
-            "type": "yesoreyeram-infinity-datasource",
-            "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+            "type": "datasource",
+            "uid": "-- Dashboard --"
           },
-          "filters": [],
-          "format": "table",
-          "global_query_id": "",
-          "parser": "backend",
-          "refId": "A",
-          "root_selector": "",
-          "source": "url",
-          "type": "csv",
-          "url": "",
-          "url_options": {
-            "data": "",
-            "method": "GET",
-            "params": [
-              {
-                "key": "from",
-                "value": "$__from"
-              },
-              {
-                "key": "to",
-                "value": "$__to"
-              },
-              {
-                "key": "filter",
-                "value": "Time (UNIX ms),DRB.MacSduRetransmissionRateDl,DRB.MacSduRetransmissionRateUl,UE ID"
-              }
-            ]
-          }
+          "panelId": 20,
+          "refId": "A"
         }
       ],
-      "title": "MAC SDU Retransmission Rate",
+      "title": "MAC SDU Retransmission Rate (%)",
       "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "DRB.MacSduRetransmissionRateDl",
+                "DRB.MacSduRetransmissionRateUl",
+                "Time (UNIX ms)",
+                "UE ID"
+              ]
+            }
+          }
+        },
         {
           "id": "filterByValue",
           "options": {
@@ -1752,7 +1638,7 @@
                     "value": "${Selected_UE_ID}"
                   }
                 },
-                "fieldName": "UE_ID"
+                "fieldName": "UE ID"
               }
             ],
             "match": "any",
@@ -1764,8 +1650,8 @@
     },
     {
       "datasource": {
-        "type": "yesoreyeram-infinity-datasource",
-        "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+        "type": "datasource",
+        "uid": "-- Dashboard --"
       },
       "fieldConfig": {
         "defaults": {
@@ -1863,58 +1749,28 @@
       "pluginVersion": "11.6.1",
       "targets": [
         {
-          "columns": [
-            {
-              "selector": "Time (UNIX ms)",
-              "text": "Timestamp",
-              "type": "timestamp_epoch"
-            },
-            {
-              "selector": "RSSI (dBm)",
-              "text": "RSSI (dBm)",
-              "type": "number"
-            },
-            {
-              "selector": "UE ID",
-              "text": "UE_ID",
-              "type": "string"
-            }
-          ],
           "datasource": {
-            "type": "yesoreyeram-infinity-datasource",
-            "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+            "type": "datasource",
+            "uid": "-- Dashboard --"
           },
-          "filters": [],
-          "format": "table",
-          "global_query_id": "",
-          "parser": "backend",
-          "refId": "A",
-          "root_selector": "",
-          "source": "url",
-          "type": "csv",
-          "url": "",
-          "url_options": {
-            "data": "",
-            "method": "GET",
-            "params": [
-              {
-                "key": "from",
-                "value": "$__from"
-              },
-              {
-                "key": "to",
-                "value": "$__to"
-              },
-              {
-                "key": "filter",
-                "value": "Time (UNIX ms),RSSI (dBm),UE ID"
-              }
-            ]
-          }
+          "panelId": 20,
+          "refId": "A"
         }
       ],
       "title": "Received Signal Strength Indicator (RSSI)",
       "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "Time (UNIX ms)",
+                "UE ID",
+                "RSSI (dBm)"
+              ]
+            }
+          }
+        },
         {
           "id": "filterByValue",
           "options": {
@@ -1926,7 +1782,7 @@
                     "value": "${Selected_UE_ID}"
                   }
                 },
-                "fieldName": "UE_ID"
+                "fieldName": "UE ID"
               }
             ],
             "match": "any",
@@ -1938,8 +1794,8 @@
     },
     {
       "datasource": {
-        "type": "yesoreyeram-infinity-datasource",
-        "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+        "type": "datasource",
+        "uid": "-- Dashboard --"
       },
       "fieldConfig": {
         "defaults": {
@@ -2050,58 +1906,28 @@
       "pluginVersion": "11.6.1",
       "targets": [
         {
-          "columns": [
-            {
-              "selector": "Time (UNIX ms)",
-              "text": "Timestamp",
-              "type": "timestamp_epoch"
-            },
-            {
-              "selector": "N_PRB",
-              "text": "N_PRB",
-              "type": "number"
-            },
-            {
-              "selector": "UE ID",
-              "text": "UE_ID",
-              "type": "string"
-            }
-          ],
           "datasource": {
-            "type": "yesoreyeram-infinity-datasource",
-            "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+            "type": "datasource",
+            "uid": "-- Dashboard --"
           },
-          "filters": [],
-          "format": "table",
-          "global_query_id": "",
-          "parser": "backend",
-          "refId": "A",
-          "root_selector": "",
-          "source": "url",
-          "type": "csv",
-          "url": "",
-          "url_options": {
-            "data": "",
-            "method": "GET",
-            "params": [
-              {
-                "key": "from",
-                "value": "$__from"
-              },
-              {
-                "key": "to",
-                "value": "$__to"
-              },
-              {
-                "key": "filter",
-                "value": "Time (UNIX ms),N_PRB,UE ID"
-              }
-            ]
-          }
+          "panelId": 20,
+          "refId": "A"
         }
       ],
       "title": "Num. PRBs (for RSSI)",
       "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "N_PRB",
+                "Time (UNIX ms)",
+                "UE ID"
+              ]
+            }
+          }
+        },
         {
           "id": "filterByValue",
           "options": {
@@ -2113,7 +1939,7 @@
                     "value": "${Selected_UE_ID}"
                   }
                 },
-                "fieldName": "UE_ID"
+                "fieldName": "UE ID"
               }
             ],
             "match": "any",
@@ -2125,8 +1951,8 @@
     },
     {
       "datasource": {
-        "type": "yesoreyeram-infinity-datasource",
-        "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+        "type": "datasource",
+        "uid": "-- Dashboard --"
       },
       "fieldConfig": {
         "defaults": {
@@ -2238,63 +2064,29 @@
       "pluginVersion": "11.6.1",
       "targets": [
         {
-          "columns": [
-            {
-              "selector": "Time (UNIX ms)",
-              "text": "Timestamp",
-              "type": "timestamp_epoch"
-            },
-            {
-              "selector": "RRU.PrbTotDl (PRBs)",
-              "text": "RRU.PrbTotDl (PRBs)",
-              "type": "number"
-            },
-            {
-              "selector": "RRU.PrbTotUl (PRBs)",
-              "text": "RRU.PrbTotUl (PRBs)",
-              "type": "number"
-            },
-            {
-              "selector": "UE ID",
-              "text": "UE_ID",
-              "type": "string"
-            }
-          ],
           "datasource": {
-            "type": "yesoreyeram-infinity-datasource",
-            "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+            "type": "datasource",
+            "uid": "-- Dashboard --"
           },
-          "filters": [],
-          "format": "table",
-          "global_query_id": "",
-          "parser": "backend",
-          "refId": "A",
-          "root_selector": "",
-          "source": "url",
-          "type": "csv",
-          "url": "",
-          "url_options": {
-            "data": "",
-            "method": "GET",
-            "params": [
-              {
-                "key": "from",
-                "value": "$__from"
-              },
-              {
-                "key": "to",
-                "value": "$__to"
-              },
-              {
-                "key": "filter",
-                "value": "Time (UNIX ms),RRU.PrbTotDl (PRBs),RRU.PrbTotUl (PRBs),UE ID"
-              }
-            ]
-          }
+          "panelId": 20,
+          "refId": "A"
         }
       ],
-      "title": "Number of Physical Resource Blocks (PRBs)",
+      "title": "Number of PRBs Downlink / Uplink Since Last Sample",
       "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "RRU.PrbTotDl (PRBs)",
+                "RRU.PrbTotUl (PRBs)",
+                "Time (UNIX ms)",
+                "UE ID"
+              ]
+            }
+          }
+        },
         {
           "id": "filterByValue",
           "options": {
@@ -2306,7 +2098,7 @@
                     "value": "${Selected_UE_ID}"
                   }
                 },
-                "fieldName": "UE_ID"
+                "fieldName": "UE ID"
               }
             ],
             "match": "any",
@@ -2318,8 +2110,8 @@
     },
     {
       "datasource": {
-        "type": "yesoreyeram-infinity-datasource",
-        "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+        "type": "datasource",
+        "uid": "-- Dashboard --"
       },
       "fieldConfig": {
         "defaults": {
@@ -2416,58 +2208,28 @@
       "pluginVersion": "11.6.1",
       "targets": [
         {
-          "columns": [
-            {
-              "selector": "Time (UNIX ms)",
-              "text": "Timestamp",
-              "type": "timestamp_epoch"
-            },
-            {
-              "selector": "DRB.HarqBlockErrorRateDl",
-              "text": "DRB.HarqBlockErrorRateDl",
-              "type": "number"
-            },
-            {
-              "selector": "UE ID",
-              "text": "UE_ID",
-              "type": "string"
-            }
-          ],
           "datasource": {
-            "type": "yesoreyeram-infinity-datasource",
-            "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+            "type": "datasource",
+            "uid": "-- Dashboard --"
           },
-          "filters": [],
-          "format": "table",
-          "global_query_id": "",
-          "parser": "backend",
-          "refId": "A",
-          "root_selector": "",
-          "source": "url",
-          "type": "csv",
-          "url": "",
-          "url_options": {
-            "data": "",
-            "method": "GET",
-            "params": [
-              {
-                "key": "from",
-                "value": "$__from"
-              },
-              {
-                "key": "to",
-                "value": "$__to"
-              },
-              {
-                "key": "filter",
-                "value": "Time (UNIX ms),DRB.HarqBlockErrorRateDl,UE ID"
-              }
-            ]
-          }
+          "panelId": 20,
+          "refId": "A"
         }
       ],
-      "title": "HARQ Downlink Block Error Rate (BLER)",
+      "title": "HARQ Block Error Rate",
       "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "DRB.HarqBlockErrorRateDl",
+                "Time (UNIX ms)",
+                "UE ID"
+              ]
+            }
+          }
+        },
         {
           "id": "filterByValue",
           "options": {
@@ -2479,7 +2241,7 @@
                     "value": "${Selected_UE_ID}"
                   }
                 },
-                "fieldName": "UE_ID"
+                "fieldName": "UE ID"
               }
             ],
             "match": "any",
@@ -2491,8 +2253,8 @@
     },
     {
       "datasource": {
-        "type": "yesoreyeram-infinity-datasource",
-        "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+        "type": "datasource",
+        "uid": "-- Dashboard --"
       },
       "fieldConfig": {
         "defaults": {
@@ -2553,13 +2315,13 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "SNR (PUSCH)"
+              "options": "SNR (PUCCH)"
             },
             "properties": [
               {
                 "id": "color",
                 "value": {
-                  "fixedColor": "#fa7e8db3",
+                  "fixedColor": "super-light-yellow",
                   "mode": "fixed"
                 }
               }
@@ -2568,13 +2330,28 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "SNR (PUCCH)"
+              "options": "PUCCH_SNR (dB)"
             },
             "properties": [
               {
                 "id": "color",
                 "value": {
                   "fixedColor": "super-light-yellow",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "PUSCH_SNR (dB)"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#e68383a6",
                   "mode": "fixed"
                 }
               }
@@ -2605,63 +2382,29 @@
       "pluginVersion": "11.6.1",
       "targets": [
         {
-          "columns": [
-            {
-              "selector": "Time (UNIX ms)",
-              "text": "Timestamp",
-              "type": "timestamp_epoch"
-            },
-            {
-              "selector": "PUSCH_SNR (dB)",
-              "text": "SNR (PUSCH)",
-              "type": "number"
-            },
-            {
-              "selector": "PUCCH_SNR (dB)",
-              "text": "SNR (PUCCH)",
-              "type": "number"
-            },
-            {
-              "selector": "UE ID",
-              "text": "UE_ID",
-              "type": "string"
-            }
-          ],
           "datasource": {
-            "type": "yesoreyeram-infinity-datasource",
-            "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+            "type": "datasource",
+            "uid": "-- Dashboard --"
           },
-          "filters": [],
-          "format": "table",
-          "global_query_id": "",
-          "parser": "backend",
-          "refId": "A",
-          "root_selector": "",
-          "source": "url",
-          "type": "csv",
-          "url": "",
-          "url_options": {
-            "data": "",
-            "method": "GET",
-            "params": [
-              {
-                "key": "from",
-                "value": "$__from"
-              },
-              {
-                "key": "to",
-                "value": "$__to"
-              },
-              {
-                "key": "filter",
-                "value": "Time (UNIX ms),PUSCH_SNR (dB),PUCCH_SNR (dB),UE ID"
-              }
-            ]
-          }
+          "panelId": 20,
+          "refId": "A"
         }
       ],
-      "title": "Signal-to-Noise Ratio (SNR)",
+      "title": "Signal-to-Noise Ratios",
       "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "Time (UNIX ms)",
+                "UE ID",
+                "PUSCH_SNR (dB)",
+                "PUCCH_SNR (dB)"
+              ]
+            }
+          }
+        },
         {
           "id": "filterByValue",
           "options": {
@@ -2673,7 +2416,7 @@
                     "value": "${Selected_UE_ID}"
                   }
                 },
-                "fieldName": "UE_ID"
+                "fieldName": "UE ID"
               }
             ],
             "match": "any",
@@ -2685,8 +2428,8 @@
     },
     {
       "datasource": {
-        "type": "yesoreyeram-infinity-datasource",
-        "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+        "type": "datasource",
+        "uid": "-- Dashboard --"
       },
       "fieldConfig": {
         "defaults": {
@@ -2859,63 +2602,29 @@
       "pluginVersion": "11.6.1",
       "targets": [
         {
-          "columns": [
-            {
-              "selector": "Time (UNIX ms)",
-              "text": "Timestamp",
-              "type": "timestamp_epoch"
-            },
-            {
-              "selector": "DRB.HarqMcsDl",
-              "text": "DRB.HarqMcsDl",
-              "type": "number"
-            },
-            {
-              "selector": "DRB.HarqMcsUl",
-              "text": "DRB.HarqMcsUl",
-              "type": "number"
-            },
-            {
-              "selector": "UE ID",
-              "text": "UE_ID",
-              "type": "string"
-            }
-          ],
           "datasource": {
-            "type": "yesoreyeram-infinity-datasource",
-            "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+            "type": "datasource",
+            "uid": "-- Dashboard --"
           },
-          "filters": [],
-          "format": "table",
-          "global_query_id": "",
-          "parser": "backend",
-          "refId": "A",
-          "root_selector": "",
-          "source": "url",
-          "type": "csv",
-          "url": "",
-          "url_options": {
-            "data": "",
-            "method": "GET",
-            "params": [
-              {
-                "key": "from",
-                "value": "$__from"
-              },
-              {
-                "key": "to",
-                "value": "$__to"
-              },
-              {
-                "key": "filter",
-                "value": "Time (UNIX ms),DRB.HarqMcsDl,DRB.HarqMcsUl,UE ID"
-              }
-            ]
-          }
+          "panelId": 20,
+          "refId": "A"
         }
       ],
       "title": "Modulation and Coding Scheme (MCS)",
       "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "DRB.HarqMcsDl",
+                "Time (UNIX ms)",
+                "UE ID",
+                "DRB.HarqMcsUl"
+              ]
+            }
+          }
+        },
         {
           "id": "filterByValue",
           "options": {
@@ -2927,7 +2636,7 @@
                     "value": "${Selected_UE_ID}"
                   }
                 },
-                "fieldName": "UE_ID"
+                "fieldName": "UE ID"
               }
             ],
             "match": "any",
@@ -2939,8 +2648,8 @@
     },
     {
       "datasource": {
-        "type": "yesoreyeram-infinity-datasource",
-        "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+        "type": "datasource",
+        "uid": "-- Dashboard --"
       },
       "fieldConfig": {
         "defaults": {
@@ -3037,58 +2746,28 @@
       "pluginVersion": "11.6.1",
       "targets": [
         {
-          "columns": [
-            {
-              "selector": "Time (UNIX ms)",
-              "text": "Timestamp",
-              "type": "timestamp_epoch"
-            },
-            {
-              "selector": "DRB.HarqBlockErrorRateUl",
-              "text": "DRB.HarqBlockErrorRateUl",
-              "type": "number"
-            },
-            {
-              "selector": "UE ID",
-              "text": "UE_ID",
-              "type": "string"
-            }
-          ],
           "datasource": {
-            "type": "yesoreyeram-infinity-datasource",
-            "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+            "type": "datasource",
+            "uid": "-- Dashboard --"
           },
-          "filters": [],
-          "format": "table",
-          "global_query_id": "",
-          "parser": "backend",
-          "refId": "A",
-          "root_selector": "",
-          "source": "url",
-          "type": "csv",
-          "url": "",
-          "url_options": {
-            "data": "",
-            "method": "GET",
-            "params": [
-              {
-                "key": "from",
-                "value": "$__from"
-              },
-              {
-                "key": "to",
-                "value": "$__to"
-              },
-              {
-                "key": "filter",
-                "value": "Time (UNIX ms),DRB.HarqBlockErrorRateUl,UE ID"
-              }
-            ]
-          }
+          "panelId": 20,
+          "refId": "A"
         }
       ],
-      "title": "HARQ Uplink Block Error Rate (BLER)",
+      "title": "HARQ Block Error Rate",
       "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "DRB.HarqBlockErrorRateUl",
+                "Time (UNIX ms)",
+                "UE ID"
+              ]
+            }
+          }
+        },
         {
           "id": "filterByValue",
           "options": {
@@ -3100,7 +2779,7 @@
                     "value": "${Selected_UE_ID}"
                   }
                 },
-                "fieldName": "UE_ID"
+                "fieldName": "UE ID"
               }
             ],
             "match": "any",
@@ -3122,8 +2801,8 @@
       "panels": [
         {
           "datasource": {
-            "type": "yesoreyeram-infinity-datasource",
-            "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+            "type": "datasource",
+            "uid": "-- Dashboard --"
           },
           "fieldConfig": {
             "defaults": {
@@ -3220,58 +2899,28 @@
           "pluginVersion": "11.6.1",
           "targets": [
             {
-              "columns": [
-                {
-                  "selector": "Time (UNIX ms)",
-                  "text": "Timestamp",
-                  "type": "timestamp_epoch"
-                },
-                {
-                  "selector": "RSRQ (dB)",
-                  "text": "RSRQ (dB)",
-                  "type": "number"
-                },
-                {
-                  "selector": "UE ID",
-                  "text": "UE_ID",
-                  "type": "string"
-                }
-              ],
               "datasource": {
-                "type": "yesoreyeram-infinity-datasource",
-                "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+                "type": "datasource",
+                "uid": "-- Dashboard --"
               },
-              "filters": [],
-              "format": "table",
-              "global_query_id": "",
-              "parser": "backend",
-              "refId": "A",
-              "root_selector": "",
-              "source": "url",
-              "type": "csv",
-              "url": "",
-              "url_options": {
-                "data": "",
-                "method": "GET",
-                "params": [
-                  {
-                    "key": "from",
-                    "value": "$__from"
-                  },
-                  {
-                    "key": "to",
-                    "value": "$__to"
-                  },
-                  {
-                    "key": "filter",
-                    "value": "Time (UNIX ms),RSRQ (dB),UE ID"
-                  }
-                ]
-              }
+              "panelId": 20,
+              "refId": "A"
             }
           ],
           "title": "Ref. Signal Received Quality (RSRQ)",
           "transformations": [
+            {
+              "id": "filterFieldsByName",
+              "options": {
+                "include": {
+                  "names": [
+                    "RSRQ (dB)",
+                    "Time (UNIX ms)",
+                    "UE ID"
+                  ]
+                }
+              }
+            },
             {
               "id": "filterByValue",
               "options": {
@@ -3283,7 +2932,7 @@
                         "value": "${Selected_UE_ID}"
                       }
                     },
-                    "fieldName": "UE_ID"
+                    "fieldName": "UE ID"
                   }
                 ],
                 "match": "any",
@@ -3295,8 +2944,8 @@
         },
         {
           "datasource": {
-            "type": "yesoreyeram-infinity-datasource",
-            "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+            "type": "datasource",
+            "uid": "-- Dashboard --"
           },
           "fieldConfig": {
             "defaults": {
@@ -3357,7 +3006,7 @@
             "x": 5,
             "y": 25
           },
-          "id": 18,
+          "id": 40,
           "options": {
             "legend": {
               "calcs": [],
@@ -3374,58 +3023,28 @@
           "pluginVersion": "11.6.1",
           "targets": [
             {
-              "columns": [
-                {
-                  "selector": "Time (UNIX ms)",
-                  "text": "Timestamp",
-                  "type": "timestamp_epoch"
-                },
-                {
-                  "selector": "RSRQ (dB)",
-                  "text": "RSRQ (dB)",
-                  "type": "number"
-                },
-                {
-                  "selector": "UE ID",
-                  "text": "UE_ID",
-                  "type": "string"
-                }
-              ],
               "datasource": {
-                "type": "yesoreyeram-infinity-datasource",
-                "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+                "type": "datasource",
+                "uid": "-- Dashboard --"
               },
-              "filters": [],
-              "format": "table",
-              "global_query_id": "",
-              "parser": "backend",
-              "refId": "A",
-              "root_selector": "",
-              "source": "url",
-              "type": "csv",
-              "url": "",
-              "url_options": {
-                "data": "",
-                "method": "GET",
-                "params": [
-                  {
-                    "key": "from",
-                    "value": "$__from"
-                  },
-                  {
-                    "key": "to",
-                    "value": "$__to"
-                  },
-                  {
-                    "key": "filter",
-                    "value": "Time (UNIX ms),RSRQ (dB),UE ID"
-                  }
-                ]
-              }
+              "panelId": 20,
+              "refId": "A"
             }
           ],
           "title": "Histogram of RSRQ",
           "transformations": [
+            {
+              "id": "filterFieldsByName",
+              "options": {
+                "include": {
+                  "names": [
+                    "RSRQ (dB)",
+                    "Time (UNIX ms)",
+                    "UE ID"
+                  ]
+                }
+              }
+            },
             {
               "id": "filterByValue",
               "options": {
@@ -3437,7 +3056,7 @@
                         "value": "${Selected_UE_ID}"
                       }
                     },
-                    "fieldName": "UE_ID"
+                    "fieldName": "UE ID"
                   }
                 ],
                 "match": "any",
@@ -3449,8 +3068,8 @@
         },
         {
           "datasource": {
-            "type": "yesoreyeram-infinity-datasource",
-            "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+            "type": "datasource",
+            "uid": "-- Dashboard --"
           },
           "fieldConfig": {
             "defaults": {
@@ -3517,21 +3136,6 @@
                     "id": "color",
                     "value": {
                       "fixedColor": "light-purple",
-                      "mode": "fixed"
-                    }
-                  }
-                ]
-              },
-              {
-                "matcher": {
-                  "id": "byName",
-                  "options": "CQI_SINGLE_CODEWORD"
-                },
-                "properties": [
-                  {
-                    "id": "color",
-                    "value": {
-                      "fixedColor": "light-green",
                       "mode": "fixed"
                     }
                   }
@@ -3545,7 +3149,7 @@
             "x": 8,
             "y": 25
           },
-          "id": 34,
+          "id": 41,
           "options": {
             "legend": {
               "calcs": [],
@@ -3562,58 +3166,28 @@
           "pluginVersion": "11.6.1",
           "targets": [
             {
-              "columns": [
-                {
-                  "selector": "Time (UNIX ms)",
-                  "text": "Timestamp",
-                  "type": "timestamp_epoch"
-                },
-                {
-                  "selector": "CQI_SINGLE_CODEWORD",
-                  "text": "CQI_SINGLE_CODEWORD",
-                  "type": "number"
-                },
-                {
-                  "selector": "UE ID",
-                  "text": "UE_ID",
-                  "type": "string"
-                }
-              ],
               "datasource": {
-                "type": "yesoreyeram-infinity-datasource",
-                "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+                "type": "datasource",
+                "uid": "-- Dashboard --"
               },
-              "filters": [],
-              "format": "table",
-              "global_query_id": "",
-              "parser": "backend",
-              "refId": "A",
-              "root_selector": "",
-              "source": "url",
-              "type": "csv",
-              "url": "",
-              "url_options": {
-                "data": "",
-                "method": "GET",
-                "params": [
-                  {
-                    "key": "from",
-                    "value": "$__from"
-                  },
-                  {
-                    "key": "to",
-                    "value": "$__to"
-                  },
-                  {
-                    "key": "filter",
-                    "value": "Time (UNIX ms),CQI_SINGLE_CODEWORD,UE ID"
-                  }
-                ]
-              }
+              "panelId": 20,
+              "refId": "A"
             }
           ],
           "title": "CQI (Single Codeword)",
           "transformations": [
+            {
+              "id": "filterFieldsByName",
+              "options": {
+                "include": {
+                  "names": [
+                    "Time (UNIX ms)",
+                    "UE ID",
+                    "CQI_SINGLE_CODEWORD"
+                  ]
+                }
+              }
+            },
             {
               "id": "filterByValue",
               "options": {
@@ -3625,7 +3199,7 @@
                         "value": "${Selected_UE_ID}"
                       }
                     },
-                    "fieldName": "UE_ID"
+                    "fieldName": "UE ID"
                   }
                 ],
                 "match": "any",
@@ -3637,8 +3211,8 @@
         },
         {
           "datasource": {
-            "type": "yesoreyeram-infinity-datasource",
-            "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+            "type": "datasource",
+            "uid": "-- Dashboard --"
           },
           "fieldConfig": {
             "defaults": {
@@ -3709,21 +3283,6 @@
                     }
                   }
                 ]
-              },
-              {
-                "matcher": {
-                  "id": "byName",
-                  "options": "CQI_SINGLE_CODEWORD"
-                },
-                "properties": [
-                  {
-                    "id": "color",
-                    "value": {
-                      "fixedColor": "light-green",
-                      "mode": "fixed"
-                    }
-                  }
-                ]
               }
             ]
           },
@@ -3733,7 +3292,7 @@
             "x": 13,
             "y": 25
           },
-          "id": 35,
+          "id": 42,
           "options": {
             "legend": {
               "calcs": [],
@@ -3750,58 +3309,28 @@
           "pluginVersion": "11.6.1",
           "targets": [
             {
-              "columns": [
-                {
-                  "selector": "Time (UNIX ms)",
-                  "text": "Timestamp",
-                  "type": "timestamp_epoch"
-                },
-                {
-                  "selector": "CQI_DUAL_CODEWORD",
-                  "text": "CQI_DUAL_CODEWORD",
-                  "type": "number"
-                },
-                {
-                  "selector": "UE ID",
-                  "text": "UE_ID",
-                  "type": "string"
-                }
-              ],
               "datasource": {
-                "type": "yesoreyeram-infinity-datasource",
-                "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+                "type": "datasource",
+                "uid": "-- Dashboard --"
               },
-              "filters": [],
-              "format": "table",
-              "global_query_id": "",
-              "parser": "backend",
-              "refId": "A",
-              "root_selector": "",
-              "source": "url",
-              "type": "csv",
-              "url": "",
-              "url_options": {
-                "data": "",
-                "method": "GET",
-                "params": [
-                  {
-                    "key": "from",
-                    "value": "$__from"
-                  },
-                  {
-                    "key": "to",
-                    "value": "$__to"
-                  },
-                  {
-                    "key": "filter",
-                    "value": "Time (UNIX ms),CQI_DUAL_CODEWORD,UE ID"
-                  }
-                ]
-              }
+              "panelId": 20,
+              "refId": "A"
             }
           ],
           "title": "CQI (Dual Codeword)",
           "transformations": [
+            {
+              "id": "filterFieldsByName",
+              "options": {
+                "include": {
+                  "names": [
+                    "Time (UNIX ms)",
+                    "UE ID",
+                    "CQI_DUAL_CODEWORD"
+                  ]
+                }
+              }
+            },
             {
               "id": "filterByValue",
               "options": {
@@ -3813,7 +3342,7 @@
                         "value": "${Selected_UE_ID}"
                       }
                     },
-                    "fieldName": "UE_ID"
+                    "fieldName": "UE ID"
                   }
                 ],
                 "match": "any",
@@ -3825,8 +3354,8 @@
         },
         {
           "datasource": {
-            "type": "yesoreyeram-infinity-datasource",
-            "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+            "type": "datasource",
+            "uid": "-- Dashboard --"
           },
           "fieldConfig": {
             "defaults": {
@@ -3925,63 +3454,29 @@
           "pluginVersion": "11.6.1",
           "targets": [
             {
-              "columns": [
-                {
-                  "selector": "Time (UNIX ms)",
-                  "text": "Timestamp",
-                  "type": "timestamp_epoch"
-                },
-                {
-                  "selector": "DRB.PdcpSduVolumeDL (kb)",
-                  "text": "DRB.PdcpSduVolumeDL (kb)",
-                  "type": "number"
-                },
-                {
-                  "selector": "DRB.PdcpSduVolumeUL (kb)",
-                  "text": "DRB.PdcpSduVolumeUL (kb)",
-                  "type": "number"
-                },
-                {
-                  "selector": "UE ID",
-                  "text": "UE_ID",
-                  "type": "string"
-                }
-              ],
               "datasource": {
-                "type": "yesoreyeram-infinity-datasource",
-                "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+                "type": "datasource",
+                "uid": "-- Dashboard --"
               },
-              "filters": [],
-              "format": "table",
-              "global_query_id": "",
-              "parser": "backend",
-              "refId": "A",
-              "root_selector": "",
-              "source": "url",
-              "type": "csv",
-              "url": "",
-              "url_options": {
-                "data": "",
-                "method": "GET",
-                "params": [
-                  {
-                    "key": "from",
-                    "value": "$__from"
-                  },
-                  {
-                    "key": "to",
-                    "value": "$__to"
-                  },
-                  {
-                    "key": "filter",
-                    "value": "Time (UNIX ms),DRB.PdcpSduVolumeDL (kb),DRB.PdcpSduVolumeUL (kb),UE ID"
-                  }
-                ]
-              }
+              "panelId": 20,
+              "refId": "A"
             }
           ],
           "title": "",
           "transformations": [
+            {
+              "id": "filterFieldsByName",
+              "options": {
+                "include": {
+                  "names": [
+                    "DRB.PdcpSduVolumeDL (kb)",
+                    "DRB.PdcpSduVolumeUL (kb)",
+                    "Time (UNIX ms)",
+                    "UE ID"
+                  ]
+                }
+              }
+            },
             {
               "disabled": true,
               "id": "filterByValue",
@@ -4016,6 +3511,10 @@
                       "sum"
                     ],
                     "operation": "aggregate"
+                  },
+                  "Time (UNIX ms)": {
+                    "aggregations": [],
+                    "operation": "groupby"
                   },
                   "Timestamp": {
                     "aggregations": [],
@@ -4084,8 +3583,8 @@
         },
         {
           "datasource": {
-            "type": "yesoreyeram-infinity-datasource",
-            "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+            "type": "datasource",
+            "uid": "-- Dashboard --"
           },
           "fieldConfig": {
             "defaults": {
@@ -4165,58 +3664,28 @@
           "pluginVersion": "11.6.1",
           "targets": [
             {
-              "columns": [
-                {
-                  "selector": "Time (UNIX ms)",
-                  "text": "Timestamp",
-                  "type": "timestamp_epoch"
-                },
-                {
-                  "selector": "RRU.PrbTotDl (PRBs)",
-                  "text": "RRU.PrbTotDl (PRBs)",
-                  "type": "number"
-                },
-                {
-                  "selector": "UE ID",
-                  "text": "UE_ID",
-                  "type": "string"
-                }
-              ],
               "datasource": {
-                "type": "yesoreyeram-infinity-datasource",
-                "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+                "type": "datasource",
+                "uid": "-- Dashboard --"
               },
-              "filters": [],
-              "format": "table",
-              "global_query_id": "",
-              "parser": "backend",
-              "refId": "A",
-              "root_selector": "",
-              "source": "url",
-              "type": "csv",
-              "url": "",
-              "url_options": {
-                "data": "",
-                "method": "GET",
-                "params": [
-                  {
-                    "key": "from",
-                    "value": "$__from"
-                  },
-                  {
-                    "key": "to",
-                    "value": "$__to"
-                  },
-                  {
-                    "key": "filter",
-                    "value": "Time (UNIX ms),RRU.PrbTotDl (PRBs),UE ID"
-                  }
-                ]
-              }
+              "panelId": 20,
+              "refId": "A"
             }
           ],
           "title": "Histogram of PRBs Downlink",
           "transformations": [
+            {
+              "id": "filterFieldsByName",
+              "options": {
+                "include": {
+                  "names": [
+                    "RRU.PrbTotDl (PRBs)",
+                    "Time (UNIX ms)",
+                    "UE ID"
+                  ]
+                }
+              }
+            },
             {
               "id": "filterByValue",
               "options": {
@@ -4228,7 +3697,7 @@
                         "value": "${Selected_UE_ID}"
                       }
                     },
-                    "fieldName": "UE_ID"
+                    "fieldName": "UE ID"
                   }
                 ],
                 "match": "any",
@@ -4240,8 +3709,8 @@
         },
         {
           "datasource": {
-            "type": "yesoreyeram-infinity-datasource",
-            "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+            "type": "datasource",
+            "uid": "-- Dashboard --"
           },
           "fieldConfig": {
             "defaults": {
@@ -4336,63 +3805,29 @@
           "pluginVersion": "11.6.1",
           "targets": [
             {
-              "columns": [
-                {
-                  "selector": "Time (UNIX ms)",
-                  "text": "Timestamp",
-                  "type": "timestamp_epoch"
-                },
-                {
-                  "selector": "DRB.PdcpSduVolumeDL (kb)",
-                  "text": "DRB.PdcpSduVolumeDL (kb)",
-                  "type": "number"
-                },
-                {
-                  "selector": "DRB.PdcpSduVolumeUL (kb)",
-                  "text": "DRB.PdcpSduVolumeUL (kb)",
-                  "type": "number"
-                },
-                {
-                  "selector": "UE ID",
-                  "text": "UE_ID",
-                  "type": "string"
-                }
-              ],
               "datasource": {
-                "type": "yesoreyeram-infinity-datasource",
-                "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+                "type": "datasource",
+                "uid": "-- Dashboard --"
               },
-              "filters": [],
-              "format": "table",
-              "global_query_id": "",
-              "parser": "backend",
-              "refId": "A",
-              "root_selector": "",
-              "source": "url",
-              "type": "csv",
-              "url": "",
-              "url_options": {
-                "data": "",
-                "method": "GET",
-                "params": [
-                  {
-                    "key": "from",
-                    "value": "$__from"
-                  },
-                  {
-                    "key": "to",
-                    "value": "$__to"
-                  },
-                  {
-                    "key": "filter",
-                    "value": "Time (UNIX ms),DRB.PdcpSduVolumeDL (kb),DRB.PdcpSduVolumeUL (kb),UE ID"
-                  }
-                ]
-              }
+              "panelId": 20,
+              "refId": "A"
             }
           ],
           "title": "",
           "transformations": [
+            {
+              "id": "filterFieldsByName",
+              "options": {
+                "include": {
+                  "names": [
+                    "DRB.PdcpSduVolumeDL (kb)",
+                    "DRB.PdcpSduVolumeUL (kb)",
+                    "Time (UNIX ms)",
+                    "UE ID"
+                  ]
+                }
+              }
+            },
             {
               "id": "filterByValue",
               "options": {
@@ -4404,7 +3839,7 @@
                         "value": "${Selected_UE_ID}"
                       }
                     },
-                    "fieldName": "UE_ID"
+                    "fieldName": "UE ID"
                   }
                 ],
                 "match": "any",
@@ -4426,6 +3861,14 @@
                       "sum"
                     ],
                     "operation": "aggregate"
+                  },
+                  "Time": {
+                    "aggregations": [],
+                    "operation": "aggregate"
+                  },
+                  "Time (UNIX ms)": {
+                    "aggregations": [],
+                    "operation": "groupby"
                   },
                   "Timestamp": {
                     "aggregations": [],
@@ -4483,9 +3926,9 @@
               "options": {
                 "include": {
                   "names": [
-                    "Timestamp",
                     "DRB.PdcpSduVolumeDL (kb) (sum) / 8",
-                    "DRB.PdcpSduVolumeUL (kb) (sum) / 8"
+                    "DRB.PdcpSduVolumeUL (kb) (sum) / 8",
+                    "Time (UNIX ms)"
                   ]
                 }
               }
@@ -4495,8 +3938,8 @@
         },
         {
           "datasource": {
-            "type": "yesoreyeram-infinity-datasource",
-            "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+            "type": "datasource",
+            "uid": "-- Dashboard --"
           },
           "fieldConfig": {
             "defaults": {
@@ -4672,63 +4115,29 @@
           "pluginVersion": "11.6.1",
           "targets": [
             {
-              "columns": [
-                {
-                  "selector": "Time (UNIX ms)",
-                  "text": "Timestamp",
-                  "type": "timestamp_epoch"
-                },
-                {
-                  "selector": "DRB.MacSduErrorRateDl",
-                  "text": "DRB.MacSduErrorRateDl",
-                  "type": "number"
-                },
-                {
-                  "selector": "DRB.MacSduErrorRateUl",
-                  "text": "DRB.MacSduErrorRateUl",
-                  "type": "number"
-                },
-                {
-                  "selector": "UE ID",
-                  "text": "UE_ID",
-                  "type": "string"
-                }
-              ],
               "datasource": {
-                "type": "yesoreyeram-infinity-datasource",
-                "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+                "type": "datasource",
+                "uid": "-- Dashboard --"
               },
-              "filters": [],
-              "format": "table",
-              "global_query_id": "",
-              "parser": "backend",
-              "refId": "A",
-              "root_selector": "",
-              "source": "url",
-              "type": "csv",
-              "url": "",
-              "url_options": {
-                "data": "",
-                "method": "GET",
-                "params": [
-                  {
-                    "key": "from",
-                    "value": "$__from"
-                  },
-                  {
-                    "key": "to",
-                    "value": "$__to"
-                  },
-                  {
-                    "key": "filter",
-                    "value": "Time (UNIX ms),DRB.MacSduErrorRateDl,DRB.MacSduErrorRateUl,UE ID"
-                  }
-                ]
-              }
+              "panelId": 20,
+              "refId": "A"
             }
           ],
           "title": "MAC SDU Error Rate (%)",
           "transformations": [
+            {
+              "id": "filterFieldsByName",
+              "options": {
+                "include": {
+                  "names": [
+                    "DRB.MacSduErrorRateDl",
+                    "Time (UNIX ms)",
+                    "UE ID",
+                    "DRB.MacSduErrorRateUl"
+                  ]
+                }
+              }
+            },
             {
               "id": "filterByValue",
               "options": {
@@ -4740,7 +4149,7 @@
                         "value": "${Selected_UE_ID}"
                       }
                     },
-                    "fieldName": "UE_ID"
+                    "fieldName": "UE ID"
                   }
                 ],
                 "match": "any",
@@ -4752,13 +4161,14 @@
         },
         {
           "datasource": {
-            "type": "yesoreyeram-infinity-datasource",
-            "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+            "type": "datasource",
+            "uid": "-- Dashboard --"
           },
           "fieldConfig": {
             "defaults": {
               "color": {
-                "mode": "palette-classic-by-name"
+                "fixedColor": "super-light-blue",
+                "mode": "fixed"
               },
               "custom": {
                 "fillOpacity": 80,
@@ -4774,13 +4184,14 @@
                   "mode": "none"
                 }
               },
+              "decimals": 0,
               "fieldMinMax": false,
               "mappings": [],
               "thresholds": {
-                "mode": "absolute",
+                "mode": "percentage",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "super-light-blue"
                   },
                   {
                     "color": "red",
@@ -4788,9 +4199,24 @@
                   }
                 ]
               },
-              "unit": "PRB"
+              "unit": "PRBs"
             },
             "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "RRU.PrbTotDl (PRBs)"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "light-blue",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
               {
                 "matcher": {
                   "id": "byName",
@@ -4814,7 +4240,7 @@
             "x": 18,
             "y": 33
           },
-          "id": 17,
+          "id": 43,
           "options": {
             "legend": {
               "calcs": [],
@@ -4831,58 +4257,28 @@
           "pluginVersion": "11.6.1",
           "targets": [
             {
-              "columns": [
-                {
-                  "selector": "Time (UNIX ms)",
-                  "text": "Timestamp",
-                  "type": "timestamp_epoch"
-                },
-                {
-                  "selector": "RRU.PrbTotUl (PRBs)",
-                  "text": "RRU.PrbTotUl (PRBs)",
-                  "type": "number"
-                },
-                {
-                  "selector": "UE ID",
-                  "text": "UE_ID",
-                  "type": "string"
-                }
-              ],
               "datasource": {
-                "type": "yesoreyeram-infinity-datasource",
-                "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+                "type": "datasource",
+                "uid": "-- Dashboard --"
               },
-              "filters": [],
-              "format": "table",
-              "global_query_id": "",
-              "parser": "backend",
-              "refId": "A",
-              "root_selector": "",
-              "source": "url",
-              "type": "csv",
-              "url": "",
-              "url_options": {
-                "data": "",
-                "method": "GET",
-                "params": [
-                  {
-                    "key": "from",
-                    "value": "$__from"
-                  },
-                  {
-                    "key": "to",
-                    "value": "$__to"
-                  },
-                  {
-                    "key": "filter",
-                    "value": "Time (UNIX ms),RRU.PrbTotUl (PRBs),UE ID"
-                  }
-                ]
-              }
+              "panelId": 20,
+              "refId": "A"
             }
           ],
-          "title": "Histogram of PRBs Uplink",
+          "title": "Histogram of PRBs Downlink",
           "transformations": [
+            {
+              "id": "filterFieldsByName",
+              "options": {
+                "include": {
+                  "names": [
+                    "Time (UNIX ms)",
+                    "UE ID",
+                    "RRU.PrbTotUl (PRBs)"
+                  ]
+                }
+              }
+            },
             {
               "id": "filterByValue",
               "options": {
@@ -4894,7 +4290,7 @@
                         "value": "${Selected_UE_ID}"
                       }
                     },
-                    "fieldName": "UE_ID"
+                    "fieldName": "UE ID"
                   }
                 ],
                 "match": "any",
@@ -4972,12 +4368,12 @@
   },
   "time": {
     "from": "2025-04-30T20:09:15.177Z",
-    "to": "2025-04-30T21:46:22.176Z"
+    "to": "2025-04-30T21:03:41.177Z"
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "FlexRIC KPI Monitor",
+  "title": "FlexRIC KPI Monitor (two-queries-per-update, 5/02/2025)",
   "uid": "ric_dashboard1",
-  "version": 1,
+  "version": 7,
   "weekStart": ""
 }

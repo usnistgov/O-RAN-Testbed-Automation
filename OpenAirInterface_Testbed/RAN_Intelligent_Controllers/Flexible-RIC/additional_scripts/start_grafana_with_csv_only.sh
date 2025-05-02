@@ -43,7 +43,6 @@ PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$PARENT_DIR"
 
 GRAFANA_LOG_FILE="$PARENT_DIR/logs/KPI_Metrics.csv"
-SERVER_LOG_FILE="$PARENT_DIR/logs/python_server.log"
 
 if ! command -v grafana-server &>/dev/null; then
     echo "Grafana not found, installing..."
@@ -78,8 +77,11 @@ fi
 cd additional_scripts
 if ! pgrep -f "grafana_host_kpi_metrics_over_http.py" >/dev/null; then
     echo "Hosting file: http://localhost:3030/KPI_Metrics.csv"
-    >"$SERVER_LOG_FILE" # Clear the log file
-    nohup python3 -u grafana_host_kpi_metrics_over_http.py >"$SERVER_LOG_FILE" 2>&1 &
+    # Optionally, redirect the server output to logs/python_server.log
+    # SERVER_LOG_FILE="$PARENT_DIR/logs/python_server.log"
+    # >"$SERVER_LOG_FILE" # Clear the log file
+    # nohup python3 -u grafana_host_kpi_metrics_over_http.py >"$SERVER_LOG_FILE" 2>&1 &
+    nohup python3 grafana_host_kpi_metrics_over_http.py >/dev/null 2>&1 &
 else
     echo "Already hosting file: http://localhost:3030/KPI_Metrics.csv"
 fi

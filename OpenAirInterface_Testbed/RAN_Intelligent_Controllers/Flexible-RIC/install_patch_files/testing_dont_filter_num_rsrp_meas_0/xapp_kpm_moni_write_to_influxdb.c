@@ -32,19 +32,21 @@
 #include <signal.h>
 #include <pthread.h>
 #include <inttypes.h>
+#include <string.h>
 
 bool run_forever = true;
-
 static uint64_t const period_ms = 1000;
 
-static pthread_mutex_t mtx;
-bool csv_wrote_header = false;
-const char *csv_file_path = NULL;
-char csv_header_buffer[1024];
-char csv_line_buffer[1024];
-unsigned int csv_num_rows = 0;
+bool clear_database_on_startup = true;
+char influxdb_url[256] = "http://localhost:8086";
+char influxdb_org[64] = "xapp-kpm-moni";
+char influxdb_bucket[64] = "xapp-kpm-moni";
+char influxdb_token[128]; // argv[1]
+
+static pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
+char influx_fields_buffer[1024];
+unsigned int influx_num_samples = 0;
 uint64_t current_ue_id = 0;
-bool filter_invalid_sample = false;
 
 static void log_gnb_ue_id(ue_id_e2sm_t ue_id)
 {
@@ -98,175 +100,141 @@ static log_ue_id log_ue_id_e2sm[END_UE_ID_E2SM] = {
     NULL,
 };
 
-static void csv_append_name_to_csv_header(byte_array_t name, byte_array_t unit)
+void reset_measurement_buffers()
 {
-  size_t current_len = strlen(csv_header_buffer);
-  size_t name_len = name.len;
-  size_t unit_len = unit.len;
+  memset(influx_fields_buffer, 0, sizeof(influx_fields_buffer));
+}
 
-  // Don't overflow the buffer
-  if (current_len + name_len + unit_len + 4 < sizeof(csv_header_buffer)) // +4 for " ()", comma, and null terminator
+void influxdb_clear_bucket()
+{
+  char cmd[2048];
+  char current_time_iso[64];
+
+  // Get current time in ISO 8601 format (UTC)
+  time_t now = time(NULL);
+  struct tm *utc_time = gmtime(&now);
+  strftime(current_time_iso, sizeof(current_time_iso), "%Y-%m-%dT%H:%M:%SZ", utc_time);
+
+  snprintf(cmd, sizeof(cmd),
+           "curl --request POST '%s/api/v2/delete?org=%s&bucket=%s' "
+           "--header 'Authorization: Token %s' "
+           "--header 'Content-Type: application/json' "
+           "--data '{\"start\":\"1970-01-01T00:00:00Z\",\"stop\":\"%s\"}' || echo 'InfluxDB delete failed'",
+           influxdb_url, influxdb_org, influxdb_bucket, influxdb_token, current_time_iso);
+
+  printf("Clearing InfluxDB data from previous runs...\n");
+  system(cmd);
+  printf("InfluxDB data cleared successfully up to %s.\n", current_time_iso);
+}
+
+void influxdb_write(char *line_protocol)
+{
+  char cmd[2048];
+
+  snprintf(cmd, sizeof(cmd),
+           "curl -XPOST '%s/api/v2/write?org=%s&bucket=%s&precision=ms' "
+           "--header 'Authorization: Token %s' "
+           "--data-raw '%s' || echo 'InfluxDB write failed'",
+           influxdb_url, influxdb_org, influxdb_bucket, influxdb_token, line_protocol);
+
+  system(cmd);
+}
+
+// At the end of the measurement cycle, send the metrics to InfluxDB
+void send_metrics_to_influxdb(uint64_t ue_id, int64_t timestamp_ms, char *fields_buffer)
+{
+  char line_protocol[1024];
+
+  // Ensure there's a trailing comma if not already present
+  size_t len = strlen(fields_buffer);
+  if (len > 0 && fields_buffer[len - 1] != ',')
   {
-    if (unit.buf != NULL && unit_len > 0)
+    strcat(fields_buffer, ",");
+  }
+
+  // Round down the timestamp to the nearest multiple of 1000 so that multiple UEs in the same window can share the same timestamp
+  timestamp_ms = timestamp_ms - (timestamp_ms % 1000);
+
+  // Construct Line Protocol (measurement: kpm_measurements) with UE_ID as a field
+  snprintf(line_protocol, sizeof(line_protocol),
+           "kpm_measurements %sUE_ID=%" PRIu64 "i %ld",
+           fields_buffer, ue_id, timestamp_ms);
+
+  // Print metrics to the console
+  printf("Metrics for UE ID %" PRIu64 ": %s (timestamp: %ld ms)\n", ue_id, fields_buffer, timestamp_ms);
+
+  // Send metrics to InfluxDB
+  influxdb_write(line_protocol);
+}
+
+bool sanitize_metric_name(const byte_array_t *name, char *out, size_t out_size)
+{
+  size_t j = 0;
+  for (size_t i = 0; i < name->len && j < out_size - 1; i++)
+  {
+    char c = name->buf[i];
+    if ((c >= 'A' && c <= 'Z') ||
+        (c >= 'a' && c <= 'z') ||
+        (c >= '0' && c <= '9') ||
+        c == '_' || c == '-' || c == '.')
     {
-      snprintf(csv_header_buffer + current_len, sizeof(csv_header_buffer) - current_len, "%.*s (%.*s),", (int)name_len, name.buf, (int)unit_len, unit.buf);
+      out[j++] = c;
     }
-    else
-    {
-      snprintf(csv_header_buffer + current_len, sizeof(csv_header_buffer) - current_len, "%.*s,", (int)name_len, name.buf);
-    }
+    // Skip invalid characters
   }
-  else
-  {
-    fprintf(stderr, "CSV header buffer is full, cannot append more names.\n");
-  }
-}
-
-static void csv_append_int_to_csv_line(meas_record_lst_t meas_record)
-{
-  size_t current_len = strlen(csv_line_buffer);
-
-  if (current_len + 32 < sizeof(csv_line_buffer)) // Reserve space for int/float and comma
-  {
-    snprintf(csv_line_buffer + current_len, sizeof(csv_line_buffer) - current_len, "%d,", meas_record.int_val);
-  }
-  else
-  {
-    fprintf(stderr, "CSV line buffer is full, cannot append more values.\n");
-  }
-}
-
-static void csv_append_real_to_csv_line(meas_record_lst_t meas_record)
-{
-  size_t current_len = strlen(csv_line_buffer);
-
-  if (current_len + 32 < sizeof(csv_line_buffer)) // Reserve space for float and comma
-  {
-    snprintf(csv_line_buffer + current_len, sizeof(csv_line_buffer) - current_len, "%.2f,", meas_record.real_val);
-  }
-  else
-  {
-    fprintf(stderr, "CSV line buffer is full, cannot append more values.\n");
-  }
-}
-
-static void csv_prepend_ue_id()
-{
-  // Ensure the current UE ID is valid
-  if (current_ue_id == 0)
-  {
-    fprintf(stderr, "Error: No valid UE ID found.\n");
-    return;
-  }
-
-  // Ensure the buffer won't overflow
-  char ue_id_buffer[32];
-  snprintf(ue_id_buffer, sizeof(ue_id_buffer), "%" PRIu64 ",", current_ue_id);
-  size_t ue_id_len = strlen(ue_id_buffer);
-  size_t current_len = strlen(csv_line_buffer);
-
-  if (ue_id_len + current_len < sizeof(csv_line_buffer))
-  {
-    // Use a temporary buffer to construct the new line
-    char temp_buffer[sizeof(csv_line_buffer)];
-    snprintf(temp_buffer, sizeof(temp_buffer), "%s%s", ue_id_buffer, csv_line_buffer);
-    strncpy(csv_line_buffer, temp_buffer, sizeof(csv_line_buffer) - 1);
-  }
-  else
-  {
-    fprintf(stderr, "CSV line buffer is full, cannot prepend UE ID.\n");
-    fprintf(stderr, "CSV line buffer is full (current size: %zu, required size: %zu), cannot prepend UE ID.\n", current_len, ue_id_len + current_len);
-  }
-}
-
-static void csv_prepend_timestamp()
-{
-  int64_t now = time_now_us();
-  // Convert to milliseconds
-  now /= 1000;
-
-  // Ensure the timestamp is non-negative
-  if (now < 0)
-  {
-    fprintf(stderr, "Error: Negative timestamp value encountered.\n");
-    return;
-  }
-
-  char timestamp_buffer[32];
-  snprintf(timestamp_buffer, sizeof(timestamp_buffer), "%" PRId64 ",", now);
-
-  // Ensure the buffer won't overflow
-  size_t timestamp_len = strlen(timestamp_buffer);
-  size_t current_len = strlen(csv_line_buffer);
-
-  if (timestamp_len + current_len < sizeof(csv_line_buffer))
-  {
-    // Use a temporary buffer to construct the new line
-    char temp_buffer[sizeof(csv_line_buffer)];
-    snprintf(temp_buffer, sizeof(temp_buffer), "%s%s", timestamp_buffer, csv_line_buffer);
-    strncpy(csv_line_buffer, temp_buffer, sizeof(csv_line_buffer) - 1);
-    csv_line_buffer[sizeof(csv_line_buffer) - 1] = '\0'; // Ensure null termination
-  }
-  else
-  {
-    fprintf(stderr, "CSV line buffer is full, cannot prepend timestamp.\n");
-  }
+  out[j] = '\0';
+  return j > 0;
 }
 
 static void log_int_value(byte_array_t name, meas_record_lst_t meas_record)
 {
   byte_array_t unit = {.buf = "", .len = 0};
 
-  if (!csv_wrote_header)
+  if (cmp_str_ba("RRU.PrbTotDl", name) == 0)
   {
-    if (cmp_str_ba("RRU.PrbTotDl", name) == 0)
-    {
-      unit.buf = "PRBs";
-      unit.len = strlen("PRBs");
-    }
-    else if (cmp_str_ba("RRU.PrbTotUl", name) == 0)
-    {
-      unit.buf = "PRBs";
-      unit.len = strlen("PRBs");
-    }
-    else if (cmp_str_ba("DRB.PdcpSduVolumeDL", name) == 0)
-    {
-      unit.buf = "kb";
-      unit.len = strlen("kb");
-    }
-    else if (cmp_str_ba("DRB.PdcpSduVolumeUL", name) == 0)
-    {
-      unit.buf = "kb";
-      unit.len = strlen("kb");
-    }
-    else if (cmp_str_ba("N_RSRP_MEAS", name) == 0)
-    {
-      unit.buf = "";
-      unit.len = 0;
-    }
-    else if (cmp_str_ba("N_PRB", name) == 0)
-    {
-      unit.buf = "";
-      unit.len = 0;
-    }
-    else if (cmp_str_ba("CQI_SINGLE_CODEWORD", name) == 0)
-    {
-      unit.buf = "";
-      unit.len = 0;
-    }
-    else if (cmp_str_ba("CQI_DUAL_CODEWORD", name) == 0)
-    {
-      unit.buf = "";
-      unit.len = 0;
-    }
-    else
-    {
-      unit.buf = "";
-      unit.len = 0;
-    }
-    csv_append_name_to_csv_header(name, unit);
+    unit.buf = "PRBs";
+    unit.len = strlen("PRBs");
   }
-  csv_append_int_to_csv_line(meas_record);
+  else if (cmp_str_ba("RRU.PrbTotUl", name) == 0)
+  {
+    unit.buf = "PRBs";
+    unit.len = strlen("PRBs");
+  }
+  else if (cmp_str_ba("DRB.PdcpSduVolumeDL", name) == 0)
+  {
+    unit.buf = "kb";
+    unit.len = strlen("kb");
+  }
+  else if (cmp_str_ba("DRB.PdcpSduVolumeUL", name) == 0)
+  {
+    unit.buf = "kb";
+    unit.len = strlen("kb");
+  }
+  else if (cmp_str_ba("N_RSRP_MEAS", name) == 0)
+  {
+    unit.buf = "";
+    unit.len = 0;
+  }
+  else if (cmp_str_ba("N_PRB", name) == 0)
+  {
+    unit.buf = "";
+    unit.len = 0;
+  }
+  else if (cmp_str_ba("CQI_SINGLE_CODEWORD", name) == 0)
+  {
+    unit.buf = "";
+    unit.len = 0;
+  }
+  else if (cmp_str_ba("CQI_DUAL_CODEWORD", name) == 0)
+  {
+    unit.buf = "";
+    unit.len = 0;
+  }
+  else
+  {
+    unit.buf = "";
+    unit.len = 0;
+  }
   // if (cmp_str_ba("RRU.PrbTotDl", name) == 0) {
   //   printf("RRU.PrbTotDl = %d [PRBs]\n", meas_record.int_val);
   // } else if (cmp_str_ba("RRU.PrbTotUl", name) == 0) {
@@ -279,67 +247,72 @@ static void log_int_value(byte_array_t name, meas_record_lst_t meas_record)
   // } else {
   //   printf("Measurement Name not yet supported\n");
   // }
-
-  // If the measurement is N_RSRP_MEAS and the value is 0, the data is invalid
-  if (cmp_str_ba("N_RSRP_MEAS", name) == 0)
+  char safe_metric_name[128];
+  if (!sanitize_metric_name(&name, safe_metric_name, sizeof(safe_metric_name)))
   {
-    if (meas_record.int_val == 0)
-    {
-      filter_invalid_sample = true;
-      printf("\n\tNumber of RSRP measurements was zero, skipping sample to avoid divide by zero.\n\n");
-    }
+    fprintf(stderr, "Invalid metric name detected.\n");
+    return;
   }
+
+  char influx_field_name[128];
+  if (unit.len > 0)
+  {
+    snprintf(influx_field_name, sizeof(influx_field_name), "%s_%.*s", safe_metric_name, (int)unit.len, unit.buf);
+  }
+  else
+  {
+    snprintf(influx_field_name, sizeof(influx_field_name), "%s", safe_metric_name);
+  }
+
+  char influx_field[256];
+  snprintf(influx_field, sizeof(influx_field), "%s=%di,", influx_field_name, meas_record.int_val);
+  strncat(influx_fields_buffer, influx_field, sizeof(influx_fields_buffer) - strlen(influx_fields_buffer) - 1);
 }
 
 static void log_real_value(byte_array_t name, meas_record_lst_t meas_record)
 {
   byte_array_t unit = {.buf = "", .len = 0};
 
-  if (!csv_wrote_header)
+  if (cmp_str_ba("DRB.RlcSduDelayDl", name) == 0)
   {
-    if (cmp_str_ba("DRB.RlcSduDelayDl", name) == 0)
-    {
-      unit.buf = "μs";
-      unit.len = strlen("μs");
-    }
-    else if (cmp_str_ba("DRB.UEThpDl", name) == 0)
-    {
-      unit.buf = "kbps";
-      unit.len = strlen("kbps");
-    }
-    else if (cmp_str_ba("DRB.UEThpUl", name) == 0)
-    {
-      unit.buf = "kbps";
-      unit.len = strlen("kbps");
-    }
-    else if (cmp_str_ba("RSRP", name) == 0)
-    {
-      unit.buf = "dBm";
-      unit.len = strlen("dBm");
-    }
-    else if (cmp_str_ba("RSSI", name) == 0)
-    {
-      unit.buf = "dBm";
-      unit.len = strlen("dBm");
-    }
-    else if (cmp_str_ba("RSRQ", name) == 0)
-    {
-      unit.buf = "dB";
-      unit.len = strlen("dB");
-    }
-    else if (cmp_str_ba("PUSCH_SNR", name) == 0)
-    {
-      unit.buf = "dB";
-      unit.len = strlen("dB");
-    }
-    else if (cmp_str_ba("PUCCH_SNR", name) == 0)
-    {
-      unit.buf = "dB";
-      unit.len = strlen("dB");
-    }
-    csv_append_name_to_csv_header(name, unit);
+    unit.buf = "μs";
+    unit.len = strlen("μs");
   }
-  csv_append_real_to_csv_line(meas_record);
+  else if (cmp_str_ba("DRB.UEThpDl", name) == 0)
+  {
+    unit.buf = "kbps";
+    unit.len = strlen("kbps");
+  }
+  else if (cmp_str_ba("DRB.UEThpUl", name) == 0)
+  {
+    unit.buf = "kbps";
+    unit.len = strlen("kbps");
+  }
+  else if (cmp_str_ba("RSRP", name) == 0)
+  {
+    unit.buf = "dBm";
+    unit.len = strlen("dBm");
+  }
+  else if (cmp_str_ba("RSSI", name) == 0)
+  {
+    unit.buf = "dBm";
+    unit.len = strlen("dBm");
+  }
+  else if (cmp_str_ba("RSRQ", name) == 0)
+  {
+    unit.buf = "dB";
+    unit.len = strlen("dB");
+  }
+  else if (cmp_str_ba("PUSCH_SNR", name) == 0)
+  {
+    unit.buf = "dB";
+    unit.len = strlen("dB");
+  }
+  else if (cmp_str_ba("PUCCH_SNR", name) == 0)
+  {
+    unit.buf = "dB";
+    unit.len = strlen("dB");
+  }
   // if (cmp_str_ba("DRB.RlcSduDelayDl", name) == 0) {
   //   printf("DRB.RlcSduDelayDl = %.2f [μs]\n", meas_record.real_val);
   // } else if (cmp_str_ba("DRB.UEThpDl", name) == 0) {
@@ -350,6 +323,27 @@ static void log_real_value(byte_array_t name, meas_record_lst_t meas_record)
   // } else {
   //   printf("Measurement Name not yet supported\n");
   // }
+
+  char safe_metric_name[128];
+  if (!sanitize_metric_name(&name, safe_metric_name, sizeof(safe_metric_name)))
+  {
+    fprintf(stderr, "Invalid metric name detected.\n");
+    return;
+  }
+
+  char influx_field_name[128];
+  if (unit.len > 0)
+  {
+    snprintf(influx_field_name, sizeof(influx_field_name), "%s_%.*s", safe_metric_name, (int)unit.len, unit.buf);
+  }
+  else
+  {
+    snprintf(influx_field_name, sizeof(influx_field_name), "%s", safe_metric_name);
+  }
+
+  char influx_field[256];
+  snprintf(influx_field, sizeof(influx_field), "%s=%.2f,", influx_field_name, meas_record.real_val);
+  strncat(influx_fields_buffer, influx_field, sizeof(influx_fields_buffer) - strlen(influx_fields_buffer) - 1);
 }
 
 typedef void (*log_meas_value)(byte_array_t name, meas_record_lst_t meas_record);
@@ -380,46 +374,11 @@ static check_meas_type match_meas_type[END_MEAS_TYPE] = {
     match_id_meas_type,
 };
 
-static void write_csv_header_to_file()
-{
-  if (!csv_wrote_header && csv_file_path != NULL)
-  {
-    FILE *file = fopen(csv_file_path, "w");
-    if (file == NULL)
-    {
-      fprintf(stderr, "Failed to open CSV file: %s\n", csv_file_path);
-      return;
-    }
-    fprintf(file, "%s\n", csv_header_buffer);
-    fclose(file);
-
-    csv_wrote_header = true;
-    printf("CSV header written to file: %s\n", csv_file_path);
-  }
-}
-
-static void write_csv_line_to_file()
-{
-  if (csv_wrote_header && csv_file_path != NULL)
-  {
-    FILE *file = fopen(csv_file_path, "a");
-    if (file == NULL)
-    {
-      fprintf(stderr, "Failed to open CSV file for appending: %s\n", csv_file_path);
-      return;
-    }
-    fprintf(file, "%s\n", csv_line_buffer);
-    fclose(file);
-
-    printf("CSV line written to file: %s\n", csv_file_path);
-  }
-  // Reset the line buffer for the next entry
-  memset(csv_line_buffer, 0, sizeof(csv_line_buffer));
-}
-
 static void log_kpm_measurements(kpm_ind_msg_format_1_t const *msg_frm_1)
 {
   assert(msg_frm_1->meas_info_lst_len > 0 && "Cannot correctly print measurements");
+
+  reset_measurement_buffers();
 
   // UE Measurements per granularity period
   for (size_t j = 0; j < msg_frm_1->meas_data_lst_len; j++)
@@ -437,30 +396,13 @@ static void log_kpm_measurements(kpm_ind_msg_format_1_t const *msg_frm_1)
         printf("Measurement Record not reliable");
     }
   }
-  write_csv_header_to_file();
 
-  if (!filter_invalid_sample)
-  {
-    csv_prepend_ue_id();
-    csv_prepend_timestamp();
-    write_csv_line_to_file();
-  }
-  else
-  {
-    // Log an empty measurement row with 25 commas after the 0
-    printf("Logging empty measurement row\n");
-    memset(csv_line_buffer, 0, sizeof(csv_line_buffer));
-    snprintf(csv_line_buffer, sizeof(csv_line_buffer), ",,,,,,,,,,,,,,,,,,,,,,,,,");
-    csv_prepend_timestamp();
-    write_csv_line_to_file();
+  // InfluxDB send:
+  int64_t now_ms = time_now_us() / 1000;
+  send_metrics_to_influxdb(current_ue_id, now_ms, influx_fields_buffer);
 
-    // Clear the line buffer for the next entry
-    memset(csv_line_buffer, 0, sizeof(csv_line_buffer));
-  }
-
-  filter_invalid_sample = false;
-  csv_num_rows++;
-  printf("Samples collected = %u\n", csv_num_rows);
+  influx_num_samples++;
+  printf("Samples collected = %u\n", influx_num_samples);
 }
 
 static void sm_cb_kpm(sm_ag_if_rd_t const *rd)
@@ -661,22 +603,18 @@ int main(int argc, char *argv[])
 {
   if (argc < 2)
   {
-    fprintf(stderr, "Usage: %s <csv_file_path>\n", argv[0]);
+    fprintf(stderr, "Usage: %s <influxdb_token>\n", argv[0]);
     return EXIT_FAILURE;
   }
 
-  csv_wrote_header = false;
-  byte_array_t timestamp_name = {.buf = "Time", .len = strlen("Time")};
-  byte_array_t timestamp_unit = {.buf = "UNIX ms", .len = strlen("UNIX ms")};
-  csv_append_name_to_csv_header(timestamp_name, timestamp_unit);
-  byte_array_t ue_id_name = {.buf = "UE ID", .len = strlen("UE ID")};
-  byte_array_t ue_id_unit = {.buf = "", .len = 0};
-  csv_append_name_to_csv_header(ue_id_name, ue_id_unit);
-
-  csv_file_path = argv[1];
-  printf("CSV file path provided: %s\n", csv_file_path);
+  strncpy(influxdb_token, argv[1], sizeof(influxdb_token) - 1);
 
   fr_args_t args = init_fr_args(argc, argv);
+
+  if (clear_database_on_startup == true)
+  {
+    influxdb_clear_bucket();
+  }
 
   // Init the xApp
   init_xapp_api(&args);

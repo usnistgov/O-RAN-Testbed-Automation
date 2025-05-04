@@ -47,6 +47,7 @@ static pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
 char influx_fields_buffer[1024];
 unsigned int influx_num_samples = 0;
 uint64_t current_ue_id = 0;
+bool filter_invalid_sample = false;
 
 static void log_gnb_ue_id(ue_id_e2sm_t ue_id)
 {
@@ -267,6 +268,16 @@ static void log_int_value(byte_array_t name, meas_record_lst_t meas_record)
   char influx_field[256];
   snprintf(influx_field, sizeof(influx_field), "%s=%di,", influx_field_name, meas_record.int_val);
   strncat(influx_fields_buffer, influx_field, sizeof(influx_fields_buffer) - strlen(influx_fields_buffer) - 1);
+
+  // If the measurement is N_RSRP_MEAS and the value is 0, the data is invalid
+  if (cmp_str_ba("N_RSRP_MEAS", name) == 0)
+  {
+    if (meas_record.int_val == 0)
+    {
+      filter_invalid_sample = true;
+      printf("\n\tNumber of RSRP measurements was zero, skipping sample to avoid divide by zero.\n\n");
+    }
+  }
 }
 
 static void log_real_value(byte_array_t name, meas_record_lst_t meas_record)
@@ -397,10 +408,14 @@ static void log_kpm_measurements(kpm_ind_msg_format_1_t const *msg_frm_1)
     }
   }
 
-  // InfluxDB send:
-  int64_t now_ms = time_now_us() / 1000;
-  send_metrics_to_influxdb(current_ue_id, now_ms, influx_fields_buffer);
+  if (!filter_invalid_sample)
+  {
+    // InfluxDB send:
+    int64_t now_ms = time_now_us() / 1000;
+    send_metrics_to_influxdb(current_ue_id, now_ms, influx_fields_buffer);
+  }
 
+  filter_invalid_sample = false;
   influx_num_samples++;
   printf("Samples collected = %u\n", influx_num_samples);
 }

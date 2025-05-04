@@ -44,7 +44,6 @@ char csv_header_buffer[1024];
 char csv_line_buffer[1024];
 unsigned int csv_num_rows = 0;
 uint64_t current_ue_id = 0;
-bool filter_invalid_sample = false;
 
 static void log_gnb_ue_id(ue_id_e2sm_t ue_id)
 {
@@ -279,16 +278,6 @@ static void log_int_value(byte_array_t name, meas_record_lst_t meas_record)
   // } else {
   //   printf("Measurement Name not yet supported\n");
   // }
-
-  // If the measurement is N_RSRP_MEAS and the value is 0, the data is invalid
-  if (cmp_str_ba("N_RSRP_MEAS", name) == 0)
-  {
-    if (meas_record.int_val == 0)
-    {
-      filter_invalid_sample = true;
-      printf("\n\tNumber of RSRP measurements was zero, skipping sample to avoid divide by zero.\n\n");
-    }
-  }
 }
 
 static void log_real_value(byte_array_t name, meas_record_lst_t meas_record)
@@ -438,27 +427,10 @@ static void log_kpm_measurements(kpm_ind_msg_format_1_t const *msg_frm_1)
     }
   }
   write_csv_header_to_file();
+  csv_prepend_ue_id();
+  csv_prepend_timestamp();
+  write_csv_line_to_file();
 
-  if (!filter_invalid_sample)
-  {
-    csv_prepend_ue_id();
-    csv_prepend_timestamp();
-    write_csv_line_to_file();
-  }
-  else
-  {
-    // Log an empty measurement row with 25 commas after the 0
-    printf("Logging empty measurement row\n");
-    memset(csv_line_buffer, 0, sizeof(csv_line_buffer));
-    snprintf(csv_line_buffer, sizeof(csv_line_buffer), ",,,,,,,,,,,,,,,,,,,,,,,,,");
-    csv_prepend_timestamp();
-    write_csv_line_to_file();
-
-    // Clear the line buffer for the next entry
-    memset(csv_line_buffer, 0, sizeof(csv_line_buffer));
-  }
-
-  filter_invalid_sample = false;
   csv_num_rows++;
   printf("Samples collected = %u\n", csv_num_rows);
 }

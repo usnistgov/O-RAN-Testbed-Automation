@@ -1,5 +1,5 @@
 diff --git a/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c b/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c
-index b69490fbc9..f36b111a6e 100644
+index 226fe80dbb..558cf008e1 100644
 --- a/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c
 +++ b/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c
 @@ -379,6 +379,9 @@ void abort_nr_dl_harq(NR_UE_info_t* UE, int8_t harq_pid)
@@ -12,7 +12,7 @@ index b69490fbc9..f36b111a6e 100644
  }
  
  typedef struct {
-@@ -1370,6 +1373,7 @@ void nr_schedule_ue_spec(module_id_t module_id,
+@@ -1367,6 +1370,7 @@ void nr_schedule_ue_spec(module_id_t module_id,
        gNB_mac->mac_stats.used_prb_aggregate += sched_pdsch->rbSize;
  
        /* save retransmission information */

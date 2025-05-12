@@ -94,6 +94,9 @@ By default, the Hello World Go xApp (hw-go) is installed automatically. Addition
 - **Hello World Rust xApp (hw-rust)**:
   - Install with `./additional_scripts/install_xapp_hw-rust.sh`.
   - More information can be found in the code [[18]][hw-rust-code].
+ 
+> [!NOTE]
+> The metrics collected using these xApps are simulated by default. Similarly, radio metrics provided by srsRAN_Project's gNodeB when connected as an E2 node to the RIC may also be simulated [[19]][srsran-lim]. Therefore, for radio metrics collected via a KPI monitoring xApp, it is recommended to use OpenAirInterface's Near-RT RIC with Mosiac5G's monitoring xApps (see the [OpenAirInterface Testbed](../../OpenAirInterface_Testbed)).
 
 ## Uninstalling an xApp
 
@@ -102,7 +105,7 @@ Alternatively, xApps can be uninstalled manually by fetching the list of xApps w
 
 ## Migration to Cilium
 
-The cluster is installed with Flannel as the default network plugin. There are several benefits of migrating to a security-enhanced network plugin like Cilium [[19]][cilium-io], for example, to monitor and regulate the network flows going in to and out of each pod using Cilium Hubble [[20]][cilium-hubble]. By default, pods can communicate with addresses outside the namespace (including the internet). Restricting this allows for better security and monitoring of the network flows. The following steps can be used to migrate the cluster to Cilium and apply policies that restrict such communications.
+The cluster is installed with Flannel as the default network plugin. There are several benefits of migrating to a security-enhanced network plugin like Cilium [[20]][cilium-io], for example, to monitor and regulate the network flows going in to and out of each pod using Cilium Hubble [[21]][cilium-hubble]. By default, pods can communicate with addresses outside the namespace (including the internet). Restricting this allows for better security and monitoring of the network flows. The following steps can be used to migrate the cluster to Cilium and apply policies that restrict such communications.
 
 - **Install Cilium and Migrate Cluster Nodes**: Run `./additional_scripts/install_cilium_and_migrate_nodes.sh` to install Cilium and migrate each of the pods from the current network plugin to Cilium, then apply policies that restrict the pods from communicating with addresses outside the namespace.
   - For debugging purposes, the following files are generated in `$HOME/.kube/`:
@@ -157,8 +160,9 @@ The cluster is installed with Flannel as the default network plugin. There are s
 16. Traffic Steering xApp project page. O-RAN Software Community. [https://github.com/o-ran-sc/ric-app-ts][trafficxapp-code]
 17. HW Python xApp project page. O-RAN Software Community. [https://github.com/o-ran-sc/ric-app-hw-python][hw-python-code]
 18. HW Rust xApp project page. O-RAN Software Community. [https://github.com/o-ran-sc/ric-app-hw-rust][hw-rust-code]
-19. eBPF-based Networking, Observability, Security. Cilium. [https://cilium.io][cilium-io]
-20. Hubble - Network, Service & Security Observability for Kubernetes using eBPF. Hubble. [https://cilium.io/hubble][cilium-hubble]
+19. O-RAN NearRT-RIC and xApp. srsRAN Project Documentation. [https://docs.srsran.com/projects/project/en/latest/tutorials/source/near-rt-ric/source/index.html#limitations]
+20. eBPF-based Networking, Observability, Security. Cilium. [https://cilium.io][cilium-io]
+21. Hubble - Network, Service & Security Observability for Kubernetes using eBPF. Hubble. [https://cilium.io/hubble][cilium-hubble]
 
 <!-- References -->
 
@@ -180,5 +184,6 @@ The cluster is installed with Flannel as the default network plugin. There are s
 [trafficxapp-docs]: https://docs.o-ran-sc.org/projects/o-ran-sc-ric-app-ts/en/latest/user-guide.html
 [hw-python-code]: https://github.com/o-ran-sc/ric-app-hw-python
 [hw-rust-code]: https://github.com/o-ran-sc/ric-app-hw-rust
+[srsran-lim]: https://docs.srsran.com/projects/project/en/latest/tutorials/source/near-rt-ric/source/index.html#limitations
 [cilium-io]: https://cilium.io
 [cilium-hubble]: https://cilium.io/hubble

@@ -49,7 +49,7 @@ OUTPUT_FILE="logs/e2sim_output.txt"
 ./install_scripts/stop_e2sim.sh
 
 echo "Starting a new container 'oransim'..."
-rm -rf $OUTPUT_FILE
+sudo rm -rf $OUTPUT_FILE
 sudo docker run -d -it --name oransim -e RAN_FUNC_ID="$RAN_FUNC_ID" -v "$(pwd)/logs:/app/logs" oransim:0.0.999
 
 kubectl get svc -n ricplt | grep e2term-sctp || true
@@ -81,7 +81,7 @@ while true; do
     fi
     # Create the log file if it does not exist
     if [ ! -f $OUTPUT_FILE ]; then
-        touch $OUTPUT_FILE
+        sudo touch $OUTPUT_FILE
         sudo chown $USER:$USER $OUTPUT_FILE
     fi
     # Check if kpm_sim is already running to avoid duplicate runs

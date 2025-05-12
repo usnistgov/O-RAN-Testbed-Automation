@@ -323,7 +323,7 @@ int nr_write_ce_dlsch_pdu(module_id_t module_idP,
 
 static void nr_store_dlsch_buffer(module_id_t module_id, frame_t frame, slot_t slot)
 {
-  UE_iterator(RC.nrmac[module_id]->UE_info.list, UE) {
+  UE_iterator(RC.nrmac[module_id]->UE_info.connected_ue_list, UE) {
     NR_UE_sched_ctrl_t *sched_ctrl = &UE->UE_sched_ctrl;
     sched_ctrl->num_total_bytes = 0;
     sched_ctrl->dl_pdus_total = 0;
@@ -612,9 +612,6 @@ static void pf_dl(module_id_t module_id,
 
   /* Loop UE_info->list to check retransmission */
   UE_iterator(UE_list, UE) {
-    if (!UE->Msg4_MsgB_ACKed)
-      continue;
-
     NR_UE_sched_ctrl_t *sched_ctrl = &UE->UE_sched_ctrl;
     NR_UE_DL_BWP_t *current_BWP = &UE->current_DL_BWP;
 
@@ -868,7 +865,7 @@ static void nr_dlsch_preprocessor(module_id_t module_id, frame_t frame, slot_t s
   gNB_MAC_INST *mac = RC.nrmac[module_id];
   NR_UEs_t *UE_info = &mac->UE_info;
 
-  if (UE_info->list[0] == NULL)
+  if (UE_info->connected_ue_list[0] == NULL)
     return;
 
   NR_ServingCellConfigCommon_t *scc = mac->common_channels[0].ServingCellConfigCommon;
@@ -888,7 +885,7 @@ static void nr_dlsch_preprocessor(module_id_t module_id, frame_t frame, slot_t s
   max_sched_ues = min(max_sched_ues, MAX_DCI_CORESET);
 
   /* proportional fair scheduling algorithm */
-  pf_dl(module_id, frame, slot, UE_info->list, max_sched_ues, num_beams, n_rb_sched);
+  pf_dl(module_id, frame, slot, UE_info->connected_ue_list, max_sched_ues, num_beams, n_rb_sched);
 }
 
 nr_pp_impl_dl nr_init_dlsch_preprocessor(int CC_id) {
@@ -943,7 +940,7 @@ void nr_schedule_ue_spec(module_id_t module_id,
   const NR_BWP_t *initialDL = &scc->downlinkConfigCommon->initialDownlinkBWP->genericParameters;
   gNB_mac->mac_stats.total_prb_aggregate += NRRIV2BW(initialDL->locationAndBandwidth, MAX_BWP_SIZE);
 
-  UE_iterator(UE_info->list, UE) {
+  UE_iterator(UE_info->connected_ue_list, UE) {
     NR_UE_sched_ctrl_t *sched_ctrl = &UE->UE_sched_ctrl;
     NR_UE_DL_BWP_t *current_BWP = &UE->current_DL_BWP;
 

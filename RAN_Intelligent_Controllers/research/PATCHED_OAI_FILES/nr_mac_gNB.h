@@ -229,8 +229,6 @@ typedef struct {
   NR_beam_alloc_t Msg3_beam;
   /// harq_pid used for Msg4 transmission
   uint8_t harq_pid;
-  /// UE RNTI allocated during RAR
-  rnti_t rnti;
   /// RA RNTI allocated from received PRACH
   uint16_t RA_rnti;
   /// MsgB RNTI allocated from received MsgA
@@ -251,25 +249,12 @@ typedef struct {
   int msg3_nbSymb;
   /// MAC PDU length for Msg4
   int mac_pdu_length;
-  /// RA search space
-  NR_SearchSpace_t *ra_ss;
-  /// RA Coreset
-  NR_ControlResourceSet_t *coreset;
-  NR_sched_pdcch_t sched_pdcch;
-  // Beam index
-  uint8_t beam_id;
-  /// CellGroup for UE that is to come (NSA is non-null, null for SA)
-  NR_CellGroupConfig_t *CellGroup;
   /// Preambles for contention-free access
   NR_preamble_ue_t preambles;
   int contention_resolution_timer;
   nr_ra_type_t ra_type;
   /// CFRA flag
   bool cfra;
-  // BWP for RA
-  NR_UE_DL_BWP_t DL_BWP;
-  NR_UE_UL_BWP_t UL_BWP;
-  NR_UE_ServingCell_Info_t sc_info;
 } NR_RA_t;
 
 /*! \brief gNB common channels */
@@ -289,8 +274,6 @@ typedef struct {
   /// used for otherSIB data
   uint8_t other_sib_bcch_pdu[2][NR_MAX_SIB_LENGTH / 8];
   int other_sib_bcch_length[2];
-  /// Template for RA computations
-  NR_RA_t ra[NR_NB_RA_PROC_MAX];
   /// VRB map for common channels
   uint16_t vrb_map[MAX_NUM_BEAM_PERIODS][275];
   /// VRB map for common channels and PUSCH, dynamically allocated because
@@ -656,7 +639,6 @@ typedef struct {
   int pusch_snrx10;
   int pucch_snrx10;
   uint16_t ul_rssi;
-  uint8_t current_harq_pid;
   int pusch_consecutive_dtx_cnt;
   int pucch_consecutive_dtx_cnt;
   bool ul_failure;
@@ -766,27 +748,25 @@ typedef struct {
   NR_mac_stats_t mac_stats;
   /// currently active CellGroupConfig
   NR_CellGroupConfig_t *CellGroup;
-  /// CellGroupConfig that is to be activated after the next reconfiguration
-  bool expect_reconfiguration;
   /// reestablishRLC has to be signaled in RRCreconfiguration
   bool reestablish_rlc;
-  NR_CellGroupConfig_t *reconfigCellGroup;
   interrupt_followup_action_t interrupt_action;
   NR_UE_NR_Capability_t *capability;
   // UE selected beam index
   uint8_t UE_beam_index;
-  bool Msg4_MsgB_ACKed;
   float ul_thr_ue;
   float dl_thr_ue;
   long pdsch_HARQ_ACK_Codebook;
   bool is_redcap;
+  NR_RA_t *ra;
 } NR_UE_info_t;
 
 typedef struct {
   /// scheduling control info
   // last element always NULL
   pthread_mutex_t mutex;
-  NR_UE_info_t *list[MAX_MOBILES_PER_GNB+1];
+  NR_UE_info_t *connected_ue_list[MAX_MOBILES_PER_GNB + 1];
+  NR_UE_info_t *access_ue_list[NR_NB_RA_PROC_MAX + 1];
   // bitmap of CSI-RS already scheduled in current slot
   int sched_csirs;
   uid_allocator_t uid_allocator;

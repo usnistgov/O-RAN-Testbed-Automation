@@ -282,7 +282,7 @@ static arr_ue_id_t filter_ues_by_s_nssai_in_du_or_monolithic(const test_info_lst
   const ngran_node_t node_type = get_e2_node_type();
 
   // Take MAC info
-  UE_iterator (RC.nrmac[0]->UE_info.list, ue) {
+  UE_iterator(RC.nrmac[0]->UE_info.connected_ue_list, ue) {
     NR_UE_sched_ctrl_t *sched_ctrl = &ue->UE_sched_ctrl;
     // UE matches if any of its DRBs matches
     for (size_t l = 0; l < seq_arr_size(&sched_ctrl->lc_config); ++l) {

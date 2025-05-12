@@ -94,7 +94,7 @@ static meas_record_lst_t fill_RSRP(__attribute__((unused))uint32_t gran_period_m
   if (ue_info.ue->mac_stats.prev_num_rsrp_meas > 0) {
     meas_record.real_val = (double)ue_info.ue->mac_stats.prev_cumul_rsrp / (double)ue_info.ue->mac_stats.prev_num_rsrp_meas; // [dBm]
   } else {
-    meas_record.real_val = 0.0;
+    meas_record.real_val = NAN;
   }
   
   return meas_record;
@@ -135,13 +135,18 @@ static meas_record_lst_t fill_RSSI(__attribute__((unused))uint32_t gran_period_m
   meas_record.value = REAL_MEAS_VALUE;
 
   // Retrieve the cumulative RSRP in dBm averaged over the number of measurements
-  double RSRP = ue_info.ue->mac_stats.prev_num_rsrp_meas > 0 ? (double)ue_info.ue->mac_stats.prev_cumul_rsrp / ue_info.ue->mac_stats.prev_num_rsrp_meas : 0.0;
+  double RSRP = ue_info.ue->mac_stats.prev_num_rsrp_meas > 0 ? (double)ue_info.ue->mac_stats.prev_cumul_rsrp / ue_info.ue->mac_stats.prev_num_rsrp_meas : NAN;
+
+  if (isnan(RSRP)) {
+    meas_record.real_val = NAN;
+    return meas_record;
+  }
 
   // Retrieve the number of Resource Blocks over which RSSI is measured
   double N = ue_info.ue->mac_stats.NPRB;
 
 
-  // RSRP (dBM) = RSSI - 10*log(12*N)
+  // Based on https://www.techplayon.com/rssi : RSRP (dBM) = RSSI - 10*log(12*N)
   double RSSI = RSRP + 10 * log10(12 * N);
 
   meas_record.real_val = RSSI;

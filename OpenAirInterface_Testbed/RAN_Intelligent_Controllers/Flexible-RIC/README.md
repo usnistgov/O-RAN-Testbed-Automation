@@ -15,11 +15,45 @@ The Near-RT RIC, conceptualized by the O-RAN Alliance's Working Group 3 (WG3) [[
 
 ## Running an xApp
 
-This installation of the Near-RT RIC supports four xApps.
+This installation of the Near-RT RIC supports six xApps.
 
 - **KPI Monitor xApp (xapp_kpm_moni)**:
   - Run with `./run_xapp_kpm_moni.sh`.
-  - Patched to run indefinitely and include SSB/CSI-RS RSRP metric in KPIs.
+  - Patched to run indefinitely and include several new metrics (see below).
+    - Pre-existing metrics from OpenAirInterface:
+      ```console
+      DRB.PdcpSduVolumeDL (kb) - Downlink volume of the UE since the last sample
+      DRB.PdcpSduVolumeUL (kb) - Uplink volume of the UE since the last sample
+      DRB.RlcSduDelayDl (μs) - Delay downlink, (100ms-windowed) per-packet sojourn (SDU to PDU) in microseconds
+      DRB.UEThpDl (kbps) - Downlink throughput of the UE since the last sample
+      DRB.UEThpUl (kbps) - Uplink throughput of the UE since the last sample
+      RRU.PrbTotDl (PRB count) - Number of resource blocks received since the last sample
+      RRU.PrbTotUl (PRB count) - Number of resource blocks sent since the last sample
+      ```
+    - New metrics for the automation tool:
+      ```console
+      RSRP (dBm) - Averaged SSB/CSI-RS Reference Signal Received Power in the sample
+      N_RSRP_MEAS (count) - Number of RSRP measurements in the sample, used to calculate RSRP
+      N_PRB (count) - Number of PRBs in the sample, used to calculate RSSI
+      RSSI (dBm) - Received Signal Strength Indicator (computed using RSRP and N_PRB: https://www.techplayon.com/rssi)
+      PUSCH_SNR (dB) - Signal to noise ratio for Physical Uplink Shared Channel
+      PUCCH_SNR (dB) - Signal to noise ratio for Physical Uplink Control Channel
+      DRB.HarqMcsUl (MCS index) - Uplink modulation and coding scheme to use
+      DRB.HarqMcsDl (MCS index) - Downlink modulation and coding scheme to use
+      DRB.HarqBlockErrorRateUl (%) - Percentage of uplink HARQ blocks containing corrupt SDUs
+      DRB.HarqBlockErrorRateDl (%) - Percentage of downlink HARQ blocks containing corrupt SDUs
+      DRB.MacSduRetransmissionRateUl (%) - Percentage of uplink SDUs retransmitted
+      DRB.MacSduRetransmissionRateDl (%) - Percentage of downlink SDUs retransmitted
+      DRB.MacSduErrorRateUl (%) - Percentage of corrupt uplink SDUs [Experimental]
+      DRB.MacSduErrorRateDl (%) - Percentage of corrupt downlink SDUs [Experimental]
+      CQI_SINGLE_CODEWORD - Single codeword channel quality indicator [Experimental]
+      CQI_DUAL_CODEWORD - Dual codeword channel quality indicator [Experimental]
+      RSRQ (dB) - Reference Signal Received Quality, computed using RSRP, RSSI, and N_PRB [Experimental]
+      ```
+- **KPI Monitor to CSV xApp (xapp_kpm_moni_write_to_csv)**:
+  - Retains all functionality from xapp_kpm_moni, but rather than outputting to stdout, writes to `logs/KPI_Metrics.csv`.
+- **KPI Monitor to InfluxDB v2 xApp (xapp_kpm_moni_write_to_influxdb)**:
+  - Retains all functionality from xapp_kpm_moni, but rather than outputting to stdout, writes to a InfluxDB database (/var/lib/influxdb).
 - **MAC + RLC + PDCP + GTP Monitor xApp (xapp_gtp_mac_rlc_pdcp_moni)**:
   - Run with `./additional_scripts/run_xapp_gtp_mac_rlc_pdcp_moni.sh`.
 - **RIC Control xApp (xapp_kpm_rc)**:

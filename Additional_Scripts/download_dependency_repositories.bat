@@ -71,7 +71,7 @@ if exist "Next_Generation_Node_B\srsRAN_Project" rmdir /s /q "Next_Generation_No
 cd Next_Generation_Node_B
 git clone https://github.com/srsran/srsRAN_Project.git
 cd srsRAN_Project
-git checkout 2be82d8ea38e3a729850b702254952c04118cc38
+git checkout 644263b5a7c7b98b892bc1120940ae8d801eaee0
 cd ..\..
 
 cd %~dp0..
@@ -175,7 +175,7 @@ if exist "RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep" rmdir /s /q "RAN_In
 cd RAN_Intelligent_Controllers\Non-Real-Time-RIC
 git clone https://gerrit.o-ran-sc.org/r/it/dep.git
 cd dep
-git checkout 5f4f598476b357cad58d25af1c7174f87407c088
+git checkout dfcfdbc9b540b3e6d401b8c09379e5a8b6267848
 git restore --source=HEAD :/
 cd ..\..\..
 
@@ -184,7 +184,7 @@ if exist "RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\ranpm" rmdir /s /q "
 cd RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep
 git clone https://gerrit.o-ran-sc.org/r/nonrtric/plt/ranpm.git
 cd ranpm
-git checkout cfb34a99dc39c0ef22d5b1aab884483338ffed95
+git checkout b5f4f8698217ce70d3c2e6a454146fbcd2111d35
 cd ..\..\..\..
 
 cd %~dp0..
@@ -208,7 +208,7 @@ if exist "RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\smo-install\onap_oom
 cd RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\smo-install
 git clone https://gerrit.onap.org/r/oom.git
 cd onap_oom
-git checkout 8eb517a47ef7ef0e4bdc00c881449a979f29fdf0
+git checkout 1ca9e322036072b2d1ef69046c297ca13f1618b7
 cd ..\..\..\..\..
 
 cd %~dp0..
@@ -255,7 +255,7 @@ if exist "OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC\swig
 cd OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC
 git clone https://github.com/swig/swig.git
 cd swig
-git checkout e1cf7b37accc9f8ae248086194372f2a561e1195
+git checkout 01bf5808dd44516a7937afd4fb5438c026d937ac
 cd ..\..\..\..
 
 cd %~dp0..

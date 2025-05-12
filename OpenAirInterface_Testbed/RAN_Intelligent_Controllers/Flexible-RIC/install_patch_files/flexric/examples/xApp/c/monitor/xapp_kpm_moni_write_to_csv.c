@@ -149,7 +149,14 @@ static void csv_append_real_to_csv_line(meas_record_lst_t meas_record)
 
   if (current_len + 32 < sizeof(csv_line_buffer)) // Reserve space for float and comma
   {
-    snprintf(csv_line_buffer + current_len, sizeof(csv_line_buffer) - current_len, "%.2f,", meas_record.real_val);
+    if (isnan(meas_record.real_val))
+    {
+      snprintf(csv_line_buffer + current_len, sizeof(csv_line_buffer) - current_len, ",");
+    }
+    else
+    {
+      snprintf(csv_line_buffer + current_len, sizeof(csv_line_buffer) - current_len, "%.2f,", meas_record.real_val);
+    }
   }
   else
   {

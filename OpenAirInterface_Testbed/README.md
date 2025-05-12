@@ -1,6 +1,6 @@
 ## OpenAirInterface Testbed
 
-This testbed deployment consists of a 5G Core Network by Open5GS [[1]][open5gs-core], gNodeB and 5G UE by OpenAirInterface [[2]][oai-ue-gnb], and FlexRIC by Mosaic5G [[3]][mosaic-flexric].
+This testbed deployment consists of a 5G Core Network by Open5GS [[1]][open5gs-core], gNodeB and 5G UE by OpenAirInterface [[2]][oai-ue-gnb], and FlexRIC by Mosaic5G [[3]][mosaic-flexric]. The scripts in these directories build, install, and configure the testbed components similar to the parent directory. Each directory contains a `README.md` file providing more details on the testbed component.
 
 ## Usage
 
@@ -8,7 +8,7 @@ This testbed deployment consists of a 5G Core Network by Open5GS [[1]][open5gs-c
 - **Generate Configurations**: Use `./generate_configurations.sh` to create configuration files for each testbed component.
 - **Start the Testbed**: Use `./run.sh` to start the 5G Core, FlexRIC, gNodeB, and UE as background processes, and KPI monitoring xApp in the foreground.
   - To start the testbed components but use a modified KPI monitor xApp that logs the metrics to file and a Grafana dashboard to fetch and visualize the metrics in real-time, use `./run_with_grafana_dashboard.sh`.
-- **Run an xApp**: Once all components are running and properly connected, use the `./run_xapp_*` scripts within the RAN_Intelligent_Controllers/FlexRIC/additional_scripts directory to interact with the gNodeB and UE.
+- **Run an xApp**: Once the 5G Core, FlexRIC, gNodeB, and UE are running and properly connected, use the `./run_xapp_*` scripts within the RAN_Intelligent_Controllers/FlexRIC/additional_scripts directory to interact with the gNodeB and UE.
 - **Stop the Testbed**: Terminate the testbed components with `./stop.sh`.
 - **Status**: Check which testbed components are running with `./is_running.sh`.
 - **Debugging Information**: Configuration files are in the `configs/` directory, and log files are located in the `logs/` directory for each component.

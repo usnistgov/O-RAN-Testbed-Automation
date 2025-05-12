@@ -1,5 +1,5 @@
 diff --git a/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c b/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c
-index 80579e1754..07b8974aa0 100644
+index 80579e1754..dc07911dac 100644
 --- a/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c
 +++ b/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c
 @@ -22,6 +22,7 @@
@@ -10,7 +10,7 @@ index 80579e1754..07b8974aa0 100644
  
  /* measurements that need to store values from previous reporting period have a limitation
     when it comes to multiple subscriptions to the same UEs; ric_req_id is unique per subscription */
-@@ -82,6 +83,249 @@ static meas_record_lst_t fill_DRB_PdcpSduVolumeUL(__attribute__((unused))uint32_
+@@ -82,6 +83,254 @@ static meas_record_lst_t fill_DRB_PdcpSduVolumeUL(__attribute__((unused))uint32_
    return meas_record;
  }
  
@@ -25,7 +25,7 @@ index 80579e1754..07b8974aa0 100644
 +  if (ue_info.ue->mac_stats.prev_num_rsrp_meas > 0) {
 +    meas_record.real_val = (double)ue_info.ue->mac_stats.prev_cumul_rsrp / (double)ue_info.ue->mac_stats.prev_num_rsrp_meas; // [dBm]
 +  } else {
-+    meas_record.real_val = 0.0;
++    meas_record.real_val = NAN;
 +  }
 +  
 +  return meas_record;
@@ -66,13 +66,18 @@ index 80579e1754..07b8974aa0 100644
 +  meas_record.value = REAL_MEAS_VALUE;
 +
 +  // Retrieve the cumulative RSRP in dBm averaged over the number of measurements
-+  double RSRP = ue_info.ue->mac_stats.prev_num_rsrp_meas > 0 ? (double)ue_info.ue->mac_stats.prev_cumul_rsrp / ue_info.ue->mac_stats.prev_num_rsrp_meas : 0.0;
++  double RSRP = ue_info.ue->mac_stats.prev_num_rsrp_meas > 0 ? (double)ue_info.ue->mac_stats.prev_cumul_rsrp / ue_info.ue->mac_stats.prev_num_rsrp_meas : NAN;
++
++  if (isnan(RSRP)) {
++    meas_record.real_val = NAN;
++    return meas_record;
++  }
 +
 +  // Retrieve the number of Resource Blocks over which RSSI is measured
 +  double N = ue_info.ue->mac_stats.NPRB;
 +
 +
-+  // RSRP (dBM) = RSSI - 10*log(12*N)
++  // Based on https://www.techplayon.com/rssi : RSRP (dBM) = RSSI - 10*log(12*N)
 +  double RSSI = RSRP + 10 * log10(12 * N);
 +
 +  meas_record.real_val = RSSI;
@@ -260,7 +265,7 @@ index 80579e1754..07b8974aa0 100644
  #if defined (NGRAN_GNB_DU)
  static uldlcounter_t last_rlc_pdu_total_bytes[MAX_MOBILES_PER_GNB] = {0};
  static uldlcounter_t last_total_prbs[MAX_MOBILES_PER_GNB] = {0};
-@@ -194,6 +438,23 @@ static meas_record_lst_t fill_RRU_PrbTotUl(__attribute__((unused))uint32_t gran_
+@@ -194,6 +443,23 @@ static meas_record_lst_t fill_RRU_PrbTotUl(__attribute__((unused))uint32_t gran_
  static kv_measure_t lst_measure[] = {
    {.key = "DRB.PdcpSduVolumeDL", .value = fill_DRB_PdcpSduVolumeDL }, 
    {.key = "DRB.PdcpSduVolumeUL", .value = fill_DRB_PdcpSduVolumeUL },

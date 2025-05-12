@@ -151,7 +151,7 @@ static void csv_append_real_to_csv_line(meas_record_lst_t meas_record)
   {
     if (isnan(meas_record.real_val))
     {
-      snprintf(csv_line_buffer + current_len, sizeof(csv_line_buffer) - current_len, ",");
+      snprintf(csv_line_buffer + current_len, sizeof(csv_line_buffer) - current_len, "NaN,");
     }
     else
     {

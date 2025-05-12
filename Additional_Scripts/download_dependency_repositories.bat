@@ -39,7 +39,7 @@ if exist "5G_Core_Network\open5gs" rmdir /s /q "5G_Core_Network\open5gs"
 cd 5G_Core_Network
 git clone https://github.com/open5gs/open5gs.git
 cd open5gs
-git checkout 7b40d5a3f1080f088c653abfdc01f3adfac5d3cd
+git checkout 78ea40881c85e266848071391cd36d9172e60a51
 cd ..\..
 
 cd %~dp0..
@@ -71,7 +71,7 @@ if exist "Next_Generation_Node_B\srsRAN_Project" rmdir /s /q "Next_Generation_No
 cd Next_Generation_Node_B
 git clone https://github.com/srsran/srsRAN_Project.git
 cd srsRAN_Project
-git checkout 644263b5a7c7b98b892bc1120940ae8d801eaee0
+git checkout 122a1377e33f0071e2aa88028cf29740106654f5
 cd ..\..
 
 cd %~dp0..
@@ -235,7 +235,7 @@ if exist "OpenAirInterface_Testbed\5G_Core_Network\open5gs" rmdir /s /q "OpenAir
 cd OpenAirInterface_Testbed\5G_Core_Network
 git clone https://github.com/open5gs/open5gs.git
 cd open5gs
-git checkout 7b40d5a3f1080f088c653abfdc01f3adfac5d3cd
+git checkout 78ea40881c85e266848071391cd36d9172e60a51
 cd ..\..\..
 
 cd %~dp0..
@@ -243,7 +243,7 @@ if exist "OpenAirInterface_Testbed\User_Equipment\openairinterface5g" rmdir /s /
 cd OpenAirInterface_Testbed\User_Equipment
 git clone https://gitlab.eurecom.fr/oai/openairinterface5g.git
 cd openairinterface5g
-git checkout acb982d0bd96b01dee84aea730f01dfff73875d0
+git checkout 9b878d920d54a0bb6fda7b608895b315712b36ca
 cd ..\..\..
 
 cd OpenAirInterface_Testbed\Next_Generation_Node_B
@@ -255,7 +255,7 @@ if exist "OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC\swig
 cd OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC
 git clone https://github.com/swig/swig.git
 cd swig
-git checkout 01bf5808dd44516a7937afd4fb5438c026d937ac
+git checkout b96b955ca15a01f0425fb26c234528530923202a
 cd ..\..\..\..
 
 cd %~dp0..

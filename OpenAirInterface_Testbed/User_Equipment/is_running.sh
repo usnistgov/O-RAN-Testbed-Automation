@@ -53,7 +53,7 @@ done < <(pgrep -af "nr-uesoftmodem -O " | grep "configs/ue")
 if [ ${#RUNNING_UE_NUMBERS[@]} -gt 0 ]; then
     echo "User Equipment: RUNNING (${RUNNING_UE_NUMBERS[*]})"
 else
-    if pgrep -x "srsue" >/dev/null; then
+    if pgrep -x "nr-uesoftmodem" >/dev/null; then
         echo "User Equipment: RUNNING"
     else
         echo "User Equipment: NOT_RUNNING"

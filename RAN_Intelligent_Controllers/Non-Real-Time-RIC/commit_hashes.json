@@ -1,10 +1,10 @@
 {
   "https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep.git": ["master", "33b5940a15ea852d47f73521295eef53d295b7fd"],
   "https://gerrit.o-ran-sc.org/r/ric-plt/appmgr.git": ["", "4c05932dce72e98db23eaff2b72b58816e1f2d55"],
-  "https://gerrit.o-ran-sc.org/r/it/dep.git": ["master", "dfcfdbc9b540b3e6d401b8c09379e5a8b6267848"],
-  "https://gerrit.o-ran-sc.org/r/nonrtric/plt/ranpm.git": ["master", "b5f4f8698217ce70d3c2e6a454146fbcd2111d35"],  
+  "https://gerrit.o-ran-sc.org/r/it/dep.git": ["master", "c5916162150a5195b4c1351f352ccfecf0cef3de"],
+  "https://gerrit.o-ran-sc.org/r/nonrtric/plt/ranpm.git": ["master", "c132a4d3fd2155b7de3f4c1276748729bab0f381"],
   "https://github.com/onap/multicloud-k8s.git": ["", "8bea0a13c223aff43f98f0cb6426379bb23e8894"],
-  "https://gerrit.onap.org/r/oom.git": ["", "1ca9e322036072b2d1ef69046c297ca13f1618b7"],
+  "https://gerrit.onap.org/r/oom.git": ["", "858875790b72b4f6f4dc41077de5c85793107022"],
   "https://gerrit.o-ran-sc.org/r/portal/nonrtric-controlpanel.git": ["master", "15bdaf8f25dca54e3a52ad30d69fa2eb1d59ce48"],
   "https://gerrit.o-ran-sc.org/r/nonrtric/plt/rappmanager.git": ["k-release", "688ab2c9ac9b1af06c30ddc28db9bcc5ecaaa096"]
 }

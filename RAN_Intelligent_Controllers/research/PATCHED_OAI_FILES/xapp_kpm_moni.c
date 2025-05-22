@@ -40,6 +40,10 @@ uint64_t const period_ms = 1000;
 static
 pthread_mutex_t mtx;
 
+void handle_sigint(int signum) {
+  run_forever = false;
+}
+
 static
 void log_gnb_ue_id(ue_id_e2sm_t ue_id)
 {
@@ -97,8 +101,7 @@ void log_int_value(byte_array_t name, meas_record_lst_t meas_record)
     printf("DRB.PdcpSduVolumeDL = %u [kb]\n", meas_record.int_val);
   } else if (cmp_str_ba("DRB.PdcpSduVolumeUL", name) == 0) {
     printf("DRB.PdcpSduVolumeUL = %u [kb]\n", meas_record.int_val);
-
-  // Added int metrics deviating from FlexRIC:
+  // Added int metrics for KPM research:
   } else if (cmp_str_ba("N_RSRP_MEAS", name) == 0) {
     printf("N_RSRP_MEAS = %u\n", meas_record.int_val);
   } else if (cmp_str_ba("N_PRB", name) == 0) {
@@ -125,8 +128,7 @@ void log_real_value(byte_array_t name, meas_record_lst_t meas_record)
     printf("DRB.UEThpDl = %.2f [kbps]\n", meas_record.real_val);
   } else if (cmp_str_ba("DRB.UEThpUl", name) == 0) {
     printf("DRB.UEThpUl = %.2f [kbps]\n", meas_record.real_val);
-
-  // Added float metrics deviating from FlexRIC:
+  // Added float metrics for KPM research:
   } else if (cmp_str_ba("RSRP", name) == 0) {
     printf("RSRP = %.2f [dBm]\n", meas_record.real_val);
   } else if (cmp_str_ba("RSSI", name) == 0) {
@@ -453,13 +455,17 @@ int main(int argc, char* argv[])
       free_kpm_sub_data(&kpm_sub);
     }
   }
+
+  if (run_forever) signal(SIGINT, handle_sigint);
+  while (run_forever) {
+    usleep(10000);
+  }
+
   ////////////
   // END KPM
   ////////////
 
-  sleep(10);
-  while (run_forever)
-    sleep(10);
+  xapp_wait_end_api();
 
   for (int i = 0; i < nodes.len; ++i) {
     // Remove the handle previously returned

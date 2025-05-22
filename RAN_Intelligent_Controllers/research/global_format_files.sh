@@ -36,7 +36,7 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR/../.."
 
-if [ ! -f "NIST Commercial Product Disclaimer.md" ]; then
+if [ ! -f "NIST Software Disclaimer.md" ]; then
     echo "Wrong directory"
     pwd
     ls
@@ -59,8 +59,9 @@ find . -type d -exec chmod 775 {} +
 find . -type f -exec chmod 664 {} +
 
 chmod 644 "LICENSE"
-chmod 644 "NIST Commercial Product Disclaimer.md"
 chmod 644 "NIST Software Disclaimer.md"
 
 find . -type f -exec chmod -x {} +
 find . -type f -name "*.sh" -exec chmod +x {} \;
+
+echo "OK."

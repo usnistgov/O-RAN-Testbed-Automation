@@ -21,7 +21,7 @@ This tool supports the deployment of 5G O-RAN testbeds using open-source compone
 ```text
 CU/DU
 ├── srsRAN_Project gNB: v24.10.1
-├── OpenAirInterface gNB: v2025.w18
+├── OpenAirInterface gNB: v2025.w20
 └── O-RAN SC E2 Simulator: k-release
 RICs
 ├── O-RAN SC Near-RT RIC: k-release
@@ -45,7 +45,7 @@ RICs
 └── Open5GS: v2.7.5
 UEs
 ├── srsRAN_4G: v23.11
-└── OpenAirInterface 5G UE: v2025.w14
+└── OpenAirInterface 5G UE: v2025.w20
 ```
 
 The components that have been verified to support or not support connectivity are included below.
@@ -273,3 +273,4 @@ USNISTGOV/O-RAN-Testbed-Automation is developed and maintained by the NIST Wirel
 [nist-oran]: https://www.nist.gov/programs-projects/Open-RAN-Research-NIST
 [gh-nsd]: ./NIST%20Software%20Disclaimer.md
 [gh-license]: ./LICENSE
+

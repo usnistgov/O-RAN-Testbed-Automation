@@ -198,7 +198,8 @@ typedef struct NR_sched_pdcch {
   uint8_t InterleaverSize;
   uint16_t ShiftIndex;
   uint8_t DurationSymbols;
-  int n_rb;
+  uint16_t n_rb;
+  uint16_t rb_start;
 } NR_sched_pdcch_t;
 
 /*! \brief gNB template for the Random access information */
@@ -913,7 +914,7 @@ typedef struct gNB_MAC_INST_s {
   bool first_MIB;
   NR_bler_options_t dl_bler;
   NR_bler_options_t ul_bler;
-  uint8_t min_grant_prb;
+  uint16_t min_grant_prb;
   bool identity_pm;
   int precoding_matrix_size[NR_MAX_NB_LAYERS];
   int fapi_beam_index[MAX_NUM_OF_SSB];

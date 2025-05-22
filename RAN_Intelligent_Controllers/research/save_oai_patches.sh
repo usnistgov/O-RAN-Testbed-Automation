@@ -74,4 +74,5 @@ echo
 echo
 echo
 
-./apply_updates_from_parent_dir_ORAN_Testbed_Init.sh
+# For now, don't update the publicsafety oai5g repository
+#./apply_updates_from_parent_dir_ORAN_Testbed_Init.sh

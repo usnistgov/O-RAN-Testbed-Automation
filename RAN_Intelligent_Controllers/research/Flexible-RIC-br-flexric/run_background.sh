@@ -40,7 +40,7 @@ if pgrep -x "nearRT-RIC" >/dev/null; then
     echo "Already running flexric."
 else
     if [ ! -f "configs/ric.conf" ]; then
-        echo "Configuration was not found for gNodeB. Please run ./generate_configurations.sh first."
+        echo "Configuration was not found for SRS gNodeB. Please run ./generate_configurations.sh first."
         exit 1
     fi
 

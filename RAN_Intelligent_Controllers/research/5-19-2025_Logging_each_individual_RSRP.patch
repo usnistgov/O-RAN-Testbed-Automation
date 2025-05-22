@@ -1,0 +1,174 @@
+diff --git a/OpenAirInterface_Testbed/User_Equipment/install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/main.c.patch b/OpenAirInterface_Testbed/User_Equipment/install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/main.c.patch
+index 1115c2e..57710b3 100644
+--- a/OpenAirInterface_Testbed/User_Equipment/install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/main.c.patch
++++ b/OpenAirInterface_Testbed/User_Equipment/install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/main.c.patch
+@@ -1,5 +1,5 @@
+ diff --git a/openair2/LAYER2/NR_MAC_gNB/main.c b/openair2/LAYER2/NR_MAC_gNB/main.c
+-index 3137ce0902..ebb0afb5df 100644
++index 3137ce0902..37b82ee3a5 100644
+ --- a/openair2/LAYER2/NR_MAC_gNB/main.c
+ +++ b/openair2/LAYER2/NR_MAC_gNB/main.c
+ @@ -135,6 +135,7 @@ size_t dump_mac_stats(gNB_MAC_INST *gNB, char *output, size_t strlen, bool reset
+@@ -10,13 +10,38 @@ index 3137ce0902..ebb0afb5df 100644
+      output += snprintf(output,
+                         end - output,
+                         " %s PH %d dB PCMAX %d dBm, average RSRP %d (%d meas)\n",
+-@@ -174,6 +175,9 @@ size_t dump_mac_stats(gNB_MAC_INST *gNB, char *output, size_t strlen, bool reset
++@@ -144,6 +145,18 @@ size_t dump_mac_stats(gNB_MAC_INST *gNB, char *output, size_t strlen, bool reset
++                        avg_rsrp,
++                        stats->num_rsrp_meas);
++ 
+++    // NIST: Distinguishing between each RSRP measurement: print each RSRP measurement
+++    output += snprintf(output, end - output, "    RSRP Measurements: [");
+++    for (int i = 0; i < stats->num_rsrp_meas; i++) {
+++      output += snprintf(output, end - output, "%d%s", stats->rsrp_meas[i], (i < stats->num_rsrp_meas - 1) ? ", " : "");
+++    }
+++    output += snprintf(output, end - output, "]\n");
+++    output += snprintf(output, end - output, "    Number of Reports:     [");
+++    for (int i = 0; i < stats->num_rsrp_meas; i++) {
+++      output += snprintf(output, end - output, "%u%s", stats->rsrp_meas_num_reports[i], (i < stats->num_rsrp_meas - 1) ? ", " : "");
+++    }
+++    output += snprintf(output, end - output, "]\n");
+++
++     if(sched_ctrl->CSI_report.cri_ri_li_pmi_cqi_report.print_report)
++       output += snprintf(output,
++                          end - output,
++@@ -174,6 +187,15 @@ size_t dump_mac_stats(gNB_MAC_INST *gNB, char *output, size_t strlen, bool reset
+                         UE->current_DL_BWP.mcsTableIdx,
+                         sched_ctrl->dl_bler_stats.mcs);
+      if (reset_rsrp) {
+ +      // Save previous RSRP values before resetting so that querying them is synchronized with the gNB output
+ +      stats->prev_num_rsrp_meas = stats->num_rsrp_meas;
+ +      stats->prev_cumul_rsrp = stats->cumul_rsrp;
+++
+++      // NIST: Distinguishing between each RSRP measurement: reset the array and the capacity
+++      memset(stats->rsrp_meas, 0, sizeof(stats->rsrp_meas));
+++      memset(stats->rsrp_meas_num_reports, 0, sizeof(stats->rsrp_meas_num_reports));
+++      stats->rsrp_meas_capacity = 0;
+++
+        stats->num_rsrp_meas = 0;
+        stats->cumul_rsrp = 0;
+      }
+diff --git a/OpenAirInterface_Testbed/User_Equipment/install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.patch b/OpenAirInterface_Testbed/User_Equipment/install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.patch
+index 35a6317..de482be 100644
+--- a/OpenAirInterface_Testbed/User_Equipment/install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.patch
++++ b/OpenAirInterface_Testbed/User_Equipment/install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.patch
+@@ -1,5 +1,5 @@
+ diff --git a/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h b/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h
+-index 561f55339c..0c2d6c8261 100644
++index 561f55339c..d1f76f2b89 100644
+ --- a/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h
+ +++ b/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h
+ @@ -482,6 +482,8 @@ typedef struct NR_UE_harq {
+@@ -19,9 +19,16 @@ index 561f55339c..0c2d6c8261 100644
+  } NR_mac_dir_stats_t;
+  
+  typedef struct NR_mac_stats {
+-@@ -701,6 +704,8 @@ typedef struct NR_mac_stats {
++@@ -700,7 +703,15 @@ typedef struct NR_mac_stats {
++   uint64_t ulsch_total_bytes_scheduled;
+    uint32_t pucch0_DTX;
+    int cumul_rsrp;
+++
+++  // NIST: Distinguishing between each RSRP measurement: define array of RSRP measurements
+++  int rsrp_meas[1024];
+++  uint8_t rsrp_meas_num_reports[1024];
+++  uint16_t rsrp_meas_capacity;
+++
+    uint8_t num_rsrp_meas;
+ +  int prev_cumul_rsrp;
+ +  uint8_t prev_num_rsrp_meas;
+diff --git a/OpenAirInterface_Testbed/User_Equipment/install_scripts/apply_patches.sh b/OpenAirInterface_Testbed/User_Equipment/install_scripts/apply_patches.sh
+index 3ca63a6..5b27b7f 100755
+--- a/OpenAirInterface_Testbed/User_Equipment/install_scripts/apply_patches.sh
++++ b/OpenAirInterface_Testbed/User_Equipment/install_scripts/apply_patches.sh
+@@ -101,6 +101,17 @@ git restore openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c
+ git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c.patch"
+ cd ..
+ 
++# Distinguishing between each RSRP measurement: Patch to store the RSRP measurements
++if [ ! -f "openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c.previous" ]; then
++    cp openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c.previous
++fi
++echo
++echo "Patching gNB_scheduler_uci.c..."
++cd openairinterface5g
++git restore openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c
++git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c.patch"
++cd ..
++
+ # If using Linux Mint, add support for Linux Mint 20, 21, and 22 to OpenAirInterface
+ if grep -q "Linux Mint" /etc/os-release; then
+     echo
+diff --git a/RAN_Intelligent_Controllers/research/PATCHED_OAI_FILES/main.c b/RAN_Intelligent_Controllers/research/PATCHED_OAI_FILES/main.c
+index ebb0afb..37b82ee 100644
+--- a/RAN_Intelligent_Controllers/research/PATCHED_OAI_FILES/main.c
++++ b/RAN_Intelligent_Controllers/research/PATCHED_OAI_FILES/main.c
+@@ -145,6 +145,18 @@ size_t dump_mac_stats(gNB_MAC_INST *gNB, char *output, size_t strlen, bool reset
+                        avg_rsrp,
+                        stats->num_rsrp_meas);
+ 
++    // NIST: Distinguishing between each RSRP measurement: print each RSRP measurement
++    output += snprintf(output, end - output, "    RSRP Measurements: [");
++    for (int i = 0; i < stats->num_rsrp_meas; i++) {
++      output += snprintf(output, end - output, "%d%s", stats->rsrp_meas[i], (i < stats->num_rsrp_meas - 1) ? ", " : "");
++    }
++    output += snprintf(output, end - output, "]\n");
++    output += snprintf(output, end - output, "    Number of Reports:     [");
++    for (int i = 0; i < stats->num_rsrp_meas; i++) {
++      output += snprintf(output, end - output, "%u%s", stats->rsrp_meas_num_reports[i], (i < stats->num_rsrp_meas - 1) ? ", " : "");
++    }
++    output += snprintf(output, end - output, "]\n");
++
+     if(sched_ctrl->CSI_report.cri_ri_li_pmi_cqi_report.print_report)
+       output += snprintf(output,
+                          end - output,
+@@ -178,6 +190,12 @@ size_t dump_mac_stats(gNB_MAC_INST *gNB, char *output, size_t strlen, bool reset
+       // Save previous RSRP values before resetting so that querying them is synchronized with the gNB output
+       stats->prev_num_rsrp_meas = stats->num_rsrp_meas;
+       stats->prev_cumul_rsrp = stats->cumul_rsrp;
++
++      // NIST: Distinguishing between each RSRP measurement: reset the array and the capacity
++      memset(stats->rsrp_meas, 0, sizeof(stats->rsrp_meas));
++      memset(stats->rsrp_meas_num_reports, 0, sizeof(stats->rsrp_meas_num_reports));
++      stats->rsrp_meas_capacity = 0;
++
+       stats->num_rsrp_meas = 0;
+       stats->cumul_rsrp = 0;
+     }
+diff --git a/RAN_Intelligent_Controllers/research/PATCHED_OAI_FILES/nr_mac_gNB.h b/RAN_Intelligent_Controllers/research/PATCHED_OAI_FILES/nr_mac_gNB.h
+index 0c2d6c8..d1f76f2 100644
+--- a/RAN_Intelligent_Controllers/research/PATCHED_OAI_FILES/nr_mac_gNB.h
++++ b/RAN_Intelligent_Controllers/research/PATCHED_OAI_FILES/nr_mac_gNB.h
+@@ -703,6 +703,12 @@ typedef struct NR_mac_stats {
+   uint64_t ulsch_total_bytes_scheduled;
+   uint32_t pucch0_DTX;
+   int cumul_rsrp;
++
++  // NIST: Distinguishing between each RSRP measurement: define array of RSRP measurements
++  int rsrp_meas[1024];
++  uint8_t rsrp_meas_num_reports[1024];
++  uint16_t rsrp_meas_capacity;
++
+   uint8_t num_rsrp_meas;
+   int prev_cumul_rsrp;
+   uint8_t prev_num_rsrp_meas;
+diff --git a/RAN_Intelligent_Controllers/research/save_oai_patches.sh b/RAN_Intelligent_Controllers/research/save_oai_patches.sh
+index f4b8839..6ce7da9 100755
+--- a/RAN_Intelligent_Controllers/research/save_oai_patches.sh
++++ b/RAN_Intelligent_Controllers/research/save_oai_patches.sh
+@@ -42,12 +42,14 @@ git diff openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c >../install_patch_
+ git diff openair2/LAYER2/NR_MAC_gNB/main.c >../install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/main.c.patch
+ git diff openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h >../install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.patch
+ git diff openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c >../install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c.patch
++git diff openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c >../install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c.patch
+ 
+ cp openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c "$SCRIPT_DIR/PATCHED_OAI_FILES"
+ cp openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c "$SCRIPT_DIR/PATCHED_OAI_FILES"
+ cp openair2/LAYER2/NR_MAC_gNB/main.c "$SCRIPT_DIR/PATCHED_OAI_FILES"
+ cp openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h "$SCRIPT_DIR/PATCHED_OAI_FILES"
+ cp openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c "$SCRIPT_DIR/PATCHED_OAI_FILES"
++cp openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c "$SCRIPT_DIR/PATCHED_OAI_FILES"
+ cd ../..
+ 
+ cd RAN_Intelligent_Controllers/Flexible-RIC/flexric/

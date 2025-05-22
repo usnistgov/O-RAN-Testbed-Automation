@@ -58,6 +58,10 @@ unsigned int influx_num_samples = 0;
 uint64_t current_ue_id = 0;
 bool filter_current_sample = false;
 
+void handle_sigint(int signum) {
+  run_forever = false;
+}
+
 static void log_gnb_ue_id(ue_id_e2sm_t ue_id)
 {
   if (ue_id.gnb.gnb_cu_ue_f1ap_lst != NULL)
@@ -682,16 +686,19 @@ int main(int argc, char *argv[])
       free_kpm_sub_data(&kpm_sub);
     }
   }
+
+  if (run_forever) signal(SIGINT, handle_sigint);
+  while (run_forever) {
+    usleep(10000);
+  }
+
   ////////////
   // END KPM
   ////////////
 
-  sleep(10);
-  while (run_forever)
-    sleep(10);
+  xapp_wait_end_api();
 
-  for (int i = 0; i < nodes.len; ++i)
-  {
+  for (int i = 0; i < nodes.len; ++i) {
     // Remove the handle previously returned
     if (hndl[i].success == true)
       rm_report_sm_xapp_api(hndl[i].u.handle);

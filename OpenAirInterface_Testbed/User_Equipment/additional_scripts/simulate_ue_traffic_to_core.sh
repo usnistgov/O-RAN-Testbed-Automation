@@ -75,7 +75,7 @@ if [ $DURATION -lt 1 ]; then
 fi
 
 if [ ! -f "configs/ue1.conf" ]; then
-    echo "Configuration was not found for nr-uesoftmodem. Please run ./generate_configurations.sh first."
+    echo "Configuration was not found for OAI UE 1. Please run ./generate_configurations.sh first."
     exit 1
 fi
 

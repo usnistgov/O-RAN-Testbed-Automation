@@ -127,7 +127,8 @@ else
     echo "At least one kube-system pod is not running, resetting Kubernetes..."
 
     # Download ric-dep from gerrit
-    if [ ! -d "ric-dep" ]; then
+    if [ ! -f "ric-dep/bin/install_k8s_and_helm.sh" ]; then
+        sudo rm -rf ric-dep
         ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep.git ric-dep
     fi
     # Patch the install script and save a backup of the original
@@ -183,7 +184,7 @@ echo "Installing A1 Simulators                           ..."
 echo "Checking if any of the nonrtric pods are not running..."
 SHOULD_RESET_NONRTRIC=false
 if [ "$SHOULD_RESET_NONRTRIC" = false ]; then
-    POD_NAMES=("a1-sim-osc" "a1-sim-std" "a1-sim-std2" "a1controller")
+    POD_NAMES=("a1-sim-osc" "a1-sim-std" "a1-sim-std2")
     ALL_PODS=$(kubectl get pods -n nonrtric --no-headers 2>/dev/null) || true
 
     for POD_NAME in "${POD_NAMES[@]}"; do
@@ -228,7 +229,7 @@ else
     sed -i 's/true/false/g' "$RIC_YAML_FILE_PATH_UPDATED"
 
     update_yaml $RIC_YAML_FILE_PATH_UPDATED '.nonrtric.installPms' 'false'
-    update_yaml $RIC_YAML_FILE_PATH_UPDATED '.nonrtric.installA1controller' 'true'
+    update_yaml $RIC_YAML_FILE_PATH_UPDATED '.nonrtric.installA1controller' 'false'
     update_yaml $RIC_YAML_FILE_PATH_UPDATED '.nonrtric.installA1simulator' 'true'
     update_yaml $RIC_YAML_FILE_PATH_UPDATED '.nonrtric.installControlpanel' 'false'
     update_yaml $RIC_YAML_FILE_PATH_UPDATED '.nonrtric.installInformationservice' 'false'

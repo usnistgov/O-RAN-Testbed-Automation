@@ -34,20 +34,33 @@
 #include <inttypes.h>
 #include <string.h>
 
+// Set to true if the xApp should run forever, otherwise it will stop after 10 seconds
 bool run_forever = true;
+
+// Set to the interval in milliseconds at which the xApp should write to the CSV file
 static uint64_t const period_ms = 1000;
 
+// Set to true if samples containing NUM_RSRP_MEAS == 0 are to be filtered,
+// which is expected to give more stable results at the expense of some data loss
+const bool filter_invalid_rsrp_samples = false;
+
+// Configurations for InfluxDB
 bool clear_database_on_startup = true;
 char influxdb_url[256] = "http://localhost:8086";
 char influxdb_org[64] = "xapp-kpm-moni";
 char influxdb_bucket[64] = "xapp-kpm-moni";
-char influxdb_token[128]; // argv[1]
+char influxdb_token[128]; // Input argument: argv[1]
 
+// Variables that change during runtime
 static pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
 char influx_fields_buffer[1024];
 unsigned int influx_num_samples = 0;
 uint64_t current_ue_id = 0;
-bool filter_invalid_sample = false;
+bool filter_current_sample = false;
+
+void handle_sigint(int signum) {
+  run_forever = false;
+}
 
 static void log_gnb_ue_id(ue_id_e2sm_t ue_id)
 {
@@ -270,12 +283,12 @@ static void log_int_value(byte_array_t name, meas_record_lst_t meas_record)
   strncat(influx_fields_buffer, influx_field, sizeof(influx_fields_buffer) - strlen(influx_fields_buffer) - 1);
 
   // If the measurement is N_RSRP_MEAS and the value is 0, the data is invalid
-  if (cmp_str_ba("N_RSRP_MEAS", name) == 0)
+  if (filter_invalid_rsrp_samples && cmp_str_ba("N_RSRP_MEAS", name) == 0)
   {
     if (meas_record.int_val == 0)
     {
-      filter_invalid_sample = true;
-      printf("\n\t!!! Invalid N_RSRP_MEAS value detected !!!\n\n");
+      filter_current_sample = true;
+      printf("\n\tNumber of RSRP measurements was zero, skipping sample to avoid divide by zero.\n\n");
     }
   }
 }
@@ -408,14 +421,14 @@ static void log_kpm_measurements(kpm_ind_msg_format_1_t const *msg_frm_1)
     }
   }
 
-  if (!filter_invalid_sample)
+  if (filter_invalid_rsrp_samples || !filter_current_sample)
   {
     // InfluxDB send:
     int64_t now_ms = time_now_us() / 1000;
     send_metrics_to_influxdb(current_ue_id, now_ms, influx_fields_buffer);
   }
 
-  filter_invalid_sample = false;
+  filter_current_sample = false;
   influx_num_samples++;
   printf("Samples collected = %u\n", influx_num_samples);
 }
@@ -673,16 +686,19 @@ int main(int argc, char *argv[])
       free_kpm_sub_data(&kpm_sub);
     }
   }
+
+  if (run_forever) signal(SIGINT, handle_sigint);
+  while (run_forever) {
+    usleep(10000);
+  }
+
   ////////////
   // END KPM
   ////////////
 
-  sleep(10);
-  while (run_forever)
-    sleep(10);
+  xapp_wait_end_api();
 
-  for (int i = 0; i < nodes.len; ++i)
-  {
+  for (int i = 0; i < nodes.len; ++i) {
     // Remove the handle previously returned
     if (hndl[i].success == true)
       rm_report_sm_xapp_api(hndl[i].u.handle);

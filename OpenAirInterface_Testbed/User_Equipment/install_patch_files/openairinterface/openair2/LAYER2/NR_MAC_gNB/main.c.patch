@@ -1,5 +1,5 @@
 diff --git a/openair2/LAYER2/NR_MAC_gNB/main.c b/openair2/LAYER2/NR_MAC_gNB/main.c
-index 4d732bb3eb..cb8d364110 100644
+index 3137ce0902..ebb0afb5df 100644
 --- a/openair2/LAYER2/NR_MAC_gNB/main.c
 +++ b/openair2/LAYER2/NR_MAC_gNB/main.c
 @@ -135,6 +135,7 @@ size_t dump_mac_stats(gNB_MAC_INST *gNB, char *output, size_t strlen, bool reset

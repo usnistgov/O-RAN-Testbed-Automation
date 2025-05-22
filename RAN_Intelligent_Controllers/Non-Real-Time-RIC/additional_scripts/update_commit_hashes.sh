@@ -30,6 +30,8 @@
 
 # This script updates the commit hash for each repository in the JSON file. It respects the first field in each repository's entry, which is the branch name. If the branch name is "", it fetches the default branch's latest commit hash instead.
 
+set -e
+
 export DEBIAN_FRONTEND=noninteractive
 # Modifies the needrestart configuration to suppress interactive prompts
 if [ -f "/etc/needrestart/needrestart.conf" ]; then
@@ -46,9 +48,12 @@ if ! command -v realpath &>/dev/null; then
 fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
-cd "$(dirname "$SCRIPT_DIR")"
+PARENT_DIR=$(dirname "$SCRIPT_DIR")
+cd "$PARENT_DIR"
 
 if ! command -v jq &>/dev/null; then
+    sudo apt-get update
+
     echo "Installing jq..."
     sudo apt-get install -y jq
 fi

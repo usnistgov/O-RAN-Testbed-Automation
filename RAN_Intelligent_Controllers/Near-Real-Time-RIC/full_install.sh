@@ -206,6 +206,11 @@ else
     echo "At least one ricplt pod is not running, resetting Near-RT RIC pods..."
     sudo ./install_scripts/delete_namespace.sh ricinfra ricplt || true
 
+    # Download ric-dep from gerrit
+    if [ ! -d "ric-dep" ]; then
+        ./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep.git ric-dep
+    fi
+
     echo "Revising RIC Installation YAML File..."
     RIC_YAML_FILE_NAME="example_recipe_latest_stable.yaml"
     RIC_YAML_FILE_NAME_UPDATED="example_recipe_latest_stable_updated.yaml"

@@ -50,7 +50,7 @@ if [ $UE_NUMBER -lt 1 ]; then
 fi
 
 if [ ! -f "configs/ue1.conf" ]; then
-    echo "Configuration was not found for nr-uesoftmodem. Please run ./generate_configurations.sh first."
+    echo "Configuration was not found for OAI UE 1. Please run ./generate_configurations.sh first."
     exit 1
 fi
 
@@ -157,7 +157,7 @@ if ./is_running.sh | grep -q "ue$UE_NUMBER"; then
     echo "Already running ue$UE_NUMBER."
 else
     if [ ! -f "$UE_CONF_PATH" ]; then
-        echo "Configuration was not found for nr-uesoftmodem. Please run ./generate_configurations.sh first."
+        echo "Configuration was not found for OAI UE $UE_NUMBER. Please run ./generate_configurations.sh first."
         exit 1
     fi
     mkdir -p logs

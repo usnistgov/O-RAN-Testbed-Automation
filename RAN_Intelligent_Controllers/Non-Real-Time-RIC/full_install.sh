@@ -159,7 +159,8 @@ else
     echo "At least one kube-system pod is not running, resetting Kubernetes..."
 
     # Download ric-dep from gerrit
-    if [ ! -d "ric-dep" ]; then
+    if [ ! -f "ric-dep/bin/install_k8s_and_helm.sh" ]; then
+        sudo rm -rf ric-dep
         ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep.git ric-dep
     fi
     # Patch the install script and save a backup of the original

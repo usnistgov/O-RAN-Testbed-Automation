@@ -40,7 +40,7 @@ if pgrep -x "nr-softmodem" >/dev/null; then
     echo "Already running gnb."
 else
     if [ ! -f "configs/gnb.conf" ]; then
-        echo "Configuration was not found for gNodeB. Please run ./generate_configurations.sh first."
+        echo "Configuration was not found for OAI gNodeB. Please run ./generate_configurations.sh first."
         exit 1
     fi
 

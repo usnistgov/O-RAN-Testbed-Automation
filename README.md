@@ -21,7 +21,7 @@ This tool supports the deployment of 5G O-RAN testbeds using open-source compone
 ```text
 CU/DU
 ├── srsRAN_Project gNB: v24.10.1
-├── OpenAirInterface gNB: v2025.w17
+├── OpenAirInterface gNB: v2025.w20
 └── O-RAN SC E2 Simulator: k-release
 RICs
 ├── O-RAN SC Near-RT RIC: k-release
@@ -45,7 +45,7 @@ RICs
 └── Open5GS: v2.7.5
 UEs
 ├── srsRAN_4G: v23.11
-└── OpenAirInterface 5G UE: v2025.w14
+└── OpenAirInterface 5G UE: v2025.w20
 ```
 
 The components that have been verified to support or not support connectivity are included below.
@@ -241,8 +241,7 @@ USNISTGOV/O-RAN-Testbed-Automation is developed and maintained by the NIST Wirel
 13. Wireless Networks Division. National Institute of Standards and Technology. [https://www.nist.gov/ctl/Wireless-Networks-Division][nist-wnd].
 14. Open RAN Research at NIST. National Institute of Standards and Technology. [https://www.nist.gov/programs-projects/Open-RAN-Research-NIST][nist-oran].
 15. NIST Software Disclaimer. [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/NIST Software Disclaimer.md][gh-nsd].
-16. NIST Commercial Software Disclaimer. [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/NIST Commercial Product Disclaimer.md][gh-cpd].
-17. Fair Use and Licensing Statements of NIST Data/Works: [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/LICENSE][gh-license].
+16. Fair Use and Licensing Statements of NIST Data/Works: [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/LICENSE][gh-license].
 
 ## <!-- HR 2 -->
 
@@ -273,5 +272,5 @@ USNISTGOV/O-RAN-Testbed-Automation is developed and maintained by the NIST Wirel
 [nist-wnd]: https://www.nist.gov/ctl/Wireless-Networks-Division
 [nist-oran]: https://www.nist.gov/programs-projects/Open-RAN-Research-NIST
 [gh-nsd]: ./NIST%20Software%20Disclaimer.md
-[gh-cpd]: ./NIST%20Commercial%20Product%20Disclaimer.md
 [gh-license]: ./LICENSE
+

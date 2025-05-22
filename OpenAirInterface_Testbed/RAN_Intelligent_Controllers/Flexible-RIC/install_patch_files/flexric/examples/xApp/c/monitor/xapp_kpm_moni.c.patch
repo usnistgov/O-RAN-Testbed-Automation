@@ -1,8 +1,8 @@
 diff --git a/examples/xApp/c/monitor/xapp_kpm_moni.c b/examples/xApp/c/monitor/xapp_kpm_moni.c
-index 5fa00cc2..ef62de00 100644
+index d9f11118..2b36d42a 100644
 --- a/examples/xApp/c/monitor/xapp_kpm_moni.c
 +++ b/examples/xApp/c/monitor/xapp_kpm_moni.c
-@@ -32,6 +32,8 @@
+@@ -32,12 +32,18 @@
  #include <signal.h>
  #include <pthread.h>
  
@@ -11,7 +11,17 @@ index 5fa00cc2..ef62de00 100644
  static
  uint64_t const period_ms = 1000;
  
-@@ -88,13 +90,27 @@ static
+ static
+ pthread_mutex_t mtx;
+ 
++void handle_sigint(int signum) {
++  run_forever = false;
++}
++
+ static
+ void log_gnb_ue_id(ue_id_e2sm_t ue_id)
+ {
+@@ -88,13 +94,26 @@ static
  void log_int_value(byte_array_t name, meas_record_lst_t meas_record)
  {
    if (cmp_str_ba("RRU.PrbTotDl", name) == 0) {
@@ -26,8 +36,7 @@ index 5fa00cc2..ef62de00 100644
    } else if (cmp_str_ba("DRB.PdcpSduVolumeUL", name) == 0) {
 -    printf("DRB.PdcpSduVolumeUL = %d [kb]\n", meas_record.int_val);
 +    printf("DRB.PdcpSduVolumeUL = %u [kb]\n", meas_record.int_val);
-+
-+  // Added int metrics deviating from FlexRIC:
++  // Added int metrics for KPM research:
 +  } else if (cmp_str_ba("N_RSRP_MEAS", name) == 0) {
 +    printf("N_RSRP_MEAS = %u\n", meas_record.int_val);
 +  } else if (cmp_str_ba("N_PRB", name) == 0) {
@@ -43,12 +52,11 @@ index 5fa00cc2..ef62de00 100644
    } else {
      printf("Measurement Name not yet supported\n");
    }
-@@ -109,6 +125,30 @@ void log_real_value(byte_array_t name, meas_record_lst_t meas_record)
+@@ -109,6 +128,29 @@ void log_real_value(byte_array_t name, meas_record_lst_t meas_record)
      printf("DRB.UEThpDl = %.2f [kbps]\n", meas_record.real_val);
    } else if (cmp_str_ba("DRB.UEThpUl", name) == 0) {
      printf("DRB.UEThpUl = %.2f [kbps]\n", meas_record.real_val);
-+
-+  // Added float metrics deviating from FlexRIC:
++  // Added float metrics for KPM research:
 +  } else if (cmp_str_ba("RSRP", name) == 0) {
 +    printf("RSRP = %.2f [dBm]\n", meas_record.real_val);
 +  } else if (cmp_str_ba("RSSI", name) == 0) {
@@ -74,7 +82,7 @@ index 5fa00cc2..ef62de00 100644
    } else {
      printf("Measurement Name not yet supported\n");
    }
-@@ -382,7 +422,7 @@ int main(int argc, char* argv[])
+@@ -382,7 +424,7 @@ int main(int argc, char* argv[])
  
    assert(nodes.len > 0);
  
@@ -83,12 +91,16 @@ index 5fa00cc2..ef62de00 100644
  
    pthread_mutexattr_t attr = {0};
    int rc = pthread_mutex_init(&mtx, &attr);
-@@ -418,6 +458,8 @@ int main(int argc, char* argv[])
+@@ -413,6 +455,12 @@ int main(int argc, char* argv[])
+       free_kpm_sub_data(&kpm_sub);
+     }
+   }
++
++  if (run_forever) signal(SIGINT, handle_sigint);
++  while (run_forever) {
++    usleep(10000);
++  }
++
    ////////////
- 
-   sleep(10);
-+  while (run_forever)
-+    sleep(10);
- 
-   for (int i = 0; i < nodes.len; ++i) {
-     // Remove the handle previously returned
+   // END KPM
+   ////////////

@@ -322,13 +322,13 @@ update_yaml "configs/gnb.yaml" "pcap" "mac_filename" "$SCRIPT_DIR/logs/gnb_mac.p
 # Update configuration for metrics
 update_yaml "configs/gnb.yaml" "metrics" "addr" "127.0.0.1"
 update_yaml "configs/gnb.yaml" "metrics" "port" "55555"
-update_yaml "configs/gnb.yaml" "metrics" "cu_cp_statistics_report_period" "1"
-update_yaml "configs/gnb.yaml" "metrics" "cu_up_statistics_report_period" "1"
-update_yaml "configs/gnb.yaml" "metrics" "pdcp_report_period" "0"
-update_yaml "configs/gnb.yaml" "metrics" "rlc_report_period" "1000" # Every second
-update_yaml "configs/gnb.yaml" "metrics" "enable_json_metrics" "false"
+# update_yaml "configs/gnb.yaml" "metrics" "cu_cp_statistics_report_period" "1"
+# update_yaml "configs/gnb.yaml" "metrics" "cu_up_statistics_report_period" "1"
+# update_yaml "configs/gnb.yaml" "metrics" "pdcp_report_period" "0"
+# update_yaml "configs/gnb.yaml" "metrics" "rlc_report_period" "1000" # Every second
+# update_yaml "configs/gnb.yaml" "metrics" "enable_json_metrics" "false"
 update_yaml "configs/gnb.yaml" "metrics" "autostart_stdout_metrics" "false"
-update_yaml "configs/gnb.yaml" "metrics" "sched_report_period" "1000"
+# update_yaml "configs/gnb.yaml" "metrics" "sched_report_period" "1000"
 
 # For ZeroMQ, change otw_format to default
 update_yaml "configs/gnb.yaml" "ru_sdr" "otw_format" "default"

@@ -33,10 +33,17 @@
 #include <pthread.h>
 #include <inttypes.h>
 
+// Set to true if the xApp should run forever, otherwise it will stop after 10 seconds
 bool run_forever = true;
 
+// Set to the interval in milliseconds at which the xApp should write to the CSV file
 static uint64_t const period_ms = 1000;
 
+// Set to true if samples containing NUM_RSRP_MEAS == 0 are to be filtered,
+// which is expected to give more stable results at the expense of some data loss
+const bool filter_invalid_rsrp_samples = false;
+
+// Variables that change during runtime
 static pthread_mutex_t mtx;
 bool csv_wrote_header = false;
 const char *csv_file_path = NULL;
@@ -44,7 +51,11 @@ char csv_header_buffer[1024];
 char csv_line_buffer[1024];
 unsigned int csv_num_rows = 0;
 uint64_t current_ue_id = 0;
-bool filter_invalid_sample = false;
+bool filter_current_sample = false;
+
+void handle_sigint(int signum) {
+  run_forever = false;
+}
 
 static void log_gnb_ue_id(ue_id_e2sm_t ue_id)
 {
@@ -142,7 +153,14 @@ static void csv_append_real_to_csv_line(meas_record_lst_t meas_record)
 
   if (current_len + 32 < sizeof(csv_line_buffer)) // Reserve space for float and comma
   {
-    snprintf(csv_line_buffer + current_len, sizeof(csv_line_buffer) - current_len, "%.2f,", meas_record.real_val);
+    if (isnan(meas_record.real_val))
+    {
+      snprintf(csv_line_buffer + current_len, sizeof(csv_line_buffer) - current_len, "NaN,");
+    }
+    else
+    {
+      snprintf(csv_line_buffer + current_len, sizeof(csv_line_buffer) - current_len, "%.2f,", meas_record.real_val);
+    }
   }
   else
   {
@@ -281,11 +299,11 @@ static void log_int_value(byte_array_t name, meas_record_lst_t meas_record)
   // }
 
   // If the measurement is N_RSRP_MEAS and the value is 0, the data is invalid
-  if (cmp_str_ba("N_RSRP_MEAS", name) == 0)
+  if (filter_invalid_rsrp_samples && cmp_str_ba("N_RSRP_MEAS", name) == 0)
   {
     if (meas_record.int_val == 0)
     {
-      filter_invalid_sample = true;
+      filter_current_sample = true;
       printf("\n\tNumber of RSRP measurements was zero, skipping sample to avoid divide by zero.\n\n");
     }
   }
@@ -439,7 +457,7 @@ static void log_kpm_measurements(kpm_ind_msg_format_1_t const *msg_frm_1)
   }
   write_csv_header_to_file();
 
-  if (!filter_invalid_sample)
+  if (filter_invalid_rsrp_samples || !filter_current_sample)
   {
     csv_prepend_ue_id();
     csv_prepend_timestamp();
@@ -447,11 +465,18 @@ static void log_kpm_measurements(kpm_ind_msg_format_1_t const *msg_frm_1)
   }
   else
   {
+    // Log an empty measurement row with 25 commas after the 0
+    printf("Logging empty measurement row\n");
+    memset(csv_line_buffer, 0, sizeof(csv_line_buffer));
+    snprintf(csv_line_buffer, sizeof(csv_line_buffer), ",,,,,,,,,,,,,,,,,,,,,,,,,");
+    csv_prepend_timestamp();
+    write_csv_line_to_file();
+
     // Clear the line buffer for the next entry
     memset(csv_line_buffer, 0, sizeof(csv_line_buffer));
   }
 
-  filter_invalid_sample = false;
+  filter_current_sample = false;
   csv_num_rows++;
   printf("Samples collected = %u\n", csv_num_rows);
 }
@@ -713,16 +738,19 @@ int main(int argc, char *argv[])
       free_kpm_sub_data(&kpm_sub);
     }
   }
+
+  if (run_forever) signal(SIGINT, handle_sigint);
+  while (run_forever) {
+    usleep(10000);
+  }
+
   ////////////
   // END KPM
   ////////////
 
-  sleep(10);
-  while (run_forever)
-    sleep(10);
+  xapp_wait_end_api();
 
-  for (int i = 0; i < nodes.len; ++i)
-  {
+  for (int i = 0; i < nodes.len; ++i) {
     // Remove the handle previously returned
     if (hndl[i].success == true)
       rm_report_sm_xapp_api(hndl[i].u.handle);

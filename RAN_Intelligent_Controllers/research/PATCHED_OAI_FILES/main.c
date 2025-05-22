@@ -178,6 +178,11 @@ size_t dump_mac_stats(gNB_MAC_INST *gNB, char *output, size_t strlen, bool reset
       // Save previous RSRP values before resetting so that querying them is synchronized with the gNB output
       stats->prev_num_rsrp_meas = stats->num_rsrp_meas;
       stats->prev_cumul_rsrp = stats->cumul_rsrp;
+      
+      // Clear the array of individual RSRP measurements
+      memset(stats->rsrp_meas, 0, sizeof(stats->rsrp_meas));
+      stats->rsrp_meas_capacity = 0;
+
       stats->num_rsrp_meas = 0;
       stats->cumul_rsrp = 0;
     }

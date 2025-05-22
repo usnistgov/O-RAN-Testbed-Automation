@@ -53,6 +53,7 @@ fi
 # Apply patches to OpenAirInterface to add support for additional metrics in the KPI report
 if [ ! -f "openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c.previous" ]; then
     cp openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c.previous
+    cp openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c.previous "$PARENT_DIR/install_patch_files/openairinterface/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.previous.c"
 fi
 echo
 echo "Patching ran_func_kpm.c..."
@@ -63,6 +64,7 @@ cd ..
 
 if [ ! -f "openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c.previous" ]; then
     cp openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c.previous
+    cp openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c.previous "$PARENT_DIR/install_patch_files/openairinterface/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.previous.c"
 fi
 echo
 echo "Patching ran_func_kpm_subs.c..."
@@ -73,6 +75,7 @@ cd ..
 
 if [ ! -f "openairinterface5g/openair2/LAYER2/NR_MAC_gNB/main.c.previous" ]; then
     cp openairinterface5g/openair2/LAYER2/NR_MAC_gNB/main.c openairinterface5g/openair2/LAYER2/NR_MAC_gNB/main.c.previous
+    cp openairinterface5g/openair2/LAYER2/NR_MAC_gNB/main.c.previous "$PARENT_DIR/install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/main.previous.c"
 fi
 echo
 echo "Patching main.c..."
@@ -83,6 +86,7 @@ cd ..
 
 if [ ! -f "openairinterface5g/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.previous" ]; then
     cp openairinterface5g/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h openairinterface5g/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.previous
+    cp openairinterface5g/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.previous "$PARENT_DIR/install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.previous.h"
 fi
 echo
 echo "Patching nr_mac_gNB.h..."
@@ -93,12 +97,24 @@ cd ..
 
 if [ ! -f "openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c.previous" ]; then
     cp openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c.previous
+    cp openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c.previous "$PARENT_DIR/install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.previous.c"
 fi
 echo
 echo "Patching gNB_scheduler_dlsch.c..."
 cd openairinterface5g
 git restore openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c.patch"
+cd ..
+
+if [ ! -f "openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c.previous" ]; then
+    cp openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c.previous
+    cp openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c.previous "$PARENT_DIR/install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.previous.c"
+fi
+echo
+echo "Patching gNB_scheduler_uci.c..."
+cd openairinterface5g
+git restore openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c.patch"
 cd ..
 
 # If using Linux Mint, add support for Linux Mint 20, 21, and 22 to OpenAirInterface

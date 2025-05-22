@@ -42,12 +42,14 @@ git diff openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c >../install_patch_
 git diff openair2/LAYER2/NR_MAC_gNB/main.c >../install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/main.c.patch
 git diff openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h >../install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.patch
 git diff openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c >../install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c.patch
+git diff openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c >../install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c.patch
 
 cp openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c "$SCRIPT_DIR/PATCHED_OAI_FILES"
 cp openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c "$SCRIPT_DIR/PATCHED_OAI_FILES"
 cp openair2/LAYER2/NR_MAC_gNB/main.c "$SCRIPT_DIR/PATCHED_OAI_FILES"
 cp openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h "$SCRIPT_DIR/PATCHED_OAI_FILES"
 cp openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c "$SCRIPT_DIR/PATCHED_OAI_FILES"
+cp openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c "$SCRIPT_DIR/PATCHED_OAI_FILES"
 cd ../..
 
 cd RAN_Intelligent_Controllers/Flexible-RIC/flexric/
@@ -75,4 +77,4 @@ echo
 echo
 
 # For now, don't update the publicsafety oai5g repository
-#./apply_updates_from_parent_dir_ORAN_Testbed_Init.sh
+./apply_updates_from_parent_dir_ORAN_Testbed_Init.sh

@@ -1,0 +1,18 @@
+diff --git a/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c b/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c
+index 29ff27d38e..0d20711da7 100644
+--- a/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c
++++ b/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c
+@@ -585,6 +585,13 @@ static void evaluate_rsrp_report(gNB_MAC_INST *nrmac,
+   }
+ 
+   NR_mac_stats_t *stats = &UE->mac_stats;
++
++  // Log each individual RSRP measurement
++  if (stats->num_rsrp_meas < sizeof(stats->rsrp_meas) / sizeof(stats->rsrp_meas[0])) {
++    stats->rsrp_meas[stats->num_rsrp_meas] = rsrp_report->RSRP[0];
++    stats->rsrp_meas_capacity++;
++  }
++
+   // including ssb rsrp in mac stats
+   stats->cumul_rsrp += rsrp_report->RSRP[0];
+   stats->num_rsrp_meas++;

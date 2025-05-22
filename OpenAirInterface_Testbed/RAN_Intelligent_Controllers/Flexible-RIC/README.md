@@ -32,8 +32,13 @@ This installation of the Near-RT RIC supports six xApps.
       ```
     - New metrics for the automation tool:
       ```console
-      RSRP (dBm) - Averaged SSB/CSI-RS Reference Signal Received Power in the sample
-      N_RSRP_MEAS (count) - Number of RSRP measurements in the sample, used to calculate RSRP
+      RSRP.Mean (dBm) - Averaged SSB/CSI-RS Reference Signal Received Power in the sample
+      RSRP.Minimum (dBm) - Minimum SSB/CSI-RS Reference Signal Received Power in the sample
+      RSRP.Quartile1 (dBm) - Quartile 1 SSB/CSI-RS Reference Signal Received Power in the sample
+      RSRP.Median (dBm) - Quartile 2/Median SSB/CSI-RS Reference Signal Received Power in the sample
+      RSRP.Quartile3 (dBm) - Quartile 3 SSB/CSI-RS Reference Signal Received Power in the sample
+      RSRP.Maximum (dBm) - Minimum SSB/CSI-RS Reference Signal Received Power in the sample
+      RSRP.Count (count) - Number of RSRP measurements in the sample, used to calculate RSRP
       N_PRB (count) - Number of PRBs in the sample, used to calculate RSSI
       RSSI (dBm) - Received Signal Strength Indicator (computed using RSRP and N_PRB: https://www.techplayon.com/rssi)
       PUSCH_SNR (dB) - Signal to noise ratio for Physical Uplink Shared Channel

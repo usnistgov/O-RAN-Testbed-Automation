@@ -40,7 +40,7 @@ bool run_forever = true;
 // Set to the interval in milliseconds at which the xApp should write to the CSV file
 static uint64_t const period_ms = 1000;
 
-// Set to true if samples containing NUM_RSRP_MEAS == 0 are to be filtered,
+// Set to true if samples containing RSRP.Count == 0 are to be filtered,
 // which is expected to give more stable results at the expense of some data loss
 const bool filter_invalid_rsrp_samples = false;
 
@@ -224,7 +224,7 @@ static void log_int_value(byte_array_t name, meas_record_lst_t meas_record)
     unit.buf = "kb";
     unit.len = strlen("kb");
   }
-  else if (cmp_str_ba("N_RSRP_MEAS", name) == 0)
+  else if (cmp_str_ba("RSRP.Count", name) == 0)
   {
     unit.buf = "";
     unit.len = 0;
@@ -282,8 +282,8 @@ static void log_int_value(byte_array_t name, meas_record_lst_t meas_record)
   snprintf(influx_field, sizeof(influx_field), "%s=%di,", influx_field_name, meas_record.int_val);
   strncat(influx_fields_buffer, influx_field, sizeof(influx_fields_buffer) - strlen(influx_fields_buffer) - 1);
 
-  // If the measurement is N_RSRP_MEAS and the value is 0, the data is invalid
-  if (filter_invalid_rsrp_samples && cmp_str_ba("N_RSRP_MEAS", name) == 0)
+  // If the measurement is RSRP.Count and the value is 0, the data is invalid
+  if (filter_invalid_rsrp_samples && cmp_str_ba("RSRP.Count", name) == 0)
   {
     if (meas_record.int_val == 0)
     {
@@ -312,7 +312,32 @@ static void log_real_value(byte_array_t name, meas_record_lst_t meas_record)
     unit.buf = "kbps";
     unit.len = strlen("kbps");
   }
-  else if (cmp_str_ba("RSRP", name) == 0)
+  else if (cmp_str_ba("RSRP.Mean", name) == 0)
+  {
+    unit.buf = "dBm";
+    unit.len = strlen("dBm");
+  }
+  else if (cmp_str_ba("RSRP.Minimum", name) == 0)
+  {
+    unit.buf = "dBm";
+    unit.len = strlen("dBm");
+  }
+  else if (cmp_str_ba("RSRP.Quartile1", name) == 0)
+  {
+    unit.buf = "dBm";
+    unit.len = strlen("dBm");
+  }
+  else if (cmp_str_ba("RSRP.Median", name) == 0)
+  {
+    unit.buf = "dBm";
+    unit.len = strlen("dBm");
+  }
+  else if (cmp_str_ba("RSRP.Quartile3", name) == 0)
+  {
+    unit.buf = "dBm";
+    unit.len = strlen("dBm");
+  }
+  else if (cmp_str_ba("RSRP.Maximum", name) == 0)
   {
     unit.buf = "dBm";
     unit.len = strlen("dBm");

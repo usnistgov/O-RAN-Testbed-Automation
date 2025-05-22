@@ -102,8 +102,8 @@ void log_int_value(byte_array_t name, meas_record_lst_t meas_record)
   } else if (cmp_str_ba("DRB.PdcpSduVolumeUL", name) == 0) {
     printf("DRB.PdcpSduVolumeUL = %u [kb]\n", meas_record.int_val);
   // Added int metrics for KPM research:
-  } else if (cmp_str_ba("N_RSRP_MEAS", name) == 0) {
-    printf("N_RSRP_MEAS = %u\n", meas_record.int_val);
+  } else if (cmp_str_ba("RSRP.Count", name) == 0) {
+    printf("RSRP.Count = %u\n", meas_record.int_val);
   } else if (cmp_str_ba("N_PRB", name) == 0) {
     printf("N_PRB = %u\n", meas_record.int_val);
   } else if (cmp_str_ba("DRB.HarqMcsUl", name) == 0) {
@@ -129,8 +129,18 @@ void log_real_value(byte_array_t name, meas_record_lst_t meas_record)
   } else if (cmp_str_ba("DRB.UEThpUl", name) == 0) {
     printf("DRB.UEThpUl = %.2f [kbps]\n", meas_record.real_val);
   // Added float metrics for KPM research:
-  } else if (cmp_str_ba("RSRP", name) == 0) {
-    printf("RSRP = %.2f [dBm]\n", meas_record.real_val);
+  } else if (cmp_str_ba("RSRP.Mean", name) == 0) {
+    printf("RSRP.Mean = %.2f [dBm]\n", meas_record.real_val);
+  } else if (cmp_str_ba("RSRP.Minimum", name) == 0) {
+    printf("RSRP.Minimum = %.2f [dBm]\n", meas_record.real_val);
+  } else if (cmp_str_ba("RSRP.Quartile1", name) == 0) {
+    printf("RSRP.Quartile1 = %.2f [dBm]\n", meas_record.real_val);
+  } else if (cmp_str_ba("RSRP.Median", name) == 0) {
+    printf("RSRP.Median = %.2f [dBm]\n", meas_record.real_val);
+  } else if (cmp_str_ba("RSRP.Quartile3", name) == 0) {
+    printf("RSRP.Quartile3 = %.2f [dBm]\n", meas_record.real_val);
+  } else if (cmp_str_ba("RSRP.Maximum", name) == 0) {
+    printf("RSRP.Maximum = %.2f [dBm]\n", meas_record.real_val);
   } else if (cmp_str_ba("RSSI", name) == 0) {
     printf("RSSI = %.2f [dBm]\n", meas_record.real_val);
   } else if (cmp_str_ba("RSRQ", name) == 0) {

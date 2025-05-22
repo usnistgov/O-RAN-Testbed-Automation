@@ -323,7 +323,7 @@ int nr_write_ce_dlsch_pdu(module_id_t module_idP,
 
 static void nr_store_dlsch_buffer(module_id_t module_id, frame_t frame, slot_t slot)
 {
-  UE_iterator(RC.nrmac[module_id]->UE_info.list, UE) {
+  UE_iterator(RC.nrmac[module_id]->UE_info.connected_ue_list, UE) {
     NR_UE_sched_ctrl_t *sched_ctrl = &UE->UE_sched_ctrl;
     sched_ctrl->num_total_bytes = 0;
     sched_ctrl->dl_pdus_total = 0;
@@ -381,35 +381,39 @@ void abort_nr_dl_harq(NR_UE_info_t* UE, int8_t harq_pid)
   UE->mac_stats.dl.errors++;
 }
 
-typedef struct {
-  int bwpStart;
-  int bwpSize;
-} dl_bwp_info_t;
-
-static dl_bwp_info_t get_bwp_start_size(gNB_MAC_INST *mac, NR_UE_info_t *UE)
+static bwp_info_t get_pdsch_bwp_start_size(gNB_MAC_INST *nr_mac, NR_UE_info_t *UE)
 {
   NR_UE_DL_BWP_t *dl_bwp = &UE->current_DL_BWP;
   NR_UE_sched_ctrl_t *sched_ctrl = &UE->UE_sched_ctrl;
-  // UE is scheduled in a set of contiguously allocated resource blocks within the active bandwidth part of size N_BWP PRBs
-  // except for the case when DCI format 1_0 is decoded in any common search space
-  // in which case the size of CORESET 0 shall be used if CORESET 0 is configured for the cell
-  // and the size of initial DL bandwidth part shall be used if CORESET 0 is not configured for the cell.
-  // TS 38.214 Section 5.1.2.2.2
-  dl_bwp_info_t bwp_info;
-  bwp_info.bwpSize = dl_bwp->BWPSize;
-  bwp_info.bwpStart = dl_bwp->BWPStart;
-  if (sched_ctrl->search_space->searchSpaceType->present == NR_SearchSpace__searchSpaceType_PR_common &&
-      dl_bwp->dci_format == NR_DL_DCI_FORMAT_1_0) {
-    if (mac->cset0_bwp_size != 0) {
-      bwp_info.bwpStart = mac->cset0_bwp_start;
-      bwp_info.bwpSize = mac->cset0_bwp_size;
+  bwp_info_t bwp_info;
+
+  // 3GPP TS 38.214 Section 5.1.2.2 Resource allocation in frequency domain
+  // For a PDSCH scheduled with a DCI format 1_0 in any type of PDCCH common search space, regardless of which bandwidth part is the
+  // active bandwidth part, RB numbering starts from the lowest RB of the CORESET in which the DCI was received; otherwise RB
+  // numbering starts from the lowest RB in the determined downlink bandwidth part.
+  //
+  // 3GPP TS 38.214 Section 5.1.2.2.2 Downlink resource allocation type 1
+  // In downlink resource allocation of type 1, the resource block assignment information indicates to a scheduled UE a set of
+  // contiguously allocated non-interleaved or interleaved virtual resource blocks within the active bandwidth part of size   PRBs
+  // except for the case when DCI format 1_0 is decoded in any common search space in which case the size of CORESET 0 shall be
+  // used if CORESET 0 is configured for the cell and the size of initial DL bandwidth part shall be used if CORESET 0 is not
+  // configured for the cell.
+  if (dl_bwp->dci_format == NR_DL_DCI_FORMAT_1_0 && sched_ctrl->search_space->searchSpaceType
+      && sched_ctrl->search_space->searchSpaceType->present == NR_SearchSpace__searchSpaceType_PR_common
+      && dl_bwp->pdsch_Config->resourceAllocation == NR_PDSCH_Config__resourceAllocation_resourceAllocationType1) {
+    if (sched_ctrl->coreset->controlResourceSetId == 0) {
+      bwp_info.bwpStart = nr_mac->cset0_bwp_start;
+    } else {
+      bwp_info.bwpStart = dl_bwp->BWPStart + sched_ctrl->sched_pdcch.rb_start;
     }
-    else {
-      // TODO this is not entirely correct
-      // start would be the start of CORESET not of the initial BWP
-      bwp_info.bwpStart = UE->sc_info.initial_dl_BWPStart;
-      bwp_info.bwpSize = UE->sc_info.initial_dl_BWPSize;
+    if (nr_mac->cset0_bwp_size > 0) {
+      bwp_info.bwpSize = min(dl_bwp->BWPSize - bwp_info.bwpStart, nr_mac->cset0_bwp_size);
+    } else {
+      bwp_info.bwpSize = min(dl_bwp->BWPSize - bwp_info.bwpStart, UE->sc_info.initial_dl_BWPSize);
     }
+  } else {
+    bwp_info.bwpSize = dl_bwp->BWPSize;
+    bwp_info.bwpStart = dl_bwp->BWPStart;
   }
   return bwp_info;
 }
@@ -463,7 +467,7 @@ static bool allocate_dl_retransmission(module_id_t module_id,
 
   uint16_t *rballoc_mask = nr_mac->common_channels[CC_id].vrb_map[beam_idx];
 
-  dl_bwp_info_t bwp_info = get_bwp_start_size(nr_mac, UE);
+  bwp_info_t bwp_info = get_pdsch_bwp_start_size(nr_mac, UE);
   int rbStart = bwp_info.bwpStart;
   int rbStop = bwp_info.bwpStart + bwp_info.bwpSize - 1;
   int rbSize = 0;
@@ -609,9 +613,6 @@ static void pf_dl(module_id_t module_id,
 
   /* Loop UE_info->list to check retransmission */
   UE_iterator(UE_list, UE) {
-    if (!UE->Msg4_MsgB_ACKed)
-      continue;
-
     NR_UE_sched_ctrl_t *sched_ctrl = &UE->UE_sched_ctrl;
     NR_UE_DL_BWP_t *current_BWP = &UE->current_DL_BWP;
 
@@ -761,7 +762,7 @@ static void pf_dl(module_id_t module_id,
     const uint16_t slbitmap = SL_to_bitmap(tda_info->startSymbolIndex, tda_info->nrOfSymbols);
 
     uint16_t *rballoc_mask = mac->common_channels[CC_id].vrb_map[beam.idx];
-    dl_bwp_info_t bwp_info = get_bwp_start_size(mac, iterator->UE);
+    bwp_info_t bwp_info = get_pdsch_bwp_start_size(mac, iterator->UE);
     int rbStart = 0; // WRT BWP start
     int rbStop = bwp_info.bwpSize - 1;
     int bwp_start = bwp_info.bwpStart;
@@ -865,7 +866,7 @@ static void nr_dlsch_preprocessor(module_id_t module_id, frame_t frame, slot_t s
   gNB_MAC_INST *mac = RC.nrmac[module_id];
   NR_UEs_t *UE_info = &mac->UE_info;
 
-  if (UE_info->list[0] == NULL)
+  if (UE_info->connected_ue_list[0] == NULL)
     return;
 
   NR_ServingCellConfigCommon_t *scc = mac->common_channels[0].ServingCellConfigCommon;
@@ -885,7 +886,7 @@ static void nr_dlsch_preprocessor(module_id_t module_id, frame_t frame, slot_t s
   max_sched_ues = min(max_sched_ues, MAX_DCI_CORESET);
 
   /* proportional fair scheduling algorithm */
-  pf_dl(module_id, frame, slot, UE_info->list, max_sched_ues, num_beams, n_rb_sched);
+  pf_dl(module_id, frame, slot, UE_info->connected_ue_list, max_sched_ues, num_beams, n_rb_sched);
 }
 
 nr_pp_impl_dl nr_init_dlsch_preprocessor(int CC_id) {
@@ -940,7 +941,7 @@ void nr_schedule_ue_spec(module_id_t module_id,
   const NR_BWP_t *initialDL = &scc->downlinkConfigCommon->initialDownlinkBWP->genericParameters;
   gNB_mac->mac_stats.total_prb_aggregate += NRRIV2BW(initialDL->locationAndBandwidth, MAX_BWP_SIZE);
 
-  UE_iterator(UE_info->list, UE) {
+  UE_iterator(UE_info->connected_ue_list, UE) {
     NR_UE_sched_ctrl_t *sched_ctrl = &UE->UE_sched_ctrl;
     NR_UE_DL_BWP_t *current_BWP = &UE->current_DL_BWP;
 
@@ -1063,7 +1064,7 @@ void nr_schedule_ue_spec(module_id_t module_id,
     const int pduindex = gNB_mac->pdu_index[CC_id]++;
     pdsch_pdu->pduIndex = pduindex;
 
-    dl_bwp_info_t bwp_info = get_bwp_start_size(gNB_mac, UE);
+    bwp_info_t bwp_info = get_pdsch_bwp_start_size(gNB_mac, UE);
     pdsch_pdu->BWPSize  = bwp_info.bwpSize;
     pdsch_pdu->BWPStart = bwp_info.bwpStart;
 
@@ -1179,9 +1180,20 @@ void nr_schedule_ue_spec(module_id_t module_id,
     AssertFatal(pdsch_Config == NULL || pdsch_Config->resourceAllocation == NR_PDSCH_Config__resourceAllocation_resourceAllocationType1,
                 "Only frequency resource allocation type 1 is currently supported\n");
 
-    dci_payload.frequency_domain_assignment.val = PRBalloc_to_locationandbandwidth0(pdsch_pdu->rbSize,
-                                                                                    pdsch_pdu->rbStart,
-                                                                                    pdsch_pdu->BWPSize);
+    // 3GPP TS 38.214 Section 5.1.2.2.2 Downlink resource allocation type 1
+    uint16_t riv_bwp_size = pdsch_pdu->BWPSize;
+    if (current_BWP->dci_format == NR_DL_DCI_FORMAT_1_0
+        && sched_ctrl->search_space->searchSpaceType->present == NR_SearchSpace__searchSpaceType_PR_common
+        && pdsch_Config->resourceAllocation == NR_PDSCH_Config__resourceAllocation_resourceAllocationType1) {
+      if (gNB_mac->cset0_bwp_size > 0) {
+        riv_bwp_size = gNB_mac->cset0_bwp_size;
+      } else {
+        riv_bwp_size = UE->sc_info.initial_dl_BWPSize;
+      }
+    }
+    dci_payload.frequency_domain_assignment.val =
+        PRBalloc_to_locationandbandwidth0(pdsch_pdu->rbSize, pdsch_pdu->rbStart, riv_bwp_size);
+
     dci_payload.format_indicator = 1;
     dci_payload.time_domain_assignment.val = sched_pdsch->time_domain_allocation;
     dci_payload.mcs = sched_pdsch->mcs;

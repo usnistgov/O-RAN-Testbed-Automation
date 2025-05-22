@@ -31,7 +31,7 @@
 # Exit immediately if a command fails
 set -e
 
-CLEAN_INSTALL=false
+CLEAN_INSTALL=true
 
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
@@ -103,6 +103,7 @@ cd ..
 # Apply patch to FlexRIC to add support for RSRP in the KPI report
 if [ ! -f "flexric/examples/xApp/c/monitor/xapp_kpm_moni.c.previous" ]; then
     cp flexric/examples/xApp/c/monitor/xapp_kpm_moni.c flexric/examples/xApp/c/monitor/xapp_kpm_moni.c.previous
+    cp flexric/examples/xApp/c/monitor/xapp_kpm_moni.c.previous "$SCRIPT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni.previous.c"
 fi
 echo
 echo "Patching xapp_kpm_moni.c..."
@@ -122,6 +123,7 @@ cp "$SCRIPT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_mon
 # Apply patch to add new xApp KPI monitor that logs output to logs/KPI_Monitor.csv
 if [ ! -f "flexric/examples/xApp/c/monitor/CMakeLists.txt.previous" ]; then
     cp flexric/examples/xApp/c/monitor/CMakeLists.txt flexric/examples/xApp/c/monitor/CMakeLists.txt.previous
+    cp flexric/examples/xApp/c/monitor/CMakeLists.txt.previous "$SCRIPT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/CMakeLists.previous.txt"
 fi
 echo
 echo "Patching CMakeLists.txt..."

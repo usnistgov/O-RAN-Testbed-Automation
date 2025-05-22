@@ -84,7 +84,7 @@ static meas_record_lst_t fill_DRB_PdcpSduVolumeUL(__attribute__((unused))uint32_
 }
 
 // Added metric for research purposes only
-static meas_record_lst_t fill_RSRP(__attribute__((unused))uint32_t gran_period_ms, cudu_ue_info_pair_t ue_info, __attribute__((unused))const size_t ue_idx)
+static meas_record_lst_t fill_RSRP_Mean(__attribute__((unused))uint32_t gran_period_ms, cudu_ue_info_pair_t ue_info, __attribute__((unused))const size_t ue_idx)
 {
   meas_record_lst_t meas_record = {0};
 
@@ -100,9 +100,129 @@ static meas_record_lst_t fill_RSRP(__attribute__((unused))uint32_t gran_period_m
   return meas_record;
 }
 
+// Added metric for research purposes only
+static meas_record_lst_t fill_RSRP_Minimum(__attribute__((unused))uint32_t gran_period_ms, cudu_ue_info_pair_t ue_info, __attribute__((unused))const size_t ue_idx)
+{
+  meas_record_lst_t meas_record = {0};
+
+  meas_record.value = REAL_MEAS_VALUE;
+
+  // Find the minimum
+  for (int i = 0; i < ue_info.ue->mac_stats.rsrp_meas_capacity; i++) {
+    if (i == 0 || ue_info.ue->mac_stats.rsrp_meas[i] < meas_record.real_val) {
+      meas_record.real_val = (double)ue_info.ue->mac_stats.rsrp_meas[i]; // [dBm]
+    }
+  }
+  
+  return meas_record;
+}
+
+
+// Comparison function for integers used in qsort
+static int compare_int(const void *a, const void *b) {
+  return (*(int *)a - *(int *)b);
+}
 
 // Added metric for research purposes only
-static meas_record_lst_t fill_N_RSRP_MEAS(__attribute__((unused))uint32_t gran_period_ms, cudu_ue_info_pair_t ue_info, __attribute__((unused))const size_t ue_idx)
+static meas_record_lst_t fill_RSRP_Quartile1(__attribute__((unused))uint32_t gran_period_ms, cudu_ue_info_pair_t ue_info, __attribute__((unused))const size_t ue_idx)
+{
+  meas_record_lst_t meas_record = {0};
+
+  meas_record.value = REAL_MEAS_VALUE;
+
+  // Calculate the first quartile (Q1) of RSRP
+  if (ue_info.ue->mac_stats.rsrp_meas_capacity > 0) {
+    // Sort the array of RSRP measurements
+    qsort(ue_info.ue->mac_stats.rsrp_meas, ue_info.ue->mac_stats.rsrp_meas_capacity, sizeof(int), compare_int);
+
+    // Calculate Q1
+    size_t q1_index = ue_info.ue->mac_stats.rsrp_meas_capacity / 4;
+    if (ue_info.ue->mac_stats.rsrp_meas_capacity % 4 == 0) {
+      meas_record.real_val = (double)(ue_info.ue->mac_stats.rsrp_meas[q1_index - 1] +
+                                      ue_info.ue->mac_stats.rsrp_meas[q1_index]) / 2.0; // [dBm]
+    } else {
+      meas_record.real_val = (double)ue_info.ue->mac_stats.rsrp_meas[q1_index]; // [dBm]
+    }
+  } else {
+    meas_record.real_val = NAN;
+  }
+
+  return meas_record;
+}
+
+// Added metric for research purposes only
+static meas_record_lst_t fill_RSRP_Median(__attribute__((unused))uint32_t gran_period_ms, cudu_ue_info_pair_t ue_info, __attribute__((unused))const size_t ue_idx)
+{
+  meas_record_lst_t meas_record = {0};
+
+  meas_record.value = REAL_MEAS_VALUE;
+
+  // Calculate the median value of RSRP
+  if (ue_info.ue->mac_stats.rsrp_meas_capacity > 0) {
+    // Sort the array of RSRP measurements
+    qsort(ue_info.ue->mac_stats.rsrp_meas, ue_info.ue->mac_stats.rsrp_meas_capacity, sizeof(int), compare_int);
+
+    // Calculate the median
+    if (ue_info.ue->mac_stats.rsrp_meas_capacity % 2 == 0) {
+      meas_record.real_val = (double)(ue_info.ue->mac_stats.rsrp_meas[ue_info.ue->mac_stats.rsrp_meas_capacity / 2 - 1] +
+                                      ue_info.ue->mac_stats.rsrp_meas[ue_info.ue->mac_stats.rsrp_meas_capacity / 2]) / 2.0; // [dBm]
+    } else {
+      meas_record.real_val = (double)ue_info.ue->mac_stats.rsrp_meas[ue_info.ue->mac_stats.rsrp_meas_capacity / 2]; // [dBm]
+    }
+  } else {
+    meas_record.real_val = NAN;
+  }
+  
+  return meas_record;
+}
+
+// Added metric for research purposes only
+static meas_record_lst_t fill_RSRP_Quartile3(__attribute__((unused))uint32_t gran_period_ms, cudu_ue_info_pair_t ue_info, __attribute__((unused))const size_t ue_idx)
+{
+  meas_record_lst_t meas_record = {0};
+
+  meas_record.value = REAL_MEAS_VALUE;
+
+  // Calculate the third quartile (Q3) of RSRP
+  if (ue_info.ue->mac_stats.rsrp_meas_capacity > 0) {
+    // Sort the array of RSRP measurements
+    qsort(ue_info.ue->mac_stats.rsrp_meas, ue_info.ue->mac_stats.rsrp_meas_capacity, sizeof(int), compare_int);
+
+    // Calculate Q3
+    size_t q3_index = (3 * ue_info.ue->mac_stats.rsrp_meas_capacity) / 4;
+    if (ue_info.ue->mac_stats.rsrp_meas_capacity % 4 == 0) {
+      meas_record.real_val = (double)(ue_info.ue->mac_stats.rsrp_meas[q3_index - 1] +
+                                      ue_info.ue->mac_stats.rsrp_meas[q3_index]) / 2.0; // [dBm]
+    } else {
+      meas_record.real_val = (double)ue_info.ue->mac_stats.rsrp_meas[q3_index]; // [dBm]
+    }
+  } else {
+    meas_record.real_val = NAN;
+  }
+
+  return meas_record;
+}
+
+// Added metric for research purposes only
+static meas_record_lst_t fill_RSRP_Maximum(__attribute__((unused))uint32_t gran_period_ms, cudu_ue_info_pair_t ue_info, __attribute__((unused))const size_t ue_idx)
+{
+  meas_record_lst_t meas_record = {0};
+
+  meas_record.value = REAL_MEAS_VALUE;
+
+  // Find the maximum
+  for (int i = 0; i < ue_info.ue->mac_stats.rsrp_meas_capacity; i++) {
+    if (i == 0 || ue_info.ue->mac_stats.rsrp_meas[i] > meas_record.real_val) {
+      meas_record.real_val = (double)ue_info.ue->mac_stats.rsrp_meas[i]; // [dBm]
+    }
+  }
+  
+  return meas_record;
+}
+
+
+// Added metric for research purposes only
+static meas_record_lst_t fill_RSRP_Count(__attribute__((unused))uint32_t gran_period_ms, cudu_ue_info_pair_t ue_info, __attribute__((unused))const size_t ue_idx)
 {
   meas_record_lst_t meas_record = {0};
 
@@ -443,8 +563,13 @@ static meas_record_lst_t fill_RRU_PrbTotUl(__attribute__((unused))uint32_t gran_
 static kv_measure_t lst_measure[] = {
   {.key = "DRB.PdcpSduVolumeDL", .value = fill_DRB_PdcpSduVolumeDL }, 
   {.key = "DRB.PdcpSduVolumeUL", .value = fill_DRB_PdcpSduVolumeUL },
-  {.key = "RSRP", .value = fill_RSRP },
-  {.key = "N_RSRP_MEAS", .value = fill_N_RSRP_MEAS },
+  {.key = "RSRP.Mean", .value = fill_RSRP_Mean },
+  {.key = "RSRP.Minimum", .value = fill_RSRP_Minimum },
+  {.key = "RSRP.Quartile1", .value = fill_RSRP_Quartile1 },
+  {.key = "RSRP.Median", .value = fill_RSRP_Median },
+  {.key = "RSRP.Quartile3", .value = fill_RSRP_Quartile3 },
+  {.key = "RSRP.Maximum", .value = fill_RSRP_Maximum },
+  {.key = "RSRP.Count", .value = fill_RSRP_Count },
   {.key = "N_PRB", .value = fill_N_PRB },
   {.key = "RSSI", .value = fill_RSSI },
   {.key = "RSRQ", .value = fill_RSRQ },

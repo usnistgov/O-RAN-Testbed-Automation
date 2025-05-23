@@ -710,6 +710,8 @@ typedef struct NR_mac_stats {
   // Keep track of each individual RSRP measurement for KPM: median, minimum, maximum, quartile1, quartile3
   int rsrp_meas[1024];
   uint16_t rsrp_meas_capacity;
+  int prev_rsrp_meas_sorted[1024];
+  uint16_t prev_rsrp_meas_sorted_capacity;
 
   char srs_stats[50]; // Statistics may differ depending on SRS usage
   int pusch_snrx10;

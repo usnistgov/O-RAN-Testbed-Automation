@@ -1,27 +1,8 @@
 diff --git a/examples/xApp/c/monitor/xapp_kpm_moni.c b/examples/xApp/c/monitor/xapp_kpm_moni.c
-index d9f11118..cdd60456 100644
+index d9f11118..66d9e4b7 100644
 --- a/examples/xApp/c/monitor/xapp_kpm_moni.c
 +++ b/examples/xApp/c/monitor/xapp_kpm_moni.c
-@@ -32,12 +32,18 @@
- #include <signal.h>
- #include <pthread.h>
- 
-+bool run_forever = true;
-+
- static
- uint64_t const period_ms = 1000;
- 
- static
- pthread_mutex_t mtx;
- 
-+void handle_sigint(int signum) {
-+  run_forever = false;
-+}
-+
- static
- void log_gnb_ue_id(ue_id_e2sm_t ue_id)
- {
-@@ -88,13 +94,26 @@ static
+@@ -88,13 +88,26 @@ static
  void log_int_value(byte_array_t name, meas_record_lst_t meas_record)
  {
    if (cmp_str_ba("RRU.PrbTotDl", name) == 0) {
@@ -52,7 +33,7 @@ index d9f11118..cdd60456 100644
    } else {
      printf("Measurement Name not yet supported\n");
    }
-@@ -109,6 +128,39 @@ void log_real_value(byte_array_t name, meas_record_lst_t meas_record)
+@@ -109,6 +122,39 @@ void log_real_value(byte_array_t name, meas_record_lst_t meas_record)
      printf("DRB.UEThpDl = %.2f [kbps]\n", meas_record.real_val);
    } else if (cmp_str_ba("DRB.UEThpUl", name) == 0) {
      printf("DRB.UEThpUl = %.2f [kbps]\n", meas_record.real_val);
@@ -92,7 +73,7 @@ index d9f11118..cdd60456 100644
    } else {
      printf("Measurement Name not yet supported\n");
    }
-@@ -382,7 +434,7 @@ int main(int argc, char* argv[])
+@@ -382,7 +428,7 @@ int main(int argc, char* argv[])
  
    assert(nodes.len > 0);
  
@@ -101,16 +82,3 @@ index d9f11118..cdd60456 100644
  
    pthread_mutexattr_t attr = {0};
    int rc = pthread_mutex_init(&mtx, &attr);
-@@ -413,6 +465,12 @@ int main(int argc, char* argv[])
-       free_kpm_sub_data(&kpm_sub);
-     }
-   }
-+
-+  if (run_forever) signal(SIGINT, handle_sigint);
-+  while (run_forever) {
-+    usleep(10000);
-+  }
-+
-   ////////////
-   // END KPM
-   ////////////

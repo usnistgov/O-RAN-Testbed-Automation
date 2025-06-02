@@ -48,4 +48,4 @@ if [ -f "../configs/flexric.conf" ]; then
     CONFIG_PATH="-c ../configs/flexric.conf"
 fi
 
-./build/examples/xApp/c/monitor/xapp_gtp_mac_rlc_pdcp_moni $CONFIG_PATH
+XAPP_DURATION=-1 ./build/examples/xApp/c/monitor/xapp_gtp_mac_rlc_pdcp_moni $CONFIG_PATH

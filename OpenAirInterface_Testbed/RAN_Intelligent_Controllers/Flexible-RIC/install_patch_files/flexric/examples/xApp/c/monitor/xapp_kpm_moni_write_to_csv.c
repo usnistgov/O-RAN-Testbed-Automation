@@ -33,9 +33,6 @@
 #include <pthread.h>
 #include <inttypes.h>
 
-// Set to true if the xApp should run forever, otherwise it will stop after 10 seconds
-bool run_forever = true;
-
 // Set to the interval in milliseconds at which the xApp should write to the CSV file
 static uint64_t const period_ms = 1000;
 
@@ -52,10 +49,6 @@ char csv_line_buffer[1024];
 unsigned int csv_num_rows = 0;
 uint64_t current_ue_id = 0;
 bool filter_current_sample = false;
-
-void handle_sigint(int signum) {
-  run_forever = false;
-}
 
 static void log_gnb_ue_id(ue_id_e2sm_t ue_id)
 {
@@ -763,12 +756,6 @@ int main(int argc, char *argv[])
       free_kpm_sub_data(&kpm_sub);
     }
   }
-
-  if (run_forever) signal(SIGINT, handle_sigint);
-  while (run_forever) {
-    usleep(10000);
-  }
-
   ////////////
   // END KPM
   ////////////

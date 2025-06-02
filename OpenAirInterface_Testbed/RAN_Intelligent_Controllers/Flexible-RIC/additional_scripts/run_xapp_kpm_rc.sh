@@ -48,4 +48,4 @@ if [ -f "../configs/flexric.conf" ]; then
     CONFIG_PATH="-c ../configs/flexric.conf"
 fi
 
-./build/examples/xApp/c/kpm_rc/xapp_kpm_rc $CONFIG_PATH
+XAPP_DURATION=-1 ./build/examples/xApp/c/kpm_rc/xapp_kpm_rc $CONFIG_PATH

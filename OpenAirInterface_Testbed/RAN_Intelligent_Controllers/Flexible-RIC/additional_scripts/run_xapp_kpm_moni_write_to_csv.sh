@@ -65,4 +65,4 @@ echo
 echo "Output CSV path: $OUTPUT_CSV_PATH"
 echo
 
-./build/examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv "$OUTPUT_CSV_PATH" $CONFIG_PATH
+XAPP_DURATION=-1 ./build/examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv "$OUTPUT_CSV_PATH" $CONFIG_PATH

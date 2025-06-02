@@ -21,7 +21,7 @@
       "type": "grafana",
       "id": "grafana",
       "name": "Grafana",
-      "version": "12.0.1"
+      "version": "11.6.1"
     },
     {
       "type": "panel",
@@ -57,7 +57,7 @@
       "type": "datasource",
       "id": "yesoreyeram-infinity-datasource",
       "name": "Infinity",
-      "version": "3.2.1"
+      "version": "3.2.0"
     }
   ],
   "annotations": {
@@ -99,7 +99,7 @@
         "content": "<img src=\"http://localhost:3030/NIST.svg\" />",
         "mode": "html"
       },
-      "pluginVersion": "12.0.1",
+      "pluginVersion": "11.6.1",
       "transparent": true,
       "type": "text"
     },
@@ -159,7 +159,7 @@
         },
         "showHeader": false
       },
-      "pluginVersion": "12.0.1",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -292,7 +292,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.0.1",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "columns": [
@@ -596,7 +596,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.0.1",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -649,7 +649,7 @@
           "color": {
             "mode": "fixed"
           },
-          "decimals": 2,
+          "decimals": 4,
           "fieldMinMax": false,
           "mappings": [],
           "thresholds": {
@@ -729,7 +729,7 @@
         "orientation": "horizontal",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "last"
           ],
           "fields": "",
           "values": false
@@ -738,7 +738,7 @@
         "sizing": "auto",
         "valueMode": "color"
       },
-      "pluginVersion": "12.0.1",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -839,6 +839,9 @@
                 "operation": "aggregate"
               },
               "Time": {
+                "aggregations": []
+              },
+              "Time (UNIX ms)": {
                 "aggregations": [],
                 "operation": "groupby"
               },
@@ -968,7 +971,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "RSRP.Maximum (dBm)"
+              "options": "RSRP.Maximum"
             },
             "properties": [
               {
@@ -983,7 +986,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "RSRP.Minimum (dBm)"
+              "options": "RSRP.Minimum"
             },
             "properties": [
               {
@@ -998,7 +1001,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "RSRP.Median (dBm)"
+              "options": "RSRP.Median"
             },
             "properties": [
               {
@@ -1013,7 +1016,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "RSRP.Quartile3 (dBm)"
+              "options": "RSRP.Quartile3"
             },
             "properties": [
               {
@@ -1028,7 +1031,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "RSRP.Quartile1 (dBm)"
+              "options": "RSRP.Quartile1"
             },
             "properties": [
               {
@@ -1043,7 +1046,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "RSRP.Mean (dBm)"
+              "options": "RSRP.Mean"
             },
             "properties": [
               {
@@ -1077,7 +1080,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.0.1",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -1095,9 +1098,9 @@
           "options": {
             "include": {
               "names": [
-                "RSRP.Mean (dBm)",
                 "Time (UNIX ms)",
-                "UE ID"
+                "UE ID",
+                "RSRP.Mean (dBm)"
               ]
             }
           }
@@ -1234,7 +1237,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.0.1",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -1392,7 +1395,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.0.1",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -1411,10 +1414,9 @@
             "include": {
               "names": [
                 "DRB.UEThpDl (kbps)",
-                "RSRP.Count",
+                "DRB.UEThpUl (kbps)",
                 "Time (UNIX ms)",
-                "UE ID",
-                "DRB.UEThpUl (kbps)"
+                "UE ID"
               ]
             }
           }
@@ -1537,7 +1539,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.0.1",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -1710,7 +1712,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.0.1",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -1828,6 +1830,81 @@
           {
             "matcher": {
               "id": "byName",
+              "options": "RSRP.Maximum"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#181b1f",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "RSRP.Minimum"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "RSRP.Median"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "green",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "RSRP.Quartile3"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "RSRP.Quartile1"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "yellow",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
               "options": "RSRP.Maximum (dBm)"
             },
             "properties": [
@@ -1843,7 +1920,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "RSRP.Minimum (dBm)"
+              "options": "Min to Q1"
             },
             "properties": [
               {
@@ -1858,7 +1935,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "RSRP.Median (dBm)"
+              "options": "Q2 to Q3"
             },
             "properties": [
               {
@@ -1873,28 +1950,13 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "RSRP.Quartile3 (dBm)"
+              "options": "Q3 to Q4"
             },
             "properties": [
               {
                 "id": "color",
                 "value": {
                   "fixedColor": "blue",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "RSRP.Quartile1 (dBm)"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "yellow",
                   "mode": "fixed"
                 }
               }
@@ -1922,7 +1984,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.0.1",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -1940,13 +2002,13 @@
           "options": {
             "include": {
               "names": [
-                "RSRP.Maximum (dBm)",
                 "RSRP.Median (dBm)",
                 "RSRP.Minimum (dBm)",
                 "RSRP.Quartile1 (dBm)",
+                "RSRP.Quartile3 (dBm)",
                 "Time (UNIX ms)",
                 "UE ID",
-                "RSRP.Quartile3 (dBm)"
+                "RSRP.Maximum (dBm)"
               ]
             }
           }
@@ -1991,20 +2053,25 @@
             "excludeByName": {},
             "includeByName": {},
             "indexByName": {
-              "RSRP.Maximum (dBm)": 4,
-              "RSRP.Median (dBm)": 2,
-              "RSRP.Minimum (dBm)": 0,
-              "RSRP.Quartile1 (dBm)": 1,
-              "RSRP.Quartile3 (dBm)": 3,
-              "Time (UNIX ms)": 5,
-              "UE ID": 6
+              "RSRP.Maximum (dBm)": 6,
+              "RSRP.Median (dBm)": 4,
+              "RSRP.Minimum (dBm)": 2,
+              "RSRP.Quartile1 (dBm)": 3,
+              "RSRP.Quartile3 (dBm)": 5,
+              "Time (UNIX ms)": 0,
+              "UE ID": 1
             },
             "renameByName": {
-              "RSRP.Maximum (dBm)": " Max",
+              "RSRP.Maximum": " Max",
+              "RSRP.Maximum (dBm)": " ",
+              "RSRP.Median": "Q2 to Q3",
               "RSRP.Median (dBm)": "Q2 to Q3",
+              "RSRP.Minimum": "Min to Q1",
               "RSRP.Minimum (dBm)": "Min to Q1",
+              "RSRP.Quartile1": "Q1 to Q2",
               "RSRP.Quartile1 (dBm)": "Q1 to Q2",
-              "RSRP.Quartile3 (dBm)": "Q3 to Max"
+              "RSRP.Quartile3": "Q3 to Max",
+              "RSRP.Quartile3 (dBm)": "Q3 to Q4"
             }
           }
         }
@@ -2123,7 +2190,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.0.1",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -2281,7 +2348,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.0.1",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -2424,7 +2491,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.0.1",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -2568,7 +2635,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.0.1",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -2787,7 +2854,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.0.1",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -2962,7 +3029,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.0.1",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -3106,7 +3173,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.0.1",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -3262,7 +3329,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.0.1",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -3386,7 +3453,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.0.1",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -3529,7 +3596,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.0.1",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -3672,7 +3739,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.0.1",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -3817,7 +3884,7 @@
         "sizing": "auto",
         "valueMode": "color"
       },
-      "pluginVersion": "12.0.1",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -4665,7 +4732,7 @@
       "type": "histogram"
     }
   ],
-  "refresh": "auto",
+  "refresh": "30m",
   "schemaVersion": 41,
   "tags": [],
   "templating": {

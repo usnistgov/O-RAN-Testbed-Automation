@@ -28,45 +28,20 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-echo "# Script: $(realpath $0)..."
-
-# Exit immediately if a command fails
-set -e
+if ! command -v realpath &>/dev/null; then
+    echo "Package \"coreutils\" not found, installing..."
+    sudo apt-get install -y coreutils
+fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
-cd "$(dirname "$SCRIPT_DIR")"
+cd "$SCRIPT_DIR"
 
-# Set the RAN Function ID if not set
-if [ -z "$RAN_FUNC_ID" ]; then
-    export RAN_FUNC_ID="2"
-fi
-
-# Set docker's DNS server then restart docker
-sudo ./install_scripts/update_docker_dns.sh
-
-sudo apt-get install -y cmake g++ libsctp-dev
-DOCKER_FILE_PATH="e2-interface/e2sim/Dockerfile_kpm_updated"
-cp e2-interface/e2sim/Dockerfile_kpm $DOCKER_FILE_PATH
-sudo ./install_scripts/revise_e2sim_dockerfile.sh $DOCKER_FILE_PATH
-
-# Patch the E2 simulator with source code developed by Abdul Fikih Kurnia in https://hackmd.io/@abdfikih/BkIeoH9D0
-cp install_patch_files/e2-interface/e2sim/src/messagerouting/e2ap_message_handler.cpp e2-interface/e2sim/src/messagerouting/
-cp install_patch_files/e2-interface/e2sim/e2sm_examples/kpm_e2sm/reports.json e2-interface/e2sim/e2sm_examples/kpm_e2sm/
-cp install_patch_files/e2-interface/e2sim/e2sm_examples/kpm_e2sm/src/kpm/encode_kpm.cpp e2-interface/e2sim/e2sm_examples/kpm_e2sm/src/kpm/
-cp install_patch_files/e2-interface/e2sim/e2sm_examples/kpm_e2sm/src/kpm/kpm_callbacks.cpp e2-interface/e2sim/e2sm_examples/kpm_e2sm/src/kpm/
-
-cd e2-interface/e2sim/
-
-mkdir -p build
-cd build/
-cmake .. && make -j$(nproc) package && cmake .. -DDEV_PKG=1 && make -j$(nproc) package
-cp *.deb ../e2sm_examples/kpm_e2sm/
-cd ../
-docker build -t oransim:0.0.999 . -f Dockerfile_kpm_updated
-if [ $? -ne 0 ]; then
-    echo "Error: Docker build failed. Cleaning up the E2 simulator..."
-    sudo rm -rf e2-interface
-    echo
-    echo "Please try installing the E2 simulator again."
+if [ ! -f "compose/20230817/compose.sh" ]; then
+    echo "Error: Cannot find compose.sh in compose/20230817/. Please run the generate_configurations.sh script first."
     exit 1
 fi
+
+cd compose/20230817/
+
+echo "Starting the 5G Core Deployment Helper (5gdeploy) Core..."
+./compose.sh up

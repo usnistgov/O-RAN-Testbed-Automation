@@ -166,8 +166,8 @@ jq '.containers[0].image.tag = "latest" |
     .containers[0].image.name = "kpimon-go"' "$FILE" >tmp.$$.json && mv tmp.$$.json "$FILE"
 
 if [ ! -f kpimon-go.tar ]; then
-    sudo docker build -t 127.0.0.1:80/kpimon-go:latest .
-    sudo docker save -o kpimon-go.tar 127.0.0.1:80/kpimon-go:latest
+    docker build -t 127.0.0.1:80/kpimon-go:latest .
+    docker save -o kpimon-go.tar 127.0.0.1:80/kpimon-go:latest
     sudo chmod 755 kpimon-go.tar
     sudo chown $USER:$USER kpimon-go.tar
 

@@ -1,0 +1,6 @@
+# Ignore testbed subdirectories
+/configs/
+/logs/
+/5gdeploy/
+/compose/
+install_time.txt

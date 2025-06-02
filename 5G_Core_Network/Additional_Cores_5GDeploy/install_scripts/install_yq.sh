@@ -30,43 +30,74 @@
 
 echo "# Script: $(realpath $0)..."
 
-# Exit immediately if a command fails
-set -e
-
-SCRIPT_DIR=$(dirname "$(realpath "$0")")
-cd "$(dirname "$SCRIPT_DIR")"
-
-# Set the RAN Function ID if not set
-if [ -z "$RAN_FUNC_ID" ]; then
-    export RAN_FUNC_ID="2"
+# Uninstall yq with: sudo rm -rf /usr/bin/yq
+if command -v yq &>/dev/null; then
+    echo "Already installed yq, skipping."
+    exit 0
 fi
 
-# Set docker's DNS server then restart docker
-sudo ./install_scripts/update_docker_dns.sh
+echo "Installing yq..."
 
-sudo apt-get install -y cmake g++ libsctp-dev
-DOCKER_FILE_PATH="e2-interface/e2sim/Dockerfile_kpm_updated"
-cp e2-interface/e2sim/Dockerfile_kpm $DOCKER_FILE_PATH
-sudo ./install_scripts/revise_e2sim_dockerfile.sh $DOCKER_FILE_PATH
+# Determine the processor architecture
+ARCH_SUFFIX=""
+case $(uname -m) in
+"x86_64")
+    ARCH_SUFFIX="linux_amd64"
+    ;;
+"aarch64")
+    ARCH_SUFFIX="linux_arm64"
+    ;;
+"armv7l" | "armv6l")
+    ARCH_SUFFIX="linux_arm"
+    ;;
+"i386" | "i686")
+    ARCH_SUFFIX="linux_386"
+    ;;
+"ppc64le")
+    ARCH_SUFFIX="linux_ppc64le"
+    ;;
+"s390x")
+    ARCH_SUFFIX="linux_s390x"
+    ;;
+"mips")
+    ARCH_SUFFIX="linux_mips"
+    ;;
+"mips64")
+    ARCH_SUFFIX="linux_mips64"
+    ;;
+"mips64el" | "mips64le")
+    ARCH_SUFFIX="linux_mips64le"
+    ;;
+"mipsel" | "mipsle")
+    ARCH_SUFFIX="linux_mipsle"
+    ;;
+*)
+    echo "Unsupported architecture for yq: $(uname -m)"
+    exit 1
+    ;;
+esac
 
-# Patch the E2 simulator with source code developed by Abdul Fikih Kurnia in https://hackmd.io/@abdfikih/BkIeoH9D0
-cp install_patch_files/e2-interface/e2sim/src/messagerouting/e2ap_message_handler.cpp e2-interface/e2sim/src/messagerouting/
-cp install_patch_files/e2-interface/e2sim/e2sm_examples/kpm_e2sm/reports.json e2-interface/e2sim/e2sm_examples/kpm_e2sm/
-cp install_patch_files/e2-interface/e2sim/e2sm_examples/kpm_e2sm/src/kpm/encode_kpm.cpp e2-interface/e2sim/e2sm_examples/kpm_e2sm/src/kpm/
-cp install_patch_files/e2-interface/e2sim/e2sm_examples/kpm_e2sm/src/kpm/kpm_callbacks.cpp e2-interface/e2sim/e2sm_examples/kpm_e2sm/src/kpm/
+YQ_URL="https://github.com/mikefarah/yq/releases/latest/download/yq_${ARCH_SUFFIX}.tar.gz"
 
-cd e2-interface/e2sim/
+# Create a temporary directory for the download
+TEMP_DIR=$(mktemp -d)
+TEMP_PATH="$TEMP_DIR/yq.tar.gz"
 
-mkdir -p build
-cd build/
-cmake .. && make -j$(nproc) package && cmake .. -DDEV_PKG=1 && make -j$(nproc) package
-cp *.deb ../e2sm_examples/kpm_e2sm/
-cd ../
-docker build -t oransim:0.0.999 . -f Dockerfile_kpm_updated
-if [ $? -ne 0 ]; then
-    echo "Error: Docker build failed. Cleaning up the E2 simulator..."
-    sudo rm -rf e2-interface
-    echo
-    echo "Please try installing the E2 simulator again."
+echo "Downloading yq from $YQ_URL..."
+HTTP_STATUS=$(curl -L -w "%{http_code}" -o "$TEMP_PATH" "$YQ_URL")
+if [ "$HTTP_STATUS" -eq 200 ]; then
+    echo "Extracting yq..."
+    tar -xzf "$TEMP_PATH" -C "$TEMP_DIR"
+    if [ -f "$TEMP_DIR/./yq_$ARCH_SUFFIX" ]; then
+        sudo mv "$TEMP_DIR/./yq_$ARCH_SUFFIX" /usr/local/bin/yq
+        sudo chmod +x /usr/local/bin/yq
+        echo "Successfully installed yq."
+    else
+        echo "Failed to extract yq from the tar.gz."
+        exit 1
+    fi
+else
+    sudo rm -rf "$TEMP_DIR"
+    echo "Failed to download yq for the architecture: ${ARCH_SUFFIX}, HTTP status was $HTTP_STATUS."
     exit 1
 fi

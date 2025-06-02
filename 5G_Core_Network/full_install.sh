@@ -67,8 +67,8 @@ if systemctl is-active --quiet apt-daily-upgrade.timer; then
     sudo systemctl disable apt-daily-upgrade.timer &>/dev/null && echo "Successfully disabled apt-daily-upgrade.timer service."
 fi
 
-echo "Cloning Open5GS..."
 if [ ! -d "open5gs" ]; then
+    echo "Cloning Open5GS..."
     ./install_scripts/git_clone.sh https://github.com/open5gs/open5gs.git
 fi
 cd $SCRIPT_DIR/open5gs

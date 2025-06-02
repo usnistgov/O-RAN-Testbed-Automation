@@ -66,8 +66,8 @@ By default, the Hello World Go xApp (hw-go) is installed automatically. Addition
   - Patched to connect to the InfluxDB pod and write metrics to its database.
     - Upon initialization, the xApp will only connect to pre-existing E2 nodes, therefore, you can restart the xApp by running the install script again which will establish connections to any new E2 nodes.
     - Metrics will be stored in the InfluxDB pod under `bucket=kpimon, org=influxdata`. Access this data by opening the InfluxDB Client with `./additional_scripts/open_influxdb_client_shell.sh`.
-  - Information about the xApp's debugging and usage can be found at [[6]][abdul-kpimon-go].
-  - More information can be found in the documentation [[4]][kpimon-go-docs] and code [[5]][kpimon-go-code].
+  - Information about the xApp's debugging and usage can be found at [[4]][abdul-kpimon-go].
+  - More information can be found in the documentation [[5]][kpimon-go-docs] and code [[6]][kpimon-go-code].
 - **5G Cell Anomaly Detection xApp (ad-cell)**:
   - Install with `./additional_scripts/install_xapp_5g_cell_anomaly_detection.sh`.
   - As a prerequisite, the database must contain a sufficient amount of measurements.
@@ -145,9 +145,9 @@ The cluster is installed with Flannel as the default network plugin. There are s
 1. Working Group 3: Near-Real-time RAN Intelligent Controller and E2 Interface Workgroup. O-RAN Alliance. [https://public.o-ran.org/display/WG3/Introduction][oran-wg3]
 2. Near Realtime RAN Intelligent Controller. O-RAN Software Community. [https://docs.o-ran-sc.org/en/latest/projects.html#near-realtime-ran-intelligent-controller-ric][oransc-nearrtric]
 3. Release Notes. O-RAN Software Community. [https://docs.o-ran-sc.org/en/latest/release-notes.html][oransc-releases]
-4. KPI Monitoring xApp documentation. O-RAN Software Community. [https://docs.o-ran-sc.org/projects/o-ran-sc-ric-app-kpimon/en/latest/overview.html][kpimon-go-docs]
-5. KPI Monitoring xApp project page. O-RAN Software Community. [https://github.com/o-ran-sc/ric-app-kpimon-go][kpimon-go-code]
-6. Install KPI Monitoring & xApp RIC. Abdul Fikih Kurnia. [https://hackmd.io/@abdfikih/BkIeoH9D0][abdul-kpimon-go]
+4. Install KPI Monitoring & xApp RIC. Abdul Fikih Kurnia. [https://hackmd.io/@abdfikih/BkIeoH9D0][abdul-kpimon-go]
+5. KPI Monitoring xApp documentation. O-RAN Software Community. [https://docs.o-ran-sc.org/projects/o-ran-sc-ric-app-kpimon/en/latest/overview.html][kpimon-go-docs]
+6. KPI Monitoring xApp project page. O-RAN Software Community. [https://github.com/o-ran-sc/ric-app-kpimon-go][kpimon-go-code]
 7. 5G Cell AD xApp documentation. O-RAN Software Community. [https://docs.o-ran-sc.org/projects/o-ran-sc-ric-app-ad/en/latest/overview.html][ad-cell-docs]
 8. 5G Cell AD xApp project page. O-RAN Software Community. [https://github.com/o-ran-sc/ric-app-ad-cell][ad-cell-code]
 9. AD xApp documentation. O-RAN Software Community. [https://docs.o-ran-sc.org/projects/o-ran-sc-ric-app-ad/en/latest/overview.html][ad-docs]

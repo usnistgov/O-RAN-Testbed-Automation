@@ -39,17 +39,15 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$PARENT_DIR"
 
-DBCTL_DIR="./open5gs/misc/db/open5gs-dbctl"
-
 # Default values as specified in your documentation
 DEFAULT_IMSI="001010123456780"
 DEFAULT_KEY="00112233445566778899aabbccddeeff"
 DEFAULT_OPC="63BFA50EE6523365FF14C1F45F88737D"
 DEFAULT_APN="srsapn"
 
-if ! systemctl is-active --quiet "open5gs-webui"; then
-    echo "WebUI not running. Starting..."
-    sudo systemctl start open5gs-webui
+if [ ! -d "5gdeploy" ]; then
+    echo "Directory 5gdeploy does not exist. Please run the full_install.sh script first."
+    exit 1
 fi
 
 # Function to display usage
@@ -63,12 +61,6 @@ usage() {
     echo "  -h, --help                    Display this help message and exit"
     exit 1
 }
-
-# Check if the dbctl file exists
-if [ ! -f "$DBCTL_DIR" ]; then
-    echo "Error: The dbctl script ($DBCTL_DIR) does not exist."
-    usage
-fi
 
 # Parse command line arguments
 while [[ "$#" -gt 0 ]]; do
@@ -104,22 +96,19 @@ KEY="${KEY:-$DEFAULT_KEY}"
 OPC="${OPC:-$DEFAULT_OPC}"
 APN="${APN:-$DEFAULT_APN}"
 
-# Check if the subscriber already exists
-if $DBCTL_DIR showpretty | grep -q "imsi: '$IMSI'"; then
-    echo "Subscriber with IMSI $IMSI already exists in the database."
-    exit 0
+cd 5gdeploy
+
+# If file sims.tsv does not exist, create it with this header: # supi          k                                opc
+if [ ! -f sims.tsv ]; then
+    echo "File sims.tsv does not exist. Creating it with header..."
+    echo "# supi          k                                opc" >sims.tsv
 fi
 
-# Command to add subscriber using the open5gs-dbctl tool
-CMD="$DBCTL_DIR add_ue_with_apn $IMSI $KEY $OPC $APN"
+LINE="$IMSI $KEY $OPC"
 
-echo "Running command: $CMD"
-$CMD
-
-# Check exit status of the command
-if [ $? -eq 0 ]; then
-    echo "Subscriber successfully added to the database."
-    $DBCTL_DIR showpretty
+if grep -Fxq "$LINE" sims.tsv; then
+    echo "Subscriber with IMSI: $IMSI, Key: $KEY, OPC: $OPC already exists in sims.tsv"
 else
-    echo "Failed to add subscriber to the database."
+    echo "$LINE" >>sims.tsv
+    echo "Added subscriber with IMSI: $IMSI, Key: $KEY, OPC: $OPC, APN: $APN"
 fi

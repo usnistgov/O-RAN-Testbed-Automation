@@ -28,45 +28,39 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-echo "# Script: $(realpath $0)..."
-
 # Exit immediately if a command fails
 set -e
 
-SCRIPT_DIR=$(dirname "$(realpath "$0")")
-cd "$(dirname "$SCRIPT_DIR")"
-
-# Set the RAN Function ID if not set
-if [ -z "$RAN_FUNC_ID" ]; then
-    export RAN_FUNC_ID="2"
+if command -v lazydocker &>/dev/null; then
+    echo "Already installed lazydocker, skipping."
+    exit 0
 fi
 
-# Set docker's DNS server then restart docker
-sudo ./install_scripts/update_docker_dns.sh
+# Code from (https://raw.githubusercontent.com/jesseduffield/lazydocker/master/scripts/install_update_linux.sh):
+# Allow specifying different destination directory
+DIR="${DIR:-"$HOME/.local/bin"}"
+# Map different architecture variations to the available binaries
+ARCH=$(uname -m)
+case $ARCH in
+    i386|i686) ARCH=x86 ;;
+    armv6*) ARCH=armv6 ;;
+    armv7*) ARCH=armv7 ;;
+    aarch64*) ARCH=arm64 ;;
+esac
+# Prepare the download URL
+GITHUB_LATEST_VERSION=$(curl -L -s -H 'Accept: application/json' https://github.com/jesseduffield/lazydocker/releases/latest | sed -e 's/.*"tag_name":"\([^"]*\)".*/\1/')
+GITHUB_FILE="lazydocker_${GITHUB_LATEST_VERSION//v/}_$(uname -s)_${ARCH}.tar.gz"
+GITHUB_URL="https://github.com/jesseduffield/lazydocker/releases/download/${GITHUB_LATEST_VERSION}/${GITHUB_FILE}"
+# Install/update the local binary
+curl -L -o lazydocker.tar.gz $GITHUB_URL
+tar xzvf lazydocker.tar.gz lazydocker
+install -Dm 755 lazydocker -t "$DIR"
+rm lazydocker lazydocker.tar.gz
 
-sudo apt-get install -y cmake g++ libsctp-dev
-DOCKER_FILE_PATH="e2-interface/e2sim/Dockerfile_kpm_updated"
-cp e2-interface/e2sim/Dockerfile_kpm $DOCKER_FILE_PATH
-sudo ./install_scripts/revise_e2sim_dockerfile.sh $DOCKER_FILE_PATH
-
-# Patch the E2 simulator with source code developed by Abdul Fikih Kurnia in https://hackmd.io/@abdfikih/BkIeoH9D0
-cp install_patch_files/e2-interface/e2sim/src/messagerouting/e2ap_message_handler.cpp e2-interface/e2sim/src/messagerouting/
-cp install_patch_files/e2-interface/e2sim/e2sm_examples/kpm_e2sm/reports.json e2-interface/e2sim/e2sm_examples/kpm_e2sm/
-cp install_patch_files/e2-interface/e2sim/e2sm_examples/kpm_e2sm/src/kpm/encode_kpm.cpp e2-interface/e2sim/e2sm_examples/kpm_e2sm/src/kpm/
-cp install_patch_files/e2-interface/e2sim/e2sm_examples/kpm_e2sm/src/kpm/kpm_callbacks.cpp e2-interface/e2sim/e2sm_examples/kpm_e2sm/src/kpm/
-
-cd e2-interface/e2sim/
-
-mkdir -p build
-cd build/
-cmake .. && make -j$(nproc) package && cmake .. -DDEV_PKG=1 && make -j$(nproc) package
-cp *.deb ../e2sm_examples/kpm_e2sm/
-cd ../
-docker build -t oransim:0.0.999 . -f Dockerfile_kpm_updated
-if [ $? -ne 0 ]; then
-    echo "Error: Docker build failed. Cleaning up the E2 simulator..."
-    sudo rm -rf e2-interface
-    echo
-    echo "Please try installing the E2 simulator again."
+# Now that it's in DIR, make a symlink to it in /usr/local/bin
+if [ -d "$DIR" ]; then
+    sudo ln -sf "$DIR/lazydocker" /usr/local/bin/lazydocker
+else
+    echo "Directory $DIR does not exist. Please create it or specify a different directory."
     exit 1
 fi

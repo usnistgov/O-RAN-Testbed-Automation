@@ -28,45 +28,54 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-echo "# Script: $(realpath $0)..."
+# Do not exit immediately if a command fails
+set +e
 
-# Exit immediately if a command fails
-set -e
+if ! command -v realpath &>/dev/null; then
+    echo "Package \"coreutils\" not found, installing..."
+    sudo apt-get install -y coreutils
+fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
-cd "$(dirname "$SCRIPT_DIR")"
+PARENT_DIR=$(dirname "$SCRIPT_DIR")
+cd "$SCRIPT_DIR"
 
-# Set the RAN Function ID if not set
-if [ -z "$RAN_FUNC_ID" ]; then
-    export RAN_FUNC_ID="2"
-fi
+./install_scripts/uninstall_lazydocker.sh
 
-# Set docker's DNS server then restart docker
-sudo ./install_scripts/update_docker_dns.sh
+cd $SCRIPT_DIR/5gdeploy
 
-sudo apt-get install -y cmake g++ libsctp-dev
-DOCKER_FILE_PATH="e2-interface/e2sim/Dockerfile_kpm_updated"
-cp e2-interface/e2sim/Dockerfile_kpm $DOCKER_FILE_PATH
-sudo ./install_scripts/revise_e2sim_dockerfile.sh $DOCKER_FILE_PATH
+echo "Removing system packages (httpie, jq, python3-libconf, wireshark-common, nodejs)..."
+sudo apt remove --purge -y httpie jq python3-libconf wireshark-common nodejs
+sudo apt autoremove --purge -y
 
-# Patch the E2 simulator with source code developed by Abdul Fikih Kurnia in https://hackmd.io/@abdfikih/BkIeoH9D0
-cp install_patch_files/e2-interface/e2sim/src/messagerouting/e2ap_message_handler.cpp e2-interface/e2sim/src/messagerouting/
-cp install_patch_files/e2-interface/e2sim/e2sm_examples/kpm_e2sm/reports.json e2-interface/e2sim/e2sm_examples/kpm_e2sm/
-cp install_patch_files/e2-interface/e2sim/e2sm_examples/kpm_e2sm/src/kpm/encode_kpm.cpp e2-interface/e2sim/e2sm_examples/kpm_e2sm/src/kpm/
-cp install_patch_files/e2-interface/e2sim/e2sm_examples/kpm_e2sm/src/kpm/kpm_callbacks.cpp e2-interface/e2sim/e2sm_examples/kpm_e2sm/src/kpm/
+echo "Removing wireshark group membership for $(id -un)..."
+sudo deluser $(id -un) wireshark
 
-cd e2-interface/e2sim/
+echo "Removing NodeSource repo and key..."
+sudo rm -f /etc/apt/sources.list.d/nodesource.list
+sudo rm -f /etc/apt/keyrings/nodesource.gpg
 
-mkdir -p build
-cd build/
-cmake .. && make -j$(nproc) package && cmake .. -DDEV_PKG=1 && make -j$(nproc) package
-cp *.deb ../e2sm_examples/kpm_e2sm/
-cd ../
-docker build -t oransim:0.0.999 . -f Dockerfile_kpm_updated
-if [ $? -ne 0 ]; then
-    echo "Error: Docker build failed. Cleaning up the E2 simulator..."
-    sudo rm -rf e2-interface
-    echo
-    echo "Please try installing the E2 simulator again."
-    exit 1
-fi
+echo "Removing yq snap..."
+sudo snap remove yq
+
+echo "Removing Docker and cleaning config..."
+sudo apt remove --purge -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin docker-ce-rootless-extras docker-scan-plugin
+sudo apt autoremove --purge -y
+sudo systemctl stop docker
+sudo systemctl disable docker
+sudo rm -rf /etc/docker
+sudo rm -rf /home/docker
+sudo groupdel docker
+sudo deluser $(id -un) docker
+
+# Reset the shell's command hash table to recognize changes in available executables
+hash -r
+
+cd $SCRIPT_DIR
+
+echo "Removing 5G Core Deployment Helper (5gdeploy) directory..."
+sudo rm -rf 5gdeploy/
+sudo rm -rf compose/
+sudo rm -rf logs
+
+echo "Successfully uninstalled the 5G Core Deployment Helper (5gdeploy)."

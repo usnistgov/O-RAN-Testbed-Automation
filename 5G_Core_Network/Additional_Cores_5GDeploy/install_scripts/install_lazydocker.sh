@@ -42,10 +42,10 @@ DIR="${DIR:-"$HOME/.local/bin"}"
 # Map different architecture variations to the available binaries
 ARCH=$(uname -m)
 case $ARCH in
-    i386|i686) ARCH=x86 ;;
-    armv6*) ARCH=armv6 ;;
-    armv7*) ARCH=armv7 ;;
-    aarch64*) ARCH=arm64 ;;
+i386 | i686) ARCH=x86 ;;
+armv6*) ARCH=armv6 ;;
+armv7*) ARCH=armv7 ;;
+aarch64*) ARCH=arm64 ;;
 esac
 # Prepare the download URL
 GITHUB_LATEST_VERSION=$(curl -L -s -H 'Accept: application/json' https://github.com/jesseduffield/lazydocker/releases/latest | sed -e 's/.*"tag_name":"\([^"]*\)".*/\1/')

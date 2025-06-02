@@ -29,7 +29,7 @@
 # copyright protection within the United States.
 
 if docker ps --filter "name=^amf$" --format '{{.Names}}' | grep -q "^amf$"; then
-   echo "5gdeploy: RUNNING"
+    echo "5gdeploy: RUNNING"
 else
-   echo "5gdeploy: NOT_RUNNING"
+    echo "5gdeploy: NOT_RUNNING"
 fi

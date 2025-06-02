@@ -231,7 +231,7 @@ cd "$SCRIPT_DIR"
 
 # Check if docker is accessible from the current user, and if not, repair its permissions
 if [ -z "$FIXED_DOCKER_PERMS" ]; then
-    if ! output=$(docker info 2>&1) ; then
+    if ! output=$(docker info 2>&1); then
         if echo "$output" | grep -qiE 'permission denied|cannot connect to the docker daemon'; then
             echo "Repairing Docker permissions..."
             sudo groupadd -f docker

@@ -589,8 +589,10 @@ static void evaluate_rsrp_report(gNB_MAC_INST *nrmac,
   // Log each individual RSRP measurement
   if (stats->num_rsrp_meas < sizeof(stats->rsrp_meas) / sizeof(stats->rsrp_meas[0])) {
     stats->rsrp_meas[stats->num_rsrp_meas] = rsrp_report->RSRP[0];
-    stats->rsrp_meas_capacity++;
+    stats->e2_rsrp_meas_capacity++;
   }
+  stats->e2_cumul_rsrp += rsrp_report->RSRP[0];
+  stats->e2_num_rsrp_meas++;
 
   // including ssb rsrp in mac stats
   stats->cumul_rsrp += rsrp_report->RSRP[0];

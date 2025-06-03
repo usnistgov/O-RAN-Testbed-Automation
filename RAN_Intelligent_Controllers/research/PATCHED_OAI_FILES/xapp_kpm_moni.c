@@ -32,17 +32,11 @@
 #include <signal.h>
 #include <pthread.h>
 
-bool run_forever = true;
-
 static
 uint64_t const period_ms = 1000;
 
 static
 pthread_mutex_t mtx;
-
-void handle_sigint(int signum) {
-  run_forever = false;
-}
 
 static
 void log_gnb_ue_id(ue_id_e2sm_t ue_id)
@@ -465,12 +459,6 @@ int main(int argc, char* argv[])
       free_kpm_sub_data(&kpm_sub);
     }
   }
-
-  if (run_forever) signal(SIGINT, handle_sigint);
-  while (run_forever) {
-    usleep(10000);
-  }
-
   ////////////
   // END KPM
   ////////////

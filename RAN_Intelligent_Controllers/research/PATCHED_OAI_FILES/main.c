@@ -111,12 +111,6 @@ void clear_mac_stats(gNB_MAC_INST *gNB) {
   }
 }
 
-
-// Comparison function for integers used in qsort
-static int compare_int(const void *a, const void *b) {
-  return (*(int *)a - *(int *)b);
-}
-
 size_t dump_mac_stats(gNB_MAC_INST *gNB, char *output, size_t strlen, bool reset_rsrp)
 {
   const char *begin = output;
@@ -181,19 +175,6 @@ size_t dump_mac_stats(gNB_MAC_INST *gNB, char *output, size_t strlen, bool reset
                        UE->current_DL_BWP.mcsTableIdx,
                        sched_ctrl->dl_bler_stats.mcs);
     if (reset_rsrp) {
-      // Save previous RSRP values before resetting so that querying them is synchronized with the gNB output
-      stats->prev_num_rsrp_meas = stats->num_rsrp_meas;
-      stats->prev_cumul_rsrp = stats->cumul_rsrp;
-      
-      // Sort rsrp_meas in place and then copy to prev_rsrp_meas_sorted
-      qsort(stats->rsrp_meas, stats->rsrp_meas_capacity, sizeof(int), compare_int);
-      stats->prev_rsrp_meas_sorted_capacity = stats->rsrp_meas_capacity;
-      memcpy(stats->prev_rsrp_meas_sorted, stats->rsrp_meas, sizeof(stats->rsrp_meas));
-
-      // Clear the array of individual RSRP measurements
-      memset(stats->rsrp_meas, 0, sizeof(stats->rsrp_meas));
-      stats->rsrp_meas_capacity = 0;
-
       stats->num_rsrp_meas = 0;
       stats->cumul_rsrp = 0;
     }

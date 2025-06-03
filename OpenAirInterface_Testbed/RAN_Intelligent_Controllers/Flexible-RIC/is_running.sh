@@ -43,13 +43,13 @@ else
 fi
 
 if systemctl is-active grafana-server &>/dev/null; then
-    if pgrep -f "grafana_host_kpi_metrics_over_http.py" >/dev/null; then
+    if pgrep -f "python_server_for_grafana.py" >/dev/null; then
         echo "Grafana: RUNNING (with HTTP server)"
     else
         echo "Grafana: RUNNING"
     fi
 else
-    if pgrep -f "grafana_host_kpi_metrics_over_http.py" >/dev/null; then
+    if pgrep -f "python_server_for_grafana.py" >/dev/null; then
         echo "Grafana: NOT_RUNNING (with HTTP server)"
     fi
 fi

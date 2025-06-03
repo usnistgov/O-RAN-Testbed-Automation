@@ -37,6 +37,9 @@
 // Set to the interval in milliseconds at which the xApp should write to the CSV file
 static uint64_t const period_ms = 1000;
 
+// Lowering the timestamp precision groups measurements from multiple UEs under the same timestamp, making it easier to identify simultaneous connections.
+uint64_t timestamp_precision = 10;
+
 // Set to true if samples containing RSRP.Count == 0 are to be filtered,
 // which is expected to give more stable results at the expense of some data loss
 const bool filter_invalid_rsrp_samples = false;
@@ -159,8 +162,8 @@ void send_metrics_to_influxdb(uint64_t ue_id, int64_t timestamp_ms, char *fields
     strcat(fields_buffer, ",");
   }
 
-  // Round down the timestamp to the nearest multiple of 1000 so that multiple UEs in the same window can share the same timestamp
-  timestamp_ms = timestamp_ms - (timestamp_ms % 1000);
+  // Round down the timestamp to the nearest multiple of timestamp_precision so that multiple UEs in the same window can share the same timestamp
+  timestamp_ms = timestamp_ms - (timestamp_ms % timestamp_precision);
 
   // Construct Line Protocol (measurement: kpm_measurements) with UE_ID as a field
   snprintf(line_protocol, sizeof(line_protocol),

@@ -32,6 +32,10 @@ import socketserver
 import urllib.parse
 import mmap
 import time
+import random
+
+# Number of UEs. Send the last N samples without a step size (this is used for multi-UE scenarios to ensure that the round-robin sampling is not affected by the step size).
+send_last_n_samples_no_step = 6
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(script_dir)
@@ -42,10 +46,14 @@ class SingleFileHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     # Perform a binary search to find the offset in the mmap file where the timestamp is greater than or equal to the target timestamp.
     def find_offset(self, mmap_file: mmap.mmap, header_end_offset: int, target_timestamp: int):
         low, high = header_end_offset, mmap_file.size()
+        result_offset = mmap_file.size()
+
         while low < high:
             mid = (low + high) // 2
             mmap_file.seek(mid)
-            mmap_file.readline()  # Skip a possibly partial line
+            # Move to the start of the next line if not at header
+            if mid != header_end_offset:
+                mmap_file.readline()
             current_position = mmap_file.tell()
             line = mmap_file.readline()
             if not line:
@@ -58,20 +66,27 @@ class SingleFileHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 continue
 
             if timestamp < target_timestamp:
-                low = current_position + len(line)
+                low = mmap_file.tell()
             else:
+                result_offset = current_position
                 high = mid
-        
-        # If the line is still less than the target timestamp, check the next line
-        mmap_file.seek(low)
-        candidate = mmap_file.readline()
-        try:
-            ts = int(candidate.split(b',',1)[0])
-        except:
-            ts = None
-        if ts is None or ts < target_timestamp:
-            return mmap_file.size()
-        return low
+        # After binary search, perform a forward scan (limited number of lines)
+        mmap_file.seek(result_offset)
+        scan_limit = 10  # Adjust as needed
+        for _ in range(scan_limit):
+            pos = mmap_file.tell()
+            line = mmap_file.readline()
+            if not line:
+                break
+            try:
+                ts = int(line.split(b',', 1)[0])
+                if ts >= target_timestamp:
+                    return pos
+            except ValueError:
+                continue
+        # If no timestamp equal to or greater than the target was found, return the start of data (just after header)
+        return header_end_offset
+
 
     def do_GET(self):
         start_time = time.perf_counter()
@@ -87,14 +102,24 @@ class SingleFileHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             if not os.path.exists(csv_path):
                 return self.send_error(404, "Not found")
 
-            # Helper function to parse query parameters
-            def parse(name):
-                value = query.get(name)
-                return int(value[0]) if value and value[0].isdigit() else None
+            def parse_int_param(param):
+                value = query.get(param, [None])[0]
+                try:
+                    return int(value)
+                except (TypeError, ValueError):
+                    return None
 
-            from_timestamp, to_timestamp = parse('from'), parse('to')
+            from_timestamp = parse_int_param('from')
+            to_timestamp = parse_int_param('to')
+            approx_num_samples_param = parse_int_param('approx_num_samples')
             filter_param = query.get('filter', [None])[0]
             filter_columns = filter_param.split(',') if filter_param else None
+
+            if approx_num_samples_param < 1: approx_num_samples_param = None
+
+            if approx_num_samples_param and not to_timestamp:
+                self.send_error(400, "Bad Request: 'num_samples' requires 'to' parameter")
+                return
 
             # If no filters are provided, fall back to the default handler
             if from_timestamp is None and to_timestamp is None and not filter_columns:
@@ -106,12 +131,13 @@ class SingleFileHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 mmap_file = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
                 header_end = mmap_file.find(b'\n') + 1
                 start = header_end if from_timestamp is None else self.find_offset(mmap_file, header_end, from_timestamp)
+                print(f"Start position for mmap: {start}")
 
                 # If the start position is beyond the file size, return the header
                 if start >= mmap_file.size():
                     header = mmap_file[:header_end]
                     self.send_response(200)
-                    self.send_header('Content-Type',   'text/csv')
+                    self.send_header('Content-Type', 'text/csv')
                     self.send_header('Content-Length', str(len(header)))
                     self.end_headers()
                     self.wfile.write(header)
@@ -122,6 +148,9 @@ class SingleFileHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
                 # Always send the header row
                 buffer = bytearray()
+                prev_timestamp = None
+                timestamp_period_estimation = None
+                step_size_float = 1
 
                 if filter_columns:
                     # Read the header and filter columns
@@ -133,32 +162,82 @@ class SingleFileHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                     buffer.extend(filtered_bytes)
 
                     mmap_file.seek(start)
+                    line_count = 0
                     while True:
                         line = mmap_file.readline()
                         if not line:
                             break
                         timestamp = int(line.split(b',', 1)[0]) if line.split(b',', 1)[0].isdigit() else None
+
+                        # Calculate the timestamp period using the first two timestamps
+                        if timestamp_period_estimation is None and prev_timestamp is not None and timestamp is not None and to_timestamp is not None and approx_num_samples_param:
+                            period = abs(timestamp - prev_timestamp)
+                            if (period * int(approx_num_samples_param)) > 0:
+                                timestamp_period_estimation = period
+                                step_size_float = max(1, (to_timestamp - prev_timestamp) / (timestamp_period_estimation * int(approx_num_samples_param)))
+                        if send_last_n_samples_no_step is not None:
+                            # Send the last N samples at the end of the file regardless of the step size (multi-ue)
+                            if timestamp_period_estimation is not None and to_timestamp is not None and timestamp is not None and abs(to_timestamp - timestamp) / timestamp_period_estimation < send_last_n_samples_no_step:
+                                step_size_float = 1
+
+                        if step_size_float == 1:
+                            cells = line.rstrip(b'\r\n').split(b',')
+                            filtered_line = b','.join(cells[i] for i in column_indices) + b'\n'
+                            buffer.extend(filtered_line)
+                        else:
+                            # Probabilistically round the step size to avoid bias when step_size_float is not an integer
+                            prob_step_lower = int(step_size_float)
+                            prob_step_upper = prob_step_lower + 1
+                            prob_step_prob_upper = step_size_float - prob_step_lower
+                            prob_step_size = prob_step_upper if random.random() < prob_step_prob_upper else prob_step_lower
+                            if line_count % prob_step_size == 0:
+                                cells = line.rstrip(b'\r\n').split(b',')
+                                filtered_line = b','.join(cells[i] for i in column_indices) + b'\n'
+                                buffer.extend(filtered_line)
+                        line_count += 1
+                        prev_timestamp = timestamp
+
                         if to_timestamp is not None and timestamp is not None and timestamp > to_timestamp:
                             break
-
-                        cells = line.rstrip(b'\r\n').split(b',')
-                        filtered_line = b','.join(cells[i] for i in column_indices) + b'\n'
-                        buffer.extend(filtered_line)
                 else:
                     # If no filtering is applied, send the entire file content
                     header = mmap_file[:header_end]
                     buffer.extend(header)
-
                     # Read lines until the end of the file or until the to_timestamp is reached
+                    line_count = 0
                     while True:
                         line = mmap_file.readline()
                         if not line:
                             break
                         timestamp = int(line.split(b',', 1)[0]) if line.split(b',', 1)[0].isdigit() else None
+
+                        # Calculate the timestamp period using the first two timestamps
+                        if timestamp_period_estimation is None and prev_timestamp is not None and timestamp is not None and to_timestamp is not None and approx_num_samples_param:
+                            period = abs(timestamp - prev_timestamp)
+                            if (period * int(approx_num_samples_param)) > 0:
+                                timestamp_period_estimation = period
+                                step_size_float = max(1, (to_timestamp - prev_timestamp) / (timestamp_period_estimation * int(approx_num_samples_param)))
+                        if send_last_n_samples_no_step is not None:
+                            # Send the last N samples at the end of the file regardless of the step size (multi-ue)
+                            if timestamp_period_estimation is not None and to_timestamp is not None and timestamp is not None and abs(to_timestamp - timestamp) / timestamp_period_estimation < send_last_n_samples_no_step:
+                                step_size_float = 1
+
+                        if step_size_float == 1:
+                            buffer.extend(line)
+                        else:
+                            # Probabilistically round the step size to avoid bias when step_size_float is not an integer
+                            prob_step_lower = int(step_size_float)
+                            prob_step_upper = prob_step_lower + 1
+                            prob_step_prob_upper = step_size_float - prob_step_lower
+                            prob_step_size = prob_step_upper if random.random() < prob_step_prob_upper else prob_step_lower
+                            if line_count % prob_step_size == 0:
+                                buffer.extend(line)
+                        line_count += 1
+                        prev_timestamp = timestamp
+
                         if to_timestamp is not None and timestamp is not None and timestamp > to_timestamp:
                             break
-                        buffer.extend(line)
-
+                
                 mmap_file.close()
 
             data = bytes(buffer)
@@ -215,7 +294,7 @@ class MyTCPServer(socketserver.TCPServer):
 
 with MyTCPServer(('', PORT), SingleFileHTTPRequestHandler) as httpd:
     print('Serving the following routes:')
-    print(f'    http://localhost:{PORT}/KPI_Metrics.csv?from=<start_ms>&to=<end_ms>&filter=<column1,column2,...>')
+    print(f'    http://localhost:{PORT}/KPI_Metrics.csv?from=<start_ms>&to=<end_ms>&approx_num_samples=<number_of_rows>&filter=<column1,column2,...>')
     print(f'    http://localhost:{PORT}/KPI_Metrics.csv...')
     print(f'    http://localhost:{PORT}/NIST.svg...')
     httpd.serve_forever()

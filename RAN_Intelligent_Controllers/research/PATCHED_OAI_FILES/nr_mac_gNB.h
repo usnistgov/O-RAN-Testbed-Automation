@@ -705,13 +705,14 @@ typedef struct NR_mac_stats {
   uint32_t pucch0_DTX;
   int cumul_rsrp;
   uint8_t num_rsrp_meas;
-  int prev_cumul_rsrp;
-  uint8_t prev_num_rsrp_meas;
-  // Keep track of each individual RSRP measurement for KPM: median, minimum, maximum, quartile1, quartile3
+  
+  // Keep track of each individual RSRP measurements for E2 KPM
   int rsrp_meas[1024];
-  uint16_t rsrp_meas_capacity;
-  int prev_rsrp_meas_sorted[1024];
-  uint16_t prev_rsrp_meas_sorted_capacity;
+  uint16_t e2_rsrp_meas_capacity;
+  int e2_rsrp_meas_sorted[1024];
+  uint16_t e2_rsrp_meas_sorted_capacity;
+  int e2_cumul_rsrp;
+  uint8_t e2_num_rsrp_meas;
 
   char srs_stats[50]; // Statistics may differ depending on SRS usage
   int pusch_snrx10;

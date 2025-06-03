@@ -34,48 +34,12 @@ if ! command -v realpath &>/dev/null; then
 fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
-cd "$SCRIPT_DIR"
+PARENT_DIR=$(dirname "$SCRIPT_DIR")
+cd "$PARENT_DIR"
 
 # Upon exit, restore the terminal to a sane state
 trap 'stty sane; exit' EXIT SIGINT SIGTERM
 
-# Check if the components are already stopped
-if ! $(./is_running.sh | grep -q ": RUNNING"); then
-    ./is_running.sh
-    exit 0
-fi
+pkill -9 -f "python_server_for_grafana.py"
 
-echo "Stopping xApps..."
-./additional_scripts/stop_xapps.sh
-
-echo "Stopping Grafana..."
-./additional_scripts/stop_grafana_and_python_server.sh
-
-# Prevent the subsequent command from requiring credential input
-sudo ls >/dev/null 2>&1
-
-# Send a graceful shutdown signal to the FlexRIC process
-sudo pkill -f "nearRT-RIC" >/dev/null 2>&1 &
-
-# Wait for the process to terminate gracefully
-COUNT=0
-MAX_COUNT=10
-sleep 1
-while [ $COUNT -lt $MAX_COUNT ]; do
-    IS_RUNNING=$(./is_running.sh)
-    echo "$IS_RUNNING ($COUNT / $MAX_COUNT)"
-    if echo "$IS_RUNNING" | grep -q "FlexRIC: NOT_RUNNING"; then
-        echo "The FlexRIC has stopped gracefully."
-        ./is_running.sh
-        exit 0
-    fi
-    COUNT=$((COUNT + 1))
-    sleep 2
-done
-
-# If the process is still running after 20 seconds, send a forceful kill signal
-echo "The FlexRIC did not stop in time, sending forceful kill signal..."
-sudo pkill -9 -f "nearRT-RIC" >/dev/null 2>&1 &
-
-sleep 2
 ./is_running.sh

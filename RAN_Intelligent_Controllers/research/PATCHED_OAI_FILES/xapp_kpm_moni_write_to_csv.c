@@ -33,11 +33,11 @@
 #include <pthread.h>
 #include <inttypes.h>
 
-// Set to true if the xApp should run forever, otherwise it will stop after 10 seconds
-bool run_forever = true;
-
 // Set to the interval in milliseconds at which the xApp should write to the CSV file
 static uint64_t const period_ms = 1000;
+
+// Lowering the timestamp precision groups measurements from multiple UEs under the same timestamp, making it easier to identify simultaneous connections.
+uint64_t timestamp_precision = 10;
 
 // Set to true if samples containing RSRP.Count == 0 are to be filtered,
 // which is expected to give more stable results at the expense of some data loss
@@ -52,10 +52,6 @@ char csv_line_buffer[1024];
 unsigned int csv_num_rows = 0;
 uint64_t current_ue_id = 0;
 bool filter_current_sample = false;
-
-void handle_sigint(int signum) {
-  run_forever = false;
-}
 
 static void log_gnb_ue_id(ue_id_e2sm_t ue_id)
 {
@@ -210,8 +206,9 @@ static void csv_prepend_timestamp()
     return;
   }
 
+  int64_t now_adjusted_precision = now - (now % timestamp_precision);
   char timestamp_buffer[32];
-  snprintf(timestamp_buffer, sizeof(timestamp_buffer), "%" PRId64 ",", now);
+  snprintf(timestamp_buffer, sizeof(timestamp_buffer), "%" PRId64 ",", now_adjusted_precision);
 
   // Ensure the buffer won't overflow
   size_t timestamp_len = strlen(timestamp_buffer);
@@ -763,12 +760,6 @@ int main(int argc, char *argv[])
       free_kpm_sub_data(&kpm_sub);
     }
   }
-
-  if (run_forever) signal(SIGINT, handle_sigint);
-  while (run_forever) {
-    usleep(10000);
-  }
-
   ////////////
   // END KPM
   ////////////

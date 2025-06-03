@@ -36,6 +36,9 @@
 // Set to the interval in milliseconds at which the xApp should write to the CSV file
 static uint64_t const period_ms = 1000;
 
+// Lowering the timestamp precision groups measurements from multiple UEs under the same timestamp, making it easier to identify simultaneous connections.
+uint64_t timestamp_precision = 10;
+
 // Set to true if samples containing RSRP.Count == 0 are to be filtered,
 // which is expected to give more stable results at the expense of some data loss
 const bool filter_invalid_rsrp_samples = false;
@@ -203,8 +206,9 @@ static void csv_prepend_timestamp()
     return;
   }
 
+  int64_t now_adjusted_precision = now - (now % timestamp_precision);
   char timestamp_buffer[32];
-  snprintf(timestamp_buffer, sizeof(timestamp_buffer), "%" PRId64 ",", now);
+  snprintf(timestamp_buffer, sizeof(timestamp_buffer), "%" PRId64 ",", now_adjusted_precision);
 
   // Ensure the buffer won't overflow
   size_t timestamp_len = strlen(timestamp_buffer);

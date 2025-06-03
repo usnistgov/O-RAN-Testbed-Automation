@@ -37,7 +37,7 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
 # Upon exit, gracefully stop all components and fix console in case it breaks
-trap 'trap - EXIT SIGINT SIGTERM; echo "#################################  STOPPING... #################################"; "$SCRIPT_DIR/RAN_Intelligent_Controllers/Flexible-RIC/additional_scripts/./stop_grafana.sh"; "$SCRIPT_DIR/./stop.sh"; stty sane; exit' EXIT SIGINT SIGTERM
+trap 'trap - EXIT SIGINT SIGTERM; echo "#################################  STOPPING... #################################"; "$SCRIPT_DIR/RAN_Intelligent_Controllers/Flexible-RIC/additional_scripts/./stop_grafana_and_python_server.sh"; "$SCRIPT_DIR/./stop.sh"; stty sane; exit' EXIT SIGINT SIGTERM
 
 echo "Running 5G Core components..."
 cd 5G_Core_Network

@@ -91,8 +91,8 @@ static meas_record_lst_t fill_RSRP_Mean(__attribute__((unused))uint32_t gran_per
   meas_record.value = REAL_MEAS_VALUE;
 
   // Calculate the average value of RSRP
-  if (ue_info.ue->mac_stats.prev_num_rsrp_meas > 0) {
-    meas_record.real_val = (double)ue_info.ue->mac_stats.prev_cumul_rsrp / (double)ue_info.ue->mac_stats.prev_num_rsrp_meas; // [dBm]
+  if (ue_info.ue->mac_stats.e2_num_rsrp_meas > 0) {
+    meas_record.real_val = (double)ue_info.ue->mac_stats.e2_cumul_rsrp / (double)ue_info.ue->mac_stats.e2_num_rsrp_meas; // [dBm]
   } else {
     meas_record.real_val = NAN;
   }
@@ -108,9 +108,9 @@ static meas_record_lst_t fill_RSRP_Minimum(__attribute__((unused))uint32_t gran_
   meas_record.value = REAL_MEAS_VALUE;
 
   // Find the minimum
-  for (int i = 0; i < ue_info.ue->mac_stats.prev_rsrp_meas_sorted_capacity; i++) {
-    if (i == 0 || ue_info.ue->mac_stats.prev_rsrp_meas_sorted[i] < meas_record.real_val) {
-      meas_record.real_val = (double)ue_info.ue->mac_stats.prev_rsrp_meas_sorted[i]; // [dBm]
+  for (int i = 0; i < ue_info.ue->mac_stats.e2_rsrp_meas_sorted_capacity; i++) {
+    if (i == 0 || ue_info.ue->mac_stats.e2_rsrp_meas_sorted[i] < meas_record.real_val) {
+      meas_record.real_val = (double)ue_info.ue->mac_stats.e2_rsrp_meas_sorted[i]; // [dBm]
     }
   }
   
@@ -125,14 +125,14 @@ static meas_record_lst_t fill_RSRP_Quartile1(__attribute__((unused))uint32_t gra
   meas_record.value = REAL_MEAS_VALUE;
 
   // Calculate the first quartile (Q1) of RSRP
-  if (ue_info.ue->mac_stats.prev_rsrp_meas_sorted_capacity > 0) {
+  if (ue_info.ue->mac_stats.e2_rsrp_meas_sorted_capacity > 0) {
     // Calculate Q1
-    size_t q1_index = ue_info.ue->mac_stats.prev_rsrp_meas_sorted_capacity / 4;
-    if (ue_info.ue->mac_stats.prev_rsrp_meas_sorted_capacity % 4 == 0) {
-      meas_record.real_val = (double)(ue_info.ue->mac_stats.prev_rsrp_meas_sorted[q1_index - 1] +
-                                      ue_info.ue->mac_stats.prev_rsrp_meas_sorted[q1_index]) / 2.0; // [dBm]
+    size_t q1_index = ue_info.ue->mac_stats.e2_rsrp_meas_sorted_capacity / 4;
+    if (ue_info.ue->mac_stats.e2_rsrp_meas_sorted_capacity % 4 == 0) {
+      meas_record.real_val = (double)(ue_info.ue->mac_stats.e2_rsrp_meas_sorted[q1_index - 1] +
+                                      ue_info.ue->mac_stats.e2_rsrp_meas_sorted[q1_index]) / 2.0; // [dBm]
     } else {
-      meas_record.real_val = (double)ue_info.ue->mac_stats.prev_rsrp_meas_sorted[q1_index]; // [dBm]
+      meas_record.real_val = (double)ue_info.ue->mac_stats.e2_rsrp_meas_sorted[q1_index]; // [dBm]
     }
   } else {
     meas_record.real_val = NAN;
@@ -149,13 +149,13 @@ static meas_record_lst_t fill_RSRP_Median(__attribute__((unused))uint32_t gran_p
   meas_record.value = REAL_MEAS_VALUE;
 
   // Calculate the median value of RSRP
-  if (ue_info.ue->mac_stats.prev_rsrp_meas_sorted_capacity > 0) {
+  if (ue_info.ue->mac_stats.e2_rsrp_meas_sorted_capacity > 0) {
     // Calculate the median
-    if (ue_info.ue->mac_stats.prev_rsrp_meas_sorted_capacity % 2 == 0) {
-      meas_record.real_val = (double)(ue_info.ue->mac_stats.prev_rsrp_meas_sorted[ue_info.ue->mac_stats.prev_rsrp_meas_sorted_capacity / 2 - 1] +
-                                      ue_info.ue->mac_stats.prev_rsrp_meas_sorted[ue_info.ue->mac_stats.prev_rsrp_meas_sorted_capacity / 2]) / 2.0; // [dBm]
+    if (ue_info.ue->mac_stats.e2_rsrp_meas_sorted_capacity % 2 == 0) {
+      meas_record.real_val = (double)(ue_info.ue->mac_stats.e2_rsrp_meas_sorted[ue_info.ue->mac_stats.e2_rsrp_meas_sorted_capacity / 2 - 1] +
+                                      ue_info.ue->mac_stats.e2_rsrp_meas_sorted[ue_info.ue->mac_stats.e2_rsrp_meas_sorted_capacity / 2]) / 2.0; // [dBm]
     } else {
-      meas_record.real_val = (double)ue_info.ue->mac_stats.prev_rsrp_meas_sorted[ue_info.ue->mac_stats.prev_rsrp_meas_sorted_capacity / 2]; // [dBm]
+      meas_record.real_val = (double)ue_info.ue->mac_stats.e2_rsrp_meas_sorted[ue_info.ue->mac_stats.e2_rsrp_meas_sorted_capacity / 2]; // [dBm]
     }
   } else {
     meas_record.real_val = NAN;
@@ -171,14 +171,14 @@ static meas_record_lst_t fill_RSRP_Quartile3(__attribute__((unused))uint32_t gra
 
   meas_record.value = REAL_MEAS_VALUE;
   // Calculate the third quartile (Q3) of RSRP
-  if (ue_info.ue->mac_stats.prev_rsrp_meas_sorted_capacity > 0) {
+  if (ue_info.ue->mac_stats.e2_rsrp_meas_sorted_capacity > 0) {
     // Calculate Q3
-    size_t q3_index = (3 * ue_info.ue->mac_stats.prev_rsrp_meas_sorted_capacity) / 4;
-    if (ue_info.ue->mac_stats.prev_rsrp_meas_sorted_capacity % 4 == 0) {
-      meas_record.real_val = (double)(ue_info.ue->mac_stats.prev_rsrp_meas_sorted[q3_index - 1] +
-                                      ue_info.ue->mac_stats.prev_rsrp_meas_sorted[q3_index]) / 2.0; // [dBm]
+    size_t q3_index = (3 * ue_info.ue->mac_stats.e2_rsrp_meas_sorted_capacity) / 4;
+    if (ue_info.ue->mac_stats.e2_rsrp_meas_sorted_capacity % 4 == 0) {
+      meas_record.real_val = (double)(ue_info.ue->mac_stats.e2_rsrp_meas_sorted[q3_index - 1] +
+                                      ue_info.ue->mac_stats.e2_rsrp_meas_sorted[q3_index]) / 2.0; // [dBm]
     } else {
-      meas_record.real_val = (double)ue_info.ue->mac_stats.prev_rsrp_meas_sorted[q3_index]; // [dBm]
+      meas_record.real_val = (double)ue_info.ue->mac_stats.e2_rsrp_meas_sorted[q3_index]; // [dBm]
     }
   } else {
     meas_record.real_val = NAN;
@@ -195,17 +195,22 @@ static meas_record_lst_t fill_RSRP_Maximum(__attribute__((unused))uint32_t gran_
   meas_record.value = REAL_MEAS_VALUE;
 
   // Find the maximum
-  for (int i = 0; i < ue_info.ue->mac_stats.prev_rsrp_meas_sorted_capacity; i++) {
-    if (i == 0 || ue_info.ue->mac_stats.prev_rsrp_meas_sorted[i] > meas_record.real_val) {
-      meas_record.real_val = (double)ue_info.ue->mac_stats.prev_rsrp_meas_sorted[i]; // [dBm]
+  for (int i = 0; i < ue_info.ue->mac_stats.e2_rsrp_meas_sorted_capacity; i++) {
+    if (i == 0 || ue_info.ue->mac_stats.e2_rsrp_meas_sorted[i] > meas_record.real_val) {
+      meas_record.real_val = (double)ue_info.ue->mac_stats.e2_rsrp_meas_sorted[i]; // [dBm]
     }
   }
   
   return meas_record;
 }
 
+// Comparison function for integers used in qsort
+static int compare_int(const void *a, const void *b) {
+  return (*(int *)a - *(int *)b);
+}
 
 // Added metric for research purposes only
+// This function will also update the previous RSRP values
 static meas_record_lst_t fill_RSRP_Count(__attribute__((unused))uint32_t gran_period_ms, cudu_ue_info_pair_t ue_info, __attribute__((unused))const size_t ue_idx)
 {
   meas_record_lst_t meas_record = {0};
@@ -213,7 +218,23 @@ static meas_record_lst_t fill_RSRP_Count(__attribute__((unused))uint32_t gran_pe
   meas_record.value = INTEGER_MEAS_VALUE;
 
   // Get the value of the number of RSRP measurements
-  meas_record.int_val = ue_info.ue->mac_stats.prev_num_rsrp_meas;
+  meas_record.int_val = ue_info.ue->mac_stats.e2_num_rsrp_meas;
+
+  bool reset_rsrp = true;
+  if (reset_rsrp) {
+    // Save previous RSRP values before resetting so that querying them is synchronized with the gNB output
+    ue_info.ue->mac_stats.e2_num_rsrp_meas = ue_info.ue->mac_stats.num_rsrp_meas;
+    ue_info.ue->mac_stats.e2_cumul_rsrp = ue_info.ue->mac_stats.cumul_rsrp;
+    
+    // Sort rsrp_meas in place and then copy to e2_rsrp_meas_sorted
+    qsort(ue_info.ue->mac_stats.rsrp_meas, ue_info.ue->mac_stats.e2_rsrp_meas_capacity, sizeof(int), compare_int);
+    ue_info.ue->mac_stats.e2_rsrp_meas_sorted_capacity = ue_info.ue->mac_stats.e2_rsrp_meas_capacity;
+    memcpy(ue_info.ue->mac_stats.e2_rsrp_meas_sorted, ue_info.ue->mac_stats.rsrp_meas, sizeof(ue_info.ue->mac_stats.rsrp_meas));
+
+    // Clear the array of individual RSRP measurements
+    memset(ue_info.ue->mac_stats.rsrp_meas, 0, sizeof(ue_info.ue->mac_stats.rsrp_meas));
+    ue_info.ue->mac_stats.e2_rsrp_meas_capacity = 0;
+  }
 
   return meas_record;
 }
@@ -239,7 +260,7 @@ static meas_record_lst_t fill_RSSI(__attribute__((unused))uint32_t gran_period_m
   meas_record.value = REAL_MEAS_VALUE;
 
   // Retrieve the cumulative RSRP in dBm averaged over the number of measurements
-  double RSRP = ue_info.ue->mac_stats.prev_num_rsrp_meas > 0 ? (double)ue_info.ue->mac_stats.prev_cumul_rsrp / ue_info.ue->mac_stats.prev_num_rsrp_meas : NAN;
+  double RSRP = ue_info.ue->mac_stats.e2_num_rsrp_meas > 0 ? (double)ue_info.ue->mac_stats.e2_cumul_rsrp / ue_info.ue->mac_stats.e2_num_rsrp_meas : NAN;
 
   if (isnan(RSRP)) {
     meas_record.real_val = NAN;
@@ -266,7 +287,7 @@ static meas_record_lst_t fill_RSRQ(__attribute__((unused))uint32_t gran_period_m
   meas_record.value = REAL_MEAS_VALUE;
 
   // Retrieve the cumulative RSRP in dBm averaged over the number of measurements
-  double RSRP = ue_info.ue->mac_stats.prev_num_rsrp_meas > 0 ? (double)ue_info.ue->mac_stats.prev_cumul_rsrp / ue_info.ue->mac_stats.prev_num_rsrp_meas : 0.0;
+  double RSRP = ue_info.ue->mac_stats.e2_num_rsrp_meas > 0 ? (double)ue_info.ue->mac_stats.e2_cumul_rsrp / ue_info.ue->mac_stats.e2_num_rsrp_meas : 0.0;
 
   // Retrieve the number of Resource Blocks over which RSSI is measured
   double N = ue_info.ue->mac_stats.NPRB;

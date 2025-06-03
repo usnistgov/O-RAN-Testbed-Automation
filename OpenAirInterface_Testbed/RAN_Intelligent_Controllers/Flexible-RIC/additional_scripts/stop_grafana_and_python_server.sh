@@ -46,7 +46,7 @@ if ! $(./is_running.sh | grep -q ": RUNNING"); then
     exit 0
 fi
 
-pkill -9 -f "grafana_host_kpi_metrics_over_http.py"
+pkill -9 -f "python_server_for_grafana.py"
 
 # Stop Grafana server if it's running and disable it from auto-starting on boot
 if systemctl is-active grafana-server &>/dev/null; then

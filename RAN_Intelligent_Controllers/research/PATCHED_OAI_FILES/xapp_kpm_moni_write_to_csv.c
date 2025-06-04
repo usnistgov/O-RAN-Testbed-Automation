@@ -55,6 +55,7 @@ char csv_line_buffer[1024];
 unsigned int csv_num_rows = 0;
 uint64_t current_ue_id = 0;
 bool filter_current_sample = false;
+int64_t prev_now = 0;
 
 static void log_gnb_ue_id(ue_id_e2sm_t ue_id)
 {
@@ -196,6 +197,7 @@ static void csv_prepend_ue_id()
   }
 }
 
+
 static void csv_prepend_timestamp()
 {
   int64_t now = time_now_us();
@@ -213,21 +215,32 @@ static void csv_prepend_timestamp()
   char timestamp_buffer[32];
   snprintf(timestamp_buffer, sizeof(timestamp_buffer), "%" PRId64 ",", now_adjusted_precision);
 
+  int64_t reporting_timestamp_offset;
+  char offset_buffer[32];
+  if (prev_now <= 0) {
+    reporting_timestamp_offset = 0;
+    snprintf(offset_buffer, sizeof(offset_buffer), ",");
+  } else {
+    reporting_timestamp_offset = (now - prev_now) - period_ms;
+    snprintf(offset_buffer, sizeof(offset_buffer), "%" PRId64 ",", reporting_timestamp_offset);
+  }
+
   // Ensure the buffer won't overflow
   size_t timestamp_len = strlen(timestamp_buffer);
+  size_t offset_len = strlen(offset_buffer);
   size_t current_len = strlen(csv_line_buffer);
 
-  if (timestamp_len + current_len < sizeof(csv_line_buffer))
+  if (timestamp_len + offset_len + current_len < sizeof(csv_line_buffer))
   {
     // Use a temporary buffer to construct the new line
     char temp_buffer[sizeof(csv_line_buffer)];
-    snprintf(temp_buffer, sizeof(temp_buffer), "%s%s", timestamp_buffer, csv_line_buffer);
+    snprintf(temp_buffer, sizeof(temp_buffer), "%s%s%s", timestamp_buffer, offset_buffer, csv_line_buffer);
     strncpy(csv_line_buffer, temp_buffer, sizeof(csv_line_buffer) - 1);
     csv_line_buffer[sizeof(csv_line_buffer) - 1] = '\0'; // Ensure null termination
   }
   else
   {
-    fprintf(stderr, "CSV line buffer is full, cannot prepend timestamp.\n");
+    fprintf(stderr, "CSV line buffer is full, cannot prepend timestamp and offset.\n");
   }
 }
 
@@ -499,7 +512,7 @@ static void log_kpm_measurements(kpm_ind_msg_format_1_t const *msg_frm_1)
     // Log an empty measurement row with 25 commas after the 0
     printf("Logging empty measurement row\n");
     memset(csv_line_buffer, 0, sizeof(csv_line_buffer));
-    snprintf(csv_line_buffer, sizeof(csv_line_buffer), ",,,,,,,,,,,,,,,,,,,,,,,,,");
+    snprintf(csv_line_buffer, sizeof(csv_line_buffer), ",,,,,,,,,,,,,,,,,,,,,,,,,,");
     csv_prepend_timestamp();
     write_csv_line_to_file();
 
@@ -543,6 +556,7 @@ static void sm_cb_kpm(sm_ag_if_rd_t const *rd)
     }
     counter++;
   }
+  prev_now = now / 1000;
 }
 
 static test_info_lst_t filter_predicate(test_cond_type_e type, test_cond_e cond, int value)
@@ -718,6 +732,9 @@ int main(int argc, char *argv[])
   byte_array_t timestamp_name = {.buf = "Time", .len = strlen("Time")};
   byte_array_t timestamp_unit = {.buf = "UNIX ms", .len = strlen("UNIX ms")};
   csv_append_name_to_csv_header(timestamp_name, timestamp_unit);
+  byte_array_t offset_name = {.buf = "Reporting Time Offset", .len = strlen("Reporting Time Offset")};
+  byte_array_t offset_unit = {.buf = "ms", .len = strlen("ms")};
+  csv_append_name_to_csv_header(offset_name, offset_unit);
   byte_array_t ue_id_name = {.buf = "UE ID", .len = strlen("UE ID")};
   byte_array_t ue_id_unit = {.buf = "", .len = 0};
   csv_append_name_to_csv_header(ue_id_name, ue_id_unit);

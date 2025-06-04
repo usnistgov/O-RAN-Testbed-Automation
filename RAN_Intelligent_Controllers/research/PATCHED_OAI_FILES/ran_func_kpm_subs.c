@@ -222,17 +222,17 @@ static meas_record_lst_t fill_RSRP_Count(__attribute__((unused))uint32_t gran_pe
 
   bool reset_rsrp = true;
   if (reset_rsrp) {
-    // Save previous RSRP values before resetting so that querying them is synchronized with the gNB output
-    ue_info.ue->mac_stats.e2_num_rsrp_meas = ue_info.ue->mac_stats.num_rsrp_meas;
-    ue_info.ue->mac_stats.e2_cumul_rsrp = ue_info.ue->mac_stats.cumul_rsrp;
+    // Reset the cumulative RSRP and the number of measurements
+    ue_info.ue->mac_stats.e2_num_rsrp_meas = 0;
+    ue_info.ue->mac_stats.e2_cumul_rsrp = 0;
     
-    // Sort rsrp_meas in place and then copy to e2_rsrp_meas_sorted
-    qsort(ue_info.ue->mac_stats.rsrp_meas, ue_info.ue->mac_stats.e2_rsrp_meas_capacity, sizeof(int), compare_int);
+    // Sort e2_rsrp_meas in place and then copy to e2_rsrp_meas_sorted
+    qsort(ue_info.ue->mac_stats.e2_rsrp_meas, ue_info.ue->mac_stats.e2_rsrp_meas_capacity, sizeof(int), compare_int);
     ue_info.ue->mac_stats.e2_rsrp_meas_sorted_capacity = ue_info.ue->mac_stats.e2_rsrp_meas_capacity;
-    memcpy(ue_info.ue->mac_stats.e2_rsrp_meas_sorted, ue_info.ue->mac_stats.rsrp_meas, sizeof(ue_info.ue->mac_stats.rsrp_meas));
+    memcpy(ue_info.ue->mac_stats.e2_rsrp_meas_sorted, ue_info.ue->mac_stats.e2_rsrp_meas, sizeof(ue_info.ue->mac_stats.e2_rsrp_meas));
 
     // Clear the array of individual RSRP measurements
-    memset(ue_info.ue->mac_stats.rsrp_meas, 0, sizeof(ue_info.ue->mac_stats.rsrp_meas));
+    memset(ue_info.ue->mac_stats.e2_rsrp_meas, 0, sizeof(ue_info.ue->mac_stats.e2_rsrp_meas));
     ue_info.ue->mac_stats.e2_rsrp_meas_capacity = 0;
   }
 

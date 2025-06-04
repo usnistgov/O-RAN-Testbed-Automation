@@ -707,7 +707,7 @@ typedef struct NR_mac_stats {
   uint8_t num_rsrp_meas;
   
   // Keep track of each individual RSRP measurements for E2 KPM
-  int rsrp_meas[1024];
+  int e2_rsrp_meas[1024];
   uint16_t e2_rsrp_meas_capacity;
   int e2_rsrp_meas_sorted[1024];
   uint16_t e2_rsrp_meas_sorted_capacity;

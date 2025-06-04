@@ -39,6 +39,9 @@ static uint64_t const period_ms = 1000;
 // Lowering the timestamp precision groups measurements from multiple UEs under the same timestamp, making it easier to identify simultaneous connections.
 uint64_t timestamp_precision = 10;
 
+// For metrics based on the difference between indication messages, the first sample may give a wrong value, so it is skipped.
+bool skip_first_sample = true;
+
 // Set to true if samples containing RSRP.Count == 0 are to be filtered,
 // which is expected to give more stable results at the expense of some data loss
 const bool filter_invalid_rsrp_samples = false;
@@ -151,7 +154,7 @@ static void csv_append_real_to_csv_line(meas_record_lst_t meas_record)
   {
     if (isnan(meas_record.real_val))
     {
-      snprintf(csv_line_buffer + current_len, sizeof(csv_line_buffer) - current_len, "NaN,");
+      snprintf(csv_line_buffer + current_len, sizeof(csv_line_buffer) - current_len, ",");
     }
     else
     {
@@ -478,6 +481,12 @@ static void log_kpm_measurements(kpm_ind_msg_format_1_t const *msg_frm_1)
     }
   }
   write_csv_header_to_file();
+
+  if (skip_first_sample) {
+    printf("Skipping first sample to avoid incorrect initial values.\n");
+    skip_first_sample = false;
+    return;
+  }
 
   if (filter_invalid_rsrp_samples || !filter_current_sample)
   {

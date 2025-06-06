@@ -28,45 +28,39 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-# The number of milliseconds between each KPI report
-XAPP_PERIODICITY_MS=1000
-
 # Exit immediately if a command fails
 set -e
 
-if ! command -v realpath &>/dev/null; then
-    echo "Package \"coreutils\" not found, installing..."
-    sudo apt-get install -y coreutils
+if command -v lazydocker &>/dev/null; then
+    echo "Already installed lazydocker, skipping."
+    exit 0
 fi
 
-echo "# Script: $(realpath $0)..."
+# Code from (https://raw.githubusercontent.com/jesseduffield/lazydocker/master/scripts/install_update_linux.sh):
+# Allow specifying different destination directory
+DIR="${DIR:-"$HOME/.local/bin"}"
+# Map different architecture variations to the available binaries
+ARCH=$(uname -m)
+case $ARCH in
+i386 | i686) ARCH=x86 ;;
+armv6*) ARCH=armv6 ;;
+armv7*) ARCH=armv7 ;;
+aarch64*) ARCH=arm64 ;;
+esac
+# Prepare the download URL
+GITHUB_LATEST_VERSION=$(curl -L -s -H 'Accept: application/json' https://github.com/jesseduffield/lazydocker/releases/latest | sed -e 's/.*"tag_name":"\([^"]*\)".*/\1/')
+GITHUB_FILE="lazydocker_${GITHUB_LATEST_VERSION//v/}_$(uname -s)_${ARCH}.tar.gz"
+GITHUB_URL="https://github.com/jesseduffield/lazydocker/releases/download/${GITHUB_LATEST_VERSION}/${GITHUB_FILE}"
+# Install/update the local binary
+curl -L -o lazydocker.tar.gz $GITHUB_URL
+tar xzvf lazydocker.tar.gz lazydocker
+install -Dm 755 lazydocker -t "$DIR"
+rm lazydocker lazydocker.tar.gz
 
-SCRIPT_DIR=$(dirname "$(realpath "$0")")
-PARENT_DIR=$(dirname "$SCRIPT_DIR")
-cd "$PARENT_DIR"
-
-OUTPUT_CSV_PATH="$PARENT_DIR/logs/KPI_Metrics.csv"
-
-SCRIPT_DIR=$(dirname "$(realpath "$0")")
-PARENT_DIR=$(dirname "$SCRIPT_DIR")
-
-cd "$PARENT_DIR/flexric/"
-
-# Optionally, ensure that the output CSV file is empty before running the xApp)
-if [ ! -f "$OUTPUT_CSV_PATH" ]; then
-    touch "$OUTPUT_CSV_PATH"
+# Now that it's in DIR, make a symlink to it in /usr/local/bin
+if [ -d "$DIR" ]; then
+    sudo ln -sf "$DIR/lazydocker" /usr/local/bin/lazydocker
 else
-    >"$OUTPUT_CSV_PATH"
+    echo "Directory $DIR does not exist. Please create it or specify a different directory."
+    exit 1
 fi
-
-CONFIG_PATH=""
-if [ -f "../configs/flexric.conf" ]; then
-    CONFIG_PATH="-c ../configs/flexric.conf"
-fi
-
-echo
-echo "Output CSV path: $OUTPUT_CSV_PATH"
-echo
-
-set -x
-XAPP_DURATION=-1 ./build/examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv "$OUTPUT_CSV_PATH" "$XAPP_PERIODICITY_MS" $CONFIG_PATH

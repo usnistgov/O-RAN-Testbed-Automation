@@ -28,45 +28,28 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-# The number of milliseconds between each KPI report
-XAPP_PERIODICITY_MS=1000
+# Do not exit immediately if a command fails
+set +e
 
-# Exit immediately if a command fails
-set -e
-
-if ! command -v realpath &>/dev/null; then
-    echo "Package \"coreutils\" not found, installing..."
-    sudo apt-get install -y coreutils
+if [ -e "$HOME/.local/bin/lazydocker" ]; then
+    echo "Removing $HOME/.local/bin/lazydocker"
+    sudo rm -f "$HOME/.local/bin/lazydocker"
 fi
 
-echo "# Script: $(realpath $0)..."
-
-SCRIPT_DIR=$(dirname "$(realpath "$0")")
-PARENT_DIR=$(dirname "$SCRIPT_DIR")
-cd "$PARENT_DIR"
-
-OUTPUT_CSV_PATH="$PARENT_DIR/logs/KPI_Metrics.csv"
-
-SCRIPT_DIR=$(dirname "$(realpath "$0")")
-PARENT_DIR=$(dirname "$SCRIPT_DIR")
-
-cd "$PARENT_DIR/flexric/"
-
-# Optionally, ensure that the output CSV file is empty before running the xApp)
-if [ ! -f "$OUTPUT_CSV_PATH" ]; then
-    touch "$OUTPUT_CSV_PATH"
-else
-    >"$OUTPUT_CSV_PATH"
+if [ -e "/usr/local/bin/lazydocker" ] || [ -L "/usr/local/bin/lazydocker" ]; then
+    echo "Removing /usr/local/bin/lazydocker"
+    sudo rm -f "/usr/local/bin/lazydocker"
 fi
 
-CONFIG_PATH=""
-if [ -f "../configs/flexric.conf" ]; then
-    CONFIG_PATH="-c ../configs/flexric.conf"
+if [ -d "$HOME/.local/bin" ] && [ ! "$(ls -A "$HOME/.local/bin")" ]; then
+    echo "Removing empty directory $HOME/.local/bin"
+    rmdir "$HOME/.local/bin"
 fi
 
-echo
-echo "Output CSV path: $OUTPUT_CSV_PATH"
-echo
+if [ -d "$HOME/.local" ] && [ ! "$(ls -A "$HOME/.local")" ]; then
+    echo "Removing empty directory $HOME/.local"
+    rmdir "$HOME/.local"
+fi
 
-set -x
-XAPP_DURATION=-1 ./build/examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv "$OUTPUT_CSV_PATH" "$XAPP_PERIODICITY_MS" $CONFIG_PATH
+# Reset the shell's command hash table to recognize changes in available executables
+hash -r

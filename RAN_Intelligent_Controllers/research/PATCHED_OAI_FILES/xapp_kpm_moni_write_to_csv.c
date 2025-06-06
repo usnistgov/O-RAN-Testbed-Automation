@@ -34,7 +34,7 @@
 #include <inttypes.h>
 
 // Set to the interval in milliseconds at which the xApp should write to the CSV file
-static uint64_t const period_ms = 1000;
+static uint64_t period_ms = 1000;
 
 // Lowering the timestamp precision groups measurements from multiple UEs under the same timestamp, making it easier to identify simultaneous connections.
 uint64_t timestamp_precision = 10;
@@ -722,11 +722,30 @@ static size_t find_sm_idx(sm_ran_function_t *rf, size_t sz, bool (*f)(sm_ran_fun
 
 int main(int argc, char *argv[])
 {
-  if (argc < 2)
+  if (argc < 3)
   {
-    fprintf(stderr, "Usage: %s <csv_file_path>\n", argv[0]);
+    fprintf(stderr, "Usage: %s <csv_file_path> <period_ms> [other arguments]\n", argv[0]);
     return EXIT_FAILURE;
   }
+
+  csv_file_path = argv[1];
+  printf("CSV file path provided: %s\n", csv_file_path);
+
+  // Verify the CSV file path ends with ".csv"
+  size_t path_len = strlen(csv_file_path);
+  if (path_len < 4 || strcmp(csv_file_path + path_len - 4, ".csv") != 0) {
+    fprintf(stderr, "Error: The file path must end with '.csv'.\n");
+    return EXIT_FAILURE;
+  }
+
+  char *endptr = NULL;
+  long val = strtol(argv[2], &endptr, 10);
+  if (*endptr != '\0' || val <= 0) {
+    fprintf(stderr, "Invalid period_ms value: '%s'. Must be a positive integer.\n", argv[2]);
+    return EXIT_FAILURE;
+  }
+  // Cast to uint64_t and override the global period_ms
+  *((uint64_t *)&period_ms) = (uint64_t)val;
 
   csv_wrote_header = false;
   byte_array_t timestamp_name = {.buf = "Time", .len = strlen("Time")};
@@ -738,9 +757,6 @@ int main(int argc, char *argv[])
   byte_array_t ue_id_name = {.buf = "UE ID", .len = strlen("UE ID")};
   byte_array_t ue_id_unit = {.buf = "", .len = 0};
   csv_append_name_to_csv_header(ue_id_name, ue_id_unit);
-
-  csv_file_path = argv[1];
-  printf("CSV file path provided: %s\n", csv_file_path);
 
   fr_args_t args = init_fr_args(argc, argv);
 

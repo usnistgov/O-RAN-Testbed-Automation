@@ -42,6 +42,7 @@ cd "$SCRIPT_DIR"
 echo "Stopping Next Generation Node B..."
 ./stop.sh
 
+# First uninstall the User Equipment
 cd ../User_Equipment
 
 if [ -d openairinterface5g ]; then
@@ -55,6 +56,7 @@ sudo rm -rf logs/
 sudo rm -rf configs/
 sudo rm -rf install_time.txt
 
+# Second uninstall the gNodeB
 cd "$SCRIPT_DIR"
 
 if [ -d openairinterface5g ]; then
@@ -63,6 +65,11 @@ if [ -d openairinterface5g ]; then
     cd ../..
 fi
 sudo rm -rf openairinterface5g
+
+if [ -d o1-adapter ] || sudo docker images | grep -q "adapter-gnb"; then
+    echo "Uninstalling O1 Adapter..."
+    ./additional_scripts/uninstall_o1_adapter.sh bypass_confirmation
+fi
 
 sudo rm -rf logs/
 sudo rm -rf configs/

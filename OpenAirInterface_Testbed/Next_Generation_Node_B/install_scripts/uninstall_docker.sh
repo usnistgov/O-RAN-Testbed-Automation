@@ -28,45 +28,35 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-# The number of milliseconds between each KPI report
-XAPP_PERIODICITY_MS=1000
-
 # Exit immediately if a command fails
 set -e
 
-if ! command -v realpath &>/dev/null; then
-    echo "Package \"coreutils\" not found, installing..."
-    sudo apt-get install -y coreutils
-fi
-
-echo "# Script: $(realpath $0)..."
-
-SCRIPT_DIR=$(dirname "$(realpath "$0")")
-PARENT_DIR=$(dirname "$SCRIPT_DIR")
-cd "$PARENT_DIR"
-
-OUTPUT_CSV_PATH="$PARENT_DIR/logs/KPI_Metrics.csv"
-
-SCRIPT_DIR=$(dirname "$(realpath "$0")")
-PARENT_DIR=$(dirname "$SCRIPT_DIR")
-
-cd "$PARENT_DIR/flexric/"
-
-# Optionally, ensure that the output CSV file is empty before running the xApp)
-if [ ! -f "$OUTPUT_CSV_PATH" ]; then
-    touch "$OUTPUT_CSV_PATH"
-else
-    >"$OUTPUT_CSV_PATH"
-fi
-
-CONFIG_PATH=""
-if [ -f "../configs/flexric.conf" ]; then
-    CONFIG_PATH="-c ../configs/flexric.conf"
-fi
-
-echo
-echo "Output CSV path: $OUTPUT_CSV_PATH"
-echo
-
+# Echo every command as it is ran
 set -x
-XAPP_DURATION=-1 ./build/examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv "$OUTPUT_CSV_PATH" "$XAPP_PERIODICITY_MS" $CONFIG_PATH
+
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+BASE_DIR=$(realpath "$SCRIPT_DIR/../..")
+cd "$SCRIPT_DIR"
+
+echo
+echo
+echo "Stopping and removing existing Docker installations, then installing Docker $DOCKERVERSION..."
+if sudo systemctl is-active --quiet docker.socket; then
+    sudo systemctl stop docker.socket
+fi
+if sudo systemctl is-active --quiet docker.service; then
+    sudo systemctl stop docker.service
+fi
+if sudo systemctl is-enabled --quiet docker.socket; then
+    sudo systemctl disable docker.socket
+fi
+if sudo systemctl is-enabled --quiet docker.service; then
+    sudo systemctl disable docker.service
+fi
+
+# Uninstall Docker packages and clean up
+sudo apt-get remove --purge -y --allow-change-held-packages docker docker-engine docker-ce docker.io containerd runc || true
+sudo rm -rf /var/lib/docker /etc/docker
+sudo apt-get autoremove -y
+
+echo "Successfully uninstalled Docker."

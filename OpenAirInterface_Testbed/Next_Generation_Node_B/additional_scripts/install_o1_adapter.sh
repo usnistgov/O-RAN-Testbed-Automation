@@ -28,45 +28,53 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-# The number of milliseconds between each KPI report
-XAPP_PERIODICITY_MS=1000
-
-# Exit immediately if a command fails
 set -e
-
-if ! command -v realpath &>/dev/null; then
-    echo "Package \"coreutils\" not found, installing..."
-    sudo apt-get install -y coreutils
-fi
-
-echo "# Script: $(realpath $0)..."
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$PARENT_DIR"
 
-OUTPUT_CSV_PATH="$PARENT_DIR/logs/KPI_Metrics.csv"
-
-SCRIPT_DIR=$(dirname "$(realpath "$0")")
-PARENT_DIR=$(dirname "$SCRIPT_DIR")
-
-cd "$PARENT_DIR/flexric/"
-
-# Optionally, ensure that the output CSV file is empty before running the xApp)
-if [ ! -f "$OUTPUT_CSV_PATH" ]; then
-    touch "$OUTPUT_CSV_PATH"
-else
-    >"$OUTPUT_CSV_PATH"
+if [ ! -d "o1-adapter" ]; then
+    echo "Cloning o1-adapter..."
+    ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/oai/o1-adapter.git o1-adapter
 fi
 
-CONFIG_PATH=""
-if [ -f "../configs/flexric.conf" ]; then
-    CONFIG_PATH="-c ../configs/flexric.conf"
+# If docker is not installed
+if ! command -v docker &>/dev/null; then
+    ./install_scripts/install_docker.sh
 fi
 
-echo
-echo "Output CSV path: $OUTPUT_CSV_PATH"
-echo
+if ! command -v lazydocker &>/dev/null; then
+    ./install_scripts/install_lazydocker.sh
+fi
 
-set -x
-XAPP_DURATION=-1 ./build/examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv "$OUTPUT_CSV_PATH" "$XAPP_PERIODICITY_MS" $CONFIG_PATH
+cd "$SCRIPT_DIR"
+
+# Check if docker is accessible from the current user, and if not, repair its permissions
+if [ -z "$FIXED_DOCKER_PERMS" ]; then
+    if ! output=$(docker info 2>&1); then
+        if echo "$output" | grep -qiE 'permission denied|cannot connect to the docker daemon'; then
+            echo "Repairing Docker permissions..."
+            sudo groupadd -f docker
+            if [ -n "$SUDO_USER" ]; then
+                sudo usermod -aG docker "$SUDO_USER"
+            else
+                sudo usermod -aG docker "$USER"
+            fi
+            # Rather than requiring a reboot to apply docker permissions, set the docker group and re-run the parent script
+            export FIXED_DOCKER_PERMS=1
+            if ! command -v sg &>/dev/null; then
+                echo
+                echo "WARNING: Could not find set group (sg) command, docker may fail without sudo until the system reboots."
+                echo
+            else
+                exec sg docker "$0" "$@"
+            fi
+        fi
+    fi
+fi
+
+cd "$PARENT_DIR"
+
+cd o1-adapter
+./build-adapter.sh --adapter --no-cache

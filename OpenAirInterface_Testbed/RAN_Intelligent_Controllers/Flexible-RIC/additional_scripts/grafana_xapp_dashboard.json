@@ -4948,7 +4948,7 @@
       "type": "row"
     }
   ],
-  "refresh": "",
+  "refresh": "auto",
   "schemaVersion": 41,
   "tags": [],
   "templating": {
@@ -5014,8 +5014,8 @@
       {
         "allValue": "-1",
         "current": {
-          "text": "$__all",
-          "value": "$__all"
+          "text": "200",
+          "value": "200"
         },
         "includeAll": true,
         "name": "Sampling_Resolution",
@@ -5041,7 +5041,7 @@
             "value": "100"
           },
           {
-            "selected": false,
+            "selected": true,
             "text": "200",
             "value": "200"
           },

@@ -94,7 +94,7 @@ if [ -d 5G_Core/open5gs ] || [ -d gNodeB/srsRAN_Project ] || [ -d RAN_Intelligen
     echo
 fi
 
-if [ -d OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Near-Real-Time-RIC ]; then
+if [ -d OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Near-Real-Time-RIC ] && [ ! -L OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Near-Real-Time-RIC ]; then
     echo
     echo
     echo "################################################################################"

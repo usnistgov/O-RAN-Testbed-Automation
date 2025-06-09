@@ -1,5 +1,5 @@
 diff --git a/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h b/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h
-index 0b977de276..09cd1013b3 100644
+index 0b977de276..2326d56c6b 100644
 --- a/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h
 +++ b/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h
 @@ -483,6 +483,8 @@ typedef struct NR_UE_harq {
@@ -19,12 +19,19 @@ index 0b977de276..09cd1013b3 100644
  } NR_mac_dir_stats_t;
  
  typedef struct NR_mac_stats {
-@@ -702,6 +705,8 @@ typedef struct NR_mac_stats {
+@@ -702,6 +705,15 @@ typedef struct NR_mac_stats {
    uint32_t pucch0_DTX;
    int cumul_rsrp;
    uint8_t num_rsrp_meas;
-+  int prev_cumul_rsrp;
-+  uint8_t prev_num_rsrp_meas;
++  
++  // Keep track of each individual RSRP measurements for E2 KPM
++  int e2_rsrp_meas[1024];
++  uint16_t e2_rsrp_meas_capacity;
++  int e2_rsrp_meas_sorted[1024];
++  uint16_t e2_rsrp_meas_sorted_capacity;
++  int e2_cumul_rsrp;
++  uint8_t e2_num_rsrp_meas;
++
    char srs_stats[50]; // Statistics may differ depending on SRS usage
    int pusch_snrx10;
    int deltaMCS;

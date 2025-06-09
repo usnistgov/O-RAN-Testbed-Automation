@@ -21,7 +21,7 @@
       "type": "grafana",
       "id": "grafana",
       "name": "Grafana",
-      "version": "11.6.1"
+      "version": "12.0.1"
     },
     {
       "type": "panel",
@@ -57,7 +57,7 @@
       "type": "datasource",
       "id": "yesoreyeram-infinity-datasource",
       "name": "Infinity",
-      "version": "3.2.0"
+      "version": "3.3.0"
     }
   ],
   "annotations": {
@@ -99,7 +99,7 @@
         "content": "<img src=\"http://localhost:3030/NIST.svg\" />",
         "mode": "html"
       },
-      "pluginVersion": "11.6.1",
+      "pluginVersion": "12.0.1",
       "transparent": true,
       "type": "text"
     },
@@ -121,7 +121,7 @@
             },
             "filterable": false,
             "inspect": false,
-            "minWidth": 1
+            "minWidth": 50
           },
           "mappings": [],
           "thresholds": {
@@ -142,7 +142,7 @@
       "gridPos": {
         "h": 4,
         "w": 2,
-        "x": 12,
+        "x": 10,
         "y": 0
       },
       "id": 21,
@@ -159,7 +159,7 @@
         },
         "showHeader": false
       },
-      "pluginVersion": "11.6.1",
+      "pluginVersion": "12.0.1",
       "targets": [
         {
           "datasource": {
@@ -271,7 +271,7 @@
       "gridPos": {
         "h": 4,
         "w": 2,
-        "x": 14,
+        "x": 12,
         "y": 0
       },
       "id": 20,
@@ -292,7 +292,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "11.6.1",
+      "pluginVersion": "12.0.1",
       "targets": [
         {
           "columns": [
@@ -300,6 +300,11 @@
               "selector": "Time (UNIX ms)",
               "text": "",
               "type": "timestamp_epoch"
+            },
+            {
+              "selector": "Reporting Time Offset (ms)",
+              "text": "",
+              "type": "number"
             },
             {
               "selector": "UE ID",
@@ -342,12 +347,37 @@
               "type": "number"
             },
             {
-              "selector": "RSRP (dBm)",
+              "selector": "RSRP.Mean (dBm)",
               "text": "",
               "type": "number"
             },
             {
-              "selector": "N_RSRP_MEAS",
+              "selector": "RSRP.Minimum (dBm)",
+              "text": "",
+              "type": "number"
+            },
+            {
+              "selector": "RSRP.Quartile1 (dBm)",
+              "text": "",
+              "type": "number"
+            },
+            {
+              "selector": "RSRP.Median (dBm)",
+              "text": "",
+              "type": "number"
+            },
+            {
+              "selector": "RSRP.Quartile3 (dBm)",
+              "text": "",
+              "type": "number"
+            },
+            {
+              "selector": "RSRP.Maximum (dBm)",
+              "text": "",
+              "type": "number"
+            },
+            {
+              "selector": "RSRP.Count",
               "text": "",
               "type": "number"
             },
@@ -454,12 +484,16 @@
               {
                 "key": "to",
                 "value": "$__to"
+              },
+              {
+                "key": "approx_num_samples",
+                "value": "${Sampling_Resolution}"
               }
             ]
           }
         }
       ],
-      "title": "Current UEs",
+      "title": "Num. UEs",
       "transformations": [
         {
           "id": "groupBy",
@@ -558,7 +592,7 @@
       "gridPos": {
         "h": 4,
         "w": 3,
-        "x": 16,
+        "x": 14,
         "y": 0
       },
       "id": 22,
@@ -575,7 +609,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.6.1",
+      "pluginVersion": "12.0.1",
       "targets": [
         {
           "datasource": {
@@ -628,7 +662,7 @@
           "color": {
             "mode": "fixed"
           },
-          "decimals": 2,
+          "decimals": 4,
           "fieldMinMax": false,
           "mappings": [],
           "thresholds": {
@@ -689,7 +723,7 @@
       "gridPos": {
         "h": 4,
         "w": 5,
-        "x": 19,
+        "x": 17,
         "y": 0
       },
       "id": 19,
@@ -708,7 +742,7 @@
         "orientation": "horizontal",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "last"
           ],
           "fields": "",
           "values": false
@@ -717,7 +751,7 @@
         "sizing": "auto",
         "valueMode": "color"
       },
-      "pluginVersion": "11.6.1",
+      "pluginVersion": "12.0.1",
       "targets": [
         {
           "datasource": {
@@ -818,6 +852,9 @@
                 "operation": "aggregate"
               },
               "Time": {
+                "aggregations": []
+              },
+              "Time (UNIX ms)": {
                 "aggregations": [],
                 "operation": "groupby"
               },
@@ -866,6 +903,85 @@
         }
       ],
       "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Dashboard --"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-BlYlRd"
+          },
+          "mappings": [],
+          "noValue": "0",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 2,
+        "x": 22,
+        "y": 0
+      },
+      "id": 46,
+      "options": {
+        "colorMode": "none",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "-- Dashboard --"
+          },
+          "panelId": 20,
+          "refId": "A"
+        }
+      ],
+      "title": "Time Offset (ms)",
+      "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "Time (UNIX ms)",
+                "Reporting Time Offset (ms)"
+              ]
+            }
+          }
+        }
+      ],
+      "type": "stat"
     },
     {
       "datasource": {
@@ -932,7 +1048,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "RSRP (dBm)"
+              "options": "RSRP.Mean (dBm)"
             },
             "properties": [
               {
@@ -943,11 +1059,101 @@
                 }
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "RSRP.Maximum"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "RSRP.Minimum"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "yellow",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "RSRP.Median"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "orange",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "RSRP.Quartile3"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "dark-orange",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "RSRP.Quartile1"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "dark-yellow",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "RSRP.Mean"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "super-light-green",
+                  "mode": "fixed"
+                }
+              }
+            ]
           }
         ]
       },
       "gridPos": {
-        "h": 7,
+        "h": 5,
         "w": 7,
         "x": 0,
         "y": 4
@@ -966,7 +1172,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.6.1",
+      "pluginVersion": "12.0.1",
       "targets": [
         {
           "datasource": {
@@ -984,9 +1190,9 @@
           "options": {
             "include": {
               "names": [
-                "RSRP (dBm)",
+                "Time (UNIX ms)",
                 "UE ID",
-                "Time (UNIX ms)"
+                "RSRP.Mean (dBm)"
               ]
             }
           }
@@ -1015,12 +1221,10 @@
             "filters": [
               {
                 "config": {
-                  "id": "equal",
-                  "options": {
-                    "value": "0"
-                  }
+                  "id": "isNull",
+                  "options": {}
                 },
-                "fieldName": "RSRP (dBm)"
+                "fieldName": "RSRP.Mean (dBm)"
               }
             ],
             "match": "any",
@@ -1091,7 +1295,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "N_RSRP_MEAS"
+              "options": "RSRP.Count"
             },
             "properties": [
               {
@@ -1106,7 +1310,7 @@
         ]
       },
       "gridPos": {
-        "h": 7,
+        "h": 8,
         "w": 4,
         "x": 7,
         "y": 4
@@ -1125,7 +1329,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.6.1",
+      "pluginVersion": "12.0.1",
       "targets": [
         {
           "datasource": {
@@ -1143,7 +1347,7 @@
           "options": {
             "include": {
               "names": [
-                "N_RSRP_MEAS",
+                "RSRP.Count",
                 "UE ID",
                 "Time (UNIX ms)"
               ]
@@ -1283,7 +1487,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.6.1",
+      "pluginVersion": "12.0.1",
       "targets": [
         {
           "datasource": {
@@ -1302,10 +1506,9 @@
             "include": {
               "names": [
                 "DRB.UEThpDl (kbps)",
-                "N_RSRP_MEAS",
+                "DRB.UEThpUl (kbps)",
                 "Time (UNIX ms)",
-                "UE ID",
-                "DRB.UEThpUl (kbps)"
+                "UE ID"
               ]
             }
           }
@@ -1428,7 +1631,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.6.1",
+      "pluginVersion": "12.0.1",
       "targets": [
         {
           "datasource": {
@@ -1601,7 +1804,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.6.1",
+      "pluginVersion": "12.0.1",
       "targets": [
         {
           "datasource": {
@@ -1656,7 +1859,326 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic-by-name"
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 1,
+            "drawStyle": "line",
+            "fillOpacity": 100,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineStyle": {
+              "fill": "solid"
+            },
+            "lineWidth": 0,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "RSRP.Mean (dBm)"
+            },
+            "properties": []
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "RSRP.Maximum"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#181b1f",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "RSRP.Minimum"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "RSRP.Median"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "green",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "RSRP.Quartile3"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "RSRP.Quartile1"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "yellow",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "RSRP.Maximum (dBm)"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#181b1f",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Min to Q1"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Q2 to Q3"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "green",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Q3 to Q4"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 7,
+        "x": 0,
+        "y": 9
+      },
+      "id": 44,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "-- Dashboard --"
+          },
+          "panelId": 20,
+          "refId": "A"
+        }
+      ],
+      "title": "RSRP Distribution Variance",
+      "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "RSRP.Median (dBm)",
+                "RSRP.Minimum (dBm)",
+                "RSRP.Quartile1 (dBm)",
+                "RSRP.Quartile3 (dBm)",
+                "Time (UNIX ms)",
+                "UE ID",
+                "RSRP.Maximum (dBm)"
+              ]
+            }
+          }
+        },
+        {
+          "id": "filterByValue",
+          "options": {
+            "filters": [
+              {
+                "config": {
+                  "id": "equal",
+                  "options": {
+                    "value": "${Selected_UE_ID}"
+                  }
+                },
+                "fieldName": "UE ID"
+              }
+            ],
+            "match": "any",
+            "type": "include"
+          }
+        },
+        {
+          "id": "filterByValue",
+          "options": {
+            "filters": [
+              {
+                "config": {
+                  "id": "isNull",
+                  "options": {}
+                },
+                "fieldName": "RSRP.Mean (dBm)"
+              }
+            ],
+            "match": "any",
+            "type": "exclude"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {},
+            "includeByName": {},
+            "indexByName": {
+              "RSRP.Maximum (dBm)": 6,
+              "RSRP.Median (dBm)": 4,
+              "RSRP.Minimum (dBm)": 2,
+              "RSRP.Quartile1 (dBm)": 3,
+              "RSRP.Quartile3 (dBm)": 5,
+              "Time (UNIX ms)": 0,
+              "UE ID": 1
+            },
+            "renameByName": {
+              "RSRP.Maximum": " Max",
+              "RSRP.Maximum (dBm)": " ",
+              "RSRP.Median": "Q2 to Q3",
+              "RSRP.Median (dBm)": "Q2 to Q3",
+              "RSRP.Minimum": "Min to Q1",
+              "RSRP.Minimum (dBm)": "Min to Q1",
+              "RSRP.Quartile1": "Q1 to Q2",
+              "RSRP.Quartile1 (dBm)": "Q1 to Q2",
+              "RSRP.Quartile3": "Q3 to Max",
+              "RSRP.Quartile3 (dBm)": "Q3 to Q4"
+            }
+          }
+        }
+      ],
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Dashboard --"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
           },
           "custom": {
             "axisBorderShow": false,
@@ -1676,7 +2198,7 @@
             },
             "insertNulls": false,
             "lineInterpolation": "linear",
-            "lineWidth": 1,
+            "lineWidth": 2,
             "pointSize": 5,
             "scaleDistribution": {
               "type": "linear"
@@ -1691,8 +2213,8 @@
               "mode": "off"
             }
           },
-          "fieldMinMax": false,
           "mappings": [],
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -1705,21 +2227,35 @@
               }
             ]
           },
-          "unit": "dBm"
+          "unit": "PRBs"
         },
         "overrides": [
           {
             "matcher": {
               "id": "byName",
-              "options": "RSSI (dBm)"
+              "options": "RRU.PrbTotUl (PRBs)"
             },
             "properties": [
               {
                 "id": "color",
                 "value": {
-                  "fixedColor": "#cb95e6bd",
-                  "mode": "fixed",
-                  "seriesBy": "last"
+                  "fixedColor": "super-light-orange",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "RRU.PrbTotDl (PRBs)"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "light-blue",
+                  "mode": "fixed"
                 }
               }
             ]
@@ -1729,10 +2265,10 @@
       "gridPos": {
         "h": 7,
         "w": 7,
-        "x": 0,
+        "x": 11,
         "y": 11
       },
-      "id": 9,
+      "id": 15,
       "options": {
         "legend": {
           "calcs": [],
@@ -1746,7 +2282,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.6.1",
+      "pluginVersion": "12.0.1",
       "targets": [
         {
           "datasource": {
@@ -1757,16 +2293,17 @@
           "refId": "A"
         }
       ],
-      "title": "Received Signal Strength Indicator (RSSI)",
+      "title": "Number of PRBs Downlink / Uplink Since Last Sample",
       "transformations": [
         {
           "id": "filterFieldsByName",
           "options": {
             "include": {
               "names": [
+                "RRU.PrbTotDl (PRBs)",
+                "RRU.PrbTotUl (PRBs)",
                 "Time (UNIX ms)",
-                "UE ID",
-                "RSSI (dBm)"
+                "UE ID"
               ]
             }
           }
@@ -1887,7 +2424,7 @@
         "h": 7,
         "w": 4,
         "x": 7,
-        "y": 11
+        "y": 12
       },
       "id": 12,
       "options": {
@@ -1903,7 +2440,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.6.1",
+      "pluginVersion": "12.0.1",
       "targets": [
         {
           "datasource": {
@@ -1922,165 +2459,6 @@
             "include": {
               "names": [
                 "N_PRB",
-                "Time (UNIX ms)",
-                "UE ID"
-              ]
-            }
-          }
-        },
-        {
-          "id": "filterByValue",
-          "options": {
-            "filters": [
-              {
-                "config": {
-                  "id": "equal",
-                  "options": {
-                    "value": "${Selected_UE_ID}"
-                  }
-                },
-                "fieldName": "UE ID"
-              }
-            ],
-            "match": "any",
-            "type": "include"
-          }
-        }
-      ],
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "datasource",
-        "uid": "-- Dashboard --"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 2,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "PRBs"
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "RRU.PrbTotUl (PRBs)"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "super-light-orange",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "RRU.PrbTotDl (PRBs)"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "light-blue",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "gridPos": {
-        "h": 7,
-        "w": 7,
-        "x": 11,
-        "y": 11
-      },
-      "id": 15,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "11.6.1",
-      "targets": [
-        {
-          "datasource": {
-            "type": "datasource",
-            "uid": "-- Dashboard --"
-          },
-          "panelId": 20,
-          "refId": "A"
-        }
-      ],
-      "title": "Number of PRBs Downlink / Uplink Since Last Sample",
-      "transformations": [
-        {
-          "id": "filterFieldsByName",
-          "options": {
-            "include": {
-              "names": [
-                "RRU.PrbTotDl (PRBs)",
-                "RRU.PrbTotUl (PRBs)",
                 "Time (UNIX ms)",
                 "UE ID"
               ]
@@ -2205,7 +2583,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.6.1",
+      "pluginVersion": "12.0.1",
       "targets": [
         {
           "datasource": {
@@ -2259,8 +2637,7 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "fixedColor": "#c87474",
-            "mode": "shades"
+            "mode": "palette-classic-by-name"
           },
           "custom": {
             "axisBorderShow": false,
@@ -2295,7 +2672,7 @@
               "mode": "off"
             }
           },
-          "fieldMinMax": true,
+          "fieldMinMax": false,
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -2309,50 +2686,21 @@
               }
             ]
           },
-          "unit": "dB"
+          "unit": "dBm"
         },
         "overrides": [
           {
             "matcher": {
               "id": "byName",
-              "options": "SNR (PUCCH)"
+              "options": "RSSI (dBm)"
             },
             "properties": [
               {
                 "id": "color",
                 "value": {
-                  "fixedColor": "super-light-yellow",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "PUCCH_SNR (dB)"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "super-light-yellow",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "PUSCH_SNR (dB)"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "#e68383a6",
-                  "mode": "fixed"
+                  "fixedColor": "#cb95e6bd",
+                  "mode": "fixed",
+                  "seriesBy": "last"
                 }
               }
             ]
@@ -2360,12 +2708,12 @@
         ]
       },
       "gridPos": {
-        "h": 6,
-        "w": 11,
+        "h": 4,
+        "w": 7,
         "x": 0,
-        "y": 18
+        "y": 15
       },
-      "id": 14,
+      "id": 9,
       "options": {
         "legend": {
           "calcs": [],
@@ -2379,7 +2727,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.6.1",
+      "pluginVersion": "12.0.1",
       "targets": [
         {
           "datasource": {
@@ -2390,7 +2738,7 @@
           "refId": "A"
         }
       ],
-      "title": "Signal-to-Noise Ratios",
+      "title": "Received Signal Strength Indicator (RSSI)",
       "transformations": [
         {
           "id": "filterFieldsByName",
@@ -2399,8 +2747,7 @@
               "names": [
                 "Time (UNIX ms)",
                 "UE ID",
-                "PUSCH_SNR (dB)",
-                "PUCCH_SNR (dB)"
+                "RSSI (dBm)"
               ]
             }
           }
@@ -2599,7 +2946,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.6.1",
+      "pluginVersion": "12.0.1",
       "targets": [
         {
           "datasource": {
@@ -2621,6 +2968,181 @@
                 "Time (UNIX ms)",
                 "UE ID",
                 "DRB.HarqMcsUl"
+              ]
+            }
+          }
+        },
+        {
+          "id": "filterByValue",
+          "options": {
+            "filters": [
+              {
+                "config": {
+                  "id": "equal",
+                  "options": {
+                    "value": "${Selected_UE_ID}"
+                  }
+                },
+                "fieldName": "UE ID"
+              }
+            ],
+            "match": "any",
+            "type": "include"
+          }
+        }
+      ],
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Dashboard --"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "#c87474",
+            "mode": "shades"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "fieldMinMax": true,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "dB"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "SNR (PUCCH)"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "super-light-yellow",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "PUCCH_SNR (dB)"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "super-light-yellow",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "PUSCH_SNR (dB)"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#e68383a6",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 11,
+        "x": 0,
+        "y": 19
+      },
+      "id": 14,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "-- Dashboard --"
+          },
+          "panelId": 20,
+          "refId": "A"
+        }
+      ],
+      "title": "Signal-to-Noise Ratios",
+      "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "Time (UNIX ms)",
+                "UE ID",
+                "PUSCH_SNR (dB)",
+                "PUCCH_SNR (dB)"
               ]
             }
           }
@@ -2743,7 +3265,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.6.1",
+      "pluginVersion": "12.0.1",
       "targets": [
         {
           "datasource": {
@@ -2878,7 +3400,7 @@
           },
           "gridPos": {
             "h": 6,
-            "w": 5,
+            "w": 6,
             "x": 0,
             "y": 25
           },
@@ -2896,7 +3418,7 @@
               "sort": "none"
             }
           },
-          "pluginVersion": "11.6.1",
+          "pluginVersion": "12.0.1",
           "targets": [
             {
               "datasource": {
@@ -3001,9 +3523,9 @@
             ]
           },
           "gridPos": {
-            "h": 6,
-            "w": 3,
-            "x": 5,
+            "h": 4,
+            "w": 5,
+            "x": 6,
             "y": 25
           },
           "id": 40,
@@ -3020,7 +3542,7 @@
               "sort": "none"
             }
           },
-          "pluginVersion": "11.6.1",
+          "pluginVersion": "12.0.1",
           "targets": [
             {
               "datasource": {
@@ -3144,9 +3666,9 @@
             ]
           },
           "gridPos": {
-            "h": 6,
-            "w": 5,
-            "x": 8,
+            "h": 4,
+            "w": 3,
+            "x": 11,
             "y": 25
           },
           "id": 41,
@@ -3163,7 +3685,7 @@
               "sort": "none"
             }
           },
-          "pluginVersion": "11.6.1",
+          "pluginVersion": "12.0.1",
           "targets": [
             {
               "datasource": {
@@ -3287,9 +3809,9 @@
             ]
           },
           "gridPos": {
-            "h": 6,
-            "w": 5,
-            "x": 13,
+            "h": 4,
+            "w": 3,
+            "x": 14,
             "y": 25
           },
           "id": 42,
@@ -3306,7 +3828,7 @@
               "sort": "none"
             }
           },
-          "pluginVersion": "11.6.1",
+          "pluginVersion": "12.0.1",
           "targets": [
             {
               "datasource": {
@@ -3421,8 +3943,8 @@
           },
           "gridPos": {
             "h": 4,
-            "w": 6,
-            "x": 18,
+            "w": 7,
+            "x": 17,
             "y": 25
           },
           "id": 29,
@@ -3451,7 +3973,7 @@
             "sizing": "auto",
             "valueMode": "color"
           },
-          "pluginVersion": "11.6.1",
+          "pluginVersion": "12.0.1",
           "targets": [
             {
               "datasource": {
@@ -3643,8 +4165,8 @@
           },
           "gridPos": {
             "h": 4,
-            "w": 6,
-            "x": 18,
+            "w": 5,
+            "x": 6,
             "y": 29
           },
           "id": 6,
@@ -3661,7 +4183,7 @@
               "sort": "none"
             }
           },
-          "pluginVersion": "11.6.1",
+          "pluginVersion": "12.0.1",
           "targets": [
             {
               "datasource": {
@@ -3706,235 +4228,6 @@
             }
           ],
           "type": "histogram"
-        },
-        {
-          "datasource": {
-            "type": "datasource",
-            "uid": "-- Dashboard --"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "barWidthFactor": 0.6,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": false,
-                "lineInterpolation": "linear",
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "auto",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              }
-            },
-            "overrides": [
-              {
-                "matcher": {
-                  "id": "byName",
-                  "options": "DRB.PdcpSduVolumeUL (kb) (sum) / 8"
-                },
-                "properties": []
-              },
-              {
-                "matcher": {
-                  "id": "byName",
-                  "options": "DRB.PdcpSduVolumeDL (kb) (sum) / 8"
-                },
-                "properties": []
-              }
-            ]
-          },
-          "gridPos": {
-            "h": 6,
-            "w": 13,
-            "x": 0,
-            "y": 31
-          },
-          "id": 2,
-          "maxPerRow": 12,
-          "options": {
-            "legend": {
-              "calcs": [],
-              "displayMode": "list",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "hideZeros": false,
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "pluginVersion": "11.6.1",
-          "targets": [
-            {
-              "datasource": {
-                "type": "datasource",
-                "uid": "-- Dashboard --"
-              },
-              "panelId": 20,
-              "refId": "A"
-            }
-          ],
-          "title": "",
-          "transformations": [
-            {
-              "id": "filterFieldsByName",
-              "options": {
-                "include": {
-                  "names": [
-                    "DRB.PdcpSduVolumeDL (kb)",
-                    "DRB.PdcpSduVolumeUL (kb)",
-                    "Time (UNIX ms)",
-                    "UE ID"
-                  ]
-                }
-              }
-            },
-            {
-              "id": "filterByValue",
-              "options": {
-                "filters": [
-                  {
-                    "config": {
-                      "id": "equal",
-                      "options": {
-                        "value": "${Selected_UE_ID}"
-                      }
-                    },
-                    "fieldName": "UE ID"
-                  }
-                ],
-                "match": "any",
-                "type": "include"
-              }
-            },
-            {
-              "id": "groupBy",
-              "options": {
-                "fields": {
-                  "DRB.PdcpSduVolumeDL (kb)": {
-                    "aggregations": [
-                      "sum"
-                    ],
-                    "operation": "aggregate"
-                  },
-                  "DRB.PdcpSduVolumeUL (kb)": {
-                    "aggregations": [
-                      "sum"
-                    ],
-                    "operation": "aggregate"
-                  },
-                  "Time": {
-                    "aggregations": [],
-                    "operation": "aggregate"
-                  },
-                  "Time (UNIX ms)": {
-                    "aggregations": [],
-                    "operation": "groupby"
-                  },
-                  "Timestamp": {
-                    "aggregations": [],
-                    "operation": "groupby"
-                  }
-                }
-              }
-            },
-            {
-              "id": "calculateField",
-              "options": {
-                "alias": "",
-                "binary": {
-                  "left": {
-                    "matcher": {
-                      "id": "byName",
-                      "options": "DRB.PdcpSduVolumeDL (kb) (sum)"
-                    }
-                  },
-                  "operator": "/",
-                  "right": {
-                    "fixed": "8"
-                  }
-                },
-                "mode": "binary",
-                "reduce": {
-                  "reducer": "sum"
-                },
-                "replaceFields": false
-              }
-            },
-            {
-              "id": "calculateField",
-              "options": {
-                "binary": {
-                  "left": {
-                    "matcher": {
-                      "id": "byName",
-                      "options": "DRB.PdcpSduVolumeUL (kb) (sum)"
-                    }
-                  },
-                  "operator": "/",
-                  "right": {
-                    "fixed": "8"
-                  }
-                },
-                "mode": "binary",
-                "reduce": {
-                  "reducer": "sum"
-                }
-              }
-            },
-            {
-              "id": "filterFieldsByName",
-              "options": {
-                "include": {
-                  "names": [
-                    "DRB.PdcpSduVolumeDL (kb) (sum) / 8",
-                    "DRB.PdcpSduVolumeUL (kb) (sum) / 8",
-                    "Time (UNIX ms)"
-                  ]
-                }
-              }
-            }
-          ],
-          "type": "timeseries"
         },
         {
           "datasource": {
@@ -4093,10 +4386,10 @@
             ]
           },
           "gridPos": {
-            "h": 6,
+            "h": 8,
             "w": 5,
-            "x": 13,
-            "y": 31
+            "x": 11,
+            "y": 29
           },
           "id": 33,
           "options": {
@@ -4112,7 +4405,7 @@
               "sort": "none"
             }
           },
-          "pluginVersion": "11.6.1",
+          "pluginVersion": "12.0.1",
           "targets": [
             {
               "datasource": {
@@ -4154,6 +4447,357 @@
                 ],
                 "match": "any",
                 "type": "include"
+              }
+            }
+          ],
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "-- Dashboard --"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "barWidthFactor": 0.6,
+                "drawStyle": "line",
+                "fillOpacity": 0,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "DRB.PdcpSduVolumeUL (kb) (sum) / 8"
+                },
+                "properties": []
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "DRB.PdcpSduVolumeDL (kb) (sum) / 8"
+                },
+                "properties": []
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 16,
+            "y": 29
+          },
+          "id": 2,
+          "maxPerRow": 12,
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "hideZeros": false,
+              "mode": "single",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "12.0.1",
+          "targets": [
+            {
+              "datasource": {
+                "type": "datasource",
+                "uid": "-- Dashboard --"
+              },
+              "panelId": 20,
+              "refId": "A"
+            }
+          ],
+          "title": "",
+          "transformations": [
+            {
+              "id": "filterFieldsByName",
+              "options": {
+                "include": {
+                  "names": [
+                    "DRB.PdcpSduVolumeDL (kb)",
+                    "DRB.PdcpSduVolumeUL (kb)",
+                    "Time (UNIX ms)",
+                    "UE ID"
+                  ]
+                }
+              }
+            },
+            {
+              "id": "filterByValue",
+              "options": {
+                "filters": [
+                  {
+                    "config": {
+                      "id": "equal",
+                      "options": {
+                        "value": "${Selected_UE_ID}"
+                      }
+                    },
+                    "fieldName": "UE ID"
+                  }
+                ],
+                "match": "any",
+                "type": "include"
+              }
+            },
+            {
+              "id": "groupBy",
+              "options": {
+                "fields": {
+                  "DRB.PdcpSduVolumeDL (kb)": {
+                    "aggregations": [
+                      "sum"
+                    ],
+                    "operation": "aggregate"
+                  },
+                  "DRB.PdcpSduVolumeUL (kb)": {
+                    "aggregations": [
+                      "sum"
+                    ],
+                    "operation": "aggregate"
+                  },
+                  "Time": {
+                    "aggregations": [],
+                    "operation": "aggregate"
+                  },
+                  "Time (UNIX ms)": {
+                    "aggregations": [],
+                    "operation": "groupby"
+                  },
+                  "Timestamp": {
+                    "aggregations": [],
+                    "operation": "groupby"
+                  }
+                }
+              }
+            },
+            {
+              "id": "calculateField",
+              "options": {
+                "alias": "",
+                "binary": {
+                  "left": {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "DRB.PdcpSduVolumeDL (kb) (sum)"
+                    }
+                  },
+                  "operator": "/",
+                  "right": {
+                    "fixed": "8"
+                  }
+                },
+                "mode": "binary",
+                "reduce": {
+                  "reducer": "sum"
+                },
+                "replaceFields": false
+              }
+            },
+            {
+              "id": "calculateField",
+              "options": {
+                "binary": {
+                  "left": {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "DRB.PdcpSduVolumeUL (kb) (sum)"
+                    }
+                  },
+                  "operator": "/",
+                  "right": {
+                    "fixed": "8"
+                  }
+                },
+                "mode": "binary",
+                "reduce": {
+                  "reducer": "sum"
+                }
+              }
+            },
+            {
+              "id": "filterFieldsByName",
+              "options": {
+                "include": {
+                  "names": [
+                    "DRB.PdcpSduVolumeDL (kb) (sum) / 8",
+                    "DRB.PdcpSduVolumeUL (kb) (sum) / 8",
+                    "Time (UNIX ms)"
+                  ]
+                }
+              }
+            }
+          ],
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "-- Dashboard --"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic-by-name"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "barWidthFactor": 0.6,
+                "drawStyle": "line",
+                "fillOpacity": 0,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "RSRP.Count"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "super-light-green",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 6,
+            "w": 6,
+            "x": 0,
+            "y": 31
+          },
+          "id": 45,
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": false
+            },
+            "tooltip": {
+              "hideZeros": false,
+              "mode": "single",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "12.0.1",
+          "targets": [
+            {
+              "datasource": {
+                "type": "datasource",
+                "uid": "-- Dashboard --"
+              },
+              "panelId": 20,
+              "refId": "A"
+            }
+          ],
+          "title": "Time Offset (ms)",
+          "transformations": [
+            {
+              "id": "filterFieldsByName",
+              "options": {
+                "include": {
+                  "names": [
+                    "Time (UNIX ms)",
+                    "Reporting Time Offset (ms)"
+                  ]
+                }
               }
             }
           ],
@@ -4236,8 +4880,8 @@
           },
           "gridPos": {
             "h": 4,
-            "w": 6,
-            "x": 18,
+            "w": 5,
+            "x": 6,
             "y": 33
           },
           "id": 43,
@@ -4254,7 +4898,7 @@
               "sort": "none"
             }
           },
-          "pluginVersion": "11.6.1",
+          "pluginVersion": "12.0.1",
           "targets": [
             {
               "datasource": {
@@ -4353,6 +4997,10 @@
                 {
                   "key": "filter",
                   "value": "UE ID"
+                },
+                {
+                  "key": "approx_num_samples",
+                  "value": "${Sampling_Resolution}"
                 }
               ]
             }
@@ -4363,17 +5011,65 @@
         "refresh": 2,
         "regex": "",
         "type": "query"
+      },
+      {
+        "allValue": "-1",
+        "current": {
+          "text": "$__all",
+          "value": "$__all"
+        },
+        "includeAll": true,
+        "name": "Sampling_Resolution",
+        "options": [
+          {
+            "selected": false,
+            "text": "10",
+            "value": "10"
+          },
+          {
+            "selected": false,
+            "text": "25",
+            "value": "25"
+          },
+          {
+            "selected": false,
+            "text": "50",
+            "value": "50"
+          },
+          {
+            "selected": false,
+            "text": "100",
+            "value": "100"
+          },
+          {
+            "selected": false,
+            "text": "200",
+            "value": "200"
+          },
+          {
+            "selected": false,
+            "text": "500",
+            "value": "500"
+          },
+          {
+            "selected": false,
+            "text": "1000",
+            "value": "1000"
+          }
+        ],
+        "query": "10,25,50,100,200,500,1000",
+        "type": "custom"
       }
     ]
   },
   "time": {
-    "from": "2025-04-30T20:09:15.177Z",
-    "to": "2025-04-30T21:03:41.177Z"
+    "from": "now-5m",
+    "to": "now"
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "FlexRIC KPI Monitor (two-queries-per-update, 5/02/2025)",
-  "uid": "ric_dashboard1",
-  "version": 7,
+  "title": "FlexRIC KPI Monitor",
+  "uid": "ric_dashboard",
+  "version": 1,
   "weekStart": ""
 }

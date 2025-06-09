@@ -3,5 +3,6 @@
 /logs/
 /openairinterface5g/
 openairinterface5g
+/o1_adapter/
 install_time.txt
 !install_patch_files/

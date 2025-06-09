@@ -28,6 +28,9 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
+# The number of milliseconds between each KPI report
+XAPP_PERIODICITY_MS=1000
+
 # Exit immediately if a command fails
 set -e
 
@@ -65,4 +68,5 @@ echo
 echo "Output CSV path: $OUTPUT_CSV_PATH"
 echo
 
-./build/examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv "$OUTPUT_CSV_PATH" $CONFIG_PATH
+set -x
+XAPP_DURATION=-1 ./build/examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv "$OUTPUT_CSV_PATH" "$XAPP_PERIODICITY_MS" $CONFIG_PATH

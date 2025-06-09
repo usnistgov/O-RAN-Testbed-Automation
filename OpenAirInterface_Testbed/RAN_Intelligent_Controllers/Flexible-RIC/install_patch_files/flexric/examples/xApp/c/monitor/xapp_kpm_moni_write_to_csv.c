@@ -33,13 +33,16 @@
 #include <pthread.h>
 #include <inttypes.h>
 
-// Set to true if the xApp should run forever, otherwise it will stop after 10 seconds
-bool run_forever = true;
-
 // Set to the interval in milliseconds at which the xApp should write to the CSV file
-static uint64_t const period_ms = 1000;
+static uint64_t period_ms = 1000;
 
-// Set to true if samples containing NUM_RSRP_MEAS == 0 are to be filtered,
+// Lowering the timestamp precision groups measurements from multiple UEs under the same timestamp, making it easier to identify simultaneous connections.
+uint64_t timestamp_precision = 10;
+
+// For metrics based on the difference between indication messages, the first sample may give a wrong value, so it is skipped.
+bool skip_first_sample = true;
+
+// Set to true if samples containing RSRP.Count == 0 are to be filtered,
 // which is expected to give more stable results at the expense of some data loss
 const bool filter_invalid_rsrp_samples = false;
 
@@ -52,10 +55,7 @@ char csv_line_buffer[1024];
 unsigned int csv_num_rows = 0;
 uint64_t current_ue_id = 0;
 bool filter_current_sample = false;
-
-void handle_sigint(int signum) {
-  run_forever = false;
-}
+int64_t prev_now = 0;
 
 static void log_gnb_ue_id(ue_id_e2sm_t ue_id)
 {
@@ -155,7 +155,7 @@ static void csv_append_real_to_csv_line(meas_record_lst_t meas_record)
   {
     if (isnan(meas_record.real_val))
     {
-      snprintf(csv_line_buffer + current_len, sizeof(csv_line_buffer) - current_len, "NaN,");
+      snprintf(csv_line_buffer + current_len, sizeof(csv_line_buffer) - current_len, ",");
     }
     else
     {
@@ -197,6 +197,7 @@ static void csv_prepend_ue_id()
   }
 }
 
+
 static void csv_prepend_timestamp()
 {
   int64_t now = time_now_us();
@@ -210,24 +211,36 @@ static void csv_prepend_timestamp()
     return;
   }
 
+  int64_t now_adjusted_precision = now - (now % timestamp_precision);
   char timestamp_buffer[32];
-  snprintf(timestamp_buffer, sizeof(timestamp_buffer), "%" PRId64 ",", now);
+  snprintf(timestamp_buffer, sizeof(timestamp_buffer), "%" PRId64 ",", now_adjusted_precision);
+
+  int64_t reporting_timestamp_offset;
+  char offset_buffer[32];
+  if (prev_now <= 0) {
+    reporting_timestamp_offset = 0;
+    snprintf(offset_buffer, sizeof(offset_buffer), ",");
+  } else {
+    reporting_timestamp_offset = (now - prev_now) - period_ms;
+    snprintf(offset_buffer, sizeof(offset_buffer), "%" PRId64 ",", reporting_timestamp_offset);
+  }
 
   // Ensure the buffer won't overflow
   size_t timestamp_len = strlen(timestamp_buffer);
+  size_t offset_len = strlen(offset_buffer);
   size_t current_len = strlen(csv_line_buffer);
 
-  if (timestamp_len + current_len < sizeof(csv_line_buffer))
+  if (timestamp_len + offset_len + current_len < sizeof(csv_line_buffer))
   {
     // Use a temporary buffer to construct the new line
     char temp_buffer[sizeof(csv_line_buffer)];
-    snprintf(temp_buffer, sizeof(temp_buffer), "%s%s", timestamp_buffer, csv_line_buffer);
+    snprintf(temp_buffer, sizeof(temp_buffer), "%s%s%s", timestamp_buffer, offset_buffer, csv_line_buffer);
     strncpy(csv_line_buffer, temp_buffer, sizeof(csv_line_buffer) - 1);
     csv_line_buffer[sizeof(csv_line_buffer) - 1] = '\0'; // Ensure null termination
   }
   else
   {
-    fprintf(stderr, "CSV line buffer is full, cannot prepend timestamp.\n");
+    fprintf(stderr, "CSV line buffer is full, cannot prepend timestamp and offset.\n");
   }
 }
 
@@ -257,7 +270,7 @@ static void log_int_value(byte_array_t name, meas_record_lst_t meas_record)
       unit.buf = "kb";
       unit.len = strlen("kb");
     }
-    else if (cmp_str_ba("N_RSRP_MEAS", name) == 0)
+    else if (cmp_str_ba("RSRP.Count", name) == 0)
     {
       unit.buf = "";
       unit.len = 0;
@@ -298,8 +311,8 @@ static void log_int_value(byte_array_t name, meas_record_lst_t meas_record)
   //   printf("Measurement Name not yet supported\n");
   // }
 
-  // If the measurement is N_RSRP_MEAS and the value is 0, the data is invalid
-  if (filter_invalid_rsrp_samples && cmp_str_ba("N_RSRP_MEAS", name) == 0)
+  // If the measurement is RSRP.Count and the value is 0, the data is invalid
+  if (filter_invalid_rsrp_samples && cmp_str_ba("RSRP.Count", name) == 0)
   {
     if (meas_record.int_val == 0)
     {
@@ -330,7 +343,32 @@ static void log_real_value(byte_array_t name, meas_record_lst_t meas_record)
       unit.buf = "kbps";
       unit.len = strlen("kbps");
     }
-    else if (cmp_str_ba("RSRP", name) == 0)
+    else if (cmp_str_ba("RSRP.Mean", name) == 0)
+    {
+      unit.buf = "dBm";
+      unit.len = strlen("dBm");
+    }
+    else if (cmp_str_ba("RSRP.Minimum", name) == 0)
+    {
+      unit.buf = "dBm";
+      unit.len = strlen("dBm");
+    }
+    else if (cmp_str_ba("RSRP.Quartile1", name) == 0)
+    {
+      unit.buf = "dBm";
+      unit.len = strlen("dBm");
+    }
+    else if (cmp_str_ba("RSRP.Median", name) == 0)
+    {
+      unit.buf = "dBm";
+      unit.len = strlen("dBm");
+    }
+    else if (cmp_str_ba("RSRP.Quartile3", name) == 0)
+    {
+      unit.buf = "dBm";
+      unit.len = strlen("dBm");
+    }
+    else if (cmp_str_ba("RSRP.Maximum", name) == 0)
     {
       unit.buf = "dBm";
       unit.len = strlen("dBm");
@@ -457,6 +495,12 @@ static void log_kpm_measurements(kpm_ind_msg_format_1_t const *msg_frm_1)
   }
   write_csv_header_to_file();
 
+  if (skip_first_sample) {
+    printf("Skipping first sample to avoid incorrect initial values.\n");
+    skip_first_sample = false;
+    return;
+  }
+
   if (filter_invalid_rsrp_samples || !filter_current_sample)
   {
     csv_prepend_ue_id();
@@ -468,7 +512,7 @@ static void log_kpm_measurements(kpm_ind_msg_format_1_t const *msg_frm_1)
     // Log an empty measurement row with 25 commas after the 0
     printf("Logging empty measurement row\n");
     memset(csv_line_buffer, 0, sizeof(csv_line_buffer));
-    snprintf(csv_line_buffer, sizeof(csv_line_buffer), ",,,,,,,,,,,,,,,,,,,,,,,,,");
+    snprintf(csv_line_buffer, sizeof(csv_line_buffer), ",,,,,,,,,,,,,,,,,,,,,,,,,,");
     csv_prepend_timestamp();
     write_csv_line_to_file();
 
@@ -512,6 +556,7 @@ static void sm_cb_kpm(sm_ag_if_rd_t const *rd)
     }
     counter++;
   }
+  prev_now = now / 1000;
 }
 
 static test_info_lst_t filter_predicate(test_cond_type_e type, test_cond_e cond, int value)
@@ -677,22 +722,41 @@ static size_t find_sm_idx(sm_ran_function_t *rf, size_t sz, bool (*f)(sm_ran_fun
 
 int main(int argc, char *argv[])
 {
-  if (argc < 2)
+  if (argc < 3)
   {
-    fprintf(stderr, "Usage: %s <csv_file_path>\n", argv[0]);
+    fprintf(stderr, "Usage: %s <csv_file_path> <period_ms> [other arguments]\n", argv[0]);
     return EXIT_FAILURE;
   }
+
+  csv_file_path = argv[1];
+  printf("CSV file path provided: %s\n", csv_file_path);
+
+  // Verify the CSV file path ends with ".csv"
+  size_t path_len = strlen(csv_file_path);
+  if (path_len < 4 || strcmp(csv_file_path + path_len - 4, ".csv") != 0) {
+    fprintf(stderr, "Error: The file path must end with '.csv'.\n");
+    return EXIT_FAILURE;
+  }
+
+  char *endptr = NULL;
+  long val = strtol(argv[2], &endptr, 10);
+  if (*endptr != '\0' || val <= 0) {
+    fprintf(stderr, "Invalid period_ms value: '%s'. Must be a positive integer.\n", argv[2]);
+    return EXIT_FAILURE;
+  }
+  // Cast to uint64_t and override the global period_ms
+  *((uint64_t *)&period_ms) = (uint64_t)val;
 
   csv_wrote_header = false;
   byte_array_t timestamp_name = {.buf = "Time", .len = strlen("Time")};
   byte_array_t timestamp_unit = {.buf = "UNIX ms", .len = strlen("UNIX ms")};
   csv_append_name_to_csv_header(timestamp_name, timestamp_unit);
+  byte_array_t offset_name = {.buf = "Reporting Time Offset", .len = strlen("Reporting Time Offset")};
+  byte_array_t offset_unit = {.buf = "ms", .len = strlen("ms")};
+  csv_append_name_to_csv_header(offset_name, offset_unit);
   byte_array_t ue_id_name = {.buf = "UE ID", .len = strlen("UE ID")};
   byte_array_t ue_id_unit = {.buf = "", .len = 0};
   csv_append_name_to_csv_header(ue_id_name, ue_id_unit);
-
-  csv_file_path = argv[1];
-  printf("CSV file path provided: %s\n", csv_file_path);
 
   fr_args_t args = init_fr_args(argc, argv);
 
@@ -738,12 +802,6 @@ int main(int argc, char *argv[])
       free_kpm_sub_data(&kpm_sub);
     }
   }
-
-  if (run_forever) signal(SIGINT, handle_sigint);
-  while (run_forever) {
-    usleep(10000);
-  }
-
   ////////////
   // END KPM
   ////////////

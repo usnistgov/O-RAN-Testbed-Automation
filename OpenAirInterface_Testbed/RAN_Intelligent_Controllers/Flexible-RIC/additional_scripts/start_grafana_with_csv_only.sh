@@ -66,6 +66,7 @@ fi
 if [ ! -f "$GRAFANA_LOG_FILE" ]; then
     echo "Creating Grafana log file at $GRAFANA_LOG_FILE..."
     sudo mkdir -p "$(dirname "$GRAFANA_LOG_FILE")"
+    sudo chown "$(whoami):$(whoami)" "$(dirname "$GRAFANA_LOG_FILE")"
     touch "$GRAFANA_LOG_FILE"
 fi
 
@@ -75,13 +76,13 @@ if ! command -v python3 &>/dev/null; then
 fi
 
 cd additional_scripts
-if ! pgrep -f "grafana_host_kpi_metrics_over_http.py" >/dev/null; then
+if ! pgrep -f "python_server_for_grafana.py" >/dev/null; then
     echo "Hosting file: http://localhost:3030/KPI_Metrics.csv"
     # Optionally, redirect the server output to logs/python_server.log
     # SERVER_LOG_FILE="$PARENT_DIR/logs/python_server.log"
     # >"$SERVER_LOG_FILE" # Clear the log file
-    # nohup python3 -u grafana_host_kpi_metrics_over_http.py >"$SERVER_LOG_FILE" 2>&1 &
-    nohup python3 grafana_host_kpi_metrics_over_http.py >/dev/null 2>&1 &
+    # nohup python3 -u python_server_for_grafana.py >"$SERVER_LOG_FILE" 2>&1 &
+    nohup python3 python_server_for_grafana.py >/dev/null 2>&1 &
 else
     echo "Already hosting file: http://localhost:3030/KPI_Metrics.csv"
 fi
@@ -116,5 +117,3 @@ echo "The default login credentials are as follows."
 echo "    - U: \"admin\""
 echo "    - P: \"admin\""
 echo
-
-cd "$PARENT_DIR/flexric/"

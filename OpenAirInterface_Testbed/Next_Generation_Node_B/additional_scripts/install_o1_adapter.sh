@@ -28,37 +28,53 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-if ! command -v realpath &>/dev/null; then
-    echo "Package \"coreutils\" not found, installing..."
-    sudo apt-get install -y coreutils
-fi
+set -e
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$PARENT_DIR"
 
-# Upon exit, restore the terminal to a sane state
-trap 'stty sane; exit' EXIT SIGINT SIGTERM
-
-# Check if the components are already stopped
-if ! $(./is_running.sh | grep -q ": RUNNING"); then
-    ./is_running.sh
-    exit 0
+if [ ! -d "o1-adapter" ]; then
+    echo "Cloning o1-adapter..."
+    ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/oai/o1-adapter.git o1-adapter
 fi
 
-pkill -9 -f "grafana_host_kpi_metrics_over_http.py"
-
-# Stop Grafana server if it's running and disable it from auto-starting on boot
-if systemctl is-active grafana-server &>/dev/null; then
-    echo "Stopping Grafana server..."
-    set -x
-    sudo systemctl stop grafana-server
-fi
-if sudo systemctl is-enabled grafana-server &>/dev/null; then
-    echo "Disabling Grafana server auto-start..."
-    set -x
-    sudo systemctl disable grafana-server
+# If docker is not installed
+if ! command -v docker &>/dev/null; then
+    ./install_scripts/install_docker.sh
 fi
 
-sleep 1
-./is_running.sh
+if ! command -v lazydocker &>/dev/null; then
+    ./install_scripts/install_lazydocker.sh
+fi
+
+cd "$SCRIPT_DIR"
+
+# Check if docker is accessible from the current user, and if not, repair its permissions
+if [ -z "$FIXED_DOCKER_PERMS" ]; then
+    if ! output=$(docker info 2>&1); then
+        if echo "$output" | grep -qiE 'permission denied|cannot connect to the docker daemon'; then
+            echo "Repairing Docker permissions..."
+            sudo groupadd -f docker
+            if [ -n "$SUDO_USER" ]; then
+                sudo usermod -aG docker "$SUDO_USER"
+            else
+                sudo usermod -aG docker "$USER"
+            fi
+            # Rather than requiring a reboot to apply docker permissions, set the docker group and re-run the parent script
+            export FIXED_DOCKER_PERMS=1
+            if ! command -v sg &>/dev/null; then
+                echo
+                echo "WARNING: Could not find set group (sg) command, docker may fail without sudo until the system reboots."
+                echo
+            else
+                exec sg docker "$0" "$@"
+            fi
+        fi
+    fi
+fi
+
+cd "$PARENT_DIR"
+
+cd o1-adapter
+./build-adapter.sh --adapter --no-cache

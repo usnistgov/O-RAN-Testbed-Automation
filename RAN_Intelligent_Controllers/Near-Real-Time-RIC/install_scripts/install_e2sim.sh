@@ -62,7 +62,7 @@ cd build/
 cmake .. && make -j$(nproc) package && cmake .. -DDEV_PKG=1 && make -j$(nproc) package
 cp *.deb ../e2sm_examples/kpm_e2sm/
 cd ../
-sudo docker build -t oransim:0.0.999 . -f Dockerfile_kpm_updated
+docker build -t oransim:0.0.999 . -f Dockerfile_kpm_updated
 if [ $? -ne 0 ]; then
     echo "Error: Docker build failed. Cleaning up the E2 simulator..."
     sudo rm -rf e2-interface

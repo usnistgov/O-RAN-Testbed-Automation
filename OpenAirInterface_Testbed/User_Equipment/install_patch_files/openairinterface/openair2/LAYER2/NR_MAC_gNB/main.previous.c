@@ -53,9 +53,6 @@
 #include "NR_ServingCellConfig.h"
 #include "NR_ServingCellConfigCommon.h"
 #include "NR_TAG.h"
-#include "PHY/defs_common.h"
-#include "RRC/NR/MESSAGES/asn1_msg.h"
-#include "RRC/NR/nr_rrc_config.h"
 #include "assertions.h"
 #include "common/ngran_types.h"
 #include "common/ran_context.h"
@@ -66,7 +63,6 @@
 #include "nr_pdcp/nr_pdcp_oai_api.h"
 #include "nr_rlc/nr_rlc_oai_api.h"
 #include "openair2/F1AP/f1ap_ids.h"
-#include "rlc.h"
 #include "seq_arr.h"
 #include "system.h"
 #include "time_meas.h"
@@ -81,7 +77,10 @@ void *nrmac_stats_thread(void *arg) {
   char output[MACSTATSSTRLEN] = {0};
   const char *end = output + MACSTATSSTRLEN;
   FILE *file = fopen("nrMAC_stats.log","w");
-  AssertFatal(file!=NULL,"Cannot open nrMAC_stats.log, error %s\n",strerror(errno));
+  if (!file) {
+    LOG_W(NR_MAC, "Cannot open nrMAC_stats.log: %d, %s\n", errno, strerror(errno));
+    return NULL;
+  }
 
   while (oai_exit == 0) {
     char *p = output;
@@ -105,7 +104,7 @@ void *nrmac_stats_thread(void *arg) {
 }
 
 void clear_mac_stats(gNB_MAC_INST *gNB) {
-  UE_iterator(gNB->UE_info.list, UE) {
+  UE_iterator(gNB->UE_info.connected_ue_list, UE) {
     memset(&UE->mac_stats,0,sizeof(UE->mac_stats));
   }
 }
@@ -120,7 +119,7 @@ size_t dump_mac_stats(gNB_MAC_INST *gNB, char *output, size_t strlen, bool reset
   NR_SCHED_ENSURE_LOCKED(&gNB->sched_lock);
 
   NR_SCHED_LOCK(&gNB->UE_info.mutex);
-  UE_iterator(gNB->UE_info.list, UE) {
+  UE_iterator(gNB->UE_info.connected_ue_list, UE) {
     NR_UE_sched_ctrl_t *sched_ctrl = &UE->UE_sched_ctrl;
     NR_mac_stats_t *stats = &UE->mac_stats;
     const int avg_rsrp = stats->num_rsrp_meas > 0 ? stats->cumul_rsrp / stats->num_rsrp_meas : 0;
@@ -277,6 +276,7 @@ void mac_top_init_gNB(ngran_node_t node_type,
       RC.nrmac[i]->common_channels[0].pre_ServingCellConfig = scd;
 
       RC.nrmac[i]->first_MIB = true;
+      RC.nrmac[i]->num_scheduled_prach_rx = 0;
       RC.nrmac[i]->common_channels[0].mib = get_new_MIB_NR(scc);
 
       RC.nrmac[i]->cset0_bwp_start = 0;
@@ -304,33 +304,12 @@ void mac_top_init_gNB(ngran_node_t node_type,
       mac_rrc_init(RC.nrmac[i], node_type);
     }//END for (i = 0; i < RC.nb_nr_macrlc_inst; i++)
 
-    AssertFatal(rlc_module_init(1) == 0,"Could not initialize RLC layer\n");
+    nr_rlc_op_mode_t mode = NODE_IS_MONOLITHIC(node_type) ? NR_RLC_OP_MODE_MONO_GNB : NR_RLC_OP_MODE_SPLIT_GNB;
+    int success = nr_rlc_module_init(mode);
+    AssertFatal(success == 0,"Could not initialize RLC layer\n");
 
     // These should be out of here later
     if (get_softmodem_params()->usim_test == 0 ) nr_pdcp_layer_init();
-
-    if(IS_SOFTMODEM_NOS1 && get_softmodem_params()->phy_test) {
-      // get default noS1 configuration
-      NR_RadioBearerConfig_t *rbconfig = NULL;
-      NR_RLC_BearerConfig_t *rlc_rbconfig = NULL;
-      fill_nr_noS1_bearer_config(&rbconfig, &rlc_rbconfig);
-
-      /* Note! previously, in nr_DRB_preconfiguration(), we passed ENB_FLAG_NO
-       * if ENB_NAS_USE_TUN was *not* set. It seems to me that we could not set
-       * this flag anywhere in the code, hence we would always configure PDCP
-       * with ENB_FLAG_NO in nr_DRB_preconfiguration(). This makes sense for
-       * noS1, because the result of passing ENB_FLAG_NO to PDCP is that PDCP
-       * will output the packets at a local interface, which is in line with
-       * the noS1 mode.  Hence, below, we simply hardcode ENB_FLAG_NO */
-      // setup PDCP, RLC
-      nr_pdcp_entity_security_keys_and_algos_t null_security_parameters = {0};
-      nr_pdcp_add_drbs(ENB_FLAG_NO, 0x1234, rbconfig->drb_ToAddModList, &null_security_parameters);
-      nr_rlc_add_drb(0x1234, rbconfig->drb_ToAddModList->list.array[0]->drb_Identity, rlc_rbconfig);
-
-      // free memory
-      free_nr_noS1_bearer_config(&rbconfig, &rlc_rbconfig);
-    }
-
   } else {
     RC.nrmac = NULL;
   }
@@ -345,6 +324,22 @@ void mac_top_init_gNB(ngran_node_t node_type,
   du_init_f1_ue_data();
 
   srand48(0);
+}
+
+void mac_top_destroy_gNB(gNB_MAC_INST *mac)
+{
+  NR_COMMON_channels_t *cc = &mac->common_channels[0];
+  ASN_STRUCT_FREE(asn_DEF_NR_BCCH_BCH_Message, cc->mib);
+  ASN_STRUCT_FREE(asn_DEF_NR_BCCH_DL_SCH_Message, cc->sib1);
+  ASN_STRUCT_FREE(asn_DEF_NR_ServingCellConfig, cc->pre_ServingCellConfig);
+  ASN_STRUCT_FREE(asn_DEF_NR_ServingCellConfigCommon, cc->ServingCellConfigCommon);
+  NR_UEs_t *UE_info = &mac->UE_info;
+  for (int i = 0; i < sizeofArray(UE_info->connected_ue_list); ++i)
+    if (UE_info->connected_ue_list[i])
+      delete_nr_ue_data(UE_info->connected_ue_list[i], cc, &UE_info->uid_allocator);
+  for (int i = 0; i < sizeofArray(UE_info->access_ue_list); ++i)
+    if (UE_info->access_ue_list[i])
+      delete_nr_ue_data(UE_info->access_ue_list[i], cc, &UE_info->uid_allocator);
 }
 
 void nr_mac_send_f1_setup_req(void)

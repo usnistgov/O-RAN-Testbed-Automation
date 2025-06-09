@@ -32,8 +32,13 @@ This installation of the Near-RT RIC supports six xApps.
       ```
     - New metrics for the automation tool:
       ```console
-      RSRP (dBm) - Averaged SSB/CSI-RS Reference Signal Received Power in the sample
-      N_RSRP_MEAS (count) - Number of RSRP measurements in the sample, used to calculate RSRP
+      RSRP.Mean (dBm) - Averaged SSB/CSI-RS Reference Signal Received Power in the sample
+      RSRP.Minimum (dBm) - Minimum SSB/CSI-RS Reference Signal Received Power in the sample
+      RSRP.Quartile1 (dBm) - Quartile 1 SSB/CSI-RS Reference Signal Received Power in the sample
+      RSRP.Median (dBm) - Quartile 2/Median SSB/CSI-RS Reference Signal Received Power in the sample
+      RSRP.Quartile3 (dBm) - Quartile 3 SSB/CSI-RS Reference Signal Received Power in the sample
+      RSRP.Maximum (dBm) - Minimum SSB/CSI-RS Reference Signal Received Power in the sample
+      RSRP.Count (count) - Number of RSRP measurements in the sample, used to calculate RSRP
       N_PRB (count) - Number of PRBs in the sample, used to calculate RSSI
       RSSI (dBm) - Received Signal Strength Indicator (computed using RSRP and N_PRB: https://www.techplayon.com/rssi)
       PUSCH_SNR (dB) - Signal to noise ratio for Physical Uplink Shared Channel
@@ -63,7 +68,7 @@ This installation of the Near-RT RIC supports six xApps.
 
 ## KPI Monitor Visualization in Grafana
 
-After the KPI Monitor xApp subscribes to the E2 node, metrics of the gNodeB and UE are sent through the E2 interface and received by the xApp. An xApp has been made at `flexric/build/examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv` which writes the metrics to logs/KPI_Metrics.csv instead of printing them to the console. The Python server at `additional_scripts/grafana_host_kpi_metrics_over_http.py` will make this CSV file accessible at `http://localhost:3030/KPI_Metrics.csv`, and a Grafana dashboard has been created to consume this data and visualize it.
+After the KPI Monitor xApp subscribes to the E2 node, metrics of the gNodeB and UE are sent through the E2 interface and received by the xApp. An xApp has been made at `flexric/build/examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv` which writes the metrics to logs/KPI_Metrics.csv instead of printing them to the console. The Python server at `additional_scripts/python_server_for_grafana.py` will make this CSV file accessible at `http://localhost:3030/KPI_Metrics.csv`, and a Grafana dashboard has been created to consume this data and visualize it.
 
 - **Real-Time Metrics**: To start the xApp that generates `logs/KPI_Monitor.csv`, the Python server that hosts the file, and the Grafana server, run the following.
   ```console
@@ -78,7 +83,7 @@ After the KPI Monitor xApp subscribes to the E2 node, metrics of the gNodeB and 
 
 - **Initial Configuration**: The dashboard uses the Infinity plugin (yesoreyeram-infinity-datasource), which may require creating a data source under Connections → Data sources → Add data source → Infinity. Configure it under URL, Headers & Params → Base URL → Type "`http://localhost:3030/KPI_Metrics.csv`" → Save & test.
 
-- **Stop Grafana**: To stop the Grafana server, Python server, and xApp, use `./additional_scripts/stop_grafana.sh`.
+- **Stop Grafana**: To stop the Grafana server, Python server, and xApp, use `./additional_scripts/stop_grafana_and_python_server.sh`.
 
 The Grafana dashboard is accessible at `http://localhost:3000` with default credentials being "admin". Upon initial startup, import the following JSON file into the Grafana client by navigating to Dashboards → New → Import: `additional_scripts/grafana_xapp_dashboard.json`. Please note that the dashboard and the metrics provided with this software are still in development and therefore may display some inaccurate values. Below is a snapshot of the dashboard in its current state.
 

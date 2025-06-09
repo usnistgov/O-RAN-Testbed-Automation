@@ -55,6 +55,30 @@ if ! command -v docker &>/dev/null; then
     sudo usermod -aG docker "$USER"
 fi
 
+# Check if docker is accessible from the current user, and if not, repair its permissions
+if [ -z "$FIXED_DOCKER_PERMS" ]; then
+    if ! output=$(docker info 2>&1); then
+        if echo "$output" | grep -qiE 'permission denied|cannot connect to the docker daemon'; then
+            echo "Repairing Docker permissions..."
+            sudo groupadd -f docker
+            if [ -n "$SUDO_USER" ]; then
+                sudo usermod -aG docker "$SUDO_USER"
+            else
+                sudo usermod -aG docker "$USER"
+            fi
+            # Rather than requiring a reboot to apply docker permissions, set the docker group and re-run the parent script
+            export FIXED_DOCKER_PERMS=1
+            if ! command -v sg &>/dev/null; then
+                echo
+                echo "WARNING: Could not find set group (sg) command, docker may fail without sudo until the system reboots."
+                echo
+            else
+                exec sg docker "$0" "$@"
+            fi
+        fi
+    fi
+fi
+
 if ! command -v docker-compose &>/dev/null; then
     ./install_scripts/install_docker_compose.sh
 fi
@@ -115,7 +139,7 @@ fi
 
 cd nonrtric-controlpanel
 
-if ! sudo docker ps -a | grep -q nonrtric-controlpanel || ! sudo docker ps -a | grep -q nonrtric-gateway; then
+if ! docker ps -a | grep -q nonrtric-controlpanel || ! docker ps -a | grep -q nonrtric-gateway; then
     echo "Starting docker-compose for the control panel and gateway..."
     cd docker-compose
     if ! sudo docker-compose -f docker-compose.yaml -f control-panel/docker-compose.yaml -f nonrtric-gateway/docker-compose.yaml up -d; then

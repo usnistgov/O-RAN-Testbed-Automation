@@ -36,6 +36,30 @@ echo "# Script: $(realpath $0)..."
 # Exit immediately if a command fails
 set -e
 
+# Check if docker is accessible from the current user, and if not, repair its permissions
+if [ -z "$FIXED_DOCKER_PERMS" ]; then
+    if ! output=$(docker info 2>&1); then
+        if echo "$output" | grep -qiE 'permission denied|cannot connect to the docker daemon'; then
+            echo "Repairing Docker permissions..."
+            sudo groupadd -f docker
+            if [ -n "$SUDO_USER" ]; then
+                sudo usermod -aG docker "$SUDO_USER"
+            else
+                sudo usermod -aG docker "$USER"
+            fi
+            # Rather than requiring a reboot to apply docker permissions, set the docker group and re-run the parent script
+            export FIXED_DOCKER_PERMS=1
+            if ! command -v sg &>/dev/null; then
+                echo
+                echo "WARNING: Could not find set group (sg) command, docker may fail without sudo until the system reboots."
+                echo
+            else
+                exec sg docker "$0" "$@"
+            fi
+        fi
+    fi
+fi
+
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$PARENT_DIR"
@@ -82,8 +106,8 @@ jq '.containers[0].image.tag = "latest" |
     .containers[0].image.name = "trafficxapp"' "$FILE" >tmp.$$.json && mv tmp.$$.json "$FILE"
 
 if [ ! -f trafficxapp.tar]; then
-    sudo docker build -t 127.0.0.1:80/trafficxapp:latest .
-    sudo docker save -o trafficxapp.tar 127.0.0.1:80/trafficxapp:latest
+    docker build -t 127.0.0.1:80/trafficxapp:latest .
+    docker save -o trafficxapp.tar 127.0.0.1:80/trafficxapp:latest
     sudo chmod 755 trafficxapp.tar
     sudo chown $USER:$USER trafficxapp.tar
 

@@ -1,13 +1,18 @@
 diff --git a/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c b/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c
-index aaf46797ac..63f2b5e305 100644
+index aaf46797ac..c372c9f027 100644
 --- a/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c
 +++ b/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c
-@@ -426,6 +426,23 @@ static const char* kpm_meas_du[] = {
+@@ -426,6 +426,28 @@ static const char* kpm_meas_du[] = {
    "DRB.UEThpUl",
    "RRU.PrbTotDl",
    "RRU.PrbTotUl",
-+  "RSRP",
-+  "N_RSRP_MEAS",
++  "RSRP.Mean",
++  "RSRP.Minimum",
++  "RSRP.Quartile1",
++  "RSRP.Median",
++  "RSRP.Quartile3",
++  "RSRP.Maximum",
++  "RSRP.Count",
 +  "N_PRB",
 +  "RSSI",
 +  "RSRQ",
@@ -26,12 +31,17 @@ index aaf46797ac..63f2b5e305 100644
    NULL,
  };
  
-@@ -437,6 +454,23 @@ static const char* kpm_meas_gnb[] = {
+@@ -437,6 +459,28 @@ static const char* kpm_meas_gnb[] = {
    "DRB.UEThpUl",
    "RRU.PrbTotDl",
    "RRU.PrbTotUl",
-+  "RSRP",
-+  "N_RSRP_MEAS",
++  "RSRP.Mean",
++  "RSRP.Minimum",
++  "RSRP.Quartile1",
++  "RSRP.Median",
++  "RSRP.Quartile3",
++  "RSRP.Maximum",
++  "RSRP.Count",
 +  "N_PRB",
 +  "RSSI",
 +  "RSRQ",

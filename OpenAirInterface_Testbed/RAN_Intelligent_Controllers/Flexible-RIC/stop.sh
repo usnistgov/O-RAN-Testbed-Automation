@@ -49,7 +49,7 @@ echo "Stopping xApps..."
 ./additional_scripts/stop_xapps.sh
 
 echo "Stopping Grafana..."
-./additional_scripts/stop_grafana.sh
+./additional_scripts/stop_grafana_and_python_server.sh
 
 # Prevent the subsequent command from requiring credential input
 sudo ls >/dev/null 2>&1

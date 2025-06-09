@@ -36,7 +36,8 @@ fi
 echo "# Script: $(realpath $0)..."
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
-cd "$(dirname "$SCRIPT_DIR")"
+PARENT_DIR=$(dirname "$SCRIPT_DIR")
+cd "$PARENT_DIR"
 
 DBCTL_DIR="./open5gs/misc/db/open5gs-dbctl"
 

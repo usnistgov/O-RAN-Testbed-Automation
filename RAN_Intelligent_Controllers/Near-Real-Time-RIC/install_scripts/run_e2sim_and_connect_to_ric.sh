@@ -50,7 +50,7 @@ OUTPUT_FILE="logs/e2sim_output.txt"
 
 echo "Starting a new container 'oransim'..."
 sudo rm -rf $OUTPUT_FILE
-sudo docker run -d -it --name oransim -e RAN_FUNC_ID="$RAN_FUNC_ID" -v "$(pwd)/logs:/app/logs" oransim:0.0.999
+docker run -d -it --name oransim -e RAN_FUNC_ID="$RAN_FUNC_ID" -v "$(pwd)/logs:/app/logs" oransim:0.0.999
 
 kubectl get svc -n ricplt | grep e2term-sctp || true
 
@@ -85,16 +85,16 @@ while true; do
         sudo chown $USER:$USER $OUTPUT_FILE
     fi
     # Check if kpm_sim is already running to avoid duplicate runs
-    if ! sudo docker exec oransim pgrep -f "kpm_sim" >/dev/null; then
+    if ! docker exec oransim pgrep -f "kpm_sim" >/dev/null; then
         echo "Starting kpm_sim in the background, writing to $OUTPUT_FILE..."
         >"$OUTPUT_FILE" # Clears the content of the output file
-        sudo docker exec oransim mkdir -p /app/logs
-        sudo docker exec -i oransim sh -c "nohup kpm_sim $IP_E2TERM $PORT_E2TERM >> /app/logs/e2sim_output.txt 2>&1 &"
+        docker exec oransim mkdir -p /app/logs
+        docker exec -i oransim sh -c "nohup kpm_sim $IP_E2TERM $PORT_E2TERM >> /app/logs/e2sim_output.txt 2>&1 &"
         sleep 2
     fi
 
-    if ! grep -q SETUP-RESPONSE-SUCCESS $OUTPUT_FILE; then
-        # Alternatively, wait for </E2AP-PDU>: if ! grep -q "</E2AP-PDU>" $OUTPUT_FILE; then
+    if ! grep -q "</E2AP-PDU>" $OUTPUT_FILE; then
+        # Alternatively, wait for SETUP-RESPONSE-SUCCESS: if ! grep -q SETUP-RESPONSE-SUCCESS $OUTPUT_FILE; then
         echo "Waiting for connection between E2 Simulator and RIC, please be patient for all pods to be ready... $ATTEMPTS/$MAX_ATTEMPTS"
         sleep 5
     else
@@ -104,10 +104,10 @@ while true; do
     if [ "$ATTEMPTS" -eq "$MAX_ATTEMPTS" ]; then
         cat $OUTPUT_FILE
         kubectl get pods -A || true
-        if sudo docker exec oransim pgrep -f "kpm_sim" >/dev/null; then
+        if docker exec oransim pgrep -f "kpm_sim" >/dev/null; then
             echo
             echo "Restarting kpm_sim inside of oransim..."
-            sudo docker exec oransim pkill -f kpm_sim || true
+            docker exec oransim pkill -f kpm_sim || true
         fi
         ATTEMPTS=0
         KPM_RESTARTS=$((KPM_RESTARTS + 1))

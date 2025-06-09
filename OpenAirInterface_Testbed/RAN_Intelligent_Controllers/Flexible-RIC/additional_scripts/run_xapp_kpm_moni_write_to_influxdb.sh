@@ -93,4 +93,4 @@ if [ -f "../configs/flexric.conf" ]; then
 fi
 
 echo "Starting xApp KPM monitor..."
-./build/examples/xApp/c/monitor/xapp_kpm_moni_write_to_influxdb "$INFLUXDB_TOKEN" $CONFIG_PATH
+XAPP_DURATION=-1 ./build/examples/xApp/c/monitor/xapp_kpm_moni_write_to_influxdb "$INFLUXDB_TOKEN" $CONFIG_PATH

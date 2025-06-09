@@ -63,13 +63,13 @@ if grep -q "4.7.0" Dockerfile; then
     sed -i 's/4.7.0/4.9.4/g' Dockerfile
 fi
 
-sudo docker build -t example.com:80/hw-go:latest .
+docker build -t example.com:80/hw-go:latest .
 
 if [ "$CHART_REPO_URL" != "http://0.0.0.0:8090" ]; then
     export CHART_REPO_URL=http://0.0.0.0:8090
 fi
 
-sudo docker save -o hw-go.tar example.com:80/hw-go:latest
+docker save -o hw-go.tar example.com:80/hw-go:latest
 sudo chmod 755 hw-go.tar
 sudo chown $USER:$USER hw-go.tar
 

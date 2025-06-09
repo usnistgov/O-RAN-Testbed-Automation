@@ -1,5 +1,5 @@
 diff --git a/openair2/LAYER2/NR_MAC_gNB/main.c b/openair2/LAYER2/NR_MAC_gNB/main.c
-index 3137ce0902..ebb0afb5df 100644
+index 3137ce0902..55ac746863 100644
 --- a/openair2/LAYER2/NR_MAC_gNB/main.c
 +++ b/openair2/LAYER2/NR_MAC_gNB/main.c
 @@ -135,6 +135,7 @@ size_t dump_mac_stats(gNB_MAC_INST *gNB, char *output, size_t strlen, bool reset
@@ -10,13 +10,3 @@ index 3137ce0902..ebb0afb5df 100644
      output += snprintf(output,
                         end - output,
                         " %s PH %d dB PCMAX %d dBm, average RSRP %d (%d meas)\n",
-@@ -174,6 +175,9 @@ size_t dump_mac_stats(gNB_MAC_INST *gNB, char *output, size_t strlen, bool reset
-                        UE->current_DL_BWP.mcsTableIdx,
-                        sched_ctrl->dl_bler_stats.mcs);
-     if (reset_rsrp) {
-+      // Save previous RSRP values before resetting so that querying them is synchronized with the gNB output
-+      stats->prev_num_rsrp_meas = stats->num_rsrp_meas;
-+      stats->prev_cumul_rsrp = stats->cumul_rsrp;
-       stats->num_rsrp_meas = 0;
-       stats->cumul_rsrp = 0;
-     }

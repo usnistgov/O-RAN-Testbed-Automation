@@ -518,7 +518,11 @@ fi
 
 echo "Ensure Docker group exists and add user to the group before starting Docker service..."
 sudo groupadd -f docker
-sudo usermod -aG docker $USER
+if [ -n "$SUDO_USER" ]; then
+    sudo usermod -aG docker "$SUDO_USER"
+else
+    sudo usermod -aG docker "$USER"
+fi
 
 # Enable and attempt to start Docker service with retries
 echo "Enabling and starting Docker service..."

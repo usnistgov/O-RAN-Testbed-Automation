@@ -28,58 +28,25 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-# Exit immediately if a command fails
-set -e
-
-if ! command -v realpath &>/dev/null; then
-    echo "Package \"coreutils\" not found, installing..."
-    sudo apt-get install -y coreutils
-fi
-
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
-cd "$SCRIPT_DIR"
+PARENT_DIR=$(dirname "$SCRIPT_DIR")
+cd "$PARENT_DIR"
 
-# Upon exit, gracefully stop all components and fix console in case it breaks
-trap "echo \"#################################  STOPPING... #################################\"; \"$SCRIPT_DIR/./stop.sh\"; stty sane; exit" EXIT SIGINT SIGTERM
-
-echo "Running 5G Core components..."
-cd 5G_Core_Network
-./run.sh
-cd ..
-
-echo
-echo -n "Waiting for AMF to be ready"
-if [ -f "5G_Core_Network/options.yaml" ]; then
-    CORE_TO_USE=$(yq eval '.core_to_use' 5G_Core_Network/options.yaml)
+# Ensure that the correct file is used
+if [ -f "options.yaml" ]; then
+    CORE_TO_USE=$(yq eval '.core_to_use' options.yaml)
 fi
 if [[ "$CORE_TO_USE" == "null" || -z "$CORE_TO_USE" ]]; then
     CORE_TO_USE="open5gs" # Default
 fi
-if [ "$CORE_TO_USE" == "open5gs" ]; then
-    attempt=0
-    while [ ! -f 5G_Core_Network/logs/amf.log ] || ! grep -q "NF registered" 5G_Core_Network/logs/amf.log; do
-        echo -n "."
-        sleep 0.5
-        attempt=$((attempt + 1))
-        if [ $attempt -ge 120 ]; then
-            echo "5G Core components did not start after 60 seconds, exiting..."
-            exit 1
-        fi
-    done
-    echo -e "\nAMF is ready."
-else # If using a core other than the default
-    echo "..."
-    sleep 5
+if [ "$CORE_TO_USE" != "open5gs" ]; then
+    cd Additional_Cores_5GDeploy || {
+        exit 0
+    }
 fi
 
-echo
-echo "Running gNodeB..."
-cd Next_Generation_Node_B
-./run_background.sh
-cd ..
+FILE_PATH="configs/get_amf_address.txt"
 
-echo
-echo "Running User Equipment..."
-cd User_Equipment
-./run.sh
-cd ..
+if [ -f "$FILE_PATH" ]; then
+    cat "$FILE_PATH"
+fi

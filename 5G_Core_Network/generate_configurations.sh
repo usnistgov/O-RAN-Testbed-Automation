@@ -39,6 +39,23 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
+# Ensure that the correct script is used
+if [ -f "options.yaml" ]; then
+    CORE_TO_USE=$(yq eval '.core_to_use' options.yaml)
+fi
+if [[ "$CORE_TO_USE" == "null" || -z "$CORE_TO_USE" ]]; then
+    CORE_TO_USE="open5gs" # Default
+fi
+if [ "$CORE_TO_USE" != "open5gs" ]; then
+    echo "Switching to core: $CORE_TO_USE"
+    cd Additional_Cores_5GDeploy || {
+        echo "Directory 'Additional_Cores_5GDeploy' not found. Please ensure that it exists in the script's directory."
+        exit 1
+    }
+    ./generate_configurations.sh
+    exit 0
+fi
+
 # Check if the YAML editor is installed, and install it if not
 if ! command -v yq &>/dev/null; then
     sudo "$SCRIPT_DIR/install_scripts/./install_yq.sh"
@@ -48,6 +65,28 @@ echo "Parsing options.yaml..."
 # Check if the YAML file exists, if not, set and save default values
 if [ ! -f "options.yaml" ]; then
     echo "# Upon modification, apply changes with ./generate_configurations.sh." >>"options.yaml"
+    echo "" >>"options.yaml"
+    echo "# Choose which core to use by default. Options for core_to_use are:" >>"options.yaml"
+    echo "# - open5gs: Open5GS core in current directory (default, see https://github.com/open5gs/open5gs)" >>"options.yaml"
+    echo "# - 5gdeploy-oai: OpenAirInterface core in Additional_Cores_5GDeploy directory see https://gitlab.eurecom.fr/oai/cn5g)" >>"options.yaml"
+    echo "# - 5gdeploy-free5gc: Free5GC core in Additional_Cores_5GDeploy directory (see https://github.com/free5gc/free5gc)" >>"options.yaml"
+    echo "# - 5gdeploy-pheonix: Phoenix core in Additional_Cores_5GDeploy directory (requires license to operate, see: https://www.open5gcore.org)" >>"options.yaml"
+    echo "# - 5gdeploy-open5gs: Open5GS core in Additional_Cores_5GDeploy directory (see https://github.com/open5gs/open5gs)" >>"options.yaml"
+    echo "core_to_use: open5gs" >>"options.yaml"
+    echo "" >>"options.yaml"
+    echo "# Optionally, if using 5gdeploy, you may specify a different User Plane Function (UPF) to use. " >>"options.yaml"
+    echo "# Please see https://github.com/usnistgov/5gdeploy/blob/main/docs/interop.md#cp-up for details about which combinations are supported." >>"options.yaml"
+    echo "# Options for upf_to_use are:" >>"options.yaml"
+    echo "# - null: Use the same value as core_to_use" >>"options.yaml"
+    echo "# - 5gdeploy-eupf: eUPF (see https://github.com/edgecomllc/eupf)" >>"options.yaml"
+    echo "# - 5gdeploy-oai: OAI UPF (see https://gitlab.eurecom.fr/oai/cn5g)" >>"options.yaml"
+    echo "# - 5gdeploy-oai-vpp: OAI UPF based on VPP (see https://gitlab.eurecom.fr/oai/cn5g/oai-cn5g-upf-vpp)" >>"options.yaml"
+    echo "# - 5gdeploy-free5gc: Free5GC UPF (see https://github.com/free5gc/free5gc)" >>"options.yaml"
+    echo "# - 5gdeploy-pheonix: Phoenix UPF (see https://www.open5gcore.org)" >>"options.yaml"
+    echo "# - 5gdeploy-open5gs: Open5GS UPF (see https://github.com/open5gs/open5gs)" >>"options.yaml"
+    echo "# - 5gdeploy-bess: Aether SD-Core's BESS UPF (see https://github.com/omec-project/bess)" >>"options.yaml"
+    echo "# - 5gdeploy-ndndpdk: Use NIST NDN-DPDK (see https://doi.org/10.1145/3405656.3418715)" >>"options.yaml"
+    echo "upf_to_use: null" >>"options.yaml"
     echo "" >>"options.yaml"
     echo "# If false, AMF will use the default 127.0.0.5, otherwise, it will use the hostname IP" >>"options.yaml"
     echo "expose_amf_over_hostname: false" >>"options.yaml"

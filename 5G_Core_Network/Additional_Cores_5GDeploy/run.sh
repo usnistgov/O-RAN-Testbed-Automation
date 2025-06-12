@@ -45,3 +45,18 @@ cd compose/20230817/
 
 echo "Starting the 5G Core Deployment Helper (5gdeploy) Core..."
 ./compose.sh up
+
+cd "$SCRIPT_DIR"
+
+# Update the get_amf_address.txt file to point to the AMF container's IP
+mkdir -p configs
+if ! command -v jq >/dev/null 2>&1; then
+    echo "Installing jq to process JSON files..."
+    sudo apt-get install -y jq
+fi
+# Get the following AMF IP, and it will be updated in the configuration file
+AMF_IP=$(docker inspect amf | jq -r '.[0].NetworkSettings.Networks["br-n2"].IPAddress')
+AMF_IP_BIND=$(ip route get 1 | awk '{print $(NF-2); exit}') # Get the IP of the primary network interface
+AMF_ADDRESSES_OUTPUT="configs/get_amf_address.txt"
+echo "$AMF_IP" >$AMF_ADDRESSES_OUTPUT
+echo "$AMF_IP_BIND" >>$AMF_ADDRESSES_OUTPUT

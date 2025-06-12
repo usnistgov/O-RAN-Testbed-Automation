@@ -56,17 +56,28 @@ cd ../..
 
 echo
 echo -n "Waiting for AMF to be ready"
-attempt=0
-while [ ! -f 5G_Core_Network/logs/amf.log ] || ! grep -q "NF registered" 5G_Core_Network/logs/amf.log; do
-    echo -n "."
-    sleep 0.5
-    attempt=$((attempt + 1))
-    if [ $attempt -ge 120 ]; then
-        echo "5G Core components did not start after 60 seconds, exiting..."
-        exit 1
-    fi
-done
-echo -e "\nAMF is ready."
+if [ -f "5G_Core_Network/options.yaml" ]; then
+    CORE_TO_USE=$(yq eval '.core_to_use' 5G_Core_Network/options.yaml)
+fi
+if [[ "$CORE_TO_USE" == "null" || -z "$CORE_TO_USE" ]]; then
+    CORE_TO_USE="open5gs" # Default
+fi
+if [ "$CORE_TO_USE" == "open5gs" ]; then
+    attempt=0
+    while [ ! -f 5G_Core_Network/logs/amf.log ] || ! grep -q "NF registered" 5G_Core_Network/logs/amf.log; do
+        echo -n "."
+        sleep 0.5
+        attempt=$((attempt + 1))
+        if [ $attempt -ge 120 ]; then
+            echo "5G Core components did not start after 60 seconds, exiting..."
+            exit 1
+        fi
+    done
+    echo -e "\nAMF is ready."
+else # If using a core other than the default
+    echo "..."
+    sleep 5
+fi
 
 echo
 echo "Running gNodeB..."

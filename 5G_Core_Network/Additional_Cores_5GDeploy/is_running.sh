@@ -28,6 +28,11 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
+if ! command -v docker >/dev/null 2>&1; then
+    echo "5gdeploy: NOT_RUNNING"
+    exit 0
+fi
+
 if docker ps --filter "name=^amf$" --format '{{.Names}}' | grep -q "^amf$"; then
     echo "5gdeploy: RUNNING"
 else

@@ -68,7 +68,7 @@ comment_out() {
 }
 
 # Define the path to the 5G Core YAML file
-YAML_PATH="../../5G_Core_Network/options.yaml"
+YAML_PATH="../5G_Core_Network/options.yaml"
 if [ ! -f "$YAML_PATH" ]; then
     echo "Configuration not found in $YAML_PATH, please generate the configuration for 5G_Core_Network first."
     exit 1
@@ -120,7 +120,7 @@ fi
 cp openairinterface5g/targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band78.fr1.106PRB.usrpb210.conf "$SCRIPT_DIR/configs/gnb.conf"
 
 echo "Fetching AMF addresses..."
-FILE_PATH="../../5G_Core_Network/configs/get_amf_address.txt"
+AMF_ADDRESSES=$("../5G_Core_Network/install_scripts/get_amf_address.sh")
 
 prompt_for_addresses() {
     echo "Please enter the AMF address and the AMF binding address manually." >&2
@@ -129,16 +129,20 @@ prompt_for_addresses() {
     read -p "Enter AMF Binding Address: " AMF_ADDR_BIND
 }
 
-# Check if the file exists and has at least two lines
-if [[ -f "$FILE_PATH" ]]; then
-    # Read the file and check for at least two non-empty lines
-    mapfile -t ADDRESSES <"$FILE_PATH"
+# Check if AMF_ADDRESSES has at least two non-empty lines
+if [[ -n "$AMF_ADDRESSES" ]]; then
+    # Read AMF_ADDRESSES into an array, splitting on newlines
+    ADDRESSES=()
+    while IFS= read -r line; do
+        [[ -z "$line" ]] && continue # skip blank lines
+        ADDRESSES+=("$line")
+    done <<<"$AMF_ADDRESSES"
     if [[ ${#ADDRESSES[@]} -ge 2 ]] && [[ -n ${ADDRESSES[0]} ]] && [[ -n ${ADDRESSES[1]} ]]; then
         AMF_ADDR="${ADDRESSES[0]}"
         AMF_ADDR_BIND="${ADDRESSES[1]}"
     else
         echo
-        echo "AMF address file exists but does not contain valid data."
+        echo "AMF address script did not return valid data."
         prompt_for_addresses
     fi
 else

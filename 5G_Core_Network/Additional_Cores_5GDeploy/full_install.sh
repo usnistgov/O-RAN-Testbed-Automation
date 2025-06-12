@@ -44,7 +44,12 @@ if [ ! -d "5gdeploy" ]; then
     echo "Cloning 5G Core Deployment Helper (5gdeploy)..."
     "$PARENT_DIR/./install_scripts/git_clone.sh" https://github.com/usnistgov/5gdeploy.git
 fi
-cd $SCRIPT_DIR/5gdeploy
+
+# cd $SCRIPT_DIR/5gdeploy
+# echo "Patching netdef/helpers.ts to generate NR Cell ID starting at hex 0xE000 (aligning with OAI gNB) instead of 0x10"
+# sed -i '0,/^[[:space:]]*nci[[:space:]]*=.*$/s//      nci = hexPad(((3584 + i) << (36 - gnbIdLength)) | 0xF, 9),/' netdef/helpers.ts
+
+cd $SCRIPT_DIR
 
 # Step 1: Install dependencies
 mkdir -p logs
@@ -69,6 +74,11 @@ if [ ! -f logs/full_install_step_1_complete ]; then
     echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
     sudo apt update
     sudo DEBIAN_FRONTEND=noninteractive apt install -y nodejs
+    # # Install Node.js 20.x
+    # http --ignore-stdin GET https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --batch --yes --dearmor -o /etc/apt/keyrings/nodesource.gpg
+    # echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
+    # sudo apt update
+    # sudo DEBIAN_FRONTEND=noninteractive apt install -y nodejs
     # Install and configure Docker
     http --ignore-stdin GET https://get.docker.com | bash
     sudo adduser $(id -un) docker

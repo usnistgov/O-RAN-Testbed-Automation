@@ -35,8 +35,6 @@ fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 
-#!/bin/bash
-
 if ! command -v gdb &>/dev/null; then
     echo "Installing GNU Debugger..."
     sudo apt update

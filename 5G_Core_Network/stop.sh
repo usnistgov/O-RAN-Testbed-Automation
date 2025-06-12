@@ -36,6 +36,14 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
+# Ensure that the correct script is used
+if [ -f "options.yaml" ]; then
+    CORE_TO_USE=$(yq eval '.core_to_use' options.yaml)
+fi
+if [[ "$CORE_TO_USE" == "null" || -z "$CORE_TO_USE" ]]; then
+    CORE_TO_USE="open5gs" # Default
+fi
+
 # Latest components (see https://open5gs.org/open5gs/docs/guide/01-quickstart/#:~:text=Starting%20and%20Stopping%20Open5GS)
 APPS=("mmed" "sgwcd" "smfd" "amfd" "sgwud" "upfd" "hssd" "pcrfd" "nrfd" "scpd" "seppd" "ausfd" "udmd" "pcfd" "nssfd" "bsfd" "udrd" "webui")
 
@@ -57,7 +65,14 @@ for APP in "${APPS[@]}"; do
         fi
     fi
 done
-
-./is_running.sh
-
 sudo ./install_scripts/revert_network_config.sh
+
+# Check if 5gdeploy is running
+STATUS_5GDEPLOY=$(./Additional_Cores_5GDeploy/is_running.sh 2>/dev/null)
+if echo "$STATUS_5GDEPLOY" | grep -q ": NOT_RUNNING"; then
+    ./Additional_Cores_5GDeploy/stop.sh # Already includes is_running.sh
+elif [ "$CORE_TO_USE" != "open5gs" ]; then
+    ./Additional_Cores_5GDeploy/is_running.sh
+else
+    ./is_running.sh
+fi

@@ -243,6 +243,14 @@ if ! kubectl get pods -n istio-system | grep -q 'istiod-'; then
     istioctl install -y
 fi
 
+if ! kubectl get namespace nonrtric &>/dev/null; then
+    echo "Creating namespace nonrtric..."
+    kubectl create namespace nonrtric
+fi
+
+# Enable Istio sidecar injection on the namespace
+kubectl label namespace nonrtric istio-injection=enabled --overwrite
+
 cd "$SCRIPT_DIR"
 
 # Check if docker is accessible from the current user, and if not, repair its permissions

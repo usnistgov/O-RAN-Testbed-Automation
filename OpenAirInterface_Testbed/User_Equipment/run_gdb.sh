@@ -28,9 +28,6 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-# Exit immediately if a command fails
-set -e
-
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
     sudo apt-get install -y coreutils
@@ -38,6 +35,32 @@ fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
+
+UE_NUMBER=1
+if [ "$#" -eq 1 ]; then
+    UE_NUMBER=$1
+fi
+if ! [[ $UE_NUMBER =~ ^[0-9]+$ ]]; then
+    echo "Error: UE number must be a number."
+    exit 1
+fi
+if [ $UE_NUMBER -lt 1 ]; then
+    echo "Error: UE number must be greater than or equal to 1."
+    exit 1
+fi
+
+if [ ! -f "configs/ue1.conf" ]; then
+    echo "Configuration was not found for OAI UE 1. Please run ./generate_configurations.sh first."
+    exit 1
+fi
+
+# Function to handle graceful shutdown
+graceful_shutdown() {
+    echo "Shutting down UE $UE_NUMBER gracefully..."
+    ./stop.sh
+    exit
+}
+trap graceful_shutdown SIGINT
 
 # Function to update or add configuration properties in .conf files, considering sections and uncommenting if needed
 update_conf() {
@@ -63,58 +86,11 @@ comment_out() {
     sed -i "s|^\(\s*\)$STRING|#\1$STRING|" "$FILE_PATH"
 }
 
-# Define the path to the 5G Core YAML file
-YAML_PATH="../5G_Core_Network/options.yaml"
-if [ ! -f "$YAML_PATH" ]; then
-    echo "Configuration not found in $YAML_PATH, please generate the configuration for 5G_Core_Network first."
-    exit 1
-fi
-# Read PLMN and TAC values from the YAML file using sed
-PLMN=$(sed -n 's/^plmn: \([0-9]*\)/\1/p' "$YAML_PATH" | tr -d '[:space:]')
-TAC=$(sed -n 's/^tac: \([0-9]*\)/\1/p' "$YAML_PATH" | tr -d '[:space:]')
-# Check if PLMN and TAC values are found, if not, exit with an error message
-if [ -z "$PLMN" ]; then
-    echo "PLMN not configured in $YAML_PATH, please generate the configuration for 5G_Core_Network first."
-    exit 1
-fi
-if [ -z "$TAC" ]; then
-    echo "TAC not configured in $YAML_PATH, please generate the configuration for 5G_Core_Network first."
-    exit 1
-fi
+UE_CONF_PATH="configs/ue$UE_NUMBER.conf"
 
-# Parse Mobile Country Code (MCC) and Mobile Network Code (MNC) from PLMN
-MCC="${PLMN:0:3}"
-if [ ${#PLMN} -eq 5 ]; then
-    MNC="${PLMN:3:2}"
-elif [ ${#PLMN} -eq 6 ]; then
-    MNC="${PLMN:3:3}"
-fi
-MNC_LENGTH=${#MNC}
-
-echo "PLMN value: $PLMN"
-echo "TAC value: $TAC"
-echo "MCC value: $MCC"
-echo "MNC value: $MNC"
-echo "MNC_LENGTH value: $MNC_LENGTH"
-
-# Check if the YAML editor is installed, and install it if not
-if ! command -v yq &>/dev/null; then
-    sudo "$SCRIPT_DIR/install_scripts/./install_yq.sh"
-fi
-
-echo "Saving configuration file example..."
-rm -rf configs
-mkdir configs
-
-# Only remove the logs if not running
-RUNNING_STATUS=$(./is_running.sh)
-if [[ $RUNNING_STATUS != *": RUNNING"* ]]; then
-    rm -rf logs
-    mkdir logs
-fi
-
-for UE_NUMBER in {1..3}; do
-    cp openairinterface5g/targets/PROJECTS/GENERIC-NR-5GC/CONF/ue.conf "configs/ue$UE_NUMBER.conf"
+if [ ! -f "$UE_CONF_PATH" ]; then
+    echo "Configuration file for UE $UE_NUMBER not found, creating..."
+    cp openairinterface5g/targets/PROJECTS/GENERIC-NR-5GC/CONF/ue.conf "$UE_CONF_PATH"
 
     UE_OPC="63BFA50EE6523365FF14C1F45F88737D"
     UE_APN="srsapn"
@@ -160,26 +136,47 @@ for UE_NUMBER in {1..3}; do
         UE_IMSI="${PLMN}${UE_IMSI:$PLMN_LENGTH}"
     fi
 
-    # Unique identifier for the UE within the mobile network. Used by the network to identify the UE during authentication. It ensures that the UE is correctly identified by the network.
     update_conf "configs/ue$UE_NUMBER.conf" "imsi" "\"$UE_IMSI\""
-
-    # Cryptographic key shared between the UE and the network, used for encryption during the authentication process.
     update_conf "configs/ue$UE_NUMBER.conf" "key" "\"$UE_KEY\""
-
-    # Operator key for the Milenage Authentication and Key Agreement algorithm used for encryption during the authentication process.
     update_conf "configs/ue$UE_NUMBER.conf" "opc" "\"$UE_OPC\""
-
-    # Specifies the name of the data network the UE wishes to connect to, similar to an APN in 4G networks.
     update_conf "configs/ue$UE_NUMBER.conf" "dnn" "\"$UE_APN\""
-
-    # Allows the UE to select the appropriate network slice, which provides different QoS.
     update_conf "configs/ue$UE_NUMBER.conf" "nssai_sst" "1"
-
-    # Ensures the PDU Session Establishment is successful (either setting to 0xFFFFFF or commenting it out).
     update_conf "configs/ue$UE_NUMBER.conf" "nssai_sd" "0xFFFFFF"
     comment_out "configs/ue$UE_NUMBER.conf" "nssai_sd"
-done
+fi
 
-cp openairinterface5g/targets/PROJECTS/GENERIC-NR-5GC/CONF/channelmod_rfsimu_LEO_satellite.conf "$SCRIPT_DIR/configs/channelmod_rfsimu_LEO_satellite.conf"
+if [ $UE_NUMBER -gt 3 ]; then
+    echo "UE is greater than registered subscribers, registering UE $UE_NUMBER..."
+    REGISTRATION_DIR=$(dirname "$SCRIPT_DIR")/5G_Core_Network/install_scripts
+    "$REGISTRATION_DIR/./register_subscriber.sh" --imsi "$UE_IMSI" --key "$UE_KEY" --opc "$UE_OPC" --apn "$UE_APN"
+fi
 
-echo "Successfully configured the UE. The configuration file is located in the configs/ directory."
+HOSTNAME_IP=$(hostname -I | awk '{print $1}')
+
+if ./is_running.sh | grep -q "ue$UE_NUMBER"; then
+    echo "Already running ue$UE_NUMBER."
+else
+    if [ ! -f "$UE_CONF_PATH" ]; then
+        echo "Configuration was not found for OAI UE $UE_NUMBER. Please run ./generate_configurations.sh first."
+        exit 1
+    fi
+    mkdir -p logs
+    >logs/ue${UE_NUMBER}_stdout.txt
+
+    if ! command -v gdb &>/dev/null; then
+        echo "Installing GNU Debugger..."
+        sudo apt update
+        sudo apt-get install -y gdb
+    fi
+
+    echo "Starting nr-uesoftmodem (ue$UE_NUMBER)..."
+
+    # Ensure the following command runs with sudo privileges
+    sudo ls >/dev/null
+
+    # Give the UE its own network namespace and configure it to access the host network
+    sudo ./install_scripts/setup_ue_namespace.sh "$UE_NUMBER"
+
+    cd "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build"
+    sudo gdb --args ./nr-uesoftmodem -O "../../../../configs/ue$UE_NUMBER.conf" --rfsim --rfsimulator.serveraddr $HOSTNAME_IP -r 106 --numerology 1 --band 78 -C 3619200000
+fi

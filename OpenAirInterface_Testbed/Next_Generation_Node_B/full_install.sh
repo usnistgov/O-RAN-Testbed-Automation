@@ -31,7 +31,8 @@
 # Exit immediately if a command fails
 set -e
 
-CLEAN_INSTALL=false
+CLEAN_INSTALL=true
+DEBUG_SYMBOLS=false
 
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
@@ -110,9 +111,11 @@ if [[ "$CMAKE_VERSION" == 3.16.* ]]; then
 fi
 
 ADDITIONAL_FLAGS=""
-# if clean install is true, add flag -C
 if [ "$CLEAN_INSTALL" = true ]; then
     ADDITIONAL_FLAGS="-C"
+fi
+if [ "$DEBUG_SYMBOLS" = true ]; then
+    ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS -g"
 fi
 
 cd "$SCRIPT_DIR"

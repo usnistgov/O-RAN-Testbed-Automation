@@ -36,12 +36,11 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-if [ ! -f "compose/20230817/compose.sh" ]; then
-    echo "Error: Cannot find compose.sh in compose/20230817/. Please run the generate_configurations.sh script first."
-    exit 1
+if [ -f "compose/20230817/compose.sh" ]; then
+    cd compose/20230817/
+
+    echo "Stopping the 5G Core Deployment Helper (5gdeploy) Core..."
+    ./compose.sh down
 fi
 
-cd compose/20230817/
-
-echo "Stopping the 5G Core Deployment Helper (5gdeploy) Core..."
-./compose.sh down
+./is_running.sh

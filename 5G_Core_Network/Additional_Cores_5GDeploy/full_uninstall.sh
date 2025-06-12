@@ -40,13 +40,30 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$SCRIPT_DIR"
 
+echo "Stopping all Open5GS containers..."
+./stop.sh
+
 ./install_scripts/uninstall_lazydocker.sh
 
 cd $SCRIPT_DIR/5gdeploy
 
-echo "Removing system packages (httpie, jq, python3-libconf, wireshark-common, nodejs)..."
-sudo apt remove --purge -y httpie jq python3-libconf wireshark-common nodejs
+echo "Removing system packages (httpie, jq, python3-libconf, wireshark-common, nodejs, npm)..."
+sudo apt remove --purge -y httpie jq python3-libconf wireshark-common nodejs npm
 sudo apt autoremove --purge -y
+
+echo "Cleaning npm cache directories..."
+# Code from (https://stackoverflow.com/a/41057802/8687026):
+sudo rm -rf /usr/local/bin/npm
+sudo rm -rf /usr/local/share/man/man1/node*
+sudo rm -rf /usr/local/lib/dtrace/node.d
+sudo rm -rf ~/.npm
+sudo rm -rf ~/.node-gyp
+sudo rm -rf /opt/local/bin/node
+sudo rm -rf /opt/local/include/node
+sudo rm -rf /opt/local/lib/node_modules
+sudo rm -rf /usr/local/lib/node*
+sudo rm -rf /usr/local/include/node*
+sudo rm -rf /usr/local/bin/node*
 
 echo "Removing wireshark group membership for $(id -un)..."
 sudo deluser $(id -un) wireshark
@@ -67,6 +84,14 @@ sudo rm -rf /etc/docker
 sudo rm -rf /home/docker
 sudo groupdel docker
 sudo deluser $(id -un) docker
+if [ -f /usr/bin/docker ]; then
+    echo "Removing /usr/bin/docker..."
+    sudo rm -f /usr/bin/docker
+fi
+if [ -f /usr/local/bin/docker ]; then
+    echo "Removing /usr/local/bin/docker..."
+    sudo rm -f /usr/local/bin/docker
+fi
 
 # Reset the shell's command hash table to recognize changes in available executables
 hash -r
@@ -76,6 +101,11 @@ cd $SCRIPT_DIR
 echo "Removing 5G Core Deployment Helper (5gdeploy) directory..."
 sudo rm -rf 5gdeploy/
 sudo rm -rf compose/
-sudo rm -rf logs
+sudo rm -rf logs/
+sudo rm -rf configs/
 
-echo "Successfully uninstalled the 5G Core Deployment Helper (5gdeploy)."
+echo
+echo
+echo "################################################################################"
+echo "# Successfully uninstalled the 5G Core Deployment Helper (5gdeploy).           #"
+echo "################################################################################"

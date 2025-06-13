@@ -315,6 +315,14 @@ set_configuration_session_gateways() {
     yq e -i ".smf.session[1].gateway = \"$GATEWAY_IPV6\"" "$SMF_FILE_PATH"
 }
 
+set_amf_snssai() {
+    local SST=$1
+    local SD=$2
+    local AMF_FILE_PATH="configs/amf.yaml"
+    yq -i ".amf.plmn_support[0].s_nssai[0].sst = $SST" "$AMF_FILE_PATH"
+    yq -i ".amf.plmn_support[0].s_nssai[0].sd = \"$SD\"" "$AMF_FILE_PATH"
+}
+
 OGSTUN_IPV4=$(yq eval '.ogstun_ipv4' options.yaml)
 OGSTUN_IPV6=$(yq eval '.ogstun_ipv6' options.yaml)
 if [[ "$OGSTUN_IPV4" == "null" || -z "$OGSTUN_IPV4" ]]; then
@@ -368,6 +376,11 @@ else
 fi
 
 set_configuration_session_gateways $OGSTUN_IPV4 $OGSTUN_IPV4_1_NO_CIDR $OGSTUN_IPV6 $OGSTUN_IPV6_1_NO_CIDR
+
+# Configure the Single Network Slice Selection Assistance Information (S-NSSAI)
+SST="01"
+SD="FFFFFF"
+set_amf_snssai "$SST" "$SD"
 
 # Get the following AMF IP, and it will be updated in the configuration file
 AMF_ADDRESSES_OUTPUT="configs/get_amf_address.txt"

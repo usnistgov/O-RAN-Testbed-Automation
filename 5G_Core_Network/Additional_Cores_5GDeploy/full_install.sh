@@ -39,6 +39,33 @@ fi
 CURRENT_DIR=$(pwd)
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
+
+cd "$PARENT_DIR"
+
+# Ensure that 5G_Core_Network/optiona.yaml is configured to use 5gdeploy instead of Open5GS
+if [ -f "options.yaml" ]; then
+    CORE_TO_USE=$(yq eval '.core_to_use' options.yaml)
+    UPF_TO_USE=$(yq eval '.upf_to_use' options.yaml)
+fi
+if [[ "$CORE_TO_USE" == "null" || -z "$CORE_TO_USE" ]]; then
+    echo "No core specified in ../options.yaml, please ensure that \"core_to_use\" is set."
+    exit 1
+fi
+if [[ "$UPF_TO_USE" == "null" || -z "$UPF_TO_USE" ]]; then
+    UPF_TO_USE="$CORE_TO_USE" # Default to the same core if not specified
+fi
+if [ "$CORE_TO_USE" == "open5gs" ]; then
+    echo
+    echo "ERROR: The configuration file ../options.yaml needs \"core_to_use\" to be a 5gdeploy core in order to install 5gdeploy."
+    echo "       Please set \"core_to_use\" to a 5gdeploy core in ../options.yaml, then re-run this script."
+    echo "       For example, set \"core_to_use: 5gdeploy-oai\"."
+    echo
+    exit 1
+fi
+
+echo "Using CP: $CORE"
+echo "Using UP: $UPF"
+
 cd "$SCRIPT_DIR"
 
 if [ ! -d "5gdeploy" ]; then
@@ -46,9 +73,9 @@ if [ ! -d "5gdeploy" ]; then
     "$PARENT_DIR/./install_scripts/git_clone.sh" https://github.com/usnistgov/5gdeploy.git
 fi
 
-# cd $SCRIPT_DIR/5gdeploy
-# echo "Patching netdef/helpers.ts to generate NR Cell ID starting at hex 0xE000 (aligning with OAI gNB) instead of 0x10"
-# sed -i '0,/^[[:space:]]*nci[[:space:]]*=.*$/s//      nci = hexPad(((3584 + i) << (36 - gnbIdLength)) | 0xF, 9),/' netdef/helpers.ts
+cd $SCRIPT_DIR/5gdeploy
+echo "Patching netdef/helpers.ts to generate NR Cell ID starting at hex 0xE000 (aligning with OAI gNB) instead of 0x10"
+sed -i '0,/^[[:space:]]*nci[[:space:]]*=.*$/s//      nci = hexPad(((3584 + i) << (36 - gnbIdLength)) | 0xF, 9),/' netdef/helpers.ts
 
 cd $SCRIPT_DIR
 
@@ -60,12 +87,11 @@ if [ -f logs/full_install_step_1_complete ]; then
     fi
 fi
 if [ ! -f logs/full_install_step_1_complete ]; then
-    # Code from (https://github.com/usnistgov/5gdeploy/blob/main/docs/INSTALL.md):
     # Install system packages
     sudo apt update
+    sudo DEBIAN_FRONTEND=noninteractive apt install -y linux-generic linux-lowlatency
     echo 'wireshark-common wireshark-common/install-setuid boolean true' | sudo debconf-set-selections
     sudo DEBIAN_FRONTEND=noninteractive apt install -y httpie jq python3-libconf wireshark-common
-    #sudo DEBIAN_FRONTEND=noninteractive apt install -y linux-lowlatency
     sudo adduser $(id -un) wireshark
     # Check if the YAML editor is installed, and install it if not
     if ! command -v yq &>/dev/null; then
@@ -86,7 +112,6 @@ else
     echo "Dependencies already installed, skipping step 1."
 fi
 
-# if docker is not installed, run install_scripts/install_docker.sh
 if ! command -v docker &>/dev/null; then
     echo "Docker is not installed, installing..."
     "$SCRIPT_DIR/install_scripts/install_docker.sh"

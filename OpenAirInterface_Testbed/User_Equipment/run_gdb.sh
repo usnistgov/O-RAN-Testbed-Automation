@@ -80,11 +80,11 @@ update_conf() {
 }
 
 # Function to comment out a line in a file
-comment_out() {
-    local FILE_PATH="$1"
-    local STRING="$2"
-    sed -i "s|^\(\s*\)$STRING|#\1$STRING|" "$FILE_PATH"
-}
+# comment_out() {
+#     local FILE_PATH="$1"
+#     local STRING="$2"
+#     sed -i "s|^\(\s*\)$STRING|#\1$STRING|" "$FILE_PATH"
+# }
 
 UE_CONF_PATH="configs/ue$UE_NUMBER.conf"
 
@@ -140,9 +140,13 @@ if [ ! -f "$UE_CONF_PATH" ]; then
     update_conf "configs/ue$UE_NUMBER.conf" "key" "\"$UE_KEY\""
     update_conf "configs/ue$UE_NUMBER.conf" "opc" "\"$UE_OPC\""
     update_conf "configs/ue$UE_NUMBER.conf" "dnn" "\"$UE_APN\""
-    update_conf "configs/ue$UE_NUMBER.conf" "nssai_sst" "1"
-    update_conf "configs/ue$UE_NUMBER.conf" "nssai_sd" "0xFFFFFF"
-    comment_out "configs/ue$UE_NUMBER.conf" "nssai_sd"
+
+    # Configure the Single Network Slice Selection Assistance Information (S-NSSAI)
+    SST="01"
+    SD="FFFFFF"
+    update_conf "configs/ue$UE_NUMBER.conf" "nssai_sst" "$((16#$SST))"
+    update_conf "configs/ue$UE_NUMBER.conf" "nssai_sd" "0x$SD"
+    # comment_out "configs/ue$UE_NUMBER.conf" "nssai_sd" # Optionally, comment out the SD from the file
 fi
 
 if [ $UE_NUMBER -gt 3 ]; then

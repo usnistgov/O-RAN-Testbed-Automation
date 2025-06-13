@@ -75,28 +75,10 @@ sudo rm -f /etc/apt/keyrings/nodesource.gpg
 echo "Removing yq snap..."
 sudo snap remove yq
 
-echo "Removing Docker and cleaning config..."
-sudo apt remove --purge -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin docker-ce-rootless-extras docker-scan-plugin
-sudo apt autoremove --purge -y
-sudo systemctl stop docker
-sudo systemctl disable docker
-sudo rm -rf /etc/docker
-sudo rm -rf /home/docker
-sudo groupdel docker
-sudo deluser $(id -un) docker
-if [ -f /usr/bin/docker ]; then
-    echo "Removing /usr/bin/docker..."
-    sudo rm -f /usr/bin/docker
-fi
-if [ -f /usr/local/bin/docker ]; then
-    echo "Removing /usr/local/bin/docker..."
-    sudo rm -f /usr/local/bin/docker
-fi
-
-# Reset the shell's command hash table to recognize changes in available executables
-hash -r
-
 cd $SCRIPT_DIR
+
+echo "Removing Docker and cleaning config..."
+./install_scripts/uninstall_docker.sh
 
 echo "Removing 5G Core Deployment Helper (5gdeploy) directory..."
 sudo rm -rf 5gdeploy/

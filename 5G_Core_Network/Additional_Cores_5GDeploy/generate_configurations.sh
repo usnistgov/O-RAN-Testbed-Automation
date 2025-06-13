@@ -105,21 +105,6 @@ if [ ! -f "options.yaml" ]; then
     echo "ogstun3_ipv6: 2001:db8:face::/48" >>"options.yaml"
 fi
 
-# # If expose_amf_over_hostname is false, AMF will use the default 127.0.0.5, otherwise, it will use the hostname IP
-# EXPOSE_AMF_OVER_HOSTNAME=$(yq eval '.expose_amf_over_hostname' options.yaml)
-# if [[ "$EXPOSE_AMF_OVER_HOSTNAME" == "null" || -z "$EXPOSE_AMF_OVER_HOSTNAME" ]]; then
-#     echo "Missing parameter in options.yaml: expose_amf_over_hostname"
-#     exit 1
-# elif [[ "$EXPOSE_AMF_OVER_HOSTNAME" != "true" && "$EXPOSE_AMF_OVER_HOSTNAME" != "false" ]]; then
-#     echo "Invalid value for expose_amf_over_hostname in options.yaml. Expected 'true' or 'false'."
-#     exit 1
-# fi
-
-# # Set IS_OPEN5GS_ON_HOST if Open5GS will run on the host machine, otherwise, set it to false
-# if [ "$EXPOSE_AMF_OVER_HOSTNAME" = true ]; then
-#     IS_OPEN5GS_ON_HOST=true
-# fi
-
 # Read PLMN and TAC values from the YAML file using yq
 PLMN=$(yq eval '.plmn' options.yaml)
 TAC=$(yq eval '.tac' options.yaml)
@@ -310,27 +295,63 @@ echo "Using UP: $UPF"
 #     --ip-fixed=upf4,n3,192.168.63.24
 
 cd "$SCRIPT_DIR/configs"
+
+# Create symbolic links to the configuration files
 ln -sf ../5gdeploy/sims.tsv sims.tsv
 ln -sf ../compose/20230817/netdef.json netdef.json
 ln -sf ../compose/20230817/cp-cfg/config.yaml cp-cfg-config.yaml
 
 cd "$SCRIPT_DIR/compose/20230817"
 
+# Convert TAC to hex formats
+TAC_HEX_1=$(printf "%06x" "$TAC") # For example, 7 -> 000007
 echo "Previous TAC value was $(jq -r '.tac' netdef.json) (netdef.json)"
-jq '.tac = "000007"' netdef.json >tmp.json && mv tmp.json netdef.json
+jq --arg tac "$TAC_HEX_1" '.tac = $tac' netdef.json >tmp.json && mv tmp.json netdef.json
 echo "The TAC was changed to $(jq -r '.tac' netdef.json) (netdef.json)"
 
-echo "Previous TAC value was $(yq '.amf.plmn_support_list[0].tac' cp-cfg/config.yaml) (cp-cfg/config.yaml)"
-yq -i '.amf.plmn_support_list[0].tac = "0x0007"' cp-cfg/config.yaml
-echo "The TAC was changed to $(yq '.amf.plmn_support_list[0].tac' cp-cfg/config.yaml) (cp-cfg/config.yaml)"
+if [ -f "cp-cfg/config.yaml" ]; then
+    TAC_HEX_2=$(printf "0x%04x" "$TAC") # For example, 7 -> 0x0007
+    echo "Previous TAC value was $(yq '.amf.plmn_support_list[0].tac' cp-cfg/config.yaml) (cp-cfg/config.yaml)"
+    yq -i ".amf.plmn_support_list[0].tac = \"$TAC_HEX_2\"" cp-cfg/config.yaml
+    echo "The TAC was changed to $(yq '.amf.plmn_support_list[0].tac' cp-cfg/config.yaml) (cp-cfg/config.yaml)"
+fi
+
+# Configure the Single Network Slice Selection Assistance Information (S-NSSAI)
+SST="01"
+SD="FFFFFF"
 
 echo "Setting subscribers field in netdef.json..."
-jq --arg imsi1 "$IMSI1" --arg imsi2 "$IMSI2" --arg imsi3 "$IMSI3" '
+jq --arg imsi1 "$IMSI1" --arg imsi2 "$IMSI2" --arg imsi3 "$IMSI3" --arg sst "$SST" --arg sd "$SD" '
 .subscribers = [
-    { "count": 1, "gnbs": ["gnb0"], "subscribedNSSAI": [{ "dnns": ["internet"], "snssai": "01000000" }], "supi": $imsi1 },
-    { "count": 1, "gnbs": ["gnb0"], "subscribedNSSAI": [{ "dnns": ["internet"], "snssai": "01000000" }], "supi": $imsi2 },
-    { "count": 1, "gnbs": ["gnb0"], "subscribedNSSAI": [{ "dnns": ["internet"], "snssai": "01000000" }], "supi": $imsi3 }
+    { "count": 1, "gnbs": ["gnb0"], "subscribedNSSAI": [{ "dnns": ["internet"], "snssai": ($sst + $sd), "sst": $sst, "sd": $sd }], "supi": $imsi1 },
+    { "count": 1, "gnbs": ["gnb0"], "subscribedNSSAI": [{ "dnns": ["internet"], "snssai": ($sst + $sd), "sst": $sst, "sd": $sd }], "supi": $imsi2 },
+    { "count": 1, "gnbs": ["gnb0"], "subscribedNSSAI": [{ "dnns": ["internet"], "snssai": ($sst + $sd), "sst": $sst, "sd": $sd }], "supi": $imsi3 }
 ]
 ' netdef.json >tmp.json && mv tmp.json netdef.json
+
+echo "Setting all the remaining S-NSSAI SD values to $SD..."
+
+# Process cp-cfg/config.yaml
+if [ -f "cp-cfg/config.yaml" ]; then
+    SD="$SD" yq '(.[] | .. | select(has("sd"))).sd = strenv(SD)' cp-cfg/config.yaml >tmp.yaml && mv tmp.yaml cp-cfg/config.yaml
+fi
+
+if [ -f "compose.yml" ]; then
+    # Replace all occurrences of "sd" : "X" (allowing spaces around colon) with "sd" : "$SD"
+    SD="$SD" sed -i -E 's/"sd"[[:space:]]*:[[:space:]]*"[0-9A-Fa-f]{6}"/"sd": "'"$SD"'"/g' compose.yml
+
+    # Replace all occurrences of "tac" : [X] (allowing spaces around colon) with "tac": [$TAC]
+    TAC="$TAC" sed -i -E 's/"tac"[[:space:]]*:[[:space:]]*\[[0-9]+\]/"tac": \['"$TAC"'\]/g' compose.yml
+
+    # Replace only "sst": 1 (not 11, 21, etc.)
+    sed -i -E 's/"sst"[[:space:]]*:[[:space:]]*1([^0-9]|$)/"sst": '"$SST"'\1/g' compose.yml
+fi
+
+# Process netdef.json
+jq --arg sd "$SD" 'walk(
+  if (type == "object" and has("snssai")) then
+    .snssai |= (if type=="string" and test("^[0-9A-Fa-f]{8}$") then (.[:2] + $sd) else . end)
+  else . end
+)' netdef.json >tmp.json && mv tmp.json netdef.json
 
 echo "Successfully configured the 5G Core Deployment Helper (5gdeploy). The configuration files are located in the configs/ directory."

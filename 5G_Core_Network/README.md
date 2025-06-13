@@ -40,7 +40,7 @@ To select a core network beyond Open5GS, modify the `core_to_use` and `upf_to_us
   - `5gdeploy-ndndpdk`: NDN-DPDK UPF (see [[12]][nist-ndndpdk])
 
 > [!NOTE]
-> Upon updating options.conf, run `full_install.sh` to build the new core. To ensure that the gNB connects to the correct AMF address, run `./run.sh && ./stop.sh` which will update `configs/get_amf_address.txt`, then in the Next_Generation_Node_B/ directory, run `generate_configurations.sh` to reconfigure the gNB with the correct AMF.
+> Upon updating options.conf, run `full_install.sh` to build the new core, then in the Next_Generation_Node_B/ directory, run `generate_configurations.sh` to reconfigure the gNB with the correct AMF.
 
 > [!TIP]
 > The scripts in the 5G_Core_Network directory will change directory and run the respective 5G_Core_Network/Additional_Cores_5GDeploy script if options.yaml has `core_to_use` set to anything other than `open5gs`.

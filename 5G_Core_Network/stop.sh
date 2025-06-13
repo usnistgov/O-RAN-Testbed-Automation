@@ -67,9 +67,6 @@ for APP in "${APPS[@]}"; do
 done
 sudo ./install_scripts/revert_network_config.sh
 
-set -x
-echo "$(pwd)"
-
 # Check if 5gdeploy is running
 STATUS_5GDEPLOY=$(./Additional_Cores_5GDeploy/is_running.sh 2>/dev/null)
 if echo "$STATUS_5GDEPLOY" | grep -q ": RUNNING"; then

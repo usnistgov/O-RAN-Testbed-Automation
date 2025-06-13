@@ -68,4 +68,5 @@ if [ -f "compose/20230817/compose.sh" ]; then
     ./compose.sh down
 fi
 
+cd "$SCRIPT_DIR"
 ./is_running.sh

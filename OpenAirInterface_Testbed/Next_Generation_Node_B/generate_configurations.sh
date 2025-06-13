@@ -159,7 +159,11 @@ update_conf "configs/gnb.conf" "amf_ip_address" "({ ipv4 = \"$AMF_ADDR\"; })"
 update_conf "configs/gnb.conf" "GNB_IPV4_ADDRESS_FOR_NG_AMF" "\"$AMF_ADDR_BIND/24\""
 update_conf "configs/gnb.conf" "GNB_IPV4_ADDRESS_FOR_NGU" "\"$AMF_ADDR_BIND/24\""
 update_conf "configs/gnb.conf" "tracking_area_code" "$TAC"
-update_conf "configs/gnb.conf" "plmn_list" "({ mcc = $MCC; mnc = $MNC; mnc_length = $MNC_LENGTH; snssaiList = ({ sd = 0; sst = 1; }, { sd = 0; sst = 4; }) })"
+
+# Configure the Single Network Slice Selection Assistance Information (S-NSSAI)
+SST="01"
+SD="FFFFFF"
+update_conf "configs/gnb.conf" "plmn_list" "({ mcc = $MCC; mnc = $MNC; mnc_length = $MNC_LENGTH; snssaiList = ({ sst = $SST; sd = 0x$SD; }) })"
 
 if [ "$USE_SSB_RSRP" = "true" ]; then
     update_conf "configs/gnb.conf" "do_CSIRS" "0"

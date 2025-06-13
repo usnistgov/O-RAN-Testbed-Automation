@@ -38,7 +38,7 @@ This installation of the Near-RT RIC supports six xApps.
       RSRP.Quartile1 (dBm) - Quartile 1 SSB/CSI-RS Reference Signal Received Power in the sample
       RSRP.Median (dBm) - Quartile 2/Median SSB/CSI-RS Reference Signal Received Power in the sample
       RSRP.Quartile3 (dBm) - Quartile 3 SSB/CSI-RS Reference Signal Received Power in the sample
-      RSRP.Maximum (dBm) - Minimum SSB/CSI-RS Reference Signal Received Power in the sample
+      RSRP.Maximum (dBm) - Maximum SSB/CSI-RS Reference Signal Received Power in the sample
       RSRP.Count (count) - Number of RSRP measurements in the sample, used to calculate RSRP
       N_PRB (count) - Number of PRBs in the sample, used to calculate RSSI
       RSSI (dBm) - Received Signal Strength Indicator (computed using RSRP and N_PRB: https://www.techplayon.com/rssi)

@@ -172,12 +172,12 @@ for UE_NUMBER in {1..3}; do
     # Specifies the name of the data network the UE wishes to connect to, similar to an APN in 4G networks.
     update_conf "configs/ue$UE_NUMBER.conf" "dnn" "\"$UE_APN\""
 
-    # Allows the UE to select the appropriate network slice, which provides different QoS.
-    update_conf "configs/ue$UE_NUMBER.conf" "nssai_sst" "1"
-
-    # Ensures the PDU Session Establishment is successful (either setting to 0xFFFFFF or commenting it out).
-    update_conf "configs/ue$UE_NUMBER.conf" "nssai_sd" "0xFFFFFF"
-    comment_out "configs/ue$UE_NUMBER.conf" "nssai_sd"
+    # Configure the Single Network Slice Selection Assistance Information (S-NSSAI)
+    SST="01"
+    SD="FFFFFF"
+    update_conf "configs/ue$UE_NUMBER.conf" "nssai_sst" "$((16#$SST))"
+    update_conf "configs/ue$UE_NUMBER.conf" "nssai_sd" "0x$SD"
+    # comment_out "configs/ue$UE_NUMBER.conf" "nssai_sd" # Optionally, comment out the SD from the file
 done
 
 cp openairinterface5g/targets/PROJECTS/GENERIC-NR-5GC/CONF/channelmod_rfsimu_LEO_satellite.conf "$SCRIPT_DIR/configs/channelmod_rfsimu_LEO_satellite.conf"

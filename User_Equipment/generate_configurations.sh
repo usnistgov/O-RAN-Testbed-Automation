@@ -31,6 +31,8 @@
 # Exit immediately if a command fails
 set -e
 
+TODO_NEED_TO_ADD_SUPPORT_FOR_SST_AND_SD
+
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
     sudo apt-get install -y coreutils

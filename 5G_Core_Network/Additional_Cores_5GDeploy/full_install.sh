@@ -36,6 +36,7 @@ if ! command -v realpath &>/dev/null; then
     sudo apt-get install -y coreutils
 fi
 
+CURRENT_DIR=$(pwd)
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$SCRIPT_DIR"
@@ -64,6 +65,7 @@ if [ ! -f logs/full_install_step_1_complete ]; then
     sudo apt update
     echo 'wireshark-common wireshark-common/install-setuid boolean true' | sudo debconf-set-selections
     sudo DEBIAN_FRONTEND=noninteractive apt install -y httpie jq python3-libconf wireshark-common
+    #sudo DEBIAN_FRONTEND=noninteractive apt install -y linux-lowlatency
     sudo adduser $(id -un) wireshark
     # Check if the YAML editor is installed, and install it if not
     if ! command -v yq &>/dev/null; then
@@ -79,23 +81,15 @@ if [ ! -f logs/full_install_step_1_complete ]; then
     # echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
     # sudo apt update
     # sudo DEBIAN_FRONTEND=noninteractive apt install -y nodejs
-    # Install and configure Docker
-    http --ignore-stdin GET https://get.docker.com | bash
-    sudo adduser $(id -un) docker
-    sudo mkdir -p /etc/docker
-    jq -n '{
-        "data-root": "/home/docker",
-        "log-driver": "local",
-        "log-opts": {
-            "max-size": "10m",
-            "max-file": "3"
-        },
-        dns: ["1.1.1.1", "2606:4700:4700::1111"]
-    }' | sudo tee /etc/docker/daemon.json
-    sudo systemctl restart docker
     touch logs/full_install_step_1_complete
 else
     echo "Dependencies already installed, skipping step 1."
+fi
+
+# if docker is not installed, run install_scripts/install_docker.sh
+if ! command -v docker &>/dev/null; then
+    echo "Docker is not installed, installing..."
+    "$SCRIPT_DIR/install_scripts/install_docker.sh"
 fi
 
 cd "$SCRIPT_DIR"
@@ -120,7 +114,7 @@ if [ -z "$FIXED_DOCKER_PERMS" ]; then
                 echo "WARNING: Could not find set group (sg) command, docker may fail without sudo until the system reboots."
                 echo
             else
-                exec sg docker "$0" "$@"
+                exec sg docker "$CURRENT_DIR/$0" "$@"
             fi
         fi
     fi

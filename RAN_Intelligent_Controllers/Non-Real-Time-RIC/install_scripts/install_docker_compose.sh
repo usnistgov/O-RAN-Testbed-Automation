@@ -30,6 +30,8 @@
 
 echo "# Script: $(realpath $0)..."
 
+CURRENT_DIR=$(pwd)
+
 if ! command -v docker-compose &>/dev/null; then
     echo "Installing docker-compose..."
 
@@ -73,7 +75,7 @@ if ! command -v docker-compose &>/dev/null; then
     sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose || true
     if sudo usermod -aG docker $USER; then
         echo "Successfully added $USER to the docker group."
-        exec sg docker "$0" "$@" || true
+        exec sg docker "$CURRENT_DIR/$0" "$@" || true
     else
         echo "Failed to add $USER to the docker group."
         exit 1

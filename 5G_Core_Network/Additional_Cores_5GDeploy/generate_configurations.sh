@@ -36,6 +36,7 @@ if ! command -v realpath &>/dev/null; then
     sudo apt-get install -y coreutils
 fi
 
+CURRENT_DIR=$(pwd)
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$SCRIPT_DIR"
@@ -166,21 +167,21 @@ PLMN_LENGTH=${#PLMN}
 
 echo
 echo "Registering UE 1..."
-IMSI="001010123456780"
-IMSI="${PLMN}${IMSI:$PLMN_LENGTH}" # Ensure that the beginning of the IMSI is the correct PLMN
-./install_scripts/register_subscriber.sh --imsi $IMSI --key 00112233445566778899AABBCCDDEEFF --opc 63BFA50EE6523365FF14C1F45F88737D --apn srsapn
+IMSI1="001010123456780"
+IMSI1="${PLMN}${IMSI1:$PLMN_LENGTH}" # Ensure that the beginning of the IMSI is the correct PLMN
+./install_scripts/register_subscriber.sh --imsi $IMSI1 --key 00112233445566778899AABBCCDDEEFF --opc 63BFA50EE6523365FF14C1F45F88737D --apn srsapn
 
 echo
 echo "Registering UE 2..."
-IMSI="001010123456790"
-IMSI="${PLMN}${IMSI:$PLMN_LENGTH}" # Ensure that the beginning of the IMSI is the correct PLMN
-./install_scripts/register_subscriber.sh --imsi $IMSI --key 00112233445566778899AABBCCDDEF00 --opc 63BFA50EE6523365FF14C1F45F88737D --apn srsapn
+IMSI2="001010123456790"
+IMSI2="${PLMN}${IMSI2:$PLMN_LENGTH}" # Ensure that the beginning of the IMSI is the correct PLMN
+./install_scripts/register_subscriber.sh --imsi $IMSI2 --key 00112233445566778899AABBCCDDEF00 --opc 63BFA50EE6523365FF14C1F45F88737D --apn srsapn
 
 echo
 echo "Registering UE 3..."
-IMSI="001010123456791"
-IMSI="${PLMN}${IMSI:$PLMN_LENGTH}" # Ensure that the beginning of the IMSI is the correct PLMN
-./install_scripts/register_subscriber.sh --imsi $IMSI --key 00112233445566778899AABBCCDDEF01 --opc 63BFA50EE6523365FF14C1F45F88737D --apn srsapn
+IMSI3="001010123456791"
+IMSI3="${PLMN}${IMSI3:$PLMN_LENGTH}" # Ensure that the beginning of the IMSI is the correct PLMN
+./install_scripts/register_subscriber.sh --imsi $IMSI3 --key 00112233445566778899AABBCCDDEF01 --opc 63BFA50EE6523365FF14C1F45F88737D --apn srsapn
 
 # Ensure that the core is set correctly
 if [ "$CORE_TO_USE" == "5gdeploy-oai" ]; then
@@ -252,6 +253,41 @@ if [ -d "compose" ] && [ -z "$(ls -A compose)" ]; then
     sudo rmdir "compose"
 fi
 
+# Check if docker is accessible from the current user, and if not, repair its permissions
+if [ -z "$FIXED_DOCKER_PERMS" ]; then
+    if ! output=$(docker info 2>&1); then
+        if echo "$output" | grep -qiE 'permission denied|cannot connect to the docker daemon'; then
+            echo "Repairing Docker permissions..."
+            sudo groupadd -f docker
+            if [ -n "$SUDO_USER" ]; then
+                sudo usermod -aG docker "$SUDO_USER"
+            else
+                sudo usermod -aG docker "$USER"
+            fi
+            # Rather than requiring a reboot to apply docker permissions, set the docker group and re-run the parent script
+            export FIXED_DOCKER_PERMS=1
+            if ! command -v sg &>/dev/null; then
+                echo
+                echo "WARNING: Could not find set group (sg) command, docker may fail without sudo until the system reboots."
+                echo
+            else
+                exec sg docker "$CURRENT_DIR/$0" "$@"
+            fi
+        fi
+    fi
+fi
+
+cd "$SCRIPT_DIR"
+
+AMF_IP=192.168.62.11
+AMF_IP_BIND=$(ip route get 1 | awk '{print $(NF-2); exit}') # Get the IP of the primary network interface
+
+# Update the configuration file so that the gNodeB can find the AMF
+mkdir -p "$SCRIPT_DIR/configs"
+AMF_ADDRESSES_OUTPUT="configs/get_amf_address.txt"
+echo "$AMF_IP" >$AMF_ADDRESSES_OUTPUT
+echo "$AMF_IP_BIND" >>$AMF_ADDRESSES_OUTPUT
+
 cd "$SCRIPT_DIR/5gdeploy/scenario"
 
 echo "Using CP: $CORE"
@@ -260,7 +296,7 @@ echo "Using UP: $UPF"
 ./generate.sh 20230817 \
     +gnbs=1 +phones=0 +vehicles=0 \
     --cp=$CORE --up=$UPF --ran=none \
-    --ip-fixed=amf,n2,192.168.62.11 \
+    --ip-fixed=amf,n2,$AMF_IP \
     --ip-fixed=upf1,n3,192.168.63.21 \
     --ip-fixed=upf4,n3,192.168.63.24
 
@@ -269,7 +305,7 @@ echo "Using UP: $UPF"
 #     --cp=$CORE --up=$UPF --ran=none \
 #     --bridge='n2 | eth | amf*@AC:1F:6B:F5:4C:C6 gnb*@AC:1F:6B:F5:4C:C6' \
 #     --bridge='n3 | eth | upf*@AC:1F:6B:F5:4C:C6 gnb*@AC:1F:6B:F5:4C:C6' \
-#     --ip-fixed=amf,n2,192.168.62.11 \
+#     --ip-fixed=amf,n2,$AMF_IP \
 #     --ip-fixed=upf1,n3,192.168.63.21 \
 #     --ip-fixed=upf4,n3,192.168.63.24
 
@@ -287,5 +323,14 @@ echo "The TAC was changed to $(jq -r '.tac' netdef.json) (netdef.json)"
 echo "Previous TAC value was $(yq '.amf.plmn_support_list[0].tac' cp-cfg/config.yaml) (cp-cfg/config.yaml)"
 yq -i '.amf.plmn_support_list[0].tac = "0x0007"' cp-cfg/config.yaml
 echo "The TAC was changed to $(yq '.amf.plmn_support_list[0].tac' cp-cfg/config.yaml) (cp-cfg/config.yaml)"
+
+echo "Setting subscribers field in netdef.json..."
+jq --arg imsi1 "$IMSI1" --arg imsi2 "$IMSI2" --arg imsi3 "$IMSI3" '
+.subscribers = [
+    { "count": 1, "gnbs": ["gnb0"], "subscribedNSSAI": [{ "dnns": ["internet"], "snssai": "01000000" }], "supi": $imsi1 },
+    { "count": 1, "gnbs": ["gnb0"], "subscribedNSSAI": [{ "dnns": ["internet"], "snssai": "01000000" }], "supi": $imsi2 },
+    { "count": 1, "gnbs": ["gnb0"], "subscribedNSSAI": [{ "dnns": ["internet"], "snssai": "01000000" }], "supi": $imsi3 }
+]
+' netdef.json >tmp.json && mv tmp.json netdef.json
 
 echo "Successfully configured the 5G Core Deployment Helper (5gdeploy). The configuration files are located in the configs/ directory."

@@ -38,6 +38,7 @@ if ! command -v realpath &>/dev/null; then
     sudo apt-get install -y coreutils
 fi
 
+CURRENT_DIR=$(pwd)
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$PARENT_DIR"
@@ -185,7 +186,7 @@ if [ -z "$FIXED_DOCKER_PERMS" ]; then
                 echo "WARNING: Could not find set group (sg) command, docker may fail without sudo until the system reboots."
                 echo
             else
-                exec sg docker "$0" "$@"
+                exec sg docker "$CURRENT_DIR/$0" "$@"
             fi
         fi
     fi

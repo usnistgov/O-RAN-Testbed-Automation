@@ -39,6 +39,11 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
+# Check if the YAML editor is installed, and install it if not
+if ! command -v yq &>/dev/null; then
+    sudo "$SCRIPT_DIR/install_scripts/./install_yq.sh"
+fi
+
 # Ensure that the correct script is used
 if [ -f "options.yaml" ]; then
     CORE_TO_USE=$(yq eval '.core_to_use' options.yaml)

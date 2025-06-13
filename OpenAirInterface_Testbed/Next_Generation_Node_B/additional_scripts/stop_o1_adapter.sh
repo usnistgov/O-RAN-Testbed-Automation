@@ -30,6 +30,8 @@
 
 set -e
 
+CURRENT_DIR=$(pwd)
+
 # Check if docker is accessible from the current user, and if not, repair its permissions
 if [ -z "$FIXED_DOCKER_PERMS" ]; then
     if ! output=$(docker info 2>&1); then
@@ -48,7 +50,7 @@ if [ -z "$FIXED_DOCKER_PERMS" ]; then
                 echo "WARNING: Could not find set group (sg) command, docker may fail without sudo until the system reboots."
                 echo
             else
-                exec sg docker "$0" "$@"
+                exec sg docker "$CURRENT_DIR/$0" "$@"
             fi
         fi
     fi

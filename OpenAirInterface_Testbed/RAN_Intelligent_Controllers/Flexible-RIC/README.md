@@ -19,7 +19,7 @@ This installation of the Near-RT RIC supports six xApps.
 
 - **KPI Monitor xApp (xapp_kpm_moni)**:
   - Run with `./run_xapp_kpm_moni.sh`.
-  - Patched to run indefinitely and include several new metrics (see below).
+  - Sets `XAPP_DURATION=-1` to run indefinitely and include several new metrics (see below).
     - Pre-existing metrics from OpenAirInterface:
       ```console
       DRB.PdcpSduVolumeDL (kb) - Downlink volume of the UE since the last sample
@@ -32,6 +32,7 @@ This installation of the Near-RT RIC supports six xApps.
       ```
     - New metrics for the automation tool:
       ```console
+      Reporting Time Offset (ms) - Time offset from the expected reporting time in milliseconds (e.g., -1 indicates that the report arrived a millisecond early)
       RSRP.Mean (dBm) - Averaged SSB/CSI-RS Reference Signal Received Power in the sample
       RSRP.Minimum (dBm) - Minimum SSB/CSI-RS Reference Signal Received Power in the sample
       RSRP.Quartile1 (dBm) - Quartile 1 SSB/CSI-RS Reference Signal Received Power in the sample

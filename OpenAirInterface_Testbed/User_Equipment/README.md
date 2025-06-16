@@ -26,6 +26,20 @@ The `run.sh`, `run_background.sh`, and `stop.sh` scripts can be given an optiona
 
 For UE 1, UE 2, and UE 3, the SIM subscriber information is pre-registered with the 5G Core Network. For `<N>` values greater than 3, the unique values are generated dynamically, registered with the 5G Core, and stored in the `configs` directory as their own `ue<N>.conf` file before starting the UE software. For more information about the parameters refer to the `run.sh` script source code.
 
+## Interacting with the UE
+
+- **Simulate UE traffic to Core:**
+  `./additional_scripts/simulate_ue_traffic_to_core.sh <UE_ID> [BANDWIDTH] [DURATION]`
+  Sends traffic from the UE to the core. Default bandwidth: 1M, duration: 60s.
+
+- **Simulate Core traffic to UE:**
+  `./additional_scripts/simulate_core_traffic_to_ue.sh <UE_ID> [BANDWIDTH] [DURATION]`
+  Sends traffic from the core to the UE. Default bandwidth: 1M, duration: 60s.
+
+- **Open UE shell:**
+  `./additional_scripts/open_ue_shell.sh <UE_ID>`
+  Opens a shell in the UE's network namespace.
+
 ## References
 
 1. Openairinterface 5G Wireless Implementation. OpenAirInterface. [https://gitlab.eurecom.fr/oai/openairinterface5g][oai-ue]

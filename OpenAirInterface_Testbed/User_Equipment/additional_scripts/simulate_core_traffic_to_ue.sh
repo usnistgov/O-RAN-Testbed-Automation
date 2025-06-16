@@ -79,30 +79,12 @@ if [ ! -f "configs/ue1.conf" ]; then
     exit 1
 fi
 
-UE_NAMESPACE="ue$UE_NUMBER"
-
-# If the namespace doesn't exist
-if ! ip netns list | grep -q "$UE_NAMESPACE"; then
-    echo "Error: Namespace $UE_NAMESPACE does not exist. Please start the UE first with: ./run_background.sh $UE_NUMBER"
-    exit 1
-fi
-
 LOG_FILE="logs/ue${UE_NUMBER}_stdout.txt"
 PDU_SESSION_IP=$(cat $LOG_FILE | grep "Received PDU Session Establishment Accept" | cut -d ':' -f2 | xargs)
-CORE_IP=$(ip route | grep ogstun | cut -d ' ' -f 9 | xargs)
 
 if [ -z "$PDU_SESSION_IP" ]; then
     echo "Error: Unable to find PDU Session IP from the log file $LOG_FILE."
     exit 1
-fi
-
-if [ -z "$CORE_IP" ]; then
-    echo "Warning: Unable to find 5G core IP from the routing table."
-    read -p "Please enter the IP address of the 5G core: " CORE_IP
-    if [ -z "$CORE_IP" ]; then
-        echo "Error: No IP address provided. Exiting."
-        exit 1
-    fi
 fi
 
 echo "Successfully found PDU Session IP: $PDU_SESSION_IP"
@@ -112,4 +94,4 @@ if ! command -v iperf &>/dev/null; then
     sudo apt-get install -y iperf
 fi
 
-sudo ip netns exec ue$UE_NUMBER iperf -c $CORE_IP -u -i 1 -b $BANDWIDTH -t $DURATION
+iperf -c $PDU_SESSION_IP -u -i 1 -b $BANDWIDTH -t $DURATION

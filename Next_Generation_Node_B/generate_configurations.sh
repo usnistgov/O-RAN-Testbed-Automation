@@ -262,7 +262,7 @@ update_yaml "configs/gnb.yaml" "" "gnb_du_id" "$GNB_DU_ID"
 # Update configuration values to connect RIC by e2 interface
 if [ "$ENABLE_E2_TERM" = "true" ]; then
     update_yaml "configs/gnb.yaml" "e2" "enable_du_e2" "true"
-    update_yaml "configs/gnb.yaml" "e2" "enable_cu_cp_e2" "true"
+    update_yaml "configs/gnb.yaml" "e2" "enable_cu_cp_e2" "false"
     update_yaml "configs/gnb.yaml" "e2" "enable_cu_up_e2" "false"
     update_yaml "configs/gnb.yaml" "e2" "e2sm_kpm_enabled" "true"
     update_yaml "configs/gnb.yaml" "e2" "e2sm_rc_enabled" "true"

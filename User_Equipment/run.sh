@@ -186,5 +186,6 @@ else
     mkdir -p logs
     >logs/ue${UE_NUMBER}_stdout.txt
     echo "Starting srsue (ue$UE_NUMBER)..."
-    sudo ./srsRAN_4G/build/srsue/src/srsue --config_file "$UE_CONF_PATH"
+    # sudo ./srsRAN_4G/build/srsue/src/srsue --config_file "$UE_CONF_PATH"
+    sudo script -q -f -c "./srsRAN_4G/build/srsue/src/srsue --config_file \"$UE_CONF_PATH\"" logs/ue${UE_NUMBER}_stdout.txt
 fi

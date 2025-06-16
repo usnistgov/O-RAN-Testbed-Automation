@@ -139,7 +139,7 @@ The cluster is installed with Flannel as the default network plugin. There are s
 <p align="center">
   <img src="../../Images/Cilium_Hubble_UI.png" alt="Hubble UI showing network flows" width="70%">
 </p>
-  
+
 ## References
 
 1. Working Group 3: Near-Real-time RAN Intelligent Controller and E2 Interface Workgroup. O-RAN Alliance. [https://public.o-ran.org/display/WG3/Introduction][oran-wg3]

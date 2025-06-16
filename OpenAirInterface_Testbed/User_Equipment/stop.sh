@@ -61,6 +61,22 @@ fi
 # Prevent the subsequent commands from requiring credential input
 sudo ls >/dev/null 2>&1
 
+# Remove a network namespace given the UE number
+remove_ue_namespace() {
+    local UE_NUMBER="$1"
+    echo "Removing namespace ue$UE_NUMBER..."
+    sudo ./install_scripts/revert_ue_namespace.sh "$UE_NUMBER"
+}
+
+# Remove all UE network namespaces
+remove_all_ue_namespaces() {
+    # Get all active UE namespaces, and remove the namespaces
+    UE_NETNS=($(ip netns list | grep -oP '^ue\K[0-9]+'))
+    for UE_NUM in "${UE_NETNS[@]}"; do
+        remove_ue_namespace "$UE_NUM"
+    done
+}
+
 # Send a graceful shutdown signal to the UE process
 if [ -z "$UE_NUMBER" ]; then
     sudo pkill -f "nr-uesoftmodem" >/dev/null 2>&1 &
@@ -85,12 +101,14 @@ while [ $COUNT -lt $MAX_COUNT ]; do
     echo "$IS_RUNNING ($COUNT / $MAX_COUNT)"
     if [ -z "$UE_NUMBER" ]; then
         if echo "$IS_RUNNING" | grep -q "User Equipment: NOT_RUNNING"; then
+            remove_all_ue_namespaces
             echo "The User Equipment has stopped gracefully."
             ./is_running.sh
             exit 0
         fi
     else
         if ! echo "$IS_RUNNING" | grep -q "ue$UE_NUMBER"; then
+            remove_ue_namespace "$UE_NUMBER"
             echo "The User Equipment $UE_NUMBER has stopped gracefully."
             ./is_running.sh
             exit 0
@@ -104,9 +122,11 @@ done
 if [ -z "$UE_NUMBER" ]; then
     echo "The User Equipment did not stop in time, sending forceful kill signal..."
     sudo pkill -9 -f "nr-uesoftmodem" >/dev/null 2>&1 &
+    remove_all_ue_namespaces
 else
     echo "The User Equipment $UE_NUMBER did not stop in time, sending forceful kill signal..."
     sudo pkill -9 -f "nr-uesoftmodem -O ../../../../configs/ue$UE_NUMBER.conf" >/dev/null 2>&1 &
+    remove_ue_namespace "$UE_NUMBER"
 fi
 
 sleep 2

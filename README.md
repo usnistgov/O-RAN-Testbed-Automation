@@ -114,7 +114,7 @@ git clone https://github.com/USNISTGOV/O-RAN-Testbed-Automation.git
 cd O-RAN-Testbed-Automation
 ```
 
-Alternatively, you may clone the repository using SSH: `git clone git@github.com:USNISTGOV/O-RAN-Testbed-Automation.git`
+Alternatively, the repository may be cloned over SSH: `git clone git@github.com:USNISTGOV/O-RAN-Testbed-Automation.git`
 
 ---
 

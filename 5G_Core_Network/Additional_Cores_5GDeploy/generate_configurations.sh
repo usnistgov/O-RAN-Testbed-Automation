@@ -226,7 +226,15 @@ fi
 
 # Network configuration
 sudo sysctl net.ipv4.conf.all.forwarding=1
-sudo iptables -P FORWARD ACCEPT
+
+# Ensure FORWARD policy is ACCEPT
+if ! sudo iptables -L FORWARD | grep -q "Chain FORWARD (policy ACCEPT)"; then
+    echo "Setting iptables FORWARD policy to ACCEPT..."
+    sudo iptables -P FORWARD ACCEPT
+fi
+
+# List iptables rules with     sudo iptables -L FORWARD --line-numbers -n -v
+# Remove an iptables rule with sudo iptables -D FORWARD [line_number]
 
 cd "$SCRIPT_DIR"
 

@@ -28,32 +28,43 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-# Exit immediately if a command fails
-set -e
-
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
     sudo apt-get install -y coreutils
 fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
-cd "$SCRIPT_DIR"
+PARENT_DIR=$(dirname "$SCRIPT_DIR")
+cd "$PARENT_DIR"
 
-# Function to handle graceful shutdown
-graceful_shutdown() {
-    echo "Shutting down gNodeB gracefully..."
-    ./stop.sh
-    exit
-}
-trap graceful_shutdown SIGINT
-
-if pgrep -x "gnb" >/dev/null; then
-    echo "Already running gnb."
-else
-    echo "Starting gnb..."
-    mkdir -p logs
-    >logs/gnb.log
-    >logs/gnb_stdout.txt
-    # srsRAN_Project/build/apps/gnb/gnb -c configs/gnb.yaml # cell_cfg prach --ports 0 1 2
-    sudo script -q -f -c "./srsRAN_Project/build/apps/gnb/gnb -c configs/gnb.yaml" logs/gnb_stdout.txt # cell_cfg prach --ports 0 1 2
+UE_NUMBER=1
+if [ "$#" -eq 1 ]; then
+    UE_NUMBER=$1
 fi
+if ! [[ $UE_NUMBER =~ ^[0-9]+$ ]]; then
+    echo "Error: UE number must be a number."
+    exit 1
+fi
+if [ $UE_NUMBER -lt 1 ]; then
+    echo "Error: UE number must be greater than or equal to 1."
+    exit 1
+fi
+
+if [ ! -f "configs/ue1.conf" ]; then
+    echo "Configuration was not found for OAI UE 1. Please run ./generate_configurations.sh first."
+    exit 1
+fi
+
+UE_NAMESPACE="ue$UE_NUMBER"
+
+# If the namespace doesn't exist
+if ! ip netns list | grep -q "$UE_NAMESPACE"; then
+    echo "Error: Namespace $UE_NAMESPACE does not exist. Please start the UE first with: ./run_background.sh $UE_NUMBER"
+    exit 1
+fi
+
+echo "Opening shell in UE $UE_NUMBER namespace..."
+
+sudo ip netns exec $UE_NAMESPACE bash
+
+echo "Shell in UE $UE_NUMBER namespace closed."

@@ -88,7 +88,7 @@ if ! ip netns list | grep -q "$UE_NAMESPACE"; then
 fi
 
 LOG_FILE="logs/ue${UE_NUMBER}_stdout.txt"
-PDU_SESSION_IP=$(cat $LOG_FILE | grep "Received PDU Session Establishment Accept" | cut -d ':' -f2 | xargs)
+PDU_SESSION_IP=$(grep "PDU Session Establishment successful" "$LOG_FILE" | cut -d ':' -f2 | xargs | tr -cd '[:print:]')
 CORE_IP=$(ip route | grep ogstun | cut -d ' ' -f 9 | xargs)
 
 if [ -z "$PDU_SESSION_IP" ]; then

@@ -28,32 +28,71 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-# Exit immediately if a command fails
-set -e
-
+set -x
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
     sudo apt-get install -y coreutils
 fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
-cd "$SCRIPT_DIR"
+PARENT_DIR=$(dirname "$SCRIPT_DIR")
+cd "$PARENT_DIR"
 
-# Function to handle graceful shutdown
-graceful_shutdown() {
-    echo "Shutting down gNodeB gracefully..."
-    ./stop.sh
-    exit
-}
-trap graceful_shutdown SIGINT
+UE_NUMBER=$1
+BANDWIDTH=${2:-1M}
+DURATION=${3:-60}
 
-if pgrep -x "gnb" >/dev/null; then
-    echo "Already running gnb."
-else
-    echo "Starting gnb..."
-    mkdir -p logs
-    >logs/gnb.log
-    >logs/gnb_stdout.txt
-    # srsRAN_Project/build/apps/gnb/gnb -c configs/gnb.yaml # cell_cfg prach --ports 0 1 2
-    sudo script -q -f -c "./srsRAN_Project/build/apps/gnb/gnb -c configs/gnb.yaml" logs/gnb_stdout.txt # cell_cfg prach --ports 0 1 2
+if [[ -z "$UE_NUMBER" ]]; then
+    echo "Error: No UE number provided."
+    echo "Usage: $0 <UE_NUMBER> [BANDWIDTH] [DURATION]"
+    echo "       BANDWIDTH is optional and can be specified in units [k, K, m, M]. Default is 1M."
+    echo "       DURATION is optional and specifies the duration in seconds. Default is 60."
+    exit 1
 fi
+
+if ! [[ $UE_NUMBER =~ ^[0-9]+$ ]]; then
+    echo "Error: UE number must be a number."
+    exit 1
+fi
+
+if [ $UE_NUMBER -lt 1 ]; then
+    echo "Error: UE number must be greater than or equal to 1."
+    exit 1
+fi
+
+if ! [[ $BANDWIDTH =~ ^[0-9]+[kKmM]$ ]]; then
+    echo "Error: BANDWIDTH must be a number followed by a unit [k, K, m, M]."
+    exit 1
+fi
+
+if ! [[ $DURATION =~ ^[0-9]+$ ]]; then
+    echo "Error: DURATION must be a positive integer."
+    exit 1
+fi
+
+if [ $DURATION -lt 1 ]; then
+    echo "Error: DURATION must be greater than or equal to 1."
+    exit 1
+fi
+
+if [ ! -f "configs/ue1.conf" ]; then
+    echo "Configuration was not found for OAI UE 1. Please run ./generate_configurations.sh first."
+    exit 1
+fi
+
+LOG_FILE="logs/ue${UE_NUMBER}_stdout.txt"
+PDU_SESSION_IP=$(grep "PDU Session Establishment successful" "$LOG_FILE" | cut -d ':' -f2 | xargs | tr -cd '[:print:]')
+
+if [ -z "$PDU_SESSION_IP" ]; then
+    echo "Error: Unable to find PDU Session IP from the log file $LOG_FILE."
+    exit 1
+fi
+
+echo "Successfully found PDU Session IP: $PDU_SESSION_IP"
+
+if ! command -v iperf &>/dev/null; then
+    echo "Package \"iperf\" not found, installing..."
+    sudo apt-get install -y iperf
+fi
+
+iperf -c $PDU_SESSION_IP -u -i 1 -b $BANDWIDTH -t $DURATION

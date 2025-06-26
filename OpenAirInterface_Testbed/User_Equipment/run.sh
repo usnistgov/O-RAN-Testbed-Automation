@@ -116,7 +116,7 @@ else
     sudo ./install_scripts/setup_ue_namespace.sh "$UE_NUMBER"
 
     cd "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build"
-    
+
     BANDWIDTH_RBS=106
     NUMEROLOGY=1
     BAND=78

@@ -298,9 +298,8 @@ fi
 
 cd "$SCRIPT_DIR"
 
-AMF_IP=192.168.62.11 # N2 interface
+AMF_IP=192.168.62.11                                        # N2 interface
 AMF_IP_BIND=$(ip route get 1 | awk '{print $(NF-2); exit}') # Get the IP of the primary network interface
-
 
 # Set AMF_IP_BASE to AMF_IP with the last octet replaced by 0
 AMF_IP_BASE=$(echo "$AMF_IP" | awk -F. '{printf "%d.%d.%d.0", $1, $2, $3}')
@@ -376,7 +375,6 @@ cd "$SCRIPT_DIR/compose/orantestbed"
 #     echo "After patching, services.amf.ports:"
 #     yq '.services.amf.ports' compose.yml
 # fi
-
 
 # Revise configuration file netdef.json
 if [ -f "netdef.json" ]; then

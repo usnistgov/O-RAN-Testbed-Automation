@@ -172,7 +172,7 @@ if [ -d "RAN_Intelligent_Controllers/Near-Real-Time-RIC" ]; then
 
     cd RAN_Intelligent_Controllers/Near-Real-Time-RIC
     ./full_install.sh
-    
+
     cd ../..
 fi
 

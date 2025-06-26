@@ -43,6 +43,18 @@ fi
 if [[ "$CORE_TO_USE" == "null" || -z "$CORE_TO_USE" ]]; then
     CORE_TO_USE="open5gs" # Default
 fi
+if [[ "$CORE_TO_USE" != "open5gs" && -z "$INTERMEDIATE_CHECK" ]]; then
+    echo "Switching to core: $CORE_TO_USE"
+    cd Additional_Cores_5GDeploy || {
+        echo "Directory 'Additional_Cores_5GDeploy' not found. Please ensure that it exists in the script's directory."
+        exit 1
+    }
+    ./stop.sh
+    cd "$SCRIPT_DIR"
+    if ! ./is_running.sh | grep -q ": RUNNING"; then
+        exit 0
+    fi
+fi
 
 # Latest components (see https://open5gs.org/open5gs/docs/guide/01-quickstart/#:~:text=Starting%20and%20Stopping%20Open5GS)
 APPS=("mmed" "sgwcd" "smfd" "amfd" "sgwud" "upfd" "hssd" "pcrfd" "nrfd" "scpd" "seppd" "ausfd" "udmd" "pcfd" "nssfd" "bsfd" "udrd" "webui")
@@ -67,12 +79,13 @@ for APP in "${APPS[@]}"; do
 done
 sudo ./install_scripts/revert_network_config.sh
 
-# Check if 5gdeploy is running
-STATUS_5GDEPLOY=$(./Additional_Cores_5GDeploy/is_running.sh 2>/dev/null)
-if echo "$STATUS_5GDEPLOY" | grep -q ": RUNNING"; then
-    ./Additional_Cores_5GDeploy/stop.sh # Already includes is_running.sh
-elif [ "$CORE_TO_USE" != "open5gs" ]; then
-    ./Additional_Cores_5GDeploy/is_running.sh
-else
-    ./is_running.sh
-fi
+# # Check if 5gdeploy is running
+# STATUS_5GDEPLOY=$(./Additional_Cores_5GDeploy/is_running.sh 2>/dev/null)
+# if echo "$STATUS_5GDEPLOY" | grep -q ": RUNNING"; then
+#     ./Additional_Cores_5GDeploy/stop.sh # Already includes is_running.sh
+# elif [ "$CORE_TO_USE" != "open5gs" ]; then
+#     ./Additional_Cores_5GDeploy/is_running.sh
+# else
+#     ./is_running.sh
+# fi
+./is_running.sh

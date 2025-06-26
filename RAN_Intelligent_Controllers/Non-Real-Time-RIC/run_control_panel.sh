@@ -60,7 +60,7 @@ fi
 if [ -z "$FIXED_DOCKER_PERMS" ]; then
     if ! output=$(docker info 2>&1); then
         if echo "$output" | grep -qiE 'permission denied|cannot connect to the docker daemon'; then
-            echo "Repairing Docker permissions..."
+            echo "Docker permissions will repair on reboot."
             sudo groupadd -f docker
             if [ -n "$SUDO_USER" ]; then
                 sudo usermod -aG docker "$SUDO_USER"
@@ -197,13 +197,17 @@ until curl -s -o /dev/null -w "%{http_code}" localhost:4200 | grep -q "200"; do
     sleep 3
 done
 
-if command -v google-chrome &>/dev/null; then
-    echo "Opening the control panel in Google Chrome..."
+if command -v xdg-open &>/dev/null; then
+    echo "Opening the control panel in the default web browser at URL http://localhost:4200"
+    xdg-open "http://localhost:4200" >/dev/null 2>&1 &
+elif command -v google-chrome &>/dev/null; then
+    echo "Opening the control panel in Google Chrome at URL http://localhost:4200"
     nohup google-chrome "http://localhost:4200" >/dev/null 2>&1 &
 elif command -v firefox &>/dev/null; then
-    echo "Opening the control panel in Firefox..."
+    echo "Opening the control panel in Firefox at URL http://localhost:4200"
     nohup firefox "http://localhost:4200" >/dev/null 2>&1 &
 else
     echo "No supported browser detected. Visit http://localhost:4200 to access the control panel."
 fi
+
 sleep 10

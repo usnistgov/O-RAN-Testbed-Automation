@@ -88,17 +88,24 @@ if [ ! -f "options.yaml" ]; then
     echo "# - 5gdeploy-ndndpdk: Use NIST NDN-DPDK (see https://doi.org/10.1145/3405656.3418715)" >>"options.yaml"
     echo "upf_to_use: null" >>"options.yaml"
     echo "" >>"options.yaml"
-    echo "# If false, AMF will use the default 127.0.0.5, otherwise, it will use the hostname IP" >>"options.yaml"
-    echo "expose_amf_over_hostname: false" >>"options.yaml"
-    echo "" >>"options.yaml"
-    echo "# Include the Security Edge Protection Proxies (SEPP1 and SEPP2)" >>"options.yaml"
-    echo "include_sepp: false" >>"options.yaml"
-    echo "" >>"options.yaml"
     echo "# Configure the MCC/MNC and TAC" >>"options.yaml"
     echo "plmn: 00101" >>"options.yaml"
     echo "tac: 7" >>"options.yaml"
     echo "" >>"options.yaml"
-    echo "# Configure the ogstun gateway address for UE traffic" >>"options.yaml"
+    echo "# Configure the DNN/APN" >>"options.yaml"
+    echo "dnn: nist-dnn" >>"options.yaml"
+    echo "" >>"options.yaml"
+    echo "# Configure the Single Network Slice Selection Assistance Information (S-NSSAI)" >>"options.yaml"
+    echo "sst: 1" >>"options.yaml"
+    echo "sd: FFFFFF" >>"options.yaml"
+    echo "" >>"options.yaml"
+    echo "# If core_to_use=open5gs, false: AMF will use the default 127.0.0.5, true: it will use the hostname IP" >>"options.yaml"
+    echo "expose_amf_over_hostname: false" >>"options.yaml"
+    echo "" >>"options.yaml"
+    echo "# If core_to_use=open5gs, toggle whether or not to include the Security Edge Protection Proxies (SEPP1 and SEPP2)" >>"options.yaml"
+    echo "include_sepp: false" >>"options.yaml"
+    echo "" >>"options.yaml"
+    echo "# If core_to_use=open5gs, configure the ogstun gateway address for UE traffic" >>"options.yaml"
     echo "ogstun_ipv4: 10.45.0.0/16" >>"options.yaml"
     echo "ogstun_ipv6: 2001:db8:cafe::/48" >>"options.yaml"
     echo "" >>"options.yaml"
@@ -107,6 +114,7 @@ if [ ! -f "options.yaml" ]; then
     echo "" >>"options.yaml"
     echo "ogstun3_ipv4: 10.47.0.0/16" >>"options.yaml"
     echo "ogstun3_ipv6: 2001:db8:face::/48" >>"options.yaml"
+    echo "" >>"options.yaml"
 fi
 
 # If expose_amf_over_hostname is false, AMF will use the default 127.0.0.5, otherwise, it will use the hostname IP
@@ -140,6 +148,19 @@ echo "PLMN value: $PLMN"
 echo "MCC (Mobile Country Code): $MCC"
 echo "MNC (Mobile Network Code): $MNC"
 echo "TAC value: $TAC"
+
+# Configure the DNN, SST, and SD values
+DNN=$(sed -n 's/^dnn: //p' options.yaml)
+SST=$(yq eval '.sst' options.yaml)
+SD=$(yq eval '.sd' options.yaml)
+if [[ -z "$DNN" || "$DNN" == "null" ]]; then
+    echo "DNN is not set in options.yaml, please ensure that \"dnn\" is set."
+    exit 1
+fi
+if [[ -z "$SST" || -z "$SD" || "$SST" == "null" || "$SD" == "null" ]]; then
+    echo "SST or SD is not set in options.yaml, please ensure that \"sst\" and \"sd\" are set."
+    exit 1
+fi
 
 echo "Creating configs directory..."
 rm -rf configs
@@ -315,12 +336,29 @@ set_configuration_session_gateways() {
     yq e -i ".smf.session[1].gateway = \"$GATEWAY_IPV6\"" "$SMF_FILE_PATH"
 }
 
-set_amf_snssai() {
+set_snssai() {
     local SST=$1
     local SD=$2
     local AMF_FILE_PATH="configs/amf.yaml"
+    local NSSF_FILE_PATH="configs/nssf.yaml"
+    local SMF_FILE_PATH="configs/smf.yaml"
+
+    # Set S-NSSAI in AMF config
     yq -i ".amf.plmn_support[0].s_nssai[0].sst = $SST" "$AMF_FILE_PATH"
     yq -i ".amf.plmn_support[0].s_nssai[0].sd = \"$SD\"" "$AMF_FILE_PATH"
+
+    # Set S-NSSAI in NSSF config
+    yq -i ".nssf.sbi.client.nsi[0].s_nssai.sst = $SST" "$NSSF_FILE_PATH"
+    yq -i ".nssf.sbi.client.nsi[0].s_nssai.sd = \"$SD\"" "$NSSF_FILE_PATH"
+
+    # Set S-NSSAI in SMF config (info.s_nssai[0])
+    if ! yq -e '.smf.info[0].s_nssai' "$SMF_FILE_PATH" >/dev/null 2>&1; then
+        yq -i '.smf.info = [{}]' "$SMF_FILE_PATH"
+        yq -i '.smf.info[0].s_nssai = [{}]' "$SMF_FILE_PATH"
+    fi
+    yq -i ".smf.info[0].s_nssai[0].sst = $SST" "$SMF_FILE_PATH"
+    yq -i ".smf.info[0].s_nssai[0].sd = \"$SD\"" "$SMF_FILE_PATH"
+    yq -i ".smf.info[0].s_nssai[0].dnn = [\"$DNN\"]" "$SMF_FILE_PATH"
 }
 
 OGSTUN_IPV4=$(yq eval '.ogstun_ipv4' options.yaml)
@@ -378,9 +416,7 @@ fi
 set_configuration_session_gateways $OGSTUN_IPV4 $OGSTUN_IPV4_1_NO_CIDR $OGSTUN_IPV6 $OGSTUN_IPV6_1_NO_CIDR
 
 # Configure the Single Network Slice Selection Assistance Information (S-NSSAI)
-SST="01"
-SD="FFFFFF"
-set_amf_snssai "$SST" "$SD"
+set_snssai "$SST" "$SD"
 
 # Get the following AMF IP, and it will be updated in the configuration file
 AMF_ADDRESSES_OUTPUT="configs/get_amf_address.txt"
@@ -408,8 +444,8 @@ sudo ufw status || true
 sudo ./install_scripts/disable_firewall.sh
 sudo ufw status || true
 
-# echo "Unregistering all subscribers in Open5GS database..."
-# ./install_scripts/unregister_all_subscribers.sh
+echo "Unregistering all subscribers in Open5GS database..."
+./install_scripts/unregister_all_subscribers.sh
 
 PLMN_LENGTH=${#PLMN}
 
@@ -417,19 +453,19 @@ echo
 echo "Registering UE 1..."
 IMSI="001010123456780"
 IMSI="${PLMN}${IMSI:$PLMN_LENGTH}" # Ensure that the beginning of the IMSI is the correct PLMN
-./install_scripts/register_subscriber.sh --imsi $IMSI --key 00112233445566778899AABBCCDDEEFF --opc 63BFA50EE6523365FF14C1F45F88737D --apn srsapn
+./install_scripts/register_subscriber.sh --imsi $IMSI --key 00112233445566778899AABBCCDDEEFF --opc 63BFA50EE6523365FF14C1F45F88737D --apn $DNN --sst $SST --sd $SD
 
 echo
 echo "Registering UE 2..."
 IMSI="001010123456790"
 IMSI="${PLMN}${IMSI:$PLMN_LENGTH}" # Ensure that the beginning of the IMSI is the correct PLMN
-./install_scripts/register_subscriber.sh --imsi $IMSI --key 00112233445566778899AABBCCDDEF00 --opc 63BFA50EE6523365FF14C1F45F88737D --apn srsapn
+./install_scripts/register_subscriber.sh --imsi $IMSI --key 00112233445566778899AABBCCDDEF00 --opc 63BFA50EE6523365FF14C1F45F88737D --apn $DNN --sst $SST --sd $SD
 
 echo
 echo "Registering UE 3..."
 IMSI="001010123456791"
 IMSI="${PLMN}${IMSI:$PLMN_LENGTH}" # Ensure that the beginning of the IMSI is the correct PLMN
-./install_scripts/register_subscriber.sh --imsi $IMSI --key 00112233445566778899AABBCCDDEF01 --opc 63BFA50EE6523365FF14C1F45F88737D --apn srsapn
+./install_scripts/register_subscriber.sh --imsi $IMSI --key 00112233445566778899AABBCCDDEF01 --opc 63BFA50EE6523365FF14C1F45F88737D --apn $DNN --sst $SST --sd $SD
 
 # Restart Open5GS services to apply changes
 echo "To apply changed, stop and start the following:"

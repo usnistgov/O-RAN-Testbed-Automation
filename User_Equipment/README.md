@@ -28,17 +28,17 @@ For UE 1, UE 2, and UE 3, the SIM subscriber information is pre-registered with 
 
 ## Interacting with the UE
 
-- **Simulate UE traffic to Core:**
-  `./additional_scripts/simulate_ue_traffic_to_core.sh <UE_ID> [BANDWIDTH] [DURATION]`
-  Sends traffic from the UE to the core. Default bandwidth: 1M, duration: 60s.
+- **Simulate UE traffic to Core**: 
+  `./additional_scripts/simulate_ue_traffic_to_core.sh <UE_NUMBER> [BANDWIDTH] [DURATION]`
+  - Sends traffic from the UE to the core. Default bandwidth: 1M, duration: 60s.
 
-- **Simulate Core traffic to UE:**
-  `./additional_scripts/simulate_core_traffic_to_ue.sh <UE_ID> [BANDWIDTH] [DURATION]`
-  Sends traffic from the core to the UE. Default bandwidth: 1M, duration: 60s.
+- **Simulate Core traffic to UE**: 
+  `./additional_scripts/simulate_core_traffic_to_ue.sh <UE_NUMBER> [BANDWIDTH] [DURATION]`
+  - Sends traffic from the core to the UE. Default bandwidth: 1M, duration: 60s.
 
-- **Open UE shell:**
-  `./additional_scripts/open_ue_shell.sh <UE_ID>`
-  Opens a shell in the UE's network namespace.
+- **Open UE shell**: 
+  `./additional_scripts/open_ue_shell.sh <UE_NUMBER>`
+  - Opens a shell in the UE's network namespace.
 
 ## References
 

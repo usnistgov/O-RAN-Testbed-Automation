@@ -128,9 +128,9 @@ sudo apt-get install -y libsctp1 lksctp-tools
 # DOCKERV="20.10" #.21"
 
 # The version will be dynamically completed rather than hardcoding in the version
-KUBEV="1.32"
-KUBECNIV="1.5"
-HELMV="3.17"
+KUBEV="1.33"
+KUBECNIV="1.6"
+HELMV="3.18"
 
 # Fetch the Ubuntu release version regardless of the derivative distro
 if [ -f /etc/upstream-release/lsb-release ]; then
@@ -144,11 +144,11 @@ if [ "$USE_DOCKER_CE" -eq 0 ]; then # Use docker.io
     DOCKERV="20.10"
     # Select a compatible Docker version for Ubuntu 24.*
     if [[ ${UBUNTU_RELEASE} == 24.* ]]; then
-        DOCKERV="24.0"
+        DOCKERV="27.5"
     fi
 
-else # Use docker.ce
-    DOCKERV="28.0"
+else # Use docker-ce
+    DOCKERV="28.1"
     UBUNTU_CODENAME=$(grep -oP '^UBUNTU_CODENAME=\K.*' /etc/os-release 2>/dev/null)
     # If not found, try to extract VERSION_CODENAME as a fallback
     if [[ -z "$UBUNTU_CODENAME" ]]; then
@@ -162,15 +162,15 @@ else # Use docker.ce
 
     # Code from (https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository):
     sudo apt-get update
-    sudo apt-get install -y ca-certificates curl
+    sudo apt-get install ca-certificates curl
     sudo install -m 0755 -d /etc/apt/keyrings
     sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
     sudo chmod a+r /etc/apt/keyrings/docker.asc
     # Add the repository to Apt sources:
     echo \
-        "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
-      $UBUNTU_CODENAME stable" |
-        sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
+    "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+    $(. /etc/os-release && echo "${UBUNTU_CODENAME}") stable" | \
+    sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
     sudo apt-get update
 fi
 
@@ -678,6 +678,7 @@ echo "Removing CNI network interfaces..."
 sudo ip link delete cni0 2>/dev/null || true
 sudo ip link delete flannel.1 2>/dev/null || true
 sudo ip link delete weave 2>/dev/null || true
+
 echo "Kubernetes is cleaned up."
 
 # -----------------------------------------------------------------------------

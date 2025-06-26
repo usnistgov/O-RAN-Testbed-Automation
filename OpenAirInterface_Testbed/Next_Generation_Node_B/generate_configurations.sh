@@ -31,6 +31,8 @@
 # Exit immediately if a command fails
 set -e
 
+USE_RFSIM_CHANNELMOD=true
+
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
     sudo apt-get install -y coreutils
@@ -101,6 +103,19 @@ echo "MCC value: $MCC"
 echo "MNC value: $MNC"
 echo "MNC_LENGTH value: $MNC_LENGTH"
 
+# Configure the DNN, SST, and SD values
+DNN=$(sed -n 's/^dnn: //p' "$YAML_PATH")
+SST=$(yq eval '.sst' "$YAML_PATH")
+SD=$(yq eval '.sd' "$YAML_PATH")
+if [[ -z "$DNN" || "$DNN" == "null" ]]; then
+    echo "DNN is not set in $YAML_PATH, please ensure that \"dnn\" is set."
+    exit 1
+fi
+if [[ -z "$SST" || -z "$SD" || "$SST" == "null" || "$SD" == "null" ]]; then
+    echo "SST or SD is not set in $YAML_PATH, please ensure that \"sst\" and \"sd\" are set."
+    exit 1
+fi
+
 # Check if the YAML editor is installed, and install it if not
 if ! command -v yq &>/dev/null; then
     sudo "$SCRIPT_DIR/install_scripts/./install_yq.sh"
@@ -161,14 +176,23 @@ update_conf "configs/gnb.conf" "GNB_IPV4_ADDRESS_FOR_NGU" "\"$AMF_ADDR_BIND/24\"
 update_conf "configs/gnb.conf" "tracking_area_code" "$TAC"
 
 # Configure the Single Network Slice Selection Assistance Information (S-NSSAI)
-SST="01"
-SD="FFFFFF"
 update_conf "configs/gnb.conf" "plmn_list" "({ mcc = $MCC; mnc = $MNC; mnc_length = $MNC_LENGTH; snssaiList = ({ sst = $SST; sd = 0x$SD; }) })"
 
 if [ "$USE_SSB_RSRP" = "true" ]; then
     update_conf "configs/gnb.conf" "do_CSIRS" "0"
 else
     update_conf "configs/gnb.conf" "do_CSIRS" "1"
+fi
+
+if [ "$USE_RFSIM_CHANNELMOD" = true ]; then
+    # Finally, ensure that it is referencing the channelmod_rfsimu.conf file
+    if ! grep -q "@include \"channelmod_rfsimu.conf\"" "configs/gnb.conf"; then
+        echo "" >>"configs/gnb.conf"
+        echo "@include \"channelmod_rfsimu.conf\"" >>"configs/gnb.conf"
+    fi
+    cd configs
+    ln -s ../../User_Equipment/configs/channelmod_rfsimu.conf channelmod_rfsimu.conf
+    cd ..
 fi
 
 echo "Successfully configured the UE. The configuration file is located in the configs/ directory."

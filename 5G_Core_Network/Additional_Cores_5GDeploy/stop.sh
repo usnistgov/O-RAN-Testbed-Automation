@@ -41,7 +41,7 @@ cd "$SCRIPT_DIR"
 if [ -z "$FIXED_DOCKER_PERMS" ]; then
     if ! output=$(docker info 2>&1); then
         if echo "$output" | grep -qiE 'permission denied|cannot connect to the docker daemon'; then
-            echo "Repairing Docker permissions..."
+            echo "Docker permissions will repair on reboot."
             sudo groupadd -f docker
             if [ -n "$SUDO_USER" ]; then
                 sudo usermod -aG docker "$SUDO_USER"
@@ -61,8 +61,8 @@ if [ -z "$FIXED_DOCKER_PERMS" ]; then
     fi
 fi
 
-if [ -f "compose/20230817/compose.sh" ]; then
-    cd compose/20230817/
+if [ -f "compose/orantestbed/compose.sh" ]; then
+    cd compose/orantestbed/
 
     echo "Stopping the 5G Core Deployment Helper (5gdeploy) Core..."
     ./compose.sh down

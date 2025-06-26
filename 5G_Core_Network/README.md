@@ -61,12 +61,12 @@ cd ../5G_Core_Network
 
 ## Accessing Subscriber Data
 
-In Open5GS, the WebUI hosts a web interface to access subscriber data. To access the WebUI, navigate to `http://localhost:9999` in a web browser, or run `start_webui.sh` to open it in Chrome or Firefox automatically.
+In Open5GS, the WebUI hosts a web interface to access subscriber data. To access the WebUI, navigate to `http://localhost:9999` in a web browser, or run `start_webui.sh` to open it in the default browser.
 
 Alternatively, to create subscriber entries from command line, use the following.
 
 ```console
-./install_scripts/register_subscriber.sh --imsi 001010123456780 --key 00112233445566778899AABBCCDDEEFF --opc 63BFA50EE6523365FF14C1F45F88737D --apn srsapn
+./install_scripts/register_subscriber.sh --imsi 001010123456780 --key 00112233445566778899AABBCCDDEEFF --opc 63BFA50EE6523365FF14C1F45F88737D --apn srsapn [--sst 1] [--sd FFFFFF]
 ```
 
 Remove all registered subscribers with `./install_scripts/unregister_all_subscribers.sh`.

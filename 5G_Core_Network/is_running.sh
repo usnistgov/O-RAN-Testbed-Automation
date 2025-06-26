@@ -43,14 +43,19 @@ fi
 if [[ "$CORE_TO_USE" == "null" || -z "$CORE_TO_USE" ]]; then
     CORE_TO_USE="open5gs" # Default
 fi
-if [ "$CORE_TO_USE" != "open5gs" ]; then
-    echo "Switching to core: $CORE_TO_USE"
+if [[ "$CORE_TO_USE" != "open5gs" && -z "$INTERMEDIATE_CHECK" ]]; then
     cd Additional_Cores_5GDeploy || {
         echo "Directory 'Additional_Cores_5GDeploy' not found. Please ensure that it exists in the script's directory."
         exit 1
     }
     ./is_running.sh
-    exit 0
+    cd "$SCRIPT_DIR"
+    export INTERMEDIATE_CHECK=1
+    if ! ./is_running.sh | grep -q ": RUNNING"; then
+        unset INTERMEDIATE_CHECK
+        exit 0
+    fi
+    unset INTERMEDIATE_CHECK
 fi
 
 check_service() {

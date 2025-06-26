@@ -57,28 +57,17 @@ cd ../..
 
 echo
 echo -n "Waiting for AMF to be ready"
-if [ -f "5G_Core_Network/options.yaml" ]; then
-    CORE_TO_USE=$(yq eval '.core_to_use' 5G_Core_Network/options.yaml)
-fi
-if [[ "$CORE_TO_USE" == "null" || -z "$CORE_TO_USE" ]]; then
-    CORE_TO_USE="open5gs" # Default
-fi
-if [ "$CORE_TO_USE" == "open5gs" ]; then
-    attempt=0
-    while [ ! -f 5G_Core_Network/logs/amf.log ] || ! grep -q "NF registered" 5G_Core_Network/logs/amf.log; do
-        echo -n "."
-        sleep 0.5
-        attempt=$((attempt + 1))
-        if [ $attempt -ge 120 ]; then
-            echo "5G Core components did not start after 60 seconds, exiting..."
-            exit 1
-        fi
-    done
-    echo -e "\nAMF is ready."
-else # If using a core other than the default
-    echo "..."
-    sleep 5
-fi
+attempt=0
+while ! ./5G_Core_Network/is_amf_ready.sh | grep -q "true"; do
+    echo -n "."
+    sleep 0.5
+    attempt=$((attempt + 1))
+    if [ $attempt -ge 120 ]; then
+        echo "5G Core components did not start after 60 seconds, exiting..."
+        exit 1
+    fi
+done
+echo -e "\nAMF is ready."
 
 echo
 echo "Running gNodeB..."
@@ -113,6 +102,7 @@ cd User_Equipment
 echo -en "\nWaiting for UE to be ready"
 ATTEMPT=0
 while [ ! -f logs/ue1_stdout.txt ] || ! grep -q "TYPE <CTRL-C> TO TERMINATE" logs/ue1_stdout.txt; do
+#while [ ! -f logs/ue1_stdout.txt ] || ! grep -q "State = NR_RRC_CONNECTED" logs/ue1_stdout.txt; do
     echo -n "."
     sleep 0.5
     ATTEMPT=$((ATTEMPT + 1))
@@ -120,7 +110,7 @@ while [ ! -f logs/ue1_stdout.txt ] || ! grep -q "TYPE <CTRL-C> TO TERMINATE" log
         echo "UE did not start after 60 seconds, exiting..."
         exit 1
     fi
-    if grep -q "TYPE <CTRL-C> TO TERMINATE" logs/ue1_stdout.txt; then
+    if grep -q "State = NR_RRC_CONNECTED" logs/ue1_stdout.txt; then
         break
     elif $(./is_running.sh | grep -q "NOT_RUNNING"); then
         echo "Error starting UE. Check logs/ue1_stdout.txt for more information."

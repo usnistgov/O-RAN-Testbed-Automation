@@ -43,7 +43,7 @@ cd "$PARENT_DIR"
 DEFAULT_IMSI="001010123456780"
 DEFAULT_KEY="00112233445566778899aabbccddeeff"
 DEFAULT_OPC="63BFA50EE6523365FF14C1F45F88737D"
-DEFAULT_APN="srsapn"
+DEFAULT_APN="internet"
 
 if [ ! -d "5gdeploy" ]; then
     echo "Directory 5gdeploy does not exist. Please run the full_install.sh script first."

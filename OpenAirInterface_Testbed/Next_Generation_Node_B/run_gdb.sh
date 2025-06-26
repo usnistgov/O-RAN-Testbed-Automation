@@ -43,4 +43,4 @@ fi
 
 cd "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build"
 
-sudo gdb --args ./nr-softmodem -O "$SCRIPT_DIR/configs/gnb.conf" --rfsim --rfsimulator.serveraddr server --gNBs.[0].min_rxtxtime 6
+sudo gdb --args ./nr-softmodem -O "$SCRIPT_DIR/configs/gnb.conf" --rfsim --rfsimulator.serveraddr server --rfsimulator.options chanmod --gNBs.[0].min_rxtxtime 6

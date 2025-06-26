@@ -63,8 +63,8 @@ if [ "$CORE_TO_USE" == "open5gs" ]; then
     exit 1
 fi
 
-echo "Using CP: $CORE"
-echo "Using UP: $UPF"
+echo "Using CP: $CORE_TO_USE"
+echo "Using UP: $UPF_TO_USE"
 
 cd "$SCRIPT_DIR"
 
@@ -76,6 +76,11 @@ fi
 cd $SCRIPT_DIR/5gdeploy
 echo "Patching netdef/helpers.ts to generate NR Cell ID starting at hex 0xE000 (aligning with OAI gNB) instead of 0x10"
 sed -i '0,/^[[:space:]]*nci[[:space:]]*=.*$/s//      nci = hexPad(((3584 + i) << (36 - gnbIdLength)) | 0xF, 9),/' netdef/helpers.ts
+
+
+echo "Patching docker/build.sh to support Ubuntu-based distros..."
+git restore docker/build.sh
+git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/5gdeploy/docker/build.sh.patch"
 
 cd $SCRIPT_DIR
 
@@ -125,7 +130,7 @@ cd "$SCRIPT_DIR"
 if [ -z "$FIXED_DOCKER_PERMS" ]; then
     if ! output=$(docker info 2>&1); then
         if echo "$output" | grep -qiE 'permission denied|cannot connect to the docker daemon'; then
-            echo "Repairing Docker permissions..."
+            echo "Docker permissions will repair on reboot."
             sudo groupadd -f docker
             if [ -n "$SUDO_USER" ]; then
                 sudo usermod -aG docker "$SUDO_USER"

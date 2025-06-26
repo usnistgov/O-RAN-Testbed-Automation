@@ -31,7 +31,7 @@
 # Exit immediately if a command fails
 set -e
 
-CLEAN_INSTALL=true
+CLEAN_INSTALL=false
 DEBUG_SYMBOLS=false
 
 if ! command -v realpath &>/dev/null; then

@@ -28,7 +28,6 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-set -x
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
     sudo apt-get install -y coreutils

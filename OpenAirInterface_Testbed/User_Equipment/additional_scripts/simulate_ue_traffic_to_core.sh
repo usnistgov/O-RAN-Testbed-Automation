@@ -96,6 +96,8 @@ if [ -z "$PDU_SESSION_IP" ]; then
     exit 1
 fi
 
+echo "Successfully found PDU Session IP: $PDU_SESSION_IP"
+
 if [ -z "$CORE_IP" ]; then
     echo "Warning: Unable to find 5G core IP from the routing table."
     read -p "Please enter the IP address of the 5G core: " CORE_IP
@@ -104,8 +106,6 @@ if [ -z "$CORE_IP" ]; then
         exit 1
     fi
 fi
-
-echo "Successfully found PDU Session IP: $PDU_SESSION_IP"
 
 if ! command -v iperf &>/dev/null; then
     echo "Package \"iperf\" not found, installing..."

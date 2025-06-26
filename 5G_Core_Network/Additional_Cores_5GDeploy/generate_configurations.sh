@@ -84,17 +84,24 @@ if [ ! -f "options.yaml" ]; then
     echo "# - 5gdeploy-ndndpdk: Use NIST NDN-DPDK (see https://doi.org/10.1145/3405656.3418715)" >>"options.yaml"
     echo "upf_to_use: null" >>"options.yaml"
     echo "" >>"options.yaml"
-    echo "# If false, AMF will use the default 127.0.0.5, otherwise, it will use the hostname IP" >>"options.yaml"
-    echo "expose_amf_over_hostname: false" >>"options.yaml"
-    echo "" >>"options.yaml"
-    echo "# Include the Security Edge Protection Proxies (SEPP1 and SEPP2)" >>"options.yaml"
-    echo "include_sepp: false" >>"options.yaml"
-    echo "" >>"options.yaml"
     echo "# Configure the MCC/MNC and TAC" >>"options.yaml"
     echo "plmn: 00101" >>"options.yaml"
     echo "tac: 7" >>"options.yaml"
     echo "" >>"options.yaml"
-    echo "# Configure the ogstun gateway address for UE traffic" >>"options.yaml"
+    echo "# Configure the DNN/APN" >>"options.yaml"
+    echo "dnn: nist-dnn" >>"options.yaml"
+    echo "" >>"options.yaml"
+    echo "# Configure the Single Network Slice Selection Assistance Information (S-NSSAI)" >>"options.yaml"
+    echo "sst: 1" >>"options.yaml"
+    echo "sd: FFFFFF" >>"options.yaml"
+    echo "" >>"options.yaml"
+    echo "# If core_to_use=open5gs, false: AMF will use the default 127.0.0.5, true: it will use the hostname IP" >>"options.yaml"
+    echo "expose_amf_over_hostname: false" >>"options.yaml"
+    echo "" >>"options.yaml"
+    echo "# If core_to_use=open5gs, toggle whether or not to include the Security Edge Protection Proxies (SEPP1 and SEPP2)" >>"options.yaml"
+    echo "include_sepp: false" >>"options.yaml"
+    echo "" >>"options.yaml"
+    echo "# If core_to_use=open5gs, configure the ogstun gateway address for UE traffic" >>"options.yaml"
     echo "ogstun_ipv4: 10.45.0.0/16" >>"options.yaml"
     echo "ogstun_ipv6: 2001:db8:cafe::/48" >>"options.yaml"
     echo "" >>"options.yaml"
@@ -103,6 +110,7 @@ if [ ! -f "options.yaml" ]; then
     echo "" >>"options.yaml"
     echo "ogstun3_ipv4: 10.47.0.0/16" >>"options.yaml"
     echo "ogstun3_ipv6: 2001:db8:face::/48" >>"options.yaml"
+    echo "" >>"options.yaml"
 fi
 
 # Read PLMN and TAC values from the YAML file using yq
@@ -139,34 +147,52 @@ if [ "$CORE_TO_USE" == "open5gs" ]; then
     exit 1
 fi
 
+# Configure the DNN, SST, and SD values
+DNN=$(sed -n 's/^dnn: //p' options.yaml)
+SST=$(yq eval '.sst' options.yaml)
+SD=$(yq eval '.sd' options.yaml)
+if [[ -z "$DNN" || "$DNN" == "null" ]]; then
+    echo "DNN is not set in options.yaml, please ensure that \"dnn\" is set."
+    exit 1
+fi
+if [[ -z "$SST" || -z "$SD" || "$SST" == "null" || "$SD" == "null" ]]; then
+    echo "SST or SD is not set in options.yaml, please ensure that \"sst\" and \"sd\" are set."
+    exit 1
+fi
+
 cd "$SCRIPT_DIR"
 
 # echo "Creating configs directory..."
 # rm -rf configs
 # mkdir configs
 
-# echo "Unregistering all subscribers in Open5GS database..."
-# ./install_scripts/unregister_all_subscribers.sh
+echo "Unregistering all subscribers in Open5GS database..."
+./install_scripts/unregister_all_subscribers.sh
 
 PLMN_LENGTH=${#PLMN}
+
+OPC="63BFA50EE6523365FF14C1F45F88737D"
 
 echo
 echo "Registering UE 1..."
 IMSI1="001010123456780"
 IMSI1="${PLMN}${IMSI1:$PLMN_LENGTH}" # Ensure that the beginning of the IMSI is the correct PLMN
-./install_scripts/register_subscriber.sh --imsi $IMSI1 --key 00112233445566778899AABBCCDDEEFF --opc 63BFA50EE6523365FF14C1F45F88737D --apn srsapn
+KEY1="00112233445566778899AABBCCDDEEFF"
+./install_scripts/register_subscriber.sh --imsi $IMSI1 --key $KEY1 --opc $OPC --apn "$DNN"
 
 echo
 echo "Registering UE 2..."
 IMSI2="001010123456790"
 IMSI2="${PLMN}${IMSI2:$PLMN_LENGTH}" # Ensure that the beginning of the IMSI is the correct PLMN
-./install_scripts/register_subscriber.sh --imsi $IMSI2 --key 00112233445566778899AABBCCDDEF00 --opc 63BFA50EE6523365FF14C1F45F88737D --apn srsapn
+KEY2="00112233445566778899AABBCCDDEF00"
+./install_scripts/register_subscriber.sh --imsi $IMSI2 --key $KEY2 --opc $OPC --apn "$DNN"
 
 echo
 echo "Registering UE 3..."
 IMSI3="001010123456791"
 IMSI3="${PLMN}${IMSI3:$PLMN_LENGTH}" # Ensure that the beginning of the IMSI is the correct PLMN
-./install_scripts/register_subscriber.sh --imsi $IMSI3 --key 00112233445566778899AABBCCDDEF01 --opc 63BFA50EE6523365FF14C1F45F88737D --apn srsapn
+KEY3="00112233445566778899AABBCCDDEF01"
+./install_scripts/register_subscriber.sh --imsi $IMSI3 --key $KEY3 --opc $OPC --apn "$DNN"
 
 # Ensure that the core is set correctly
 if [ "$CORE_TO_USE" == "5gdeploy-oai" ]; then
@@ -239,8 +265,8 @@ fi
 cd "$SCRIPT_DIR"
 
 # Clean up the compose directory scenario if it exists
-if [ -d "compose/20230817" ]; then
-    sudo rm -rf "compose/20230817"
+if [ -d "compose/orantestbed" ]; then
+    sudo rm -rf "compose/orantestbed"
 fi
 if [ -d "compose" ] && [ -z "$(ls -A compose)" ]; then
     sudo rmdir "compose"
@@ -250,7 +276,7 @@ fi
 if [ -z "$FIXED_DOCKER_PERMS" ]; then
     if ! output=$(docker info 2>&1); then
         if echo "$output" | grep -qiE 'permission denied|cannot connect to the docker daemon'; then
-            echo "Repairing Docker permissions..."
+            echo "Docker permissions will repair on reboot."
             sudo groupadd -f docker
             if [ -n "$SUDO_USER" ]; then
                 sudo usermod -aG docker "$SUDO_USER"
@@ -272,8 +298,14 @@ fi
 
 cd "$SCRIPT_DIR"
 
-AMF_IP=192.168.62.11
+AMF_IP=192.168.62.11 # N2 interface
 AMF_IP_BIND=$(ip route get 1 | awk '{print $(NF-2); exit}') # Get the IP of the primary network interface
+
+
+# Set AMF_IP_BASE to AMF_IP with the last octet replaced by 0
+AMF_IP_BASE=$(echo "$AMF_IP" | awk -F. '{printf "%d.%d.%d.0", $1, $2, $3}')
+sudo iptables -t nat -A POSTROUTING -s 172.25.194.0/24 ! -d 172.25.194.0/24 -j MASQUERADE
+sudo iptables -t nat -A POSTROUTING -s $AMF_IP_BASE/24 ! -d $AMF_IP_BASE/24 -j MASQUERADE
 
 # Update the configuration file so that the gNodeB can find the AMF
 mkdir -p "$SCRIPT_DIR/configs"
@@ -281,85 +313,234 @@ AMF_ADDRESSES_OUTPUT="configs/get_amf_address.txt"
 echo "$AMF_IP" >$AMF_ADDRESSES_OUTPUT
 echo "$AMF_IP_BIND" >>$AMF_ADDRESSES_OUTPUT
 
+### Start of pre-generation patching ###
+cd "$SCRIPT_DIR/5gdeploy/scenario"
+
+if [ -d "orantestbed" ]; then
+    echo "Removing existing orantestbed directory..."
+    sudo rm -rf "orantestbed"
+fi
+cp -r 20230817 orantestbed
+
+SST_PADDED=$(printf "%02x" "$SST") # For example, 1 -> 01
+
+echo "Revising scenario files..."
+sed -i "s/01000000/$SST_PADDED$SD/g" orantestbed/scenario.ts
+sed -i "s/20230817/orantestbed/g" orantestbed/sonic-dl.ts
+sed -i "s/20230817/orantestbed/g" orantestbed/sonic-ul.ts
+
+TAC_PADDED=$(printf "%06x" "$TAC") # For example, 7 -> 000007
+# Edit the scenario.ts file to include the PLMN and TAC
+# sed -i "/const network =/a\  tac: \"${TAC_PADDED}\"," orantestbed/scenario.ts
+# sed -i "/const network =/a\  plmn: \"${MCC}-${MNC}\"," orantestbed/scenario.ts
+# Also edit the common scenario template
+sed -i "s/plmn: \"[^\"]*\"/plmn: \"$MCC-$MNC\"/g" common/phones-vehicles.ts
+sed -i "s/tac: \"[^\"]*\"/tac: \"$TAC_PADDED\"/g" common/phones-vehicles.ts
+### End of pre-generation patching ###
+
 cd "$SCRIPT_DIR/5gdeploy/scenario"
 
 echo "Using CP: $CORE"
 echo "Using UP: $UPF"
 
-./generate.sh 20230817 \
+./generate.sh orantestbed \
     +gnbs=1 +phones=0 +vehicles=0 \
     --cp=$CORE --up=$UPF --ran=none \
     --ip-fixed=amf,n2,$AMF_IP \
     --ip-fixed=upf1,n3,192.168.63.21 \
     --ip-fixed=upf4,n3,192.168.63.24
-
-# ./generate.sh 20230817 \
-#     +gnbs=1 +phones=1 +vehicles=0 \
-#     --cp=$CORE --up=$UPF --ran=none \
 #     --bridge='n2 | eth | amf*@AC:1F:6B:F5:4C:C6 gnb*@AC:1F:6B:F5:4C:C6' \
-#     --bridge='n3 | eth | upf*@AC:1F:6B:F5:4C:C6 gnb*@AC:1F:6B:F5:4C:C6' \
-#     --ip-fixed=amf,n2,$AMF_IP \
-#     --ip-fixed=upf1,n3,192.168.63.21 \
-#     --ip-fixed=upf4,n3,192.168.63.24
+#     --bridge='n3 | eth | upf*@AC:1F:6B:F5:4C:C6 gnb*@AC:1F:6B:F5:4C:C6'
 
 cd "$SCRIPT_DIR/configs"
 
 # Create symbolic links to the configuration files
 ln -sf ../5gdeploy/sims.tsv sims.tsv
-ln -sf ../compose/20230817/netdef.json netdef.json
-ln -sf ../compose/20230817/cp-cfg/config.yaml cp-cfg-config.yaml
+ln -sf ../compose/orantestbed/netdef.json netdef.json
+ln -sf ../compose/orantestbed/cp-cfg/config.yaml cp-cfg-config.yaml
+ln -sf ../compose/orantestbed/up-cfg/upf1.yaml up-cfg-upf1.yaml
+ln -sf ../compose/orantestbed/up-cfg/upf1.yaml up-cfg-upf1.yaml
+ln -sf ../compose/orantestbed/up-cfg/upf140.yaml up-cfg-upf140.yaml
+ln -sf ../compose/orantestbed/up-cfg/upf141.yaml up-cfg-upf141.yaml
 
-cd "$SCRIPT_DIR/compose/20230817"
+### Start of post-generation patching ###
+cd "$SCRIPT_DIR/compose/orantestbed"
 
-# Convert TAC to hex formats
-TAC_HEX_1=$(printf "%06x" "$TAC") # For example, 7 -> 000007
-echo "Previous TAC value was $(jq -r '.tac' netdef.json) (netdef.json)"
-jq --arg tac "$TAC_HEX_1" '.tac = $tac' netdef.json >tmp.json && mv tmp.json netdef.json
-echo "The TAC was changed to $(jq -r '.tac' netdef.json) (netdef.json)"
+# # Ensure AMF port 38412 is exposed in compose.yml if not already present
+# if [ -f "compose.yml" ]; then
+#     echo "Before patching, services.amf.ports:"
+#     yq '.services.amf.ports' compose.yml
+#     if ! yq '.services.amf.ports[]' compose.yml 2>/dev/null | grep -q '^38412:38412$'; then
+#         yq -i '.services.amf.ports += ["38412:38412"]' compose.yml
+#     fi
+#     echo "After patching, services.amf.ports:"
+#     yq '.services.amf.ports' compose.yml
+# fi
 
-if [ -f "cp-cfg/config.yaml" ]; then
-    TAC_HEX_2=$(printf "0x%04x" "$TAC") # For example, 7 -> 0x0007
-    echo "Previous TAC value was $(yq '.amf.plmn_support_list[0].tac' cp-cfg/config.yaml) (cp-cfg/config.yaml)"
-    yq -i ".amf.plmn_support_list[0].tac = \"$TAC_HEX_2\"" cp-cfg/config.yaml
-    echo "The TAC was changed to $(yq '.amf.plmn_support_list[0].tac' cp-cfg/config.yaml) (cp-cfg/config.yaml)"
+
+# Revise configuration file netdef.json
+if [ -f "netdef.json" ]; then
+    echo "Setting subscribers field in netdef.json..."
+    jq --arg imsi1 "$IMSI1" --arg imsi2 "$IMSI2" --arg imsi3 "$IMSI3" --arg sst "$SST" --arg sd "$SD" --arg dnn "$DNN" '
+    .subscribers = [
+        { "count": 1, "gnbs": ["gnb0"], "subscribedNSSAI": [{ "dnns": [$dnn], "snssai": ($sst + $sd), "sst": $sst, "sd": $sd }], "supi": $imsi1 },
+        { "count": 1, "gnbs": ["gnb0"], "subscribedNSSAI": [{ "dnns": [$dnn], "snssai": ($sst + $sd), "sst": $sst, "sd": $sd }], "supi": $imsi2 },
+        { "count": 1, "gnbs": ["gnb0"], "subscribedNSSAI": [{ "dnns": [$dnn], "snssai": ($sst + $sd), "sst": $sst, "sd": $sd }], "supi": $imsi3 }
+    ]
+    ' netdef.json >tmp.json && mv tmp.json netdef.json
+
+    # # Convert TAC to hex formats
+    # TAC_HEX=$(printf "%06x" "$TAC") # For example, 7 -> 000007
+    # echo "Previous TAC value was $(jq -r '.tac' netdef.json) (netdef.json)"
+    # jq --arg tac "$TAC_HEX" '.tac = $tac' netdef.json >tmp.json && mv tmp.json netdef.json
+    # echo "The TAC was changed to $(jq -r '.tac' netdef.json) (netdef.json)"
+
+    # # Set the S-NSSAI SD value in netdef.json
+    # jq --arg sd "$SD" 'walk(
+    # if (type == "object" and has("snssai")) then
+    #     .snssai |= (if type=="string" and test("^[0-9A-Fa-f]{8}$") then (.[:2] + $sd) else . end)
+    # else . end
+    # )' netdef.json >tmp.json && mv tmp.json netdef.json
+
+    sed -i "s/\"internet\"/\"$DNN\"/g" netdef.json
+    sed -i "s/'internet'/'$DNN'/g" netdef.json
 fi
 
-# Configure the Single Network Slice Selection Assistance Information (S-NSSAI)
-SST="01"
-SD="FFFFFF"
+# Revise configuration files in the cp-cfg directory
+for CPFILE in cp-cfg/*; do
+    if [ -f "$CPFILE" ]; then
+        sed -i "s/\"internet\"/\"$DNN\"/g" "$CPFILE"
+        sed -i "s/'internet'/'$DNN'/g" "$CPFILE"
+    fi
+done
+# # Revise configuration file cp-cfg/config.yaml
+# if [ -f "cp-cfg/config.yaml" ]; then
+#     #SD="$SD" yq '(.[] | .. | select(has("sd"))).sd = strenv(SD)' cp-cfg/config.yaml >tmp.yaml && mv tmp.yaml cp-cfg/config.yaml
+#     sed -i "s/\"internet\"/\"$DNN\"/g" cp-cfg/config.yaml
+#     sed -i "s/'internet'/'$DNN'/g" cp-cfg/config.yaml
 
-echo "Setting subscribers field in netdef.json..."
-jq --arg imsi1 "$IMSI1" --arg imsi2 "$IMSI2" --arg imsi3 "$IMSI3" --arg sst "$SST" --arg sd "$SD" '
-.subscribers = [
-    { "count": 1, "gnbs": ["gnb0"], "subscribedNSSAI": [{ "dnns": ["internet"], "snssai": ($sst + $sd), "sst": $sst, "sd": $sd }], "supi": $imsi1 },
-    { "count": 1, "gnbs": ["gnb0"], "subscribedNSSAI": [{ "dnns": ["internet"], "snssai": ($sst + $sd), "sst": $sst, "sd": $sd }], "supi": $imsi2 },
-    { "count": 1, "gnbs": ["gnb0"], "subscribedNSSAI": [{ "dnns": ["internet"], "snssai": ($sst + $sd), "sst": $sst, "sd": $sd }], "supi": $imsi3 }
-]
-' netdef.json >tmp.json && mv tmp.json netdef.json
+#     # TAC_HEX=$(printf "0x%04x" "$TAC") # For example, 7 -> 0x0007
+#     # echo "Previous TAC value was $(yq '.amf.plmn_support_list[0].tac' cp-cfg/config.yaml) (cp-cfg/config.yaml)"
+#     # yq -i ".amf.plmn_support_list[0].tac = \"$TAC_HEX\"" cp-cfg/config.yaml
+#     # echo "The TAC was changed to $(yq '.amf.plmn_support_list[0].tac' cp-cfg/config.yaml) (cp-cfg/config.yaml)"
+# fi
 
-echo "Setting all the remaining S-NSSAI SD values to $SD..."
+# # Revise configuration files up-cfg/upf1.yaml, up-cfg/upf140.yaml, and up-cfg/upf141.yaml
+if [ -f "up-cfg/upf1.yaml" ]; then
+    SD="$SD" yq '(.[] | .. | select(has("sd"))).sd = strenv(SD)' up-cfg/upf1.yaml >tmp.yaml && mv tmp.yaml up-cfg/upf1.yaml
+    sed -i "s/\"internet\"/\"$DNN\"/g" up-cfg/upf1.yaml
+    sed -i "s/'internet'/'$DNN'/g" up-cfg/upf1.yaml
 
-# Process cp-cfg/config.yaml
-if [ -f "cp-cfg/config.yaml" ]; then
-    SD="$SD" yq '(.[] | .. | select(has("sd"))).sd = strenv(SD)' cp-cfg/config.yaml >tmp.yaml && mv tmp.yaml cp-cfg/config.yaml
+    # TAC_HEX=$(printf "0x%04x" "$TAC") # For example, 7 -> 0x0007
+    # echo "Previous TAC value was $(yq '.amf.plmn_support_list[0].tac' up-cfg/upf1.yaml) (up-cfg/upf1.yaml)"
+    # yq -i ".amf.plmn_support_list[0].tac = \"$TAC_HEX\"" up-cfg/upf1.yaml
+    # echo "The TAC was changed to $(yq '.amf.plmn_support_list[0].tac' up-cfg/upf1.yaml) (up-cfg/upf1.yaml)"
+fi
+if [ -f "up-cfg/upf140.yaml" ]; then
+    SD="$SD" yq '(.[] | .. | select(has("sd"))).sd = strenv(SD)' up-cfg/upf140.yaml >tmp.yaml && mv tmp.yaml up-cfg/upf140.yaml
+    sed -i "s/\"internet\"/\"$DNN\"/g" up-cfg/upf140.yaml
+    sed -i "s/'internet'/'$DNN'/g" up-cfg/upf140.yaml
+
+    # TAC_HEX=$(printf "0x%04x" "$TAC") # For example, 7 -> 0x0007
+    # echo "Previous TAC value was $(yq '.amf.plmn_support_list[0].tac' up-cfg/upf140.yaml) (up-cfg/upf140.yaml)"
+    # yq -i ".amf.plmn_support_list[0].tac = \"$TAC_HEX\"" up-cfg/upf140.yaml
+    # echo "The TAC was changed to $(yq '.amf.plmn_support_list[0].tac' up-cfg/upf140.yaml) (up-cfg/upf140.yaml)"
+fi
+if [ -f "up-cfg/upf141.yaml" ]; then
+    SD="$SD" yq '(.[] | .. | select(has("sd"))).sd = strenv(SD)' up-cfg/upf141.yaml >tmp.yaml && mv tmp.yaml up-cfg/upf141.yaml
+    sed -i "s/\"internet\"/\"$DNN\"/g" up-cfg/upf141.yaml
+    sed -i "s/'internet'/'$DNN'/g" up-cfg/upf141.yaml
+
+    # TAC_HEX=$(printf "0x%04x" "$TAC") # For example, 7 -> 0x0007
+    # echo "Previous TAC value was $(yq '.amf.plmn_support_list[0].tac' up-cfg/upf141.yaml) (up-cfg/upf141.yaml)"
+    # yq -i ".amf.plmn_support_list[0].tac = \"$TAC_HEX\"" up-cfg/upf141.yaml
+    # echo "The TAC was changed to $(yq '.amf.plmn_support_list[0].tac' up-cfg/upf141.yaml) (up-cfg/upf141.yaml)"
 fi
 
+# Revise compose.yml
 if [ -f "compose.yml" ]; then
-    # Replace all occurrences of "sd" : "X" (allowing spaces around colon) with "sd" : "$SD"
-    SD="$SD" sed -i -E 's/"sd"[[:space:]]*:[[:space:]]*"[0-9A-Fa-f]{6}"/"sd": "'"$SD"'"/g' compose.yml
+    # Replace "dnn":["internet"] with dnn:["$DNN"]
+    sed -i -E 's/"dnn"[[:space:]]*:[[:space:]]*\[[[:space:]]*"internet"[[:space:]]*\]/"dnn":["'"$DNN"'"]/g' compose.yml
 
-    # Replace all occurrences of "tac" : [X] (allowing spaces around colon) with "tac": [$TAC]
-    TAC="$TAC" sed -i -E 's/"tac"[[:space:]]*:[[:space:]]*\[[0-9]+\]/"tac": \['"$TAC"'\]/g' compose.yml
+    # Replace "dnn":"internet" with "dnn":"$DNN"
+    sed -i -E 's/"dnn"[[:space:]]*:[[:space:]]*"internet"/"dnn":"'"$DNN"'"/g' compose.yml
 
-    # Replace only "sst": 1 (not 11, 21, etc.)
-    sed -i -E 's/"sst"[[:space:]]*:[[:space:]]*1([^0-9]|$)/"sst": '"$SST"'\1/g' compose.yml
+    # Replace ${SST_PADDED}${SD}_internet with ${SST_PADDED}${SD}_${DNN}
+    sed -i -E "s/${SST_PADDED}${SD}_internet/${SST_PADDED}${SD}_${DNN}/g" compose.yml
+
+    # Replace ${SST_PADDED}${SD}:internet with ${SST_PADDED}${SD}:${DNN}
+    sed -i -E "s/${SST_PADDED}${SD}:internet/${SST_PADDED}${SD}:${DNN}/g" compose.yml
 fi
 
-# Process netdef.json
-jq --arg sd "$SD" 'walk(
-  if (type == "object" and has("snssai")) then
-    .snssai |= (if type=="string" and test("^[0-9A-Fa-f]{8}$") then (.[:2] + $sd) else . end)
-  else . end
-)' netdef.json >tmp.json && mv tmp.json netdef.json
+# Revise cp-sql/oai_db.sql
+if [ -f "cp-sql/oai_db.sql" ]; then
+
+    # Ensure that the database is dropped before creating it
+    sed -i '1i DROP DATABASE IF EXISTS oai_db;' cp-sql/oai_db.sql
+
+#     sed -i -E 's/\\\"sst\\\"[[:space:]]*:[[:space:]]*[0-9]+/\\\"sst\\\": '"$SST"'/g' cp-sql/oai_db.sql
+#     sed -i -E 's/\\\"sd\\\"[[:space:]]*:[[:space:]]*\\\"[0-9A-Fa-f]+\\\"/\\\"sd\\\": \\"'"$SD"'\\"/g' cp-sql/oai_db.sql
+
+#     # Ensure that the subscribers are added to the OAI database
+#     if grep -q "INSERT INTO \`AuthenticationSubscription\`" cp-sql/oai_db.sql; then
+#         if ! grep -q "$IMSI1" cp-sql/oai_db.sql && ! grep -q "$IMSI2" cp-sql/oai_db.sql && ! grep -q "$IMSI3" cp-sql/oai_db.sql; then
+#             echo "Adding subscribers to cp-sql/oai_db.sql..."
+#             sed -i "/INSERT INTO \`AuthenticationSubscription\`/a ('${IMSI3}', '5G_AKA', '${KEY3}', '${KEY3}', '{\\\\\"sqn\\\\\": \\\\\"000000000020\\\\\", \\\\\"sqnScheme\\\\\": \\\\\"NON_TIME_BASED\\\\\", \\\\\"lastIndexes\\\\\": {\\\\\"ausf\\\\\": 0}}', '8000', 'milenage', '${OPC}', NULL, NULL, NULL, NULL, '${IMSI3}')," cp-sql/oai_db.sql
+#             sed -i "/INSERT INTO \`AuthenticationSubscription\`/a ('${IMSI2}', '5G_AKA', '${KEY2}', '${KEY2}', '{\\\\\"sqn\\\\\": \\\\\"000000000020\\\\\", \\\\\"sqnScheme\\\\\": \\\\\"NON_TIME_BASED\\\\\", \\\\\"lastIndexes\\\\\": {\\\\\"ausf\\\\\": 0}}', '8000', 'milenage', '${OPC}', NULL, NULL, NULL, NULL, '${IMSI2}')," cp-sql/oai_db.sql
+#             sed -i "/INSERT INTO \`AuthenticationSubscription\`/a ('${IMSI1}', '5G_AKA', '${KEY1}', '${KEY1}', '{\\\\\"sqn\\\\\": \\\\\"000000000020\\\\\", \\\\\"sqnScheme\\\\\": \\\\\"NON_TIME_BASED\\\\\", \\\\\"lastIndexes\\\\\": {\\\\\"ausf\\\\\": 0}}', '8000', 'milenage', '${OPC}', NULL, NULL, NULL, NULL, '${IMSI1}')," cp-sql/oai_db.sql
+#         else
+#             echo "Subscribers IMSI1, IMSI2, and IMSI3 already exist in AuthenticationSubscription in cp-sql/oai_db.sql."
+#         fi
+#     else
+#         echo "Error: cp-sql/oai_db.sql does not contain the AuthenticationSubscription table. Please ensure that the file is correct."
+#         exit 1
+#     fi
+
+#     if grep -q "INSERT INTO \`AccessAndMobilitySubscriptionData\`" cp-sql/oai_db.sql; then
+#         echo "Adding subscribers to AccessAndMobilitySubscriptionData in cp-sql/oai_db.sql..."
+#         sed -i "/INSERT INTO \`AccessAndMobilitySubscriptionData\`/a ('${IMSI3}', '${PLMN}', '{\\\\\"defaultSingleNssais\\\\\": [{\\\\\"sst\\\\\": ${SST}, \\\\\"sd\\\\\": \\\\\"${SD}\\\\\"}]}')," cp-sql/oai_db.sql
+#         sed -i "/INSERT INTO \`AccessAndMobilitySubscriptionData\`/a ('${IMSI2}', '${PLMN}', '{\\\\\"defaultSingleNssais\\\\\": [{\\\\\"sst\\\\\": ${SST}, \\\\\"sd\\\\\": \\\\\"${SD}\\\\\"}]}')," cp-sql/oai_db.sql
+#         sed -i "/INSERT INTO \`AccessAndMobilitySubscriptionData\`/a ('${IMSI1}', '${PLMN}', '{\\\\\"defaultSingleNssais\\\\\": [{\\\\\"sst\\\\\": ${SST}, \\\\\"sd\\\\\": \\\\\"${SD}\\\\\"}]}')," cp-sql/oai_db.sql
+#     else
+#         echo "Error: cp-sql/oai_db.sql does not contain the AccessAndMobilitySubscriptionData table. Please ensure that the file is correct."
+#         exit 1
+#     fi
+
+#     if grep -q "INSERT INTO \`SessionManagementSubscriptionData\`" cp-sql/oai_db.sql; then
+#         echo "Adding subscribers to SessionManagementSubscriptionData in cp-sql/oai_db.sql..."
+#         sed -i "0,/INSERT INTO \`SessionManagementSubscriptionData\`/{
+# /INSERT INTO \`SessionManagementSubscriptionData\`/i \
+# INSERT INTO \`SessionManagementSubscriptionData\` (\`ueid\`, \`servingPlmnid\`, \`singleNssai\`, \`dnnConfigurations\`) VALUES ('${IMSI1}', '${PLMN}', '{\\\\\"sst\\\\\": ${SST}, \\\\\"sd\\\\\": \\\\\"${SD}\\\\\"}', '{\\\\\"default\\\\\":{\\\\\"pduSessionTypes\\\\\":{\\\\\"defaultSessionType\\\\\": \\\\\"IPV4\\\\\"},\\\\\"sscModes\\\\\": {\\\\\"defaultSscMode\\\\\": \\\\\"SSC_MODE_1\\\\\"},\\\\\"5gQosProfile\\\\\": {\\\\\"5qi\\\\\": 6,\\\\\"arp\\\\\":{\\\\\"priorityLevel\\\\\": 1,\\\\\"preemptCap\\\\\": \\\\\"NOT_PREEMPT\\\\\",\\\\\"preemptVuln\\\\\":\\\\\"NOT_PREEMPTABLE\\\\\"},\\\\\"priorityLevel\\\\\":1},\\\\\"sessionAmbr\\\\\":{\\\\\"uplink\\\\\":\\\\\"100Mbps\\\\\", \\\\\"downlink\\\\\":\\\\\"100Mbps\\\\\"}}}');\n\
+# INSERT INTO \`SessionManagementSubscriptionData\` (\`ueid\`, \`servingPlmnid\`, \`singleNssai\`, \`dnnConfigurations\`) VALUES ('${IMSI2}', '${PLMN}', '{\\\\\"sst\\\\\": ${SST}, \\\\\"sd\\\\\": \\\\\"${SD}\\\\\"}', '{\\\\\"default\\\\\":{\\\\\"pduSessionTypes\\\\\":{\\\\\"defaultSessionType\\\\\": \\\\\"IPV4\\\\\"},\\\\\"sscModes\\\\\": {\\\\\"defaultSscMode\\\\\": \\\\\"SSC_MODE_1\\\\\"},\\\\\"5gQosProfile\\\\\": {\\\\\"5qi\\\\\": 6,\\\\\"arp\\\\\":{\\\\\"priorityLevel\\\\\": 1,\\\\\"preemptCap\\\\\": \\\\\"NOT_PREEMPT\\\\\",\\\\\"preemptVuln\\\\\":\\\\\"NOT_PREEMPTABLE\\\\\"},\\\\\"priorityLevel\\\\\":1},\\\\\"sessionAmbr\\\\\":{\\\\\"uplink\\\\\":\\\\\"100Mbps\\\\\", \\\\\"downlink\\\\\":\\\\\"100Mbps\\\\\"}}}');\n\
+# INSERT INTO \`SessionManagementSubscriptionData\` (\`ueid\`, \`servingPlmnid\`, \`singleNssai\`, \`dnnConfigurations\`) VALUES ('${IMSI3}', '${PLMN}', '{\\\\\"sst\\\\\": ${SST}, \\\\\"sd\\\\\": \\\\\"${SD}\\\\\"}', '{\\\\\"default\\\\\":{\\\\\"pduSessionTypes\\\\\":{\\\\\"defaultSessionType\\\\\": \\\\\"IPV4\\\\\"},\\\\\"sscModes\\\\\": {\\\\\"defaultSscMode\\\\\": \\\\\"SSC_MODE_1\\\\\"},\\\\\"5gQosProfile\\\\\": {\\\\\"5qi\\\\\": 6,\\\\\"arp\\\\\":{\\\\\"priorityLevel\\\\\": 1,\\\\\"preemptCap\\\\\": \\\\\"NOT_PREEMPT\\\\\",\\\\\"preemptVuln\\\\\":\\\\\"NOT_PREEMPTABLE\\\\\"},\\\\\"priorityLevel\\\\\":1},\\\\\"sessionAmbr\\\\\":{\\\\\"uplink\\\\\":\\\\\"100Mbps\\\\\", \\\\\"downlink\\\\\":\\\\\"100Mbps\\\\\"}}}');
+# }" cp-sql/oai_db.sql
+
+#     else
+#         echo "Error: cp-sql/oai_db.sql does not contain the SessionManagementSubscriptionData table. Please ensure that the file is correct."
+#         exit 1
+#     fi
+
+#     # Remove DELETE FROM AuthenticationSubscription;
+#     if grep -q "DELETE FROM AuthenticationSubscription;" cp-sql/oai_db.sql; then
+#         echo "Commenting out DELETE FROM AuthenticationSubscription in cp-sql/oai_db.sql..."
+#         sed -i 's/DELETE FROM AuthenticationSubscription;/-- DELETE FROM AuthenticationSubscription;/g' cp-sql/oai_db.sql
+#     fi
+#     # Remove DELETE FROM AccessAndMobilitySubscriptionData;
+#     if grep -q "DELETE FROM AccessAndMobilitySubscriptionData;" cp-sql/oai_db.sql; then
+#         echo "Commenting out DELETE FROM AccessAndMobilitySubscriptionData in cp-sql/oai_db.sql..."
+#         sed -i 's/DELETE FROM AccessAndMobilitySubscriptionData;/-- DELETE FROM AccessAndMobilitySubscriptionData;/g' cp-sql/oai_db.sql
+#     fi
+#     # Remove DELETE FROM SessionManagementSubscriptionData;
+#     if grep -q "DELETE FROM SessionManagementSubscriptionData;" cp-sql/oai_db.sql; then
+#         echo "Commenting out DELETE FROM SessionManagementSubscriptionData in cp-sql/oai_db.sql..."
+#         sed -i 's/DELETE FROM SessionManagementSubscriptionData;/-- DELETE FROM SessionManagementSubscriptionData;/g' cp-sql/oai_db.sql
+#     fi
+fi
+
+if [ -f "cp-db/open5gs.sh" ]; then
+    # Replace " internet " with " $DNN "
+    sed -i "s/ internet / $DNN /g" cp-db/open5gs.sh
+fi
+### End of post-generation patching ###
 
 echo "Successfully configured the 5G Core Deployment Helper (5gdeploy). The configuration files are located in the configs/ directory."

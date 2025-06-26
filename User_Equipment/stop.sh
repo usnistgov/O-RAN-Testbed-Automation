@@ -49,8 +49,30 @@ if [ "$#" -eq 1 ]; then
     fi
 fi
 
+# Remove a network namespace given the UE number
+remove_ue_namespace() {
+    local UE_NUMBER="$1"
+    echo "Removing namespace ue$UE_NUMBER..."
+    sudo ./install_scripts/revert_ue_namespace.sh "$UE_NUMBER"
+}
+
+# Remove all UE network namespaces
+remove_all_ue_namespaces() {
+    # Get all active UE namespaces, and remove the namespaces
+    UE_NETNS=($(ip netns list | grep -oP '^ue\K[0-9]+'))
+    for UE_NUM in "${UE_NETNS[@]}"; do
+        remove_ue_namespace "$UE_NUM"
+    done
+}
+
 # Check if the UE is already stopped
 if $(./is_running.sh | grep -q "User Equipment: NOT_RUNNING"); then
+    # Remove UE namespaces
+    if [ -z "$UE_NUMBER" ]; then
+        remove_all_ue_namespaces
+    else
+        remove_ue_namespace "$UE_NUMBER"
+    fi
     ./is_running.sh
     exit 0
 fi
@@ -61,8 +83,10 @@ sudo ls >/dev/null 2>&1
 # Send a graceful shutdown signal to the UE process
 if [ -z "$UE_NUMBER" ]; then
     sudo pkill -f "srsue" >/dev/null 2>&1 &
+    remove_all_ue_namespaces
 else
     sudo pkill -f "srsue --config_file configs/ue$UE_NUMBER.conf" >/dev/null 2>&1 &
+    remove_ue_namespace "$UE_NUMBER"
 fi
 
 # Wait for the process to terminate gracefully
@@ -93,9 +117,11 @@ done
 if [ -z "$UE_NUMBER" ]; then
     echo "The User Equipment did not stop in time, sending forceful kill signal..."
     sudo pkill -9 -f "srsue" >/dev/null 2>&1 &
+    remove_all_ue_namespaces
 else
     echo "The User Equipment $UE_NUMBER did not stop in time, sending forceful kill signal..."
     sudo pkill -9 -f "srsue --config_file configs/ue$UE_NUMBER.conf" >/dev/null 2>&1 &
+    remove_ue_namespace "$UE_NUMBER"
 fi
 
 sleep 2

@@ -39,6 +39,8 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
+BASE_EXAMPLE_CONFIG_PATH="$SCRIPT_DIR/srsRAN_Project/configs/gnb_rf_b210_fdd_srsUE.yml"
+
 # Define the path to the YAML file
 YAML_PATH="../5G_Core_Network/options.yaml"
 if [ ! -f "$YAML_PATH" ]; then
@@ -75,7 +77,12 @@ if [[ $RUNNING_STATUS != *": RUNNING"* ]]; then
     rm -rf logs
     mkdir logs
 fi
-cp srsRAN_Project/configs/gnb_rf_b200_tdd_n78_20mhz.yml configs/gnb.yaml
+
+if [ ! -f "$BASE_EXAMPLE_CONFIG_PATH" ]; then
+    echo "Configuration file not found in $BASE_EXAMPLE_CONFIG_PATH, please ensure that the file exists."
+    exit 1
+fi
+cp "$BASE_EXAMPLE_CONFIG_PATH" configs/gnb.yaml
 
 ENABLE_E2_TERM="true"
 if [ ! -d "../RAN_Intelligent_Controllers/Near-Real-Time-RIC" ]; then
@@ -227,29 +234,14 @@ update_yaml "configs/gnb.yaml" "cu_cp.amf.supported_tracking_areas[0].plmn_list[
 update_yaml "configs/gnb.yaml" "ru_sdr" "device_driver" "zmq"
 update_yaml "configs/gnb.yaml" "ru_sdr" "device_args" "$DEVICE_ARGS"
 update_yaml "configs/gnb.yaml" "ru_sdr" "srate" "23.04"
-update_yaml "configs/gnb.yaml" "ru_sdr" "tx_gain" "75"
-update_yaml "configs/gnb.yaml" "ru_sdr" "rx_gain" "75"
 update_yaml "configs/gnb.yaml" "ru_sdr" "clock" "default"
 update_yaml "configs/gnb.yaml" "ru_sdr" "sync" "default"
 
 # Update configuration values for 5G cell parameters
-update_yaml "configs/gnb.yaml" "cell_cfg" "dl_arfcn" "368500" # NR ARFCN
 update_yaml "configs/gnb.yaml" "cell_cfg" "nof_antennas_dl" "1"
 update_yaml "configs/gnb.yaml" "cell_cfg" "nof_antennas_ul" "1"
-update_yaml "configs/gnb.yaml" "cell_cfg" "band" "3"
-update_yaml "configs/gnb.yaml" "cell_cfg" "channel_bandwidth_MHz" "20"
-update_yaml "configs/gnb.yaml" "cell_cfg" "common_scs" "15"
 update_yaml "configs/gnb.yaml" "cell_cfg" "plmn" $PLMN
 update_yaml "configs/gnb.yaml" "cell_cfg" "tac" $TAC
-
-# Update configuration values for PDCCH and PRACH
-update_yaml "configs/gnb.yaml" "cell_cfg.pdcch.common" "ss0_index" "0"
-update_yaml "configs/gnb.yaml" "cell_cfg.pdcch.common" "coreset0_index" "12"
-update_yaml "configs/gnb.yaml" "cell_cfg.pdcch.dedicated" "ss2_type" "common"
-update_yaml "configs/gnb.yaml" "cell_cfg.pdcch.dedicated" "dci_format_0_1_and_1_1" "false"
-update_yaml "configs/gnb.yaml" "cell_cfg.prach" "prach_config_index" "1"
-update_yaml "configs/gnb.yaml" "cell_cfg.pdsch" "mcs_table" "qam64"
-update_yaml "configs/gnb.yaml" "cell_cfg.pusch" "mcs_table" "qam64"
 
 GNB_ID="411"
 RAN_NODE_NAME="srsgnb01"
@@ -282,12 +274,11 @@ update_yaml "configs/gnb.yaml" "cu_cp" "max_nof_dus" ""
 update_yaml "configs/gnb.yaml" "cu_cp" "max_nof_cu_ups" ""
 update_yaml "configs/gnb.yaml" "cu_cp" "max_nof_ues" ""
 update_yaml "configs/gnb.yaml" "cu_cp" "max_nof_drbs_per_ue" ""
-update_yaml "configs/gnb.yaml" "cu_cp" "inactivity_timer" "7200"
 update_yaml "configs/gnb.yaml" "cu_cp" "request_pdu_session_timeout" "3"
 
 # Update configuration values for gNodeB logging
 update_yaml "configs/gnb.yaml" "log" "filename" "$SCRIPT_DIR/logs/gnb.log"
-update_yaml "configs/gnb.yaml" "log" "all_level" "info"
+update_yaml "configs/gnb.yaml" "log" "all_level" "none"
 update_yaml "configs/gnb.yaml" "log" "hex_max_size" "0"
 
 # Packet capture for NGAP

@@ -28,73 +28,70 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-# Exit immediately if a command fails
-set -e
-
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
     sudo apt-get install -y coreutils
 fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
-cd "$SCRIPT_DIR"
+PARENT_DIR=$(dirname "$SCRIPT_DIR")
+cd "$PARENT_DIR"
 
-UE_NUMBER=1
-if [ "$#" -eq 1 ]; then
-    UE_NUMBER=$1
+UE_NUMBER=$1
+BANDWIDTH=${2:-1M}
+DURATION=${3:-60}
+
+if [[ -z "$UE_NUMBER" ]]; then
+    echo "Error: No UE number provided."
+    echo "Usage: $0 <UE_NUMBER> [BANDWIDTH] [DURATION]"
+    echo "       BANDWIDTH is optional and can be specified in units [k, K, m, M]. Default is 1M."
+    echo "       DURATION is optional and specifies the duration in seconds. Default is 60."
+    exit 1
 fi
+
 if ! [[ $UE_NUMBER =~ ^[0-9]+$ ]]; then
     echo "Error: UE number must be a number."
     exit 1
 fi
+
 if [ $UE_NUMBER -lt 1 ]; then
     echo "Error: UE number must be greater than or equal to 1."
     exit 1
 fi
 
-if [ ! -f "configs/ue1.conf" ]; then
-    echo "Configuration was not found for SRS UE 1. Please run ./generate_configurations.sh first."
+if ! [[ $BANDWIDTH =~ ^[0-9]+[kKmM]$ ]]; then
+    echo "Error: BANDWIDTH must be a number followed by a unit [k, K, m, M]."
     exit 1
 fi
 
-# Function to handle graceful shutdown
-graceful_shutdown() {
-    echo "Shutting down UE $UE_NUMBER gracefully..."
-    ./stop.sh
-    exit
-}
-trap graceful_shutdown SIGINT
-
-UE_CONF_PATH="configs/ue$UE_NUMBER.conf"
-
-if [ ! -f "$UE_CONF_PATH" ]; then
-    echo "Configuration file for UE $UE_NUMBER not found, creating..."
-    ./generate_configurations.sh "$UE_NUMBER"
-    if [ ! -f "$UE_CONF_PATH" ]; then
-        echo "Configuration file for UE $UE_NUMBER still not found after generation."
-        exit 1
-    fi
+if ! [[ $DURATION =~ ^[0-9]+$ ]]; then
+    echo "Error: DURATION must be a positive integer."
+    exit 1
 fi
 
-if [ $UE_NUMBER -gt 3 ]; then
-    echo "UE is greater than registered subscribers, registering UE $UE_NUMBER..."
-    REGISTRATION_DIR=$(dirname "$SCRIPT_DIR")/5G_Core_Network/install_scripts
-    "$REGISTRATION_DIR/./register_subscriber.sh" --imsi "$UE_IMSI" --key "$UE_KEY" --opc "$UE_OPC" --apn "$UE_APN"
+if [ $DURATION -lt 1 ]; then
+    echo "Error: DURATION must be greater than or equal to 1."
+    exit 1
 fi
 
-# Give the UE its own network namespace and configure it to access the host network
-sudo ./install_scripts/setup_ue_namespace.sh "$UE_NUMBER"
-
-if ./is_running.sh | grep -q "ue$UE_NUMBER"; then
-    echo "Already running ue$UE_NUMBER."
-else
-    if [ ! -f "$UE_CONF_PATH" ]; then
-        echo "Configuration was not found for SRS UE $UE_NUMBER. Please run ./generate_configurations.sh first."
-        exit 1
-    fi
-    mkdir -p logs
-    >logs/ue${UE_NUMBER}_stdout.txt
-    echo "Starting srsue (ue$UE_NUMBER)..."
-    # sudo ./srsRAN_4G/build/srsue/src/srsue --config_file "$UE_CONF_PATH"
-    sudo script -q -f -c "./srsRAN_4G/build/srsue/src/srsue --config_file \"$UE_CONF_PATH\"" logs/ue${UE_NUMBER}_stdout.txt
+if [ ! -f "configs/ue1.conf" ]; then
+    echo "Configuration was not found for OAI UE 1. Please run ./generate_configurations.sh first."
+    exit 1
 fi
+
+LOG_FILE="logs/ue${UE_NUMBER}_stdout.txt"
+PDU_SESSION_IP=$(grep "PDU Session Establishment successful" "$LOG_FILE" | cut -d ':' -f2 | xargs | tr -cd '[:print:]')
+
+if [ -z "$PDU_SESSION_IP" ]; then
+    echo "Error: Unable to find PDU Session IP from the log file $LOG_FILE."
+    exit 1
+fi
+
+echo "Successfully found PDU Session IP: $PDU_SESSION_IP"
+
+if ! command -v iperf &>/dev/null; then
+    echo "Package \"iperf\" not found, installing..."
+    sudo apt-get install -y iperf
+fi
+
+iperf -c $PDU_SESSION_IP -u -i 1 -b $BANDWIDTH -t $DURATION

@@ -28,73 +28,26 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
+echo "# Script: $(realpath $0)..."
+
 # Exit immediately if a command fails
 set -e
 
-if ! command -v realpath &>/dev/null; then
-    echo "Package \"coreutils\" not found, installing..."
-    sudo apt-get install -y coreutils
-fi
+UE_NUMBER=$1
 
-SCRIPT_DIR=$(dirname "$(realpath "$0")")
-cd "$SCRIPT_DIR"
-
-UE_NUMBER=1
-if [ "$#" -eq 1 ]; then
-    UE_NUMBER=$1
+if [[ -z "$UE_NUMBER" ]]; then
+    echo "Error: No UE number provided."
+    echo "Usage: $0 <UE_NUMBER>"
+    exit 1
 fi
 if ! [[ $UE_NUMBER =~ ^[0-9]+$ ]]; then
     echo "Error: UE number must be a number."
     exit 1
 fi
-if [ $UE_NUMBER -lt 1 ]; then
-    echo "Error: UE number must be greater than or equal to 1."
-    exit 1
-fi
 
-if [ ! -f "configs/ue1.conf" ]; then
-    echo "Configuration was not found for SRS UE 1. Please run ./generate_configurations.sh first."
-    exit 1
-fi
+UE_NAMESPACE="ue$UE_NUMBER"
 
-# Function to handle graceful shutdown
-graceful_shutdown() {
-    echo "Shutting down UE $UE_NUMBER gracefully..."
-    ./stop.sh
-    exit
-}
-trap graceful_shutdown SIGINT
-
-UE_CONF_PATH="configs/ue$UE_NUMBER.conf"
-
-if [ ! -f "$UE_CONF_PATH" ]; then
-    echo "Configuration file for UE $UE_NUMBER not found, creating..."
-    ./generate_configurations.sh "$UE_NUMBER"
-    if [ ! -f "$UE_CONF_PATH" ]; then
-        echo "Configuration file for UE $UE_NUMBER still not found after generation."
-        exit 1
-    fi
-fi
-
-if [ $UE_NUMBER -gt 3 ]; then
-    echo "UE is greater than registered subscribers, registering UE $UE_NUMBER..."
-    REGISTRATION_DIR=$(dirname "$SCRIPT_DIR")/5G_Core_Network/install_scripts
-    "$REGISTRATION_DIR/./register_subscriber.sh" --imsi "$UE_IMSI" --key "$UE_KEY" --opc "$UE_OPC" --apn "$UE_APN"
-fi
-
-# Give the UE its own network namespace and configure it to access the host network
-sudo ./install_scripts/setup_ue_namespace.sh "$UE_NUMBER"
-
-if ./is_running.sh | grep -q "ue$UE_NUMBER"; then
-    echo "Already running ue$UE_NUMBER."
-else
-    if [ ! -f "$UE_CONF_PATH" ]; then
-        echo "Configuration was not found for SRS UE $UE_NUMBER. Please run ./generate_configurations.sh first."
-        exit 1
-    fi
-    mkdir -p logs
-    >logs/ue${UE_NUMBER}_stdout.txt
-    echo "Starting srsue (ue$UE_NUMBER)..."
-    # sudo ./srsRAN_4G/build/srsue/src/srsue --config_file "$UE_CONF_PATH"
-    sudo script -q -f -c "./srsRAN_4G/build/srsue/src/srsue --config_file \"$UE_CONF_PATH\"" logs/ue${UE_NUMBER}_stdout.txt
+if ! ip netns list | grep -q "^$UE_NAMESPACE$"; then
+    echo "Setting user equipment namespace..."
+    sudo ip netns add $UE_NAMESPACE
 fi

@@ -39,6 +39,8 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
+DNN="nist-dnn"
+
 # Check if the YAML editor is installed, and install it if not
 if ! command -v yq &>/dev/null; then
     sudo "$SCRIPT_DIR/install_scripts/./install_yq.sh"
@@ -356,8 +358,8 @@ sudo ufw status || true
 sudo ./install_scripts/disable_firewall.sh
 sudo ufw status || true
 
-# echo "Unregistering all subscribers in Open5GS database..."
-# ./install_scripts/unregister_all_subscribers.sh
+echo "Unregistering all subscribers in Open5GS database..."
+./install_scripts/unregister_all_subscribers.sh
 
 PLMN_LENGTH=${#PLMN}
 
@@ -365,19 +367,19 @@ echo
 echo "Registering UE 1..."
 IMSI="001010123456780"
 IMSI="${PLMN}${IMSI:$PLMN_LENGTH}" # Ensure that the beginning of the IMSI is the correct PLMN
-./install_scripts/register_subscriber.sh --imsi $IMSI --key 00112233445566778899AABBCCDDEEFF --opc 63BFA50EE6523365FF14C1F45F88737D --apn srsapn
+./install_scripts/register_subscriber.sh --imsi $IMSI --key 00112233445566778899AABBCCDDEEFF --opc 63BFA50EE6523365FF14C1F45F88737D --apn "$DNN"
 
 echo
 echo "Registering UE 2..."
 IMSI="001010123456790"
 IMSI="${PLMN}${IMSI:$PLMN_LENGTH}" # Ensure that the beginning of the IMSI is the correct PLMN
-./install_scripts/register_subscriber.sh --imsi $IMSI --key 00112233445566778899AABBCCDDEF00 --opc 63BFA50EE6523365FF14C1F45F88737D --apn srsapn
+./install_scripts/register_subscriber.sh --imsi $IMSI --key 00112233445566778899AABBCCDDEF00 --opc 63BFA50EE6523365FF14C1F45F88737D --apn "$DNN"
 
 echo
 echo "Registering UE 3..."
 IMSI="001010123456791"
 IMSI="${PLMN}${IMSI:$PLMN_LENGTH}" # Ensure that the beginning of the IMSI is the correct PLMN
-./install_scripts/register_subscriber.sh --imsi $IMSI --key 00112233445566778899AABBCCDDEF01 --opc 63BFA50EE6523365FF14C1F45F88737D --apn srsapn
+./install_scripts/register_subscriber.sh --imsi $IMSI --key 00112233445566778899AABBCCDDEF01 --opc 63BFA50EE6523365FF14C1F45F88737D --apn "$DNN"
 
 # Restart Open5GS services to apply changes
 echo "To apply changed, stop and start the following:"

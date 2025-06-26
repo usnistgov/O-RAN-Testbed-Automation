@@ -1,9 +1,9 @@
 {
-  "https://github.com/open5gs/open5gs.git": ["", "ceb764b65fe24572ca4db72fd873c9d5dd839533"],
+  "https://github.com/open5gs/open5gs.git": ["", "52ca325ed5b11104e2a4b77a1aacb7e44af01ab5"],
   "https://github.com/srsran/srsRAN_4G.git": ["", "ec29b0c1ff79cebcbe66caa6d6b90778261c42b8"],
-  "https://github.com/zeromq/libzmq.git": ["", "c2f7f8ae12720f48e97dc7d719da73cdab77e450"],
-  "https://github.com/zeromq/czmq.git": ["", "5d35e0283c66a799ed90cebe6f78bcee3de55827"],
-  "https://github.com/srsran/srsRAN_Project.git": ["", "d5fa4f0ecbcee45167755c03643212f1a3a96e47"],
+  "https://github.com/zeromq/libzmq.git": ["", "3e5ce5c1cd75bd93b2ab51d98e0239eb8628b953"],
+  "https://github.com/zeromq/czmq.git": ["", "1786a2dcbfc4af94456615acc1d0f8358f2aadce"],
+  "https://github.com/srsran/srsRAN_Project.git": ["", "920ee6ecebfdfc8595165d4b42ebafca630854f7"],
   "https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep.git": ["master", "33b5940a15ea852d47f73521295eef53d295b7fd"],
   "https://gerrit.o-ran-sc.org/r/sim/e2-interface.git": ["k-release", "da6f82f286cdbb38af1178f82f85877b12c2f85b"],
   "https://gerrit.o-ran-sc.org/r/ric-plt/appmgr.git": ["", "4c05932dce72e98db23eaff2b72b58816e1f2d55"],

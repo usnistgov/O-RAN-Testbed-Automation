@@ -39,22 +39,50 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
+EXAMPLE_CONFIG_PATH="$SCRIPT_DIR/srsRAN_4G/srsue/ue.conf.example"
+CLEAR_CONFIGS=false
+
+DNN="nist-dnn"
+
+# Support input argument for the UE number(s), for example:
+# ./generate_configurations.sh --> configures UE 1, 2, and 3
+# ./generate_configurations.sh 2 --> configures UE 2
+# ./generate_configurations.sh 4 5 6 --> configures UE 4, 5, and 6
+UE_NUMBERS=("$@")
+if [ ${#UE_NUMBERS[@]} -eq 0 ]; then
+    UE_NUMBERS=(3 2 1)
+    CLEAR_CONFIGS=true
+fi
+# Check if the input is a number
+for i in "${UE_NUMBERS[@]}"; do
+    if ! [[ "$i" =~ ^[0-9]+$ ]]; then
+        echo "Error: UE number must be a number."
+        exit 1
+    fi
+    if [ "$i" -lt 1 ]; then
+        echo "Error: UE number must be greater than or equal to 1."
+        exit 1
+    fi
+    echo "UE $i will be configured."
+done
+
 # Check if the YAML editor is installed, and install it if not
 if ! command -v yq &>/dev/null; then
     sudo "$SCRIPT_DIR/install_scripts/./install_yq.sh"
 fi
 
-echo "Downloading configuration file example..."
-rm -rf configs
-mkdir configs
+echo "Saving configuration file example..."
+if [ "$CLEAR_CONFIGS" = true ]; then
+    sudo rm -rf configs
 
-# Only remove the logs if is not running
-RUNNING_STATUS=$(./is_running.sh)
-if [[ $RUNNING_STATUS != *": RUNNING"* ]]; then
-    rm -rf logs
-    mkdir logs
+    # Only remove the logs if not running
+    RUNNING_STATUS=$(./is_running.sh)
+    if [[ $RUNNING_STATUS != *": RUNNING"* ]]; then
+        sudo rm -rf logs
+    fi
 fi
-wget https://raw.githubusercontent.com/srsran/srsRAN/master/srsue/ue.conf.example -O configs/ue1.conf
+mkdir -p configs
+mkdir -p logs
 
 # Function to update or add configuration properties in .conf files, considering sections and uncommenting if needed
 update_conf() {
@@ -74,91 +102,167 @@ update_conf() {
     sed -i "/^\[$SECTION\]/a $PROPERTY = $VALUE" "$FILE_PATH"
 }
 
-PLMN_LENGTH=${#PLMN}
-
-IMSI="001010123456780"
-
 # Read the PLMN value from the 5G Core, and apply it to the beginning of the UE's IMSI
 YAML_PATH="../5G_Core_Network/options.yaml"
 if [ ! -f "$YAML_PATH" ]; then
     echo "Configuration not found in $YAML_PATH, please generate the configuration for 5G_Core_Network first."
     exit 1
 fi
+# Read PLMN and TAC values from the YAML file using sed
 PLMN=$(sed -n 's/^plmn: \([0-9]*\)/\1/p' "$YAML_PATH" | tr -d '[:space:]')
-if [ ! -z "$PLMN" ]; then
-    PLMN_LENGTH=${#PLMN}
-    IMSI="${PLMN}${IMSI:$PLMN_LENGTH}"
+TAC=$(sed -n 's/^tac: \([0-9]*\)/\1/p' "$YAML_PATH" | tr -d '[:space:]')
+# Check if PLMN and TAC values are found, if not, exit with an error message
+if [ -z "$PLMN" ]; then
+    echo "PLMN not configured in $YAML_PATH, please generate the configuration for 5G_Core_Network first."
+    exit 1
+fi
+if [ -z "$TAC" ]; then
+    echo "TAC not configured in $YAML_PATH, please generate the configuration for 5G_Core_Network first."
+    exit 1
 fi
 
-UE1_TX_PORT=2001 # 2101
-UE1_RX_PORT=2000 # 2100
+# Parse Mobile Country Code (MCC) and Mobile Network Code (MNC) from PLMN
+MCC="${PLMN:0:3}"
+if [ ${#PLMN} -eq 5 ]; then
+    MNC="${PLMN:3:2}"
+elif [ ${#PLMN} -eq 6 ]; then
+    MNC="${PLMN:3:3}"
+fi
+MNC_LENGTH=${#MNC}
 
-# Update configuration values for RF front-end device
-update_conf "configs/ue1.conf" "rf" "device_name" "zmq"
-update_conf "configs/ue1.conf" "rf" "device_args" "tx_port=tcp://127.0.0.1:$UE1_TX_PORT,rx_port=tcp://127.0.0.1:$UE1_RX_PORT,base_srate=23.04e6"
-update_conf "configs/ue1.conf" "rf" "nof_antennas" "1"
-update_conf "configs/ue1.conf" "rf" "tx_gain" "50"
-update_conf "configs/ue1.conf" "rf" "rx_gain" "40"
-update_conf "configs/ue1.conf" "rf" "srate" "23.04e6"
-update_conf "configs/ue1.conf" "rf" "freq_offset" "0"
+echo "PLMN value: $PLMN"
+echo "TAC value: $TAC"
+echo "MCC value: $MCC"
+echo "MNC value: $MNC"
+echo "MNC_LENGTH value: $MNC_LENGTH"
 
-# Update configuration values for RAT (EUTRA)
-update_conf "configs/ue1.conf" "rat.eutra" "nof_carriers" "0" # Disabled EUTRA (LTE) since we are using NR (5G)
-update_conf "configs/ue1.conf" "rat.eutra" "dl_earfcn" "2850"
+if [ ! -f "$EXAMPLE_CONFIG_PATH" ]; then
+    echo "Configuration file example not found in $EXAMPLE_CONFIG_PATH, please ensure that the file exists."
+    exit 1
+fi
 
-# Update configuration values for RAT (NR)
-update_conf "configs/ue1.conf" "rat.nr" "nof_carriers" "1"
-update_conf "configs/ue1.conf" "rat.nr" "bands" "3"
-update_conf "configs/ue1.conf" "rat.nr" "max_nof_prb" "106"
-update_conf "configs/ue1.conf" "rat.nr" "nof_prb" "106"
+for UE_NUMBER in "${UE_NUMBERS[@]}"; do
+    cp "$EXAMPLE_CONFIG_PATH" "configs/ue${UE_NUMBER}.conf"
 
-# Update configuration values for PCAP
-update_conf "configs/ue1.conf" "pcap" "enable" "none"
-# Uncomment for log files:
-# update_conf "configs/ue1.conf" "pcap" "enable" "mac,mac_nr,nas"
-update_conf "configs/ue1.conf" "pcap" "mac_filename" "$SCRIPT_DIR/logs/ue1_mac.pcap"
-update_conf "configs/ue1.conf" "pcap" "mac_nr_filename" "$SCRIPT_DIR/logs/ue1_mac_nr.pcap"
-update_conf "configs/ue1.conf" "pcap" "nas_filename" "$SCRIPT_DIR/logs/ue1_nas.pcap"
+    UE_OPC="63BFA50EE6523365FF14C1F45F88737D"
+    UE_TX_PORT=2001
+    UE_RX_PORT=2000
+    if [ "$UE_NUMBER" -eq 1 ]; then # Following the blueprint for UE 1: https://doi.org/10.6028/NIST.TN.2311
+        UE_IMEI="353490069873319"
+        UE_IMSI="001010123456780"
+        UE_KEY="00112233445566778899AABBCCDDEEFF"
+        # UE_TX_PORT=2101
+        # UE_RX_PORT=2100
+        UE_NAMESPACE="ue1"
 
-# Update configuration values for Logging
-update_conf "configs/ue1.conf" "log" "all_level" "info" #warning
-update_conf "configs/ue1.conf" "log" "phy_lib_level" "none"
-update_conf "configs/ue1.conf" "log" "all_hex_limit" "32"
-update_conf "configs/ue1.conf" "log" "filename" "$SCRIPT_DIR/logs/ue1.log"
-update_conf "configs/ue1.conf" "log" "file_max_size" "-1"
+    elif [ "$UE_NUMBER" -eq 2 ]; then # Following the blueprint for UE 2: https://doi.org/10.6028/NIST.TN.2311
+        UE_IMEI="353490069873318"
+        UE_IMSI="001010123456790"
+        UE_KEY="00112233445566778899AABBCCDDEF00"
+        # UE_TX_PORT=2201
+        # UE_RX_PORT=2200
+        UE_NAMESPACE="ue2"
 
-# Update configuration values for Metrics
-update_conf "configs/ue1.conf" "general" "metrics_period_secs" "1"
-update_conf "configs/ue1.conf" "general" "metrics_csv_enable" "false"
-update_conf "configs/ue1.conf" "general" "metrics_csv_filename" "$SCRIPT_DIR/logs/ue1_metrics.csv"
-update_conf "configs/ue1.conf" "general" "metrics_json_enable" "false"
-update_conf "configs/ue1.conf" "general" "metrics_json_filename" "$SCRIPT_DIR/logs/ue_metrics.json"
-update_conf "configs/ue1.conf" "general" "tracing_enable" "true"
-update_conf "configs/ue1.conf" "general" "tracing_filename" "$SCRIPT_DIR/logs/ue1_tracing.log"
-update_conf "configs/ue1.conf" "general" "tracing_buffcapacity" "1000000"
+    elif [ "$UE_NUMBER" -eq 3 ]; then # Following the blueprint for UE 3: https://doi.org/10.6028/NIST.TN.2311
+        UE_IMEI="353490069873312"
+        UE_IMSI="001010123456791"
+        UE_KEY="00112233445566778899AABBCCDDEF01"
+        # UE_TX_PORT=2301
+        # UE_RX_PORT=2300
+        UE_NAMESPACE="ue3"
 
-# Update configuration values for USIM
-update_conf "configs/ue1.conf" "usim" "mode" "soft"
-update_conf "configs/ue1.conf" "usim" "algo" "milenage"
-update_conf "configs/ue1.conf" "usim" "opc" "63BFA50EE6523365FF14C1F45F88737D"
-update_conf "configs/ue1.conf" "usim" "k" "00112233445566778899aabbccddeeff"
-update_conf "configs/ue1.conf" "usim" "imsi" "$IMSI"
-update_conf "configs/ue1.conf" "usim" "imei" "353490069873319"
+    elif [ "$UE_NUMBER" -gt 3 ]; then # Dynamic configurations for UE 4 and beyond
+        UE_OFFSET=$((UE_NUMBER - 3))
+        UE_IMEI=$(printf '%d' $((353490069873319 + UE_OFFSET)))
+        UE_IMSI=$(printf '%015d' $((1010123456781 + UE_OFFSET)))
+        UE_KEY="00112233445566778$(printf '%X' $((16#899AABBCCDDEF01 + UE_OFFSET)))"
+        # UE_TX_PORT="$((23 + $UE_OFFSET))01"
+        # UE_RX_PORT="$((23 + $UE_OFFSET))00"
+        UE_NAMESPACE="ue$UE_NUMBER"
+    fi
 
-# Update configuration values for RRC
-update_conf "configs/ue1.conf" "rrc" "release" "15"
-update_conf "configs/ue1.conf" "rrc" "ue_category" "4"
+    # Ensure that the beginning of the IMSI is the correct PLMN
+    if [ ! -z "$PLMN" ]; then
+        PLMN_LENGTH=${#PLMN}
+        UE_IMSI="${PLMN}${UE_IMSI:$PLMN_LENGTH}"
+    fi
 
-# Update configuration values for NAS
-update_conf "configs/ue1.conf" "nas" "apn" "srsapn"
-update_conf "configs/ue1.conf" "nas" "apn_protocol" "ipv4"
+    # Update configuration values for RF front-end device
+    update_conf "configs/ue${UE_NUMBER}.conf" "rf" "device_name" "zmq"
+    update_conf "configs/ue${UE_NUMBER}.conf" "rf" "device_args" "tx_port=tcp://127.0.0.1:$UE_TX_PORT,rx_port=tcp://127.0.0.1:$UE_RX_PORT,base_srate=23.04e6"
+    update_conf "configs/ue${UE_NUMBER}.conf" "rf" "nof_antennas" "1"
+    update_conf "configs/ue${UE_NUMBER}.conf" "rf" "freq_offset" "0"
+    update_conf "configs/ue${UE_NUMBER}.conf" "rf" "tx_gain" "35"
+    update_conf "configs/ue${UE_NUMBER}.conf" "rf" "rx_gain" "60"
+    update_conf "configs/ue${UE_NUMBER}.conf" "rf" "srate" "23.04e6"
 
-# Update configuration values for Gateway
-update_conf "configs/ue1.conf" "gw" "netns" "ue1"
-update_conf "configs/ue1.conf" "gw" "ip_devname" "tun_srsue"
-update_conf "configs/ue1.conf" "gw" "ip_netmask" "255.255.255.0"
+    # Update configuration values for RAT (EUTRA)
+    update_conf "configs/ue${UE_NUMBER}.conf" "rat.eutra" "nof_carriers" "0" # Disabled EUTRA (LTE) since we are using NR (5G)
 
-# Update configuration values for GUI
-update_conf "configs/ue1.conf" "gui" "enable" "false"
+    # Update configuration values for RAT (NR)
+    update_conf "configs/ue${UE_NUMBER}.conf" "rat.nr" "nof_carriers" "1"
+    update_conf "configs/ue${UE_NUMBER}.conf" "rat.nr" "bands" "3"
+    update_conf "configs/ue${UE_NUMBER}.conf" "rat.nr" "max_nof_prb" "106"
+    update_conf "configs/ue${UE_NUMBER}.conf" "rat.nr" "nof_prb" "106"
 
-echo "Successfully configured the UE. The configuration file is located in the configs/ directory."
+    # Update configuration values for PCAP
+    update_conf "configs/ue${UE_NUMBER}.conf" "pcap" "enable" "none"
+    # Uncomment for log files:
+    # update_conf "configs/ue${UE_NUMBER}.conf" "pcap" "enable" "mac,mac_nr,nas"
+    update_conf "configs/ue${UE_NUMBER}.conf" "pcap" "mac_filename" "$SCRIPT_DIR/logs/ue${UE_NUMBER}_mac.pcap"
+    update_conf "configs/ue${UE_NUMBER}.conf" "pcap" "mac_nr_filename" "$SCRIPT_DIR/logs/ue${UE_NUMBER}_mac_nr.pcap"
+    update_conf "configs/ue${UE_NUMBER}.conf" "pcap" "nas_filename" "$SCRIPT_DIR/logs/ue${UE_NUMBER}_nas.pcap"
+
+    # Update configuration values for Logging
+    update_conf "configs/ue${UE_NUMBER}.conf" "log" "all_level" "none" #warning
+    update_conf "configs/ue${UE_NUMBER}.conf" "log" "phy_lib_level" "none"
+    update_conf "configs/ue${UE_NUMBER}.conf" "log" "all_hex_limit" "32"
+    update_conf "configs/ue${UE_NUMBER}.conf" "log" "filename" "$SCRIPT_DIR/logs/ue${UE_NUMBER}.log"
+    update_conf "configs/ue${UE_NUMBER}.conf" "log" "file_max_size" "-1"
+
+    # Update configuration values for Metrics
+    update_conf "configs/ue${UE_NUMBER}.conf" "general" "metrics_period_secs" "1"
+    update_conf "configs/ue${UE_NUMBER}.conf" "general" "metrics_csv_enable" "false"
+    update_conf "configs/ue${UE_NUMBER}.conf" "general" "metrics_csv_filename" "$SCRIPT_DIR/logs/ue${UE_NUMBER}_metrics.csv"
+    update_conf "configs/ue${UE_NUMBER}.conf" "general" "metrics_json_enable" "false"
+    update_conf "configs/ue${UE_NUMBER}.conf" "general" "metrics_json_filename" "$SCRIPT_DIR/logs/ue${UE_NUMBER}_metrics.json"
+    update_conf "configs/ue${UE_NUMBER}.conf" "general" "tracing_enable" "true"
+    update_conf "configs/ue${UE_NUMBER}.conf" "general" "tracing_filename" "$SCRIPT_DIR/logs/ue${UE_NUMBER}_tracing.log"
+    update_conf "configs/ue${UE_NUMBER}.conf" "general" "tracing_buffcapacity" "1000000"
+
+    # Update configuration values for USIM
+    update_conf "configs/ue${UE_NUMBER}.conf" "usim" "mode" "soft"
+    update_conf "configs/ue${UE_NUMBER}.conf" "usim" "algo" "milenage"
+    update_conf "configs/ue${UE_NUMBER}.conf" "usim" "opc" "$UE_OPC"
+    update_conf "configs/ue${UE_NUMBER}.conf" "usim" "k" "$UE_KEY"
+    update_conf "configs/ue${UE_NUMBER}.conf" "usim" "imsi" "$UE_IMSI"
+    update_conf "configs/ue${UE_NUMBER}.conf" "usim" "imei" "$UE_IMEI"
+
+    # Update configuration values for RRC
+    update_conf "configs/ue${UE_NUMBER}.conf" "rrc" "release" "15"
+    update_conf "configs/ue${UE_NUMBER}.conf" "rrc" "ue_category" "4"
+
+    # Update configuration values for NAS
+    update_conf "configs/ue${UE_NUMBER}.conf" "nas" "apn" "$DNN"
+    update_conf "configs/ue${UE_NUMBER}.conf" "nas" "apn_protocol" "ipv4"
+
+    # Update configuration values for Gateway
+    update_conf "configs/ue${UE_NUMBER}.conf" "gw" "netns" "ue${UE_NUMBER}"
+    update_conf "configs/ue${UE_NUMBER}.conf" "gw" "ip_devname" "tun_srsue"
+    update_conf "configs/ue${UE_NUMBER}.conf" "gw" "ip_netmask" "255.255.255.0"
+
+    # Update configuration values for GUI
+    update_conf "configs/ue${UE_NUMBER}.conf" "gui" "enable" "false"
+
+    echo
+    echo "Successfully configured UE ${UE_NUMBER}."
+    echo "    OPC:  $UE_OPC"
+    echo "    IMEI: $UE_IMEI"
+    echo "    IMSI: $UE_IMSI"
+    echo "    KEY:  $UE_KEY"
+    echo "    PLMN: $PLMN"
+    echo "    DNN:  $DNN"
+    echo
+
+    echo "The configuration file is located in the configs/ directory."
+done

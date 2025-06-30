@@ -417,7 +417,7 @@
               "type": "number"
             },
             {
-              "selector": "CQI_SINGLE_CODEWORD",
+              "selector": "DRB.DerivedCQIDl",
               "text": "",
               "type": "number"
             },
@@ -3344,7 +3344,7 @@
               "names": [
                 "Time (UNIX ms)",
                 "UE ID",
-                "CQI_SINGLE_CODEWORD"
+                "DRB.DerivedCQIDl"
               ]
             }
           }
@@ -3372,7 +3372,7 @@
           "options": {
             "include": {
               "names": [
-                "CQI_SINGLE_CODEWORD",
+                "DRB.DerivedCQIDl",
                 "Time (UNIX ms)"
               ]
             }

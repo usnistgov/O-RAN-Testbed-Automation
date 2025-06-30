@@ -1,0 +1,133 @@
+diff --git a/docker/build.sh b/docker/build.sh
+index d6b2c94..e47d8fe 100755
+--- a/docker/build.sh
++++ b/docker/build.sh
+@@ -4,6 +4,13 @@ cd "$(dirname "${BASH_SOURCE[0]}")"/..
+ D=$1
+ shift
+ 
++TAG=${1:-}
++TAG_ARG=()
++if [[ -n "$TAG" ]]; then
++  shift
++  TAG_ARG=(--build-arg branch="$TAG")
++fi
++
+ PULL=--pull
+ if [[ ${NOPULL:-} -eq 1 ]]; then
+   PULL=''
+@@ -16,7 +23,7 @@ build_image() {
+   if grep -q localhost/ docker/$NAME/Dockerfile; then
+     PULL1=''
+   fi
+-  docker build $PULL1 --progress=plain -t 5gdeploy.localhost/$NAME "$@" docker/$NAME
++  docker build $PULL1 --progress=plain -t 5gdeploy.localhost/$NAME "${TAG_ARG[@]}" "$@" docker/$NAME
+ }
+ 
+ build_oai_nwdaf_microservice() {
+@@ -29,6 +36,9 @@ build_oai_nwdaf_microservice() {
+ 
+ build_oai_nwdaf() {
+   local BRANCH=http2_server_support
++  if [[ -n "$TAG" ]]; then
++    BRANCH=$TAG
++  fi
+ 
+   for MS in engine nbi-analytics nbi-events nbi-ml sbi; do
+     build_oai_nwdaf_microservice $MS \
+diff --git a/eupf/download.sh b/eupf/download.sh
+index 11bd624..74fc261 100644
+--- a/eupf/download.sh
++++ b/eupf/download.sh
+@@ -1,7 +1,8 @@
+ #!/bin/bash
+ set -euo pipefail
+ cd "$(dirname "${BASH_SOURCE[0]}")"
++TAG=${1:-v0.7.0}
+ 
+ mkdir -p grafana
+-curl -sfLS https://github.com/edgecomllc/eupf/archive/refs/tags/v0.7.0.tar.gz |
+-  tar -C grafana -xzv --strip-components=3 --wildcards 'eupf-*/.deploy/grafana'
++curl -sfLS "https://github.com/edgecomllc/eupf/archive/${TAG}.tar.gz" |
++  tar -C grafana -xzv --strip-components=3 --wildcards 'eupf-*/.deploy/grafana'
+\ No newline at end of file
+diff --git a/install.sh b/install.sh
+index aad29ba..e50e56d 100755
+--- a/install.sh
++++ b/install.sh
+@@ -19,6 +19,37 @@ for CMD in corepack docker jq yq; do
+   fi
+ done
+ 
++# Parse command line arguments for optional tags
++declare -A TAGS=( [eupf]="" [free5gc]="" [oai]="" [open5gs]="" )
++
++while [[ $# -gt 0 ]]; do
++  case "$1" in
++    --eupf-tag)
++      TAGS[eupf]="$2"
++      msg "Using EUPF tag: ${TAGS[eupf]}"
++      shift 2
++      ;;
++    --free5gc-tag)
++      TAGS[free5gc]="$2"
++      msg "Using Free5GC tag: ${TAGS[free5gc]}"
++      shift 2
++      ;;
++    --oai-tag)
++      TAGS[oai]="$2"
++      msg "Using OAI tag: ${TAGS[oai]}"
++      shift 2
++      ;;
++    --open5gs-tag)
++      TAGS[open5gs]="$2"
++      msg "Using Open5GS tag: ${TAGS[open5gs]}"
++      shift 2
++      ;;
++    *)
++      shift
++      ;;
++  esac
++done
++
+ if ! docker version &>/dev/null; then
+   die Unable to access Docker, check docker group membership
+ fi
+@@ -26,14 +57,19 @@ fi
+ msg Installing 5gdeploy
+ corepack pnpm install
+ bash ./types/build-schema.sh
+-bash ./eupf/download.sh
+-bash ./free5gc/download.sh
+-bash ./oai/download.sh
+-bash ./open5gs/download.sh
++bash ./eupf/download.sh "${TAGS[eupf]}"
++bash ./free5gc/download.sh "${TAGS[free5gc]}"
++bash ./oai/download.sh "${TAGS[oai]}"
++bash ./open5gs/download.sh "${TAGS[open5gs]}"
+ 
+ for IMG in bridge dn eupf free5gc-webclient gnbsim gtp5g iperf2 ns3http open5gs packetrusher sockperf srsran5g ueransim virt; do
+-  msg Building Docker image $IMG
+-  ./docker/build.sh $IMG
++  TAG=${TAGS[$IMG]:-}
++  if [[ -z "$TAG" ]]; then
++    msg "Building Docker image $IMG"
++  else
++    msg "Building Docker image $IMG with tag $TAG"
++  fi
++  ./docker/build.sh $IMG $TAG
+ done
+ 
+ msg 5gdeploy is installed
+diff --git a/open5gs/download.sh b/open5gs/download.sh
+index 10b140b..eadc084 100644
+--- a/open5gs/download.sh
++++ b/open5gs/download.sh
+@@ -1,5 +1,6 @@
+ #!/bin/bash
+ set -euo pipefail
+ cd "$(dirname "${BASH_SOURCE[0]}")"
++TAG=${1:-v2.7.2}
+ 
+-curl -sfLS "https://github.com/open5gs/open5gs/raw/v2.7.2/misc/db/open5gs-dbctl" -o open5gs-dbctl
++curl -sfLS "https://github.com/open5gs/open5gs/raw/${TAG}/misc/db/open5gs-dbctl" -o open5gs-dbctl

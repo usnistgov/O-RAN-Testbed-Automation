@@ -1,5 +1,5 @@
 diff --git a/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h b/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h
-index 0b977de276..2326d56c6b 100644
+index d97783604f..b9bd602c74 100644
 --- a/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h
 +++ b/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h
 @@ -483,6 +483,8 @@ typedef struct NR_UE_harq {

@@ -31,7 +31,7 @@
 # Exit immediately if a command fails
 set -e
 
-CLEAN_INSTALL=false
+CLEAN_INSTALL=true # Note: If set to true, then full_install.sh needs to be ran in the Next_Generation_Node_B directory too.
 DEBUG_SYMBOLS=false
 
 if ! command -v realpath &>/dev/null; then

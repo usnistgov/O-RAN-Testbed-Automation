@@ -225,7 +225,7 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
 
     echo
     echo "Successfully configured UE ${UE_NUMBER}."
-    echo "    OPC:  $UE_OPC"
+    echo "    OPc:  $UE_OPC"
     echo "    IMEI: $UE_IMEI"
     echo "    IMSI: $UE_IMSI"
     echo "    KEY:  $UE_KEY"

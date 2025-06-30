@@ -98,16 +98,18 @@ void log_int_value(byte_array_t name, meas_record_lst_t meas_record)
   // Added int metrics for KPM research:
   } else if (cmp_str_ba("RSRP.Count", name) == 0) {
     printf("RSRP.Count = %u\n", meas_record.int_val);
-  } else if (cmp_str_ba("N_PRB", name) == 0) {
-    printf("N_PRB = %u\n", meas_record.int_val);
+  } else if (cmp_str_ba("PHY.NPrbDl", name) == 0) {
+    printf("PHY.NPrbDl = %u\n", meas_record.int_val);
   } else if (cmp_str_ba("DRB.HarqMcsUl", name) == 0) {
     printf("DRB.HarqMcsUl = %u\n", meas_record.int_val);
   } else if (cmp_str_ba("DRB.HarqMcsDl", name) == 0) {
     printf("DRB.HarqMcsDl = %u\n", meas_record.int_val);
-  } else if (cmp_str_ba("CQI_SINGLE_CODEWORD", name) == 0) {
-    printf("CQI_SINGLE_CODEWORD = %u\n", meas_record.int_val);
-  } else if (cmp_str_ba("CQI_DUAL_CODEWORD", name) == 0) {
-    printf("CQI_DUAL_CODEWORD = %u\n", meas_record.int_val);
+  } else if (cmp_str_ba("DRB.DerivedCQIDl", name) == 0) {
+    printf("DRB.DerivedCQIDl = %u\n", meas_record.int_val);
+  } else if (cmp_str_ba("PHY.CqiWb1TbDl", name) == 0) {
+    printf("PHY.CqiWb1TbDl = %u\n", meas_record.int_val);
+  } else if (cmp_str_ba("PHY.CqiWb2TbDl", name) == 0) {
+    printf("PHY.CqiWb2TbDl = %u\n", meas_record.int_val);
   } else {
     printf("Measurement Name not yet supported\n");
   }
@@ -135,14 +137,14 @@ void log_real_value(byte_array_t name, meas_record_lst_t meas_record)
     printf("RSRP.Quartile3 = %.2f [dBm]\n", meas_record.real_val);
   } else if (cmp_str_ba("RSRP.Maximum", name) == 0) {
     printf("RSRP.Maximum = %.2f [dBm]\n", meas_record.real_val);
-  } else if (cmp_str_ba("RSSI", name) == 0) {
-    printf("RSSI = %.2f [dBm]\n", meas_record.real_val);
-  } else if (cmp_str_ba("RSRQ", name) == 0) {
-    printf("RSRQ = %.2f [dB]\n", meas_record.real_val);
-  } else if (cmp_str_ba("PUSCH_SNR", name) == 0) {
-    printf("PUSCH_SNR = %.2f [dB]\n", meas_record.real_val);
-  } else if (cmp_str_ba("PUCCH_SNR", name) == 0) {
-    printf("PUCCH_SNR = %.2f [dB]\n", meas_record.real_val);
+  } else if (cmp_str_ba("PHY.DerivedRssiDl", name) == 0) {
+    printf("PHY.DerivedRssiDl = %.2f [dBm]\n", meas_record.real_val);
+  } else if (cmp_str_ba("PHY.DerivedRsrqDl", name) == 0) {
+    printf("PHY.DerivedRsrqDl = %.2f [dB]\n", meas_record.real_val);
+  } else if (cmp_str_ba("PUSCH.Snr", name) == 0) {
+    printf("PUSCH.Snr = %.2f [dB]\n", meas_record.real_val);
+  } else if (cmp_str_ba("PUCCH.Snr", name) == 0) {
+    printf("PUCCH.Snr = %.2f [dB]\n", meas_record.real_val);
   } else if (cmp_str_ba("DRB.HarqBlockErrorRateUl", name) == 0) {
     printf("DRB.HarqBlockErrorRateUl = %.2f [%%]\n", meas_record.real_val);
   } else if (cmp_str_ba("DRB.HarqBlockErrorRateDl", name) == 0) {
@@ -242,7 +244,6 @@ void sm_cb_kpm(sm_ag_if_rd_t const* rd)
 
       // log measurements
       log_kpm_measurements(&msg_frm_3->meas_report_per_ue[i].ind_msg_format_1);
-      
     }
     counter++;
   }

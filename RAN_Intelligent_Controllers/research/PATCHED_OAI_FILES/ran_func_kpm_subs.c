@@ -381,6 +381,7 @@ static meas_record_lst_t fill_MCS_DL(__attribute__((unused))uint32_t gran_period
   // Fetch the MCS table index
   return meas_record;
 }
+
 // Added metric for research purposes only
 static meas_record_lst_t fill_BLER_UL(__attribute__((unused))uint32_t gran_period_ms, cudu_ue_info_pair_t ue_info, __attribute__((unused))const size_t ue_idx)
 {
@@ -454,6 +455,51 @@ static meas_record_lst_t fill_DRB_MacSduErrorRateUl(__attribute__((unused))uint3
 
   // Calculate the SDU-level packet drop rate (SDUs failed due to HARQ failures / total SDUs transmitted)
   meas_record.real_val = (double)ue_info.ue->mac_stats.ul.sdu_errors / (double)ue_info.ue->mac_stats.ul.num_mac_sdu;
+  return meas_record;
+}
+
+
+// Added metric for research purposes only
+static meas_record_lst_t fill_CQI(__attribute__((unused))uint32_t gran_period_ms, cudu_ue_info_pair_t ue_info, __attribute__((unused))const size_t ue_idx)
+{
+  meas_record_lst_t meas_record = {0};
+
+  meas_record.value = INTEGER_MEAS_VALUE;
+
+  uint8_t mcs = ue_info.ue->UE_sched_ctrl.dl_bler_stats.mcs;
+
+  /*
+  # Small Python script to generate the mapping from MCS to CQI:
+  # 3GPP 38.214 § 5.2.2.1: "The UE shall derive for each CQI value reported in uplink slot n the highest CQI index which satisfies which satisfies the following condition: A single PDSCH transport block with a combination of modulation scheme, target code rate and transport block size corresponding to the CQI index, and occupying a group of downlink physical resource blocks termed the CSI reference resource"
+
+  # Table 5.1.3.1-1 column 4:
+  mcs_eff = [0.2344, 0.3066, 0.3770, 0.4902, 0.6016, 0.7402, 0.8770, 1.0273, 1.1758, 1.3262, 1.3281, 1.4766, 1.6953, 1.9141, 2.1602, 2.4063, 2.5703, 2.5664, 2.7305, 3.0293, 3.3223, 3.6094, 3.9023, 4.2129, 4.5234, 4.8164, 5.1152, 5.3320, 5.5547]
+
+  # Table 5.2.2.1-2 column 4:
+  cqi_eff = [0.0, 0.1523, 0.2344, 0.3770, 0.6016, 0.8770, 1.1758, 1.4766, 1.9141, 2.4063, 2.7305, 3.3223, 3.9023, 4.5234, 5.1152, 5.5547]
+
+  # Find the first CQI index whose spectral-efficiency is greater than the MCS spectral-efficiency at the same index.
+  mcs_to_cqi_spec = [next((cq_idx for cq_idx, cq_se in enumerate(cqi_eff) if cq_se >= se), 15) for se in mcs_eff]
+  print("mcs_to_cqi_spec =  ", mcs_to_cqi_spec)
+  # Result:       [2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 7, 8, 8, 9, 9, 10, 10, 10, 11, 11, 12, 12, 13, 13, 14, 14, 15, 15]
+
+  mcs_to_cqi_vendor = [i if i < 4 else 3 + (i - 3)//2 for i in range(len(mcs_eff))]
+  print("mcs_to_cqi_vendor =", mcs_to_cqi_vendor)
+  # Result:       [0, 1, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14, 14, 15, 15]
+  */
+
+  // static const uint8_t mcs_to_cqi_spec[] = {2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 7, 8, 8, 9, 9, 10, 10, 10, 11, 11, 12, 12, 13, 13, 14, 14, 15, 15};
+  static const uint8_t mcs_to_cqi_vendor[] = {0, 1, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14, 14, 15, 15};
+
+  uint8_t cqi_index = 0;
+  if (mcs < sizeof(mcs_to_cqi_vendor) / sizeof(mcs_to_cqi_vendor[0])) {
+    cqi_index = mcs_to_cqi_vendor[mcs];
+  } else {
+    cqi_index = 0;
+  }
+
+  meas_record.int_val = cqi_index;
+
   return meas_record;
 }
 
@@ -602,11 +648,11 @@ static kv_measure_t lst_measure[] = {
   {.key = "RSRP.Quartile3", .value = fill_RSRP_Quartile3 },
   {.key = "RSRP.Maximum", .value = fill_RSRP_Maximum },
   {.key = "RSRP.Count", .value = fill_RSRP_Count },
-  {.key = "N_PRB", .value = fill_N_PRB },
-  {.key = "RSSI", .value = fill_RSSI },
-  {.key = "RSRQ", .value = fill_RSRQ },
-  {.key = "PUSCH_SNR", .value = fill_PUSCH_SNR },
-  {.key = "PUCCH_SNR", .value = fill_PUCCH_SNR },
+  {.key = "PHY.NPrbDl", .value = fill_N_PRB },
+  {.key = "PHY.DerivedRssiDl", .value = fill_RSSI },
+  {.key = "PHY.DerivedRsrqDl", .value = fill_RSRQ },
+  {.key = "PUSCH.Snr", .value = fill_PUSCH_SNR },
+  {.key = "PUCCH.Snr", .value = fill_PUCCH_SNR },
   {.key = "DRB.HarqMcsUl", .value = fill_MCS_UL },
   {.key = "DRB.HarqMcsDl", .value = fill_MCS_DL },
   {.key = "DRB.HarqBlockErrorRateUl", .value = fill_BLER_UL },
@@ -615,8 +661,9 @@ static kv_measure_t lst_measure[] = {
   {.key = "DRB.MacSduRetransmissionRateDl", .value = fill_DRB_MacSduRetransmissionRateDl },
   {.key = "DRB.MacSduErrorRateUl", .value = fill_DRB_MacSduErrorRateUl },
   {.key = "DRB.MacSduErrorRateDl", .value = fill_DRB_MacSduErrorRateDl },
-  {.key = "CQI_SINGLE_CODEWORD", .value = fill_CQI_SINGLE_CODEWORD },
-  {.key = "CQI_DUAL_CODEWORD", .value = fill_CQI_DUAL_CODEWORD },
+  {.key = "DRB.DerivedCQIDl", .value = fill_CQI },
+  {.key = "PHY.CqiWb1TbDl", .value = fill_CQI_SINGLE_CODEWORD },
+  {.key = "PHY.CqiWb2TbDl", .value = fill_CQI_DUAL_CODEWORD },
 #if defined (NGRAN_GNB_DU)
   {.key = "DRB.RlcSduDelayDl", .value =  fill_DRB_RlcSduDelayDl }, 
   {.key = "DRB.UEThpDl", .value =  fill_DRB_UEThpDl }, 

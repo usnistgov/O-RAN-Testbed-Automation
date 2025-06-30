@@ -74,7 +74,7 @@
 #include "NR_BCCH-BCH-Message.h"
 #include "NR_CellGroupConfig.h"
 #include "NR_BCCH-DL-SCH-Message.h"
-#include "openair2/RRC/NR/nr_rrc_config.h"
+#include "nr_radio_config.h"
 
 /* PHY */
 #include "time_meas.h"

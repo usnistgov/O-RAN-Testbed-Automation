@@ -95,7 +95,9 @@ if [ ! -d "open5gs" ]; then
 fi
 cd $SCRIPT_DIR/open5gs
 
-echo "Starting installation of Open5GS..."
+echo
+echo
+echo "Installing Open5GS..."
 export DEBIAN_FRONTEND=noninteractive
 # Modifies the needrestart configuration to suppress interactive prompts
 if [ -f "/etc/needrestart/needrestart.conf" ]; then

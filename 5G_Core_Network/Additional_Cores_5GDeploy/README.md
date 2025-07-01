@@ -22,19 +22,19 @@ To select a core network beyond Open5GS, modify the `core_to_use` and `upf_to_us
   - `open5gs`: Open5GS core in the current directory (default, see [[4]][open5gs-open5gs])
   - `5gdeploy-oai`: OpenAirInterface core (see [[5]][oaicore-oai])
   - `5gdeploy-free5gc`: Free5GC core (see [[6]][free5gc-free5gc])
-  - `5gdeploy-pheonix`: Phoenix core, also known as Open5GCore (requires license to operate, see [[7]][open5gcore-phoenix])
-  - `5gdeploy-open5gs`: Open5GC core (with the difference being that this is containerized in Docker, see [[4]][open5gs-open5gs])
+  - `5gdeploy-phoenix`: Phoenix core, also known as Open5GCore (requires license to operate, see [\[7][open5gcore-fraunhofer-fokus], [8\]][open5gcore-phoenix])
+  - `5gdeploy-open5gs`: Open5GS core (containerized in Docker, see [[4]][open5gs-open5gs])
 
 - `upf_to_use` (optional):
   - `null` or blank: Uses the same value as `core_to_use` (default)
-  - `5gdeploy-eupf`: eUPF (see [[8]][eupf-edgecomllc])
-  - `5gdeploy-oai`: OpenAirInterface UPF (see [[9]][upf-oai])
-  - `5gdeploy-oai-vpp`: OpenAirInterface UPF (see [[10]][upf-vpp-oai])
+  - `5gdeploy-eupf`: eUPF (see [[9]][eupf-edgecomllc])
+  - `5gdeploy-oai`: OpenAirInterface UPF (see [[10]][upf-oai])
+  - `5gdeploy-oai-vpp`: OpenAirInterface UPF (see [[11]][upf-vpp-oai])
   - `5gdeploy-free5gc`: Free5GC UPF (see [[7]][free5gc-free5gc])
-  - `5gdeploy-pheonix`: Phoenix core, also known as Open5GCore (requires license to operate, see [[8]][open5gcore-phoenix])
-  - `5gdeploy-open5gs`: Open5GC core (containerized in Docker, see [[4]][open5gs-open5gs])
-  - `5gdeploy-bess`: Aether SD-Core BESS UPF (see [[11]][bess-aethercore])
-  - `5gdeploy-ndndpdk`: NDN-DPDK UPF (see [[12]][nist-ndndpdk])
+  - `5gdeploy-phoenix`: Phoenix core, also known as Open5GCore (requires license to operate, see [\[7][open5gcore-fraunhofer-fokus], [8\]][open5gcore-phoenix])
+  - `5gdeploy-open5gs`: Open5GS core (containerized in Docker, see [[4]][open5gs-open5gs])
+  - `5gdeploy-bess`: Aether SD-Core BESS UPF (see [[12]][bess-aethercore])
+  - `5gdeploy-ndndpdk`: NDN-DPDK UPF (see [[13]][nist-ndndpdk])
 
 Upon updating options.conf, run `full_install.sh` to build the new core.
 Please see the parent directory's README.md for more information.
@@ -47,12 +47,13 @@ Please see the parent directory's README.md for more information.
 4. Open Source implementation for 5G Core and EPC. Open5GS. [https://open5gs.org][open5gs-open5gs]
 5. 5G Core Network. OpenAirInterface. [https://gitlab.eurecom.fr/oai/cn5g][oaicore-oai]
 6. Open Source 5G Core Network based on 3GPP R15. Free5GC. [https://github.com/free5gc/free5gc][free5gc-free5gc]
-7. Open5GCore - 5G Core Network for Research, Testbeds and Trials. Open5GCore. [https://www.open5gcore.org][open5gcore-phoenix]
-8. 5G User Plane Function (UPF) based on eBPF. edgecomllc. [https://github.com/edgecomllc/eupf][eupf-edgecomllc]
-9. An eBPF implementation of the User Plane Function. OpenAirInterface. [https://gitlab.eurecom.fr/oai/cn5g/oai-cn5g-upf][upf-oai]
-10. OpenAir CN 5G for UPF - Using a VPP implementation. OpenAirInterface. [https://gitlab.eurecom.fr/oai/cn5g/oai-cn5g-upf-vpp][upf-vpp-oai]
-11. Open Source Cloud Native Mobile Core. Aether SD-Core. [https://github.com/omec-project/bess][bess-aethercore]
-12. Shi, J. , Pesavento, D. and Benmohamed, L. (2020), NDN-DPDK: NDN Forwarding at 100 Gbps on Commodity Hardware, 7th ACM Conference on Information-Centric Networking (ICN 2020), Montreal, CA, [online], [https://doi.org/10.1145/3405656.3418715][nist-ndndpdk], https://tsapps.nist.gov/publication/get_pdf.cfm?pub_id=930577
+7. Open 5G Campus Networks: Key Drivers for 6G Innovations. Fraunhofer FOKUS. [https://doi.org/10.1007/s00502-022-01064-7][open5gcore-fraunhofer-fokus]
+8. Open5GCore - 5G Core Network for Research, Testbeds and Trials. Open5GCore. [https://www.open5gcore.org][open5gcore-phoenix]
+9. 5G User Plane Function (UPF) based on eBPF. edgecomllc. [https://github.com/edgecomllc/eupf][eupf-edgecomllc]
+10. An eBPF implementation of the User Plane Function. OpenAirInterface. [https://gitlab.eurecom.fr/oai/cn5g/oai-cn5g-upf][upf-oai]
+11. OpenAir CN 5G for UPF - Using a VPP implementation. OpenAirInterface. [https://gitlab.eurecom.fr/oai/cn5g/oai-cn5g-upf-vpp][upf-vpp-oai]
+12. Open Source Cloud Native Mobile Core. Aether SD-Core. [https://github.com/omec-project/bess][bess-aethercore]
+13. Shi, J. , Pesavento, D. and Benmohamed, L. (2020), NDN-DPDK: NDN Forwarding at 100 Gbps on Commodity Hardware, 7th ACM Conference on Information-Centric Networking (ICN 2020), Montreal, CA, [online], [https://doi.org/10.1145/3405656.3418715][nist-ndndpdk], https://tsapps.nist.gov/publication/get_pdf.cfm?pub_id=930577
 
 <!-- References -->
 
@@ -62,6 +63,7 @@ Please see the parent directory's README.md for more information.
 [5gdeploy-nist]: https://doi.org/10.18434/mds2-3794
 [oaicore-oai]: https://gitlab.eurecom.fr/oai/cn5g
 [free5gc-free5gc]: https://github.com/free5gc/free5gc
+[open5gcore-fraunhofer-fokus]: https://doi.org/10.1007/s00502-022-01064-7
 [open5gcore-phoenix]: https://www.open5gcore.org
 [eupf-edgecomllc]: https://github.com/edgecomllc/eupf
 [upf-oai]: https://gitlab.eurecom.fr/oai/cn5g/oai-cn5g-upf

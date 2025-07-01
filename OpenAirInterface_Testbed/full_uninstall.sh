@@ -91,3 +91,6 @@ echo
 
 cd RAN_Intelligent_Controllers/Flexible-RIC
 ./full_uninstall.sh
+
+echo
+echo "Successfully uninstalled all OpenAirInterface testbed components."

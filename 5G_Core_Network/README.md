@@ -25,7 +25,7 @@ To select a core network beyond Open5GS, modify the `core_to_use` and `upf_to_us
   - `open5gs`: Open5GS core in the current directory (default, see [[3]][open5gs-open5gs])
   - `5gdeploy-oai`: OpenAirInterface core (see [[5]][oaicore-oai])
   - `5gdeploy-free5gc`: Free5GC core (see [[6]][free5gc-free5gc])
-  - `5gdeploy-pheonix`: Phoenix core, also known as Open5GCore (requires license to operate, see [[7]][open5gcore-phoenix])
+  - `5gdeploy-phoenix`: Phoenix core, also known as Open5GCore (requires license to operate, see [[7]][open5gcore-phoenix])
   - `5gdeploy-open5gs`: Open5GC core (with the difference being that this is containerized in Docker, see [[3]][open5gs-open5gs])
 
 - Supported values for `upf_to_use`:
@@ -34,7 +34,7 @@ To select a core network beyond Open5GS, modify the `core_to_use` and `upf_to_us
   - `5gdeploy-oai`: OpenAirInterface UPF (see [[9]][upf-oai])
   - `5gdeploy-oai-vpp`: OpenAirInterface UPF (see [[10]][upf-vpp-oai])
   - `5gdeploy-free5gc`: Free5GC UPF (see [[7]][free5gc-free5gc])
-  - `5gdeploy-pheonix`: Phoenix core, also known as Open5GCore (requires license to operate, see [[8]][open5gcore-phoenix])
+  - `5gdeploy-phoenix`: Phoenix core, also known as Open5GCore (requires license to operate, see [[8]][open5gcore-phoenix])
   - `5gdeploy-open5gs`: Open5GC core (containerized in Docker, see [[3]][open5gs-open5gs])
   - `5gdeploy-bess`: Aether SD-Core BESS UPF (see [[11]][bess-aethercore])
   - `5gdeploy-ndndpdk`: NDN-DPDK UPF (see [[12]][nist-ndndpdk])

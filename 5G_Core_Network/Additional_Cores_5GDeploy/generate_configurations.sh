@@ -66,7 +66,7 @@ if [ ! -f "options.yaml" ]; then
     echo "# - open5gs: Open5GS core in current directory (default, see https://github.com/open5gs/open5gs)" >>"options.yaml"
     echo "# - 5gdeploy-oai: OpenAirInterface core in Additional_Cores_5GDeploy directory see https://gitlab.eurecom.fr/oai/cn5g)" >>"options.yaml"
     echo "# - 5gdeploy-free5gc: Free5GC core in Additional_Cores_5GDeploy directory (see https://github.com/free5gc/free5gc)" >>"options.yaml"
-    echo "# - 5gdeploy-pheonix: Phoenix core in Additional_Cores_5GDeploy directory (requires license to operate, see: https://www.open5gcore.org)" >>"options.yaml"
+    echo "# - 5gdeploy-phoenix: Phoenix core in Additional_Cores_5GDeploy directory (requires license to operate, see: https://www.open5gcore.org)" >>"options.yaml"
     echo "# - 5gdeploy-open5gs: Open5GS core in Additional_Cores_5GDeploy directory (see https://github.com/open5gs/open5gs)" >>"options.yaml"
     echo "core_to_use: open5gs" >>"options.yaml"
     echo "" >>"options.yaml"
@@ -78,7 +78,7 @@ if [ ! -f "options.yaml" ]; then
     echo "# - 5gdeploy-oai: OAI UPF (see https://gitlab.eurecom.fr/oai/cn5g)" >>"options.yaml"
     echo "# - 5gdeploy-oai-vpp: OAI UPF based on VPP (see https://gitlab.eurecom.fr/oai/cn5g/oai-cn5g-upf-vpp)" >>"options.yaml"
     echo "# - 5gdeploy-free5gc: Free5GC UPF (see https://github.com/free5gc/free5gc)" >>"options.yaml"
-    echo "# - 5gdeploy-pheonix: Phoenix UPF (see https://www.open5gcore.org)" >>"options.yaml"
+    echo "# - 5gdeploy-phoenix: Phoenix UPF (see https://doi.org/10.1007/s00502-022-01064-7 and https://www.open5gcore.org)" >>"options.yaml"
     echo "# - 5gdeploy-open5gs: Open5GS UPF (see https://github.com/open5gs/open5gs)" >>"options.yaml"
     echo "# - 5gdeploy-bess: Aether SD-Core's BESS UPF (see https://github.com/omec-project/bess)" >>"options.yaml"
     echo "# - 5gdeploy-ndndpdk: Use NIST NDN-DPDK (see https://doi.org/10.1145/3405656.3418715)" >>"options.yaml"
@@ -199,16 +199,15 @@ if [ "$CORE_TO_USE" == "5gdeploy-oai" ]; then
     CORE="oai"
 elif [ "$CORE_TO_USE" == "5gdeploy-free5gc" ]; then
     CORE="free5gc"
-elif [ "$CORE_TO_USE" == "5gdeploy-pheonix" ]; then
-    CORE="pheonix"
+elif [ "$CORE_TO_USE" == "5gdeploy-phoenix" ]; then
+    CORE="phoenix"
 elif [ "$CORE_TO_USE" == "5gdeploy-open5gs" ]; then
     CORE="open5gs"
 else
     # Remove the prefix if it exists
     CORE="${CORE_TO_USE#5gdeploy-}"
-    echo "Unknown core: $CORE"
     echo
-    read -p "Warning: 5gdeploy may not support this core. Do you want to proceed? (y/n): " yn
+    read -p "WARNING: Unknown core: \"$CORE\", 5gdeploy may not support this core. Do you want to proceed? (y/n): " yn
     case $yn in
     [Yy]*) ;;
     *)
@@ -227,8 +226,8 @@ elif [ "$UPF_TO_USE" == "5gdeploy-oai-vpp" ]; then
     UPF="oai-vpp"
 elif [ "$UPF_TO_USE" == "5gdeploy-free5gc" ]; then
     UPF="free5gc"
-elif [ "$UPF_TO_USE" == "5gdeploy-pheonix" ]; then
-    UPF="pheonix"
+elif [ "$UPF_TO_USE" == "5gdeploy-phoenix" ]; then
+    UPF="phoenix"
 elif [ "$UPF_TO_USE" == "5gdeploy-open5gs" ]; then
     UPF="open5gs"
 elif [ "$UPF_TO_USE" == "5gdeploy-bess" ]; then
@@ -240,7 +239,7 @@ else
     UPF="${UPF_TO_USE#5gdeploy-}"
     echo "Unknown UPF: $UPF"
     echo
-    read -p "Warning: 5gdeploy may not support this UPF. Do you want to proceed? (y/n): " yn
+    read -p "WARNING: 5gdeploy may not support this UPF. Do you want to proceed? (y/n): " yn
     case $yn in
     [Yy]*) ;;
     *)
@@ -298,13 +297,19 @@ fi
 
 cd "$SCRIPT_DIR"
 
-AMF_IP=192.168.62.11                                        # N2 interface
+AMF_IP=192.168.62.11 # N2 interface
+#SUBNET_INTERNAL="172.25.194.0/24"                           # Subnet for internet core network
 AMF_IP_BIND=$(ip route get 1 | awk '{print $(NF-2); exit}') # Get the IP of the primary network interface
 
 # Set AMF_IP_BASE to AMF_IP with the last octet replaced by 0
 AMF_IP_BASE=$(echo "$AMF_IP" | awk -F. '{printf "%d.%d.%d.0", $1, $2, $3}')
-sudo iptables -t nat -A POSTROUTING -s 172.25.194.0/24 ! -d 172.25.194.0/24 -j MASQUERADE
-sudo iptables -t nat -A POSTROUTING -s $AMF_IP_BASE/24 ! -d $AMF_IP_BASE/24 -j MASQUERADE
+
+# # if ! sudo iptables -t nat -C POSTROUTING -s "$SUBNET_INTERNAL" ! -d "$SUBNET_INTERNAL" -j MASQUERADE 2>/dev/null; then
+# #     sudo iptables -t nat -A POSTROUTING -s "$SUBNET_INTERNAL" ! -d "$SUBNET_INTERNAL" -j MASQUERADE
+# # fi
+# if ! sudo iptables -t nat -C POSTROUTING -s "$AMF_IP_BASE/24" ! -d "$AMF_IP_BASE/24" -j MASQUERADE 2>/dev/null; then
+#     sudo iptables -t nat -A POSTROUTING -s "$AMF_IP_BASE/24" ! -d "$AMF_IP_BASE/24" -j MASQUERADE
+# fi
 
 # Update the configuration file so that the gNodeB can find the AMF
 mkdir -p "$SCRIPT_DIR/configs"
@@ -410,6 +415,10 @@ for CPFILE in cp-cfg/*; do
         sed -i "s/\"internet\"/\"$DNN\"/g" "$CPFILE"
         sed -i "s/'internet'/'$DNN'/g" "$CPFILE"
     fi
+    # if grep -q "172.25.196." "$CPFILE"; then
+    #     echo "Replacing 172.25.196.x with 172.25.194.x in $CPFILE"
+    #     sed -i 's/172\.25\.196\.\([0-9]\+\)/172.25.194.\1/g' "$CPFILE"
+    # fi
 done
 # # Revise configuration file cp-cfg/config.yaml
 # if [ -f "cp-cfg/config.yaml" ]; then
@@ -535,10 +544,23 @@ if [ -f "cp-sql/oai_db.sql" ]; then
 #     fi
 fi
 
+# Revise cp-sql/smf.sql
+if [ -f "cp-sql/smf.sql" ]; then
+    # Replace "'internet'" with "'$DNN'"
+    sed -i "s/'internet'/'$DNN'/g" cp-sql/smf.sql
+fi
+
+# Revise cp-sql/udm.sql
+if [ -f "cp-sql/udm.sql" ]; then
+    # Replace "'internet'" with "'$DNN'"
+    sed -i "s/'internet'/'$DNN'/g" cp-sql/udm.sql
+fi
+
 if [ -f "cp-db/open5gs.sh" ]; then
     # Replace " internet " with " $DNN "
     sed -i "s/ internet / $DNN /g" cp-db/open5gs.sh
 fi
+
 ### End of post-generation patching ###
 
 echo "Successfully configured the 5G Core Deployment Helper (5gdeploy). The configuration files are located in the configs/ directory."

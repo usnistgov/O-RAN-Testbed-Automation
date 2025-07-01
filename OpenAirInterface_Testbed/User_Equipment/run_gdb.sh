@@ -110,7 +110,7 @@ else
 
     if ! command -v gdb &>/dev/null; then
         echo "Installing GNU Debugger..."
-        sudo apt update
+        sudo apt-get update
         sudo apt-get install -y gdb
     fi
 

@@ -166,9 +166,6 @@ else
     sudo usermod -aG docker "$USER"
 fi
 
-# Set docker's DNS server then restart docker
-sudo ./update_docker_dns.sh
-
 # Enable and attempt to start Docker service with retries
 echo "Enabling and starting Docker service..."
 sudo systemctl daemon-reload
@@ -191,5 +188,9 @@ if ! sudo systemctl is-active --quiet docker; then
 else
     echo "Docker started successfully."
 fi
+
+echo "Setting Docker DNS servers..."
+cd "$SCRIPT_DIR"
+sudo ./update_docker_dns.sh
 
 echo "Successfully installed Docker $DOCKERVERSION"

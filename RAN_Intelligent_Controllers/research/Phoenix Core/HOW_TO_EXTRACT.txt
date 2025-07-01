@@ -1,0 +1,16 @@
+-------------------------------------------------------------------------------
+
+To unzip it:
+
+zip -s 0 phoenix-repo-encrypted.zip --out combined-phoenix-repo-encrypted
+unzip combined-phoenix-repo-encrypted.zip
+# A prompt for the password will show up #
+rm -rf combined-phoenix-repo-encrypted.zip
+
+-------------------------------------------------------------------------------
+
+To re-zip it:
+
+zip -r -P 'PASTE_PASSWORD_HERE' -s 90m phoenix-repo-encrypted.zip phoenix-repo
+
+-------------------------------------------------------------------------------

@@ -48,8 +48,8 @@ echo "Stopping all Open5GS containers..."
 cd $SCRIPT_DIR/5gdeploy
 
 echo "Removing system packages (httpie, jq, python3-libconf, wireshark-common, nodejs, npm)..."
-sudo apt remove --purge -y httpie jq python3-libconf wireshark-common nodejs npm
-sudo apt autoremove --purge -y
+sudo apt-get remove --purge -y httpie jq python3-libconf wireshark-common nodejs npm
+sudo apt-get autoremove --purge -y
 
 echo "Cleaning npm cache directories..."
 # Code from (https://stackoverflow.com/a/41057802/8687026):
@@ -82,9 +82,30 @@ echo "Removing Docker and cleaning config..."
 
 echo "Removing 5G Core Deployment Helper (5gdeploy) directory..."
 sudo rm -rf 5gdeploy/
+# sudo rm -rf phoenix-repo/
 sudo rm -rf compose/
 sudo rm -rf logs/
 sudo rm -rf configs/
+
+if [ -d phoenix-repo ]; then
+    cd phoenix-repo
+    echo "Removing Phoenix build artifacts..."
+    sudo rm -rf phoenix-src/build
+    find phoenix-src/3rdParty -type d -name build -exec sudo rm -rf {} +
+    find phoenix-src -type d -name CMakeFiles -exec sudo rm -rf {} +
+    find phoenix-src/3rdParty -type f -name Makefile -exec sudo rm -f {} +
+    find phoenix-src/3rdParty -type f -name config.status -exec sudo rm -f {} +
+    find phoenix-src/3rdParty -type f -name config.log -exec sudo rm -f {} +
+    find phoenix-src/3rdParty -type f -name stamp-h1 -exec sudo rm -f {} +
+    find phoenix-src/3rdParty -type f -name libtool -exec sudo rm -f {} +
+    find phoenix-src/3rdParty -type f \( -name lib*.a -o -name lib*.so* \) -exec sudo rm -f {} +
+    find phoenix-src/3rdParty/localInstDir/lib -type f \( -name lib*.a -o -name lib*.so* \) -exec sudo rm -f {} +
+    find phoenix-src/3rdParty/localInstDir/lib64 -type f \( -name lib*.a -o -name lib*.so* \) -exec sudo rm -f {} +
+
+    echo
+    echo "The directory $SCRIPT_DIR/phoenix-repo/ still exists. Please remove it manually if it is no longer needed."
+    cd ..
+fi
 
 echo
 echo

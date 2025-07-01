@@ -63,10 +63,36 @@ if [ "$CORE_TO_USE" == "open5gs" ]; then
     exit 1
 fi
 
+echo
+echo
+echo "Installing 5G Core Deployment Helper (5gdeploy)..."
+export DEBIAN_FRONTEND=noninteractive
+# Modifies the needrestart configuration to suppress interactive prompts
+if [ -f "/etc/needrestart/needrestart.conf" ]; then
+    if ! grep -q "^\$nrconf{restart} = 'a';$" "/etc/needrestart/needrestart.conf"; then
+        sudo sed -i "/\$nrconf{restart} = /c\$nrconf{restart} = 'a';" "/etc/needrestart/needrestart.conf"
+        echo "Modified needrestart configuration to auto-restart services."
+    fi
+fi
+export NEEDRESTART_SUSPEND=1
+
 echo "Using CP: $CORE_TO_USE"
 echo "Using UP: $UPF_TO_USE"
 
 cd "$SCRIPT_DIR"
+
+if [ "$CORE_TO_USE" == "5gdeploy-phoenix" ]; then
+    if [ ! -d "$SCRIPT_DIR/phoenix-repo" ]; then
+        echo
+        echo "The core to use is 5gdeploy-phoenix, but the directory \"phoenix-repo\" does not exist."
+        echo "Please ensure that the following directory exists before proceeding."
+        echo
+        echo "    $SCRIPT_DIR/phoenix-repo"
+        echo
+        echo "It can be acquired by purchasing a license from https://www.open5gcore.org."
+        exit 1
+    fi
+fi
 
 if [ ! -d "5gdeploy" ]; then
     echo "Cloning 5G Core Deployment Helper (5gdeploy)..."
@@ -92,10 +118,10 @@ if [ -f logs/full_install_step_1_complete ]; then
 fi
 if [ ! -f logs/full_install_step_1_complete ]; then
     # Install system packages
-    sudo apt update
-    sudo DEBIAN_FRONTEND=noninteractive apt install -y linux-generic linux-lowlatency
+    sudo apt-get update
+    sudo apt-get install -y linux-generic linux-lowlatency
     echo 'wireshark-common wireshark-common/install-setuid boolean true' | sudo debconf-set-selections
-    sudo DEBIAN_FRONTEND=noninteractive apt install -y httpie jq python3-libconf wireshark-common
+    sudo apt-get install -y httpie jq python3-libconf wireshark-common
     sudo adduser $(id -un) wireshark
     # Check if the YAML editor is installed, and install it if not
     if ! command -v yq &>/dev/null; then
@@ -104,13 +130,13 @@ if [ ! -f logs/full_install_step_1_complete ]; then
     # Install Node.js 22.x
     http --ignore-stdin GET https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --batch --yes --dearmor -o /etc/apt/keyrings/nodesource.gpg
     echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
-    sudo apt update
-    sudo DEBIAN_FRONTEND=noninteractive apt install -y nodejs
+    sudo apt-get update
+    sudo apt-get install -y nodejs
     # # Install Node.js 20.x
     # http --ignore-stdin GET https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --batch --yes --dearmor -o /etc/apt/keyrings/nodesource.gpg
     # echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
-    # sudo apt update
-    # sudo DEBIAN_FRONTEND=noninteractive apt install -y nodejs
+    # sudo apt-get update
+    # sudo apt-get install -y nodejs
     touch logs/full_install_step_1_complete
 else
     echo "Dependencies already installed, skipping step 1."
@@ -150,6 +176,11 @@ if [ -z "$FIXED_DOCKER_PERMS" ]; then
 fi
 
 cd "$SCRIPT_DIR/5gdeploy"
+
+if [ "$CORE_TO_USE" == "5gdeploy-phoenix" ]; then
+    echo "Building Phoenix Docker image..."
+    ./docker/build.sh phoenix
+fi
 
 # Step 2: Install 5gdeploy
 echo "Starting installation of 5G Core Deployment Helper (5gdeploy)..."

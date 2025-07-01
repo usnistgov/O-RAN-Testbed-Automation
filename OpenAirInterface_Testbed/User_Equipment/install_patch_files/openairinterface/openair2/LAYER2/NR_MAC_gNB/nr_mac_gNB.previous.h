@@ -45,6 +45,7 @@
 #include "common/utils/ds/seq_arr.h"
 #include "common/utils/nr/nr_common.h"
 #include "common/utils/ds/byte_array.h"
+#include "openair2/LAYER2/nr_rlc/nr_rlc_configuration.h"
 
 #define NR_SCHED_LOCK(lock)                                        \
   do {                                                             \
@@ -89,9 +90,6 @@
 #include "LAYER2/NR_MAC_COMMON/nr_mac_common.h"
 #include "NR_TAG.h"
 
-#include <openair3/UICC/usim_interface.h>
-
-
 /* Defs */
 #define MAX_NUM_BWP 5
 #define MAX_NUM_CORESET 12
@@ -100,7 +98,6 @@
 #define NR_NB_RA_PROC_MAX 4
 #define MAX_NUM_OF_SSB 64
 #define MAX_NUM_NR_PRACH_PREAMBLES 64
-#define MIN_NUM_PRBS_TO_SCHEDULE  5
 
 uint8_t nr_get_rv(int rel_round);
 
@@ -564,6 +561,8 @@ typedef struct NR_QoS_config_s {
 
 typedef struct nr_lc_config {
   uint8_t lcid;
+  /// flag if corresponding RB is suspended
+  bool suspended;
   /// priority as specified in 38.321
   int priority;
   /// associated NSSAI for DRB
@@ -677,10 +676,6 @@ typedef struct {
   float pdcch_cl_adjust;
 } NR_UE_sched_ctrl_t;
 
-typedef struct {
-  uicc_t *uicc;
-} NRUEcontext_t;
-
 typedef struct NR_mac_dir_stats {
   uint64_t lc_bytes[64];
   uint64_t rounds[8];
@@ -744,8 +739,9 @@ typedef struct {
   NR_mac_stats_t mac_stats;
   /// currently active CellGroupConfig
   NR_CellGroupConfig_t *CellGroup;
-  /// reestablishRLC has to be signaled in RRCreconfiguration
-  bool reestablish_rlc;
+  /// in case of reestablishment, old spCellConfig to apply after
+  /// reconfiguration
+  NR_SpCellConfig_t *reconfigSpCellConfig;
   interrupt_followup_action_t interrupt_action;
   NR_UE_NR_Capability_t *capability;
   // UE selected beam index
@@ -899,6 +895,7 @@ typedef struct gNB_MAC_INST_s {
   nr_pp_impl_ul pre_processor_ul;
 
   nr_mac_config_t radio_config;
+  nr_rlc_configuration_t rlc_config;
 
   NR_UE_sched_ctrl_t *sched_ctrlCommon;
   NR_sched_pdcch_t *sched_pdcch_otherSI;

@@ -48,10 +48,10 @@ echo "Uninstalling InfluxDB 2.x..."
 
 sudo ./install_scripts/stop_influxdb_service.sh
 
-sudo apt remove -y influxdb
-sudo apt remove -y influxdb-client
-sudo apt remove -y influxdb2
-sudo apt autoclean -y && sudo apt autoremove -y
+sudo apt-get remove -y influxdb
+sudo apt-get remove -y influxdb-client
+sudo apt-get remove -y influxdb2
+sudo apt-get autoclean -ysudo apt-get apt-get autoremove -y
 
 sudo rm -rf /var/lib/influxdb/
 sudo rm -rf /var/log/influxdb/

@@ -99,6 +99,11 @@ elif [[ "$CORE_TO_USE" == "5gdeploy-free5gc" ]]; then
         echo true
         exit 0
     fi
+elif [[ "$CORE_TO_USE" == "5gdeploy-phoenix" ]]; then
+    if echo "$AMF_LOG" | grep -q "Successfully parsed command line"; then # TODO: Improve this check
+        echo true
+        exit 0
+    fi
 fi
 
 echo false

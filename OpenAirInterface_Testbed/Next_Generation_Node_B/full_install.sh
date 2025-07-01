@@ -108,7 +108,7 @@ if [[ "$CMAKE_VERSION" == 3.16.* ]]; then
     # Add Kitware's APT repository
     wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc | sudo apt-key add -
     sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ focal main'
-    sudo apt update
+    sudo apt-get update
     sudo apt-get install -y cmake
 fi
 

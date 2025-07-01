@@ -445,7 +445,7 @@ while true; do
     # Check for disk-pressure taint on the node and warn the user if removing it fails
     if kubectl describe nodes | grep Taints | grep disk-pressure &>/dev/null; then
         if ! sudo ./install_scripts/handle_disk_pressure_taint.sh; then
-            echo "Warning: Disk-pressure taint is preventing xApp deployment. Please ensure sufficient RAM and disk space is available."
+            echo "WARNING: Disk-pressure taint is preventing xApp deployment. Please ensure sufficient RAM and disk space is available."
             echo "Check the taints with: kubectl describe nodes | grep Taints"
             break
         fi

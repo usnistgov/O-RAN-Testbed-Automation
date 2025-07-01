@@ -236,7 +236,8 @@ static void mac_rrc_init(gNB_MAC_INST *mac, ngran_node_t node_type)
 void mac_top_init_gNB(ngran_node_t node_type,
                       NR_ServingCellConfigCommon_t *scc,
                       NR_ServingCellConfig_t *scd,
-                      const nr_mac_config_t *config)
+                      const nr_mac_config_t *config,
+                      const nr_rlc_configuration_t *default_rlc_config)
 {
   module_id_t     i;
   gNB_MAC_INST    *nrmac;
@@ -272,6 +273,7 @@ void mac_top_init_gNB(ngran_node_t node_type,
 
       RC.nrmac[i]->common_channels[0].ServingCellConfigCommon = scc;
       RC.nrmac[i]->radio_config = *config;
+      RC.nrmac[i]->rlc_config = *default_rlc_config;
 
       RC.nrmac[i]->common_channels[0].pre_ServingCellConfig = scd;
 

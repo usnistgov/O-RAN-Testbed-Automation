@@ -42,6 +42,11 @@ PARENT_DIR=$(dirname "$SCRIPT_DIR")
 
 cd "$PARENT_DIR"
 
+# Check if the YAML editor is installed, and install it if not
+if ! command -v yq &>/dev/null; then
+    sudo "$SCRIPT_DIR/install_scripts/./install_yq.sh"
+fi
+
 # Ensure that 5G_Core_Network/optiona.yaml is configured to use 5gdeploy instead of Open5GS
 if [ -f "options.yaml" ]; then
     CORE_TO_USE=$(yq eval '.core_to_use' options.yaml)
@@ -82,16 +87,7 @@ echo "Using UP: $UPF_TO_USE"
 cd "$SCRIPT_DIR"
 
 if [ "$CORE_TO_USE" == "5gdeploy-phoenix" ]; then
-    if [ ! -d "$SCRIPT_DIR/phoenix-repo" ]; then
-        echo
-        echo "The core to use is 5gdeploy-phoenix, but the directory \"phoenix-repo\" does not exist."
-        echo "Please ensure that the following directory exists before proceeding."
-        echo
-        echo "    $SCRIPT_DIR/phoenix-repo"
-        echo
-        echo "It can be acquired by purchasing a license from https://www.open5gcore.org."
-        exit 1
-    fi
+    ./install_scripts/phoenix_validate.sh
 fi
 
 if [ ! -d "5gdeploy" ]; then
@@ -121,11 +117,13 @@ if [ ! -f logs/full_install_step_1_complete ]; then
     sudo apt-get update
     sudo apt-get install -y linux-generic linux-lowlatency
     echo 'wireshark-common wireshark-common/install-setuid boolean true' | sudo debconf-set-selections
-    sudo apt-get install -y httpie jq python3-libconf wireshark-common
+    sudo apt-get install -y httpie jq wireshark-common
     sudo adduser $(id -un) wireshark
-    # Check if the YAML editor is installed, and install it if not
-    if ! command -v yq &>/dev/null; then
-        sudo "$SCRIPT_DIR/install_scripts/./install_yq.sh"
+    if ! dpkg -s python3-libconf &>/dev/null; then
+        if ! sudo apt-get install -y python3-libconf; then
+            echo "Package python3-libconf not found in apt, installing via pip..."
+            python3 -m pip install --user libconf
+        fi
     fi
     # Install Node.js 22.x
     http --ignore-stdin GET https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --batch --yes --dearmor -o /etc/apt/keyrings/nodesource.gpg
@@ -175,12 +173,12 @@ if [ -z "$FIXED_DOCKER_PERMS" ]; then
     fi
 fi
 
-cd "$SCRIPT_DIR/5gdeploy"
-
 if [ "$CORE_TO_USE" == "5gdeploy-phoenix" ]; then
-    echo "Building Phoenix Docker image..."
-    ./docker/build.sh phoenix
+    cd "$SCRIPT_DIR"
+    ./install_scripts/phoenix_build.sh
 fi
+
+cd "$SCRIPT_DIR/5gdeploy"
 
 # Step 2: Install 5gdeploy
 echo "Starting installation of 5G Core Deployment Helper (5gdeploy)..."

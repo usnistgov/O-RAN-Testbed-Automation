@@ -298,18 +298,30 @@ fi
 cd "$SCRIPT_DIR"
 
 AMF_IP=192.168.62.11 # N2 interface
-#SUBNET_INTERNAL="172.25.194.0/24"                           # Subnet for internet core network
 AMF_IP_BIND=$(ip route get 1 | awk '{print $(NF-2); exit}') # Get the IP of the primary network interface
+UPF1_IP=192.168.63.21
+UPF4_IP=192.168.63.24
+SUBNET_INTERNAL="172.25.160.0/20" # Sets the subnet for internal core network
 
-# Set AMF_IP_BASE to AMF_IP with the last octet replaced by 0
-AMF_IP_BASE=$(echo "$AMF_IP" | awk -F. '{printf "%d.%d.%d.0", $1, $2, $3}')
+# Uncomment to give the core components internet access
+# if ! sudo iptables -t nat -C POSTROUTING -s "$SUBNET_INTERNAL" ! -d "$SUBNET_INTERNAL" -j MASQUERADE 2>/dev/null; then
+#     sudo iptables -t nat -A POSTROUTING -s "$SUBNET_INTERNAL" ! -d "$SUBNET_INTERNAL" -j MASQUERADE
+# fi
+# Remove with sudo iptables -t nat -D POSTROUTING -s "$SUBNET_INTERNAL" ! -d "$SUBNET_INTERNAL" -j MASQUERADE
 
-# # if ! sudo iptables -t nat -C POSTROUTING -s "$SUBNET_INTERNAL" ! -d "$SUBNET_INTERNAL" -j MASQUERADE 2>/dev/null; then
-# #     sudo iptables -t nat -A POSTROUTING -s "$SUBNET_INTERNAL" ! -d "$SUBNET_INTERNAL" -j MASQUERADE
-# # fi
+
+
+# # Set AMF_IP_BASE to AMF_IP with the last octet replaced by 0
+# AMF_IP_BASE=$(echo "$AMF_IP" | awk -F. '{printf "%d.%d.%d.0", $1, $2, $3}')
 # if ! sudo iptables -t nat -C POSTROUTING -s "$AMF_IP_BASE/24" ! -d "$AMF_IP_BASE/24" -j MASQUERADE 2>/dev/null; then
 #     sudo iptables -t nat -A POSTROUTING -s "$AMF_IP_BASE/24" ! -d "$AMF_IP_BASE/24" -j MASQUERADE
 # fi
+# # Remove with sudo iptables -t nat -D POSTROUTING -s "$AMF_IP_BASE/24" ! -d "$AMF_IP_BASE/24" -j MASQUERADE
+
+# if ! sudo iptables -t nat -C POSTROUTING -o br-cp -j MASQUERADE 2>/dev/null; then
+#     sudo iptables -t nat -A POSTROUTING -o br-cp -j MASQUERADE
+# fi
+# # Remove with sudo iptables -t nat -D POSTROUTING -o br-cp -j MASQUERADE
 
 # Update the configuration file so that the gNodeB can find the AMF
 mkdir -p "$SCRIPT_DIR/configs"
@@ -340,6 +352,21 @@ TAC_PADDED=$(printf "%06x" "$TAC") # For example, 7 -> 000007
 # Also edit the common scenario template
 sed -i "s/plmn: \"[^\"]*\"/plmn: \"$MCC-$MNC\"/g" common/phones-vehicles.ts
 sed -i "s/tac: \"[^\"]*\"/tac: \"$TAC_PADDED\"/g" common/phones-vehicles.ts
+
+cd "$SCRIPT_DIR/5gdeploy"
+
+# Set the subnet in compose/ipalloc.ts
+if [ -f "compose/ipalloc.ts" ]; then
+    echo "Setting core subnet in compose/ipalloc.ts..."
+    sed -E -i 's|(dfltSpace[[:space:]]*=[[:space:]]*")[^"]*(")|\1'"$SUBNET_INTERNAL"'\2|' compose/ipalloc.ts
+fi
+
+# Set the subnet in virt/main.ts
+if [ -f "virt/main.ts" ]; then
+    echo "Setting core subnet in virt/main.ts..."
+    sed -E -i 's|(ipAllocOptions[[:space:]]*\(")[^"]*("\))|\1'"$SUBNET_INTERNAL"'\2|' virt/main.ts
+fi
+
 ### End of pre-generation patching ###
 
 cd "$SCRIPT_DIR/5gdeploy/scenario"
@@ -351,8 +378,8 @@ echo "Using UP: $UPF"
     +gnbs=1 +phones=0 +vehicles=0 \
     --cp=$CORE --up=$UPF --ran=none \
     --ip-fixed=amf,n2,$AMF_IP \
-    --ip-fixed=upf1,n3,192.168.63.21 \
-    --ip-fixed=upf4,n3,192.168.63.24
+    --ip-fixed=upf1,n3,$UPF1_IP \
+    --ip-fixed=upf4,n3,$UPF4_IP
 #     --bridge='n2 | eth | amf*@AC:1F:6B:F5:4C:C6 gnb*@AC:1F:6B:F5:4C:C6' \
 #     --bridge='n3 | eth | upf*@AC:1F:6B:F5:4C:C6 gnb*@AC:1F:6B:F5:4C:C6'
 

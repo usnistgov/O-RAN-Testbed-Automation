@@ -90,6 +90,9 @@ fi
 LOG_FILE="logs/ue${UE_NUMBER}_stdout.txt"
 PDU_SESSION_IP=$(grep "PDU Session Establishment successful" "$LOG_FILE" | cut -d ':' -f2 | xargs | tr -cd '[:print:]')
 CORE_IP=$(ip route | grep ogstun | cut -d ' ' -f 9 | xargs)
+if [ -z "$CORE_IP" ]; then # Try 5gdeploy control plane bridge if ogstun is not found
+    CORE_IP=$(ip route | grep br-cp | cut -d ' ' -f 9 | xargs)
+fi
 
 if [ -z "$PDU_SESSION_IP" ]; then
     echo "Error: Unable to find PDU Session IP from the log file $LOG_FILE."

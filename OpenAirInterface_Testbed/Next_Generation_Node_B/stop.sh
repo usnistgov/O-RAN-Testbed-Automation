@@ -54,13 +54,13 @@ MAX_COUNT=5
 sleep 1
 while [ $COUNT -lt $MAX_COUNT ]; do
     IS_RUNNING=$(./is_running.sh)
-    echo "$IS_RUNNING ($COUNT / $MAX_COUNT)"
     if echo "$IS_RUNNING" | grep -q "gNodeB: NOT_RUNNING"; then
         echo "The gNodeB has stopped gracefully."
         ./is_running.sh
         exit 0
     fi
     COUNT=$((COUNT + 1))
+    echo "$IS_RUNNING [$((MAX_COUNT - COUNT + 1))]"
     sleep 2
 done
 

@@ -28,42 +28,18 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-if ! command -v realpath &>/dev/null; then
-    echo "Package \"coreutils\" not found, installing..."
-    sudo apt-get install -y coreutils
-fi
+echo "# Script: $(realpath $0)..."
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
-cd "$SCRIPT_DIR"
+PARENT_DIR=$(dirname "$SCRIPT_DIR")
 
-# Check if the gNodeB is already stopped
-if $(./is_running.sh | grep -q "gNodeB: NOT_RUNNING"); then
-    ./is_running.sh
-    exit 0
+if [ ! -d "$PARENT_DIR/phoenix-repo" ]; then
+    echo
+    echo "The core to use is 5gdeploy-phoenix, but the directory \"phoenix-repo\" does not exist."
+    echo "Please ensure that the following directory exists before proceeding."
+    echo
+    echo "    $PARENT_DIR/phoenix-repo"
+    echo
+    echo "It can be acquired by purchasing a license from https://www.open5gcore.org."
+    exit 1
 fi
-
-# Prevent the subsequent command from requiring credential input
-sudo ls >/dev/null 2>&1
-
-# Send a graceful shutdown signal to the gNodeB process
-sudo pkill -f "gnb" >/dev/null 2>&1 &
-
-# Wait for the process to terminate gracefully
-COUNT=0
-MAX_COUNT=10
-sleep 1
-while [ $COUNT -lt $MAX_COUNT ]; do
-    IS_RUNNING=$(./is_running.sh)
-    if echo "$IS_RUNNING" | grep -q "gNodeB: NOT_RUNNING"; then
-        echo "The gNodeB has stopped gracefully."
-        ./is_running.sh
-        exit 0
-    fi
-    COUNT=$((COUNT + 1))
-    echo "$IS_RUNNING [$((MAX_COUNT - COUNT + 1))]"
-    sleep 2
-done
-
-# If the process is still running after 20 seconds, send a forceful kill signal
-echo "The gNodeB did not stop in time, sending forceful kill signal..."
-sudo pkill -9 -f "gnb" >/dev/null 2>&1 &

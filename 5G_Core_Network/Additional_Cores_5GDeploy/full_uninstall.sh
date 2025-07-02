@@ -88,23 +88,8 @@ sudo rm -rf logs/
 sudo rm -rf configs/
 
 if [ -d phoenix-repo ]; then
-    cd phoenix-repo
-    echo "Removing Phoenix build artifacts..."
-    sudo rm -rf phoenix-src/build
-    find phoenix-src/3rdParty -type d -name build -exec sudo rm -rf {} +
-    find phoenix-src -type d -name CMakeFiles -exec sudo rm -rf {} +
-    find phoenix-src/3rdParty -type f -name Makefile -exec sudo rm -f {} +
-    find phoenix-src/3rdParty -type f -name config.status -exec sudo rm -f {} +
-    find phoenix-src/3rdParty -type f -name config.log -exec sudo rm -f {} +
-    find phoenix-src/3rdParty -type f -name stamp-h1 -exec sudo rm -f {} +
-    find phoenix-src/3rdParty -type f -name libtool -exec sudo rm -f {} +
-    find phoenix-src/3rdParty -type f \( -name lib*.a -o -name lib*.so* \) -exec sudo rm -f {} +
-    find phoenix-src/3rdParty/localInstDir/lib -type f \( -name lib*.a -o -name lib*.so* \) -exec sudo rm -f {} +
-    find phoenix-src/3rdParty/localInstDir/lib64 -type f \( -name lib*.a -o -name lib*.so* \) -exec sudo rm -f {} +
-
     echo
     echo "The directory $SCRIPT_DIR/phoenix-repo/ still exists. Please remove it manually if it is no longer needed."
-    cd ..
 fi
 
 echo

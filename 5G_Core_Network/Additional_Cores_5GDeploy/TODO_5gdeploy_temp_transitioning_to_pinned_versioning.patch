@@ -71,7 +71,7 @@ index aad29ba..e50e56d 100755
 +      ;;
 +    --free5gc-tag)
 +      TAGS[free5gc]="$2"
-+      msg "Using Free5GC tag: ${TAGS[free5gc]}"
++      msg "Using free5GC tag: ${TAGS[free5gc]}"
 +      shift 2
 +      ;;
 +    --oai-tag)

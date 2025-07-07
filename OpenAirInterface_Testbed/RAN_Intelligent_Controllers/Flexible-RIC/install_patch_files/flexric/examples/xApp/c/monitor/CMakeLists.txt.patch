@@ -1,5 +1,5 @@
 diff --git a/examples/xApp/c/monitor/CMakeLists.txt b/examples/xApp/c/monitor/CMakeLists.txt
-index b2148e05d..9c3c02807 100644
+index b2148e05..9c3c0280 100644
 --- a/examples/xApp/c/monitor/CMakeLists.txt
 +++ b/examples/xApp/c/monitor/CMakeLists.txt
 @@ -80,3 +80,29 @@ target_link_libraries(xapp_rc_moni

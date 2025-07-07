@@ -1,8 +1,8 @@
 diff --git a/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c b/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c
-index aaf46797ac..15cf054ecd 100644
+index 4468cdf0b9..81e2909800 100644
 --- a/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c
 +++ b/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c
-@@ -426,6 +426,29 @@ static const char* kpm_meas_du[] = {
+@@ -432,6 +432,29 @@ static const char* kpm_meas_du[] = {
    "DRB.UEThpUl",
    "RRU.PrbTotDl",
    "RRU.PrbTotUl",
@@ -32,7 +32,7 @@ index aaf46797ac..15cf054ecd 100644
    NULL,
  };
  
-@@ -437,6 +460,29 @@ static const char* kpm_meas_gnb[] = {
+@@ -443,6 +466,29 @@ static const char* kpm_meas_gnb[] = {
    "DRB.UEThpUl",
    "RRU.PrbTotDl",
    "RRU.PrbTotUl",

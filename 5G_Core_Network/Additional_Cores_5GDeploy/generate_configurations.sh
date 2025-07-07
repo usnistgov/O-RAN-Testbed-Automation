@@ -28,6 +28,12 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
+AMF_IP=192.168.62.11                                        # N2 interface
+AMF_IP_BIND=$(ip route get 1 | awk '{print $(NF-2); exit}') # Get the IP of the primary network interface
+UPF1_IP=192.168.63.21
+UPF4_IP=192.168.63.24
+SUBNET_INTERNAL="172.25.160.0/20" # Sets the subnet for internal core network
+
 # Exit immediately if a command fails
 set -e
 
@@ -65,7 +71,7 @@ if [ ! -f "options.yaml" ]; then
     echo "# Choose which core to use by default. Options for core_to_use are:" >>"options.yaml"
     echo "# - open5gs: Open5GS core in current directory (default, see https://github.com/open5gs/open5gs)" >>"options.yaml"
     echo "# - 5gdeploy-oai: OpenAirInterface core in Additional_Cores_5GDeploy directory see https://gitlab.eurecom.fr/oai/cn5g)" >>"options.yaml"
-    echo "# - 5gdeploy-free5gc: Free5GC core in Additional_Cores_5GDeploy directory (see https://github.com/free5gc/free5gc)" >>"options.yaml"
+    echo "# - 5gdeploy-free5gc: free5GC core in Additional_Cores_5GDeploy directory (see https://github.com/free5gc/free5gc)" >>"options.yaml"
     echo "# - 5gdeploy-phoenix: Phoenix core in Additional_Cores_5GDeploy directory (requires license to operate, see: https://www.open5gcore.org)" >>"options.yaml"
     echo "# - 5gdeploy-open5gs: Open5GS core in Additional_Cores_5GDeploy directory (see https://github.com/open5gs/open5gs)" >>"options.yaml"
     echo "core_to_use: open5gs" >>"options.yaml"
@@ -77,7 +83,7 @@ if [ ! -f "options.yaml" ]; then
     echo "# - 5gdeploy-eupf: eUPF (see https://github.com/edgecomllc/eupf)" >>"options.yaml"
     echo "# - 5gdeploy-oai: OAI UPF (see https://gitlab.eurecom.fr/oai/cn5g)" >>"options.yaml"
     echo "# - 5gdeploy-oai-vpp: OAI UPF based on VPP (see https://gitlab.eurecom.fr/oai/cn5g/oai-cn5g-upf-vpp)" >>"options.yaml"
-    echo "# - 5gdeploy-free5gc: Free5GC UPF (see https://github.com/free5gc/free5gc)" >>"options.yaml"
+    echo "# - 5gdeploy-free5gc: free5GC UPF (see https://github.com/free5gc/free5gc)" >>"options.yaml"
     echo "# - 5gdeploy-phoenix: Phoenix UPF (see https://doi.org/10.1007/s00502-022-01064-7 and https://www.open5gcore.org)" >>"options.yaml"
     echo "# - 5gdeploy-open5gs: Open5GS UPF (see https://github.com/open5gs/open5gs)" >>"options.yaml"
     echo "# - 5gdeploy-bess: Aether SD-Core's BESS UPF (see https://github.com/omec-project/bess)" >>"options.yaml"
@@ -249,18 +255,6 @@ else
     esac
 fi
 
-# Network configuration
-sudo sysctl net.ipv4.conf.all.forwarding=1
-
-# Ensure FORWARD policy is ACCEPT
-if ! sudo iptables -L FORWARD | grep -q "Chain FORWARD (policy ACCEPT)"; then
-    echo "Setting iptables FORWARD policy to ACCEPT..."
-    sudo iptables -P FORWARD ACCEPT
-fi
-
-# List iptables rules with     sudo iptables -L FORWARD --line-numbers -n -v
-# Remove an iptables rule with sudo iptables -D FORWARD [line_number]
-
 cd "$SCRIPT_DIR"
 
 # Clean up the compose directory scenario if it exists
@@ -297,19 +291,34 @@ fi
 
 cd "$SCRIPT_DIR"
 
-AMF_IP=192.168.62.11 # N2 interface
-AMF_IP_BIND=$(ip route get 1 | awk '{print $(NF-2); exit}') # Get the IP of the primary network interface
-UPF1_IP=192.168.63.21
-UPF4_IP=192.168.63.24
-SUBNET_INTERNAL="172.25.160.0/20" # Sets the subnet for internal core network
+# Ensure that 5gdeploy is installed before proceeding
+if ! command -v docker &>/dev/null; then
+    echo "5gdeploy is not installed, please run the full_install.sh script first."
+    exit 1
+fi
+# Check for the last image installed by 5gdeploy
+if ! docker image inspect 5gdeploy.localhost/srsran5g &>/dev/null; then
+    echo "5gdeploy is not installed, please run the full_install.sh script first."
+    exit 1
+fi
 
-# Uncomment to give the core components internet access
-# if ! sudo iptables -t nat -C POSTROUTING -s "$SUBNET_INTERNAL" ! -d "$SUBNET_INTERNAL" -j MASQUERADE 2>/dev/null; then
-#     sudo iptables -t nat -A POSTROUTING -s "$SUBNET_INTERNAL" ! -d "$SUBNET_INTERNAL" -j MASQUERADE
-# fi
+# Network configuration
+sudo sysctl net.ipv4.conf.all.forwarding=1
+
+# Ensure FORWARD policy is ACCEPT
+if ! sudo iptables -L FORWARD | grep -q "Chain FORWARD (policy ACCEPT)"; then
+    echo "Setting iptables FORWARD policy to ACCEPT..."
+    sudo iptables -P FORWARD ACCEPT
+fi
+
+# List iptables rules with     sudo iptables -L FORWARD --line-numbers -n -v
+# Remove an iptables rule with sudo iptables -D FORWARD [line_number]
+
+# Give the core components internet access
+if ! sudo iptables -t nat -C POSTROUTING -s "$SUBNET_INTERNAL" ! -d "$SUBNET_INTERNAL" -j MASQUERADE 2>/dev/null; then
+    sudo iptables -t nat -A POSTROUTING -s "$SUBNET_INTERNAL" ! -d "$SUBNET_INTERNAL" -j MASQUERADE
+fi
 # Remove with sudo iptables -t nat -D POSTROUTING -s "$SUBNET_INTERNAL" ! -d "$SUBNET_INTERNAL" -j MASQUERADE
-
-
 
 # # Set AMF_IP_BASE to AMF_IP with the last octet replaced by 0
 # AMF_IP_BASE=$(echo "$AMF_IP" | awk -F. '{printf "%d.%d.%d.0", $1, $2, $3}')
@@ -374,14 +383,17 @@ cd "$SCRIPT_DIR/5gdeploy/scenario"
 echo "Using CP: $CORE"
 echo "Using UP: $UPF"
 
+# PRIMARY_INTERFACE=$(ip route | grep default | awk '{print $5}')
+# IP_ADDRESS=$(ip -f inet addr show $PRIMARY_INTERFACE | grep -Po 'inet \K[\d.]+')
+
 ./generate.sh orantestbed \
     +gnbs=1 +phones=0 +vehicles=0 \
     --cp=$CORE --up=$UPF --ran=none \
     --ip-fixed=amf,n2,$AMF_IP \
     --ip-fixed=upf1,n3,$UPF1_IP \
-    --ip-fixed=upf4,n3,$UPF4_IP
-#     --bridge='n2 | eth | amf*@AC:1F:6B:F5:4C:C6 gnb*@AC:1F:6B:F5:4C:C6' \
-#     --bridge='n3 | eth | upf*@AC:1F:6B:F5:4C:C6 gnb*@AC:1F:6B:F5:4C:C6'
+    --ip-fixed=upf4,n3,$UPF4_IP \
+    # --bridge="n2 | vx | $IP_ADDRESS,$AMF_IP" \
+    # --bridge="n3 | vx | $IP_ADDRESS,$UPF1_IP" \
 
 cd "$SCRIPT_DIR/configs"
 

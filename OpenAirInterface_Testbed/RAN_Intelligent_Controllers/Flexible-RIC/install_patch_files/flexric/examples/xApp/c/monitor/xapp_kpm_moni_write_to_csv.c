@@ -421,6 +421,7 @@ static void log_kpm_measurements(kpm_ind_msg_format_1_t const *msg_frm_1) {
 
   if (skip_first_sample) {
     printf("Skipping first sample to avoid incorrect initial values.\n");
+    memset(csv_line_buffer, 0, sizeof(csv_line_buffer)); // Clean the line buffer
     skip_first_sample = false;
     return;
   }

@@ -33,6 +33,8 @@ import json
 import os
 import pytest
 import requests
+import tempfile
+from shutil import copy2
 
 global rapp_id, rapp_file_name
 rapp_id = "icsconsumer"
@@ -152,12 +154,61 @@ def test_rapps_list():
 ################################################################################
 # Test the priming of a testing rApp
 ################################################################################
-# def test_rapp_priming():
-#     global rappmgr_ip, rappmgr_port, rapp_id, rapp_file_name
-#     #remove_test_rapp_if_exists(rapp_id, rapp_file_name)
+def test_rapp_priming():
+    global rappmgr_ip, rappmgr_port, rapp_id, rapp_file_name
+    import time
+    remove_test_rapp_if_exists(rapp_id, rapp_file_name)
 
-#     print("Priming testing rApp...")
+    # Ensure the rApp is created before priming
+    print("Creating testing rApp for priming...")
+    rapp_dir_original = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "rApps")
+    # Use a temporary directory
+    rapp_dir = tempfile.gettempdir()
+    rapp_binary_path = os.path.join(rapp_dir, rapp_file_name)
+    # Remove any existing file in the temp directory
+    try:
+        os.remove(rapp_binary_path)
+    except FileNotFoundError:
+        pass
+    # Copy the file to the temp directory
+    copy2(os.path.join(rapp_dir_original, rapp_file_name), rapp_binary_path)
 
-#     prime_rapp = requests.put(f'http://{rappmgr_ip}:{rappmgr_port}/rapps/{rapp_id}', headers={'Content-Type': 'application/json'}, data=json.dumps(data))
-#     print(f'Console command: curl -X PUT http://{rappmgr_ip}:{rappmgr_port}/rapps/{rapp_id} -H "Content-Type: application/json" -d \'{json.dumps(data)}\'')    
-#     assert prime_rapp.status_code == 200, f'Priming rApp status code: {prime_rapp.status_code}'
+    with open(rapp_binary_path, 'rb') as file:
+        files = {'file': (rapp_binary_path, file, 'application/octet-stream')}
+        create_rapp = requests.post(f'http://{rappmgr_ip}:{rappmgr_port}/rapps/{rapp_id}', files=files)
+    assert create_rapp.status_code == 202, f'Create rApp status code: {create_rapp.status_code}'
+
+    # Wait for the rApp to be commissioned before priming
+    print("Waiting for rApp to be commissioned...")
+    timeout = 60  # seconds
+    interval = 2  # seconds
+    elapsed = 0
+    while elapsed < timeout:
+        status_resp = requests.get(f'http://{rappmgr_ip}:{rappmgr_port}/rapps/{rapp_id}')
+        if status_resp.status_code == 200:
+            status_json = status_resp.json()
+            if status_json.get("state") == "COMMISSIONED":
+                break
+        time.sleep(interval)
+        elapsed += interval
+    else:
+        raise RuntimeError(f"Timeout waiting for rApp {rapp_id} to be commissioned")
+
+    print("Priming testing rApp...")
+    data = {
+        "primeOrder": "PRIME"
+    }
+
+    prime_rapp = requests.put(
+        f'http://{rappmgr_ip}:{rappmgr_port}/rapps/{rapp_id}',
+        headers={'Content-Type': 'application/json'},
+        data=json.dumps(data)
+    )
+    print(f'Console command: curl -X PUT http://{rappmgr_ip}:{rappmgr_port}/rapps/{rapp_id} -H \"Content-Type: application/json\" -d \'{json.dumps(data)}\'')
+    assert prime_rapp.status_code == 200, f'Priming rApp status code: {prime_rapp.status_code}'
+
+    # Clean up the copied file
+    try:
+        os.remove(rapp_binary_path)
+    except Exception:
+        pass

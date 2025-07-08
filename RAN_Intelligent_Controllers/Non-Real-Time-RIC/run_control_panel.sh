@@ -30,7 +30,6 @@
 
 # Exit immediately if a command fails
 set -e
-set -x
 
 if [ "$1" = "mock" ]; then
     MOCK_MODE=true
@@ -115,7 +114,7 @@ if [ ! -z "$IP_PMS" ] && [ ! -z "$PORT_PMS" ]; then
     fi
     JSON_CONFIG_PATH="$SCRIPT_DIR/nonrtric-controlpanel/webapp-frontend/proxy.conf.json"
     if jq -e '.["/a1-policy"].target' "$JSON_CONFIG_PATH" >/dev/null; then
-        jq --arg newUrl "http://$IP_PMS:$PORT_PMS" '.["/a1-policy"].target = $newUrl' "$JSON_CONFIG_PATH" >temp.json && mv temp.json "$JSON_CONFIG_PATH"
+        jq --arg newUrl "http://$IP_PMS:$PORT_PMS" '.["/a1-policy"].target = $newUrl' "$JSON_CONFIG_PATH" >temp.json && mv -f temp.json "$JSON_CONFIG_PATH"
         echo "Configured A1-Policy proxy target to http://$IP_PMS:$PORT_PMS."
     fi
 fi
@@ -129,11 +128,11 @@ if [ ! -z "$IP_ICS" ] && [ ! -z "$PORT_ICS" ]; then
     fi
     JSON_CONFIG_PATH="$SCRIPT_DIR/nonrtric-controlpanel/webapp-frontend/proxy.conf.json"
     if jq -e '.["/data-producer"].target' "$JSON_CONFIG_PATH" >/dev/null; then
-        jq --arg newUrl "http://$IP_ICS:$PORT_ICS" '.["/data-producer"].target = $newUrl' "$JSON_CONFIG_PATH" >temp.json && mv temp.json "$JSON_CONFIG_PATH"
+        jq --arg newUrl "http://$IP_ICS:$PORT_ICS" '.["/data-producer"].target = $newUrl' "$JSON_CONFIG_PATH" >temp.json && mv -f temp.json "$JSON_CONFIG_PATH"
         echo "Configured /data-producer proxy target to http://$IP_ICS:$PORT_ICS."
     fi
     if jq -e '.["/data-consumer"].target' "$JSON_CONFIG_PATH" >/dev/null; then
-        jq --arg newUrl "http://$IP_ICS:$PORT_ICS" '.["/data-consumer"].target = $newUrl' "$JSON_CONFIG_PATH" >temp.json && mv temp.json "$JSON_CONFIG_PATH"
+        jq --arg newUrl "http://$IP_ICS:$PORT_ICS" '.["/data-consumer"].target = $newUrl' "$JSON_CONFIG_PATH" >temp.json && mv -f temp.json "$JSON_CONFIG_PATH"
         echo "Configured /data-consumer proxy target to http://$IP_ICS:$PORT_ICS."
     fi
 fi
@@ -200,14 +199,8 @@ done
 if command -v xdg-open &>/dev/null; then
     echo "Opening the control panel in the default web browser at URL http://localhost:4200"
     xdg-open "http://localhost:4200" >/dev/null 2>&1 &
-elif command -v google-chrome &>/dev/null; then
-    echo "Opening the control panel in Google Chrome at URL http://localhost:4200"
-    nohup google-chrome "http://localhost:4200" >/dev/null 2>&1 &
-elif command -v firefox &>/dev/null; then
-    echo "Opening the control panel in Firefox at URL http://localhost:4200"
-    nohup firefox "http://localhost:4200" >/dev/null 2>&1 &
 else
-    echo "No supported browser detected. Visit http://localhost:4200 to access the control panel."
+    echo "No default browser detected. Visit http://localhost:4200 to access the control panel."
 fi
 
 sleep 10

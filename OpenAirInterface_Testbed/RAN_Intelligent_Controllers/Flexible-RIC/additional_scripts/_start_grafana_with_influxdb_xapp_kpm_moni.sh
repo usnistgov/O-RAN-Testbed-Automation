@@ -93,14 +93,11 @@ else
 fi
 sleep 3
 
-if command -v google-chrome &>/dev/null; then
-    echo "Opening Grafana in Google Chrome..."
-    google-chrome "http://localhost:3000/dashboards" >/dev/null 2>&1 &
-elif command -v firefox &>/dev/null; then
-    echo "Opening Grafana in Firefox..."
-    firefox "http://localhost:3000/dashboards" >/dev/null 2>&1 &
+if command -v xdg-open &>/dev/null; then
+    echo "Opening the control panel in the default web browser at URL http://localhost:3000"
+    xdg-open "http://localhost:3000" >/dev/null 2>&1 &
 else
-    echo "No supported browser detected. Visit http://localhost:3000/dashboards to access the WebUI."
+    echo "No default browser detected. Visit http://localhost:3000 to access the control panel."
 fi
 
 echo

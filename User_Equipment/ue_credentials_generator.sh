@@ -28,22 +28,57 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-if ! systemctl is-active --quiet "open5gs-webui"; then
-    echo "Starting webui service..."
-    sudo systemctl start open5gs-webui
+if [ $# -lt 1 ] || [ $# -gt 2 ]; then # Input validation
+    echo "Usage: $0 <UE_NUMBER> [PLMN]"
+    echo "Output fields: UE_OPC, UE_IMEI, UE_IMSI, UE_KEY, UE_NAMESPACE"
+    exit 1
 fi
 
-WEBUI_PORT=9999
+UE_NUMBER="$1"
+PLMN="${2:-""}" # Optional PLMN parameter
 
-if command -v xdg-open &>/dev/null; then
-    echo "Opening the WebUI in the default web browser at URL http://localhost:$WEBUI_PORT"
-    xdg-open "http://localhost:$WEBUI_PORT" >/dev/null 2>&1 &
-    sleep 3
-else
-    echo "No default browser detected. Visit http://localhost:$WEBUI_PORT to access the WebUI."
+# Validate that UE_NUMBER is a positive integer
+if ! [[ "$UE_NUMBER" =~ ^[0-9]+$ ]] || [ "$UE_NUMBER" -lt 1 ]; then
+    echo "Error: UE_NUMBER must be a positive integer."
+    exit 1
 fi
 
-echo
-echo "The login credentials are set to the following."
-echo "    - U: \"admin\""
-echo "    - P: \"1423\""
+UE_OPC="63BFA50EE6523365FF14C1F45F88737D"
+UE_IMEI=""
+UE_IMSI=""
+UE_KEY=""
+UE_NAMESPACE=""
+
+if [ "$UE_NUMBER" -eq 1 ]; then # Following the blueprint for UE 1: https://doi.org/10.6028/NIST.TN.2311
+    UE_IMEI="353490069873319"
+    UE_IMSI="001010123456780"
+    UE_KEY="00112233445566778899AABBCCDDEEFF"
+    UE_NAMESPACE="ue1"
+
+elif [ "$UE_NUMBER" -eq 2 ]; then # Following the blueprint for UE 2: https://doi.org/10.6028/NIST.TN.2311
+    UE_IMEI="353490069873318"
+    UE_IMSI="001010123456790"
+    UE_KEY="00112233445566778899AABBCCDDEF00"
+    UE_NAMESPACE="ue2"
+
+elif [ "$UE_NUMBER" -eq 3 ]; then # Following the blueprint for UE 3: https://doi.org/10.6028/NIST.TN.2311
+    UE_IMEI="353490069873312"
+    UE_IMSI="001010123456791"
+    UE_KEY="00112233445566778899AABBCCDDEF01"
+    UE_NAMESPACE="ue3"
+
+elif [ "$UE_NUMBER" -gt 3 ]; then # Dynamic configurations for UE 4 and beyond
+    UE_OFFSET=$((UE_NUMBER - 3))
+    UE_IMEI=$(printf '%d' $((353490069873319 + UE_OFFSET)))
+    UE_IMSI=$(printf '%015d' $((1010123456781 + UE_OFFSET)))
+    UE_KEY="00112233445566778$(printf '%X' $((16#899AABBCCDDEF01 + UE_OFFSET)))"
+    UE_NAMESPACE="ue$UE_NUMBER"
+fi
+
+# Ensure that the beginning of the IMSI is the correct PLMN
+if [ ! -z "$PLMN" ]; then
+    PLMN_LENGTH=${#PLMN}
+    UE_IMSI="${PLMN}${UE_IMSI:$PLMN_LENGTH}"
+fi
+
+echo "$UE_OPC" "$UE_IMEI" "$UE_IMSI" "$UE_KEY" "$UE_NAMESPACE"

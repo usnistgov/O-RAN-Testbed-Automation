@@ -47,10 +47,24 @@ if [ ! -d install_patch_files ]; then
 fi
 
 cd flexric/
+
+# Update the patch files
 git diff examples/xApp/c/monitor/xapp_kpm_moni.c >../install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni.c.patch
 git diff examples/xApp/c/monitor/CMakeLists.txt >../install_patch_files/flexric/examples/xApp/c/monitor/CMakeLists.txt.patch
 cp examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv.c ../install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv.c
 cp examples/xApp/c/monitor/xapp_kpm_moni_write_to_influxdb.c ../install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni_write_to_influxdb.c
+
+# Update the previous versions of the files
+git restore examples/xApp/c/monitor/xapp_kpm_moni.c
+cp examples/xApp/c/monitor/xapp_kpm_moni.c ../install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni.previous.c
+cp examples/xApp/c/monitor/xapp_kpm_moni.c examples/xApp/c/monitor/xapp_kpm_moni.c.previous
+git apply --verbose --ignore-whitespace ../install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni.c.patch
+
+git restore examples/xApp/c/monitor/CMakeLists.txt
+cp examples/xApp/c/monitor/CMakeLists.txt ../install_patch_files/flexric/examples/xApp/c/monitor/CMakeLists.previous.txt
+cp examples/xApp/c/monitor/CMakeLists.txt examples/xApp/c/monitor/CMakeLists.txt.previous
+git apply --verbose --ignore-whitespace ../install_patch_files/flexric/examples/xApp/c/monitor/CMakeLists.txt.patch
+
 cd ..
 
 echo "Successfully created patch files in the FlexRIC/install_patch_files directory."

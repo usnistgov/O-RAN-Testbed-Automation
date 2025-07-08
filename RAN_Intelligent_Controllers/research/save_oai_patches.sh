@@ -36,32 +36,35 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR/../../OpenAirInterface_Testbed"
 
-cd User_Equipment/openairinterface5g
-git diff openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c >../install_patch_files/openairinterface/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c.patch
-git diff openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c >../install_patch_files/openairinterface/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c.patch
-git diff openair2/LAYER2/NR_MAC_gNB/main.c >../install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/main.c.patch
-git diff openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h >../install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.patch
-git diff openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c >../install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c.patch
-git diff openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c >../install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c.patch
+# cd User_Equipment/openairinterface5g
+# git diff openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c >../install_patch_files/openairinterface/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c.patch
+# git diff openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c >../install_patch_files/openairinterface/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c.patch
+# git diff openair2/LAYER2/NR_MAC_gNB/main.c >../install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/main.c.patch
+# git diff openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h >../install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.patch
+# git diff openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c >../install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c.patch
+# git diff openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c >../install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c.patch
 
-cp openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c "$SCRIPT_DIR/PATCHED_OAI_FILES"
-cp openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c "$SCRIPT_DIR/PATCHED_OAI_FILES"
-cp openair2/LAYER2/NR_MAC_gNB/main.c "$SCRIPT_DIR/PATCHED_OAI_FILES"
-cp openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h "$SCRIPT_DIR/PATCHED_OAI_FILES"
-cp openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c "$SCRIPT_DIR/PATCHED_OAI_FILES"
-cp openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c "$SCRIPT_DIR/PATCHED_OAI_FILES"
+# cp openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c "$SCRIPT_DIR/PATCHED_OAI_FILES"
+# cp openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c "$SCRIPT_DIR/PATCHED_OAI_FILES"
+# cp openair2/LAYER2/NR_MAC_gNB/main.c "$SCRIPT_DIR/PATCHED_OAI_FILES"
+# cp openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h "$SCRIPT_DIR/PATCHED_OAI_FILES"
+# cp openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c "$SCRIPT_DIR/PATCHED_OAI_FILES"
+# cp openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c "$SCRIPT_DIR/PATCHED_OAI_FILES"
+cd User_Equipment/
+./additional_scripts/apply_changes_to_patch_files.sh
 cd ../..
 
-cd RAN_Intelligent_Controllers/Flexible-RIC/flexric/
-git diff examples/xApp/c/monitor/xapp_kpm_moni.c >../install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni.c.patch
-git diff examples/xApp/c/monitor/CMakeLists.txt >../install_patch_files/flexric/examples/xApp/c/monitor/CMakeLists.txt.patch
-cp examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv.c ../install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv.c
-cp examples/xApp/c/monitor/xapp_kpm_moni_write_to_influxdb.c ../install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni_write_to_influxdb.c
-cp examples/xApp/c/monitor/xapp_kpm_moni.c "$SCRIPT_DIR/PATCHED_OAI_FILES"
-cp examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv.c "$SCRIPT_DIR/PATCHED_OAI_FILES"
-cp examples/xApp/c/monitor/xapp_kpm_moni_write_to_influxdb.c "$SCRIPT_DIR/PATCHED_OAI_FILES"
-cp examples/xApp/c/monitor/CMakeLists.txt "$SCRIPT_DIR/PATCHED_OAI_FILES"/FLEXRIC_CMakeLists.txt
-
+# cd RAN_Intelligent_Controllers/Flexible-RIC/flexric/
+# git diff examples/xApp/c/monitor/xapp_kpm_moni.c >../install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni.c.patch
+# git diff examples/xApp/c/monitor/CMakeLists.txt >../install_patch_files/flexric/examples/xApp/c/monitor/CMakeLists.txt.patch
+# cp examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv.c ../install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv.c
+# cp examples/xApp/c/monitor/xapp_kpm_moni_write_to_influxdb.c ../install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni_write_to_influxdb.c
+# cp examples/xApp/c/monitor/xapp_kpm_moni.c "$SCRIPT_DIR/PATCHED_OAI_FILES"
+# cp examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv.c "$SCRIPT_DIR/PATCHED_OAI_FILES"
+# cp examples/xApp/c/monitor/xapp_kpm_moni_write_to_influxdb.c "$SCRIPT_DIR/PATCHED_OAI_FILES"
+# cp examples/xApp/c/monitor/CMakeLists.txt "$SCRIPT_DIR/PATCHED_OAI_FILES"/FLEXRIC_CMakeLists.txt
+cd RAN_Intelligent_Controllers/Flexible-RIC/
+./additional_scripts/apply_changes_to_patch_files.sh
 cd ../..
 
 cd "$SCRIPT_DIR"

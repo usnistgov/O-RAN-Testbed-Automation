@@ -34,6 +34,8 @@ UPF1_IP=192.168.63.21
 UPF4_IP=192.168.63.24
 SUBNET_INTERNAL="172.25.160.0/20" # Sets the subnet for internal core network
 
+UE_NUMBERS=($(seq 100 -1 1)) # Subscribers from UE 100 to UE 1
+
 # Exit immediately if a command fails
 set -e
 
@@ -172,33 +174,22 @@ cd "$SCRIPT_DIR"
 # rm -rf configs
 # mkdir configs
 
+UE_CREDENTIAL_GENERATOR_SCRIPT="$(dirname "$PARENT_DIR")/User_Equipment/ue_credentials_generator.sh"
+if [ ! -f "$UE_CREDENTIAL_GENERATOR_SCRIPT" ]; then
+    echo "Error: Cannot find $UE_CREDENTIAL_GENERATOR_SCRIPT to generate UE subscriber credentials."
+    exit 1
+fi
+
 echo "Unregistering all subscribers in Open5GS database..."
 ./install_scripts/unregister_all_subscribers.sh
 
-PLMN_LENGTH=${#PLMN}
-
-OPC="63BFA50EE6523365FF14C1F45F88737D"
-
-echo
-echo "Registering UE 1..."
-IMSI1="001010123456780"
-IMSI1="${PLMN}${IMSI1:$PLMN_LENGTH}" # Ensure that the beginning of the IMSI is the correct PLMN
-KEY1="00112233445566778899AABBCCDDEEFF"
-./install_scripts/register_subscriber.sh --imsi $IMSI1 --key $KEY1 --opc $OPC --apn "$DNN"
-
-echo
-echo "Registering UE 2..."
-IMSI2="001010123456790"
-IMSI2="${PLMN}${IMSI2:$PLMN_LENGTH}" # Ensure that the beginning of the IMSI is the correct PLMN
-KEY2="00112233445566778899AABBCCDDEF00"
-./install_scripts/register_subscriber.sh --imsi $IMSI2 --key $KEY2 --opc $OPC --apn "$DNN"
-
-echo
-echo "Registering UE 3..."
-IMSI3="001010123456791"
-IMSI3="${PLMN}${IMSI3:$PLMN_LENGTH}" # Ensure that the beginning of the IMSI is the correct PLMN
-KEY3="00112233445566778899AABBCCDDEF01"
-./install_scripts/register_subscriber.sh --imsi $IMSI3 --key $KEY3 --opc $OPC --apn "$DNN"
+# Register the subscribers
+for UE_NUMBER in "${UE_NUMBERS[@]}"; do
+    echo "Registering UE $UE_NUMBER..."
+    # Fetch the UE's OPc, IMEI, IMSI, KEY, and NAMESPACE
+    read -r UE_OPC UE_IMEI UE_IMSI UE_KEY UE_NAMESPACE < <("$UE_CREDENTIAL_GENERATOR_SCRIPT" "$UE_NUMBER" "$PLMN")
+    ./install_scripts/register_subscriber.sh --imsi "$UE_IMSI" --key "$UE_KEY" --opc "$UE_OPC" --apn "$DNN"
+done
 
 # Ensure that the core is set correctly
 if [ "$CORE_TO_USE" == "5gdeploy-oai" ]; then
@@ -391,9 +382,9 @@ echo "Using UP: $UPF"
     --cp=$CORE --up=$UPF --ran=none \
     --ip-fixed=amf,n2,$AMF_IP \
     --ip-fixed=upf1,n3,$UPF1_IP \
-    --ip-fixed=upf4,n3,$UPF4_IP \
-    # --bridge="n2 | vx | $IP_ADDRESS,$AMF_IP" \
-    # --bridge="n3 | vx | $IP_ADDRESS,$UPF1_IP" \
+    --ip-fixed=upf4,n3,$UPF4_IP
+# --bridge="n2 | vx | $IP_ADDRESS,$AMF_IP" \
+# --bridge="n3 | vx | $IP_ADDRESS,$UPF1_IP" \
 
 cd "$SCRIPT_DIR/configs"
 
@@ -423,13 +414,37 @@ cd "$SCRIPT_DIR/compose/orantestbed"
 # Revise configuration file netdef.json
 if [ -f "netdef.json" ]; then
     echo "Setting subscribers field in netdef.json..."
-    jq --arg imsi1 "$IMSI1" --arg imsi2 "$IMSI2" --arg imsi3 "$IMSI3" --arg sst "$SST" --arg sd "$SD" --arg dnn "$DNN" '
-    .subscribers = [
-        { "count": 1, "gnbs": ["gnb0"], "subscribedNSSAI": [{ "dnns": [$dnn], "snssai": ($sst + $sd), "sst": $sst, "sd": $sd }], "supi": $imsi1 },
-        { "count": 1, "gnbs": ["gnb0"], "subscribedNSSAI": [{ "dnns": [$dnn], "snssai": ($sst + $sd), "sst": $sst, "sd": $sd }], "supi": $imsi2 },
-        { "count": 1, "gnbs": ["gnb0"], "subscribedNSSAI": [{ "dnns": [$dnn], "snssai": ($sst + $sd), "sst": $sst, "sd": $sd }], "supi": $imsi3 }
-    ]
-    ' netdef.json >tmp.json && mv tmp.json netdef.json
+    # jq --arg imsi1 "$IMSI1" --arg imsi2 "$IMSI2" --arg imsi3 "$IMSI3" --arg sst "$SST" --arg sd "$SD" --arg dnn "$DNN" '
+    # .subscribers = [
+    #     { "count": 1, "gnbs": ["gnb0"], "subscribedNSSAI": [{ "dnns": [$dnn], "snssai": ($sst + $sd), "sst": $sst, "sd": $sd }], "supi": $imsi1 },
+    #     { "count": 1, "gnbs": ["gnb0"], "subscribedNSSAI": [{ "dnns": [$dnn], "snssai": ($sst + $sd), "sst": $sst, "sd": $sd }], "supi": $imsi2 },
+    #     { "count": 1, "gnbs": ["gnb0"], "subscribedNSSAI": [{ "dnns": [$dnn], "snssai": ($sst + $sd), "sst": $sst, "sd": $sd }], "supi": $imsi3 }
+    # ]
+    # ' netdef.json >tmp.json && mv tmp.json netdef.json
+
+    # # Reset .subscribers to an empty array
+    # jq '.subscribers = []' netdef.json >tmp.json && mv tmp.json netdef.json
+
+    # for UE_NUMBER in "${UE_NUMBERS[@]}"; do
+    #     # Fetch the UE's OPc, IMEI, IMSI, KEY, and NAMESPACE
+    #     read -r UE_OPC UE_IMEI UE_IMSI UE_KEY UE_NAMESPACE < <("$UE_CREDENTIAL_GENERATOR_SCRIPT" "$UE_NUMBER" "$PLMN")
+    #     echo "Configuring UE $UE_NUMBER with SUPI $UE_IMSI..."
+    #     # jq --arg imsi "$UE_IMSI" --arg sst "$SST" --arg sd "$SD" --arg dnn "$DNN" \
+    #     #     '.subscribers += [{ "count": 1, "gnbs": ["gnb0"], "subscribedNSSAI": [{ "dnns": [$dnn], "snssai": ($sst + $sd), "sst": $sst, "sd": $sd }], "supi": $imsi }]' \
+    #     #     netdef.json > tmp.json && mv tmp.json netdef.json
+
+    #     # Each entry needs to look like this:
+    #     # {
+    #     # "count": 1,
+    #     # "k": "00112233445566778899AABBCCDDEF01",
+    #     # "opc": "63BFA50EE6523365FF14C1F45F88737D",
+    #     # "supi": "001010123456791"
+    #     # },
+
+    #     jq --arg imsi "$UE_IMSI" --arg k "$UE_KEY" --arg opc "$UE_OPC" \
+    #         '.subscribers += [{ "count": 1, "k": $k, "opc": $opc, "supi": $imsi }]' \
+    #         netdef.json >tmp.json && mv tmp.json netdef.json
+    # done
 
     # # Convert TAC to hex formats
     # TAC_HEX=$(printf "%06x" "$TAC") # For example, 7 -> 000007

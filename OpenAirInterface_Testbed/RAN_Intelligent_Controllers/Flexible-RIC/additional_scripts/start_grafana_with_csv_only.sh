@@ -105,14 +105,8 @@ sleep 3
 if command -v xdg-open &>/dev/null; then
     echo "Opening Grafana in the default web browser at URL http://localhost:3000/dashboards"
     xdg-open "http://localhost:3000/dashboards" >/dev/null 2>&1 &
-elif command -v google-chrome &>/dev/null; then
-    echo "Opening Grafana in Google Chrome at URL http://localhost:3000/dashboards"
-    google-chrome "http://localhost:3000/dashboards" >/dev/null 2>&1 &
-elif command -v firefox &>/dev/null; then
-    echo "Opening Grafana in Firefox at URL http://localhost:3000/dashboards"
-    firefox "http://localhost:3000/dashboards" >/dev/null 2>&1 &
 else
-    echo "No supported browser detected. Visit http://localhost:3000/dashboards to access the WebUI."
+    echo "No default browser detected. Visit http://localhost:3000/dashboards to access the WebUI."
 fi
 
 echo

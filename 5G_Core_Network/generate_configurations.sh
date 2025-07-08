@@ -31,6 +31,8 @@
 # Exit immediately if a command fails
 set -e
 
+UE_NUMBERS=(3 2 1) # Subscribers from UE 3 to UE 1
+
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
     sudo apt-get install -y coreutils
@@ -444,28 +446,23 @@ sudo ufw status || true
 sudo ./install_scripts/disable_firewall.sh
 sudo ufw status || true
 
+UE_CREDENTIAL_GENERATOR_SCRIPT="$(dirname "$SCRIPT_DIR")/User_Equipment/ue_credentials_generator.sh"
+if [ ! -f "$UE_CREDENTIAL_GENERATOR_SCRIPT" ]; then
+    echo "Error: Cannot find $UE_CREDENTIAL_GENERATOR_SCRIPT to generate UE subscriber credentials."
+    exit 1
+fi
+
 echo "Unregistering all subscribers in Open5GS database..."
 ./install_scripts/unregister_all_subscribers.sh
 
-PLMN_LENGTH=${#PLMN}
-
-echo
-echo "Registering UE 1..."
-IMSI="001010123456780"
-IMSI="${PLMN}${IMSI:$PLMN_LENGTH}" # Ensure that the beginning of the IMSI is the correct PLMN
-./install_scripts/register_subscriber.sh --imsi $IMSI --key 00112233445566778899AABBCCDDEEFF --opc 63BFA50EE6523365FF14C1F45F88737D --apn $DNN --sst $SST --sd $SD
-
-echo
-echo "Registering UE 2..."
-IMSI="001010123456790"
-IMSI="${PLMN}${IMSI:$PLMN_LENGTH}" # Ensure that the beginning of the IMSI is the correct PLMN
-./install_scripts/register_subscriber.sh --imsi $IMSI --key 00112233445566778899AABBCCDDEF00 --opc 63BFA50EE6523365FF14C1F45F88737D --apn $DNN --sst $SST --sd $SD
-
-echo
-echo "Registering UE 3..."
-IMSI="001010123456791"
-IMSI="${PLMN}${IMSI:$PLMN_LENGTH}" # Ensure that the beginning of the IMSI is the correct PLMN
-./install_scripts/register_subscriber.sh --imsi $IMSI --key 00112233445566778899AABBCCDDEF01 --opc 63BFA50EE6523365FF14C1F45F88737D --apn $DNN --sst $SST --sd $SD
+# Register the subscribers
+for UE_NUMBER in "${UE_NUMBERS[@]}"; do
+    echo
+    echo "Registering UE $UE_NUMBER..."
+    # Fetch the UE's OPc, IMEI, IMSI, KEY, and NAMESPACE
+    read -r UE_OPC UE_IMEI UE_IMSI UE_KEY UE_NAMESPACE < <("$UE_CREDENTIAL_GENERATOR_SCRIPT" "$UE_NUMBER" "$PLMN")
+    ./install_scripts/register_subscriber.sh --imsi "$UE_IMSI" --key "$UE_KEY" --opc "$UE_OPC" --apn "$DNN" --sst "$SST" --sd "$SD"
+done
 
 # Restart Open5GS services to apply changes
 echo "To apply changed, stop and start the following:"

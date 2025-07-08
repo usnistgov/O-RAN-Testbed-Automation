@@ -163,41 +163,17 @@ else
     cp openairinterface5g/targets/PROJECTS/GENERIC-NR-5GC/CONF/channelmod_rfsimu_LEO_satellite.conf configs/channelmod_rfsimu.conf
 fi
 
+UE_CREDENTIAL_GENERATOR_SCRIPT="$SCRIPT_DIR/ue_credentials_generator.sh"
+if [ ! -f "$UE_CREDENTIAL_GENERATOR_SCRIPT" ]; then
+    echo "Error: Cannot find $UE_CREDENTIAL_GENERATOR_SCRIPT to generate UE subscriber credentials."
+    exit 1
+fi
+
 for UE_NUMBER in "${UE_NUMBERS[@]}"; do
     cp openairinterface5g/targets/PROJECTS/GENERIC-NR-5GC/CONF/ue.conf "configs/ue$UE_NUMBER.conf"
 
-    UE_OPC="63BFA50EE6523365FF14C1F45F88737D"
-    if [ "$UE_NUMBER" -eq 1 ]; then # Following the blueprint for UE 1: https://doi.org/10.6028/NIST.TN.2311
-        UE_IMEI="353490069873319"
-        UE_IMSI="001010123456780"
-        UE_KEY="00112233445566778899AABBCCDDEEFF"
-        UE_NAMESPACE="ue1"
-
-    elif [ "$UE_NUMBER" -eq 2 ]; then # Following the blueprint for UE 2: https://doi.org/10.6028/NIST.TN.2311
-        UE_IMEI="353490069873318"
-        UE_IMSI="001010123456790"
-        UE_KEY="00112233445566778899AABBCCDDEF00"
-        UE_NAMESPACE="ue2"
-
-    elif [ "$UE_NUMBER" -eq 3 ]; then # Following the blueprint for UE 3: https://doi.org/10.6028/NIST.TN.2311
-        UE_IMEI="353490069873312"
-        UE_IMSI="001010123456791"
-        UE_KEY="00112233445566778899AABBCCDDEF01"
-        UE_NAMESPACE="ue3"
-
-    elif [ "$UE_NUMBER" -gt 3 ]; then # Dynamic configurations for UE 4 and beyond
-        UE_OFFSET=$((UE_NUMBER - 3))
-        UE_IMEI=$(printf '%d' $((353490069873319 + UE_OFFSET)))
-        UE_IMSI=$(printf '%015d' $((1010123456781 + UE_OFFSET)))
-        UE_KEY="00112233445566778$(printf '%X' $((16#899AABBCCDDEF01 + UE_OFFSET)))"
-        UE_NAMESPACE="ue$UE_NUMBER"
-    fi
-
-    # Ensure that the beginning of the IMSI is the correct PLMN
-    if [ ! -z "$PLMN" ]; then
-        PLMN_LENGTH=${#PLMN}
-        UE_IMSI="${PLMN}${UE_IMSI:$PLMN_LENGTH}"
-    fi
+    # Fetch the UE's OPc, IMEI, IMSI, KEY, and NAMESPACE
+    read -r UE_OPC UE_IMEI UE_IMSI UE_KEY UE_NAMESPACE < <("$UE_CREDENTIAL_GENERATOR_SCRIPT" "$UE_NUMBER" "$PLMN")
 
     # Unique identifier for the UE within the mobile network. Used by the network to identify the UE during authentication. It ensures that the UE is correctly identified by the network.
     update_conf "configs/ue$UE_NUMBER.conf" "imsi" "\"$UE_IMSI\""

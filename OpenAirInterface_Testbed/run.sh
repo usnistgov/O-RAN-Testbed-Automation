@@ -102,7 +102,6 @@ cd User_Equipment
 echo -en "\nWaiting for UE to be ready"
 ATTEMPT=0
 while [ ! -f logs/ue1_stdout.txt ] || ! grep -q "TYPE <CTRL-C> TO TERMINATE" logs/ue1_stdout.txt; do
-    #while [ ! -f logs/ue1_stdout.txt ] || ! grep -q "State = NR_RRC_CONNECTED" logs/ue1_stdout.txt; do
     echo -n "."
     sleep 0.5
     ATTEMPT=$((ATTEMPT + 1))

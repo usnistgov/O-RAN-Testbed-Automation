@@ -41,6 +41,11 @@ if ! command -v gdb &>/dev/null; then
     sudo apt-get install -y gdb
 fi
 
+cd "$SCRIPT_DIR"
+mkdir -p logs
+>logs/gnb_stdout.txt
+
 cd "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build"
 
-sudo gdb --args ./nr-softmodem -O "$SCRIPT_DIR/configs/gnb.conf" --rfsim --rfsimulator.serveraddr server --rfsimulator.options chanmod --gNBs.[0].min_rxtxtime 6
+# sudo gdb --args ./nr-softmodem -O "$SCRIPT_DIR/configs/gnb.conf" --rfsim --rfsimulator.serveraddr server --rfsimulator.options chanmod --gNBs.[0].min_rxtxtime 6
+sudo script -q -f -c "gdb --args ./nr-softmodem -O \"$SCRIPT_DIR/configs/gnb.conf\" --rfsim --rfsimulator.serveraddr server --rfsimulator.options chanmod --gNBs.[0].min_rxtxtime 6" "$SCRIPT_DIR/logs/gnb_stdout.txt"

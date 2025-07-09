@@ -28,15 +28,15 @@ To customize the SIM subscriber information or to get more information about how
 
 ## Interacting with the UE
 
-- **Simulate UE traffic to Core**: 
+- **Simulate UE traffic to Core**:
   `./additional_scripts/simulate_ue_traffic_to_core.sh <UE_NUMBER> [BANDWIDTH] [DURATION]`
   - Sends traffic from the UE to the core. Default bandwidth: 1M, duration: 60s.
 
-- **Simulate Core traffic to UE**: 
+- **Simulate Core traffic to UE**:
   `./additional_scripts/simulate_core_traffic_to_ue.sh <UE_NUMBER> [BANDWIDTH] [DURATION]`
   - Sends traffic from the core to the UE. Default bandwidth: 1M, duration: 60s.
 
-- **Open UE shell**: 
+- **Open UE shell**:
   `./additional_scripts/open_ue_shell.sh <UE_NUMBER>`
   - Opens a shell in the UE's network namespace.
 

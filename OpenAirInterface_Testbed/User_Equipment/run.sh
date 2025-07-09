@@ -122,6 +122,6 @@ else
     BAND=78
     DL_CARRIER_FREQUENCY_HZ=3619200000
 
-    sudo ip netns exec ue$UE_NUMBER ./nr-uesoftmodem -O "../../../../configs/ue$UE_NUMBER.conf" --rfsim --rfsimulator.serveraddr $HOSTNAME_IP --rfsimulator.options chanmod -r $BANDWIDTH_RBS --numerology $NUMEROLOGY --band $BAND -C $DL_CARRIER_FREQUENCY_HZ
-    # sudo ip netns exec ue1 ./nr-uesoftmodem -O "../../../../configs/ue$UE_NUMBER.conf" --rfsim --rfsimulator.serveraddr $HOSTNAME_IP --rfsimulator.options chanmod -r 106 --numerology 1 --band 78 -C 3619200000
+    # sudo ip netns exec ue$UE_NUMBER ./nr-uesoftmodem -O "../../../../configs/ue$UE_NUMBER.conf" --rfsim --rfsimulator.serveraddr $HOSTNAME_IP --rfsimulator.options chanmod -r $BANDWIDTH_RBS --numerology $NUMEROLOGY --band $BAND -C $DL_CARRIER_FREQUENCY_HZ
+    sudo script -q -f -c "ip netns exec ue$UE_NUMBER ./nr-uesoftmodem -O \"../../../../configs/ue$UE_NUMBER.conf\" --rfsim --rfsimulator.serveraddr $HOSTNAME_IP --rfsimulator.options chanmod -r $BANDWIDTH_RBS --numerology $NUMEROLOGY --band $BAND -C $DL_CARRIER_FREQUENCY_HZ" "$SCRIPT_DIR/logs/ue${UE_NUMBER}_stdout.txt"
 fi

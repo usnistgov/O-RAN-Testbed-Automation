@@ -5042,7 +5042,7 @@
           "refId": "A"
         }
       ],
-      "title": "Histogram of PRBs Downlink",
+      "title": "Histogram of PRBs Uplink",
       "transformations": [
         {
           "id": "filterFieldsByName",

@@ -67,7 +67,7 @@ nonrtric       servicemanager-795d499bd-msl8n                  1/1     Running
 
 ## Migration to Cilium
 
-For instructions on migrating the cluster to Cilium, since the scripts behave the same, please see the Near-RT RIC [README.md](../Near-Real-Time-RIC/README.md#migration-to-cilium) document. 
+For instructions on migrating the cluster to Cilium, since the scripts behave the same, please see the Near-RT RIC [README.md](../Near-Real-Time-RIC/README.md#migration-to-cilium) document.
 
 ---
 

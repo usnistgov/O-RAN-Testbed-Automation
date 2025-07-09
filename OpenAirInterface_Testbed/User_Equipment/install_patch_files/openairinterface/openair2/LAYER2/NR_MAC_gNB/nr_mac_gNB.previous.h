@@ -88,6 +88,7 @@
 
 /* MAC */
 #include "LAYER2/NR_MAC_COMMON/nr_mac_common.h"
+#include "LAYER2/NR_MAC_gNB/mac_config.h"
 #include "NR_TAG.h"
 
 /* Defs */
@@ -392,6 +393,11 @@ typedef struct NR_pusch_dmrs {
   uint16_t ul_dmrs_symb_pos;
   uint8_t num_dmrs_cdm_grps_no_data;
   nfapi_nr_dmrs_type_e dmrs_config_type;
+  int dmrs_scrambling_id;
+  int pusch_identity;
+  int scid;
+  int low_papr_sequence_number;
+  NR_PTRS_UplinkConfig_t *ptrsConfig;
 } NR_pusch_dmrs_t;
 
 typedef struct NR_sched_pusch {
@@ -413,7 +419,6 @@ typedef struct NR_sched_pusch {
 
   /// UL HARQ PID to use for this UE, or -1 for "any new"
   int8_t ul_harq_pid;
-
   uint8_t nrOfLayers;
   int tpmi;
 
@@ -421,6 +426,7 @@ typedef struct NR_sched_pusch {
   int time_domain_allocation;
   NR_tda_info_t tda_info;
   NR_pusch_dmrs_t dmrs_info;
+  bwp_info_t bwp_info;
   int phr_txpower_calc;
 } NR_sched_pusch_t;
 
@@ -436,7 +442,10 @@ typedef struct NR_pdsch_dmrs {
   uint8_t N_DMRS_SLOT;
   uint16_t dl_dmrs_symb_pos;
   uint8_t numDmrsCdmGrpsNoData;
+  uint32_t scrambling_id;
+  int n_scid;
   nfapi_nr_dmrs_type_e dmrsConfigType;
+  NR_PTRS_DownlinkConfig_t *phaseTrackingRS;
 } NR_pdsch_dmrs_t;
 
 typedef struct NR_sched_pdsch {
@@ -460,7 +469,7 @@ typedef struct NR_sched_pdsch {
 
   uint16_t pm_index;
   uint8_t nrOfLayers;
-
+  bwp_info_t bwp_info;
   NR_pdsch_dmrs_t dmrs_parms;
   // time_domain_allocation is the index of a list of tda
   int time_domain_allocation;
@@ -848,39 +857,23 @@ typedef struct gNB_MAC_INST_s {
 
   NR_UEs_t UE_info;
 
-  /// UL handle
-  uint32_t ul_handle;
-  //UE_info_t UE_info;
-
   // MAC function execution peformance profiler
-  /// processing time of eNB scheduler
-  time_stats_t eNB_scheduler;
-  /// processing time of eNB scheduler for SI
-  time_stats_t schedule_si;
-  /// processing time of eNB scheduler for Random access
+  /// processing time of gNB scheduler
+  time_stats_t gNB_scheduler;
+  /// processing time of gNB scheduler for Random access
   time_stats_t schedule_ra;
-  /// processing time of eNB ULSCH scheduler
-  time_stats_t schedule_ulsch;
-  /// processing time of eNB DCI generation
-  time_stats_t fill_DLSCH_dci;
-  /// processing time of eNB MAC preprocessor
-  time_stats_t schedule_dlsch_preprocessor;
-  /// processing time of eNB DLSCH scheduler
+  /// processing time of gNB DLSCH scheduler
+  time_stats_t schedule_ulsch;  // include preprocessor
+  /// processing time of gNB DLSCH scheduler
   time_stats_t schedule_dlsch;  // include rlc_data_req + MAC header + preprocessor
   /// processing time of rlc_data_req
   time_stats_t rlc_data_req;
-  /// processing time of rlc_status_ind
-  time_stats_t rlc_status_ind;
   /// processing time of nr_srs_ri_computation
   time_stats_t nr_srs_ri_computation_timer;
   /// processing time of nr_srs_tpmi_estimation
   time_stats_t nr_srs_tpmi_computation_timer;
-  /// processing time of eNB MCH scheduler
-  time_stats_t schedule_mch;
-  /// processing time of eNB ULSCH reception
+  /// processing time of gNB ULSCH reception
   time_stats_t rx_ulsch_sdu;  // include rlc_data_ind
-  /// processing time of eNB PCH scheduler
-  time_stats_t schedule_pch;
 
   NR_beam_info_t beam_info;
 

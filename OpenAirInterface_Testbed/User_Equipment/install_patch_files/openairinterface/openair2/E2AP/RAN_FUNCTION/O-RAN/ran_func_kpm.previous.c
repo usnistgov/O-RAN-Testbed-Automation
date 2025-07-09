@@ -209,6 +209,9 @@ static arr_ue_id_t filter_ues_by_s_nssai_in_cu(const test_info_lst_t test_info)
   struct rrc_gNB_ue_context_s* rrc_ue_context = NULL;
   RB_FOREACH(rrc_ue_context, rrc_nr_ue_tree_s, &RC.nrrrc[0]->rrc_ue_head) {
     gNB_RRC_UE_t *ue = &rrc_ue_context->ue_context;
+    /* UE has no AMF UE NGAP ID yet => can't send message */
+    if (ue->amf_ue_ngap_id >= (1LL << 40))
+      continue;
     for (int p = 0; p < ue->nb_of_pdusessions; ++p) {
       pdusession_t *pdu = &ue->pduSession[p].param;
       if (nssai_matches(pdu->nssai, sst, sd)) {
@@ -296,6 +299,9 @@ static arr_ue_id_t filter_ues_by_s_nssai_in_du_or_monolithic(const test_info_lst
           arr_ue_id.ue_id[arr_ue_id.sz] = fill_ue_id_data[ngran_gNB_DU](NULL, rrc_ue_id.secondary_ue, 0);
         } else {
           rrc_gNB_ue_context_t* rrc_ue_context = rrc_gNB_get_ue_context_by_rnti(RC.nrrrc[0], -1, ue->rnti);
+          /* UE has no AMF UE NGAP ID yet => can't send message */
+          if (rrc_ue_context->ue_context.amf_ue_ngap_id >= (1LL << 40))
+            continue;
           arr_ue_id.ue_id[arr_ue_id.sz] = fill_ue_id_data[ngran_gNB](&rrc_ue_context->ue_context, 0, 0);
         }
 

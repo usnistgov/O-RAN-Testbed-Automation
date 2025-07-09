@@ -899,8 +899,13 @@ void handle_nr_uci_pucch_0_1(module_id_t mod_id, frame_t frame, slot_t slot, con
       nr_mac_update_pdcch_closed_loop_adjust(sched_ctrl, harq_confidence != 0);
       bool success = harq_value == 0 && harq_confidence == 0;
       handle_dl_harq(UE, pid, success, nrmac->dl_bler.harq_round_max);
-      if (is_ra)
-        nr_check_Msg4_MsgB_Ack(mod_id, frame, slot, UE, success);
+      if (is_ra) {
+        bool ue_rejected = nr_check_Msg4_MsgB_Ack(mod_id, frame, slot, UE, success);
+        if (ue_rejected) {
+          NR_SCHED_UNLOCK(&nrmac->sched_lock);
+          return;
+        }
+      }
       if (harq_confidence == 1)
         UE->mac_stats.pucch0_DTX++;
     }

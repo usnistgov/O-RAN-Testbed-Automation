@@ -15,7 +15,7 @@ This testbed deployment consists of a 5G Core Network by Open5GS [[1]][open5gs-c
 - **Debugging Information**: Configuration files are in the `configs/` directory, and log files are located in the `logs/` directory for each component.
 
 ## Potential Cause for Build Errors
-It may be required for the AVX2 instruction set to be available on the host machine installing the OpenAirInterface testbed. 
+It may be required for the AVX2 instruction set to be available on the host machine installing the OpenAirInterface testbed.
 
 <details>
   <summary><b>Enabling VT-x/AMD-V for the AVX2 instruction set</b></summary>

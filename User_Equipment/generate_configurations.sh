@@ -42,8 +42,6 @@ cd "$SCRIPT_DIR"
 EXAMPLE_CONFIG_PATH="$SCRIPT_DIR/srsRAN_4G/srsue/ue.conf.example"
 CLEAR_CONFIGS=false
 
-DNN="nist-dnn"
-
 # Support input argument for the UE number(s), for example:
 # ./generate_configurations.sh --> configures UE 1, 2, and 3
 # ./generate_configurations.sh 2 --> configures UE 2
@@ -136,56 +134,38 @@ echo "MCC value: $MCC"
 echo "MNC value: $MNC"
 echo "MNC_LENGTH value: $MNC_LENGTH"
 
+# Configure the DNN, SST, and SD values
+DNN=$(sed -n 's/^dnn: //p' "$YAML_PATH")
+SST=$(yq eval '.sst' "$YAML_PATH")
+SD=$(yq eval '.sd' "$YAML_PATH")
+if [[ -z "$DNN" || "$DNN" == "null" ]]; then
+    echo "DNN is not set in "$YAML_PATH", please ensure that \"dnn\" is set."
+    exit 1
+fi
+if [[ -z "$SST" || -z "$SD" || "$SST" == "null" || "$SD" == "null" ]]; then
+    echo "SST or SD is not set in "$YAML_PATH", please ensure that \"sst\" and \"sd\" are set."
+    exit 1
+fi
+
 if [ ! -f "$EXAMPLE_CONFIG_PATH" ]; then
     echo "Configuration file example not found in $EXAMPLE_CONFIG_PATH, please ensure that the file exists."
+    exit 1
+fi
+
+UE_CREDENTIAL_GENERATOR_SCRIPT="$SCRIPT_DIR/ue_credentials_generator.sh"
+if [ ! -f "$UE_CREDENTIAL_GENERATOR_SCRIPT" ]; then
+    echo "Error: Cannot find $UE_CREDENTIAL_GENERATOR_SCRIPT to generate UE subscriber credentials."
     exit 1
 fi
 
 for UE_NUMBER in "${UE_NUMBERS[@]}"; do
     cp "$EXAMPLE_CONFIG_PATH" "configs/ue${UE_NUMBER}.conf"
 
-    UE_OPC="63BFA50EE6523365FF14C1F45F88737D"
     UE_TX_PORT=2001
     UE_RX_PORT=2000
-    if [ "$UE_NUMBER" -eq 1 ]; then # Following the blueprint for UE 1: https://doi.org/10.6028/NIST.TN.2311
-        UE_IMEI="353490069873319"
-        UE_IMSI="001010123456780"
-        UE_KEY="00112233445566778899AABBCCDDEEFF"
-        # UE_TX_PORT=2101
-        # UE_RX_PORT=2100
-        UE_NAMESPACE="ue1"
 
-    elif [ "$UE_NUMBER" -eq 2 ]; then # Following the blueprint for UE 2: https://doi.org/10.6028/NIST.TN.2311
-        UE_IMEI="353490069873318"
-        UE_IMSI="001010123456790"
-        UE_KEY="00112233445566778899AABBCCDDEF00"
-        # UE_TX_PORT=2201
-        # UE_RX_PORT=2200
-        UE_NAMESPACE="ue2"
-
-    elif [ "$UE_NUMBER" -eq 3 ]; then # Following the blueprint for UE 3: https://doi.org/10.6028/NIST.TN.2311
-        UE_IMEI="353490069873312"
-        UE_IMSI="001010123456791"
-        UE_KEY="00112233445566778899AABBCCDDEF01"
-        # UE_TX_PORT=2301
-        # UE_RX_PORT=2300
-        UE_NAMESPACE="ue3"
-
-    elif [ "$UE_NUMBER" -gt 3 ]; then # Dynamic configurations for UE 4 and beyond
-        UE_OFFSET=$((UE_NUMBER - 3))
-        UE_IMEI=$(printf '%d' $((353490069873319 + UE_OFFSET)))
-        UE_IMSI=$(printf '%015d' $((1010123456781 + UE_OFFSET)))
-        UE_KEY="00112233445566778$(printf '%X' $((16#899AABBCCDDEF01 + UE_OFFSET)))"
-        # UE_TX_PORT="$((23 + $UE_OFFSET))01"
-        # UE_RX_PORT="$((23 + $UE_OFFSET))00"
-        UE_NAMESPACE="ue$UE_NUMBER"
-    fi
-
-    # Ensure that the beginning of the IMSI is the correct PLMN
-    if [ ! -z "$PLMN" ]; then
-        PLMN_LENGTH=${#PLMN}
-        UE_IMSI="${PLMN}${UE_IMSI:$PLMN_LENGTH}"
-    fi
+    # Fetch the UE's OPc, IMEI, IMSI, KEY, and NAMESPACE
+    read -r UE_OPC UE_IMEI UE_IMSI UE_KEY UE_NAMESPACE < <("$UE_CREDENTIAL_GENERATOR_SCRIPT" "$UE_NUMBER" "$PLMN")
 
     # Update configuration values for RF front-end device
     update_conf "configs/ue${UE_NUMBER}.conf" "rf" "device_name" "zmq"
@@ -246,8 +226,13 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
     update_conf "configs/ue${UE_NUMBER}.conf" "nas" "apn" "$DNN"
     update_conf "configs/ue${UE_NUMBER}.conf" "nas" "apn_protocol" "ipv4"
 
+    # Update configuration values for Slicing
+    SD_DECIMAL=$((16#${SD}))
+    update_conf "configs/ue${UE_NUMBER}.conf" "slicing" "nssai-sd" "$SD_DECIMAL"
+    update_conf "configs/ue${UE_NUMBER}.conf" "slicing" "nssai-sst" "$SST"
+
     # Update configuration values for Gateway
-    update_conf "configs/ue${UE_NUMBER}.conf" "gw" "netns" "ue${UE_NUMBER}"
+    update_conf "configs/ue${UE_NUMBER}.conf" "gw" "netns" "$UE_NAMESPACE"
     update_conf "configs/ue${UE_NUMBER}.conf" "gw" "ip_devname" "tun_srsue"
     update_conf "configs/ue${UE_NUMBER}.conf" "gw" "ip_netmask" "255.255.255.0"
 
@@ -256,12 +241,14 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
 
     echo
     echo "Successfully configured UE ${UE_NUMBER}."
-    echo "    OPC:  $UE_OPC"
+    echo "    OPc:  $UE_OPC"
     echo "    IMEI: $UE_IMEI"
     echo "    IMSI: $UE_IMSI"
     echo "    KEY:  $UE_KEY"
     echo "    PLMN: $PLMN"
     echo "    DNN:  $DNN"
+    echo "    SST:  $SST"
+    echo "    SD:   $SD"
     echo
 
     echo "The configuration file is located in the configs/ directory."

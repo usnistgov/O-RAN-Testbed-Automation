@@ -40,7 +40,9 @@ cd "$SCRIPT_DIR"
 
 echo
 echo
-echo "Stopping and removing existing Docker installations, then installing Docker $DOCKERVERSION..."
+echo "Stopping and removing existing Docker installations, then uninstalling Docker..."
+
+# Stop and disable Docker services and sockets
 if sudo systemctl is-active --quiet docker.socket; then
     sudo systemctl stop docker.socket
 fi
@@ -53,10 +55,46 @@ fi
 if sudo systemctl is-enabled --quiet docker.service; then
     sudo systemctl disable docker.service
 fi
+if sudo systemctl is-active --quiet docker; then
+    sudo systemctl stop docker
+fi
+if sudo systemctl is-enabled --quiet docker; then
+    sudo systemctl disable docker
+fi
 
-# Uninstall Docker packages and clean up
-sudo apt-get remove --purge -y --allow-change-held-packages docker docker-engine docker-ce docker.io containerd runc || true
-sudo rm -rf /var/lib/docker /etc/docker
-sudo apt-get autoremove -y
+echo "Removing Docker and cleaning config..."
+
+# Uninstall all possible Docker packages
+sudo apt-get remove --purge -y --allow-change-held-packages \
+    docker docker-engine docker-ce docker.io containerd runc \
+    docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin \
+    docker-ce-rootless-extras docker-scan-plugin || true
+
+# Remove Docker directories
+sudo rm -rf /var/lib/docker /etc/docker /home/docker
+
+# Remove Docker group and user from group
+if getent group docker >/dev/null; then
+    sudo groupdel docker
+fi
+if id -nG "$(id -un)" | grep -qw docker; then
+    sudo deluser "$(id -un)" docker
+fi
+
+# Remove Docker binaries if present
+if [ -f /usr/bin/docker ]; then
+    echo "Removing /usr/bin/docker..."
+    sudo rm -f /usr/bin/docker
+fi
+if [ -f /usr/local/bin/docker ]; then
+    echo "Removing /usr/local/bin/docker..."
+    sudo rm -f /usr/local/bin/docker
+fi
+
+# Clean up
+sudo apt-get autoremove --purge -y
+
+# Reset the shell's command hash table to recognize changes in available executables
+hash -r
 
 echo "Successfully uninstalled Docker."

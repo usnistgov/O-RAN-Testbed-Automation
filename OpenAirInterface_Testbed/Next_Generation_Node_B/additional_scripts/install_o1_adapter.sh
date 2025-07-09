@@ -30,6 +30,7 @@
 
 set -e
 
+CURRENT_DIR=$(pwd)
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$PARENT_DIR"
@@ -54,7 +55,7 @@ cd "$SCRIPT_DIR"
 if [ -z "$FIXED_DOCKER_PERMS" ]; then
     if ! output=$(docker info 2>&1); then
         if echo "$output" | grep -qiE 'permission denied|cannot connect to the docker daemon'; then
-            echo "Repairing Docker permissions..."
+            echo "Docker permissions will repair on reboot."
             sudo groupadd -f docker
             if [ -n "$SUDO_USER" ]; then
                 sudo usermod -aG docker "$SUDO_USER"
@@ -68,7 +69,7 @@ if [ -z "$FIXED_DOCKER_PERMS" ]; then
                 echo "WARNING: Could not find set group (sg) command, docker may fail without sudo until the system reboots."
                 echo
             else
-                exec sg docker "$0" "$@"
+                exec sg docker "$CURRENT_DIR/$0" "$@"
             fi
         fi
     fi

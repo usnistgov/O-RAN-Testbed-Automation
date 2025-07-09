@@ -1,8 +1,8 @@
 diff --git a/examples/xApp/c/monitor/xapp_kpm_moni.c b/examples/xApp/c/monitor/xapp_kpm_moni.c
-index d9f11118..66d9e4b7 100644
+index d9f11118..bc155779 100644
 --- a/examples/xApp/c/monitor/xapp_kpm_moni.c
 +++ b/examples/xApp/c/monitor/xapp_kpm_moni.c
-@@ -88,13 +88,26 @@ static
+@@ -88,13 +88,16 @@ static
  void log_int_value(byte_array_t name, meas_record_lst_t meas_record)
  {
    if (cmp_str_ba("RRU.PrbTotDl", name) == 0) {
@@ -20,60 +20,28 @@ index d9f11118..66d9e4b7 100644
 +  // Added int metrics for KPM research:
 +  } else if (cmp_str_ba("RSRP.Count", name) == 0) {
 +    printf("RSRP.Count = %u\n", meas_record.int_val);
-+  } else if (cmp_str_ba("N_PRB", name) == 0) {
-+    printf("N_PRB = %u\n", meas_record.int_val);
-+  } else if (cmp_str_ba("DRB.HarqMcsUl", name) == 0) {
-+    printf("DRB.HarqMcsUl = %u\n", meas_record.int_val);
-+  } else if (cmp_str_ba("DRB.HarqMcsDl", name) == 0) {
-+    printf("DRB.HarqMcsDl = %u\n", meas_record.int_val);
-+  } else if (cmp_str_ba("CQI_SINGLE_CODEWORD", name) == 0) {
-+    printf("CQI_SINGLE_CODEWORD = %u\n", meas_record.int_val);
-+  } else if (cmp_str_ba("CQI_DUAL_CODEWORD", name) == 0) {
-+    printf("CQI_DUAL_CODEWORD = %u\n", meas_record.int_val);
    } else {
      printf("Measurement Name not yet supported\n");
    }
-@@ -109,6 +122,39 @@ void log_real_value(byte_array_t name, meas_record_lst_t meas_record)
+@@ -109,6 +112,9 @@ void log_real_value(byte_array_t name, meas_record_lst_t meas_record)
      printf("DRB.UEThpDl = %.2f [kbps]\n", meas_record.real_val);
    } else if (cmp_str_ba("DRB.UEThpUl", name) == 0) {
      printf("DRB.UEThpUl = %.2f [kbps]\n", meas_record.real_val);
 +  // Added float metrics for KPM research:
 +  } else if (cmp_str_ba("RSRP.Mean", name) == 0) {
 +    printf("RSRP.Mean = %.2f [dBm]\n", meas_record.real_val);
-+  } else if (cmp_str_ba("RSRP.Minimum", name) == 0) {
-+    printf("RSRP.Minimum = %.2f [dBm]\n", meas_record.real_val);
-+  } else if (cmp_str_ba("RSRP.Quartile1", name) == 0) {
-+    printf("RSRP.Quartile1 = %.2f [dBm]\n", meas_record.real_val);
-+  } else if (cmp_str_ba("RSRP.Median", name) == 0) {
-+    printf("RSRP.Median = %.2f [dBm]\n", meas_record.real_val);
-+  } else if (cmp_str_ba("RSRP.Quartile3", name) == 0) {
-+    printf("RSRP.Quartile3 = %.2f [dBm]\n", meas_record.real_val);
-+  } else if (cmp_str_ba("RSRP.Maximum", name) == 0) {
-+    printf("RSRP.Maximum = %.2f [dBm]\n", meas_record.real_val);
-+  } else if (cmp_str_ba("RSSI", name) == 0) {
-+    printf("RSSI = %.2f [dBm]\n", meas_record.real_val);
-+  } else if (cmp_str_ba("RSRQ", name) == 0) {
-+    printf("RSRQ = %.2f [dB]\n", meas_record.real_val);
-+  } else if (cmp_str_ba("PUSCH_SNR", name) == 0) {
-+    printf("PUSCH_SNR = %.2f [dB]\n", meas_record.real_val);
-+  } else if (cmp_str_ba("PUCCH_SNR", name) == 0) {
-+    printf("PUCCH_SNR = %.2f [dB]\n", meas_record.real_val);
-+  } else if (cmp_str_ba("DRB.HarqBlockErrorRateUl", name) == 0) {
-+    printf("DRB.HarqBlockErrorRateUl = %.2f [%%]\n", meas_record.real_val);
-+  } else if (cmp_str_ba("DRB.HarqBlockErrorRateDl", name) == 0) {
-+    printf("DRB.HarqBlockErrorRateDl = %.2f [%%]\n", meas_record.real_val);
-+  } else if (cmp_str_ba("DRB.MacSduRetransmissionRateUl", name) == 0) {
-+    printf("DRB.MacSduRetransmissionRateUl = %.2f [%%]\n", meas_record.real_val);
-+  } else if (cmp_str_ba("DRB.MacSduRetransmissionRateDl", name) == 0) {
-+    printf("DRB.MacSduRetransmissionRateDl = %.2f [%%]\n", meas_record.real_val);
-+  } else if (cmp_str_ba("DRB.MacSduErrorRateUl", name) == 0) {
-+    printf("DRB.MacSduErrorRateUl = %.2f [%%]\n", meas_record.real_val);
-+  } else if (cmp_str_ba("DRB.MacSduErrorRateDl", name) == 0) {
-+    printf("DRB.MacSduErrorRateDl = %.2f [%%]\n", meas_record.real_val);
    } else {
      printf("Measurement Name not yet supported\n");
    }
-@@ -382,7 +428,7 @@ int main(int argc, char* argv[])
+@@ -196,7 +202,6 @@ void sm_cb_kpm(sm_ag_if_rd_t const* rd)
+ 
+       // log measurements
+       log_kpm_measurements(&msg_frm_3->meas_report_per_ue[i].ind_msg_format_1);
+-      
+     }
+     counter++;
+   }
+@@ -382,7 +387,7 @@ int main(int argc, char* argv[])
  
    assert(nodes.len > 0);
  

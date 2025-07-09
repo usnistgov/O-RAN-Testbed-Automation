@@ -1,23 +1,30 @@
-/*
- * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under
- * the OAI Public License, Version 1.1  (the "License"); you may not use this file
- * except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.openairinterface.org/?page_id=698
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BAS
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *-------------------------------------------------------------------------------
- * For more information about the OpenAirInterface (OAI) Software Alliance:
- *      contact@openairinterface.org
- */
+// NIST-developed software is provided by NIST as a public service. You may use,
+// copy, and distribute copies of the software in any medium, provided that you
+// keep intact this entire notice. You may improve, modify, and create derivative
+// works of the software or any portion of the software, and you may copy and
+// distribute such modifications or works. Modified works should carry a notice
+// stating that you changed the software and should note the date and nature of
+// any such change. Please explicitly acknowledge the National Institute of
+// Standards and Technology as the source of the software.
+//
+// NIST-developed software is expressly provided "AS IS." NIST MAKES NO WARRANTY
+// OF ANY KIND, EXPRESS, IMPLIED, IN FACT, OR ARISING BY OPERATION OF LAW,
+// INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTY OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT, AND DATA ACCURACY. NIST
+// NEITHER REPRESENTS NOR WARRANTS THAT THE OPERATION OF THE SOFTWARE WILL BE
+// UNINTERRUPTED OR ERROR-FREE, OR THAT ANY DEFECTS WILL BE CORRECTED. NIST DOES
+// NOT WARRANT OR MAKE ANY REPRESENTATIONS REGARDING THE USE OF THE SOFTWARE OR
+// THE RESULTS THEREOF, INCLUDING BUT NOT LIMITED TO THE CORRECTNESS, ACCURACY,
+// RELIABILITY, OR USEFULNESS OF THE SOFTWARE.
+//
+// You are solely responsible for determining the appropriateness of using and
+// distributing the software and you assume all risks associated with its use,
+// including but not limited to the risks and costs of program errors, compliance
+// with applicable laws, damage to or loss of data, programs or equipment, and
+// the unavailability or interruption of operation. This software is not intended
+// to be used in any situation where a failure could cause risk of injury or
+// damage to property. The software developed by NIST employees is not subject to
+// copyright protection within the United States.
 
 #include "../../../../src/xApp/e42_xapp_api.h"
 #include "../../../../src/util/alg_ds/alg/defer.h"
@@ -53,46 +60,36 @@ char influxdb_token[128]; // Input argument: argv[1]
 
 // Variables that change during runtime
 static pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
-char influx_fields_buffer[1024];
+char influx_fields_buffer[2048];
 unsigned int influx_num_samples = 0;
 uint64_t current_ue_id = 0;
 bool filter_current_sample = false;
 
-static void log_gnb_ue_id(ue_id_e2sm_t ue_id)
-{
-  if (ue_id.gnb.gnb_cu_ue_f1ap_lst != NULL)
-  {
-    for (size_t i = 0; i < ue_id.gnb.gnb_cu_ue_f1ap_lst_len; i++)
-    {
+static void log_gnb_ue_id(ue_id_e2sm_t ue_id) {
+  if (ue_id.gnb.gnb_cu_ue_f1ap_lst != NULL) {
+    for (size_t i = 0; i < ue_id.gnb.gnb_cu_ue_f1ap_lst_len; i++) {
       printf("UE ID type = gNB-CU, gnb_cu_ue_f1ap = %u\n", ue_id.gnb.gnb_cu_ue_f1ap_lst[i]);
     }
-  }
-  else
-  {
+  } else {
     printf("UE ID type = gNB, amf_ue_ngap_id = %lu\n", ue_id.gnb.amf_ue_ngap_id);
   }
-  if (ue_id.gnb.ran_ue_id != NULL)
-  {
+  if (ue_id.gnb.ran_ue_id != NULL) {
     printf("ran_ue_id = %lx\n", *ue_id.gnb.ran_ue_id); // RAN UE NGAP ID
   }
   current_ue_id = ue_id.gnb.amf_ue_ngap_id; // Update the global UE ID
 }
 
-static void log_du_ue_id(ue_id_e2sm_t ue_id)
-{
+static void log_du_ue_id(ue_id_e2sm_t ue_id) {
   printf("UE ID type = gNB-DU, gnb_cu_ue_f1ap = %u\n", ue_id.gnb_du.gnb_cu_ue_f1ap);
-  if (ue_id.gnb_du.ran_ue_id != NULL)
-  {
+  if (ue_id.gnb_du.ran_ue_id != NULL) {
     printf("ran_ue_id = %lx\n", *ue_id.gnb_du.ran_ue_id); // RAN UE NGAP ID
   }
   current_ue_id = ue_id.gnb_du.gnb_cu_ue_f1ap; // Update the global UE ID
 }
 
-static void log_cuup_ue_id(ue_id_e2sm_t ue_id)
-{
+static void log_cuup_ue_id(ue_id_e2sm_t ue_id) {
   printf("UE ID type = gNB-CU-UP, gnb_cu_cp_ue_e1ap = %u\n", ue_id.gnb_cu_up.gnb_cu_cp_ue_e1ap);
-  if (ue_id.gnb_cu_up.ran_ue_id != NULL)
-  {
+  if (ue_id.gnb_cu_up.ran_ue_id != NULL) {
     printf("ran_ue_id = %lx\n", *ue_id.gnb_cu_up.ran_ue_id); // RAN UE NGAP ID
   }
   current_ue_id = ue_id.gnb_cu_up.gnb_cu_cp_ue_e1ap; // Update the global UE ID
@@ -110,13 +107,11 @@ static log_ue_id log_ue_id_e2sm[END_UE_ID_E2SM] = {
     NULL,
 };
 
-void reset_measurement_buffers()
-{
+void reset_measurement_buffers() {
   memset(influx_fields_buffer, 0, sizeof(influx_fields_buffer));
 }
 
-void influxdb_clear_bucket()
-{
+void influxdb_clear_bucket() {
   char cmd[2048];
   char current_time_iso[64];
 
@@ -137,8 +132,7 @@ void influxdb_clear_bucket()
   printf("InfluxDB data cleared successfully up to %s.\n", current_time_iso);
 }
 
-void influxdb_write(char *line_protocol)
-{
+void influxdb_write(char *line_protocol) {
   char cmd[2048];
 
   snprintf(cmd, sizeof(cmd),
@@ -151,14 +145,12 @@ void influxdb_write(char *line_protocol)
 }
 
 // At the end of the measurement cycle, send the metrics to InfluxDB
-void send_metrics_to_influxdb(uint64_t ue_id, int64_t timestamp_ms, char *fields_buffer)
-{
+void send_metrics_to_influxdb(uint64_t ue_id, int64_t timestamp_ms, char *fields_buffer) {
   char line_protocol[1024];
 
   // Ensure there's a trailing comma if not already present
   size_t len = strlen(fields_buffer);
-  if (len > 0 && fields_buffer[len - 1] != ',')
-  {
+  if (len > 0 && fields_buffer[len - 1] != ',') {
     strcat(fields_buffer, ",");
   }
 
@@ -177,17 +169,14 @@ void send_metrics_to_influxdb(uint64_t ue_id, int64_t timestamp_ms, char *fields
   influxdb_write(line_protocol);
 }
 
-bool sanitize_metric_name(const byte_array_t *name, char *out, size_t out_size)
-{
+bool sanitize_metric_name(const byte_array_t *name, char *out, size_t out_size) {
   size_t j = 0;
-  for (size_t i = 0; i < name->len && j < out_size - 1; i++)
-  {
+  for (size_t i = 0; i < name->len && j < out_size - 1; i++) {
     char c = name->buf[i];
     if ((c >= 'A' && c <= 'Z') ||
         (c >= 'a' && c <= 'z') ||
         (c >= '0' && c <= '9') ||
-        c == '_' || c == '-' || c == '.')
-    {
+        c == '_' || c == '-' || c == '.') {
       out[j++] = c;
     }
     // Skip invalid characters
@@ -196,53 +185,26 @@ bool sanitize_metric_name(const byte_array_t *name, char *out, size_t out_size)
   return j > 0;
 }
 
-static void log_int_value(byte_array_t name, meas_record_lst_t meas_record)
-{
-  byte_array_t unit = {.buf = "", .len = 0};
+static void log_int_value(byte_array_t name, meas_record_lst_t meas_record) {
+  byte_array_t unit = {.buf = (uint8_t *)"", .len = 0};
 
-  if (cmp_str_ba("RRU.PrbTotDl", name) == 0)
-  {
-    unit.buf = "PRBs";
+  if (cmp_str_ba("RRU.PrbTotDl", name) == 0) {
+    unit.buf = (uint8_t *)"PRBs";
     unit.len = strlen("PRBs");
-  }
-  else if (cmp_str_ba("RRU.PrbTotUl", name) == 0)
-  {
-    unit.buf = "PRBs";
+  } else if (cmp_str_ba("RRU.PrbTotUl", name) == 0) {
+    unit.buf = (uint8_t *)"PRBs";
     unit.len = strlen("PRBs");
-  }
-  else if (cmp_str_ba("DRB.PdcpSduVolumeDL", name) == 0)
-  {
-    unit.buf = "kb";
+  } else if (cmp_str_ba("DRB.PdcpSduVolumeDL", name) == 0) {
+    unit.buf = (uint8_t *)"kb";
     unit.len = strlen("kb");
-  }
-  else if (cmp_str_ba("DRB.PdcpSduVolumeUL", name) == 0)
-  {
-    unit.buf = "kb";
+  } else if (cmp_str_ba("DRB.PdcpSduVolumeUL", name) == 0) {
+    unit.buf = (uint8_t *)"kb";
     unit.len = strlen("kb");
-  }
-  else if (cmp_str_ba("RSRP.Count", name) == 0)
-  {
-    unit.buf = "";
+  } else if (cmp_str_ba("RSRP.Count", name) == 0) {
+    unit.buf = (uint8_t *)"";
     unit.len = 0;
-  }
-  else if (cmp_str_ba("N_PRB", name) == 0)
-  {
-    unit.buf = "";
-    unit.len = 0;
-  }
-  else if (cmp_str_ba("CQI_SINGLE_CODEWORD", name) == 0)
-  {
-    unit.buf = "";
-    unit.len = 0;
-  }
-  else if (cmp_str_ba("CQI_DUAL_CODEWORD", name) == 0)
-  {
-    unit.buf = "";
-    unit.len = 0;
-  }
-  else
-  {
-    unit.buf = "";
+  } else {
+    unit.buf = (uint8_t *)"";
     unit.len = 0;
   }
   // if (cmp_str_ba("RRU.PrbTotDl", name) == 0) {
@@ -258,19 +220,31 @@ static void log_int_value(byte_array_t name, meas_record_lst_t meas_record)
   //   printf("Measurement Name not yet supported\n");
   // }
   char safe_metric_name[128];
-  if (!sanitize_metric_name(&name, safe_metric_name, sizeof(safe_metric_name)))
-  {
+  if (!sanitize_metric_name(&name, safe_metric_name, sizeof(safe_metric_name))) {
     fprintf(stderr, "Invalid metric name detected.\n");
     return;
   }
 
   char influx_field_name[128];
-  if (unit.len > 0)
-  {
-    snprintf(influx_field_name, sizeof(influx_field_name), "%s_%.*s", safe_metric_name, (int)unit.len, unit.buf);
-  }
-  else
-  {
+  if (unit.len > 0) {
+    size_t total_len = 0;
+    influx_field_name[0] = '\0';
+    strncat(influx_field_name, safe_metric_name, sizeof(influx_field_name) - 1);
+    total_len = strlen(influx_field_name);
+    if (total_len < sizeof(influx_field_name) - 2) { // Leave room for '_' and unit
+      influx_field_name[total_len] = '_';
+      influx_field_name[total_len + 1] = '\0';
+      total_len++;
+      size_t remain = sizeof(influx_field_name) - 1 - total_len;
+      size_t safe_unit_len = unit.len < remain ? unit.len : remain;
+      if (safe_unit_len > 0) {
+        memcpy(influx_field_name + total_len, unit.buf, safe_unit_len);
+        influx_field_name[total_len + safe_unit_len] = '\0';
+      }
+    } else {
+      snprintf(influx_field_name, sizeof(influx_field_name), "%s", safe_metric_name);
+    }
+  } else {
     snprintf(influx_field_name, sizeof(influx_field_name), "%s", safe_metric_name);
   }
 
@@ -279,110 +253,57 @@ static void log_int_value(byte_array_t name, meas_record_lst_t meas_record)
   strncat(influx_fields_buffer, influx_field, sizeof(influx_fields_buffer) - strlen(influx_fields_buffer) - 1);
 
   // If the measurement is RSRP.Count and the value is 0, the data is invalid
-  if (filter_invalid_rsrp_samples && cmp_str_ba("RSRP.Count", name) == 0)
-  {
-    if (meas_record.int_val == 0)
-    {
+  if (filter_invalid_rsrp_samples && cmp_str_ba("RSRP.Count", name) == 0) {
+    if (meas_record.int_val == 0) {
       filter_current_sample = true;
       printf("\n\tNumber of RSRP measurements was zero, skipping sample to avoid divide by zero.\n\n");
     }
   }
 }
 
-static void log_real_value(byte_array_t name, meas_record_lst_t meas_record)
-{
-  byte_array_t unit = {.buf = "", .len = 0};
+static void log_real_value(byte_array_t name, meas_record_lst_t meas_record) {
+  byte_array_t unit = {.buf = (uint8_t *)"", .len = 0};
 
-  if (cmp_str_ba("DRB.RlcSduDelayDl", name) == 0)
-  {
-    unit.buf = "μs";
+  if (cmp_str_ba("DRB.RlcSduDelayDl", name) == 0) {
+    unit.buf = (uint8_t *)"μs";
     unit.len = strlen("μs");
-  }
-  else if (cmp_str_ba("DRB.UEThpDl", name) == 0)
-  {
-    unit.buf = "kbps";
+  } else if (cmp_str_ba("DRB.UEThpDl", name) == 0) {
+    unit.buf = (uint8_t *)"kbps";
     unit.len = strlen("kbps");
-  }
-  else if (cmp_str_ba("DRB.UEThpUl", name) == 0)
-  {
-    unit.buf = "kbps";
+  } else if (cmp_str_ba("DRB.UEThpUl", name) == 0) {
+    unit.buf = (uint8_t *)"kbps";
     unit.len = strlen("kbps");
-  }
-  else if (cmp_str_ba("RSRP.Mean", name) == 0)
-  {
-    unit.buf = "dBm";
+  } else if (cmp_str_ba("RSRP.Mean", name) == 0) {
+    unit.buf = (uint8_t *)"dBm";
     unit.len = strlen("dBm");
   }
-  else if (cmp_str_ba("RSRP.Minimum", name) == 0)
-  {
-    unit.buf = "dBm";
-    unit.len = strlen("dBm");
-  }
-  else if (cmp_str_ba("RSRP.Quartile1", name) == 0)
-  {
-    unit.buf = "dBm";
-    unit.len = strlen("dBm");
-  }
-  else if (cmp_str_ba("RSRP.Median", name) == 0)
-  {
-    unit.buf = "dBm";
-    unit.len = strlen("dBm");
-  }
-  else if (cmp_str_ba("RSRP.Quartile3", name) == 0)
-  {
-    unit.buf = "dBm";
-    unit.len = strlen("dBm");
-  }
-  else if (cmp_str_ba("RSRP.Maximum", name) == 0)
-  {
-    unit.buf = "dBm";
-    unit.len = strlen("dBm");
-  }
-  else if (cmp_str_ba("RSSI", name) == 0)
-  {
-    unit.buf = "dBm";
-    unit.len = strlen("dBm");
-  }
-  else if (cmp_str_ba("RSRQ", name) == 0)
-  {
-    unit.buf = "dB";
-    unit.len = strlen("dB");
-  }
-  else if (cmp_str_ba("PUSCH_SNR", name) == 0)
-  {
-    unit.buf = "dB";
-    unit.len = strlen("dB");
-  }
-  else if (cmp_str_ba("PUCCH_SNR", name) == 0)
-  {
-    unit.buf = "dB";
-    unit.len = strlen("dB");
-  }
-  // if (cmp_str_ba("DRB.RlcSduDelayDl", name) == 0) {
-  //   printf("DRB.RlcSduDelayDl = %.2f [μs]\n", meas_record.real_val);
-  // } else if (cmp_str_ba("DRB.UEThpDl", name) == 0) {
-  //   printf("DRB.UEThpDl = %.2f [kbps]\n", meas_record.real_val);
-  // } else if (cmp_str_ba("DRB.UEThpUl", name) == 0) {
-  //   printf("DRB.UEThpUl = %.2f [kbps]\n", meas_record.real_val);
-  // } else if (...) {
-  // } else {
-  //   printf("Measurement Name not yet supported\n");
-  // }
 
   char safe_metric_name[128];
-  if (!sanitize_metric_name(&name, safe_metric_name, sizeof(safe_metric_name)))
-  {
+  if (!sanitize_metric_name(&name, safe_metric_name, sizeof(safe_metric_name))) {
     fprintf(stderr, "Invalid metric name detected.\n");
     return;
   }
 
   char influx_field_name[128];
-  if (unit.len > 0)
-  {
-    snprintf(influx_field_name, sizeof(influx_field_name), "%s_%.*s", safe_metric_name, (int)unit.len, unit.buf);
-  }
-  else
-  {
+  if (unit.len > 0) {
+    size_t total_len = 0;
+    influx_field_name[0] = '\0';
+    strncat(influx_field_name, safe_metric_name, sizeof(influx_field_name) - 1);
+    total_len = strlen(influx_field_name);
+    if (total_len < sizeof(influx_field_name) - 2) { // Leave room for '_' and unit
+      influx_field_name[total_len] = '_';
+      influx_field_name[total_len + 1] = '\0';
+      total_len++;
+      size_t remain = sizeof(influx_field_name) - 1 - total_len;
+      size_t safe_unit_len = unit.len < remain ? unit.len : remain;
+      if (safe_unit_len > 0) {
+        memcpy(influx_field_name + total_len, unit.buf, safe_unit_len);
+        influx_field_name[total_len + safe_unit_len] = '\0';
+      }
+    } else {
+      snprintf(influx_field_name, sizeof(influx_field_name), "%s", safe_metric_name);
+    }
+  } else {
     snprintf(influx_field_name, sizeof(influx_field_name), "%s", safe_metric_name);
   }
 
@@ -399,14 +320,12 @@ static log_meas_value get_meas_value[END_MEAS_VALUE] = {
     NULL,
 };
 
-static void match_meas_name_type(meas_type_t meas_type, meas_record_lst_t meas_record)
-{
+static void match_meas_name_type(meas_type_t meas_type, meas_record_lst_t meas_record) {
   // Get the value of the Measurement
   get_meas_value[meas_record.value](meas_type.name, meas_record);
 }
 
-static void match_id_meas_type(meas_type_t meas_type, meas_record_lst_t meas_record)
-{
+static void match_id_meas_type(meas_type_t meas_type, meas_record_lst_t meas_record) {
   (void)meas_type;
   (void)meas_record;
   assert(false && "ID Measurement Type not yet supported");
@@ -419,19 +338,16 @@ static check_meas_type match_meas_type[END_MEAS_TYPE] = {
     match_id_meas_type,
 };
 
-static void log_kpm_measurements(kpm_ind_msg_format_1_t const *msg_frm_1)
-{
+static void log_kpm_measurements(kpm_ind_msg_format_1_t const *msg_frm_1) {
   assert(msg_frm_1->meas_info_lst_len > 0 && "Cannot correctly print measurements");
 
   reset_measurement_buffers();
 
   // UE Measurements per granularity period
-  for (size_t j = 0; j < msg_frm_1->meas_data_lst_len; j++)
-  {
+  for (size_t j = 0; j < msg_frm_1->meas_data_lst_len; j++) {
     meas_data_lst_t const data_item = msg_frm_1->meas_data_lst[j];
 
-    for (size_t z = 0; z < data_item.meas_record_len; z++)
-    {
+    for (size_t z = 0; z < data_item.meas_record_len; z++) {
       meas_type_t const meas_type = msg_frm_1->meas_info_lst[z].meas_type;
       meas_record_lst_t const record_item = data_item.meas_record_lst[z];
 
@@ -442,8 +358,7 @@ static void log_kpm_measurements(kpm_ind_msg_format_1_t const *msg_frm_1)
     }
   }
 
-  if (filter_invalid_rsrp_samples || !filter_current_sample)
-  {
+  if (filter_invalid_rsrp_samples || !filter_current_sample) {
     // InfluxDB send:
     int64_t now_ms = time_now_us() / 1000;
     send_metrics_to_influxdb(current_ue_id, now_ms, influx_fields_buffer);
@@ -454,8 +369,7 @@ static void log_kpm_measurements(kpm_ind_msg_format_1_t const *msg_frm_1)
   printf("Samples collected = %u\n", influx_num_samples);
 }
 
-static void sm_cb_kpm(sm_ag_if_rd_t const *rd)
-{
+static void sm_cb_kpm(sm_ag_if_rd_t const *rd) {
   assert(rd != NULL);
   assert(rd->type == INDICATION_MSG_AGENT_IF_ANS_V0);
   assert(rd->ind.type == KPM_STATS_V3_0);
@@ -473,8 +387,7 @@ static void sm_cb_kpm(sm_ag_if_rd_t const *rd)
     printf("\n%7d KPM ind_msg latency = %ld [μs]\n", counter, now - hdr_frm_1->collectStartTime); // xApp <-> E2 Node
 
     // Reported list of measurements per UE
-    for (size_t i = 0; i < msg_frm_3->ue_meas_report_lst_len; i++)
-    {
+    for (size_t i = 0; i < msg_frm_3->ue_meas_report_lst_len; i++) {
       // log UE ID
       ue_id_e2sm_t const ue_id_e2sm = msg_frm_3->meas_report_per_ue[i].ue_meas_report_lst;
       ue_id_e2sm_e const type = ue_id_e2sm.type;
@@ -487,8 +400,7 @@ static void sm_cb_kpm(sm_ag_if_rd_t const *rd)
   }
 }
 
-static test_info_lst_t filter_predicate(test_cond_type_e type, test_cond_e cond, int value)
-{
+static test_info_lst_t filter_predicate(test_cond_type_e type, test_cond_e cond, int value) {
   test_info_lst_t dst = {0};
 
   dst.test_cond_type = type;
@@ -515,8 +427,7 @@ static test_info_lst_t filter_predicate(test_cond_type_e type, test_cond_e cond,
   return dst;
 }
 
-static label_info_lst_t fill_kpm_label(void)
-{
+static label_info_lst_t fill_kpm_label(void) {
   label_info_lst_t label_item = {0};
 
   label_item.noLabel = ecalloc(1, sizeof(enum_value_e));
@@ -525,8 +436,7 @@ static label_info_lst_t fill_kpm_label(void)
   return label_item;
 }
 
-static kpm_act_def_format_1_t fill_act_def_frm_1(ric_report_style_item_t const *report_item)
-{
+static kpm_act_def_format_1_t fill_act_def_frm_1(ric_report_style_item_t const *report_item) {
   assert(report_item != NULL);
 
   kpm_act_def_format_1_t ad_frm_1 = {0};
@@ -538,8 +448,7 @@ static kpm_act_def_format_1_t fill_act_def_frm_1(ric_report_style_item_t const *
   ad_frm_1.meas_info_lst = calloc(sz, sizeof(meas_info_format_1_lst_t));
   assert(ad_frm_1.meas_info_lst != NULL && "Memory exhausted");
 
-  for (size_t i = 0; i < sz; i++)
-  {
+  for (size_t i = 0; i < sz; i++) {
     meas_info_format_1_lst_t *meas_item = &ad_frm_1.meas_info_lst[i];
     // 8.3.9
     // Measurement Name
@@ -568,8 +477,7 @@ static kpm_act_def_format_1_t fill_act_def_frm_1(ric_report_style_item_t const *
   return ad_frm_1;
 }
 
-static kpm_act_def_t fill_report_style_4(ric_report_style_item_t const *report_item)
-{
+static kpm_act_def_t fill_report_style_4(ric_report_style_item_t const *report_item) {
   assert(report_item != NULL);
   assert(report_item->act_def_format_type == FORMAT_4_ACTION_DEFINITION);
 
@@ -603,8 +511,7 @@ static fill_kpm_act_def get_kpm_act_def[END_RIC_SERVICE_REPORT] = {
     NULL,
 };
 
-static kpm_sub_data_t gen_kpm_subs(kpm_ran_function_def_t const *ran_func)
-{
+static kpm_sub_data_t gen_kpm_subs(kpm_ran_function_def_t const *ran_func) {
   assert(ran_func != NULL);
   assert(ran_func->ric_event_trigger_style_list != NULL);
 
@@ -629,18 +536,15 @@ static kpm_sub_data_t gen_kpm_subs(kpm_ran_function_def_t const *ran_func)
   return kpm_sub;
 }
 
-static bool eq_sm(sm_ran_function_t const *elem, int const id)
-{
+static bool eq_sm(sm_ran_function_t const *elem, int const id) {
   if (elem->id == id)
     return true;
 
   return false;
 }
 
-static size_t find_sm_idx(sm_ran_function_t *rf, size_t sz, bool (*f)(sm_ran_function_t const *, int const), int const id)
-{
-  for (size_t i = 0; i < sz; i++)
-  {
+static size_t find_sm_idx(sm_ran_function_t *rf, size_t sz, bool (*f)(sm_ran_function_t const *, int const), int const id) {
+  for (size_t i = 0; i < sz; i++) {
     if (f(&rf[i], id))
       return i;
   }
@@ -648,10 +552,8 @@ static size_t find_sm_idx(sm_ran_function_t *rf, size_t sz, bool (*f)(sm_ran_fun
   assert(0 != 0 && "SM ID could not be found in the RAN Function List");
 }
 
-int main(int argc, char *argv[])
-{
-  if (argc < 2)
-  {
+int main(int argc, char *argv[]) {
+  if (argc < 2) {
     fprintf(stderr, "Usage: %s <influxdb_token>\n", argv[0]);
     return EXIT_FAILURE;
   }
@@ -660,8 +562,7 @@ int main(int argc, char *argv[])
 
   fr_args_t args = init_fr_args(argc, argv);
 
-  if (clear_database_on_startup == true)
-  {
+  if (clear_database_on_startup == true) {
     influxdb_clear_bucket();
   }
 
@@ -688,16 +589,14 @@ int main(int argc, char *argv[])
   ////////////
   int const KPM_ran_function = 2;
 
-  for (size_t i = 0; i < nodes.len; ++i)
-  {
+  for (size_t i = 0; i < nodes.len; ++i) {
     e2_node_connected_xapp_t *n = &nodes.n[i];
 
     size_t const idx = find_sm_idx(n->rf, n->len_rf, eq_sm, KPM_ran_function);
     assert(n->rf[idx].defn.type == KPM_RAN_FUNC_DEF_E && "KPM is not the received RAN Function");
     // if REPORT Service is supported by E2 node, send SUBSCRIPTION
     // e.g. OAI CU-CP
-    if (n->rf[idx].defn.kpm.ric_report_style_list != NULL)
-    {
+    if (n->rf[idx].defn.kpm.ric_report_style_list != NULL) {
       // Generate KPM SUBSCRIPTION message
       kpm_sub_data_t kpm_sub = gen_kpm_subs(&n->rf[idx].defn.kpm);
 

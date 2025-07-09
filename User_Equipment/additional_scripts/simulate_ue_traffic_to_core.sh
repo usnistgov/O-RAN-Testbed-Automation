@@ -99,7 +99,7 @@ fi
 echo "Successfully found PDU Session IP: $PDU_SESSION_IP"
 
 if [ -z "$CORE_IP" ]; then
-    echo "Warning: Unable to find 5G core IP from the routing table."
+    echo "WARNING: Unable to find 5G core IP from the routing table."
     read -p "Please enter the IP address of the 5G core: " CORE_IP
     if [ -z "$CORE_IP" ]; then
         echo "Error: No IP address provided. Exiting."

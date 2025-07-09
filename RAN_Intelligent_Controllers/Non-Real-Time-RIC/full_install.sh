@@ -36,6 +36,7 @@ if ! command -v realpath &>/dev/null; then
     sudo apt-get install -y coreutils
 fi
 
+CURRENT_DIR=$(pwd)
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
@@ -243,13 +244,21 @@ if ! kubectl get pods -n istio-system | grep -q 'istiod-'; then
     istioctl install -y
 fi
 
+if ! kubectl get namespace nonrtric &>/dev/null; then
+    echo "Creating namespace nonrtric..."
+    kubectl create namespace nonrtric
+fi
+
+# Enable Istio sidecar injection on the namespace
+kubectl label namespace nonrtric istio-injection=enabled --overwrite
+
 cd "$SCRIPT_DIR"
 
 # Check if docker is accessible from the current user, and if not, repair its permissions
 if [ -z "$FIXED_DOCKER_PERMS" ]; then
     if ! output=$(docker info 2>&1); then
         if echo "$output" | grep -qiE 'permission denied|cannot connect to the docker daemon'; then
-            echo "Repairing Docker permissions..."
+            echo "Docker permissions will repair on reboot."
             sudo groupadd -f docker
             if [ -n "$SUDO_USER" ]; then
                 sudo usermod -aG docker "$SUDO_USER"
@@ -263,7 +272,7 @@ if [ -z "$FIXED_DOCKER_PERMS" ]; then
                 echo "WARNING: Could not find set group (sg) command, docker may fail without sudo until the system reboots."
                 echo
             else
-                exec sg docker "$0" "$@"
+                exec sg docker "$CURRENT_DIR/$0" "$@"
             fi
         fi
     fi

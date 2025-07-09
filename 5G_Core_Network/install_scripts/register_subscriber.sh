@@ -45,7 +45,9 @@ DBCTL_DIR="./open5gs/misc/db/open5gs-dbctl"
 DEFAULT_IMSI="001010123456780"
 DEFAULT_KEY="00112233445566778899aabbccddeeff"
 DEFAULT_OPC="63BFA50EE6523365FF14C1F45F88737D"
-DEFAULT_APN="srsapn"
+DEFAULT_APN="internet"
+DEFAULT_SST=""
+DEFAULT_SD=""
 
 if ! systemctl is-active --quiet "open5gs-webui"; then
     echo "WebUI not running. Starting..."
@@ -60,6 +62,8 @@ usage() {
     echo "  --key [Key]                   Set the authentication key (default: $DEFAULT_KEY)"
     echo "  --opc [OPC]                   Set the OPC value (default: $DEFAULT_OPC)"
     echo "  --apn [APN]                   Set the APN value (default: $DEFAULT_APN)"
+    echo "  --sst [SST]                   Set the SST value (optional)"
+    echo "  --sd [SD]                     Set the SD value (optional)"
     echo "  -h, --help                    Display this help message and exit"
     exit 1
 }
@@ -89,6 +93,14 @@ while [[ "$#" -gt 0 ]]; do
         APN="${2}"
         shift
         ;;
+    --sst)
+        SST="${2}"
+        shift
+        ;;
+    --sd)
+        SD="${2}"
+        shift
+        ;;
     -h | --help) usage ;;
     *)
         echo "Unknown parameter passed: $1"
@@ -103,6 +115,8 @@ IMSI="${IMSI:-$DEFAULT_IMSI}"
 KEY="${KEY:-$DEFAULT_KEY}"
 OPC="${OPC:-$DEFAULT_OPC}"
 APN="${APN:-$DEFAULT_APN}"
+SST="${SST:-$DEFAULT_SST}"
+SD="${SD:-$DEFAULT_SD}"
 
 # Check if the subscriber already exists
 if $DBCTL_DIR showpretty | grep -q "imsi: '$IMSI'"; then
@@ -111,7 +125,11 @@ if $DBCTL_DIR showpretty | grep -q "imsi: '$IMSI'"; then
 fi
 
 # Command to add subscriber using the open5gs-dbctl tool
-CMD="$DBCTL_DIR add_ue_with_apn $IMSI $KEY $OPC $APN"
+if [[ -n "$SST" && -n "$SD" ]]; then
+    CMD="$DBCTL_DIR add_ue_with_slice $IMSI $KEY $OPC $APN $SST $SD"
+else
+    CMD="$DBCTL_DIR add_ue_with_apn $IMSI $KEY $OPC $APN"
+fi
 
 echo "Running command: $CMD"
 $CMD

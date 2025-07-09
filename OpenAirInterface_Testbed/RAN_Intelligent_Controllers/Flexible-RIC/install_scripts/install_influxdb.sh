@@ -36,8 +36,8 @@ set -x
 INFLUXDB_ORG="xapp-kpm-moni"
 INFLUXDB_BUCKET="xapp-kpm-moni"
 INFLUXDB_ROOT_USER="root"
-INFLUXDB_ROOT_PASS="g10bNbAj31@K"
-INFLUXDB_ROOT_TOKEN="A684h862N3b01j3KJC04Ssf2K1H95L2"
+INFLUXDB_ROOT_PASS="g10bNbAj31@K"                     # Randomly generated
+INFLUXDB_ROOT_TOKEN="A684h862N3b01j3KJC04Ssf2K1H95L2" # Randomly generated
 
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."

@@ -35,16 +35,12 @@ fi
 
 WEBUI_PORT=9999
 
-if command -v google-chrome &>/dev/null; then
-    echo "Opening the WebUI in Google Chrome..."
-    google-chrome "http://localhost:$WEBUI_PORT" >/dev/null 2>&1 &
-    sleep 3
-elif command -v firefox &>/dev/null; then
-    echo "Opening the WebUI in Firefox..."
-    firefox "http://localhost:$WEBUI_PORT" >/dev/null 2>&1 &
+if command -v xdg-open &>/dev/null; then
+    echo "Opening the WebUI in the default web browser at URL http://localhost:$WEBUI_PORT"
+    xdg-open "http://localhost:$WEBUI_PORT" >/dev/null 2>&1 &
     sleep 3
 else
-    echo "No supported browser detected. Visit http://localhost:$WEBUI_PORT to access the WebUI."
+    echo "No default browser detected. Visit http://localhost:$WEBUI_PORT to access the WebUI."
 fi
 
 echo

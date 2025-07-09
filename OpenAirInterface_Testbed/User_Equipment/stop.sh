@@ -52,15 +52,6 @@ if [ "$#" -eq 1 ]; then
     fi
 fi
 
-# Check if the UE is already stopped
-if $(./is_running.sh | grep -q "User Equipment: NOT_RUNNING"); then
-    ./is_running.sh
-    exit 0
-fi
-
-# Prevent the subsequent commands from requiring credential input
-sudo ls >/dev/null 2>&1
-
 # Remove a network namespace given the UE number
 remove_ue_namespace() {
     local UE_NUMBER="$1"
@@ -77,19 +68,29 @@ remove_all_ue_namespaces() {
     done
 }
 
+# Check if the UE is already stopped
+if $(./is_running.sh | grep -q "User Equipment: NOT_RUNNING"); then
+    # Remove UE namespaces
+    if [ -z "$UE_NUMBER" ]; then
+        remove_all_ue_namespaces
+    else
+        remove_ue_namespace "$UE_NUMBER"
+    fi
+    ./is_running.sh
+    exit 0
+fi
+
+# Prevent the subsequent commands from requiring credential input
+sudo ls >/dev/null 2>&1
+
 # Send a graceful shutdown signal to the UE process
 if [ -z "$UE_NUMBER" ]; then
     sudo pkill -f "nr-uesoftmodem" >/dev/null 2>&1 &
-    # Revert all running UE namespaces if no UE number is provided
-    RUNNING_UE=$(./is_running.sh | grep -oP '(?<=User Equipment: RUNNING \().*(?=\))')
-    for UE in $RUNNING_UE; do
-        UE_NUM=$(echo "$UE" | grep -oP '(?<=ue)\d+')
-        sudo ./install_scripts/revert_ue_namespace.sh "$UE_NUM" &>/dev/null
-    done
+    remove_all_ue_namespaces
     stty sane
 else
     sudo pkill -f "nr-uesoftmodem -O ../../../../configs/ue$UE_NUMBER.conf" >/dev/null 2>&1 &
-    sudo ./install_scripts/revert_ue_namespace.sh $UE_NUMBER
+    remove_ue_namespace "$UE_NUMBER"
 fi
 
 # Wait for the process to terminate gracefully
@@ -98,23 +99,21 @@ MAX_COUNT=5
 sleep 1
 while [ $COUNT -lt $MAX_COUNT ]; do
     IS_RUNNING=$(./is_running.sh)
-    echo "$IS_RUNNING ($COUNT / $MAX_COUNT)"
     if [ -z "$UE_NUMBER" ]; then
         if echo "$IS_RUNNING" | grep -q "User Equipment: NOT_RUNNING"; then
-            remove_all_ue_namespaces
             echo "The User Equipment has stopped gracefully."
             ./is_running.sh
             exit 0
         fi
     else
         if ! echo "$IS_RUNNING" | grep -q "ue$UE_NUMBER"; then
-            remove_ue_namespace "$UE_NUMBER"
             echo "The User Equipment $UE_NUMBER has stopped gracefully."
             ./is_running.sh
             exit 0
         fi
     fi
     COUNT=$((COUNT + 1))
+    echo "$IS_RUNNING [$((MAX_COUNT - COUNT + 1))]"
     sleep 2
 done
 

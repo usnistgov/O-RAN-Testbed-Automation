@@ -45,10 +45,8 @@ if ! $(./is_running.sh | grep -q ": RUNNING"); then
     exit 0
 fi
 
-echo "Stopping xApps..."
 ./additional_scripts/stop_xapps.sh
 
-echo "Stopping Grafana..."
 ./additional_scripts/stop_grafana_and_python_server.sh
 
 # Prevent the subsequent command from requiring credential input
@@ -63,13 +61,13 @@ MAX_COUNT=10
 sleep 1
 while [ $COUNT -lt $MAX_COUNT ]; do
     IS_RUNNING=$(./is_running.sh)
-    echo "$IS_RUNNING ($COUNT / $MAX_COUNT)"
     if echo "$IS_RUNNING" | grep -q "FlexRIC: NOT_RUNNING"; then
         echo "The FlexRIC has stopped gracefully."
         ./is_running.sh
         exit 0
     fi
     COUNT=$((COUNT + 1))
+    echo "$IS_RUNNING [$((MAX_COUNT - COUNT + 1))]"
     sleep 2
 done
 

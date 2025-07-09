@@ -65,11 +65,11 @@ if [ "$USE_DOCKER_CE" -eq 0 ]; then # Use docker.io
     DOCKERV="20.10"
     # Select a compatible Docker version for Ubuntu 24.*
     if [[ ${UBUNTU_RELEASE} == 24.* ]]; then
-        DOCKERV="24.0"
+        DOCKERV="27.5"
     fi
 
 else # Use docker.ce
-    DOCKERV="28.0"
+    DOCKERV="28.1"
     UBUNTU_CODENAME=$(grep -oP '^UBUNTU_CODENAME=\K.*' /etc/os-release 2>/dev/null)
     # If not found, try to extract VERSION_CODENAME as a fallback
     if [[ -z "$UBUNTU_CODENAME" ]]; then
@@ -90,7 +90,7 @@ else # Use docker.ce
     # Add the repository to Apt sources:
     echo \
         "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
-      $UBUNTU_CODENAME stable" |
+    $(. /etc/os-release && echo "${UBUNTU_CODENAME}") stable" |
         sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
     sudo apt-get update
 fi

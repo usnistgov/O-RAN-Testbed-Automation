@@ -69,7 +69,7 @@ fi
 
 echo "Verifying swap is disabled..."
 if sudo swapon --show | grep -q 'swap'; then
-    echo "Warning: Swap is still active."
+    echo "WARNING: Swap is still active."
     sudo swapon --show
 else
     echo "All swap has been successfully disabled."

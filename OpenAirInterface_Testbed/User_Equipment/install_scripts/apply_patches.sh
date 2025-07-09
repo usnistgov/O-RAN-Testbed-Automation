@@ -73,17 +73,6 @@ git restore openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c.patch"
 cd ..
 
-if [ ! -f "openairinterface5g/openair2/LAYER2/NR_MAC_gNB/main.c.previous" ]; then
-    cp openairinterface5g/openair2/LAYER2/NR_MAC_gNB/main.c openairinterface5g/openair2/LAYER2/NR_MAC_gNB/main.c.previous
-    cp openairinterface5g/openair2/LAYER2/NR_MAC_gNB/main.c.previous "$PARENT_DIR/install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/main.previous.c"
-fi
-echo
-echo "Patching main.c..."
-cd openairinterface5g
-git restore openair2/LAYER2/NR_MAC_gNB/main.c
-git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/main.c.patch"
-cd ..
-
 if [ ! -f "openairinterface5g/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.previous" ]; then
     cp openairinterface5g/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h openairinterface5g/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.previous
     cp openairinterface5g/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.previous "$PARENT_DIR/install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.previous.h"
@@ -93,17 +82,6 @@ echo "Patching nr_mac_gNB.h..."
 cd openairinterface5g
 git restore openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.patch"
-cd ..
-
-if [ ! -f "openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c.previous" ]; then
-    cp openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c.previous
-    cp openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c.previous "$PARENT_DIR/install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.previous.c"
-fi
-echo
-echo "Patching gNB_scheduler_dlsch.c..."
-cd openairinterface5g
-git restore openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c
-git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c.patch"
 cd ..
 
 if [ ! -f "openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c.previous" ]; then

@@ -31,7 +31,8 @@
 # Exit immediately if a command fails
 set -e
 
-CLEAN_INSTALL=true
+CLEAN_INSTALL=true # Note: If set to true, then full_install.sh needs to be ran in the Next_Generation_Node_B directory too.
+DEBUG_SYMBOLS=false
 
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
@@ -42,7 +43,7 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
 if ! grep -q avx2 /proc/cpuinfo; then
-    echo "Warning: Support for AVX2 is not available on this machine. Errors may occur when building due to unsupported AVX instructions."
+    echo "WARNING: Support for AVX2 is not available on this machine. Errors may occur when building due to unsupported AVX instructions."
     echo "Please consider following the instructions \"Enabling VT-x/AMD-V for the AVX2 instruction set\" in OpenAirInterface_Testbed/README.md."
     echo
     echo "Press any key to continue."
@@ -113,14 +114,16 @@ if [[ "$CMAKE_VERSION" == 3.16.* ]]; then
     # Add Kitware's APT repository
     wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc | sudo apt-key add -
     sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ focal main'
-    sudo apt update
+    sudo apt-get update
     sudo apt-get install -y cmake
 fi
 
 ADDITIONAL_FLAGS=""
-# if clean install is true, add flag -C
 if [ "$CLEAN_INSTALL" = true ]; then
     ADDITIONAL_FLAGS="-C"
+fi
+if [ "$DEBUG_SYMBOLS" = true ]; then
+    ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS -g"
 fi
 
 cd "$SCRIPT_DIR"

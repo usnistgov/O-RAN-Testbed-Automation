@@ -95,7 +95,6 @@ MAX_COUNT=10
 sleep 1
 while [ $COUNT -lt $MAX_COUNT ]; do
     IS_RUNNING=$(./is_running.sh)
-    echo "$IS_RUNNING ($COUNT / $MAX_COUNT)"
     if [ -z "$UE_NUMBER" ]; then
         if echo "$IS_RUNNING" | grep -q "User Equipment: NOT_RUNNING"; then
             echo "The User Equipment has stopped gracefully."
@@ -110,6 +109,7 @@ while [ $COUNT -lt $MAX_COUNT ]; do
         fi
     fi
     COUNT=$((COUNT + 1))
+    echo "$IS_RUNNING [$((MAX_COUNT - COUNT + 1))]"
     sleep 2
 done
 

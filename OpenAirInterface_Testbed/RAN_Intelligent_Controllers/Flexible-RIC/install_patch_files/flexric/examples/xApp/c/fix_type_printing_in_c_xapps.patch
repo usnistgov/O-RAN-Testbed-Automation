@@ -51,7 +51,7 @@ index 52c50aec..a2137bc5 100644
               *nodes.n[i].id.cu_du_id);
  
 -    printf("E2 node %ld supported RAN function's IDs:", i);
-+    printf("E2 node %zu supported RAN function's IDs:", i);
++    printf("E2 node %d supported RAN function's IDs:", i);
      for (size_t j = 0; j < nodes.n[i].len_rf; j++)
 -      printf(", %d", nodes.n[i].rf[j].id);
 +      printf(", %u", nodes.n[i].rf[j].id);
@@ -94,7 +94,7 @@ index 9898b6ea..aaa84b25 100644
              else if (strcmp(meas_info_name_str, "DRB.UEThpDl.QOS") == 0)
              {
 -              printf("DRB.UEThpDl.QOS = %d [kb/s], with 5QI = %hhu\n", msg_frm_2->meas_data_lst[0].meas_record_lst[j].int_val, *msg_frm_2->meas_info_cond_ue_lst[i].matching_cond_lst[0].label_info_lst.fiveQI);
-+              printf("DRB.UEThpDl.QOS = %ld [kb/s], with 5QI = %hhu\n", msg_frm_2->meas_data_lst[0].meas_record_lst[j].int_val, *msg_frm_2->meas_info_cond_ue_lst[i].matching_cond_lst[0].label_info_lst.fiveQI);
++              printf("DRB.UEThpDl.QOS = %u [kb/s], with 5QI = %hhu\n", msg_frm_2->meas_data_lst[0].meas_record_lst[j].int_val, *msg_frm_2->meas_info_cond_ue_lst[i].matching_cond_lst[0].label_info_lst.fiveQI);
                assert(num_matched_ues_dl >= 0 && num_matched_ues_dl < 5);
  
                if (*msg_frm_2->meas_info_cond_ue_lst[i].matching_cond_lst[0].label_info_lst.fiveQI == 131){

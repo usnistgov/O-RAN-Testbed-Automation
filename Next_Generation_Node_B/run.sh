@@ -54,5 +54,7 @@ else
     mkdir -p logs
     >logs/gnb.log
     >logs/gnb_stdout.txt
-    srsRAN_Project/build/apps/gnb/gnb -c configs/gnb.yaml # cell_cfg prach --ports 0 1 2
+
+    # srsRAN_Project/build/apps/gnb/gnb -c configs/gnb.yaml # cell_cfg prach --ports 0 1 2
+    sudo script -q -f -c "./srsRAN_Project/build/apps/gnb/gnb -c configs/gnb.yaml" logs/gnb_stdout.txt # cell_cfg prach --ports 0 1 2
 fi

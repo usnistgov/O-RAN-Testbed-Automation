@@ -1,10 +1,10 @@
 # Automation Tool for Deploying 5G O-RAN Testbeds
 
-Based on the blueprints described in NIST TN 2311 [[1]][nist-tn], this automation tool facilitates the deployment and configuration of 5G Open Radio Access Network (O-RAN) testbeds. Designed to operate in both bare metal and virtualized environments, it simplifies setting up the components required for a 5G O-RAN testbed, including the 5G Core; Next Generation Node B (gNodeB) composed of Radio Unit (RU), Distributed Unit (DU), and Centralized Unit (CU); User Equipment (UE); RAN Intelligent Controller (RIC); and a series of xApps that can be installed in the RIC. This reduces the complexity and time required to operationalize the testbeds described in the report above, and enables more efficient testing and validation to facilitate research and development in 5G technologies.
+Based on the blueprints described in NIST TN 2311 [[1]][nist-tn-2311], this automation tool facilitates the deployment and configuration of 5G Open Radio Access Network (O-RAN) testbeds. Designed to operate in both bare metal and virtualized environments, it simplifies setting up the components required for a 5G O-RAN testbed, including the 5G Core; Next Generation Node B (gNodeB) composed of Radio Unit (RU), Distributed Unit (DU), and Centralized Unit (CU); User Equipment (UE); RAN Intelligent Controller (RIC); and a series of xApps that can be installed in the RIC. This reduces the complexity and time required to operationalize the testbeds described in the report above, and enables more efficient testing and validation to facilitate research and development in 5G technologies.
 
 ## Setting Up a Testbed
 
-The automation tool can be used in virtual machines and physical machines with the list of open-source components and minimum system requirements specified below. For additional details on the configuration of physical hardware and individual software components, refer to [[1]][nist-tn].
+The automation tool can be used in virtual machines and physical machines with the list of open-source components and minimum system requirements specified below. For additional details on the configuration of physical hardware and individual software components, refer to [[1]][nist-tn-2311].
 
 ### Supported Testbed Open-Source Components
 
@@ -20,11 +20,11 @@ This tool supports the deployment of 5G O-RAN testbeds using open-source compone
 
 ```text
 CU/DU
-├── srsRAN_Project gNB: v24.10.1
-├── OpenAirInterface gNB: v2025.w23
-└── O-RAN SC E2 Simulator: k-release
+├── srsRAN_Project gNB: v25.04
+├── OpenAirInterface gNB: v2.3.0
+└── O-RAN SC E2 Simulator: L-release
 RICs
-├── O-RAN SC Near-RT RIC: k-release
+├── O-RAN SC Near-RT RIC: L-release
 │   └── xApps
 │       ├── Hello World xApps (Go, Python, and Rust)
 │       ├── KPI Monitor xApp
@@ -39,13 +39,13 @@ RICs
 │       ├── MAC + RLC + PDCP + GTP Monitor xApp
 │       ├── RIC Control xApp
 │       └── RIC Control Monitor xApp
-└── O-RAN SC Non-RT RIC: k-release
+└── O-RAN SC Non-RT RIC: L-release
     └── Minimal prototype with no rApp support.
 5G Core
 └── Open5GS: v2.7.5
 UEs
 ├── srsRAN_4G: v23.11
-└── OpenAirInterface 5G UE: v2025.w23
+└── OpenAirInterface 5G UE: v2.3.0
 ```
 
 The components that have been verified to support or not support connectivity are included below.
@@ -114,7 +114,7 @@ git clone https://github.com/USNISTGOV/O-RAN-Testbed-Automation.git
 cd O-RAN-Testbed-Automation
 ```
 
-Alternatively, you may clone the repository using SSH: `git clone git@github.com:USNISTGOV/O-RAN-Testbed-Automation.git`
+Alternatively, the repository may be cloned over SSH: `git clone git@github.com:USNISTGOV/O-RAN-Testbed-Automation.git`
 
 ---
 
@@ -226,7 +226,7 @@ USNISTGOV/O-RAN-Testbed-Automation is developed and maintained by the NIST Wirel
 
 ## References
 
-1. Liu, Peng, Lee, Kyehwan, Cintrón, Fernando J., Wuthier, Simeon, Savaliya, Bhadresh, Montgomery, Douglas, Rouil, Richard (2024). Blueprint for Deploying 5G O-RAN Testbeds: A Guide to Using Diverse O-RAN Software Stacks. National Institute of Standards and Technology. [https://doi.org/10.6028/NIST.TN.2311][nist-tn].
+1. Liu, Peng, Lee, Kyehwan, Cintrón, Fernando J., Wuthier, Simeon, Savaliya, Bhadresh, Montgomery, Douglas, Rouil, Richard (2024). Blueprint for Deploying 5G O-RAN Testbeds: A Guide to Using Diverse O-RAN Software Stacks. National Institute of Standards and Technology. [https://doi.org/10.6028/NIST.TN.2311][nist-tn-2311].
 2. Releases, Automation Tool for Deploying 5G O-RAN Testbeds. GitHub. [https://github.com/USNISTGOV/O-RAN-Testbed-Automation/releases][gh-ota].
 3. Documentation of Base Directory. [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/README.md][gh-readme]
 4. Documentation of 5G Core Network (Open5GS). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/5G_Core_Network/README.md][gh-5gcore].
@@ -257,7 +257,7 @@ USNISTGOV/O-RAN-Testbed-Automation is developed and maintained by the NIST Wirel
 
 <!-- References -->
 
-[nist-tn]: https://doi.org/10.6028/NIST.TN.2311
+[nist-tn-2311]: https://doi.org/10.6028/NIST.TN.2311
 [gh-ota]: https://github.com/USNISTGOV/O-RAN-Testbed-Automation/releases
 [gh-readme]: README.md
 [gh-5gcore]: 5G_Core_Network/README.md
@@ -273,3 +273,4 @@ USNISTGOV/O-RAN-Testbed-Automation is developed and maintained by the NIST Wirel
 [nist-oran]: https://www.nist.gov/programs-projects/Open-RAN-Research-NIST
 [gh-nsd]: ./NIST%20Software%20Disclaimer.md
 [gh-license]: ./LICENSE
+

@@ -1,34 +1,13 @@
 diff --git a/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h b/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h
-index 0b977de276..2326d56c6b 100644
+index ea2cc617bd..bdc0da31b3 100644
 --- a/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h
 +++ b/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h
-@@ -483,6 +483,8 @@ typedef struct NR_UE_harq {
- 
-   /// sched_pdsch keeps information on MCS etc used for the initial transmission
-   NR_sched_pdsch_t sched_pdsch;
-+  // number of SDUs associated with this HARQ process
-+  int num_sdus;
- } NR_UE_harq_t;
- 
- //! fixme : need to enhace for the multiple TB CQI report
-@@ -692,6 +694,7 @@ typedef struct NR_mac_dir_stats {
-   uint32_t total_rbs_retx;
-   uint32_t num_mac_sdu;
-   uint32_t current_rbs;
-+  uint32_t sdu_errors;
- } NR_mac_dir_stats_t;
- 
- typedef struct NR_mac_stats {
-@@ -702,6 +705,15 @@ typedef struct NR_mac_stats {
+@@ -706,6 +706,11 @@ typedef struct NR_mac_stats {
    uint32_t pucch0_DTX;
    int cumul_rsrp;
    uint8_t num_rsrp_meas;
 +  
-+  // Keep track of each individual RSRP measurements for E2 KPM
-+  int e2_rsrp_meas[1024];
-+  uint16_t e2_rsrp_meas_capacity;
-+  int e2_rsrp_meas_sorted[1024];
-+  uint16_t e2_rsrp_meas_sorted_capacity;
++  // Keep track of RSRP measurements for E2 KPM
 +  int e2_cumul_rsrp;
 +  uint8_t e2_num_rsrp_meas;
 +

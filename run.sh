@@ -47,13 +47,14 @@ cd 5G_Core_Network
 ./run.sh
 cd ..
 
+echo
 echo -n "Waiting for AMF to be ready"
-ATTEMPT=0
-while [ ! -f 5G_Core_Network/logs/amf.log ] || ! grep -q "NF registered" 5G_Core_Network/logs/amf.log; do
+attempt=0
+while ! ./5G_Core_Network/is_amf_ready.sh | grep -q "true"; do
     echo -n "."
     sleep 0.5
-    ATTEMPT=$((ATTEMPT + 1))
-    if [ $ATTEMPT -ge 120 ]; then
+    attempt=$((attempt + 1))
+    if [ $attempt -ge 120 ]; then
         echo "5G Core components did not start after 60 seconds, exiting..."
         exit 1
     fi

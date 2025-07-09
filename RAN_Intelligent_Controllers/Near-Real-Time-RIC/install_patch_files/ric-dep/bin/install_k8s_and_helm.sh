@@ -128,9 +128,9 @@ sudo apt-get install -y libsctp1 lksctp-tools
 # DOCKERV="20.10" #.21"
 
 # The version will be dynamically completed rather than hardcoding in the version
-KUBEV="1.32"
-KUBECNIV="1.5"
-HELMV="3.17"
+KUBEV="1.33"
+KUBECNIV="1.6"
+HELMV="3.18"
 
 # Fetch the Ubuntu release version regardless of the derivative distro
 if [ -f /etc/upstream-release/lsb-release ]; then
@@ -144,11 +144,11 @@ if [ "$USE_DOCKER_CE" -eq 0 ]; then # Use docker.io
     DOCKERV="20.10"
     # Select a compatible Docker version for Ubuntu 24.*
     if [[ ${UBUNTU_RELEASE} == 24.* ]]; then
-        DOCKERV="24.0"
+        DOCKERV="27.5"
     fi
 
-else # Use docker.ce
-    DOCKERV="28.0"
+else # Use docker-ce
+    DOCKERV="28.1"
     UBUNTU_CODENAME=$(grep -oP '^UBUNTU_CODENAME=\K.*' /etc/os-release 2>/dev/null)
     # If not found, try to extract VERSION_CODENAME as a fallback
     if [[ -z "$UBUNTU_CODENAME" ]]; then
@@ -169,7 +169,7 @@ else # Use docker.ce
     # Add the repository to Apt sources:
     echo \
         "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
-      $UBUNTU_CODENAME stable" |
+    $(. /etc/os-release && echo "${UBUNTU_CODENAME}") stable" |
         sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
     sudo apt-get update
 fi
@@ -442,7 +442,7 @@ fi
 
 echo "Verifying swap is disabled..."
 if sudo swapon --show | grep -q 'swap'; then
-    echo "Warning: Swap is still active."
+    echo "WARNING: Swap is still active."
     sudo swapon --show
 else
     echo "All swap has been successfully disabled."

@@ -161,18 +161,20 @@ cd Next_Generation_Node_B
 
 cd ..
 
-echo
-echo
-echo "################################################################################"
-echo "# Installing Near-Real-Time RAN Intelligent Controller...                      #"
-echo "################################################################################"
-echo
-echo
+if [ -d "RAN_Intelligent_Controllers/Near-Real-Time-RIC" ]; then
+    echo
+    echo
+    echo "################################################################################"
+    echo "# Installing Near-Real-Time RAN Intelligent Controller...                      #"
+    echo "################################################################################"
+    echo
+    echo
 
-cd RAN_Intelligent_Controllers/Near-Real-Time-RIC
-./full_install.sh
+    cd RAN_Intelligent_Controllers/Near-Real-Time-RIC
+    ./full_install.sh
 
-cd ../..
+    cd ../..
+fi
 
 echo
 echo

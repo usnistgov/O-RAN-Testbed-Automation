@@ -31,6 +31,8 @@
 # Exit immediately if a command fails
 set -e
 
+USE_RFSIM_CHANNELMOD=true
+
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
     sudo apt-get install -y coreutils
@@ -68,7 +70,7 @@ comment_out() {
 }
 
 # Define the path to the 5G Core YAML file
-YAML_PATH="../../5G_Core_Network/options.yaml"
+YAML_PATH="../5G_Core_Network/options.yaml"
 if [ ! -f "$YAML_PATH" ]; then
     echo "Configuration not found in $YAML_PATH, please generate the configuration for 5G_Core_Network first."
     exit 1
@@ -101,6 +103,19 @@ echo "MCC value: $MCC"
 echo "MNC value: $MNC"
 echo "MNC_LENGTH value: $MNC_LENGTH"
 
+# Configure the DNN, SST, and SD values
+DNN=$(sed -n 's/^dnn: //p' "$YAML_PATH")
+SST=$(yq eval '.sst' "$YAML_PATH")
+SD=$(yq eval '.sd' "$YAML_PATH")
+if [[ -z "$DNN" || "$DNN" == "null" ]]; then
+    echo "DNN is not set in $YAML_PATH, please ensure that \"dnn\" is set."
+    exit 1
+fi
+if [[ -z "$SST" || -z "$SD" || "$SST" == "null" || "$SD" == "null" ]]; then
+    echo "SST or SD is not set in $YAML_PATH, please ensure that \"sst\" and \"sd\" are set."
+    exit 1
+fi
+
 # Check if the YAML editor is installed, and install it if not
 if ! command -v yq &>/dev/null; then
     sudo "$SCRIPT_DIR/install_scripts/./install_yq.sh"
@@ -120,7 +135,7 @@ fi
 cp openairinterface5g/targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band78.fr1.106PRB.usrpb210.conf "$SCRIPT_DIR/configs/gnb.conf"
 
 echo "Fetching AMF addresses..."
-FILE_PATH="../../5G_Core_Network/configs/get_amf_address.txt"
+AMF_ADDRESSES=$("../5G_Core_Network/install_scripts/get_amf_address.sh")
 
 prompt_for_addresses() {
     echo "Please enter the AMF address and the AMF binding address manually." >&2
@@ -129,16 +144,20 @@ prompt_for_addresses() {
     read -p "Enter AMF Binding Address: " AMF_ADDR_BIND
 }
 
-# Check if the file exists and has at least two lines
-if [[ -f "$FILE_PATH" ]]; then
-    # Read the file and check for at least two non-empty lines
-    mapfile -t ADDRESSES <"$FILE_PATH"
+# Check if AMF_ADDRESSES has at least two non-empty lines
+if [[ -n "$AMF_ADDRESSES" ]]; then
+    # Read AMF_ADDRESSES into an array, splitting on newlines
+    ADDRESSES=()
+    while IFS= read -r line; do
+        [[ -z "$line" ]] && continue # skip blank lines
+        ADDRESSES+=("$line")
+    done <<<"$AMF_ADDRESSES"
     if [[ ${#ADDRESSES[@]} -ge 2 ]] && [[ -n ${ADDRESSES[0]} ]] && [[ -n ${ADDRESSES[1]} ]]; then
         AMF_ADDR="${ADDRESSES[0]}"
         AMF_ADDR_BIND="${ADDRESSES[1]}"
     else
         echo
-        echo "AMF address file exists but does not contain valid data."
+        echo "AMF address script did not return valid data."
         prompt_for_addresses
     fi
 else
@@ -155,12 +174,25 @@ update_conf "configs/gnb.conf" "amf_ip_address" "({ ipv4 = \"$AMF_ADDR\"; })"
 update_conf "configs/gnb.conf" "GNB_IPV4_ADDRESS_FOR_NG_AMF" "\"$AMF_ADDR_BIND/24\""
 update_conf "configs/gnb.conf" "GNB_IPV4_ADDRESS_FOR_NGU" "\"$AMF_ADDR_BIND/24\""
 update_conf "configs/gnb.conf" "tracking_area_code" "$TAC"
-update_conf "configs/gnb.conf" "plmn_list" "({ mcc = $MCC; mnc = $MNC; mnc_length = $MNC_LENGTH; snssaiList = ({ sst = 1; }) })"
+
+# Configure the Single Network Slice Selection Assistance Information (S-NSSAI)
+update_conf "configs/gnb.conf" "plmn_list" "({ mcc = $MCC; mnc = $MNC; mnc_length = $MNC_LENGTH; snssaiList = ({ sst = $SST; sd = 0x$SD; }) })"
 
 if [ "$USE_SSB_RSRP" = "true" ]; then
     update_conf "configs/gnb.conf" "do_CSIRS" "0"
 else
     update_conf "configs/gnb.conf" "do_CSIRS" "1"
+fi
+
+if [ "$USE_RFSIM_CHANNELMOD" = true ]; then
+    # Finally, ensure that it is referencing the channelmod_rfsimu.conf file
+    if ! grep -q "@include \"channelmod_rfsimu.conf\"" "configs/gnb.conf"; then
+        echo "" >>"configs/gnb.conf"
+        echo "@include \"channelmod_rfsimu.conf\"" >>"configs/gnb.conf"
+    fi
+    cd configs
+    ln -s ../../User_Equipment/configs/channelmod_rfsimu.conf channelmod_rfsimu.conf
+    cd ..
 fi
 
 echo "Successfully configured the UE. The configuration file is located in the configs/ directory."

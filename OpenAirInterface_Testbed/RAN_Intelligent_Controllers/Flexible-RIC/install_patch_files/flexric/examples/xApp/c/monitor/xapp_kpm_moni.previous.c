@@ -88,13 +88,13 @@ static
 void log_int_value(byte_array_t name, meas_record_lst_t meas_record)
 {
   if (cmp_str_ba("RRU.PrbTotDl", name) == 0) {
-    printf("RRU.PrbTotDl = %u [PRBs]\n", meas_record.int_val);
+    printf("RRU.PrbTotDl = %d [PRBs]\n", meas_record.int_val);
   } else if (cmp_str_ba("RRU.PrbTotUl", name) == 0) {
-    printf("RRU.PrbTotUl = %u [PRBs]\n", meas_record.int_val);
+    printf("RRU.PrbTotUl = %d [PRBs]\n", meas_record.int_val);
   } else if (cmp_str_ba("DRB.PdcpSduVolumeDL", name) == 0) {
-    printf("DRB.PdcpSduVolumeDL = %u [kb]\n", meas_record.int_val);
+    printf("DRB.PdcpSduVolumeDL = %d [kb]\n", meas_record.int_val);
   } else if (cmp_str_ba("DRB.PdcpSduVolumeUL", name) == 0) {
-    printf("DRB.PdcpSduVolumeUL = %u [kb]\n", meas_record.int_val);
+    printf("DRB.PdcpSduVolumeUL = %d [kb]\n", meas_record.int_val);
   } else {
     printf("Measurement Name not yet supported\n");
   }
@@ -382,7 +382,7 @@ int main(int argc, char* argv[])
 
   assert(nodes.len > 0);
 
-  printf("Connected E2 nodes = %u\n", nodes.len);
+  printf("Connected E2 nodes = %d\n", nodes.len);
 
   pthread_mutexattr_t attr = {0};
   int rc = pthread_mutex_init(&mtx, &attr);

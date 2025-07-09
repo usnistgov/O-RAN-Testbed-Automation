@@ -1,8 +1,8 @@
-## Non-RT RIC, K-Release
+## Non-RT RIC, L-Release
 
 The Non-RT RIC, conceptualized by the O-RAN Alliance's Working Group 2 (WG2) [[1]][oran-wg2] and implemented by the O-RAN Software Community [[2]][oransc-nonrtric], facilitates strategic long-term planning and policy management in Radio Access Networks (RAN).
 
-This automation tool is based on the K-Release of the Non-RT RIC. More information about these releases can be found at [[3]][oransc-releases].
+This automation tool is based on the L-Release of the Non-RT RIC. More information about these releases can be found at [[3]][oransc-releases].
 
 ## Usage
 
@@ -67,7 +67,7 @@ nonrtric       servicemanager-795d499bd-msl8n                  1/1     Running
 
 ## Migration to Cilium
 
-For instructions on migrating the cluster to Cilium, since the scripts behave the same, please see the Near-RT RIC [README.md](../Near-Real-Time-RIC/README.md#migration-to-cilium) document. 
+For instructions on migrating the cluster to Cilium, since the scripts behave the same, please see the Near-RT RIC [README.md](../Near-Real-Time-RIC/README.md#migration-to-cilium) document.
 
 ---
 

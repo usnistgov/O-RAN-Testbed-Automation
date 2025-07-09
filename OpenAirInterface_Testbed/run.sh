@@ -58,7 +58,7 @@ cd ../..
 echo
 echo -n "Waiting for AMF to be ready"
 attempt=0
-while [ ! -f 5G_Core_Network/logs/amf.log ] || ! grep -q "NF registered" 5G_Core_Network/logs/amf.log; do
+while ! ./5G_Core_Network/is_amf_ready.sh | grep -q "true"; do
     echo -n "."
     sleep 0.5
     attempt=$((attempt + 1))
@@ -102,6 +102,7 @@ cd User_Equipment
 echo -en "\nWaiting for UE to be ready"
 ATTEMPT=0
 while [ ! -f logs/ue1_stdout.txt ] || ! grep -q "TYPE <CTRL-C> TO TERMINATE" logs/ue1_stdout.txt; do
+    #while [ ! -f logs/ue1_stdout.txt ] || ! grep -q "State = NR_RRC_CONNECTED" logs/ue1_stdout.txt; do
     echo -n "."
     sleep 0.5
     ATTEMPT=$((ATTEMPT + 1))
@@ -109,7 +110,7 @@ while [ ! -f logs/ue1_stdout.txt ] || ! grep -q "TYPE <CTRL-C> TO TERMINATE" log
         echo "UE did not start after 60 seconds, exiting..."
         exit 1
     fi
-    if grep -q "TYPE <CTRL-C> TO TERMINATE" logs/ue1_stdout.txt; then
+    if grep -q "State = NR_RRC_CONNECTED" logs/ue1_stdout.txt; then
         break
     elif $(./is_running.sh | grep -q "NOT_RUNNING"); then
         echo "Error starting UE. Check logs/ue1_stdout.txt for more information."

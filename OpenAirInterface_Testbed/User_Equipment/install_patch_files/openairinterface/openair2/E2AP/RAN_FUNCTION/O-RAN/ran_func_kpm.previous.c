@@ -115,7 +115,9 @@ static cudu_ue_info_pair_t fill_ue_related_info(arr_ue_id_t* arr_ue_id, const si
 
   if (arr_ue_id->ue_id[ue_idx].type == GNB_UE_ID_E2SM) {
     ue_info.rrc_ue_id = *arr_ue_id->ue_id[ue_idx].gnb.ran_ue_id;  // rrc_ue_id
-    ue_info.ue = arr_ue_id->ue_info_list[ue_idx];
+    if (arr_ue_id->ue_info_list != NULL) {
+      ue_info.ue = arr_ue_id->ue_info_list[ue_idx];
+    }
   } else if (arr_ue_id->ue_id[ue_idx].type == GNB_CU_UP_UE_ID_E2SM) {
     /* in OAI implementation, CU-UP ue id = CU-CP ue id
                            => CU-UP ue id = rrc_ue_id, but it should not be the case by the spec */
@@ -171,6 +173,7 @@ static void capture_sst_sd(test_cond_value_t* test_cond_value, uint8_t *sst, uin
         *sd = malloc(**sd);
         **sd = buf[1] << 16 | buf[2] << 8 | buf[3];
       }
+      printf("[E2 AGENT][E2SM-KPM] Condition NSSAI (%d, %x).\n", *sst, (*sd) ? **sd : 0xffffff);
       break;
     }
     default:
@@ -206,6 +209,9 @@ static arr_ue_id_t filter_ues_by_s_nssai_in_cu(const test_info_lst_t test_info)
   struct rrc_gNB_ue_context_s* rrc_ue_context = NULL;
   RB_FOREACH(rrc_ue_context, rrc_nr_ue_tree_s, &RC.nrrrc[0]->rrc_ue_head) {
     gNB_RRC_UE_t *ue = &rrc_ue_context->ue_context;
+    /* UE has no AMF UE NGAP ID yet => can't send message */
+    if (ue->amf_ue_ngap_id >= (1LL << 40))
+      continue;
     for (int p = 0; p < ue->nb_of_pdusessions; ++p) {
       pdusession_t *pdu = &ue->pduSession[p].param;
       if (nssai_matches(pdu->nssai, sst, sd)) {
@@ -293,6 +299,9 @@ static arr_ue_id_t filter_ues_by_s_nssai_in_du_or_monolithic(const test_info_lst
           arr_ue_id.ue_id[arr_ue_id.sz] = fill_ue_id_data[ngran_gNB_DU](NULL, rrc_ue_id.secondary_ue, 0);
         } else {
           rrc_gNB_ue_context_t* rrc_ue_context = rrc_gNB_get_ue_context_by_rnti(RC.nrrrc[0], -1, ue->rnti);
+          /* UE has no AMF UE NGAP ID yet => can't send message */
+          if (rrc_ue_context->ue_context.amf_ue_ngap_id >= (1LL << 40))
+            continue;
           arr_ue_id.ue_id[arr_ue_id.sz] = fill_ue_id_data[ngran_gNB](&rrc_ue_context->ue_context, 0, 0);
         }
 
@@ -406,7 +415,10 @@ bool read_kpm_sm(void* data)
         ue_type_matcher fp_match_cond_type = (*match_cond_arr[test_info.test_cond_type])[node_type];
         arr_ue_id_t arr_ue_id = fp_match_cond_type(test_info);
 
-        if (arr_ue_id.sz == 0) return false;
+        if (arr_ue_id.sz == 0) {
+          printf("[E2 AGENT][E2SM-KPM] No UE matches the condition criteria.\n");
+          return false;
+        }
         kpm->ind.msg.frm_3 = fill_kpm_ind_msg_frm_3(&arr_ue_id, &frm_4->action_def_format_1);
       }
       break;

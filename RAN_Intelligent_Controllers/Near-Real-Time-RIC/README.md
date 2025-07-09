@@ -1,8 +1,8 @@
-## Near-RT RIC, K-Release
+## Near-RT RIC, L-Release
 
 The Near-RT RIC, conceptualized by the O-RAN Alliance's Working Group 3 (WG3) [[1]][oran-wg3] and implemented by the O-RAN Software Community [[2]][oransc-nearrtric], enables dynamic management and optimization of Radio Access Networks (RAN).
 
-This automation tool is based on the K-Release of the Near-RT RIC. More information about these releases can be found at [[3]][oransc-releases].
+This automation tool is based on the L-Release of the Near-RT RIC. More information about these releases can be found at [[3]][oransc-releases].
 
 ## Usage
 
@@ -139,7 +139,7 @@ The cluster is installed with Flannel as the default network plugin. There are s
 <p align="center">
   <img src="../../Images/Cilium_Hubble_UI.png" alt="Hubble UI showing network flows" width="70%">
 </p>
-  
+
 ## References
 
 1. Working Group 3: Near-Real-time RAN Intelligent Controller and E2 Interface Workgroup. O-RAN Alliance. [https://public.o-ran.org/display/WG3/Introduction][oran-wg3]

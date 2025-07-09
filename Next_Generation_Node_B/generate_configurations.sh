@@ -62,6 +62,19 @@ fi
 echo "PLMN value: $PLMN"
 echo "TAC value: $TAC"
 
+# Configure the DNN, SST, and SD values
+DNN=$(sed -n 's/^dnn: //p' "$YAML_PATH")
+SST=$(yq eval '.sst' "$YAML_PATH")
+SD=$(yq eval '.sd' "$YAML_PATH")
+if [[ -z "$DNN" || "$DNN" == "null" ]]; then
+    echo "DNN is not set in $YAML_PATH, please ensure that \"dnn\" is set."
+    exit 1
+fi
+if [[ -z "$SST" || -z "$SD" || "$SST" == "null" || "$SD" == "null" ]]; then
+    echo "SST or SD is not set in $YAML_PATH, please ensure that \"sst\" and \"sd\" are set."
+    exit 1
+fi
+
 # Check if the YAML editor is installed, and install it if not
 if ! command -v yq &>/dev/null; then
     sudo "$SCRIPT_DIR/install_scripts/./install_yq.sh"
@@ -146,7 +159,7 @@ if [ "$ENABLE_E2_TERM" = "true" ]; then
 fi
 
 echo "Fetching AMF addresses..."
-FILE_PATH="../5G_Core_Network/configs/get_amf_address.txt"
+AMF_ADDRESSES=$("../5G_Core_Network/install_scripts/get_amf_address.sh")
 
 prompt_for_addresses() {
     echo "Please enter the AMF address and the AMF binding address manually." >&2
@@ -155,16 +168,20 @@ prompt_for_addresses() {
     read -p "Enter AMF Binding Address: " AMF_ADDR_BIND
 }
 
-# Check if the file exists and has at least two lines
-if [[ -f "$FILE_PATH" ]]; then
-    # Read the file and check for at least two non-empty lines
-    mapfile -t ADDRESSES <"$FILE_PATH"
+# Check if AMF_ADDRESSES has at least two non-empty lines
+if [[ -n "$AMF_ADDRESSES" ]]; then
+    # Read AMF_ADDRESSES into an array, splitting on newlines
+    ADDRESSES=()
+    while IFS= read -r line; do
+        [[ -z "$line" ]] && continue # skip blank lines
+        ADDRESSES+=("$line")
+    done <<<"$AMF_ADDRESSES"
     if [[ ${#ADDRESSES[@]} -ge 2 ]] && [[ -n ${ADDRESSES[0]} ]] && [[ -n ${ADDRESSES[1]} ]]; then
         AMF_ADDR="${ADDRESSES[0]}"
         AMF_ADDR_BIND="${ADDRESSES[1]}"
     else
         echo
-        echo "AMF address file exists but does not contain valid data."
+        echo "AMF address script did not return valid data."
         prompt_for_addresses
     fi
 else
@@ -242,6 +259,13 @@ update_yaml "configs/gnb.yaml" "cell_cfg" "nof_antennas_dl" "1"
 update_yaml "configs/gnb.yaml" "cell_cfg" "nof_antennas_ul" "1"
 update_yaml "configs/gnb.yaml" "cell_cfg" "plmn" $PLMN
 update_yaml "configs/gnb.yaml" "cell_cfg" "tac" $TAC
+
+# Update configuration values for slicing
+SD_DECIMAL=$((16#${SD}))
+update_yaml "configs/gnb.yaml" "cell_cfg.slicing[0]" "sd" "$SD_DECIMAL"
+update_yaml "configs/gnb.yaml" "cell_cfg.slicing[0]" "sst" "$SST"
+update_yaml "configs/gnb.yaml" "cell_cfg.slicing[0].sched_cfg" "min_prb_policy_ratio" "0"
+update_yaml "configs/gnb.yaml" "cell_cfg.slicing[0].sched_cfg" "max_prb_policy_ratio" "100"
 
 GNB_ID="411"
 RAN_NODE_NAME="srsgnb01"

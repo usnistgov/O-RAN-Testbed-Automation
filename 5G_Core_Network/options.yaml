@@ -1,14 +1,21 @@
 # Upon modification, apply changes with ./generate_configurations.sh.
 
-# If false, AMF will use the default 127.0.0.5, otherwise, it will use the hostname IP
-expose_amf_over_hostname: false
-
-# Include the Security Edge Protection Proxies (SEPP1 and SEPP2)
-include_sepp: false
-
 # Configure the MCC/MNC and TAC
 plmn: 00101
 tac: 7
+
+# Configure the DNN/APN
+dnn: nist-dnn
+
+# Configure the Single Network Slice Selection Assistance Information (S-NSSAI)
+sst: 1
+sd: FFFFFF
+
+# If false, AMF will use the default 127.0.0.5, true: it will use the hostname IP
+expose_amf_over_hostname: false
+
+# Toggle whether or not to include the Security Edge Protection Proxies (SEPP1 and SEPP2)
+include_sepp: false
 
 # Configure the ogstun gateway address for UE traffic
 ogstun_ipv4: 10.45.0.0/16

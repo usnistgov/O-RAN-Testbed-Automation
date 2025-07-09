@@ -31,7 +31,7 @@
 # Exit immediately if a command fails
 set -e
 
-CLEAN_INSTALL=false
+DEBUG_SYMBOLS=false
 
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
@@ -49,6 +49,9 @@ if [ ! -f "openairinterface5g/cmake_targets/build_oai" ]; then
         ln -s "../User_Equipment/openairinterface5g" openairinterface5g
     fi
 fi
+
+# Since the UE and gNB share the same openairinterface5g directory, and the UE is installed first, the gNB's CLEAN_INSTALL must be false to prevent cleaning the UE installation
+CLEAN_INSTALL=false
 
 # Check for gNB binary to determine if srsRAN_Project is already installed
 if [ "$CLEAN_INSTALL" = false ] && [ -f "openairinterface5g/cmake_targets/ran_build/build/nr-softmodem" ]; then
@@ -105,14 +108,16 @@ if [[ "$CMAKE_VERSION" == 3.16.* ]]; then
     # Add Kitware's APT repository
     wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc | sudo apt-key add -
     sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ focal main'
-    sudo apt update
+    sudo apt-get update
     sudo apt-get install -y cmake
 fi
 
 ADDITIONAL_FLAGS=""
-# if clean install is true, add flag -C
 if [ "$CLEAN_INSTALL" = true ]; then
     ADDITIONAL_FLAGS="-C"
+fi
+if [ "$DEBUG_SYMBOLS" = true ]; then
+    ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS -g"
 fi
 
 cd "$SCRIPT_DIR"

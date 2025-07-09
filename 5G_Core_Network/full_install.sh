@@ -39,6 +39,11 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
+# Check if the YAML editor is installed, and install it if not
+if ! command -v yq &>/dev/null; then
+    sudo "$SCRIPT_DIR/install_scripts/./install_yq.sh"
+fi
+
 # Check for open5gs-amfd and open5gs-upfd binaries to determine if Open5GS is already installed
 if [ -f "open5gs/install/bin/open5gs-amfd" ] && [ -f "open5gs/install/bin/open5gs-upfd" ]; then
     echo "Open5GS is already installed, skipping."
@@ -73,7 +78,9 @@ if [ ! -d "open5gs" ]; then
 fi
 cd $SCRIPT_DIR/open5gs
 
-echo "Starting installation of Open5GS..."
+echo
+echo
+echo "Installing Open5GS..."
 export DEBIAN_FRONTEND=noninteractive
 # Modifies the needrestart configuration to suppress interactive prompts
 if [ -f "/etc/needrestart/needrestart.conf" ]; then

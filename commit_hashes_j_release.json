@@ -23,6 +23,7 @@
   "https://gerrit.o-ran-sc.org/r/portal/nonrtric-controlpanel.git": ["master", "15bdaf8f25dca54e3a52ad30d69fa2eb1d59ce48"],
   "https://gerrit.o-ran-sc.org/r/nonrtric/plt/rappmanager.git": ["j-release", "ffd5b45b53572ae42fbc22510bcbe3ad8883b86f"],
   "https://gitlab.eurecom.fr/oai/openairinterface5g.git": ["develop", "acb982d0bd96b01dee84aea730f01dfff73875d0"],
+  "https://gitlab.eurecom.fr/oai/o1-adapter.git": ["main", "ce1399277ce04ac16c2021268233dc47a830656c"],
   "https://github.com/swig/swig.git": ["master", "01bf5808dd44516a7937afd4fb5438c026d937ac"],
   "https://gitlab.eurecom.fr/mosaic5g/flexric.git": ["dev", "596a1ae67309618a74e09e56dff9a723ea7d99c5"]
 }

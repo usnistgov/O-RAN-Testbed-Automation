@@ -1,8 +1,8 @@
 diff --git a/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c b/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c
-index aaf46797ac..c372c9f027 100644
+index fd6578b3b2..e705d38e39 100644
 --- a/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c
 +++ b/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c
-@@ -426,6 +426,28 @@ static const char* kpm_meas_du[] = {
+@@ -438,6 +438,29 @@ static const char* kpm_meas_du[] = {
    "DRB.UEThpUl",
    "RRU.PrbTotDl",
    "RRU.PrbTotUl",
@@ -13,11 +13,11 @@ index aaf46797ac..c372c9f027 100644
 +  "RSRP.Quartile3",
 +  "RSRP.Maximum",
 +  "RSRP.Count",
-+  "N_PRB",
-+  "RSSI",
-+  "RSRQ",
-+  "PUSCH_SNR",
-+  "PUCCH_SNR",
++  "PHY.NPrbDl",
++  "PHY.DerivedRssiDl",
++  "PHY.DerivedRsrqDl",
++  "PUSCH.Snr",
++  "PUCCH.Snr",
 +  "DRB.HarqMcsUl",
 +  "DRB.HarqMcsDl",
 +  "DRB.HarqBlockErrorRateUl",
@@ -26,12 +26,13 @@ index aaf46797ac..c372c9f027 100644
 +  "DRB.MacSduRetransmissionRateDl",
 +  "DRB.MacSduErrorRateUl",
 +  "DRB.MacSduErrorRateDl",
-+  "CQI_SINGLE_CODEWORD",
-+  "CQI_DUAL_CODEWORD",
++  "DRB.DerivedCQIDl",
++  "PHY.CqiWb1TbDl",
++  "PHY.CqiWb2TbDl",
    NULL,
  };
  
-@@ -437,6 +459,28 @@ static const char* kpm_meas_gnb[] = {
+@@ -449,6 +472,29 @@ static const char* kpm_meas_gnb[] = {
    "DRB.UEThpUl",
    "RRU.PrbTotDl",
    "RRU.PrbTotUl",
@@ -42,11 +43,11 @@ index aaf46797ac..c372c9f027 100644
 +  "RSRP.Quartile3",
 +  "RSRP.Maximum",
 +  "RSRP.Count",
-+  "N_PRB",
-+  "RSSI",
-+  "RSRQ",
-+  "PUSCH_SNR",
-+  "PUCCH_SNR",
++  "PHY.NPrbDl",
++  "PHY.DerivedRssiDl",
++  "PHY.DerivedRsrqDl",
++  "PUSCH.Snr",
++  "PUCCH.Snr",
 +  "DRB.HarqMcsUl",
 +  "DRB.HarqMcsDl",
 +  "DRB.HarqBlockErrorRateUl",
@@ -55,8 +56,9 @@ index aaf46797ac..c372c9f027 100644
 +  "DRB.MacSduRetransmissionRateDl",
 +  "DRB.MacSduErrorRateUl",
 +  "DRB.MacSduErrorRateDl",
-+  "CQI_SINGLE_CODEWORD",
-+  "CQI_DUAL_CODEWORD",
++  "DRB.DerivedCQIDl",
++  "PHY.CqiWb1TbDl",
++  "PHY.CqiWb2TbDl",
    NULL,
  };
  

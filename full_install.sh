@@ -161,7 +161,9 @@ cd Next_Generation_Node_B
 
 cd ..
 
+INSTALL_NEAR_RT_RIC=false
 if [ -d "RAN_Intelligent_Controllers/Near-Real-Time-RIC" ]; then
+    INSTALL_NEAR_RT_RIC=true
     echo
     echo
     echo "################################################################################"
@@ -192,8 +194,16 @@ cd ../User_Equipment
 ./generate_configurations.sh
 cd ..
 
-echo
-echo
-echo "################################################################################"
-echo "# Successfully installed the Near-RT RIC, 5G Core, gNodeB, and UE.             #"
-echo "################################################################################"
+if [ "$INSTALL_NEAR_RT_RIC" = true ]; then
+    echo
+    echo
+    echo "################################################################################"
+    echo "# Successfully installed the Near-RT RIC, 5G Core, gNodeB, and UE.             #"
+    echo "################################################################################"
+else
+    echo
+    echo
+    echo "################################################################################"
+    echo "# Successfully installed the 5G Core, gNodeB, and UE.                          #"
+    echo "################################################################################"
+fi

@@ -51,7 +51,8 @@ sudo ./install_scripts/stop_influxdb_service.sh
 sudo apt-get remove -y influxdb
 sudo apt-get remove -y influxdb-client
 sudo apt-get remove -y influxdb2
-sudo apt-get autoclean -ysudo apt-get apt-get autoremove -y
+sudo apt-get autoclean -y
+sudo apt-get autoremove -y
 
 sudo rm -rf /var/lib/influxdb/
 sudo rm -rf /var/log/influxdb/

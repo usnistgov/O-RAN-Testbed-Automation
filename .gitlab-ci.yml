@@ -7,13 +7,13 @@ install_openairinterface_testbed:
   image: ubuntu:22.04
   resource_group: testbed_install
   interruptible: true
-  variables:
-    DEBIAN_FRONTEND: noninteractive
   before_script:
     - apt-get update
     - apt-get install -y sudo bash grep coreutils curl wget git
   script:
     - set -e
+    - echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections
+    - DEBIAN_FRONTEND=noninteractive sudo apt-get update && sudo apt-get -y --no-install-recommends install tzdata
     - cd OpenAirInterface_Testbed
     - bash ./full_install.sh
     - bash ./generate_configurations.sh
@@ -36,13 +36,13 @@ install_srsran_oransc_testbed:
   image: ubuntu:22.04
   resource_group: testbed_install
   interruptible: true
-  variables:
-    DEBIAN_FRONTEND: noninteractive
   before_script:
     - apt-get update
     - apt-get install -y sudo bash grep coreutils curl wget git
   script:
     - set -e
+    - echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections
+    - DEBIAN_FRONTEND=noninteractive sudo apt-get update && sudo apt-get -y --no-install-recommends install tzdata
     - bash ./full_install.sh
     - bash ./generate_configurations.sh
     - bash ./run.sh &

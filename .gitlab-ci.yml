@@ -1,0 +1,64 @@
+stages:
+  - install_openairinterface_testbed
+  - install_srsran_oransc_testbed
+
+install_openairinterface_testbed:
+  stage: install_openairinterface_testbed
+  image: ubuntu:22.04
+  before_script:
+    - apt-get update
+    - apt-get install -y bash grep coreutils
+  script:
+    - set -e
+    - cd OpenAirInterface_Testbed
+    - bash ./full_install.sh
+    - bash ./generate_configurations.sh
+    - |
+      echo "Starting run.sh and waiting up to 2 minutes for DRB.PdcpSduVolumeDL..."
+      if timeout 120s bash ./run.sh |& grep -q "DRB.PdcpSduVolumeDL"; then
+        echo "Successfully found DRB.PdcpSduVolumeDL in FlexRIC output."
+      else
+        echo "String DRB.PdcpSduVolumeDL not found in output after 2 minutes."
+        exit 1
+      fi
+    - bash ./full_uninstall.sh
+  artifacts:
+    expire_in: 1 hour
+    when: always
+  retry: 0
+
+install_srsran_oransc_testbed:
+  stage: install_srsran_oransc_testbed
+  image: ubuntu:22.04
+  before_script:
+    - apt-get update
+    - apt-get install -y bash grep coreutils
+  script:
+    - set -e
+    - bash ./full_install.sh
+    - bash ./generate_configurations.sh
+    - bash ./run.sh &
+    - |
+      # Wait up to 120s for the successful UE connection
+      echo "Waiting for RRC NR reconfiguration successful in log..."
+      timeout=120
+      found=0
+      for i in $(seq 1 $timeout); do
+        if grep -q "RRC NR reconfiguration successful" User_Equipment/logs/ue1_stdout.txt 2>/dev/null; then
+          echo "Successfully found RRC NR reconfiguration successful in srsRAN_4G UE log."
+          found=1
+          break
+        fi
+        sleep 1
+      done
+      if [ "$found" -ne 1 ]; then
+        echo "Did not find success string in time."
+        exit 1
+      fi
+    - bash ./full_uninstall.sh
+  artifacts:
+    expire_in: 1 hour
+    when: always
+    paths:
+      - User_Equipment/logs/ue1_stdout.txt
+  retry: 0

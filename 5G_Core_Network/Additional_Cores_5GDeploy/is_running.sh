@@ -41,9 +41,9 @@ if [ -z "$FIXED_DOCKER_PERMS" ]; then
         if echo "$output" | grep -qiE 'permission denied|cannot connect to the docker daemon'; then
             sudo groupadd -f docker
             if [ -n "$SUDO_USER" ]; then
-                sudo usermod -aG docker "$SUDO_USER"
+                sudo usermod -aG docker "${SUDO_USER:-root}"
             else
-                sudo usermod -aG docker "$USER"
+                sudo usermod -aG docker "${USER:-root}"
             fi
             # Rather than requiring a reboot to apply docker permissions, set the docker group and re-run the parent script
             export FIXED_DOCKER_PERMS=1

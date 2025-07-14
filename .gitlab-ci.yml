@@ -7,7 +7,7 @@ install_openairinterface_testbed:
   image: ubuntu:22.04
   before_script:
     - apt-get update
-    - apt-get install -y sudo bash grep coreutils
+    - apt-get install -y sudo bash grep coreutils curl wget
   script:
     - set -e
     - cd OpenAirInterface_Testbed
@@ -32,7 +32,7 @@ install_srsran_oransc_testbed:
   image: ubuntu:22.04
   before_script:
     - apt-get update
-    - apt-get install -y sudo bash grep coreutils
+    - apt-get install -y sudo bash grep coreutils curl wget
   script:
     - set -e
     - bash ./full_install.sh

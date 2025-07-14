@@ -9,7 +9,7 @@ install_openairinterface_testbed:
   interruptible: true
   before_script:
     - apt-get update
-    - apt-get install -y sudo bash grep coreutils curl wget git gnupg
+    - apt-get install -y sudo bash grep coreutils curl wget git gnupg lsb-release
   script:
     - set -e
     - echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections
@@ -41,7 +41,7 @@ install_srsran_oransc_testbed:
   interruptible: true
   before_script:
     - apt-get update
-    - apt-get install -y sudo bash grep coreutils curl wget git gnupg
+    - apt-get install -y sudo bash grep coreutils curl wget git gnupg lsb-release
   script:
     - set -e
     - echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections

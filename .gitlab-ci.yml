@@ -17,6 +17,7 @@ install_openairinterface_testbed:
     - echo -e '#!/bin/sh\necho "systemctl not supported in CI container"\nexit 0' | sudo tee /usr/local/bin/systemctl > /dev/null
     - sudo chmod +x /usr/local/bin/systemctl
     - cd OpenAirInterface_Testbed
+    - sed -i -E 's/^core_to_use:.*/core_to_use: 5gdeply-open5gs/' 5G_Core_Network/options.yaml
     - bash ./full_install.sh
     - bash ./generate_configurations.sh
     # - |
@@ -27,7 +28,7 @@ install_openairinterface_testbed:
     #     echo "String DRB.PdcpSduVolumeDL not found in output after 2 minutes."
     #     exit 1
     #   fi
-    - bash ./full_uninstall.sh
+    # - bash ./full_uninstall.sh
   artifacts:
     expire_in: 1 day
     when: always
@@ -47,6 +48,7 @@ install_srsran_oransc_testbed:
     - DEBIAN_FRONTEND=noninteractive sudo apt-get update && sudo apt-get -y --no-install-recommends install tzdata
     - echo -e '#!/bin/sh\necho "systemctl not supported in CI container"\nexit 0' | sudo tee /usr/local/bin/systemctl > /dev/null
     - sudo chmod +x /usr/local/bin/systemctl
+    - sed -i -E 's/^core_to_use:.*/core_to_use: 5gdeply-open5gs/' 5G_Core_Network/options.yaml
     - bash ./full_install.sh
     - bash ./generate_configurations.sh
     # - bash ./run.sh &
@@ -67,7 +69,7 @@ install_srsran_oransc_testbed:
     #     echo "Did not find success string in time."
     #     exit 1
     #   fi
-    - bash ./full_uninstall.sh
+    # - bash ./full_uninstall.sh
   artifacts:
     expire_in: 1 day
     when: always

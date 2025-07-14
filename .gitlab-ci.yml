@@ -10,15 +10,12 @@ install_openairinterface_testbed:
   before_script:
     - apt-get update
     - apt-get install -y sudo bash grep coreutils curl wget git
-    - alias systemctl="echo 'systemctl not supported in CI container'"
   script:
     - set -e
     - echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections
     - DEBIAN_FRONTEND=noninteractive sudo apt-get update && sudo apt-get -y --no-install-recommends install tzdata
-    - mkdir -p ~/fakebin
-    - echo -e '#!/bin/sh\necho "systemctl not supported in CI container"\nexit 0' > ~/fakebin/systemctl
-    - chmod +x ~/fakebin/systemctl
-    - export PATH=~/fakebin:$PATH
+    - echo -e '#!/bin/sh\necho "systemctl not supported in CI container"\nexit 0' | sudo tee /usr/local/bin/systemctl > /dev/null
+    - sudo chmod +x /usr/local/bin/systemctl
     - cd OpenAirInterface_Testbed
     - bash ./full_install.sh
     - bash ./generate_configurations.sh
@@ -44,15 +41,12 @@ install_srsran_oransc_testbed:
   before_script:
     - apt-get update
     - apt-get install -y sudo bash grep coreutils curl wget git
-    - alias systemctl="echo 'systemctl not supported in CI container'"
   script:
     - set -e
     - echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections
     - DEBIAN_FRONTEND=noninteractive sudo apt-get update && sudo apt-get -y --no-install-recommends install tzdata
-    - mkdir -p ~/fakebin
-    - echo -e '#!/bin/sh\necho "systemctl not supported in CI container"\nexit 0' > ~/fakebin/systemctl
-    - chmod +x ~/fakebin/systemctl
-    - export PATH=~/fakebin:$PATH
+    - echo -e '#!/bin/sh\necho "systemctl not supported in CI container"\nexit 0' | sudo tee /usr/local/bin/systemctl > /dev/null
+    - sudo chmod +x /usr/local/bin/systemctl
     - bash ./full_install.sh
     - bash ./generate_configurations.sh
     # - bash ./run.sh &

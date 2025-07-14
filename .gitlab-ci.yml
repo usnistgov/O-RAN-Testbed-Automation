@@ -15,6 +15,10 @@ install_openairinterface_testbed:
     - set -e
     - echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections
     - DEBIAN_FRONTEND=noninteractive sudo apt-get update && sudo apt-get -y --no-install-recommends install tzdata
+    - mkdir -p ~/fakebin
+    - echo -e '#!/bin/sh\necho "systemctl not supported in CI container"\nexit 0' > ~/fakebin/systemctl
+    - chmod +x ~/fakebin/systemctl
+    - export PATH=~/fakebin:$PATH
     - cd OpenAirInterface_Testbed
     - bash ./full_install.sh
     - bash ./generate_configurations.sh
@@ -45,6 +49,10 @@ install_srsran_oransc_testbed:
     - set -e
     - echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections
     - DEBIAN_FRONTEND=noninteractive sudo apt-get update && sudo apt-get -y --no-install-recommends install tzdata
+    - mkdir -p ~/fakebin
+    - echo -e '#!/bin/sh\necho "systemctl not supported in CI container"\nexit 0' > ~/fakebin/systemctl
+    - chmod +x ~/fakebin/systemctl
+    - export PATH=~/fakebin:$PATH
     - bash ./full_install.sh
     - bash ./generate_configurations.sh
     # - bash ./run.sh &

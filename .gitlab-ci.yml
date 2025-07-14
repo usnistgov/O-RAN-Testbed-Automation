@@ -1,6 +1,3 @@
-variables:
-  DEBIAN_FRONTEND: noninteractive
-
 stages:
   - install_openairinterface_testbed
   - install_srsran_oransc_testbed
@@ -10,6 +7,8 @@ install_openairinterface_testbed:
   image: ubuntu:22.04
   resource_group: testbed_install
   interruptible: true
+  variables:
+    DEBIAN_FRONTEND: noninteractive
   before_script:
     - apt-get update
     - apt-get install -y sudo bash grep coreutils curl wget git
@@ -37,6 +36,8 @@ install_srsran_oransc_testbed:
   image: ubuntu:22.04
   resource_group: testbed_install
   interruptible: true
+  variables:
+    DEBIAN_FRONTEND: noninteractive
   before_script:
     - apt-get update
     - apt-get install -y sudo bash grep coreutils curl wget git

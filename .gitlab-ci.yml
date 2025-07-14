@@ -1,3 +1,6 @@
+variables:
+  DEBIAN_FRONTEND: noninteractive
+
 stages:
   - install_openairinterface_testbed
   - install_srsran_oransc_testbed
@@ -5,8 +8,9 @@ stages:
 install_openairinterface_testbed:
   stage: install_openairinterface_testbed
   image: ubuntu:22.04
+  resource_group: testbed_install
+  interruptible: true
   before_script:
-    - export DEBIAN_FRONTEND=noninteractive
     - apt-get update
     - apt-get install -y sudo bash grep coreutils curl wget git
   script:
@@ -24,15 +28,16 @@ install_openairinterface_testbed:
       fi
     - bash ./full_uninstall.sh
   artifacts:
-    expire_in: 1 hour
+    expire_in: 1 day
     when: always
   retry: 0
 
 install_srsran_oransc_testbed:
   stage: install_srsran_oransc_testbed
   image: ubuntu:22.04
+  resource_group: testbed_install
+  interruptible: true
   before_script:
-    - export DEBIAN_FRONTEND=noninteractive
     - apt-get update
     - apt-get install -y sudo bash grep coreutils curl wget git
   script:
@@ -59,7 +64,7 @@ install_srsran_oransc_testbed:
       fi
     - bash ./full_uninstall.sh
   artifacts:
-    expire_in: 1 hour
+    expire_in: 1 day
     when: always
     paths:
       - User_Equipment/logs/ue1_stdout.txt

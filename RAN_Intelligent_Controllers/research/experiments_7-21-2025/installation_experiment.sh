@@ -38,11 +38,9 @@ if ! command -v realpath &>/dev/null; then
 fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
-BASE_DIR=$(dirname "$(dirname "$(dirname "$(dirname "$SCRIPT_DIR")")")")
+BASE_DIR=$(dirname "$(dirname "$(dirname "$SCRIPT_DIR")")")
 
 cd "$BASE_DIR"
-less
-exit 0
 
 CSV_FILE="$SCRIPT_DIR/install_experiment.csv"
 if [ ! -f "$CSV_FILE" ]; then

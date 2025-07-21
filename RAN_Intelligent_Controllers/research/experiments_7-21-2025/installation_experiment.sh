@@ -159,6 +159,7 @@ for I in $(seq 1 $NUM_SAMPLES); do
     CSV_LINE+="$ORAN_RIC_INSTALL_TIME\n"
     echo -e "$CSV_LINE" >> "$CSV_FILE"
     echo "    Wrote Iteration $I to $CSV_FILE."
+    
     cd "$BASE_DIR"
     ./full_uninstall.sh
 

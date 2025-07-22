@@ -159,13 +159,13 @@ for I in $(seq 1 $NUM_SAMPLES); do
     echo "    Wrote Iteration $I to $CSV_FILE."
 
     cd "$BASE_DIR"
-    ./full_uninstall.sh
+    ./full_uninstall.sh bypass_confirmation
 
     cd "$BASE_DIR/5G_Core_Network"
     yq eval -i '.core_to_use = "open5gs"' options.yaml
-    ./full_uninstall.sh
+    ./full_uninstall.sh bypass_confirmation
     
     cd "$BASE_DIR/OpenAirInterface"
-    ./full_uninstall.sh
+    ./full_uninstall.sh bypass_confirmation
 done
 

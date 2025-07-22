@@ -239,6 +239,14 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
     # Update configuration values for GUI
     update_conf "configs/ue${UE_NUMBER}.conf" "gui" "enable" "false"
 
+    if [ $UE_NUMBER -gt 3 ]; then
+        echo "UE is greater than registered subscribers, registering UE $UE_NUMBER..."
+        REGISTRATION_DIR=$(dirname "$SCRIPT_DIR")/5G_Core_Network/install_scripts
+        if [ -f "$REGISTRATION_DIR/./register_subscriber.sh" ]; then
+            "$REGISTRATION_DIR/./register_subscriber.sh" --imsi "$UE_IMSI" --key "$UE_KEY" --opc "$UE_OPC" --apn "$DNN" || true
+        fi
+    fi
+
     echo
     echo "Successfully configured UE ${UE_NUMBER}."
     echo "    OPc:  $UE_OPC"

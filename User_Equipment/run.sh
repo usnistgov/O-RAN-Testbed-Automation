@@ -76,12 +76,6 @@ if [ ! -f "$UE_CONF_PATH" ]; then
     fi
 fi
 
-if [ $UE_NUMBER -gt 3 ]; then
-    echo "UE is greater than registered subscribers, registering UE $UE_NUMBER..."
-    REGISTRATION_DIR=$(dirname "$SCRIPT_DIR")/5G_Core_Network/install_scripts
-    "$REGISTRATION_DIR/./register_subscriber.sh" --imsi "$UE_IMSI" --key "$UE_KEY" --opc "$UE_OPC" --apn "$UE_APN"
-fi
-
 # Give the UE its own network namespace and configure it to access the host network
 sudo ./install_scripts/setup_ue_namespace.sh "$UE_NUMBER"
 

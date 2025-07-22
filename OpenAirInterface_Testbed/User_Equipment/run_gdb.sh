@@ -90,12 +90,6 @@ if [ ! -f "$UE_CONF_PATH" ]; then
     fi
 fi
 
-if [ $UE_NUMBER -gt 3 ]; then
-    echo "UE is greater than registered subscribers, registering UE $UE_NUMBER..."
-    REGISTRATION_DIR=$(dirname "$SCRIPT_DIR")/5G_Core_Network/install_scripts
-    "$REGISTRATION_DIR/./register_subscriber.sh" --imsi "$UE_IMSI" --key "$UE_KEY" --opc "$UE_OPC" --apn "$UE_APN"
-fi
-
 HOSTNAME_IP=$(hostname -I | awk '{print $1}')
 
 if ./is_running.sh | grep -q "ue$UE_NUMBER"; then

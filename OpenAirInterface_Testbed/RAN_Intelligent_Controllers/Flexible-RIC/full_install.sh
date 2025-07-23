@@ -32,6 +32,7 @@
 set -e
 
 CLEAN_INSTALL=true
+DEBUG_SYMBOLS=false
 
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
@@ -132,12 +133,17 @@ git restore examples/xApp/c/monitor/CMakeLists.txt
 git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/CMakeLists.txt.patch"
 cd ..
 
+ADDITIONAL_FLAGS=""
+if [ "$DEBUG_SYMBOLS" = true ]; then
+    ADDITIONAL_FLAGS="-DCMAKE_BUILD_TYPE=Debug"
+fi
+
 echo "Building FlexRIC..."
 cd flexric
 sudo rm -rf build
 mkdir build
 cd build
-CC=gcc-10 CXX=g++-10 cmake .. -DE2AP_VERSION=E2AP_V3 -DKPM_VERSION=KPM_V3_00
+CC=gcc-10 CXX=g++-10 cmake .. -DE2AP_VERSION=E2AP_V3 -DKPM_VERSION=KPM_V3_00 $ADDITIONAL_FLAGS
 make -j$(nproc)
 
 echo "Installing FlexRIC..."

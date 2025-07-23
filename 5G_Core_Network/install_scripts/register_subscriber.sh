@@ -49,10 +49,7 @@ DEFAULT_APN="internet"
 DEFAULT_SST=""
 DEFAULT_SD=""
 
-if ! systemctl is-active --quiet "open5gs-webui"; then
-    echo "WebUI not running. Starting..."
-    sudo systemctl start open5gs-webui
-fi
+./start_webui.sh no-browser
 
 # Function to display usage
 usage() {

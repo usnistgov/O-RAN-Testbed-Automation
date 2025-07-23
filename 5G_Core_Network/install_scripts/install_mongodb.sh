@@ -31,7 +31,13 @@
 echo "# Script: $(realpath $0)..."
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
-cd "$(dirname "$SCRIPT_DIR")"
+PARENT_DIR=$(dirname "$SCRIPT_DIR")
+cd "$PARENT_DIR"
+
+USE_SYSTEMCTL=$(yq eval '.use_systemctl' options.yaml)
+if [[ "$USE_SYSTEMCTL" == "null" || -z "$USE_SYSTEMCTL" ]]; then
+    USE_SYSTEMCTL="true" # Default
+fi
 
 UBUNTU_CODENAME=$(./install_scripts/get_ubuntu_codename.sh)
 INSTALLED_VERSION=$(mongod --version 2>/dev/null | grep -oP "(?<=v)\d+\.\d+\.\d+") || true
@@ -225,21 +231,30 @@ fi
 sudo mkdir -p /var/lib/mongodb /var/log/mongodb
 sudo chown -R mongodb:mongodb /var/lib/mongodb /var/log/mongodb
 
-# Point mongodb to the correct configuration file
-sudo sed -i "s|ExecStart=/usr/bin/mongod --config .*|ExecStart=/usr/bin/mongod --config $CONFIG_FILE|" /lib/systemd/system/mongod.service
-sudo systemctl daemon-reload
+if [[ "$USE_SYSTEMCTL" == "true" ]]; then
+    # Point mongodb to the correct configuration file
+    sudo sed -i "s|ExecStart=/usr/bin/mongod --config .*|ExecStart=/usr/bin/mongod --config $CONFIG_FILE|" /lib/systemd/system/mongod.service
+    sudo systemctl daemon-reload
 
-echo "Checking MongoDB service..."
-if ! sudo systemctl is-active --quiet mongod; then
-    echo "Starting MongoDB service..."
-    sudo systemctl start mongod
-else
-    echo "MongoDB service is already running."
-fi
+    echo "Checking MongoDB service..."
+    if ! sudo systemctl is-active --quiet mongod; then
+        echo "Starting MongoDB service..."
+        sudo systemctl start mongod
+    else
+        echo "MongoDB service is already running."
+    fi
 
-if ! sudo systemctl is-enabled --quiet mongod; then
-    echo "Enabling MongoDB service to start on boot..."
-    sudo systemctl enable mongod
+    if ! sudo systemctl is-enabled --quiet mongod; then
+        echo "Enabling MongoDB service to start on boot..."
+        sudo systemctl enable mongod
+    else
+        echo "MongoDB service is already enabled to start on boot."
+    fi
 else
-    echo "MongoDB service is already enabled to start on boot."
+    if ! pgrep -f "mongod" >/dev/null; then
+        echo "Starting MongoDB service..."
+        sudo mongod --config "$CONFIG_FILE" --fork
+    else
+        echo "MongoDB service is already running."
+    fi
 fi

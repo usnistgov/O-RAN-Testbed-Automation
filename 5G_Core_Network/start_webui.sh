@@ -71,11 +71,8 @@ if [[ "$NO_BROWSER" == false ]]; then
     else
         echo "No default browser detected. Visit http://localhost:$WEBUI_PORT to access the WebUI."
     fi
-else
-    echo "The Open5GS WebUI started. It can be accessed at http://localhost:$WEBUI_PORT"
+    echo
+    echo "The login credentials are set to the following."
+    echo "    - U: \"admin\""
+    echo "    - P: \"1423\""
 fi
-
-echo
-echo "The login credentials are set to the following."
-echo "    - U: \"admin\""
-echo "    - P: \"1423\""

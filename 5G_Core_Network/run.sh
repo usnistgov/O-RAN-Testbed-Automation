@@ -182,8 +182,8 @@ APPS=("mmed" "sgwcd" "smfd" "amfd" "sgwud" "upfd" "hssd" "pcrfd" "nrfd" "scpd" "
 # Check if the last application is 'webui'
 if [ "${APPS[-1]}" == "webui" ]; then
     unset APPS[-1]
-    echo "Starting webui service..."
-    sudo systemctl start open5gs-webui
+    echo "Starting Open5GS WebUI..."
+    ./start_webui.sh no-browser
 fi
 
 if [[ $1 == "show" ]]; then

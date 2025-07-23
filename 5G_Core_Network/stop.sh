@@ -56,6 +56,11 @@ if [[ "$CORE_TO_USE" != "open5gs" && -z "$INTERMEDIATE_CHECK" ]]; then
     fi
 fi
 
+USE_SYSTEMCTL=$(yq eval '.use_systemctl' options.yaml)
+if [[ "$USE_SYSTEMCTL" == "null" || -z "$USE_SYSTEMCTL" ]]; then
+    USE_SYSTEMCTL="true" # Default
+fi
+
 # Latest components (see https://open5gs.org/open5gs/docs/guide/01-quickstart/#:~:text=Starting%20and%20Stopping%20Open5GS)
 APPS=("mmed" "sgwcd" "smfd" "amfd" "sgwud" "upfd" "hssd" "pcrfd" "nrfd" "scpd" "seppd" "ausfd" "udmd" "pcfd" "nssfd" "bsfd" "udrd" "webui")
 
@@ -64,7 +69,11 @@ for APP in "${APPS[@]}"; do
     if [ "$APP" != "webui" ]; then
         sudo pkill -x "open5gs-$APP" && echo "Component open5gs-$APP has stopped gracefully."
     else
-        sudo systemctl stop "open5gs-$APP.service" 2>/dev/null
+        if [[ "$USE_SYSTEMCTL" == "true" ]]; then
+            sudo systemctl stop "open5gs-$APP.service" 2>/dev/null
+        else
+            sudo pkill -x "open5gs-$APP" && echo "Component open5gs-$APP has stopped gracefully."
+        fi
     fi
 done
 

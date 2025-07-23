@@ -58,16 +58,29 @@ if [[ "$CORE_TO_USE" != "open5gs" && -z "$INTERMEDIATE_CHECK" ]]; then
     unset INTERMEDIATE_CHECK
 fi
 
+USE_SYSTEMCTL=$(yq eval '.use_systemctl' options.yaml)
+if [[ "$USE_SYSTEMCTL" == "null" || -z "$USE_SYSTEMCTL" ]]; then
+    USE_SYSTEMCTL="true" # Default
+fi
+
 check_service() {
     local SEARCH_PATTERN="open5gs-$1"
     local DISPLAY_NAME="$2"
     if pgrep -f "$SEARCH_PATTERN" >/dev/null; then
         echo "$DISPLAY_NAME: RUNNING"
     else
-        if systemctl is-active --quiet "$SEARCH_PATTERN"; then
-            echo "$DISPLAY_NAME: RUNNING"
+        if [ "$USE_SYSTEMCTL" == "true" ]; then
+            if systemctl is-active --quiet "$SEARCH_PATTERN"; then
+                echo "$DISPLAY_NAME: RUNNING"
+            else
+                echo "$DISPLAY_NAME: NOT_RUNNING"
+            fi
         else
-            echo "$DISPLAY_NAME: NOT_RUNNING"
+            if pgrep -f "$SEARCH_PATTERN" >/dev/null; then
+                echo "$DISPLAY_NAME: RUNNING"
+            else
+                echo "$DISPLAY_NAME: NOT_RUNNING"
+            fi
         fi
     fi
 }

@@ -171,6 +171,12 @@ echo "Creating configs directory..."
 rm -rf configs
 mkdir configs
 
+MONGODB_CONFIG_FILE="/etc/mongod/mongod.conf"
+if [ -f "$MONGODB_CONFIG_FILE" ]; then
+    echo "Creating symbolic link for MongoDB configuration file..."
+    sudo ln -s "$MONGODB_CONFIG_FILE" configs/mongod.conf
+fi
+
 # Only remove the logs if no component is running
 RUNNING_STATUS=$(./is_running.sh)
 if [[ $RUNNING_STATUS != *": RUNNING"* ]]; then

@@ -59,6 +59,13 @@ echo "Removing Open5GS installation directory..."
 sudo rm -rf open5gs/
 sudo rm -rf /var/log/open5gs
 
+for INTERMEDIATE_DIR in open5gs-*; do
+    if [[ -d "$INTERMEDIATE_DIR" && "$INTERMEDIATE_DIR" != "open5gs-*" ]]; then
+        echo "Removing intermediate open5gs directory: $INTERMEDIATE_DIR"
+        sudo rm -rf "$INTERMEDIATE_DIR"
+    fi
+done
+
 echo "Uninstalling WebUI..."
 curl -fsSL https://open5gs.org/open5gs/assets/webui/uninstall | sudo -E bash -
 

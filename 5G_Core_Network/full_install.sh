@@ -100,6 +100,7 @@ if [ ! -d "open5gs" ]; then
     echo "Cloning Open5GS..."
     ./install_scripts/git_clone.sh https://github.com/open5gs/open5gs.git
 fi
+
 cd $SCRIPT_DIR/open5gs
 
 echo
@@ -116,6 +117,7 @@ fi
 export NEEDRESTART_SUSPEND=1
 
 sudo "$SCRIPT_DIR/./install_scripts/install_mongodb.sh"
+sudo "$SCRIPT_DIR/./install_scripts/start_mongodb.sh"
 
 # Check and create the open5gs user and group if they don't exist
 if ! getent passwd open5gs >/dev/null; then

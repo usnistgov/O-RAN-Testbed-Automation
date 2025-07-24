@@ -28,16 +28,14 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-SCRIPT_DIR=$(dirname "$(realpath "$0")")
-cd "$SCRIPT_DIR"
+echo "# Script: $(realpath $0)..."
 
-NO_BROWSER=false
-for ARG in "$@"; do
-    if [[ "$ARG" == "no-browser" ]]; then
-        NO_BROWSER=true
-        break
-    fi
-done
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+PARENT_DIR=$(dirname "$SCRIPT_DIR")
+cd "$PARENT_DIR"
+
+CONFIG_DIR="/etc/mongod"
+CONFIG_FILE="$CONFIG_DIR/mongod.conf"
 
 USE_SYSTEMCTL=$(yq eval '.use_systemctl' options.yaml)
 if [[ "$USE_SYSTEMCTL" == "null" || -z "$USE_SYSTEMCTL" ]]; then
@@ -45,37 +43,29 @@ if [[ "$USE_SYSTEMCTL" == "null" || -z "$USE_SYSTEMCTL" ]]; then
 fi
 
 if [[ "$USE_SYSTEMCTL" == "true" ]]; then
-    if ! systemctl is-active --quiet "open5gs-webui"; then
-        echo "Starting webui service..."
-        sudo systemctl start open5gs-webui
+    # Point mongodb to the correct configuration file
+    sudo sed -i "s|ExecStart=/usr/bin/mongod --config .*|ExecStart=/usr/bin/mongod --config $CONFIG_FILE|" /lib/systemd/system/mongod.service
+    sudo systemctl daemon-reload
+
+    echo "Checking MongoDB service..."
+    if ! sudo systemctl is-active --quiet mongod; then
+        echo "Starting MongoDB service..."
+        sudo systemctl start mongod
+    else
+        echo "MongoDB service is already running."
+    fi
+
+    if ! sudo systemctl is-enabled --quiet mongod; then
+        echo "Enabling MongoDB service to start on boot..."
+        sudo systemctl enable mongod
+    else
+        echo "MongoDB service is already enabled to start on boot."
     fi
 else
-    # MongoDB must be started manually since USE_SYSTEMCTL=false, so it is not managed by systemd
-    sudo ./install_scripts/start_mongodb.sh
-    
-    # Check if the WebUI server is already running by looking for the Node.js process in the correct directory
-    if ! pgrep -f "open5gs-webui" >/dev/null; then
-        echo "Starting webui process..."
-        cd open5gs/webui
-        npm install
-        # nohup node --title="open5gs-webui" server/index.js >logs/webui_stdout.txt 2>&1 &
-        nohup node --title="open5gs-webui" server/index.js >/dev/null 2>&1 &
-        cd "$SCRIPT_DIR"
-    fi
-fi
-
-WEBUI_PORT=9999
-
-if [[ "$NO_BROWSER" == false ]]; then
-    if command -v xdg-open &>/dev/null; then
-        echo "Opening the WebUI in the default web browser at URL http://localhost:$WEBUI_PORT"
-        xdg-open "http://localhost:$WEBUI_PORT" >/dev/null 2>&1 &
-        sleep 3
+    if ! pgrep -f "mongod" >/dev/null; then
+        echo "Starting MongoDB service..."
+        sudo mongod --config "$CONFIG_FILE" --fork
     else
-        echo "No default browser detected. Visit http://localhost:$WEBUI_PORT to access the WebUI."
+        echo "MongoDB service is already running."
     fi
-    echo
-    echo "The login credentials are set to the following."
-    echo "    - U: \"admin\""
-    echo "    - P: \"1423\""
 fi

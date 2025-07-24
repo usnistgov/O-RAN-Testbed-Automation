@@ -80,7 +80,7 @@ if [ ! -f "configs/ue1.conf" ]; then
 fi
 
 LOG_FILE="logs/ue${UE_NUMBER}_stdout.txt"
-PDU_SESSION_IP=$(grep "PDU Session Establishment successful" "$LOG_FILE" | cut -d ':' -f2 | xargs | tr -cd '[:print:]')
+PDU_SESSION_IP=$(cat $LOG_FILE | grep "PDU Session Establishment successful" | cut -d ':' -f2 | xargs | tr -d '\r\n')
 
 if [ -z "$PDU_SESSION_IP" ]; then
     echo "Error: Unable to find PDU Session IP from the log file $LOG_FILE."
@@ -89,9 +89,20 @@ fi
 
 echo "Successfully found PDU Session IP: $PDU_SESSION_IP"
 
-if ! command -v iperf &>/dev/null; then
-    echo "Package \"iperf\" not found, installing..."
-    sudo apt-get install -y iperf
+if command -v docker >/dev/null 2>&1 && docker ps --format '{{.Names}}' | grep -qw dn_internet; then
+    USING_5GDEPLOY=true
+else
+    USING_5GDEPLOY=false
 fi
 
-iperf -c $PDU_SESSION_IP -u -i 1 -b $BANDWIDTH -t $DURATION
+if [ "$USING_5GDEPLOY" = true ]; then # 5GDeploy:
+    docker exec -it dn_internet apk add --no-cache iperf
+    docker exec -it dn_internet iperf -c $PDU_SESSION_IP -u -i 1 -b $BANDWIDTH -t $DURATION
+else # Open5GS:
+    if ! command -v iperf &>/dev/null; then
+        echo "Package \"iperf\" not found, installing..."
+        sudo apt-get install -y iperf
+    fi
+
+    iperf -c $PDU_SESSION_IP -u -i 1 -b $BANDWIDTH -t $DURATION
+fi

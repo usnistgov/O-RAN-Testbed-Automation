@@ -34,7 +34,7 @@ UPF1_IP=192.168.63.21
 UPF4_IP=192.168.63.24
 SUBNET_INTERNAL="172.25.160.0/20" # Sets the subnet for internal core network
 
-UE_NUMBERS=($(seq 100 -1 1)) # Subscribers from UE 100 to UE 1
+UE_NUMBERS=($(seq 1 100)) # Subscribers from UE 1 to UE 100
 
 # Exit immediately if a command fails
 set -e

@@ -79,6 +79,13 @@ if [ ! -f "configs/ue1.conf" ]; then
     exit 1
 fi
 
+# Remove the CIDR suffix from an IP address
+# For example, 10.45.0.1/16 --> 10.45.0.1
+remove_cidr_suffix() {
+    local IP=$1
+    echo ${IP%/*}
+}
+
 UE_NAMESPACE="ue$UE_NUMBER"
 
 # If the namespace doesn't exist
@@ -88,10 +95,13 @@ if ! ip netns list | grep -q "$UE_NAMESPACE"; then
 fi
 
 LOG_FILE="logs/ue${UE_NUMBER}_stdout.txt"
-PDU_SESSION_IP=$(cat $LOG_FILE | grep "Received PDU Session Establishment Accept" | cut -d ':' -f2 | xargs)
+PDU_SESSION_IP=$(cat $LOG_FILE | grep "Received PDU Session Establishment Accept" | cut -d ':' -f2 | xargs | tr -d '\r\n')
 CORE_IP=$(ip route | grep ogstun | cut -d ' ' -f 9 | xargs)
-if [ -z "$CORE_IP" ]; then # Try 5gdeploy control plane bridge if ogstun is not found
-    CORE_IP=$(ip route | grep br-cp | cut -d ' ' -f 9 | xargs)
+if [ -z "$CORE_IP" ]; then # 5GDeploy:
+    if sudo ip netns exec "$UE_NAMESPACE" ip route | grep -q "oaitun_ue$UE_NUMBER"; then
+        SUBNET=$(sudo ip netns exec "$UE_NAMESPACE" ip route | awk "/oaitun_ue$UE_NUMBER/ {print \$1}")
+        CORE_IP=$(remove_cidr_suffix "$SUBNET")
+    fi
 fi
 
 if [ -z "$PDU_SESSION_IP" ]; then

@@ -55,7 +55,7 @@ if [ ! -f "$CSV_FILE" ]; then
     CSV_HEADER+="srsRAN_Project (m),"
     CSV_HEADER+="srsRAN_UE (m),"
     CSV_HEADER+="O-SC Near-RT RIC (m)\n"
-    echo -e "$CSV_HEADER" > "$CSV_FILE"
+    echo -e "$CSV_HEADER" >"$CSV_FILE"
 fi
 
 # Check if the YAML editor is installed, and install it if not
@@ -106,7 +106,7 @@ for I in $(seq 1 $NUM_SAMPLES); do
     else
         OAI_UE_INSTALL_TIME=""
     fi
-    
+
     OAI_GNB_FILE="$BASE_DIR/OpenAirInterface/Next_Generation_Node_B/install_time.txt"
     if [ -f "$OAI_GNB_FILE" ]; then
         OAI_GNB_INSTALL_TIME=$(head -n 1 "$OAI_GNB_FILE" | awk '{print $1}')
@@ -155,7 +155,7 @@ for I in $(seq 1 $NUM_SAMPLES); do
     CSV_LINE+="$SRSRAN_GNB_INSTALL_TIME,"
     CSV_LINE+="$SRSRAN_UE_INSTALL_TIME,"
     CSV_LINE+="$ORAN_RIC_INSTALL_TIME,"
-    echo -e "$CSV_LINE" >> "$CSV_FILE\n"
+    echo -e "$CSV_LINE" >>"$CSV_FILE\n"
     echo "    Wrote Iteration $I to $CSV_FILE."
 
     cd "$BASE_DIR"
@@ -164,8 +164,7 @@ for I in $(seq 1 $NUM_SAMPLES); do
     cd "$BASE_DIR/5G_Core_Network"
     yq eval -i '.core_to_use = "open5gs"' options.yaml
     ./full_uninstall.sh bypass_confirmation
-    
+
     cd "$BASE_DIR/OpenAirInterface"
     ./full_uninstall.sh bypass_confirmation
 done
-

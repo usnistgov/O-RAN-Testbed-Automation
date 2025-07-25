@@ -49,11 +49,11 @@ if [[ "$USE_SYSTEMCTL" == "true" ]]; then
 
     echo "Checking MongoDB service..."
     if ! sudo systemctl is-active --quiet mongod; then
-        if pgrep -f "mongod" >/dev/null; then
-            echo "Stopping existing MongoDB process..."
-            sudo pkill -f "mongod"
-        fi
-
+        # if pgrep -f "mongod" >/dev/null; then
+        #     echo "Stopping existing MongoDB process..."
+        #     sudo pkill -f "mongod"
+        #     sleep 3
+        # fi
         echo "Starting MongoDB service..."
         sudo systemctl start mongod
     fi

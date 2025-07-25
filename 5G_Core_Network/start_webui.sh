@@ -44,7 +44,6 @@ if [[ "$USE_SYSTEMCTL" == "null" || -z "$USE_SYSTEMCTL" ]]; then
     USE_SYSTEMCTL="true" # Default
 fi
 
-
 # Ensure that MongoDB is running
 sudo ./install_scripts/start_mongodb.sh
 

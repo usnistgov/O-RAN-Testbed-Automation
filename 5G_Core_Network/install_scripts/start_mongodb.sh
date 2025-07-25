@@ -49,23 +49,28 @@ if [[ "$USE_SYSTEMCTL" == "true" ]]; then
 
     echo "Checking MongoDB service..."
     if ! sudo systemctl is-active --quiet mongod; then
+        if pgrep -f "mongod" >/dev/null; then
+            echo "Stopping existing MongoDB process..."
+            sudo pkill -f "mongod"
+        fi
+
         echo "Starting MongoDB service..."
         sudo systemctl start mongod
-    else
-        echo "MongoDB service is already running."
     fi
 
     if ! sudo systemctl is-enabled --quiet mongod; then
         echo "Enabling MongoDB service to start on boot..."
         sudo systemctl enable mongod
-    else
-        echo "MongoDB service is already enabled to start on boot."
     fi
 else
     if ! pgrep -f "mongod" >/dev/null; then
+        # First ensure that the service is not running and is disabled
+        if command -v systemctl &>/dev/null; then
+            sudo systemctl stop mongod
+            sudo systemctl disable mongod
+        fi
+
         echo "Starting MongoDB service..."
         sudo mongod --config "$CONFIG_FILE" --fork
-    else
-        echo "MongoDB service is already running."
     fi
 fi

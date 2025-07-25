@@ -44,15 +44,16 @@ if [[ "$USE_SYSTEMCTL" == "null" || -z "$USE_SYSTEMCTL" ]]; then
     USE_SYSTEMCTL="true" # Default
 fi
 
+
+# Ensure that MongoDB is running
+sudo ./install_scripts/start_mongodb.sh
+
 if [[ "$USE_SYSTEMCTL" == "true" ]]; then
     if ! systemctl is-active --quiet "open5gs-webui"; then
         echo "Starting webui service..."
         sudo systemctl start open5gs-webui
     fi
 else
-    # MongoDB must be started manually since USE_SYSTEMCTL=false, so it is not managed by systemd
-    sudo ./install_scripts/start_mongodb.sh
-
     # Check if the WebUI server is already running by looking for the Node.js process in the correct directory
     if ! pgrep -f "open5gs-webui" >/dev/null; then
         echo "Starting webui process..."

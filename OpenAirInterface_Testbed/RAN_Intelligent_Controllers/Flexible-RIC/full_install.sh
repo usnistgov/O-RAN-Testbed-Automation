@@ -92,46 +92,8 @@ if [ ! -d "flexric" ]; then
     ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/mosaic5g/flexric.git
 fi
 
-# Apply patch to xApps to correct the type printing (as of commit hash 596a1ae67309618a74e09e56dff9a723ea7d99c5)
-echo
-echo "Patching xApp type printing..."
-cd flexric
-sudo rm -rf examples/xApp/c
-git restore examples/xApp/c/*
-git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/flexric/examples/xApp/c/fix_type_printing_in_c_xapps.patch" || true
-cd ..
-
-# Apply patch to FlexRIC to add support for RSRP in the KPI report
-cd flexric
-git restore examples/xApp/c/monitor/xapp_kpm_moni.c
-if [ ! -f "examples/xApp/c/monitor/xapp_kpm_moni.c.previous" ]; then
-    cp examples/xApp/c/monitor/xapp_kpm_moni.c examples/xApp/c/monitor/xapp_kpm_moni.c.previous
-    cp examples/xApp/c/monitor/xapp_kpm_moni.c.previous "$SCRIPT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni.previous.c"
-fi
-echo
-echo "Patching xapp_kpm_moni.c..."
-git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni.c.patch"
-cd ..
-
-echo
-echo "Adding xapp_kpm_moni_write_to_csv.c..."
-cp "$SCRIPT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv.c" flexric/examples/xApp/c/monitor/
-
-echo
-echo "Adding xapp_kpm_moni_write_to_influxdb.c..."
-cp "$SCRIPT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni_write_to_influxdb.c" flexric/examples/xApp/c/monitor/
-
-# Apply patch to add new xApp KPI monitor that logs output to logs/KPI_Monitor.csv
-cd flexric
-git restore examples/xApp/c/monitor/CMakeLists.txt
-if [ ! -f "examples/xApp/c/monitor/CMakeLists.txt.previous" ]; then
-    cp examples/xApp/c/monitor/CMakeLists.txt examples/xApp/c/monitor/CMakeLists.txt.previous
-    cp examples/xApp/c/monitor/CMakeLists.txt.previous "$SCRIPT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/CMakeLists.previous.txt"
-fi
-echo
-echo "Patching CMakeLists.txt..."
-git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/CMakeLists.txt.patch"
-cd ..
+echo "Patching FlexRIC..."
+./install_scripts/apply_patches.sh
 
 ADDITIONAL_FLAGS=""
 if [ "$DEBUG_SYMBOLS" = true ]; then

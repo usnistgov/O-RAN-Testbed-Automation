@@ -57,7 +57,6 @@ if [ ! -f "openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c.previous" ]; then
     cp openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c.previous
     cp openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c.previous "$PARENT_DIR/install_patch_files/openairinterface/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.previous.c"
 fi
-echo
 echo "Patching ran_func_kpm.c..."
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c.patch"
 cd ..
@@ -68,7 +67,6 @@ if [ ! -f "openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c.previous" ]; the
     cp openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c.previous
     cp openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c.previous "$PARENT_DIR/install_patch_files/openairinterface/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.previous.c"
 fi
-echo
 echo "Patching ran_func_kpm_subs.c..."
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c.patch"
 cd ..
@@ -77,7 +75,6 @@ if [ ! -f "openairinterface5g/openair2/LAYER2/NR_MAC_gNB/main.c.previous" ]; the
     cp openairinterface5g/openair2/LAYER2/NR_MAC_gNB/main.c openairinterface5g/openair2/LAYER2/NR_MAC_gNB/main.c.previous
     cp openairinterface5g/openair2/LAYER2/NR_MAC_gNB/main.c.previous "$PARENT_DIR/install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/main.previous.c"
 fi
-echo
 echo "Patching main.c..."
 cd openairinterface5g
 git restore openair2/LAYER2/NR_MAC_gNB/main.c
@@ -90,7 +87,6 @@ if [ ! -f "openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.previous" ]; then
     cp openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.previous
     cp openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.previous "$PARENT_DIR/install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.previous.h"
 fi
-echo
 echo "Patching nr_mac_gNB.h..."
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.patch"
 cd ..
@@ -101,7 +97,6 @@ if [ ! -f "openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c.previous" ]; then
     cp openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c.previous
     cp openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c.previous "$PARENT_DIR/install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.previous.c"
 fi
-echo
 echo "Patching gNB_scheduler_dlsch.c..."
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c.patch"
 cd ..
@@ -112,14 +107,12 @@ if [ ! -f "openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c.previous" ]; then
     cp openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c.previous
     cp openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c.previous "$PARENT_DIR/install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.previous.c"
 fi
-echo
 echo "Patching gNB_scheduler_uci.c..."
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c.patch"
 cd ..
 
 # If using Linux Mint, add support for Linux Mint 20, 21, and 22 to OpenAirInterface
 if grep -q "Linux Mint" /etc/os-release; then
-    echo
     echo "Linux Mint detected, attempting to patching OpenAirInterface to support Linux Mint 20, 21, and 22..."
     cd openairinterface5g
     git restore cmake_targets/tools/build_helper

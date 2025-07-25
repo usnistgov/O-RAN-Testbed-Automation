@@ -102,14 +102,14 @@ git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/flexric
 cd ..
 
 # Apply patch to FlexRIC to add support for RSRP in the KPI report
-if [ ! -f "flexric/examples/xApp/c/monitor/xapp_kpm_moni.c.previous" ]; then
-    cp flexric/examples/xApp/c/monitor/xapp_kpm_moni.c flexric/examples/xApp/c/monitor/xapp_kpm_moni.c.previous
-    cp flexric/examples/xApp/c/monitor/xapp_kpm_moni.c.previous "$SCRIPT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni.previous.c"
+cd flexric
+git restore examples/xApp/c/monitor/xapp_kpm_moni.c
+if [ ! -f "examples/xApp/c/monitor/xapp_kpm_moni.c.previous" ]; then
+    cp examples/xApp/c/monitor/xapp_kpm_moni.c examples/xApp/c/monitor/xapp_kpm_moni.c.previous
+    cp examples/xApp/c/monitor/xapp_kpm_moni.c.previous "$SCRIPT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni.previous.c"
 fi
 echo
 echo "Patching xapp_kpm_moni.c..."
-cd flexric
-git restore examples/xApp/c/monitor/xapp_kpm_moni.c
 git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni.c.patch"
 cd ..
 
@@ -122,14 +122,14 @@ echo "Adding xapp_kpm_moni_write_to_influxdb.c..."
 cp "$SCRIPT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni_write_to_influxdb.c" flexric/examples/xApp/c/monitor/
 
 # Apply patch to add new xApp KPI monitor that logs output to logs/KPI_Monitor.csv
-if [ ! -f "flexric/examples/xApp/c/monitor/CMakeLists.txt.previous" ]; then
-    cp flexric/examples/xApp/c/monitor/CMakeLists.txt flexric/examples/xApp/c/monitor/CMakeLists.txt.previous
-    cp flexric/examples/xApp/c/monitor/CMakeLists.txt.previous "$SCRIPT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/CMakeLists.previous.txt"
+cd flexric
+git restore examples/xApp/c/monitor/CMakeLists.txt
+if [ ! -f "examples/xApp/c/monitor/CMakeLists.txt.previous" ]; then
+    cp examples/xApp/c/monitor/CMakeLists.txt examples/xApp/c/monitor/CMakeLists.txt.previous
+    cp examples/xApp/c/monitor/CMakeLists.txt.previous "$SCRIPT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/CMakeLists.previous.txt"
 fi
 echo
 echo "Patching CMakeLists.txt..."
-cd flexric
-git restore examples/xApp/c/monitor/CMakeLists.txt
 git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/CMakeLists.txt.patch"
 cd ..
 

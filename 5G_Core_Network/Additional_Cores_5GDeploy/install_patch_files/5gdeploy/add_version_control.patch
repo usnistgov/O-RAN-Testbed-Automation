@@ -251,9 +251,17 @@ index 2557679..28cafd5 100644
  COPY --from=gtp5g --chmod=644 /gtp5g.zip /
  COPY --from=gtp5g --chmod=755 /gtp5g-load.sh /
 diff --git a/docs/INSTALL.md b/docs/INSTALL.md
-index 332dbc9..6884d43 100644
+index 332dbc9..c494a68 100644
 --- a/docs/INSTALL.md
 +++ b/docs/INSTALL.md
+@@ -1,6 +1,6 @@
+ # Installation Guide
+ 
+-5gdeploy supports Ubuntu 24.04 operating system only.
++5gdeploy supports Linux distributions based on Ubuntu 20.04, 22.04, and 24.04.
+ 
+ ## Dependencies
+ 
 @@ -68,6 +68,23 @@ cd ~/5gdeploy
  # change 'ueransim' to the image that you want to rebuild
  ```

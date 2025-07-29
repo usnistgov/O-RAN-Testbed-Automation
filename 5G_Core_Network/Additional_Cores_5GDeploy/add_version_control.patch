@@ -1,16 +1,3 @@
-diff --git a/compose/ipalloc.ts b/compose/ipalloc.ts
-index 89cd370..725f530 100644
---- a/compose/ipalloc.ts
-+++ b/compose/ipalloc.ts
-@@ -4,7 +4,7 @@ import { ip2long, long2ip, Netmask } from "netmask";
- import { assert, YargsCoercedArray, type YargsInfer, type YargsOptions } from "../util/mod.js";
- 
- /** Yargs options definition for IPv4 address allocator. */
--export function ipAllocOptions(dfltSpace = "172.25.192.0/18") {
-+export function ipAllocOptions(dfltSpace = "172.25.160.0/20") {
-   const minBitmask = new Netmask(dfltSpace).bitmask;
-   return {
-     "ip-space": {
 diff --git a/docker/bridge/Dockerfile b/docker/bridge/Dockerfile
 index ca32a1f..71f3943 100644
 --- a/docker/bridge/Dockerfile
@@ -207,7 +194,7 @@ index 2557679..28cafd5 100644
  COPY --from=gtp5g --chmod=644 /gtp5g.zip /
  COPY --from=gtp5g --chmod=755 /gtp5g-load.sh /
 diff --git a/docs/INSTALL.md b/docs/INSTALL.md
-index 332dbc9..334b567 100644
+index 332dbc9..d4ed1b6 100644
 --- a/docs/INSTALL.md
 +++ b/docs/INSTALL.md
 @@ -68,6 +68,23 @@ cd ~/5gdeploy
@@ -216,20 +203,20 @@ index 332dbc9..334b567 100644
  
 +### Installation Options
 +The following arguments can be passed to `./install.sh`:
-+* `--bridge-tag <tag>`: Specify a **branch**, **tag**, or **commit hash** to use for bridge (_default: [9ba97f1735022fb5f811d9c2a304dda33fae1ad1](https://github.com/jpetazzo/pipework)_)
-+* `--eupf-tag <tag>`: Specify a **branch** or **commit hash** to use for EUPF (_default: [main](https://github.com/edgecomllc/eupf)_)
-+* `--free5gc-tag <tag>`: Specify a **branch**, **tag**, or **commit hash** to use for free5GC (_default: [master](https://github.com/free5gc/free5gc-compose)_)
-+* `--free5gc-webconsole-tag <tag>`: Specify a **branch**, **tag**, or **commit hash** to use for free5GC webconsole (_default: [f4932d569dd0045fc31baca062a05d7b34e3e8e0](https://github.com/free5gc/webconsole)_)
-+* `--gnbsim-tag <tag>`: Specify a **branch**, **tag**, or **commit hash** to use for gnbsim (_default: [d3fce7e35a69b9f5d670242a93b7d1bee8842ecf](https://github.com/omec-project/gnbsim)_)
-+* `--gtp5g-tag <tag>`: Specify a **branch**, **tag**, or **commit hash** to use for gtp5g (_default: [v0.9.13](https://github.com/free5gc/gtp5g)_)
-+* `--oai-fed-tag <tag>`: Specify a **branch**, **tag**, or **commit hash** to use for OAI (_default: [master](https://gitlab.eurecom.fr/oai/cn5g/oai-cn5g-fed)_)
-+* `--oai-nwdaf-tag <tag>`: Specify a **branch**, **tag**, or **commit hash** to use for OAI-NWDAF (_default: [http2_server_support](https://gitlab.eurecom.fr/oai/cn5g/oai-cn5g-nwdaf)_)
++* `--bridge-version <version>`: Specify a **branch**, **tag**, or **commit hash** to use for bridge (_default: [9ba97f1735022fb5f811d9c2a304dda33fae1ad1](https://github.com/jpetazzo/pipework)_)
++* `--eupf-version <version>`: Specify a **branch** or **commit hash** to use for EUPF (_default: [main](https://github.com/edgecomllc/eupf)_)
++* `--free5gc-version <version>`: Specify a **branch**, **tag**, or **commit hash** to use for free5GC (_default: [master](https://github.com/free5gc/free5gc-compose)_)
++* `--free5gc-webconsole-version <version>`: Specify a **branch**, **tag**, or **commit hash** to use for free5GC webconsole (_default: [f4932d569dd0045fc31baca062a05d7b34e3e8e0](https://github.com/free5gc/webconsole)_)
++* `--gnbsim-version <version>`: Specify a **branch**, **tag**, or **commit hash** to use for gnbsim (_default: [d3fce7e35a69b9f5d670242a93b7d1bee8842ecf](https://github.com/omec-project/gnbsim)_)
++* `--gtp5g-version <version>`: Specify a **branch**, **tag**, or **commit hash** to use for gtp5g (_default: [v0.9.13](https://github.com/free5gc/gtp5g)_)
++* `--oai-fed-version <version>`: Specify a **branch**, **tag**, or **commit hash** to use for OAI (_default: [master](https://gitlab.eurecom.fr/oai/cn5g/oai-cn5g-fed)_)
++* `--oai-nwdaf-version <version>`: Specify a **branch**, **tag**, or **commit hash** to use for OAI-NWDAF (_default: [http2_server_support](https://gitlab.eurecom.fr/oai/cn5g/oai-cn5g-nwdaf)_)
 +* `--open5gs-release <release>`: Specify a **release** to use for Open5GS (_default: [2.7.2](https://hub.docker.com/r/gradiant/open5gs)_)
-+* `--packetrusher-tag <tag>`: Specify a **branch**, **tag**, or **commit hash** to use for Packetrusher (_default: [80a7f4bc63d9563a8ec58ba126440d94018a35a2](https://github.com/packetrusher/packetrusher)_)
-+* `--sockperf-tag <tag>`: Specify a **branch**, **tag**, or **commit hash** to use for Sockperf (_default: [19accb5229503dac7833f03713b978cb7fc48762](https://github.com/Mellanox/sockperf)_)
++* `--packetrusher-version <version>`: Specify a **branch**, **tag**, or **commit hash** to use for Packetrusher (_default: [80a7f4bc63d9563a8ec58ba126440d94018a35a2](https://github.com/packetrusher/packetrusher)_)
++* `--sockperf-version <version>`: Specify a **branch**, **tag**, or **commit hash** to use for Sockperf (_default: [19accb5229503dac7833f03713b978cb7fc48762](https://github.com/Mellanox/sockperf)_)
 +* `--srsran5g-release <tag>`: Specify a **release** to use for srsRAN 5G (_default: [24_10_1](https://hub.docker.com/r/gradiant/srsran-5g)_)
-+* `--ueransim-tag <tag>`: Specify a **branch**, **tag**, or **commit hash** to use for UERANSIM (_default: [2fc85e3e422b9a981d330bf6ff945136bfae97f3](https://github.com/aligungr/UERANSIM)_)
-+* `--virt-dpdk-tag <tag>`: Specify a **branch**, **tag**, or **commit hash** to use for DPDK (_default: [v24.11](https://github.com/DPDK/dpdk)_)
++* `--ueransim-version <version>`: Specify a **branch**, **tag**, or **commit hash** to use for UERANSIM (_default: [2fc85e3e422b9a981d330bf6ff945136bfae97f3](https://github.com/aligungr/UERANSIM)_)
++* `--virt-dpdk-version <version>`: Specify a **branch**, **tag**, or **commit hash** to use for DPDK (_default: [v24.11](https://github.com/DPDK/dpdk)_)
 +
  ## Secondary Host
  
@@ -275,7 +262,7 @@ index ec2c5a8..4092880 100644
    openapitools/openapi-generator-cli generate -i /webconsole.yaml -g typescript-fetch -o /output
  docker run --rm -v ./webconsole-openapi:/output alpine:3.21 chown -R $(id -u):$(id -g) /output
 diff --git a/install.sh b/install.sh
-index aad29ba..e596eed 100755
+index aad29ba..7f039bc 100755
 --- a/install.sh
 +++ b/install.sh
 @@ -19,6 +19,100 @@ for CMD in corepack docker jq yq; do
@@ -300,74 +287,74 @@ index aad29ba..e596eed 100755
 +
 +while [[ $# -gt 0 ]]; do
 +  case "$1" in
-+    --bridge-tag)
-+      TAGS[bridge]="$2" # Default: v3.20
-+      msg "Using bridge tag: ${TAGS[bridge]}"
++    --bridge-version)
++      TAGS[bridge]="$2"
++      msg "Using bridge version: ${TAGS[bridge]}"
 +      shift 2
 +      ;;
-+    --eupf-tag)
++    --eupf-version)
 +      TAGS[eupf]="$2"
-+      msg "Using EUPF tag: ${TAGS[eupf]}"
++      msg "Using EUPF version: ${TAGS[eupf]}"
 +      shift 2
 +      ;;
-+    --free5gc-tag)
++    --free5gc-version)
 +      TAGS[free5gc]="$2"
-+      msg "Using free5GC tag: ${TAGS[free5gc]}"
++      msg "Using free5GC version: ${TAGS[free5gc]}"
 +      shift 2
 +      ;;
-+    --free5gc-webconsole-tag)
++    --free5gc-webconsole-version)
 +      TAGS[free5gc-webconsole]="$2"
-+      msg "Using free5GC webconsole tag: ${TAGS[free5gc-webconsole]}"
++      msg "Using free5GC webconsole version: ${TAGS[free5gc-webconsole]}"
 +      shift 2
 +      ;;
-+    --gnbsim-tag)
++    --gnbsim-version)
 +      TAGS[gnbsim]="$2"
-+      msg "Using gnbsim tag: ${TAGS[gnbsim]}"
++      msg "Using gnbsim version: ${TAGS[gnbsim]}"
 +      shift 2
 +      ;;
-+    --gtp5g-tag)
++    --gtp5g-version)
 +      TAGS[gtp5g]="$2"
-+      msg "Using gtp5g tag: ${TAGS[gtp5g]}"
++      msg "Using gtp5g version: ${TAGS[gtp5g]}"
 +      shift 2
 +      ;;
-+    --oai-fed-tag)
++    --oai-fed-version)
 +      TAGS[oai-fed]="$2"
-+      msg "Using OAI-FED tag: ${TAGS[oai-fed]}"
++      msg "Using OAI-FED version: ${TAGS[oai-fed]}"
 +      shift 2
 +      ;;
-+    --oai-nwdaf-tag)
++    --oai-nwdaf-version)
 +      TAGS[oai-nwdaf]="$2"
-+      msg "Using OAI-NWDAF tag: ${TAGS[oai-nwdaf]}"
++      msg "Using OAI-NWDAF version: ${TAGS[oai-nwdaf]}"
 +      shift 2
 +      ;;
-+    --open5gs-release)
++    --open5gs-version)
 +      TAGS[open5gs]="$2"
-+      msg "Using Open5GS release: ${TAGS[open5gs]}"
++      msg "Using Open5GS version: ${TAGS[open5gs]}"
 +      shift 2
 +      ;;
-+    --packetrusher-tag)
++    --packetrusher-version)
 +      TAGS[packetrusher]="$2"
-+      msg "Using Packetrusher tag: ${TAGS[packetrusher]}"
++      msg "Using Packetrusher version: ${TAGS[packetrusher]}"
 +      shift 2
 +      ;;
-+    --sockperf-tag)
++    --sockperf-version)
 +      TAGS[sockperf]="$2"
-+      msg "Using Sockperf tag: ${TAGS[sockperf]}"
++      msg "Using Sockperf version: ${TAGS[sockperf]}"
 +      shift 2
 +      ;;
-+    --srsran5g-release)
++    --srsran5g-version)
 +      TAGS[srsran5g]="$2"
-+      msg "Using srsRAN 5G release: ${TAGS[srsran5g]}"
++      msg "Using srsRAN 5G version: ${TAGS[srsran5g]}"
 +      shift 2
 +      ;;
-+    --ueransim-tag)
++    --ueransim-version)
 +      TAGS[ueransim]="$2"
-+      msg "Using UERANSIM tag: ${TAGS[ueransim]}"
++      msg "Using UERANSIM version: ${TAGS[ueransim]}"
 +      shift 2
 +      ;;
-+    --virt-dpdk-tag)
++    --virt-dpdk-version)
 +      TAGS[virt]="$2"
-+      msg "Using Virt-DPDK tag: ${TAGS[virt]}"
++      msg "Using Virt-DPDK version: ${TAGS[virt]}"
 +      shift 2
 +      ;;
 +    *)
@@ -399,25 +386,12 @@ index aad29ba..e596eed 100755
 +  if [[ -z "$TAG" ]]; then
 +    msg "Building Docker image $IMG"
 +  else
-+    msg "Building Docker image $IMG with tag $TAG"
++    msg "Building Docker image $IMG with version $TAG"
 +  fi
 +  ./docker/build.sh $IMG $TAG
  done
  
  msg 5gdeploy is installed
-diff --git a/netdef/helpers.ts b/netdef/helpers.ts
-index 8d29843..2d16725 100644
---- a/netdef/helpers.ts
-+++ b/netdef/helpers.ts
-@@ -286,7 +286,7 @@ export namespace GNB {
- export function listGnbs({ gnbs, gnbIdLength }: N.Network): GNB[] {
-   return gnbs.map((gnb, i) => {
-     const {
--      nci = hexPad(((1 + i) << (36 - gnbIdLength)) | 0xF, 9),
-+      nci = hexPad(((3584 + i) << (36 - gnbIdLength)) | 0xF, 9),
-     } = gnb;
-     return {
-       ...gnb,
 diff --git a/oai/download.sh b/oai/download.sh
 index 6433d23..b95118d 100644
 --- a/oai/download.sh
@@ -444,16 +418,3 @@ index 10b140b..962c17c 100644
  
 -curl -sfLS "https://github.com/open5gs/open5gs/raw/v2.7.2/misc/db/open5gs-dbctl" -o open5gs-dbctl
 +curl -sfLS "https://github.com/open5gs/open5gs/raw/v${TAG}/misc/db/open5gs-dbctl" -o open5gs-dbctl
-diff --git a/scenario/common/phones-vehicles.ts b/scenario/common/phones-vehicles.ts
-index 7c405ef..d5d4b2c 100644
---- a/scenario/common/phones-vehicles.ts
-+++ b/scenario/common/phones-vehicles.ts
-@@ -90,7 +90,7 @@ export function buildNetwork(opts: YargsInfer<typeof cliOptions>, s: ScenarioOpt
-   const network: N.Network = {
-     plmn: "001-01",
-     gnbIdLength: 24,
--    tac: "000005",
-+    tac: "000007",
-     subscribers: [],
-     gnbs: [],
-     upfs: upfs.map((name) => ({ name })),

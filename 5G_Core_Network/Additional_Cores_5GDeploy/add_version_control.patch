@@ -1,12 +1,27 @@
+diff --git a/compose/ipalloc.ts b/compose/ipalloc.ts
+index 89cd370..725f530 100644
+--- a/compose/ipalloc.ts
++++ b/compose/ipalloc.ts
+@@ -4,7 +4,7 @@ import { ip2long, long2ip, Netmask } from "netmask";
+ import { assert, YargsCoercedArray, type YargsInfer, type YargsOptions } from "../util/mod.js";
+ 
+ /** Yargs options definition for IPv4 address allocator. */
+-export function ipAllocOptions(dfltSpace = "172.25.192.0/18") {
++export function ipAllocOptions(dfltSpace = "172.25.160.0/20") {
+   const minBitmask = new Netmask(dfltSpace).bitmask;
+   return {
+     "ip-space": {
 diff --git a/docker/bridge/Dockerfile b/docker/bridge/Dockerfile
-index ca32a1f..d1d37c0 100644
+index ca32a1f..71f3943 100644
 --- a/docker/bridge/Dockerfile
 +++ b/docker/bridge/Dockerfile
-@@ -1,3 +1,4 @@
-+ARG TAG=9ba97f1735022fb5f811d9c2a304dda33fae1ad1
+@@ -1,5 +1,6 @@
  FROM alpine:3.21
  SHELL ["/bin/ash", "-c"]
++ARG TAG=9ba97f1735022fb5f811d9c2a304dda33fae1ad1
  
+ # ethtool 6.11 is failing in '-X hkey' command on Linux kernel 6.1
+ RUN <<EOF
 @@ -8,5 +9,5 @@ RUN <<EOF
    apk add --no-cache arping docker-cli 'ethtool<6.11' iproute2 jq util-linux-misc
  EOF
@@ -15,100 +30,68 @@ index ca32a1f..d1d37c0 100644
 +ADD --chmod=755 https://github.com/jpetazzo/pipework/raw/${TAG}/pipework /usr/local/bin/
  COPY --chmod=755 *.sh /usr/local/bin/
 diff --git a/docker/build.sh b/docker/build.sh
-index d6b2c94..d00dfaf 100755
+index d6b2c94..b0f5537 100755
 --- a/docker/build.sh
 +++ b/docker/build.sh
-@@ -4,6 +4,13 @@ cd "$(dirname "${BASH_SOURCE[0]}")"/..
- D=$1
- shift
- 
-+TAG=${1:-}
-+TAG_ARG=()
-+if [[ -z "${TAG:-}" || "$TAG" == "" ]]; then
-+  shift
-+  TAG_ARG=(--build-arg TAG="$TAG")
-+fi
-+
- PULL=--pull
- if [[ ${NOPULL:-} -eq 1 ]]; then
-   PULL=''
-@@ -16,30 +23,35 @@ build_image() {
-   if grep -q localhost/ docker/$NAME/Dockerfile; then
-     PULL1=''
-   fi
--  docker build $PULL1 --progress=plain -t 5gdeploy.localhost/$NAME "$@" docker/$NAME
-+  docker build $PULL1 --progress=plain -t 5gdeploy.localhost/$NAME "${TAG_ARG[@]}" "$@" docker/$NAME
+@@ -61,9 +61,21 @@ build_phoenix() {
+   build_image phoenix
  }
  
- build_oai_nwdaf_microservice() {
-   local MS=$1
--  shift
-+  local TAG=$2
-+  shift 2
-   docker build $PULL --progress=plain -t 5gdeploy.localhost/oai-nwdaf-$MS \
-     "$@" -f docker/Dockerfile.$MS \
--    https://gitlab.eurecom.fr/oai/cn5g/oai-cn5g-nwdaf.git#$BRANCH:components/oai-nwdaf-$MS
-+    https://gitlab.eurecom.fr/oai/cn5g/oai-cn5g-nwdaf.git#$TAG:components/oai-nwdaf-$MS
- }
- 
- build_oai_nwdaf() {
--  local BRANCH=http2_server_support
-+  if [[ -z "${TAG:-}" || "$TAG" == "" ]]; then
-+    TAG=http2_server_support
-+    TAG_ARG=(--build-arg TAG="$TAG")
++ubuntu_codename() {
++  UBUNTU_CODENAME=$(grep -oP '^UBUNTU_CODENAME=\K.*' /etc/os-release 2>/dev/null)
++  if [[ -z "$UBUNTU_CODENAME" ]]; then
++    UBUNTU_CODENAME=$(grep -oP '^VERSION_CODENAME=\K.*' /etc/os-release 2>/dev/null)
 +  fi
- 
-   for MS in engine nbi-analytics nbi-events nbi-ml sbi; do
--    build_oai_nwdaf_microservice $MS \
-+    build_oai_nwdaf_microservice $MS "$TAG" \
-       --build-arg BUILD_IMAGE=golang:1.23-alpine3.21 \
--      --build-arg TARGET_IMAGE=alpine:3.21
-+      --build-arg TARGET_IMAGE=alpine:3.21 \
-+      "${TAG_ARG[@]}"
-   done
- 
--  build_oai_nwdaf_microservice engine-ads
-+  build_oai_nwdaf_microservice engine-ads "$TAG"
- 
-   docker build $PULL --progress=plain -t 5gdeploy.localhost/oai-nwdaf-cli \
--    --build-arg branch=$BRANCH \
-+    "${TAG_ARG[@]}" \
-     docker/oai-nwdaf-cli
- }
- 
++  if [[ -z "$UBUNTU_CODENAME" ]]; then
++    echo "Unable to determine Ubuntu codename from /etc/os-release" >&2
++    exit 1
++  fi
++  echo "$UBUNTU_CODENAME"
++}
++
+ case $D in
+   gtp5g)
+-    build_image gtp5g --build-arg BUILDPACK_TAG="$(lsb_release -c -s)"
++    build_image gtp5g --build-arg BUILDPACK_TAG="$(ubuntu_codename)"
+     ;;
+   oai-nwdaf)
+     build_oai_nwdaf
 diff --git a/docker/eupf/Dockerfile b/docker/eupf/Dockerfile
-index 64d8007..a57a573 100644
+index 64d8007..e01d506 100644
 --- a/docker/eupf/Dockerfile
 +++ b/docker/eupf/Dockerfile
 @@ -1,4 +1,4 @@
 -ARG BASE=ghcr.io/edgecomllc/eupf:main
 -FROM $BASE
-+ARG TAG=v0.7.0
++ARG TAG=54ed069c6cdf1da18b09bd78cb166bc4e4dd1ceb # v0.7.0
 +FROM ghcr.io/edgecomllc/eupf:${TAG}
  SHELL ["/bin/ash", "-c"]
  RUN apk add --no-cache ethtool iproute2
 diff --git a/docker/gnbsim/Dockerfile b/docker/gnbsim/Dockerfile
-index 1d355f8..bd5e9be 100644
+index 1d355f8..6603c60 100644
 --- a/docker/gnbsim/Dockerfile
 +++ b/docker/gnbsim/Dockerfile
 @@ -1,6 +1,7 @@
-+ARG TAG=d3fce7e35a69b9f5d670242a93b7d1bee8842ecf
  FROM golang:1.24-alpine3.21 AS build
  SHELL ["/bin/ash", "-c"]
 -ADD https://github.com/omec-project/gnbsim/archive/d3fce7e35a69b9f5d670242a93b7d1bee8842ecf.zip /gnbsim.zip
++ARG TAG=d3fce7e35a69b9f5d670242a93b7d1bee8842ecf
 +ADD https://github.com/omec-project/gnbsim/archive/${TAG}.zip /gnbsim.zip
  
  RUN --mount=type=cache,id=go1.24-build,target=/root/.cache/go-build,sharing=locked \
  <<EOF
 diff --git a/docker/gtp5g/Dockerfile b/docker/gtp5g/Dockerfile
-index 92711dd..6a67c1b 100644
+index 92711dd..3dc28b0 100644
 --- a/docker/gtp5g/Dockerfile
 +++ b/docker/gtp5g/Dockerfile
-@@ -1,3 +1,4 @@
-+ARG TAG=v0.9.13
+@@ -1,6 +1,7 @@
  ARG BUILDPACK_TAG=noble
  FROM buildpack-deps:$BUILDPACK_TAG
  SHELL ["/bin/bash", "-c"]
++ARG TAG=v0.9.13
+ 
+ RUN --mount=type=cache,id=gtp5g-apt-cache,target=/var/cache/apt,sharing=locked \
+     --mount=type=cache,id=gtp5g-apt-cache,target=/var/lib/apt,sharing=locked \
 @@ -12,6 +13,6 @@ RUN --mount=type=cache,id=gtp5g-apt-cache,target=/var/cache/apt,sharing=locked \
    apt-get install -y --no-install-recommends kmod
  EOF
@@ -118,15 +101,15 @@ index 92711dd..6a67c1b 100644
  COPY --chmod=755 gtp5g-load.sh /
  ENTRYPOINT ["/gtp5g-load.sh"]
 diff --git a/docker/oai-nwdaf-cli/Dockerfile b/docker/oai-nwdaf-cli/Dockerfile
-index c379930..63d9b44 100644
+index c379930..7231463 100644
 --- a/docker/oai-nwdaf-cli/Dockerfile
 +++ b/docker/oai-nwdaf-cli/Dockerfile
 @@ -1,7 +1,7 @@
-+ARG TAG=http2_server_support
  FROM python:3.10-alpine3.21
  SHELL ["/bin/ash", "-c"]
 -ARG branch=master
 -ADD https://gitlab.eurecom.fr/oai/cn5g/oai-cn5g-nwdaf/-/archive/$branch/oai-cn5g-nwdaf-$branch.zip?path=cli /nwdaf.zip
++ARG TAG=http2_server_support
 +ADD https://gitlab.eurecom.fr/oai/cn5g/oai-cn5g-nwdaf/-/archive/$TAG/oai-cn5g-nwdaf-$TAG.zip?path=cli /nwdaf.zip
  
  RUN <<EOF
@@ -145,52 +128,54 @@ index 2da123b..ae7d75b 100644
  USER root:root
  COPY --from=yasu /usr/local/bin/yasu /usr/local/bin/yasu
 diff --git a/docker/packetrusher/Dockerfile b/docker/packetrusher/Dockerfile
-index b4500e2..3f81721 100644
+index b4500e2..6db50b3 100644
 --- a/docker/packetrusher/Dockerfile
 +++ b/docker/packetrusher/Dockerfile
 @@ -1,6 +1,8 @@
-+ARG TAG=80a7f4bc63d9563a8ec58ba126440d94018a35a2
  FROM golang:1.24-alpine3.21 AS build
  SHELL ["/bin/ash", "-c"]
 -ADD https://github.com/HewlettPackard/PacketRusher/archive/80a7f4bc63d9563a8ec58ba126440d94018a35a2.zip /PacketRusher.zip
++ARG TAG=80a7f4bc63d9563a8ec58ba126440d94018a35a2
 +
 +ADD https://github.com/HewlettPackard/PacketRusher/archive/${TAG}.zip /PacketRusher.zip
  
  RUN --mount=type=cache,id=go1.24-build,target=/root/.cache/go-build,sharing=locked \
  <<EOF
 diff --git a/docker/sockperf/Dockerfile b/docker/sockperf/Dockerfile
-index c97b763..2ec6f39 100644
+index c97b763..854869f 100644
 --- a/docker/sockperf/Dockerfile
 +++ b/docker/sockperf/Dockerfile
 @@ -1,6 +1,7 @@
-+ARG TAG=19accb5229503dac7833f03713b978cb7fc48762
  FROM buildpack-deps:bookworm AS build
  SHELL ["/bin/bash", "-c"]
 -ADD https://github.com/Mellanox/sockperf/archive/19accb5229503dac7833f03713b978cb7fc48762.zip /sockperf.zip
++ARG TAG=19accb5229503dac7833f03713b978cb7fc48762
 +ADD https://github.com/Mellanox/sockperf/archive/${TAG}.zip /sockperf.zip
  
  RUN <<EOF
    set -euxo pipefail
 diff --git a/docker/srsran5g/Dockerfile b/docker/srsran5g/Dockerfile
-index 6483565..4720600 100644
+index 6483565..7fbc1e5 100644
 --- a/docker/srsran5g/Dockerfile
 +++ b/docker/srsran5g/Dockerfile
 @@ -1,4 +1,5 @@
 -FROM gradiant/srsran-5g:24_10_1
-+ARG TAG=25_10_1
++ARG TAG=24_10_1
 +FROM gradiant/srsran-5g:${TAG}
  SHELL ["/bin/bash", "-c"]
  
  RUN --mount=type=cache,id=jammy-apt-cache,target=/var/cache/apt,sharing=locked \
 diff --git a/docker/ueransim/Dockerfile b/docker/ueransim/Dockerfile
-index 8ef4be7..ac7ef9d 100644
+index 8ef4be7..c234889 100644
 --- a/docker/ueransim/Dockerfile
 +++ b/docker/ueransim/Dockerfile
-@@ -1,3 +1,4 @@
-+ARG TAG=2fc85e3e422b9a981d330bf6ff945136bfae97f3
+@@ -1,5 +1,6 @@
  FROM free5gc/ueransim
  SHELL ["/bin/bash", "-c"]
++ARG TAG=2fc85e3e422b9a981d330bf6ff945136bfae97f3
  
+ RUN --mount=type=cache,id=bullseye-apt-cache,target=/var/cache/apt,sharing=locked \
+     --mount=type=cache,id=bullseye-apt-cache,target=/var/lib/apt,sharing=locked \
 @@ -12,5 +13,5 @@ RUN --mount=type=cache,id=bullseye-apt-cache,target=/var/cache/apt,sharing=locke
  EOF
  
@@ -200,15 +185,20 @@ index 8ef4be7..ac7ef9d 100644
 +ADD --chmod=644 https://github.com/aligungr/UERANSIM/raw/${TAG}/config/custom-gnb.yaml /ueransim/config/
 +ADD --chmod=644 https://github.com/aligungr/UERANSIM/raw/${TAG}/config/custom-ue.yaml /ueransim/config/
 diff --git a/docker/virt/Dockerfile b/docker/virt/Dockerfile
-index 2557679..ecc8925 100644
+index 2557679..28cafd5 100644
 --- a/docker/virt/Dockerfile
 +++ b/docker/virt/Dockerfile
-@@ -1,3 +1,4 @@
-+ARG TAG=v24.11
+@@ -1,8 +1,8 @@
  FROM 5gdeploy.localhost/gtp5g AS gtp5g
  FROM crazymax/yasu AS yasu
+-
+ FROM debian:bookworm
+ SHELL ["/bin/bash", "-c"]
++ARG TAG=v24.11
  
-@@ -22,6 +23,6 @@ EOF
+ RUN --mount=type=cache,id=bookworm-apt-cache,target=/var/cache/apt,sharing=locked \
+     --mount=type=cache,id=bookworm-apt-cache,target=/var/lib/apt,sharing=locked \
+@@ -22,6 +22,6 @@ EOF
  
  COPY --from=yasu /usr/local/bin/yasu /usr/local/bin/yasu
  ADD --chmod=755 https://github.com/0xef53/qmp-shell/releases/download/v2.0.1/qmp-shell /usr/local/bin/
@@ -217,7 +207,7 @@ index 2557679..ecc8925 100644
  COPY --from=gtp5g --chmod=644 /gtp5g.zip /
  COPY --from=gtp5g --chmod=755 /gtp5g-load.sh /
 diff --git a/docs/INSTALL.md b/docs/INSTALL.md
-index 332dbc9..eeea015 100644
+index 332dbc9..334b567 100644
 --- a/docs/INSTALL.md
 +++ b/docs/INSTALL.md
 @@ -68,6 +68,23 @@ cd ~/5gdeploy
@@ -226,20 +216,20 @@ index 332dbc9..eeea015 100644
  
 +### Installation Options
 +The following arguments can be passed to `./install.sh`:
-+* `--bridge-tag <tag>`: Specify a branch, tag, or commit hash to use for bridge (_default: [9ba97f1735022fb5f811d9c2a304dda33fae1ad1](https://github.com/jpetazzo/pipework)_)
-+* `--eupf-tag <tag>`: Specify a branch, tag, or commit hash to use for EUPF (_default: [main](https://github.com/edgecomllc/eupf)_)
-+* `--free5gc-tag <tag>`: Specify a branch, tag, or commit hash to use for free5GC (_default: [master](https://github.com/free5gc/free5gc-compose)_)
-+* `--free5gc-webconsole-tag <tag>`: Specify a branch, tag, or commit hash to use for free5GC webconsole (_default: [f4932d569dd0045fc31baca062a05d7b34e3e8e0](https://github.com/free5gc/webconsole)_)
-+* `--gnbsim-tag <tag>`: Specify a branch, tag, or commit hash to use for gnbsim (_default: [d3fce7e35a69b9f5d670242a93b7d1bee8842ecf](https://github.com/omec-project/gnbsim)_)
-+* `--gtp5g-tag <tag>`: Specify a branch, tag, or commit hash to use for gtp5g (_default: [v0.9.13](https://github.com/free5gc/gtp5g)_)
-+* `--oai-fed-tag <tag>`: Specify a branch, tag, or commit hash to use for OAI (_default: [master](https://gitlab.eurecom.fr/oai/cn5g/oai-cn5g-fed)_)
-+* `--oai-nwdaf-tag <tag>`: Specify a branch, tag, or commit hash to use for OAI-NWDAF (_default: [http2_server_support](https://gitlab.eurecom.fr/oai/cn5g/oai-cn5g-nwdaf)_)
-+* `--open5gs-release <release>`: Specify the Open5GS release to use (_default: [2.7.2](https://hub.docker.com/r/gradiant/open5gs)_)
-+* `--packetrusher-tag <tag>`: Specify a branch, tag, or commit hash to use for Packetrusher (_default: [80a7f4bc63d9563a8ec58ba126440d94018a35a2](https://github.com/packetrusher/packetrusher)_)
-+* `--sockperf-tag <tag>`: Specify a branch, tag, or commit hash to use for Sockperf (_default: [19accb5229503dac7833f03713b978cb7fc48762](https://github.com/Mellanox/sockperf)_)
-+* `--srsran5g-release <tag>`: Specify the srsRAN 5G release to use (_default: [25_10_1](https://hub.docker.com/r/gradiant/srsran-5g)_)
-+* `--ueransim-tag <tag>`: Specify a branch, tag, or commit hash to use for UERANSIM (_default: [2fc85e3e422b9a981d330bf6ff945136bfae97f3](https://github.com/aligungr/UERANSIM)_)
-+* `--virt-dpdk-tag <tag>`: Specify a branch, tag, or commit hash to use for DPDK (_default: [v24.11](https://github.com/DPDK/dpdk)_)
++* `--bridge-tag <tag>`: Specify a **branch**, **tag**, or **commit hash** to use for bridge (_default: [9ba97f1735022fb5f811d9c2a304dda33fae1ad1](https://github.com/jpetazzo/pipework)_)
++* `--eupf-tag <tag>`: Specify a **branch** or **commit hash** to use for EUPF (_default: [main](https://github.com/edgecomllc/eupf)_)
++* `--free5gc-tag <tag>`: Specify a **branch**, **tag**, or **commit hash** to use for free5GC (_default: [master](https://github.com/free5gc/free5gc-compose)_)
++* `--free5gc-webconsole-tag <tag>`: Specify a **branch**, **tag**, or **commit hash** to use for free5GC webconsole (_default: [f4932d569dd0045fc31baca062a05d7b34e3e8e0](https://github.com/free5gc/webconsole)_)
++* `--gnbsim-tag <tag>`: Specify a **branch**, **tag**, or **commit hash** to use for gnbsim (_default: [d3fce7e35a69b9f5d670242a93b7d1bee8842ecf](https://github.com/omec-project/gnbsim)_)
++* `--gtp5g-tag <tag>`: Specify a **branch**, **tag**, or **commit hash** to use for gtp5g (_default: [v0.9.13](https://github.com/free5gc/gtp5g)_)
++* `--oai-fed-tag <tag>`: Specify a **branch**, **tag**, or **commit hash** to use for OAI (_default: [master](https://gitlab.eurecom.fr/oai/cn5g/oai-cn5g-fed)_)
++* `--oai-nwdaf-tag <tag>`: Specify a **branch**, **tag**, or **commit hash** to use for OAI-NWDAF (_default: [http2_server_support](https://gitlab.eurecom.fr/oai/cn5g/oai-cn5g-nwdaf)_)
++* `--open5gs-release <release>`: Specify a **release** to use for Open5GS (_default: [2.7.2](https://hub.docker.com/r/gradiant/open5gs)_)
++* `--packetrusher-tag <tag>`: Specify a **branch**, **tag**, or **commit hash** to use for Packetrusher (_default: [80a7f4bc63d9563a8ec58ba126440d94018a35a2](https://github.com/packetrusher/packetrusher)_)
++* `--sockperf-tag <tag>`: Specify a **branch**, **tag**, or **commit hash** to use for Sockperf (_default: [19accb5229503dac7833f03713b978cb7fc48762](https://github.com/Mellanox/sockperf)_)
++* `--srsran5g-release <tag>`: Specify a **release** to use for srsRAN 5G (_default: [24_10_1](https://hub.docker.com/r/gradiant/srsran-5g)_)
++* `--ueransim-tag <tag>`: Specify a **branch**, **tag**, or **commit hash** to use for UERANSIM (_default: [2fc85e3e422b9a981d330bf6ff945136bfae97f3](https://github.com/aligungr/UERANSIM)_)
++* `--virt-dpdk-tag <tag>`: Specify a **branch**, **tag**, or **commit hash** to use for DPDK (_default: [v24.11](https://github.com/DPDK/dpdk)_)
 +
  ## Secondary Host
  
@@ -415,6 +405,19 @@ index aad29ba..e596eed 100755
  done
  
  msg 5gdeploy is installed
+diff --git a/netdef/helpers.ts b/netdef/helpers.ts
+index 8d29843..2d16725 100644
+--- a/netdef/helpers.ts
++++ b/netdef/helpers.ts
+@@ -286,7 +286,7 @@ export namespace GNB {
+ export function listGnbs({ gnbs, gnbIdLength }: N.Network): GNB[] {
+   return gnbs.map((gnb, i) => {
+     const {
+-      nci = hexPad(((1 + i) << (36 - gnbIdLength)) | 0xF, 9),
++      nci = hexPad(((3584 + i) << (36 - gnbIdLength)) | 0xF, 9),
+     } = gnb;
+     return {
+       ...gnb,
 diff --git a/oai/download.sh b/oai/download.sh
 index 6433d23..b95118d 100644
 --- a/oai/download.sh
@@ -441,3 +444,16 @@ index 10b140b..962c17c 100644
  
 -curl -sfLS "https://github.com/open5gs/open5gs/raw/v2.7.2/misc/db/open5gs-dbctl" -o open5gs-dbctl
 +curl -sfLS "https://github.com/open5gs/open5gs/raw/v${TAG}/misc/db/open5gs-dbctl" -o open5gs-dbctl
+diff --git a/scenario/common/phones-vehicles.ts b/scenario/common/phones-vehicles.ts
+index 7c405ef..d5d4b2c 100644
+--- a/scenario/common/phones-vehicles.ts
++++ b/scenario/common/phones-vehicles.ts
+@@ -90,7 +90,7 @@ export function buildNetwork(opts: YargsInfer<typeof cliOptions>, s: ScenarioOpt
+   const network: N.Network = {
+     plmn: "001-01",
+     gnbIdLength: 24,
+-    tac: "000005",
++    tac: "000007",
+     subscribers: [],
+     gnbs: [],
+     upfs: upfs.map((name) => ({ name })),

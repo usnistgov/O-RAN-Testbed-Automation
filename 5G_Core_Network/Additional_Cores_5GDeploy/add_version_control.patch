@@ -102,28 +102,27 @@ index c379930..7231463 100644
  RUN <<EOF
    set -euxo pipefail
 diff --git a/docker/open5gs/Dockerfile b/docker/open5gs/Dockerfile
-index 2da123b..ae7d75b 100644
+index 2da123b..4a3c131 100644
 --- a/docker/open5gs/Dockerfile
 +++ b/docker/open5gs/Dockerfile
-@@ -1,6 +1,6 @@
+@@ -1,6 +1,7 @@
 +ARG TAG=2.7.2
  FROM crazymax/yasu AS yasu
--
+ 
 -FROM gradiant/open5gs:2.7.2
 +FROM gradiant/open5gs:${TAG}
  SHELL ["/bin/bash", "-c"]
  USER root:root
  COPY --from=yasu /usr/local/bin/yasu /usr/local/bin/yasu
 diff --git a/docker/packetrusher/Dockerfile b/docker/packetrusher/Dockerfile
-index b4500e2..6db50b3 100644
+index b4500e2..ef41215 100644
 --- a/docker/packetrusher/Dockerfile
 +++ b/docker/packetrusher/Dockerfile
-@@ -1,6 +1,8 @@
+@@ -1,6 +1,7 @@
  FROM golang:1.24-alpine3.21 AS build
  SHELL ["/bin/ash", "-c"]
 -ADD https://github.com/HewlettPackard/PacketRusher/archive/80a7f4bc63d9563a8ec58ba126440d94018a35a2.zip /PacketRusher.zip
 +ARG TAG=80a7f4bc63d9563a8ec58ba126440d94018a35a2
-+
 +ADD https://github.com/HewlettPackard/PacketRusher/archive/${TAG}.zip /PacketRusher.zip
  
  RUN --mount=type=cache,id=go1.24-build,target=/root/.cache/go-build,sharing=locked \

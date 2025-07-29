@@ -17,7 +17,7 @@ index ca32a1f..71f3943 100644
 +ADD --chmod=755 https://github.com/jpetazzo/pipework/raw/${TAG}/pipework /usr/local/bin/
  COPY --chmod=755 *.sh /usr/local/bin/
 diff --git a/docker/build.sh b/docker/build.sh
-index d6b2c94..d00dfaf 100755
+index d6b2c94..256cd1a 100755
 --- a/docker/build.sh
 +++ b/docker/build.sh
 @@ -4,6 +4,13 @@ cd "$(dirname "${BASH_SOURCE[0]}")"/..
@@ -26,7 +26,7 @@ index d6b2c94..d00dfaf 100755
  
 +TAG=${1:-}
 +TAG_ARG=()
-+if [[ -z "${TAG:-}" || "$TAG" == "" ]]; then
++if [[ -n "${TAG:-}" ]]; then
 +  shift
 +  TAG_ARG=(--build-arg TAG="$TAG")
 +fi
@@ -39,7 +39,7 @@ index d6b2c94..d00dfaf 100755
      PULL1=''
    fi
 -  docker build $PULL1 --progress=plain -t 5gdeploy.localhost/$NAME "$@" docker/$NAME
-+  docker build $PULL1 --progress=plain -t 5gdeploy.localhost/$NAME "${TAG_ARG[@]}" "$@" docker/$NAME
++  docker build $PULL1 --progress=plain -t 5gdeploy.localhost/$NAME "$@" docker/$NAME "${TAG_ARG[@]}"
  }
  
  build_oai_nwdaf_microservice() {
@@ -55,7 +55,7 @@ index d6b2c94..d00dfaf 100755
  
  build_oai_nwdaf() {
 -  local BRANCH=http2_server_support
-+  if [[ -z "${TAG:-}" || "$TAG" == "" ]]; then
++  if [[ -n "${TAG:-}" ]]; then
 +    TAG=http2_server_support
 +    TAG_ARG=(--build-arg TAG="$TAG")
 +  fi
@@ -78,6 +78,29 @@ index d6b2c94..d00dfaf 100755
      docker/oai-nwdaf-cli
  }
  
+@@ -61,9 +73,21 @@ build_phoenix() {
+   build_image phoenix
+ }
+ 
++ubuntu_codename() {
++  UBUNTU_CODENAME=$(grep -oP '^UBUNTU_CODENAME=\K.*' /etc/os-release 2>/dev/null)
++  if [[ -z "$UBUNTU_CODENAME" ]]; then
++    UBUNTU_CODENAME=$(grep -oP '^VERSION_CODENAME=\K.*' /etc/os-release 2>/dev/null)
++  fi
++  if [[ -z "$UBUNTU_CODENAME" ]]; then
++    echo "Unable to determine Ubuntu codename from /etc/os-release" >&2
++    exit 1
++  fi
++  echo "$UBUNTU_CODENAME"
++}
++
+ case $D in
+   gtp5g)
+-    build_image gtp5g --build-arg BUILDPACK_TAG="$(lsb_release -c -s)"
++    build_image gtp5g --build-arg BUILDPACK_TAG="$(ubuntu_codename)"
+     ;;
+   oai-nwdaf)
+     build_oai_nwdaf
 diff --git a/docker/eupf/Dockerfile b/docker/eupf/Dockerfile
 index 64d8007..e01d506 100644
 --- a/docker/eupf/Dockerfile
@@ -228,7 +251,7 @@ index 2557679..28cafd5 100644
  COPY --from=gtp5g --chmod=644 /gtp5g.zip /
  COPY --from=gtp5g --chmod=755 /gtp5g-load.sh /
 diff --git a/docs/INSTALL.md b/docs/INSTALL.md
-index 332dbc9..d4ed1b6 100644
+index 332dbc9..6884d43 100644
 --- a/docs/INSTALL.md
 +++ b/docs/INSTALL.md
 @@ -68,6 +68,23 @@ cd ~/5gdeploy
@@ -236,19 +259,19 @@ index 332dbc9..d4ed1b6 100644
  ```
  
 +### Installation Options
-+The following arguments can be passed to `./install.sh`:
++The following optional arguments can be passed to `./install.sh`:
 +* `--bridge-version <version>`: Specify a **branch**, **tag**, or **commit hash** to use for bridge (_default: [9ba97f1735022fb5f811d9c2a304dda33fae1ad1](https://github.com/jpetazzo/pipework)_)
 +* `--eupf-version <version>`: Specify a **branch** or **commit hash** to use for EUPF (_default: [main](https://github.com/edgecomllc/eupf)_)
 +* `--free5gc-version <version>`: Specify a **branch**, **tag**, or **commit hash** to use for free5GC (_default: [master](https://github.com/free5gc/free5gc-compose)_)
-+* `--free5gc-webconsole-version <version>`: Specify a **branch**, **tag**, or **commit hash** to use for free5GC webconsole (_default: [f4932d569dd0045fc31baca062a05d7b34e3e8e0](https://github.com/free5gc/webconsole)_)
++* `--free5gc-webclient-version <version>`: Specify a **branch**, **tag**, or **commit hash** to use for free5GC webconsole (_default: [f4932d569dd0045fc31baca062a05d7b34e3e8e0](https://github.com/free5gc/webconsole)_)
 +* `--gnbsim-version <version>`: Specify a **branch**, **tag**, or **commit hash** to use for gnbsim (_default: [d3fce7e35a69b9f5d670242a93b7d1bee8842ecf](https://github.com/omec-project/gnbsim)_)
 +* `--gtp5g-version <version>`: Specify a **branch**, **tag**, or **commit hash** to use for gtp5g (_default: [v0.9.13](https://github.com/free5gc/gtp5g)_)
 +* `--oai-fed-version <version>`: Specify a **branch**, **tag**, or **commit hash** to use for OAI (_default: [master](https://gitlab.eurecom.fr/oai/cn5g/oai-cn5g-fed)_)
 +* `--oai-nwdaf-version <version>`: Specify a **branch**, **tag**, or **commit hash** to use for OAI-NWDAF (_default: [http2_server_support](https://gitlab.eurecom.fr/oai/cn5g/oai-cn5g-nwdaf)_)
-+* `--open5gs-release <release>`: Specify a **release** to use for Open5GS (_default: [2.7.2](https://hub.docker.com/r/gradiant/open5gs)_)
++* `--open5gs-version <version>`: Specify a **release** to use for Open5GS (_default: [2.7.2](https://hub.docker.com/r/gradiant/open5gs)_)
 +* `--packetrusher-version <version>`: Specify a **branch**, **tag**, or **commit hash** to use for Packetrusher (_default: [80a7f4bc63d9563a8ec58ba126440d94018a35a2](https://github.com/packetrusher/packetrusher)_)
 +* `--sockperf-version <version>`: Specify a **branch**, **tag**, or **commit hash** to use for Sockperf (_default: [19accb5229503dac7833f03713b978cb7fc48762](https://github.com/Mellanox/sockperf)_)
-+* `--srsran5g-release <tag>`: Specify a **release** to use for srsRAN 5G (_default: [24_10_1](https://hub.docker.com/r/gradiant/srsran-5g)_)
++* `--srsran5g-version <version>`: Specify a **release** to use for srsRAN 5G (_default: [24_10_1](https://hub.docker.com/r/gradiant/srsran-5g)_)
 +* `--ueransim-version <version>`: Specify a **branch**, **tag**, or **commit hash** to use for UERANSIM (_default: [2fc85e3e422b9a981d330bf6ff945136bfae97f3](https://github.com/aligungr/UERANSIM)_)
 +* `--virt-dpdk-version <version>`: Specify a **branch**, **tag**, or **commit hash** to use for DPDK (_default: [v24.11](https://github.com/DPDK/dpdk)_)
 +
@@ -296,19 +319,19 @@ index ec2c5a8..4092880 100644
    openapitools/openapi-generator-cli generate -i /webconsole.yaml -g typescript-fetch -o /output
  docker run --rm -v ./webconsole-openapi:/output alpine:3.21 chown -R $(id -u):$(id -g) /output
 diff --git a/install.sh b/install.sh
-index aad29ba..7f039bc 100755
+index aad29ba..ec98a57 100755
 --- a/install.sh
 +++ b/install.sh
-@@ -19,6 +19,100 @@ for CMD in corepack docker jq yq; do
+@@ -19,6 +19,101 @@ for CMD in corepack docker jq yq; do
    fi
  done
  
-+# Parse command line arguments for optional tags
++# Parse command line arguments for optional version tags
 +declare -A TAGS=(
 +  [bridge]=""
 +  [eupf]=""
 +  [free5gc]=""
-+  [free5gc-webconsole]=""
++  [free5gc-webclient]=""
 +  [gnbsim]=""
 +  [gtp5g]=""
 +  [oai-fed]=""
@@ -323,75 +346,76 @@ index aad29ba..7f039bc 100755
 +  case "$1" in
 +    --bridge-version)
 +      TAGS[bridge]="$2"
-+      msg "Using bridge version: ${TAGS[bridge]}"
++      msg "Argument bridge-version = ${TAGS[bridge]}"
 +      shift 2
 +      ;;
 +    --eupf-version)
 +      TAGS[eupf]="$2"
-+      msg "Using EUPF version: ${TAGS[eupf]}"
++      msg "Argument eupf-version = ${TAGS[eupf]}"
 +      shift 2
 +      ;;
 +    --free5gc-version)
 +      TAGS[free5gc]="$2"
-+      msg "Using free5GC version: ${TAGS[free5gc]}"
++      msg "Argument free5gc-version = ${TAGS[free5gc]}"
 +      shift 2
 +      ;;
-+    --free5gc-webconsole-version)
-+      TAGS[free5gc-webconsole]="$2"
-+      msg "Using free5GC webconsole version: ${TAGS[free5gc-webconsole]}"
++    --free5gc-webclient-version)
++      TAGS[free5gc-webclient]="$2"
++      msg "Argument free5gc-webclient-version = ${TAGS[free5gc-webclient]}"
 +      shift 2
 +      ;;
 +    --gnbsim-version)
 +      TAGS[gnbsim]="$2"
-+      msg "Using gnbsim version: ${TAGS[gnbsim]}"
++      msg "Argument gnbsim-version = ${TAGS[gnbsim]}"
 +      shift 2
 +      ;;
 +    --gtp5g-version)
 +      TAGS[gtp5g]="$2"
-+      msg "Using gtp5g version: ${TAGS[gtp5g]}"
++      msg "Argument gtp5g-version = ${TAGS[gtp5g]}"
 +      shift 2
 +      ;;
 +    --oai-fed-version)
 +      TAGS[oai-fed]="$2"
-+      msg "Using OAI-FED version: ${TAGS[oai-fed]}"
++      msg "Argument oai-fed-version = ${TAGS[oai-fed]}"
 +      shift 2
 +      ;;
 +    --oai-nwdaf-version)
 +      TAGS[oai-nwdaf]="$2"
-+      msg "Using OAI-NWDAF version: ${TAGS[oai-nwdaf]}"
++      msg "Argument oai-nwdaf-version = ${TAGS[oai-nwdaf]}"
 +      shift 2
 +      ;;
 +    --open5gs-version)
 +      TAGS[open5gs]="$2"
-+      msg "Using Open5GS version: ${TAGS[open5gs]}"
++      msg "Argument open5gs-version = ${TAGS[open5gs]}"
 +      shift 2
 +      ;;
 +    --packetrusher-version)
 +      TAGS[packetrusher]="$2"
-+      msg "Using Packetrusher version: ${TAGS[packetrusher]}"
++      msg "Argument packetrusher-version = ${TAGS[packetrusher]}"
 +      shift 2
 +      ;;
 +    --sockperf-version)
 +      TAGS[sockperf]="$2"
-+      msg "Using Sockperf version: ${TAGS[sockperf]}"
++      msg "Argument sockperf-version = ${TAGS[sockperf]}"
 +      shift 2
 +      ;;
 +    --srsran5g-version)
 +      TAGS[srsran5g]="$2"
-+      msg "Using srsRAN 5G version: ${TAGS[srsran5g]}"
++      msg "Argument srsran5g-version = ${TAGS[srsran5g]}"
 +      shift 2
 +      ;;
 +    --ueransim-version)
 +      TAGS[ueransim]="$2"
-+      msg "Using UERANSIM version: ${TAGS[ueransim]}"
++      msg "Argument ueransim-version = ${TAGS[ueransim]}"
 +      shift 2
 +      ;;
 +    --virt-dpdk-version)
 +      TAGS[virt]="$2"
-+      msg "Using Virt-DPDK version: ${TAGS[virt]}"
++      msg "Argument virt-dpdk-version = ${TAGS[virt]}"
 +      shift 2
 +      ;;
 +    *)
++      die "Unknown argument: \"$1\""
 +      shift
 +      ;;
 +  esac
@@ -400,7 +424,7 @@ index aad29ba..7f039bc 100755
  if ! docker version &>/dev/null; then
    die Unable to access Docker, check docker group membership
  fi
-@@ -26,14 +120,19 @@ fi
+@@ -26,14 +121,19 @@ fi
  msg Installing 5gdeploy
  corepack pnpm install
  bash ./types/build-schema.sh
@@ -409,7 +433,7 @@ index aad29ba..7f039bc 100755
 -bash ./oai/download.sh
 -bash ./open5gs/download.sh
 +bash ./eupf/download.sh "${TAGS[eupf]}"
-+bash ./free5gc/download.sh "${TAGS[free5gc]}" "${TAGS[free5gc-webconsole]}"
++bash ./free5gc/download.sh "${TAGS[free5gc]}" "${TAGS[free5gc-webclient]}"
 +bash ./oai/download.sh "${TAGS[oai-fed]}" "${TAGS[oai-nwdaf]}"
 +bash ./open5gs/download.sh "${TAGS[open5gs]}"
  

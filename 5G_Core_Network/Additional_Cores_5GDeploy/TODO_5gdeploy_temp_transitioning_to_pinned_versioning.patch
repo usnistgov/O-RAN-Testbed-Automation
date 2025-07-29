@@ -1,5 +1,21 @@
+diff --git a/docker/bridge/Dockerfile b/docker/bridge/Dockerfile
+index ca32a1f..d1d37c0 100644
+--- a/docker/bridge/Dockerfile
++++ b/docker/bridge/Dockerfile
+@@ -1,3 +1,4 @@
++ARG TAG=9ba97f1735022fb5f811d9c2a304dda33fae1ad1
+ FROM alpine:3.21
+ SHELL ["/bin/ash", "-c"]
+ 
+@@ -8,5 +9,5 @@ RUN <<EOF
+   apk add --no-cache arping docker-cli 'ethtool<6.11' iproute2 jq util-linux-misc
+ EOF
+ 
+-ADD --chmod=755 https://github.com/jpetazzo/pipework/raw/9ba97f1735022fb5f811d9c2a304dda33fae1ad1/pipework /usr/local/bin/
++ADD --chmod=755 https://github.com/jpetazzo/pipework/raw/${TAG}/pipework /usr/local/bin/
+ COPY --chmod=755 *.sh /usr/local/bin/
 diff --git a/docker/build.sh b/docker/build.sh
-index d6b2c94..e47d8fe 100755
+index d6b2c94..d00dfaf 100755
 --- a/docker/build.sh
 +++ b/docker/build.sh
 @@ -4,6 +4,13 @@ cd "$(dirname "${BASH_SOURCE[0]}")"/..
@@ -8,15 +24,15 @@ index d6b2c94..e47d8fe 100755
  
 +TAG=${1:-}
 +TAG_ARG=()
-+if [[ -n "$TAG" ]]; then
++if [[ -z "${TAG:-}" || "$TAG" == "" ]]; then
 +  shift
-+  TAG_ARG=(--build-arg branch="$TAG")
++  TAG_ARG=(--build-arg TAG="$TAG")
 +fi
 +
  PULL=--pull
  if [[ ${NOPULL:-} -eq 1 ]]; then
    PULL=''
-@@ -16,7 +23,7 @@ build_image() {
+@@ -16,30 +23,35 @@ build_image() {
    if grep -q localhost/ docker/$NAME/Dockerfile; then
      PULL1=''
    fi
@@ -25,16 +41,209 @@ index d6b2c94..e47d8fe 100755
  }
  
  build_oai_nwdaf_microservice() {
-@@ -29,6 +36,9 @@ build_oai_nwdaf_microservice() {
+   local MS=$1
+-  shift
++  local TAG=$2
++  shift 2
+   docker build $PULL --progress=plain -t 5gdeploy.localhost/oai-nwdaf-$MS \
+     "$@" -f docker/Dockerfile.$MS \
+-    https://gitlab.eurecom.fr/oai/cn5g/oai-cn5g-nwdaf.git#$BRANCH:components/oai-nwdaf-$MS
++    https://gitlab.eurecom.fr/oai/cn5g/oai-cn5g-nwdaf.git#$TAG:components/oai-nwdaf-$MS
+ }
  
  build_oai_nwdaf() {
-   local BRANCH=http2_server_support
-+  if [[ -n "$TAG" ]]; then
-+    BRANCH=$TAG
+-  local BRANCH=http2_server_support
++  if [[ -z "${TAG:-}" || "$TAG" == "" ]]; then
++    TAG=http2_server_support
++    TAG_ARG=(--build-arg TAG="$TAG")
 +  fi
  
    for MS in engine nbi-analytics nbi-events nbi-ml sbi; do
-     build_oai_nwdaf_microservice $MS \
+-    build_oai_nwdaf_microservice $MS \
++    build_oai_nwdaf_microservice $MS "$TAG" \
+       --build-arg BUILD_IMAGE=golang:1.23-alpine3.21 \
+-      --build-arg TARGET_IMAGE=alpine:3.21
++      --build-arg TARGET_IMAGE=alpine:3.21 \
++      "${TAG_ARG[@]}"
+   done
+ 
+-  build_oai_nwdaf_microservice engine-ads
++  build_oai_nwdaf_microservice engine-ads "$TAG"
+ 
+   docker build $PULL --progress=plain -t 5gdeploy.localhost/oai-nwdaf-cli \
+-    --build-arg branch=$BRANCH \
++    "${TAG_ARG[@]}" \
+     docker/oai-nwdaf-cli
+ }
+ 
+diff --git a/docker/eupf/Dockerfile b/docker/eupf/Dockerfile
+index 64d8007..a57a573 100644
+--- a/docker/eupf/Dockerfile
++++ b/docker/eupf/Dockerfile
+@@ -1,4 +1,4 @@
+-ARG BASE=ghcr.io/edgecomllc/eupf:main
+-FROM $BASE
++ARG TAG=v0.7.0
++FROM ghcr.io/edgecomllc/eupf:${TAG}
+ SHELL ["/bin/ash", "-c"]
+ RUN apk add --no-cache ethtool iproute2
+diff --git a/docker/gnbsim/Dockerfile b/docker/gnbsim/Dockerfile
+index 1d355f8..bd5e9be 100644
+--- a/docker/gnbsim/Dockerfile
++++ b/docker/gnbsim/Dockerfile
+@@ -1,6 +1,7 @@
++ARG TAG=d3fce7e35a69b9f5d670242a93b7d1bee8842ecf
+ FROM golang:1.24-alpine3.21 AS build
+ SHELL ["/bin/ash", "-c"]
+-ADD https://github.com/omec-project/gnbsim/archive/d3fce7e35a69b9f5d670242a93b7d1bee8842ecf.zip /gnbsim.zip
++ADD https://github.com/omec-project/gnbsim/archive/${TAG}.zip /gnbsim.zip
+ 
+ RUN --mount=type=cache,id=go1.24-build,target=/root/.cache/go-build,sharing=locked \
+ <<EOF
+diff --git a/docker/gtp5g/Dockerfile b/docker/gtp5g/Dockerfile
+index 92711dd..6a67c1b 100644
+--- a/docker/gtp5g/Dockerfile
++++ b/docker/gtp5g/Dockerfile
+@@ -1,3 +1,4 @@
++ARG TAG=v0.9.13
+ ARG BUILDPACK_TAG=noble
+ FROM buildpack-deps:$BUILDPACK_TAG
+ SHELL ["/bin/bash", "-c"]
+@@ -12,6 +13,6 @@ RUN --mount=type=cache,id=gtp5g-apt-cache,target=/var/cache/apt,sharing=locked \
+   apt-get install -y --no-install-recommends kmod
+ EOF
+ 
+-ADD https://github.com/free5gc/gtp5g/archive/v0.9.13.zip /gtp5g.zip
++ADD https://github.com/free5gc/gtp5g/archive/${TAG}.zip /gtp5g.zip
+ COPY --chmod=755 gtp5g-load.sh /
+ ENTRYPOINT ["/gtp5g-load.sh"]
+diff --git a/docker/oai-nwdaf-cli/Dockerfile b/docker/oai-nwdaf-cli/Dockerfile
+index c379930..63d9b44 100644
+--- a/docker/oai-nwdaf-cli/Dockerfile
++++ b/docker/oai-nwdaf-cli/Dockerfile
+@@ -1,7 +1,7 @@
++ARG TAG=http2_server_support
+ FROM python:3.10-alpine3.21
+ SHELL ["/bin/ash", "-c"]
+-ARG branch=master
+-ADD https://gitlab.eurecom.fr/oai/cn5g/oai-cn5g-nwdaf/-/archive/$branch/oai-cn5g-nwdaf-$branch.zip?path=cli /nwdaf.zip
++ADD https://gitlab.eurecom.fr/oai/cn5g/oai-cn5g-nwdaf/-/archive/$TAG/oai-cn5g-nwdaf-$TAG.zip?path=cli /nwdaf.zip
+ 
+ RUN <<EOF
+   set -euxo pipefail
+diff --git a/docker/open5gs/Dockerfile b/docker/open5gs/Dockerfile
+index 2da123b..ae7d75b 100644
+--- a/docker/open5gs/Dockerfile
++++ b/docker/open5gs/Dockerfile
+@@ -1,6 +1,6 @@
++ARG TAG=2.7.2
+ FROM crazymax/yasu AS yasu
+-
+-FROM gradiant/open5gs:2.7.2
++FROM gradiant/open5gs:${TAG}
+ SHELL ["/bin/bash", "-c"]
+ USER root:root
+ COPY --from=yasu /usr/local/bin/yasu /usr/local/bin/yasu
+diff --git a/docker/packetrusher/Dockerfile b/docker/packetrusher/Dockerfile
+index b4500e2..3f81721 100644
+--- a/docker/packetrusher/Dockerfile
++++ b/docker/packetrusher/Dockerfile
+@@ -1,6 +1,8 @@
++ARG TAG=80a7f4bc63d9563a8ec58ba126440d94018a35a2
+ FROM golang:1.24-alpine3.21 AS build
+ SHELL ["/bin/ash", "-c"]
+-ADD https://github.com/HewlettPackard/PacketRusher/archive/80a7f4bc63d9563a8ec58ba126440d94018a35a2.zip /PacketRusher.zip
++
++ADD https://github.com/HewlettPackard/PacketRusher/archive/${TAG}.zip /PacketRusher.zip
+ 
+ RUN --mount=type=cache,id=go1.24-build,target=/root/.cache/go-build,sharing=locked \
+ <<EOF
+diff --git a/docker/sockperf/Dockerfile b/docker/sockperf/Dockerfile
+index c97b763..2ec6f39 100644
+--- a/docker/sockperf/Dockerfile
++++ b/docker/sockperf/Dockerfile
+@@ -1,6 +1,7 @@
++ARG TAG=19accb5229503dac7833f03713b978cb7fc48762
+ FROM buildpack-deps:bookworm AS build
+ SHELL ["/bin/bash", "-c"]
+-ADD https://github.com/Mellanox/sockperf/archive/19accb5229503dac7833f03713b978cb7fc48762.zip /sockperf.zip
++ADD https://github.com/Mellanox/sockperf/archive/${TAG}.zip /sockperf.zip
+ 
+ RUN <<EOF
+   set -euxo pipefail
+diff --git a/docker/srsran5g/Dockerfile b/docker/srsran5g/Dockerfile
+index 6483565..4720600 100644
+--- a/docker/srsran5g/Dockerfile
++++ b/docker/srsran5g/Dockerfile
+@@ -1,4 +1,5 @@
+-FROM gradiant/srsran-5g:24_10_1
++ARG TAG=25_10_1
++FROM gradiant/srsran-5g:${TAG}
+ SHELL ["/bin/bash", "-c"]
+ 
+ RUN --mount=type=cache,id=jammy-apt-cache,target=/var/cache/apt,sharing=locked \
+diff --git a/docker/ueransim/Dockerfile b/docker/ueransim/Dockerfile
+index 8ef4be7..ac7ef9d 100644
+--- a/docker/ueransim/Dockerfile
++++ b/docker/ueransim/Dockerfile
+@@ -1,3 +1,4 @@
++ARG TAG=2fc85e3e422b9a981d330bf6ff945136bfae97f3
+ FROM free5gc/ueransim
+ SHELL ["/bin/bash", "-c"]
+ 
+@@ -12,5 +13,5 @@ RUN --mount=type=cache,id=bullseye-apt-cache,target=/var/cache/apt,sharing=locke
+ EOF
+ 
+ ADD --chmod=755 https://github.com/mikefarah/yq/releases/download/v4.45.1/yq_linux_amd64 /usr/local/bin/yq
+-ADD --chmod=644 https://github.com/aligungr/UERANSIM/raw/2fc85e3e422b9a981d330bf6ff945136bfae97f3/config/custom-gnb.yaml /ueransim/config/
+-ADD --chmod=644 https://github.com/aligungr/UERANSIM/raw/2fc85e3e422b9a981d330bf6ff945136bfae97f3/config/custom-ue.yaml /ueransim/config/
++ADD --chmod=644 https://github.com/aligungr/UERANSIM/raw/${TAG}/config/custom-gnb.yaml /ueransim/config/
++ADD --chmod=644 https://github.com/aligungr/UERANSIM/raw/${TAG}/config/custom-ue.yaml /ueransim/config/
+diff --git a/docker/virt/Dockerfile b/docker/virt/Dockerfile
+index 2557679..ecc8925 100644
+--- a/docker/virt/Dockerfile
++++ b/docker/virt/Dockerfile
+@@ -1,3 +1,4 @@
++ARG TAG=v24.11
+ FROM 5gdeploy.localhost/gtp5g AS gtp5g
+ FROM crazymax/yasu AS yasu
+ 
+@@ -22,6 +23,6 @@ EOF
+ 
+ COPY --from=yasu /usr/local/bin/yasu /usr/local/bin/yasu
+ ADD --chmod=755 https://github.com/0xef53/qmp-shell/releases/download/v2.0.1/qmp-shell /usr/local/bin/
+-ADD --chmod=755 https://github.com/DPDK/dpdk/raw/refs/tags/v24.11/usertools/dpdk-devbind.py /usr/local/bin/dpdk-devbind.py
++ADD --chmod=755 https://github.com/DPDK/dpdk/raw/${TAG}/usertools/dpdk-devbind.py /usr/local/bin/dpdk-devbind.py
+ COPY --from=gtp5g --chmod=644 /gtp5g.zip /
+ COPY --from=gtp5g --chmod=755 /gtp5g-load.sh /
+diff --git a/docs/INSTALL.md b/docs/INSTALL.md
+index 332dbc9..eeea015 100644
+--- a/docs/INSTALL.md
++++ b/docs/INSTALL.md
+@@ -68,6 +68,23 @@ cd ~/5gdeploy
+ # change 'ueransim' to the image that you want to rebuild
+ ```
+ 
++### Installation Options
++The following arguments can be passed to `./install.sh`:
++* `--bridge-tag <tag>`: Specify a branch, tag, or commit hash to use for bridge (_default: [9ba97f1735022fb5f811d9c2a304dda33fae1ad1](https://github.com/jpetazzo/pipework)_)
++* `--eupf-tag <tag>`: Specify a branch, tag, or commit hash to use for EUPF (_default: [main](https://github.com/edgecomllc/eupf)_)
++* `--free5gc-tag <tag>`: Specify a branch, tag, or commit hash to use for free5GC (_default: [master](https://github.com/free5gc/free5gc-compose)_)
++* `--free5gc-webconsole-tag <tag>`: Specify a branch, tag, or commit hash to use for free5GC webconsole (_default: [f4932d569dd0045fc31baca062a05d7b34e3e8e0](https://github.com/free5gc/webconsole)_)
++* `--gnbsim-tag <tag>`: Specify a branch, tag, or commit hash to use for gnbsim (_default: [d3fce7e35a69b9f5d670242a93b7d1bee8842ecf](https://github.com/omec-project/gnbsim)_)
++* `--gtp5g-tag <tag>`: Specify a branch, tag, or commit hash to use for gtp5g (_default: [v0.9.13](https://github.com/free5gc/gtp5g)_)
++* `--oai-fed-tag <tag>`: Specify a branch, tag, or commit hash to use for OAI (_default: [master](https://gitlab.eurecom.fr/oai/cn5g/oai-cn5g-fed)_)
++* `--oai-nwdaf-tag <tag>`: Specify a branch, tag, or commit hash to use for OAI-NWDAF (_default: [http2_server_support](https://gitlab.eurecom.fr/oai/cn5g/oai-cn5g-nwdaf)_)
++* `--open5gs-release <release>`: Specify the Open5GS release to use (_default: [2.7.2](https://hub.docker.com/r/gradiant/open5gs)_)
++* `--packetrusher-tag <tag>`: Specify a branch, tag, or commit hash to use for Packetrusher (_default: [80a7f4bc63d9563a8ec58ba126440d94018a35a2](https://github.com/packetrusher/packetrusher)_)
++* `--sockperf-tag <tag>`: Specify a branch, tag, or commit hash to use for Sockperf (_default: [19accb5229503dac7833f03713b978cb7fc48762](https://github.com/Mellanox/sockperf)_)
++* `--srsran5g-release <tag>`: Specify the srsRAN 5G release to use (_default: [25_10_1](https://hub.docker.com/r/gradiant/srsran-5g)_)
++* `--ueransim-tag <tag>`: Specify a branch, tag, or commit hash to use for UERANSIM (_default: [2fc85e3e422b9a981d330bf6ff945136bfae97f3](https://github.com/aligungr/UERANSIM)_)
++* `--virt-dpdk-tag <tag>`: Specify a branch, tag, or commit hash to use for DPDK (_default: [v24.11](https://github.com/DPDK/dpdk)_)
++
+ ## Secondary Host
+ 
+ See [multi-host deployment](multi-host.md) page for concepts of multi-host deployment.
 diff --git a/eupf/download.sh b/eupf/download.sh
 index 11bd624..74fc261 100644
 --- a/eupf/download.sh
@@ -51,19 +260,61 @@ index 11bd624..74fc261 100644
 +curl -sfLS "https://github.com/edgecomllc/eupf/archive/${TAG}.tar.gz" |
 +  tar -C grafana -xzv --strip-components=3 --wildcards 'eupf-*/.deploy/grafana'
 \ No newline at end of file
+diff --git a/free5gc/download.sh b/free5gc/download.sh
+index ec2c5a8..4092880 100644
+--- a/free5gc/download.sh
++++ b/free5gc/download.sh
+@@ -1,7 +1,9 @@
+ #!/bin/bash
+ set -euo pipefail
+ cd "$(dirname "${BASH_SOURCE[0]}")"
+-TAG=${1:-master}
++TAG=${1:-}
++TAG=${TAG:-master}
++TAG_WEBCONSOLE=${2:-f4932d569dd0045fc31baca062a05d7b34e3e8e0}
+ 
+ if [[ -d free5gc-compose ]]; then
+   git -C free5gc-compose fetch
+@@ -11,7 +13,7 @@ else
+   git clone --branch "${TAG}" https://github.com/free5gc/free5gc-compose.git
+ fi
+ 
+-curl -o webconsole.yaml -fsLS https://github.com/free5gc/webconsole/raw/f4932d569dd0045fc31baca062a05d7b34e3e8e0/frontend/webconsole.yaml
++curl -o webconsole.yaml -fsLS "https://github.com/free5gc/webconsole/raw/${TAG_WEBCONSOLE}/frontend/webconsole.yaml"
+ docker run --rm --network none -v ./webconsole-openapi:/output -v ./webconsole.yaml:/webconsole.yaml:ro \
+   openapitools/openapi-generator-cli generate -i /webconsole.yaml -g typescript-fetch -o /output
+ docker run --rm -v ./webconsole-openapi:/output alpine:3.21 chown -R $(id -u):$(id -g) /output
 diff --git a/install.sh b/install.sh
-index aad29ba..e50e56d 100755
+index aad29ba..e596eed 100755
 --- a/install.sh
 +++ b/install.sh
-@@ -19,6 +19,37 @@ for CMD in corepack docker jq yq; do
+@@ -19,6 +19,100 @@ for CMD in corepack docker jq yq; do
    fi
  done
  
 +# Parse command line arguments for optional tags
-+declare -A TAGS=( [eupf]="" [free5gc]="" [oai]="" [open5gs]="" )
++declare -A TAGS=(
++  [bridge]=""
++  [eupf]=""
++  [free5gc]=""
++  [free5gc-webconsole]=""
++  [gnbsim]=""
++  [gtp5g]=""
++  [oai-fed]=""
++  [oai-nwdaf]=""
++  [open5gs]=""
++  [packetrusher]=""
++  [srsran5g]=""
++  [ueransim]=""
++)
 +
 +while [[ $# -gt 0 ]]; do
 +  case "$1" in
++    --bridge-tag)
++      TAGS[bridge]="$2" # Default: v3.20
++      msg "Using bridge tag: ${TAGS[bridge]}"
++      shift 2
++      ;;
 +    --eupf-tag)
 +      TAGS[eupf]="$2"
 +      msg "Using EUPF tag: ${TAGS[eupf]}"
@@ -74,14 +325,59 @@ index aad29ba..e50e56d 100755
 +      msg "Using free5GC tag: ${TAGS[free5gc]}"
 +      shift 2
 +      ;;
-+    --oai-tag)
-+      TAGS[oai]="$2"
-+      msg "Using OAI tag: ${TAGS[oai]}"
++    --free5gc-webconsole-tag)
++      TAGS[free5gc-webconsole]="$2"
++      msg "Using free5GC webconsole tag: ${TAGS[free5gc-webconsole]}"
 +      shift 2
 +      ;;
-+    --open5gs-tag)
++    --gnbsim-tag)
++      TAGS[gnbsim]="$2"
++      msg "Using gnbsim tag: ${TAGS[gnbsim]}"
++      shift 2
++      ;;
++    --gtp5g-tag)
++      TAGS[gtp5g]="$2"
++      msg "Using gtp5g tag: ${TAGS[gtp5g]}"
++      shift 2
++      ;;
++    --oai-fed-tag)
++      TAGS[oai-fed]="$2"
++      msg "Using OAI-FED tag: ${TAGS[oai-fed]}"
++      shift 2
++      ;;
++    --oai-nwdaf-tag)
++      TAGS[oai-nwdaf]="$2"
++      msg "Using OAI-NWDAF tag: ${TAGS[oai-nwdaf]}"
++      shift 2
++      ;;
++    --open5gs-release)
 +      TAGS[open5gs]="$2"
-+      msg "Using Open5GS tag: ${TAGS[open5gs]}"
++      msg "Using Open5GS release: ${TAGS[open5gs]}"
++      shift 2
++      ;;
++    --packetrusher-tag)
++      TAGS[packetrusher]="$2"
++      msg "Using Packetrusher tag: ${TAGS[packetrusher]}"
++      shift 2
++      ;;
++    --sockperf-tag)
++      TAGS[sockperf]="$2"
++      msg "Using Sockperf tag: ${TAGS[sockperf]}"
++      shift 2
++      ;;
++    --srsran5g-release)
++      TAGS[srsran5g]="$2"
++      msg "Using srsRAN 5G release: ${TAGS[srsran5g]}"
++      shift 2
++      ;;
++    --ueransim-tag)
++      TAGS[ueransim]="$2"
++      msg "Using UERANSIM tag: ${TAGS[ueransim]}"
++      shift 2
++      ;;
++    --virt-dpdk-tag)
++      TAGS[virt]="$2"
++      msg "Using Virt-DPDK tag: ${TAGS[virt]}"
 +      shift 2
 +      ;;
 +    *)
@@ -93,7 +389,7 @@ index aad29ba..e50e56d 100755
  if ! docker version &>/dev/null; then
    die Unable to access Docker, check docker group membership
  fi
-@@ -26,14 +57,19 @@ fi
+@@ -26,14 +120,19 @@ fi
  msg Installing 5gdeploy
  corepack pnpm install
  bash ./types/build-schema.sh
@@ -102,8 +398,8 @@ index aad29ba..e50e56d 100755
 -bash ./oai/download.sh
 -bash ./open5gs/download.sh
 +bash ./eupf/download.sh "${TAGS[eupf]}"
-+bash ./free5gc/download.sh "${TAGS[free5gc]}"
-+bash ./oai/download.sh "${TAGS[oai]}"
++bash ./free5gc/download.sh "${TAGS[free5gc]}" "${TAGS[free5gc-webconsole]}"
++bash ./oai/download.sh "${TAGS[oai-fed]}" "${TAGS[oai-nwdaf]}"
 +bash ./open5gs/download.sh "${TAGS[open5gs]}"
  
  for IMG in bridge dn eupf free5gc-webclient gnbsim gtp5g iperf2 ns3http open5gs packetrusher sockperf srsran5g ueransim virt; do
@@ -119,15 +415,29 @@ index aad29ba..e50e56d 100755
  done
  
  msg 5gdeploy is installed
+diff --git a/oai/download.sh b/oai/download.sh
+index 6433d23..b95118d 100644
+--- a/oai/download.sh
++++ b/oai/download.sh
+@@ -1,7 +1,8 @@
+ #!/bin/bash
+ set -euo pipefail
+ cd "$(dirname "${BASH_SOURCE[0]}")"
+-FED_TAG=${1:-master}
++FED_TAG=${1:-}
++FED_TAG=${FED_TAG:-master}
+ NWDAF_TAG=${2:-master}
+ 
+ mkdir -p fed
 diff --git a/open5gs/download.sh b/open5gs/download.sh
-index 10b140b..eadc084 100644
+index 10b140b..962c17c 100644
 --- a/open5gs/download.sh
 +++ b/open5gs/download.sh
 @@ -1,5 +1,6 @@
  #!/bin/bash
  set -euo pipefail
  cd "$(dirname "${BASH_SOURCE[0]}")"
-+TAG=${1:-v2.7.2}
++TAG=${1:-2.7.2}
  
 -curl -sfLS "https://github.com/open5gs/open5gs/raw/v2.7.2/misc/db/open5gs-dbctl" -o open5gs-dbctl
-+curl -sfLS "https://github.com/open5gs/open5gs/raw/${TAG}/misc/db/open5gs-dbctl" -o open5gs-dbctl
++curl -sfLS "https://github.com/open5gs/open5gs/raw/v${TAG}/misc/db/open5gs-dbctl" -o open5gs-dbctl

@@ -58,6 +58,30 @@ if [ ! -d "5gdeploy/scenario" ]; then
     exit 1
 fi
 
+# Check if docker is accessible from the current user, and if not, repair its permissions
+if [ -z "$FIXED_DOCKER_PERMS" ]; then
+    if ! OUTPUT=$(docker info 2>&1); then
+        if echo "$OUTPUT" | grep -qiE 'permission denied|cannot connect to the docker daemon'; then
+            echo "Docker permissions will repair on reboot."
+            sudo groupadd -f docker
+            if [ -n "$SUDO_USER" ]; then
+                sudo usermod -aG docker "${SUDO_USER:-root}"
+            else
+                sudo usermod -aG docker "${USER:-root}"
+            fi
+            # Rather than requiring a reboot to apply docker permissions, set the docker group and re-run the parent script
+            export FIXED_DOCKER_PERMS=1
+            if ! command -v sg &>/dev/null; then
+                echo
+                echo "WARNING: Could not find set group (sg) command, docker may fail without sudo until the system reboots."
+                echo
+            else
+                exec sg docker "$CURRENT_DIR/$0" "$@"
+            fi
+        fi
+    fi
+fi
+
 cd "$PARENT_DIR"
 
 # Check if the YAML editor is installed, and install it if not
@@ -257,30 +281,6 @@ if [ -d "compose/orantestbed" ]; then
 fi
 if [ -d "compose" ] && [ -z "$(ls -A compose)" ]; then
     sudo rmdir "compose"
-fi
-
-# Check if docker is accessible from the current user, and if not, repair its permissions
-if [ -z "$FIXED_DOCKER_PERMS" ]; then
-    if ! OUTPUT=$(docker info 2>&1); then
-        if echo "$OUTPUT" | grep -qiE 'permission denied|cannot connect to the docker daemon'; then
-            echo "Docker permissions will repair on reboot."
-            sudo groupadd -f docker
-            if [ -n "$SUDO_USER" ]; then
-                sudo usermod -aG docker "${SUDO_USER:-root}"
-            else
-                sudo usermod -aG docker "${USER:-root}"
-            fi
-            # Rather than requiring a reboot to apply docker permissions, set the docker group and re-run the parent script
-            export FIXED_DOCKER_PERMS=1
-            if ! command -v sg &>/dev/null; then
-                echo
-                echo "WARNING: Could not find set group (sg) command, docker may fail without sudo until the system reboots."
-                echo
-            else
-                exec sg docker "$CURRENT_DIR/$0" "$@"
-            fi
-        fi
-    fi
 fi
 
 cd "$SCRIPT_DIR"

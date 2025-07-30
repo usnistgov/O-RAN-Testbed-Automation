@@ -103,26 +103,26 @@ sed -i '0,/^[[:space:]]*nci[[:space:]]*=.*$/s//      nci = hexPad(((3584 + i) <<
 # git restore docker/build.sh
 # git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/5gdeploy/docker/build.sh.patch"
 
-echo "Patching 5gdeploy to add version control..."
-git restore docker/bridge/Dockerfile
-git restore docker/build.sh
-git restore docker/eupf/Dockerfile
-git restore docker/gnbsim/Dockerfile
-git restore docker/gtp5g/Dockerfile
-git restore docker/oai-nwdaf-cli/Dockerfile
-git restore docker/open5gs/Dockerfile
-git restore docker/packetrusher/Dockerfile
-git restore docker/sockperf/Dockerfile
-git restore docker/srsran5g/Dockerfile
-git restore docker/ueransim/Dockerfile
-git restore docker/virt/Dockerfile
-git restore docs/INSTALL.md
-git restore eupf/download.sh
-git restore free5gc/download.sh
-git restore install.sh
-git restore oai/download.sh
-git restore open5gs/download.sh
-git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/5gdeploy/add_version_control.patch"
+# echo "Patching 5gdeploy to add version control..."
+# git restore docker/bridge/Dockerfile
+# git restore docker/build.sh
+# git restore docker/eupf/Dockerfile
+# git restore docker/gnbsim/Dockerfile
+# git restore docker/gtp5g/Dockerfile
+# git restore docker/oai-nwdaf-cli/Dockerfile
+# git restore docker/open5gs/Dockerfile
+# git restore docker/packetrusher/Dockerfile
+# git restore docker/sockperf/Dockerfile
+# git restore docker/srsran5g/Dockerfile
+# git restore docker/ueransim/Dockerfile
+# git restore docker/virt/Dockerfile
+# git restore docs/INSTALL.md
+# git restore eupf/download.sh
+# git restore free5gc/download.sh
+# git restore install.sh
+# git restore oai/download.sh
+# git restore open5gs/download.sh
+# git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/5gdeploy/add_version_control.patch"
 
 cd $SCRIPT_DIR
 
@@ -205,10 +205,10 @@ cd "$SCRIPT_DIR/5gdeploy"
 # Step 2: Install 5gdeploy
 echo "Starting installation of 5G Core Deployment Helper (5gdeploy)..."
 ./install.sh \
-  --bridge-version 9ba97f1735022fb5f811d9c2a304dda33fae1ad1 \
+  --pipework-version 9ba97f1735022fb5f811d9c2a304dda33fae1ad1 \
   --eupf-version main \
   --free5gc-version master \
-  --free5gc-webclient-version f4932d569dd0045fc31baca062a05d7b34e3e8e0 \
+  --free5gc-webconsole-version f4932d569dd0045fc31baca062a05d7b34e3e8e0 \
   --gnbsim-version d3fce7e35a69b9f5d670242a93b7d1bee8842ecf \
   --gtp5g-version v0.9.13 \
   --oai-fed-version master \
@@ -218,7 +218,7 @@ echo "Starting installation of 5G Core Deployment Helper (5gdeploy)..."
   --sockperf-version 19accb5229503dac7833f03713b978cb7fc48762 \
   --srsran5g-version 24_10_1 \
   --ueransim-version 2fc85e3e422b9a981d330bf6ff945136bfae97f3 \
-  --virt-dpdk-version v24.11
+  --dpdk-version v24.11
 
 cd "$SCRIPT_DIR"
 ./generate_configurations.sh

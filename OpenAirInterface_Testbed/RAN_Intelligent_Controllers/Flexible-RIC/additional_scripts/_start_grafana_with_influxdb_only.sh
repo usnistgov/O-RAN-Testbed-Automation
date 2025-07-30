@@ -65,7 +65,7 @@ INFLUXDB_ORG="xapp-kpm-moni"
 INFLUXDB_BUCKET="xapp-kpm-moni"
 INFLUXDB_TOKEN_PATH="$PARENT_DIR/influxdb_auth_token.json"
 
-# Check if influxdb is even installed:
+# Check if influxdb is installed:
 if ! command -v influx &>/dev/null; then
     echo "InfluxDB is not installed. Installing InfluxDB..."
     ./install_scripts/install_influxdb.sh

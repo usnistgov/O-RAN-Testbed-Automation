@@ -187,6 +187,10 @@ else
     echo
     echo "Installing Helm Chart and Museum..."
     cd "$SCRIPT_DIR/dep/ric-dep/bin/"
+    if helm plugin list | grep -q servecm; then
+        echo "servecm plugin already installed, removing..."
+        helm plugin remove servecm
+    fi
     sudo ./install_common_templates_to_helm.sh
 fi
 

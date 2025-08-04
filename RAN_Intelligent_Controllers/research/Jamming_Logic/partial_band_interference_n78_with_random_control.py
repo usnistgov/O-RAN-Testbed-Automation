@@ -77,7 +77,7 @@ class partial_band_interference_n78(gr.top_block, Qt.QWidget):
         self.f_low = f_low = -3.6e6
         self.BW = BW = 7.2e6
         self.samp_rate = samp_rate = 7.2e6
-        self.gain_tx = gain_tx = 62
+        self.gain_tx = gain_tx = 52
         self.freq_center = freq_center = 3619.2e6
         self.f_high = f_high = f_low+BW
 
@@ -190,13 +190,13 @@ def main(top_block_cls=partial_band_interference_n78, options=None):
 
     tb.show()
 
-    ############################################################################
+    ##################################################
     # Start of radio stats printing
-    ############################################################################
+    ##################################################
     radio_on_event_delay_from = 5
     radio_on_event_delay_to = 30
-    radio_off_event_delay_from = 10
-    radio_off_event_delay_to = 60
+    radio_off_event_delay_from = 20
+    radio_off_event_delay_to = 120
 
     import csv
     import os
@@ -214,23 +214,27 @@ def main(top_block_cls=partial_band_interference_n78, options=None):
     print(f"Output CSV: {CSV_FILE_PATH}")
 
     radio_on = False
+    delay_duration = 0
     
     def print_radio_stats():
+        nonlocal delay_duration
         now = time.time()
         print(f"Time: {now}")
         print(f"   Is Radio On: {'1' if radio_on else '0'}")
         print(f"   TX Gain: {tb.get_gain_tx()}")
+        print(f"   Duration (s): {delay_duration}")
         print(f"   Bandwidth: {tb.get_BW()}")
         print(f"   Sample Rate: {tb.get_samp_rate()}")
         print(f"   Center Frequency: {tb.get_freq_center()}")
         print(f"   Low Frequency: {tb.get_f_low()}")
         print(f"   High Frequency: {tb.get_f_high()}")
         # Write to CSV
-        fieldnames = ['Time (UNIX Epoch)', 'Is Radio On', 'TX Gain', 'Bandwidth', 'Sample Rate', 'Center Frequency', 'Low Frequency', 'High Frequency']
+        fieldnames = ['Time (UNIX Epoch)', 'Is Radio On', 'TX Gain', 'Duration (s)', 'Bandwidth', 'Sample Rate', 'Center Frequency', 'Low Frequency', 'High Frequency']
         row = {
             'Time (UNIX Epoch)': f"{now:.6f}",
             'Is Radio On': '1' if radio_on else '0',
             'TX Gain': tb.get_gain_tx(),
+            'Duration (s)': delay_duration,
             'Bandwidth': tb.get_BW(),
             'Sample Rate': tb.get_samp_rate(),
             'Center Frequency': tb.get_freq_center(),
@@ -249,41 +253,53 @@ def main(top_block_cls=partial_band_interference_n78, options=None):
         except Exception as e:
             print(f"Error writing to CSV: {e}")
 
-    def toggle_radio_event():
+    def toggle_radio_event(reschedule=True):
         nonlocal radio_on
+        nonlocal delay_duration
+        if reschedule:
+            if radio_on:
+                delay_duration = int(random.uniform(radio_off_event_delay_from, radio_off_event_delay_to) * 1000) / 1000
+            else:
+                delay_duration = int(random.uniform(radio_on_event_delay_from, radio_on_event_delay_to) * 1000) / 1000
+        else:
+            delay_duration = ""
         if radio_on:
             print("Turning radio OFF")
             tb.stop()
+            tb.wait()
             radio_on = False
-            print_radio_stats()
-            delay = random.uniform(radio_off_event_delay_from, radio_off_event_delay_to) * 1000 # ms
-            print(f"Remaining in state for {delay} ms")
-            random_event_timer.start(int(delay))
         else:
             print("Turning radio ON")
             tb.start()
             radio_on = True
-            print_radio_stats()
-            delay = random.uniform(radio_on_event_delay_from, radio_on_event_delay_to) * 1000 # ms
-            print(f"Remaining in state for {delay} ms")
-            random_event_timer.start(int(delay))
+        print_radio_stats()
+        if reschedule:
+            print(f"Remaining in state for {delay_duration} ms")
+            random_event_timer.start(int(delay_duration * 1000)) # ms
+        else:
+            print("Not rescheduling the radio event.")
 
     random_event_timer = Qt.QTimer()
     random_event_timer.timeout.connect(toggle_radio_event)
-    toggle_radio_event()
-
-    ############################################################################
-    # End of radio stats printing
-    ############################################################################
+    toggle_radio_event(reschedule=True)
 
     def sig_handler(sig=None, frame=None):
+        nonlocal delay_duration
+        delay_duration = 0
+        radio_on = False
+        print("Exiting gracefully...")
         tb.stop()
-        tb.wait()
+        print_radio_stats()
 
+        tb.wait()
         Qt.QApplication.quit()
 
     signal.signal(signal.SIGINT, sig_handler)
     signal.signal(signal.SIGTERM, sig_handler)
+    
+    ##################################################
+    # End of radio stats printing
+    ##################################################
 
     timer = Qt.QTimer()
     timer.start(500)

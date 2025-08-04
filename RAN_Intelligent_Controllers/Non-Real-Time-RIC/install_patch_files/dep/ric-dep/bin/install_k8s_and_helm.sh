@@ -703,6 +703,16 @@ else
     sudo apt-get install -y $APTOPTS kubeadm=${KUBEVERSION} kubelet=${KUBEVERSION} kubectl=${KUBEVERSION}
 fi
 
+# If kubectl command is not found after install, reinstall
+if ! command -v kubectl >/dev/null 2>&1; then
+    echo "kubectl not found after install, retrying with --reinstall..."
+    sudo apt-get install --reinstall -y kubectl=${KUBEVERSION}
+    if ! command -v kubectl >/dev/null 2>&1; then
+        echo "ERROR: /usr/bin/kubectl still not found after reinstall. Aborting."
+        exit 1
+    fi
+fi
+
 sudo apt-mark hold docker.io kubernetes-cni kubelet kubeadm kubectl
 
 # Unmask and enable kubelet service without starting it
@@ -990,19 +1000,26 @@ esac
 
 # Create a temporary directory for the Helm installation process
 TEMP_DIR="$(mktemp -d)"
+trap 'rm -rf "${TEMP_DIR}"' EXIT
 
-# Download the Helm tarball if not already present
-if [ ! -e "${TEMP_DIR}/helm-v${HELMVERSIONWITHOUTSUFFIX}-linux-${ARCH_SUFFIX}.tar.gz" ]; then
-    wget -P "${TEMP_DIR}" "https://get.helm.sh/helm-v${HELMVERSIONWITHOUTSUFFIX}-linux-${ARCH_SUFFIX}.tar.gz"
+HELM_URL="https://get.helm.sh/helm-v${HELMVERSIONWITHOUTSUFFIX}-linux-${ARCH_SUFFIX}.tar.gz"
+HELM_ARCHIVE="${TEMP_DIR}/helm-v${HELMVERSIONWITHOUTSUFFIX}-linux-${ARCH_SUFFIX}.tar.gz"
+
+# Download Helm tarball if not already present
+if [ ! -e "${HELM_ARCHIVE}" ]; then
+    curl -fSL --http1.1 "${HELM_URL}" -o "${HELM_ARCHIVE}"
 fi
 
-# Extract Helm and move it to /usr/local/bin
-tar -xvf "${TEMP_DIR}/helm-v${HELMVERSIONWITHOUTSUFFIX}-linux-${ARCH_SUFFIX}.tar.gz" -C "${TEMP_DIR}"
-sudo mv "${TEMP_DIR}/linux-${ARCH_SUFFIX}/helm" /usr/local/bin/helm
-sudo chmod +x /usr/local/bin/helm
-
-# Clean up temporary directory
-rm -rf "${TEMP_DIR}"
+# Verify if download succeeded and is a valid gzip file
+if file "${HELM_ARCHIVE}" | grep -q 'gzip compressed data'; then
+    # Extract Helm and move it to /usr/local/bin
+    tar -xzvf "${HELM_ARCHIVE}" -C "${TEMP_DIR}"
+    sudo mv "${TEMP_DIR}/linux-${ARCH_SUFFIX}/helm" /usr/local/bin/helm
+    sudo chmod +x /usr/local/bin/helm
+else
+    echo "Helm archive download failed or file corrupted."
+    exit 1
+fi
 
 # Remove any old Helm configurations
 rm -rf "$HOME/.helm"

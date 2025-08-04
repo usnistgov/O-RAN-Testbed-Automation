@@ -205,20 +205,20 @@ cd "$SCRIPT_DIR/5gdeploy"
 # Step 2: Install 5gdeploy
 echo "Starting installation of 5G Core Deployment Helper (5gdeploy)..."
 ./install.sh \
-  --pipework-version 9ba97f1735022fb5f811d9c2a304dda33fae1ad1 \
-  --eupf-version main \
-  --free5gc-version master \
-  --free5gc-webconsole-version f4932d569dd0045fc31baca062a05d7b34e3e8e0 \
-  --gnbsim-version d3fce7e35a69b9f5d670242a93b7d1bee8842ecf \
-  --gtp5g-version v0.9.13 \
-  --oai-fed-version master \
-  --oai-nwdaf-version http2_server_support \
-  --open5gs-version 2.7.2 \
-  --packetrusher-version 80a7f4bc63d9563a8ec58ba126440d94018a35a2 \
-  --sockperf-version 19accb5229503dac7833f03713b978cb7fc48762 \
-  --srsran5g-version 24_10_1 \
-  --ueransim-version 2fc85e3e422b9a981d330bf6ff945136bfae97f3 \
-  --dpdk-version v24.11
+    --pipework-version 9ba97f1735022fb5f811d9c2a304dda33fae1ad1 \
+    --eupf-version main \
+    --free5gc-version master \
+    --free5gc-webconsole-version f4932d569dd0045fc31baca062a05d7b34e3e8e0 \
+    --gnbsim-version d3fce7e35a69b9f5d670242a93b7d1bee8842ecf \
+    --gtp5g-version v0.9.13 \
+    --oai-fed-version master \
+    --oai-nwdaf-version http2_server_support \
+    --open5gs-version 2.7.2 \
+    --packetrusher-version 80a7f4bc63d9563a8ec58ba126440d94018a35a2 \
+    --sockperf-version 19accb5229503dac7833f03713b978cb7fc48762 \
+    --srsran5g-version 24_10_1 \
+    --ueransim-version 2fc85e3e422b9a981d330bf6ff945136bfae97f3 \
+    --dpdk-version v24.11
 
 cd "$SCRIPT_DIR"
 ./generate_configurations.sh

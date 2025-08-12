@@ -267,6 +267,8 @@ update_yaml "configs/gnb.yaml" "cell_cfg.slicing[0]" "sd" "$SD_DECIMAL"
 update_yaml "configs/gnb.yaml" "cell_cfg.slicing[0]" "sst" "$SST"
 update_yaml "configs/gnb.yaml" "cell_cfg.slicing[0].sched_cfg" "min_prb_policy_ratio" "0"
 update_yaml "configs/gnb.yaml" "cell_cfg.slicing[0].sched_cfg" "max_prb_policy_ratio" "100"
+update_yaml "configs/gnb.yaml" "cu_cp.amf.supported_tracking_areas[0].plmn_list[0].tai_slice_support_list[0]" "sst" "$SST"
+update_yaml "configs/gnb.yaml" "cu_cp.amf.supported_tracking_areas[0].plmn_list[0].tai_slice_support_list[0]" "sd" "$SD_DECIMAL"
 
 GNB_ID="411"
 RAN_NODE_NAME="srsgnb01"

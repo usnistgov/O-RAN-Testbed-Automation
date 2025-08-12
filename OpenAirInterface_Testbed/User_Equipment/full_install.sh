@@ -84,12 +84,15 @@ echo
 echo "Installing OpenAirInterface User Equipment..."
 export DEBIAN_FRONTEND=noninteractive
 # Modifies the needrestart configuration to suppress interactive prompts
-if [ -f "/etc/needrestart/needrestart.conf" ]; then
-    if ! grep -q "^\$nrconf{restart} = 'a';$" "/etc/needrestart/needrestart.conf"; then
-        sudo sed -i "/\$nrconf{restart} = /c\$nrconf{restart} = 'a';" "/etc/needrestart/needrestart.conf"
-        echo "Modified needrestart configuration to auto-restart services."
-    fi
+if [ -d /etc/needrestart ]; then
+    sudo install -d -m 0755 /etc/needrestart/conf.d
+    sudo tee /etc/needrestart/conf.d/99-no-auto-restart.conf >/dev/null <<'EOF'
+# Disable automatic restarts during apt operations
+$nrconf{restart} = 'l';
+EOF
+    echo "Configured needrestart to list-only (no service restarts)."
 fi
+export NEEDRESTART_MODE=l
 export NEEDRESTART_SUSPEND=1
 
 # Check if GCC 13 is installed, if not, install it and set it as the default

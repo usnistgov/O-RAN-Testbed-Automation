@@ -56,12 +56,15 @@ fi
 echo "Uninstalling Non-Real-Time RAN Intelligent Controller..."
 export DEBIAN_FRONTEND=noninteractive
 # Modifies the needrestart configuration to suppress interactive prompts
-if [ -f "/etc/needrestart/needrestart.conf" ]; then
-    if ! grep -q "^\$nrconf{restart} = 'a';$" "/etc/needrestart/needrestart.conf"; then
-        sudo sed -i "/\$nrconf{restart} = /c\$nrconf{restart} = 'a';" "/etc/needrestart/needrestart.conf"
-        echo "Modified needrestart configuration to auto-restart services."
-    fi
+if [ -d /etc/needrestart ]; then
+    sudo install -d -m 0755 /etc/needrestart/conf.d
+    sudo tee /etc/needrestart/conf.d/99-no-auto-restart.conf >/dev/null <<'EOF'
+# Disable automatic restarts during apt operations
+$nrconf{restart} = 'l';
+EOF
+    echo "Configured needrestart to list-only (no service restarts)."
 fi
+export NEEDRESTART_MODE=l
 export NEEDRESTART_SUSPEND=1
 
 # Run a sudo command every minute to ensure script execution without user interaction

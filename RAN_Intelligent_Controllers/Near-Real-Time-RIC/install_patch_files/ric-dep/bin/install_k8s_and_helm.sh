@@ -709,7 +709,7 @@ fi
 # If kubectl command is not found after install, reinstall
 if ! command -v kubectl >/dev/null 2>&1; then
     echo "kubectl not found after install, retrying with --reinstall..."
-    sudo apt-get install --reinstall -y kubectl=${KUBEVERSION}
+    sudo apt-get install -y --reinstall kubectl=${KUBEVERSION}
     if ! command -v kubectl >/dev/null 2>&1; then
         echo "ERROR: /usr/bin/kubectl still not found after reinstall. Aborting."
         exit 1

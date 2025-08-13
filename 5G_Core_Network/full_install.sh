@@ -136,7 +136,7 @@ sudo usermod -a -G open5gs open5gs
 echo "Installing dependencies for building Open5GS..."
 
 # Code from (https://open5gs.org/open5gs/docs/guide/02-building-open5gs-from-sources#building-open5gs):
-sudo apt-get install -y python3-pip python3-setuptools python3-wheel ninja-build build-essential flex bison git cmake libsctp-dev libgnutls28-dev libgcrypt-dev libssl-dev libmongoc-dev libbson-dev libyaml-dev libnghttp2-dev libmicrohttpd-dev libcurl4-gnutls-dev libnghttp2-dev libtins-dev libtalloc-dev meson
+sudo apt-get install -y python3-pip python3-setuptools python3-wheel ninja-build build-essential flex bison git cmake libsctp-dev libgnutls28-dev libgcrypt-dev libssl-dev libmongoc-dev libbson-dev libyaml-dev libmicrohttpd-dev libcurl4-gnutls-dev libnghttp2-dev libtins-dev libtalloc-dev meson
 if apt-cache show libidn-dev >/dev/null 2>&1; then
     sudo apt-get install -y --no-install-recommends libidn-dev
 else

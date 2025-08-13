@@ -35,7 +35,7 @@ RICs
 │       └── Traffic Steering xApp
 ├── FlexRIC: v2.0.0
 │   └── xApps
-│       ├── KPI Monitor xApp
+│       ├── KPI Monitor xApp (to console, CSV, or InfluxDB)
 │       ├── MAC + RLC + PDCP + GTP Monitor xApp
 │       ├── RIC Control xApp
 │       └── RIC Control Monitor xApp

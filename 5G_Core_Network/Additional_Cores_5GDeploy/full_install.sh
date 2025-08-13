@@ -31,9 +31,10 @@
 # Exit immediately if a command fails
 set -e
 
+APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
-    sudo apt-get install -y coreutils
+    sudo $APTVARS apt-get install -y coreutils
 fi
 
 CURRENT_DIR=$(pwd)
@@ -71,7 +72,6 @@ fi
 echo
 echo
 echo "Installing 5G Core Deployment Helper (5gdeploy)..."
-export DEBIAN_FRONTEND=noninteractive
 # Modifies the needrestart configuration to suppress interactive prompts
 if [ -d /etc/needrestart ]; then
     sudo install -d -m 0755 /etc/needrestart/conf.d
@@ -81,8 +81,6 @@ $nrconf{restart} = 'l';
 EOF
     echo "Configured needrestart to list-only (no service restarts)."
 fi
-export NEEDRESTART_MODE=l
-export NEEDRESTART_SUSPEND=1
 
 echo "Using CP: $CORE_TO_USE"
 echo "Using UP: $UPF_TO_USE"
@@ -139,12 +137,12 @@ fi
 if [ ! -f logs/full_install_step_1_complete ]; then
     # Install system packages
     sudo apt-get update
-    sudo apt-get install -y linux-generic linux-lowlatency
+    sudo $APTVARS apt-get install -y linux-generic linux-lowlatency
     echo 'wireshark-common wireshark-common/install-setuid boolean true' | sudo debconf-set-selections
-    sudo apt-get install -y httpie jq wireshark-common
+    sudo $APTVARS apt-get install -y httpie jq wireshark-common
     sudo adduser $(id -un) wireshark
     if ! dpkg -s python3-libconf &>/dev/null; then
-        if ! sudo apt-get install -y python3-libconf; then
+        if ! sudo $APTVARS apt-get install -y python3-libconf; then
             echo "Package python3-libconf not found in apt, installing via pip..."
             python3 -m pip install --user libconf
         fi
@@ -153,12 +151,12 @@ if [ ! -f logs/full_install_step_1_complete ]; then
     http --ignore-stdin GET https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --batch --yes --dearmor -o /etc/apt/keyrings/nodesource.gpg
     echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
     sudo apt-get update
-    sudo apt-get install -y nodejs
+    sudo $APTVARS apt-get install -y nodejs
     # # Install Node.js 20.x
     # http --ignore-stdin GET https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --batch --yes --dearmor -o /etc/apt/keyrings/nodesource.gpg
     # echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
     # sudo apt-get update
-    # sudo apt-get install -y nodejs
+    sudo $APTVARS apt-get install -y nodejs
     touch logs/full_install_step_1_complete
 else
     echo "Dependencies already installed, skipping step 1."

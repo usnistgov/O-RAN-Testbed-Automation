@@ -33,9 +33,10 @@ set -e
 
 DEBUG_SYMBOLS=false
 
+APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
-    sudo apt-get install -y coreutils
+    sudo $APTVARS apt-get install -y coreutils
 fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
@@ -76,7 +77,6 @@ echo "Patching OpenAirInterface..."
 echo
 echo
 echo "Installing OpenAirInterface Next Generation Node B..."
-export DEBIAN_FRONTEND=noninteractive
 # Modifies the needrestart configuration to suppress interactive prompts
 if [ -d /etc/needrestart ]; then
     sudo install -d -m 0755 /etc/needrestart/conf.d
@@ -86,8 +86,6 @@ $nrconf{restart} = 'l';
 EOF
     echo "Configured needrestart to list-only (no service restarts)."
 fi
-export NEEDRESTART_MODE=l
-export NEEDRESTART_SUSPEND=1
 
 # Check if GCC 13 is installed, if not, install it and set it as the default
 GCC_VERSION=$(gcc -v 2>&1 | grep "gcc version" | awk '{print $3}')
@@ -95,7 +93,7 @@ if [[ -z "$GCC_VERSION" || ! "$GCC_VERSION" == 13.* ]]; then
     echo "Installing GCC 13..."
     sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
     sudo apt-get update
-    sudo apt-get install -y gcc-13 g++-13
+    sudo $APTVARS apt-get install -y gcc-13 g++-13
     sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 100
     sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-13 100
 fi
@@ -103,7 +101,7 @@ fi
 if ! command -v cmake &>/dev/null; then
     echo "Installing CMake..."
     sudo apt-get update
-    sudo apt-get install -y cmake
+    sudo $APTVARS apt-get install -y cmake
 fi
 CMAKE_VERSION=$(cmake --version | head -n1 | awk '{print $3}')
 if [[ "$CMAKE_VERSION" == 3.16.* ]]; then
@@ -112,7 +110,7 @@ if [[ "$CMAKE_VERSION" == 3.16.* ]]; then
     wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc | sudo apt-key add -
     sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ focal main'
     sudo apt-get update
-    sudo apt-get install -y cmake
+    sudo $APTVARS apt-get install -y cmake
 fi
 
 ADDITIONAL_FLAGS=""

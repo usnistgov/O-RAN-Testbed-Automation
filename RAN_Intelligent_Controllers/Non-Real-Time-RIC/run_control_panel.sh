@@ -37,9 +37,10 @@ else
     MOCK_MODE=false
 fi
 
+APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
-    sudo apt-get install -y coreutils
+    sudo $APTVARS apt-get install -y coreutils
 fi
 
 CURRENT_DIR=$(pwd)
@@ -49,7 +50,7 @@ cd "$SCRIPT_DIR"
 if ! command -v docker &>/dev/null; then
     echo "Docker not found, installing..."
     sudo apt-get update
-    sudo apt-get install -y docker.io
+    sudo $APTVARS apt-get install -y docker.io
     sudo systemctl start docker
     sudo systemctl enable docker
     sudo usermod -aG docker "$USER"

@@ -154,7 +154,8 @@ echo "Creating and modifying the configuration file deploy/config_updated.json"
 if ! command -v jq &>/dev/null; then
     echo "Installing jq..."
     sudo apt-get update
-    sudo apt-get install -y jq
+    APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
+    sudo $APTVARS apt-get install -y jq
 fi
 
 FILE="deploy/config_updated.json"

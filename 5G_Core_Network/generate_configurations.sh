@@ -33,9 +33,10 @@ set -e
 
 UE_NUMBERS=(3 2 1) # Subscribers from UE 3 to UE 1
 
+APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
-    sudo apt-get install -y coreutils
+    sudo $APTVARS apt-get install -y coreutils
 fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")

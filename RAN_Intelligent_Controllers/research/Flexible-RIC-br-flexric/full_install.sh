@@ -33,9 +33,10 @@ set -e
 
 # If using this br-flexric branch, set the commit_hashes.json file to a compatible OpenAirInterface version: "https://gitlab.eurecom.fr/oai/openairinterface5g.git": ["develop", "NOT e15fa14c5758d74dde78d6c01b8eaf1d7cc07261"],
 
+APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
-    sudo apt-get install -y coreutils
+    sudo $APTVARS apt-get install -y coreutils
 fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
@@ -55,10 +56,10 @@ INSTALL_START_TIME=$(date +%s)
 
 echo "Installing dependencies..."
 sudo apt-get update || true
-sudo apt-get install -y build-essential
-sudo apt-get install -y gcc-10 g++-10
-sudo apt-get install -y libsctp-dev python3 cmake-curses-gui python3-dev pkg-config libconfig-dev libconfig++-dev
-sudo apt-get install -y libmysqlclient-dev mysql-server
+sudo $APTVARS apt-get install -y build-essential
+sudo $APTVARS apt-get install -y gcc-10 g++-10
+sudo $APTVARS apt-get install -y libsctp-dev python3 cmake-curses-gui python3-dev pkg-config libconfig-dev libconfig++-dev
+sudo $APTVARS apt-get install -y libmysqlclient-dev mysql-server
 
 if [ ! -d "swig" ]; then
     echo "Cloning SWIG..."

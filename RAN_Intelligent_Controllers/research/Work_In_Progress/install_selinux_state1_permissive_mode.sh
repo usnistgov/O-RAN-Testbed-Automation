@@ -64,9 +64,11 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
+
 echo "Installing SELinux packages..."
-sudo apt-get install -y policycoreutils selinux-utils selinux-basics
-sudo apt-get install -y auditd
+sudo $APTVARS apt-get install -y policycoreutils selinux-utils selinux-basics
+sudo $APTVARS apt-get install -y auditd
 sudo DEBIAN_FRONTEND=noninteractive apt-get install -y sddm # Simple Desktop Display Manager (used for GUI login)
 if [ $? -ne 0 ]; then
     echo "Failed to install SELinux packages. Exiting."

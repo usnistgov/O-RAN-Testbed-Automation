@@ -31,7 +31,6 @@
 # Exit immediately if a command fails
 set -e
 
-export DEBIAN_FRONTEND=noninteractive
 # Modifies the needrestart configuration to suppress interactive prompts
 if [ -d /etc/needrestart ]; then
     sudo install -d -m 0755 /etc/needrestart/conf.d
@@ -41,12 +40,11 @@ $nrconf{restart} = 'l';
 EOF
     echo "Configured needrestart to list-only (no service restarts)."
 fi
-export NEEDRESTART_MODE=l
-export NEEDRESTART_SUSPEND=1
 
 sudo apt-get update
 sudo apt-get upgrade -y
-sudo apt-get install -y git
+APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
+sudo $APTVARS apt-get install -y git
 
 # rm -rf O-RAN-Testbed-Init
 if [ ! -d O-RAN-Testbed-Init ]; then

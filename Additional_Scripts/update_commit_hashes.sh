@@ -32,7 +32,6 @@
 
 set -e
 
-export DEBIAN_FRONTEND=noninteractive
 # Modifies the needrestart configuration to suppress interactive prompts
 if [ -d /etc/needrestart ]; then
     sudo install -d -m 0755 /etc/needrestart/conf.d
@@ -42,12 +41,11 @@ $nrconf{restart} = 'l';
 EOF
     echo "Configured needrestart to list-only (no service restarts)."
 fi
-export NEEDRESTART_MODE=l
-export NEEDRESTART_SUSPEND=1
 
+APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
-    sudo apt-get install -y coreutils
+    sudo $APTVARS apt-get install -y coreutils
 fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
@@ -58,7 +56,7 @@ if ! command -v jq &>/dev/null; then
     sudo apt-get update
 
     echo "Installing jq..."
-    sudo apt-get install -y jq
+    sudo $APTVARS apt-get install -y jq
 fi
 
 JSON_FILE="commit_hashes.json"

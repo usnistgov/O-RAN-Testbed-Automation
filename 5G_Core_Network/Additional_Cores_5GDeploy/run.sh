@@ -78,7 +78,6 @@ cd "$SCRIPT_DIR"
 mkdir -p configs
 if ! command -v jq >/dev/null 2>&1; then
     echo "Installing jq to process JSON files..."
-    APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
     sudo $APTVARS apt-get install -y jq
 fi
 

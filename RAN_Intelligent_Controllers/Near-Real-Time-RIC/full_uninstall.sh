@@ -31,9 +31,10 @@
 # Do not exit immediately if a command fails
 set +e
 
+APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
-    sudo apt-get install -y coreutils
+    sudo $APTVARS apt-get install -y coreutils
 fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
@@ -54,7 +55,6 @@ if [ "$1" != "bypass_confirmation" ]; then
 fi
 
 echo "Uninstalling Near-Real-Time RAN Intelligent Controller..."
-export DEBIAN_FRONTEND=noninteractive
 # Modifies the needrestart configuration to suppress interactive prompts
 if [ -d /etc/needrestart ]; then
     sudo install -d -m 0755 /etc/needrestart/conf.d
@@ -64,8 +64,6 @@ $nrconf{restart} = 'l';
 EOF
     echo "Configured needrestart to list-only (no service restarts)."
 fi
-export NEEDRESTART_MODE=l
-export NEEDRESTART_SUSPEND=1
 
 # Run a sudo command every minute to ensure script execution without user interaction
 ./install_scripts/start_sudo_refresh.sh
@@ -88,7 +86,7 @@ fi
 if ! dpkg -s chrony &>/dev/null; then
     echo "Chrony is not installed, installing..."
     sudo apt-get update
-    sudo apt-get install -y chrony || true
+    sudo $APTVARS apt-get install -y chrony || true
 fi
 if ! systemctl is-enabled --quiet chrony; then
     echo "Enabling Chrony service..."

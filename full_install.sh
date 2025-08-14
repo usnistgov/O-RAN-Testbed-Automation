@@ -123,23 +123,6 @@ fi
 # Ensure backward compatibility with previous installations
 sudo ./Additional_Scripts/migrate_to_new_version.sh
 
-INSTALL_NEAR_RT_RIC=false
-if [ -d "RAN_Intelligent_Controllers/Near-Real-Time-RIC" ]; then
-    INSTALL_NEAR_RT_RIC=true
-    echo
-    echo
-    echo "################################################################################"
-    echo "# Installing Near-Real-Time RAN Intelligent Controller...                      #"
-    echo "################################################################################"
-    echo
-    echo
-
-    cd RAN_Intelligent_Controllers/Near-Real-Time-RIC
-    ./full_install.sh
-
-    cd ../..
-fi
-
 echo
 echo
 echo "################################################################################"
@@ -178,6 +161,23 @@ cd Next_Generation_Node_B
 ./full_install.sh
 
 cd ..
+
+INSTALL_NEAR_RT_RIC=false
+if [ -d "RAN_Intelligent_Controllers/Near-Real-Time-RIC" ]; then
+    INSTALL_NEAR_RT_RIC=true
+    echo
+    echo
+    echo "################################################################################"
+    echo "# Installing Near-Real-Time RAN Intelligent Controller...                      #"
+    echo "################################################################################"
+    echo
+    echo
+
+    cd RAN_Intelligent_Controllers/Near-Real-Time-RIC
+    ./full_install.sh
+
+    cd ../..
+fi
 
 echo
 echo

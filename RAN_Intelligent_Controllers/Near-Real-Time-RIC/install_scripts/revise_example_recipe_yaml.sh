@@ -64,7 +64,7 @@ fi
 # Check that the correct version of yq is installed
 if ! yq --version 2>/dev/null | grep -q 'https://github\.com/mikefarah/yq'; then
     echo "ERROR: Detected an incompatible yq installation."
-    echo "Please ensure the Python yq is uninstalled with \"pip uninstall yq\", then re-run this script."
+    echo "Please ensure the Python yq is uninstalled with \"pip uninstall -y yq\", then re-run this script."
     exit 1
 fi
 

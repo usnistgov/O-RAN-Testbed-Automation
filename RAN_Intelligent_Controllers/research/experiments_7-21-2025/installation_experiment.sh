@@ -84,7 +84,7 @@ for I in $(seq 1 $NUM_SAMPLES); do
     yq eval -i '.core_to_use = "open5gs"' options.yaml
 
     # Install Open5GS, OAI UE, OAI gNB, FlexRIC
-    cd "$BASE_DIR/OpenAirInterface"
+    cd "$BASE_DIR/OpenAirInterface_Testbed"
     ./full_install.sh --no
 
     # Install 5GDeploy Cores
@@ -109,14 +109,14 @@ for I in $(seq 1 $NUM_SAMPLES); do
         NIST5GDEPLOY_INSTALL_TIME=""
     fi
 
-    OAI_UE_FILE="$BASE_DIR/OpenAirInterface/User_Equipment/install_time.txt"
+    OAI_UE_FILE="$BASE_DIR/OpenAirInterface_Testbed/User_Equipment/install_time.txt"
     if [ -f "$OAI_UE_FILE" ]; then
         OAI_UE_INSTALL_TIME=$(head -n 1 "$OAI_UE_FILE" | awk '{print $1}')
     else
         OAI_UE_INSTALL_TIME=""
     fi
 
-    OAI_GNB_FILE="$BASE_DIR/OpenAirInterface/Next_Generation_Node_B/install_time.txt"
+    OAI_GNB_FILE="$BASE_DIR/OpenAirInterface_Testbed/Next_Generation_Node_B/install_time.txt"
     if [ -f "$OAI_GNB_FILE" ]; then
         OAI_GNB_INSTALL_TIME=$(head -n 1 "$OAI_GNB_FILE" | awk '{print $1}')
     else
@@ -174,6 +174,6 @@ for I in $(seq 1 $NUM_SAMPLES); do
     yq eval -i '.core_to_use = "open5gs"' options.yaml
     ./full_uninstall.sh bypass_confirmation
 
-    cd "$BASE_DIR/OpenAirInterface"
+    cd "$BASE_DIR/OpenAirInterface_Testbed"
     ./full_uninstall.sh bypass_confirmation
 done

@@ -16,7 +16,7 @@ The Near-RT RIC, conceptualized by the O-RAN Alliance's Working Group 3 (WG3) [[
 
 This implementation of the Near-RT RIC showcases two xApps.
 
-- **KPI Monitoring xApp (xapp_kpm_moni)**:
+- **KPM Monitoring xApp (xapp_kpm_moni)**:
   - Run with `./additional_scripts/run_xapp_kpi_monitor.sh`.
 - **RIC Control xApp (xapp_kpm_rc)**:
   - Run with `./additional_scripts/run_xapp_ric_control.sh`.

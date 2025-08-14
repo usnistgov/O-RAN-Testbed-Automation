@@ -27,7 +27,7 @@ RICs
 ├── O-RAN SC Near-RT RIC: L-release
 │   └── xApps
 │       ├── Hello World xApps (Go, Python, and Rust)
-│       ├── KPI Monitor xApp
+│       ├── KPM Monitor xApp
 │       ├── 5G Cell Anomaly Detection xApp
 │       ├── Anomaly Detection xApp
 │       ├── Quality of Experience Predictor xApp
@@ -35,7 +35,7 @@ RICs
 │       └── Traffic Steering xApp
 ├── FlexRIC: v2.0.0
 │   └── xApps
-│       ├── KPI Monitor xApp (to console, CSV, or InfluxDB)
+│       ├── KPM Monitor xApp (to console, CSV, or InfluxDB)
 │       ├── MAC + RLC + PDCP + GTP Monitor xApp
 │       ├── RIC Control xApp
 │       └── RIC Control Monitor xApp
@@ -164,7 +164,7 @@ See <a href="RAN_Intelligent_Controllers/Near-Real-Time-RIC#migration-to-cilium"
   <summary><b>OpenAirInterface and FlexRIC Output</b></summary>
   <hr>
 
-Run the testbed with `./run.sh` to start the 5G Core, FlexRIC, gNodeB, and UE as background processes, and the KPI monitoring xApp in the foreground. Use `./is_running.sh` to check if the components are running, and `./stop.sh` to stop the components.
+Run the testbed with `./run.sh` to start the 5G Core, FlexRIC, gNodeB, and UE as background processes, and the KPM monitoring xApp in the foreground. Use `./is_running.sh` to check if the components are running, and `./stop.sh` to stop the components.
 
 ```console
 8 KPM ind_msg latency = 600 [μs]
@@ -181,11 +181,11 @@ RSRP = -44.00 [dBm]
 ...
 ```
 
-<b>Supplementary Dashboard for KPI Visualization</b><p align="center">
-  <img src="Images/xApp_Dashboard.png" alt="Grafana dashboard of xApp KPI metrics" width="75%">
+<b>Supplementary Dashboard for KPM Visualization</b><p align="center">
+  <img src="Images/xApp_Dashboard.png" alt="Grafana dashboard of xApp KPM metrics" width="75%">
 </p>
 
-See <a href="OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC#kpi-monitor-visualization-in-grafana">this section</a> for the set up guide.
+See <a href="OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC#kpm-monitor-visualization-in-grafana">this section</a> for the set up guide.
 </details>
 
 ---

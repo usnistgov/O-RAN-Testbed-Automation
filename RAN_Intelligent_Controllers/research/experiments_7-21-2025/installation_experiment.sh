@@ -55,7 +55,7 @@ if [ ! -f "$CSV_FILE" ]; then
     CSV_HEADER+="FlexRIC (m),"
     CSV_HEADER+="srsRAN_Project (m),"
     CSV_HEADER+="srsRAN_UE (m),"
-    CSV_HEADER+="O-SC Near-RT RIC (m)\n"
+    CSV_HEADER+="O-SC Near-RT RIC (m)"
     echo -e "$CSV_HEADER" >"$CSV_FILE"
 fi
 
@@ -162,7 +162,7 @@ for I in $(seq 1 $NUM_SAMPLES); do
     CSV_LINE+="$SRSRAN_GNB_INSTALL_TIME,"
     CSV_LINE+="$SRSRAN_UE_INSTALL_TIME,"
     CSV_LINE+="$ORAN_RIC_INSTALL_TIME,"
-    echo -e "$CSV_LINE\n" >>"$CSV_FILE"
+    echo -e "$CSV_LINE" >>"$CSV_FILE"
     echo "    Wrote Iteration $I to $CSV_FILE."
 
     cd "$BASE_DIR"

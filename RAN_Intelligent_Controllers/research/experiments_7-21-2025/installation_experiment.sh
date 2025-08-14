@@ -123,7 +123,7 @@ for I in $(seq 1 $NUM_SAMPLES); do
         OAI_GNB_INSTALL_TIME=""
     fi
 
-    FLEXRIC_FILE="$BASE_DIR/RAN_Intelligent_Controllers/FlexRIC/install_time.txt"
+    FLEXRIC_FILE="$BASE_DIR/RAN_Intelligent_Controllers/Flexible-RIC/install_time.txt"
     if [ -f "$FLEXRIC_FILE" ]; then
         FLEXRIC_INSTALL_TIME=$(head -n 1 "$FLEXRIC_FILE" | awk '{print $1}')
     else

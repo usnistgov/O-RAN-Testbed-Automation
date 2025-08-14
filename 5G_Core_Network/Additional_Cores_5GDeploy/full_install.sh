@@ -75,6 +75,9 @@ if [ "$CORE_TO_USE" == "open5gs" ]; then
     exit 1
 fi
 
+# Get the start timestamp in seconds
+INSTALL_START_TIME=$(date +%s)
+
 echo
 echo
 echo "Installing 5G Core Deployment Helper (5gdeploy)..."
@@ -228,6 +231,17 @@ echo "Starting installation of 5G Core Deployment Helper (5gdeploy)..."
     --dpdk-version v24.11
 
 cd "$SCRIPT_DIR"
+
+# Calculate how long the script took to run
+INSTALL_END_TIME=$(date +%s)
+if [ -n "$INSTALL_START_TIME" ]; then
+    DURATION=$((INSTALL_END_TIME - INSTALL_START_TIME))
+    DURATION_MINUTES=$(echo "scale=5; $DURATION/ 60" | bc)
+    echo "The Open5GS installation process took $DURATION_MINUTES minutes to complete."
+    mkdir -p logs
+    echo "$DURATION_MINUTES minutes" >>install_time.txt
+fi
+
 ./generate_configurations.sh
 
 echo "Successfully installed and configured the 5G Core Deployment Helper (5gdeploy)."

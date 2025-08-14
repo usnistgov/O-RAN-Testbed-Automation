@@ -152,7 +152,6 @@ if [ ! -f "options.yaml" ]; then
     echo "" >>"options.yaml"
     echo "# The use of systemctl can be disabled to support installations within Docker. Before changing this value, it is recommended to uninstall the testbed." >>"options.yaml"
     echo "use_systemctl: true" >>"options.yaml"
-    echo "" >>"options.yaml"
 fi
 
 # Read PLMN and TAC values from the YAML file using yq

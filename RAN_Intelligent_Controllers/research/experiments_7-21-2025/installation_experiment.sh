@@ -83,7 +83,7 @@ for I in $(seq 1 $NUM_SAMPLES); do
 
     # Install Open5GS, OAI UE, OAI gNB, FlexRIC
     cd "$BASE_DIR/OpenAirInterface"
-    ./full_install.sh -n
+    ./full_install.sh --no
 
     # Install 5GDeploy Cores
     cd "$BASE_DIR/5G_Core_Network"
@@ -91,7 +91,7 @@ for I in $(seq 1 $NUM_SAMPLES); do
 
     # Install srsRAN_Project, srsRAN_UE, and O-SC Near-RT RIC
     cd "$BASE_DIR"
-    ./full_install.sh -y
+    ./full_install.sh --yes
 
     OPEN5GS_FILE="$BASE_DIR/5G_Core_Network/install_time.txt"
     if [ -f "$OPEN5GS_FILE" ]; then
@@ -162,7 +162,7 @@ for I in $(seq 1 $NUM_SAMPLES); do
     CSV_LINE+="$SRSRAN_GNB_INSTALL_TIME,"
     CSV_LINE+="$SRSRAN_UE_INSTALL_TIME,"
     CSV_LINE+="$ORAN_RIC_INSTALL_TIME,"
-    echo -e "$CSV_LINE" >>"$CSV_FILE\n"
+    echo -e "$CSV_LINE\n" >>"$CSV_FILE"
     echo "    Wrote Iteration $I to $CSV_FILE."
 
     cd "$BASE_DIR"

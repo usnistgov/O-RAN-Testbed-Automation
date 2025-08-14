@@ -126,7 +126,6 @@ if [ ! -f "options.yaml" ]; then
     echo "" >>"options.yaml"
     echo "# The use of systemctl can be disabled to support installations within Docker. Before changing this value, it is recommended to uninstall the testbed." >>"options.yaml"
     echo "use_systemctl: true" >>"options.yaml"
-    echo "" >>"options.yaml"
 fi
 
 # If expose_amf_over_hostname is false, AMF will use the default 127.0.0.5, otherwise, it will use the hostname IP

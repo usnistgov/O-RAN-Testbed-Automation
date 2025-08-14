@@ -28,7 +28,9 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-set +e
+#set +e
+set -x
+set -e
 
 NUM_SAMPLES=100
 
@@ -161,7 +163,7 @@ for I in $(seq 1 $NUM_SAMPLES); do
     CSV_LINE+="$FLEXRIC_INSTALL_TIME,"
     CSV_LINE+="$SRSRAN_GNB_INSTALL_TIME,"
     CSV_LINE+="$SRSRAN_UE_INSTALL_TIME,"
-    CSV_LINE+="$ORAN_RIC_INSTALL_TIME,"
+    CSV_LINE+="$ORAN_RIC_INSTALL_TIME"
     echo -e "$CSV_LINE" >>"$CSV_FILE"
     echo "    Wrote Iteration $I to $CSV_FILE."
 

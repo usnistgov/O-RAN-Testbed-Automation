@@ -47,6 +47,12 @@ cd "$PARENT_DIR"
 if ! command -v yq &>/dev/null; then
     sudo "$SCRIPT_DIR/install_scripts/./install_yq.sh"
 fi
+# Check that the correct version of yq is installed
+if ! yq --version 2>/dev/null | grep -q 'https://github\.com/mikefarah/yq'; then
+    echo "ERROR: Detected an incompatible yq installation."
+    echo "Please ensure the Python yq is uninstalled with \"pip uninstall yq\", then re-run this script."
+    exit 1
+fi
 
 # Ensure that 5G_Core_Network/optiona.yaml is configured to use 5gdeploy instead of Open5GS
 if [ -f "options.yaml" ]; then

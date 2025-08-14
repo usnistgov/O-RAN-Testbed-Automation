@@ -16,7 +16,7 @@ The automation tool can be used in virtual machines and physical machines with t
   </picture>
 </p>
 
-This tool supports the deployment of 5G O-RAN testbeds using open-source components in two main scenarios: srsRAN with O-RAN SC's Near-RT RIC, and OpenAirInterface with Mosaic5G's FlexRIC. Below is the list of the supported testbed open-source components.
+This tool supports the deployment of 5G O-RAN testbeds using open-source components in two main scenarios: Software Radio Systems with O-RAN SC's Near-RT RIC, and OpenAirInterface with Mosaic5G's FlexRIC. Below is the list of the supported testbed open-source components.
 
 ```text
 CU/DU
@@ -137,7 +137,7 @@ Begin the installation process, recommended to be run as the current user rather
 ```
 
 <details>
-  <summary><b>O-RAN SC Near-RT RIC and srsRAN Output</b></summary>
+  <summary><b>Software Radio Systems and O-RAN SC Near-RT RIC Output</b></summary>
   <hr>
 
 Run the testbed with `./run.sh` to start the 5G Core and gNodeB as background processes, and the UE in the foreground. Use `./is_running.sh` to check if the components are running, and `./stop.sh` to stop the components. The RIC starts automatically on boot and can be accessed with `k9s -A`.

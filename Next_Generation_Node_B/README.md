@@ -1,6 +1,6 @@
 ## Next Generation Node B
 
-The Next Generation Node B (gNodeB) is a 5G base station configured with srsRAN_Project [[1]][srsran-gnb], connecting User Equipments (UEs) to the 5G Core Network based on the specifications outlined in 3GPP TS 38.300 [[2]][ts3191-3gpp], 3GPP TS 38.401 [[3]][ts3219-3gpp], and 3GPP TS 38.413 [[4]][ts3223-3gpp].
+The Next Generation Node B (gNodeB) is a 5G base station configured with srsRAN_Project provided by Software Radio Systems [[1]][srsran-gnb], connecting User Equipments (UEs) to the 5G Core Network based on the specifications outlined in 3GPP TS 38.300 [[2]][ts3191-3gpp], 3GPP TS 38.401 [[3]][ts3219-3gpp], and 3GPP TS 38.413 [[4]][ts3223-3gpp].
 
 ## Usage
 

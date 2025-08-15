@@ -96,7 +96,8 @@ for I in $(seq 1 $NUM_SAMPLES); do
 
     OPEN5GS_FILE="$BASE_DIR/5G_Core_Network/install_time.txt"
     if [ -f "$OPEN5GS_FILE" ]; then
-        OPEN5GS_INSTALL_TIME=$(tail -n 1 5G_Core_Network/install_time.txt | awk '{print $1}')
+        OPEN5GS_INSTALL_TIME=$(tail -n 1 "$OPEN5GS_FILE" | awk '{print $1}')
+        rm "$OPEN5GS_FILE"
     else
         OPEN5GS_INSTALL_TIME=""
     fi
@@ -104,6 +105,7 @@ for I in $(seq 1 $NUM_SAMPLES); do
     NIST5GDEPLOY_FILE="$BASE_DIR/5G_Core_Network/Additional_Cores_5GDeploy/install_time.txt"
     if [ -f "$NIST5GDEPLOY_FILE" ]; then
         NIST5GDEPLOY_INSTALL_TIME=$(tail -n 1 "$NIST5GDEPLOY_FILE" | awk '{print $1}')
+        rm "$NIST5GDEPLOY_FILE"
     else
         NIST5GDEPLOY_INSTALL_TIME=""
     fi
@@ -111,6 +113,7 @@ for I in $(seq 1 $NUM_SAMPLES); do
     OAI_UE_FILE="$BASE_DIR/OpenAirInterface_Testbed/User_Equipment/install_time.txt"
     if [ -f "$OAI_UE_FILE" ]; then
         OAI_UE_INSTALL_TIME=$(tail -n 1 "$OAI_UE_FILE" | awk '{print $1}')
+        rm "$OAI_UE_FILE"
     else
         OAI_UE_INSTALL_TIME=""
     fi
@@ -118,6 +121,7 @@ for I in $(seq 1 $NUM_SAMPLES); do
     OAI_GNB_FILE="$BASE_DIR/OpenAirInterface_Testbed/Next_Generation_Node_B/install_time.txt"
     if [ -f "$OAI_GNB_FILE" ]; then
         OAI_GNB_INSTALL_TIME=$(tail -n 1 "$OAI_GNB_FILE" | awk '{print $1}')
+        rm "$OAI_GNB_FILE"
     else
         OAI_GNB_INSTALL_TIME=""
     fi
@@ -125,6 +129,7 @@ for I in $(seq 1 $NUM_SAMPLES); do
     FLEXRIC_FILE="$BASE_DIR/RAN_Intelligent_Controllers/Flexible-RIC/install_time.txt"
     if [ -f "$FLEXRIC_FILE" ]; then
         FLEXRIC_INSTALL_TIME=$(tail -n 1 "$FLEXRIC_FILE" | awk '{print $1}')
+        rm "$FLEXRIC_FILE"
     else
         FLEXRIC_INSTALL_TIME=""
     fi
@@ -132,6 +137,7 @@ for I in $(seq 1 $NUM_SAMPLES); do
     SRSRAN_GNB_FILE="$BASE_DIR/Next_Generation_Node_B/install_time.txt"
     if [ -f "$SRSRAN_GNB_FILE" ]; then
         SRSRAN_GNB_INSTALL_TIME=$(tail -n 1 "$SRSRAN_GNB_FILE" | awk '{print $1}')
+        rm "$SRSRAN_GNB_FILE"
     else
         SRSRAN_GNB_INSTALL_TIME=""
     fi
@@ -139,6 +145,7 @@ for I in $(seq 1 $NUM_SAMPLES); do
     SRSRAN_UE_FILE="$BASE_DIR/User_Equipment/install_time.txt"
     if [ -f "$SRSRAN_UE_FILE" ]; then
         SRSRAN_UE_INSTALL_TIME=$(tail -n 1 "$SRSRAN_UE_FILE" | awk '{print $1}')
+        rm "$SRSRAN_UE_FILE"
     else
         SRSRAN_UE_INSTALL_TIME=""
     fi
@@ -146,6 +153,7 @@ for I in $(seq 1 $NUM_SAMPLES); do
     ORAN_RIC_FILE="$BASE_DIR/RAN_Intelligent_Controllers/Near-Real-Time-RIC/install_time.txt"
     if [ -f "$ORAN_RIC_FILE" ]; then
         ORAN_RIC_INSTALL_TIME=$(tail -n 1 "$ORAN_RIC_FILE" | awk '{print $1}')
+        rm "$ORAN_RIC_FILE"
     else
         ORAN_RIC_INSTALL_TIME=""
     fi

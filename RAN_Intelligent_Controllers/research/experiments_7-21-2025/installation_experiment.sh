@@ -28,9 +28,8 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-#set +e
+set +e
 set -x
-set -e
 
 NUM_SAMPLES=100
 
@@ -97,56 +96,56 @@ for I in $(seq 1 $NUM_SAMPLES); do
 
     OPEN5GS_FILE="$BASE_DIR/5G_Core_Network/install_time.txt"
     if [ -f "$OPEN5GS_FILE" ]; then
-        OPEN5GS_INSTALL_TIME=$(head -n 1 5G_Core_Network/install_time.txt | awk '{print $1}')
+        OPEN5GS_INSTALL_TIME=$(tail -n 1 5G_Core_Network/install_time.txt | awk '{print $1}')
     else
         OPEN5GS_INSTALL_TIME=""
     fi
 
     NIST5GDEPLOY_FILE="$BASE_DIR/5G_Core_Network/Additional_Cores_5GDeploy/install_time.txt"
     if [ -f "$NIST5GDEPLOY_FILE" ]; then
-        NIST5GDEPLOY_INSTALL_TIME=$(head -n 1 "$NIST5GDEPLOY_FILE" | awk '{print $1}')
+        NIST5GDEPLOY_INSTALL_TIME=$(tail -n 1 "$NIST5GDEPLOY_FILE" | awk '{print $1}')
     else
         NIST5GDEPLOY_INSTALL_TIME=""
     fi
 
     OAI_UE_FILE="$BASE_DIR/OpenAirInterface_Testbed/User_Equipment/install_time.txt"
     if [ -f "$OAI_UE_FILE" ]; then
-        OAI_UE_INSTALL_TIME=$(head -n 1 "$OAI_UE_FILE" | awk '{print $1}')
+        OAI_UE_INSTALL_TIME=$(tail -n 1 "$OAI_UE_FILE" | awk '{print $1}')
     else
         OAI_UE_INSTALL_TIME=""
     fi
 
     OAI_GNB_FILE="$BASE_DIR/OpenAirInterface_Testbed/Next_Generation_Node_B/install_time.txt"
     if [ -f "$OAI_GNB_FILE" ]; then
-        OAI_GNB_INSTALL_TIME=$(head -n 1 "$OAI_GNB_FILE" | awk '{print $1}')
+        OAI_GNB_INSTALL_TIME=$(tail -n 1 "$OAI_GNB_FILE" | awk '{print $1}')
     else
         OAI_GNB_INSTALL_TIME=""
     fi
 
     FLEXRIC_FILE="$BASE_DIR/RAN_Intelligent_Controllers/Flexible-RIC/install_time.txt"
     if [ -f "$FLEXRIC_FILE" ]; then
-        FLEXRIC_INSTALL_TIME=$(head -n 1 "$FLEXRIC_FILE" | awk '{print $1}')
+        FLEXRIC_INSTALL_TIME=$(tail -n 1 "$FLEXRIC_FILE" | awk '{print $1}')
     else
         FLEXRIC_INSTALL_TIME=""
     fi
 
     SRSRAN_GNB_FILE="$BASE_DIR/Next_Generation_Node_B/install_time.txt"
     if [ -f "$SRSRAN_GNB_FILE" ]; then
-        SRSRAN_GNB_INSTALL_TIME=$(head -n 1 "$SRSRAN_GNB_FILE" | awk '{print $1}')
+        SRSRAN_GNB_INSTALL_TIME=$(tail -n 1 "$SRSRAN_GNB_FILE" | awk '{print $1}')
     else
         SRSRAN_GNB_INSTALL_TIME=""
     fi
 
     SRSRAN_UE_FILE="$BASE_DIR/User_Equipment/install_time.txt"
     if [ -f "$SRSRAN_UE_FILE" ]; then
-        SRSRAN_UE_INSTALL_TIME=$(head -n 1 "$SRSRAN_UE_FILE" | awk '{print $1}')
+        SRSRAN_UE_INSTALL_TIME=$(tail -n 1 "$SRSRAN_UE_FILE" | awk '{print $1}')
     else
         SRSRAN_UE_INSTALL_TIME=""
     fi
 
     ORAN_RIC_FILE="$BASE_DIR/RAN_Intelligent_Controllers/Near-Real-Time-RIC/install_time.txt"
     if [ -f "$ORAN_RIC_FILE" ]; then
-        ORAN_RIC_INSTALL_TIME=$(head -n 1 "$ORAN_RIC_FILE" | awk '{print $1}')
+        ORAN_RIC_INSTALL_TIME=$(tail -n 1 "$ORAN_RIC_FILE" | awk '{print $1}')
     else
         ORAN_RIC_INSTALL_TIME=""
     fi
@@ -172,6 +171,9 @@ for I in $(seq 1 $NUM_SAMPLES); do
 
     cd "$BASE_DIR/5G_Core_Network"
     yq eval -i '.core_to_use = "open5gs"' options.yaml
+    ./full_uninstall.sh bypass_confirmation
+
+    cd "$BASE_DIR/5G_Core_Network/Additional_Cores_5GDeploy"
     ./full_uninstall.sh bypass_confirmation
 
     cd "$BASE_DIR/OpenAirInterface_Testbed"

@@ -30,10 +30,10 @@
 
 echo "# Script: $(realpath $0)..."
 
-kubectl get services -n ricplt | grep service-ricplt-appmgr
+kubectl get services -n corbin-oran | grep service-ricplt-appmgr
 
 # Fetch the service information using kubectl and grep, and extract the appmgr IP and port
-LINE=$(kubectl get services -n ricplt | grep service-ricplt-appmgr-http)
+LINE=$(kubectl get services -n corbin-oran | grep service-ricplt-appmgr-http)
 IP_APPMGR=$(echo $LINE | awk '{print $3}')
 PORT_APPMGR=$(echo $LINE | awk '{print $5}' | sed 's/\/.*//')
 

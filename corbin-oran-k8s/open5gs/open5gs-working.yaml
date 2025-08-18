@@ -1,0 +1,273 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: open5gs-nrf
+  namespace: corbin-oran
+  labels:
+    app: open5gs-nrf
+    component: open5gs
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: open5gs-nrf
+  template:
+    metadata:
+      labels:
+        app: open5gs-nrf
+        component: open5gs
+    spec:
+      containers:
+      - name: nrf
+        image: openverso/open5gs:latest
+        command: ["open5gs-nrfd"]
+        args: ["-c", "/open5gs/config/nrf.yaml"]
+        ports:
+        - containerPort: 7777
+          protocol: TCP
+        env:
+        - name: DB_URI
+          value: mongodb://mongodb-service:27017/open5gs
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "50m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        volumeMounts:
+        - name: nrf-config
+          mountPath: /open5gs/config/nrf.yaml
+          subPath: nrf.yaml
+      volumes:
+      - name: nrf-config
+        configMap:
+          name: open5gs-nrf-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: open5gs-nrf-service
+  namespace: corbin-oran
+  labels:
+    app: open5gs-nrf
+spec:
+  selector:
+    app: open5gs-nrf
+  ports:
+  - name: sbi
+    port: 7777
+    targetPort: 7777
+    protocol: TCP
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: open5gs-nrf-config
+  namespace: corbin-oran
+data:
+  nrf.yaml: |
+    db_uri: mongodb://mongodb-service:27017/open5gs
+    
+    nrf:
+      sbi:
+        - addr: 0.0.0.0
+          port: 7777
+      serving:
+        - plmn_id:
+            mcc: 001
+            mnc: 01
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: open5gs-smf
+  namespace: corbin-oran
+  labels:
+    app: open5gs-smf
+    component: open5gs
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: open5gs-smf
+  template:
+    metadata:
+      labels:
+        app: open5gs-smf
+        component: open5gs
+    spec:
+      containers:
+      - name: smf
+        image: openverso/open5gs:latest
+        command: ["open5gs-smfd"]
+        args: ["-c", "/open5gs/config/smf.yaml"]
+        ports:
+        - containerPort: 7777
+          protocol: TCP
+        - containerPort: 8805
+          protocol: UDP
+        env:
+        - name: DB_URI
+          value: mongodb://mongodb-service:27017/open5gs
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "300m"
+        volumeMounts:
+        - name: smf-config
+          mountPath: /open5gs/config/smf.yaml
+          subPath: smf.yaml
+      volumes:
+      - name: smf-config
+        configMap:
+          name: open5gs-smf-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: open5gs-smf-service
+  namespace: corbin-oran
+  labels:
+    app: open5gs-smf
+spec:
+  selector:
+    app: open5gs-smf
+  ports:
+  - name: sbi
+    port: 7777
+    targetPort: 7777
+    protocol: TCP
+  - name: pfcp
+    port: 8805
+    targetPort: 8805
+    protocol: UDP
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: open5gs-smf-config
+  namespace: corbin-oran
+data:
+  smf.yaml: |
+    db_uri: mongodb://mongodb-service:27017/open5gs
+    
+    smf:
+      sbi:
+        - addr: 0.0.0.0
+          port: 7777
+      pfcp:
+        - addr: 0.0.0.0
+          port: 8805
+      session:
+        - subnet: 10.45.0.1/16
+          gateway: 10.45.0.1
+          dnn: internet
+      dns:
+        - 8.8.8.8
+        - 8.8.4.4
+      upf:
+        - addr: open5gs-upf-service
+    
+    nrf:
+      sbi:
+        - addr: open5gs-nrf-service
+          port: 7777
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: open5gs-upf
+  namespace: corbin-oran
+  labels:
+    app: open5gs-upf
+    component: open5gs
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: open5gs-upf
+  template:
+    metadata:
+      labels:
+        app: open5gs-upf
+        component: open5gs
+    spec:
+      containers:
+      - name: upf
+        image: openverso/open5gs:latest
+        command: ["open5gs-upfd"]
+        args: ["-c", "/open5gs/config/upf.yaml"]
+        ports:
+        - containerPort: 2152
+          protocol: UDP
+        - containerPort: 8805
+          protocol: UDP
+        securityContext:
+          privileged: true
+          capabilities:
+            add:
+            - NET_ADMIN
+        env:
+        - name: DB_URI
+          value: mongodb://mongodb-service:27017/open5gs
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "300m"
+        volumeMounts:
+        - name: upf-config
+          mountPath: /open5gs/config/upf.yaml
+          subPath: upf.yaml
+      volumes:
+      - name: upf-config
+        configMap:
+          name: open5gs-upf-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: open5gs-upf-service
+  namespace: corbin-oran
+  labels:
+    app: open5gs-upf
+spec:
+  selector:
+    app: open5gs-upf
+  ports:
+  - name: gtpu
+    port: 2152
+    targetPort: 2152
+    protocol: UDP
+  - name: pfcp
+    port: 8805
+    targetPort: 8805
+    protocol: UDP
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: open5gs-upf-config
+  namespace: corbin-oran
+data:
+  upf.yaml: |
+    db_uri: mongodb://mongodb-service:27017/open5gs
+    
+    upf:
+      pfcp:
+        - addr: 0.0.0.0
+          port: 8805
+      gtpu:
+        - addr: 0.0.0.0
+          port: 2152
+      session:
+        - subnet: 10.45.0.1/16
+          gateway: 10.45.0.1
+        - subnet: 2001:db8:cafe::1/48
+          gateway: 2001:db8:cafe::1

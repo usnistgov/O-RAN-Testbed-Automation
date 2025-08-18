@@ -212,7 +212,7 @@ fi
 echo "Checking if any of the ricplt pods are not running..."
 if [ "$SHOULD_RESET_RIC" = false ]; then
     POD_NAMES=("ricplt-a1mediator" "ricplt-alarmmanager" "ricplt-appmgr" "ricplt-e2mgr" "ricplt-e2term" "ricplt-o1mediator" "ricplt-rtmgr" "ricplt-submgr" "ricplt-vespamgr" "r4-infrastructure-prometheus-alertmanager" "r4-infrastructure-prometheus-server")
-    ALL_PODS=$(kubectl get pods -n ricplt --no-headers 2>/dev/null) || true
+    ALL_PODS=$(kubectl get pods -n corbin-oran --no-headers 2>/dev/null) || true
     for POD_NAME in "${POD_NAMES[@]}"; do
         # Check for at least one pod with the part of the name matching and in 'RUNNING' or 'COMPLETED' status
         if ! echo "$ALL_PODS" | grep -e "$POD_NAME" | awk '{print $3}' | grep -q -e "Running" -e "Completed"; then

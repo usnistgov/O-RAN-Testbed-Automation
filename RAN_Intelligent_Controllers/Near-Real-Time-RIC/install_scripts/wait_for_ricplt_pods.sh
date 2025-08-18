@@ -92,7 +92,7 @@ wait_for_all_pods_running() {
         local PRINTED_E2TERM_MSG=0
         local NOT_READY_PODS=""
         if [ $ALREADY_TERMINATED_E2TERM -eq 0 ]; then
-            POD_STATUS=$(kubectl get pods -n ricplt --no-headers 2>/dev/null)
+            POD_STATUS=$(kubectl get pods -n corbin-oran --no-headers 2>/dev/null)
             NOT_READY_PODS=$(echo "$POD_STATUS" | awk '{
                 split($2, arr, "/");
                 if ($3 == "Terminating") next;
@@ -124,7 +124,7 @@ wait_for_all_pods_running() {
             echo
             echo "Sending signal to restart the e2term pod..."
             POD_NAME=$(echo "$NOT_READY_PODS" | grep "ricplt-e2term")
-            kubectl delete pod "$POD_NAME" -n ricplt >/dev/null 2>&1 &
+            kubectl delete pod "$POD_NAME" -n corbin-oran >/dev/null 2>&1 &
             ALREADY_TERMINATED_E2TERM=1
             PRINTED_E2TERM_MSG=0
             sleep 3

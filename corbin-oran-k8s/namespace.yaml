@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: corbin-oran
+  labels:
+    name: corbin-oran
+    purpose: o-ran-testbed
+    owner: gkim26
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: corbin-oran-quota
+  namespace: corbin-oran
+spec:
+  hard:
+    requests.cpu: "4"
+    requests.memory: 8Gi
+    limits.cpu: "8"
+    limits.memory: 16Gi
+    persistentvolumeclaims: "10"
+    pods: "20"

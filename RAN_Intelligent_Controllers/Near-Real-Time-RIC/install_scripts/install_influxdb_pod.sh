@@ -42,8 +42,8 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$PARENT_DIR"
 
-# Check if the influxDB pod already exists: kubectl get pods -n ricplt | grep r4-influxdb-influxdb2
-if kubectl get pods -n ricplt | grep r4-influxdb-influxdb2 &>/dev/null; then
+# Check if the influxDB pod already exists: kubectl get pods -n corbin-oran | grep r4-influxdb-influxdb2
+if kubectl get pods -n corbin-oran | grep r4-influxdb-influxdb2 &>/dev/null; then
     echo "The InfluxDB pod is already installed and running, skipping."
     exit 0
 fi

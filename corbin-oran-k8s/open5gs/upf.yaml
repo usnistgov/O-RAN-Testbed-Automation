@@ -1,0 +1,105 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: open5gs-upf
+  namespace: corbin-oran
+  labels:
+    app: open5gs-upf
+    component: open5gs
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: open5gs-upf
+  template:
+    metadata:
+      labels:
+        app: open5gs-upf
+        component: open5gs
+    spec:
+      containers:
+      - name: upf
+        image: ubuntu:22.04
+        command: 
+        - /bin/bash
+        - -c
+        - |
+          apt-get update && 
+          apt-get install -y software-properties-common wget gnupg iproute2 iptables &&
+          add-apt-repository ppa:open5gs/latest &&
+          apt-get update &&
+          apt-get install -y open5gs-upf &&
+          echo 'net.ipv4.ip_forward=1' >> /etc/sysctl.conf &&
+          sysctl -p &&
+          open5gs-upfd -c /etc/open5gs/upf.yaml -D
+        ports:
+        - containerPort: 2152
+          protocol: UDP
+        - containerPort: 8805
+          protocol: UDP
+        securityContext:
+          privileged: true
+          capabilities:
+            add:
+            - NET_ADMIN
+            - SYS_ADMIN
+        env:
+        - name: DB_URI
+          value: mongodb://mongodb-service:27017/open5gs
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "200m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        volumeMounts:
+        - name: upf-config
+          mountPath: /etc/open5gs/upf.yaml
+          subPath: upf.yaml
+      volumes:
+      - name: upf-config
+        configMap:
+          name: open5gs-upf-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: open5gs-upf-service
+  namespace: corbin-oran
+  labels:
+    app: open5gs-upf
+spec:
+  selector:
+    app: open5gs-upf
+  ports:
+  - name: gtpu
+    port: 2152
+    targetPort: 2152
+    protocol: UDP
+  - name: pfcp
+    port: 8805
+    targetPort: 8805
+    protocol: UDP
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: open5gs-upf-config
+  namespace: corbin-oran
+data:
+  upf.yaml: |
+    db_uri: mongodb://mongodb-service:27017/open5gs
+    
+    upf:
+      pfcp:
+        - addr: 0.0.0.0
+          port: 8805
+      gtpu:
+        - addr: 0.0.0.0
+          port: 2152
+      session:
+        - subnet: 10.45.0.1/16
+          gateway: 10.45.0.1
+        - subnet: 2001:db8:cafe::1/48
+          gateway: 2001:db8:cafe::1

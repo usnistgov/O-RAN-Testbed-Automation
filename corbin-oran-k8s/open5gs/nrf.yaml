@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: open5gs-nrf
+  namespace: corbin-oran
+  labels:
+    app: open5gs-nrf
+    component: open5gs
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: open5gs-nrf
+  template:
+    metadata:
+      labels:
+        app: open5gs-nrf
+        component: open5gs
+    spec:
+      containers:
+      - name: nrf
+        image: ubuntu:22.04
+        command: 
+        - /bin/bash
+        - -c
+        - |
+          apt-get update && 
+          apt-get install -y software-properties-common wget gnupg &&
+          add-apt-repository ppa:open5gs/latest &&
+          apt-get update &&
+          apt-get install -y open5gs-nrf &&
+          open5gs-nrfd -c /etc/open5gs/nrf.yaml -D
+        ports:
+        - containerPort: 7777
+          protocol: TCP
+        env:
+        - name: DB_URI
+          value: mongodb://mongodb-service:27017/open5gs
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "300m"
+        volumeMounts:
+        - name: nrf-config
+          mountPath: /etc/open5gs/nrf.yaml
+          subPath: nrf.yaml
+      volumes:
+      - name: nrf-config
+        configMap:
+          name: open5gs-nrf-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: open5gs-nrf-service
+  namespace: corbin-oran
+  labels:
+    app: open5gs-nrf
+spec:
+  selector:
+    app: open5gs-nrf
+  ports:
+  - name: sbi
+    port: 7777
+    targetPort: 7777
+    protocol: TCP
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: open5gs-nrf-config
+  namespace: corbin-oran
+data:
+  nrf.yaml: |
+    db_uri: mongodb://mongodb-service:27017/open5gs
+    
+    nrf:
+      sbi:
+        - addr: 0.0.0.0
+          port: 7777
+      serving:
+        - plmn_id:
+            mcc: 001
+            mnc: 01

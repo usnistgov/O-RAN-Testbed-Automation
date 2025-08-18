@@ -40,4 +40,4 @@ echo -e "  ZRANGE <sorted-set-name> 0 -1 WITHSCORES\tIf key is a sorted set, lis
 echo -e "  SCAN 0\t\t\t\tIteratively lists keys in the database in a cursor-based manner"
 echo -e "\nType 'exit' to leave the Redis CLI and return to your shell."
 
-kubectl exec -n ricplt -it statefulset-ricplt-dbaas-server-0 -c container-ricplt-dbaas-redis -- redis-cli
+kubectl exec -n corbin-oran -it statefulset-ricplt-dbaas-server-0 -c container-ricplt-dbaas-redis -- redis-cli

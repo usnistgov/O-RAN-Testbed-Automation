@@ -1,0 +1,25 @@
+nearrtric:
+  persistence:
+    mountPath: /tmp/dockerdata-nfs
+  
+  # 필수 컴포넌트들 활성화
+  installA1Mediator: true
+  installAlarmManager: true  
+  installJaegerAdapter: false
+  installO1Mediator: false
+  installVespamgr: false
+  installXappOnboarder: true
+  
+  # Third Party Components
+  installInfluxDB: true
+  
+  # 볼륨 설정 (로컬 스토리지 사용)
+  volume1:
+    size: 2Gi
+    storageClassName: local-path
+  volume2:
+    size: 2Gi  
+    storageClassName: local-path
+  volume3:
+    size: 2Gi
+    storageClassName: local-path

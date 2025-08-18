@@ -1,0 +1,141 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: open5gs-docker-amf
+  namespace: corbin-oran
+  labels:
+    app: open5gs-docker
+    component: amf
+spec:
+  type: ExternalName
+  externalName: host.docker.internal
+  ports:
+  - name: ngap
+    port: 38412
+    targetPort: 38412
+    protocol: TCP
+  - name: sbi
+    port: 7777
+    targetPort: 7777
+    protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: open5gs-docker-smf
+  namespace: corbin-oran
+  labels:
+    app: open5gs-docker
+    component: smf
+spec:
+  type: ExternalName
+  externalName: host.docker.internal
+  ports:
+  - name: sbi
+    port: 7777
+    targetPort: 7777
+    protocol: TCP
+  - name: pfcp
+    port: 8805
+    targetPort: 8805
+    protocol: UDP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: open5gs-docker-upf
+  namespace: corbin-oran
+  labels:
+    app: open5gs-docker
+    component: upf
+spec:
+  type: ExternalName
+  externalName: host.docker.internal
+  ports:
+  - name: gtpu
+    port: 2152
+    targetPort: 2152
+    protocol: UDP
+  - name: pfcp
+    port: 8805
+    targetPort: 8805
+    protocol: UDP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: open5gs-docker-webui
+  namespace: corbin-oran
+  labels:
+    app: open5gs-docker
+    component: webui
+spec:
+  type: NodePort
+  externalName: host.docker.internal
+  ports:
+  - name: http
+    port: 9999
+    targetPort: 9999
+    nodePort: 30999
+    protocol: TCP
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: open5gs-docker-amf
+  namespace: corbin-oran
+subsets:
+- addresses:
+  - ip: 10.53.1.2  # srsRAN Docker Network의 Open5GS IP
+  ports:
+  - name: ngap
+    port: 38412
+    protocol: TCP
+  - name: sbi
+    port: 7777
+    protocol: TCP
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: open5gs-docker-smf
+  namespace: corbin-oran
+subsets:
+- addresses:
+  - ip: 10.53.1.2
+  ports:
+  - name: sbi
+    port: 7777
+    protocol: TCP
+  - name: pfcp
+    port: 8805
+    protocol: UDP
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: open5gs-docker-upf
+  namespace: corbin-oran
+subsets:
+- addresses:
+  - ip: 10.53.1.2
+  ports:
+  - name: gtpu
+    port: 2152
+    protocol: UDP
+  - name: pfcp
+    port: 8805
+    protocol: UDP
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: open5gs-docker-webui
+  namespace: corbin-oran
+subsets:
+- addresses:
+  - ip: 10.53.1.2
+  ports:
+  - name: http
+    port: 9999
+    protocol: TCP

@@ -52,7 +52,7 @@ echo "Starting a new container 'oransim'..."
 sudo rm -rf $OUTPUT_FILE
 docker run -d -it --name oransim -e RAN_FUNC_ID="$RAN_FUNC_ID" -v "$(pwd)/logs:/app/logs" oransim:0.0.999
 
-kubectl get svc -n ricplt | grep e2term-sctp || true
+kubectl get svc -n corbin-oran | grep e2term-sctp || true
 
 # Get the IP and port of the E2 termination point inside the near Real Time RIC
 SERVICE_NAME="service-ricplt-e2term-sctp"
@@ -66,7 +66,7 @@ KPM_MAX_RESTARTS=3
 # Monitor output file for a success message
 while true; do
     if [ -z "$LINE" ]; then
-        LINE=$(kubectl get svc -n ricplt | grep $SERVICE_NAME)
+        LINE=$(kubectl get svc -n corbin-oran | grep $SERVICE_NAME)
         IP_E2TERM=$(echo $LINE | awk '{print $3}')
         PORT_E2TERM=$(echo $LINE | awk '{print $5}' | sed 's/:.*//')
         echo "IP for $SERVICE_NAME: $IP_E2TERM"
@@ -74,7 +74,7 @@ while true; do
     fi
     if [ -z "$IP_E2TERM" ] || [ -z "$PORT_E2TERM" ]; then
         echo "Could not find service $SERVICE_NAME. IP or PORT is missing. Services:"
-        kubectl get svc -n ricplt
+        kubectl get svc -n corbin-oran
         echo "Retrying in 8 seconds..."
         sleep 8
         continue
@@ -125,7 +125,7 @@ done
 stty sane || true
 
 SERVICE_NAME="service-ricplt-e2mgr-http"
-LINE=$(kubectl get svc -n ricplt | grep $SERVICE_NAME || echo "")
+LINE=$(kubectl get svc -n corbin-oran | grep $SERVICE_NAME || echo "")
 IP_HTTP_E2TERM=$(echo $LINE | awk '{print $3}')
 PORT_HTTP_E2TERM=$(echo $LINE | awk '{print $5}' | sed 's/\/.*//' | cut -d: -f2)
 echo "$IP_HTTP_E2TERM:$PORT_HTTP_E2TERM"

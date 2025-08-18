@@ -1,0 +1,109 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: open5gs-smf
+  namespace: corbin-oran
+  labels:
+    app: open5gs-smf
+    component: open5gs
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: open5gs-smf
+  template:
+    metadata:
+      labels:
+        app: open5gs-smf
+        component: open5gs
+    spec:
+      containers:
+      - name: smf
+        image: ubuntu:22.04
+        command: 
+        - /bin/bash
+        - -c
+        - |
+          apt-get update && 
+          apt-get install -y software-properties-common wget gnupg &&
+          add-apt-repository ppa:open5gs/latest &&
+          apt-get update &&
+          apt-get install -y open5gs-smf &&
+          open5gs-smfd -c /etc/open5gs/smf.yaml -D
+        ports:
+        - containerPort: 7777
+          protocol: TCP
+        - containerPort: 8805
+          protocol: UDP
+        env:
+        - name: DB_URI
+          value: mongodb://mongodb-service:27017/open5gs
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "300m"
+        volumeMounts:
+        - name: smf-config
+          mountPath: /etc/open5gs/smf.yaml
+          subPath: smf.yaml
+      volumes:
+      - name: smf-config
+        configMap:
+          name: open5gs-smf-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: open5gs-smf-service
+  namespace: corbin-oran
+  labels:
+    app: open5gs-smf
+spec:
+  selector:
+    app: open5gs-smf
+  ports:
+  - name: sbi
+    port: 7777
+    targetPort: 7777
+    protocol: TCP
+  - name: pfcp
+    port: 8805
+    targetPort: 8805
+    protocol: UDP
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: open5gs-smf-config
+  namespace: corbin-oran
+data:
+  smf.yaml: |
+    db_uri: mongodb://mongodb-service:27017/open5gs
+    
+    smf:
+      sbi:
+        - addr: 0.0.0.0
+          port: 7777
+      pfcp:
+        - addr: 0.0.0.0
+          port: 8805
+      session:
+        - subnet: 10.45.0.1/16
+          gateway: 10.45.0.1
+          dnn: internet
+        - subnet: 2001:db8:cafe::1/48
+          gateway: 2001:db8:cafe::1
+          dnn: internet
+      dns:
+        - 8.8.8.8
+        - 8.8.4.4
+      upf:
+        - addr: open5gs-upf-service
+    
+    nrf:
+      sbi:
+        - addr: open5gs-nrf-service
+          port: 7777

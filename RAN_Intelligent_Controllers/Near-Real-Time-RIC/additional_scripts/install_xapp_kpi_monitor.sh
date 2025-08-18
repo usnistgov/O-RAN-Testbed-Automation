@@ -44,7 +44,7 @@ cd "$PARENT_DIR"
 # Run a sudo command every minute to ensure script execution without user interaction
 ./install_scripts/start_sudo_refresh.sh
 
-if ! kubectl get pods -n ricplt | grep r4-influxdb-influxdb2 &>/dev/null; then
+if ! kubectl get pods -n corbin-oran | grep r4-influxdb-influxdb2 &>/dev/null; then
     echo "The InfluxDB pod is not running, installing it..."
     ./install_scripts/install_influxdb_pod.sh
 fi
@@ -73,7 +73,7 @@ cd kpimon-go
 INFLUXDB_TOKEN_PATH="$PARENT_DIR/influxdb_auth_token.json"
 if [ ! -f "$INFLUXDB_TOKEN_PATH" ]; then
     echo "Creating an InfluxDB token to influxdb_auth_token.json..."
-    kubectl exec -it r4-influxdb-influxdb2-0 --namespace ricplt -- influx auth create --org influxdata --all-access --json >"$INFLUXDB_TOKEN_PATH"
+    kubectl exec -it r4-influxdb-influxdb2-0 --namespace corbin-oran -- influx auth create --org influxdata --all-access --json >"$INFLUXDB_TOKEN_PATH"
 fi
 INFLUXDB_TOKEN=$(jq -r '.token' "$INFLUXDB_TOKEN_PATH")
 
@@ -102,7 +102,7 @@ if grep -qE '^[[:space:]]*create_db\(\)' control/control.go; then
 fi
 # Create the bucket here instead of in the control.go file:
 echo "Creating the 'kpimon' bucket in the 'influxdata' organization if it does not exist..."
-kubectl exec -n ricplt -it r4-influxdb-influxdb2-0 -- influx bucket create --org influxdata --name kpimon --json || true
+kubectl exec -n corbin-oran -it r4-influxdb-influxdb2-0 -- influx bucket create --org influxdata --name kpimon --json || true
 
 # Set influxdb2.NewClient("http://r4-influxdb-influxdb2.ricplt:80", "$INFLUXDB_TOKEN")
 if grep -q "influxdb2.NewClient(" control/control.go; then

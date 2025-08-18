@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: open5gs-smf
+  namespace: corbin-oran
+  labels:
+    app: open5gs-smf
+    component: open5gs
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: open5gs-smf
+  template:
+    metadata:
+      labels:
+        app: open5gs-smf
+        component: open5gs
+    spec:
+      containers:
+      - name: smf
+        image: openverso/open5gs:latest
+        command: ["open5gs-smfd"]
+        args: ["-c", "/open5gs/config/smf.yaml"]
+        ports:
+        - containerPort: 7777
+          protocol: TCP
+        - containerPort: 8805
+          protocol: UDP
+        env:
+        - name: DB_URI
+          value: mongodb://mongodb-service:27017/open5gs
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "300m"
+        volumeMounts:
+        - name: smf-config
+          mountPath: /open5gs/config/smf.yaml
+          subPath: smf.yaml
+      volumes:
+      - name: smf-config
+        configMap:
+          name: open5gs-smf-config

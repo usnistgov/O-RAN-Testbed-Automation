@@ -44,7 +44,7 @@ cd "$PARENT_DIR"
 # Run a sudo command every minute to ensure script execution without user interaction
 ./install_scripts/start_sudo_refresh.sh
 
-if ! kubectl get pods -n ricplt | grep r4-influxdb-influxdb2 &>/dev/null; then
+if ! kubectl get pods -n corbin-oran | grep r4-influxdb-influxdb2 &>/dev/null; then
     echo "The InfluxDB pod is not running, installing it..."
     ./install_scripts/install_influxdb_pod.sh
 fi

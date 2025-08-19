@@ -16,7 +16,7 @@ The automation tool can be used in virtual machines and physical machines with t
   </picture>
 </p>
 
-This tool supports the deployment of 5G O-RAN testbeds using open-source components in two main scenarios: srsRAN with O-RAN SC's Near-RT RIC, and OpenAirInterface with Mosaic5G's FlexRIC. Below is the list of the supported testbed open-source components.
+This tool supports the deployment of 5G O-RAN testbeds using open-source components in two main scenarios: Software Radio Systems with O-RAN SC's Near-RT RIC, and OpenAirInterface with Mosaic5G's FlexRIC. Below is the list of the supported testbed open-source components.
 
 ```text
 CU/DU
@@ -27,7 +27,7 @@ RICs
 ├── O-RAN SC Near-RT RIC: L-release
 │   └── xApps
 │       ├── Hello World xApps (Go, Python, and Rust)
-│       ├── KPI Monitor xApp
+│       ├── KPM Monitor xApp
 │       ├── 5G Cell Anomaly Detection xApp
 │       ├── Anomaly Detection xApp
 │       ├── Quality of Experience Predictor xApp
@@ -35,7 +35,7 @@ RICs
 │       └── Traffic Steering xApp
 ├── FlexRIC: v2.0.0
 │   └── xApps
-│       ├── KPI Monitor xApp
+│       ├── KPM Monitor xApp (to console, CSV, or InfluxDB)
 │       ├── MAC + RLC + PDCP + GTP Monitor xApp
 │       ├── RIC Control xApp
 │       └── RIC Control Monitor xApp
@@ -137,7 +137,7 @@ Begin the installation process, recommended to be run as the current user rather
 ```
 
 <details>
-  <summary><b>O-RAN SC Near-RT RIC and srsRAN Output</b></summary>
+  <summary><b>Software Radio Systems and O-RAN SC Near-RT RIC Output</b></summary>
   <hr>
 
 Run the testbed with `./run.sh` to start the 5G Core and gNodeB as background processes, and the UE in the foreground. Use `./is_running.sh` to check if the components are running, and `./stop.sh` to stop the components. The RIC starts automatically on boot and can be accessed with `k9s -A`.
@@ -164,7 +164,7 @@ See <a href="RAN_Intelligent_Controllers/Near-Real-Time-RIC#migration-to-cilium"
   <summary><b>OpenAirInterface and FlexRIC Output</b></summary>
   <hr>
 
-Run the testbed with `./run.sh` to start the 5G Core, FlexRIC, gNodeB, and UE as background processes, and the KPI monitoring xApp in the foreground. Use `./is_running.sh` to check if the components are running, and `./stop.sh` to stop the components.
+Run the testbed with `./run.sh` to start the 5G Core, FlexRIC, gNodeB, and UE as background processes, and the KPM monitoring xApp in the foreground. Use `./is_running.sh` to check if the components are running, and `./stop.sh` to stop the components.
 
 ```console
 8 KPM ind_msg latency = 600 [μs]
@@ -181,11 +181,11 @@ RSRP = -44.00 [dBm]
 ...
 ```
 
-<b>Supplementary Dashboard for KPI Visualization</b><p align="center">
-  <img src="Images/xApp_Dashboard.png" alt="Grafana dashboard of xApp KPI metrics" width="75%">
+<b>Supplementary Dashboard for KPM Visualization</b><p align="center">
+  <img src="Images/xApp_Dashboard.png" alt="Grafana dashboard of xApp KPM metrics" width="75%">
 </p>
 
-See <a href="OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC#kpi-monitor-visualization-in-grafana">this section</a> for the set up guide.
+See <a href="OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC#kpm-monitor-visualization-in-grafana">this section</a> for the set up guide.
 </details>
 
 ---
@@ -272,4 +272,3 @@ USNISTGOV/O-RAN-Testbed-Automation is developed and maintained by the NIST Wirel
 [nist-oran]: https://www.nist.gov/programs-projects/Open-RAN-Research-NIST
 [gh-nsd]: ./NIST%20Software%20Disclaimer.md
 [gh-license]: ./LICENSE
-

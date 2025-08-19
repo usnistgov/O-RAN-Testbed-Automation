@@ -28,13 +28,19 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
+APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
-    sudo apt-get install -y coreutils
+    sudo $APTVARS apt-get install -y coreutils
 fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
+
+USE_SYSTEMCTL=$(yq eval '.use_systemctl' options.yaml)
+if [[ "$USE_SYSTEMCTL" == "null" || -z "$USE_SYSTEMCTL" ]]; then
+    USE_SYSTEMCTL="true" # Default
+fi
 
 # Latest components (see https://open5gs.org/open5gs/docs/guide/01-quickstart/#:~:text=Starting%20and%20Stopping%20Open5GS)
 APPS=("mmed" "sgwcd" "smfd" "amfd" "sgwud" "upfd" "hssd" "pcrfd" "nrfd" "scpd" "seppd" "ausfd" "udmd" "pcfd" "nssfd" "bsfd" "udrd" "webui")
@@ -44,7 +50,11 @@ for APP in "${APPS[@]}"; do
     if [ "$APP" != "webui" ]; then
         sudo pkill -x "open5gs-$APP" && echo "Component open5gs-$APP has stopped gracefully."
     else
-        sudo systemctl stop "open5gs-$APP.service" 2>/dev/null
+        if [[ "$USE_SYSTEMCTL" == "true" ]]; then
+            sudo systemctl stop "open5gs-$APP.service" 2>/dev/null
+        else
+            sudo pkill -x "open5gs-$APP" && echo "Component open5gs-$APP has stopped gracefully."
+        fi
     fi
 done
 

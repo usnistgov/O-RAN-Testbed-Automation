@@ -28,9 +28,10 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
+APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
-    sudo apt-get install -y coreutils
+    sudo $APTVARS apt-get install -y coreutils
 fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
@@ -88,8 +89,12 @@ if ! ip netns list | grep -q "$UE_NAMESPACE"; then
 fi
 
 LOG_FILE="logs/ue${UE_NUMBER}_stdout.txt"
-PDU_SESSION_IP=$(grep "PDU Session Establishment successful" "$LOG_FILE" | cut -d ':' -f2 | xargs | tr -cd '[:print:]')
+PDU_SESSION_IP=$(cat $LOG_FILE | grep "PDU Session Establishment successful" | cut -d ':' -f2 | xargs | tr -d '\r\n')
 CORE_IP=$(ip route | grep ogstun | cut -d ' ' -f 9 | xargs)
+if [ -z "$CORE_IP" ]; then
+    echo "Error: Could not find 'ogstun' interface. Please ensure the core is running and the interface exists."
+    exit 1
+fi
 
 if [ -z "$PDU_SESSION_IP" ]; then
     echo "Error: Unable to find PDU Session IP from the log file $LOG_FILE."
@@ -109,7 +114,7 @@ fi
 
 if ! command -v iperf &>/dev/null; then
     echo "Package \"iperf\" not found, installing..."
-    sudo apt-get install -y iperf
+    sudo $APTVARS apt-get install -y iperf
 fi
 
 sudo ip netns exec ue$UE_NUMBER iperf -c $CORE_IP -u -i 1 -b $BANDWIDTH -t $DURATION

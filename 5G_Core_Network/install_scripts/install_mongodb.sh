@@ -31,7 +31,10 @@
 echo "# Script: $(realpath $0)..."
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
-cd "$(dirname "$SCRIPT_DIR")"
+PARENT_DIR=$(dirname "$SCRIPT_DIR")
+cd "$PARENT_DIR"
+
+APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 
 UBUNTU_CODENAME=$(./install_scripts/get_ubuntu_codename.sh)
 INSTALLED_VERSION=$(mongod --version 2>/dev/null | grep -oP "(?<=v)\d+\.\d+\.\d+") || true
@@ -96,7 +99,7 @@ else
     fi
 
     echo "Installing gnupg and curl if not already installed..."
-    sudo apt-get install -y gnupg curl || {
+    sudo $APTVARS apt-get install -y gnupg curl || {
         echo "Failed to install GnuPG or curl"
         exit 1
     }
@@ -125,13 +128,13 @@ else
     fi
 
     echo "Attempting to install MongoDB 4.4..."
-    if ! sudo apt-get install -y --allow-change-held-packages mongodb-org=4.4.* mongodb-org-server=4.4.* mongodb-org-shell=4.4.* mongodb-org-mongos=4.4.* mongodb-org-tools=4.4.*; then
+    if ! sudo $APTVARS apt-get install -y --allow-change-held-packages mongodb-org=4.4.* mongodb-org-server=4.4.* mongodb-org-shell=4.4.* mongodb-org-mongos=4.4.* mongodb-org-tools=4.4.*; then
         echo "Initial MongoDB installation failed. Attempting to fix broken installations..."
         sudo apt-get --fix-broken install
         sudo apt-get autoremove -y
         sudo apt-get clean
         echo "Trying to install MongoDB 4.4 again..."
-        if ! sudo apt-get install -y --allow-change-held-packages mongodb-org=4.4.* mongodb-org-server=4.4.* mongodb-org-shell=4.4.* mongodb-org-mongos=4.4.* mongodb-org-tools=4.4.*; then
+        if ! sudo $APTVARS apt-get install -y --allow-change-held-packages mongodb-org=4.4.* mongodb-org-server=4.4.* mongodb-org-shell=4.4.* mongodb-org-mongos=4.4.* mongodb-org-tools=4.4.*; then
             echo "Failed to install MongoDB 4.4 after attempting repairs. Exiting script."
             exit 1
         fi
@@ -139,7 +142,7 @@ else
 fi
 
 echo "Attempting to install mongosh..."
-if ! sudo apt-get install -y --allow-change-held-packages mongosh; then
+if ! sudo $APTVARS apt-get install -y --allow-change-held-packages mongosh; then
     echo "Failed initial attempt to install mongosh. Adding MongoDB 5.0 repository for mongosh..."
     # Import the MongoDB 5.0 public key
     if ! curl -fsSL https://www.mongodb.org/static/pgp/server-5.0.asc | sudo apt-key add -; then
@@ -156,13 +159,13 @@ if ! sudo apt-get install -y --allow-change-held-packages mongosh; then
     done
 
     sudo apt-get update
-    if ! sudo apt-get install -y --allow-change-held-packages mongodb-mongosh; then
+    if ! sudo $APTVARS apt-get install -y --allow-change-held-packages mongodb-mongosh; then
         echo "Failed to install mongosh even from MongoDB 5.0 repository. Attempting to fix broken installations..."
         sudo apt-get --fix-broken install
         sudo apt-get autoremove -y
         sudo apt-get clean
         echo "Trying to install mongosh again..."
-        if ! sudo apt-get install -y --allow-change-held-packages mongodb-mongosh; then
+        if ! sudo $APTVARS apt-get install -y --allow-change-held-packages mongodb-mongosh; then
             echo "An error occured. Running dpkg --configure -a to ensure all packages are properly configured..."
             sudo dpkg --configure -a || true
             echo "Failed to install mongosh after attempting repairs. Exiting script."
@@ -225,21 +228,5 @@ fi
 sudo mkdir -p /var/lib/mongodb /var/log/mongodb
 sudo chown -R mongodb:mongodb /var/lib/mongodb /var/log/mongodb
 
-# Point mongodb to the correct configuration file
-sudo sed -i "s|ExecStart=/usr/bin/mongod --config .*|ExecStart=/usr/bin/mongod --config $CONFIG_FILE|" /lib/systemd/system/mongod.service
-sudo systemctl daemon-reload
-
-echo "Checking MongoDB service..."
-if ! sudo systemctl is-active --quiet mongod; then
-    echo "Starting MongoDB service..."
-    sudo systemctl start mongod
-else
-    echo "MongoDB service is already running."
-fi
-
-if ! sudo systemctl is-enabled --quiet mongod; then
-    echo "Enabling MongoDB service to start on boot..."
-    sudo systemctl enable mongod
-else
-    echo "MongoDB service is already enabled to start on boot."
-fi
+echo "Enabling MongoDB service..."
+sudo ./install_scripts/start_mongodb.sh

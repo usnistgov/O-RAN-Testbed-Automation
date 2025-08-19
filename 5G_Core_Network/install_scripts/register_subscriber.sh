@@ -28,9 +28,10 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
+APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
-    sudo apt-get install -y coreutils
+    sudo $APTVARS apt-get install -y coreutils
 fi
 
 echo "# Script: $(realpath $0)..."
@@ -49,10 +50,7 @@ DEFAULT_APN="internet"
 DEFAULT_SST=""
 DEFAULT_SD=""
 
-if ! systemctl is-active --quiet "open5gs-webui"; then
-    echo "WebUI not running. Starting..."
-    sudo systemctl start open5gs-webui
-fi
+./start_webui.sh no-browser
 
 # Function to display usage
 usage() {

@@ -33,9 +33,10 @@ set -e
 
 UE_NUMBERS=(3 2 1) # Subscribers from UE 3 to UE 1
 
+APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
-    sudo apt-get install -y coreutils
+    sudo $APTVARS apt-get install -y coreutils
 fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
@@ -44,6 +45,12 @@ cd "$SCRIPT_DIR"
 # Check if the YAML editor is installed, and install it if not
 if ! command -v yq &>/dev/null; then
     sudo "$SCRIPT_DIR/install_scripts/./install_yq.sh"
+fi
+# Check that the correct version of yq is installed
+if ! yq --version 2>/dev/null | grep -q 'https://github\.com/mikefarah/yq'; then
+    echo "ERROR: Detected an incompatible yq installation."
+    echo "Please ensure the Python yq is uninstalled with \"pip uninstall -y yq\", then re-run this script."
+    exit 1
 fi
 
 echo "Parsing options.yaml..."
@@ -77,6 +84,9 @@ if [ ! -f "options.yaml" ]; then
     echo "" >>"options.yaml"
     echo "ogstun3_ipv4: 10.47.0.0/16" >>"options.yaml"
     echo "ogstun3_ipv6: 2001:db8:face::/48" >>"options.yaml"
+    echo "" >>"options.yaml"
+    echo "# The use of systemctl can be disabled to support installations within Docker. Before changing this value, it is recommended to uninstall the testbed." >>"options.yaml"
+    echo "use_systemctl: true" >>"options.yaml"
 fi
 
 # If expose_amf_over_hostname is false, AMF will use the default 127.0.0.5, otherwise, it will use the hostname IP
@@ -127,6 +137,12 @@ fi
 echo "Creating configs directory..."
 rm -rf configs
 mkdir configs
+
+MONGODB_CONFIG_FILE="/etc/mongod/mongod.conf"
+if [ -f "$MONGODB_CONFIG_FILE" ]; then
+    echo "Creating symbolic link for MongoDB configuration file..."
+    sudo ln -s "$MONGODB_CONFIG_FILE" configs/mongod.conf
+fi
 
 # Only remove the logs if no component is running
 RUNNING_STATUS=$(./is_running.sh)

@@ -28,9 +28,10 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
+APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
-    sudo apt-get install -y coreutils
+    sudo $APTVARS apt-get install -y coreutils
 fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
@@ -165,8 +166,8 @@ APPS=("mmed" "sgwcd" "smfd" "amfd" "sgwud" "upfd" "hssd" "pcrfd" "nrfd" "scpd" "
 # Check if the last application is 'webui'
 if [ "${APPS[-1]}" == "webui" ]; then
     unset APPS[-1]
-    echo "Starting webui service..."
-    sudo systemctl start open5gs-webui
+    echo "Starting Open5GS WebUI..."
+    ./start_webui.sh no-browser
 fi
 
 if [[ $1 == "show" ]]; then

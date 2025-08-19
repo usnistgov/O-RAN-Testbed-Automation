@@ -31,25 +31,28 @@
 # Do not exit immediately if a command fails
 set +e
 
-clear
-echo "This script will remove Open5GS, srsRAN_Project, srsRAN_4G, and the Near-RT RIC by removing Docker and Kubernetes."
-echo "This is a destructive operation and may result in data loss."
-echo "Please ensure you have backed up any necessary data before proceeding."
-echo
-echo "Do you want to proceed? (yes/no)"
-read -r PROCEED
-if [ "$PROCEED" != "yes" ]; then
-    echo "Exiting script."
-    exit 0
-fi
-
-if ! command -v realpath &>/dev/null; then
-    echo "Package \"coreutils\" not found, installing..."
-    sudo apt-get install -y coreutils
-fi
-
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
+
+if [ "$1" != "bypass_confirmation" ]; then
+    clear
+    echo "This script will remove Open5GS, srsRAN_Project, srsRAN_4G, and the Near-RT RIC by removing Docker and Kubernetes."
+    echo "This is a destructive operation and may result in data loss."
+    echo "Please ensure you have backed up any necessary data before proceeding."
+    echo
+    echo "Do you want to proceed? (yes/no)"
+    read -r PROCEED
+    if [ "$PROCEED" != "yes" ]; then
+        echo "Exiting script."
+        exit 0
+    fi
+fi
+
+APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
+if ! command -v realpath &>/dev/null; then
+    echo "Package \"coreutils\" not found, installing..."
+    sudo $APTVARS apt-get install -y coreutils
+fi
 
 echo "Stopping 5G Core Network, srsRAN_Project, and srsRAN_4G..."
 ./stop.sh

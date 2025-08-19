@@ -31,9 +31,10 @@
 # Exit immediately if a command fails
 set -e
 
+APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
-    sudo apt-get install -y coreutils
+    sudo $APTVARS apt-get install -y coreutils
 fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
@@ -67,6 +68,12 @@ done
 # Check if the YAML editor is installed, and install it if not
 if ! command -v yq &>/dev/null; then
     sudo "$SCRIPT_DIR/install_scripts/./install_yq.sh"
+fi
+# Check that the correct version of yq is installed
+if ! yq --version 2>/dev/null | grep -q 'https://github\.com/mikefarah/yq'; then
+    echo "ERROR: Detected an incompatible yq installation."
+    echo "Please ensure the Python yq is uninstalled with \"pip uninstall -y yq\", then re-run this script."
+    exit 1
 fi
 
 echo "Saving configuration file example..."
@@ -238,6 +245,14 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
 
     # Update configuration values for GUI
     update_conf "configs/ue${UE_NUMBER}.conf" "gui" "enable" "false"
+
+    if [ $UE_NUMBER -gt 3 ]; then
+        echo "UE is greater than registered subscribers, registering UE $UE_NUMBER..."
+        REGISTRATION_DIR=$(dirname "$SCRIPT_DIR")/5G_Core_Network/install_scripts
+        if [ -f "$REGISTRATION_DIR/./register_subscriber.sh" ]; then
+            "$REGISTRATION_DIR/./register_subscriber.sh" --imsi "$UE_IMSI" --key "$UE_KEY" --opc "$UE_OPC" --apn "$DNN" || true
+        fi
+    fi
 
     echo
     echo "Successfully configured UE ${UE_NUMBER}."

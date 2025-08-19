@@ -26,3 +26,6 @@ ogstun2_ipv6: 2001:db8:babe::/48
 
 ogstun3_ipv4: 10.47.0.0/16
 ogstun3_ipv6: 2001:db8:face::/48
+
+# The use of systemctl can be disabled to support installations within Docker. Before changing this value, it is recommended to uninstall the testbed.
+use_systemctl: true

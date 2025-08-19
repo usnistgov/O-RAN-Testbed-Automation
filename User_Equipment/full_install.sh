@@ -31,9 +31,10 @@
 # Exit immediately if a command fails
 set -e
 
+APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
-    sudo apt-get install -y coreutils
+    sudo $APTVARS apt-get install -y coreutils
 fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
@@ -78,28 +79,28 @@ if ! sudo apt-get update; then
 fi
 
 echo "Installing User Equipment..."
-export DEBIAN_FRONTEND=noninteractive
 # Modifies the needrestart configuration to suppress interactive prompts
-if [ -f "/etc/needrestart/needrestart.conf" ]; then
-    if ! grep -q "^\$nrconf{restart} = 'a';$" "/etc/needrestart/needrestart.conf"; then
-        sudo sed -i "/\$nrconf{restart} = /c\$nrconf{restart} = 'a';" "/etc/needrestart/needrestart.conf"
-        echo "Modified needrestart configuration to auto-restart services."
-    fi
+if [ -d /etc/needrestart ]; then
+    sudo install -d -m 0755 /etc/needrestart/conf.d
+    sudo tee /etc/needrestart/conf.d/99-no-auto-restart.conf >/dev/null <<'EOF'
+# Disable automatic restarts during apt operations
+$nrconf{restart} = 'l';
+EOF
+    echo "Configured needrestart to list-only (no service restarts)."
 fi
-export NEEDRESTART_SUSPEND=1
 
 # Code from (https://docs.srsran.com/projects/4g/en/latest/general/source/1_installation.html#installation-from-source):
-sudo apt-get install -y build-essential cmake cmake-data libfftw3-dev libmbedtls-dev libboost-program-options-dev libconfig++-dev libsctp-dev
+sudo $APTVARS apt-get install -y build-essential cmake cmake-data libfftw3-dev libmbedtls-dev libboost-program-options-dev libconfig++-dev libsctp-dev
 
-sudo apt-get install -y libboost-all-dev
-sudo apt-get install -y libuhd-dev
-sudo apt-get install -y uhd-host
-sudo apt-get install -y libdw-dev libbfd-dev libdwarf-dev
-sudo apt-get install -y libyaml-cpp-dev
-sudo apt-get install -y libgtest-dev
-sudo apt-get install -y libtool
+sudo $APTVARS apt-get install -y libboost-all-dev
+sudo $APTVARS apt-get install -y libuhd-dev
+sudo $APTVARS apt-get install -y uhd-host
+sudo $APTVARS apt-get install -y libdw-dev libbfd-dev libdwarf-dev
+sudo $APTVARS apt-get install -y libyaml-cpp-dev
+sudo $APTVARS apt-get install -y libgtest-dev
+sudo $APTVARS apt-get install -y libtool
 # Enable SCTP
-sudo apt-get install -y libsctp-dev
+sudo $APTVARS apt-get install -y libsctp-dev
 # Check if SCTP is available and load it if necessary
 if ! lsmod | grep -q sctp; then
     echo "Loading SCTP module..."
@@ -119,7 +120,7 @@ if [[ -z "$GCC_VERSION" || ! "$GCC_VERSION" == 13.* ]]; then
     echo "Installing GCC 13..."
     sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
     sudo apt-get update
-    sudo apt-get install -y gcc-13 g++-13
+    sudo $APTVARS apt-get install -y gcc-13 g++-13
     sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 100
     sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-13 100
 fi

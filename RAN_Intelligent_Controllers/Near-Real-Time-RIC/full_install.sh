@@ -31,9 +31,10 @@
 # Exit immediately if a command fails
 set -e
 
+APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
-    sudo apt-get install -y coreutils
+    sudo $APTVARS apt-get install -y coreutils
 fi
 
 CURRENT_DIR=$(pwd)
@@ -41,15 +42,15 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
 echo "Installing Near-Real-Time RAN Intelligent Controller..."
-export DEBIAN_FRONTEND=noninteractive
 # Modifies the needrestart configuration to suppress interactive prompts
-if [ -f "/etc/needrestart/needrestart.conf" ]; then
-    if ! grep -q "^\$nrconf{restart} = 'a';$" "/etc/needrestart/needrestart.conf"; then
-        sudo sed -i "/\$nrconf{restart} = /c\$nrconf{restart} = 'a';" "/etc/needrestart/needrestart.conf"
-        echo "Modified needrestart configuration to auto-restart services."
-    fi
+if [ -d /etc/needrestart ]; then
+    sudo install -d -m 0755 /etc/needrestart/conf.d
+    sudo tee /etc/needrestart/conf.d/99-no-auto-restart.conf >/dev/null <<'EOF'
+# Disable automatic restarts during apt operations
+$nrconf{restart} = 'l';
+EOF
+    echo "Configured needrestart to list-only (no service restarts)."
 fi
-export NEEDRESTART_SUSPEND=1
 
 # Run a sudo command every minute to ensure script execution without user interaction
 ./install_scripts/start_sudo_refresh.sh
@@ -77,7 +78,7 @@ fi
 if ! dpkg -s chrony &>/dev/null; then
     echo "Chrony is not installed, installing..."
     sudo apt-get update
-    sudo apt-get install -y chrony || true
+    sudo $APTVARS apt-get install -y chrony || true
 fi
 if ! systemctl is-enabled --quiet chrony; then
     echo "Enabling Chrony service..."
@@ -147,6 +148,12 @@ else
     if ! command -v yq &>/dev/null; then
         sudo "$SCRIPT_DIR/install_scripts/./install_yq.sh"
     fi
+    # Check that the correct version of yq is installed
+    if ! yq --version 2>/dev/null | grep -q 'https://github\.com/mikefarah/yq'; then
+        echo "ERROR: Detected an incompatible yq installation."
+        echo "Please ensure the Python yq is uninstalled with \"pip uninstall -y yq\", then re-run this script."
+        exit 1
+    fi
 
     # If kong gives troubles in Release I or Release J then it can be disabled with the following code.
     # cd "$SCRIPT_DIR/ric-dep"
@@ -169,6 +176,10 @@ else
     echo
     echo "Installing Helm Chart and Museum..."
     cd "$SCRIPT_DIR/ric-dep/bin"
+    if helm plugin list | grep -q servecm; then
+        echo "servecm plugin already installed, removing..."
+        helm plugin remove servecm
+    fi
     sudo ./install_common_templates_to_helm.sh
 fi
 
@@ -176,14 +187,14 @@ cd "$SCRIPT_DIR"
 
 # Check if docker is accessible from the current user, and if not, repair its permissions
 if [ -z "$FIXED_DOCKER_PERMS" ]; then
-    if ! output=$(docker info 2>&1); then
-        if echo "$output" | grep -qiE 'permission denied|cannot connect to the docker daemon'; then
+    if ! OUTPUT=$(docker info 2>&1); then
+        if echo "$OUTPUT" | grep -qiE 'permission denied|cannot connect to the docker daemon'; then
             echo "Docker permissions will repair on reboot."
             sudo groupadd -f docker
             if [ -n "$SUDO_USER" ]; then
-                sudo usermod -aG docker "$SUDO_USER"
+                sudo usermod -aG docker "${SUDO_USER:-root}"
             else
-                sudo usermod -aG docker "$USER"
+                sudo usermod -aG docker "${USER:-root}"
             fi
             # Rather than requiring a reboot to apply docker permissions, set the docker group and re-run the parent script
             export FIXED_DOCKER_PERMS=1

@@ -114,7 +114,8 @@ echo "Creating and modifying the configuration file xapp-descriptor/config_updat
 if ! command -v jq &>/dev/null; then
     echo "Installing jq..."
     sudo apt-get update
-    sudo apt-get install -y jq
+    APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
+    sudo $APTVARS apt-get install -y jq
 fi
 
 FILE="xapp-descriptor/config_updated.json"
@@ -139,14 +140,14 @@ fi
 
 # Check if docker is accessible from the current user, and if not, repair its permissions
 if [ -z "$FIXED_DOCKER_PERMS" ]; then
-    if ! output=$(docker info 2>&1); then
-        if echo "$output" | grep -qiE 'permission denied|cannot connect to the docker daemon'; then
+    if ! OUTPUT=$(docker info 2>&1); then
+        if echo "$OUTPUT" | grep -qiE 'permission denied|cannot connect to the docker daemon'; then
             echo "Docker permissions will repair on reboot."
             sudo groupadd -f docker
             if [ -n "$SUDO_USER" ]; then
-                sudo usermod -aG docker "$SUDO_USER"
+                sudo usermod -aG docker "${SUDO_USER:-root}"
             else
-                sudo usermod -aG docker "$USER"
+                sudo usermod -aG docker "${USER:-root}"
             fi
             # Rather than requiring a reboot to apply docker permissions, set the docker group and re-run the parent script
             export FIXED_DOCKER_PERMS=1

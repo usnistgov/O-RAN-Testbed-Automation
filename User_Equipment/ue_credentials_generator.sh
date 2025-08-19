@@ -70,7 +70,7 @@ elif [ "$UE_NUMBER" -eq 3 ]; then # Following the blueprint for UE 3: https://do
 elif [ "$UE_NUMBER" -gt 3 ]; then # Dynamic configurations for UE 4 and beyond
     UE_OFFSET=$((UE_NUMBER - 3))
     UE_IMEI=$(printf '%d' $((353490069873319 + UE_OFFSET)))
-    UE_IMSI=$(printf '%015d' $((1010123456781 + UE_OFFSET)))
+    UE_IMSI=$(printf '%015d' $((1010123456791 + UE_OFFSET)))
     UE_KEY="00112233445566778$(printf '%X' $((16#899AABBCCDDEF01 + UE_OFFSET)))"
     UE_NAMESPACE="ue$UE_NUMBER"
 fi

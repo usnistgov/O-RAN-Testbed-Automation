@@ -39,11 +39,6 @@ fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 
-cd "$SCRIPT_DIR/flexric/"
+cd "$SCRIPT_DIR/flexric"
 
-CONFIG_PATH=""
-if [ -f "../configs/flexric.conf" ]; then
-    CONFIG_PATH="-c ../configs/flexric.conf"
-fi
-
-XAPP_DURATION=-1 ./build/examples/xApp/c/monitor/xapp_kpm_moni $CONFIG_PATH
+gdb --args ./build/examples/ric/nearRT-RIC -c "../configs/flexric.conf"

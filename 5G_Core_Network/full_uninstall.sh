@@ -33,9 +33,10 @@ set +e
 
 echo "# Script: $(realpath $0)..."
 
+APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
-    sudo apt-get install -y coreutils
+    sudo $APTVARS apt-get install -y coreutils
 fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
@@ -58,6 +59,13 @@ sudo groupdel open5gs
 echo "Removing Open5GS installation directory..."
 sudo rm -rf open5gs/
 sudo rm -rf /var/log/open5gs
+
+for INTERMEDIATE_DIR in open5gs-*; do
+    if [[ -d "$INTERMEDIATE_DIR" && "$INTERMEDIATE_DIR" != "open5gs-*" ]]; then
+        echo "Removing intermediate open5gs directory: $INTERMEDIATE_DIR"
+        sudo rm -rf "$INTERMEDIATE_DIR"
+    fi
+done
 
 echo "Uninstalling WebUI..."
 curl -fsSL https://open5gs.org/open5gs/assets/webui/uninstall | sudo -E bash -

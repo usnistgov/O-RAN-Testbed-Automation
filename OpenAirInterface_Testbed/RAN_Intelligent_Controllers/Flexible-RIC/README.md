@@ -17,7 +17,7 @@ The Near-RT RIC, conceptualized by the O-RAN Alliance's Working Group 3 (WG3) [[
 
 This installation of the Near-RT RIC supports six xApps.
 
-- **KPI Monitor xApp (xapp_kpm_moni, revised xApp)**:
+- **KPM Monitor xApp (xapp_kpm_moni, revised xApp)**:
   - Run with `./run_xapp_kpm_moni.sh`.
   - Sets `XAPP_DURATION=-1` to run indefinitely and include several new metrics (see below).
     - Pre-existing metrics from OpenAirInterface:
@@ -36,9 +36,9 @@ This installation of the Near-RT RIC supports six xApps.
       RSRP.Mean (dBm) - Averaged SSB/CSI-RS Reference Signal Received Power in the sample
       RSRP.Count (count) - Number of RSRP measurements in the sample, used to calculate RSRP
       ```
-- **KPI Monitor to CSV xApp (xapp_kpm_moni_write_to_csv, new xApp)**:
+- **KPM Monitor to CSV xApp (xapp_kpm_moni_write_to_csv, new xApp)**:
   - Retains all functionality from xapp_kpm_moni, but rather than outputting to stdout, writes to `logs/KPI_Metrics.csv`.
-- **KPI Monitor to InfluxDB v2 xApp (xapp_kpm_moni_write_to_influxdb, new xApp)**:
+- **KPM Monitor to InfluxDB v2 xApp (xapp_kpm_moni_write_to_influxdb, new xApp)**:
   - Retains all functionality from xapp_kpm_moni, but rather than outputting to stdout, writes to a InfluxDB database (/var/lib/influxdb).
 - **MAC + RLC + PDCP + GTP Monitor xApp (xapp_gtp_mac_rlc_pdcp_moni)**:
   - Run with `./additional_scripts/run_xapp_gtp_mac_rlc_pdcp_moni.sh`.
@@ -47,9 +47,9 @@ This installation of the Near-RT RIC supports six xApps.
 - **RIC Control Monitor xApp (xapp_rc_moni)**:
   - Run with `./additional_scripts/run_xapp_rc_moni.sh`.
 
-## KPI Monitor Visualization in Grafana
+## KPM Monitor Visualization in Grafana
 
-After the KPI Monitor xApp subscribes to the E2 node, metrics of the gNodeB and UE are sent through the E2 interface and received by the xApp. An xApp has been made at `flexric/build/examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv` which writes the metrics to logs/KPI_Metrics.csv instead of printing them to the console. The Python server at `additional_scripts/python_server_for_grafana.py` will make this CSV file accessible at `http://localhost:3030/KPI_Metrics.csv`, and a Grafana [[4]][grafanalabs-grafana] dashboard has been created to consume this data and visualize it.
+After the KPM Monitor xApp subscribes to the E2 node, metrics of the gNodeB and UE are sent through the E2 interface and received by the xApp. An xApp has been made at `flexric/build/examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv` which writes the metrics to logs/KPI_Metrics.csv instead of printing them to the console. The Python server at `additional_scripts/python_server_for_grafana.py` will make this CSV file accessible at `http://localhost:3030/KPI_Metrics.csv`, and a Grafana [[4]][grafanalabs-grafana] dashboard has been created to consume this data and visualize it.
 
 - **Real-Time Metrics**: To start the xApp that generates `logs/KPI_Monitor.csv`, the Python server that hosts the file, and the Grafana server, run the following.
   ```console
@@ -69,7 +69,7 @@ After the KPI Monitor xApp subscribes to the E2 node, metrics of the gNodeB and 
 The Grafana dashboard is accessible at `http://localhost:3000` with default credentials being "admin". Upon initial startup, import the following JSON file into the Grafana client by navigating to Dashboards → New → Import: `additional_scripts/grafana_xapp_dashboard.json`. Please note that the dashboard and the metrics provided with this software are still in development and therefore may display some inaccurate values. Below is a snapshot of the dashboard in its current state.
 
 <p align="center">
-  <img src="../../../Images/xApp_Dashboard.png" alt="Grafana dashboard of xApp KPI metrics" width="75%">
+  <img src="../../../Images/xApp_Dashboard.png" alt="Grafana dashboard of xApp KPM metrics" width="75%">
 </p>
 
 ## References

@@ -71,7 +71,7 @@ Alternatively, to create subscriber entries from command line, use the following
 
 Remove all registered subscribers with `./install_scripts/unregister_all_subscribers.sh`.
 
-By default, the configuration process automatically unregisters all subscribers, then registers subscriber entries for UE 1, UE 2, and UE 3 based on the following table from the blueprint [[4]][nist-tn-2311]. The IMSI values will be updated accordingly if the PLMN value is changed in options.yaml.
+By default, the configuration process automatically unregisters all subscribers, then registers subscriber entries for UE 1, UE 2, and UE 3 based on the following table from the blueprint [[13]][nist-tn-2311]. The IMSI values will be updated accordingly if the PLMN value is changed in options.yaml.
 
 <table><thead>
   <tr>

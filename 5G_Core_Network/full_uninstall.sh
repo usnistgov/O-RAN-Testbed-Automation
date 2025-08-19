@@ -88,5 +88,5 @@ cd Additional_Cores_5GDeploy
 echo
 echo
 echo "################################################################################"
-echo "# Successfully uninstalled 5G Core                                             #"
+echo "# Successfully uninstalled Open5GS                                             #"
 echo "################################################################################"

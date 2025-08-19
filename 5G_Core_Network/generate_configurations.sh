@@ -108,7 +108,7 @@ if [ ! -f "options.yaml" ]; then
     echo "sst: 1" >>"options.yaml"
     echo "sd: FFFFFF" >>"options.yaml"
     echo "" >>"options.yaml"
-    echo "# If core_to_use=open5gs, false: AMF will use the default 127.0.0.5, true: it will use the hostname IP" >>"options.yaml"
+    echo "# If core_to_use=open5gs, false means AMF will use the default 127.0.0.5, true means it will use the hostname IP" >>"options.yaml"
     echo "expose_amf_over_hostname: false" >>"options.yaml"
     echo "" >>"options.yaml"
     echo "# If core_to_use=open5gs, toggle whether or not to include the Security Edge Protection Proxies (SEPP1 and SEPP2)" >>"options.yaml"

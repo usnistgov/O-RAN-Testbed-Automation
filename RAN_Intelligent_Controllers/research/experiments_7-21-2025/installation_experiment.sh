@@ -187,3 +187,5 @@ for I in $(seq 1 $NUM_SAMPLES); do
     cd "$BASE_DIR/OpenAirInterface_Testbed"
     ./full_uninstall.sh bypass_confirmation
 done
+
+echo "OK"

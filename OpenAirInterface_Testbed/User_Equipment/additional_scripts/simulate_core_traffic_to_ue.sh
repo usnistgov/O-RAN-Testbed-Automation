@@ -28,9 +28,10 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
+APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
-    sudo apt-get install -y coreutils
+    sudo $APTVARS apt-get install -y coreutils
 fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
@@ -80,7 +81,7 @@ if [ ! -f "configs/ue1.conf" ]; then
 fi
 
 LOG_FILE="logs/ue${UE_NUMBER}_stdout.txt"
-PDU_SESSION_IP=$(cat $LOG_FILE | grep "Received PDU Session Establishment Accept" | cut -d ':' -f2 | xargs)
+PDU_SESSION_IP=$(cat $LOG_FILE | grep "Received PDU Session Establishment Accept" | cut -d ':' -f2 | xargs | tr -d '\r\n')
 
 if [ -z "$PDU_SESSION_IP" ]; then
     echo "Error: Unable to find PDU Session IP from the log file $LOG_FILE."
@@ -91,7 +92,7 @@ echo "Successfully found PDU Session IP: $PDU_SESSION_IP"
 
 if ! command -v iperf &>/dev/null; then
     echo "Package \"iperf\" not found, installing..."
-    sudo apt-get install -y iperf
+    sudo $APTVARS apt-get install -y iperf
 fi
 
 iperf -c $PDU_SESSION_IP -u -i 1 -b $BANDWIDTH -t $DURATION

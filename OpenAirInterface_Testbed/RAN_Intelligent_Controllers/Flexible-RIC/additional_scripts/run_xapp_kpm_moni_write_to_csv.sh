@@ -28,24 +28,19 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-# The number of milliseconds between each KPI report
-XAPP_PERIODICITY_MS=1000
+# The number of milliseconds between each KPI report (default: 1000)
+XAPP_PERIODICITY_MS="${1:-1000}"
 
 # Exit immediately if a command fails
 set -e
 
+APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
-    sudo apt-get install -y coreutils
+    sudo $APTVARS apt-get install -y coreutils
 fi
 
 echo "# Script: $(realpath $0)..."
-
-SCRIPT_DIR=$(dirname "$(realpath "$0")")
-PARENT_DIR=$(dirname "$SCRIPT_DIR")
-cd "$PARENT_DIR"
-
-OUTPUT_CSV_PATH="$PARENT_DIR/logs/KPI_Metrics.csv"
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
@@ -53,6 +48,7 @@ PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$PARENT_DIR/flexric/"
 
 # Optionally, ensure that the output CSV file is empty before running the xApp)
+OUTPUT_CSV_PATH="$PARENT_DIR/logs/KPI_Metrics.csv"
 if [ ! -f "$OUTPUT_CSV_PATH" ]; then
     touch "$OUTPUT_CSV_PATH"
 else

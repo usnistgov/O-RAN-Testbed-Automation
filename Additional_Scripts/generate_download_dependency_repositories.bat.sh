@@ -30,9 +30,10 @@
 
 # This script will download the 5G_Core_Network, gNodeB, User_Equipment and RAN_Intelligent_Controllers repositories for analyzing the source code without requiring a full testbed build and installation.
 
+APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
-    sudo apt-get install -y coreutils
+    sudo $APTVARS apt-get install -y coreutils
 fi
 
 echo "# Script: $(realpath $0)..."
@@ -82,7 +83,7 @@ echo "" >>download_dependency_repositories.bat
 
 if ! command -v jq >/dev/null 2>&1; then
     echo "Installing jq to process JSON files..."
-    sudo apt-get install -y jq
+    sudo $APTVARS apt-get install -y jq
 fi
 
 # Function to generate the git clone and git checkout commands

@@ -40,7 +40,8 @@ RIC_INSTALLATION_LOG_JSON="logs/ric_installation_stdout_parsed.json"
 
 if ! command -v jq >/dev/null 2>&1; then
     echo "Installing jq to process JSON files..."
-    sudo apt-get install -y jq
+    APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
+    sudo $APTVARS apt-get install -y jq
 fi
 
 # Initialize the JSON log file if it doesn't exist

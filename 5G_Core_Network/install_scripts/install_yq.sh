@@ -30,7 +30,7 @@
 
 echo "# Script: $(realpath $0)..."
 
-# Uninstall yq with: sudo rm -rf /usr/bin/yq
+# Uninstall yq with: sudo rm -rf /usr/local/bin/yq; hash -r && hash -r
 if command -v yq &>/dev/null; then
     echo "Already installed yq, skipping."
     exit 0

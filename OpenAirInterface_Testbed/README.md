@@ -6,8 +6,8 @@ This testbed deployment consists of a 5G Core Network by Open5GS [[1]][open5gs-c
 
 - **Installation**: Use `./full_install.sh` to build and install the testbed components, and `./full_uninstall.sh` to remove them.
 - **Generate Configurations**: Use `./generate_configurations.sh` to create configuration files for each testbed component.
-- **Start the Testbed**: Use `./run.sh` to start the 5G Core, FlexRIC, gNodeB, and UE as background processes, and KPI monitoring xApp in the foreground.
-  - To start the testbed components but use a modified KPI monitor xApp that logs the metrics to file and a Grafana dashboard to fetch and visualize the metrics in real-time, use `./run_with_grafana_dashboard.sh`.
+- **Start the Testbed**: Use `./run.sh` to start the 5G Core, FlexRIC, gNodeB, and UE as background processes, and KPM monitoring xApp in the foreground.
+  - To start the testbed components but use a modified KPM monitor xApp that logs the metrics to file and a Grafana dashboard to fetch and visualize the metrics in real-time, use `./run_with_grafana_dashboard.sh`.
 - **Run an xApp**: Once the 5G Core, FlexRIC, gNodeB, and UE are running and properly connected, use the `./run_xapp_*` scripts within the RAN_Intelligent_Controllers/FlexRIC/additional_scripts directory to interact with the gNodeB and UE.
 - **Send Traffic Through a UE**: Scripts under User_Equipment/additional_scripts provide the ability to open a shell in the UE's network namespace, simulate traffic from UE to the core, or from core to the UE.
 - **Stop the Testbed**: Terminate the testbed components with `./stop.sh`.

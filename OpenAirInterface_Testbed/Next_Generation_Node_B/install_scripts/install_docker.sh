@@ -60,6 +60,8 @@ else
     UBUNTU_RELEASE=$(lsb_release -sr)
 fi
 
+APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
+
 USE_DOCKER_CE=1
 if [ "$USE_DOCKER_CE" -eq 0 ]; then # Use docker.io
     DOCKERV="20.10"
@@ -83,7 +85,7 @@ else # Use docker.ce
 
     # Code from (https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository):
     sudo apt-get update
-    sudo apt-get install -y ca-certificates curl
+    sudo $APTVARS apt-get install -y ca-certificates curl
     sudo install -m 0755 -d /etc/apt/keyrings
     sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
     sudo chmod a+r /etc/apt/keyrings/docker.asc
@@ -138,9 +140,9 @@ fi
 echo "Installing Docker..."
 if ! command -v docker &>/dev/null; then
     if [ "$USE_DOCKER_CE" -eq 0 ]; then
-        sudo apt-get install -y $APTOPTS "docker.io=$DOCKERVERSION"
+        sudo $APTVARS apt-get install -y $APTOPTS "docker.io=$DOCKERVERSION"
     else
-        sudo apt-get install -y $APTOPTS "docker-ce=$DOCKERVERSION"
+        sudo $APTVARS apt-get install -y $APTOPTS "docker-ce=$DOCKERVERSION"
     fi
 fi
 
@@ -177,9 +179,9 @@ fi
 echo "Ensure Docker group exists and add user to the group before starting Docker service..."
 sudo groupadd -f docker
 if [ -n "$SUDO_USER" ]; then
-    sudo usermod -aG docker "$SUDO_USER"
+    sudo usermod -aG docker "${SUDO_USER:-root}"
 else
-    sudo usermod -aG docker "$USER"
+    sudo usermod -aG docker "${USER:-root}"
 fi
 
 # Enable and attempt to start Docker service with retries

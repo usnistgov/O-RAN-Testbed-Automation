@@ -31,9 +31,10 @@
 # Exit immediately if a command fails
 set -e
 
+APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
-    sudo apt-get install -y coreutils
+    sudo $APTVARS apt-get install -y coreutils
 fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
@@ -74,12 +75,6 @@ if [ ! -f "$UE_CONF_PATH" ]; then
         echo "Configuration file for UE $UE_NUMBER still not found after generation."
         exit 1
     fi
-fi
-
-if [ $UE_NUMBER -gt 3 ]; then
-    echo "UE is greater than registered subscribers, registering UE $UE_NUMBER..."
-    REGISTRATION_DIR=$(dirname "$SCRIPT_DIR")/5G_Core_Network/install_scripts
-    "$REGISTRATION_DIR/./register_subscriber.sh" --imsi "$UE_IMSI" --key "$UE_KEY" --opc "$UE_OPC" --apn "$UE_APN"
 fi
 
 # Give the UE its own network namespace and configure it to access the host network

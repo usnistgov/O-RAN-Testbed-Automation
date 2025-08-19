@@ -31,11 +31,13 @@
 # Exit immediately if a command fails
 set -e
 
-CLEAN_INSTALL=true
+CLEAN_INSTALL=false
+DEBUG_SYMBOLS=false
 
+APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
-    sudo apt-get install -y coreutils
+    sudo $APTVARS apt-get install -y coreutils
 fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
@@ -60,9 +62,9 @@ INSTALL_START_TIME=$(date +%s)
 echo "Installing dependencies..."
 if ! command -v gcc-10 &>/dev/null || ! command -v g++-10 &>/dev/null || ! command -v swig &>/dev/null; then
     sudo apt-get update || true
-    sudo apt-get install -y build-essential automake
-    sudo apt-get install -y gcc-10 g++-10
-    sudo apt-get install -y libsctp-dev python3 cmake-curses-gui libpcre2-dev python3-dev
+    sudo $APTVARS apt-get install -y build-essential automake
+    sudo $APTVARS apt-get install -y gcc-10 g++-10
+    sudo $APTVARS apt-get install -y libsctp-dev python3 cmake-curses-gui libpcre2-dev python3-dev
 fi
 
 if [ ! -d "swig" ]; then
@@ -91,53 +93,20 @@ if [ ! -d "flexric" ]; then
     ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/mosaic5g/flexric.git
 fi
 
-# Apply patch to xApps to correct the type printing (as of commit hash 596a1ae67309618a74e09e56dff9a723ea7d99c5)
-echo
-echo "Patching xApp type printing..."
-cd flexric
-sudo rm -rf examples/xApp/c
-git restore examples/xApp/c/*
-git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/flexric/examples/xApp/c/fix_type_printing_in_c_xapps.patch" || true
-cd ..
+echo "Patching FlexRIC..."
+./install_scripts/apply_patches.sh
 
-# Apply patch to FlexRIC to add support for RSRP in the KPI report
-if [ ! -f "flexric/examples/xApp/c/monitor/xapp_kpm_moni.c.previous" ]; then
-    cp flexric/examples/xApp/c/monitor/xapp_kpm_moni.c flexric/examples/xApp/c/monitor/xapp_kpm_moni.c.previous
-    cp flexric/examples/xApp/c/monitor/xapp_kpm_moni.c.previous "$SCRIPT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni.previous.c"
+ADDITIONAL_FLAGS=""
+if [ "$DEBUG_SYMBOLS" = true ]; then
+    ADDITIONAL_FLAGS="-DCMAKE_BUILD_TYPE=Debug"
 fi
-echo
-echo "Patching xapp_kpm_moni.c..."
-cd flexric
-git restore examples/xApp/c/monitor/xapp_kpm_moni.c
-git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni.c.patch"
-cd ..
-
-echo
-echo "Adding xapp_kpm_moni_write_to_csv.c..."
-cp "$SCRIPT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv.c" flexric/examples/xApp/c/monitor/
-
-echo
-echo "Adding xapp_kpm_moni_write_to_influxdb.c..."
-cp "$SCRIPT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni_write_to_influxdb.c" flexric/examples/xApp/c/monitor/
-
-# Apply patch to add new xApp KPI monitor that logs output to logs/KPI_Monitor.csv
-if [ ! -f "flexric/examples/xApp/c/monitor/CMakeLists.txt.previous" ]; then
-    cp flexric/examples/xApp/c/monitor/CMakeLists.txt flexric/examples/xApp/c/monitor/CMakeLists.txt.previous
-    cp flexric/examples/xApp/c/monitor/CMakeLists.txt.previous "$SCRIPT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/CMakeLists.previous.txt"
-fi
-echo
-echo "Patching CMakeLists.txt..."
-cd flexric
-git restore examples/xApp/c/monitor/CMakeLists.txt
-git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/CMakeLists.txt.patch"
-cd ..
 
 echo "Building FlexRIC..."
 cd flexric
 sudo rm -rf build
 mkdir build
 cd build
-CC=gcc-10 CXX=g++-10 cmake .. -DE2AP_VERSION=E2AP_V3 -DKPM_VERSION=KPM_V3_00
+CC=gcc-10 CXX=g++-10 cmake .. -DE2AP_VERSION=E2AP_V3 -DKPM_VERSION=KPM_V3_00 $ADDITIONAL_FLAGS
 make -j$(nproc)
 
 echo "Installing FlexRIC..."

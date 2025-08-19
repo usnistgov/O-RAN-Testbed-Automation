@@ -39,9 +39,10 @@ INFLUXDB_ROOT_USER="root"
 INFLUXDB_ROOT_PASS="g10bNbAj31@K"                     # Randomly generated
 INFLUXDB_ROOT_TOKEN="A684h862N3b01j3KJC04Ssf2K1H95L2" # Randomly generated
 
+APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
-    sudo apt-get install -y coreutils
+    sudo $APTVARS apt-get install -y coreutils
 fi
 
 echo "# Script: $(realpath $0)..."
@@ -62,7 +63,8 @@ echo "943666881a1b8d9b849b74caebf02d3465d6beb716510d86a39f6c8e8dac7515  influxda
     echo 'deb [signed-by=/etc/apt/trusted.gpg.d/influxdata-archive.gpg] https://repos.influxdata.com/debian stable main' |
     sudo tee /etc/apt/sources.list.d/influxdata.list
 # Install influxdb
-sudo apt-get update && sudo apt-get install -y influxdb2
+sudo apt-get update
+sudo $APTVARS apt-get install -y influxdb2
 
 # Make sure InfluxDB does not start on boot (manual start only)
 sudo systemctl disable influxdb

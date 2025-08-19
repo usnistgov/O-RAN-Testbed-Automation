@@ -31,9 +31,10 @@
 # Exit immediately if a command fails
 set -e
 
+APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
-    sudo apt-get install -y coreutils
+    sudo $APTVARS apt-get install -y coreutils
 fi
 
 echo "# Script: $(realpath $0)..."
@@ -52,7 +53,7 @@ INFLUXDB_ORG="xapp-kpm-moni"
 INFLUXDB_BUCKET="xapp-kpm-moni"
 INFLUXDB_TOKEN_PATH="$PARENT_DIR/influxdb_auth_token.json"
 
-# Check if influxdb is even installed:
+# Check if influxdb is installed:
 if ! command -v influx &>/dev/null; then
     echo "InfluxDB is not installed. Installing InfluxDB..."
     ./install_scripts/install_influxdb.sh

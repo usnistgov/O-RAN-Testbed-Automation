@@ -31,9 +31,10 @@
 # Exit immediately if a command fails
 set -e
 
+APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
-    sudo apt-get install -y coreutils
+    sudo $APTVARS apt-get install -y coreutils
 fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
@@ -78,6 +79,12 @@ fi
 # Check if the YAML editor is installed, and install it if not
 if ! command -v yq &>/dev/null; then
     sudo "$SCRIPT_DIR/install_scripts/./install_yq.sh"
+fi
+# Check that the correct version of yq is installed
+if ! yq --version 2>/dev/null | grep -q 'https://github\.com/mikefarah/yq'; then
+    echo "ERROR: Detected an incompatible yq installation."
+    echo "Please ensure the Python yq is uninstalled with \"pip uninstall -y yq\", then re-run this script."
+    exit 1
 fi
 
 echo "Restoring gNodeB configuration file..."
@@ -246,6 +253,7 @@ update_yaml "configs/gnb.yaml" "cu_cp.amf" "addr" "$AMF_ADDR"
 update_yaml "configs/gnb.yaml" "cu_cp.amf" "bind_addr" "$AMF_ADDR_BIND"
 update_yaml "configs/gnb.yaml" "cu_cp.amf.supported_tracking_areas[0]" "tac" $TAC
 update_yaml "configs/gnb.yaml" "cu_cp.amf.supported_tracking_areas[0].plmn_list[0]" "plmn" $PLMN
+update_yaml "configs/gnb.yaml" "cu_cp.request_pdu_session_timeout" "60"
 
 # Update configuration values for RF front-end device
 update_yaml "configs/gnb.yaml" "ru_sdr" "device_driver" "zmq"
@@ -266,6 +274,8 @@ update_yaml "configs/gnb.yaml" "cell_cfg.slicing[0]" "sd" "$SD_DECIMAL"
 update_yaml "configs/gnb.yaml" "cell_cfg.slicing[0]" "sst" "$SST"
 update_yaml "configs/gnb.yaml" "cell_cfg.slicing[0].sched_cfg" "min_prb_policy_ratio" "0"
 update_yaml "configs/gnb.yaml" "cell_cfg.slicing[0].sched_cfg" "max_prb_policy_ratio" "100"
+update_yaml "configs/gnb.yaml" "cu_cp.amf.supported_tracking_areas[0].plmn_list[0].tai_slice_support_list[0]" "sst" "$SST"
+update_yaml "configs/gnb.yaml" "cu_cp.amf.supported_tracking_areas[0].plmn_list[0].tai_slice_support_list[0]" "sd" "$SD_DECIMAL"
 
 GNB_ID="411"
 RAN_NODE_NAME="srsgnb01"

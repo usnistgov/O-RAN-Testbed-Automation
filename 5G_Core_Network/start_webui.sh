@@ -28,22 +28,54 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-if ! systemctl is-active --quiet "open5gs-webui"; then
-    echo "Starting webui service..."
-    sudo systemctl start open5gs-webui
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+cd "$SCRIPT_DIR"
+
+NO_BROWSER=false
+for ARG in "$@"; do
+    if [[ "$ARG" == "no-browser" ]]; then
+        NO_BROWSER=true
+        break
+    fi
+done
+
+USE_SYSTEMCTL=$(yq eval '.use_systemctl' options.yaml)
+if [[ "$USE_SYSTEMCTL" == "null" || -z "$USE_SYSTEMCTL" ]]; then
+    USE_SYSTEMCTL="true" # Default
+fi
+
+# Ensure that MongoDB is running
+sudo ./install_scripts/start_mongodb.sh
+
+if [[ "$USE_SYSTEMCTL" == "true" ]]; then
+    if ! systemctl is-active --quiet "open5gs-webui"; then
+        echo "Starting webui service..."
+        sudo systemctl start open5gs-webui
+    fi
+else
+    # Check if the WebUI server is already running by looking for the Node.js process in the correct directory
+    if ! pgrep -f "open5gs-webui" >/dev/null; then
+        echo "Starting webui process..."
+        cd open5gs/webui
+        npm install
+        # nohup node --title="open5gs-webui" server/index.js >logs/webui_stdout.txt 2>&1 &
+        nohup node --title="open5gs-webui" server/index.js >/dev/null 2>&1 &
+        cd "$SCRIPT_DIR"
+    fi
 fi
 
 WEBUI_PORT=9999
 
-if command -v xdg-open &>/dev/null; then
-    echo "Opening the WebUI in the default web browser at URL http://localhost:$WEBUI_PORT"
-    xdg-open "http://localhost:$WEBUI_PORT" >/dev/null 2>&1 &
-    sleep 3
-else
-    echo "No default browser detected. Visit http://localhost:$WEBUI_PORT to access the WebUI."
+if [[ "$NO_BROWSER" == false ]]; then
+    if command -v xdg-open &>/dev/null; then
+        echo "Opening the WebUI in the default web browser at URL http://localhost:$WEBUI_PORT"
+        xdg-open "http://localhost:$WEBUI_PORT" >/dev/null 2>&1 &
+        sleep 3
+    else
+        echo "No default browser detected. Visit http://localhost:$WEBUI_PORT to access the WebUI."
+    fi
+    echo
+    echo "The login credentials are set to the following."
+    echo "    - U: \"admin\""
+    echo "    - P: \"1423\""
 fi
-
-echo
-echo "The login credentials are set to the following."
-echo "    - U: \"admin\""
-echo "    - P: \"1423\""

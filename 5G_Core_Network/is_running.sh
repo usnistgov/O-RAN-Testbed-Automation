@@ -28,13 +28,19 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
+APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
-    sudo apt-get install -y coreutils
+    sudo $APTVARS apt-get install -y coreutils
 fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
+
+USE_SYSTEMCTL=$(yq eval '.use_systemctl' options.yaml)
+if [[ "$USE_SYSTEMCTL" == "null" || -z "$USE_SYSTEMCTL" ]]; then
+    USE_SYSTEMCTL="true" # Default
+fi
 
 check_service() {
     local SEARCH_PATTERN="open5gs-$1"
@@ -42,10 +48,18 @@ check_service() {
     if pgrep -f "$SEARCH_PATTERN" >/dev/null; then
         echo "$DISPLAY_NAME: RUNNING"
     else
-        if systemctl is-active --quiet "$SEARCH_PATTERN"; then
-            echo "$DISPLAY_NAME: RUNNING"
+        if [ "$USE_SYSTEMCTL" == "true" ]; then
+            if systemctl is-active --quiet "$SEARCH_PATTERN"; then
+                echo "$DISPLAY_NAME: RUNNING"
+            else
+                echo "$DISPLAY_NAME: NOT_RUNNING"
+            fi
         else
-            echo "$DISPLAY_NAME: NOT_RUNNING"
+            if pgrep -f "$SEARCH_PATTERN" >/dev/null; then
+                echo "$DISPLAY_NAME: RUNNING"
+            else
+                echo "$DISPLAY_NAME: NOT_RUNNING"
+            fi
         fi
     fi
 }
@@ -65,3 +79,4 @@ for APP in "${APPS[@]}"; do
         check_service "$APP" "$APP"
     fi
 done
+

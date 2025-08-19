@@ -34,6 +34,8 @@ set -e
 # Echo every command as it is ran
 set -x
 
+RESET_IPTABLES=false
+
 usage() {
     echo "Usage: $0 [ -k <k8s version> -d <docker version> -e <helm version> -c <cni-version> --no-sctp-support ]" 1>&2
     echo "Options:" 1>&2
@@ -104,6 +106,7 @@ wait_for_pods_running() {
 # -----------------------------------------------------------------------------
 sudo mkdir -p /etc/apt/apt.conf.d
 echo "APT::Acquire::Retries \"3\";" | sudo tee /etc/apt/apt.conf.d/80-retries >/dev/null
+APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 
 # Wait for dpkg lock to be released by directly checking in the loop
 until sudo dpkg --configure -a >/dev/null 2>&1; do
@@ -113,13 +116,13 @@ done
 
 echo "Installing prerequisites..."
 sudo apt-get update || true
-sudo apt-get install -y curl wget gnupg2 software-properties-common lsb-release net-tools iproute2 iputils-ping
-sudo apt-get install -y kmod
-sudo apt-get install -y gawk sed
-sudo apt-get install -y iptables
-sudo apt-get install -y ipvsadm
-sudo apt-get install -y socat
-sudo apt-get install -y libsctp1 lksctp-tools
+sudo $APTVARS apt-get install -y curl wget gnupg2 software-properties-common lsb-release net-tools iproute2 iputils-ping
+sudo $APTVARS apt-get install -y kmod
+sudo $APTVARS apt-get install -y gawk sed
+sudo $APTVARS apt-get install -y iptables
+sudo $APTVARS apt-get install -y ipvsadm
+sudo $APTVARS apt-get install -y socat
+sudo $APTVARS apt-get install -y libsctp1 lksctp-tools
 
 # Previous versions from original script (HELMV 3.14.X causes continuous APIServer crashing on Ubuntu 22):
 # KUBEV="1.28" #.11"
@@ -162,7 +165,7 @@ else # Use docker-ce
 
     # Code from (https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository):
     sudo apt-get update
-    sudo apt-get install -y ca-certificates curl
+    sudo $APTVARS apt-get install -y ca-certificates curl
     sudo install -m 0755 -d /etc/apt/keyrings
     sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
     sudo chmod a+r /etc/apt/keyrings/docker.asc
@@ -203,15 +206,15 @@ if [[ ${HELMV} == 2.* ]]; then
     exit -1
 fi
 
-export DEBIAN_FRONTEND=noninteractive
 # Modifies the needrestart configuration to suppress interactive prompts
-if [ -f "/etc/needrestart/needrestart.conf" ]; then
-    if ! grep -q "^\$nrconf{restart} = 'a';$" "/etc/needrestart/needrestart.conf"; then
-        sudo sed -i "/\$nrconf{restart} = /c\$nrconf{restart} = 'a';" "/etc/needrestart/needrestart.conf"
-        echo "Modified needrestart configuration to auto-restart services."
-    fi
+if [ -d /etc/needrestart ]; then
+    sudo install -d -m 0755 /etc/needrestart/conf.d
+    sudo tee /etc/needrestart/conf.d/99-no-auto-restart.conf >/dev/null <<'EOF'
+# Disable automatic restarts during apt operations
+$nrconf{restart} = 'l';
+EOF
+    echo "Configured needrestart to list-only (no service restarts)."
 fi
-export NEEDRESTART_SUSPEND=1
 
 # Update /etc/hosts to include the user's IP address
 # Check if the IP address and hostname are not empty
@@ -449,7 +452,7 @@ else
 fi
 
 sudo apt-get update
-sudo apt-get install -y curl jq netcat-openbsd make ipset moreutils
+sudo $APTVARS apt-get install -y curl jq netcat-openbsd make ipset moreutils
 
 # -----------------------------------------------------------------------------
 # Docker uninstallation then clean installation
@@ -480,9 +483,9 @@ sudo apt-get autoremove -y
 echo "Installing Docker..."
 if ! command -v docker &>/dev/null; then
     if [ "$USE_DOCKER_CE" -eq 0 ]; then
-        sudo apt-get install -y $APTOPTS "docker.io=$DOCKERVERSION"
+        sudo $APTVARS apt-get install -y $APTOPTS "docker.io=$DOCKERVERSION"
     else
-        sudo apt-get install -y $APTOPTS "docker-ce=$DOCKERVERSION"
+        sudo $APTVARS apt-get install -y $APTOPTS "docker-ce=$DOCKERVERSION"
     fi
 fi
 
@@ -519,9 +522,9 @@ fi
 echo "Ensure Docker group exists and add user to the group before starting Docker service..."
 sudo groupadd -f docker
 if [ -n "$SUDO_USER" ]; then
-    sudo usermod -aG docker "$SUDO_USER"
+    sudo usermod -aG docker "${SUDO_USER:-root}"
 else
-    sudo usermod -aG docker "$USER"
+    sudo usermod -aG docker "${USER:-root}"
 fi
 
 # Enable and attempt to start Docker service with retries
@@ -659,21 +662,23 @@ else
     echo "crictl not found; skipping containerd cleanup."
 fi
 
-# Reset iptables: Flush all default chains
-sudo iptables -F
-sudo iptables -t nat -F
-sudo iptables -t mangle -F
-# Reset iptables: Delete known custom chains safely
-for chain in FLANNEL-FWD FLANNEL-INGRESS FLANNEL-EGRESS; do
-    sudo iptables -D FORWARD -j $chain 2>/dev/null || true
-    sudo iptables -F $chain 2>/dev/null || true
-    sudo iptables -X $chain 2>/dev/null || true
-done
-# Reset iptables: Delete all remaining user-defined chains
-sudo iptables -X || true
-sudo iptables -t nat -X || true
-sudo iptables -t mangle -X || true
-# Reset iptables: Delete CNI interfaces
+if [ "$RESET_IPTABLES" = true ]; then
+    # Reset iptables: Flush all default chains
+    sudo iptables -F
+    sudo iptables -t nat -F
+    sudo iptables -t mangle -F
+    # Reset iptables: Delete known custom chains safely
+    for chain in FLANNEL-FWD FLANNEL-INGRESS FLANNEL-EGRESS; do
+        sudo iptables -D FORWARD -j $chain 2>/dev/null || true
+        sudo iptables -F $chain 2>/dev/null || true
+        sudo iptables -X $chain 2>/dev/null || true
+    done
+    # Reset iptables: Delete all remaining user-defined chains
+    sudo iptables -X || true
+    sudo iptables -t nat -X || true
+    sudo iptables -t mangle -X || true
+fi
+# Delete CNI interfaces
 echo "Removing CNI network interfaces..."
 sudo ip link delete cni0 2>/dev/null || true
 sudo ip link delete flannel.1 2>/dev/null || true
@@ -692,15 +697,25 @@ echo "Kubernetes version without suffix: $KUBEVERSIONWITHOUTSUFFIX"
 
 # Install Kubernetes components
 if [ -z "${CNIVERSION}" ]; then
-    sudo apt-get install -y kubernetes-cni
+    sudo $APTVARS apt-get install -y kubernetes-cni
 else
-    sudo apt-get install -y $APTOPTS kubernetes-cni=${CNIVERSION}
+    sudo $APTVARS apt-get install -y $APTOPTS kubernetes-cni=${CNIVERSION}
 fi
 
 if [ -z "${KUBEVERSION}" ]; then
-    sudo apt-get install -y kubeadm kubelet kubectl
+    sudo $APTVARS apt-get install -y kubeadm kubelet kubectl
 else
-    sudo apt-get install -y $APTOPTS kubeadm=${KUBEVERSION} kubelet=${KUBEVERSION} kubectl=${KUBEVERSION}
+    sudo $APTVARS apt-get install -y $APTOPTS kubeadm=${KUBEVERSION} kubelet=${KUBEVERSION} kubectl=${KUBEVERSION}
+fi
+
+# If kubectl command is not found after install, reinstall
+if ! command -v kubectl >/dev/null 2>&1; then
+    echo "kubectl not found after install, retrying with --reinstall..."
+    sudo $APTVARS apt-get install -y --reinstall kubectl=${KUBEVERSION}
+    if ! command -v kubectl >/dev/null 2>&1; then
+        echo "ERROR: /usr/bin/kubectl still not found after reinstall. Aborting."
+        exit 1
+    fi
 fi
 
 sudo apt-mark hold docker.io kubernetes-cni kubelet kubeadm kubectl
@@ -990,19 +1005,26 @@ esac
 
 # Create a temporary directory for the Helm installation process
 TEMP_DIR="$(mktemp -d)"
+trap 'rm -rf "${TEMP_DIR}"' EXIT
 
-# Download the Helm tarball if not already present
-if [ ! -e "${TEMP_DIR}/helm-v${HELMVERSIONWITHOUTSUFFIX}-linux-${ARCH_SUFFIX}.tar.gz" ]; then
-    wget -P "${TEMP_DIR}" "https://get.helm.sh/helm-v${HELMVERSIONWITHOUTSUFFIX}-linux-${ARCH_SUFFIX}.tar.gz"
+HELM_URL="https://get.helm.sh/helm-v${HELMVERSIONWITHOUTSUFFIX}-linux-${ARCH_SUFFIX}.tar.gz"
+HELM_ARCHIVE="${TEMP_DIR}/helm-v${HELMVERSIONWITHOUTSUFFIX}-linux-${ARCH_SUFFIX}.tar.gz"
+
+# Download Helm tarball if not already present
+if [ ! -e "${HELM_ARCHIVE}" ]; then
+    curl -fSL --http1.1 "${HELM_URL}" -o "${HELM_ARCHIVE}"
 fi
 
-# Extract Helm and move it to /usr/local/bin
-tar -xvf "${TEMP_DIR}/helm-v${HELMVERSIONWITHOUTSUFFIX}-linux-${ARCH_SUFFIX}.tar.gz" -C "${TEMP_DIR}"
-sudo mv "${TEMP_DIR}/linux-${ARCH_SUFFIX}/helm" /usr/local/bin/helm
-sudo chmod +x /usr/local/bin/helm
-
-# Clean up temporary directory
-rm -rf "${TEMP_DIR}"
+# Verify if download succeeded and is a valid gzip file
+if file "${HELM_ARCHIVE}" | grep -q 'gzip compressed data'; then
+    # Extract Helm and move it to /usr/local/bin
+    tar -xzvf "${HELM_ARCHIVE}" -C "${TEMP_DIR}"
+    sudo mv "${TEMP_DIR}/linux-${ARCH_SUFFIX}/helm" /usr/local/bin/helm
+    sudo chmod +x /usr/local/bin/helm
+else
+    echo "Helm archive download failed or file corrupted."
+    exit 1
+fi
 
 # Remove any old Helm configurations
 rm -rf "$HOME/.helm"

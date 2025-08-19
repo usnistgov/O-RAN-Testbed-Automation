@@ -31,9 +31,10 @@
 # Exit immediately if a command fails
 set -e
 
+APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
-    sudo apt-get install -y coreutils
+    sudo $APTVARS apt-get install -y coreutils
 fi
 
 echo "# Script: $(realpath $0)..."
@@ -45,14 +46,14 @@ cd "$PARENT_DIR"
 if ! command -v grafana-server &>/dev/null; then
     echo "Grafana not found, installing..."
     # Code from (https://grafana.com/docs/grafana/latest/setup-grafana/installation/debian):
-    sudo apt-get install -y apt-transport-https software-properties-common wget
+    sudo $APTVARS apt-get install -y apt-transport-https software-properties-common wget
     sudo mkdir -p /etc/apt/keyrings/
     wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | sudo tee /etc/apt/keyrings/grafana.gpg >/dev/null
     echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
     # Updates the list of available packages
     sudo apt-get update
     # Installs the latest OSS release:
-    sudo apt-get install -y grafana
+    sudo $APTVARS apt-get install -y grafana
 fi
 
 # # Installing and configuring Grafana to use the CSV data source plugin
@@ -65,7 +66,7 @@ INFLUXDB_ORG="xapp-kpm-moni"
 INFLUXDB_BUCKET="xapp-kpm-moni"
 INFLUXDB_TOKEN_PATH="$PARENT_DIR/influxdb_auth_token.json"
 
-# Check if influxdb is even installed:
+# Check if influxdb is installed:
 if ! command -v influx &>/dev/null; then
     echo "InfluxDB is not installed. Installing InfluxDB..."
     ./install_scripts/install_influxdb.sh

@@ -32,66 +32,81 @@ set +e
 
 # Scenario 1: O-RAN Software Community Near-RT RIC with srsRAN gNB and OAI CN
 
-NUM_SAMPLES=20
+NUM_SAMPLES=100
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 BASE_DIR=$(dirname "$(dirname "$(dirname "$SCRIPT_DIR")")")
 
-trap '"$BASE_DIR"/stop.sh; exit' SIGINT
+trap '"$BASE_DIR"/stop.sh; stty sane; exit' SIGINT
 
 UE_DIR="$BASE_DIR/User_Equipment"
 LOG_FILE="$UE_DIR/logs/ue1_stdout.txt"
 OUT_FILE="$SCRIPT_DIR/ue_experiment_1.txt"
 
-cd "$BASE_DIR"
-./stop.sh
+# Start fresh output file
+if [ ! -f "$OUT_FILE" ]; then
+    : > "$OUT_FILE"
+fi
 
-yq eval -i '.core_to_use = "5gdeploy-oai"' 5G_Core_Network/options.yaml
-./generate_configurations.sh
+restart_other_components() {
+    cd "$BASE_DIR"
+    ./stop.sh
 
-cd "$BASE_DIR"
-echo "Running 5G Core components..."
-cd 5G_Core_Network
-./run.sh
-cd ..
+    yq eval -i '.core_to_use = "5gdeploy-oai"' 5G_Core_Network/options.yaml
+    ./generate_configurations.sh
 
-echo
-echo -n "Waiting for AMF to be ready"
-attempt=0
-while ! ./5G_Core_Network/is_amf_ready.sh | grep -q "true"; do
-    echo -n "."
-    sleep 0.5
-    attempt=$((attempt + 1))
-    if [ $attempt -ge 120 ]; then
-        echo "5G Core components did not start after 60 seconds, exiting..."
-        exit 1
-    fi
-done
-echo -e "\nAMF is ready."
+    cd "$BASE_DIR"
+    echo "Running 5G Core components..."
+    cd 5G_Core_Network
+    ./run.sh
+    cd ..
 
-echo
-echo "Running gNodeB..."
-cd Next_Generation_Node_B
-./run_background.sh
-cd ..
+    echo
+    echo -n "Waiting for AMF to be ready"
+    attempt=0
+    while ! ./5G_Core_Network/is_amf_ready.sh | grep -q "true"; do
+        echo -n "."
+        sleep 0.5
+        attempt=$((attempt + 1))
+        if [ $attempt -ge 120 ]; then
+            echo "5G Core components did not start after 60 seconds, exiting..."
+            exit 1
+        fi
+    done
+    echo -e "\nAMF is ready."
 
-echo "Starting UE experiment in 15 seconds..."
-sleep 15
+    echo
+    echo "Running gNodeB..."
+    cd Next_Generation_Node_B
+    ./run_background.sh
+    cd ..
 
-cd "$UE_DIR"
+    echo "Starting UE experiment in 5 seconds..."
+    sleep 5
+}
+
+restart_other_components
+
 for ((i=1; i<=NUM_SAMPLES; i++)); do
+    cd "$UE_DIR"
     ./run_background.sh
     START_TIME=$(date +%s.%N)
 
     while [ ! -f "$LOG_FILE" ]; do
         sleep 0.2
     done
-
-    timeout 60s bash -c 'tail -n 0 -F "$0" 2>/dev/null | grep -m 1 -F "PDU Session" >/dev/null' "$LOG_FILE"
-    if [ $? -ne 0 ]; then
+    FOUND=0
+    for _ in {1..300}; do
+        if grep -q -F "PDU Session" "$LOG_FILE"; then
+            FOUND=1
+            break
+        fi
+        sleep 0.2
+    done
+    if [ "$FOUND" -ne 1 ]; then
         echo "Sample $i: PDU Session not established within 60 seconds, skipping..."
         ./stop.sh
-        sleep 5
+        restart_other_components
         continue
     fi
     END_TIME=$(date +%s.%N)
@@ -101,5 +116,11 @@ for ((i=1; i<=NUM_SAMPLES; i++)); do
     echo "$DURATION" >> "$OUT_FILE"
 
     ./stop.sh
+
+    cd "$BASE_DIR/Next_Generation_Node_B"
+    ./stop.sh
+    ./run_background.sh
+    
+    stty sane
     sleep 5
 done

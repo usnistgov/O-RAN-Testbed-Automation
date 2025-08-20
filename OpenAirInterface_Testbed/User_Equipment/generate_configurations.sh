@@ -66,6 +66,17 @@ for i in "${UE_NUMBERS[@]}"; do
     echo "UE $i will be configured."
 done
 
+# Check if the YAML editor is installed, and install it if not
+if ! command -v yq &>/dev/null; then
+    sudo "$SCRIPT_DIR/install_scripts/./install_yq.sh"
+fi
+# Check that the correct version of yq is installed
+if ! yq --version 2>/dev/null | grep -q 'https://github\.com/mikefarah/yq'; then
+    echo "ERROR: Detected an incompatible yq installation."
+    echo "Please ensure the Python yq is uninstalled with \"pip uninstall -y yq\", then re-run this script."
+    exit 1
+fi
+
 # Function to update or add configuration properties in .conf files, considering sections and uncommenting if needed
 update_conf() {
     echo "update_conf($1, $2, $3)"
@@ -134,17 +145,6 @@ if [[ -z "$DNN" || "$DNN" == "null" ]]; then
 fi
 if [[ -z "$SST" || -z "$SD" || "$SST" == "null" || "$SD" == "null" ]]; then
     echo "SST or SD is not set in "$YAML_PATH", please ensure that \"sst\" and \"sd\" are set."
-    exit 1
-fi
-
-# Check if the YAML editor is installed, and install it if not
-if ! command -v yq &>/dev/null; then
-    sudo "$SCRIPT_DIR/install_scripts/./install_yq.sh"
-fi
-# Check that the correct version of yq is installed
-if ! yq --version 2>/dev/null | grep -q 'https://github\.com/mikefarah/yq'; then
-    echo "ERROR: Detected an incompatible yq installation."
-    echo "Please ensure the Python yq is uninstalled with \"pip uninstall -y yq\", then re-run this script."
     exit 1
 fi
 

@@ -90,18 +90,18 @@ restart_other_components
 for ((i=1; i<=NUM_SAMPLES; i++)); do
     cd "$UE_DIR"
     ./run_background.sh
-    START_TIME=$(date +%s.%N)
 
     while [ ! -f "$LOG_FILE" ]; do
-        sleep 0.2
+        sleep 0.1
     done
+    START_TIME=$(date +%s.%N)
     FOUND=0
-    for _ in {1..300}; do
+    for ((j=1; j<=600; j++)); do
         if grep -q -F "PDU Session" "$LOG_FILE"; then
             FOUND=1
             break
         fi
-        sleep 0.2
+        sleep 0.1
     done
     if [ "$FOUND" -ne 1 ]; then
         echo "Sample $i: PDU Session not established within 60 seconds, skipping..."

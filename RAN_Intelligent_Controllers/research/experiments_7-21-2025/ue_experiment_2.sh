@@ -30,9 +30,9 @@
 
 set +e
 
-# Scenario 2: Mosaic5G FlexRIC with OAI gNB and Open5GS
+# Scenario 2: Mosaic5G FlexRIC with OAI gNB and OAI CN
 
-NUM_SAMPLES=20
+NUM_SAMPLES=100
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 BASE_DIR=$(dirname "$(dirname "$(dirname "$SCRIPT_DIR")")")
@@ -49,13 +49,13 @@ if [ ! -f "$OUT_FILE" ]; then
 fi
 
 restart_other_components() {
-    cd "$BASE_DIR"
+    cd "$BASE_DIR/OpenAirInterface_Testbed"
     ./stop.sh
 
-    yq eval -i '.core_to_use = "open5gs"' 5G_Core_Network/options.yaml
+    yq eval -i '.core_to_use = "5gdeploy-oai"' 5G_Core_Network/options.yaml
     ./generate_configurations.sh
 
-    cd "$BASE_DIR"
+    cd "$BASE_DIR/OpenAirInterface_Testbed"
     echo "Running 5G Core components..."
     cd 5G_Core_Network
     ./run.sh
@@ -122,18 +122,18 @@ restart_other_components
 for ((i=1; i<=NUM_SAMPLES; i++)); do
     cd "$UE_DIR"
     ./run_background.sh
-    START_TIME=$(date +%s.%N)
 
     while [ ! -f "$LOG_FILE" ]; do
-        sleep 0.2
+        sleep 0.1
     done
+    START_TIME=$(date +%s.%N)
     FOUND=0
-    for _ in {1..300}; do
+    for ((j=1; j<=600; j++)); do
         if grep -q -F "PDU Session" "$LOG_FILE"; then
             FOUND=1
             break
         fi
-        sleep 0.2
+        sleep 0.1
     done
     if [ "$FOUND" -ne 1 ]; then
         echo "Sample $i: PDU Session not established within 60 seconds, skipping..."

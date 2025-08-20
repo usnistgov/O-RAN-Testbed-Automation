@@ -37,7 +37,7 @@ NUM_SAMPLES=20
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 BASE_DIR=$(dirname "$(dirname "$(dirname "$SCRIPT_DIR")")")
 
-trap '"$BASE_DIR"/OpenAirInterface_Testbed/stop.sh' EXIT
+trap '"$BASE_DIR"/OpenAirInterface_Testbed/stop.sh; exit' SIGINT
 
 UE_DIR="$BASE_DIR/OpenAirInterface_Testbed/User_Equipment"
 LOG_FILE="$UE_DIR/logs/ue1_stdout.txt"
@@ -118,7 +118,13 @@ for ((i=1; i<=NUM_SAMPLES; i++)); do
     while [ ! -f "$LOG_FILE" ]; do
         sleep 0.2
     done
-    tail -n 0 -F "$LOG_FILE" 2>/dev/null | grep -m 1 -F "PDU Session" >/dev/null
+    timeout 60s bash -c 'tail -n 0 -F "$0" 2>/dev/null | grep -m 1 -F "PDU Session" >/dev/null' "$LOG_FILE"
+    if [ $? -ne 0 ]; then
+        echo "Sample $i: PDU Session not established within 60 seconds, skipping..."
+        ./stop.sh
+        sleep 5
+        continue
+    fi
     END_TIME=$(date +%s.%N)
 
     DURATION=$(awk -v s="$START_TIME" -v e="$END_TIME" 'BEGIN { print (e - s) }')

@@ -68,7 +68,7 @@ while ! ./is_running.sh | grep -q "ue$UE_NUMBER"; do
     sleep 0.5
     ATTEMPT=$((ATTEMPT + 1))
     if [ $ATTEMPT -ge 120 ]; then
-        echo "gNodeB did not start after 60 seconds, exiting..."
+        echo "UE did not start after 60 seconds, exiting..."
         exit 1
     fi
 done

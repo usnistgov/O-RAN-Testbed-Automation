@@ -136,9 +136,10 @@ for ((i=1; i<=NUM_SAMPLES; i++)); do
         sleep 0.1
     done
     if [ "$FOUND" -ne 1 ]; then
-        echo "Sample $i: PDU Session not established within 60 seconds, skipping..."
+        echo "Sample $i: PDU Session not established within 60 seconds, redoing sample..."
         ./stop.sh
         restart_other_components
+        i=$((i - 1))
         continue
     fi
     END_TIME=$(date +%s.%N)

@@ -52,7 +52,7 @@ restart_other_components() {
     cd "$BASE_DIR/OpenAirInterface_Testbed"
     ./stop.sh
 
-    yq eval -i '.core_to_use = "5gdeploy-oai"' 5G_Core_Network/options.yaml
+    yq eval -i '.core_to_use = "open5gs"' 5G_Core_Network/options.yaml
     ./generate_configurations.sh
 
     cd "$BASE_DIR/OpenAirInterface_Testbed"

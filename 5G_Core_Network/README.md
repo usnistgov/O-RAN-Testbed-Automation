@@ -104,6 +104,12 @@ By default, the configuration process automatically unregisters all subscribers,
     <td>...2</td>
   </tr>
   <tr>
+    <td>Address</td>
+    <td>10.45.0.1</td>
+    <td>...2</td>
+    <td>...3</td>
+  </tr>
+  <tr>
     <td>netns</td>
     <td>ue1</td>
     <td>ue2</td>

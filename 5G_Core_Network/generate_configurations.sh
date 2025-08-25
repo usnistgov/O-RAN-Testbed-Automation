@@ -389,39 +389,43 @@ if [[ "$OGSTUN_IPV6" == "null" || -z "$OGSTUN_IPV6" ]]; then
     exit 1
 fi
 
-# Extract the first IPv4 address from a CIDR block by replacing the last octet with '.1'
-# For example, 10.45.0.0/16 --> 10.45.0.1/16
-grab_first_ipv4_address() {
-    local IP=$1
-    echo ${IP%.*}.1/${IP#*/}
-}
+if ! command -v python3 &>/dev/null; then
+    echo "Python is not installed. Installing Python..."
+    sudo apt-get update
+    sudo apt-get install -y python3
+fi
 
-# Extract the first IPv6 address from a CIDR block by replacing the suffix with '::1'.
-# For example, 2001:db8:cafe::/48 --> 2001:db8:cafe::1/48
-grab_first_ipv6_address() {
-    local IP=$1
-    echo ${IP%::*}::1/${IP#*/}
-}
+# # Extract the first IPv4 address from a CIDR block by replacing the last octet with '.1'
+# # For example, 10.45.0.0/16 --> 10.45.0.1/16
+# grab_first_ipv4_address() {
+#     local IP=$1
+#     echo ${IP%.*}.1/${IP#*/}
+# }
 
-# Remove the CIDR suffix from an IP address
-# For example, 10.45.0.1/16 --> 10.45.0.1
-remove_cidr_suffix() {
-    local IP=$1
-    echo ${IP%/*}
-}
+# # Extract the first IPv6 address from a CIDR block by replacing the suffix with '::1'.
+# # For example, 2001:db8:cafe::/48 --> 2001:db8:cafe::1/48
+# grab_first_ipv6_address() {
+#     local IP=$1
+#     echo ${IP%::*}::1/${IP#*/}
+# }
+
+# # Remove the CIDR suffix from an IP address
+# # For example, 10.45.0.1/16 --> 10.45.0.1
+# remove_cidr_suffix() {
+#     local IP=$1
+#     echo ${IP%/*}
+# }
 
 # Extract the first IPv4 and IPv6 addresses from the CIDR blocks
-OGSTUN_IPV4_1=$(grab_first_ipv4_address "$OGSTUN_IPV4")
-OGSTUN_IPV6_1=$(grab_first_ipv6_address "$OGSTUN_IPV6")
-OGSTUN_IPV4_1_NO_CIDR=$(remove_cidr_suffix "$OGSTUN_IPV4_1")
-OGSTUN_IPV6_1_NO_CIDR=$(remove_cidr_suffix "$OGSTUN_IPV6_1")
+OGSTUN_IPV4_1="$(python3 install_scripts/fetch_nth_ip.py "$OGSTUN_IPV4" 0)"
+OGSTUN_IPV6_1="$(python3 install_scripts/fetch_nth_ip.py "$OGSTUN_IPV6" 0)"
 
 if [ "$EXPOSE_AMF_OVER_HOSTNAME" = true ]; then
     AMF_IP=$(hostname -I | awk '{print $1}')
     set_configuration_server_ips $AMF_IP
     # Need an address for the gNodeB to bind to that is not the host IP.
     if [ "$IS_OPEN5GS_ON_HOST" = true ]; then
-        AMF_IP_BIND=$OGSTUN_IPV4_1_NO_CIDR
+        AMF_IP_BIND=$OGSTUN_IPV4_1
     else
         AMF_IP_BIND=$AMF_IP
     fi
@@ -430,7 +434,7 @@ else
     AMF_IP_BIND="127.0.0.1"
 fi
 
-set_configuration_session_gateways $OGSTUN_IPV4 $OGSTUN_IPV4_1_NO_CIDR $OGSTUN_IPV6 $OGSTUN_IPV6_1_NO_CIDR
+set_configuration_session_gateways $OGSTUN_IPV4 $OGSTUN_IPV4_1 $OGSTUN_IPV6 $OGSTUN_IPV6_1
 
 # Configure the Single Network Slice Selection Assistance Information (S-NSSAI)
 set_snssai "$SST" "$SD"
@@ -472,11 +476,15 @@ echo "Unregistering all subscribers in Open5GS database..."
 
 # Register the subscribers
 for UE_NUMBER in "${UE_NUMBERS[@]}"; do
+    UE_INDEX=$((UE_NUMBER - 1))
+    UE_IPV4="$(python3 install_scripts/fetch_nth_ip.py "$OGSTUN_IPV4" "$UE_INDEX")"
+
     echo
-    echo "Registering UE $UE_NUMBER..."
+    echo "Registering UE $UE_NUMBER (static IP: $UE_IPV4)..."
+
     # Fetch the UE's OPc, IMEI, IMSI, KEY, and NAMESPACE
     read -r UE_OPC UE_IMEI UE_IMSI UE_KEY UE_NAMESPACE < <("$UE_CREDENTIAL_GENERATOR_SCRIPT" "$UE_NUMBER" "$PLMN")
-    ./install_scripts/register_subscriber.sh --imsi "$UE_IMSI" --key "$UE_KEY" --opc "$UE_OPC" --apn "$DNN" --sst "$SST" --sd "$SD"
+    ./install_scripts/register_subscriber.sh --imsi "$UE_IMSI" --key "$UE_KEY" --opc "$UE_OPC" --apn "$DNN" --sst "$SST" --sd "$SD" --ipv4 "$UE_IPV4"
 done
 
 # Restart Open5GS services to apply changes

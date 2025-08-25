@@ -477,14 +477,19 @@ echo "Unregistering all subscribers in Open5GS database..."
 # Register the subscribers
 for UE_NUMBER in "${UE_NUMBERS[@]}"; do
     UE_INDEX=$((UE_NUMBER - 1))
-    UE_IPV4="$(python3 install_scripts/fetch_nth_ip.py "$OGSTUN_IPV4" "$UE_INDEX")"
+    UE_IPV4=$(python3 install_scripts/fetch_nth_ip.py "$OGSTUN_IPV4" "$UE_INDEX")
+    if [ $? -eq 0 ]; then
+        IPV4_LINE="--ipv4 $UE_IPV4"
+    else
+        IPV4_LINE=""
+    fi
 
     echo
-    echo "Registering UE $UE_NUMBER (static IP: $UE_IPV4)..."
+    echo "Registering UE $UE_NUMBER..."
 
     # Fetch the UE's OPc, IMEI, IMSI, KEY, and NAMESPACE
     read -r UE_OPC UE_IMEI UE_IMSI UE_KEY UE_NAMESPACE < <("$UE_CREDENTIAL_GENERATOR_SCRIPT" "$UE_NUMBER" "$PLMN")
-    ./install_scripts/register_subscriber.sh --imsi "$UE_IMSI" --key "$UE_KEY" --opc "$UE_OPC" --apn "$DNN" --sst "$SST" --sd "$SD" --ipv4 "$UE_IPV4"
+    ./install_scripts/register_subscriber.sh --imsi "$UE_IMSI" --key "$UE_KEY" --opc "$UE_OPC" --apn "$DNN" --sst "$SST" --sd "$SD" $IPV4_LINE
 done
 
 # Restart Open5GS services to apply changes

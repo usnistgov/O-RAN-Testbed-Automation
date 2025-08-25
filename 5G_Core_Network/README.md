@@ -110,7 +110,7 @@ By default, the configuration process automatically unregisters all subscribers,
     <td>...3</td>
   </tr>
   <tr>
-    <td>netns</td>
+    <td>Namespace</td>
     <td>ue1</td>
     <td>ue2</td>
     <td>ue3</td>

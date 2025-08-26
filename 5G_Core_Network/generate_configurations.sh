@@ -395,27 +395,6 @@ if ! command -v python3 &>/dev/null; then
     sudo apt-get install -y python3
 fi
 
-# # Extract the first IPv4 address from a CIDR block by replacing the last octet with '.1'
-# # For example, 10.45.0.0/16 --> 10.45.0.1/16
-# grab_first_ipv4_address() {
-#     local IP=$1
-#     echo ${IP%.*}.1/${IP#*/}
-# }
-
-# # Extract the first IPv6 address from a CIDR block by replacing the suffix with '::1'.
-# # For example, 2001:db8:cafe::/48 --> 2001:db8:cafe::1/48
-# grab_first_ipv6_address() {
-#     local IP=$1
-#     echo ${IP%::*}::1/${IP#*/}
-# }
-
-# # Remove the CIDR suffix from an IP address
-# # For example, 10.45.0.1/16 --> 10.45.0.1
-# remove_cidr_suffix() {
-#     local IP=$1
-#     echo ${IP%/*}
-# }
-
 # Extract the first IPv4 and IPv6 addresses from the CIDR blocks
 OGSTUN_IPV4_1="$(python3 install_scripts/fetch_nth_ip.py "$OGSTUN_IPV4" 0)"
 OGSTUN_IPV6_1="$(python3 install_scripts/fetch_nth_ip.py "$OGSTUN_IPV6" 0)"

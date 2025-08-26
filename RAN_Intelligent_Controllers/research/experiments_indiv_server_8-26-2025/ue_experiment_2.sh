@@ -30,7 +30,7 @@
 
 set +e
 
-# Scenario 2: Mosaic5G FlexRIC with OAI gNB and OAI CN
+# Scenario 2: Mosaic5G FlexRIC with OAI gNB and Open5GS
 
 NUM_SAMPLES=100
 

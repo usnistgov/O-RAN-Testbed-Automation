@@ -31,7 +31,7 @@
 set +e
 set -x
 
-NUM_SAMPLES=100
+NUM_SAMPLES=1000
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then

@@ -1,0 +1,175 @@
+diff --git a/docker/build.sh b/docker/build.sh
+index 256cd1a..efad1a4 100755
+--- a/docker/build.sh
++++ b/docker/build.sh
+@@ -36,7 +36,7 @@ build_oai_nwdaf_microservice() {
+ }
+ 
+ build_oai_nwdaf() {
+-  if [[ -n "${TAG:-}" ]]; then
++  if [[ -z "${TAG:-}" ]]; then
+     TAG=http2_server_support
+     TAG_ARG=(--build-arg TAG="$TAG")
+   fi
+diff --git a/docker/open5gs/Dockerfile b/docker/open5gs/Dockerfile
+index 4a3c131..631c895 100644
+--- a/docker/open5gs/Dockerfile
++++ b/docker/open5gs/Dockerfile
+@@ -1,4 +1,4 @@
+-ARG TAG=2.7.2
++ARG TAG=2.7.6
+ FROM crazymax/yasu AS yasu
+ 
+ FROM gradiant/open5gs:${TAG}
+diff --git a/docs/INSTALL.md b/docs/INSTALL.md
+index b976609..ddce1e7 100644
+--- a/docs/INSTALL.md
++++ b/docs/INSTALL.md
+@@ -70,20 +70,21 @@ cd ~/5gdeploy
+ 
+ ### Installation Options
+ The following optional arguments can be passed to `./install.sh`:
+-* `--pipework-version <version>`: Specify a **branch**, **tag**, or **commit hash** to use for Pipework (_default: [9ba97f1735022fb5f811d9c2a304dda33fae1ad1](https://github.com/jpetazzo/pipework)_)
+-* `--eupf-version <version>`: Specify a **branch** or **commit hash** to use for eUPF (_default: [main](https://github.com/edgecomllc/eupf)_)
+-* `--free5gc-version <version>`: Specify a **branch**, **tag**, or **commit hash** to use for free5GC (_default: [master](https://github.com/free5gc/free5gc-compose)_)
+-* `--free5gc-webconsole-version <version>`: Specify a **branch**, **tag**, or **commit hash** to use for free5GC Web Console (_default: [f4932d569dd0045fc31baca062a05d7b34e3e8e0](https://github.com/free5gc/webconsole)_)
+-* `--gnbsim-version <version>`: Specify a **branch**, **tag**, or **commit hash** to use for gNBSim (_default: [d3fce7e35a69b9f5d670242a93b7d1bee8842ecf](https://github.com/omec-project/gnbsim)_)
++* `--dpdk-version <version>`: Specify a **branch**, **tag**, or **commit hash** to use for DPDK (_default: [v24.11](https://github.com/DPDK/dpdk)_)
++* `--eupf-version <version>`: Specify a **branch** or **commit hash** to use for eUPF (_default: [54ed069](https://github.com/edgecomllc/eupf)_ [v0.7.0])
++* `--free5gc-version <version>`: Specify a **branch**, **tag**, or **commit hash** to use for free5GC (_default: [v4.0.1](https://github.com/free5gc/free5gc-compose)_)
++* `--free5gc-webconsole-version <version>`: Specify a **branch**, **tag**, or **commit hash** to use for free5GC Web Console (_default: [f4932d5](https://github.com/free5gc/webconsole)_)
++* `--gnbsim-version <version>`: Specify a **branch**, **tag**, or **commit hash** to use for gNBSim (_default: [d3fce7e](https://github.com/omec-project/gnbsim)_)
+ * `--gtp5g-version <version>`: Specify a **branch**, **tag**, or **commit hash** to use for gtp5g (_default: [v0.9.13](https://github.com/free5gc/gtp5g)_)
+-* `--oai-fed-version <version>`: Specify a **branch**, **tag**, or **commit hash** to use for OAI-CN5G (_default: [master](https://gitlab.eurecom.fr/oai/cn5g/oai-cn5g-fed)_)
+-* `--oai-nwdaf-version <version>`: Specify a **branch**, **tag**, or **commit hash** to use for OAI-CN5G-NWDAF (_default: [http2_server_support](https://gitlab.eurecom.fr/oai/cn5g/oai-cn5g-nwdaf)_)
+-* `--open5gs-version <version>`: Specify a **release** to use for Open5GS (_default: [2.7.2](https://hub.docker.com/r/gradiant/open5gs)_)
+-* `--packetrusher-version <version>`: Specify a **branch**, **tag**, or **commit hash** to use for PacketRusher (_default: [80a7f4bc63d9563a8ec58ba126440d94018a35a2](https://github.com/HewlettPackard/PacketRusher)_)
+-* `--sockperf-version <version>`: Specify a **branch**, **tag**, or **commit hash** to use for sockperf (_default: [19accb5229503dac7833f03713b978cb7fc48762](https://github.com/Mellanox/sockperf)_)
++* `--oai-fed-version <version>`: Specify a **branch**, **tag**, or **commit hash** to use for OAI-CN5G (_default: [2024.w45](https://gitlab.eurecom.fr/oai/cn5g/oai-cn5g-fed)_)
++* `--oai-nwdaf-version <version>`: Specify a **branch**, **tag**, or **commit hash** to use for OAI-CN5G-NWDAF (_default: [6a1408c](https://gitlab.eurecom.fr/oai/cn5g/oai-cn5g-nwdaf)_)
++* `--open5gs-dbctl-version <version>`: Specify a **branch**, **tag**, or **commit hash** to use for Open5GS DBCTL (_default: [v2.7.6](https://github.com/open5gs/open5gs)_)
++* `--open5gs-version <version>`: Specify a **release** to use for Open5GS (_default: [2.7.6](https://hub.docker.com/r/gradiant/open5gs)_)
++* `--packetrusher-version <version>`: Specify a **branch**, **tag**, or **commit hash** to use for PacketRusher (_default: [80a7f4b](https://github.com/HewlettPackard/PacketRusher)_)
++* `--pipework-version <version>`: Specify a **branch**, **tag**, or **commit hash** to use for Pipework (_default: [9ba97f1](https://github.com/jpetazzo/pipework)_)
++* `--sockperf-version <version>`: Specify a **branch**, **tag**, or **commit hash** to use for sockperf (_default: [19accb5](https://github.com/Mellanox/sockperf)_)
+ * `--srsran5g-version <version>`: Specify a **release** to use for srsRAN Project (_default: [24_10_1](https://hub.docker.com/r/gradiant/srsran-5g)_)
+-* `--ueransim-version <version>`: Specify a **branch**, **tag**, or **commit hash** to use for UERANSIM (_default: [2fc85e3e422b9a981d330bf6ff945136bfae97f3](https://github.com/aligungr/UERANSIM)_)
+-* `--dpdk-version <version>`: Specify a **branch**, **tag**, or **commit hash** to use for DPDK (_default: [v24.11](https://github.com/DPDK/dpdk)_)
++* `--ueransim-version <version>`: Specify a **branch**, **tag**, or **commit hash** to use for UERANSIM (_default: [2fc85e3](https://github.com/aligungr/UERANSIM)_)
+ 
+ ## Secondary Host
+ 
+diff --git a/free5gc/download.sh b/free5gc/download.sh
+index 4092880..87b49f9 100644
+--- a/free5gc/download.sh
++++ b/free5gc/download.sh
+@@ -2,7 +2,7 @@
+ set -euo pipefail
+ cd "$(dirname "${BASH_SOURCE[0]}")"
+ TAG=${1:-}
+-TAG=${TAG:-master}
++TAG=${TAG:-v4.0.1}
+ TAG_WEBCONSOLE=${2:-f4932d569dd0045fc31baca062a05d7b34e3e8e0}
+ 
+ if [[ -d free5gc-compose ]]; then
+@@ -10,7 +10,10 @@ if [[ -d free5gc-compose ]]; then
+   git -C free5gc-compose checkout "${TAG}"
+   git -C free5gc-compose pull || true
+ else
+-  git clone --branch "${TAG}" https://github.com/free5gc/free5gc-compose.git
++  git clone https://github.com/free5gc/free5gc-compose.git
++  cd free5gc-compose
++  git checkout "${TAG}"
++  cd ..
+ fi
+ 
+ curl -o webconsole.yaml -fsLS "https://github.com/free5gc/webconsole/raw/${TAG_WEBCONSOLE}/frontend/webconsole.yaml"
+diff --git a/install.sh b/install.sh
+index 3ae69da..564a4bb 100755
+--- a/install.sh
++++ b/install.sh
+@@ -30,6 +30,7 @@ declare -A TAGS=(
+   [oai-fed]=""
+   [oai-nwdaf]=""
+   [open5gs]=""
++  [open5gs-dbctl]=""
+   [packetrusher]=""
+   [srsran5g]=""
+   [ueransim]=""
+@@ -82,6 +83,11 @@ while [[ $# -gt 0 ]]; do
+       msg "Argument open5gs-version = ${TAGS[open5gs]}"
+       shift 2
+       ;;
++    --open5gs-dbctl-version)
++      TAGS[open5gs-dbctl]="$2"
++      msg "Argument open5gs-dbctl-version = ${TAGS[open5gs-dbctl]}"
++      shift 2
++      ;;
+     --packetrusher-version)
+       TAGS[packetrusher]="$2"
+       msg "Argument packetrusher-version = ${TAGS[packetrusher]}"
+@@ -124,7 +130,7 @@ bash ./types/build-schema.sh
+ bash ./eupf/download.sh "${TAGS[eupf]}"
+ bash ./free5gc/download.sh "${TAGS[free5gc]}" "${TAGS[free5gc-webclient]}"
+ bash ./oai/download.sh "${TAGS[oai-fed]}" "${TAGS[oai-nwdaf]}"
+-bash ./open5gs/download.sh "${TAGS[open5gs]}"
++bash ./open5gs/download.sh "${TAGS[open5gs-dbctl]}"
+ 
+ for IMG in bridge dn eupf free5gc-webclient gnbsim gtp5g iperf2 ns3http open5gs packetrusher sockperf srsran5g ueransim virt; do
+   TAG=${TAGS[$IMG]:-}
+diff --git a/oai/download.sh b/oai/download.sh
+index b95118d..85cd274 100644
+--- a/oai/download.sh
++++ b/oai/download.sh
+@@ -2,8 +2,8 @@
+ set -euo pipefail
+ cd "$(dirname "${BASH_SOURCE[0]}")"
+ FED_TAG=${1:-}
+-FED_TAG=${FED_TAG:-master}
+-NWDAF_TAG=${2:-master}
++FED_TAG=${FED_TAG:-2024.w45}
++NWDAF_TAG=${2:-6a1408c9be6f5cf0ddb6c1f1b527a04e36205471}
+ 
+ mkdir -p fed
+ curl -sfLS "https://gitlab.eurecom.fr/oai/cn5g/oai-cn5g-fed/-/archive/${FED_TAG}/oai-cn5g-fed-${FED_TAG}.tar.gz?path=docker-compose" |
+diff --git a/omec/download.sh b/omec/download.sh
+index aa0ed76..03474f1 100644
+--- a/omec/download.sh
++++ b/omec/download.sh
+@@ -8,7 +8,9 @@ if [[ -d upf ]]; then
+   git -C upf checkout "${TAG}"
+   git -C upf pull || true
+ else
+-  git clone --branch "${TAG}" https://github.com/omec-project/upf.git
++  git clone https://github.com/omec-project/upf.git
++  cd upf
++  git checkout "${TAG}"
+ fi
+ 
+ make -C upf docker-build
+diff --git a/open5gs/common.ts b/open5gs/common.ts
+index 24c17a9..2fdcb2b 100644
+--- a/open5gs/common.ts
++++ b/open5gs/common.ts
+@@ -5,7 +5,7 @@ import type { ComposeService, O5G } from "../types/mod.js";
+ import type { O5GOpts } from "./options.js";
+ 
+ export const o5DockerImage = "5gdeploy.localhost/open5gs";
+-export const webuiDockerImage = "gradiant/open5gs-webui:2.7.2";
++export const webuiDockerImage = "gradiant/open5gs-webui:2.7.6";
+ 
+ export function makeSockNode(s: ComposeService, net: string, port?: number): O5G.SockNode {
+   return {
+diff --git a/open5gs/download.sh b/open5gs/download.sh
+index 962c17c..0425234 100644
+--- a/open5gs/download.sh
++++ b/open5gs/download.sh
+@@ -1,6 +1,6 @@
+ #!/bin/bash
+ set -euo pipefail
+ cd "$(dirname "${BASH_SOURCE[0]}")"
+-TAG=${1:-2.7.2}
++TAG=${1:-v2.7.6}
+ 
+-curl -sfLS "https://github.com/open5gs/open5gs/raw/v${TAG}/misc/db/open5gs-dbctl" -o open5gs-dbctl
++curl -sfLS "https://github.com/open5gs/open5gs/raw/${TAG}/misc/db/open5gs-dbctl" -o open5gs-dbctl

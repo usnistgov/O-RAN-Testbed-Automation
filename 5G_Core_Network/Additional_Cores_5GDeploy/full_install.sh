@@ -109,30 +109,17 @@ cd $SCRIPT_DIR/5gdeploy
 echo "Patching netdef/helpers.ts to generate NR Cell ID starting at hex 0xE000 (aligning with OAI gNB) instead of 0x10"
 sed -i '0,/^[[:space:]]*nci[[:space:]]*=.*$/s//      nci = hexPad(((3584 + i) << (36 - gnbIdLength)) | 0xF, 9),/' netdef/helpers.ts
 
-# echo "Patching docker/build.sh to support Ubuntu-based distros..."
-# git restore docker/build.sh
-# git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/5gdeploy/docker/build.sh.patch"
-
-# echo "Patching 5gdeploy to add version control..."
-# git restore docker/bridge/Dockerfile
-# git restore docker/build.sh
-# git restore docker/eupf/Dockerfile
-# git restore docker/gnbsim/Dockerfile
-# git restore docker/gtp5g/Dockerfile
-# git restore docker/oai-nwdaf-cli/Dockerfile
-# git restore docker/open5gs/Dockerfile
-# git restore docker/packetrusher/Dockerfile
-# git restore docker/sockperf/Dockerfile
-# git restore docker/srsran5g/Dockerfile
-# git restore docker/ueransim/Dockerfile
-# git restore docker/virt/Dockerfile
-# git restore docs/INSTALL.md
-# git restore eupf/download.sh
-# git restore free5gc/download.sh
-# git restore install.sh
-# git restore oai/download.sh
-# git restore open5gs/download.sh
-# git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/5gdeploy/add_version_control.patch"
+echo "Patching 5gdeploy to fix version control..."
+git restore docker/build.sh
+git restore docker/open5gs/Dockerfile
+git restore docs/INSTALL.md
+git restore free5gc/download.sh
+git restore install.sh
+git restore oai/download.sh
+git restore omec/download.sh
+git restore open5gs/common.ts
+git restore open5gs/download.sh
+git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/5gdeploy/fix_version_control.patch"
 
 cd $SCRIPT_DIR
 
@@ -215,20 +202,21 @@ cd "$SCRIPT_DIR/5gdeploy"
 # Step 2: Install 5gdeploy
 echo "Starting installation of 5G Core Deployment Helper (5gdeploy)..."
 ./install.sh \
-    --pipework-version 9ba97f1735022fb5f811d9c2a304dda33fae1ad1 \
-    --eupf-version main \
-    --free5gc-version master \
-    --free5gc-webconsole-version f4932d569dd0045fc31baca062a05d7b34e3e8e0 \
+    --dpdk-version v24.11 \
+    --eupf-version 54ed069c6cdf1da18b09bd78cb166bc4e4dd1ceb \
+    --free5gc-version v4.0.1 \
+    --free5gc-webconsole-version v1.4.1 \
     --gnbsim-version d3fce7e35a69b9f5d670242a93b7d1bee8842ecf \
     --gtp5g-version v0.9.13 \
-    --oai-fed-version master \
-    --oai-nwdaf-version http2_server_support \
-    --open5gs-version 2.7.2 \
+    --oai-fed-version 2024.w45 \
+    --oai-nwdaf-version 6a1408c9be6f5cf0ddb6c1f1b527a04e36205471 \
+    --open5gs-dbctl-version v2.7.6 \
+    --open5gs-version 2.7.6 \
     --packetrusher-version 80a7f4bc63d9563a8ec58ba126440d94018a35a2 \
+    --pipework-version 9ba97f1735022fb5f811d9c2a304dda33fae1ad1 \
     --sockperf-version 19accb5229503dac7833f03713b978cb7fc48762 \
     --srsran5g-version 24_10_1 \
-    --ueransim-version 2fc85e3e422b9a981d330bf6ff945136bfae97f3 \
-    --dpdk-version v24.11
+    --ueransim-version 2fc85e3e422b9a981d330bf6ff945136bfae97f3
 
 cd "$SCRIPT_DIR"
 

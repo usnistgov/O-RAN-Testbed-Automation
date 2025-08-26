@@ -105,9 +105,9 @@ By default, the configuration process automatically unregisters all subscribers,
   </tr>
   <tr>
     <td>Address</td>
-    <td>10.45.0.1</td>
-    <td>...2</td>
-    <td>...3</td>
+    <td>10.45.0.101</td>
+    <td>...102</td>
+    <td>...103</td>
   </tr>
   <tr>
     <td>Namespace</td>

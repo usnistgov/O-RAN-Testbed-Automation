@@ -455,7 +455,7 @@ echo "Unregistering all subscribers in Open5GS database..."
 
 # Register the subscribers
 for UE_NUMBER in "${UE_NUMBERS[@]}"; do
-    UE_INDEX=$((UE_NUMBER - 1))
+    UE_INDEX=$((UE_NUMBER + 99))
     UE_IPV4=$(python3 install_scripts/fetch_nth_ip.py "$OGSTUN_IPV4" "$UE_INDEX")
     if [ $? -eq 0 ]; then
         IPV4_LINE="--ipv4 $UE_IPV4"

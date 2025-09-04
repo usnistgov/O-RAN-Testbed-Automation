@@ -30,18 +30,18 @@
 
 set +e
 
-# Scenario 2: Mosaic5G FlexRIC with OAI gNB and Open5GS
+# Scenario 1: O-RAN Software Community Near-RT RIC with srsRAN gNB and OAI CN
 
 NUM_SAMPLES=100
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 BASE_DIR=$(dirname "$(dirname "$(dirname "$SCRIPT_DIR")")")
 
-trap '"$BASE_DIR"/OpenAirInterface_Testbed/stop.sh; stty sane; exit' SIGINT
+trap '"$BASE_DIR"/stop.sh; stty sane; exit' SIGINT
 
-UE_DIR="$BASE_DIR/OpenAirInterface_Testbed/User_Equipment"
+UE_DIR="$BASE_DIR/User_Equipment"
 LOG_FILE="$UE_DIR/logs/ue1_stdout.txt"
-OUT_FILE="$SCRIPT_DIR/ue_experiment_2.txt"
+OUT_FILE="$SCRIPT_DIR/ue_experiment_1.txt"
 
 # Start fresh output file
 if [ ! -f "$OUT_FILE" ]; then
@@ -49,30 +49,17 @@ if [ ! -f "$OUT_FILE" ]; then
 fi
 
 restart_other_components() {
-    cd "$BASE_DIR/OpenAirInterface_Testbed"
+    cd "$BASE_DIR"
     ./stop.sh
 
-    yq eval -i '.core_to_use = "open5gs"' 5G_Core_Network/options.yaml
+    yq eval -i '.core_to_use = "5gdeploy-oai"' 5G_Core_Network/options.yaml
     ./generate_configurations.sh
 
-    cd "$BASE_DIR/OpenAirInterface_Testbed"
+    cd "$BASE_DIR"
     echo "Running 5G Core components..."
     cd 5G_Core_Network
     ./run.sh
     cd ..
-
-    cd "$BASE_DIR/OpenAirInterface_Testbed"
-
-    echo
-    echo "Running FlexRIC..."
-    cd RAN_Intelligent_Controllers/Flexible-RIC
-    ./run_background.sh
-
-    if $(./is_running.sh | grep -q "NOT_RUNNING"); then
-        echo "Error starting FlexRIC."
-        exit 1
-    fi
-    cd ../..
 
     echo
     echo -n "Waiting for AMF to be ready"
@@ -92,25 +79,6 @@ restart_other_components() {
     echo "Running gNodeB..."
     cd Next_Generation_Node_B
     ./run_background.sh
-
-    echo -en "\nWaiting for gNodeB to be ready"
-    ATTEMPT=0
-    while [ ! -f logs/gnb_stdout.txt ] || ! grep -q "TYPE <CTRL-C> TO TERMINATE" logs/gnb_stdout.txt; do
-        echo -n "."
-        sleep 0.5
-        ATTEMPT=$((ATTEMPT + 1))
-        if [ $ATTEMPT -ge 120 ]; then
-            echo "gNodeB did not start after 60 seconds, exiting..."
-            exit 1
-        fi
-        if grep -q "TYPE <CTRL-C> TO TERMINATE" logs/gnb_stdout.txt; then
-            break
-        elif $(./is_running.sh | grep -q "NOT_RUNNING"); then
-            echo "Error starting gNodeB. Check logs/gnb_stdout.txt for more information."
-            exit 1
-        fi
-    done
-    echo -e "\ngNodeB is ready."
     cd ..
 
     echo "Starting UE experiment in 5 seconds..."
@@ -149,6 +117,11 @@ for ((i=1; i<=NUM_SAMPLES; i++)); do
     echo "$DURATION" >> "$OUT_FILE"
 
     ./stop.sh
+
+    cd "$BASE_DIR/Next_Generation_Node_B"
+    ./stop.sh
+    ./run_background.sh
+    
     stty sane
     sleep 5
 done

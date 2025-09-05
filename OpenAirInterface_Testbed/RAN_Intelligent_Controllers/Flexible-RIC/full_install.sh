@@ -96,6 +96,37 @@ fi
 echo "Patching FlexRIC..."
 ./install_scripts/apply_patches.sh
 
+# Define the path to the 5G Core YAML file
+YAML_PATH="../../5G_Core_Network/options.yaml"
+if [ ! -f "$YAML_PATH" ]; then
+    echo "Configuration not found in $YAML_PATH, please generate the configuration for 5G_Core_Network first."
+    exit 1
+fi
+
+# Configure the SST, and SD values
+SST=$(yq eval '.sst' "$YAML_PATH")
+SD=$(yq eval '.sd' "$YAML_PATH")
+if [[ -z "$SST" || -z "$SD" || "$SST" == "null" || "$SD" == "null" ]]; then
+    echo "SST or SD is not set in $YAML_PATH, please ensure that \"sst\" and \"sd\" are set."
+    exit 1
+fi
+
+echo "Configuring FlexRIC to use SST: $SST and SD: $SD"
+cd flexric/examples/xApp/c/monitor/
+if [ -f "xapp_kpm_moni.c" ]; then
+    sed -i "s/^#define[[:space:]]\+KPM_SLICING_SST.*/#define KPM_SLICING_SST $SST/" xapp_kpm_moni.c
+    sed -i "s/^#define[[:space:]]\+KPM_SLICING_SD.*/#define KPM_SLICING_SD 0x$SD/" xapp_kpm_moni.c
+fi
+if [ -f "xapp_kpm_moni_write_to_csv.c" ]; then
+    sed -i "s/^#define[[:space:]]\+KPM_SLICING_SST.*/#define KPM_SLICING_SST $SST/" xapp_kpm_moni_write_to_csv.c
+    sed -i "s/^#define[[:space:]]\+KPM_SLICING_SD.*/#define KPM_SLICING_SD 0x$SD/" xapp_kpm_moni_write_to_csv.c
+fi
+if [ -f "xapp_kpm_moni_write_to_influxdb.c" ]; then
+    sed -i "s/^#define[[:space:]]\+KPM_SLICING_SST.*/#define KPM_SLICING_SST $SST/" xapp_kpm_moni_write_to_influxdb.c
+    sed -i "s/^#define[[:space:]]\+KPM_SLICING_SD.*/#define KPM_SLICING_SD 0x$SD/" xapp_kpm_moni_write_to_influxdb.c
+fi
+cd ../../../../../
+
 ADDITIONAL_FLAGS=""
 if [ "$DEBUG_SYMBOLS" = true ]; then
     ADDITIONAL_FLAGS="-DCMAKE_BUILD_TYPE=Debug"

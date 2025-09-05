@@ -105,7 +105,7 @@ if [ ! -f "options.yaml" ]; then
     echo "ogstun3_ipv4: 10.47.0.0/16" >>"options.yaml"
     echo "ogstun3_ipv6: 2001:db8:face::/48" >>"options.yaml"
     echo "" >>"options.yaml"
-    echo "# The use of systemctl can be disabled to support installations within Docker. Before changing this value, it is recommended to uninstall the testbed." >>"options.yaml"
+    echo "# If core_to_use=open5gs, the use of systemctl can be disabled to support installations within Docker. Before changing this value, it is recommended to uninstall the testbed." >>"options.yaml"
     echo "use_systemctl: true" >>"options.yaml"
 fi
 

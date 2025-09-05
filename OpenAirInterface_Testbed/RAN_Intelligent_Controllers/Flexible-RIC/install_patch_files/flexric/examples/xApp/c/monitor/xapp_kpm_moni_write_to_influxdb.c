@@ -33,6 +33,7 @@
 #include "../../../../src/util/e.h"
 
 #include <stdlib.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <time.h>
 #include <unistd.h>
@@ -57,6 +58,13 @@ char influxdb_url[256] = "http://localhost:8086";
 char influxdb_org[64] = "xapp-kpm-moni";
 char influxdb_bucket[64] = "xapp-kpm-moni";
 char influxdb_token[128]; // Input argument: argv[1]
+
+#ifndef KPM_SLICING_SST
+#define KPM_SLICING_SST 1
+#endif
+#ifndef KPM_SLICING_SD
+#define KPM_SLICING_SD 0x000001
+#endif
 
 // Variables that change during runtime
 static pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
@@ -439,7 +447,9 @@ static void sm_cb_kpm(sm_ag_if_rd_t const *rd) {
   }
 }
 
-static test_info_lst_t filter_predicate(test_cond_type_e type, test_cond_e cond, int value) {
+static
+test_info_lst_t filter_predicate(test_cond_type_e type, test_cond_e cond, uint8_t sst, uint32_t sd)
+{
   test_info_lst_t dst = {0};
 
   dst.test_cond_type = type;
@@ -457,11 +467,15 @@ static test_info_lst_t filter_predicate(test_cond_type_e type, test_cond_e cond,
 
   dst.test_cond_value->octet_string_value = calloc(1, sizeof(byte_array_t));
   assert(dst.test_cond_value->octet_string_value != NULL && "Memory exhausted");
-  const size_t len_nssai = 1;
+  const size_t len_nssai = 4;
   dst.test_cond_value->octet_string_value->len = len_nssai;
+  sd &= 0xFFFFFF;
   dst.test_cond_value->octet_string_value->buf = calloc(len_nssai, sizeof(uint8_t));
   assert(dst.test_cond_value->octet_string_value->buf != NULL && "Memory exhausted");
-  dst.test_cond_value->octet_string_value->buf[0] = value;
+  dst.test_cond_value->octet_string_value->buf[0] = (uint8_t)sst;
+  dst.test_cond_value->octet_string_value->buf[1] = (uint8_t)((sd >> 16) & 0xFF);
+  dst.test_cond_value->octet_string_value->buf[2] = (uint8_t)((sd >> 8) & 0xFF);
+  dst.test_cond_value->octet_string_value->buf[3] = (uint8_t)(sd & 0xFF);
 
   return dst;
 }
@@ -530,8 +544,7 @@ static kpm_act_def_t fill_report_style_4(ric_report_style_item_t const *report_i
   // Filter connected UEs by S-NSSAI criteria
   test_cond_type_e const type = S_NSSAI_TEST_COND_TYPE; // CQI_TEST_COND_TYPE
   test_cond_e const condition = EQUAL_TEST_COND;        // GREATERTHAN_TEST_COND
-  int const value = 1;
-  act_def.frm_4.matching_cond_lst[0].test_info_lst = filter_predicate(type, condition, value);
+  act_def.frm_4.matching_cond_lst[0].test_info_lst = filter_predicate(type, condition, KPM_SLICING_SST, KPM_SLICING_SD);
 
   // Fill Action Definition Format 1
   // 8.2.1.2.1

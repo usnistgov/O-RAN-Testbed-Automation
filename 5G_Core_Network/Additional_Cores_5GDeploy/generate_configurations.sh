@@ -401,21 +401,23 @@ for CPFILE in cp-cfg/*; do
 done
 
 # Revise configuration files up-cfg/upf1.yaml, up-cfg/upf140.yaml, and up-cfg/upf141.yaml
-if [ -f "up-cfg/upf1.yaml" ]; then
-    SD="$SD" yq '(.[] | .. | select(has("sd"))).sd = strenv(SD)' up-cfg/upf1.yaml >tmp.yaml && mv tmp.yaml up-cfg/upf1.yaml
-    sed -i "s/\"internet\"/\"$DNN\"/g" up-cfg/upf1.yaml
-    sed -i "s/'internet'/'$DNN'/g" up-cfg/upf1.yaml
-fi
-if [ -f "up-cfg/upf140.yaml" ]; then
-    SD="$SD" yq '(.[] | .. | select(has("sd"))).sd = strenv(SD)' up-cfg/upf140.yaml >tmp.yaml && mv tmp.yaml up-cfg/upf140.yaml
-    sed -i "s/\"internet\"/\"$DNN\"/g" up-cfg/upf140.yaml
-    sed -i "s/'internet'/'$DNN'/g" up-cfg/upf140.yaml
-fi
-if [ -f "up-cfg/upf141.yaml" ]; then
-    SD="$SD" yq '(.[] | .. | select(has("sd"))).sd = strenv(SD)' up-cfg/upf141.yaml >tmp.yaml && mv tmp.yaml up-cfg/upf141.yaml
-    sed -i "s/\"internet\"/\"$DNN\"/g" up-cfg/upf141.yaml
-    sed -i "s/'internet'/'$DNN'/g" up-cfg/upf141.yaml
-fi
+for FILE in up-cfg/upf1.yaml up-cfg/upf140.yaml up-cfg/upf141.yaml; do
+    if [ -f "$FILE" ]; then
+        # Patch all "sd" fields to the correct SD value, but only for top-level or first element arrays
+        SD="$SD" yq -y '
+            reduce (paths(objects | has("sd"))) as $p (
+            .;
+            if ([ $p[] | numbers | select(. != 0) ] | length) == 0
+            then setpath($p + ["sd"]; strenv(SD))
+            else .
+            end
+            )
+        ' "$FILE" > tmp.yaml && mv tmp.yaml "$FILE"
+
+        sed -i "s/\"internet\"/\"$DNN\"/g" "$FILE"
+        sed -i "s/'internet'/'$DNN'/g" "$FILE"
+    fi
+done
 
 # Revise compose.yml
 if [ -f "compose.yml" ]; then

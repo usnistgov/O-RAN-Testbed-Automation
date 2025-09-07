@@ -45,7 +45,7 @@ OUT_FILE="$SCRIPT_DIR/ue_experiment_2.txt"
 
 # Start fresh output file
 if [ ! -f "$OUT_FILE" ]; then
-    : > "$OUT_FILE"
+    : >"$OUT_FILE"
 fi
 
 restart_other_components() {
@@ -119,7 +119,7 @@ restart_other_components() {
 
 restart_other_components
 
-for ((i=1; i<=NUM_SAMPLES; i++)); do
+for ((i = 1; i <= NUM_SAMPLES; i++)); do
     cd "$UE_DIR"
     ./run_background.sh
 
@@ -128,7 +128,7 @@ for ((i=1; i<=NUM_SAMPLES; i++)); do
     done
     START_TIME=$(date +%s.%N)
     FOUND=0
-    for ((j=1; j<=600; j++)); do
+    for ((j = 1; j <= 600; j++)); do
         if grep -q -F "PDU Session" "$LOG_FILE"; then
             FOUND=1
             break
@@ -146,7 +146,7 @@ for ((i=1; i<=NUM_SAMPLES; i++)); do
 
     DURATION=$(awk -v s="$START_TIME" -v e="$END_TIME" 'BEGIN { print (e - s) }')
     echo "Saving sample $i duration: $DURATION"
-    echo "$DURATION" >> "$OUT_FILE"
+    echo "$DURATION" >>"$OUT_FILE"
 
     ./stop.sh
     stty sane

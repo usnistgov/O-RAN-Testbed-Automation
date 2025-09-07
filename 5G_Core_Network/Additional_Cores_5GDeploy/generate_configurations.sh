@@ -412,7 +412,7 @@ for FILE in up-cfg/upf1.yaml up-cfg/upf140.yaml up-cfg/upf141.yaml; do
             else .
             end
             )
-        ' "$FILE" > tmp.yaml && mv tmp.yaml "$FILE"
+        ' "$FILE" >tmp.yaml && mv tmp.yaml "$FILE"
 
         sed -i "s/\"internet\"/\"$DNN\"/g" "$FILE"
         sed -i "s/'internet'/'$DNN'/g" "$FILE"

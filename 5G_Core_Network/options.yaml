@@ -6,7 +6,7 @@
 # - 5gdeploy-free5gc: Free5GC core in Additional_Cores_5GDeploy directory (see https://github.com/free5gc/free5gc)
 # - 5gdeploy-phoenix: Phoenix core in Additional_Cores_5GDeploy directory (requires license to operate, see: https://www.open5gcore.org)
 # - 5gdeploy-open5gs: Open5GS core in Additional_Cores_5GDeploy directory (see https://github.com/open5gs/open5gs)
-core_to_use: open5gs
+core_to_use: 5gdeploy-oai
 
 # Optionally, if using 5gdeploy, you may specify a different User Plane Function (UPF) to use. 
 # Please see https://github.com/usnistgov/5gdeploy/blob/main/docs/interop.md#cp-up for details about which combinations are supported.
@@ -31,7 +31,7 @@ dnn: nist-dnn
 
 # Configure the Single Network Slice Selection Assistance Information (S-NSSAI)
 sst: 1
-sd: FFFFFF
+sd: 000001
 
 # If core_to_use=open5gs, false means AMF will use the default 127.0.0.5, true means it will use the hostname IP
 expose_amf_over_hostname: false

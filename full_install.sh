@@ -130,7 +130,7 @@ sudo ./Additional_Scripts/migrate_to_new_version.sh
 
 # Check if the YAML editor is installed, and install it if not
 if ! command -v yq &>/dev/null; then
-    sudo "$SCRIPT_DIR/install_scripts/./install_yq.sh"
+    sudo "$SCRIPT_DIR/5G_Core_Network/install_scripts/./install_yq.sh"
 fi
 # Check that the correct version of yq is installed
 if ! yq --version 2>/dev/null | grep -q 'https://github\.com/mikefarah/yq'; then

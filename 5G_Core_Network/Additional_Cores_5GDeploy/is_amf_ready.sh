@@ -85,8 +85,11 @@ fi
 
 if [[ "$CORE_TO_USE" == "5gdeploy-open5gs" ]]; then
     if echo "$AMF_LOG" | grep -q "NF registered"; then
-        echo true
-        exit 0
+        # Also ensure that at least three subscribers have been created in MongoDB
+        if [ "$(docker logs mongo 2>&1 | grep -c "Creating subscriber")" -gt 3 ]; then
+            echo true
+            exit 0
+        fi
     fi
     echo false
     exit 0

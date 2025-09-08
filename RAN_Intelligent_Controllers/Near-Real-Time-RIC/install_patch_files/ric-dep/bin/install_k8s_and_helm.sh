@@ -357,6 +357,7 @@ if [ "$MAJOR_VERSION" -lt 5 ]; then
 else
     # For newer kernels (version 5 and later), use the unified nf_conntrack module
     sudo modprobe nf_conntrack
+    sudo modprobe nf_conntrack_sctp || true
 fi
 
 # Ensure modules are loaded on boot

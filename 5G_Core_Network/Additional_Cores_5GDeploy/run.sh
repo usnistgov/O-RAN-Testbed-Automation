@@ -82,7 +82,7 @@ if ! command -v jq >/dev/null 2>&1; then
 fi
 
 # # Dynamic AMF IP support: Fetch the AMF IP, and it will be updated in the configuration file
-# # This code is optional, since the AMF IP is fixed on configuration; dynamic IP is not needed
+# # This code is optional since the AMF IP is fixed on configuration; dynamic IP is not needed
 # AMF_IP=$(docker inspect amf | jq -r '.[0].NetworkSettings.Networks["br-n2"].IPAddress')
 # AMF_IP_BIND=$(ip route get 1 | awk '{print $(NF-2); exit}') # Get the IP of the primary network interface
 # AMF_ADDRESSES_OUTPUT="configs/get_amf_address.txt"

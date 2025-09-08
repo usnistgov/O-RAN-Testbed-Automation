@@ -83,6 +83,12 @@ YQ_URL="https://github.com/mikefarah/yq/releases/latest/download/yq_${ARCH_SUFFI
 TEMP_DIR=$(mktemp -d)
 TEMP_PATH="$TEMP_DIR/yq.tar.gz"
 
+if ! command -v curl &>/dev/null; then
+    echo "Package \"curl\" not found, installing..."
+    APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
+    sudo $APTVARS apt-get install -y curl
+fi
+
 echo "Downloading yq from $YQ_URL..."
 HTTP_STATUS=$(curl -L -w "%{http_code}" -o "$TEMP_PATH" "$YQ_URL")
 if [ "$HTTP_STATUS" -eq 200 ]; then

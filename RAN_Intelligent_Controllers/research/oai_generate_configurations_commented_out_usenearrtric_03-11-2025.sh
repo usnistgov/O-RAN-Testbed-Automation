@@ -183,9 +183,14 @@ if [[ -n "$AMF_ADDRESSES" ]]; then
         [[ -z "$line" ]] && continue # skip blank lines
         ADDRESSES+=("$line")
     done <<<"$AMF_ADDRESSES"
+    if [[ ${#ADDRESSES[@]} -ge 3 ]] && [[ -n ${ADDRESSES[0]} ]] && [[ -n ${ADDRESSES[1]} ]] && [[ -n ${ADDRESSES[2]} ]]; then
+        AMF_ADDR="${ADDRESSES[0]}"
+        AMF_ADDR_BIND="${ADDRESSES[1]}"
+        NGAP_ADDR_BIND="${ADDRESSES[2]}"
     if [[ ${#ADDRESSES[@]} -ge 2 ]] && [[ -n ${ADDRESSES[0]} ]] && [[ -n ${ADDRESSES[1]} ]]; then
         AMF_ADDR="${ADDRESSES[0]}"
         AMF_ADDR_BIND="${ADDRESSES[1]}"
+        NGAP_ADDR_BIND="${ADDRESSES[1]}"
     else
         echo
         echo "AMF address script did not return valid data."
@@ -199,10 +204,11 @@ fi
 
 echo "AMF Address: $AMF_ADDR"
 echo "AMF Binding Address: $AMF_ADDR_BIND"
+echo "NGAP Binding Address: $NGAP_ADDR_BIND"
 
 # Update configuration values for RF front-end device
 update_conf "configs/gnb.conf" "amf_ip_address" "({ ipv4 = \"$AMF_ADDR\"; })"
-update_conf "configs/gnb.conf" "GNB_IPV4_ADDRESS_FOR_NG_AMF" "\"$AMF_ADDR_BIND/24\""
+update_conf "configs/gnb.conf" "GNB_IPV4_ADDRESS_FOR_NG_AMF" "\"$NGAP_ADDR_BIND/24\""
 update_conf "configs/gnb.conf" "GNB_IPV4_ADDRESS_FOR_NGU" "\"$AMF_ADDR_BIND/24\""
 update_conf "configs/gnb.conf" "tracking_area_code" "$TAC"
 update_conf "configs/gnb.conf" "plmn_list" "({ mcc = $MCC; mnc = $MNC; mnc_length = $MNC_LENGTH; snssaiList = ({ sst = 1; }) })"

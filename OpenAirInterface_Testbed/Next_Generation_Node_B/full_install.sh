@@ -87,6 +87,9 @@ EOF
     echo "Configured needrestart to list-only (no service restarts)."
 fi
 
+echo "Ensuring that SCTP is enabled..."
+sudo ./install_scripts/enable_sctp.sh
+
 # Check if GCC 13 is installed, if not, install it and set it as the default
 GCC_VERSION=$(gcc -v 2>&1 | grep "gcc version" | awk '{print $3}')
 if [[ -z "$GCC_VERSION" || ! "$GCC_VERSION" == 13.* ]]; then

@@ -121,6 +121,7 @@ fi
 
 if ! dpkg -s libsimde-dev &>/dev/null; then
     echo "Installing libsimde-dev..."
+    sudo apt-get update
     sudo $APTVARS apt-get install -y libsimde-dev
 fi
 if [ -d /usr/include/simde ]; then

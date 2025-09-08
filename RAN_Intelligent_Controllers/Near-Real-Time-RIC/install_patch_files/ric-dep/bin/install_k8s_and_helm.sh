@@ -165,7 +165,7 @@ else # Use docker-ce
 
     # Code from (https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository):
     sudo apt-get update
-    sudo $APTVARS apt-get install -y ca-certificates curl
+    sudo $APTVARS apt-get install -y curl gnupg ca-certificates
     sudo install -m 0755 -d /etc/apt/keyrings
     sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
     sudo chmod a+r /etc/apt/keyrings/docker.asc
@@ -235,14 +235,16 @@ echo "### k8s cni version = "${KUBECNIV}
 echo
 echo "Updating Kubernetes keyring..."
 sudo mkdir -p /etc/apt/keyrings
-sudo curl -fsSL https://pkgs.k8s.io/core:/stable:/v${KUBEV}/deb/Release.key | gpg --dearmor --yes | sudo tee /etc/apt/keyrings/kubernetes-apt-keyring.gpg >/dev/null
-sudo echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v${KUBEV}/deb/ /" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+sudo curl -fsSL "https://pkgs.k8s.io/core:/stable:/v${KUBEV}/deb/Release.key" | gpg --dearmor --yes | sudo tee /etc/apt/keyrings/kubernetes-apt-keyring.gpg >/dev/null
+echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v${KUBEV}/deb/ /" | sudo tee /etc/apt/sources.list.d/kubernetes.list >/dev/null
 
 echo
 echo "Updating Helm keyring..."
-sudo mkdir -p /etc/apt/keyrings
-sudo curl -fsSL https://baltocdn.com/helm/signing.asc | gpg --dearmor --yes | sudo tee /etc/apt/keyrings/helm-apt-keyring.gpg >/dev/null
-sudo echo "deb [signed-by=/etc/apt/keyrings/helm-apt-keyring.gpg] https://baltocdn.com/helm/stable/debian/ all main" | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list
+sudo rm -f /etc/apt/sources.list.d/helm-stable-debian.list
+sudo rm -f /etc/apt/keyrings/helm-apt-keyring.gpg
+sudo install -d -m 0755 /usr/share/keyrings
+curl -fsSL https://packages.buildkite.com/helm-linux/helm-debian/gpgkey | gpg --dearmor | sudo tee /usr/share/keyrings/helm.gpg >/dev/null
+echo "deb [signed-by=/usr/share/keyrings/helm.gpg] https://packages.buildkite.com/helm-linux/helm-debian/any/ any main" | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list >/dev/null
 
 # If this errors you can remove Kubernetes with `sudo rm /etc/apt/sources.list.d/kubernetes.list` or remove Helm with `sudo rm /etc/apt/sources.list.d/helm-stable-debian.list`
 sudo apt-get update
@@ -332,8 +334,8 @@ if [[ $(cat /opt/config/stack_name.txt) == *aux* ]]; then
 fi
 
 # Load necessary kernel modules
-sudo modprobe overlay
-sudo modprobe br_netfilter
+sudo modprobe overlay || true
+sudo modprobe br_netfilter || true
 
 # Load IP Virtual Server (IPVS) modules
 sudo modprobe ip_vs
@@ -345,18 +347,19 @@ sudo modprobe ip_vs_sh
 sudo modprobe sctp
 
 # Get the kernel major version
-KERNEL_VERSION=$(uname -r | cut -d'-' -f1)
-MAJOR_VERSION=$(echo $KERNEL_VERSION | cut -d'.' -f1)
+KERNEL_VERSION="$(uname -r | cut -d'-' -f1)"
+MAJOR_VERSION="$(echo "$KERNEL_VERSION" | cut -d'.' -f1)"
 
 # Conditional loading of connection tracking modules based on kernel version
 if [ "$MAJOR_VERSION" -lt 5 ]; then
     # For older kernels (before version 5), load IPv4 and IPv6 specific modules
-    sudo modprobe nf_conntrack_ipv4
-    sudo modprobe nf_conntrack_ipv6
-    sudo modprobe nf_conntrack_proto_sctp
+    sudo modprobe nf_conntrack_ipv4 || true
+    sudo modprobe nf_conntrack_ipv6 || true
+    sudo modprobe nf_conntrack_proto_sctp || true
 else
     # For newer kernels (version 5 and later), use the unified nf_conntrack module
-    sudo modprobe nf_conntrack
+    sudo modprobe nf_conntrack || true
+    sudo modprobe nf_conntrack_sctp || true
 fi
 
 # Ensure modules are loaded on boot

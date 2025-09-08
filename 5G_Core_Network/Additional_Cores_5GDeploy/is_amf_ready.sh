@@ -95,8 +95,8 @@ if [[ "$CORE_TO_USE" == "5gdeploy-open5gs" ]]; then
     exit 0
 elif [[ "$CORE_TO_USE" == "5gdeploy-oai" ]]; then
     if echo "$AMF_LOG" | grep -q "AMF has successfully registered to NRF"; then
-        if [ "$(docker logs sql 2>&1 | grep -c "MariaDB setup finished")" -gt 0 ] && \
-           docker logs udr 2>&1 | grep -q "Sending NF Registration request"; then
+        if [ "$(docker logs sql 2>&1 | grep -c "MariaDB setup finished")" -gt 0 ] &&
+            docker logs udr 2>&1 | grep -q "Sending NF Registration request"; then
             echo true
             exit 0
         fi

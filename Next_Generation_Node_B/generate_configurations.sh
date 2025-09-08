@@ -172,7 +172,8 @@ prompt_for_addresses() {
     echo "Please enter the AMF address and the AMF binding address manually." >&2
     echo "You can find this information in the 5G_Core_Network/configs/get_amf_addresses.txt file in the first two lines, respectively." >&2
     read -p "Enter AMF Address: " AMF_ADDR
-    read -p "Enter AMF Binding Address: " AMF_ADDR_BIND
+    read -p "Enter AMF Binding Address: " N3_ADDR_BIND
+    N2_ADDR_BIND=$N3_ADDR_BIND
 }
 
 # Check if AMF_ADDRESSES has at least two non-empty lines
@@ -183,9 +184,14 @@ if [[ -n "$AMF_ADDRESSES" ]]; then
         [[ -z "$line" ]] && continue # skip blank lines
         ADDRESSES+=("$line")
     done <<<"$AMF_ADDRESSES"
-    if [[ ${#ADDRESSES[@]} -ge 2 ]] && [[ -n ${ADDRESSES[0]} ]] && [[ -n ${ADDRESSES[1]} ]]; then
+    if [[ ${#ADDRESSES[@]} -ge 3 ]] && [[ -n ${ADDRESSES[0]} ]] && [[ -n ${ADDRESSES[1]} ]] && [[ -n ${ADDRESSES[2]} ]]; then
         AMF_ADDR="${ADDRESSES[0]}"
-        AMF_ADDR_BIND="${ADDRESSES[1]}"
+        N3_ADDR_BIND="${ADDRESSES[1]}"
+        N2_ADDR_BIND="${ADDRESSES[2]}"
+    elif [[ ${#ADDRESSES[@]} -ge 2 ]] && [[ -n ${ADDRESSES[0]} ]] && [[ -n ${ADDRESSES[1]} ]]; then
+        AMF_ADDR="${ADDRESSES[0]}"
+        N3_ADDR_BIND="${ADDRESSES[1]}"
+        N2_ADDR_BIND="${ADDRESSES[1]}"
     else
         echo
         echo "AMF address script did not return valid data."
@@ -198,7 +204,7 @@ else
 fi
 
 echo "AMF Address: $AMF_ADDR"
-echo "AMF Binding Address: $AMF_ADDR_BIND"
+echo "NGAP Binding Address: $N2_ADDR_BIND"
 
 # Function to update or add YAML configuration properties using yq
 update_yaml() {
@@ -250,7 +256,7 @@ DEVICE_ARGS="tx_port0=tcp://127.0.0.1:2000,rx_port0=tcp://127.0.0.1:2001,base_sr
 
 # Update configuration values for AMF connection
 update_yaml "configs/gnb.yaml" "cu_cp.amf" "addr" "$AMF_ADDR"
-update_yaml "configs/gnb.yaml" "cu_cp.amf" "bind_addr" "$AMF_ADDR_BIND"
+update_yaml "configs/gnb.yaml" "cu_cp.amf" "bind_addr" "$N2_ADDR_BIND"
 update_yaml "configs/gnb.yaml" "cu_cp.amf.supported_tracking_areas[0]" "tac" $TAC
 update_yaml "configs/gnb.yaml" "cu_cp.amf.supported_tracking_areas[0].plmn_list[0]" "plmn" $PLMN
 update_yaml "configs/gnb.yaml" "cu_cp.request_pdu_session_timeout" "60"

@@ -435,6 +435,9 @@ configure_plmn_tac $MCC $MNC $TAC
 
 sudo ./install_scripts/network_config.sh
 
+# Enable SCTP kernel module
+sudo ./install_scripts/enable_sctp.sh
+
 # Enable IPv4/IPv6 Forwarding
 sudo sysctl -w net.ipv4.ip_forward=1
 sudo sysctl -w net.ipv6.conf.all.forwarding=1

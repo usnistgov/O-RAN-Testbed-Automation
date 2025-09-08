@@ -28,9 +28,9 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-AMF_IP=192.168.62.11                                        # N2 interface
-AMF_IP_BIND=$(ip route get 1 | awk '{print $(NF-2); exit}') # Get the IP of the primary network interface
-######### TODO: AMF_IP_BIND=127.0.0.1 #$(ip route get 1 | awk '{print $(NF-2); exit}') # Get the IP of the primary network interface
+AMF_IP=192.168.62.11 # N2 interface
+N2_IP_BIND=192.168.62.1
+N3_IP_BIND=$(ip route get 1 | awk '{print $(NF-2); exit}') # Get the IP of the primary network interface
 UPF1_IP=192.168.63.21
 UPF4_IP=192.168.63.24
 SUBNET_INTERNAL="172.25.160.0/20" # Sets the subnet for internal core network
@@ -314,11 +314,15 @@ if ! sudo iptables -t nat -C POSTROUTING -s "$SUBNET_INTERNAL" ! -d "$SUBNET_INT
 fi
 # Remove with sudo iptables -t nat -D POSTROUTING -s "$SUBNET_INTERNAL" ! -d "$SUBNET_INTERNAL" -j MASQUERADE
 
+# Enable SCTP kernel module
+sudo ./install_scripts/enable_sctp.sh
+
 # Update the configuration file so that the gNodeB can find the AMF
 mkdir -p "$SCRIPT_DIR/configs"
 AMF_ADDRESSES_OUTPUT="configs/get_amf_address.txt"
 echo "$AMF_IP" >$AMF_ADDRESSES_OUTPUT
-echo "$AMF_IP_BIND" >>$AMF_ADDRESSES_OUTPUT
+echo "$N3_IP_BIND" >>$AMF_ADDRESSES_OUTPUT
+echo "$N2_IP_BIND" >>$AMF_ADDRESSES_OUTPUT
 
 ### Start of pre-generation patching ###
 cd "$SCRIPT_DIR/5gdeploy/scenario"

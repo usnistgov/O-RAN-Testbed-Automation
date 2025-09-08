@@ -133,10 +133,10 @@ index b95118d..85cd274 100644
  mkdir -p fed
  curl -sfLS "https://gitlab.eurecom.fr/oai/cn5g/oai-cn5g-fed/-/archive/${FED_TAG}/oai-cn5g-fed-${FED_TAG}.tar.gz?path=docker-compose" |
 diff --git a/omec/download.sh b/omec/download.sh
-index aa0ed76..03474f1 100644
+index aa0ed76..ee271ce 100644
 --- a/omec/download.sh
 +++ b/omec/download.sh
-@@ -8,7 +8,9 @@ if [[ -d upf ]]; then
+@@ -8,7 +8,10 @@ if [[ -d upf ]]; then
    git -C upf checkout "${TAG}"
    git -C upf pull || true
  else
@@ -144,6 +144,7 @@ index aa0ed76..03474f1 100644
 +  git clone https://github.com/omec-project/upf.git
 +  cd upf
 +  git checkout "${TAG}"
++  cd ..
  fi
  
  make -C upf docker-build

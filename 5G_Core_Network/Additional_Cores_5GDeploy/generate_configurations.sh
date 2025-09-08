@@ -30,6 +30,7 @@
 
 AMF_IP=192.168.62.11                                        # N2 interface
 AMF_IP_BIND=$(ip route get 1 | awk '{print $(NF-2); exit}') # Get the IP of the primary network interface
+######### TODO: AMF_IP_BIND=127.0.0.1 #$(ip route get 1 | awk '{print $(NF-2); exit}') # Get the IP of the primary network interface
 UPF1_IP=192.168.63.21
 UPF4_IP=192.168.63.24
 SUBNET_INTERNAL="172.25.160.0/20" # Sets the subnet for internal core network
@@ -384,6 +385,18 @@ ln -sf ../compose/orantestbed/up-cfg/upf141.yaml up-cfg-upf141.yaml
 ### Start of post-generation patching ###
 
 cd "$SCRIPT_DIR/compose/orantestbed"
+
+###################### TODO
+# # Ensure AMF port 38412 is exposed in compose.yml if not already present
+# if [ -f "compose.yml" ]; then
+#     echo "Before patching, services.amf.ports:"
+#     yq '.services.amf.ports' compose.yml
+#     if ! yq '.services.amf.ports[]' compose.yml 2>/dev/null | grep -q '^38412:38412$'; then
+#         yq -i '.services.amf.ports += ["38412:38412"]' compose.yml
+#     fi
+#     echo "After patching, services.amf.ports:"
+#     yq '.services.amf.ports' compose.yml
+# fi
 
 # Revise configuration file netdef.json
 if [ -f "netdef.json" ]; then

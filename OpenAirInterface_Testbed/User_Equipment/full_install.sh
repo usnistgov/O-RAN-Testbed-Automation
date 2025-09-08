@@ -125,8 +125,9 @@ if ! dpkg -s libsimde-dev &>/dev/null; then
     sudo $APTVARS apt-get install -y libsimde-dev
 fi
 if [ -d /usr/include/simde ]; then
-    echo "Cleaning up /usr/include/simde to prevent build issues..."
-    sudo rm -rf /usr/include/simde
+    sudo chown -R root:root /usr/include/simde
+    sudo find /usr/include/simde -type d -exec chmod 755 {} +
+    sudo find /usr/include/simde -type f -exec chmod 644 {} +
 fi
 
 ADDITIONAL_FLAGS=""

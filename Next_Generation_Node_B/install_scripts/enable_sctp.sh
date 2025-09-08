@@ -28,7 +28,7 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-echo "# Script: $(realpath $0)..."
+echo "# Script: $(realpath "$0")..."
 
 # Exit immediately if a command fails
 set -e
@@ -61,9 +61,9 @@ MAJOR_VERSION="$(echo "$KERNEL_VERSION" | cut -d'.' -f1)"
 # Conditional loading of connection tracking modules based on kernel version
 if [ "$MAJOR_VERSION" -lt 5 ]; then
     # For older kernels (before version 5), load IPv4 and IPv6 specific modules
-    sudo modprobe nf_conntrack_ipv4
-    sudo modprobe nf_conntrack_ipv6
-    sudo modprobe nf_conntrack_proto_sctp
+    sudo modprobe nf_conntrack_ipv4 || true
+    sudo modprobe nf_conntrack_ipv6 || true
+    sudo modprobe nf_conntrack_proto_sctp || true
 else
     # For newer kernels (version 5 and later), use the unified nf_conntrack module
     sudo modprobe nf_conntrack || true

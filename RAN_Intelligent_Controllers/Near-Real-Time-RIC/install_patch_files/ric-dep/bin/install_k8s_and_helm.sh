@@ -332,8 +332,8 @@ if [[ $(cat /opt/config/stack_name.txt) == *aux* ]]; then
 fi
 
 # Load necessary kernel modules
-sudo modprobe overlay
-sudo modprobe br_netfilter
+sudo modprobe overlay || true
+sudo modprobe br_netfilter || true
 
 # Load IP Virtual Server (IPVS) modules
 sudo modprobe ip_vs
@@ -345,18 +345,18 @@ sudo modprobe ip_vs_sh
 sudo modprobe sctp
 
 # Get the kernel major version
-KERNEL_VERSION=$(uname -r | cut -d'-' -f1)
-MAJOR_VERSION=$(echo $KERNEL_VERSION | cut -d'.' -f1)
+KERNEL_VERSION="$(uname -r | cut -d'-' -f1)"
+MAJOR_VERSION="$(echo "$KERNEL_VERSION" | cut -d'.' -f1)"
 
 # Conditional loading of connection tracking modules based on kernel version
 if [ "$MAJOR_VERSION" -lt 5 ]; then
     # For older kernels (before version 5), load IPv4 and IPv6 specific modules
-    sudo modprobe nf_conntrack_ipv4
-    sudo modprobe nf_conntrack_ipv6
-    sudo modprobe nf_conntrack_proto_sctp
+    sudo modprobe nf_conntrack_ipv4 || true
+    sudo modprobe nf_conntrack_ipv6 || true
+    sudo modprobe nf_conntrack_proto_sctp || true
 else
     # For newer kernels (version 5 and later), use the unified nf_conntrack module
-    sudo modprobe nf_conntrack
+    sudo modprobe nf_conntrack || true
     sudo modprobe nf_conntrack_sctp || true
 fi
 

@@ -28,6 +28,6 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-echo "# Script: $(realpath $0)..."
+echo "# Script: $(realpath "$0")..."
 
 kubectl logs -l kubearmor-app=kubearmor -n kubearmor --follow

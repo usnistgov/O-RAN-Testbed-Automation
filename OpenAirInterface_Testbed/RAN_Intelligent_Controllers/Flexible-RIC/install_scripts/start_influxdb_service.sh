@@ -37,7 +37,7 @@ if ! command -v realpath &>/dev/null; then
     sudo env $APTVARS apt-get install -y coreutils
 fi
 
-echo "# Script: $(realpath $0)..."
+echo "# Script: $(realpath "$0")..."
 
 if systemctl is-active --quiet influxdb; then
     echo "InfluxDB is already running."

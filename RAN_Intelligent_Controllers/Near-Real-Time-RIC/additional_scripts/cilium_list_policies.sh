@@ -30,6 +30,6 @@
 
 set -e
 
-echo "# Script: $(realpath $0)..."
+echo "# Script: $(realpath "$0")..."
 
 kubectl get cnp --all-namespaces

@@ -36,7 +36,7 @@ if ! dpkg -s "wireshark" &>/dev/null; then
     sudo add-apt-repository ppa:wireshark-dev/stable -y
     sudo apt-get update
     APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
-    sudo $APTVARS apt-get install -y wireshark
+    sudo env $APTVARS apt-get install -y wireshark
 fi
 
 # Add user to the Wireshark group if not already a member

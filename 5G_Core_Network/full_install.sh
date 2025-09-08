@@ -34,7 +34,7 @@ set -e
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
-    sudo $APTVARS apt-get install -y coreutils
+    sudo env $APTVARS apt-get install -y coreutils
 fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
@@ -198,11 +198,11 @@ sudo usermod -a -G open5gs open5gs
 echo "Installing dependencies for building Open5GS..."
 
 # Code from (https://open5gs.org/open5gs/docs/guide/02-building-open5gs-from-sources#building-open5gs):
-sudo $APTVARS apt-get install -y python3-pip python3-setuptools python3-wheel ninja-build build-essential flex bison git cmake libsctp-dev libgnutls28-dev libgcrypt-dev libssl-dev libmongoc-dev libbson-dev libyaml-dev libmicrohttpd-dev libcurl4-gnutls-dev libnghttp2-dev libtins-dev libtalloc-dev meson
+sudo env $APTVARS apt-get install -y python3-pip python3-setuptools python3-wheel ninja-build build-essential flex bison git cmake libsctp-dev libgnutls28-dev libgcrypt-dev libssl-dev libmongoc-dev libbson-dev libyaml-dev libmicrohttpd-dev libcurl4-gnutls-dev libnghttp2-dev libtins-dev libtalloc-dev meson
 if apt-cache show libidn-dev >/dev/null 2>&1; then
-    sudo $APTVARS apt-get install -y --no-install-recommends libidn-dev
+    sudo env $APTVARS apt-get install -y --no-install-recommends libidn-dev
 else
-    sudo $APTVARS apt-get install -y --no-install-recommends libidn11-dev
+    sudo env $APTVARS apt-get install -y --no-install-recommends libidn11-dev
 fi
 
 rm -rf build

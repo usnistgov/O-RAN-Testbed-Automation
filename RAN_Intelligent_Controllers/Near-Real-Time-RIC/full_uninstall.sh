@@ -34,7 +34,7 @@ set +e
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
-    sudo $APTVARS apt-get install -y coreutils
+    sudo env $APTVARS apt-get install -y coreutils
 fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
@@ -86,7 +86,7 @@ fi
 if ! dpkg -s chrony &>/dev/null; then
     echo "Chrony is not installed, installing..."
     sudo apt-get update
-    sudo $APTVARS apt-get install -y chrony || true
+    sudo env $APTVARS apt-get install -y chrony || true
 fi
 if ! systemctl is-enabled --quiet chrony; then
     echo "Enabling Chrony service..."

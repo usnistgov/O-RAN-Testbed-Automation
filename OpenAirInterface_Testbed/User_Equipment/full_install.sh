@@ -37,7 +37,7 @@ DEBUG_SYMBOLS=false
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
-    sudo $APTVARS apt-get install -y coreutils
+    sudo env $APTVARS apt-get install -y coreutils
 fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
@@ -99,7 +99,7 @@ if [[ -z "$GCC_VERSION" || ! "$GCC_VERSION" == 13.* ]]; then
     echo "Installing GCC 13..."
     sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
     sudo apt-get update
-    sudo $APTVARS apt-get install -y gcc-13 g++-13
+    sudo env $APTVARS apt-get install -y gcc-13 g++-13
     sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 100
     sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-13 100
 fi
@@ -107,7 +107,7 @@ fi
 if ! command -v cmake &>/dev/null; then
     echo "Installing CMake..."
     sudo apt-get update
-    sudo $APTVARS apt-get install -y cmake
+    sudo env $APTVARS apt-get install -y cmake
 fi
 CMAKE_VERSION=$(cmake --version | head -n1 | awk '{print $3}')
 if [[ "$CMAKE_VERSION" == 3.16.* ]]; then
@@ -116,13 +116,13 @@ if [[ "$CMAKE_VERSION" == 3.16.* ]]; then
     wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc | sudo apt-key add -
     sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ focal main'
     sudo apt-get update
-    sudo $APTVARS apt-get install -y cmake
+    sudo env $APTVARS apt-get install -y cmake
 fi
 
 if ! dpkg -s libsimde-dev &>/dev/null; then
     echo "Installing libsimde-dev..."
     sudo apt-get update
-    sudo $APTVARS apt-get install -y libsimde-dev
+    sudo env $APTVARS apt-get install -y libsimde-dev
 fi
 if [ -d /usr/include/simde ]; then
     sudo chown -R root:root /usr/include/simde

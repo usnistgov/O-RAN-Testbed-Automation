@@ -41,7 +41,7 @@ set -e
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
-    sudo $APTVARS apt-get install -y coreutils
+    sudo env $APTVARS apt-get install -y coreutils
 fi
 
 echo "# Script: $(realpath $0)..."
@@ -53,7 +53,7 @@ if ! command -v git &>/dev/null; then
     echo
     echo "Installing git..."
     sudo apt-get update
-    sudo $APTVARS apt-get install -y git
+    sudo env $APTVARS apt-get install -y git
 fi
 
 mkdir -p "$SCRIPT_DIR/srsran_xapps"
@@ -103,11 +103,11 @@ echo
 
 if ! command -v curl &>/dev/null; then
     echo "Installing curl..."
-    sudo $APTVARS apt-get install -y curl
+    sudo env $APTVARS apt-get install -y curl
 fi
 if ! command -v jq &>/dev/null; then
     echo "Installing jq..."
-    sudo $APTVARS apt-get install -y jq
+    sudo env $APTVARS apt-get install -y jq
 fi
 
 SUBMGR_IP="null"
@@ -209,18 +209,18 @@ cd "$SCRIPT_DIR/srsran_xapps"
 if ! command -v python3.8 &>/dev/null; then
     echo "Python 3.8 is not installed. Installing..."
     sudo apt-get update
-    sudo $APTVARS apt-get install -y software-properties-common
+    sudo env $APTVARS apt-get install -y software-properties-common
     sudo add-apt-repository ppa:deadsnakes/ppa -y
     sudo apt-get update
     sudo apt-get update
-    sudo $APTVARS apt-get install -y python3.8 python3.8-dev
+    sudo env $APTVARS apt-get install -y python3.8 python3.8-dev
 fi
 if ! command -v pip &>/dev/null; then
     echo "Installing pip..."
-    sudo $APTVARS apt-get install -y python3-pip
+    sudo env $APTVARS apt-get install -y python3-pip
 fi
 
-sudo $APTVARS apt-get install -y python3.8-venv
+sudo env $APTVARS apt-get install -y python3.8-venv
 
 # Create a virtual environment with Python 3.8 if it doesn't exist
 if [ ! -d "venv" ]; then
@@ -248,15 +248,15 @@ E2AP_VERSION=1.1.0
 
 if ! command -v wget &>/dev/null; then
     echo "Installing wget..."
-    sudo $APTVARS apt-get install -y wget
+    sudo env $APTVARS apt-get install -y wget
 fi
 if ! command -v gcc &>/dev/null; then
     echo "Installing gcc..."
-    sudo $APTVARS apt-get install -y gcc
+    sudo env $APTVARS apt-get install -y gcc
 fi
 if ! dpkg -s musl-dev &>/dev/null; then
     echo "Installing musl-dev..."
-    sudo $APTVARS apt-get install -y musl-dev
+    sudo env $APTVARS apt-get install -y musl-dev
 fi
 
 if [ ! -f /usr/local/lib/librmr_si.so ]; then

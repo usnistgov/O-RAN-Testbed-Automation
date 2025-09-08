@@ -34,7 +34,7 @@ set -e
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
-    sudo $APTVARS apt-get install -y coreutils
+    sudo env $APTVARS apt-get install -y coreutils
 fi
 
 CURRENT_DIR=$(pwd)
@@ -142,12 +142,12 @@ fi
 if [ ! -f logs/full_install_step_1_complete ]; then
     # Install system packages
     sudo apt-get update
-    sudo $APTVARS apt-get install -y linux-generic linux-lowlatency
+    sudo env $APTVARS apt-get install -y linux-generic linux-lowlatency
     echo 'wireshark-common wireshark-common/install-setuid boolean true' | sudo debconf-set-selections
-    sudo $APTVARS apt-get install -y httpie jq wireshark-common
+    sudo env $APTVARS apt-get install -y httpie jq wireshark-common
     sudo adduser $(id -un) wireshark
     if ! dpkg -s python3-libconf &>/dev/null; then
-        if ! sudo $APTVARS apt-get install -y python3-libconf; then
+        if ! sudo env $APTVARS apt-get install -y python3-libconf; then
             echo "Package python3-libconf not found in apt, installing via pip..."
             python3 -m pip install --user libconf
         fi
@@ -158,7 +158,7 @@ if [ ! -f logs/full_install_step_1_complete ]; then
     echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
     sudo apt-get update
 
-    sudo $APTVARS apt-get install -y -t nodistro nodejs
+    sudo env $APTVARS apt-get install -y -t nodistro nodejs
     touch logs/full_install_step_1_complete
 else
     echo "Dependencies already installed, skipping step 1."

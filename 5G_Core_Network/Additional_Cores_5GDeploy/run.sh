@@ -31,7 +31,7 @@
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
-    sudo $APTVARS apt-get install -y coreutils
+    sudo env $APTVARS apt-get install -y coreutils
 fi
 
 CURRENT_DIR=$(pwd)
@@ -78,7 +78,7 @@ cd "$SCRIPT_DIR"
 mkdir -p configs
 if ! command -v jq >/dev/null 2>&1; then
     echo "Installing jq to process JSON files..."
-    sudo $APTVARS apt-get install -y jq
+    sudo env $APTVARS apt-get install -y jq
 fi
 
 # # Dynamic AMF IP support: Fetch the AMF IP, and it will be updated in the configuration file

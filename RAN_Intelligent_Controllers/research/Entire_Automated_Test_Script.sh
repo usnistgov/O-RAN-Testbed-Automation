@@ -44,7 +44,7 @@ fi
 sudo apt-get update
 sudo apt-get upgrade -y
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
-sudo $APTVARS apt-get install -y git
+sudo env $APTVARS apt-get install -y git
 
 # rm -rf O-RAN-Testbed-Init
 if [ ! -d O-RAN-Testbed-Init ]; then

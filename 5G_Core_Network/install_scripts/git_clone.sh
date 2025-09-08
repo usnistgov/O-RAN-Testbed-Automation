@@ -53,7 +53,7 @@ fi
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
-    sudo $APTVARS apt-get install -y coreutils
+    sudo env $APTVARS apt-get install -y coreutils
 fi
 
 CURRENT_DIR=$(pwd)
@@ -63,7 +63,7 @@ HOME_DIR=$(dirname "$(dirname "$SCRIPT_DIR")")
 
 if ! command -v jq &>/dev/null; then
     echo "Installing jq..."
-    sudo $APTVARS apt-get install -y jq
+    sudo env $APTVARS apt-get install -y jq
 fi
 
 # First check the directory containing install_scripts/, otherwise, use the home directory

@@ -36,7 +36,7 @@ set -e
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
-    sudo $APTVARS apt-get install -y coreutils
+    sudo env $APTVARS apt-get install -y coreutils
 fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
@@ -56,10 +56,10 @@ INSTALL_START_TIME=$(date +%s)
 
 echo "Installing dependencies..."
 sudo apt-get update || true
-sudo $APTVARS apt-get install -y build-essential
-sudo $APTVARS apt-get install -y gcc-10 g++-10
-sudo $APTVARS apt-get install -y libsctp-dev python3 cmake-curses-gui python3-dev pkg-config libconfig-dev libconfig++-dev
-sudo $APTVARS apt-get install -y libmysqlclient-dev mysql-server
+sudo env $APTVARS apt-get install -y build-essential
+sudo env $APTVARS apt-get install -y gcc-10 g++-10
+sudo env $APTVARS apt-get install -y libsctp-dev python3 cmake-curses-gui python3-dev pkg-config libconfig-dev libconfig++-dev
+sudo env $APTVARS apt-get install -y libmysqlclient-dev mysql-server
 
 if [ ! -d "swig" ]; then
     echo "Cloning SWIG..."

@@ -31,7 +31,7 @@
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
-    sudo $APTVARS apt-get install -y coreutils
+    sudo env $APTVARS apt-get install -y coreutils
 fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
@@ -123,7 +123,7 @@ fi
 
 if ! command -v iperf &>/dev/null; then
     echo "Package \"iperf\" not found, installing..."
-    sudo $APTVARS apt-get install -y iperf
+    sudo env $APTVARS apt-get install -y iperf
 fi
 
 sudo ip netns exec ue$UE_NUMBER iperf -c $CORE_IP -u -i 1 -b $BANDWIDTH -t $DURATION

@@ -31,7 +31,7 @@
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
-    sudo $APTVARS apt-get install -y coreutils
+    sudo env $APTVARS apt-get install -y coreutils
 fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
@@ -48,12 +48,12 @@ fi
 
 if ! command -v shfmt &>/dev/null; then
     echo "Package \"shfmt\" not found, installing..."
-    sudo $APTVARS apt-get install -y shfmt
+    sudo env $APTVARS apt-get install -y shfmt
 fi
 find . -type f -name "*.sh" -exec shfmt -i 4 -w {} +
 git restore *.previous.sh
 
-sudo $APTVARS apt-get install -y dos2unix
+sudo env $APTVARS apt-get install -y dos2unix
 find . -type f -exec dos2unix {} \;
 
 find . -type d -exec chmod 775 {} +

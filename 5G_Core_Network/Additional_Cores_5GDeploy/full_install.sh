@@ -129,6 +129,15 @@ if [ -f logs/full_install_step_1_complete ]; then
     if ! command -v docker &>/dev/null; then
         rm logs/full_install_step_1_complete
     fi
+    # If node version is less than 22, re-run step 1
+    if command -v node &>/dev/null; then
+        NODE_VERSION=$(node --version | sed 's/v//g' | cut -d. -f1)
+        if [ "$NODE_VERSION" -lt 22 ]; then
+            echo "Node.js version is less than 22, reinstalling Node.js 22.x"
+            sudo apt-get purge -y nodejs npm || true
+            rm logs/full_install_step_1_complete
+        fi
+    fi
 fi
 if [ ! -f logs/full_install_step_1_complete ]; then
     # Install system packages
@@ -144,15 +153,12 @@ if [ ! -f logs/full_install_step_1_complete ]; then
         fi
     fi
     # Install Node.js 22.x
+    sudo install -d -m 0755 /etc/apt/keyrings
     http --ignore-stdin GET https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --batch --yes --dearmor -o /etc/apt/keyrings/nodesource.gpg
     echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
     sudo apt-get update
-    sudo $APTVARS apt-get install -y nodejs
-    # # Install Node.js 20.x
-    # http --ignore-stdin GET https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --batch --yes --dearmor -o /etc/apt/keyrings/nodesource.gpg
-    # echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
-    # sudo apt-get update
-    sudo $APTVARS apt-get install -y nodejs
+
+    sudo $APTVARS apt-get install -y -t nodistro nodejs
     touch logs/full_install_step_1_complete
 else
     echo "Dependencies already installed, skipping step 1."

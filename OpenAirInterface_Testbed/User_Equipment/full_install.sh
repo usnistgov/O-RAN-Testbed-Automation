@@ -119,6 +119,15 @@ if [[ "$CMAKE_VERSION" == 3.16.* ]]; then
     sudo $APTVARS apt-get install -y cmake
 fi
 
+if ! dpkg -s libsimde-dev &>/dev/null; then
+    echo "Installing libsimde-dev..."
+    sudo $APTVARS apt-get install -y libsimde-dev
+fi
+if [ -d /usr/include/simde ]; then
+    echo "Cleaning up /usr/include/simde to prevent build issues..."
+    sudo rm -rf /usr/include/simde
+fi
+
 ADDITIONAL_FLAGS=""
 if [ "$CLEAN_INSTALL" = true ]; then
     ADDITIONAL_FLAGS="-C"

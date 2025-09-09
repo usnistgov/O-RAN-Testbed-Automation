@@ -64,8 +64,10 @@ if [ -f "core_upf_used.txt" ]; then
     CURRENT_CORE=$(sed -n '1p' core_upf_used.txt)
     CURRENT_UPF=$(sed -n '2p' core_upf_used.txt)
     if [[ "$CURRENT_CORE" != "$CORE_TO_USE" || "$CURRENT_UPF" != "$UPF_TO_USE" ]]; then
+        echo
         echo "ERROR: The selected core ($CORE_TO_USE) or UPF ($UPF_TO_USE) does not match the currently deployed core ($CURRENT_CORE) or UPF ($CURRENT_UPF)."
         echo "Please run the generate_configurations.sh script to update the configuration before deploying."
+        echo
         exit 1
     fi
 fi

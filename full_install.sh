@@ -128,16 +128,9 @@ fi
 # Ensure backward compatibility with previous installations
 sudo ./Additional_Scripts/migrate_to_new_version.sh
 
-# Check if the YAML editor is installed, and install it if not
-if ! command -v yq &>/dev/null; then
-    sudo "$SCRIPT_DIR/5G_Core_Network/install_scripts/./install_yq.sh"
-fi
-# Check that the correct version of yq is installed
-if ! yq --version 2>/dev/null | grep -q 'https://github\.com/mikefarah/yq'; then
-    echo "ERROR: Detected an incompatible yq installation."
-    echo "Please ensure the Python yq is uninstalled with \"pip uninstall -y yq\", then re-run this script."
-    exit 1
-fi
+# Ensure the correct YAML editor is installed
+sudo "$SCRIPT_DIR/5G_Core_Network/install_scripts/./ensure_consistent_yq.sh"
+
 # Check which core will be used
 if [ -f "5G_Core_Network/options.yaml" ]; then
     CORE_TO_USE=$(yq eval '.core_to_use' 5G_Core_Network/options.yaml)

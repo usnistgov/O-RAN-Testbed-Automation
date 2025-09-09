@@ -30,10 +30,27 @@
 
 echo "# Script: $(realpath "$0")..."
 
-# Uninstall yq with: sudo rm -rf /usr/local/bin/yq; hash -r
+# Exit immediately if a command fails
+set -e
+
+YQ_VERSION="v4.47.2"
+
 if command -v yq &>/dev/null; then
-    echo "Already installed yq, skipping."
-    exit 0
+    # Check that the correct version of yq is installed
+    if ! yq --version 2>/dev/null | grep -q 'https://github\.com/mikefarah/yq'; then
+        echo "ERROR: Detected an incompatible yq installation."
+        echo "Please ensure the Python yq is uninstalled with \"pip uninstall -y yq\", then re-run this script."
+        exit 1
+    fi
+
+    if yq --version 2>/dev/null | grep -q "$YQ_VERSION"; then
+        echo "Already installed yq version $YQ_VERSION, skipping."
+        exit 0
+    fi
+
+    echo "Removing incompatible yq..."
+    sudo rm -rf /usr/local/bin/yq
+    hash -r
 fi
 
 echo "Installing yq..."
@@ -77,7 +94,7 @@ case $(uname -m) in
     ;;
 esac
 
-YQ_URL="https://github.com/mikefarah/yq/releases/latest/download/yq_${ARCH_SUFFIX}.tar.gz"
+YQ_URL="https://github.com/mikefarah/yq/releases/download/$YQ_VERSION/yq_${ARCH_SUFFIX}.tar.gz"
 
 # Create a temporary directory for the download
 TEMP_DIR=$(mktemp -d)

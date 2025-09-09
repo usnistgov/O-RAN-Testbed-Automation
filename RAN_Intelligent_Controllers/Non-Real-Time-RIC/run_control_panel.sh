@@ -88,16 +88,8 @@ if [ ! -d nonrtric-controlpanel ]; then
     ./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/portal/nonrtric-controlpanel.git nonrtric-controlpanel
 fi
 
-# Check if the YAML editor is installed, and install it if not
-if ! command -v yq &>/dev/null; then
-    sudo "$SCRIPT_DIR/install_scripts/./install_yq.sh"
-fi
-# Check that the correct version of yq is installed
-if ! yq --version 2>/dev/null | grep -q 'https://github\.com/mikefarah/yq'; then
-    echo "ERROR: Detected an incompatible yq installation."
-    echo "Please ensure the Python yq is uninstalled with \"pip uninstall -y yq\", then re-run this script."
-    exit 1
-fi
+# Ensure the correct YAML editor is installed
+sudo "$SCRIPT_DIR/install_scripts/./ensure_consistent_yq.sh"
 
 # Fetch the addresses of the policy management service and information service
 SERVICE_INFO_PMS=$(kubectl get service -n nonrtric | grep policymanagementservice || echo "")

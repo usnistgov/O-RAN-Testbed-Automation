@@ -40,16 +40,8 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-# Check if the YAML editor is installed, and install it if not
-if ! command -v yq &>/dev/null; then
-    sudo "$SCRIPT_DIR/install_scripts/./install_yq.sh"
-fi
-# Check that the correct version of yq is installed
-if ! yq --version 2>/dev/null | grep -q 'https://github\.com/mikefarah/yq'; then
-    echo "ERROR: Detected an incompatible yq installation."
-    echo "Please ensure the Python yq is uninstalled with \"pip uninstall -y yq\", then re-run this script."
-    exit 1
-fi
+# Ensure the correct YAML editor is installed
+sudo "$SCRIPT_DIR/install_scripts/./ensure_consistent_yq.sh"
 
 echo "Parsing options.yaml..."
 # Check if the YAML file exists, if not, set and save default values
@@ -60,8 +52,8 @@ if [ ! -f "options.yaml" ]; then
     echo "# - open5gs: Open5GS core in current directory (default, see https://github.com/open5gs/open5gs)" >>"options.yaml"
     echo "# - 5gdeploy-oai: OpenAirInterface core in Additional_Cores_5GDeploy directory see https://gitlab.eurecom.fr/oai/cn5g)" >>"options.yaml"
     echo "# - 5gdeploy-free5gc: Free5GC core in Additional_Cores_5GDeploy directory (see https://github.com/free5gc/free5gc)" >>"options.yaml"
-    echo "# - 5gdeploy-phoenix: Phoenix core in Additional_Cores_5GDeploy directory (requires license to operate, see: https://www.open5gcore.org)" >>"options.yaml"
     echo "# - 5gdeploy-open5gs: Open5GS core in Additional_Cores_5GDeploy directory (see https://github.com/open5gs/open5gs)" >>"options.yaml"
+    echo "# - 5gdeploy-phoenix: Phoenix core in Additional_Cores_5GDeploy directory (requires license to operate, see: https://www.open5gcore.org)" >>"options.yaml"
     echo "core_to_use: open5gs" >>"options.yaml"
     echo "" >>"options.yaml"
     echo "# Optionally, if using 5gdeploy, you may specify a different User Plane Function (UPF) to use. " >>"options.yaml"
@@ -72,10 +64,10 @@ if [ ! -f "options.yaml" ]; then
     echo "# - 5gdeploy-oai: OAI UPF (see https://gitlab.eurecom.fr/oai/cn5g)" >>"options.yaml"
     echo "# - 5gdeploy-oai-vpp: OAI UPF based on VPP (see https://gitlab.eurecom.fr/oai/cn5g/oai-cn5g-upf-vpp)" >>"options.yaml"
     echo "# - 5gdeploy-free5gc: Free5GC UPF (see https://github.com/free5gc/free5gc)" >>"options.yaml"
-    echo "# - 5gdeploy-phoenix: Phoenix UPF (see https://doi.org/10.1007/s00502-022-01064-7 and https://www.open5gcore.org)" >>"options.yaml"
     echo "# - 5gdeploy-open5gs: Open5GS UPF (see https://github.com/open5gs/open5gs)" >>"options.yaml"
     echo "# - 5gdeploy-bess: Aether SD-Core's BESS UPF (see https://github.com/omec-project/bess)" >>"options.yaml"
     echo "# - 5gdeploy-ndndpdk: Use NIST NDN-DPDK (see https://doi.org/10.1145/3405656.3418715)" >>"options.yaml"
+    echo "# - 5gdeploy-phoenix: Phoenix UPF (see https://doi.org/10.1007/s00502-022-01064-7 and https://www.open5gcore.org)" >>"options.yaml"
     echo "upf_to_use: null" >>"options.yaml"
     echo "" >>"options.yaml"
     echo "# Configure the MCC/MNC and TAC" >>"options.yaml"
@@ -87,7 +79,7 @@ if [ ! -f "options.yaml" ]; then
     echo "" >>"options.yaml"
     echo "# Configure the Single Network Slice Selection Assistance Information (S-NSSAI)" >>"options.yaml"
     echo "sst: 1" >>"options.yaml"
-    echo "sd: FFFFFF" >>"options.yaml"
+    echo "sd: 000001" >>"options.yaml"
     echo "" >>"options.yaml"
     echo "# If core_to_use=open5gs, false means AMF will use the default 127.0.0.5, true means it will use the hostname IP" >>"options.yaml"
     echo "expose_amf_over_hostname: false" >>"options.yaml"

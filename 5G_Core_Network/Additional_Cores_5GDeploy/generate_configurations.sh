@@ -390,17 +390,9 @@ ln -sf ../compose/orantestbed/up-cfg/upf141.yaml up-cfg-upf141.yaml
 
 cd "$SCRIPT_DIR/compose/orantestbed"
 
-###################### TODO
-# # Ensure AMF port 38412 is exposed in compose.yml if not already present
-# if [ -f "compose.yml" ]; then
-#     echo "Before patching, services.amf.ports:"
-#     yq '.services.amf.ports' compose.yml
-#     if ! yq '.services.amf.ports[]' compose.yml 2>/dev/null | grep -q '^38412:38412$'; then
-#         yq -i '.services.amf.ports += ["38412:38412"]' compose.yml
-#     fi
-#     echo "After patching, services.amf.ports:"
-#     yq '.services.amf.ports' compose.yml
-# fi
+# Save the core and UPF used to a text file for reference
+echo "$CORE_TO_USE" >core_upf_used.txt
+echo "$UPF_TO_USE" >>core_upf_used.txt
 
 # Revise configuration file netdef.json
 if [ -f "netdef.json" ]; then

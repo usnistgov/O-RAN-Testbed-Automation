@@ -36,6 +36,7 @@ fi
 
 CURRENT_DIR=$(pwd)
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
+PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$SCRIPT_DIR"
 
 if [ ! -f "compose/orantestbed/compose.sh" ]; then
@@ -67,7 +68,31 @@ if [ -z "$FIXED_DOCKER_PERMS" ]; then
     fi
 fi
 
+# Fetch the core and UPF to use from options.yaml
+if [ -f "$PARENT_DIR/options.yaml" ]; then
+    CORE_TO_USE=$(yq eval '.core_to_use' "$PARENT_DIR/options.yaml")
+    UPF_TO_USE=$(yq eval '.upf_to_use' "$PARENT_DIR/options.yaml")
+fi
+if [[ "$CORE_TO_USE" == "null" || -z "$CORE_TO_USE" ]]; then
+    echo "No core specified in options.yaml, please ensure that \"core_to_use\" is set."
+    exit 1
+fi
+if [[ "$UPF_TO_USE" == "null" || -z "$UPF_TO_USE" ]]; then
+    UPF_TO_USE="$CORE_TO_USE" # Default to the same core if not specified
+fi
+
 cd compose/orantestbed/
+
+# Verify that the selected core and UPF match the currently deployed ones
+if [ -f "core_upf_used.txt" ]; then
+    CURRENT_CORE=$(sed -n '1p' core_upf_used.txt)
+    CURRENT_UPF=$(sed -n '2p' core_upf_used.txt)
+    if [[ "$CURRENT_CORE" != "$CORE_TO_USE" || "$CURRENT_UPF" != "$UPF_TO_USE" ]]; then
+        echo "ERROR: The selected core ($CORE_TO_USE) or UPF ($UPF_TO_USE) does not match the currently deployed core ($CURRENT_CORE) or UPF ($CURRENT_UPF)."
+        echo "Please run the generate_configurations.sh script to update the configuration before deploying."
+        exit 1
+    fi
+fi
 
 echo "Starting the 5G Core Deployment Helper (5gdeploy) Core..."
 ./compose.sh up

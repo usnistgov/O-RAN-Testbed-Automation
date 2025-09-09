@@ -51,7 +51,7 @@ if [ "$CORE_TO_USE" != "open5gs" ]; then
         exit 1
     }
     ./run.sh
-    exit 0
+    exit $?
 fi
 
 if [ ! -f "configs/amf.yaml" ] || [ ! -f "configs/mme.yaml" ]; then

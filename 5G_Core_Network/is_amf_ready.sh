@@ -50,7 +50,7 @@ if [[ "$CORE_TO_USE" != "open5gs" ]]; then
         exit 1
     }
     ./is_amf_ready.sh
-    exit 0
+    exit $?
 fi
 
 if ./is_running.sh | grep -q "NOT_RUNNING"; then

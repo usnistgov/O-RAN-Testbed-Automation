@@ -123,7 +123,7 @@ if [ "$CORE_TO_USE" != "open5gs" ]; then
         exit 1
     }
     ./full_install.sh
-    exit 0
+    exit $?
 fi
 
 USE_SYSTEMCTL=$(yq eval '.use_systemctl' options.yaml)

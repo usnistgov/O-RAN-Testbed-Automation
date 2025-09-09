@@ -56,7 +56,7 @@ if [ "$CORE_TO_USE" != "open5gs" ]; then
         exit 1
     }
     ./generate_configurations.sh
-    exit 0
+    exit $?
 fi
 
 # Check if the YAML editor is installed, and install it if not

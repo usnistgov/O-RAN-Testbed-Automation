@@ -44,30 +44,6 @@ if [ ! -f "compose/orantestbed/compose.sh" ]; then
     exit 1
 fi
 
-# Check if docker is accessible from the current user, and if not, repair its permissions
-if [ -z "$FIXED_DOCKER_PERMS" ]; then
-    if ! OUTPUT=$(docker info 2>&1); then
-        if echo "$OUTPUT" | grep -qiE 'permission denied|cannot connect to the docker daemon'; then
-            echo "Docker permissions will repair on reboot."
-            sudo groupadd -f docker
-            if [ -n "$SUDO_USER" ]; then
-                sudo usermod -aG docker "${SUDO_USER:-root}"
-            else
-                sudo usermod -aG docker "${USER:-root}"
-            fi
-            # Rather than requiring a reboot to apply docker permissions, set the docker group and re-run the parent script
-            export FIXED_DOCKER_PERMS=1
-            if ! command -v sg &>/dev/null; then
-                echo
-                echo "WARNING: Could not find set group (sg) command, docker may fail without sudo until the system reboots."
-                echo
-            else
-                exec sg docker "$CURRENT_DIR/$0" "$@"
-            fi
-        fi
-    fi
-fi
-
 # Fetch the core and UPF to use from options.yaml
 if [ -f "$PARENT_DIR/options.yaml" ]; then
     CORE_TO_USE=$(yq eval '.core_to_use' "$PARENT_DIR/options.yaml")
@@ -91,6 +67,30 @@ if [ -f "core_upf_used.txt" ]; then
         echo "ERROR: The selected core ($CORE_TO_USE) or UPF ($UPF_TO_USE) does not match the currently deployed core ($CURRENT_CORE) or UPF ($CURRENT_UPF)."
         echo "Please run the generate_configurations.sh script to update the configuration before deploying."
         exit 1
+    fi
+fi
+
+# Check if docker is accessible from the current user, and if not, repair its permissions
+if [ -z "$FIXED_DOCKER_PERMS" ]; then
+    if ! OUTPUT=$(docker info 2>&1); then
+        if echo "$OUTPUT" | grep -qiE 'permission denied|cannot connect to the docker daemon'; then
+            echo "Docker permissions will repair on reboot."
+            sudo groupadd -f docker
+            if [ -n "$SUDO_USER" ]; then
+                sudo usermod -aG docker "${SUDO_USER:-root}"
+            else
+                sudo usermod -aG docker "${USER:-root}"
+            fi
+            # Rather than requiring a reboot to apply docker permissions, set the docker group and re-run the parent script
+            export FIXED_DOCKER_PERMS=1
+            if ! command -v sg &>/dev/null; then
+                echo
+                echo "WARNING: Could not find set group (sg) command, docker may fail without sudo until the system reboots."
+                echo
+            else
+                exec sg docker "$CURRENT_DIR/$0" "$@"
+            fi
+        fi
     fi
 fi
 

@@ -101,18 +101,6 @@ cd $SCRIPT_DIR/5gdeploy
 echo "Patching netdef/helpers.ts to generate NR Cell ID starting at hex 0xE000 (aligning with OAI gNB) instead of 0x10"
 sed -i '0,/^[[:space:]]*nci[[:space:]]*=.*$/s//      nci = hexPad(((3584 + i) << (36 - gnbIdLength)) | 0xF, 9),/' netdef/helpers.ts
 
-echo "Patching 5gdeploy to fix version control..."
-git restore docker/build.sh
-git restore docker/open5gs/Dockerfile
-git restore docs/INSTALL.md
-git restore free5gc/download.sh
-git restore install.sh
-git restore oai/download.sh
-git restore omec/download.sh
-git restore open5gs/common.ts
-git restore open5gs/download.sh
-git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/5gdeploy/fix_version_control.patch"
-
 cd $SCRIPT_DIR
 
 # Step 1: Install dependencies

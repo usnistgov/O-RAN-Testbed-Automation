@@ -406,12 +406,11 @@ for FILE in up-cfg/upf1.yaml up-cfg/upf140.yaml up-cfg/upf141.yaml; do
     if [ -f "$FILE" ]; then
         # Patch all "sd" fields to the correct SD value, but only for top-level or first element arrays
         SD="$SD" yq '
-            reduce (paths(objects | has("sd"))) as $p (
-            .;
-            if ([ $p[] | numbers | select(. != 0) ] | length) == 0
-            then setpath($p + ["sd"]; strenv(SD))
-            else .
-            end
+            with(select(has("sd")); .sd = env(SD)) |
+            (
+                (.. | select(kind == "seq" and length > 0) | .[0]
+                    | select(kind == "map" and has("sd")) | .sd
+                ) |= env(SD)
             )
         ' "$FILE" >tmp.yaml && mv tmp.yaml "$FILE"
 

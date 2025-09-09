@@ -46,7 +46,6 @@ trap "echo \"#################################  STOPPING... ####################
 echo "Running 5G Core components..."
 cd 5G_Core_Network
 ./run.sh
-echo "EXIT CODE WAS: $?"
 cd ..
 
 echo

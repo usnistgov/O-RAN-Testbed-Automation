@@ -8,13 +8,10 @@ The automation tool can be used in virtual machines and physical machines with t
 
 ### Supported Testbed Open-Source Components
 
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: light)" srcset="./Images/Architecture_Light.svg">
-    <source media="(prefers-color-scheme: dark)" srcset="./Images/Architecture_Dark.svg">
-    <img alt="Diagram of Testbed Open-Source Components" width="70%">
-  </picture>
-</p>
+<div align="center">
+  <img src="Images/Architecture_Light.svg#gl-light-mode-only" alt="Diagram of Testbed Open-Source Components" width="70%">
+  <img src="Images/Architecture_Dark.svg#gl-dark-mode-only" alt="Diagram of Testbed Open-Source Components" width="70%">
+</div>
 
 This tool supports the deployment of 5G O-RAN testbeds using open-source components in two main scenarios: Software Radio Systems with O-RAN SC's Near-RT RIC, and OpenAirInterface with Mosaic5G's FlexRIC. Below is the list of the supported testbed open-source components.
 
@@ -49,13 +46,11 @@ UEs
 ```
 
 The components that have been verified to support or not support connectivity are included below.
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: light)" srcset="./Images/Support_Light.svg">
-    <source media="(prefers-color-scheme: dark)" srcset="./Images/Support_Dark.svg">
-    <img alt="Diagram of Supported and Unsupported Connections" width="97%">
-  </picture>
-</p>
+
+<div align="center">
+  <img src="Images/Support_Light.svg#gl-light-mode-only" alt="Diagram of Supported Connections" width="97%">
+  <img src="Images/Support_Dark.svg#gl-dark-mode-only" alt="Diagram of Supported Connections" width="97%">
+</div>
 
 ### Minimum System Requirements
 

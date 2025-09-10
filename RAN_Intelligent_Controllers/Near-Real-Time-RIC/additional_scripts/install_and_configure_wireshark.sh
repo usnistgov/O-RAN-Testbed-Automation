@@ -28,7 +28,7 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-echo "# Script: $(realpath $0)..."
+echo "# Script: $(realpath "$0")..."
 
 # Install Wireshark if not already installed
 if ! dpkg -s "wireshark" &>/dev/null; then
@@ -36,7 +36,7 @@ if ! dpkg -s "wireshark" &>/dev/null; then
     sudo add-apt-repository ppa:wireshark-dev/stable -y
     sudo apt-get update
     APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
-    sudo $APTVARS apt-get install -y wireshark
+    sudo env $APTVARS apt-get install -y wireshark
 fi
 
 # Add user to the Wireshark group if not already a member

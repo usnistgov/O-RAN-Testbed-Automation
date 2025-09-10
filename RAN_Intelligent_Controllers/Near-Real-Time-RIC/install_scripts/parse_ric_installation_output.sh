@@ -28,7 +28,7 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-echo "# Script: $(realpath $0)..."
+echo "# Script: $(realpath "$0")..."
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$(dirname "$SCRIPT_DIR")"
@@ -41,7 +41,7 @@ RIC_INSTALLATION_LOG_JSON="logs/ric_installation_stdout_parsed.json"
 if ! command -v jq >/dev/null 2>&1; then
     echo "Installing jq to process JSON files..."
     APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
-    sudo $APTVARS apt-get install -y jq
+    sudo env $APTVARS apt-get install -y jq
 fi
 
 # Initialize the JSON log file if it doesn't exist

@@ -31,7 +31,7 @@
 # Do not exit immediately if a command fails
 set +e
 
-echo "# Script: $(realpath $0)..."
+echo "# Script: $(realpath "$0")..."
 
 # Stop and disable the MongoDB service
 if systemctl is-active --quiet mongod; then

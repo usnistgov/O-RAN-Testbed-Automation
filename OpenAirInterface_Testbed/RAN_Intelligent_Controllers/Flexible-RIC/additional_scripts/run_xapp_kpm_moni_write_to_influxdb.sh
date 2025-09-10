@@ -34,10 +34,10 @@ set -e
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
-    sudo $APTVARS apt-get install -y coreutils
+    sudo env $APTVARS apt-get install -y coreutils
 fi
 
-echo "# Script: $(realpath $0)..."
+echo "# Script: $(realpath "$0")..."
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
@@ -93,5 +93,6 @@ if [ -f "../configs/flexric.conf" ]; then
     CONFIG_PATH="-c ../configs/flexric.conf"
 fi
 
-echo "Starting xApp KPM monitor..."
+echo "Starting xApp KPM monitor to InfluxDB..."
+set -x
 XAPP_DURATION=-1 ./build/examples/xApp/c/monitor/xapp_kpm_moni_write_to_influxdb "$INFLUXDB_TOKEN" $CONFIG_PATH

@@ -28,7 +28,7 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-echo "# Script: $(realpath $0)..."
+echo "# Script: $(realpath "$0")..."
 
 export CHART_REPO_URL=http://0.0.0.0:8090
 sudo sed -i '/CHART_REPO_URL/d' /etc/environment

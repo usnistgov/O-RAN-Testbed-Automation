@@ -28,7 +28,7 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-echo "# Script: $(realpath $0)..."
+echo "# Script: $(realpath "$0")..."
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
@@ -37,7 +37,7 @@ cd "$PARENT_DIR"
 sudo ./install_scripts/start_mongodb.sh
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
-sudo $APTVARS apt-get install -y ca-certificates curl gnupg
+sudo env $APTVARS apt-get install -y ca-certificates curl gnupg
 sudo mkdir -p /etc/apt/keyrings
 curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor --yes -o /etc/apt/keyrings/nodesource.gpg
 
@@ -54,6 +54,6 @@ fi
 
 sudo apt-get update
 
-sudo $APTVARS apt-get install -y nodejs
+sudo env $APTVARS apt-get install -y nodejs
 
 curl -fsSL https://open5gs.org/open5gs/assets/webui/install | sudo -E bash -

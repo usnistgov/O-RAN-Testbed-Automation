@@ -85,7 +85,7 @@ else # Use docker.ce
 
     # Code from (https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository):
     sudo apt-get update
-    sudo $APTVARS apt-get install -y ca-certificates curl
+    sudo env $APTVARS apt-get install -y ca-certificates curl
     sudo install -m 0755 -d /etc/apt/keyrings
     sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
     sudo chmod a+r /etc/apt/keyrings/docker.asc
@@ -140,9 +140,9 @@ fi
 echo "Installing Docker..."
 if ! command -v docker &>/dev/null; then
     if [ "$USE_DOCKER_CE" -eq 0 ]; then
-        sudo $APTVARS apt-get install -y $APTOPTS "docker.io=$DOCKERVERSION"
+        sudo env $APTVARS apt-get install -y $APTOPTS "docker.io=$DOCKERVERSION"
     else
-        sudo $APTVARS apt-get install -y $APTOPTS "docker-ce=$DOCKERVERSION"
+        sudo env $APTVARS apt-get install -y $APTOPTS "docker-ce=$DOCKERVERSION"
     fi
 fi
 

@@ -28,7 +28,7 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-echo "# Script: $(realpath $0)..."
+echo "# Script: $(realpath "$0")..."
 
 # Exit immediately if a command fails
 set -e
@@ -53,7 +53,7 @@ fi
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
-    sudo $APTVARS apt-get install -y coreutils
+    sudo env $APTVARS apt-get install -y coreutils
 fi
 
 CURRENT_DIR=$(pwd)
@@ -63,7 +63,7 @@ HOME_DIR=$(dirname "$(dirname "$(dirname "$SCRIPT_DIR")")")
 
 if ! command -v jq &>/dev/null; then
     echo "Installing jq..."
-    sudo $APTVARS apt-get install -y jq
+    sudo env $APTVARS apt-get install -y jq
 fi
 
 # First check the directory containing install_scripts/, otherwise, use the home directory
@@ -87,7 +87,7 @@ if [[ -d "$NAME" && ! -d "$NAME/.git" ]]; then
 fi
 
 # Verify that the repository is on the correct commit hash
-if jq -e ".\"$URL\"[1]" $JSON_FILE &>/dev/null; then
+if jq -e --arg url "$URL" '.[$url][1]' "$JSON_FILE" &>/dev/null; then
     BRANCH=$(jq -r ".\"$URL\"[0]" $JSON_FILE)
     TARGET_COMMIT_HASH=$(jq -r ".\"$URL\"[1]" $JSON_FILE)
 

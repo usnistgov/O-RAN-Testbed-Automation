@@ -28,7 +28,7 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-echo "# Script: $(realpath $0)..."
+echo "# Script: $(realpath "$0")..."
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
@@ -99,7 +99,7 @@ else
     fi
 
     echo "Installing gnupg and curl if not already installed..."
-    sudo $APTVARS apt-get install -y gnupg curl || {
+    sudo env $APTVARS apt-get install -y gnupg curl || {
         echo "Failed to install GnuPG or curl"
         exit 1
     }
@@ -128,13 +128,13 @@ else
     fi
 
     echo "Attempting to install MongoDB 4.4..."
-    if ! sudo $APTVARS apt-get install -y --allow-change-held-packages mongodb-org=4.4.* mongodb-org-server=4.4.* mongodb-org-shell=4.4.* mongodb-org-mongos=4.4.* mongodb-org-tools=4.4.*; then
+    if ! sudo env $APTVARS apt-get install -y --allow-change-held-packages mongodb-org=4.4.* mongodb-org-server=4.4.* mongodb-org-shell=4.4.* mongodb-org-mongos=4.4.* mongodb-org-tools=4.4.*; then
         echo "Initial MongoDB installation failed. Attempting to fix broken installations..."
         sudo apt-get --fix-broken install
         sudo apt-get autoremove -y
         sudo apt-get clean
         echo "Trying to install MongoDB 4.4 again..."
-        if ! sudo $APTVARS apt-get install -y --allow-change-held-packages mongodb-org=4.4.* mongodb-org-server=4.4.* mongodb-org-shell=4.4.* mongodb-org-mongos=4.4.* mongodb-org-tools=4.4.*; then
+        if ! sudo env $APTVARS apt-get install -y --allow-change-held-packages mongodb-org=4.4.* mongodb-org-server=4.4.* mongodb-org-shell=4.4.* mongodb-org-mongos=4.4.* mongodb-org-tools=4.4.*; then
             echo "Failed to install MongoDB 4.4 after attempting repairs. Exiting script."
             exit 1
         fi
@@ -142,7 +142,7 @@ else
 fi
 
 echo "Attempting to install mongosh..."
-if ! sudo $APTVARS apt-get install -y --allow-change-held-packages mongosh; then
+if ! sudo env $APTVARS apt-get install -y --allow-change-held-packages mongosh; then
     echo "Failed initial attempt to install mongosh. Adding MongoDB 5.0 repository for mongosh..."
     # Import the MongoDB 5.0 public key
     if ! curl -fsSL https://www.mongodb.org/static/pgp/server-5.0.asc | sudo apt-key add -; then
@@ -159,13 +159,13 @@ if ! sudo $APTVARS apt-get install -y --allow-change-held-packages mongosh; then
     done
 
     sudo apt-get update
-    if ! sudo $APTVARS apt-get install -y --allow-change-held-packages mongodb-mongosh; then
+    if ! sudo env $APTVARS apt-get install -y --allow-change-held-packages mongodb-mongosh; then
         echo "Failed to install mongosh even from MongoDB 5.0 repository. Attempting to fix broken installations..."
         sudo apt-get --fix-broken install
         sudo apt-get autoremove -y
         sudo apt-get clean
         echo "Trying to install mongosh again..."
-        if ! sudo $APTVARS apt-get install -y --allow-change-held-packages mongodb-mongosh; then
+        if ! sudo env $APTVARS apt-get install -y --allow-change-held-packages mongodb-mongosh; then
             echo "An error occured. Running dpkg --configure -a to ensure all packages are properly configured..."
             sudo dpkg --configure -a || true
             echo "Failed to install mongosh after attempting repairs. Exiting script."

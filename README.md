@@ -63,8 +63,8 @@ Before beginning the installation and setup of the testbed, verify that the syst
 
 - **Operating System**: Linux distributions based on Ubuntu 20.04 LTS, Ubuntu 22.04 LTS, and Ubuntu 24.04 LTS are supported.
   - _Recommendation: Ubuntu 22.04._
-- **Hard Drive Storage**: Must be `≥ 35` GB.
-- **Base Memory/RAM**: Must be `≥ 6144` MB.
+- **Hard Drive Storage**: Must be `≥ 57` GB.
+- **Base Memory/RAM**: Must be `≥ 6000` MB.
 - **Number of Processors**: Must be `≥ 2` processors.
   - _Recommendation: `≥ 6` processors._
 - **Internet Connectivity**: A stable internet connection must be maintained during the installation otherwise the process may fail and require restarting.

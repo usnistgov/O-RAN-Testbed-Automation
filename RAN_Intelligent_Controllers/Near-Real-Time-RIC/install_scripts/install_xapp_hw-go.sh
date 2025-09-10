@@ -28,7 +28,7 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-echo "# Script: $(realpath $0)..."
+echo "# Script: $(realpath "$0")..."
 
 # Exit immediately if a command fails
 set -e
@@ -44,7 +44,7 @@ if ! command -v jq &>/dev/null; then
     echo "Installing jq..."
     sudo apt-get update
     APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
-    sudo $APTVARS apt-get install -y jq
+    sudo env $APTVARS apt-get install -y jq
 fi
 
 FILE="config/config-file_updated.json"

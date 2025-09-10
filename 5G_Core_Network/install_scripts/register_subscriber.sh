@@ -31,10 +31,10 @@
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
-    sudo $APTVARS apt-get install -y coreutils
+    sudo env $APTVARS apt-get install -y coreutils
 fi
 
-echo "# Script: $(realpath $0)..."
+echo "# Script: $(realpath "$0")..."
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
@@ -49,6 +49,8 @@ DEFAULT_OPC="63BFA50EE6523365FF14C1F45F88737D"
 DEFAULT_APN="internet"
 DEFAULT_SST=""
 DEFAULT_SD=""
+DEFAULT_IPV4=""
+DEFAULT_IPV6=""
 
 ./start_webui.sh no-browser
 
@@ -62,6 +64,8 @@ usage() {
     echo "  --apn [APN]                   Set the APN value (default: $DEFAULT_APN)"
     echo "  --sst [SST]                   Set the SST value (optional)"
     echo "  --sd [SD]                     Set the SD value (optional)"
+    echo "  --ipv4 [IPv4]                 Set the IPv4 address (optional)"
+    echo "  --ipv6 [IPv6]                 Set the IPv6 address (optional)"
     echo "  -h, --help                    Display this help message and exit"
     exit 1
 }
@@ -99,6 +103,14 @@ while [[ "$#" -gt 0 ]]; do
         SD="${2}"
         shift
         ;;
+    --ipv4)
+        IPV4="${2}"
+        shift
+        ;;
+    --ipv6)
+        IPV6="${2}"
+        shift
+        ;;
     -h | --help) usage ;;
     *)
         echo "Unknown parameter passed: $1"
@@ -115,6 +127,8 @@ OPC="${OPC:-$DEFAULT_OPC}"
 APN="${APN:-$DEFAULT_APN}"
 SST="${SST:-$DEFAULT_SST}"
 SD="${SD:-$DEFAULT_SD}"
+IPV4="${IPV4:-$DEFAULT_IPV4}"
+IPV6="${IPV6:-$DEFAULT_IPV6}"
 
 # Check if the subscriber already exists
 if $DBCTL_DIR showpretty | grep -q "imsi: '$IMSI'"; then
@@ -131,6 +145,28 @@ fi
 
 echo "Running command: $CMD"
 $CMD
+
+# Support for IPv4 and IPv6
+if [[ -n "$IPV4" ]]; then
+    echo "Assigning static IPv4 $IPV4 to subscriber $IMSI"
+    $DBCTL_DIR static_ip $IMSI $IPV4
+fi
+if [[ -n "$IPV6" ]]; then
+    echo "Assigning static IPv6 $IPV6 to subscriber $IMSI"
+    $DBCTL_DIR static_ip6 $IMSI $IPV6
+fi
+TYPE=""
+if [[ -n "$IPV4" && -n "$IPV6" ]]; then # IPv4v6
+    TYPE="3"
+elif [[ -n "$IPV4" ]]; then # IPv4
+    TYPE="1"
+elif [[ -n "$IPV6" ]]; then # IPv6
+    TYPE="2"
+fi
+if [[ -n "$TYPE" ]]; then
+    echo "Assigning PDN-Type $TYPE to subscriber $IMSI"
+    $DBCTL_DIR type $IMSI $TYPE
+fi
 
 # Check exit status of the command
 if [ $? -eq 0 ]; then

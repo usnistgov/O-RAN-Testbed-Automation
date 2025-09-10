@@ -28,7 +28,7 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-echo "# Script: $(realpath $0)..."
+echo "# Script: $(realpath "$0")..."
 
 # Attempt to kill the process
 pkill -f "sudo_stay_validated.sh" || echo "No process found to stop."

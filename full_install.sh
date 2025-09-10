@@ -34,7 +34,7 @@ set -e
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
-    sudo $APTVARS apt-get install -y coreutils
+    sudo env $APTVARS apt-get install -y coreutils
 fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
@@ -122,6 +122,9 @@ fi
 
 # Ensure backward compatibility with previous installations
 sudo ./Additional_Scripts/migrate_to_new_version.sh
+
+# Ensure the correct YAML editor is installed
+sudo "$SCRIPT_DIR/5G_Core_Network/install_scripts/./ensure_consistent_yq.sh"
 
 echo
 echo

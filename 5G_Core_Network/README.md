@@ -73,10 +73,16 @@ By default, the configuration process automatically unregisters all subscribers,
     <td>...2</td>
   </tr>
   <tr>
-    <td>netns</td>
-    <td>ue1</td>
-    <td>ue2</td>
-    <td>ue3</td>
+    <td>Address</td>
+    <td>10.45.0.101</td>
+    <td>...102</td>
+    <td>...103</td>
+  </tr>
+  <tr>
+    <td>Namespace</td>
+     <td>ue1</td>
+     <td>ue2</td>
+     <td>ue3</td>
   </tr>
   <!-- <tr>
     <td>TX Port</td>

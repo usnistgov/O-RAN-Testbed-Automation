@@ -34,7 +34,7 @@ set -e
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
-    sudo $APTVARS apt-get install -y coreutils
+    sudo env $APTVARS apt-get install -y coreutils
 fi
 
 CURRENT_DIR=$(pwd)
@@ -78,7 +78,7 @@ fi
 if ! dpkg -s chrony &>/dev/null; then
     echo "Chrony is not installed, installing..."
     sudo apt-get update
-    sudo $APTVARS apt-get install -y chrony || true
+    sudo env $APTVARS apt-get install -y chrony || true
 fi
 if ! systemctl is-enabled --quiet chrony; then
     echo "Enabling Chrony service..."
@@ -291,7 +291,7 @@ fi
 
 if ! command -v jq >/dev/null 2>&1; then
     echo "Installing jq to process JSON files..."
-    sudo $APTVARS apt-get install -y jq
+    sudo env $APTVARS apt-get install -y jq
 fi
 
 if ! command -v envsubst &>/dev/null; then
@@ -306,7 +306,7 @@ if ! command -v keytool &>/dev/null; then
     echo "Installing openjdk-11-jre-headless..."
     sudo add-apt-repository -y ppa:openjdk-r/ppa
     sudo apt-get update
-    sudo $APTVARS apt-get install -y openjdk-11-jre-headless
+    sudo env $APTVARS apt-get install -y openjdk-11-jre-headless
 fi
 
 echo

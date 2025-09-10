@@ -28,7 +28,7 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-echo "# Script: $(realpath $0)..."
+echo "# Script: $(realpath "$0")..."
 
 # Read policy names and namespaces into arrays
 read -a POLICY_NAMES <<<$(kubectl get cnp --all-namespaces -o jsonpath='{.items[*].metadata.name}')

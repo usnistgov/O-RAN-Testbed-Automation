@@ -9,8 +9,12 @@ The automation tool can be used in virtual machines and physical machines with t
 ### Supported Testbed Open-Source Components
 
 <div align="center">
-  <img src="Images/Architecture_Light.svg#gl-light-mode-only" alt="Diagram of Testbed Open-Source Components" width="70%">
-  <img src="Images/Architecture_Dark.svg#gl-dark-mode-only" alt="Diagram of Testbed Open-Source Components" width="70%">
+  <!-- <picture>
+    <source media="(prefers-color-scheme: light)" srcset="./Images/Architecture_Light.svg">
+    <source media="(prefers-color-scheme: dark)" srcset="./Images/Architecture_Dark.svg">
+    <img alt="Diagram of Testbed Open-Source Components" width="70%">
+  </picture> -->
+  <img src="Images/Architecture_Light.svg" alt="Diagram of Testbed Open-Source Components" width="70%">
 </div>
 
 This tool supports the deployment of 5G O-RAN testbeds using open-source components in two main scenarios: Software Radio Systems with O-RAN SC's Near-RT RIC, and OpenAirInterface with Mosaic5G's FlexRIC. Below is the list of the supported testbed open-source components.
@@ -47,9 +51,14 @@ UEs
 
 The components that have been verified to support or not support connectivity are included below.
 
+The components that have been verified to support or not support connectivity are included below.
 <div align="center">
-  <img src="Images/Support_Light.svg#gl-light-mode-only" alt="Diagram of Supported Connections" width="97%">
-  <img src="Images/Support_Dark.svg#gl-dark-mode-only" alt="Diagram of Supported Connections" width="97%">
+  <!-- <picture>
+    <source media="(prefers-color-scheme: light)" srcset="./Images/Support_Light.svg">
+    <source media="(prefers-color-scheme: dark)" srcset="./Images/Support_Dark.svg">
+    <img alt="Diagram of Supported Connections" width="97%">
+  </picture> -->
+  <img src="Images/Support_Light.svg" alt="Diagram of Supported Connections" width="97%">
 </div>
 
 ### Minimum System Requirements
@@ -146,9 +155,9 @@ PDU Session Establishment successful. IP: 10.45.0.2
 RRC NR reconfiguration successful.
 ```
 
-<b>Supplementary Network Monitoring, Visualization, and Control</b><p align="center">
+<b>Supplementary Network Monitoring, Visualization, and Control</b><div align="center">
   <img src="Images/Cilium_Hubble_UI.png" alt="Hubble UI showing network flows" width="70%">
-</p>
+</div>
 
 See <a href="RAN_Intelligent_Controllers/Near-Real-Time-RIC#migration-to-cilium">this section</a> for the set up guide.
 </details>
@@ -176,9 +185,9 @@ RSRP = -44.00 [dBm]
 ...
 ```
 
-<b>Supplementary Dashboard for KPM Visualization</b><p align="center">
+<b>Supplementary Dashboard for KPM Visualization</b><div align="center">
   <img src="Images/xApp_Dashboard.png" alt="Grafana dashboard of xApp KPM metrics" width="75%">
-</p>
+</div>
 
 See <a href="OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC#kpm-monitor-visualization-in-grafana">this section</a> for the set up guide.
 </details>
@@ -239,15 +248,16 @@ USNISTGOV/O-RAN-Testbed-Automation is developed and maintained by the NIST Wirel
 
 ## <!-- HR 2 -->
 
-<p align="center">
+<div align="center">
   <a href="https://www.nist.gov" target="_blank">
-    <picture>
+    <!-- <picture>
       <source media="(prefers-color-scheme: light)" srcset="./Images/NIST_Light.png">
       <source media="(prefers-color-scheme: dark)" srcset="./Images/NIST_Dark.png">
       <img alt="National Institute of Standards and Technology" width="85%">
-    </picture>
+    </picture> -->
+    <img src="Images/NIST_Light.png" alt="National Institute of Standards and Technology" width="85%">
   </a>
-</p>
+</div>
 
 <!-- References -->
 

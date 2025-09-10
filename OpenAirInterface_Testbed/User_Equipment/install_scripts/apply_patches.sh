@@ -72,16 +72,6 @@ echo "Patching ran_func_kpm_subs.c..."
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c.patch"
 cd ..
 
-if [ ! -f "openairinterface5g/openair2/LAYER2/NR_MAC_gNB/main.c.previous" ]; then
-    cp openairinterface5g/openair2/LAYER2/NR_MAC_gNB/main.c openairinterface5g/openair2/LAYER2/NR_MAC_gNB/main.c.previous
-    cp openairinterface5g/openair2/LAYER2/NR_MAC_gNB/main.c.previous "$PARENT_DIR/install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/main.previous.c"
-fi
-echo "Patching main.c..."
-cd openairinterface5g
-git restore openair2/LAYER2/NR_MAC_gNB/main.c
-git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/main.c.patch"
-cd ..
-
 cd openairinterface5g
 git restore openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h
 if [ ! -f "openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.previous" ]; then

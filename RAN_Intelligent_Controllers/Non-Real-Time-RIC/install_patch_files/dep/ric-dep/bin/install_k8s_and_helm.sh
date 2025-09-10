@@ -123,6 +123,7 @@ sudo env $APTVARS apt-get install -y iptables
 sudo env $APTVARS apt-get install -y ipvsadm
 sudo env $APTVARS apt-get install -y socat
 sudo env $APTVARS apt-get install -y libsctp1 lksctp-tools
+sudo env $APTVARS apt-get install -y jq netcat-openbsd make ipset moreutils
 
 # Previous versions from original script (HELMV 3.14.X causes continuous APIServer crashing on Ubuntu 22):
 # KUBEV="1.28" #.11"
@@ -453,9 +454,6 @@ if sudo swapon --show | grep -q 'swap'; then
 else
     echo "All swap has been successfully disabled."
 fi
-
-sudo apt-get update
-sudo env $APTVARS apt-get install -y curl jq netcat-openbsd make ipset moreutils
 
 # -----------------------------------------------------------------------------
 # Docker uninstallation then clean installation

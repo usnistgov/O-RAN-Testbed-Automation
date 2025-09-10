@@ -124,7 +124,7 @@ if [[ "$USE_SYSTEMCTL" == "null" || -z "$USE_SYSTEMCTL" ]]; then
 fi
 
 # Check for open5gs-amfd and open5gs-upfd binaries to determine if Open5GS is already installed
-if [ -f "open5gs/install/bin/open5gs-amfd" ] && [ -f "open5gs/install/bin/open5gs-upfd" ]; then
+if [ -f "open5gs/install/bin/open5gs-amfd" ] && [ -f "open5gs/install/bin/open5gs-upfd" ] && command -v mongod &>/dev/null; then
     echo "Open5GS is already installed, skipping."
     exit 0
 fi

@@ -87,7 +87,7 @@ if [[ -d "$NAME" && ! -d "$NAME/.git" ]]; then
 fi
 
 # Verify that the repository is on the correct commit hash
-if jq -e ".\"$URL\"[1]" $JSON_FILE &>/dev/null; then
+if jq -e --arg url "$URL" '.[$url][1]' "$JSON_FILE" &>/dev/null; then
     BRANCH=$(jq -r ".\"$URL\"[0]" $JSON_FILE)
     TARGET_COMMIT_HASH=$(jq -r ".\"$URL\"[1]" $JSON_FILE)
 

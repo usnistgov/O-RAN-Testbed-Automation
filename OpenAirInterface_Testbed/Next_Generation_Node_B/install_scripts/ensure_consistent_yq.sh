@@ -28,8 +28,6 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-echo "# Script: $(realpath "$0")..."
-
 # Exit immediately if a command fails
 set -e
 
@@ -44,7 +42,6 @@ if command -v yq &>/dev/null; then
     fi
 
     if yq --version 2>/dev/null | grep -q "$YQ_VERSION"; then
-        echo "Already installed yq version $YQ_VERSION, skipping."
         exit 0
     fi
 

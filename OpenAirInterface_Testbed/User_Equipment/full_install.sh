@@ -31,7 +31,7 @@
 # Exit immediately if a command fails
 set -e
 
-CLEAN_INSTALL=true # Note: If set to true, then full_install.sh needs to be ran in the Next_Generation_Node_B directory too.
+CLEAN_INSTALL=false # Note: If set to true, then full_install.sh needs to be ran in the Next_Generation_Node_B directory too.
 DEBUG_SYMBOLS=false
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
@@ -120,9 +120,9 @@ if [[ "$CMAKE_VERSION" == 3.16.* ]]; then
 fi
 
 if ! dpkg -s libsimde-dev &>/dev/null; then
-    echo "Installing libsimde-dev..."
+    echo "Attempting to install libsimde-dev..."
     sudo apt-get update
-    sudo env $APTVARS apt-get install -y libsimde-dev
+    sudo env $APTVARS apt-get install -y libsimde-dev || true
 fi
 if [ -d /usr/include/simde ]; then
     sudo chown -R root:root /usr/include/simde

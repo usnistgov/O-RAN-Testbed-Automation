@@ -1,6 +1,6 @@
 ## 5G Core Network
 
-The 5G Core Network operates as a standalone network based on the 3GPP specifications TS 23.501 [[1]][ts3144-3gpp] and TS 23.502 [[2]][ts3145-3gpp], implemented using various software stacks. The 5G Core Network consists of the Mobility Management Entity (MME), Serving Gateway Control (SGWC), Session Management Function (SMF), Access and Mobility Management Function (AMF), Serving Gateway User Plane (SGWU), User Plane Function (UPF), Home Subscriber Server (HSS), Policy Control and Charging Rules Function (PCRF), Network Repository Function (NRF), Security Capability Proxy (SCP), Security Edge Protection Proxy 1 & 2 (SEPP 1, SEPP 2), Authentication Server Function (AUSF), Unified Data Management (UDM), Policy Control Function (PCF), Network Slice Selection Function (NSSF), Binding Support Function (BSF), and Unified Data Repository (UDR).
+The 5G Core Network operates as a standalone network based on the 3GPP specifications TS 23.501 [\[1\]][ts3144-3gpp] and TS 23.502 [\[2\]][ts3145-3gpp], implemented using various software stacks. The 5G Core Network consists of the Mobility Management Entity (MME), Serving Gateway Control (SGWC), Session Management Function (SMF), Access and Mobility Management Function (AMF), Serving Gateway User Plane (SGWU), User Plane Function (UPF), Home Subscriber Server (HSS), Policy Control and Charging Rules Function (PCRF), Network Repository Function (NRF), Security Capability Proxy (SCP), Security Edge Protection Proxy 1 & 2 (SEPP 1, SEPP 2), Authentication Server Function (AUSF), Unified Data Management (UDM), Policy Control Function (PCF), Network Slice Selection Function (NSSF), Binding Support Function (BSF), and Unified Data Repository (UDR).
 
 ## Usage
 
@@ -13,30 +13,30 @@ The 5G Core Network operates as a standalone network based on the 3GPP specifica
 
 ## Supported Cores Using `USNISTGOV/5gdeploy`
 
-These 5G Core implementations are provided through the USNISTGOV/5gdeploy 5G Core Deployment Helper [[3]][5gdeploy-nist]. In support for diverse software stacks, the tool allow disaggregating the Control Plane (CP) and User Plane Function (UPF) components in the 5G core network.
+These 5G Core implementations are provided through the USNISTGOV/5gdeploy 5G Core Deployment Helper [\[3\]][5gdeploy-nist]. In support for diverse software stacks, the tool allow disaggregating the Control Plane (CP) and User Plane Function (UPF) components in the 5G core network.
 
 To select a core network beyond Open5GS, modify the `core_to_use` and `upf_to_use` fields in the ../options.yaml file. The available options are listed below.
 
 - `core_to_use`:
 
-  - `open5gs`: Open5GS core in the current directory (default, see [[4]][open5gs-open5gs]).
-  - `5gdeploy-oai`: OpenAirInterface core (see [[5]][oaicore-oai]).
-  - `5gdeploy-free5gc`: free5GC core (see [[6]][free5gc-free5gc]).
-    - _Note: free5GC does not support gNB KPI metric subscriptions due to slicing limitations [[7]][free5gc-limitation]._
+  - `open5gs`: Open5GS core in the current directory (default, see [\[4\]][open5gs-open5gs]).
+  - `5gdeploy-oai`: OpenAirInterface core (see [\[5\]][oaicore-oai]).
+  - `5gdeploy-free5gc`: free5GC core (see [\[6\]][free5gc-free5gc]).
+    - _Note: free5GC does not support gNB KPI metric subscriptions due to slicing limitations [\[7\]][free5gc-limitation]._
   - `5gdeploy-phoenix`: Phoenix core (see [\[8][open5gcore-fraunhofer-fokus], [9\]][open5gcore-phoenix]).
       - _Note: Phoenix Platform, also known as Open5GCore, requires a license to operate. See links above for more information._
-  - `5gdeploy-open5gs`: Open5GS core (containerized in Docker, see [[4]][open5gs-open5gs]).
+  - `5gdeploy-open5gs`: Open5GS core (containerized in Docker, see [\[4\]][open5gs-open5gs]).
 
 - `upf_to_use` (optional):
   - `null` or blank: Uses the same value as `core_to_use` (default).
-  - `5gdeploy-eupf`: eUPF (see [[10]][eupf-edgecomllc]).
-  - `5gdeploy-oai`: OpenAirInterface UPF (see [[11]][upf-oai]).
-  - `5gdeploy-oai-vpp`: OpenAirInterface UPF (see [[12]][upf-vpp-oai]).
-  - `5gdeploy-free5gc`: free5GC UPF (see [[6]][free5gc-free5gc]).
+  - `5gdeploy-eupf`: eUPF (see [\[10\]][eupf-edgecomllc]).
+  - `5gdeploy-oai`: OpenAirInterface UPF (see [\[11\]][upf-oai]).
+  - `5gdeploy-oai-vpp`: OpenAirInterface UPF (see [\[12\]][upf-vpp-oai]).
+  - `5gdeploy-free5gc`: free5GC UPF (see [\[6\]][free5gc-free5gc]).
   - `5gdeploy-phoenix`: Phoenix core (license required, see [\[8][open5gcore-fraunhofer-fokus], [9\]][open5gcore-phoenix]).
-  - `5gdeploy-open5gs`: Open5GS core (containerized in Docker, see [[4]][open5gs-open5gs]).
-  - `5gdeploy-bess`: Aether SD-Core BESS UPF (see [[13]][bess-aethercore]).
-  - `5gdeploy-ndndpdk`: NDN-DPDK UPF (see [[14]][nist-ndndpdk]).
+  - `5gdeploy-open5gs`: Open5GS core (containerized in Docker, see [\[4\]][open5gs-open5gs]).
+  - `5gdeploy-bess`: Aether SD-Core BESS UPF (see [\[13\]][bess-aethercore]).
+  - `5gdeploy-ndndpdk`: NDN-DPDK UPF (see [\[14\]][nist-ndndpdk]).
 
 Upon updating options.conf, run `generate_configurations.sh` on the core, the gNodeB, and the UE to apply changes. Please see the parent directory's README.md for more information.
 

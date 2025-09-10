@@ -1,6 +1,6 @@
 ## OpenAirInterface Testbed
 
-This testbed deployment consists of a 5G Core Network by Open5GS [[1]][open5gs-core], gNodeB and 5G UE by OpenAirInterface at Eurecom [[2]][oai-ue-gnb], and FlexRIC by Mosaic5G at Eurecom [[3]][mosaic-flexric]. The scripts in these directories build, install, and configure the testbed components similar to the parent directory. Each directory contains a `README.md` file providing more details on the respective testbed component.
+This testbed deployment consists of a 5G Core Network by Open5GS [\[1\]][open5gs-core], gNodeB and 5G UE by OpenAirInterface at Eurecom [\[2\]][oai-ue-gnb], and FlexRIC by Mosaic5G at Eurecom [\[3\]][mosaic-flexric]. The scripts in these directories build, install, and configure the testbed components similar to the parent directory. Each directory contains a `README.md` file providing more details on the respective testbed component.
 
 ## Usage
 

@@ -1,6 +1,6 @@
 ## 5G Core Network
 
-The 5G Core Network operates as a standalone network based on the 3GPP specifications TS 23.501 [[1]][ts3144-3gpp] and TS 23.502 [[2]][ts3145-3gpp], implemented using the Open5GS software [[3]][open5gs-open5gs]. The 5G Core Network consists of the Mobility Management Entity (MME), Serving Gateway Control (SGWC), Session Management Function (SMF), Access and Mobility Management Function (AMF), Serving Gateway User Plane (SGWU), User Plane Function (UPF), Home Subscriber Server (HSS), Policy Control and Charging Rules Function (PCRF), Network Repository Function (NRF), Security Capability Proxy (SCP), Security Edge Protection Proxy 1 & 2 (SEPP 1, SEPP 2), Authentication Server Function (AUSF), Unified Data Management (UDM), Policy Control Function (PCF), Network Slice Selection Function (NSSF), Binding Support Function (BSF), and Unified Data Repository (UDR).
+The 5G Core Network operates as a standalone network based on the 3GPP specifications TS 23.501 [\[1\]][ts3144-3gpp] and TS 23.502 [\[2\]][ts3145-3gpp], implemented using the Open5GS software [\[3\]][open5gs-open5gs]. The 5G Core Network consists of the Mobility Management Entity (MME), Serving Gateway Control (SGWC), Session Management Function (SMF), Access and Mobility Management Function (AMF), Serving Gateway User Plane (SGWU), User Plane Function (UPF), Home Subscriber Server (HSS), Policy Control and Charging Rules Function (PCRF), Network Repository Function (NRF), Security Capability Proxy (SCP), Security Edge Protection Proxy 1 & 2 (SEPP 1, SEPP 2), Authentication Server Function (AUSF), Unified Data Management (UDM), Policy Control Function (PCF), Network Slice Selection Function (NSSF), Binding Support Function (BSF), and Unified Data Repository (UDR).
 
 ## Usage
 
@@ -16,28 +16,28 @@ The 5G Core Network operates as a standalone network based on the 3GPP specifica
 
 ## Supported Cores Beyond Open5GS Using `USNISTGOV/5gdeploy`
 
-Additional 5G Core implementations are provided through the USNISTGOV/5gdeploy 5G Core Deployment Helper [[4]][5gdeploy-nist]. In support for diverse software stacks, the tool allow disaggregating the Control Plane (CP) and User Plane Function (UPF) components in the 5G core network.
+Additional 5G Core implementations are provided through the USNISTGOV/5gdeploy 5G Core Deployment Helper [\[4\]][5gdeploy-nist]. In support for diverse software stacks, the tool allow disaggregating the Control Plane (CP) and User Plane Function (UPF) components in the 5G core network.
 
 To select a core network beyond Open5GS, modify the `core_to_use` and `upf_to_use` fields in the 5G_Core_Network/options.yaml file. The available options are listed below.
 
 - Supported values for `core_to_use`:
 
-  - `open5gs`: Open5GS core in the current directory (default, see [[3]][open5gs-open5gs])
-  - `5gdeploy-oai`: OpenAirInterface core (see [[5]][oaicore-oai])
-  - `5gdeploy-free5gc`: Free5GC core (see [[6]][free5gc-free5gc])
-  - `5gdeploy-phoenix`: Phoenix core, also known as Open5GCore (requires license to operate, see [[7]][open5gcore-phoenix])
-  - `5gdeploy-open5gs`: Open5GC core (with the difference being that this is containerized in Docker, see [[3]][open5gs-open5gs])
+  - `open5gs`: Open5GS core in the current directory (default, see [\[3\]][open5gs-open5gs])
+  - `5gdeploy-oai`: OpenAirInterface core (see [\[5\]][oaicore-oai])
+  - `5gdeploy-free5gc`: Free5GC core (see [\[6\]][free5gc-free5gc])
+  - `5gdeploy-phoenix`: Phoenix core, also known as Open5GCore (requires license to operate, see [\[7\]][open5gcore-phoenix])
+  - `5gdeploy-open5gs`: Open5GC core (with the difference being that this is containerized in Docker, see [\[3\]][open5gs-open5gs])
 
 - Supported values for `upf_to_use`:
   - `null` or blank: Uses the same value as `core_to_use` (default)
-  - `5gdeploy-eupf`: eUPF (see [[8]][eupf-edgecomllc])
-  - `5gdeploy-oai`: OpenAirInterface UPF (see [[9]][upf-oai])
-  - `5gdeploy-oai-vpp`: OpenAirInterface UPF (see [[10]][upf-vpp-oai])
-  - `5gdeploy-free5gc`: Free5GC UPF (see [[7]][free5gc-free5gc])
-  - `5gdeploy-phoenix`: Phoenix core, also known as Open5GCore (requires license to operate, see [[8]][open5gcore-phoenix])
-  - `5gdeploy-open5gs`: Open5GC core (containerized in Docker, see [[3]][open5gs-open5gs])
-  - `5gdeploy-bess`: Aether SD-Core BESS UPF (see [[11]][bess-aethercore])
-  - `5gdeploy-ndndpdk`: NDN-DPDK UPF (see [[12]][nist-ndndpdk])
+  - `5gdeploy-eupf`: eUPF (see [\[8\]][eupf-edgecomllc])
+  - `5gdeploy-oai`: OpenAirInterface UPF (see [\[9\]][upf-oai])
+  - `5gdeploy-oai-vpp`: OpenAirInterface UPF (see [\[10\]][upf-vpp-oai])
+  - `5gdeploy-free5gc`: Free5GC UPF (see [\[7\]][free5gc-free5gc])
+  - `5gdeploy-phoenix`: Phoenix core, also known as Open5GCore (requires license to operate, see [\[8\]][open5gcore-phoenix])
+  - `5gdeploy-open5gs`: Open5GC core (containerized in Docker, see [\[3\]][open5gs-open5gs])
+  - `5gdeploy-bess`: Aether SD-Core BESS UPF (see [\[11\]][bess-aethercore])
+  - `5gdeploy-ndndpdk`: NDN-DPDK UPF (see [\[12\]][nist-ndndpdk])
 
 > [!NOTE]
 > Upon updating options.conf, run `full_install.sh` to build the new core, then in the Next_Generation_Node_B/ directory, run `generate_configurations.sh` to reconfigure the gNB with the correct AMF.
@@ -71,7 +71,7 @@ Alternatively, to create subscriber entries from command line, use the following
 
 Remove all registered subscribers with `./install_scripts/unregister_all_subscribers.sh`.
 
-By default, the configuration process automatically unregisters all subscribers, then registers subscriber entries for UE 1, UE 2, and UE 3 based on the following table from the blueprint [[13]][nist-tn-2311]. The IMSI values will be updated accordingly if the PLMN value is changed in options.yaml.
+By default, the configuration process automatically unregisters all subscribers, then registers subscriber entries for UE 1, UE 2, and UE 3 based on the following table from the blueprint [\[13\]][nist-tn-2311]. The IMSI values will be updated accordingly if the PLMN value is changed in options.yaml.
 
 <table><thead>
   <tr>
@@ -130,7 +130,7 @@ By default, the configuration process automatically unregisters all subscribers,
 </tbody>
 </table>
 
-For more information on the subscriber data, refer to the blueprint [[13]][nist-tn-2311] and the User_Equipment README document.
+For more information on the subscriber data, refer to the blueprint [\[13\]][nist-tn-2311] and the User_Equipment README document.
 
 ### Open5GS: Custom Gateway Address for UE Traffic
 

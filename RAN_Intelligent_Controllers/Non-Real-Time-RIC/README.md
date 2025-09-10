@@ -1,8 +1,8 @@
 ## Non-RT RIC, L-Release
 
-The Non-RT RIC, conceptualized by the O-RAN Alliance's Working Group 2 (WG2) [[1]][oran-wg2] and implemented by the O-RAN Software Community [[2]][oransc-nonrtric], facilitates strategic long-term planning and policy management in Radio Access Networks (RAN).
+The Non-RT RIC, conceptualized by the O-RAN Alliance's Working Group 2 (WG2) [\[1\]][oran-wg2] and implemented by the O-RAN Software Community [\[2\]][oransc-nonrtric], facilitates strategic long-term planning and policy management in Radio Access Networks (RAN).
 
-This automation tool is based on the L-Release of the Non-RT RIC. More information about these releases can be found at [[3]][oransc-releases].
+This automation tool is based on the L-Release of the Non-RT RIC. More information about these releases can be found at [\[3\]][oransc-releases].
 
 ## Usage
 

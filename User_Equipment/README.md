@@ -1,6 +1,6 @@
 ## User Equipment
 
-The User Equipment (UE) is a simulated device utilizing the srsRAN_4G software provided by Software Radio Systems [[1]][srsran-srsue], designed to connect to the gNodeB and establish a PDU session with the 5G Core Network based on the specifications outlined in 3GPP TS 36.300 [[2]][ts2430-3gpp], 3GPP TS 36.331 [[3]][ts2440-3gpp], 3GPP TS 36.401 [[4]][ts2442-3gpp], 3GPP TS 36.413 [[5]][ts2446-3gpp], and 3GPP TS 23.401 [[6]][ts849-3gpp].
+The User Equipment (UE) is a simulated device utilizing the srsRAN_4G software provided by Software Radio Systems [\[1\]][srsran-srsue], designed to connect to the gNodeB and establish a PDU session with the 5G Core Network based on the specifications outlined in 3GPP TS 36.300 [\[2\]][ts2430-3gpp], 3GPP TS 36.331 [\[3\]][ts2440-3gpp], 3GPP TS 36.401 [\[4\]][ts2442-3gpp], 3GPP TS 36.413 [\[5\]][ts2446-3gpp], and 3GPP TS 23.401 [\[6\]][ts849-3gpp].
 
 ## Usage
 

@@ -1,6 +1,6 @@
 ## Flexible RAN Intelligent Controller (FlexRIC)
 
-The Near-RT RIC, conceptualized by the O-RAN Alliance's Working Group 3 (WG3) [[1]][oran-wg3] and implemented by Mosaic5G [[2]][publication-nearrtric][[3]][mosaic5g-nearrtric], enables dynamic management and optimization of Radio Access Networks (RAN).
+The Near-RT RIC, conceptualized by the O-RAN Alliance's Working Group 3 (WG3) [\[1\]][oran-wg3] and implemented by Mosaic5G [\[2\]][publication-nearrtric][\[3\]][mosaic5g-nearrtric], enables dynamic management and optimization of Radio Access Networks (RAN).
 
 ## Usage
 

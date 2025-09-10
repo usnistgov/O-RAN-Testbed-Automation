@@ -19,7 +19,7 @@ This installation of the Near-RT RIC supports six xApps.
 
 - **KPM Monitor xApp (xapp_kpm_moni, revised xApp)**:
   - Run with `./run_xapp_kpm_moni.sh`.
-  - Sets `XAPP_DURATION=-1` to run indefinitely and include several new metrics (see below).
+  - Sets `XAPP_DURATION=-1` to run indefinitely and include new metrics (see below).
     - Pre-existing metrics from OpenAirInterface:
       ```console
       DRB.PdcpSduVolumeDL (kb) - Downlink volume of the UE since the last sample
@@ -57,6 +57,7 @@ This installation of the Near-RT RIC supports six xApps.
       PHY.CqiWb1TbDl - Channel Quality Indicator (CQI), wideband, 1 transport-block [Experimental]
       PHY.CqiWb2TbDl - Channel Quality Indicator (CQI), wideband, 2 transport-blocks [Experimental]
       ```
+    - Note that this xApp uses REPORT Style 4 (O-RAN E2SM-KPM clause 7.4.5) with the condition being that the UE must have Slice/Service Type (SST): 001 and Slice Differentiator (SD): 0xFFFFFF.
 - **KPM Monitor to CSV xApp (xapp_kpm_moni_write_to_csv, new xApp)**:
   - Retains all functionality from xapp_kpm_moni, but rather than outputting to stdout, writes to `logs/KPI_Metrics.csv`.
 - **KPM Monitor to InfluxDB v2 xApp (xapp_kpm_moni_write_to_influxdb, new xApp)**:

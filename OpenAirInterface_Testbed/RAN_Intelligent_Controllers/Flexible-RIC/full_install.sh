@@ -37,7 +37,7 @@ DEBUG_SYMBOLS=false
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
-    sudo $APTVARS apt-get install -y coreutils
+    sudo env $APTVARS apt-get install -y coreutils
 fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
@@ -62,9 +62,9 @@ INSTALL_START_TIME=$(date +%s)
 echo "Installing dependencies..."
 if ! command -v gcc-10 &>/dev/null || ! command -v g++-10 &>/dev/null || ! command -v swig &>/dev/null; then
     sudo apt-get update || true
-    sudo $APTVARS apt-get install -y build-essential automake
-    sudo $APTVARS apt-get install -y gcc-10 g++-10
-    sudo $APTVARS apt-get install -y libsctp-dev python3 cmake-curses-gui libpcre2-dev python3-dev
+    sudo env $APTVARS apt-get install -y build-essential automake
+    sudo env $APTVARS apt-get install -y gcc-10 g++-10
+    sudo env $APTVARS apt-get install -y libsctp-dev python3 cmake-curses-gui libpcre2-dev python3-dev
 fi
 
 if [ ! -d "swig" ]; then

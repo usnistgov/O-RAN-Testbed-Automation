@@ -28,76 +28,47 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-echo "# Script: $(realpath $0)..."
+echo "# Script: $(realpath "$0")..."
 
-# Uninstall yq with: sudo rm -rf /usr/local/bin/yq; hash -r
-if command -v yq &>/dev/null; then
-    echo "Already installed yq, skipping."
-    exit 0
+# Exit immediately if a command fails
+set -e
+
+APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
+if ! dpkg -s lksctp-tools >/dev/null 2>&1; then
+    sudo apt-get update
+    sudo env $APTVARS apt-get install -y lksctp-tools
+fi
+if ! dpkg -s libsctp1 >/dev/null 2>&1; then
+    sudo apt-get update
+    sudo env $APTVARS apt-get install -y libsctp1
+fi
+if ! dpkg -s libsctp-dev >/dev/null 2>&1; then
+    sudo apt-get update
+    sudo env $APTVARS apt-get install -y libsctp-dev
 fi
 
-echo "Installing yq..."
+# Load necessary kernel modules
+sudo modprobe overlay || true
+sudo modprobe br_netfilter || true
 
-# Determine the processor architecture
-ARCH_SUFFIX=""
-case $(uname -m) in
-"x86_64")
-    ARCH_SUFFIX="linux_amd64"
-    ;;
-"aarch64")
-    ARCH_SUFFIX="linux_arm64"
-    ;;
-"armv7l" | "armv6l")
-    ARCH_SUFFIX="linux_arm"
-    ;;
-"i386" | "i686")
-    ARCH_SUFFIX="linux_386"
-    ;;
-"ppc64le")
-    ARCH_SUFFIX="linux_ppc64le"
-    ;;
-"s390x")
-    ARCH_SUFFIX="linux_s390x"
-    ;;
-"mips")
-    ARCH_SUFFIX="linux_mips"
-    ;;
-"mips64")
-    ARCH_SUFFIX="linux_mips64"
-    ;;
-"mips64el" | "mips64le")
-    ARCH_SUFFIX="linux_mips64le"
-    ;;
-"mipsel" | "mipsle")
-    ARCH_SUFFIX="linux_mipsle"
-    ;;
-*)
-    echo "Unsupported architecture for yq: $(uname -m)"
-    exit 1
-    ;;
-esac
+# Load SCTP module
+sudo modprobe sctp
 
-YQ_URL="https://github.com/mikefarah/yq/releases/latest/download/yq_${ARCH_SUFFIX}.tar.gz"
+# Get the kernel major version
+KERNEL_VERSION="$(uname -r | cut -d'-' -f1)"
+MAJOR_VERSION="$(echo "$KERNEL_VERSION" | cut -d'.' -f1)"
 
-# Create a temporary directory for the download
-TEMP_DIR=$(mktemp -d)
-TEMP_PATH="$TEMP_DIR/yq.tar.gz"
-
-echo "Downloading yq from $YQ_URL..."
-HTTP_STATUS=$(curl -L -w "%{http_code}" -o "$TEMP_PATH" "$YQ_URL")
-if [ "$HTTP_STATUS" -eq 200 ]; then
-    echo "Extracting yq..."
-    tar -xzf "$TEMP_PATH" -C "$TEMP_DIR"
-    if [ -f "$TEMP_DIR/./yq_$ARCH_SUFFIX" ]; then
-        sudo mv "$TEMP_DIR/./yq_$ARCH_SUFFIX" /usr/local/bin/yq
-        sudo chmod +x /usr/local/bin/yq
-        echo "Successfully installed yq."
-    else
-        echo "Failed to extract yq from the tar.gz."
-        exit 1
-    fi
+# Conditional loading of connection tracking modules based on kernel version
+if [ "$MAJOR_VERSION" -lt 5 ]; then
+    # For older kernels (before version 5), load IPv4 and IPv6 specific modules
+    sudo modprobe nf_conntrack_ipv4 || true
+    sudo modprobe nf_conntrack_ipv6 || true
+    sudo modprobe nf_conntrack_proto_sctp || true
 else
-    sudo rm -rf "$TEMP_DIR"
-    echo "Failed to download yq for the architecture: ${ARCH_SUFFIX}, HTTP status was $HTTP_STATUS."
-    exit 1
+    # For newer kernels (version 5 and later), use the unified nf_conntrack module
+    sudo modprobe nf_conntrack || true
+    sudo modprobe nf_conntrack_sctp || true
 fi
+
+echo "SCTP kernel module present:"
+lsmod | grep -E '(^| )sctp( |$)' || echo "WARNING: sctp not loaded"

@@ -28,7 +28,7 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-echo "# Script: $(realpath $0)..."
+echo "# Script: $(realpath "$0")..."
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$(dirname "$SCRIPT_DIR")"
@@ -54,16 +54,8 @@ if [[ ! -r "$RECIPE_PATH" ]]; then
     exit 1
 fi
 
-# Check if the YAML editor is installed, and install it if not
-if ! command -v yq &>/dev/null; then
-    sudo ./install_scripts/install_yq.sh
-fi
-# Check that the correct version of yq is installed
-if ! yq --version 2>/dev/null | grep -q 'https://github\.com/mikefarah/yq'; then
-    echo "ERROR: Detected an incompatible yq installation."
-    echo "Please ensure the Python yq is uninstalled with \"pip uninstall -y yq\", then re-run this script."
-    exit 1
-fi
+# Ensure the correct YAML editor is installed
+sudo ./install_scripts/ensure_consistent_yq.sh
 
 # Function to update YAML configuration files
 update_yaml() {

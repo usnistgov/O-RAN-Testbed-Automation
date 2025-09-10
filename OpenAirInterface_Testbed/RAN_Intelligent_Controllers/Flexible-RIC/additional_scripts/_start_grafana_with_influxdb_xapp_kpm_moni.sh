@@ -34,10 +34,10 @@ set -e
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
-    sudo $APTVARS apt-get install -y coreutils
+    sudo env $APTVARS apt-get install -y coreutils
 fi
 
-echo "# Script: $(realpath $0)..."
+echo "# Script: $(realpath "$0")..."
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
@@ -46,14 +46,14 @@ cd "$PARENT_DIR"
 if ! command -v grafana-server &>/dev/null; then
     echo "Grafana not found, installing..."
     # Code from (https://grafana.com/docs/grafana/latest/setup-grafana/installation/debian):
-    sudo $APTVARS apt-get install -y apt-transport-https software-properties-common wget
+    sudo env $APTVARS apt-get install -y apt-transport-https software-properties-common wget
     sudo mkdir -p /etc/apt/keyrings/
     wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | sudo tee /etc/apt/keyrings/grafana.gpg >/dev/null
     echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
     # Updates the list of available packages
     sudo apt-get update
     # Installs the latest OSS release:
-    sudo $APTVARS apt-get install -y grafana
+    sudo env $APTVARS apt-get install -y grafana
 fi
 
 # # Installing and configuring Grafana to use the CSV data source plugin
@@ -64,7 +64,7 @@ fi
 
 if ! command -v python3 &>/dev/null; then
     echo "Python3 not found, installing..."
-    sudo $APTVARS apt-get install -y python3
+    sudo env $APTVARS apt-get install -y python3
 fi
 
 cd additional_scripts

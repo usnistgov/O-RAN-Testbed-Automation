@@ -28,12 +28,26 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-echo "# Script: $(realpath $0)..."
+# Exit immediately if a command fails
+set -e
 
-# Uninstall yq with: sudo rm -rf /usr/local/bin/yq; hash -r && hash -r
+YQ_VERSION="v4.47.2"
+
 if command -v yq &>/dev/null; then
-    echo "Already installed yq, skipping."
-    exit 0
+    # Check that the correct version of yq is installed
+    if ! yq --version 2>/dev/null | grep -q 'https://github\.com/mikefarah/yq'; then
+        echo "ERROR: Detected an incompatible yq installation."
+        echo "Please ensure the Python yq is uninstalled with \"pip uninstall -y yq\", then re-run this script."
+        exit 1
+    fi
+
+    if yq --version 2>/dev/null | grep -q "$YQ_VERSION"; then
+        exit 0
+    fi
+
+    echo "Removing incompatible yq..."
+    sudo rm -rf /usr/local/bin/yq
+    hash -r
 fi
 
 echo "Installing yq..."
@@ -77,11 +91,17 @@ case $(uname -m) in
     ;;
 esac
 
-YQ_URL="https://github.com/mikefarah/yq/releases/latest/download/yq_${ARCH_SUFFIX}.tar.gz"
+YQ_URL="https://github.com/mikefarah/yq/releases/download/$YQ_VERSION/yq_${ARCH_SUFFIX}.tar.gz"
 
 # Create a temporary directory for the download
 TEMP_DIR=$(mktemp -d)
 TEMP_PATH="$TEMP_DIR/yq.tar.gz"
+
+if ! command -v curl &>/dev/null; then
+    echo "Package \"curl\" not found, installing..."
+    APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
+    sudo env $APTVARS apt-get install -y curl
+fi
 
 echo "Downloading yq from $YQ_URL..."
 HTTP_STATUS=$(curl -L -w "%{http_code}" -o "$TEMP_PATH" "$YQ_URL")

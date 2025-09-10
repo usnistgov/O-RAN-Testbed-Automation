@@ -116,13 +116,14 @@ done
 
 echo "Installing prerequisites..."
 sudo apt-get update || true
-sudo $APTVARS apt-get install -y curl wget gnupg2 software-properties-common lsb-release net-tools iproute2 iputils-ping
-sudo $APTVARS apt-get install -y kmod
-sudo $APTVARS apt-get install -y gawk sed
-sudo $APTVARS apt-get install -y iptables
-sudo $APTVARS apt-get install -y ipvsadm
-sudo $APTVARS apt-get install -y socat
-sudo $APTVARS apt-get install -y libsctp1 lksctp-tools
+sudo env $APTVARS apt-get install -y curl wget gnupg2 software-properties-common lsb-release net-tools iproute2 iputils-ping
+sudo env $APTVARS apt-get install -y kmod
+sudo env $APTVARS apt-get install -y gawk sed
+sudo env $APTVARS apt-get install -y iptables
+sudo env $APTVARS apt-get install -y ipvsadm
+sudo env $APTVARS apt-get install -y socat
+sudo env $APTVARS apt-get install -y libsctp1 lksctp-tools
+sudo env $APTVARS apt-get install -y jq netcat-openbsd make ipset moreutils
 
 # Previous versions from original script (HELMV 3.14.X causes continuous APIServer crashing on Ubuntu 22):
 # KUBEV="1.28" #.11"
@@ -165,7 +166,7 @@ else # Use docker-ce
 
     # Code from (https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository):
     sudo apt-get update
-    sudo $APTVARS apt-get install -y curl gnupg ca-certificates
+    sudo env $APTVARS apt-get install -y curl gnupg ca-certificates
     sudo install -m 0755 -d /etc/apt/keyrings
     sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
     sudo chmod a+r /etc/apt/keyrings/docker.asc
@@ -454,9 +455,6 @@ else
     echo "All swap has been successfully disabled."
 fi
 
-sudo apt-get update
-sudo $APTVARS apt-get install -y curl jq netcat-openbsd make ipset moreutils
-
 # -----------------------------------------------------------------------------
 # Docker uninstallation then clean installation
 # -----------------------------------------------------------------------------
@@ -486,9 +484,9 @@ sudo apt-get autoremove -y
 echo "Installing Docker..."
 if ! command -v docker &>/dev/null; then
     if [ "$USE_DOCKER_CE" -eq 0 ]; then
-        sudo $APTVARS apt-get install -y $APTOPTS "docker.io=$DOCKERVERSION"
+        sudo env $APTVARS apt-get install -y $APTOPTS "docker.io=$DOCKERVERSION"
     else
-        sudo $APTVARS apt-get install -y $APTOPTS "docker-ce=$DOCKERVERSION"
+        sudo env $APTVARS apt-get install -y $APTOPTS "docker-ce=$DOCKERVERSION"
     fi
 fi
 
@@ -700,21 +698,21 @@ echo "Kubernetes version without suffix: $KUBEVERSIONWITHOUTSUFFIX"
 
 # Install Kubernetes components
 if [ -z "${CNIVERSION}" ]; then
-    sudo $APTVARS apt-get install -y kubernetes-cni
+    sudo env $APTVARS apt-get install -y kubernetes-cni
 else
-    sudo $APTVARS apt-get install -y $APTOPTS kubernetes-cni=${CNIVERSION}
+    sudo env $APTVARS apt-get install -y $APTOPTS kubernetes-cni=${CNIVERSION}
 fi
 
 if [ -z "${KUBEVERSION}" ]; then
-    sudo $APTVARS apt-get install -y kubeadm kubelet kubectl
+    sudo env $APTVARS apt-get install -y kubeadm kubelet kubectl
 else
-    sudo $APTVARS apt-get install -y $APTOPTS kubeadm=${KUBEVERSION} kubelet=${KUBEVERSION} kubectl=${KUBEVERSION}
+    sudo env $APTVARS apt-get install -y $APTOPTS kubeadm=${KUBEVERSION} kubelet=${KUBEVERSION} kubectl=${KUBEVERSION}
 fi
 
 # If kubectl command is not found after install, reinstall
 if ! command -v kubectl >/dev/null 2>&1; then
     echo "kubectl not found after install, retrying with --reinstall..."
-    sudo $APTVARS apt-get install -y --reinstall kubectl=${KUBEVERSION}
+    sudo env $APTVARS apt-get install -y --reinstall kubectl=${KUBEVERSION}
     if ! command -v kubectl >/dev/null 2>&1; then
         echo "ERROR: /usr/bin/kubectl still not found after reinstall. Aborting."
         exit 1

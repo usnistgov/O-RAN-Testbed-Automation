@@ -28,7 +28,7 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-echo "# Script: $(realpath $0)..."
+echo "# Script: $(realpath "$0")..."
 
 # If the disk-pressure taint is not present then skip
 if ! kubectl describe nodes | grep Taints | grep -q "disk-pressure"; then

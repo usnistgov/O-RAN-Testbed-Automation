@@ -28,7 +28,7 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-echo "# Script: $(realpath $0)..."
+echo "# Script: $(realpath "$0")..."
 
 # Exit immediately if a command fails
 set -e
@@ -42,13 +42,13 @@ cd appmgr/xapp_orchestrater/dev/xapp_onboarder
 # Install prerequisites
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v python3 &>/dev/null; then
-    sudo $APTVARS apt-get install -y python3
+    sudo env $APTVARS apt-get install -y python3
 fi
 if ! command -v pip &>/dev/null; then
-    sudo $APTVARS apt-get install -y python3-pip
+    sudo env $APTVARS apt-get install -y python3-pip
 fi
 if ! dpkg -l | grep -q python3-venv; then
-    sudo $APTVARS apt-get install -y python3-venv
+    sudo env $APTVARS apt-get install -y python3-venv
 fi
 
 # Check if the dmi_cli binary is already installed

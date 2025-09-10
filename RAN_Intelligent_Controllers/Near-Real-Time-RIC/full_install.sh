@@ -34,7 +34,7 @@ set -e
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
-    sudo $APTVARS apt-get install -y coreutils
+    sudo env $APTVARS apt-get install -y coreutils
 fi
 
 CURRENT_DIR=$(pwd)
@@ -78,7 +78,7 @@ fi
 if ! dpkg -s chrony &>/dev/null; then
     echo "Chrony is not installed, installing..."
     sudo apt-get update
-    sudo $APTVARS apt-get install -y chrony || true
+    sudo env $APTVARS apt-get install -y chrony || true
 fi
 if ! systemctl is-enabled --quiet chrony; then
     echo "Enabling Chrony service..."
@@ -144,16 +144,8 @@ else
         exit 1
     fi
 
-    # Check if the YAML editor is installed, and install it if not
-    if ! command -v yq &>/dev/null; then
-        sudo "$SCRIPT_DIR/install_scripts/./install_yq.sh"
-    fi
-    # Check that the correct version of yq is installed
-    if ! yq --version 2>/dev/null | grep -q 'https://github\.com/mikefarah/yq'; then
-        echo "ERROR: Detected an incompatible yq installation."
-        echo "Please ensure the Python yq is uninstalled with \"pip uninstall -y yq\", then re-run this script."
-        exit 1
-    fi
+    # Ensure the correct YAML editor is installed
+    sudo "$SCRIPT_DIR/install_scripts/./ensure_consistent_yq.sh"
 
     # If kong gives troubles in Release I or Release J then it can be disabled with the following code.
     # cd "$SCRIPT_DIR/ric-dep"

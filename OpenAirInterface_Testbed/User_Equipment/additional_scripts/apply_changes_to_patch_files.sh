@@ -31,7 +31,7 @@
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
-    sudo $APTVARS apt-get install -y coreutils
+    sudo env $APTVARS apt-get install -y coreutils
 fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
@@ -52,7 +52,6 @@ cd openairinterface5g
 # Update the patch files
 git diff openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c >../install_patch_files/openairinterface/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c.patch
 git diff openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c >../install_patch_files/openairinterface/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c.patch
-git diff openair2/LAYER2/NR_MAC_gNB/main.c >../install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/main.c.patch
 git diff openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h >../install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.patch
 git diff openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c >../install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c.patch
 git diff openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c >../install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c.patch
@@ -67,11 +66,6 @@ git restore openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c
 cp openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c ../install_patch_files/openairinterface/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.previous.c
 cp openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c.previous
 git apply --verbose --ignore-whitespace ../install_patch_files/openairinterface/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c.patch
-
-git restore openair2/LAYER2/NR_MAC_gNB/main.c
-cp openair2/LAYER2/NR_MAC_gNB/main.c ../install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/main.previous.c
-cp openair2/LAYER2/NR_MAC_gNB/main.c openair2/LAYER2/NR_MAC_gNB/main.c.previous
-git apply --verbose --ignore-whitespace ../install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/main.c.patch
 
 git restore openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h
 cp openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h ../install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.previous.h

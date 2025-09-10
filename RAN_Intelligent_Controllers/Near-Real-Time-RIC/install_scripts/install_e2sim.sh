@@ -28,7 +28,7 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-echo "# Script: $(realpath $0)..."
+echo "# Script: $(realpath "$0")..."
 
 # Exit immediately if a command fails
 set -e
@@ -45,7 +45,7 @@ fi
 sudo ./install_scripts/update_docker_dns.sh
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
-sudo $APTVARS apt-get install -y cmake g++ libsctp-dev
+sudo env $APTVARS apt-get install -y cmake g++ libsctp-dev
 DOCKER_FILE_PATH="e2-interface/e2sim/Dockerfile_kpm_updated"
 cp e2-interface/e2sim/Dockerfile_kpm $DOCKER_FILE_PATH
 sudo ./install_scripts/revise_e2sim_dockerfile.sh $DOCKER_FILE_PATH

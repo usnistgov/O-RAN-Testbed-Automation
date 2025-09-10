@@ -28,7 +28,7 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-echo "# Script: $(realpath $0)..."
+echo "# Script: $(realpath "$0")..."
 
 # Exit immediately if a command fails
 set -e
@@ -116,16 +116,8 @@ volumeBindingMode: WaitForFirstConsumer
 EOF
 kubectl apply -f "$HOME/.kube/influxdb-nfs.yaml"
 
-# Check if the YAML editor is installed, and install it if not
-if ! command -v yq &>/dev/null; then
-    sudo ./install_scripts/install_yq.sh
-fi
-# Check that the correct version of yq is installed
-if ! yq --version 2>/dev/null | grep -q 'https://github\.com/mikefarah/yq'; then
-    echo "ERROR: Detected an incompatible yq installation."
-    echo "Please ensure the Python yq is uninstalled with \"pip uninstall -y yq\", then re-run this script."
-    exit 1
-fi
+# Ensure the correct YAML editor is installed
+sudo ./install_scripts/ensure_consistent_yq.sh
 
 INFLUXDB_VALUES_PATH="$PARENT_DIR/ric-dep/helm/influxdb/values.yaml"
 INFLUXDB_VALUES_PATH2="$PARENT_DIR/ric-dep/helm/3rdparty/influxdb/values.yaml"

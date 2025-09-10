@@ -28,7 +28,7 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-echo "# Script: $(realpath $0)..."
+echo "# Script: $(realpath "$0")..."
 
 # Run this script to build and deploy the RIC Control xApp (rc) in the Near-Real-Time RIC.
 # More information can be found at: https://github.com/o-ran-sc/ric-app-rc and https://docs.o-ran-sc.org/projects/o-ran-sc-ric-app-rc/en/latest/overview.html
@@ -72,7 +72,7 @@ if ! command -v jq &>/dev/null; then
     echo "Installing jq..."
     sudo apt-get update
     APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
-    sudo $APTVARS apt-get install -y jq
+    sudo env $APTVARS apt-get install -y jq
 fi
 
 FILE="xapp-descriptor/config_updated.json"

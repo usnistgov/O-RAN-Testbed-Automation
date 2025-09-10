@@ -36,7 +36,7 @@ USE_RFSIM_CHANNELMOD=true
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
-    sudo $APTVARS apt-get install -y coreutils
+    sudo env $APTVARS apt-get install -y coreutils
 fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
@@ -117,16 +117,8 @@ if [[ -z "$SST" || -z "$SD" || "$SST" == "null" || "$SD" == "null" ]]; then
     exit 1
 fi
 
-# Check if the YAML editor is installed, and install it if not
-if ! command -v yq &>/dev/null; then
-    sudo "$SCRIPT_DIR/install_scripts/./install_yq.sh"
-fi
-# Check that the correct version of yq is installed
-if ! yq --version 2>/dev/null | grep -q 'https://github\.com/mikefarah/yq'; then
-    echo "ERROR: Detected an incompatible yq installation."
-    echo "Please ensure the Python yq is uninstalled with \"pip uninstall -y yq\", then re-run this script."
-    exit 1
-fi
+# Ensure the correct YAML editor is installed
+sudo "$SCRIPT_DIR/install_scripts/./ensure_consistent_yq.sh"
 
 echo "Saving configuration file example..."
 rm -rf configs
@@ -148,7 +140,8 @@ prompt_for_addresses() {
     echo "Please enter the AMF address and the AMF binding address manually." >&2
     echo "You can find this information in the 5G_Core_Network/configs/get_amf_addresses.txt file in the first two lines, respectively." >&2
     read -p "Enter AMF Address: " AMF_ADDR
-    read -p "Enter AMF Binding Address: " AMF_ADDR_BIND
+    read -p "Enter AMF Binding Address: " N3_ADDR_BIND
+    N2_ADDR_BIND=$N3_ADDR_BIND
 }
 
 # Check if AMF_ADDRESSES has at least two non-empty lines
@@ -159,9 +152,14 @@ if [[ -n "$AMF_ADDRESSES" ]]; then
         [[ -z "$line" ]] && continue # skip blank lines
         ADDRESSES+=("$line")
     done <<<"$AMF_ADDRESSES"
-    if [[ ${#ADDRESSES[@]} -ge 2 ]] && [[ -n ${ADDRESSES[0]} ]] && [[ -n ${ADDRESSES[1]} ]]; then
+    if [[ ${#ADDRESSES[@]} -ge 3 ]] && [[ -n ${ADDRESSES[0]} ]] && [[ -n ${ADDRESSES[1]} ]] && [[ -n ${ADDRESSES[2]} ]]; then
         AMF_ADDR="${ADDRESSES[0]}"
-        AMF_ADDR_BIND="${ADDRESSES[1]}"
+        N3_ADDR_BIND="${ADDRESSES[1]}"
+        N2_ADDR_BIND="${ADDRESSES[2]}"
+    elif [[ ${#ADDRESSES[@]} -ge 2 ]] && [[ -n ${ADDRESSES[0]} ]] && [[ -n ${ADDRESSES[1]} ]]; then
+        AMF_ADDR="${ADDRESSES[0]}"
+        N3_ADDR_BIND="${ADDRESSES[1]}"
+        N2_ADDR_BIND="${ADDRESSES[1]}"
     else
         echo
         echo "AMF address script did not return valid data."
@@ -174,12 +172,13 @@ else
 fi
 
 echo "AMF Address: $AMF_ADDR"
-echo "AMF Binding Address: $AMF_ADDR_BIND"
+echo "AMF Binding Address: $N3_ADDR_BIND"
+echo "NGAP Binding Address: $N2_ADDR_BIND/24"
 
 # Update configuration values for RF front-end device
 update_conf "configs/gnb.conf" "amf_ip_address" "({ ipv4 = \"$AMF_ADDR\"; })"
-update_conf "configs/gnb.conf" "GNB_IPV4_ADDRESS_FOR_NG_AMF" "\"$AMF_ADDR_BIND/24\""
-update_conf "configs/gnb.conf" "GNB_IPV4_ADDRESS_FOR_NGU" "\"$AMF_ADDR_BIND/24\""
+update_conf "configs/gnb.conf" "GNB_IPV4_ADDRESS_FOR_NG_AMF" "\"$N2_ADDR_BIND/24\""
+update_conf "configs/gnb.conf" "GNB_IPV4_ADDRESS_FOR_NGU" "\"$N3_ADDR_BIND/24\""
 update_conf "configs/gnb.conf" "tracking_area_code" "$TAC"
 
 # Configure the Single Network Slice Selection Assistance Information (S-NSSAI)

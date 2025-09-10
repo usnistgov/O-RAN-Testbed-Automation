@@ -216,7 +216,7 @@ if exist "RAN_Intelligent_Controllers\Non-Real-Time-RIC\nonrtric-controlpanel" r
 cd RAN_Intelligent_Controllers\Non-Real-Time-RIC
 git clone https://gerrit.o-ran-sc.org/r/portal/nonrtric-controlpanel.git
 cd nonrtric-controlpanel
-git checkout fe9051bb91b524ff9cef5023a95dea7161d75388
+git checkout f337177ece41c036967ece8513e9f29b07deca34
 cd ..\..\..
 
 cd %~dp0..
@@ -243,7 +243,7 @@ if exist "OpenAirInterface_Testbed\User_Equipment\openairinterface5g" rmdir /s /
 cd OpenAirInterface_Testbed\User_Equipment
 git clone https://gitlab.eurecom.fr/oai/openairinterface5g.git
 cd openairinterface5g
-git checkout 8bf6d5d7da8c0a8384e4022fd4872e6d3d550921
+git checkout fc1c762cf2d1390a1e21f4360c05a3d5fa5a090e
 cd ..\..\..
 
 cd OpenAirInterface_Testbed\Next_Generation_Node_B

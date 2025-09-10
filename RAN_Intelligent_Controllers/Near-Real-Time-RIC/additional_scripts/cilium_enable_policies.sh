@@ -30,7 +30,7 @@
 
 set -e
 
-echo "# Script: $(realpath $0)..."
+echo "# Script: $(realpath "$0")..."
 
 CILIUM_POLICY_FILE="$HOME/.kube/cilium-policy.yaml"
 

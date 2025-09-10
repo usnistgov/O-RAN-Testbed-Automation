@@ -36,7 +36,7 @@ DEBUG_SYMBOLS=false
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
-    sudo $APTVARS apt-get install -y coreutils
+    sudo env $APTVARS apt-get install -y coreutils
 fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
@@ -87,13 +87,16 @@ EOF
     echo "Configured needrestart to list-only (no service restarts)."
 fi
 
+echo "Ensuring that SCTP is enabled..."
+sudo ./install_scripts/enable_sctp.sh
+
 # Check if GCC 13 is installed, if not, install it and set it as the default
 GCC_VERSION=$(gcc -v 2>&1 | grep "gcc version" | awk '{print $3}')
 if [[ -z "$GCC_VERSION" || ! "$GCC_VERSION" == 13.* ]]; then
     echo "Installing GCC 13..."
     sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
     sudo apt-get update
-    sudo $APTVARS apt-get install -y gcc-13 g++-13
+    sudo env $APTVARS apt-get install -y gcc-13 g++-13
     sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 100
     sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-13 100
 fi
@@ -101,7 +104,7 @@ fi
 if ! command -v cmake &>/dev/null; then
     echo "Installing CMake..."
     sudo apt-get update
-    sudo $APTVARS apt-get install -y cmake
+    sudo env $APTVARS apt-get install -y cmake
 fi
 CMAKE_VERSION=$(cmake --version | head -n1 | awk '{print $3}')
 if [[ "$CMAKE_VERSION" == 3.16.* ]]; then
@@ -110,7 +113,7 @@ if [[ "$CMAKE_VERSION" == 3.16.* ]]; then
     wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc | sudo apt-key add -
     sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ focal main'
     sudo apt-get update
-    sudo $APTVARS apt-get install -y cmake
+    sudo env $APTVARS apt-get install -y cmake
 fi
 
 ADDITIONAL_FLAGS=""

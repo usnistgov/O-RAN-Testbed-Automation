@@ -45,7 +45,7 @@ DURATION=${3:-60}
 if [[ -z "$UE_NUMBER" ]]; then
     echo "Error: No UE number provided."
     echo "Usage: $0 <UE_NUMBER> [BANDWIDTH] [DURATION]"
-    echo "       BANDWIDTH is optional and can be specified in units [k, K, m, M]. Default is 1M."
+    echo "       BANDWIDTH is optional and can be specified in units [k, K, m, M, g, G]. Default is 1M."
     echo "       DURATION is optional and specifies the duration in seconds. Default is 60."
     exit 1
 fi
@@ -60,8 +60,8 @@ if [ $UE_NUMBER -lt 1 ]; then
     exit 1
 fi
 
-if ! [[ $BANDWIDTH =~ ^[0-9]+[kKmM]$ ]]; then
-    echo "Error: BANDWIDTH must be a number followed by a unit [k, K, m, M]."
+if ! [[ $BANDWIDTH =~ ^[0-9]+[kmgKMG]$ ]]; then
+    echo "Error: BANDWIDTH must be a number followed by a unit [k, K, m, M, g, G]."
     exit 1
 fi
 

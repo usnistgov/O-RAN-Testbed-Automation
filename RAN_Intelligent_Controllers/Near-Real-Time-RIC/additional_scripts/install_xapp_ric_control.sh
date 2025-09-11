@@ -101,13 +101,13 @@ if [ -z "$FIXED_DOCKER_PERMS" ]; then
                 echo "WARNING: Could not find set group (sg) command, docker may fail without sudo until the system reboots."
                 echo
             else
-                exec sg docker "$CURRENT_DIR/$0" "$@"
+                exec sg docker -c "$(printf '%q ' "$CURRENT_DIR/$0" "$@")"
             fi
         fi
     fi
 fi
 
-if [ ! -f rc.tar]; then
+if [ ! -f rc.tar ]; then
     docker build -t 127.0.0.1:80/rc:latest .
     docker save -o rc.tar 127.0.0.1:80/rc:latest
     sudo chmod 755 rc.tar

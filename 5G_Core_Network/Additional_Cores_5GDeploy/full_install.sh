@@ -156,7 +156,6 @@ cd "$SCRIPT_DIR"
 # Check if docker is accessible from the current user, and if not, repair its permissions
 if [ -z "$FIXED_DOCKER_PERMS" ]; then
     if ! OUTPUT=$(docker info 2>&1); then
-        echo "DEBUGGING: DOCKER OUTPUT: $OUTPUT"
         if echo "$OUTPUT" | grep -qiE 'permission denied|cannot connect to the docker daemon'; then
             echo "Docker permissions will repair on reboot."
             sudo groupadd -f docker
@@ -172,7 +171,7 @@ if [ -z "$FIXED_DOCKER_PERMS" ]; then
                 echo "WARNING: Could not find set group (sg) command, docker may fail without sudo until the system reboots."
                 echo
             else
-                exec sg docker "$CURRENT_DIR/$0" "$@"
+                exec sg docker -c "$(printf '%q ' "$CURRENT_DIR/$0" "$@")"
             fi
         fi
     fi

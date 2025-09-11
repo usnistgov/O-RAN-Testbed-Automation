@@ -34,6 +34,7 @@ if ! command -v realpath &>/dev/null; then
     sudo env $APTVARS apt-get install -y coreutils
 fi
 
+CURRENT_DIR=$(pwd)
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$PARENT_DIR"
@@ -45,7 +46,7 @@ DURATION=${3:-60}
 if [[ -z "$UE_NUMBER" ]]; then
     echo "Error: No UE number provided."
     echo "Usage: $0 <UE_NUMBER> [BANDWIDTH] [DURATION]"
-    echo "       BANDWIDTH is optional and can be specified in units [k, K, m, M]. Default is 1M."
+    echo "       BANDWIDTH is optional and can be specified in units [k, K, m, M, g, G]. Default is 1M."
     echo "       DURATION is optional and specifies the duration in seconds. Default is 60."
     exit 1
 fi
@@ -60,8 +61,8 @@ if [ $UE_NUMBER -lt 1 ]; then
     exit 1
 fi
 
-if ! [[ $BANDWIDTH =~ ^[0-9]+[kKmM]$ ]]; then
-    echo "Error: BANDWIDTH must be a number followed by a unit [k, K, m, M]."
+if ! [[ $BANDWIDTH =~ ^[0-9]+[kmgKMG]$ ]]; then
+    echo "Error: BANDWIDTH must be a number followed by a unit [k, K, m, M, g, G]."
     exit 1
 fi
 
@@ -78,6 +79,30 @@ fi
 if [ ! -f "configs/ue1.conf" ]; then
     echo "Configuration was not found for OAI UE 1. Please run ./generate_configurations.sh first."
     exit 1
+fi
+
+# Check if docker is accessible from the current user, and if not, repair its permissions
+if [ -z "$FIXED_DOCKER_PERMS" ]; then
+    if ! OUTPUT=$(docker info 2>&1); then
+        if echo "$OUTPUT" | grep -qiE 'permission denied|cannot connect to the docker daemon'; then
+            echo "Docker permissions will repair on reboot."
+            sudo groupadd -f docker
+            if [ -n "$SUDO_USER" ]; then
+                sudo usermod -aG docker "${SUDO_USER:-root}"
+            else
+                sudo usermod -aG docker "${USER:-root}"
+            fi
+            # Rather than requiring a reboot to apply docker permissions, set the docker group and re-run the parent script
+            export FIXED_DOCKER_PERMS=1
+            if ! command -v sg &>/dev/null; then
+                echo
+                echo "WARNING: Could not find set group (sg) command, docker may fail without sudo until the system reboots."
+                echo
+            else
+                exec sg docker -c "$(printf '%q ' "$CURRENT_DIR/$0" "$@")"
+            fi
+        fi
+    fi
 fi
 
 LOG_FILE="logs/ue${UE_NUMBER}_stdout.txt"

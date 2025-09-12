@@ -96,9 +96,9 @@ class SingleFileHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         path = parsed.path.lstrip('/')
         query = urllib.parse.parse_qs(parsed.query)
 
-        # Handle requests for KPI_Metrics.csv
-        if path == 'KPI_Metrics.csv':
-            csv_path = os.path.join(parent_dir, 'logs', 'KPI_Metrics.csv')
+        # Handle requests for the file (e.g., KPI_Metrics.csv)
+        if path.endswith('.csv'):
+            csv_path = os.path.join(parent_dir, 'logs', path)
             if not os.path.exists(csv_path):
                 return self.send_error(404, "Not found")
 
@@ -115,7 +115,7 @@ class SingleFileHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             filter_param = query.get('filter', [None])[0]
             filter_columns = filter_param.split(',') if filter_param else None
 
-            if approx_num_samples_param < 1: approx_num_samples_param = None
+            if approx_num_samples_param and approx_num_samples_param < 1: approx_num_samples_param = None
 
             if approx_num_samples_param and not to_timestamp:
                 self.send_error(400, "Bad Request: 'num_samples' requires 'to' parameter")
@@ -252,6 +252,24 @@ class SingleFileHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             #print(f"{elapsed:.2f} ms")
             return
 
+        # Get a list of the files in the logs directory
+        elif path == 'files':
+            logs_dir = os.path.join(parent_dir, 'logs')
+            try:
+                files = os.listdir(logs_dir)
+                files_list = '\n'.join(files)
+                data = files_list.encode('utf-8')
+                self.send_response(200)
+                self.send_header('Content-Type', 'text/plain')
+                self.send_header('Content-Length', str(len(data)))
+                self.end_headers()
+                self.wfile.write(data)
+            except Exception as e:
+                self.send_error(500, f'Error reading logs directory: {e}')
+            elapsed = (time.perf_counter() - start_time) * 1000
+            #print(f"{elapsed:.2f} ms")
+            return
+
         # NIST.svg handling stays the same
         elif path == 'NIST.svg':
             self.path = os.path.join(base_dir, 'Images', 'NIST_Dark.svg')
@@ -294,6 +312,7 @@ class MyTCPServer(socketserver.TCPServer):
 
 with MyTCPServer(('', PORT), SingleFileHTTPRequestHandler) as httpd:
     print('Serving the following routes:')
+    print(f'    http://localhost:{PORT}/files')
     print(f'    http://localhost:{PORT}/KPI_Metrics.csv?from=<start_ms>&to=<end_ms>&approx_num_samples=<number_of_rows>&filter=<column1,column2,...>')
     print(f'    http://localhost:{PORT}/KPI_Metrics.csv...')
     print(f'    http://localhost:{PORT}/NIST.svg...')

@@ -72,7 +72,93 @@
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
         "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
         "type": "dashboard"
+      },
+      {
+        "datasource": {
+          "type": "yesoreyeram-infinity-datasource",
+          "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+        },
+        "enable": false,
+        "filter": {
+          "exclude": true,
+          "ids": [
+            20,
+            21,
+            22
+          ]
+        },
+        "hide": false,
+        "iconColor": "#8032d980",
+        "mappings": {
+          "tags": {
+            "source": "field",
+            "value": "tx_gain"
+          },
+          "text": {
+            "source": "field",
+            "value": "tx_gain"
+          },
+          "time": {
+            "source": "field",
+            "value": "time_start"
+          },
+          "timeEnd": {
+            "source": "field",
+            "value": "time_end"
+          }
+        },
+        "name": "Jamming Annotations",
+        "target": {
+          "columns": [
+            {
+              "selector": "time_start",
+              "text": "time_start",
+              "type": "timestamp_epoch"
+            },
+            {
+              "selector": "time_end",
+              "text": "time_end",
+              "type": "timestamp_epoch"
+            },
+            {
+              "selector": "tx_gain",
+              "text": "tx_gain",
+              "type": "number"
+            }
+          ],
+          "computed_columns": [
+            {
+              "selector": "",
+              "text": "",
+              "type": "string"
+            }
+          ],
+          "csv_options": {
+            "columns": ""
+          },
+          "filterExpression": "",
+          "filters": [],
+          "format": "table",
+          "global_query_id": "",
+          "parser": "backend",
+          "refId": "Anno",
+          "root_selector": "",
+          "source": "url",
+          "type": "csv",
+          "url": "$Annotations_File",
+          "url_options": {
+            "data": "",
+            "method": "GET",
+            "params": []
+          }
+        }
       }
     ]
   },
@@ -85,7 +171,7 @@
     {
       "gridPos": {
         "h": 4,
-        "w": 10,
+        "w": 8,
         "x": 0,
         "y": 0
       },
@@ -96,7 +182,7 @@
           "showLineNumbers": false,
           "showMiniMap": false
         },
-        "content": "<img src=\"http://localhost:3030/NIST.svg\" style=\"max-width: 100%; max-height: 100%; height: auto;\" />",
+        "content": "<img src=\"http://localhost:3030/NIST.svg\" />",
         "mode": "html"
       },
       "pluginVersion": "12.1.1",
@@ -5119,7 +5205,7 @@
           "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
         },
         "definition": "",
-        "description": "",
+        "description": "The UE identifier to visualize",
         "includeAll": false,
         "name": "Selected_UE_ID",
         "options": [],
@@ -5223,7 +5309,7 @@
           "text": "KPI_Metrics.csv",
           "value": "KPI_Metrics.csv"
         },
-        "description": "The source KPI metrics file to use for the dashboard",
+        "description": "Source KPI metrics file to visualize",
         "name": "Metrics_File",
         "options": [
           {
@@ -5234,6 +5320,23 @@
         ],
         "query": "KPI_Metrics.csv",
         "type": "textbox"
+      },
+      {
+        "current": {
+          "text": "Annotation_Labeled_KPI_Metrics.csv",
+          "value": "Annotation_Labeled_KPI_Metrics.csv"
+        },
+        "description": "Source file for Grafana annotations",
+        "name": "Annotations_File",
+        "options": [
+          {
+            "selected": true,
+            "text": "Annotation_Labeled_KPI_Metrics.csv",
+            "value": "Annotation_Labeled_KPI_Metrics.csv"
+          }
+        ],
+        "query": "Annotation_Labeled_KPI_Metrics.csv",
+        "type": "textbox"
       }
     ]
   },
@@ -5243,8 +5346,8 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "FlexRIC KPI Monitor",
-  "uid": "ric_dashboard",
+  "title": "FlexRIC KPI Monitor [Annotations]",
+  "uid": "ric_dashboard_annotations",
   "version": 1,
   "weekStart": ""
 }

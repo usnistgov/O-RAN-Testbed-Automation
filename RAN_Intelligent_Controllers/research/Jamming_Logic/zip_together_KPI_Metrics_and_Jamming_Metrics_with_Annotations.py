@@ -188,9 +188,9 @@ output_labeled_metrics_file.close()
 #input('Press Enter to proceed to annotations generation...')
 
 print()
-print('Generating Annotated_KPI_Metrics file from Labeled_KPI_Metrics file...')
+print('Generating Annotation_KPI_Metrics file from Labeled_KPI_Metrics file...')
 
-output_annotations_name = 'Annotated_' + output_labeled_metrics_name
+output_annotations_name = 'Annotation_' + output_labeled_metrics_name
 print('Output file name:', output_annotations_name)
 
 

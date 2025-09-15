@@ -251,6 +251,7 @@ update_yaml "configs/gnb.yaml" "cu_cp.amf" "addr" "$AMF_ADDR"
 update_yaml "configs/gnb.yaml" "cu_cp.amf" "bind_addr" "$N2_ADDR_BIND"
 update_yaml "configs/gnb.yaml" "cu_cp.amf.supported_tracking_areas[0]" "tac" $TAC
 update_yaml "configs/gnb.yaml" "cu_cp.amf.supported_tracking_areas[0].plmn_list[0]" "plmn" $PLMN
+update_yaml "configs/gnb.yaml" "cu_cp.inactivity_timer" "7200"
 update_yaml "configs/gnb.yaml" "cu_cp.request_pdu_session_timeout" "60"
 
 # Update configuration values for RF front-end device

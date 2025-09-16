@@ -35,6 +35,15 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$PARENT_DIR"
 
+NETCONF_ADDRESS=$(hostname -I | awk '{print $1}')
+NETCONF_PORT=11830
+SFTP_PORT=11221
+
+if [ -z "$NETCONF_ADDRESS" ]; then
+    echo "Could not determine the IP address of this machine. Please check your network connection."
+    exit 1
+fi
+
 if [ ! -d "o1-adapter" ]; then
     echo "Cloning o1-adapter..."
     ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/oai/o1-adapter.git o1-adapter
@@ -77,5 +86,39 @@ fi
 
 cd "$PARENT_DIR"
 
+if ! command -v jq >/dev/null 2>&1; then
+    echo "Installing jq to process JSON files..."
+    sudo env $APTVARS apt-get install -y jq
+fi
+
+# Configure the o1 adapter
+CONFIG_PATH="$PARENT_DIR/o1-adapter/docker/config/config.json"
+if [ ! -f "$CONFIG_PATH" ]; then
+    echo "Could not find $CONFIG_PATH, aborting."
+    exit 1
+fi
+
+# Update the IP addresses
+TEMP_CONF="o1-adapter-config.tmp.json"
+jq --arg ip "$NETCONF_ADDRESS" '.network.host = $ip' "$CONFIG_PATH" > "$TEMP_CONF" && \
+mv "$TEMP_CONF" "$CONFIG_PATH"
+
+jq --arg ip "$NETCONF_ADDRESS" '.telnet.host = $ip' "$CONFIG_PATH" > "$TEMP_CONF" && \
+mv "$TEMP_CONF" "$CONFIG_PATH"
+
+# Update the ports
+jq --argjson port "$NETCONF_PORT" '.network["netconf-port"] = $port' "$CONFIG_PATH" > "$TEMP_CONF" && \
+mv "$TEMP_CONF" "$CONFIG_PATH"
+
+jq --argjson port "$SFTP_PORT" '.network["sftp-port"] = $port' "$CONFIG_PATH" > "$TEMP_CONF" && \
+mv "$TEMP_CONF" "$CONFIG_PATH"
+
+mkdir -p configs
+cd configs
+sudo rm -f o1-adapter-config.json
+ln -s "$CONFIG_PATH" o1-adapter-config.json
+cd ..
+
+# Build the o1 adapter
 cd o1-adapter
 ./build-adapter.sh --adapter --no-cache

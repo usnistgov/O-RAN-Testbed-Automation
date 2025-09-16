@@ -35,9 +35,10 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$PARENT_DIR"
 
-NETCONF_ADDRESS=$(hostname -I | awk '{print $1}')
+NETCONF_ADDRESS="127.0.0.1" #$(hostname -I | awk '{print $1}')
 NETCONF_PORT=11830
 SFTP_PORT=11221
+TELNET_PORT=9091
 
 if [ -z "$NETCONF_ADDRESS" ]; then
     echo "Could not determine the IP address of this machine. Please check your network connection."
@@ -100,18 +101,13 @@ fi
 
 # Update the IP addresses
 TEMP_CONF="o1-adapter-config.tmp.json"
-jq --arg ip "$NETCONF_ADDRESS" '.network.host = $ip' "$CONFIG_PATH" > "$TEMP_CONF" && \
-mv "$TEMP_CONF" "$CONFIG_PATH"
-
-jq --arg ip "$NETCONF_ADDRESS" '.telnet.host = $ip' "$CONFIG_PATH" > "$TEMP_CONF" && \
-mv "$TEMP_CONF" "$CONFIG_PATH"
+jq --arg ip "$NETCONF_ADDRESS" '.network.host = $ip' "$CONFIG_PATH" > "$TEMP_CONF" && mv "$TEMP_CONF" "$CONFIG_PATH"
+jq --arg ip "$NETCONF_ADDRESS" '.telnet.host = $ip' "$CONFIG_PATH" > "$TEMP_CONF" && mv "$TEMP_CONF" "$CONFIG_PATH"
 
 # Update the ports
-jq --argjson port "$NETCONF_PORT" '.network["netconf-port"] = $port' "$CONFIG_PATH" > "$TEMP_CONF" && \
-mv "$TEMP_CONF" "$CONFIG_PATH"
-
-jq --argjson port "$SFTP_PORT" '.network["sftp-port"] = $port' "$CONFIG_PATH" > "$TEMP_CONF" && \
-mv "$TEMP_CONF" "$CONFIG_PATH"
+jq --argjson port "$NETCONF_PORT" '.network["netconf-port"] = $port' "$CONFIG_PATH" > "$TEMP_CONF" && mv "$TEMP_CONF" "$CONFIG_PATH"
+jq --argjson port "$SFTP_PORT" '.network["sftp-port"] = $port' "$CONFIG_PATH" > "$TEMP_CONF" && mv "$TEMP_CONF" "$CONFIG_PATH"
+jq --argjson port "$TELNET_PORT" '.telnet.port = $port' "$CONFIG_PATH" > "$TEMP_CONF" && mv "$TEMP_CONF" "$CONFIG_PATH"
 
 mkdir -p configs
 cd configs

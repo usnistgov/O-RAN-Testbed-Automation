@@ -144,6 +144,9 @@ echo
 echo
 echo "Compiling and Installing OpenAirInterface UE..."
 
+cd "$SCRIPT_DIR/openairinterface5g"
+source oaienv
+
 # Install OAI dependencies
 cd "$SCRIPT_DIR/openairinterface5g/cmake_targets"
 ./build_oai -I

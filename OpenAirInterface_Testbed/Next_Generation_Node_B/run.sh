@@ -34,17 +34,19 @@ if ! command -v realpath &>/dev/null; then
     sudo env $APTVARS apt-get install -y coreutils
 fi
 
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+
 ADDITIONAL_FLAGS=""
-TELNET_SERVER=false
-if [ -f "cmake_targets/ran_build/build/libtelnetsrv.so" ]; then
+if [ -f "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build/libtelnetsrv.so" ]; then
+    echo "Found telnet server library. Enabling telnet server..."
     TELNET_SERVER=true
     ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --telnetsrv"
     ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --listenaddr 0.0.0.0"
-    ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --listenport 9090"
+    ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --listenport 9091"
     ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --listenstdin 0"
+else
+    TELNET_SERVER=false
 fi
-
-SCRIPT_DIR=$(dirname "$(realpath "$0")")
 
 cd "$SCRIPT_DIR"
 mkdir -p logs

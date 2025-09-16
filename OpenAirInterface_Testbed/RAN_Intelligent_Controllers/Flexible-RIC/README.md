@@ -84,7 +84,7 @@ After the KPM Monitor xApp subscribes to the E2 node, metrics of the gNodeB and 
   ```
   A sample KPI_Metrics.csv file has been provided, and can be applied with `cp additional_scripts/sample_KPI_Metrics.csv logs/KPI_Metrics.csv`.
 
-- **Initial Configuration**: The dashboard uses the Infinity plugin (yesoreyeram-infinity-datasource [\[5\]][grafana-infinity]), which will require creating a data source under Connections → Data sources → Add data source → Infinity. Configure it under URL, Headers & Params → Base URL → Type "`http://localhost:3030/KPI_Metrics.csv`" → Save & test.
+- **Initial Configuration**: The dashboard uses the Infinity plugin (yesoreyeram-infinity-datasource [\[5\]][grafana-infinity]), which will require creating a data source under Connections → Data sources → Add data source → Infinity. Configure it under URL, Headers & Params → Base URL → Type "`http://localhost:3030/`" → Save & test.
 
 - **Stop Grafana**: To stop the Grafana server, Python server, and xApp, use `./additional_scripts/stop_grafana_and_python_server.sh`.
 

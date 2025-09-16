@@ -28,54 +28,10 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-set -e
+echo "# Script: $(realpath "$0")..."
 
-CURRENT_DIR=$(pwd)
-SCRIPT_DIR=$(dirname "$(realpath "$0")")
-PARENT_DIR=$(dirname "$SCRIPT_DIR")
-cd "$PARENT_DIR"
-
-if [ ! -d "o1-adapter" ]; then
-    echo "Cloning o1-adapter..."
-    ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/oai/o1-adapter.git o1-adapter
-fi
-
-# If docker is not installed
-if ! command -v docker &>/dev/null; then
-    ./install_scripts/install_docker.sh
-fi
-
-if ! command -v lazydocker &>/dev/null; then
-    ./install_scripts/install_lazydocker.sh
-fi
-
-cd "$SCRIPT_DIR"
-
-# Check if docker is accessible from the current user, and if not, repair its permissions
-if [ -z "$FIXED_DOCKER_PERMS" ]; then
-    if ! OUTPUT=$(docker info 2>&1); then
-        if echo "$OUTPUT" | grep -qiE 'permission denied|cannot connect to the docker daemon'; then
-            echo "Docker permissions will repair on reboot."
-            sudo groupadd -f docker
-            if [ -n "$SUDO_USER" ]; then
-                sudo usermod -aG docker "${SUDO_USER:-root}"
-            else
-                sudo usermod -aG docker "${USER:-root}"
-            fi
-            # Rather than requiring a reboot to apply docker permissions, set the docker group and re-run the parent script
-            export FIXED_DOCKER_PERMS=1
-            if ! command -v sg &>/dev/null; then
-                echo
-                echo "WARNING: Could not find set group (sg) command, docker may fail without sudo until the system reboots."
-                echo
-            else
-                exec sg docker -c "$(printf '%q ' "$CURRENT_DIR/$0" "$@")"
-            fi
-        fi
-    fi
-fi
-
-cd "$PARENT_DIR"
-
-cd o1-adapter
-./build-adapter.sh --adapter --no-cache
+# Simple script to keep sudo active by refreshing it every minute
+while true; do
+    sudo -v
+    sleep 60
+done

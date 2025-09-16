@@ -202,7 +202,7 @@ if [ ! -f "$UE_CREDENTIAL_GENERATOR_SCRIPT" ]; then
     exit 1
 fi
 
-echo "Unregistering all subscribers in Open5GS database..."
+echo "Unregistering all subscribers in 5gdeploy database..."
 ./install_scripts/unregister_all_subscribers.sh
 
 # Register the subscribers
@@ -358,6 +358,7 @@ cd "$SCRIPT_DIR/5gdeploy/scenario"
 echo "Using CP: $CORE"
 echo "Using UP: $UPF"
 
+# For a multi-host deployment, see the 5gdeploy documentation: https://github.com/usnistgov/5gdeploy/blob/main/docs/multi-host.md
 ./generate.sh orantestbed \
     +gnbs=1 +phones=0 +vehicles=0 \
     --cp=$CORE --up=$UPF --ran=none \

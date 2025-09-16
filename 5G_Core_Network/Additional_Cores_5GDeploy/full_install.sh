@@ -67,6 +67,9 @@ if [ "$CORE_TO_USE" == "open5gs" ]; then
     exit 1
 fi
 
+# Run a sudo command every minute to ensure script execution without user interaction
+./install_scripts/start_sudo_refresh.sh
+
 # Get the start timestamp in seconds
 INSTALL_START_TIME=$(date +%s)
 
@@ -185,6 +188,7 @@ fi
 cd "$SCRIPT_DIR/5gdeploy"
 
 # Step 2: Install 5gdeploy
+# For more information, see the 5gdeploy documentation: https://github.com/usnistgov/5gdeploy/blob/main/docs/INSTALL.md
 echo "Starting installation of 5G Core Deployment Helper (5gdeploy)..."
 ./install.sh \
     --dpdk-version v24.11 \
@@ -205,12 +209,15 @@ echo "Starting installation of 5G Core Deployment Helper (5gdeploy)..."
 
 cd "$SCRIPT_DIR"
 
+# Stop the sudo timeout refresher, it is no longer necessary to run
+./install_scripts/stop_sudo_refresh.sh
+
 # Calculate how long the script took to run
 INSTALL_END_TIME=$(date +%s)
 if [ -n "$INSTALL_START_TIME" ]; then
     DURATION=$((INSTALL_END_TIME - INSTALL_START_TIME))
     DURATION_MINUTES=$(echo "scale=5; $DURATION/ 60" | bc)
-    echo "The Open5GS installation process took $DURATION_MINUTES minutes to complete."
+    echo "The 5gdeploy installation process took $DURATION_MINUTES minutes to complete."
     mkdir -p logs
     echo "$DURATION_MINUTES minutes" >>install_time.txt
 fi

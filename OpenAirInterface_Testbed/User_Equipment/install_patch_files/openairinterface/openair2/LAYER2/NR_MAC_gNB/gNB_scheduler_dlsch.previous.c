@@ -551,9 +551,9 @@ static bool allocate_dl_retransmission(module_id_t module_id,
                                sched_ctrl->search_space,
                                sched_ctrl->coreset,
                                &sched_ctrl->sched_pdcch,
-                               false,
                                sched_ctrl->pdcch_cl_adjust);
   if (CCEIndex<0) {
+    sched_ctrl->dl_cce_fail++;
     LOG_D(NR_MAC, "[UE %04x][%4d.%2d] could not find free CCE for DL DCI retransmission\n", UE->rnti, frame, slot);
     return false;
   }
@@ -593,8 +593,15 @@ typedef struct UEsched_s {
   NR_UE_info_t * UE;
 } UEsched_t;
 
-static int comparator(const void *p, const void *q) {
-  return ((UEsched_t*)p)->coef < ((UEsched_t*)q)->coef;
+static int comparator(const void *p, const void *q)
+{
+  const UEsched_t *pp = p;
+  const UEsched_t *qq = q;
+  if (pp->coef < qq->coef)
+    return 1;
+  else if (pp->coef > qq->coef)
+    return -1;
+  return 0;
 }
 
 static void pf_dl(module_id_t module_id,
@@ -612,7 +619,7 @@ static void pf_dl(module_id_t module_id,
   int remainUEs[num_beams];
   for (int i = 0; i < num_beams; i++)
     remainUEs[i] = max_num_ue;
-  int curUE = 0;
+  int numUE = 0;
   int CC_id = 0;
   int slots_per_frame = mac->frame_structure.numb_slots_frame;
 
@@ -621,7 +628,7 @@ static void pf_dl(module_id_t module_id,
     NR_UE_sched_ctrl_t *sched_ctrl = &UE->UE_sched_ctrl;
     NR_UE_DL_BWP_t *current_BWP = &UE->current_DL_BWP;
 
-    if (sched_ctrl->ul_failure)
+    if (!nr_mac_ue_is_active(UE))
       continue;
 
     const NR_mac_dir_stats_t *stats = &UE->mac_stats.dl;
@@ -676,7 +683,8 @@ static void pf_dl(module_id_t module_id,
       const int max_mcs_table = current_BWP->mcsTableIdx == 1 ? 27 : 28;
       const int max_mcs = min(sched_ctrl->dl_max_mcs, max_mcs_table);
       if (bo->harq_round_max == 1) {
-        sched_pdsch->mcs = min(bo->max_mcs, max_mcs);
+        int new_mcs = min(bo->max_mcs, max_mcs);
+        sched_pdsch->mcs = max(bo->min_mcs, new_mcs);
         sched_ctrl->dl_bler_stats.mcs = sched_pdsch->mcs;
       } else
         sched_pdsch->mcs = get_mcs_from_bler(bo, stats, &sched_ctrl->dl_bler_stats, max_mcs, frame);
@@ -703,13 +711,13 @@ static void pf_dl(module_id_t module_id,
             tbs,
             coeff_ue);
       /* Create UE_sched list for UEs eligible for new transmission*/
-      UE_sched[curUE].coef=coeff_ue;
-      UE_sched[curUE].UE=UE;
-      curUE++;
+      UE_sched[numUE].coef = coeff_ue;
+      UE_sched[numUE].UE = UE;
+      numUE++;
     }
   }
 
-  qsort(UE_sched, sizeofArray(UE_sched), sizeof(UEsched_t), comparator);
+  qsort(UE_sched, numUE, sizeof(UEsched_t), comparator);
   UEsched_t *iterator = UE_sched;
 
   const int min_rbSize = 5;
@@ -790,6 +798,7 @@ static void pf_dl(module_id_t module_id,
             rbStart,
             max_rbSize,
             rbStop);
+      reset_beam_status(&mac->beam_info, frame, slot, iterator->UE->UE_beam_index, slots_per_frame, beam.new_beam);
       iterator++;
       continue;
     }
@@ -803,9 +812,9 @@ static void pf_dl(module_id_t module_id,
                                  sched_ctrl->search_space,
                                  sched_ctrl->coreset,
                                  &sched_ctrl->sched_pdcch,
-                                 false,
                                  sched_ctrl->pdcch_cl_adjust);
     if (CCEIndex < 0) {
+      sched_ctrl->dl_cce_fail++;
       LOG_D(NR_MAC, "[UE %04x][%4d.%2d] could not find free CCE for DL DCI\n", rnti, frame, slot);
       reset_beam_status(&mac->beam_info, frame, slot, iterator->UE->UE_beam_index, slots_per_frame, beam.new_beam);
       iterator++;
@@ -993,10 +1002,10 @@ nfapi_nr_dl_tti_pdsch_pdu_rel15_t *prepare_pdsch_pdu(nfapi_nr_dl_tti_request_pdu
   pdsch_pdu->maintenance_parms_v3.tbSizeLbrmBytes = nr_compute_tbslbrm(pdsch_pdu->mcsTable[0], dl_bw_tbslbrm, nl_tbslbrm);
   pdsch_pdu->maintenance_parms_v3.ldpcBaseGraph = get_BG(sched_pdsch->tb_size << 3, sched_pdsch->R);
   // Precoding and beamforming
-  pdsch_pdu->precodingAndBeamforming.num_prgs = 0;
+  pdsch_pdu->precodingAndBeamforming.num_prgs = 1;
   pdsch_pdu->precodingAndBeamforming.prg_size = pdsch_pdu->rbSize;
-  pdsch_pdu->precodingAndBeamforming.dig_bf_interfaces = 0;
-  pdsch_pdu->precodingAndBeamforming.prgs_list[0].pm_idx = sched_pdsch->pm_index;
+  pdsch_pdu->precodingAndBeamforming.dig_bf_interfaces = 1;
+  pdsch_pdu->precodingAndBeamforming.prgs_list[0].pm_idx = sched_pdsch->pm_index; 
   pdsch_pdu->precodingAndBeamforming.prgs_list[0].dig_bf_interface_list[0].beam_idx = beam_index;
   return pdsch_pdu;
 }
@@ -1029,7 +1038,7 @@ void nr_schedule_ue_spec(module_id_t module_id,
     NR_UE_sched_ctrl_t *sched_ctrl = &UE->UE_sched_ctrl;
     NR_UE_DL_BWP_t *current_BWP = &UE->current_DL_BWP;
 
-    if (sched_ctrl->ul_failure && !get_softmodem_params()->phy_test)
+    if (!nr_mac_ue_is_active(UE) && !get_softmodem_params()->phy_test)
       continue;
 
     NR_sched_pdsch_t *sched_pdsch = &sched_ctrl->sched_pdsch;
@@ -1305,6 +1314,7 @@ void nr_schedule_ue_spec(module_id_t module_id,
             if (len == 0)
               break;
 
+            T(T_GNB_MAC_LCID_DL, T_INT(rnti), T_INT(frame), T_INT(slot), T_INT(lcid), T_INT(len * 8), T_INT(nr_rlc_tx_list_occupancy(rnti, lcid)));
             header->R = 0;
             header->F = 1;
             header->LCID = lcid;
@@ -1378,6 +1388,7 @@ void nr_schedule_ue_spec(module_id_t module_id,
 
       T(T_GNB_MAC_DL_PDU_WITH_DATA, T_INT(module_id), T_INT(CC_id), T_INT(rnti),
         T_INT(frame), T_INT(slot), T_INT(current_harq_pid), T_BUFFER(harq->transportBlock.buf, TBS));
+      T(T_GNB_MAC_DL, T_INT(rnti), T_INT(frame), T_INT(slot), T_INT(sched_pdsch->mcs), T_INT(TBS));
     }
 
     const int ntx_req = TX_req->Number_of_PDUs;

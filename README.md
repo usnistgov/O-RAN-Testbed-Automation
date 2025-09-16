@@ -21,8 +21,8 @@ This tool supports the deployment of 5G O-RAN testbeds using open-source compone
 
 ```text
 CU/DU
-├── srsRAN_Project gNB: v25.04
-├── OpenAirInterface gNB: v2.3.0
+├── srsRAN_Project gNB: release_25.04
+├── OpenAirInterface gNB: 2025.w37
 └── O-RAN SC E2 Simulator: L-release
 RICs
 ├── O-RAN SC Near-RT RIC: L-release
@@ -43,15 +43,14 @@ RICs
 └── O-RAN SC Non-RT RIC: L-release
     └── Minimal prototype with no rApp support.
 5G Core
-└── Open5GS: v2.7.5
+└── Open5GS: v2.7.6
 UEs
-├── srsRAN_4G: v23.11
-└── OpenAirInterface 5G UE: v2.3.0
+├── srsRAN_4G: release_23_11
+└── OpenAirInterface 5G UE: 2025.w37
 ```
 
 The components that have been verified to support or not support connectivity are included below.
 
-The components that have been verified to support or not support connectivity are included below.
 <div align="center">
   <!-- <picture>
     <source media="(prefers-color-scheme: light)" srcset="./Images/Support_Light.svg">
@@ -122,7 +121,7 @@ Alternatively, the repository may be cloned over SSH: `git clone git@github.com:
 
 ---
 
-> [!TIP]
+> [!IMPORTANT]
 > The deployment scenario based on OpenAirInterface with FlexRIC can be installed from the `OpenAirInterface_Testbed` directory, while the deployment scenario based on srsRAN and O-RAN SC's Near-RT RIC can be installed from the base directory.
 
 Begin the installation process, recommended to be run as the current user rather than as root:
@@ -131,7 +130,7 @@ Begin the installation process, recommended to be run as the current user rather
 ./full_install.sh
 ```
 
-> [!NOTE]
+> [!TIP]
 > Due to `set -e`, the scripts will halt upon encountering an error so that it can be corrected before trying again. Since the scripts are idempotent, only the incomplete steps of the installation process will be executed unless specified otherwise. Please be patient until an error occurs or the testbed installation completes successfully.
 
 ```text

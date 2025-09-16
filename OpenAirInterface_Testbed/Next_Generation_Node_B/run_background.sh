@@ -34,6 +34,16 @@ if ! command -v realpath &>/dev/null; then
     sudo env $APTVARS apt-get install -y coreutils
 fi
 
+ADDITIONAL_FLAGS=""
+TELNET_SERVER=false
+if [ -f "cmake_targets/ran_build/build/libtelnetsrv.so" ]; then
+    TELNET_SERVER=true
+    ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --telnetsrv"
+    ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --listenaddr 0.0.0.0"
+    ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --listenport 9090"
+    ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --listenstdin 0"
+fi
+
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
@@ -50,7 +60,7 @@ else
     >logs/gnb_stdout.txt
 
     cd "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build"
-    sudo setsid bash -c "stdbuf -oL -eL ./nr-softmodem -O \"$SCRIPT_DIR/configs/gnb.conf\" --rfsim --rfsimulator.serveraddr server --rfsimulator.options chanmod --gNBs.[0].min_rxtxtime 6 > \"$SCRIPT_DIR/logs/gnb_stdout.txt\" 2>&1" </dev/null &
+    sudo setsid bash -c "stdbuf -oL -eL ./nr-softmodem -O \"$SCRIPT_DIR/configs/gnb.conf\" --rfsim --rfsimulator.serveraddr server --rfsimulator.options chanmod --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS > \"$SCRIPT_DIR/logs/gnb_stdout.txt\" 2>&1" </dev/null &
 
     cd "$SCRIPT_DIR"
 

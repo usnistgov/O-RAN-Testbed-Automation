@@ -216,9 +216,8 @@ For more information about a specific component, refer to the README.md files in
 USNISTGOV/O-RAN-Testbed-Automation is developed and maintained by the NIST Wireless Networks Division [\[13\]][nist-wnd], as part of their Open RAN Research Program [\[14\]][nist-oran].  Contacts for this software:
 
 - Simeon J. Wuthier, @Simewu
-- Peng Liu, @pengnist
-- Kyehwan Lee, @kyehwanlee
 - Fernando J. Cintrón, @fjcintron
+- Kyehwan Lee, @kyehwanlee
 - Doug Montgomery, @dougm-nist
 
 ## NIST Disclaimers

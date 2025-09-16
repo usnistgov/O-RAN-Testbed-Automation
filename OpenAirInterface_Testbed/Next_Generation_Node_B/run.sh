@@ -53,5 +53,5 @@ mkdir -p logs
 cd "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build"
 
 # Code from (https://github.com/OPENAIRINTERFACE/openairinterface5g/blob/develop/radio/rfsimulator/README.md#5g-case):
-# sudo ./nr-softmodem -O "$SCRIPT_DIR/configs/gnb.conf" --rfsim --rfsimulator.serveraddr server --rfsimulator.options chanmod --gNBs.[0].min_rxtxtime 6
-sudo script -q -f -c "./nr-softmodem -O \"$SCRIPT_DIR/configs/gnb.conf\" --rfsim --rfsimulator.serveraddr server --rfsimulator.options chanmod --gNBs.[0].min_rxtxtime 6" "$SCRIPT_DIR/logs/gnb_stdout.txt"
+# sudo ./nr-softmodem -O "$SCRIPT_DIR/configs/gnb.conf" --rfsim --rfsimulator.serveraddr server --rfsimulator.options chanmod --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS
+sudo script -q -f -c "./nr-softmodem -O \"$SCRIPT_DIR/configs/gnb.conf\" --rfsim --rfsimulator.serveraddr server --rfsimulator.options chanmod --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS" "$SCRIPT_DIR/logs/gnb_stdout.txt"

@@ -34,6 +34,16 @@ if ! command -v realpath &>/dev/null; then
     sudo env $APTVARS apt-get install -y coreutils
 fi
 
+ADDITIONAL_FLAGS=""
+TELNET_SERVER=false
+if [ -f "cmake_targets/ran_build/build/libtelnetsrv.so" ]; then
+    TELNET_SERVER=true
+    ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --telnetsrv"
+    ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --listenaddr 0.0.0.0"
+    ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --listenport 9090"
+    ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --listenstdin 0"
+fi
+
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 
 if ! command -v gdb &>/dev/null; then
@@ -48,5 +58,5 @@ mkdir -p logs
 
 cd "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build"
 
-# sudo gdb --args ./nr-softmodem -O "$SCRIPT_DIR/configs/gnb.conf" --rfsim --rfsimulator.serveraddr server --rfsimulator.options chanmod --gNBs.[0].min_rxtxtime 6
-sudo script -q -f -c "gdb --args ./nr-softmodem -O \"$SCRIPT_DIR/configs/gnb.conf\" --rfsim --rfsimulator.serveraddr server --rfsimulator.options chanmod --gNBs.[0].min_rxtxtime 6" "$SCRIPT_DIR/logs/gnb_stdout.txt"
+# sudo gdb --args ./nr-softmodem -O "$SCRIPT_DIR/configs/gnb.conf" --rfsim --rfsimulator.serveraddr server --rfsimulator.options chanmod --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS
+sudo script -q -f -c "gdb --args ./nr-softmodem -O \"$SCRIPT_DIR/configs/gnb.conf\" --rfsim --rfsimulator.serveraddr server --rfsimulator.options chanmod --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS" "$SCRIPT_DIR/logs/gnb_stdout.txt"

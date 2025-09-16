@@ -31,6 +31,7 @@
 # Exit immediately if a command fails
 set -e
 
+TELNET_SERVER=true
 DEBUG_SYMBOLS=false
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
@@ -122,6 +123,9 @@ if [ "$CLEAN_INSTALL" = true ]; then
 fi
 if [ "$DEBUG_SYMBOLS" = true ]; then
     ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS -g"
+fi
+if [ "$TELNET_SERVER" = true ]; then
+    ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --build-lib telnetsrv"
 fi
 
 cd "$SCRIPT_DIR"

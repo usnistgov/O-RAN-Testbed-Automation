@@ -69,6 +69,10 @@
           "uid": "-- Grafana --"
         },
         "enable": true,
+        "filter": {
+          "exclude": false,
+          "ids": []
+        },
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
         "name": "Annotations & Alerts",
@@ -85,7 +89,7 @@
           "type": "yesoreyeram-infinity-datasource",
           "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
         },
-        "enable": false,
+        "enable": true,
         "filter": {
           "exclude": true,
           "ids": [
@@ -95,7 +99,7 @@
           ]
         },
         "hide": false,
-        "iconColor": "#8032d980",
+        "iconColor": "#d9324c80",
         "mappings": {
           "tags": {
             "source": "field",
@@ -171,7 +175,7 @@
     {
       "gridPos": {
         "h": 4,
-        "w": 8,
+        "w": 10,
         "x": 0,
         "y": 0
       },
@@ -1097,7 +1101,7 @@
             "axisPlacement": "auto",
             "barAlignment": 0,
             "barWidthFactor": 0.6,
-            "drawStyle": "line",
+            "drawStyle": "points",
             "fillOpacity": 0,
             "gradientMode": "none",
             "hideFrom": {
@@ -5259,8 +5263,8 @@
       {
         "allValue": "-1",
         "current": {
-          "text": "200",
-          "value": "200"
+          "text": "$__all",
+          "value": "$__all"
         },
         "includeAll": true,
         "name": "Sampling_Resolution",
@@ -5286,7 +5290,7 @@
             "value": "100"
           },
           {
-            "selected": true,
+            "selected": false,
             "text": "200",
             "value": "200"
           },
@@ -5306,43 +5310,43 @@
       },
       {
         "current": {
-          "text": "KPI_Metrics.csv",
-          "value": "KPI_Metrics.csv"
+          "text": "Labeled_KPI_Metrics_9-09-25.N78.3UE.ssb-rsrp.jamming.constgain48.on60s.off30-60s.dltraffic.openrf.csv",
+          "value": "Labeled_KPI_Metrics_9-09-25.N78.3UE.ssb-rsrp.jamming.constgain48.on60s.off30-60s.dltraffic.openrf.csv"
         },
         "description": "Source KPI metrics file to visualize",
         "name": "Metrics_File",
         "options": [
           {
             "selected": true,
-            "text": "KPI_Metrics.csv",
-            "value": "KPI_Metrics.csv"
+            "text": "Labeled_KPI_Metrics_9-09-25.N78.3UE.ssb-rsrp.jamming.constgain48.on60s.off30-60s.dltraffic.openrf.csv",
+            "value": "Labeled_KPI_Metrics_9-09-25.N78.3UE.ssb-rsrp.jamming.constgain48.on60s.off30-60s.dltraffic.openrf.csv"
           }
         ],
-        "query": "KPI_Metrics.csv",
+        "query": "Labeled_KPI_Metrics_9-09-25.N78.3UE.ssb-rsrp.jamming.constgain48.on60s.off30-60s.dltraffic.openrf.csv",
         "type": "textbox"
       },
       {
         "current": {
-          "text": "Annotation_Labeled_KPI_Metrics.csv",
-          "value": "Annotation_Labeled_KPI_Metrics.csv"
+          "text": "Annotation_Labeled_KPI_Metrics_9-09-25.N78.3UE.ssb-rsrp.jamming.constgain48.on60s.off30-60s.dltraffic.openrf.csv",
+          "value": "Annotation_Labeled_KPI_Metrics_9-09-25.N78.3UE.ssb-rsrp.jamming.constgain48.on60s.off30-60s.dltraffic.openrf.csv"
         },
         "description": "Source file for Grafana annotations",
         "name": "Annotations_File",
         "options": [
           {
             "selected": true,
-            "text": "Annotation_Labeled_KPI_Metrics.csv",
-            "value": "Annotation_Labeled_KPI_Metrics.csv"
+            "text": "Annotation_Labeled_KPI_Metrics_9-09-25.N78.3UE.ssb-rsrp.jamming.constgain48.on60s.off30-60s.dltraffic.openrf.csv",
+            "value": "Annotation_Labeled_KPI_Metrics_9-09-25.N78.3UE.ssb-rsrp.jamming.constgain48.on60s.off30-60s.dltraffic.openrf.csv"
           }
         ],
-        "query": "Annotation_Labeled_KPI_Metrics.csv",
+        "query": "Annotation_Labeled_KPI_Metrics_9-09-25.N78.3UE.ssb-rsrp.jamming.constgain48.on60s.off30-60s.dltraffic.openrf.csv",
         "type": "textbox"
       }
     ]
   },
   "time": {
-    "from": "now-5m",
-    "to": "now"
+    "from": "2025-09-09T15:01:48.246Z",
+    "to": "2025-09-09T15:16:22.419Z"
   },
   "timepicker": {},
   "timezone": "browser",

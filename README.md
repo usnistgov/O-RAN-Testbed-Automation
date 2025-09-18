@@ -217,7 +217,6 @@ USNISTGOV/O-RAN-Testbed-Automation is developed and maintained by the NIST Wirel
 
 - Simeon J. Wuthier, @Simewu
 - Fernando J. Cintrón, @fjcintron
-- Kyehwan Lee, @kyehwanlee
 - Doug Montgomery, @dougm-nist
 
 ## NIST Disclaimers

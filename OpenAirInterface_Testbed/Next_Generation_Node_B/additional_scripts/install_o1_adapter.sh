@@ -50,6 +50,11 @@ if [ ! -d "o1-adapter" ]; then
     ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/oai/o1-adapter.git o1-adapter
 fi
 
+if grep -q -- "-p 11221:21 adapter-gnb" o1-adapter/start-adapter.sh; then
+    echo "Patching o1-adapter/start-adapter.sh to use host networking for telnet server..."
+    sed -i.bak "s/-p 11221:21 adapter-gnb/-p 11221:21 --network=host adapter-gnb/g" o1-adapter/start-adapter.sh
+fi
+
 # If docker is not installed
 if ! command -v docker &>/dev/null; then
     ./install_scripts/install_docker.sh
@@ -107,7 +112,7 @@ jq --arg ip "$NETCONF_ADDRESS" '.telnet.host = $ip' "$CONFIG_PATH" > "$TEMP_CONF
 # Update the ports
 jq --argjson port "$NETCONF_PORT" '.network["netconf-port"] = $port' "$CONFIG_PATH" > "$TEMP_CONF" && mv "$TEMP_CONF" "$CONFIG_PATH"
 jq --argjson port "$SFTP_PORT" '.network["sftp-port"] = $port' "$CONFIG_PATH" > "$TEMP_CONF" && mv "$TEMP_CONF" "$CONFIG_PATH"
-jq --argjson port "9090" '.telnet.port = $port' "$CONFIG_PATH" > "$TEMP_CONF" && mv "$TEMP_CONF" "$CONFIG_PATH"
+jq --argjson port "$TELNET_PORT" '.telnet.port = $port' "$CONFIG_PATH" > "$TEMP_CONF" && mv "$TEMP_CONF" "$CONFIG_PATH"
 
 # Optionally, link the configuration to the configs directory
 # However, changes to this file will not take effect until the adapter is uninstalled and reinstalled
@@ -116,9 +121,6 @@ jq --argjson port "9090" '.telnet.port = $port' "$CONFIG_PATH" > "$TEMP_CONF" &&
 # sudo rm -f o1-adapter-config.json
 # ln -s "$CONFIG_PATH" o1-adapter-config.json
 # cd ..
-
-# Expose the telnet port to the adapter container
-sed -i.bak "s/-p 11221:21 adapter-gnb/-p 11221:21 -p ${TELNET_PORT}:9090 adapter-gnb/g" o1-adapter/build-adapter.sh
 
 # Build the o1 adapter
 cd o1-adapter

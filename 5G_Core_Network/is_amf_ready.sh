@@ -53,10 +53,13 @@ if [[ "$CORE_TO_USE" != "open5gs" ]]; then
     exit $?
 fi
 
-if ./is_running.sh | grep -q "NOT_RUNNING"; then
-    echo false
-    exit 0
-fi
+IS_RUNNING=$(./is_running.sh)
+for service in mmed sgwcd smfd amfd sgwud upfd hssd pcrfd nrfd scpd ausfd udmd pcfd nssfd bsfd udrd; do
+    if ! echo "$IS_RUNNING" | grep -q "${service}: RUNNING"; then
+        echo false
+        exit 0
+    fi
+done
 
 if [ ! -f "logs/amf.log" ]; then
     echo false

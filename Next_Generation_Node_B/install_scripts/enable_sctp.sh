@@ -46,13 +46,23 @@ if ! dpkg -s libsctp-dev >/dev/null 2>&1; then
     sudo apt-get update
     sudo env $APTVARS apt-get install -y libsctp-dev
 fi
+EXTRA_PKG="linux-modules-extra-$(uname -r)"
+if ! dpkg -s "$EXTRA_PKG" >/dev/null 2>&1; then
+    sudo apt-get update
+    if apt-cache policy "$EXTRA_PKG" | grep -q 'Candidate: (none)'; then
+        echo "NOTE: $EXTRA_PKG not available in APT for $(uname -r). Continuing without it."
+    else
+        sudo env $APTVARS apt-get install -y "$EXTRA_PKG"
+    fi
+fi
 
 # Load necessary kernel modules
 sudo modprobe overlay || true
 sudo modprobe br_netfilter || true
 
 # Load SCTP module
-sudo modprobe sctp
+sudo modprobe --ignore-install sctp || true
+modprobe -c | grep -qE '^install[[:space:]]+sctp[[:space:]]+' && echo "NOTE: SCTP has an install override. Used --ignore-install."
 
 # Get the kernel major version
 KERNEL_VERSION="$(uname -r | cut -d'-' -f1)"
@@ -67,8 +77,22 @@ if [ "$MAJOR_VERSION" -lt 5 ]; then
 else
     # For newer kernels (version 5 and later), use the unified nf_conntrack module
     sudo modprobe nf_conntrack || true
-    sudo modprobe nf_conntrack_sctp || true
+    if modinfo -F filename nf_conntrack_sctp >/dev/null 2>&1; then
+        if ! modinfo -F filename nf_conntrack_sctp 2>/dev/null | grep -q '(builtin)'; then
+            sudo modprobe nf_conntrack_sctp || true
+        else
+            echo "NOTE: nf_conntrack_sctp is built into this kernel. Skipping modprobe."
+        fi
+    else
+        echo "NOTE: nf_conntrack_sctp module not present. Feature may be built-in or not provided."
+    fi
 fi
 
 echo "SCTP kernel module present:"
-lsmod | grep -E '(^| )sctp( |$)' || echo "WARNING: sctp not loaded"
+if lsmod | grep -E '(^| )sctp( |$)'; then
+    echo "SCTP module is loaded."
+elif modinfo -F filename sctp 2>/dev/null | grep -q '(builtin)'; then
+    echo "NOTE: SCTP is built into the kernel."
+else
+    echo "WARNING: SCTP not loaded."
+fi

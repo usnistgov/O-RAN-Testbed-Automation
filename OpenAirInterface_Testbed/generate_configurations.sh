@@ -62,3 +62,6 @@ echo "Generating Configuration for FlexRIC..."
 cd RAN_Intelligent_Controllers/Flexible-RIC
 ./generate_configurations.sh
 cd ../..
+
+echo
+echo "Successfully configured testbed components."

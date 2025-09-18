@@ -60,6 +60,12 @@ update_conf() {
 
 echo "Saving configuration file example..."
 rm -rf configs
+
+if [ ! -d flexric ]; then
+    echo "FlexRIC cannot be configured because it is not installed. Skipping."
+    exit 0
+fi
+
 mkdir configs
 
 # Only remove the logs if not running

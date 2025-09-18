@@ -125,7 +125,7 @@ if [ "$DEBUG_SYMBOLS" = true ]; then
     ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS -g"
 fi
 if [ "$TELNET_SERVER" = true ]; then
-    ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --build-lib \"telnetsrv uescope nrscope\""
+    ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --build-lib telnetsrv"
 fi
 
 cd "$SCRIPT_DIR"

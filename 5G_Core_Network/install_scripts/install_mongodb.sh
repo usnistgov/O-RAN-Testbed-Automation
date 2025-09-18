@@ -124,7 +124,7 @@ else
     fi
 
     echo "Attempting to install MongoDB 4.4..."
-    if ! sudo env $APTVARS apt-get install -y --allow-change-held-packages mongodb-org=4.4.* mongodb-org-server=4.4.* mongodb-org-shell=4.4.* mongodb-org-mongos=4.4.* mongodb-org-tools=4.4.*; then
+    if ! sudo env $APTVARS apt-get install -y --allow-change-held-packages --allow-downgrades mongodb-org=4.4.* mongodb-org-server=4.4.* mongodb-org-shell=4.4.* mongodb-org-mongos=4.4.* mongodb-org-tools=4.4.*; then
         echo "Initial MongoDB installation failed. Attempting to fix broken installations..."
         sudo apt-get --fix-broken install
         sudo apt-get autoremove -y

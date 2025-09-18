@@ -38,7 +38,7 @@ cd "$PARENT_DIR"
 NETCONF_ADDRESS=0.0.0.0
 NETCONF_PORT=11830
 SFTP_PORT=11221
-TELNET_PORT=9091
+TELNET_PORT=9090
 
 if [ -z "$NETCONF_ADDRESS" ]; then
     echo "Could not determine the IP address of this machine. Please check your network connection."

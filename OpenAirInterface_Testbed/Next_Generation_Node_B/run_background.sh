@@ -39,13 +39,13 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 ADDITIONAL_FLAGS=""
 if [ -f "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build/libtelnetsrv.so" ]; then
     echo "Found telnet server library. Enabling telnet server..."
-    TELNET_SERVER=true
+    TELNET_ADDRESS=0.0.0.0
+    TELNET_PORT=9091
     ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --telnetsrv"
-    ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --listenaddr 0.0.0.0"
-    ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --listenport 9091"
-    ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --listenstdin 0"
-else
-    TELNET_SERVER=false
+    ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --telnetsrv.shrmod o1"
+    ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --telnetsrv.listenaddr $TELNET_ADDRESS"
+    ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --telnetsrv.listenport $TELNET_PORT"
+    #ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --telnetsrv.listenstdin 1"
 fi
 
 cd "$SCRIPT_DIR"

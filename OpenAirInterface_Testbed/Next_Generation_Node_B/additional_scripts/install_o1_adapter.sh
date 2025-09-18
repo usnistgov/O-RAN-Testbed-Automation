@@ -35,7 +35,7 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$PARENT_DIR"
 
-NETCONF_ADDRESS="127.0.0.1" #$(hostname -I | awk '{print $1}')
+NETCONF_ADDRESS=0.0.0.0
 NETCONF_PORT=11830
 SFTP_PORT=11221
 TELNET_PORT=9091
@@ -109,11 +109,13 @@ jq --argjson port "$NETCONF_PORT" '.network["netconf-port"] = $port' "$CONFIG_PA
 jq --argjson port "$SFTP_PORT" '.network["sftp-port"] = $port' "$CONFIG_PATH" > "$TEMP_CONF" && mv "$TEMP_CONF" "$CONFIG_PATH"
 jq --argjson port "$TELNET_PORT" '.telnet.port = $port' "$CONFIG_PATH" > "$TEMP_CONF" && mv "$TEMP_CONF" "$CONFIG_PATH"
 
-mkdir -p configs
-cd configs
-sudo rm -f o1-adapter-config.json
-ln -s "$CONFIG_PATH" o1-adapter-config.json
-cd ..
+# Optionally, link the configuration to the configs directory
+# However, changes to this file will not take effect until the adapter is uninstalled and reinstalled
+# mkdir -p configs
+# cd configs
+# sudo rm -f o1-adapter-config.json
+# ln -s "$CONFIG_PATH" o1-adapter-config.json
+# cd ..
 
 # Build the o1 adapter
 cd o1-adapter

@@ -31,7 +31,7 @@
 # Exit immediately if a command fails
 set -e
 
-TELNET_SERVER=true
+TELNET_SERVER=false
 DEBUG_SYMBOLS=false
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"

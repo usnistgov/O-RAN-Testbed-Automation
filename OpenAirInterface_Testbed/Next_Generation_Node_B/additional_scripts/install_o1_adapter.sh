@@ -38,7 +38,7 @@ cd "$PARENT_DIR"
 NETCONF_ADDRESS=0.0.0.0
 NETCONF_PORT=11830
 SFTP_PORT=11221
-TELNET_PORT=9090
+TELNET_PORT=9099
 
 if [ -z "$NETCONF_ADDRESS" ]; then
     echo "Could not determine the IP address of this machine. Please check your network connection."
@@ -48,6 +48,11 @@ fi
 if [ ! -d "o1-adapter" ]; then
     echo "Cloning o1-adapter..."
     ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/oai/o1-adapter.git o1-adapter
+fi
+
+if grep -q -- "-p 11221:21 adapter-gnb" o1-adapter/start-adapter.sh; then
+    echo "Patching o1-adapter/start-adapter.sh to use host networking for telnet server..."
+    sed -i.bak "s/-p 11221:21 adapter-gnb/-p 11221:21 --network=host adapter-gnb/g" o1-adapter/start-adapter.sh
 fi
 
 # If docker is not installed

@@ -1,47 +1,8 @@
 diff --git a/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c b/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c
-index fd6578b3b2..2437ea660e 100644
+index aa68ba7d9d..5261866a86 100644
 --- a/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c
 +++ b/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c
-@@ -157,10 +157,12 @@ static kpm_ind_msg_format_3_t fill_kpm_ind_msg_frm_3(arr_ue_id_t* arr_ue_id, con
- 
- static void capture_sst_sd(test_cond_value_t* test_cond_value, uint8_t *sst, uint32_t **sd)
- {
-+  DevAssert(test_cond_value != NULL);
-   DevAssert(sst != NULL);
-   DevAssert(sd != NULL);
-+  DevAssert(test_cond_value->octet_string_value != NULL);
- 
--  // S-NSSAI is an OCTET_STRING, as defined by spec
-+  // S-NSSAI is an OCTET_STRING, as defined by 23.003 clause 28.4.2
-   switch (test_cond_value->type) {
-     case OCTET_STRING_TEST_COND_VALUE: {
-       if (test_cond_value->octet_string_value->len == 1) {
-@@ -170,10 +172,12 @@ static void capture_sst_sd(test_cond_value_t* test_cond_value, uint8_t *sst, uin
-         DevAssert(test_cond_value->octet_string_value->len == 4);
-         uint8_t *buf = test_cond_value->octet_string_value->buf;
-         *sst = buf[0];
--        *sd = malloc(**sd);
--        **sd = buf[1] << 16 | buf[2] << 8 | buf[3];
-+        *sd = (uint32_t*)malloc(sizeof(**sd));
-+        DevAssert(*sd != NULL);
-+        **sd = (((uint32_t)buf[1] << 16) | ((uint32_t)buf[2] << 8) | ((uint32_t)buf[3]));
-+        **sd &= 0xFFFFFFu;
-       }
--      printf("[E2 AGENT][E2SM-KPM] Condition NSSAI (%d, %x).\n", *sst, (*sd) ? **sd : 0xffffff);
-+      printf("[E2 AGENT][E2SM-KPM] Condition NSSAI (%u, %06x).\n", (unsigned)*sst, (unsigned)(((*sd ? **sd : 0xFFFFFFu) & 0xFFFFFFu)));
-       break;
-     }
-     default:
-@@ -186,7 +190,7 @@ static bool nssai_matches(nssai_t a_nssai, uint8_t b_sst, const uint32_t *b_sd)
-   if (b_sd == NULL) {
-     return a_nssai.sst == b_sst && a_nssai.sd == 0xffffff;
-   } else {
--    AssertFatal(*b_sd <= 0xffffff, "illegal SD %d\n", *b_sd);
-+    AssertFatal(*b_sd <= 0xFFFFFFu, "illegal SD 0x%06x\n", (unsigned)*b_sd);
-     return a_nssai.sst == b_sst && a_nssai.sd == *b_sd;
-   }
- }
-@@ -438,6 +442,29 @@ static const char* kpm_meas_du[] = {
+@@ -438,6 +438,29 @@ static const char* kpm_meas_du[] = {
    "DRB.UEThpUl",
    "RRU.PrbTotDl",
    "RRU.PrbTotUl",
@@ -71,7 +32,7 @@ index fd6578b3b2..2437ea660e 100644
    NULL,
  };
  
-@@ -449,6 +476,29 @@ static const char* kpm_meas_gnb[] = {
+@@ -449,6 +472,29 @@ static const char* kpm_meas_gnb[] = {
    "DRB.UEThpUl",
    "RRU.PrbTotDl",
    "RRU.PrbTotUl",

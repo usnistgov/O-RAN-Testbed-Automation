@@ -243,7 +243,7 @@ if exist "OpenAirInterface_Testbed\User_Equipment\openairinterface5g" rmdir /s /
 cd OpenAirInterface_Testbed\User_Equipment
 git clone https://gitlab.eurecom.fr/oai/openairinterface5g.git
 cd openairinterface5g
-git checkout 206c7667e68340247bb37bc1159fe7ac4b3d94e5
+git checkout 32c81b7b06af5c2e49b745d65e5870c581e5dd32
 cd ..\..\..
 
 cd OpenAirInterface_Testbed\Next_Generation_Node_B

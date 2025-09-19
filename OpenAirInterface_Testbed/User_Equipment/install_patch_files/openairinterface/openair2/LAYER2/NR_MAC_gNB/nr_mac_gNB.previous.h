@@ -688,6 +688,10 @@ typedef struct {
   /// Timer for RRC processing procedures and transmission activity
   NR_timer_t transm_interrupt;
 
+  /// Timer for timeout before UE is set to UL failure (e.g.,
+  /// "TransmissionActionIndicator" handling
+  NR_timer_t transm_timeout;
+
   /// sri, ul_ri and tpmi based on SRS
   nr_srs_feedback_t srs_feedback;
 
@@ -762,8 +766,6 @@ typedef struct measgap_config {
   int mgl_slots;
 } measgap_config_t;
 
-typedef enum interrupt_followup_action { FOLLOW_INSYNC, FOLLOW_OUTOFSYNC } interrupt_followup_action_t;
-
 /*! \brief UE list used by gNB to order UEs/CC for scheduling*/
 typedef struct {
   rnti_t rnti;
@@ -780,7 +782,6 @@ typedef struct {
   /// in case of reestablishment, old spCellConfig to apply after
   /// reconfiguration
   NR_SpCellConfig_t *reconfigSpCellConfig;
-  interrupt_followup_action_t interrupt_action;
   NR_UE_NR_Capability_t *capability;
   measgap_config_t measgap_config;
   // UE selected beam index

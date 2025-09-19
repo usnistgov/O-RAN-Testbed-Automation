@@ -9,7 +9,7 @@
 # any such change. Please explicitly acknowledge the National Institute of
 # Standards and Technology as the source of the software.
 #
-# NIST-developed software is expressly provided 'AS IS.' NIST MAKES NO WARRANTY
+# NIST-developed software is expressly provided "AS IS." NIST MAKES NO WARRANTY
 # OF ANY KIND, EXPRESS, IMPLIED, IN FACT, OR ARISING BY OPERATION OF LAW,
 # INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTY OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT, AND DATA ACCURACY. NIST

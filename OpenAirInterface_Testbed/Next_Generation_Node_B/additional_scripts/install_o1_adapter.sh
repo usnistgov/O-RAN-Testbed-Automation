@@ -129,3 +129,5 @@ jq --arg url "$VES_ENDPOINT" '.ves.url = $url' "$CONFIG_PATH" > "$TEMP_CONF" && 
 # Build the o1 adapter
 cd o1-adapter
 ./build-adapter.sh --adapter --no-cache
+
+echo "Successfully built O1 Adapter."

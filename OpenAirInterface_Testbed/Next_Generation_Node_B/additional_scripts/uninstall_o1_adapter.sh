@@ -64,3 +64,5 @@ fi
 ./install_scripts/uninstall_lazydocker.sh
 
 sudo rm -rf o1-adapter
+
+echo "Successfully uninstalled O1 Adapter."

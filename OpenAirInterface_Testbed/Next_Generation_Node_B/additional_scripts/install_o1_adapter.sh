@@ -39,6 +39,7 @@ NETCONF_ADDRESS=0.0.0.0
 NETCONF_PORT=11830
 SFTP_PORT=11221
 TELNET_PORT=9099
+VES_ENDPOINT=https://127.0.0.1:8443/eventListener/v7
 
 if [ -z "$NETCONF_ADDRESS" ]; then
     echo "Could not determine the IP address of this machine. Please check your network connection."
@@ -115,7 +116,7 @@ jq --argjson port "$SFTP_PORT" '.network["sftp-port"] = $port' "$CONFIG_PATH" > 
 jq --argjson port "$TELNET_PORT" '.telnet.port = $port' "$CONFIG_PATH" > "$TEMP_CONF" && mv "$TEMP_CONF" "$CONFIG_PATH"
 
 # Update the VES URL to point to localhost
-jq '.ves.url = "https://127.0.0.1:8443/eventListener/v7"' "$CONFIG_PATH" > "$TEMP_CONF" && mv "$TEMP_CONF" "$CONFIG_PATH"
+jq --arg url "$VES_ENDPOINT" '.ves.url = $url' "$CONFIG_PATH" > "$TEMP_CONF" && mv "$TEMP_CONF" "$CONFIG_PATH"
 
 # Optionally, link the configuration to the configs directory
 # However, changes to this file will not take effect until the adapter is uninstalled and reinstalled

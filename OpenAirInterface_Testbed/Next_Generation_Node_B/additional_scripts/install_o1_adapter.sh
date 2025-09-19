@@ -107,16 +107,16 @@ fi
 
 # Update the IP addresses
 TEMP_CONF="o1-adapter-config.tmp.json"
-jq --arg ip "$NETCONF_ADDRESS" '.network.host = $ip' "$CONFIG_PATH" > "$TEMP_CONF" && mv "$TEMP_CONF" "$CONFIG_PATH"
-jq --arg ip "$NETCONF_ADDRESS" '.telnet.host = $ip' "$CONFIG_PATH" > "$TEMP_CONF" && mv "$TEMP_CONF" "$CONFIG_PATH"
+jq --arg ip "$NETCONF_ADDRESS" '.network.host = $ip' "$CONFIG_PATH" >"$TEMP_CONF" && mv "$TEMP_CONF" "$CONFIG_PATH"
+jq --arg ip "$NETCONF_ADDRESS" '.telnet.host = $ip' "$CONFIG_PATH" >"$TEMP_CONF" && mv "$TEMP_CONF" "$CONFIG_PATH"
 
 # Update the ports
-jq --argjson port "$NETCONF_PORT" '.network["netconf-port"] = $port' "$CONFIG_PATH" > "$TEMP_CONF" && mv "$TEMP_CONF" "$CONFIG_PATH"
-jq --argjson port "$SFTP_PORT" '.network["sftp-port"] = $port' "$CONFIG_PATH" > "$TEMP_CONF" && mv "$TEMP_CONF" "$CONFIG_PATH"
-jq --argjson port "$TELNET_PORT" '.telnet.port = $port' "$CONFIG_PATH" > "$TEMP_CONF" && mv "$TEMP_CONF" "$CONFIG_PATH"
+jq --argjson port "$NETCONF_PORT" '.network["netconf-port"] = $port' "$CONFIG_PATH" >"$TEMP_CONF" && mv "$TEMP_CONF" "$CONFIG_PATH"
+jq --argjson port "$SFTP_PORT" '.network["sftp-port"] = $port' "$CONFIG_PATH" >"$TEMP_CONF" && mv "$TEMP_CONF" "$CONFIG_PATH"
+jq --argjson port "$TELNET_PORT" '.telnet.port = $port' "$CONFIG_PATH" >"$TEMP_CONF" && mv "$TEMP_CONF" "$CONFIG_PATH"
 
 # Update the VES URL to point to localhost
-jq --arg url "$VES_ENDPOINT" '.ves.url = $url' "$CONFIG_PATH" > "$TEMP_CONF" && mv "$TEMP_CONF" "$CONFIG_PATH"
+jq --arg url "$VES_ENDPOINT" '.ves.url = $url' "$CONFIG_PATH" >"$TEMP_CONF" && mv "$TEMP_CONF" "$CONFIG_PATH"
 
 # Optionally, link the configuration to the configs directory
 # However, changes to this file will not take effect until the adapter is uninstalled and reinstalled

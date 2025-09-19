@@ -37,4 +37,5 @@ The gNodeB can be monitored and controlled remotely using the O1 adapter [\[6\]]
 [ts3191-3gpp]: https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=3191
 [ts3219-3gpp]: https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=3219
 [ts3223-3gpp]: https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=3223
-[oai-telnet]: https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/develop/common/utils/telnetsrv/DOC/telnetusage.md[oai-o1-adapter]: https://gitlab.eurecom.fr/oai/o1-adapter
+[oai-telnet]: https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/develop/common/utils/telnetsrv/DOC/telnetusage.md
+[oai-o1-adapter]: https://gitlab.eurecom.fr/oai/o1-adapter

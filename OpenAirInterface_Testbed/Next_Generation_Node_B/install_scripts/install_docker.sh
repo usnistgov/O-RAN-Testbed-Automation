@@ -79,7 +79,7 @@ else # Use docker.ce
     fi
     # Check if UBUNTU_CODENAME is still empty
     if [[ -z "$UBUNTU_CODENAME" ]]; then
-        echo "Error: Ubuntu codename not found in /etc/os-release."
+        echo "ERROR: Ubuntu codename not found in /etc/os-release."
         exit 1
     fi
 

@@ -36,31 +36,53 @@ fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 
-cd "$SCRIPT_DIR"
-
-if pgrep -x "nr-softmodem" >/dev/null; then
-    echo "Already running gNodeB."
-else
-    if [ ! -f "configs/gnb.conf" ]; then
-        echo "Configuration was not found for OAI gNodeB. Please run ./generate_configurations.sh first."
-        exit 1
-    fi
-
-    echo "Starting gNodeB in background..."
-    mkdir -p logs
-    >logs/gnb_stdout.txt
-
-    sudo setsid bash -c "stdbuf -oL -eL \"$SCRIPT_DIR/run.sh\" > logs/gnb_stdout.txt 2>&1" </dev/null &
-
-    ATTEMPT=0
-    while $(./is_running.sh | grep -q "NOT_RUNNING"); do
-        sleep 0.5
-        ATTEMPT=$((ATTEMPT + 1))
-        if [ $ATTEMPT -ge 120 ]; then
-            echo "gNodeB did not start after 60 seconds, exiting..."
-            exit 1
-        fi
-    done
-
-    ./is_running.sh
+if [ "$#" -ne 1 ]; then
+    echo "ERROR: You must provide a DU number as an argument."
+    echo "    For example, $0 1"
+    exit 1
 fi
+DU_NUMBER=$1
+if ! [[ $DU_NUMBER =~ ^[0-9]+$ ]]; then
+    echo "ERROR: DU number must be a number."
+    exit 1
+fi
+if [ $DU_NUMBER -lt 1 ]; then
+    echo "ERROR: DU number must be greater than or equal to 1."
+    exit 1
+fi
+
+DU_CONFIG="$SCRIPT_DIR/configs/split_du$DU_NUMBER.conf"
+if [ ! -f "$DU_CONFIG" ]; then
+    echo "ERROR: Configuration file $DU_CONFIG does not exist."
+    exit 1
+fi
+
+# ADDITIONAL_FLAGS=""
+# if [ -f "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build/libtelnetsrv.so" ]; then
+#     echo "Found telnet server library. Enabling telnet server..."
+#     TELNET_ADDRESS=127.0.0.1
+#     TELNET_PORT=9099
+#     ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --telnetsrv"
+#     ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --telnetsrv.shrmod ci,o1"
+#     ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --telnetsrv.listenaddr $TELNET_ADDRESS"
+#     ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --telnetsrv.listenport $TELNET_PORT"
+#     ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --telnetsrv.listenstdin 1"
+# fi
+
+cd "$SCRIPT_DIR"
+mkdir -p logs
+>logs/split_du${DU_NUMBER}_stdout.txt
+
+# Ensure the following command runs with sudo privileges
+sudo ls >/dev/null
+
+# Give the DU its own network namespace and configure it to access the host network
+sudo ./install_scripts/setup_du_namespace.sh "$DU_NUMBER"
+
+cd "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build"
+
+HOSTNAME_IP=$(hostname -I | awk '{print $1}')
+
+# Code from (https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/develop/doc/handover-tutorial.md#run-the-setup):
+# sudo ./nr-softmodem -O "$DU_CONFIG" --rfsim --rfsimulator.serveraddr $HOSTNAME_IP --rfsimulator.options chanmod --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS
+sudo script -q -f -c "./nr-softmodem -O \"$DU_CONFIG\" --rfsim --rfsimulator.serveraddr $HOSTNAME_IP --rfsimulator.options chanmod --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS" "$SCRIPT_DIR/logs/split_du${DU_NUMBER}_stdout.txt"

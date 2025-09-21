@@ -29,6 +29,11 @@ It may be required for the AVX2 instruction set to be available on the host mach
   - If `cat /proc/cpuinfo | grep avx2` is not empty, then OpenAirInterface should be able to build without issues.
 </details>
 
+## Handover Scenario
+
+The script `run_handover_scenario.sh`, based on the handover tutorial [\[4\]][oai-handover], automates the process of setting up a handover scenario with two DUs and one CU. It starts the 5G Core, FlexRIC, CU, DU 1, and UE 1. Next, it starts DU 2, and opens a telnet session to the CU for monitoring and controlling the handover process. The command `ci trigger_f1_ho 1` can be used to trigger a handover for UE 1 from DU 1 to DU 2.
+  - To start each component in its own gnome-terminal instance, use `./run_handover_scenario.sh show`.
+
 ---
 
 ## References
@@ -36,12 +41,11 @@ It may be required for the AVX2 instruction set to be available on the host mach
 1. Open Source implementation for 5G Core and EPC. Open5GS. [https://github.com/open5gs/open5gs][open5gs-core]
 2. Openairinterface 5G Wireless Implementation. OpenAirInterface. [https://gitlab.eurecom.fr/oai/openairinterface5g][oai-ue-gnb]
 3. Flexible RAN Intelligent Controller (FlexRIC) and E2 Agent. Mosaic5G. [https://gitlab.eurecom.fr/mosaic5g/flexric][mosaic-flexric]
+4. OpenAirInterface Handover Tutorial. OpenAirInterface. [https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/develop/doc/handover-tutorial.md][oai-handover]
 
 <!-- References -->
 
 [open5gs-core]: https://github.com/open5gs/open5gs
 [oai-ue-gnb]: https://gitlab.eurecom.fr/oai/openairinterface5g
 [mosaic-flexric]: https://gitlab.eurecom.fr/mosaic5g/flexric
-[ts3191-3gpp]: https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=3191
-[ts3219-3gpp]: https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=3219
-[ts3223-3gpp]: https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=3223
+[oai-handover]: https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/develop/doc/handover-tutorial.md

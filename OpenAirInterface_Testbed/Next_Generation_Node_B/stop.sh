@@ -43,11 +43,75 @@ if $(./is_running.sh | grep -q "gNodeB: NOT_RUNNING"); then
     exit 0
 fi
 
+if [ "$#" -eq 1 ]; then
+    SELECTOR=$1
+fi
+
+DU_NUMBER=""
+if [[ $SELECTOR =~ ^[0-9]+$ ]]; then
+    DU_NUMBER=$SELECTOR
+elif [[ $SELECTOR =~ ^du[0-9]+$ ]]; then
+    DU_NUMBER=${SELECTOR:2}
+fi
+
+# Remove a network namespace given the DU number
+remove_du_namespace() {
+    local DU_NUMBER="$1"
+    if ! ip netns list | grep -qw "du$DU_NUMBER"; then
+        echo "Namespace du$DU_NUMBER does not exist, skipping removal."
+        return
+    fi
+    echo "Removing namespace du$DU_NUMBER..."
+    sudo ./install_scripts/revert_du_namespace.sh "$DU_NUMBER"
+}
+
+# Remove all DU network namespaces
+remove_all_du_namespaces() {
+    # Get all active DU namespaces, and remove the namespaces
+    DU_NETNS=($(ip netns list | grep -oP '^du\K[0-9]+'))
+    for DU_NUM in "${DU_NETNS[@]}"; do
+        remove_du_namespace "$DU_NUM"
+    done
+}
+
+# Check if the DU is already stopped
+if $(./is_running.sh | grep -q "gNodeB: NOT_RUNNING"); then
+    # Remove DU namespaces
+    if [ -z "$DU_NUMBER" ]; then
+        remove_all_du_namespaces
+    else
+        remove_du_namespace "$DU_NUMBER"
+    fi
+    ./is_running.sh
+    exit 0
+fi
+
 # Prevent the subsequent command from requiring credential input
 sudo ls >/dev/null 2>&1
 
 # Send a graceful shutdown signal to the gNodeB process
-sudo pkill -f "nr-softmodem" >/dev/null 2>&1 &
+if [ -z "$SELECTOR" ]; then
+    sudo pkill -f "nr-softmodem" >/dev/null 2>&1 &
+    remove_all_du_namespaces
+    stty sane
+else
+    # Find all nr-softmodem processes with -O <config> argument
+    pgrep -af "nr-softmodem.*-O" | while read -r LINE; do
+        PID=$(echo "$LINE" | awk '{print $1}')
+        # Extract the -O argument value (config path)
+        CONFIG_PATH=$(echo "$LINE" | grep -oP '(?<=-O )[^ ]+')
+        if [ -n "$CONFIG_PATH" ]; then
+            CONFIG_FILE=$(basename "$CONFIG_PATH")
+            if [[ "$CONFIG_FILE" == *"$SELECTOR"* ]]; then
+                #echo "Stopping nr-softmodem with config $CONFIG_FILE (PID $PID)..."
+                sudo kill "$PID" >/dev/null 2>&1 &
+            fi
+        fi
+    done
+    if [ -n "$DU_NUMBER" ]; then
+        remove_du_namespace "$DU_NUMBER"
+    fi
+fi
 
 # Wait for the process to terminate gracefully
 COUNT=0
@@ -55,10 +119,18 @@ MAX_COUNT=5
 sleep 1
 while [ $COUNT -lt $MAX_COUNT ]; do
     IS_RUNNING=$(./is_running.sh)
-    if echo "$IS_RUNNING" | grep -q "gNodeB: NOT_RUNNING"; then
-        echo "The gNodeB has stopped gracefully."
-        ./is_running.sh
-        exit 0
+    if [ -z "$SELECTOR" ]; then
+        if echo "$IS_RUNNING" | grep -q "gNodeB: NOT_RUNNING"; then
+            echo "The gNodeB has stopped gracefully."
+            ./is_running.sh
+            exit 0
+        fi
+    else
+        if ! echo "$IS_RUNNING" | grep -q "$SELECTOR"; then
+            echo "The gNodeB component '$SELECTOR' has stopped gracefully."
+            ./is_running.sh
+            exit 0
+        fi
     fi
     COUNT=$((COUNT + 1))
     echo "$IS_RUNNING [$((MAX_COUNT - COUNT + 1))]"
@@ -66,5 +138,30 @@ while [ $COUNT -lt $MAX_COUNT ]; do
 done
 
 # If the process is still running after 20 seconds, send a forceful kill signal
-echo "The gNodeB did not stop in time, sending forceful kill signal..."
-sudo pkill -9 -f "nr-softmodem" >/dev/null 2>&1 &
+if [ -z "$SELECTOR" ]; then
+    echo "The gNodeB did not stop in time, sending forceful kill signal..."
+    sudo pkill -9 -f "nr-softmodem" >/dev/null 2>&1 &
+    remove_all_du_namespaces
+    stty sane
+else
+    echo "The gNodeB component '$SELECTOR' did not stop in time, sending forceful kill signal..."
+    # Find all nr-softmodem processes with -O <config> argument
+    pgrep -af "nr-softmodem.*-O" | while read -r LINE; do
+        PID=$(echo "$LINE" | awk '{print $1}')
+        # Extract the -O argument value (config path)
+        CONFIG_PATH=$(echo "$LINE" | grep -oP '(?<=-O )[^ ]+')
+        if [ -n "$CONFIG_PATH" ]; then
+            CONFIG_FILE=$(basename "$CONFIG_PATH")
+            if [[ "$CONFIG_FILE" == *"$SELECTOR"* ]]; then
+                #echo "Force stopping nr-softmodem with config $CONFIG_FILE (PID $PID)..."
+                sudo kill -9 "$PID" >/dev/null 2>&1 &
+            fi
+        fi
+    done
+    if [ -n "$DU_NUMBER" ]; then
+        remove_du_namespace "$DU_NUMBER"
+    fi
+fi
+
+sleep 2
+./is_running.sh

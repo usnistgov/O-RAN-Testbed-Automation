@@ -10,13 +10,20 @@ The Next Generation Node B (gNodeB) is a 5G base station configured with OpenAir
   - Configuration files can be accessed and modified in the `configs` directory.
 - **Start the gNodeB**: Use `./run.sh` to start the gNodeB, or `./run_background.sh` to run it as a background process where the output is redirected to `logs/gnb_stdout.txt`.
 - **Stop the gNodeB**: Terminate the gNodeB with `./stop.sh`.
-- **Status**: Check if the gNodeB is running with `./is_running.sh`.
+- **Status**: Use `./is_running.sh` to check which gNodeB components are currently running (CU, DU, or gNodeB).
 - **Logs**: Access logs by navigating to the `logs` directory.
 - **Uninstall**: Use `./uninstall.sh` to remove the gNodeB/UE software.
 
 ## Telnet Server for Monitoring and Control
 
 This gNodeB supports an optional telnet server for monitoring and controlling the gNodeB [\[5\]][oai-telnet]. Enable it by setting `TELNET_SERVER=true` at the beginning of the `full_install.sh` script before running it. When starting the gNodeB, if the telnet server was installed, it will automatically start and can be accessed by directly typing into the gNodeB terminal or with `telnet 127.0.0.1 9099`. Use the `help` command within the telnet session to view available commands.
+
+## Split CU/DU Deployment
+
+The gNodeB can be deployed in a split Central Unit (CU) and Distributed Unit (DU) configuration.
+- **Start the CU**: Use `./run_split_cu.sh` or `./run_background_split_cu.sh` to start the CU.
+- **Start a DU Instance**: Use `./run_split_du.sh <du_number>` or `./run_background_split_du.sh <du_number>` to start a DU instance, where `du_number` is an integer identifying the DU (e.g., `1` or `2`).
+- **Stop the CU/DU/gNodeB**: Use `./stop.sh [selector]` to terminate components. The optional `[selector]` argument specifies which instances to stop: `cu` for all Central Units, `du` for all Distributed Units, a specific DU such as `du1` or `du2`, or `gnb` for all gNodeBs. If no argument is provided, all components will be stopped.
 
 ### Telnet Connection to O1 Interface
 

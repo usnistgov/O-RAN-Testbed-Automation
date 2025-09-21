@@ -47,18 +47,21 @@ fi
 
 UE_NAMESPACE="ue$UE_NUMBER"
 
-NETWORK_INTEFACE=$(ip route | grep default | awk '{print $5}')
+NETWORK_INTERFACE=$(ip route | grep default | awk '{print $5}')
 UE_SUBNET_FIRST_3_OCTETS=10.201.$UE_NUMBER
+UE_HOST_IP=$UE_SUBNET_FIRST_3_OCTETS.1
+UE_NS_IP=$UE_SUBNET_FIRST_3_OCTETS.2
 
 echo "Removing IP routes and addresses inside the namespace..."
-sudo ip netns exec $UE_NAMESPACE ip route del default via $UE_SUBNET_FIRST_3_OCTETS.1
-sudo ip netns exec $UE_NAMESPACE ip addr del $UE_SUBNET_FIRST_3_OCTETS.2/24 dev v-$UE_NAMESPACE
+sudo ip netns exec $UE_NAMESPACE ip route del default via $UE_HOST_IP
+sudo ip netns exec $UE_NAMESPACE ip addr del $UE_NS_IP/24 dev v-$UE_NAMESPACE
 sudo ip netns exec $UE_NAMESPACE ip link set v-$UE_NAMESPACE down
 
 echo "Removing iptables rules..."
-sudo iptables -D FORWARD -o $NETWORK_INTEFACE -i v-eth$UE_NUMBER -j ACCEPT
-sudo iptables -D FORWARD -i $NETWORK_INTEFACE -o v-eth$UE_NUMBER -j ACCEPT
-sudo iptables -t nat -D POSTROUTING -s $UE_SUBNET_FIRST_3_OCTETS.0/24 -o $NETWORK_INTEFACE -j MASQUERADE
+
+sudo iptables -D FORWARD -o $NETWORK_INTERFACE -i v-eth$UE_NUMBER -j ACCEPT
+sudo iptables -D FORWARD -i $NETWORK_INTERFACE -o v-eth$UE_NUMBER -j ACCEPT
+sudo iptables -t nat -D POSTROUTING -s $UE_SUBNET_FIRST_3_OCTETS.0/24 -o $NETWORK_INTERFACE -j MASQUERADE
 
 echo "Deleting the network devices..."
 sudo ip link set v-eth$UE_NUMBER down

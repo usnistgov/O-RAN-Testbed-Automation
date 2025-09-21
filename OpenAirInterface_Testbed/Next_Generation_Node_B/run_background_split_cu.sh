@@ -38,26 +38,26 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 
 cd "$SCRIPT_DIR"
 
-if pgrep -x "nr-softmodem" >/dev/null; then
-    echo "Already running gNodeB."
+if ./is_running.sh | grep -E "^gNodeB:" | grep -q "cu"; then
+    echo "Already running gNodeB (CU)."
 else
     if [ ! -f "configs/gnb.conf" ]; then
-        echo "Configuration was not found for OAI gNodeB. Please run ./generate_configurations.sh first."
+        echo "Configuration was not found for OAI CU. Please run ./generate_configurations.sh first."
         exit 1
     fi
 
-    echo "Starting gNodeB in background..."
+    echo "Starting CU in background..."
     mkdir -p logs
-    >logs/gnb_stdout.txt
+    >logs/split_cu_stdout.txt
 
-    sudo setsid bash -c "stdbuf -oL -eL \"$SCRIPT_DIR/run.sh\" > logs/gnb_stdout.txt 2>&1" </dev/null &
+    sudo setsid bash -c "stdbuf -oL -eL \"$SCRIPT_DIR/run_split_cu.sh\" > logs/split_cu_stdout.txt 2>&1" </dev/null &
 
     ATTEMPT=0
-    while $(./is_running.sh | grep -q "NOT_RUNNING"); do
+    while ! (./is_running.sh | grep -E "^gNodeB:" | grep -q "cu"); do
         sleep 0.5
         ATTEMPT=$((ATTEMPT + 1))
         if [ $ATTEMPT -ge 120 ]; then
-            echo "gNodeB did not start after 60 seconds, exiting..."
+            echo "CU did not start after 60 seconds, exiting..."
             exit 1
         fi
     done

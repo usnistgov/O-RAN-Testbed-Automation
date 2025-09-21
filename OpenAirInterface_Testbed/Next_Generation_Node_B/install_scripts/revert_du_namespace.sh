@@ -28,39 +28,45 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
-if ! command -v realpath &>/dev/null; then
-    echo "Package \"coreutils\" not found, installing..."
-    sudo env $APTVARS apt-get install -y coreutils
+echo "# Script: $(realpath "$0")..."
+
+# Do not exit immediately if a command fails
+set +e
+
+DU_NUMBER=$1
+
+if [[ -z "$DU_NUMBER" ]]; then
+    echo "Error: No DU number provided."
+    echo "Usage: $0 <DU_NUMBER>"
+    exit 1
+fi
+if ! [[ $DU_NUMBER =~ ^[0-9]+$ ]]; then
+    echo "Error: DU number must be a number."
+    exit 1
 fi
 
-SCRIPT_DIR=$(dirname "$(realpath "$0")")
+DU_NAMESPACE="du$DU_NUMBER"
 
-cd "$SCRIPT_DIR"
+NETWORK_INTERFACE=$(ip route | grep default | awk '{print $5}')
+DU_SUBNET_FIRST_3_OCTETS=10.202.$DU_NUMBER
+DU_HOST_IP=$DU_SUBNET_FIRST_3_OCTETS.1
+DU_NS_IP=$DU_SUBNET_FIRST_3_OCTETS.2
 
-if pgrep -x "nr-softmodem" >/dev/null; then
-    echo "Already running gNodeB."
-else
-    if [ ! -f "configs/gnb.conf" ]; then
-        echo "Configuration was not found for OAI gNodeB. Please run ./generate_configurations.sh first."
-        exit 1
-    fi
+echo "Removing IP routes and addresses inside the namespace..."
+sudo ip netns exec $DU_NAMESPACE ip route del default via $DU_HOST_IP
+sudo ip netns exec $DU_NAMESPACE ip addr del $DU_NS_IP/24 dev v-$DU_NAMESPACE
+sudo ip netns exec $DU_NAMESPACE ip link set v-$DU_NAMESPACE down
 
-    echo "Starting gNodeB in background..."
-    mkdir -p logs
-    >logs/gnb_stdout.txt
+echo "Removing iptables rules..."
+sudo iptables -D FORWARD -o $NETWORK_INTERFACE -i v-eth-du$DU_NUMBER -j ACCEPT
+sudo iptables -D FORWARD -i $NETWORK_INTERFACE -o v-eth-du$DU_NUMBER -j ACCEPT
+sudo iptables -t nat -D POSTROUTING -s $DU_SUBNET_FIRST_3_OCTETS.0/24 -o $NETWORK_INTERFACE -j MASQDURADE
 
-    sudo setsid bash -c "stdbuf -oL -eL \"$SCRIPT_DIR/run.sh\" > logs/gnb_stdout.txt 2>&1" </dev/null &
+echo "Deleting the network devices..."
+sudo ip link set v-eth-du$DU_NUMBER down
+sudo ip link del v-eth-du$DU_NUMBER
 
-    ATTEMPT=0
-    while $(./is_running.sh | grep -q "NOT_RUNNING"); do
-        sleep 0.5
-        ATTEMPT=$((ATTEMPT + 1))
-        if [ $ATTEMPT -ge 120 ]; then
-            echo "gNodeB did not start after 60 seconds, exiting..."
-            exit 1
-        fi
-    done
+echo "Deleting the network namespace..."
+sudo ip netns del $DU_NAMESPACE
 
-    ./is_running.sh
-fi
+echo "Successfully reverted the DU $DU_NUMBER namespace."

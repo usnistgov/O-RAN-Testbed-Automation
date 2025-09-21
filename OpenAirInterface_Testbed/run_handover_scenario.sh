@@ -145,24 +145,24 @@ cd ..
 
 # Ensure that DU 1 has connected to the UE before starting DU 2
 cd Next_Generation_Node_B
-echo -en "\nWaiting for DU 1 to connect to UE"
+echo -en "\nWaiting for UE to connect to DU 1"
 ATTEMPT=0
-while [ ! -f logs/split_du1_stdout.txt ] || ! grep -q "Adding new UE context" logs/split_du1_stdout.txt; do
+while [ ! -f ../User_Equipment/logs/ue1_stdout.txt ] || ! grep -q "Received PDU Session Establishment Accept," ../User_Equipment/logs/ue1_stdout.txt; do
     echo -n "."
     sleep 0.5
     ATTEMPT=$((ATTEMPT + 1))
     if [ $ATTEMPT -ge 120 ]; then
-        echo "DU 1 did not connect to UE after 60 seconds, exiting..."
+        echo "UE did not connect to DU 1 after 60 seconds, exiting..."
         exit 1
     fi
-    if grep -q "Adding new UE context" logs/split_du1_stdout.txt; then
+    if grep -q "Received PDU Session Establishment Accept," ../User_Equipment/logs/ue1_stdout.txt; then
         break
     elif $(./is_running.sh | grep -q "NOT_RUNNING"); then
-        echo "Error starting DU 1. Check logs/split_du1_stdout.txt for more information."
+        echo "Error: DU 1 or UE may not be running. Check logs for more information."
         exit 1
     fi
 done
-echo -e "\nDU 1 has connected to UE."
+echo -e "\nUE has connected to DU 1."
 cd ..
 
 echo
@@ -198,6 +198,22 @@ echo
 ./is_running.sh
 
 echo
+echo
+echo
 echo "Starting telnet session to CU..."
-echo help | nc 127.0.0.1 9099 && echo
-telnet 127.0.0.1 9099
+echo "    Type 'help' for a list of commands."
+echo "    Type 'ci trigger_f1_ho 1' to trigger a handover for UE 1 from DU 1 to DU 2."
+echo
+
+# Open a single persistent connection for help and interactive session
+exec 3<>/dev/tcp/127.0.0.1/9099
+echo help >&3
+cat <&3 &
+echo "Connected to the CU telnet session."
+
+# Forward user input to the telnet session
+cat >&3
+
+# Close the connection when done
+exec 3<&-
+exec 3>&-

@@ -61,7 +61,7 @@ echo "Starting User Equipment in background..."
 mkdir -p logs
 >logs/ue${UE_NUMBER}_stdout.txt
 
-sudo setsid bash -c "stdbuf -oL -eL \"$SCRIPT_DIR/run.sh\" $UE_NUMBER > logs/ue${UE_NUMBER}_stdout.txt 2>&1" </dev/null &
+sudo setsid bash -c "stdbuf -oL -eL \"$SCRIPT_DIR/run.sh\" $UE_NUMBER >/dev/null 2>&1" </dev/null &
 
 ATTEMPT=0
 while ! ./is_running.sh | grep -q "ue$UE_NUMBER"; do

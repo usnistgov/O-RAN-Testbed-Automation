@@ -1,5 +1,5 @@
 diff --git a/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h b/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h
-index af62663de7..a0efbe03b5 100644
+index 50f77b681c..0dfb4ac46c 100644
 --- a/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h
 +++ b/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h
 @@ -509,6 +509,8 @@ typedef struct NR_UE_harq {
@@ -11,7 +11,7 @@ index af62663de7..a0efbe03b5 100644
  } NR_UE_harq_t;
  
  //! fixme : need to enhace for the multiple TB CQI report
-@@ -710,6 +712,7 @@ typedef struct NR_mac_dir_stats {
+@@ -714,6 +716,7 @@ typedef struct NR_mac_dir_stats {
    uint32_t total_rbs_retx;
    uint32_t num_mac_sdu;
    uint32_t current_rbs;
@@ -19,7 +19,7 @@ index af62663de7..a0efbe03b5 100644
  } NR_mac_dir_stats_t;
  
  typedef struct NR_mac_stats {
-@@ -722,6 +725,15 @@ typedef struct NR_mac_stats {
+@@ -726,6 +729,15 @@ typedef struct NR_mac_stats {
    uint8_t num_rsrp_meas;
    int cumul_sinrx10;
    uint8_t num_sinr_meas;

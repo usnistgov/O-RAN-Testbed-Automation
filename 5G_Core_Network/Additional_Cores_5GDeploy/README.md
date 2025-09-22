@@ -55,7 +55,7 @@ Upon updating options.conf, run `generate_configurations.sh` on the core, the gN
 11. An eBPF implementation of the User Plane Function. OpenAirInterface. [https://gitlab.eurecom.fr/oai/cn5g/oai-cn5g-upf][upf-oai]
 12. OpenAir CN 5G for UPF - Using a VPP implementation. OpenAirInterface. [https://gitlab.eurecom.fr/oai/cn5g/oai-cn5g-upf-vpp][upf-vpp-oai]
 13. Open Source Cloud Native Mobile Core. Aether SD-Core. [https://github.com/omec-project/bess][bess-aethercore]
-14. Shi, J. , Pesavento, D. and Benmohamed, L. (2020), NDN-DPDK: NDN Forwarding at 100 Gbps on Commodity Hardware, 7th ACM Conference on Information-Centric Networking (ICN 2020), Montreal, CA, [online], [https://doi.org/10.1145/3405656.3418715][nist-ndndpdk], https://tsapps.nist.gov/publication/get_pdf.cfm?pub_id=930577
+14. Shi, J., Pesavento, D. and Benmohamed, L. (2020), NDN-DPDK: NDN Forwarding at 100 Gbps on Commodity Hardware, 7th ACM Conference on Information-Centric Networking (ICN 2020), Montreal, CA, [online], [https://doi.org/10.1145/3405656.3418715][nist-ndndpdk], https://tsapps.nist.gov/publication/get_pdf.cfm?pub_id=930577
 
 <!-- References -->
 

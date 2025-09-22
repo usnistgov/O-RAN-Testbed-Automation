@@ -26,7 +26,7 @@ To select a core network beyond Open5GS, modify the `core_to_use` and `upf_to_us
   - `5gdeploy-oai`: OpenAirInterface core (see [\[5\]][oaicore-oai])
   - `5gdeploy-free5gc`: Free5GC core (see [\[6\]][free5gc-free5gc])
   - `5gdeploy-phoenix`: Phoenix core, also known as Open5GCore (requires license to operate, see [\[7\]][open5gcore-phoenix])
-  - `5gdeploy-open5gs`: Open5GC core (with the difference being that this is containerized in Docker, see [\[3\]][open5gs-open5gs])
+  - `5gdeploy-open5gs`: Open5GS core (with the difference being that this is containerized in Docker, see [\[3\]][open5gs-open5gs])
 
 - Supported values for `upf_to_use`:
   - `null` or blank: Uses the same value as `core_to_use` (default)
@@ -35,7 +35,7 @@ To select a core network beyond Open5GS, modify the `core_to_use` and `upf_to_us
   - `5gdeploy-oai-vpp`: OpenAirInterface UPF (see [\[10\]][upf-vpp-oai])
   - `5gdeploy-free5gc`: Free5GC UPF (see [\[7\]][free5gc-free5gc])
   - `5gdeploy-phoenix`: Phoenix core, also known as Open5GCore (requires license to operate, see [\[8\]][open5gcore-phoenix])
-  - `5gdeploy-open5gs`: Open5GC core (containerized in Docker, see [\[3\]][open5gs-open5gs])
+  - `5gdeploy-open5gs`: Open5GS core (containerized in Docker, see [\[3\]][open5gs-open5gs])
   - `5gdeploy-bess`: Aether SD-Core BESS UPF (see [\[11\]][bess-aethercore])
   - `5gdeploy-ndndpdk`: NDN-DPDK UPF (see [\[12\]][nist-ndndpdk])
 
@@ -149,7 +149,7 @@ To use a custom gateway address for UE traffic, edit the `ogstun_ipv4` and `ogst
 9. An eBPF implementation of the User Plane Function. OpenAirInterface. [https://gitlab.eurecom.fr/oai/cn5g/oai-cn5g-upf][upf-oai]
 10. OpenAir CN 5G for UPF - Using a VPP implementation. OpenAirInterface. [https://gitlab.eurecom.fr/oai/cn5g/oai-cn5g-upf-vpp][upf-vpp-oai]
 11. Open Source Cloud Native Mobile Core. Aether SD-Core. [https://github.com/omec-project/bess][bess-aethercore]
-12. Shi, J. , Pesavento, D. and Benmohamed, L. (2020), NDN-DPDK: NDN Forwarding at 100 Gbps on Commodity Hardware, 7th ACM Conference on Information-Centric Networking (ICN 2020), Montreal, CA, [online], [https://doi.org/10.1145/3405656.3418715][nist-ndndpdk], https://tsapps.nist.gov/publication/get_pdf.cfm?pub_id=930577
+12. Shi, J., Pesavento, D. and Benmohamed, L. (2020), NDN-DPDK: NDN Forwarding at 100 Gbps on Commodity Hardware, 7th ACM Conference on Information-Centric Networking (ICN 2020), Montreal, CA, [online], [https://doi.org/10.1145/3405656.3418715][nist-ndndpdk], https://tsapps.nist.gov/publication/get_pdf.cfm?pub_id=930577
 13. Liu, Peng, Lee, Kyehwan, Cintrón, Fernando J., Wuthier, Simeon, Savaliya, Bhadresh, Montgomery, Douglas, Rouil, Richard (2024). Blueprint for Deploying 5G O-RAN Testbeds: A Guide to Using Diverse O-RAN Software Stacks. National Institute of Standards and Technology. [https://doi.org/10.6028/NIST.TN.2311][nist-tn-2311]
 
 <!-- References -->

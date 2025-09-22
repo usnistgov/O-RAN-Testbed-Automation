@@ -74,8 +74,6 @@ if [ ! -f "configs/ue1.conf" ]; then
 fi
 
 echo "Starting User Equipment in background..."
-mkdir -p logs
->logs/ue${UE_NUMBER}_stdout.txt
 
 # Ensure the following command runs with sudo privileges
 sudo ls >/dev/null
@@ -85,7 +83,7 @@ if [ "$RFSIM_SERVER" -ne 0 ]; then
     RFSIM_SERVER_ARG="--rfsim-server"
 fi
 
-sudo setsid bash -c "stdbuf -oL -eL \"$SCRIPT_DIR/run.sh\" $UE_NUMBER $RFSIM_SERVER_ARG > logs/ue${UE_NUMBER}_stdout.txt 2>&1" </dev/null &
+sudo setsid bash -c "stdbuf -oL -eL \"$SCRIPT_DIR/run.sh\" $UE_NUMBER $RFSIM_SERVER_ARG >/dev/null 2>&1" </dev/null &
 
 ATTEMPT=0
 while $(./is_running.sh | grep -q "NOT_RUNNING"); do

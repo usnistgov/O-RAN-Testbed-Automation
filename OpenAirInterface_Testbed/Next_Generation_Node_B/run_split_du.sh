@@ -36,12 +36,29 @@ fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 
-if [ "$#" -ne 1 ]; then
-    echo "ERROR: You must provide a DU number as an argument."
-    echo "    For example, $0 1"
+# Parse arguments
+RFSIM_SERVER=1
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        [0-9]*)
+            DU_NUMBER="$1"
+            shift
+            ;;
+        --no-rfsim-server)
+            RFSIM_SERVER=0
+            shift
+            ;;
+        *)
+            echo "Unknown argument: $1"
+            exit 1
+            ;;
+    esac
+done
+if [ -z "$DU_NUMBER" ]; then
+    echo "ERROR: A DU number must be provided as an argument."
+    echo "    For example, $0 1 [--no-rfsim-server]"
     exit 1
 fi
-DU_NUMBER=$1
 if ! [[ $DU_NUMBER =~ ^[0-9]+$ ]]; then
     echo "ERROR: DU number must be a number."
     exit 1
@@ -49,6 +66,18 @@ fi
 if [ $DU_NUMBER -lt 1 ]; then
     echo "ERROR: DU number must be greater than or equal to 1."
     exit 1
+fi
+
+# Only DU 1 can be the RF simulator server
+if [ "$DU_NUMBER" -ne 1 ]; then
+    RFSIM_SERVER=0
+fi
+
+HOSTNAME_IP=$(hostname -I | awk '{print $1}')
+RFSIM_SERVER_ARG="--rfsimulator.serveraddr $HOSTNAME_IP"
+if [ "$RFSIM_SERVER" -ne 0 ]; then
+    echo "RF simulator server mode enabled."
+    RFSIM_SERVER_ARG="--rfsimulator.serveraddr server"
 fi
 
 DU_CONFIG="$SCRIPT_DIR/configs/split_du$DU_NUMBER.conf"
@@ -84,5 +113,5 @@ cd "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build"
 HOSTNAME_IP=$(hostname -I | awk '{print $1}')
 
 # Code from (https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/develop/doc/handover-tutorial.md#run-the-setup):
-# sudo ./nr-softmodem -O "$DU_CONFIG" --rfsim --rfsimulator.serveraddr $HOSTNAME_IP --rfsimulator.options chanmod --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS
-sudo script -q -f -c "./nr-softmodem -O \"$DU_CONFIG\" --rfsim --rfsimulator.serveraddr $HOSTNAME_IP --rfsimulator.options chanmod --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS" "$SCRIPT_DIR/logs/split_du${DU_NUMBER}_stdout.txt"
+# sudo ./nr-softmodem -O "$DU_CONFIG" --rfsim $RFSIM_SERVER_ARG --rfsimulator.options chanmod --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS
+sudo script -q -f -c "./nr-softmodem -O \"$DU_CONFIG\" --rfsim $RFSIM_SERVER_ARG --rfsimulator.options chanmod --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS" "$SCRIPT_DIR/logs/split_du${DU_NUMBER}_stdout.txt"

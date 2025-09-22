@@ -90,7 +90,7 @@ cd ..
 echo
 echo "Running DU 1..."
 cd Next_Generation_Node_B
-./run_background_split_du.sh 1
+./run_background_split_du.sh 1 --no-rfsim-server
 if [ "$SHOW_TERMINALS" = true ]; then
     gnome-terminal --title="DU 1 Log" -- bash -c "tail -f logs/split_du1_stdout.txt; exec bash"
 fi
@@ -168,7 +168,7 @@ cd ..
 echo
 echo "Running DU 2..."
 cd Next_Generation_Node_B
-./run_background_split_du.sh 2
+./run_background_split_du.sh 2 --no-rfsim-server
 if [ "$SHOW_TERMINALS" = true ]; then
     gnome-terminal --title="DU 2 Log" -- bash -c "tail -f logs/split_du2_stdout.txt; exec bash"
 fi

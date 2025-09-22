@@ -47,10 +47,8 @@ else
     fi
 
     echo "Starting gNodeB in background..."
-    mkdir -p logs
-    >logs/gnb_stdout.txt
 
-    sudo setsid bash -c "stdbuf -oL -eL \"$SCRIPT_DIR/run.sh\" > logs/gnb_stdout.txt 2>&1" </dev/null &
+    sudo setsid bash -c "stdbuf -oL -eL \"$SCRIPT_DIR/run.sh\" >/dev/null 2>&1" </dev/null &
 
     ATTEMPT=0
     while $(./is_running.sh | grep -q "NOT_RUNNING"); do

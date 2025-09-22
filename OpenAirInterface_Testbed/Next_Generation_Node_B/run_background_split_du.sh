@@ -36,12 +36,29 @@ fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 
-if [ "$#" -ne 1 ]; then
-    echo "ERROR: You must provide a DU number as an argument."
-    echo "    For example, $0 1"
+# Parse arguments
+RFSIM_SERVER=1
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        [0-9]*)
+            DU_NUMBER="$1"
+            shift
+            ;;
+        --no-rfsim-server)
+            RFSIM_SERVER=0
+            shift
+            ;;
+        *)
+            echo "Unknown argument: $1"
+            exit 1
+            ;;
+    esac
+done
+if [ -z "$DU_NUMBER" ]; then
+    echo "ERROR: A DU number must be provided as an argument."
+    echo "    For example, $0 1 [--no-rfsim-server]"
     exit 1
 fi
-DU_NUMBER=$1
 if ! [[ $DU_NUMBER =~ ^[0-9]+$ ]]; then
     echo "ERROR: DU number must be a number."
     exit 1
@@ -62,10 +79,13 @@ else
     fi
 
     echo "Starting DU $DU_NUMBER in background..."
-    mkdir -p logs
-    >logs/split_du${DU_NUMBER}_stdout.txt
 
-    sudo setsid bash -c "stdbuf -oL -eL \"$SCRIPT_DIR/run_split_du.sh\" \"$DU_NUMBER\" > logs/split_du${DU_NUMBER}_stdout.txt 2>&1" </dev/null &
+    RFSIM_SERVER_ARG=""
+    if [ "$RFSIM_SERVER" -eq 0 ]; then
+        RFSIM_SERVER_ARG="--no-rfsim-server"
+    fi
+
+    sudo setsid bash -c "stdbuf -oL -eL \"$SCRIPT_DIR/run_split_du.sh\" \"$DU_NUMBER\" \"$RFSIM_SERVER_ARG\"  >/dev/null 2>&1" </dev/null &
 
     ATTEMPT=0
     while ! (./is_running.sh | grep -E "^gNodeB:" | grep -q "du$DU_NUMBER"); do

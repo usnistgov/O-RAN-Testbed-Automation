@@ -47,10 +47,8 @@ else
     fi
 
     echo "Starting CU in background..."
-    mkdir -p logs
-    >logs/split_cu_stdout.txt
 
-    sudo setsid bash -c "stdbuf -oL -eL \"$SCRIPT_DIR/run_split_cu.sh\" > logs/split_cu_stdout.txt 2>&1" </dev/null &
+    sudo setsid bash -c "stdbuf -oL -eL \"$SCRIPT_DIR/run_split_cu.sh\" >/dev/null 2>&1" </dev/null &
 
     ATTEMPT=0
     while ! (./is_running.sh | grep -E "^gNodeB:" | grep -q "cu"); do

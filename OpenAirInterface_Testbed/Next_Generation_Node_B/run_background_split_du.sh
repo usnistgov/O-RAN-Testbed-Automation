@@ -40,18 +40,18 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 RFSIM_SERVER=1
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        [0-9]*)
-            DU_NUMBER="$1"
-            shift
-            ;;
-        --no-rfsim-server)
-            RFSIM_SERVER=0
-            shift
-            ;;
-        *)
-            echo "Unknown argument: $1"
-            exit 1
-            ;;
+    [0-9]*)
+        DU_NUMBER="$1"
+        shift
+        ;;
+    --no-rfsim-server)
+        RFSIM_SERVER=0
+        shift
+        ;;
+    *)
+        echo "Unknown argument: $1"
+        exit 1
+        ;;
     esac
 done
 if [ -z "$DU_NUMBER" ]; then

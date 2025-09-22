@@ -242,7 +242,7 @@ for DU_CONF in "${SPLIT_DUS[@]}"; do
                 found=1
             }
         }
-        ' "configs/$DU_CONF" "configs/$DU_CONF" > "configs/$DU_CONF.tmp" && mv "configs/$DU_CONF.tmp" "configs/$DU_CONF"
+        ' "configs/$DU_CONF" "configs/$DU_CONF" >"configs/$DU_CONF.tmp" && mv "configs/$DU_CONF.tmp" "configs/$DU_CONF"
         sed -i "s|^\([[:space:]]*\)gNB_name\s*=.*|\1gNB_name = \"du${DU_ID}-rfsim\";|" "configs/$DU_CONF"
         sed -i "s|^\([[:space:]]*\)nr_cellid\s*=.*|\1nr_cellid = $((11111111 + DU_ID - 1))L;|" "configs/$DU_CONF"
         sed -i "s|^\([[:space:]]*\)physCellId\s*=.*|\1physCellId = $((DU_ID - 1));|" "configs/$DU_CONF"
@@ -272,7 +272,7 @@ for DU_CONF in "${SPLIT_DUS[@]}"; do
             next
           }
           { print }
-        ' "configs/$DU_CONF" > "configs/$DU_CONF.tmp" && mv "configs/$DU_CONF.tmp" "configs/$DU_CONF"
+        ' "configs/$DU_CONF" >"configs/$DU_CONF.tmp" && mv "configs/$DU_CONF.tmp" "configs/$DU_CONF"
 
         comment_out "configs/$DU_CONF" "amf_ip_address"
 
@@ -283,7 +283,7 @@ for DU_CONF in "${SPLIT_DUS[@]}"; do
           in_sec && /^[[:space:]]*}[[:space:]]*;[[:space:]]*$/ { print "#"$0; in_sec=0; next }
           in_sec { print "#"$0; next }
           { print }
-        ' "configs/$DU_CONF" > "configs/$DU_CONF.tmp" && mv "configs/$DU_CONF.tmp" "configs/$DU_CONF"
+        ' "configs/$DU_CONF" >"configs/$DU_CONF.tmp" && mv "configs/$DU_CONF.tmp" "configs/$DU_CONF"
 
         comment_out "configs/$DU_CONF" "serveraddr"
     fi

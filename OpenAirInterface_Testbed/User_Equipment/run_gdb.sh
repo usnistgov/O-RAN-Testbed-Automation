@@ -44,18 +44,18 @@ RFSIM_SERVER=0
 # Parse arguments
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        [0-9]*)
-            UE_NUMBER="$1"
-            shift
-            ;;
-        --rfsim-server)
-            RFSIM_SERVER=1
-            shift
-            ;;
-        *)
-            echo "Unknown argument: $1"
-            exit 1
-            ;;
+    [0-9]*)
+        UE_NUMBER="$1"
+        shift
+        ;;
+    --rfsim-server)
+        RFSIM_SERVER=1
+        shift
+        ;;
+    *)
+        echo "Unknown argument: $1"
+        exit 1
+        ;;
     esac
 done
 

@@ -84,7 +84,6 @@ else
     fi
 fi
 
-
 # if pgrep -x "nr-softmodem" >/dev/null; then
 #     echo "gNodeB: RUNNING"
 # else

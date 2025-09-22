@@ -23,7 +23,7 @@ This gNodeB supports an optional telnet server for monitoring and controlling th
 The gNodeB can be deployed in a split Central Unit (CU) and Distributed Unit (DU) configuration.
 - **Start the CU**: Use `./run_split_cu.sh` or `./run_background_split_cu.sh` to start the CU.
 - **Start a DU Instance**: Use `./run_split_du.sh <du_number>` or `./run_background_split_du.sh <du_number>` to start a DU instance, where `du_number` is an integer identifying the DU (e.g., `1` or `2`).
-  - In the RF simulator, DU 1 acts as the server by default. To support handover scenarios where the UE should be the server, start DU 1 with the `--no-rfsim-server` argument to disable its server role.
+  - In the RF simulator, DU 1 functions as the server by default. For handover scenarios where the UE must serve as the server, start DU 1 with the `--no-rfsim-server` argument to disable its server functionality.
 - **Stop the CU/DU/gNodeB**: Use `./stop.sh [selector]` to terminate components. The optional `[selector]` argument specifies which instances to stop: `cu` for all Central Units, `du` for all Distributed Units, a specific DU such as `du1` or `du2`, or `gnb` for all gNodeBs. If no argument is provided, all components will be stopped.
 
 ### Telnet Connection to O1 Interface

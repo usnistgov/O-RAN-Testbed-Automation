@@ -1,6 +1,6 @@
 ## User Equipment
 
-The following scripts operationalize a 5G User Equipment (UE) configured with OpenAirInterface [[1]][oai-ue], designed to connect to the gNodeB and establish a PDU session with the 5G Core Network based on the specifications outlined in 3GPP TS 36.300 [[2]][ts2430-3gpp], 3GPP TS 36.331 [[3]][ts2440-3gpp], 3GPP TS 36.401 [[4]][ts2442-3gpp], 3GPP TS 36.413 [[5]][ts2446-3gpp], and 3GPP TS 23.401 [[6]][ts849-3gpp].
+The following scripts operationalize a 5G User Equipment (UE) configured with OpenAirInterface [\[1\]][oai-ue], designed to connect to the gNodeB and establish a PDU session with the 5G Core Network based on the specifications outlined in 3GPP TS 36.300 [\[2\]][ts2430-3gpp], 3GPP TS 36.331 [\[3\]][ts2440-3gpp], 3GPP TS 36.401 [\[4\]][ts2442-3gpp], 3GPP TS 36.413 [\[5\]][ts2446-3gpp], and 3GPP TS 23.401 [\[6\]][ts849-3gpp].
 
 ## Usage
 
@@ -25,6 +25,10 @@ The `run.sh`, `run_background.sh`, and `stop.sh` scripts can be given an optiona
 - Network namespace
 
 To customize the SIM subscriber information or to get more information about how they are generated, refer to the `ue_credentials_generator.sh` script. For UE 1, UE 2, and UE 3, the SIM subscriber information is pre-registered with the 5G Core Network. For `<N>` values greater than 3, the unique values are generated dynamically, registered with the 5G Core, and stored in the `configs` directory as their own `ue<N>.conf` file before starting the UE software.
+
+## RF Simulator Server
+
+By default, the RF simulator server is set to the gNodeB host. To make the UE the server, add `--rfsim-server` to the `run.sh` command. This is useful in multi-DU scenarios where the UE may be handed over between different DUs.
 
 ## Interacting with the UE
 

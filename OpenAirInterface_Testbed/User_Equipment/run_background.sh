@@ -37,10 +37,28 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
+# Default values
 UE_NUMBER=1
-if [ "$#" -eq 1 ]; then
-    UE_NUMBER=$1
-fi
+RFSIM_SERVER=0
+
+# Parse arguments
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+    [0-9]*)
+        UE_NUMBER="$1"
+        shift
+        ;;
+    --rfsim-server)
+        RFSIM_SERVER=1
+        shift
+        ;;
+    *)
+        echo "Unknown argument: $1"
+        exit 1
+        ;;
+    esac
+done
+
 if ! [[ $UE_NUMBER =~ ^[0-9]+$ ]]; then
     echo "Error: UE number must be a number."
     exit 1
@@ -56,13 +74,16 @@ if [ ! -f "configs/ue1.conf" ]; then
 fi
 
 echo "Starting User Equipment in background..."
-mkdir -p logs
->logs/ue${UE_NUMBER}_stdout.txt
 
 # Ensure the following command runs with sudo privileges
 sudo ls >/dev/null
 
-sudo setsid bash -c "stdbuf -oL -eL \"$SCRIPT_DIR/run.sh\" $UE_NUMBER > logs/ue${UE_NUMBER}_stdout.txt 2>&1" </dev/null &
+RFSIM_SERVER_ARG=""
+if [ "$RFSIM_SERVER" -ne 0 ]; then
+    RFSIM_SERVER_ARG="--rfsim-server"
+fi
+
+sudo setsid bash -c "stdbuf -oL -eL \"$SCRIPT_DIR/run.sh\" $UE_NUMBER $RFSIM_SERVER_ARG >/dev/null 2>&1" </dev/null &
 
 ATTEMPT=0
 while $(./is_running.sh | grep -q "NOT_RUNNING"); do

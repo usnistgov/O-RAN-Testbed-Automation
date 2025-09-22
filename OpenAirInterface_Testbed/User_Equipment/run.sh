@@ -37,16 +37,34 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
+# Default values
 UE_NUMBER=1
-if [ "$#" -eq 1 ]; then
-    UE_NUMBER=$1
-fi
+RFSIM_SERVER=0
+
+# Parse arguments
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+    [0-9]*)
+        UE_NUMBER="$1"
+        shift
+        ;;
+    --rfsim-server)
+        RFSIM_SERVER=1
+        shift
+        ;;
+    *)
+        echo "Unknown argument: $1"
+        exit 1
+        ;;
+    esac
+done
+
 if ! [[ $UE_NUMBER =~ ^[0-9]+$ ]]; then
-    echo "Error: UE number must be a number."
+    echo "ERROR: UE number must be a number."
     exit 1
 fi
 if [ $UE_NUMBER -lt 1 ]; then
-    echo "Error: UE number must be greater than or equal to 1."
+    echo "ERROR: UE number must be greater than or equal to 1."
     exit 1
 fi
 
@@ -96,6 +114,12 @@ HOSTNAME_IP=$(hostname -I | awk '{print $1}')
 if ./is_running.sh | grep -q "ue$UE_NUMBER"; then
     echo "Already running ue$UE_NUMBER."
 else
+    RFSIM_SERVER_ARG="--rfsimulator.serveraddr $HOSTNAME_IP"
+    if [ "$RFSIM_SERVER" -ne 0 ]; then
+        echo "RF simulator server mode enabled."
+        RFSIM_SERVER_ARG="--rfsimulator.serveraddr server"
+    fi
+
     if [ ! -f "$UE_CONF_PATH" ]; then
         echo "Configuration was not found for OAI UE $UE_NUMBER. Please run ./generate_configurations.sh first."
         exit 1
@@ -117,6 +141,10 @@ else
     BAND=78
     DL_CARRIER_FREQUENCY_HZ=3619200000
 
-    # sudo ip netns exec ue$UE_NUMBER ./nr-uesoftmodem -O "../../../../configs/ue$UE_NUMBER.conf" --rfsim --rfsimulator.serveraddr $HOSTNAME_IP --rfsimulator.options chanmod -r $BANDWIDTH_RBS --numerology $NUMEROLOGY --band $BAND -C $DL_CARRIER_FREQUENCY_HZ
-    sudo script -q -f -c "ip netns exec ue$UE_NUMBER ./nr-uesoftmodem -O \"../../../../configs/ue$UE_NUMBER.conf\" --rfsim --rfsimulator.serveraddr $HOSTNAME_IP --rfsimulator.options chanmod -r $BANDWIDTH_RBS --numerology $NUMEROLOGY --band $BAND -C $DL_CARRIER_FREQUENCY_HZ" "$SCRIPT_DIR/logs/ue${UE_NUMBER}_stdout.txt"
+    # sudo ip netns exec ue$UE_NUMBER ./nr-uesoftmodem -O "../../../../configs/ue$UE_NUMBER.conf" --rfsim $RFSIM_SERVER_ARG --rfsimulator.options chanmod -r $BANDWIDTH_RBS --numerology $NUMEROLOGY --band $BAND -C $DL_CARRIER_FREQUENCY_HZ
+    if [ $RFSIM_SERVER -eq 0 ]; then
+        sudo script -q -f -c "ip netns exec ue$UE_NUMBER ./nr-uesoftmodem -O \"../../../../configs/ue$UE_NUMBER.conf\" --rfsim $RFSIM_SERVER_ARG --rfsimulator.options chanmod -r $BANDWIDTH_RBS --numerology $NUMEROLOGY --band $BAND -C $DL_CARRIER_FREQUENCY_HZ" "$SCRIPT_DIR/logs/ue${UE_NUMBER}_stdout.txt"
+    else
+        sudo script -q -f -c "./nr-uesoftmodem -O \"../../../../configs/ue$UE_NUMBER.conf\" --rfsim $RFSIM_SERVER_ARG --rfsimulator.options chanmod -r $BANDWIDTH_RBS --numerology $NUMEROLOGY --band $BAND -C $DL_CARRIER_FREQUENCY_HZ" "$SCRIPT_DIR/logs/ue${UE_NUMBER}_stdout.txt"
+    fi
 fi

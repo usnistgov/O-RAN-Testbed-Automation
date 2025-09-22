@@ -1,6 +1,6 @@
 ## OpenAirInterface Testbed
 
-This testbed deployment consists of a 5G Core Network by Open5GS [[1]][open5gs-core], gNodeB and 5G UE by OpenAirInterface at Eurecom [[2]][oai-ue-gnb], and FlexRIC by Mosaic5G at Eurecom [[3]][mosaic-flexric]. The scripts in these directories build, install, and configure the testbed components similar to the parent directory. Each directory contains a `README.md` file providing more details on the respective testbed component.
+This testbed deployment consists of a 5G Core Network by Open5GS [\[1\]][open5gs-core], gNodeB and 5G UE by OpenAirInterface at Eurecom [\[2\]][oai-ue-gnb], and FlexRIC by Mosaic5G at Eurecom [\[3\]][mosaic-flexric]. The scripts in these directories build, install, and configure the testbed components similar to the parent directory. Each directory contains a `README.md` file providing more details on the respective testbed component.
 
 ## Usage
 
@@ -29,6 +29,24 @@ It may be required for the AVX2 instruction set to be available on the host mach
   - If `cat /proc/cpuinfo | grep avx2` is not empty, then OpenAirInterface should be able to build without issues.
 </details>
 
+## Handover Scenario
+
+The script `run_handover_scenario.sh`, based on the handover tutorial [\[4\]][oai-handover], automates the process of setting up a handover scenario with two DUs and one CU. It starts the 5G Core, FlexRIC, CU, DU 1, and UE 1. After UE connectivity, it starts DU 2 and opens a telnet session to the CU for monitoring and controlling the handover process.
+  - The variable `TELNET_SERVER` in `Next_Generation_Node_B/full_install.sh` must be set to `true` prior to gNodeB installation.
+  - To start each component in its own gnome-terminal instance, use `./run_handover_scenario.sh show`.
+  - The command `ci trigger_f1_ho 1` will trigger a handover for UE 1 from its current DU to the next DU in a round robin manner.
+
+
+<details>
+  <summary><b>Example of F1 handover output</b></summary>
+  <hr>
+  
+  <p align="center">
+    <img src="../Images/F1_Handover_Scenario_Example.png" alt="F1 Handover Scenario Example Output" width="70%">
+  </p>
+
+</details>
+
 ---
 
 ## References
@@ -36,12 +54,11 @@ It may be required for the AVX2 instruction set to be available on the host mach
 1. Open Source implementation for 5G Core and EPC. Open5GS. [https://github.com/open5gs/open5gs][open5gs-core]
 2. Openairinterface 5G Wireless Implementation. OpenAirInterface. [https://gitlab.eurecom.fr/oai/openairinterface5g][oai-ue-gnb]
 3. Flexible RAN Intelligent Controller (FlexRIC) and E2 Agent. Mosaic5G. [https://gitlab.eurecom.fr/mosaic5g/flexric][mosaic-flexric]
+4. OpenAirInterface Handover Tutorial. OpenAirInterface. [https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/develop/doc/handover-tutorial.md][oai-handover]
 
 <!-- References -->
 
 [open5gs-core]: https://github.com/open5gs/open5gs
 [oai-ue-gnb]: https://gitlab.eurecom.fr/oai/openairinterface5g
 [mosaic-flexric]: https://gitlab.eurecom.fr/mosaic5g/flexric
-[ts3191-3gpp]: https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=3191
-[ts3219-3gpp]: https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=3219
-[ts3223-3gpp]: https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=3223
+[oai-handover]: https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/develop/doc/handover-tutorial.md

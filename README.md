@@ -1,27 +1,28 @@
 # Automation Tool for Deploying 5G O-RAN Testbeds
 
-Based on the blueprints described in NIST TN 2311 [[1]][nist-tn-2311], this automation tool facilitates the deployment and configuration of 5G Open Radio Access Network (O-RAN) testbeds. Designed to operate in both bare metal and virtualized environments, it simplifies setting up the components required for a 5G O-RAN testbed, including the 5G Core; Next Generation Node B (gNodeB) composed of Radio Unit (RU), Distributed Unit (DU), and Centralized Unit (CU); User Equipment (UE); RAN Intelligent Controller (RIC); and a series of xApps that can be installed in the RIC. This reduces the complexity and time required to operationalize the testbeds described in the report above, and enables more efficient testing and validation to facilitate research and development in 5G technologies.
+Based on the blueprints described in NIST TN 2311 [\[1\]][nist-tn-2311], this automation tool facilitates the deployment and configuration of 5G Open Radio Access Network (O-RAN) testbeds. Designed to operate in both bare metal and virtualized environments, it simplifies setting up the components required for a 5G O-RAN testbed, including the 5G Core; Next Generation Node B (gNodeB) composed of Radio Unit (RU), Distributed Unit (DU), and Centralized Unit (CU); User Equipment (UE); RAN Intelligent Controller (RIC); and a series of xApps that can be installed in the RIC. This reduces the complexity and time required to operationalize the testbeds described in the report above, and enables more efficient testing and validation to facilitate research and development in 5G technologies.
 
 ## Setting Up a Testbed
 
-The automation tool can be used in virtual machines and physical machines with the list of open-source components and minimum system requirements specified below. For additional details on the configuration of physical hardware and individual software components, refer to [[1]][nist-tn-2311].
+The automation tool can be used in virtual machines and physical machines with the list of open-source components and minimum system requirements specified below. For additional details on the configuration of physical hardware and individual software components, refer to [\[1\]][nist-tn-2311].
 
 ### Supported Testbed Open-Source Components
 
-<p align="center">
+<div align="center">
   <picture>
     <source media="(prefers-color-scheme: light)" srcset="./Images/Architecture_Light.svg">
     <source media="(prefers-color-scheme: dark)" srcset="./Images/Architecture_Dark.svg">
     <img alt="Diagram of Testbed Open-Source Components" width="70%">
   </picture>
-</p>
+  <!-- <img src="Images/Architecture_Light.svg" alt="Diagram of Testbed Open-Source Components" width="70%"> -->
+</div>
 
 This tool supports the deployment of 5G O-RAN testbeds using open-source components in two main scenarios: Software Radio Systems with O-RAN SC's Near-RT RIC, and OpenAirInterface with Mosaic5G's FlexRIC. Below is the list of the supported testbed open-source components.
 
 ```text
 CU/DU
-├── srsRAN_Project gNB: v25.04
-├── OpenAirInterface gNB: v2.3.0
+├── srsRAN_Project gNB: release_25.04
+├── OpenAirInterface gNB: 2025.w38
 └── O-RAN SC E2 Simulator: L-release
 RICs
 ├── O-RAN SC Near-RT RIC: L-release
@@ -42,20 +43,22 @@ RICs
 └── O-RAN SC Non-RT RIC: L-release
     └── Minimal prototype with no rApp support.
 5G Core
-└── Open5GS: v2.7.5
+└── Open5GS: v2.7.6
 UEs
-├── srsRAN_4G: v23.11
-└── OpenAirInterface 5G UE: v2.3.0
+├── srsRAN_4G: release_23_11
+└── OpenAirInterface 5G UE: 2025.w38
 ```
 
 The components that have been verified to support or not support connectivity are included below.
-<p align="center">
+
+<div align="center">
   <picture>
     <source media="(prefers-color-scheme: light)" srcset="./Images/Support_Light.svg">
     <source media="(prefers-color-scheme: dark)" srcset="./Images/Support_Dark.svg">
-    <img alt="Diagram of Supported and Unsupported Connections" width="97%">
+    <img alt="Diagram of Supported Connections" width="97%">
   </picture>
-</p>
+  <!-- <img src="Images/Support_Light.svg" alt="Diagram of Supported Connections" width="97%"> -->
+</div>
 
 ### Minimum System Requirements
 
@@ -118,7 +121,7 @@ Alternatively, the repository may be cloned over SSH: `git clone git@github.com:
 
 ---
 
-> [!TIP]
+> [!IMPORTANT]
 > The deployment scenario based on OpenAirInterface with FlexRIC can be installed from the `OpenAirInterface_Testbed` directory, while the deployment scenario based on srsRAN and O-RAN SC's Near-RT RIC can be installed from the base directory.
 
 Begin the installation process, recommended to be run as the current user rather than as root:
@@ -127,7 +130,7 @@ Begin the installation process, recommended to be run as the current user rather
 ./full_install.sh
 ```
 
-> [!NOTE]
+> [!TIP]
 > Due to `set -e`, the scripts will halt upon encountering an error so that it can be corrected before trying again. Since the scripts are idempotent, only the incomplete steps of the installation process will be executed unless specified otherwise. Please be patient until an error occurs or the testbed installation completes successfully.
 
 ```text
@@ -151,9 +154,9 @@ PDU Session Establishment successful. IP: 10.45.0.2
 RRC NR reconfiguration successful.
 ```
 
-<b>Supplementary Network Monitoring, Visualization, and Control</b><p align="center">
+<b>Supplementary Network Monitoring, Visualization, and Control</b><div align="center">
   <img src="Images/Cilium_Hubble_UI.png" alt="Hubble UI showing network flows" width="70%">
-</p>
+</div>
 
 See <a href="RAN_Intelligent_Controllers/Near-Real-Time-RIC#migration-to-cilium">this section</a> for the set up guide.
 </details>
@@ -181,9 +184,9 @@ RSRP = -44.00 [dBm]
 ...
 ```
 
-<b>Supplementary Dashboard for KPM Visualization</b><p align="center">
+<b>Supplementary Dashboard for KPM Visualization</b><div align="center">
   <img src="Images/xApp_Dashboard.png" alt="Grafana dashboard of xApp KPM metrics" width="75%">
-</p>
+</div>
 
 See <a href="OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC#kpm-monitor-visualization-in-grafana">this section</a> for the set up guide.
 </details>
@@ -192,36 +195,35 @@ See <a href="OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC#k
 
 ## Software Versioning
 
-For stability of software dependencies, all `git clone` calls are routed through `commit_hashes.json` which specifies a branch and/or commit hash for each repository. This file can be updated manually, or with `./Additional_Scripts/update_commit_hashes.sh` to fetch the latest commit hashes. For information about the automation tool versions, please see the releases page [[2]][gh-ota].
+For stability of software dependencies, all `git clone` calls are routed through `commit_hashes.json` which specifies a branch and/or commit hash for each repository. This file can be updated manually, or with `./Additional_Scripts/update_commit_hashes.sh` to fetch the latest commit hashes. For information about the automation tool versions, please see the releases page [\[2\]][gh-ota].
 
 ## Documentation
 
 For more information about a specific component, refer to the README.md files in the respective subdirectories:
-- README.md [[3]][gh-readme]
-- 5G_Core_Network/README.md [[4]][gh-5gcore]
-- Next_Generation_Node_B/README.md [[5]][gh-gnodeb]
-- User_Equipment/README.md [[6]][gh-ue]
-- RAN_Intelligent_Controllers/Near-Real-Time-RIC/README.md [[7]][gh-nearrtric]
-- RAN_Intelligent_Controllers/Non-Real-Time-RIC/README.md [[8]][gh-nonrtric]
-- OpenAirInterface_Testbed/README.md [[9]][gh-oai]
-- OpenAirInterface_Testbed/Next_Generation_Node_B/README.md [[10]][gh-oaignb]
-- OpenAirInterface_Testbed/User_Equipment/README.md [[11]][gh-oaiue]
-- OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC/README.md [[12]][gh-flexric]
+- README.md [\[3\]][gh-readme]
+- 5G_Core_Network/README.md [\[4\]][gh-5gcore]
+- 5G_Core_Network/Additional_Cores_5GDeploy/README.md [\[5\]][gh-5gdeploy]
+- Next_Generation_Node_B/README.md [\[6\]][gh-gnodeb]
+- User_Equipment/README.md [\[7\]][gh-ue]
+- RAN_Intelligent_Controllers/Near-Real-Time-RIC/README.md [\[8\]][gh-nearrtric]
+- RAN_Intelligent_Controllers/Non-Real-Time-RIC/README.md [\[9\]][gh-nonrtric]
+- OpenAirInterface_Testbed/README.md [\[10\]][gh-oai]
+- OpenAirInterface_Testbed/Next_Generation_Node_B/README.md [\[11\]][gh-oaignb]
+- OpenAirInterface_Testbed/User_Equipment/README.md [\[12\]][gh-oaiue]
+- OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC/README.md [\[13\]][gh-flexric]
 
 ## Contact Information
 
-USNISTGOV/O-RAN-Testbed-Automation is developed and maintained by the NIST Wireless Networks Division [[13]][nist-wnd], as part of their Open RAN Research Program [[14]][nist-oran].  Contacts for this software:
+USNISTGOV/O-RAN-Testbed-Automation is developed and maintained by the NIST Wireless Networks Division [\[14\]][nist-wnd], as part of their Open RAN Research Program [\[15\]][nist-oran].  Contacts for this software:
 
 - Simeon J. Wuthier, @Simewu
-- Peng Liu, @pengnist
-- Kyehwan Lee, @kyehwanlee
 - Fernando J. Cintrón, @fjcintron
 - Doug Montgomery, @dougm-nist
 
 ## NIST Disclaimers
 
-- **NIST Software Disclaimer** [[15]][gh-nsd]
-- **Fair Use and Licensing Statements of NIST Data/Works** [[16]][gh-license]
+- **NIST Software Disclaimer** [\[16\]][gh-nsd]
+- **Fair Use and Licensing Statements of NIST Data/Works** [\[17\]][gh-license]
 
 ## References
 
@@ -229,30 +231,32 @@ USNISTGOV/O-RAN-Testbed-Automation is developed and maintained by the NIST Wirel
 2. Releases, Automation Tool for Deploying 5G O-RAN Testbeds. GitHub. [https://github.com/USNISTGOV/O-RAN-Testbed-Automation/releases][gh-ota].
 3. Documentation of Base Directory. [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/README.md][gh-readme]
 4. Documentation of 5G Core Network (Open5GS). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/5G_Core_Network/README.md][gh-5gcore].
-5. Documentation of Next Generation Node B (srsRAN_Project). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/Next_Generation_Node_B/README.md][gh-gnodeb].
-6. Documentation of User Equipment (srsRAN_4G). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/User_Equipment/README.md][gh-ue].
-7. Documentation of Near-Real Time RAN Intelligent Controller (O-RAN SC). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/RAN_Intelligent_Controllers/Near-Real-Time-RIC/README.md][gh-nearrtric].
-8. Documentation of Non-Real Time RAN Intelligent Controller (O-RAN SC). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/RAN_Intelligent_Controllers/Non-Real-Time-RIC/README.md][gh-nonrtric].
-9. Documentation of OpenAirInterface Testbed. [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/OpenAirInterface_Testbed/README.md][gh-oai].
-10. Documentation of Next Generation Node B (OpenAirInterface). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/OpenAirInterface_Testbed/Next_Generation_Node_B/README.md][gh-oaignb].
-11. Documentation of User Equipment (OpenAirInterface). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/OpenAirInterface_Testbed/User_Equipment/README.md][gh-oaiue].
-12. Documentation of Near-Real Time RAN Intelligent Controller (FlexRIC). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC/README.md][gh-flexric].
-13. Wireless Networks Division. National Institute of Standards and Technology. [https://www.nist.gov/ctl/Wireless-Networks-Division][nist-wnd].
-14. Open RAN Research at NIST. National Institute of Standards and Technology. [https://www.nist.gov/programs-projects/Open-RAN-Research-NIST][nist-oran].
-15. NIST Software Disclaimer. [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/NIST Software Disclaimer.md][gh-nsd].
-16. Fair Use and Licensing Statements of NIST Data/Works: [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/LICENSE][gh-license].
+5. Documentation of Additional Cores for 5G Deployment. [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/5G_Core_Network/Additional_Cores_5GDeploy/README.md][gh-5gdeploy].
+6. Documentation of Next Generation Node B (srsRAN_Project). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/Next_Generation_Node_B/README.md][gh-gnodeb].
+7. Documentation of User Equipment (srsRAN_4G). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/User_Equipment/README.md][gh-ue].
+8. Documentation of Near-Real Time RAN Intelligent Controller (O-RAN SC). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/RAN_Intelligent_Controllers/Near-Real-Time-RIC/README.md][gh-nearrtric].
+9. Documentation of Non-Real Time RAN Intelligent Controller (O-RAN SC). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/RAN_Intelligent_Controllers/Non-Real-Time-RIC/README.md][gh-nonrtric].
+10. Documentation of OpenAirInterface Testbed. [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/OpenAirInterface_Testbed/README.md][gh-oai].
+11. Documentation of Next Generation Node B (OpenAirInterface). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/OpenAirInterface_Testbed/Next_Generation_Node_B/README.md][gh-oaignb].
+12. Documentation of User Equipment (OpenAirInterface). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/OpenAirInterface_Testbed/User_Equipment/README.md][gh-oaiue].
+13. Documentation of Near-Real Time RAN Intelligent Controller (FlexRIC). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC/README.md][gh-flexric].
+14. Wireless Networks Division. National Institute of Standards and Technology. [https://www.nist.gov/ctl/Wireless-Networks-Division][nist-wnd].
+15. Open RAN Research at NIST. National Institute of Standards and Technology. [https://www.nist.gov/programs-projects/Open-RAN-Research-NIST][nist-oran].
+16. NIST Software Disclaimer. [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/NIST Software Disclaimer.md][gh-nsd].
+17. Fair Use and Licensing Statements of NIST Data/Works: [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/LICENSE][gh-license].
 
 ## <!-- HR 2 -->
 
-<p align="center">
+<div align="center">
   <a href="https://www.nist.gov" target="_blank">
     <picture>
       <source media="(prefers-color-scheme: light)" srcset="./Images/NIST_Light.png">
       <source media="(prefers-color-scheme: dark)" srcset="./Images/NIST_Dark.png">
       <img alt="National Institute of Standards and Technology" width="85%">
     </picture>
+    <!-- <img src="Images/NIST_Light.png" alt="National Institute of Standards and Technology" width="85%"> -->
   </a>
-</p>
+</div>
 
 <!-- References -->
 
@@ -260,6 +264,7 @@ USNISTGOV/O-RAN-Testbed-Automation is developed and maintained by the NIST Wirel
 [gh-ota]: https://github.com/USNISTGOV/O-RAN-Testbed-Automation/releases
 [gh-readme]: README.md
 [gh-5gcore]: 5G_Core_Network/README.md
+[gh-5gdeploy]: 5G_Core_Network/Additional_Cores_5GDeploy/README.md
 [gh-gnodeb]: Next_Generation_Node_B/README.md
 [gh-ue]: User_Equipment/README.md
 [gh-nearrtric]: RAN_Intelligent_Controllers/Near-Real-Time-RIC/README.md

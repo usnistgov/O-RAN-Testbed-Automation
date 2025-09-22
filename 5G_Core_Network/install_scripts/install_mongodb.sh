@@ -74,11 +74,7 @@ else
         echo "Removing conflicting MongoDB packages..."
 
         # Remove all installed MongoDB-related packages
-        sudo apt-get remove --purge -y mongodb-org mongodb-org-server mongodb-org-shell mongodb-org-mongos mongodb-org-tools \
-            mongodb-server mongodb-server-core mongodb-clients || {
-            echo "Failed to remove conflicting MongoDB packages"
-            exit 1
-        }
+        sudo apt-get remove --purge -y mongodb-org mongodb-org-server mongodb-org-shell mongodb-org-mongos mongodb-org-tools mongodb-server mongodb-server-core mongodb-clients || true
 
         # Clean up MongoDB directories (data and logs)
         sudo rm -rf /var/lib/mongodb
@@ -107,7 +103,7 @@ else
     # Import the MongoDB 4.4 public key using signed-by method
     echo "Attempting to import MongoDB 4.4 server public key using signed-by method..."
     if ! curl -fsSL https://www.mongodb.org/static/pgp/server-4.4.asc | sudo gpg --dearmor --yes -o /usr/share/keyrings/mongodb-archive-keyring.gpg; then
-        rm -f /usr/share/keyrings/mongodb-archive-keyring.gpg
+        sudo rm -f /usr/share/keyrings/mongodb-archive-keyring.gpg
         echo "Failed to import MongoDB public key. Please check your internet connection and try again. Exiting."
         exit 1
     else
@@ -128,7 +124,7 @@ else
     fi
 
     echo "Attempting to install MongoDB 4.4..."
-    if ! sudo env $APTVARS apt-get install -y --allow-change-held-packages mongodb-org=4.4.* mongodb-org-server=4.4.* mongodb-org-shell=4.4.* mongodb-org-mongos=4.4.* mongodb-org-tools=4.4.*; then
+    if ! sudo env $APTVARS apt-get install -y --allow-change-held-packages --allow-downgrades mongodb-org=4.4.* mongodb-org-server=4.4.* mongodb-org-shell=4.4.* mongodb-org-mongos=4.4.* mongodb-org-tools=4.4.*; then
         echo "Initial MongoDB installation failed. Attempting to fix broken installations..."
         sudo apt-get --fix-broken install
         sudo apt-get autoremove -y

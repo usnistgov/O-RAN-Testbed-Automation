@@ -31,6 +31,7 @@
 # Exit immediately if a command fails
 set -e
 
+SPLIT_DU_IDS=$(seq 1 3)
 USE_RFSIM_CHANNELMOD=true
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
@@ -132,6 +133,10 @@ if [[ $RUNNING_STATUS != *": RUNNING"* ]]; then
 fi
 
 cp openairinterface5g/targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band78.fr1.106PRB.usrpb210.conf "$SCRIPT_DIR/configs/gnb.conf"
+cp openairinterface5g/targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb-cu.sa.f1.conf "$SCRIPT_DIR/configs/split_cu.conf"
+cp "$SCRIPT_DIR/configs/gnb.conf" "$SCRIPT_DIR/configs/split_du1.conf"
+cp "$SCRIPT_DIR/configs/gnb.conf" "$SCRIPT_DIR/configs/split_du2.conf"
+cp "$SCRIPT_DIR/configs/gnb.conf" "$SCRIPT_DIR/configs/split_du3.conf"
 
 echo "Fetching AMF addresses..."
 AMF_ADDRESSES=$("../5G_Core_Network/install_scripts/get_amf_address.sh")
@@ -175,30 +180,52 @@ echo "AMF Address: $AMF_ADDR"
 echo "AMF Binding Address: $N3_ADDR_BIND"
 echo "NGAP Binding Address: $N2_ADDR_BIND/24"
 
-# Update configuration values for RF front-end device
-update_conf "configs/gnb.conf" "amf_ip_address" "({ ipv4 = \"$AMF_ADDR\"; })"
-update_conf "configs/gnb.conf" "GNB_IPV4_ADDRESS_FOR_NG_AMF" "\"$N2_ADDR_BIND/24\""
-update_conf "configs/gnb.conf" "GNB_IPV4_ADDRESS_FOR_NGU" "\"$N3_ADDR_BIND/24\""
-update_conf "configs/gnb.conf" "tracking_area_code" "$TAC"
+SPLIT_DUS=()
+for i in $SPLIT_DU_IDS; do
+    SPLIT_DUS+=("split_du${i}.conf")
+done
 
-# Configure the Single Network Slice Selection Assistance Information (S-NSSAI)
-update_conf "configs/gnb.conf" "plmn_list" "({ mcc = $MCC; mnc = $MNC; mnc_length = $MNC_LENGTH; snssaiList = ({ sst = $SST; sd = 0x$SD; }) })"
+for CONF_FILE in gnb.conf split_cu.conf "${SPLIT_DUS[@]}"; do
+    echo "Configuring $CONF_FILE..."
+    # Update configuration values for RF front-end device
+    update_conf "configs/$CONF_FILE" "amf_ip_address" "({ ipv4 = \"$AMF_ADDR\"; })"
+    update_conf "configs/$CONF_FILE" "GNB_IPV4_ADDRESS_FOR_NG_AMF" "\"$N2_ADDR_BIND/24\""
+    update_conf "configs/$CONF_FILE" "GNB_IPV4_ADDRESS_FOR_NGU" "\"$N3_ADDR_BIND/24\""
+    update_conf "configs/$CONF_FILE" "tracking_area_code" "$TAC"
 
-if [ "$USE_SSB_RSRP" = "true" ]; then
-    update_conf "configs/gnb.conf" "do_CSIRS" "0"
-else
-    update_conf "configs/gnb.conf" "do_CSIRS" "1"
-fi
+    # Configure the Single Network Slice Selection Assistance Information (S-NSSAI)
+    update_conf "configs/$CONF_FILE" "plmn_list" "({ mcc = $MCC; mnc = $MNC; mnc_length = $MNC_LENGTH; snssaiList = ({ sst = $SST; sd = 0x$SD; }) })"
 
-if [ "$USE_RFSIM_CHANNELMOD" = true ]; then
-    # Finally, ensure that it is referencing the channelmod_rfsimu.conf file
-    if ! grep -q "@include \"channelmod_rfsimu.conf\"" "configs/gnb.conf"; then
-        echo "" >>"configs/gnb.conf"
-        echo "@include \"channelmod_rfsimu.conf\"" >>"configs/gnb.conf"
+    if [ "$USE_SSB_RSRP" = "true" ]; then
+        update_conf "configs/$CONF_FILE" "do_CSIRS" "0"
+    else
+        update_conf "configs/$CONF_FILE" "do_CSIRS" "1"
     fi
-    cd configs
-    ln -s ../../User_Equipment/configs/channelmod_rfsimu.conf channelmod_rfsimu.conf
-    cd ..
-fi
 
-echo "Successfully configured the UE. The configuration file is located in the configs/ directory."
+    if [ "$USE_RFSIM_CHANNELMOD" = true ]; then
+        # Finally, ensure that it is referencing the channelmod_rfsimu.conf file
+        if ! grep -q "@include \"channelmod_rfsimu.conf\"" "configs/$CONF_FILE"; then
+            echo "" >>"configs/$CONF_FILE"
+            echo "@include \"channelmod_rfsimu.conf\"" >>"configs/$CONF_FILE"
+        fi
+        if [ ! -e "configs/channelmod_rfsimu.conf" ]; then
+            cd configs
+            ln -s ../../User_Equipment/configs/channelmod_rfsimu.conf channelmod_rfsimu.conf
+            cd ..
+        fi
+    fi
+done
+
+echo
+echo "Generating configuration for CU..."
+# Set the local_n_address in the CU configuration file
+sed -i 's|^\([[:space:]]*\)local_n_address\s*=.*|\1local_n_address     = "127.0.0.100";|' "configs/split_cu.conf"
+echo "    Configured CU."
+
+for DU_CONF in "${SPLIT_DUS[@]}"; do
+    DU_NUMBER=$(echo "$DU_CONF" | grep -oP 'split_du\K[0-9]+')
+    ./install_scripts/generate_du_configuration.sh "$DU_NUMBER"
+done
+
+echo
+echo "Successfully configured the gNodeB and split CU/DUs. The configuration files are located in the configs/ directory."

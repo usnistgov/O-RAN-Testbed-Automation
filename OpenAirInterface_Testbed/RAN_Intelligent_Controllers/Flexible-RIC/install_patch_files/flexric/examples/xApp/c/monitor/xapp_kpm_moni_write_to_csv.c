@@ -34,8 +34,10 @@
 #include "../../../../src/sm/kpm_sm/kpm_data_ie_wrapper.h"
 
 #include <stdlib.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <time.h>
+#include <errno.h>
 #include <unistd.h>
 #include <signal.h>
 #include <pthread.h>
@@ -54,6 +56,16 @@ bool skip_first_sample = true;
 // Set to true if samples containing RSRP.Count == 0 are to be filtered,
 // which is expected to give more stable results at the expense of some data loss
 const bool filter_invalid_rsrp_samples = false;
+
+#ifndef KPM_SLICING_SST
+#define KPM_SLICING_SST 1
+#endif
+#ifndef KPM_SLICING_SD
+#define KPM_SLICING_SD 0xFFFFFF
+#endif
+
+static uint8_t  cfg_sst = KPM_SLICING_SST;
+static uint32_t cfg_sd  = KPM_SLICING_SD;
 
 // Variables that change during runtime
 static pthread_mutex_t mtx;
@@ -408,6 +420,28 @@ static void log_kpm_measurements(kpm_ind_msg_format_1_t const *msg_frm_1) {
   printf("Samples collected = %u\n", csv_num_rows);
 }
 
+static void load_slice_from_env(void)
+{
+  const char *s;
+  char *end = NULL;
+  errno = 0;
+
+  s = getenv("SST");
+  if (s && *s) {
+    unsigned long v = strtoul(s, &end, 0);
+    if (end != s && errno == 0 && v <= 0xFFul) cfg_sst = (uint8_t)v;
+  }
+
+  errno = 0; end = NULL;
+  s = getenv("SD");
+  if (s && *s) {
+    unsigned long v = strtoul(s, &end, 0);
+    if (end != s && errno == 0) cfg_sd = ((uint32_t)v) & 0xFFFFFFu;
+  }
+
+  printf("[xApp] Using S-NSSAI SST=%u SD=%06x (env SST/SD can override)\n", (unsigned)cfg_sst, (unsigned)(cfg_sd & 0xFFFFFFu));
+}
+
 static void sm_cb_kpm(sm_ag_if_rd_t const *rd) {
   assert(rd != NULL);
   assert(rd->type == INDICATION_MSG_AGENT_IF_ANS_V0);
@@ -440,7 +474,9 @@ static void sm_cb_kpm(sm_ag_if_rd_t const *rd) {
   prev_now = now / 1000;
 }
 
-static test_info_lst_t filter_predicate(test_cond_type_e type, test_cond_e cond, int value) {
+static
+test_info_lst_t filter_predicate(test_cond_type_e type, test_cond_e cond, uint8_t sst, uint32_t sd)
+{
   test_info_lst_t dst = {0};
 
   dst.test_cond_type = type;
@@ -458,11 +494,15 @@ static test_info_lst_t filter_predicate(test_cond_type_e type, test_cond_e cond,
 
   dst.test_cond_value->octet_string_value = calloc(1, sizeof(byte_array_t));
   assert(dst.test_cond_value->octet_string_value != NULL && "Memory exhausted");
-  const size_t len_nssai = 1;
+  const size_t len_nssai = 4;
   dst.test_cond_value->octet_string_value->len = len_nssai;
+  sd &= 0xFFFFFF;
   dst.test_cond_value->octet_string_value->buf = calloc(len_nssai, sizeof(uint8_t));
   assert(dst.test_cond_value->octet_string_value->buf != NULL && "Memory exhausted");
-  dst.test_cond_value->octet_string_value->buf[0] = value;
+  dst.test_cond_value->octet_string_value->buf[0] = (uint8_t)sst;
+  dst.test_cond_value->octet_string_value->buf[1] = (uint8_t)((sd >> 16) & 0xFF);
+  dst.test_cond_value->octet_string_value->buf[2] = (uint8_t)((sd >> 8) & 0xFF);
+  dst.test_cond_value->octet_string_value->buf[3] = (uint8_t)(sd & 0xFF);
 
   return dst;
 }
@@ -531,8 +571,7 @@ static kpm_act_def_t fill_report_style_4(ric_report_style_item_t const *report_i
   // Filter connected UEs by S-NSSAI criteria
   test_cond_type_e const type = S_NSSAI_TEST_COND_TYPE; // CQI_TEST_COND_TYPE
   test_cond_e const condition = EQUAL_TEST_COND;        // GREATERTHAN_TEST_COND
-  int const value = 1;
-  act_def.frm_4.matching_cond_lst[0].test_info_lst = filter_predicate(type, condition, value);
+  act_def.frm_4.matching_cond_lst[0].test_info_lst = filter_predicate(type, condition, cfg_sst, cfg_sd);
 
   // Fill Action Definition Format 1
   // 8.2.1.2.1
@@ -644,6 +683,8 @@ int main(int argc, char *argv[]) {
   pthread_mutexattr_t attr = {0};
   int rc = pthread_mutex_init(&mtx, &attr);
   assert(rc == 0);
+
+  load_slice_from_env();
 
   sm_ans_xapp_t *hndl = calloc(nodes.len, sizeof(sm_ans_xapp_t));
   assert(hndl != NULL);

@@ -3,6 +3,7 @@
 /czmq/
 /libzmq/
 /logs/
+/o1-adapter/
 /srsRAN_Project/
 czmq
 install_time.txt

@@ -37,6 +37,23 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
+# Ensure that the correct script is used
+if [ -f "options.yaml" ]; then
+    CORE_TO_USE=$(yq eval '.core_to_use' options.yaml)
+fi
+if [[ "$CORE_TO_USE" == "null" || -z "$CORE_TO_USE" ]]; then
+    CORE_TO_USE="open5gs" # Default
+fi
+if [ "$CORE_TO_USE" != "open5gs" ]; then
+    echo "Switching to core: $CORE_TO_USE"
+    cd Additional_Cores_5GDeploy || {
+        echo "Directory 'Additional_Cores_5GDeploy' not found. Please ensure that it exists in the script's directory."
+        exit 1
+    }
+    ./run.sh
+    exit $?
+fi
+
 if [ ! -f "configs/amf.yaml" ] || [ ! -f "configs/mme.yaml" ]; then
     echo "Configurations were not found for Open5GS. Please run ./generate_configurations.sh first."
     exit 1

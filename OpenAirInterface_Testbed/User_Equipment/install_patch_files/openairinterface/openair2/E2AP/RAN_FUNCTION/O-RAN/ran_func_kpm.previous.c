@@ -170,7 +170,7 @@ static void capture_sst_sd(test_cond_value_t* test_cond_value, uint8_t *sst, uin
         DevAssert(test_cond_value->octet_string_value->len == 4);
         uint8_t *buf = test_cond_value->octet_string_value->buf;
         *sst = buf[0];
-        *sd = malloc(**sd);
+        *sd = malloc(sizeof(uint32_t));
         **sd = buf[1] << 16 | buf[2] << 8 | buf[3];
       }
       printf("[E2 AGENT][E2SM-KPM] Condition NSSAI (%d, %x).\n", *sst, (*sd) ? **sd : 0xffffff);

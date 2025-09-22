@@ -251,7 +251,8 @@ update_yaml "configs/gnb.yaml" "cu_cp.amf" "addr" "$AMF_ADDR"
 update_yaml "configs/gnb.yaml" "cu_cp.amf" "bind_addr" "$N2_ADDR_BIND"
 update_yaml "configs/gnb.yaml" "cu_cp.amf.supported_tracking_areas[0]" "tac" $TAC
 update_yaml "configs/gnb.yaml" "cu_cp.amf.supported_tracking_areas[0].plmn_list[0]" "plmn" $PLMN
-update_yaml "configs/gnb.yaml" "cu_cp.request_pdu_session_timeout" "60"
+update_yaml "configs/gnb.yaml" "cu_cp.inactivity_timer" "7200"
+update_yaml "configs/gnb.yaml" "cu_cp.request_pdu_session_timeout" "3"
 
 # Update configuration values for RF front-end device
 update_yaml "configs/gnb.yaml" "ru_sdr" "device_driver" "zmq"
@@ -343,15 +344,26 @@ update_yaml "configs/gnb.yaml" "pcap" "mac_type" "udp" # Supported: [dlt, udp]
 update_yaml "configs/gnb.yaml" "pcap" "mac_filename" "$SCRIPT_DIR/logs/gnb_mac.pcap"
 
 # Update configuration for metrics
-update_yaml "configs/gnb.yaml" "metrics" "addr" "127.0.0.1"
-update_yaml "configs/gnb.yaml" "metrics" "port" "55555"
-# update_yaml "configs/gnb.yaml" "metrics" "cu_cp_statistics_report_period" "1"
-# update_yaml "configs/gnb.yaml" "metrics" "cu_up_statistics_report_period" "1"
-# update_yaml "configs/gnb.yaml" "metrics" "pdcp_report_period" "0"
-# update_yaml "configs/gnb.yaml" "metrics" "rlc_report_period" "1000" # Every second
-# update_yaml "configs/gnb.yaml" "metrics" "enable_json_metrics" "false"
-update_yaml "configs/gnb.yaml" "metrics" "autostart_stdout_metrics" "false"
-# update_yaml "configs/gnb.yaml" "metrics" "sched_report_period" "1000"
+# update_yaml "configs/gnb.yaml" "metrics" "autostart_stdout_metrics" "false"
+# update_yaml "configs/gnb.yaml" "metrics" "addr" "127.0.0.1"
+# update_yaml "configs/gnb.yaml" "metrics" "port" "55555"
+# update_yaml "configs/gnb.yaml" "metrics" "enable_json" "false"
+# update_yaml "configs/gnb.yaml" "metrics" "enable_log" "false"
+# update_yaml "configs/gnb.yaml" "metrics" "enable_verbose" "false"
+# update_yaml "configs/gnb.yaml" "metrics" "layers.enable_app_usage" "false"
+# update_yaml "configs/gnb.yaml" "metrics" "layers.enable_e1ap" "false"
+# update_yaml "configs/gnb.yaml" "metrics" "layers.enable_pdcp" "false"
+# update_yaml "configs/gnb.yaml" "metrics" "layers.enable_cu_up_executor" "false"
+# update_yaml "configs/gnb.yaml" "metrics" "layers.enable_sched" "true"
+# update_yaml "configs/gnb.yaml" "metrics" "layers.enable_rlc" "false"
+# update_yaml "configs/gnb.yaml" "metrics" "layers.enable_mac" "false"
+# update_yaml "configs/gnb.yaml" "metrics" "layers.enable_executor" "false"
+# update_yaml "configs/gnb.yaml" "metrics" "layers.enable_du_low" "false"
+# update_yaml "configs/gnb.yaml" "metrics" "layers.enable_ru" "false"
+# update_yaml "configs/gnb.yaml" "metrics" "periodicity.app_usage_report_period" "1000"
+# update_yaml "configs/gnb.yaml" "metrics" "periodicity.cu_cp_report_period" "1000"
+# update_yaml "configs/gnb.yaml" "metrics" "periodicity.cu_up_report_period" "1000"
+# update_yaml "configs/gnb.yaml" "metrics" "periodicity.du_report_period" "1000"
 
 # For ZeroMQ, change otw_format to default
 update_yaml "configs/gnb.yaml" "ru_sdr" "otw_format" "default"

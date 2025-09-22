@@ -32,6 +32,19 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$PARENT_DIR"
 
+# Ensure that the correct file is used
+if [ -f "options.yaml" ]; then
+    CORE_TO_USE=$(yq eval '.core_to_use' options.yaml)
+fi
+if [[ "$CORE_TO_USE" == "null" || -z "$CORE_TO_USE" ]]; then
+    CORE_TO_USE="open5gs" # Default
+fi
+if [ "$CORE_TO_USE" != "open5gs" ]; then
+    cd Additional_Cores_5GDeploy || {
+        exit 0
+    }
+fi
+
 FILE_PATH="configs/get_amf_address.txt"
 
 if [ -f "$FILE_PATH" ]; then

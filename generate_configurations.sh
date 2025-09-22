@@ -56,3 +56,6 @@ echo "Generating Configuration for User Equipment..."
 cd User_Equipment
 ./generate_configurations.sh
 cd ..
+
+echo
+echo "Successfully configured testbed components."

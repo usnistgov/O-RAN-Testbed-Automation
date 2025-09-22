@@ -35,10 +35,11 @@ if ! command -v realpath &>/dev/null; then
 fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
+
 cd "$SCRIPT_DIR"
 
 if pgrep -x "nr-softmodem" >/dev/null; then
-    echo "Already running gnb."
+    echo "Already running gNodeB."
 else
     if [ ! -f "configs/gnb.conf" ]; then
         echo "Configuration was not found for OAI gNodeB. Please run ./generate_configurations.sh first."
@@ -46,13 +47,8 @@ else
     fi
 
     echo "Starting gNodeB in background..."
-    mkdir -p logs
-    >logs/gnb_stdout.txt
 
-    cd "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build"
-    sudo setsid bash -c "stdbuf -oL -eL ./nr-softmodem -O \"$SCRIPT_DIR/configs/gnb.conf\" --rfsim --rfsimulator.serveraddr server --rfsimulator.options chanmod --gNBs.[0].min_rxtxtime 6 > \"$SCRIPT_DIR/logs/gnb_stdout.txt\" 2>&1" </dev/null &
-
-    cd "$SCRIPT_DIR"
+    sudo setsid bash -c "stdbuf -oL -eL \"$SCRIPT_DIR/run.sh\" >/dev/null 2>&1" </dev/null &
 
     ATTEMPT=0
     while $(./is_running.sh | grep -q "NOT_RUNNING"); do

@@ -236,7 +236,7 @@ void nr_csi_meas_reporting(int Mod_idP,frame_t frame, slot_t slot)
     NR_UE_sched_ctrl_t *sched_ctrl = &UE->UE_sched_ctrl;
     NR_UE_UL_BWP_t *ul_bwp = &UE->current_UL_BWP;
     const int n_slots_frame = nrmac->frame_structure.numb_slots_frame;
-    if (nr_timer_is_active(&sched_ctrl->transm_interrupt) || (sched_ctrl->ul_failure && !get_softmodem_params()->phy_test)) {
+    if (!nr_mac_ue_is_active(UE) && !get_softmodem_params()->phy_test) {
       continue;
     }
     const NR_CSI_MeasConfig_t *csi_measconfig = UE->sc_info.csi_MeasConfig;
@@ -414,6 +414,25 @@ static void handle_dl_harq(NR_UE_info_t * UE,
   }
 }
 
+// Referred Table 10.1.16.1-1 in 38.133 V16.7.0.
+static int get_measured_sinr(int index)
+{
+  if (index < 0 || index > 127)
+    return INT_MAX;
+
+  return -235 + index * 5;
+}
+
+// Referred Table 10.1.16.1-2 in 38.133 V16.7.0.
+static int get_diff_sinr(int index, int best_SINRx10)
+{
+  if (index <= 0)
+    return best_SINRx10;
+  if (index >= 15)
+    return best_SINRx10 - 150;
+  return best_SINRx10 - index * 10;
+}
+
 //returns the measured RSRP value (upper limit)
 static bool get_measured_rsrp(uint8_t index, int *rsrp)
 {
@@ -498,22 +517,33 @@ static void evaluate_sinr_report(gNB_MAC_INST *nrmac,
   }
 
   curr_payload = pickandreverse_bits(payload, 7, *cumul_bits);
-  sinr_report->SINR_index[0] = curr_payload & 0x7f;
+  int sinr_index = curr_payload & 0x7f;
   *cumul_bits += 7;
 
   csi_report->nb_of_csi_ssb_report++;
-  if (sinr_report->SINR_index[0] < 0 || sinr_report->SINR_index[0] > 127) {
-    LOG_E(NR_MAC, "UE %04x: reported SINR index %d invalid\n", UE->rnti, sinr_report->SINR_index[0]);
+  int SINRx10 = get_measured_sinr(sinr_index);
+  if (SINRx10 == INT_MAX) {
+    LOG_E(NR_MAC, "UE %04x: reported SINR index %d invalid\n", UE->rnti, sinr_index);
     return;
   }
+  sinr_report->SINRx10[0] = SINRx10;
 
   for (int i = 1; i < sinr_report->nr_reports; i++) {
     curr_payload = pickandreverse_bits(payload, 4, *cumul_bits);
-    sinr_report->SINR_index[i] = curr_payload & 0x0f;
+    sinr_report->SINRx10[i] = get_diff_sinr(curr_payload & 0x0f, sinr_report->SINRx10[0]);
     *cumul_bits += 4;
   }
 
-  LOG_D(MAC, "Reported SSB-SINR index = %d\n", sinr_report->SINR_index[0]);
+  NR_mac_stats_t *stats = &UE->mac_stats;
+  // including ssb SINR in mac stats
+  stats->cumul_sinrx10 += sinr_report->SINRx10[0];
+  stats->num_sinr_meas++;
+
+  const int mcs_table = UE->current_DL_BWP.mcsTableIdx;
+  const int nrOfLayers = get_dl_nrOfLayers(sched_ctrl, UE->current_DL_BWP.dci_format);
+  sched_ctrl->dl_max_mcs = get_mcs_from_SINRx10(mcs_table, sinr_report->SINRx10[0], nrOfLayers);
+
+  LOG_D(MAC, "Reported SSB-SINR = %d.%d, dl_max_mcs %d\n", sinr_report->SINRx10[0] / 10, sinr_report->SINRx10[0] % 10, sched_ctrl->dl_max_mcs);
 }
 
 static void evaluate_rsrp_report(gNB_MAC_INST *nrmac,
@@ -1250,7 +1280,7 @@ void nr_sr_reporting(gNB_MAC_INST *nrmac, frame_t SFN, slot_t slot)
     NR_UE_sched_ctrl_t *sched_ctrl = &UE->UE_sched_ctrl;
     NR_UE_UL_BWP_t *ul_bwp = &UE->current_UL_BWP;
     const int n_slots_frame = nrmac->frame_structure.numb_slots_frame;
-    if (sched_ctrl->ul_failure || nr_timer_is_active(&sched_ctrl->transm_interrupt))
+    if (!nr_mac_ue_is_active(UE))
       continue;
     NR_PUCCH_Config_t *pucch_Config = ul_bwp->pucch_Config;
 

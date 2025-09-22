@@ -37,6 +37,28 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
+# Ensure that the correct script is used
+if [ -f "options.yaml" ]; then
+    CORE_TO_USE=$(yq eval '.core_to_use' options.yaml)
+fi
+if [[ "$CORE_TO_USE" == "null" || -z "$CORE_TO_USE" ]]; then
+    CORE_TO_USE="open5gs" # Default
+fi
+if [[ "$CORE_TO_USE" != "open5gs" && -z "$INTERMEDIATE_CHECK" ]]; then
+    cd Additional_Cores_5GDeploy || {
+        echo "Directory 'Additional_Cores_5GDeploy' not found. Please ensure that it exists in the script's directory."
+        exit 1
+    }
+    ./is_running.sh
+    cd "$SCRIPT_DIR"
+    export INTERMEDIATE_CHECK=1
+    if ! ./is_running.sh | grep -q ": RUNNING"; then
+        unset INTERMEDIATE_CHECK
+        exit 0
+    fi
+    unset INTERMEDIATE_CHECK
+fi
+
 USE_SYSTEMCTL=$(yq eval '.use_systemctl' options.yaml)
 if [[ "$USE_SYSTEMCTL" == "null" || -z "$USE_SYSTEMCTL" ]]; then
     USE_SYSTEMCTL="true" # Default
@@ -79,3 +101,9 @@ for APP in "${APPS[@]}"; do
         check_service "$APP" "$APP"
     fi
 done
+
+# Check if 5gdeploy is running
+STATUS_5GDEPLOY=$(./Additional_Cores_5GDeploy/is_running.sh 2>/dev/null)
+if echo "$STATUS_5GDEPLOY" | grep -q ": RUNNING"; then
+    ./Additional_Cores_5GDeploy/is_running.sh
+fi

@@ -27,6 +27,7 @@
 # copyright protection within the United States.
 
 import http.server
+import errno
 import os
 import socketserver
 import urllib.parse
@@ -87,19 +88,40 @@ class SingleFileHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         # If no timestamp equal to or greater than the target was found, return the start of data (just after header)
         return header_end_offset
 
+    def _safe_write(self, data: bytes):
+        try:
+            self.wfile.write(data)
+        except (BrokenPipeError, ConnectionAbortedError, ConnectionResetError, OSError) as e:
+            if isinstance(e, OSError) and getattr(e, "errno", None) not in (errno.EPIPE, errno.ECONNRESET):
+                raise
+            self.close_connection = True
+
+    def _safe_path(self, requested: str):
+        base = os.path.realpath(os.path.join(parent_dir, 'logs'))
+        candidate = os.path.realpath(os.path.join(base, requested))
+        if not candidate.startswith(base + os.sep):
+            return None
+        if os.path.islink(candidate):
+            return None
+        if not os.path.isfile(candidate):
+            return None
+        return candidate
 
     def do_GET(self):
         start_time = time.perf_counter()
         
         # Parse the URL path and query string
         parsed = urllib.parse.urlparse(self.path)
-        path = parsed.path.lstrip('/')
+        path = urllib.parse.unquote(parsed.path).lstrip('/')
         query = urllib.parse.parse_qs(parsed.query)
 
-        # Handle requests for KPI_Metrics.csv
-        if path == 'KPI_Metrics.csv':
-            csv_path = os.path.join(parent_dir, 'logs', 'KPI_Metrics.csv')
-            if not os.path.exists(csv_path):
+        # Default to KPI_Metrics.csv if no file is specified
+        if path == '':
+            path = 'KPI_Metrics.csv'
+
+        if path.endswith('.csv'):
+            csv_path = self._safe_path(path)
+            if csv_path is None:
                 return self.send_error(404, "Not found")
 
             def parse_int_param(param):
@@ -115,7 +137,7 @@ class SingleFileHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             filter_param = query.get('filter', [None])[0]
             filter_columns = filter_param.split(',') if filter_param else None
 
-            if approx_num_samples_param < 1: approx_num_samples_param = None
+            if approx_num_samples_param and approx_num_samples_param < 1: approx_num_samples_param = None
 
             if approx_num_samples_param and not to_timestamp:
                 self.send_error(400, "Bad Request: 'num_samples' requires 'to' parameter")
@@ -140,7 +162,7 @@ class SingleFileHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                     self.send_header('Content-Type', 'text/csv')
                     self.send_header('Content-Length', str(len(header)))
                     self.end_headers()
-                    self.wfile.write(header)
+                    self._safe_write(header)
                     mmap_file.close()
                     return
 
@@ -246,8 +268,38 @@ class SingleFileHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.send_header('Content-Type', 'text/csv')
             self.send_header('Content-Length', str(len(data)))
             self.end_headers()
-            self.wfile.write(data)
+            self._safe_write(data)
             
+            elapsed = (time.perf_counter() - start_time) * 1000
+            #print(f"{elapsed:.2f} ms")
+            return
+
+        # Get a list of the files in the logs directory
+        elif path == 'files':
+            logs_dir = os.path.realpath(os.path.join(parent_dir, 'logs'))
+            try:
+                entries = []
+                for name in os.listdir(logs_dir):
+                    full = os.path.join(logs_dir, name)
+                    if os.path.islink(full):
+                        continue
+                    if not os.path.isfile(full):
+                        continue
+                    real = os.path.realpath(full)
+                    if not real.startswith(logs_dir + os.sep):
+                        continue
+                    entries.append(name)
+                entries.sort()
+                files_list = '\n'.join(entries)
+
+                data = files_list.encode('utf-8')
+                self.send_response(200)
+                self.send_header('Content-Type', 'text/plain')
+                self.send_header('Content-Length', str(len(data)))
+                self.end_headers()
+                self._safe_write(data)
+            except Exception as e:
+                self.send_error(500, f'Error reading logs directory: {e}')
             elapsed = (time.perf_counter() - start_time) * 1000
             #print(f"{elapsed:.2f} ms")
             return
@@ -294,6 +346,7 @@ class MyTCPServer(socketserver.TCPServer):
 
 with MyTCPServer(('', PORT), SingleFileHTTPRequestHandler) as httpd:
     print('Serving the following routes:')
+    print(f'    http://localhost:{PORT}/files')
     print(f'    http://localhost:{PORT}/KPI_Metrics.csv?from=<start_ms>&to=<end_ms>&approx_num_samples=<number_of_rows>&filter=<column1,column2,...>')
     print(f'    http://localhost:{PORT}/KPI_Metrics.csv...')
     print(f'    http://localhost:{PORT}/NIST.svg...')

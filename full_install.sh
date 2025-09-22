@@ -94,6 +94,11 @@ if [[ "$OPEN5GS_INSTALLED" = true || "$GNODEB_INSTALLED" = true || "$UE_INSTALLE
         sudo rm -rf 5G_Core_Network/logs
         sudo rm -rf 5G_Core_Network/configs
         sudo rm -rf 5G_Core_Network/install_time.txt
+        sudo rm -rf 5G_Core_Network/Additional_Cores_5GDeploy/5gdeploy
+        sudo rm -rf 5G_Core_Network/Additional_Cores_5GDeploy/compose
+        sudo rm -rf 5G_Core_Network/Additional_Cores_5GDeploy/logs
+        sudo rm -rf 5G_Core_Network/Additional_Cores_5GDeploy/configs
+        sudo rm -rf 5G_Core_Network/Additional_Cores_5GDeploy/install_time.txt
         sudo rm -rf User_Equipment/srsRAN_4G
         sudo rm -rf User_Equipment/czmq
         sudo rm -rf User_Equipment/libzmq
@@ -126,18 +131,28 @@ sudo ./Additional_Scripts/migrate_to_new_version.sh
 # Ensure the correct YAML editor is installed
 sudo "$SCRIPT_DIR/5G_Core_Network/install_scripts/./ensure_consistent_yq.sh"
 
-echo
-echo
-echo "################################################################################"
-echo "# Installing 5G Core...                                                        #"
-echo "################################################################################"
-echo
-echo
+# Check which core will be used
+if [ -f "5G_Core_Network/options.yaml" ]; then
+    CORE_TO_USE=$(yq eval '.core_to_use' 5G_Core_Network/options.yaml)
+fi
+if [[ "$CORE_TO_USE" == "null" || -z "$CORE_TO_USE" ]]; then
+    CORE_TO_USE="open5gs" # Default
+fi
 
-cd 5G_Core_Network
-./full_install.sh
+if [ "$CORE_TO_USE" == "open5gs" ]; then
+    echo
+    echo
+    echo "################################################################################"
+    echo "# Installing Open5GS...                                                        #"
+    echo "################################################################################"
+    echo
+    echo
 
-cd ..
+    cd 5G_Core_Network
+    ./full_install.sh
+
+    cd ..
+fi
 
 echo
 echo
@@ -180,6 +195,22 @@ if [ -d "RAN_Intelligent_Controllers/Near-Real-Time-RIC" ]; then
     ./full_install.sh
 
     cd ../..
+fi
+
+# If using a core from 5gdeploy, the installation needs to be after O-RAN SC's Near-RT RIC to prevent docker conflicts
+if [ "$CORE_TO_USE" != "open5gs" ]; then
+    echo
+    echo
+    echo "################################################################################"
+    echo "# Installing Open5GS...                                                        #"
+    echo "################################################################################"
+    echo
+    echo
+
+    cd 5G_Core_Network
+    ./full_install.sh
+
+    cd ..
 fi
 
 echo

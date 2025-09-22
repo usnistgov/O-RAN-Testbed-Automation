@@ -1,8 +1,8 @@
 ## Near-RT RIC, L-Release
 
-The Near-RT RIC, conceptualized by the O-RAN Alliance's Working Group 3 (WG3) [[1]][oran-wg3] and implemented by the O-RAN Software Community [[2]][oransc-nearrtric], enables dynamic management and optimization of Radio Access Networks (RAN).
+The Near-RT RIC, conceptualized by the O-RAN Alliance's Working Group 3 (WG3) [\[1\]][oran-wg3] and implemented by the O-RAN Software Community [\[2\]][oransc-nearrtric], enables dynamic management and optimization of Radio Access Networks (RAN).
 
-This automation tool is based on the L-Release of the Near-RT RIC. More information about these releases can be found at [[3]][oransc-releases].
+This automation tool is based on the L-Release of the Near-RT RIC. More information about these releases can be found at [\[3\]][oransc-releases].
 
 ## Usage
 
@@ -66,37 +66,37 @@ By default, the Hello World Go xApp (hw-go) is installed automatically. Addition
   - Patched to connect to the InfluxDB pod and write metrics to its database.
     - Upon initialization, the xApp will only connect to pre-existing E2 nodes, therefore, you can restart the xApp by running the install script again which will establish connections to any new E2 nodes.
     - Metrics will be stored in the InfluxDB pod under `bucket=kpimon, org=influxdata`. Access this data by opening the InfluxDB Client with `./additional_scripts/open_influxdb_client_shell.sh`.
-  - Information about the xApp's debugging and usage can be found at [[4]][abdul-kpimon-go].
-  - More information can be found in the documentation [[5]][kpimon-go-docs] and code [[6]][kpimon-go-code].
+  - Information about the xApp's debugging and usage can be found at [\[4\]][abdul-kpimon-go].
+  - More information can be found in the documentation [\[5\]][kpimon-go-docs] and code [\[6\]][kpimon-go-code].
 - **5G Cell Anomaly Detection xApp (ad-cell)**:
   - Install with `./additional_scripts/install_xapp_5g_cell_anomaly_detection.sh`.
   - As a prerequisite, the database must contain a sufficient amount of measurements.
-  - More information can be found in the documentation [[7]][ad-cell-docs] and code [[8]][ad-cell-code].
+  - More information can be found in the documentation [\[7\]][ad-cell-docs] and code [\[8\]][ad-cell-code].
 - **Anomaly Detection xApp (ad)**:
   - Install with `./additional_scripts/install_xapp_anomaly_detection.sh`.
   - Patched to support InfluxDB version 2._X_ instead of InfluxDB 1._X_.
   - As a prerequisite, the database must contain a sufficient amount of measurements.
-  - More information can be found in the documentation [[9]][ad-docs] and code [[10]][ad-code].
+  - More information can be found in the documentation [\[9\]][ad-docs] and code [\[10\]][ad-code].
 - **Quality of Experience Predictor xApp (qp)**:
   - Install with `./additional_scripts/install_xapp_qoe_predictor.sh`.
   - Patched to support InfluxDB version 2._X_ instead of InfluxDB 1._X_.
   - As a prerequisite, the database must contain a sufficient amount of measurements.
-  - More information can be found in the documentation [[11]][qp-docs] and code [[12]][qp-code].
+  - More information can be found in the documentation [\[11\]][qp-docs] and code [\[12\]][qp-code].
 - **RIC Control xApp (rc)**:
   - Install with `./additional_scripts/install_xapp_ric_control.sh`.
-  - More information can be found in the documentation [[13]][rc-docs] and code [[14]][rc-code].
+  - More information can be found in the documentation [\[13\]][rc-docs] and code [\[14\]][rc-code].
 - **Traffic Steering xApp (trafficxapp)**:
   - Install with `./additional_scripts/install_xapp_traffic_steering.sh`.
-  - More information can be found in the documentation [[15]][trafficxapp-docs] and code [[16]][trafficxapp-code].
+  - More information can be found in the documentation [\[15\]][trafficxapp-docs] and code [\[16\]][trafficxapp-code].
 - **Hello World Python xApp (hw-python)**:
   - Install with `./additional_scripts/install_xapp_hw-python.sh`.
-  - More information can be found in the code [[17]][hw-python-code].
+  - More information can be found in the code [\[17\]][hw-python-code].
 - **Hello World Rust xApp (hw-rust)**:
   - Install with `./additional_scripts/install_xapp_hw-rust.sh`.
-  - More information can be found in the code [[18]][hw-rust-code].
+  - More information can be found in the code [\[18\]][hw-rust-code].
  
 > [!NOTE]
-> The metrics collected using these xApps are simulated by default. Similarly, radio metrics provided by srsRAN_Project's gNodeB when connected as an E2 node to the RIC may also be simulated [[19]][srsran-lim]. Therefore, for radio metrics collected via a KPI monitoring xApp, it is recommended to use OpenAirInterface's Near-RT RIC with Mosiac5G's monitoring xApps (see the [OpenAirInterface Testbed](../../OpenAirInterface_Testbed)).
+> The metrics collected using these xApps are simulated by default. Similarly, radio metrics provided by srsRAN_Project's gNodeB when connected as an E2 node to the RIC may also be simulated [\[19\]][srsran-lim]. Therefore, for radio metrics collected via a KPI monitoring xApp, it is recommended to use OpenAirInterface's Near-RT RIC with Mosiac5G's monitoring xApps (see the [OpenAirInterface Testbed](../../OpenAirInterface_Testbed)).
 
 ## Uninstalling an xApp
 
@@ -105,7 +105,7 @@ Alternatively, xApps can be uninstalled manually by fetching the list of xApps w
 
 ## Migration to Cilium
 
-The cluster is installed with Flannel as the default network plugin. There are several benefits of migrating to a security-enhanced network plugin like Cilium [[20]][cilium-io], for example, to monitor and regulate the network flows going in to and out of each pod using Cilium Hubble [[21]][cilium-hubble]. By default, pods can communicate with addresses outside the namespace (including the internet). Restricting this allows for better security and monitoring of the network flows. The following steps can be used to migrate the cluster to Cilium and apply policies that restrict such communications.
+The cluster is installed with Flannel as the default network plugin. There are several benefits of migrating to a security-enhanced network plugin like Cilium [\[20\]][cilium-io], for example, to monitor and regulate the network flows going in to and out of each pod using Cilium Hubble [\[21\]][cilium-hubble]. By default, pods can communicate with addresses outside the namespace (including the internet). Restricting this allows for better security and monitoring of the network flows. The following steps can be used to migrate the cluster to Cilium and apply policies that restrict such communications.
 
 - **Install Cilium and Migrate Cluster Nodes**: Run `./additional_scripts/install_cilium_and_migrate_nodes.sh` to install Cilium and migrate each of the pods from the current network plugin to Cilium, then apply policies that restrict the pods from communicating with addresses outside the namespace.
   - For debugging purposes, the following files are generated in `$HOME/.kube/`:

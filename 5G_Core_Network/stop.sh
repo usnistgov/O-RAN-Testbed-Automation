@@ -37,6 +37,26 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
+# Ensure that the correct script is used
+if [ -f "options.yaml" ]; then
+    CORE_TO_USE=$(yq eval '.core_to_use' options.yaml)
+fi
+if [[ "$CORE_TO_USE" == "null" || -z "$CORE_TO_USE" ]]; then
+    CORE_TO_USE="open5gs" # Default
+fi
+if [[ "$CORE_TO_USE" != "open5gs" && -z "$INTERMEDIATE_CHECK" ]]; then
+    echo "Switching to core: $CORE_TO_USE"
+    cd Additional_Cores_5GDeploy || {
+        echo "Directory 'Additional_Cores_5GDeploy' not found. Please ensure that it exists in the script's directory."
+        exit 1
+    }
+    ./stop.sh
+    cd "$SCRIPT_DIR"
+    if ! ./is_running.sh | grep -q ": RUNNING"; then
+        exit 0
+    fi
+fi
+
 USE_SYSTEMCTL=$(yq eval '.use_systemctl' options.yaml)
 if [[ "$USE_SYSTEMCTL" == "null" || -z "$USE_SYSTEMCTL" ]]; then
     USE_SYSTEMCTL="true" # Default
@@ -69,4 +89,13 @@ for APP in "${APPS[@]}"; do
 done
 sudo ./install_scripts/revert_network_config.sh
 
+# # Check if 5gdeploy is running
+# STATUS_5GDEPLOY=$(./Additional_Cores_5GDeploy/is_running.sh 2>/dev/null)
+# if echo "$STATUS_5GDEPLOY" | grep -q ": RUNNING"; then
+#     ./Additional_Cores_5GDeploy/stop.sh # Already includes is_running.sh
+# elif [ "$CORE_TO_USE" != "open5gs" ]; then
+#     ./Additional_Cores_5GDeploy/is_running.sh
+# else
+#     ./is_running.sh
+# fi
 ./is_running.sh

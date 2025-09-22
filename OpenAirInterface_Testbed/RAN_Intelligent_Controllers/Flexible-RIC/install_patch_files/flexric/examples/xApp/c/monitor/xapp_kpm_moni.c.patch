@@ -1,8 +1,32 @@
 diff --git a/examples/xApp/c/monitor/xapp_kpm_moni.c b/examples/xApp/c/monitor/xapp_kpm_moni.c
-index d9f11118..bc155779 100644
+index d9f11118..1a59322a 100644
 --- a/examples/xApp/c/monitor/xapp_kpm_moni.c
 +++ b/examples/xApp/c/monitor/xapp_kpm_moni.c
-@@ -88,13 +88,16 @@ static
+@@ -26,8 +26,10 @@
+ #include "../../../../src/util/e.h"
+ 
+ #include <stdlib.h>
++#include <stdint.h>
+ #include <stdio.h>
+ #include <time.h>
++#include <errno.h>
+ #include <unistd.h>
+ #include <signal.h>
+ #include <pthread.h>
+@@ -38,6 +40,12 @@ uint64_t const period_ms = 1000;
+ static
+ pthread_mutex_t mtx;
+ 
++// Overwritten if environment variables SST and SD are set
++static
++uint8_t  cfg_slicing_sst = 1;
++static
++uint32_t cfg_slicing_sd  = 0xFFFFFF; // 0xFFFFFF for any SD
++
+ static
+ void log_gnb_ue_id(ue_id_e2sm_t ue_id)
+ {
+@@ -88,13 +96,16 @@ static
  void log_int_value(byte_array_t name, meas_record_lst_t meas_record)
  {
    if (cmp_str_ba("RRU.PrbTotDl", name) == 0) {
@@ -23,7 +47,7 @@ index d9f11118..bc155779 100644
    } else {
      printf("Measurement Name not yet supported\n");
    }
-@@ -109,6 +112,9 @@ void log_real_value(byte_array_t name, meas_record_lst_t meas_record)
+@@ -109,6 +120,9 @@ void log_real_value(byte_array_t name, meas_record_lst_t meas_record)
      printf("DRB.UEThpDl = %.2f [kbps]\n", meas_record.real_val);
    } else if (cmp_str_ba("DRB.UEThpUl", name) == 0) {
      printf("DRB.UEThpUl = %.2f [kbps]\n", meas_record.real_val);
@@ -33,7 +57,37 @@ index d9f11118..bc155779 100644
    } else {
      printf("Measurement Name not yet supported\n");
    }
-@@ -196,7 +202,6 @@ void sm_cb_kpm(sm_ag_if_rd_t const* rd)
+@@ -168,6 +182,29 @@ void log_kpm_measurements(kpm_ind_msg_format_1_t const* msg_frm_1)
+ 
+ }
+ 
++static
++void load_slice_from_env(void)
++{
++  const char *s;
++  char *end = NULL;
++  errno = 0;
++
++  s = getenv("SST");
++  if (s && *s) {
++    unsigned long v = strtoul(s, &end, 0);
++    if (end != s && errno == 0 && v <= 0xFFul) cfg_slicing_sst = (uint8_t)v;
++  }
++
++  errno = 0; end = NULL;
++  s = getenv("SD");
++  if (s && *s) {
++    unsigned long v = strtoul(s, &end, 0);
++    if (end != s && errno == 0) cfg_slicing_sd = ((uint32_t)v) & 0xFFFFFFu;
++  }
++
++  printf("[xApp] Using S-NSSAI SST=%u SD=%06x (env SST/SD can override)\n", (unsigned)cfg_slicing_sst, (unsigned)(cfg_slicing_sd & 0xFFFFFFu));
++}
++
+ static
+ void sm_cb_kpm(sm_ag_if_rd_t const* rd)
+ {
+@@ -196,14 +233,13 @@ void sm_cb_kpm(sm_ag_if_rd_t const* rd)
  
        // log measurements
        log_kpm_measurements(&msg_frm_3->meas_report_per_ue[i].ind_msg_format_1);
@@ -41,7 +95,47 @@ index d9f11118..bc155779 100644
      }
      counter++;
    }
-@@ -382,7 +387,7 @@ int main(int argc, char* argv[])
+ }
+ 
+ static
+-test_info_lst_t filter_predicate(test_cond_type_e type, test_cond_e cond, int value)
++test_info_lst_t filter_predicate(test_cond_type_e type, test_cond_e cond, uint8_t sst, uint32_t sd)
+ {
+   test_info_lst_t dst = {0};
+ 
+@@ -222,11 +258,19 @@ test_info_lst_t filter_predicate(test_cond_type_e type, test_cond_e cond, int va
+ 
+   dst.test_cond_value->octet_string_value = calloc(1, sizeof(byte_array_t));
+   assert(dst.test_cond_value->octet_string_value != NULL && "Memory exhausted");
+-  const size_t len_nssai = 1;
++
++  const size_t len_nssai = (sd == 0xFFFFFF) ? 1 : 4;
+   dst.test_cond_value->octet_string_value->len = len_nssai;
+   dst.test_cond_value->octet_string_value->buf = calloc(len_nssai, sizeof(uint8_t));
+   assert(dst.test_cond_value->octet_string_value->buf != NULL && "Memory exhausted");
+-  dst.test_cond_value->octet_string_value->buf[0] = value;
++
++  dst.test_cond_value->octet_string_value->buf[0] = (uint8_t)sst;
++  if (len_nssai == 4) {
++    sd &= 0xFFFFFF;
++    dst.test_cond_value->octet_string_value->buf[1] = (uint8_t)((sd >> 16) & 0xFF);
++    dst.test_cond_value->octet_string_value->buf[2] = (uint8_t)((sd >> 8) & 0xFF);
++    dst.test_cond_value->octet_string_value->buf[3] = (uint8_t)(sd & 0xFF);
++  }
+ 
+   return dst;
+ }
+@@ -301,8 +345,7 @@ kpm_act_def_t fill_report_style_4(ric_report_style_item_t const* report_item)
+   // Filter connected UEs by S-NSSAI criteria
+   test_cond_type_e const type = S_NSSAI_TEST_COND_TYPE; // CQI_TEST_COND_TYPE
+   test_cond_e const condition = EQUAL_TEST_COND; // GREATERTHAN_TEST_COND
+-  int const value = 1;
+-  act_def.frm_4.matching_cond_lst[0].test_info_lst = filter_predicate(type, condition, value);
++  act_def.frm_4.matching_cond_lst[0].test_info_lst = filter_predicate(type, condition, cfg_slicing_sst, cfg_slicing_sd);
+ 
+   // Fill Action Definition Format 1
+   // 8.2.1.2.1
+@@ -382,12 +425,14 @@ int main(int argc, char* argv[])
  
    assert(nodes.len > 0);
  
@@ -50,3 +144,10 @@ index d9f11118..bc155779 100644
  
    pthread_mutexattr_t attr = {0};
    int rc = pthread_mutex_init(&mtx, &attr);
+   assert(rc == 0);
+ 
++  load_slice_from_env();
++
+   sm_ans_xapp_t* hndl = calloc(nodes.len, sizeof(sm_ans_xapp_t));
+   assert(hndl != NULL);
+ 

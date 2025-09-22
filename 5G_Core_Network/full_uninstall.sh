@@ -82,6 +82,9 @@ sudo rm -rf logs/
 sudo rm -rf configs/
 sudo rm -rf install_time.txt
 
+cd Additional_Cores_5GDeploy
+./full_uninstall.sh
+
 echo
 echo
 echo "################################################################################"

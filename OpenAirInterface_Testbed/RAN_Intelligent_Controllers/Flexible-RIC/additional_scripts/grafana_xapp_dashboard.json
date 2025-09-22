@@ -21,7 +21,7 @@
       "type": "grafana",
       "id": "grafana",
       "name": "Grafana",
-      "version": "12.0.2"
+      "version": "12.1.1"
     },
     {
       "type": "panel",
@@ -57,7 +57,7 @@
       "type": "datasource",
       "id": "yesoreyeram-infinity-datasource",
       "name": "Infinity",
-      "version": "3.3.0"
+      "version": "3.5.0"
     }
   ],
   "annotations": {
@@ -96,10 +96,10 @@
           "showLineNumbers": false,
           "showMiniMap": false
         },
-        "content": "<img src=\"http://localhost:3030/NIST.svg\" />",
+        "content": "<img src=\"http://localhost:3030/NIST.svg\" style=\"max-width: 100%; max-height: 100%; height: auto;\" />",
         "mode": "html"
       },
-      "pluginVersion": "12.0.2",
+      "pluginVersion": "12.1.1",
       "transparent": true,
       "type": "text"
     },
@@ -128,7 +128,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "super-light-yellow"
+                "color": "super-light-yellow",
+                "value": 0
               },
               {
                 "color": "red",
@@ -159,7 +160,7 @@
         },
         "showHeader": false
       },
-      "pluginVersion": "12.0.2",
+      "pluginVersion": "12.1.1",
       "targets": [
         {
           "datasource": {
@@ -257,7 +258,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "super-light-yellow"
+                "color": "super-light-yellow",
+                "value": 0
               },
               {
                 "color": "red",
@@ -292,7 +294,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.0.2",
+      "pluginVersion": "12.1.1",
       "targets": [
         {
           "columns": [
@@ -397,7 +399,7 @@
           "root_selector": "",
           "source": "url",
           "type": "csv",
-          "url": "",
+          "url": "$Metrics_File",
           "url_options": {
             "data": "",
             "method": "GET",
@@ -502,7 +504,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "super-light-yellow"
+                "color": "super-light-yellow",
+                "value": 0
               },
               {
                 "color": "red",
@@ -534,7 +537,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.0.2",
+      "pluginVersion": "12.1.1",
       "targets": [
         {
           "datasource": {
@@ -594,7 +597,8 @@
             "mode": "percentage",
             "steps": [
               {
-                "color": "yellow"
+                "color": "yellow",
+                "value": 0
               },
               {
                 "color": "purple",
@@ -676,7 +680,7 @@
         "sizing": "auto",
         "valueMode": "color"
       },
-      "pluginVersion": "12.0.2",
+      "pluginVersion": "12.1.1",
       "targets": [
         {
           "datasource": {
@@ -845,7 +849,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "text"
+                "color": "text",
+                "value": 0
               },
               {
                 "color": "red",
@@ -881,7 +886,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.0.2",
+      "pluginVersion": "12.1.1",
       "targets": [
         {
           "datasource": {
@@ -959,7 +964,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -1097,7 +1103,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.0.2",
+      "pluginVersion": "12.1.1",
       "targets": [
         {
           "datasource": {
@@ -1207,7 +1213,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -1254,7 +1261,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.0.2",
+      "pluginVersion": "12.1.1",
       "targets": [
         {
           "datasource": {
@@ -1349,7 +1356,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -1397,7 +1405,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.0.2",
+      "pluginVersion": "12.1.1",
       "targets": [
         {
           "datasource": {
@@ -1459,7 +1467,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -1542,7 +1551,7 @@
         "sizing": "auto",
         "valueMode": "color"
       },
-      "pluginVersion": "12.0.2",
+      "pluginVersion": "12.1.1",
       "targets": [
         {
           "datasource": {
@@ -1703,7 +1712,8 @@
             "mode": "percentage",
             "steps": [
               {
-                "color": "super-light-blue"
+                "color": "super-light-blue",
+                "value": 0
               },
               {
                 "color": "red",
@@ -1751,7 +1761,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.0.2",
+      "pluginVersion": "12.1.1",
       "targets": [
         {
           "datasource": {
@@ -1846,7 +1856,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -1909,7 +1920,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.0.2",
+      "pluginVersion": "12.1.1",
       "targets": [
         {
           "datasource": {
@@ -2005,7 +2016,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -2068,7 +2080,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.0.2",
+      "pluginVersion": "12.1.1",
       "targets": [
         {
           "datasource": {
@@ -2147,7 +2159,8 @@
             "mode": "percentage",
             "steps": [
               {
-                "color": "super-light-blue"
+                "color": "super-light-blue",
+                "value": 0
               },
               {
                 "color": "red",
@@ -2210,7 +2223,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.0.2",
+      "pluginVersion": "12.1.1",
       "targets": [
         {
           "datasource": {
@@ -2289,7 +2302,7 @@
             "root_selector": "",
             "source": "url",
             "type": "csv",
-            "url": "",
+            "url": "$Metrics_File",
             "url_options": {
               "data": "",
               "method": "GET",
@@ -2367,6 +2380,23 @@
         ],
         "query": "10,25,50,100,200,500,1000",
         "type": "custom"
+      },
+      {
+        "current": {
+          "text": "KPI_Metrics.csv",
+          "value": "KPI_Metrics.csv"
+        },
+        "description": "The source KPI metrics file to use for the dashboard",
+        "name": "Metrics_File",
+        "options": [
+          {
+            "selected": true,
+            "text": "KPI_Metrics.csv",
+            "value": "KPI_Metrics.csv"
+          }
+        ],
+        "query": "KPI_Metrics.csv",
+        "type": "textbox"
       }
     ]
   },

@@ -1,5 +1,5 @@
 diff --git a/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c b/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c
-index fd6578b3b2..18987eac46 100644
+index aa68ba7d9d..5c8f5faaa8 100644
 --- a/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c
 +++ b/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c
 @@ -438,6 +438,8 @@ static const char* kpm_meas_du[] = {

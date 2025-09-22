@@ -101,13 +101,13 @@ if [ -z "$FIXED_DOCKER_PERMS" ]; then
                 echo "WARNING: Could not find set group (sg) command, docker may fail without sudo until the system reboots."
                 echo
             else
-                exec sg docker "$CURRENT_DIR/$0" "$@"
+                exec sg docker -c "$(printf '%q ' "$CURRENT_DIR/$0" "$@")"
             fi
         fi
     fi
 fi
 
-if [ ! -f trafficxapp.tar]; then
+if [ ! -f trafficxapp.tar ]; then
     docker build -t 127.0.0.1:80/trafficxapp:latest .
     docker save -o trafficxapp.tar 127.0.0.1:80/trafficxapp:latest
     sudo chmod 755 trafficxapp.tar

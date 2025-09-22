@@ -1,5 +1,27 @@
 # Upon modification, apply changes with ./generate_configurations.sh.
 
+# Choose which core to use by default. Options for core_to_use are:
+# - open5gs: Open5GS core in current directory (default, see https://github.com/open5gs/open5gs)
+# - 5gdeploy-oai: OpenAirInterface core in Additional_Cores_5GDeploy directory see https://gitlab.eurecom.fr/oai/cn5g)
+# - 5gdeploy-free5gc: Free5GC core in Additional_Cores_5GDeploy directory (see https://github.com/free5gc/free5gc)
+# - 5gdeploy-open5gs: Open5GS core in Additional_Cores_5GDeploy directory (see https://github.com/open5gs/open5gs)
+# - 5gdeploy-phoenix: Phoenix core in Additional_Cores_5GDeploy directory (requires license to operate, see: https://www.open5gcore.org)
+core_to_use: open5gs
+
+# Optionally, if using 5gdeploy, you may specify a different User Plane Function (UPF) to use. 
+# Please see https://github.com/usnistgov/5gdeploy/blob/main/docs/interop.md#cp-up for details about which combinations are supported.
+# Options for upf_to_use are:
+# - null: Use the same value as core_to_use
+# - 5gdeploy-eupf: eUPF (see https://github.com/edgecomllc/eupf)
+# - 5gdeploy-oai: OAI UPF (see https://gitlab.eurecom.fr/oai/cn5g)
+# - 5gdeploy-oai-vpp: OAI UPF based on VPP (see https://gitlab.eurecom.fr/oai/cn5g/oai-cn5g-upf-vpp)
+# - 5gdeploy-free5gc: Free5GC UPF (see https://github.com/free5gc/free5gc)
+# - 5gdeploy-open5gs: Open5GS UPF (see https://github.com/open5gs/open5gs)
+# - 5gdeploy-bess: Aether SD-Core's BESS UPF (see https://github.com/omec-project/bess)
+# - 5gdeploy-ndndpdk: Use NIST NDN-DPDK (see https://doi.org/10.1145/3405656.3418715)
+# - 5gdeploy-phoenix: Phoenix UPF (see https://doi.org/10.1007/s00502-022-01064-7 and https://www.open5gcore.org)
+upf_to_use: null
+
 # Configure the MCC/MNC and TAC
 plmn: 00101
 tac: 7
@@ -9,15 +31,15 @@ dnn: nist-dnn
 
 # Configure the Single Network Slice Selection Assistance Information (S-NSSAI)
 sst: 1
-sd: FFFFFF
+sd: 000001
 
-# If false, AMF will use the default 127.0.0.5, true: it will use the hostname IP
+# If core_to_use=open5gs, false means AMF will use the default 127.0.0.5, true means it will use the hostname IP
 expose_amf_over_hostname: false
 
-# Toggle whether or not to include the Security Edge Protection Proxies (SEPP1 and SEPP2)
+# If core_to_use=open5gs, toggle whether or not to include the Security Edge Protection Proxies (SEPP1 and SEPP2)
 include_sepp: false
 
-# Configure the ogstun gateway address for UE traffic
+# If core_to_use=open5gs, configure the ogstun gateway address for UE traffic
 ogstun_ipv4: 10.45.0.0/16
 ogstun_ipv6: 2001:db8:cafe::/48
 
@@ -27,5 +49,5 @@ ogstun2_ipv6: 2001:db8:babe::/48
 ogstun3_ipv4: 10.47.0.0/16
 ogstun3_ipv6: 2001:db8:face::/48
 
-# The use of systemctl can be disabled to support installations within Docker. Before changing this value, it is recommended to uninstall the testbed.
+# If core_to_use=open5gs, the use of systemctl can be disabled to support installations within Docker. Before changing this value, it is recommended to uninstall the testbed.
 use_systemctl: true

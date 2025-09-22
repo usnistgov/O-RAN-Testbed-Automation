@@ -37,8 +37,55 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-if pgrep -x "nr-softmodem" >/dev/null; then
-    echo "gNodeB: RUNNING"
-else
-    echo "gNodeB: NOT_RUNNING"
+RUNNING_CUDU_NUMBERS=()
+# check for cu.conf from the configuration file path
+while read -r LINE; do
+    CU_DU=$(echo "$LINE" | grep -oP "configs/split_cu\.conf" | sed 's/.conf//')
+    if [[ -n $CU_DU ]]; then
+        # Add to array only if not already present
+        if [[ ! " ${RUNNING_CUDU_NUMBERS[@]} " =~ " cu " ]]; then
+            RUNNING_CUDU_NUMBERS+=("cu")
+        fi
+    fi
+done < <(pgrep -af "nr-softmodem -O " | grep "configs/split_cu")
+
+# Attempt to extract the DU number from the configuration file path
+while read -r LINE; do
+    DU_NUMBER=$(echo "$LINE" | grep -oP "configs/split_du\K\d+\.conf" | sed 's/.conf//')
+    if [[ -n $DU_NUMBER ]]; then
+        # Add to array only if not already present
+        if [[ ! " ${RUNNING_CUDU_NUMBERS[@]} " =~ " du$DU_NUMBER " ]]; then
+            RUNNING_CUDU_NUMBERS+=("du$DU_NUMBER")
+        fi
+    fi
+done < <(pgrep -af "nr-softmodem -O " | grep "configs/split_du")
+
+# If any CU or DU found, also check for gnb.conf from the configuration file path
+if [ ${#RUNNING_CUDU_NUMBERS[@]} -gt 0 ]; then
+    while read -r LINE; do
+        GNB=$(echo "$LINE" | grep -oP "configs/gnb\.conf" | sed 's/.conf//')
+        if [[ -n $GNB ]]; then
+            # Add to array only if not already present
+            if [[ ! " ${RUNNING_CUDU_NUMBERS[@]} " =~ " gnb " ]]; then
+                RUNNING_CUDU_NUMBERS+=("gnb")
+            fi
+        fi
+    done < <(pgrep -af "nr-softmodem -O " | grep "configs/gnb")
 fi
+
+# Check if the DU is running
+if [ ${#RUNNING_CUDU_NUMBERS[@]} -gt 0 ]; then
+    echo "gNodeB: RUNNING (${RUNNING_CUDU_NUMBERS[*]})"
+else
+    if pgrep -x "nr-softmodem" >/dev/null; then
+        echo "gNodeB: RUNNING"
+    else
+        echo "gNodeB: NOT_RUNNING"
+    fi
+fi
+
+# if pgrep -x "nr-softmodem" >/dev/null; then
+#     echo "gNodeB: RUNNING"
+# else
+#     echo "gNodeB: NOT_RUNNING"
+# fi

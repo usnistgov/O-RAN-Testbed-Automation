@@ -345,7 +345,8 @@ sudo modprobe ip_vs_wrr
 sudo modprobe ip_vs_sh
 
 # Load SCTP module
-sudo modprobe sctp
+sudo modprobe --ignore-install sctp || true
+modprobe -c | grep -qE '^install[[:space:]]+sctp[[:space:]]+' && echo "NOTE: SCTP has an install override. Used --ignore-install."
 
 # Get the kernel major version
 KERNEL_VERSION="$(uname -r | cut -d'-' -f1)"
@@ -360,7 +361,15 @@ if [ "$MAJOR_VERSION" -lt 5 ]; then
 else
     # For newer kernels (version 5 and later), use the unified nf_conntrack module
     sudo modprobe nf_conntrack || true
-    sudo modprobe nf_conntrack_sctp || true
+    if modinfo -F filename nf_conntrack_sctp >/dev/null 2>&1; then
+        if ! modinfo -F filename nf_conntrack_sctp 2>/dev/null | grep -q '(builtin)'; then
+            sudo modprobe nf_conntrack_sctp || true
+        else
+            echo "NOTE: nf_conntrack_sctp is built into this kernel. Skipping modprobe."
+        fi
+    else
+        echo "NOTE: nf_conntrack_sctp module not present. Feature may be built-in or not provided."
+    fi
 fi
 
 # Ensure modules are loaded on boot

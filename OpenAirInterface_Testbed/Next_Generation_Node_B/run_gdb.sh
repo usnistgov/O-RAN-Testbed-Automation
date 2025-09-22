@@ -42,11 +42,23 @@ if ! command -v gdb &>/dev/null; then
     sudo env $APTVARS apt-get install -y gdb
 fi
 
+ADDITIONAL_FLAGS=""
+if [ -f "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build/libtelnetsrv.so" ]; then
+    echo "Found telnet server library. Enabling telnet server..."
+    TELNET_ADDRESS=127.0.0.1
+    TELNET_PORT=9099
+    ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --telnetsrv"
+    ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --telnetsrv.shrmod ci,o1"
+    ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --telnetsrv.listenaddr $TELNET_ADDRESS"
+    ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --telnetsrv.listenport $TELNET_PORT"
+    ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --telnetsrv.listenstdin 1"
+fi
+
 cd "$SCRIPT_DIR"
 mkdir -p logs
 >logs/gnb_stdout.txt
 
 cd "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build"
 
-# sudo gdb --args ./nr-softmodem -O "$SCRIPT_DIR/configs/gnb.conf" --rfsim --rfsimulator.serveraddr server --rfsimulator.options chanmod --gNBs.[0].min_rxtxtime 6
-sudo script -q -f -c "gdb --args ./nr-softmodem -O \"$SCRIPT_DIR/configs/gnb.conf\" --rfsim --rfsimulator.serveraddr server --rfsimulator.options chanmod --gNBs.[0].min_rxtxtime 6" "$SCRIPT_DIR/logs/gnb_stdout.txt"
+# sudo gdb --args ./nr-softmodem -O "$SCRIPT_DIR/configs/gnb.conf" --rfsim --rfsimulator.serveraddr server --rfsimulator.options chanmod --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS
+sudo script -q -f -c "gdb --args ./nr-softmodem -O \"$SCRIPT_DIR/configs/gnb.conf\" --rfsim --rfsimulator.serveraddr server --rfsimulator.options chanmod --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS" "$SCRIPT_DIR/logs/gnb_stdout.txt"

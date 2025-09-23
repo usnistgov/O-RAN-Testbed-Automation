@@ -57,7 +57,7 @@
       "type": "datasource",
       "id": "yesoreyeram-infinity-datasource",
       "name": "Infinity",
-      "version": "3.5.0"
+      "version": "3.6.0"
     }
   ],
   "annotations": {
@@ -233,6 +233,22 @@
             "keepTime": false,
             "replace": true,
             "source": "UE ID (allValues)"
+          }
+        },
+        {
+          "id": "transpose",
+          "options": {
+            "firstFieldName": "UE IDs"
+          }
+        },
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "UE IDs"
+              ]
+            }
           }
         }
       ],
@@ -5107,7 +5123,7 @@
       "type": "histogram"
     }
   ],
-  "refresh": "",
+  "refresh": "5s",
   "schemaVersion": 41,
   "tags": [],
   "templating": {
@@ -5173,8 +5189,8 @@
       {
         "allValue": "-1",
         "current": {
-          "text": "200",
-          "value": "200"
+          "text": "$__all",
+          "value": "$__all"
         },
         "includeAll": true,
         "name": "Sampling_Resolution",
@@ -5200,7 +5216,7 @@
             "value": "100"
           },
           {
-            "selected": true,
+            "selected": false,
             "text": "200",
             "value": "200"
           },

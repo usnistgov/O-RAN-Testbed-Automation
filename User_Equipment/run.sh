@@ -64,7 +64,7 @@ graceful_shutdown() {
     ./stop.sh
     exit
 }
-trap graceful_shutdown SIGINT
+trap graceful_shutdown SIGINT SIGTERM SIGQUIT
 
 UE_CONF_PATH="configs/ue$UE_NUMBER.conf"
 

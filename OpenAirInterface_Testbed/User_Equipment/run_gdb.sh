@@ -79,7 +79,7 @@ graceful_shutdown() {
     ./stop.sh
     exit
 }
-trap graceful_shutdown SIGINT
+trap graceful_shutdown SIGINT SIGTERM SIGQUIT
 
 # Function to update or add configuration properties in .conf files, considering sections and uncommenting if needed
 update_conf() {

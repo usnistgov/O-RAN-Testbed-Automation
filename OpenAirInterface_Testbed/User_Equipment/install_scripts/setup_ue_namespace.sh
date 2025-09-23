@@ -33,6 +33,9 @@ echo "# Script: $(realpath "$0")..."
 # Exit immediately if a command fails
 set -e
 
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+cd "$SCRIPT_DIR"
+
 UE_NUMBER=$1
 
 if [[ -z "$UE_NUMBER" ]]; then
@@ -49,7 +52,9 @@ UE_NAMESPACE="ue$UE_NUMBER"
 
 # Give the UE its own network namespace and configure it to access the host network
 NETWORK_INTERFACE=$(ip route | grep default | awk '{print $5}')
-UE_SUBNET_FIRST_3_OCTETS=10.201.$UE_NUMBER
+# Fetch the base IP using the Python script
+BASE_IP=$(python3 fetch_nth_ip.py 0.10.201.0/24 $((UE_NUMBER - 1)))
+UE_SUBNET_FIRST_3_OCTETS=$(echo $BASE_IP | cut -d. -f2-4)
 UE_HOST_IP=$UE_SUBNET_FIRST_3_OCTETS.1
 UE_NS_IP=$UE_SUBNET_FIRST_3_OCTETS.2
 

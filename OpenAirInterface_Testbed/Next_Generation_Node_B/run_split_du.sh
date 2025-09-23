@@ -28,6 +28,9 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
+# Exit immediately if a command fails
+set -e
+
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
@@ -80,12 +83,6 @@ if [ "$RFSIM_SERVER" -ne 0 ]; then
     RFSIM_SERVER_ARG="--rfsimulator.serveraddr server"
 fi
 
-DU_CONFIG="$SCRIPT_DIR/configs/split_du$DU_NUMBER.conf"
-if [ ! -f "$DU_CONFIG" ]; then
-    echo "ERROR: Configuration file $DU_CONFIG does not exist."
-    exit 1
-fi
-
 # ADDITIONAL_FLAGS=""
 # if [ -f "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build/libtelnetsrv.so" ]; then
 #     echo "Found telnet server library. Enabling telnet server..."
@@ -99,6 +96,13 @@ fi
 # fi
 
 cd "$SCRIPT_DIR"
+
+DU_CONFIG="$SCRIPT_DIR/configs/split_du$DU_NUMBER.conf"
+if [ ! -f "$DU_CONFIG" ]; then
+    echo "Generating configuration for DU $DU_NUMBER..."
+    ./install_scripts/generate_du_configuration.sh "$DU_NUMBER"
+fi
+
 mkdir -p logs
 >logs/split_du${DU_NUMBER}_stdout.txt
 

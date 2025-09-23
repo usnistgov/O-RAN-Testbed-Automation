@@ -76,10 +76,10 @@ fi
 # Function to handle graceful shutdown
 graceful_shutdown() {
     echo "Shutting down UE $UE_NUMBER gracefully..."
-    ./stop.sh
+    "$SCRIPT_DIR/stop.sh" $UE_NUMBER
     exit
 }
-trap graceful_shutdown SIGINT
+trap graceful_shutdown SIGINT SIGTERM SIGQUIT
 
 # Function to update or add configuration properties in .conf files, considering sections and uncommenting if needed
 update_conf() {

@@ -33,6 +33,9 @@ echo "# Script: $(realpath "$0")..."
 # Do not exit immediately if a command fails
 set +e
 
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+cd "$SCRIPT_DIR"
+
 DU_NUMBER=$1
 
 if [[ -z "$DU_NUMBER" ]]; then
@@ -47,8 +50,11 @@ fi
 
 DU_NAMESPACE="du$DU_NUMBER"
 
+# Give the DU its own network namespace and configure it to access the host network
 NETWORK_INTERFACE=$(ip route | grep default | awk '{print $5}')
-DU_SUBNET_FIRST_3_OCTETS=10.202.$DU_NUMBER
+# Fetch the base IP using the Python script
+BASE_IP=$(python3 fetch_nth_ip.py 0.10.202.0/24 $((DU_NUMBER - 1)))
+DU_SUBNET_FIRST_3_OCTETS=$(echo $BASE_IP | cut -d. -f2-4)
 DU_HOST_IP=$DU_SUBNET_FIRST_3_OCTETS.1
 DU_NS_IP=$DU_SUBNET_FIRST_3_OCTETS.2
 

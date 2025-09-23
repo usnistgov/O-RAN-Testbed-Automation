@@ -28,6 +28,9 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
+# Exit immediately if a command fails
+set -e
+
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
@@ -73,8 +76,8 @@ cd "$SCRIPT_DIR"
 if ./is_running.sh | grep -E "^gNodeB:" | grep -q "du$DU_NUMBER"; then
     echo "Already running gNodeB (DU $DU_NUMBER)."
 else
-    if [ ! -f "configs/gnb.conf" ]; then
-        echo "Configuration was not found for OAI DU $DU_NUMBER. Please run ./generate_configurations.sh first."
+    if [ ! -d "configs" ]; then
+        echo "Configuration directory does not exist. Please run ./generate_configurations.sh first."
         exit 1
     fi
 

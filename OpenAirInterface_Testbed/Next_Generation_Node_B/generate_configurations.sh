@@ -216,77 +216,16 @@ for CONF_FILE in gnb.conf split_cu.conf "${SPLIT_DUS[@]}"; do
     fi
 done
 
+echo
 echo "Generating configuration for CU..."
 # Set the local_n_address in the CU configuration file
 sed -i 's|^\([[:space:]]*\)local_n_address\s*=.*|\1local_n_address     = "127.0.0.100";|' "configs/split_cu.conf"
+echo "    Configured CU."
 
 for DU_CONF in "${SPLIT_DUS[@]}"; do
-    DU_ID=$(echo "$DU_CONF" | grep -oP 'split_du\K[0-9]+')
-    if [[ -n "$DU_ID" ]]; then
-        echo "Generating configuration for DU $DU_ID..."
-
-        # Set Active_gNBs = ... to Active_gNBs = ( "du${DU_ID}-rfsim");
-        sed -i "s|^\([[:space:]]*\)Active_gNBs\s*=.*|\1Active_gNBs = ( \"du${DU_ID}-rfsim\" );|" "configs/$DU_CONF"
-
-        HEX=$(printf '%x' $((0xe00 + DU_ID - 1)))
-
-        # Set unique gNB_ID, gNB_DU_ID, gNB_name, nr_cellid, physCellId, local_n_address, and remote_n_address
-        sed -i "s|^\([[:space:]]*\)gNB_ID\s*=.*|\1gNB_ID = 0x$HEX;|" "configs/$DU_CONF"
-        awk -v hex="$HEX" '
-        FNR==NR { if ($0 ~ /^\s*gNB_DU_ID\s*=/) found=1; next }
-        {
-            print
-            if (!found && $0 ~ /^\s*gNB_ID\s*=/) {
-                sub(/[^ ].*$/, "", $0)
-                print $0 "gNB_DU_ID = 0x" hex ";"
-                found=1
-            }
-        }
-        ' "configs/$DU_CONF" "configs/$DU_CONF" >"configs/$DU_CONF.tmp" && mv "configs/$DU_CONF.tmp" "configs/$DU_CONF"
-        sed -i "s|^\([[:space:]]*\)gNB_name\s*=.*|\1gNB_name = \"du${DU_ID}-rfsim\";|" "configs/$DU_CONF"
-        sed -i "s|^\([[:space:]]*\)nr_cellid\s*=.*|\1nr_cellid = $((11111111 + DU_ID - 1))L;|" "configs/$DU_CONF"
-        sed -i "s|^\([[:space:]]*\)physCellId\s*=.*|\1physCellId = $((DU_ID - 1));|" "configs/$DU_CONF"
-
-        LAST_OCT=$((DU_ID + 100)) # The CU is 127.0.0.100, and DU 1 is 127.0.0.101
-        # Set local_n_address and remote_n_address inside the MACRLCs section
-        awk -v last="$LAST_OCT" '
-          /^[[:space:]]*MACRLCs[[:space:]]*=\s*\(/ { in_m=1; ins=0; tnp_ins=0 }
-          in_m && /^[[:space:]]*\)\s*;/ { print; in_m=0; next }
-          in_m && /^[[:space:]]*(local_n_address|remote_n_address)[[:space:]]*=/ { next }
-          in_m && /^[[:space:]]*tr_n_preference[[:space:]]*=/ {
-            if (tnp_ins) { next }
-            match($0, /^[[:space:]]*/); ind=substr($0,1,RLENGTH)
-            printf "%str_n_preference             = \"f1\";\n", ind
-            if (!ins) {
-              printf "%slocal_n_address             = \"127.0.0.%d\";\n%sremote_n_address            = \"127.0.0.3\";\n", ind, last, ind
-              ins=1
-            }
-            next
-          }
-          in_m && !ins && /^[[:space:]]*num_cc[[:space:]]*=/ {
-            print
-            match($0, /^[[:space:]]*/); ind=substr($0,1,RLENGTH)
-            printf "%str_n_preference             = \"f1\";\n%slocal_n_address             = \"127.0.0.%d\";\n%sremote_n_address            = \"127.0.0.3\";\n", ind, ind, last, ind
-            ins=1
-            tnp_ins=1
-            next
-          }
-          { print }
-        ' "configs/$DU_CONF" >"configs/$DU_CONF.tmp" && mv "configs/$DU_CONF.tmp" "configs/$DU_CONF"
-
-        comment_out "configs/$DU_CONF" "amf_ip_address"
-
-        # Comment out the entire security section
-        awk '
-          BEGIN { in_sec=0 }
-          /^[[:space:]]*security[[:space:]]*=[[:space:]]*{[[:space:]]*$/ { print "#"$0; in_sec=1; next }
-          in_sec && /^[[:space:]]*}[[:space:]]*;[[:space:]]*$/ { print "#"$0; in_sec=0; next }
-          in_sec { print "#"$0; next }
-          { print }
-        ' "configs/$DU_CONF" >"configs/$DU_CONF.tmp" && mv "configs/$DU_CONF.tmp" "configs/$DU_CONF"
-
-        comment_out "configs/$DU_CONF" "serveraddr"
-    fi
+    DU_NUMBER=$(echo "$DU_CONF" | grep -oP 'split_du\K[0-9]+')
+    ./install_scripts/generate_du_configuration.sh "$DU_NUMBER"
 done
 
+echo
 echo "Successfully configured the gNodeB and split CU/DUs. The configuration files are located in the configs/ directory."

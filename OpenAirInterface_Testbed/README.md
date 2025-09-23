@@ -42,7 +42,7 @@ The script `run_handover_scenario.sh`, based on the handover tutorial [\[4\]][oa
   <hr>
   
   <p align="center">
-    <img src="../Images/F1_Handover_Scenario_Example.png" alt="F1 Handover Scenario Example Output" width="70%">
+    <img src="../Images/F1_Handover_Scenario_Example.png" alt="F1 Handover Scenario Example Output">
   </p>
 
 </details>

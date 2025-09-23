@@ -140,6 +140,17 @@ if [[ -z "$SST" || -z "$SD" || "$SST" == "null" || "$SD" == "null" ]]; then
     exit 1
 fi
 
+OGSTUN_IPV4=$(yq eval '.ogstun_ipv4' "$YAML_PATH")
+OGSTUN_IPV6=$(yq eval '.ogstun_ipv6' "$YAML_PATH")
+if [[ "$OGSTUN_IPV4" == "null" || -z "$OGSTUN_IPV4" ]]; then
+    echo "Missing parameter in "$YAML_PATH": ogstun_ipv4"
+    exit 1
+fi
+if [[ "$OGSTUN_IPV6" == "null" || -z "$OGSTUN_IPV6" ]]; then
+    echo "Missing parameter in "$YAML_PATH": ogstun_ipv6"
+    exit 1
+fi
+
 echo "Saving configuration file example..."
 if [ "$CLEAR_CONFIGS" = true ]; then
     sudo rm -rf configs
@@ -198,11 +209,19 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
         echo "@include \"channelmod_rfsimu.conf\"" >>"configs/ue$UE_NUMBER.conf"
     fi
 
+    UE_IPV4=""
     if [ $UE_NUMBER -gt 3 ]; then
         echo "UE is greater than registered subscribers, registering UE $UE_NUMBER..."
         REGISTRATION_DIR=$(dirname "$SCRIPT_DIR")/5G_Core_Network/install_scripts
         if [ -f "$REGISTRATION_DIR/./register_subscriber.sh" ]; then
-            "$REGISTRATION_DIR/./register_subscriber.sh" --imsi "$UE_IMSI" --key "$UE_KEY" --opc "$UE_OPC" --apn "$DNN" || true
+            UE_INDEX=$((UE_NUMBER + 99))
+            UE_IPV4=$(python3 install_scripts/fetch_nth_ip.py "$OGSTUN_IPV4" "$UE_INDEX")
+            if [ $? -eq 0 ]; then
+                IPV4_LINE="--ipv4 $UE_IPV4"
+            else
+                IPV4_LINE=""
+            fi
+            "$REGISTRATION_DIR/./register_subscriber.sh" --imsi "$UE_IMSI" --key "$UE_KEY" --opc "$UE_OPC" --apn "$DNN" --sst "$SST" --sd "$SD" $IPV4_LINE || true
         fi
     fi
 
@@ -216,6 +235,9 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
     echo "    DNN:  $DNN"
     echo "    SST:  $SST"
     echo "    SD:   $SD"
+    if [ -n "$UE_IPV4" ]; then
+        echo "    IPv4: $UE_IPV4"
+    fi
     echo
 
     echo "The configuration file is located in the configs/ directory."

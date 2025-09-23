@@ -46,7 +46,7 @@ graceful_shutdown() {
     ./stop.sh
     exit
 }
-trap graceful_shutdown SIGINT
+trap graceful_shutdown SIGINT SIGTERM SIGQUIT
 
 if pgrep -x "gnb" >/dev/null; then
     echo "Already running gnb."

@@ -33,6 +33,9 @@ echo "# Script: $(realpath "$0")..."
 # Do not exit immediately if a command fails
 set +e
 
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+cd "$SCRIPT_DIR"
+
 UE_NUMBER=$1
 
 if [[ -z "$UE_NUMBER" ]]; then
@@ -47,8 +50,11 @@ fi
 
 UE_NAMESPACE="ue$UE_NUMBER"
 
+# Give the UE its own network namespace and configure it to access the host network
 NETWORK_INTERFACE=$(ip route | grep default | awk '{print $5}')
-UE_SUBNET_FIRST_3_OCTETS=10.201.$UE_NUMBER
+# Fetch the base IP using the Python script
+BASE_IP=$(python3 fetch_nth_ip.py 0.10.201.0/24 $((UE_NUMBER - 1)))
+UE_SUBNET_FIRST_3_OCTETS=$(echo $BASE_IP | cut -d. -f2-4)
 UE_HOST_IP=$UE_SUBNET_FIRST_3_OCTETS.1
 UE_NS_IP=$UE_SUBNET_FIRST_3_OCTETS.2
 
@@ -58,7 +64,6 @@ sudo ip netns exec $UE_NAMESPACE ip addr del $UE_NS_IP/24 dev v-$UE_NAMESPACE
 sudo ip netns exec $UE_NAMESPACE ip link set v-$UE_NAMESPACE down
 
 echo "Removing iptables rules..."
-
 sudo iptables -D FORWARD -o $NETWORK_INTERFACE -i v-eth$UE_NUMBER -j ACCEPT
 sudo iptables -D FORWARD -i $NETWORK_INTERFACE -o v-eth$UE_NUMBER -j ACCEPT
 sudo iptables -t nat -D POSTROUTING -s $UE_SUBNET_FIRST_3_OCTETS.0/24 -o $NETWORK_INTERFACE -j MASQUERADE

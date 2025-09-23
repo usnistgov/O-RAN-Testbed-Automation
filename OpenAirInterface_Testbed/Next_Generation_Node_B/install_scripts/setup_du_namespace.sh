@@ -52,18 +52,11 @@ DU_NAMESPACE="du$DU_NUMBER"
 
 # Give the DU its own network namespace and configure it to access the host network
 NETWORK_INTERFACE=$(ip route | grep default | awk '{print $5}')
-DU_INDEX=$((DU_NUMBER - 1))
-
 # Fetch the base IP using the Python script
-BASE_IP=$(python3 fetch_nth_ip.py 0.10.202.0/24 $DU_INDEX)
+BASE_IP=$(python3 fetch_nth_ip.py 0.10.202.0/24 $((DU_NUMBER - 1)))
 DU_SUBNET_FIRST_3_OCTETS=$(echo $BASE_IP | cut -d. -f2-4)
 DU_HOST_IP=$DU_SUBNET_FIRST_3_OCTETS.1
 DU_NS_IP=$DU_SUBNET_FIRST_3_OCTETS.2
-
-echo "Subnet is $DU_SUBNET_FIRST_3_OCTETS.0/24"
-echo "Host IP is $DU_HOST_IP"
-echo "Namespace IP is $DU_NS_IP"
-exit 0
 
 # Code from (https://open-cells.com/index.php/2021/02/08/rf-simulator-1-enb-2-ues-all-in-one):
 sudo ip netns delete $DU_NAMESPACE || true

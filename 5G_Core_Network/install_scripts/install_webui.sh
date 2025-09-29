@@ -52,8 +52,20 @@ if ! echo "deb [arch=amd64,arm64 signed-by=/etc/apt/keyrings/nodesource.gpg] htt
     ) | sudo bash -
 fi
 
+sudo tee /etc/apt/preferences.d/nodesource >/dev/null <<'EOF'
+Package: nodejs
+Pin: origin deb.nodesource.com
+Pin-Priority: 1001
+EOF
+
 sudo apt-get update
 
 sudo env $APTVARS apt-get install -y nodejs
+
+if ! command -v npm >/dev/null || [ "$(node -p 'process.versions.node.split(`.`)[0]' 2>/dev/null)" -ne "$NODE_MAJOR" ]; then
+    echo "Node.js version or npm not as expected. Using NodeSource setup script..."
+    curl -fsSL https://deb.nodesource.com/setup_$NODE_MAJOR.x | sudo -E bash -
+    sudo env $APTVARS apt-get install -y nodejs
+fi
 
 curl -fsSL https://open5gs.org/open5gs/assets/webui/install | sudo -E bash -

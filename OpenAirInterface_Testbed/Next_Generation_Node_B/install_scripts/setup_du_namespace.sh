@@ -53,7 +53,7 @@ DU_NAMESPACE="du$DU_NUMBER"
 # Give the DU its own network namespace and configure it to access the host network
 NETWORK_INTERFACE=$(ip route | grep default | awk '{print $5}')
 # Fetch the base IP using the Python script
-BASE_IP=$(python3 fetch_nth_ip.py 0.10.202.0/24 $((DU_NUMBER - 1)))
+BASE_IP=$(python3 fetch_nth_ip.py 0.10.202.0/16 $((DU_NUMBER - 1)))
 DU_SUBNET_FIRST_3_OCTETS=$(echo $BASE_IP | cut -d. -f2-4)
 DU_HOST_IP=$DU_SUBNET_FIRST_3_OCTETS.1
 DU_NS_IP=$DU_SUBNET_FIRST_3_OCTETS.2
@@ -64,14 +64,14 @@ sudo ip link delete v-eth-du$DU_NUMBER || true
 sudo ip netns add $DU_NAMESPACE
 sudo ip link add v-eth-du$DU_NUMBER type veth peer name v-$DU_NAMESPACE
 sudo ip link set v-$DU_NAMESPACE netns $DU_NAMESPACE
-sudo ip addr add $DU_HOST_IP/24 dev v-eth-du$DU_NUMBER
+sudo ip addr add $DU_HOST_IP/16 dev v-eth-du$DU_NUMBER
 sudo ip link set v-eth-du$DU_NUMBER up
-sudo iptables -t nat -A POSTROUTING -s $DU_SUBNET_FIRST_3_OCTETS.0/24 -o $NETWORK_INTERFACE -j MASQUERADE
+sudo iptables -t nat -A POSTROUTING -s $DU_SUBNET_FIRST_3_OCTETS.0/16 -o $NETWORK_INTERFACE -j MASQUERADE
 # Allow forwarding between host primary interface and the DU veth
 sudo iptables -A FORWARD -i $NETWORK_INTERFACE -o v-eth-du$DU_NUMBER -j ACCEPT
 sudo iptables -A FORWARD -o $NETWORK_INTERFACE -i v-eth-du$DU_NUMBER -j ACCEPT
 
 sudo ip netns exec $DU_NAMESPACE ip link set dev lo up
-sudo ip netns exec $DU_NAMESPACE ip addr add $DU_NS_IP/24 dev v-$DU_NAMESPACE
+sudo ip netns exec $DU_NAMESPACE ip addr add $DU_NS_IP/16 dev v-$DU_NAMESPACE
 sudo ip netns exec $DU_NAMESPACE ip link set v-$DU_NAMESPACE up
 sudo ip netns exec $DU_NAMESPACE ip route add default via $DU_HOST_IP

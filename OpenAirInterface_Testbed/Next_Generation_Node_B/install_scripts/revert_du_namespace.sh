@@ -53,20 +53,20 @@ DU_NAMESPACE="du$DU_NUMBER"
 # Give the DU its own network namespace and configure it to access the host network
 NETWORK_INTERFACE=$(ip route | grep default | awk '{print $5}')
 # Fetch the base IP using the Python script
-BASE_IP=$(python3 fetch_nth_ip.py 0.10.202.0/24 $((DU_NUMBER - 1)))
+BASE_IP=$(python3 fetch_nth_ip.py 0.10.202.0/16 $((DU_NUMBER - 1)))
 DU_SUBNET_FIRST_3_OCTETS=$(echo $BASE_IP | cut -d. -f2-4)
 DU_HOST_IP=$DU_SUBNET_FIRST_3_OCTETS.1
 DU_NS_IP=$DU_SUBNET_FIRST_3_OCTETS.2
 
 echo "Removing IP routes and addresses inside the namespace..."
 sudo ip netns exec $DU_NAMESPACE ip route del default via $DU_HOST_IP
-sudo ip netns exec $DU_NAMESPACE ip addr del $DU_NS_IP/24 dev v-$DU_NAMESPACE
+sudo ip netns exec $DU_NAMESPACE ip addr del $DU_NS_IP/16 dev v-$DU_NAMESPACE
 sudo ip netns exec $DU_NAMESPACE ip link set v-$DU_NAMESPACE down
 
 echo "Removing iptables rules..."
 sudo iptables -D FORWARD -o $NETWORK_INTERFACE -i v-eth-du$DU_NUMBER -j ACCEPT
 sudo iptables -D FORWARD -i $NETWORK_INTERFACE -o v-eth-du$DU_NUMBER -j ACCEPT
-sudo iptables -t nat -D POSTROUTING -s $DU_SUBNET_FIRST_3_OCTETS.0/24 -o $NETWORK_INTERFACE -j MASQDURADE
+sudo iptables -t nat -D POSTROUTING -s $DU_SUBNET_FIRST_3_OCTETS.0/16 -o $NETWORK_INTERFACE -j MASQDURADE
 
 echo "Deleting the network devices..."
 sudo ip link set v-eth-du$DU_NUMBER down

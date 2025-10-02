@@ -106,7 +106,7 @@ if ! command -v python3 &>/dev/null; then
 fi
 
 DU_IP_INDEX=$((DU_NUMBER + 99)) # The CU is 127.0.0.100, and DU 1 is 127.0.0.101
-LOCAL_N_ADDRESS="$(python3 install_scripts/fetch_nth_ip.py "127.0.0.0/24" "$DU_IP_INDEX")"
+LOCAL_N_ADDRESS="$(python3 install_scripts/fetch_nth_ip.py "127.0.0.0/16" "$DU_IP_INDEX")"
 REMOTE_N_ADDRESS="127.0.0.3"
 
 # Set local_n_address and remote_n_address inside the MACRLCs section

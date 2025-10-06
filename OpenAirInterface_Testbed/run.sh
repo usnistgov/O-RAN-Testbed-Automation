@@ -124,7 +124,7 @@ echo -e "\nUE is ready."
 cd ..
 
 echo
-echo "Running FlexRIC..."
+echo "Running xApp KPM Monitor..."
 cd RAN_Intelligent_Controllers/Flexible-RIC
 ./run_xapp_kpm_moni.sh
 cd ../..

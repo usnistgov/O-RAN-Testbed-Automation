@@ -31,7 +31,7 @@
 # Exit immediately if a command fails
 set -e
 
-CLEAN_INSTALL=false
+CLEAN_INSTALL=true
 DEBUG_SYMBOLS=false
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"

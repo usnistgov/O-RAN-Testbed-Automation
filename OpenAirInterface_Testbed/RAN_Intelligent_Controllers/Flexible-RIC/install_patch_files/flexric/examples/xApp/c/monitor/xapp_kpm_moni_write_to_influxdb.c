@@ -77,6 +77,10 @@ unsigned int influx_num_samples = 0;
 uint64_t current_ue_id = 0;
 bool filter_current_sample = false;
 
+// Buffer to store the current E2 Node ID
+static
+char current_e2_id_str[256];
+
 static void log_gnb_ue_id(ue_id_e2sm_t ue_id) {
   if (ue_id.gnb.gnb_cu_ue_f1ap_lst != NULL) {
     for (size_t i = 0; i < ue_id.gnb.gnb_cu_ue_f1ap_lst_len; i++) {
@@ -89,6 +93,49 @@ static void log_gnb_ue_id(ue_id_e2sm_t ue_id) {
     printf("ran_ue_id = %lx\n", *ue_id.gnb.ran_ue_id); // RAN UE NGAP ID
   }
   current_ue_id = ue_id.gnb.amf_ue_ngap_id; // Update the global UE ID
+
+  // Store the current E2 Node ID (prefer Global NG-RAN Node ID, then Global gNB ID, then CU F1AP ID)
+  if (ue_id.gnb.global_ng_ran_node_id) {
+    const global_ng_ran_node_id_t *n = ue_id.gnb.global_ng_ran_node_id;
+    switch (n->type) {
+      case GNB_GLOBAL_TYPE_ID: {
+        const global_gnb_id_t *g = &n->global_gnb_id;
+        if (g->type == GNB_TYPE_ID) {
+          snprintf(current_e2_id_str, sizeof(current_e2_id_str), "gNB:%u", (unsigned)g->gnb_id.nb_id);
+        } else {
+          snprintf(current_e2_id_str, sizeof(current_e2_id_str), "gNB:UNKNOWN");
+        }
+        break;
+      }
+      case NG_ENB_GLOBAL_TYPE_ID: {
+        const global_ng_enb_id_t *e = &n->global_ng_enb_id;
+        switch (e->type) {
+          case MACRO_NG_ENB_TYPE_ID:
+            snprintf(current_e2_id_str, sizeof(current_e2_id_str), "ng-eNB-macro:%u", (unsigned)e->macro_ng_enb_id);
+            break;
+          case SHORT_MACRO_NG_ENB_TYPE_ID:
+            snprintf(current_e2_id_str, sizeof(current_e2_id_str), "ng-eNB-short:%u", (unsigned)e->short_macro_ng_enb_id);
+            break;
+          case LONG_MACRO_NG_ENB_TYPE_ID:
+            snprintf(current_e2_id_str, sizeof(current_e2_id_str), "ng-eNB-long:%u", (unsigned)e->long_macro_ng_enb_id);
+            break;
+          default:
+            snprintf(current_e2_id_str, sizeof(current_e2_id_str), "ng-eNB:unsupported:%d", (int)e->type);
+            break;
+        }
+        break;
+      }
+      default:
+        snprintf(current_e2_id_str, sizeof(current_e2_id_str), "UNKNOWN");
+        break;
+    }
+  } else if (ue_id.gnb.global_gnb_id) {
+    snprintf(current_e2_id_str, sizeof(current_e2_id_str), "gNB:%u", (unsigned)ue_id.gnb.global_gnb_id->gnb_id.nb_id);
+  } else if (ue_id.gnb.gnb_cu_ue_f1ap_lst && ue_id.gnb.gnb_cu_ue_f1ap_lst_len > 0) {
+    snprintf(current_e2_id_str, sizeof(current_e2_id_str), "CU:%u", (unsigned)ue_id.gnb.gnb_cu_ue_f1ap_lst[0]);
+  } else {
+    snprintf(current_e2_id_str, sizeof(current_e2_id_str), "gNB");
+  }
 }
 
 static void log_du_ue_id(ue_id_e2sm_t ue_id) {
@@ -97,6 +144,9 @@ static void log_du_ue_id(ue_id_e2sm_t ue_id) {
     printf("ran_ue_id = %lx\n", *ue_id.gnb_du.ran_ue_id); // RAN UE NGAP ID
   }
   current_ue_id = ue_id.gnb_du.gnb_cu_ue_f1ap; // Update the global UE ID
+
+  // Store the current E2 Node ID
+  snprintf(current_e2_id_str, sizeof(current_e2_id_str), "DU:%u", ue_id.gnb_du.gnb_cu_ue_f1ap);
 }
 
 static void log_cuup_ue_id(ue_id_e2sm_t ue_id) {
@@ -105,6 +155,9 @@ static void log_cuup_ue_id(ue_id_e2sm_t ue_id) {
     printf("ran_ue_id = %lx\n", *ue_id.gnb_cu_up.ran_ue_id); // RAN UE NGAP ID
   }
   current_ue_id = ue_id.gnb_cu_up.gnb_cu_cp_ue_e1ap; // Update the global UE ID
+
+  // Store the current E2 Node ID
+  snprintf(current_e2_id_str, sizeof(current_e2_id_str), "CU-UP:%u", ue_id.gnb_cu_up.gnb_cu_cp_ue_e1ap);
 }
 
 typedef void (*log_ue_id)(ue_id_e2sm_t ue_id);
@@ -157,7 +210,7 @@ void influxdb_write(char *line_protocol) {
 }
 
 // At the end of the measurement cycle, send the metrics to InfluxDB
-void send_metrics_to_influxdb(uint64_t ue_id, int64_t timestamp_ms, char *fields_buffer) {
+void send_metrics_to_influxdb(uint64_t ue_id, const char *e2_node_id, int64_t timestamp_ms, char *fields_buffer) {
   char line_protocol[1024];
 
   // Ensure there's a trailing comma if not already present
@@ -169,13 +222,13 @@ void send_metrics_to_influxdb(uint64_t ue_id, int64_t timestamp_ms, char *fields
   // Round down the timestamp to the nearest multiple of timestamp_precision so that multiple UEs in the same window can share the same timestamp
   timestamp_ms = timestamp_ms - (timestamp_ms % timestamp_precision);
 
-  // Construct Line Protocol (measurement: kpm_measurements) with UE_ID as a field
+  // Construct Line Protocol (measurement: kpm_measurements) with E2_NODE_ID and UE_ID as fields
   snprintf(line_protocol, sizeof(line_protocol),
-           "kpm_measurements %sUE_ID=%" PRIu64 "i %ld",
-           fields_buffer, ue_id, timestamp_ms);
+           "kpm_measurements %sE2_NODE_ID=\"%s\",UE_ID=%" PRIu64 "i %ld",
+           fields_buffer, e2_node_id, ue_id, timestamp_ms);
 
   // Print metrics to the console
-  printf("Metrics for UE ID %" PRIu64 ": %s (timestamp: %ld ms)\n", ue_id, fields_buffer, timestamp_ms);
+  printf("Metrics for UE ID %" PRIu64 " (E2 Node: %s): %s (timestamp: %ld ms)\n", ue_id, e2_node_id, fields_buffer, timestamp_ms);
 
   // Send metrics to InfluxDB
   influxdb_write(line_protocol);
@@ -412,7 +465,7 @@ static void log_kpm_measurements(kpm_ind_msg_format_1_t const *msg_frm_1) {
   if (filter_invalid_rsrp_samples || !filter_current_sample) {
     // InfluxDB send:
     int64_t now_ms = time_now_us() / 1000;
-    send_metrics_to_influxdb(current_ue_id, now_ms, influx_fields_buffer);
+    send_metrics_to_influxdb(current_ue_id, current_e2_id_str, now_ms, influx_fields_buffer);
   }
 
   filter_current_sample = false;

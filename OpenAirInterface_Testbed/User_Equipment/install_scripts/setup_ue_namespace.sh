@@ -30,6 +30,14 @@
 
 echo "# Script: $(realpath "$0")..."
 
+UE_DU_NS_SUBNET="10.200.0.0/16" # Must match setup_du_namespace.sh
+UE_IP_OFFSET=256 # Must match revert_ue_namespace.sh
+
+# Shared bridge (single L2 for all rf-sim instances)
+BRIDGE_NAME="br-rfsim"
+BRIDGE_GW_IP="10.200.0.1"
+BRIDGE_CIDR="$BRIDGE_GW_IP/16"
+
 # Exit immediately if a command fails
 set -e
 
@@ -49,14 +57,22 @@ if ! [[ $UE_NUMBER =~ ^[0-9]+$ ]]; then
 fi
 
 UE_NAMESPACE="ue$UE_NUMBER"
+UE_NS_IP=$(python3 fetch_nth_ip.py $UE_DU_NS_SUBNET $((UE_IP_OFFSET + UE_NUMBER)))
 
 # Give the UE its own network namespace and configure it to access the host network
 NETWORK_INTERFACE=$(ip route | grep default | awk '{print $5}')
-# Fetch the base IP using the Python script
-BASE_IP=$(python3 fetch_nth_ip.py 0.10.201.0/16 $((UE_NUMBER - 1)))
-UE_SUBNET_FIRST_3_OCTETS=$(echo $BASE_IP | cut -d. -f2-4)
-UE_HOST_IP=$UE_SUBNET_FIRST_3_OCTETS.1
-UE_NS_IP=$UE_SUBNET_FIRST_3_OCTETS.2
+
+# Ensure shared bridge exists
+sudo sysctl -w net.ipv4.ip_forward=1 >/dev/null
+if ! ip link show "$BRIDGE_NAME" >/dev/null 2>&1; then
+    sudo ip link add "$BRIDGE_NAME" type bridge
+    sudo ip addr add "$BRIDGE_CIDR" dev "$BRIDGE_NAME"
+    sudo ip link set "$BRIDGE_NAME" up
+fi
+# Ensure single MASQUERADE from shared subnet
+if ! sudo iptables -t nat -C POSTROUTING -s "$UE_DU_NS_SUBNET" -o "$NETWORK_INTERFACE" -j MASQUERADE 2>/dev/null; then
+    sudo iptables -t nat -A POSTROUTING -s "$UE_DU_NS_SUBNET" -o "$NETWORK_INTERFACE" -j MASQUERADE
+fi
 
 # Code from (https://open-cells.com/index.php/2021/02/08/rf-simulator-1-enb-2-ues-all-in-one):
 sudo ip netns delete $UE_NAMESPACE || true
@@ -64,14 +80,12 @@ sudo ip link delete v-eth$UE_NUMBER || true
 sudo ip netns add $UE_NAMESPACE
 sudo ip link add v-eth$UE_NUMBER type veth peer name v-$UE_NAMESPACE
 sudo ip link set v-$UE_NAMESPACE netns $UE_NAMESPACE
-sudo ip addr add $UE_HOST_IP/16 dev v-eth$UE_NUMBER
+
+# Attach host end to shared bridge (no IP on host veth)
+sudo ip link set v-eth$UE_NUMBER master $BRIDGE_NAME
 sudo ip link set v-eth$UE_NUMBER up
-sudo iptables -t nat -A POSTROUTING -s $UE_SUBNET_FIRST_3_OCTETS.0/16 -o $NETWORK_INTERFACE -j MASQUERADE
-# Allow forwarding between host primary interface and the UE veth
-sudo iptables -A FORWARD -i $NETWORK_INTERFACE -o v-eth$UE_NUMBER -j ACCEPT
-sudo iptables -A FORWARD -o $NETWORK_INTERFACE -i v-eth$UE_NUMBER -j ACCEPT
 
 sudo ip netns exec $UE_NAMESPACE ip link set dev lo up
 sudo ip netns exec $UE_NAMESPACE ip addr add $UE_NS_IP/16 dev v-$UE_NAMESPACE
 sudo ip netns exec $UE_NAMESPACE ip link set v-$UE_NAMESPACE up
-sudo ip netns exec $UE_NAMESPACE ip route add default via $UE_HOST_IP
+sudo ip netns exec $UE_NAMESPACE ip route add default via $BRIDGE_GW_IP

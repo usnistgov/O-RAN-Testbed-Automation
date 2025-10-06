@@ -54,6 +54,10 @@ if [ -f "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build/libtelnets
     ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --telnetsrv.listenstdin 1"
 fi
 
+# Write the hostname IP to the get_rfsim_server_address.txt file
+HOSTNAME_IP=$(hostname -I | awk '{print $1}')
+echo "$HOSTNAME_IP" > configs/get_rfsim_server_address.txt
+
 cd "$SCRIPT_DIR"
 mkdir -p logs
 >logs/gnb_stdout.txt

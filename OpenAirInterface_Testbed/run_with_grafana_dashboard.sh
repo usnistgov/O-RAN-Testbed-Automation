@@ -123,7 +123,7 @@ echo -e "\nUE is ready."
 cd ..
 
 echo
-echo "Running FlexRIC..."
+echo "Running xApp KPM Monitor..."
 cd RAN_Intelligent_Controllers/Flexible-RIC/additional_scripts
 
 # Send metrics to CSV (Grafana dashboard provided)

@@ -78,6 +78,10 @@ uint64_t current_ue_id = 0;
 bool filter_current_sample = false;
 int64_t prev_now = 0;
 
+// Buffer to store the current E2 Node ID
+static
+char current_e2_id_str[256];
+
 static void log_gnb_ue_id(ue_id_e2sm_t ue_id) {
   if (ue_id.gnb.gnb_cu_ue_f1ap_lst != NULL) {
     for (size_t i = 0; i < ue_id.gnb.gnb_cu_ue_f1ap_lst_len; i++) {
@@ -90,6 +94,49 @@ static void log_gnb_ue_id(ue_id_e2sm_t ue_id) {
     printf("ran_ue_id = %lx\n", *ue_id.gnb.ran_ue_id); // RAN UE NGAP ID
   }
   current_ue_id = ue_id.gnb.amf_ue_ngap_id; // Update the global UE ID
+
+  // Store the current E2 Node ID (prefer Global NG-RAN Node ID, then Global gNB ID, then CU F1AP ID)
+  if (ue_id.gnb.global_ng_ran_node_id) {
+    const global_ng_ran_node_id_t *n = ue_id.gnb.global_ng_ran_node_id;
+    switch (n->type) {
+      case GNB_GLOBAL_TYPE_ID: {
+        const global_gnb_id_t *g = &n->global_gnb_id;
+        if (g->type == GNB_TYPE_ID) {
+          snprintf(current_e2_id_str, sizeof(current_e2_id_str), "gNB:%u", (unsigned)g->gnb_id.nb_id);
+        } else {
+          snprintf(current_e2_id_str, sizeof(current_e2_id_str), "gNB:UNKNOWN");
+        }
+        break;
+      }
+      case NG_ENB_GLOBAL_TYPE_ID: {
+        const global_ng_enb_id_t *e = &n->global_ng_enb_id;
+        switch (e->type) {
+          case MACRO_NG_ENB_TYPE_ID:
+            snprintf(current_e2_id_str, sizeof(current_e2_id_str), "ng-eNB-macro:%u", (unsigned)e->macro_ng_enb_id);
+            break;
+          case SHORT_MACRO_NG_ENB_TYPE_ID:
+            snprintf(current_e2_id_str, sizeof(current_e2_id_str), "ng-eNB-short:%u", (unsigned)e->short_macro_ng_enb_id);
+            break;
+          case LONG_MACRO_NG_ENB_TYPE_ID:
+            snprintf(current_e2_id_str, sizeof(current_e2_id_str), "ng-eNB-long:%u", (unsigned)e->long_macro_ng_enb_id);
+            break;
+          default:
+            snprintf(current_e2_id_str, sizeof(current_e2_id_str), "ng-eNB:unsupported:%d", (int)e->type);
+            break;
+        }
+        break;
+      }
+      default:
+        snprintf(current_e2_id_str, sizeof(current_e2_id_str), "UNKNOWN");
+        break;
+    }
+  } else if (ue_id.gnb.global_gnb_id) {
+    snprintf(current_e2_id_str, sizeof(current_e2_id_str), "gNB:%u", (unsigned)ue_id.gnb.global_gnb_id->gnb_id.nb_id);
+  } else if (ue_id.gnb.gnb_cu_ue_f1ap_lst && ue_id.gnb.gnb_cu_ue_f1ap_lst_len > 0) {
+    snprintf(current_e2_id_str, sizeof(current_e2_id_str), "CU:%u", (unsigned)ue_id.gnb.gnb_cu_ue_f1ap_lst[0]);
+  } else {
+    snprintf(current_e2_id_str, sizeof(current_e2_id_str), "gNB");
+  }
 }
 
 static void log_du_ue_id(ue_id_e2sm_t ue_id) {
@@ -98,6 +145,9 @@ static void log_du_ue_id(ue_id_e2sm_t ue_id) {
     printf("ran_ue_id = %lx\n", *ue_id.gnb_du.ran_ue_id); // RAN UE NGAP ID
   }
   current_ue_id = ue_id.gnb_du.gnb_cu_ue_f1ap; // Update the global UE ID
+
+  // Store the current E2 Node ID
+  snprintf(current_e2_id_str, sizeof(current_e2_id_str), "DU:%u", ue_id.gnb_du.gnb_cu_ue_f1ap);
 }
 
 static void log_cuup_ue_id(ue_id_e2sm_t ue_id) {
@@ -106,6 +156,9 @@ static void log_cuup_ue_id(ue_id_e2sm_t ue_id) {
     printf("ran_ue_id = %lx\n", *ue_id.gnb_cu_up.ran_ue_id); // RAN UE NGAP ID
   }
   current_ue_id = ue_id.gnb_cu_up.gnb_cu_cp_ue_e1ap; // Update the global UE ID
+
+  // Store the current E2 Node ID
+  snprintf(current_e2_id_str, sizeof(current_e2_id_str), "CU-UP:%u", ue_id.gnb_cu_up.gnb_cu_cp_ue_e1ap);
 }
 
 typedef void (*log_ue_id)(ue_id_e2sm_t ue_id);
@@ -158,6 +211,37 @@ static void csv_append_real_to_csv_line(meas_record_lst_t meas_record) {
     }
   } else {
     fprintf(stderr, "CSV line buffer is full, cannot append more values.\n");
+  }
+}
+
+static void csv_prepend_e2_node_id() {
+  // Ensure the current E2 Node ID is valid
+  if (current_e2_id_str[0] == '\0') {
+    fprintf(stderr, "Error: No valid E2 Node ID found.\n");
+    return;
+  }
+
+  // Ensure the buffer won't overflow
+  char e2_node_id_buffer[256];
+  snprintf(e2_node_id_buffer, sizeof(e2_node_id_buffer), "%s,", current_e2_id_str);
+  size_t e2_node_id_len = strlen(e2_node_id_buffer);
+  size_t current_len = strlen(csv_line_buffer);
+
+  if (e2_node_id_len + current_len < sizeof(csv_line_buffer)) {
+    // Use a temporary buffer to construct the new line
+    char temp_buffer[sizeof(csv_line_buffer)];
+    size_t total_len = 0;
+    temp_buffer[0] = '\0';
+    strncat(temp_buffer, e2_node_id_buffer, sizeof(temp_buffer) - 1);
+    total_len = strlen(temp_buffer);
+    if (total_len < sizeof(temp_buffer) - 1) {
+      strncat(temp_buffer, csv_line_buffer, sizeof(temp_buffer) - 1 - total_len);
+    }
+    strncpy(csv_line_buffer, temp_buffer, sizeof(csv_line_buffer) - 1);
+    csv_line_buffer[sizeof(csv_line_buffer) - 1] = '\0';
+  } else {
+    fprintf(stderr, "CSV line buffer is full, cannot prepend E2 Node ID.\n");
+    fprintf(stderr, "CSV line buffer is full (current size: %zu, required size: %zu), cannot prepend E2 Node ID.\n", current_len, e2_node_id_len + current_len);
   }
 }
 
@@ -440,13 +524,15 @@ static void log_kpm_measurements(kpm_ind_msg_format_1_t const *msg_frm_1) {
 
   if (filter_invalid_rsrp_samples || !filter_current_sample) {
     csv_prepend_ue_id();
+    csv_prepend_e2_node_id();
     csv_prepend_timestamp();
     write_csv_line_to_file();
   } else {
-    // Log an empty measurement row with 25 commas after the 0
+    // Log an empty measurement row with 26 commas after the 0
     printf("Logging empty measurement row\n");
     memset(csv_line_buffer, 0, sizeof(csv_line_buffer));
     snprintf(csv_line_buffer, sizeof(csv_line_buffer), ",,,,,,,,,,,,,,,,,,,,,,,,,,");
+    csv_prepend_e2_node_id();
     csv_prepend_timestamp();
     write_csv_line_to_file();
 
@@ -702,6 +788,9 @@ int main(int argc, char *argv[]) {
   byte_array_t offset_name = {.buf = (uint8_t *)"Reporting Time Offset", .len = strlen("Reporting Time Offset")};
   byte_array_t offset_unit = {.buf = (uint8_t *)"ms", .len = strlen("ms")};
   csv_append_name_to_csv_header(offset_name, offset_unit);
+  byte_array_t e2_node_id_name = {.buf = (uint8_t *)"E2 Node ID", .len = strlen("E2 Node ID")};
+  byte_array_t e2_node_id_unit = {.buf = (uint8_t *)"", .len = 0};
+  csv_append_name_to_csv_header(e2_node_id_name, e2_node_id_unit);
   byte_array_t ue_id_name = {.buf = (uint8_t *)"UE ID", .len = strlen("UE ID")};
   byte_array_t ue_id_unit = {.buf = (uint8_t *)"", .len = 0};
   csv_append_name_to_csv_header(ue_id_name, ue_id_unit);

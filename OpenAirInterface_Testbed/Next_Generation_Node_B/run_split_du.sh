@@ -76,13 +76,6 @@ if [ "$DU_NUMBER" -ne 1 ]; then
     RFSIM_SERVER=0
 fi
 
-HOSTNAME_IP=$(hostname -I | awk '{print $1}')
-RFSIM_SERVER_ARG="--rfsimulator.serveraddr $HOSTNAME_IP"
-if [ "$RFSIM_SERVER" -ne 0 ]; then
-    echo "RF simulator server mode enabled."
-    RFSIM_SERVER_ARG="--rfsimulator.serveraddr server"
-fi
-
 # ADDITIONAL_FLAGS=""
 # if [ -f "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build/libtelnetsrv.so" ]; then
 #     echo "Found telnet server library. Enabling telnet server..."
@@ -112,9 +105,22 @@ sudo ls >/dev/null
 # Give the DU its own network namespace and configure it to access the host network
 sudo ./install_scripts/setup_du_namespace.sh "$DU_NUMBER"
 
-cd "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build"
-
 HOSTNAME_IP=$(hostname -I | awk '{print $1}')
+if [ "$RFSIM_SERVER" -eq 0 ]; then
+    SERVER_IP=$(cat configs/get_rfsim_server_address.txt)
+    if [ -z "$SERVER_IP" ]; then
+        echo "ERROR: Could not find RF simulator server address."
+        exit 1
+    fi
+    RFSIM_SERVER_ARG="--rfsimulator.serveraddr $SERVER_IP"
+else
+    echo "RF simulator server mode enabled."
+    RFSIM_SERVER_ARG="--rfsimulator.serveraddr server"
+    SERVER_IP=$(sudo ip netns exec du$DU_NUMBER ip addr show dev v-du$DU_NUMBER | grep "inet " | awk '{print $2}' | cut -d/ -f1)
+    echo "$SERVER_IP" > configs/get_rfsim_server_address.txt
+fi
+
+cd "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build"
 
 # Code from (https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/develop/doc/handover-tutorial.md#run-the-setup):
 # sudo ./nr-softmodem -O "$DU_CONFIG" --rfsim $RFSIM_SERVER_ARG --rfsimulator.options chanmod --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS

@@ -30,6 +30,14 @@
 
 echo "# Script: $(realpath "$0")..."
 
+UE_DU_NS_SUBNET="10.200.0.0/16" # Must match setup_du_namespace.sh
+UE_IP_OFFSET=256 # Must match setup_ue_namespace.sh
+
+# Shared bridge (single L2 for all rf-sim instances)
+BRIDGE_NAME="br-rfsim"
+BRIDGE_GW_IP="10.200.0.1"
+BRIDGE_CIDR="$BRIDGE_GW_IP/16"
+
 # Do not exit immediately if a command fails
 set +e
 
@@ -49,30 +57,36 @@ if ! [[ $UE_NUMBER =~ ^[0-9]+$ ]]; then
 fi
 
 UE_NAMESPACE="ue$UE_NUMBER"
+UE_NS_IP=$(python3 fetch_nth_ip.py $UE_DU_NS_SUBNET $((UE_IP_OFFSET + UE_NUMBER)))
 
 # Give the UE its own network namespace and configure it to access the host network
 NETWORK_INTERFACE=$(ip route | grep default | awk '{print $5}')
-# Fetch the base IP using the Python script
-BASE_IP=$(python3 fetch_nth_ip.py 0.10.201.0/16 $((UE_NUMBER - 1)))
-UE_SUBNET_FIRST_3_OCTETS=$(echo $BASE_IP | cut -d. -f2-4)
-UE_HOST_IP=$UE_SUBNET_FIRST_3_OCTETS.1
-UE_NS_IP=$UE_SUBNET_FIRST_3_OCTETS.2
 
 echo "Removing IP routes and addresses inside the namespace..."
-sudo ip netns exec $UE_NAMESPACE ip route del default via $UE_HOST_IP
-sudo ip netns exec $UE_NAMESPACE ip addr del $UE_NS_IP/16 dev v-$UE_NAMESPACE
-sudo ip netns exec $UE_NAMESPACE ip link set v-$UE_NAMESPACE down
+sudo ip netns exec $UE_NAMESPACE ip route del default via $BRIDGE_GW_IP 2>/dev/null || true
+# Backward compatibility with previous version not using bridge
+sudo ip netns exec $UE_NAMESPACE ip addr del $UE_NS_IP/16 dev v-$UE_NAMESPACE 2>/dev/null || true
+sudo ip netns exec $UE_NAMESPACE ip link set v-$UE_NAMESPACE down 2>/dev/null || true
 
-echo "Removing iptables rules..."
-sudo iptables -D FORWARD -o $NETWORK_INTERFACE -i v-eth$UE_NUMBER -j ACCEPT
-sudo iptables -D FORWARD -i $NETWORK_INTERFACE -o v-eth$UE_NUMBER -j ACCEPT
-sudo iptables -t nat -D POSTROUTING -s $UE_SUBNET_FIRST_3_OCTETS.0/16 -o $NETWORK_INTERFACE -j MASQUERADE
+echo "Removing host-side veth for UE $UE_NUMBER..."
+sudo ip link set v-eth$UE_NUMBER down 2>/dev/null || true
+sudo ip link del v-eth$UE_NUMBER 2>/dev/null || true
 
-echo "Deleting the network devices..."
-sudo ip link set v-eth$UE_NUMBER down
-sudo ip link del v-eth$UE_NUMBER
+echo "Deleting network namespace $UE_NAMESPACE..."
+sudo ip netns del $UE_NAMESPACE 2>/dev/null || true
 
-echo "Deleting the network namespace..."
-sudo ip netns del $UE_NAMESPACE
+# Decide whether to remove shared bridge and MASQUERADE rule
+REMAINING_NS=$(ip netns list | awk '{print $1}' | grep -E '^(ue|du)[0-9]+$' | wc -l)
+if [ "$REMAINING_NS" -eq 0 ]; then
+  echo "No UE/DU namespaces remain. Cleaning up shared bridge and MASQUERADE..."
+  if sudo iptables -t nat -C POSTROUTING -s "$UE_DU_NS_SUBNET" -o "$NETWORK_INTERFACE" -j MASQUERADE 2>/dev/null; then
+    sudo iptables -t nat -D POSTROUTING -s "$UE_DU_NS_SUBNET" -o "$NETWORK_INTERFACE" -j MASQUERADE
+  fi
+  # Delete bridge if it exists
+  if ip link show "$BRIDGE_NAME" >/dev/null 2>&1; then
+    sudo ip link set "$BRIDGE_NAME" down 2>/dev/null || true
+    sudo ip link del "$BRIDGE_NAME" 2>/dev/null || true
+  fi
+fi
 
 echo "Successfully reverted the UE $UE_NUMBER namespace."

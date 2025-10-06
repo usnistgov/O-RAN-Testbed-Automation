@@ -227,5 +227,13 @@ for DU_CONF in "${SPLIT_DUS[@]}"; do
     ./install_scripts/generate_du_configuration.sh "$DU_NUMBER"
 done
 
+cd configs
+# Link the get_rfsim_server_address.txt from the UE configuration to here
+if [ -L "get_rfsim_server_address.txt" ]; then
+    sudo rm -rf "get_rfsim_server_address.txt"
+fi
+ln -sf "../../User_Equipment/configs/get_rfsim_server_address.txt" get_rfsim_server_address.txt
+cd ..
+
 echo
 echo "Successfully configured the gNodeB and split CU/DUs. The configuration files are located in the configs/ directory."

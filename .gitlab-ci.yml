@@ -4,7 +4,6 @@ stages:
 
 install_openairinterface_testbed:
   stage: install_openairinterface_testbed
-  image: ubuntu:22.04
   resource_group: testbed_install
   interruptible: true
   before_script:
@@ -36,7 +35,6 @@ install_openairinterface_testbed:
 
 install_srsran_oransc_testbed:
   stage: install_srsran_oransc_testbed
-  image: ubuntu:22.04
   resource_group: testbed_install
   interruptible: true
   before_script:

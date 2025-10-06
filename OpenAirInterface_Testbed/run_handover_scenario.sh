@@ -52,29 +52,29 @@ fi
 SHOW_TERMINALS=false
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        show|--show)
-            SHOW_TERMINALS=true
-            shift
-            ;;
-        help|-h|--help)
-            echo "Usage: $0 [show] [--num-dus N] [help|-h|--help]"
-            echo "  show           Show logs in new terminals"
-            echo "  --num-dus N    Set number of DUs (default: 2)"
-            echo "  help, -h       Show this help message"
-            exit 0
-            ;;
-        # --num-ues)
-        #     NUM_UES="$2"
-        #     shift 2
-        #     ;;
-        --num-dus)
-            NUM_DUS="$2"
-            shift 2
-            ;;
-        *)
-            echo "Unknown argument: $1"
-            exit 1
-            ;;
+    show | --show)
+        SHOW_TERMINALS=true
+        shift
+        ;;
+    help | -h | --help)
+        echo "Usage: $0 [show] [--num-dus N] [help|-h|--help]"
+        echo "  show           Show logs in new terminals"
+        echo "  --num-dus N    Set number of DUs (default: 2)"
+        echo "  help, -h       Show this help message"
+        exit 0
+        ;;
+    # --num-ues)
+    #     NUM_UES="$2"
+    #     shift 2
+    #     ;;
+    --num-dus)
+        NUM_DUS="$2"
+        shift 2
+        ;;
+    *)
+        echo "Unknown argument: $1"
+        exit 1
+        ;;
     esac
 done
 
@@ -270,9 +270,9 @@ if [ "$RUN_XAPP_KPM_MONITOR" = true ]; then
 
     # Send metrics to CSV (Grafana dashboard provided)
     if [ "$RUN_GRAFANA_DASHBOARD" = true ]; then
-        nohup ./start_grafana_with_csv_xapp_kpm_moni.sh > ../logs/xapp_kpm_moni_stdout.txt 2>&1 &
+        nohup ./start_grafana_with_csv_xapp_kpm_moni.sh >../logs/xapp_kpm_moni_stdout.txt 2>&1 &
     else
-        nohup ./run_xapp_kpm_moni.sh > ../logs/xapp_kpm_moni_stdout.txt 2>&1 &
+        nohup ./run_xapp_kpm_moni.sh >../logs/xapp_kpm_moni_stdout.txt 2>&1 &
     fi
     if [ "$SHOW_TERMINALS" = true ]; then
         gnome-terminal --title="xApp KPM Monitor Log" -- bash -c "tail -f ../logs/xapp_kpm_moni_stdout.txt; exec bash"

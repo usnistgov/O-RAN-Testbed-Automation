@@ -50,7 +50,7 @@ fi
 
 # Write the hostname IP to the get_rfsim_server_address.txt file
 HOSTNAME_IP=$(hostname -I | awk '{print $1}')
-echo "$HOSTNAME_IP" > configs/get_rfsim_server_address.txt
+echo "$HOSTNAME_IP" >configs/get_rfsim_server_address.txt
 
 cd "$SCRIPT_DIR"
 mkdir -p logs

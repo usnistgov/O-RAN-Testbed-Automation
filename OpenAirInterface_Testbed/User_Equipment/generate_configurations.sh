@@ -245,4 +245,4 @@ done
 
 # Create the get_rfsim_server_address.txt file with the current hostname IP
 HOSTNAME_IP=$(hostname -I | awk '{print $1}')
-echo "$HOSTNAME_IP" > configs/get_rfsim_server_address.txt
+echo "$HOSTNAME_IP" >configs/get_rfsim_server_address.txt

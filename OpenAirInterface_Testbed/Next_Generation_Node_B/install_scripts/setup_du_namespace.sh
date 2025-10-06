@@ -33,7 +33,7 @@ echo "# Script: $(realpath "$0")..."
 set -x
 
 UE_DU_NS_SUBNET="10.200.0.0/16" # Must match setup_ue_namespace.sh
-DU_IP_OFFSET=10 # Must match revert_du_namespace.sh
+DU_IP_OFFSET=10                 # Must match revert_du_namespace.sh
 
 # Shared bridge (single L2 for all rf-sim instances)
 BRIDGE_NAME="br-rfsim"

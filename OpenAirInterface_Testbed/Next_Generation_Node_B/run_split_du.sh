@@ -117,7 +117,7 @@ else
     echo "RF simulator server mode enabled."
     RFSIM_SERVER_ARG="--rfsimulator.serveraddr server"
     SERVER_IP=$(sudo ip netns exec du$DU_NUMBER ip addr show dev v-du$DU_NUMBER | grep "inet " | awk '{print $2}' | cut -d/ -f1)
-    echo "$SERVER_IP" > configs/get_rfsim_server_address.txt
+    echo "$SERVER_IP" >configs/get_rfsim_server_address.txt
 fi
 
 cd "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build"

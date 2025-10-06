@@ -38,6 +38,7 @@ if ! command -v realpath &>/dev/null; then
 fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
+cd "$SCRIPT_DIR"
 
 echo "Starting GitLab Runner..."
 sudo gitlab-runner run

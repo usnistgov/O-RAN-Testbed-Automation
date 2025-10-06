@@ -40,10 +40,32 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-# Code from (https://docs.gitlab.com/runner/install/linux-repository):
-curl -L "https://packages.gitlab.com/install/repositories/runner/gitlab-runner/script.deb.sh" | sudo bash
+# Stop user-mode runner if running
+systemctl --user stop gitlab-runner 2>/dev/null || true
+pkill -f "gitlab-runner run" 2>/dev/null || true
 
+# Stop and disable system service
+sudo systemctl disable --now gitlab-runner 2>/dev/null || true
+
+# Unregister all runners
+sudo gitlab-runner unregister --all-runners 2>/dev/null || true
+gitlab-runner unregister --all-runners 2>/dev/null || true
+
+# Remove package and dependencies
+sudo apt purge -y gitlab-runner
+sudo apt autoremove -y
+
+# Remove GitLab Runner APT repo and keys
+sudo rm -f /etc/apt/sources.list.d/*gitlab-runner*.list
+sudo rm -f /etc/apt/trusted.gpg.d/*gitlab*.gpg /etc/apt/keyrings/*gitlab*.gpg
 sudo apt update
-sudo apt install -y gitlab-runner
 
-echo "Successfully installed GitLab Runner."
+# Delete leftover data, config, and logs
+sudo rm -rf /etc/gitlab-runner /var/lib/gitlab-runner /var/log/gitlab-runner
+rm -rf ~/.gitlab-runner
+
+# Remove service account
+sudo userdel -r gitlab-runner 2>/dev/null || true
+
+sudo rm -f $SCRIPT_DIR/config.toml
+sudo rm -f config.toml

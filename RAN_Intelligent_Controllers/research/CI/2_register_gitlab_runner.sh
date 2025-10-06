@@ -38,13 +38,14 @@ if ! command -v realpath &>/dev/null; then
 fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
+cd "$SCRIPT_DIR"
 
 if [ -z "$RUNNER_TOKEN" ]; then
   echo "Error: Environment variable RUNNER_TOKEN is not set."
   echo "Please set RUNNER_TOKEN to your GitLab runner registration token. The token can be created for your project by doing the following:"
   echo "    - On your GitLab project, go to Settings > CI/CD > Runners"
   echo "    - Click the \"Create project runner\" button"
-  echo "    - Check \"Run untagged jobs\" and write a description (e.g., \"NIST CI/CD Runner\")"
+  echo "    - Check \"Run untagged jobs\" and write a description (e.g., \"NIST CI Runner\")"
   echo "    - Proceed, and it will show you the registration token starting with \"glrt-...\""
   echo "    - Run the command: export RUNNER_TOKEN=..."
   exit 1
@@ -59,7 +60,7 @@ if [ -n "$RUNNERS" ]; then
   while IFS= read -r RUNNER; do
     if [ -n "$RUNNER" ]; then
       echo "Unregistering runner: \"$RUNNER\""
-      gitlab-runner unregister --name "$RUNNER" || true
+      sudo gitlab-runner unregister --name "$RUNNER" || true
     fi
   done <<< "$RUNNERS"
 else
@@ -69,10 +70,12 @@ fi
 sudo gitlab-runner register \
   --non-interactive \
   --url https://gitlab.nist.gov/gitlab \
-  --token glrt-OCg250wnPxthRZrF-kCaNG86MQpwOjg4Nwp0OjMKdToyajAT.01.1c15iwbk4 \
-  --description "NIST CI/CD Runner" \
+  --token "$RUNNER_TOKEN" \
+  --description "NIST CI Runner" \
   --executor "shell"
 
 echo "Creating symbolic link to config.toml in script directory..."
 sudo rm -f $SCRIPT_DIR/config.toml
 ln -s $HOME/.gitlab-runner/config.toml $SCRIPT_DIR/config.toml
+
+echo "Successfully registered GitLab runner."

@@ -62,11 +62,6 @@ DU_NS_IP=$(python3 fetch_nth_ip.py $UE_DU_NS_SUBNET $((DU_IP_OFFSET + DU_NUMBER)
 # Give the DU its own network namespace and configure it to access the host network
 NETWORK_INTERFACE=$(ip route | grep default | awk '{print $5}')
 
-# Calculate the even IP for the host side and the next odd IP for the DU namespace side
-BASE_IDX=$((DU_IP_OFFSET + DU_NUMBER * 2))
-DU_HOST_IP=$(python3 fetch_nth_ip.py $UE_DU_NS_SUBNET $BASE_IDX)
-DU_NS_IP=$(python3 fetch_nth_ip.py $UE_DU_NS_SUBNET $((BASE_IDX + 1)))
-
 echo "Removing IP routes and addresses inside the namespace..."
 sudo ip netns exec $DU_NAMESPACE ip route del default via $BRIDGE_GW_IP 2>/dev/null || true
 # Backward compatibility with previous version not using bridge

@@ -170,41 +170,41 @@ install_srsran_gnb:
     when: always
   retry: 0
 
-  uninstall_srsran_ue:
-    stage: uninstall_srsran_ue
-    resource_group: testbed_uninstall
-    interruptible: true
-    script:
-      - cd User_Equipment
-      - bash ./full_uninstall.sh
-    artifacts:
-      expire_in: 1 day
-      when: always
-    retry: 0
+uninstall_srsran_ue:
+  stage: uninstall_srsran_ue
+  resource_group: testbed_uninstall
+  interruptible: true
+  script:
+    - cd User_Equipment
+    - bash ./full_uninstall.sh
+  artifacts:
+    expire_in: 1 day
+    when: always
+  retry: 0
 
-  uninstall_srsran_gnb:
-    stage: uninstall_srsran_gnb
-    resource_group: testbed_uninstall
-    interruptible: true
-    script:
-      - cd Next_Generation_Node_B
-      - bash ./full_uninstall.sh
-    artifacts:
-      expire_in: 1 day
-      when: always
-    retry: 0
+uninstall_srsran_gnb:
+  stage: uninstall_srsran_gnb
+  resource_group: testbed_uninstall
+  interruptible: true
+  script:
+    - cd Next_Generation_Node_B
+    - bash ./full_uninstall.sh
+  artifacts:
+    expire_in: 1 day
+    when: always
+  retry: 0
 
-  uninstall_open5gs:
-    stage: uninstall_open5gs
-    resource_group: testbed_uninstall
-    interruptible: true
-    script:
-      - cd OpenAirInterface_Testbed/5G_Core_Network
-      - bash ./full_uninstall.sh
-    artifacts:
-      expire_in: 1 day
-      when: always
-    retry: 0
+uninstall_open5gs:
+  stage: uninstall_open5gs
+  resource_group: testbed_uninstall
+  interruptible: true
+  script:
+    - cd OpenAirInterface_Testbed/5G_Core_Network
+    - bash ./full_uninstall.sh
+  artifacts:
+    expire_in: 1 day
+    when: always
+  retry: 0
 
 # OAI
     # - |

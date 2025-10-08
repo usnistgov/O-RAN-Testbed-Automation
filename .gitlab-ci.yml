@@ -2,8 +2,8 @@ default:
   tags: [nist-ci-runner]
 
 stages:
-  - uninstall_all_components
   - install_initial_dependencies
+  - uninstall_all_components
   - install_open5gs
   - install_oai_ue
   - install_oai_gnb
@@ -20,30 +20,11 @@ stages:
   - uninstall_srsran_gnb
   - uninstall_open5gs
 
-uninstall_all_components:
-  stage: uninstall_all_components
-  resource_group: testbed_uninstall
-  interruptible: true
-  script:
-    - set -e
-    - echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections
-    - DEBIAN_FRONTEND=noninteractive sudo apt-get update && sudo apt-get -y --no-install-recommends install tzdata
-    - "sed -i -E 's/^core_to_use:.*/core_to_use: open5gs/' 5G_Core_Network/options.yaml"
-    - bash ./full_uninstall.sh
-    - cd OpenAirInterface_Testbed
-    - "sed -i -E 's/^core_to_use:.*/core_to_use: 5gdeploy-open5gs/' 5G_Core_Network/options.yaml"
-    - bash ./full_uninstall.sh
-  artifacts:
-    expire_in: 1 day
-    when: always
-  retry: 0
-
 install_initial_dependencies:
   stage: install_initial_dependencies
   resource_group: testbed_install
   interruptible: true
   script:
-    - set -e
     - echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections
     - export DEBIAN_FRONTEND=noninteractive
     - sudo apt-get update
@@ -60,7 +41,24 @@ install_initial_dependencies:
   artifacts:
     expire_in: 1 day
     when: always
-  retry: 0
+  retry: 1
+
+uninstall_all_components:
+  stage: uninstall_all_components
+  resource_group: testbed_uninstall
+  interruptible: true
+  script:
+    - echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections
+    - DEBIAN_FRONTEND=noninteractive sudo apt-get update && sudo apt-get -y --no-install-recommends install tzdata
+    - "sed -i -E 's/^core_to_use:.*/core_to_use: open5gs/' 5G_Core_Network/options.yaml"
+    - bash ./full_uninstall.sh
+    - cd OpenAirInterface_Testbed
+    - "sed -i -E 's/^core_to_use:.*/core_to_use: 5gdeploy-open5gs/' 5G_Core_Network/options.yaml"
+    - bash ./full_uninstall.sh
+  artifacts:
+    expire_in: 1 day
+    when: always
+  retry: 1
 
 install_open5gs:
   stage: install_open5gs
@@ -68,6 +66,9 @@ install_open5gs:
   interruptible: true
   script:
     - cd OpenAirInterface_Testbed/5G_Core_Network
+    - "sed -i -E 's/^core_to_use:.*/core_to_use: open5gs/' options.yaml"
+    # Disable systemctl so that Open5GS components are direct processes running in background
+    - "sed -i -E 's/^use_systemctl:.*/use_systemctl: false/' options.yaml"
     - bash ./full_install.sh
   artifacts:
     expire_in: 1 day

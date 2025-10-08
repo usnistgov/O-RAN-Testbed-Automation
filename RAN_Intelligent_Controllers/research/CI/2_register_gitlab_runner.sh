@@ -77,5 +77,7 @@ sudo gitlab-runner register \
 echo "Creating symbolic link to config.toml in script directory..."
 sudo rm -f $SCRIPT_DIR/config.toml
 ln -s $HOME/.gitlab-runner/config.toml $SCRIPT_DIR/config.toml
+# pre_clone_script = "sudo chown -R gitlab-runner:gitlab-runner ."
+
 
 echo "Successfully registered GitLab runner."

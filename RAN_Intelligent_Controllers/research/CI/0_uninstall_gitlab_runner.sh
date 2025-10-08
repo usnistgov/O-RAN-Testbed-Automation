@@ -67,5 +67,5 @@ rm -rf ~/.gitlab-runner
 # Remove service account
 sudo userdel -r gitlab-runner 2>/dev/null || true
 
+sudo rm -rf $HOME/.gitlab-runner
 sudo rm -f $SCRIPT_DIR/config.toml
-sudo rm -f config.toml

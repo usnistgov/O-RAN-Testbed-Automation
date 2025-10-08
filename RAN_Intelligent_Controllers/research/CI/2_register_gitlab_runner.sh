@@ -41,43 +41,46 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
 if [ -z "$RUNNER_TOKEN" ]; then
-  echo "Error: Environment variable RUNNER_TOKEN is not set."
-  echo "Please set RUNNER_TOKEN to your GitLab runner registration token. The token can be created for your project by doing the following:"
-  echo "    - On your GitLab project, go to Settings > CI/CD > Runners"
-  echo "    - Click the \"Create project runner\" button"
-  echo "    - Check \"Run untagged jobs\" and write a description (e.g., \"NIST CI Runner\")"
-  echo "    - Proceed, and it will show you the registration token starting with \"glrt-...\""
-  echo "    - Run the command: export RUNNER_TOKEN=..."
-  exit 1
+    echo "Error: Environment variable RUNNER_TOKEN is not set."
+    echo "Please set RUNNER_TOKEN to your GitLab runner registration token. The token can be created for your project by doing the following:"
+    echo "    - On your GitLab project, go to Settings > CI/CD > Runners"
+    echo "    - Click the \"Create project runner\" button"
+    echo "    - Check \"Run untagged jobs\" and write a description (e.g., \"NIST CI Runner\")"
+    echo "    - Proceed, and it will show you the registration token starting with \"glrt-...\""
+    echo "    - Run the command: export RUNNER_TOKEN=..."
+    exit 1
 fi
 
 echo "Checking for existing GitLab runners to unregister..."
 RUNNERS=$(gitlab-runner list 2>&1 | grep -E 'Executor' | sed 's|Executor.*||' | awk '{ gsub(/\033\[[0-9;]*[[:alpha:]]/, ""); sub(/[[:space:]]+$/, ""); print }')
 if [ -n "$RUNNERS" ]; then
-  echo "Currently registered runners:"
-  printf '%s\n' "$RUNNERS"
-  # Unregister each runner by name, preserving names with spaces
-  while IFS= read -r RUNNER; do
-    if [ -n "$RUNNER" ]; then
-      echo "Unregistering runner: \"$RUNNER\""
-      sudo gitlab-runner unregister --name "$RUNNER" || true
-    fi
-  done <<< "$RUNNERS"
+    echo "Currently registered runners:"
+    printf '%s\n' "$RUNNERS"
+    # Unregister each runner by name, preserving names with spaces
+    while IFS= read -r RUNNER; do
+        if [ -n "$RUNNER" ]; then
+            echo "Unregistering runner: \"$RUNNER\""
+            sudo gitlab-runner unregister --name "$RUNNER" || true
+        fi
+    done <<<"$RUNNERS"
 else
-  echo "No runners are currently registered."
+    echo "No runners are currently registered."
 fi
 
 sudo gitlab-runner register \
-  --non-interactive \
-  --url https://gitlab.nist.gov/gitlab \
-  --token "$RUNNER_TOKEN" \
-  --description "NIST CI Runner" \
-  --executor "shell"
+    --non-interactive \
+    --url https://gitlab.nist.gov/gitlab \
+    --token "$RUNNER_TOKEN" \
+    --description "NIST CI Runner" \
+    --executor "shell"
 
 echo "Creating symbolic link to config.toml in script directory..."
 sudo rm -f $SCRIPT_DIR/config.toml
-ln -s $HOME/.gitlab-runner/config.toml $SCRIPT_DIR/config.toml
-# pre_clone_script = "sudo chown -R gitlab-runner:gitlab-runner ."
+ln -s /etc/gitlab-runner/config.toml $SCRIPT_DIR/config.toml
 
+if ! sudo grep -q 'pre_clone_script = "sudo chown -R gitlab-runner:gitlab-runner ."' /etc/gitlab-runner/config.toml; then
+    echo "Fixing permissions issue by adding pre_clone_script to config.toml..."
+    sudo sed -i '/executor = "shell"/i \  pre_clone_script = "sudo chown -R gitlab-runner:gitlab-runner ."' /etc/gitlab-runner/config.toml
+fi
 
 echo "Successfully registered GitLab runner."

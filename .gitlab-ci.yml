@@ -2,30 +2,211 @@ default:
   tags: [nist-ci-runner]
 
 stages:
-  - uninstall_openairinterface_testbed
-  - uninstall_srsran_oransc_testbed
-  - install_openairinterface_testbed
-  - uninstall_openairinterface_testbed
-  - install_srsran_oransc_testbed
-  - uninstall_srsran_oransc_testbed
+  - uninstall_all_components
+  - install_initial_dependencies
+  - install_open5gs
+  - install_oai_ue
+  - install_oai_gnb
+  - install_flexric
+  - configure_oai_testbed
+  # TODO: add E2E tests for OAI here
+  - uninstall_oai_ue
+  - uninstall_oai_gnb
+  - uninstall_flexric
+  - install_srsran_ue
+  - install_srsran_gnb
+  # TODO: add E2E tests for srsRAN here
+  - uninstall_srsran_ue
+  - uninstall_srsran_gnb
+  - uninstall_open5gs
 
-install_openairinterface_testbed:
-  stage: install_openairinterface_testbed
-  resource_group: testbed_install
+uninstall_all_components:
+  stage: uninstall_all_components
+  resource_group: testbed_uninstall
   interruptible: true
-  before_script:
-    - sudo apt-get update
-    - sudo apt-get install -y sudo bash grep coreutils curl wget git gnupg lsb-release
   script:
     - set -e
     - echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections
     - DEBIAN_FRONTEND=noninteractive sudo apt-get update && sudo apt-get -y --no-install-recommends install tzdata
-    #- echo -e '#!/bin/sh\necho "systemctl not supported in CI container"\nexit 0' | sudo tee /usr/local/bin/systemctl > /dev/null
-    #- sudo chmod +x /usr/local/bin/systemctl
+    - "sed -i -E 's/^core_to_use:.*/core_to_use: open5gs/' 5G_Core_Network/options.yaml"
+    - bash ./full_uninstall.sh
     - cd OpenAirInterface_Testbed
     - "sed -i -E 's/^core_to_use:.*/core_to_use: 5gdeploy-open5gs/' 5G_Core_Network/options.yaml"
+    - bash ./full_uninstall.sh
+  artifacts:
+    expire_in: 1 day
+    when: always
+  retry: 0
+
+install_initial_dependencies:
+  stage: install_initial_dependencies
+  resource_group: testbed_install
+  interruptible: true
+  script:
+    - set -e
+    - echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections
+    - export DEBIAN_FRONTEND=noninteractive
+    - sudo apt-get update
+    - sudo apt-get install -y sudo
+    - sudo apt-get install -y bash
+    - sudo apt-get install -y grep
+    - sudo apt-get install -y coreutils
+    - sudo apt-get install -y curl
+    - sudo apt-get install -y wget
+    - sudo apt-get install -y git
+    - sudo apt-get install -y gnupg
+    - sudo apt-get install -y lsb-release
+    - sudo apt-get install -y --no-install-recommends tzdata
+  artifacts:
+    expire_in: 1 day
+    when: always
+  retry: 0
+
+install_open5gs:
+  stage: install_open5gs
+  resource_group: testbed_install
+  interruptible: true
+  script:
+    - cd OpenAirInterface_Testbed/5G_Core_Network
     - bash ./full_install.sh
+  artifacts:
+    expire_in: 1 day
+    when: always
+  retry: 0
+
+install_oai_ue:
+  stage: install_oai_ue
+  resource_group: testbed_install
+  interruptible: true
+  script:
+    - cd OpenAirInterface_Testbed/User_Equipment
+    - bash ./full_install.sh
+  artifacts:
+    expire_in: 1 day
+    when: always
+  retry: 0
+
+install_oai_gnb:
+  stage: install_oai_gnb
+  resource_group: testbed_install
+  interruptible: true
+  script:
+    - cd OpenAirInterface_Testbed/Next_Generation_Node_B
+    - bash ./full_install.sh
+  artifacts:
+    expire_in: 1 day
+    when: always
+  retry: 0
+
+configure_oai_testbed:
+  stage: configure_oai_testbed
+  resource_group: testbed_install
+  interruptible: true
+  script:
+    - cd OpenAirInterface_Testbed
     - bash ./generate_configurations.sh
+  artifacts:
+    expire_in: 1 day
+    when: always
+  retry: 0
+
+uninstall_oai_ue:
+  stage: uninstall_oai_ue
+  resource_group: testbed_uninstall
+  interruptible: true
+  script:
+    - cd OpenAirInterface_Testbed/User_Equipment
+    - bash ./full_uninstall.sh
+  artifacts:
+    expire_in: 1 day
+    when: always
+  retry: 0
+
+uninstall_oai_gnb:
+  stage: uninstall_oai_gnb
+  resource_group: testbed_uninstall
+  interruptible: true
+  script:
+    - cd OpenAirInterface_Testbed/Next_Generation_Node_B
+    - bash ./full_uninstall.sh
+  artifacts:
+    expire_in: 1 day
+    when: always
+  retry: 0
+
+uninstall_flexric:
+  stage: uninstall_flexric
+  resource_group: testbed_uninstall
+  interruptible: true
+  script:
+    - cd OpenAirInterface_Testbed/FlexRIC
+    - bash ./full_uninstall.sh
+  artifacts:
+    expire_in: 1 day
+    when: always
+  retry: 0
+
+install_srsran_ue:
+  stage: install_srsran_ue
+  resource_group: testbed_install
+  interruptible: true
+  script:
+    - cd User_Equipment
+    - bash ./full_install.sh
+  artifacts:
+    expire_in: 1 day
+    when: always
+  retry: 0
+
+install_srsran_gnb:
+  stage: install_srsran_gnb
+  resource_group: testbed_install
+  interruptible: true
+  script:
+    - cd Next_Generation_Node_B
+    - bash ./full_install.sh
+  artifacts:
+    expire_in: 1 day
+    when: always
+  retry: 0
+
+  uninstall_srsran_ue:
+    stage: uninstall_srsran_ue
+    resource_group: testbed_uninstall
+    interruptible: true
+    script:
+      - cd User_Equipment
+      - bash ./full_uninstall.sh
+    artifacts:
+      expire_in: 1 day
+      when: always
+    retry: 0
+
+  uninstall_srsran_gnb:
+    stage: uninstall_srsran_gnb
+    resource_group: testbed_uninstall
+    interruptible: true
+    script:
+      - cd Next_Generation_Node_B
+      - bash ./full_uninstall.sh
+    artifacts:
+      expire_in: 1 day
+      when: always
+    retry: 0
+
+  uninstall_open5gs:
+    stage: uninstall_open5gs
+    resource_group: testbed_uninstall
+    interruptible: true
+    script:
+      - cd OpenAirInterface_Testbed/5G_Core_Network
+      - bash ./full_uninstall.sh
+    artifacts:
+      expire_in: 1 day
+      when: always
+    retry: 0
+
+# OAI
     # - |
     #   echo "Starting run.sh and waiting up to 2 minutes for DRB.PdcpSduVolumeDL..."
     #   if timeout 120s bash ./run.sh |& grep -q "DRB.PdcpSduVolumeDL"; then
@@ -35,80 +216,25 @@ install_openairinterface_testbed:
     #     exit 1
     #   fi
     # - bash ./full_uninstall.sh
-  artifacts:
-    expire_in: 1 day
-    when: always
-  retry: 0
 
-uninstall_openairinterface_testbed:
-  stage: uninstall_openairinterface_testbed
-  resource_group: testbed_uninstall
-  interruptible: true
-  script:
-    - set -e
-    - echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections
-    - DEBIAN_FRONTEND=noninteractive sudo apt-get update && sudo apt-get -y --no-install-recommends install tzdata
-    - cd OpenAirInterface_Testbed
-    - "sed -i -E 's/^core_to_use:.*/core_to_use: 5gdeploy-open5gs/' 5G_Core_Network/options.yaml"
-    - bash ./full_uninstall.sh
-  artifacts:
-    expire_in: 1 day
-    when: always
-  retry: 0
 
-install_srsran_oransc_testbed:
-  stage: install_srsran_oransc_testbed
-  resource_group: testbed_install
-  interruptible: true
-  before_script:
-    - apt-get update
-    - apt-get install -y sudo bash grep coreutils curl wget git gnupg lsb-release
-  script:
-    - set -e
-    - echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections
-    - DEBIAN_FRONTEND=noninteractive sudo apt-get update && sudo apt-get -y --no-install-recommends install tzdata
-    - echo -e '#!/bin/sh\necho "systemctl not supported in CI container"\nexit 0' | sudo tee /usr/local/bin/systemctl > /dev/null
-    - sudo chmod +x /usr/local/bin/systemctl
-    - "sed -i -E 's/^core_to_use:.*/core_to_use: open5gs/' 5G_Core_Network/options.yaml"
-    - bash ./full_install.sh
-    - bash ./generate_configurations.sh
-    - bash ./run.sh &
-    - |
-      # Wait up to 120s for the successful UE connection
-      echo "Waiting for RRC NR reconfiguration successful in log..."
-      timeout=120
-      found=0
-      for i in $(seq 1 $timeout); do
-        if grep -q "RRC NR reconfiguration successful" User_Equipment/logs/ue1_stdout.txt 2>/dev/null; then
-          echo "Successfully found RRC NR reconfiguration successful in srsRAN_4G UE log."
-          found=1
-          break
-        fi
-        sleep 1
-      done
-      if [ "$found" -ne 1 ]; then
-        echo "Did not find success string in time."
-        exit 1
-      fi
-    - bash ./full_uninstall.sh
-  artifacts:
-    expire_in: 1 day
-    when: always
-    paths:
-      - User_Equipment/logs/ue1_stdout.txt
-  retry: 0
 
-uninstall_srsran_oransc_testbed:
-  stage: uninstall_srsran_oransc_testbed
-  resource_group: testbed_uninstall
-  interruptible: true
-  script:
-    - set -e
-    - echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections
-    - DEBIAN_FRONTEND=noninteractive sudo apt-get update && sudo apt-get -y --no-install-recommends install tzdata
-    - "sed -i -E 's/^core_to_use:.*/core_to_use: open5gs/' 5G_Core_Network/options.yaml"
-    - bash ./full_uninstall.sh
-  artifacts:
-    expire_in: 1 day
-    when: always
-  retry: 0
+# srsRAN
+    # - |
+    #   # Wait up to 120s for the successful UE connection
+    #   echo "Waiting for RRC NR reconfiguration successful in log..."
+    #   timeout=120
+    #   found=0
+    #   for i in $(seq 1 $timeout); do
+    #     if grep -q "RRC NR reconfiguration successful" User_Equipment/logs/ue1_stdout.txt 2>/dev/null; then
+    #       echo "Successfully found RRC NR reconfiguration successful in srsRAN_4G UE log."
+    #       found=1
+    #       break
+    #     fi
+    #     sleep 1
+    #   done
+    #   if [ "$found" -ne 1 ]; then
+    #     echo "Did not find success string in time."
+    #     exit 1
+    #   fi
+  

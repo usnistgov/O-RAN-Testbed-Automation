@@ -40,5 +40,13 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
+# Create sudoers file for gitlab-runner to allow the CI to run sudo interactively
+SUDOERS_FILE="/etc/sudoers.d/gitlab-runner"
+SUDOERS_LINE="gitlab-runner ALL=(ALL) NOPASSWD:ALL"
+if ! sudo grep -Fxq "$SUDOERS_LINE" "$SUDOERS_FILE" 2>/dev/null; then
+    echo "$SUDOERS_LINE" | sudo tee "$SUDOERS_FILE" >/dev/null
+    sudo chmod 440 "$SUDOERS_FILE"
+fi
+
 echo "Starting GitLab Runner..."
 sudo gitlab-runner run

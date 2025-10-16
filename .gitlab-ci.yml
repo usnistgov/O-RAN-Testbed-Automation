@@ -13,24 +13,11 @@ default:
   cache: []
 
 stages:
-  - workspace_preclean
-  - install_initial_dependencies
-  - uninstall_all_components
-  - install_open5gs
-  - install_oai_ue
-  - install_oai_gnb
-  - install_flexric
-  - configure_oai_testbed
-  # TODO: add E2E tests for OAI here
-  - uninstall_oai_ue
-  - uninstall_oai_gnb
-  - uninstall_flexric
-  - install_srsran_ue
-  - install_srsran_gnb
-  # TODO: add E2E tests for srsRAN here
-  - uninstall_srsran_ue
-  - uninstall_srsran_gnb
-  - uninstall_open5gs
+  - initialization
+  - testbed_1_installation
+  - testbed_1_uninstallation
+  - testbed_2_installation
+  - testbed_2_uninstallation
 
 workspace_preclean:
   stage: initialization

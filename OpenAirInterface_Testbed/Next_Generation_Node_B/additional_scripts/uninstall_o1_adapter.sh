@@ -41,7 +41,7 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$PARENT_DIR"
 
-if [ "$1" != "bypass_confirmation" ]; then
+if [[ "$1" != "bypass_confirmation" && "$1" != "--yes" && "$1" != "-y" ]]; then
     clear
     echo "This script will remove Docker from the system."
     echo "This is a destructive operation and may result in data loss."

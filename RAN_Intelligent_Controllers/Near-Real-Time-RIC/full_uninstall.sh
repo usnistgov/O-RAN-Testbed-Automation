@@ -40,7 +40,7 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-if [ "$1" != "bypass_confirmation" ]; then
+if [[ "$1" != "bypass_confirmation" && "$1" != "--yes" && "$1" != "-y" ]]; then
     clear
     echo "This script will remove Docker and Kubernetes from the system."
     echo "This is a destructive operation and may result in data loss."

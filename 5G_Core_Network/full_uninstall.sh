@@ -60,7 +60,7 @@ echo "Removing Open5GS installation directory..."
 sudo rm -rf open5gs/
 sudo rm -rf /var/log/open5gs
 
-if ls open5gs-* 1> /dev/null 2>&1; then
+if ls open5gs-* 1>/dev/null 2>&1; then
     echo "Removing intermediate open5gs directories from older versions..."
     for INTERMEDIATE_DIR in open5gs-*; do
         if [[ -d "$INTERMEDIATE_DIR" && "$INTERMEDIATE_DIR" != "open5gs-*" ]]; then
@@ -72,7 +72,7 @@ fi
 
 mkdir -p logs
 cd logs
-if ls ../open5gs-* 1> /dev/null 2>&1; then
+if ls ../open5gs-* 1>/dev/null 2>&1; then
     echo "Removing intermediate open5gs directories..."
     for INTERMEDIATE_DIR in ../open5gs-*; do
         if [[ -d "$INTERMEDIATE_DIR" && "$INTERMEDIATE_DIR" != "open5gs-*" ]]; then

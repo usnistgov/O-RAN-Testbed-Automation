@@ -122,7 +122,7 @@ install_flexric:
   variables:
     GIT_STRATEGY: none
   script:
-    - cd OpenAirInterface_Testbed/RAN_Intelligent_Controllers/FlexRIC
+    - cd OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC
     - ./full_install.sh
     - cd ../../..
   artifacts:
@@ -145,6 +145,8 @@ configure_oai_testbed:
     expire_in: 1 day
     when: always
   retry: 0
+
+############################ TODO: END-TO-END TESTS ############################
 
 uninstall_oai_ue:
   stage: testbed_1
@@ -186,7 +188,7 @@ uninstall_flexric:
   variables:
     GIT_STRATEGY: none
   script:
-    - cd OpenAirInterface_Testbed/RAN_Intelligent_Controllers/FlexRIC
+    - cd OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC
     - ./full_uninstall.sh
     - cd ../../..
   artifacts:
@@ -229,11 +231,27 @@ install_srsran_gnb:
     when: always
   retry: 0
 
-uninstall_srsran_ue:
+configure_srsran_testbed:
   stage: testbed_2
   interruptible: true
   resource_group: testbed
   needs: [install_srsran_gnb]
+  variables:
+    GIT_STRATEGY: none
+  script:
+    - ./generate_configurations.sh
+  artifacts:
+    expire_in: 1 day
+    when: always
+  retry: 0
+
+############################ TODO: END-TO-END TESTS ############################
+
+uninstall_srsran_ue:
+  stage: testbed_2
+  interruptible: true
+  resource_group: testbed
+  needs: [configure_srsran_testbed]
   variables:
     GIT_STRATEGY: none
   script:

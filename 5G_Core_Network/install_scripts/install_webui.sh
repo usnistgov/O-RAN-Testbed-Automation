@@ -68,4 +68,8 @@ if ! command -v npm >/dev/null || [ "$(node -p 'process.versions.node.split(`.`)
     sudo env $APTVARS apt-get install -y nodejs
 fi
 
+# Installing the Open5GS web UI required cloning the repository and running the installation script; use a logs directory
+mkdir -p logs
+cd logs
+
 curl -fsSL https://open5gs.org/open5gs/assets/webui/install | sudo -E bash -

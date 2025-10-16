@@ -123,8 +123,22 @@ if [[ "$USE_SYSTEMCTL" == "null" || -z "$USE_SYSTEMCTL" ]]; then
     USE_SYSTEMCTL="true" # Default
 fi
 
+# Start MongoDB and check if it is healthy
+#./install_scripts/stop_mongodb.sh
+./install_scripts/start_mongodb.sh
+MONGO_HEALTHY=true
+if command -v mongod &>/dev/null; then
+    if ! mongo --host 127.0.0.1 --port 27017 --quiet --eval 'db.adminCommand({ping:1}).ok' admin &>/dev/null; then
+        MONGO_HEALTHY=false
+        echo "MongoDB is not responding to ping."
+    fi
+else
+    MONGO_HEALTHY=false
+    echo "MongoDB not found."
+fi
+
 # Check for open5gs-amfd and open5gs-upfd binaries to determine if Open5GS is already installed
-if [ -f "open5gs/install/bin/open5gs-amfd" ] && [ -f "open5gs/install/bin/open5gs-upfd" ] && command -v mongod &>/dev/null; then
+if [ -f "open5gs/install/bin/open5gs-amfd" ] && [ -f "open5gs/install/bin/open5gs-upfd" ] && [ "$MONGO_HEALTHY" = true ]; then
     echo "Open5GS is already installed, skipping."
     exit 0
 fi
@@ -171,6 +185,11 @@ if [ -d /etc/needrestart ]; then
 $nrconf{restart} = 'l';
 EOF
     echo "Configured needrestart to list-only (no service restarts)."
+fi
+
+if [ "$MONGO_HEALTHY" = false ]; then
+    echo "MongoDB is not healthy, reinstalling..."
+    sudo "$SCRIPT_DIR/./install_scripts/uninstall_mongodb.sh"
 fi
 
 sudo "$SCRIPT_DIR/./install_scripts/install_mongodb.sh"
@@ -221,7 +240,11 @@ echo "Installation complete. Open5GS has been installed."
 cd "$SCRIPT_DIR"
 
 echo "Installing WebUI for Subscriber Registration..."
-sudo ./install_scripts/install_webui.sh
+sudo ./install_scripts/install_webui.sh || {
+    echo
+    echo "WebUI installation failed, continuing without it."
+    echo
+}
 
 # Define library paths
 LIB_SBI_PATH="${SCRIPT_DIR}/open5gs/build/lib/sbi"

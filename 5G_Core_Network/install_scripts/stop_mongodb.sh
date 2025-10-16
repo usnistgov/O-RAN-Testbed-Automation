@@ -28,32 +28,43 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
-if ! command -v realpath &>/dev/null; then
-    echo "Package \"coreutils\" not found, installing..."
-    sudo env $APTVARS apt-get install -y coreutils
-fi
-
 echo "# Script: $(realpath "$0")..."
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$PARENT_DIR"
 
-DBCTL_DIR="./open5gs/misc/db/open5gs-dbctl"
+CONFIG_FILE="/etc/mongod/mongod.conf"
 
-./start_webui.sh no-browser
+USE_SYSTEMCTL=$(yq eval '.use_systemctl' options.yaml)
+if [[ "$USE_SYSTEMCTL" == "null" || -z "$USE_SYSTEMCTL" ]]; then
+    USE_SYSTEMCTL="true" # Default
+fi
 
-# Command to remove all subscribers using the open5gs-dbctl tool
-CMD="$DBCTL_DIR reset"
+if [[ "$USE_SYSTEMCTL" == "true" ]]; then
+    # Point mongodb to the correct configuration file
+    sudo sed -i "s|ExecStart=/usr/bin/mongod --config .*|ExecStart=/usr/bin/mongod --config $CONFIG_FILE|" /lib/systemd/system/mongod.service
+    sudo systemctl daemon-reload
 
-echo "Running command: $CMD"
-$CMD
+    echo "Checking MongoDB service..."
+    if sudo systemctl is-active --quiet mongod; then
+        echo "Stopping MongoDB service..."
+        sudo systemctl stop mongod
+    fi
 
-# Check exit status of the command
-if [ $? -eq 0 ]; then
-    echo "Subscribers successfully removed from the database."
-    $DBCTL_DIR showpretty
+    if sudo systemctl is-enabled --quiet mongod; then
+        echo "Disabling MongoDB service from starting on boot..."
+        sudo systemctl disable mongod
+    fi
 else
-    echo "Failed to remove subscribers from the database."
+    # Ensure that the service is not running and is disabled
+    if command -v systemctl &>/dev/null; then
+        sudo systemctl stop mongod &>/dev/null
+        sudo systemctl disable mongod &>/dev/null
+    fi
+
+    if sudo pgrep -x "mongod" -a >/dev/null; then
+        echo "Stopping existing MongoDB process..."
+        sudo pkill -f "mongod"
+    fi
 fi

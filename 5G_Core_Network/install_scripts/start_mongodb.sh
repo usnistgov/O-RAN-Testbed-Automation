@@ -34,8 +34,7 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$PARENT_DIR"
 
-CONFIG_DIR="/etc/mongod"
-CONFIG_FILE="$CONFIG_DIR/mongod.conf"
+CONFIG_FILE="/etc/mongod/mongod.conf"
 
 USE_SYSTEMCTL=$(yq eval '.use_systemctl' options.yaml)
 if [[ "$USE_SYSTEMCTL" == "null" || -z "$USE_SYSTEMCTL" ]]; then
@@ -56,6 +55,7 @@ if [[ "$USE_SYSTEMCTL" == "true" ]]; then
         # fi
         echo "Starting MongoDB service..."
         sudo systemctl start mongod
+        sleep 3
     fi
 
     if ! sudo systemctl is-enabled --quiet mongod; then
@@ -63,14 +63,16 @@ if [[ "$USE_SYSTEMCTL" == "true" ]]; then
         sudo systemctl enable mongod
     fi
 else
-    if ! pgrep -f "mongod" >/dev/null; then
+    if ! sudo pgrep -x "mongod" -a >/dev/null; then
+        echo "MongoDB is not running."
         # First ensure that the service is not running and is disabled
         if command -v systemctl &>/dev/null; then
-            sudo systemctl stop mongod
-            sudo systemctl disable mongod
+            sudo systemctl stop mongod &>/dev/null
+            sudo systemctl disable mongod &>/dev/null
         fi
 
         echo "Starting MongoDB service..."
         sudo mongod --config "$CONFIG_FILE" --fork
+        sleep 3
     fi
 fi

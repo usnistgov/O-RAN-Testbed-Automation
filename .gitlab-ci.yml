@@ -1,7 +1,19 @@
+variables:
+  GIT_STRATEGY: clone
+  GIT_DEPTH: "1"
+  GIT_SUBMODULE_STRATEGY: none
+  DEBIAN_FRONTEND: noninteractive
+
 default:
   tags: [testbed-ci-runner]
+  interruptible: true
+  before_script:
+    - echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections
+    - export DEBIAN_FRONTEND=noninteractive
+  cache: []
 
 stages:
+  - workspace_preclean
   - install_initial_dependencies
   - uninstall_all_components
   - install_open5gs
@@ -20,13 +32,19 @@ stages:
   - uninstall_srsran_gnb
   - uninstall_open5gs
 
-install_initial_dependencies:
-  stage: install_initial_dependencies
-  resource_group: testbed_install
-  interruptible: true
+workspace_preclean:
+  stage: initialization
+  resource_group: testbed
+  variables:
+    GIT_STRATEGY: none
   script:
-    - echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections
-    - export DEBIAN_FRONTEND=noninteractive
+    - sudo rm -rf * && sudo rm -rf .git*
+
+clone_and_install_dependencies:
+  stage: initialization
+  resource_group: testbed
+  dependencies: []
+  script:
     - sudo apt-get update
     - sudo apt-get install -y sudo
     - sudo apt-get install -y bash
@@ -42,14 +60,11 @@ install_initial_dependencies:
     expire_in: 1 day
     when: always
   retry: 1
-
+  
 uninstall_all_components:
-  stage: uninstall_all_components
-  resource_group: testbed_uninstall
-  interruptible: true
+  stage: initialization
+  resource_group: testbed
   script:
-    - echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections
-    - DEBIAN_FRONTEND=noninteractive sudo apt-get update && sudo apt-get -y --no-install-recommends install tzdata
     - "sed -i -E 's/^core_to_use:.*/core_to_use: open5gs/' 5G_Core_Network/options.yaml"
     - ./full_uninstall.sh
     - cd OpenAirInterface_Testbed
@@ -61,9 +76,8 @@ uninstall_all_components:
   retry: 1
 
 install_open5gs:
-  stage: install_open5gs
-  resource_group: testbed_install
-  interruptible: true
+  stage: testbed_1_installation
+  resource_group: testbed
   script:
     - cd OpenAirInterface_Testbed/5G_Core_Network
     - "sed -i -E 's/^core_to_use:.*/core_to_use: open5gs/' options.yaml"
@@ -76,9 +90,8 @@ install_open5gs:
   retry: 0
 
 install_oai_ue:
-  stage: install_oai_ue
-  resource_group: testbed_install
-  interruptible: true
+  stage: testbed_1_installation
+  resource_group: testbed
   script:
     - cd OpenAirInterface_Testbed/User_Equipment
     - ./full_install.sh
@@ -88,9 +101,8 @@ install_oai_ue:
   retry: 0
 
 install_oai_gnb:
-  stage: install_oai_gnb
-  resource_group: testbed_install
-  interruptible: true
+  stage: testbed_1_installation
+  resource_group: testbed
   script:
     - cd OpenAirInterface_Testbed/Next_Generation_Node_B
     - ./full_install.sh
@@ -100,9 +112,8 @@ install_oai_gnb:
   retry: 0
 
 configure_oai_testbed:
-  stage: configure_oai_testbed
-  resource_group: testbed_install
-  interruptible: true
+  stage: testbed_1_installation
+  resource_group: testbed
   script:
     - cd OpenAirInterface_Testbed
     - ./generate_configurations.sh
@@ -112,9 +123,8 @@ configure_oai_testbed:
   retry: 0
 
 uninstall_oai_ue:
-  stage: uninstall_oai_ue
-  resource_group: testbed_uninstall
-  interruptible: true
+  stage: testbed_1_uninstallation
+  resource_group: testbed
   script:
     - cd OpenAirInterface_Testbed/User_Equipment
     - ./full_uninstall.sh
@@ -124,9 +134,8 @@ uninstall_oai_ue:
   retry: 0
 
 uninstall_oai_gnb:
-  stage: uninstall_oai_gnb
-  resource_group: testbed_uninstall
-  interruptible: true
+  stage: testbed_1_uninstallation
+  resource_group: testbed
   script:
     - cd OpenAirInterface_Testbed/Next_Generation_Node_B
     - ./full_uninstall.sh
@@ -136,9 +145,8 @@ uninstall_oai_gnb:
   retry: 0
 
 uninstall_flexric:
-  stage: uninstall_flexric
-  resource_group: testbed_uninstall
-  interruptible: true
+  stage: testbed_1_uninstallation
+  resource_group: testbed
   script:
     - cd OpenAirInterface_Testbed/FlexRIC
     - ./full_uninstall.sh
@@ -148,9 +156,8 @@ uninstall_flexric:
   retry: 0
 
 install_srsran_ue:
-  stage: install_srsran_ue
-  resource_group: testbed_install
-  interruptible: true
+  stage: testbed_2_installation
+  resource_group: testbed
   script:
     - cd User_Equipment
     - ./full_install.sh
@@ -160,9 +167,8 @@ install_srsran_ue:
   retry: 0
 
 install_srsran_gnb:
-  stage: install_srsran_gnb
-  resource_group: testbed_install
-  interruptible: true
+  stage: testbed_2_installation
+  resource_group: testbed
   script:
     - cd Next_Generation_Node_B
     - ./full_install.sh
@@ -172,9 +178,8 @@ install_srsran_gnb:
   retry: 0
 
 uninstall_srsran_ue:
-  stage: uninstall_srsran_ue
-  resource_group: testbed_uninstall
-  interruptible: true
+  stage: testbed_2_uninstallation
+  resource_group: testbed
   script:
     - cd User_Equipment
     - ./full_uninstall.sh
@@ -184,9 +189,8 @@ uninstall_srsran_ue:
   retry: 0
 
 uninstall_srsran_gnb:
-  stage: uninstall_srsran_gnb
-  resource_group: testbed_uninstall
-  interruptible: true
+  stage: testbed_2_uninstallation
+  resource_group: testbed
   script:
     - cd Next_Generation_Node_B
     - ./full_uninstall.sh
@@ -196,9 +200,8 @@ uninstall_srsran_gnb:
   retry: 0
 
 uninstall_open5gs:
-  stage: uninstall_open5gs
-  resource_group: testbed_uninstall
-  interruptible: true
+  stage: testbed_2_uninstallation
+  resource_group: testbed
   script:
     - cd OpenAirInterface_Testbed/5G_Core_Network
     - ./full_uninstall.sh
@@ -206,36 +209,3 @@ uninstall_open5gs:
     expire_in: 1 day
     when: always
   retry: 0
-
-# OAI
-    # - |
-    #   echo "Starting run.sh and waiting up to 2 minutes for DRB.PdcpSduVolumeDL..."
-    #   if timeout 120s ./run.sh |& grep -q "DRB.PdcpSduVolumeDL"; then
-    #     echo "Successfully found DRB.PdcpSduVolumeDL in FlexRIC output."
-    #   else
-    #     echo "String DRB.PdcpSduVolumeDL not found in output after 2 minutes."
-    #     exit 1
-    #   fi
-    # - ./full_uninstall.sh
-
-
-
-# srsRAN
-    # - |
-    #   # Wait up to 120s for the successful UE connection
-    #   echo "Waiting for RRC NR reconfiguration successful in log..."
-    #   timeout=120
-    #   found=0
-    #   for i in $(seq 1 $timeout); do
-    #     if grep -q "RRC NR reconfiguration successful" User_Equipment/logs/ue1_stdout.txt 2>/dev/null; then
-    #       echo "Successfully found RRC NR reconfiguration successful in srsRAN_4G UE log."
-    #       found=1
-    #       break
-    #     fi
-    #     sleep 1
-    #   done
-    #   if [ "$found" -ne 1 ]; then
-    #     echo "Did not find success string in time."
-    #     exit 1
-    #   fi
-  

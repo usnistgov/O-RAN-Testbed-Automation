@@ -16,6 +16,10 @@ stages:
   - testbed_1
   - testbed_2
 
+################################################################################
+############################### INITIALIZATION #################################
+################################################################################
+
 workspace_preclean:
   stage: initialization
   interruptible: true
@@ -65,6 +69,10 @@ uninstall_all_components:
     expire_in: 1 day
     when: always
   retry: 1
+
+################################################################################
+########################### TESTBED 1 INSTALLATION #############################
+################################################################################
 
 install_open5gs:
   stage: testbed_1
@@ -188,11 +196,14 @@ uninstall_flexric:
     when: always
   retry: 0
 
+################################################################################
+########################### TESTBED 2 INSTALLATION #############################
+################################################################################
+
 install_srsran_ue:
   stage: testbed_2
   interruptible: true
   resource_group: testbed
-  needs: [uninstall_flexric]
   variables:
     GIT_STRATEGY: none
   script:

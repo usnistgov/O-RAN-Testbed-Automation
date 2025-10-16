@@ -27,7 +27,6 @@ workspace_preclean:
   resource_group: testbed
   variables:
     GIT_STRATEGY: none
-  cache: []
   script:
     - sudo rm -rf * && sudo rm -rf .git*
 
@@ -81,6 +80,7 @@ install_open5gs:
   stage: testbed_1
   interruptible: true
   resource_group: testbed
+  needs: [uninstall_all_components]
   variables:
     GIT_STRATEGY: none
   script:
@@ -93,7 +93,7 @@ install_open5gs:
   artifacts:
     expire_in: 1 day
     when: always
-  retry: 0
+  retry: 1
 
 install_oai_ue_gnb:
   stage: testbed_1
@@ -204,6 +204,7 @@ install_srsran_ue:
   stage: testbed_2
   interruptible: true
   resource_group: testbed
+  needs: [uninstall_flexric]
   variables:
     GIT_STRATEGY: none
   script:

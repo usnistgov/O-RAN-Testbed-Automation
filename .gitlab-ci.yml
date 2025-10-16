@@ -9,6 +9,7 @@ default:
   before_script:
     - echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections
     - export DEBIAN_FRONTEND=noninteractive
+    - cd "$CI_PROJECT_DIR"
   cache: []
 
 stages:

@@ -166,11 +166,17 @@ mkdir -p logs
 
 if [ "$USE_RFSIM_CHANNELMOD" = true ]; then
     echo "Using the channelmod_rfsimu.conf file for the RFSIM channel model."
-    cp install_patch_files/channelmod_rfsimu.conf "$SCRIPT_DIR/configs/channelmod_rfsimu.conf"
+    #cp install_patch_files/channelmod_rfsimu.conf "$SCRIPT_DIR/configs/channelmod_rfsimu.conf"
+    cd configs
+    ln -sf ../install_patch_files/channelmod_rfsimu.conf channelmod_rfsimu.conf
+    cd ..
 else
     echo "Using the channelmod_rfsimu_LEO_satellite.conf file for the RFSIM channel model."
     # Use the default channelmod_rfsimu_LEO_satellite.conf file
-    cp openairinterface5g/targets/PROJECTS/GENERIC-NR-5GC/CONF/channelmod_rfsimu_LEO_satellite.conf configs/channelmod_rfsimu.conf
+    #cp openairinterface5g/targets/PROJECTS/GENERIC-NR-5GC/CONF/channelmod_rfsimu_LEO_satellite.conf configs/channelmod_rfsimu.conf
+    cd configs
+    ln -sf ../openairinterface5g/targets/PROJECTS/GENERIC-NR-5GC/CONF/channelmod_rfsimu_LEO_satellite.conf channelmod_rfsimu.conf
+    cd ..
 fi
 
 UE_CREDENTIAL_GENERATOR_SCRIPT="$SCRIPT_DIR/ue_credentials_generator.sh"

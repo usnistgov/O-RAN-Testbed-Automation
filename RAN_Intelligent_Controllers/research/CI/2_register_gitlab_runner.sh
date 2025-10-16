@@ -67,20 +67,30 @@ else
     echo "No runners are currently registered."
 fi
 
-sudo gitlab-runner register \
-    --non-interactive \
-    --url https://gitlab.nist.gov/gitlab \
-    --token "$RUNNER_TOKEN" \
-    --description "NIST CI Runner" \
-    --executor "shell"
-
 echo "Creating symbolic link to config.toml in script directory..."
-sudo rm -f $SCRIPT_DIR/config.toml
-ln -s /etc/gitlab-runner/config.toml $SCRIPT_DIR/config.toml
+sudo rm -f config.toml
+ln -s /etc/gitlab-runner/config.toml config.toml
 
-if ! sudo grep -q 'pre_clone_script = "sudo chown -R gitlab-runner:gitlab-runner ."' /etc/gitlab-runner/config.toml; then
-    echo "Fixing permissions issue by adding pre_clone_script to config.toml..."
-    sudo sed -i '/executor = "shell"/i \  pre_clone_script = "sudo chown -R gitlab-runner:gitlab-runner ."' /etc/gitlab-runner/config.toml
+if ! sudo grep -q "$RUNNER_TOKEN" config.toml; then
+    sudo gitlab-runner register \
+            --non-interactive \
+            --url https://gitlab.nist.gov/gitlab \
+            --token "$RUNNER_TOKEN" \
+            --description "NIST CI Runner" \
+            --executor "shell"
+else
+    echo "Runner with the provided token is already registered in config.toml."
+fi
+
+# Configure the runner to use 'sudo -n true' as a pre_build_script to ensure sudo permissions
+if ! sudo grep -qE '^\s*pre_clone_script\s*=' /etc/gitlab-runner/config.toml; then
+  echo "Adding pre_clone_script to config.toml..."
+    sudo sed -i -E '1,/^[[:space:]]*executor = "shell"/{s/^([[:space:]]*)executor = "shell"/\1pre_clone_script = "sudo chown -R gitlab-runner:gitlab-runner ."\n\1executor = "shell"/}' /etc/gitlab-runner/config.toml
+fi
+
+if ! sudo grep -qE '^\s*pre_build_script\s*=' /etc/gitlab-runner/config.toml; then
+  echo "Adding pre_build_script to config.toml..."
+  sudo sed -i -E '1,/^\s*executor = "shell"/{s/^([[:space:]]*)executor = "shell"/\1pre_build_script = "sudo -n true"\n\1executor = "shell"/}' /etc/gitlab-runner/config.toml
 fi
 
 echo "Successfully registered GitLab runner."

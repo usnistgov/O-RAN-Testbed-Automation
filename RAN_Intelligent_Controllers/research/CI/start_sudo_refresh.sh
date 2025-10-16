@@ -28,35 +28,16 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-# Exit immediately if a command fails
-set -e
+echo "# Script: $(realpath "$0")..."
 
-APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
-if ! command -v realpath &>/dev/null; then
-    echo "Package \"coreutils\" not found, installing..."
-    sudo env $APTVARS apt-get install -y coreutils
-fi
-
+sudo ls &>/dev/null
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
-cd "$SCRIPT_DIR"
 
-# Run a sudo command every minute to ensure script execution without user interaction
-./start_sudo_refresh.sh
-
-# Ensure the sudo timeout refresher is stopped on script exit
-trap './stop_sudo_refresh.sh' EXIT SIGINT SIGTERM SIGQUIT
-
-SCRIPT_DIR=$(dirname "$(realpath "$0")")
-cd "$SCRIPT_DIR"
-
-# Create sudoers file for gitlab-runner to allow the CI to run sudo interactively
-SUDOERS_FILE="/etc/sudoers.d/90-gitlab-runner"
-SUDOERS_LINE="gitlab-runner ALL=(ALL) NOPASSWD: ALL"
-if ! sudo grep -Eqs '^\s*gitlab-runner\s+ALL=\(ALL\)\s+NOPASSWD:\s+ALL\s*$' "$SUDOERS_FILE" 2>/dev/null; then
-    echo "$SUDOERS_LINE" | sudo tee "$SUDOERS_FILE" >/dev/null
-    sudo chmod 440 "$SUDOERS_FILE"
-    sudo visudo -cf "$SUDOERS_FILE"
+# Check if the user is not root
+if [ "$USER" != "root" ]; then
+    # Start the sudo-stay-validated.sh script in the background
+    nohup ./sudo_stay_validated.sh >/dev/null 2>&1 &
+    echo "Sudo refresh process started with PID $!"
+else
+    echo "You are root, no need to refresh sudo timeout."
 fi
-
-echo "Starting GitLab Runner..."
-sudo gitlab-runner run --config "/etc/gitlab-runner/config.toml"

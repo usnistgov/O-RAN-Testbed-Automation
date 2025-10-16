@@ -210,7 +210,8 @@ for CONF_FILE in gnb.conf split_cu.conf "${SPLIT_DUS[@]}"; do
         fi
         if [ ! -e "configs/channelmod_rfsimu.conf" ]; then
             cd configs
-            ln -s ../../User_Equipment/configs/channelmod_rfsimu.conf channelmod_rfsimu.conf
+            #ln -s ../../User_Equipment/configs/channelmod_rfsimu.conf channelmod_rfsimu.conf
+            ln -sf ../install_patch_files/channelmod_rfsimu.conf channelmod_rfsimu.conf
             cd ..
         fi
     fi

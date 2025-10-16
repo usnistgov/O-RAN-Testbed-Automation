@@ -1,5 +1,5 @@
 default:
-  tags: [nist-ci-runner]
+  tags: [testbed-ci-runner]
 
 stages:
   - install_initial_dependencies
@@ -51,10 +51,10 @@ uninstall_all_components:
     - echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections
     - DEBIAN_FRONTEND=noninteractive sudo apt-get update && sudo apt-get -y --no-install-recommends install tzdata
     - "sed -i -E 's/^core_to_use:.*/core_to_use: open5gs/' 5G_Core_Network/options.yaml"
-    - bash ./full_uninstall.sh
+    - ./full_uninstall.sh
     - cd OpenAirInterface_Testbed
     - "sed -i -E 's/^core_to_use:.*/core_to_use: 5gdeploy-open5gs/' 5G_Core_Network/options.yaml"
-    - bash ./full_uninstall.sh
+    - ./full_uninstall.sh
   artifacts:
     expire_in: 1 day
     when: always
@@ -69,7 +69,7 @@ install_open5gs:
     - "sed -i -E 's/^core_to_use:.*/core_to_use: open5gs/' options.yaml"
     # Disable systemctl so that Open5GS components are direct processes running in background
     - "sed -i -E 's/^use_systemctl:.*/use_systemctl: false/' options.yaml"
-    - bash ./full_install.sh
+    - ./full_install.sh
   artifacts:
     expire_in: 1 day
     when: always
@@ -81,7 +81,7 @@ install_oai_ue:
   interruptible: true
   script:
     - cd OpenAirInterface_Testbed/User_Equipment
-    - bash ./full_install.sh
+    - ./full_install.sh
   artifacts:
     expire_in: 1 day
     when: always
@@ -93,7 +93,7 @@ install_oai_gnb:
   interruptible: true
   script:
     - cd OpenAirInterface_Testbed/Next_Generation_Node_B
-    - bash ./full_install.sh
+    - ./full_install.sh
   artifacts:
     expire_in: 1 day
     when: always
@@ -105,7 +105,7 @@ configure_oai_testbed:
   interruptible: true
   script:
     - cd OpenAirInterface_Testbed
-    - bash ./generate_configurations.sh
+    - ./generate_configurations.sh
   artifacts:
     expire_in: 1 day
     when: always
@@ -117,7 +117,7 @@ uninstall_oai_ue:
   interruptible: true
   script:
     - cd OpenAirInterface_Testbed/User_Equipment
-    - bash ./full_uninstall.sh
+    - ./full_uninstall.sh
   artifacts:
     expire_in: 1 day
     when: always
@@ -129,7 +129,7 @@ uninstall_oai_gnb:
   interruptible: true
   script:
     - cd OpenAirInterface_Testbed/Next_Generation_Node_B
-    - bash ./full_uninstall.sh
+    - ./full_uninstall.sh
   artifacts:
     expire_in: 1 day
     when: always
@@ -141,7 +141,7 @@ uninstall_flexric:
   interruptible: true
   script:
     - cd OpenAirInterface_Testbed/FlexRIC
-    - bash ./full_uninstall.sh
+    - ./full_uninstall.sh
   artifacts:
     expire_in: 1 day
     when: always
@@ -153,7 +153,7 @@ install_srsran_ue:
   interruptible: true
   script:
     - cd User_Equipment
-    - bash ./full_install.sh
+    - ./full_install.sh
   artifacts:
     expire_in: 1 day
     when: always
@@ -165,7 +165,7 @@ install_srsran_gnb:
   interruptible: true
   script:
     - cd Next_Generation_Node_B
-    - bash ./full_install.sh
+    - ./full_install.sh
   artifacts:
     expire_in: 1 day
     when: always
@@ -177,7 +177,7 @@ uninstall_srsran_ue:
   interruptible: true
   script:
     - cd User_Equipment
-    - bash ./full_uninstall.sh
+    - ./full_uninstall.sh
   artifacts:
     expire_in: 1 day
     when: always
@@ -189,7 +189,7 @@ uninstall_srsran_gnb:
   interruptible: true
   script:
     - cd Next_Generation_Node_B
-    - bash ./full_uninstall.sh
+    - ./full_uninstall.sh
   artifacts:
     expire_in: 1 day
     when: always
@@ -201,7 +201,7 @@ uninstall_open5gs:
   interruptible: true
   script:
     - cd OpenAirInterface_Testbed/5G_Core_Network
-    - bash ./full_uninstall.sh
+    - ./full_uninstall.sh
   artifacts:
     expire_in: 1 day
     when: always
@@ -210,13 +210,13 @@ uninstall_open5gs:
 # OAI
     # - |
     #   echo "Starting run.sh and waiting up to 2 minutes for DRB.PdcpSduVolumeDL..."
-    #   if timeout 120s bash ./run.sh |& grep -q "DRB.PdcpSduVolumeDL"; then
+    #   if timeout 120s ./run.sh |& grep -q "DRB.PdcpSduVolumeDL"; then
     #     echo "Successfully found DRB.PdcpSduVolumeDL in FlexRIC output."
     #   else
     #     echo "String DRB.PdcpSduVolumeDL not found in output after 2 minutes."
     #     exit 1
     #   fi
-    # - bash ./full_uninstall.sh
+    # - ./full_uninstall.sh
 
 
 

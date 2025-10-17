@@ -41,7 +41,7 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$SCRIPT_DIR"
 
-echo "Stopping all Open5GS containers..."
+echo "Stopping all 5G Core Deployment Helper (5gdeploy) containers..."
 ./stop.sh
 
 ./install_scripts/uninstall_lazydocker.sh

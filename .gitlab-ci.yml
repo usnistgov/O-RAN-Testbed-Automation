@@ -67,6 +67,7 @@ uninstall_all_components:
     - "sed -i -E 's/^core_to_use:.*/core_to_use: 5gdeploy-open5gs/' 5G_Core_Network/options.yaml"
     - ./full_uninstall.sh
     - cd ..
+    - "sed -i -E 's/^core_to_use:.*/core_to_use: open5gs/' 5G_Core_Network/options.yaml"
   artifacts:
     expire_in: 1 day
     when: always
@@ -232,11 +233,28 @@ install_srsran_gnb:
     when: always
   retry: 0
 
-configure_srsran_testbed:
+install_5gdeploy:
   stage: testbed_2
   interruptible: true
   resource_group: testbed
   needs: [install_srsran_gnb]
+  variables:
+    GIT_STRATEGY: none
+  script:
+    - cd 5G_Core_Network
+    - "sed -i -E 's/^core_to_use:.*/core_to_use: 5gdeploy-oai/' options.yaml"
+    - ./full_install.sh
+    - cd ..
+  artifacts:
+    expire_in: 1 day
+    when: always
+  retry: 1
+
+configure_srsran_testbed:
+  stage: testbed_2
+  interruptible: true
+  resource_group: testbed
+  needs: [install_5gdeploy]
   variables:
     GIT_STRATEGY: none
   script:
@@ -288,9 +306,27 @@ uninstall_open5gs:
   variables:
     GIT_STRATEGY: none
   script:
-    - cd OpenAirInterface_Testbed/5G_Core_Network
+    - cd 5G_Core_Network
+    - "sed -i -E 's/^core_to_use:.*/core_to_use: open5gs/' options.yaml"
     - ./full_uninstall.sh
-    - cd ../..
+    - cd ..
+  artifacts:
+    expire_in: 1 day
+    when: always
+  retry: 0
+
+uninstall_5gdeploy:
+  stage: testbed_2
+  interruptible: true
+  resource_group: testbed
+  needs: [uninstall_open5gs]
+  variables:
+    GIT_STRATEGY: none
+  script:
+    - cd 5G_Core_Network
+    - "sed -i -E 's/^core_to_use:.*/core_to_use: 5gdeploy-oai/' options.yaml"
+    - ./full_uninstall.sh
+    - cd ..
   artifacts:
     expire_in: 1 day
     when: always

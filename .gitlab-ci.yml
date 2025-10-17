@@ -63,10 +63,12 @@ uninstall_all_components:
   variables:
     GIT_STRATEGY: none
   script:
+    # Testbed 1
     - "sed -i -E 's/^core_to_use:.*/core_to_use: open5gs/' 5G_Core_Network/options.yaml"
     - ./full_uninstall.sh
+    # Testbed 2
     - cd OpenAirInterface_Testbed
-    - "sed -i -E 's/^core_to_use:.*/core_to_use: 5gdeploy-open5gs/' 5G_Core_Network/options.yaml"
+    - "sed -i -E 's/^core_to_use:.*/core_to_use: 5gdeploy-oai/' 5G_Core_Network/options.yaml"
     - ./full_uninstall.sh
     - cd ..
     - "sed -i -E 's/^core_to_use:.*/core_to_use: open5gs/' 5G_Core_Network/options.yaml"
@@ -242,13 +244,16 @@ uninstall_open5gs:
   stage: uninstall_testbed_1
   interruptible: true
   resource_group: testbed
-  needs: [configure_srsran_testbed]
+  needs:
+    - job: configure_srsran_testbed
+      optional: true
   variables:
     GIT_STRATEGY: none
+  when: always
   script:
     - cd 5G_Core_Network
     - "sed -i -E 's/^core_to_use:.*/core_to_use: open5gs/' options.yaml"
-    - ./full_uninstall.sh
+    - ./full_uninstall.sh bypass_confirmation
     - cd ..
   artifacts:
     expire_in: 1 day
@@ -259,12 +264,15 @@ uninstall_oai_ue:
   stage: uninstall_testbed_1
   interruptible: true
   resource_group: testbed
-  needs: [uninstall_open5gs]
+  needs:
+    - job: uninstall_open5gs
+      optional: true
   variables:
     GIT_STRATEGY: none
+  when: always
   script:
     - cd OpenAirInterface_Testbed/User_Equipment
-    - ./full_uninstall.sh
+    - ./full_uninstall.sh bypass_confirmation
     - cd ../..
   artifacts:
     expire_in: 1 day
@@ -275,12 +283,15 @@ uninstall_oai_gnb:
   stage: uninstall_testbed_1
   interruptible: true
   resource_group: testbed
-  needs: [uninstall_oai_ue]
+  needs:
+    - job: uninstall_oai_ue
+      optional: true
   variables:
     GIT_STRATEGY: none
+  when: always
   script:
     - cd OpenAirInterface_Testbed/Next_Generation_Node_B
-    - ./full_uninstall.sh
+    - ./full_uninstall.sh bypass_confirmation
     - cd ../..
   artifacts:
     expire_in: 1 day
@@ -291,12 +302,15 @@ uninstall_flexric:
   stage: uninstall_testbed_1
   interruptible: true
   resource_group: testbed
-  needs: [uninstall_oai_gnb]
+  needs:
+    - job: uninstall_oai_gnb
+      optional: true
   variables:
     GIT_STRATEGY: none
+  when: always
   script:
     - cd OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC
-    - ./full_uninstall.sh
+    - ./full_uninstall.sh bypass_confirmation
     - cd ../../..
   artifacts:
     expire_in: 1 day
@@ -307,12 +321,15 @@ uninstall_srsran_ue:
   stage: uninstall_testbed_2
   interruptible: true
   resource_group: testbed
-  needs: [uninstall_flexric]
+  needs:
+    - job: uninstall_flexric
+      optional: true
   variables:
     GIT_STRATEGY: none
+  when: always
   script:
     - cd User_Equipment
-    - ./full_uninstall.sh
+    - ./full_uninstall.sh bypass_confirmation
     - cd ..
   artifacts:
     expire_in: 1 day
@@ -323,12 +340,15 @@ uninstall_srsran_gnb:
   stage: uninstall_testbed_2
   interruptible: true
   resource_group: testbed
-  needs: [uninstall_srsran_ue]
+  needs:
+    - job: uninstall_srsran_ue
+      optional: true
   variables:
     GIT_STRATEGY: none
+  when: always
   script:
     - cd Next_Generation_Node_B
-    - ./full_uninstall.sh
+    - ./full_uninstall.sh bypass_confirmation
     - cd ..
   artifacts:
     expire_in: 1 day
@@ -339,12 +359,15 @@ uninstall_oran_sc_nearrtric:
   stage: uninstall_testbed_2
   interruptible: true
   resource_group: testbed
-  needs: [uninstall_srsran_gnb]
+  needs:
+    - job: uninstall_srsran_gnb
+      optional: true
   variables:
     GIT_STRATEGY: none
+  when: always
   script:
     - cd RAN_Intelligent_Controllers/Near-Real-Time-RIC
-    - ./full_uninstall.sh
+    - ./full_uninstall.sh bypass_confirmation
     - cd ..
   artifacts:
     expire_in: 1 day
@@ -355,13 +378,16 @@ uninstall_5gdeploy:
   stage: uninstall_testbed_2
   interruptible: true
   resource_group: testbed
-  needs: [uninstall_oran_sc_nearrtric]
+  needs:
+    - job: uninstall_oran_sc_nearrtric
+      optional: true
   variables:
     GIT_STRATEGY: none
+  when: always
   script:
     - cd 5G_Core_Network
     - "sed -i -E 's/^core_to_use:.*/core_to_use: 5gdeploy-oai/' options.yaml"
-    - ./full_uninstall.sh
+    - ./full_uninstall.sh bypass_confirmation
     - cd ..
   artifacts:
     expire_in: 1 day

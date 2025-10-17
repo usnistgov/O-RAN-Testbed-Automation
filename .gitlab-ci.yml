@@ -14,8 +14,10 @@ default:
 
 stages:
   - initialization
-  - testbed_1
-  - testbed_2
+  - install_testbed_1
+  - install_testbed_2
+  - uninstall_testbed_1
+  - uninstall_testbed_2
 
 ################################################################################
 ############################### INITIALIZATION #################################
@@ -78,7 +80,7 @@ uninstall_all_components:
 ################################################################################
 
 install_open5gs:
-  stage: testbed_1
+  stage: install_testbed_1
   interruptible: true
   resource_group: testbed
   needs: [uninstall_all_components]
@@ -94,10 +96,10 @@ install_open5gs:
   artifacts:
     expire_in: 1 day
     when: always
-  retry: 1
+  retry: 0
 
 install_oai_ue_gnb:
-  stage: testbed_1
+  stage: install_testbed_1
   interruptible: true
   resource_group: testbed
   needs: [install_open5gs]
@@ -116,7 +118,7 @@ install_oai_ue_gnb:
   retry: 0
 
 install_flexric:
-  stage: testbed_1
+  stage: install_testbed_1
   interruptible: true
   resource_group: testbed
   needs: [install_oai_ue_gnb]
@@ -132,7 +134,7 @@ install_flexric:
   retry: 0
 
 configure_oai_testbed:
-  stage: testbed_1
+  stage: install_testbed_1
   interruptible: true
   resource_group: testbed
   needs: [install_flexric]
@@ -149,11 +151,115 @@ configure_oai_testbed:
 
 ############################ TODO: END-TO-END TESTS ############################
 
-uninstall_oai_ue:
-  stage: testbed_1
+
+################################################################################
+########################### TESTBED 2 INSTALLATION #############################
+################################################################################
+
+install_srsran_ue:
+  stage: install_testbed_2
   interruptible: true
   resource_group: testbed
   needs: [configure_oai_testbed]
+  variables:
+    GIT_STRATEGY: none
+  script:
+    - cd User_Equipment
+    - ./full_install.sh
+    - cd ..
+  artifacts:
+    expire_in: 1 day
+    when: always
+  retry: 0
+
+install_srsran_gnb:
+  stage: install_testbed_2
+  interruptible: true
+  resource_group: testbed
+  needs: [install_srsran_ue]
+  variables:
+    GIT_STRATEGY: none
+  script:
+    - cd Next_Generation_Node_B
+    - ./full_install.sh
+    - cd ..
+  artifacts:
+    expire_in: 1 day
+    when: always
+  retry: 0
+
+install_oran_sc_nearrtric:
+  stage: install_testbed_2
+  interruptible: true
+  resource_group: testbed
+  needs: [install_srsran_gnb]
+  variables:
+    GIT_STRATEGY: none
+  script:
+    - cd RAN_Intelligent_Controllers/Near-Real-Time-RIC
+    - ./full_install.sh
+    - cd ..
+  artifacts:
+    expire_in: 1 day
+    when: always
+  retry: 0
+
+install_5gdeploy:
+  stage: install_testbed_2
+  interruptible: true
+  resource_group: testbed
+  needs: [install_oran_sc_nearrtric]
+  variables:
+    GIT_STRATEGY: none
+  script:
+    - cd 5G_Core_Network
+    - "sed -i -E 's/^core_to_use:.*/core_to_use: 5gdeploy-oai/' options.yaml"
+    - ./full_install.sh
+    - cd ..
+  artifacts:
+    expire_in: 1 day
+    when: always
+  retry: 0
+
+configure_srsran_testbed:
+  stage: install_testbed_2
+  interruptible: true
+  resource_group: testbed
+  needs: [install_5gdeploy]
+  variables:
+    GIT_STRATEGY: none
+  script:
+    - "sed -i -E 's/^core_to_use:.*/core_to_use: 5gdeploy-oai/' 5G_Core_Network/options.yaml"
+    - ./generate_configurations.sh
+  artifacts:
+    expire_in: 1 day
+    when: always
+  retry: 0
+
+############################ TODO: END-TO-END TESTS ############################
+
+uninstall_open5gs:
+  stage: uninstall_testbed_1
+  interruptible: true
+  resource_group: testbed
+  needs: [configure_srsran_testbed]
+  variables:
+    GIT_STRATEGY: none
+  script:
+    - cd 5G_Core_Network
+    - "sed -i -E 's/^core_to_use:.*/core_to_use: open5gs/' options.yaml"
+    - ./full_uninstall.sh
+    - cd ..
+  artifacts:
+    expire_in: 1 day
+    when: always
+  retry: 0
+
+uninstall_oai_ue:
+  stage: uninstall_testbed_1
+  interruptible: true
+  resource_group: testbed
+  needs: [uninstall_open5gs]
   variables:
     GIT_STRATEGY: none
   script:
@@ -166,7 +272,7 @@ uninstall_oai_ue:
   retry: 0
 
 uninstall_oai_gnb:
-  stage: testbed_1
+  stage: uninstall_testbed_1
   interruptible: true
   resource_group: testbed
   needs: [uninstall_oai_ue]
@@ -182,7 +288,7 @@ uninstall_oai_gnb:
   retry: 0
 
 uninstall_flexric:
-  stage: testbed_1
+  stage: uninstall_testbed_1
   interruptible: true
   resource_group: testbed
   needs: [uninstall_oai_gnb]
@@ -197,80 +303,11 @@ uninstall_flexric:
     when: always
   retry: 0
 
-################################################################################
-########################### TESTBED 2 INSTALLATION #############################
-################################################################################
-
-install_srsran_ue:
-  stage: testbed_2
+uninstall_srsran_ue:
+  stage: uninstall_testbed_2
   interruptible: true
   resource_group: testbed
   needs: [uninstall_flexric]
-  variables:
-    GIT_STRATEGY: none
-  script:
-    - cd User_Equipment
-    - ./full_install.sh
-    - cd ..
-  artifacts:
-    expire_in: 1 day
-    when: always
-  retry: 0
-
-install_srsran_gnb:
-  stage: testbed_2
-  interruptible: true
-  resource_group: testbed
-  needs: [install_srsran_ue]
-  variables:
-    GIT_STRATEGY: none
-  script:
-    - cd Next_Generation_Node_B
-    - ./full_install.sh
-    - cd ..
-  artifacts:
-    expire_in: 1 day
-    when: always
-  retry: 0
-
-install_5gdeploy:
-  stage: testbed_2
-  interruptible: true
-  resource_group: testbed
-  needs: [install_srsran_gnb]
-  variables:
-    GIT_STRATEGY: none
-  script:
-    - cd 5G_Core_Network
-    - "sed -i -E 's/^core_to_use:.*/core_to_use: 5gdeploy-oai/' options.yaml"
-    - ./full_install.sh
-    - cd ..
-  artifacts:
-    expire_in: 1 day
-    when: always
-  retry: 1
-
-configure_srsran_testbed:
-  stage: testbed_2
-  interruptible: true
-  resource_group: testbed
-  needs: [install_5gdeploy]
-  variables:
-    GIT_STRATEGY: none
-  script:
-    - ./generate_configurations.sh
-  artifacts:
-    expire_in: 1 day
-    when: always
-  retry: 0
-
-############################ TODO: END-TO-END TESTS ############################
-
-uninstall_srsran_ue:
-  stage: testbed_2
-  interruptible: true
-  resource_group: testbed
-  needs: [configure_srsran_testbed]
   variables:
     GIT_STRATEGY: none
   script:
@@ -283,7 +320,7 @@ uninstall_srsran_ue:
   retry: 0
 
 uninstall_srsran_gnb:
-  stage: testbed_2
+  stage: uninstall_testbed_2
   interruptible: true
   resource_group: testbed
   needs: [uninstall_srsran_ue]
@@ -298,16 +335,15 @@ uninstall_srsran_gnb:
     when: always
   retry: 0
 
-uninstall_open5gs:
-  stage: testbed_2
+uninstall_oran_sc_nearrtric:
+  stage: uninstall_testbed_2
   interruptible: true
   resource_group: testbed
   needs: [uninstall_srsran_gnb]
   variables:
     GIT_STRATEGY: none
   script:
-    - cd 5G_Core_Network
-    - "sed -i -E 's/^core_to_use:.*/core_to_use: open5gs/' options.yaml"
+    - cd RAN_Intelligent_Controllers/Near-Real-Time-RIC
     - ./full_uninstall.sh
     - cd ..
   artifacts:
@@ -316,10 +352,10 @@ uninstall_open5gs:
   retry: 0
 
 uninstall_5gdeploy:
-  stage: testbed_2
+  stage: uninstall_testbed_2
   interruptible: true
   resource_group: testbed
-  needs: [uninstall_open5gs]
+  needs: [uninstall_oran_sc_nearrtric]
   variables:
     GIT_STRATEGY: none
   script:

@@ -753,14 +753,33 @@ if ! sudo sed -i 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd
       PodSandboxImage = "registry.k8s.io/pause:3.9"
 EOF
 fi
-# Restart containerd
-if ! sudo systemctl restart containerd; then
-    echo "Failed to restart containerd."
+
+# Restart containerd service or start it as background process
+if command -v systemctl >/dev/null 2>&1 && sudo systemctl daemon-reload >/dev/null 2>&1; then
+    sudo systemctl restart containerd
+else
+    echo "Systemd not available or daemon-reload failed. Starting containerd as a background process..."
+    sudo mkdir -p /run/containerd
+    sudo sh -c 'nohup containerd --config /etc/containerd/config.toml >>/tmp/containerd.log 2>&1 &'
+fi
+
+# Wait up to 30 seconds for containerd CRI to be ready
+for i in {1..30}; do
+    if sudo crictl info >/dev/null 2>&1; then
+        break
+    fi
+    sleep 1
+done
+if ! sudo crictl info >/dev/null 2>&1; then
+    echo "ERROR: containerd CRI not ready"
+    sudo tail -n 200 /tmp/containerd.log 2>/dev/null || true
     exit 1
 fi
 
-# Restart kubelet to pick up new containerd configuration
-sudo systemctl restart kubelet
+# Restart kubelet
+if command -v systemctl >/dev/null 2>&1; then
+    sudo systemctl restart kubelet || true
+fi
 
 # Configure crictl to not give endpoint warnings when running: sudo crictl ps -a
 cat <<EOF | sudo tee /etc/crictl.yaml >/dev/null
@@ -773,7 +792,7 @@ sudo chmod 644 /etc/crictl.yaml
 
 # Pull required images for Kubernetes
 echo "Pulling kube-apiserver, kube-controller-manager, kube-scheduler, kube-proxy, pause, etcd, and coredns..."
-sudo kubeadm config images pull --kubernetes-version=${KUBEVERSIONWITHOUTSUFFIX}
+sudo kubeadm config images pull --kubernetes-version=${KUBEVERSIONWITHOUTSUFFIX} --cri-socket=unix:///run/containerd/containerd.sock
 
 echo "Kubernetes components reinstalled and ready for initialization."
 

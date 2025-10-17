@@ -1,8 +1,10 @@
 variables:
-  GIT_STRATEGY: clone
   GIT_DEPTH: "1"
   GIT_SUBMODULE_STRATEGY: none
   DEBIAN_FRONTEND: noninteractive
+  FF_USE_FASTZIP: true
+  ARTIFACT_COMPRESSION_LEVEL: "slowest"
+  CACHE_COMPRESSION_LEVEL: "slowest"
 
 default:
   tags: [testbed-ci-runner]
@@ -11,6 +13,7 @@ default:
     - export DEBIAN_FRONTEND=noninteractive
     # - cd "$CI_PROJECT_DIR"
     - pwd
+    - tree . -d
 
 stages:
   - initialization
@@ -23,10 +26,38 @@ stages:
 ############################### INITIALIZATION #################################
 ################################################################################
 
+uninstall_all_components:
+  stage: initialization
+  interruptible: true
+  resource_group: testbed
+  variables:
+    GIT_STRATEGY: none
+  script:
+    - |
+      if [[ -f "5G_Core_Network/options.yaml" && -f "full_uninstall.sh" && -f "OpenAirInterface_Testbed/full_uninstall.sh" ]]; then
+        # Testbed 1
+        sed -i -E 's/^core_to_use:.*/core_to_use: open5gs/' 5G_Core_Network/options.yaml
+        ./full_uninstall.sh
+        # Testbed 2
+        sed -i -E 's/^core_to_use:.*/core_to_use: 5gdeploy-oai/' 5G_Core_Network/options.yaml
+        cd OpenAirInterface_Testbed
+        ./full_uninstall.sh
+        cd ..
+        sed -i -E 's/^core_to_use:.*/core_to_use: open5gs/' 5G_Core_Network/options.yaml
+      else
+        echo "Repositories don't exist yet for uninstall_all_components, skipping."
+      fi
+  artifacts:
+    expire_in: 1 day
+    when: always
+  retry: 2
+
 workspace_preclean:
   stage: initialization
   interruptible: true
   resource_group: testbed
+  needs:        [uninstall_all_components]
+  dependencies: [uninstall_all_components]
   variables:
     GIT_STRATEGY: none
   script:
@@ -36,46 +67,20 @@ clone_and_install_dependencies:
   stage: initialization
   interruptible: true
   resource_group: testbed
-  needs: [workspace_preclean]
-  dependencies: []
+  needs:        [workspace_preclean]
+  dependencies: [workspace_preclean]
+  variables:
+    GIT_STRATEGY: clone
   script:
     - sudo apt-get update
-    - sudo apt-get install -y sudo
-    - sudo apt-get install -y bash
-    - sudo apt-get install -y grep
-    - sudo apt-get install -y coreutils
-    - sudo apt-get install -y curl
-    - sudo apt-get install -y wget
-    - sudo apt-get install -y git
-    - sudo apt-get install -y gnupg
-    - sudo apt-get install -y lsb-release
+    - sudo apt-get install -y sudo bash grep coreutils curl wget git gnupg lsb-release tree
     - sudo apt-get install -y --no-install-recommends tzdata
   artifacts:
     expire_in: 1 day
     when: always
-  retry: 1
-  
-uninstall_all_components:
-  stage: initialization
-  interruptible: true
-  resource_group: testbed
-  needs: [clone_and_install_dependencies]
-  variables:
-    GIT_STRATEGY: none
-  script:
-    # Testbed 1
-    - "sed -i -E 's/^core_to_use:.*/core_to_use: open5gs/' 5G_Core_Network/options.yaml"
-    - ./full_uninstall.sh
-    # Testbed 2
-    - cd OpenAirInterface_Testbed
-    - "sed -i -E 's/^core_to_use:.*/core_to_use: 5gdeploy-oai/' 5G_Core_Network/options.yaml"
-    - ./full_uninstall.sh
-    - cd ..
-    - "sed -i -E 's/^core_to_use:.*/core_to_use: open5gs/' 5G_Core_Network/options.yaml"
-  artifacts:
-    expire_in: 1 day
-    when: always
-  retry: 1
+    paths:
+      - ./
+  retry: 2
 
 ################################################################################
 ########################### TESTBED 1 INSTALLATION #############################
@@ -85,7 +90,8 @@ install_open5gs:
   stage: install_testbed_1
   interruptible: true
   resource_group: testbed
-  needs: [uninstall_all_components]
+  needs:        [clone_and_install_dependencies]
+  dependencies: [clone_and_install_dependencies]
   variables:
     GIT_STRATEGY: none
   script:
@@ -98,13 +104,16 @@ install_open5gs:
   artifacts:
     expire_in: 1 day
     when: always
-  retry: 0
+    # paths:
+    #   - ./
+  retry: 2
 
 install_oai_ue_gnb:
   stage: install_testbed_1
   interruptible: true
   resource_group: testbed
-  needs: [install_open5gs]
+  needs:        [install_open5gs]
+  dependencies: [install_open5gs]
   variables:
     GIT_STRATEGY: none
   script:
@@ -117,13 +126,16 @@ install_oai_ue_gnb:
   artifacts:
     expire_in: 1 day
     when: always
-  retry: 0
+    # paths:
+    #   - ./
+  retry: 2
 
 install_flexric:
   stage: install_testbed_1
   interruptible: true
   resource_group: testbed
-  needs: [install_oai_ue_gnb]
+  needs:        [install_open5gs, install_oai_ue_gnb]
+  dependencies: [install_open5gs, install_oai_ue_gnb]
   variables:
     GIT_STRATEGY: none
   script:
@@ -133,13 +145,16 @@ install_flexric:
   artifacts:
     expire_in: 1 day
     when: always
-  retry: 0
+    # paths:
+    #   - ./
+  retry: 2
 
 configure_oai_testbed:
   stage: install_testbed_1
   interruptible: true
   resource_group: testbed
-  needs: [install_flexric]
+  needs:        [install_open5gs, install_oai_ue_gnb, install_flexric]
+  dependencies: [install_open5gs, install_oai_ue_gnb, install_flexric]
   variables:
     GIT_STRATEGY: none
   script:
@@ -149,7 +164,9 @@ configure_oai_testbed:
   artifacts:
     expire_in: 1 day
     when: always
-  retry: 0
+    # paths:
+    #   - ./
+  retry: 2
 
 ############################ TODO: END-TO-END TESTS ############################
 
@@ -162,7 +179,8 @@ install_srsran_ue:
   stage: install_testbed_2
   interruptible: true
   resource_group: testbed
-  needs: [configure_oai_testbed]
+  needs:        [configure_oai_testbed]
+  dependencies: [configure_oai_testbed]
   variables:
     GIT_STRATEGY: none
   script:
@@ -172,13 +190,16 @@ install_srsran_ue:
   artifacts:
     expire_in: 1 day
     when: always
-  retry: 0
+    # paths:
+    #   - ./
+  retry: 2
 
 install_srsran_gnb:
   stage: install_testbed_2
   interruptible: true
   resource_group: testbed
-  needs: [install_srsran_ue]
+  needs:        [install_srsran_ue]
+  dependencies: [install_srsran_ue]
   variables:
     GIT_STRATEGY: none
   script:
@@ -188,13 +209,16 @@ install_srsran_gnb:
   artifacts:
     expire_in: 1 day
     when: always
-  retry: 0
+    # paths:
+    #   - ./
+  retry: 2
 
 install_oran_sc_nearrtric:
   stage: install_testbed_2
   interruptible: true
   resource_group: testbed
-  needs: [install_srsran_gnb]
+  needs:        [install_srsran_ue, install_srsran_gnb]
+  dependencies: [install_srsran_ue, install_srsran_gnb]
   variables:
     GIT_STRATEGY: none
   script:
@@ -204,13 +228,16 @@ install_oran_sc_nearrtric:
   artifacts:
     expire_in: 1 day
     when: always
-  retry: 0
+    # paths:
+    #   - ./
+  retry: 2
 
 install_5gdeploy:
   stage: install_testbed_2
   interruptible: true
   resource_group: testbed
-  needs: [install_oran_sc_nearrtric]
+  needs:        [install_srsran_ue, install_srsran_gnb, install_oran_sc_nearrtric]
+  dependencies: [install_srsran_ue, install_srsran_gnb, install_oran_sc_nearrtric]
   variables:
     GIT_STRATEGY: none
   script:
@@ -221,13 +248,16 @@ install_5gdeploy:
   artifacts:
     expire_in: 1 day
     when: always
-  retry: 0
+    # paths:
+    #   - ./
+  retry: 2
 
 configure_srsran_testbed:
   stage: install_testbed_2
   interruptible: true
   resource_group: testbed
-  needs: [install_5gdeploy]
+  needs:        [install_srsran_ue, install_srsran_gnb, install_oran_sc_nearrtric, install_5gdeploy]
+  dependencies: [install_srsran_ue, install_srsran_gnb, install_oran_sc_nearrtric, install_5gdeploy]
   variables:
     GIT_STRATEGY: none
   script:
@@ -236,7 +266,9 @@ configure_srsran_testbed:
   artifacts:
     expire_in: 1 day
     when: always
-  retry: 0
+    # paths:
+    #   - ./
+  retry: 2
 
 ############################ TODO: END-TO-END TESTS ############################
 
@@ -258,7 +290,7 @@ uninstall_open5gs:
   artifacts:
     expire_in: 1 day
     when: always
-  retry: 0
+  retry: 2
 
 uninstall_oai_ue:
   stage: uninstall_testbed_1
@@ -277,7 +309,7 @@ uninstall_oai_ue:
   artifacts:
     expire_in: 1 day
     when: always
-  retry: 0
+  retry: 2
 
 uninstall_oai_gnb:
   stage: uninstall_testbed_1
@@ -296,7 +328,7 @@ uninstall_oai_gnb:
   artifacts:
     expire_in: 1 day
     when: always
-  retry: 0
+  retry: 2
 
 uninstall_flexric:
   stage: uninstall_testbed_1
@@ -315,7 +347,7 @@ uninstall_flexric:
   artifacts:
     expire_in: 1 day
     when: always
-  retry: 0
+  retry: 2
 
 uninstall_srsran_ue:
   stage: uninstall_testbed_2
@@ -334,7 +366,7 @@ uninstall_srsran_ue:
   artifacts:
     expire_in: 1 day
     when: always
-  retry: 0
+  retry: 2
 
 uninstall_srsran_gnb:
   stage: uninstall_testbed_2
@@ -353,7 +385,7 @@ uninstall_srsran_gnb:
   artifacts:
     expire_in: 1 day
     when: always
-  retry: 0
+  retry: 2
 
 uninstall_oran_sc_nearrtric:
   stage: uninstall_testbed_2
@@ -372,7 +404,7 @@ uninstall_oran_sc_nearrtric:
   artifacts:
     expire_in: 1 day
     when: always
-  retry: 0
+  retry: 2
 
 uninstall_5gdeploy:
   stage: uninstall_testbed_2
@@ -392,4 +424,5 @@ uninstall_5gdeploy:
   artifacts:
     expire_in: 1 day
     when: always
-  retry: 0
+  retry: 2
+

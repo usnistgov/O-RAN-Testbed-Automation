@@ -49,6 +49,10 @@ trap './stop_sudo_refresh.sh' EXIT SIGINT SIGTERM SIGQUIT
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
+# Clean up previous artifacts
+sudo rm -rf builds
+sudo rm -rf cache
+
 # Create sudoers file for gitlab-runner to allow the CI to run sudo interactively
 SUDOERS_FILE="/etc/sudoers.d/90-gitlab-runner"
 SUDOERS_LINE="gitlab-runner ALL=(ALL) NOPASSWD: ALL"
@@ -57,6 +61,9 @@ if ! sudo grep -Eqs '^\s*gitlab-runner\s+ALL=\(ALL\)\s+NOPASSWD:\s+ALL\s*$' "$SU
     sudo chmod 440 "$SUDOERS_FILE"
     sudo visudo -cf "$SUDOERS_FILE"
 fi
+
+# Configure git to avoid "fatal: detected dubious ownership in repository" errors
+git config --global --add safe.directory '*'
 
 echo "Starting GitLab Runner..."
 sudo gitlab-runner run --config "/etc/gitlab-runner/config.toml"

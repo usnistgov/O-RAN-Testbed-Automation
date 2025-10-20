@@ -1,37 +1,45 @@
 variables:
   GIT_DEPTH: "1"
+  GIT_STRATEGY: none #fetch
   GIT_SUBMODULE_STRATEGY: none
+  GIT_CONFIG_COUNT: "1"
+  GIT_CONFIG_KEY_0: "safe.directory"
+  GIT_CONFIG_VALUE_0: "*"
+  GIT_SSL_NO_VERIFY: "1"
   DEBIAN_FRONTEND: noninteractive
   FF_USE_FASTZIP: true
   ARTIFACT_COMPRESSION_LEVEL: "slowest"
   CACHE_COMPRESSION_LEVEL: "slowest"
+
 
 default:
   tags: [testbed-ci-runner]
   before_script:
     - echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections
     - export DEBIAN_FRONTEND=noninteractive
-    # - cd "$CI_PROJECT_DIR"
+    - cd "$CI_PROJECT_DIR"
     - pwd
     - tree . -d
+  after_script:
+    - sudo chown -R "$USER:$USER" "$CI_PROJECT_DIR" || true
 
 stages:
   - initialization
-  - install_testbed_1
-  - install_testbed_2
-  - uninstall_testbed_1
-  - uninstall_testbed_2
+  - testbed_1
+  - testbed_2
+  - finalization
 
 ################################################################################
 ############################### INITIALIZATION #################################
 ################################################################################
 
-uninstall_all_components:
+pre_install_cleanup:
   stage: initialization
   interruptible: true
   resource_group: testbed
   variables:
     GIT_STRATEGY: none
+  allow_failure: true
   script:
     - |
       if [[ -f "5G_Core_Network/options.yaml" && -f "full_uninstall.sh" && -f "OpenAirInterface_Testbed/full_uninstall.sh" ]]; then
@@ -45,127 +53,128 @@ uninstall_all_components:
         cd ..
         sed -i -E 's/^core_to_use:.*/core_to_use: open5gs/' 5G_Core_Network/options.yaml
       else
-        echo "Repositories don't exist yet for uninstall_all_components, skipping."
+        echo "Repositories don't exist for uninstall_all_components, skipping."
       fi
-  artifacts:
-    expire_in: 1 day
-    when: always
-  retry: 2
-
-workspace_preclean:
-  stage: initialization
-  interruptible: true
-  resource_group: testbed
-  needs:        [uninstall_all_components]
-  dependencies: [uninstall_all_components]
-  variables:
-    GIT_STRATEGY: none
-  script:
     - sudo rm -rf * && sudo rm -rf .git*
 
-clone_and_install_dependencies:
+clone_repo_install_deps:
   stage: initialization
   interruptible: true
   resource_group: testbed
-  needs:        [workspace_preclean]
-  dependencies: [workspace_preclean]
+  needs: [pre_install_cleanup]
   variables:
     GIT_STRATEGY: clone
   script:
+    - sudo rm -f /var/lib/dpkg/lock-frontend /var/lib/dpkg/lock || true
+    - sudo dpkg --configure -a || true
+    - |
+      if dpkg -s mongosh >/dev/null 2>&1 || ls /var/lib/dpkg/info/mongosh* >/dev/null 2>&1; then
+        echo "Purging broken mongosh package..."
+        sudo dpkg --remove --force-remove-reinstreq mongosh || true
+        sudo dpkg --purge mongosh || true
+        sudo rm -f /var/lib/dpkg/info/mongosh.* || true
+      fi
+    - sudo apt-get -y -f install || true
     - sudo apt-get update
     - sudo apt-get install -y sudo bash grep coreutils curl wget git gnupg lsb-release tree
     - sudo apt-get install -y --no-install-recommends tzdata
-  artifacts:
-    expire_in: 1 day
-    when: always
-    paths:
-      - ./
+    - sudo update-ca-certificates || true
   retry: 2
 
 ################################################################################
 ########################### TESTBED 1 INSTALLATION #############################
 ################################################################################
 
-install_open5gs:
-  stage: install_testbed_1
+testbed_1_setup:
+  stage: testbed_1
   interruptible: true
   resource_group: testbed
-  needs:        [clone_and_install_dependencies]
-  dependencies: [clone_and_install_dependencies]
-  variables:
-    GIT_STRATEGY: none
+  needs: [clone_repo_install_deps]
   script:
+    - echo -e "\e[0Ksection_start:$(date +%s):open5gs_install[collapsed=true]\r\e[0KInstall Open5GS"
+    - echo "********************************************************************************"
+    - echo "***************************** CI Install Open5GS *******************************"
+    - echo "********************************************************************************"
     - cd OpenAirInterface_Testbed/5G_Core_Network
     - "sed -i -E 's/^core_to_use:.*/core_to_use: open5gs/' options.yaml"
     # Disable systemctl so that Open5GS components are direct processes running in background
     - "sed -i -E 's/^use_systemctl:.*/use_systemctl: false/' options.yaml"
     - ./full_install.sh
     - cd ../..
-  artifacts:
-    expire_in: 1 day
-    when: always
-    # paths:
-    #   - ./
-  retry: 2
+    - echo -e "\e[0Ksection_end:$(date +%s):open5gs_install\r\e[0K"
 
-install_oai_ue_gnb:
-  stage: install_testbed_1
-  interruptible: true
-  resource_group: testbed
-  needs:        [install_open5gs]
-  dependencies: [install_open5gs]
-  variables:
-    GIT_STRATEGY: none
-  script:
+    - echo -e "\e[0Ksection_start:$(date +%s):oai_ue_install[collapsed=true]\r\e[0KInstall OpenAirInterface UE"
+    - echo "********************************************************************************"
+    - echo "***************************** CI Install OAI UE ********************************"
+    - echo "********************************************************************************"
     - cd OpenAirInterface_Testbed/User_Equipment
     - ./full_install.sh
     - cd ../..
+    - echo -e "\e[0Ksection_end:$(date +%s):oai_ue_install\r\e[0K"
+
+    - echo -e "\e[0Ksection_start:$(date +%s):oai_gnb_install[collapsed=true]\r\e[0KInstall OpenAirInterface gNB"
+    - echo "********************************************************************************"
+    - echo "***************************** CI Install OAI gNB *******************************"
+    - echo "********************************************************************************"
     - cd OpenAirInterface_Testbed/Next_Generation_Node_B
     - ./full_install.sh
     - cd ../..
-  artifacts:
-    expire_in: 1 day
-    when: always
-    # paths:
-    #   - ./
-  retry: 2
+    - echo -e "\e[0Ksection_end:$(date +%s):oai_gnb_install\r\e[0K"
 
-install_flexric:
-  stage: install_testbed_1
-  interruptible: true
-  resource_group: testbed
-  needs:        [install_open5gs, install_oai_ue_gnb]
-  dependencies: [install_open5gs, install_oai_ue_gnb]
-  variables:
-    GIT_STRATEGY: none
-  script:
+    - echo -e "\e[0Ksection_start:$(date +%s):flexric_install[collapsed=true]\r\e[0KInstall FlexRIC"
+    - echo "********************************************************************************"
+    - echo "***************************** CI Install FlexRIC *******************************"
+    - echo "********************************************************************************"
     - cd OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC
     - ./full_install.sh
     - cd ../../..
-  artifacts:
-    expire_in: 1 day
-    when: always
-    # paths:
-    #   - ./
-  retry: 2
+    - echo -e "\e[0Ksection_end:$(date +%s):flexric_install\r\e[0K"
 
-configure_oai_testbed:
-  stage: install_testbed_1
-  interruptible: true
-  resource_group: testbed
-  needs:        [install_open5gs, install_oai_ue_gnb, install_flexric]
-  dependencies: [install_open5gs, install_oai_ue_gnb, install_flexric]
-  variables:
-    GIT_STRATEGY: none
-  script:
+    - echo -e "\e[0Ksection_start:$(date +%s):testbed_1_configuration[collapsed=true]\r\e[0KTestbed 1 Configuration"
+    - echo "********************************************************************************"
+    - echo "****************************** CI Configuration ********************************"
+    - echo "********************************************************************************"
     - cd OpenAirInterface_Testbed
     - ./generate_configurations.sh
     - cd ..
-  artifacts:
-    expire_in: 1 day
-    when: always
-    # paths:
-    #   - ./
+    - echo -e "\e[0Ksection_end:$(date +%s):testbed_1_configuration\r\e[0K"
+
+    - echo -e "\e[0Ksection_start:$(date +%s):open5gs_uninstall[collapsed=true]\r\e[0KUninstall Open5GS"
+    - echo "********************************************************************************"
+    - echo "**************************** CI Uninstall Open5GS ******************************"
+    - echo "********************************************************************************"
+    - cd 5G_Core_Network
+    - "sed -i -E 's/^core_to_use:.*/core_to_use: open5gs/' options.yaml"
+    - ./full_uninstall.sh bypass_confirmation
+    - cd ..
+    - echo -e "\e[0Ksection_end:$(date +%s):open5gs_uninstall\r\e[0K"
+
+    - echo -e "\e[0Ksection_start:$(date +%s):oai_ue_uninstall[collapsed=true]\r\e[0KUninstall OpenAirInterface UE"
+    - echo "********************************************************************************"
+    - echo "***************************** CI Uninstall OAI UE ******************************"
+    - echo "********************************************************************************"
+    - cd OpenAirInterface_Testbed/User_Equipment
+    - ./full_uninstall.sh bypass_confirmation
+    - cd ../..
+    - echo -e "\e[0Ksection_end:$(date +%s):oai_ue_uninstall\r\e[0K"
+
+    - echo -e "\e[0Ksection_start:$(date +%s):oai_gnb_uninstall[collapsed=true]\r\e[0KUninstall OpenAirInterface gNB"
+    - echo "********************************************************************************"
+    - echo "***************************** CI Uninstall OAI gNB *****************************"
+    - echo "********************************************************************************"
+    - cd OpenAirInterface_Testbed/Next_Generation_Node_B
+    - ./full_uninstall.sh bypass_confirmation
+    - cd ../..
+    - echo -e "\e[0Ksection_end:$(date +%s):oai_gnb_uninstall\r\e[0K"
+
+    - echo -e "\e[0Ksection_start:$(date +%s):flexric_uninstall[collapsed=true]\r\e[0KUninstall FlexRIC"
+    - echo "********************************************************************************"
+    - echo "***************************** CI Uninstall FlexRIC *****************************"
+    - echo "********************************************************************************"
+    - cd OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC
+    - ./full_uninstall.sh bypass_confirmation
+    - cd ../../..
+    - echo -e "\e[0Ksection_end:$(date +%s):flexric_uninstall\r\e[0K"
   retry: 2
 
 ############################ TODO: END-TO-END TESTS ############################
@@ -175,254 +184,123 @@ configure_oai_testbed:
 ########################### TESTBED 2 INSTALLATION #############################
 ################################################################################
 
-install_srsran_ue:
-  stage: install_testbed_2
+testbed_2_setup:
+  stage: testbed_2
   interruptible: true
   resource_group: testbed
-  needs:        [configure_oai_testbed]
-  dependencies: [configure_oai_testbed]
-  variables:
-    GIT_STRATEGY: none
+  needs: [testbed_1_setup]
   script:
+    - echo -e "\e[0Ksection_start:$(date +%s):srsran_ue_install[collapsed=true]\r\e[0KInstall srsRAN_4G UE"
+    - echo "********************************************************************************"
+    - echo "**************************** CI Install srsRAN UE ******************************"
+    - echo "********************************************************************************"
     - cd User_Equipment
     - ./full_install.sh
     - cd ..
-  artifacts:
-    expire_in: 1 day
-    when: always
-    # paths:
-    #   - ./
-  retry: 2
-
-install_srsran_gnb:
-  stage: install_testbed_2
-  interruptible: true
-  resource_group: testbed
-  needs:        [install_srsran_ue]
-  dependencies: [install_srsran_ue]
-  variables:
-    GIT_STRATEGY: none
-  script:
+    - echo -e "\e[0Ksection_end:$(date +%s):srsran_ue_install\r\e[0K"
+    
+    - echo -e "\e[0Ksection_start:$(date +%s):srsran_gnb_install[collapsed=true]\r\e[0KInstall srsRAN_Project gNB"
+    - echo "********************************************************************************"
+    - echo "*************************** CI Install srsRAN gNB ******************************"
+    - echo "********************************************************************************"
     - cd Next_Generation_Node_B
     - ./full_install.sh
     - cd ..
-  artifacts:
-    expire_in: 1 day
-    when: always
-    # paths:
-    #   - ./
-  retry: 2
-
-install_oran_sc_nearrtric:
-  stage: install_testbed_2
-  interruptible: true
-  resource_group: testbed
-  needs:        [install_srsran_ue, install_srsran_gnb]
-  dependencies: [install_srsran_ue, install_srsran_gnb]
-  variables:
-    GIT_STRATEGY: none
-  script:
+    - echo -e "\e[0Ksection_end:$(date +%s):srsran_gnb_install\r\e[0K"
+    
+    - echo -e "\e[0Ksection_start:$(date +%s):o-ran-sc_near-rt-ric_install[collapsed=true]\r\e[0KInstall O-RAN SC Near-RT RIC"
+    - echo "********************************************************************************"
+    - echo "********************** CI Install O-RAN SC Near-RT RIC *************************"
+    - echo "********************************************************************************"
     - cd RAN_Intelligent_Controllers/Near-Real-Time-RIC
     - ./full_install.sh
-    - cd ..
-  artifacts:
-    expire_in: 1 day
-    when: always
-    # paths:
-    #   - ./
-  retry: 2
-
-install_5gdeploy:
-  stage: install_testbed_2
-  interruptible: true
-  resource_group: testbed
-  needs:        [install_srsran_ue, install_srsran_gnb, install_oran_sc_nearrtric]
-  dependencies: [install_srsran_ue, install_srsran_gnb, install_oran_sc_nearrtric]
-  variables:
-    GIT_STRATEGY: none
-  script:
+    - cd ../..
+    - echo -e "\e[0Ksection_end:$(date +%s):o-ran-sc_near-rt-ric_install\r\e[0K"
+    
+    - echo -e "\e[0Ksection_start:$(date +%s):5gdeploy_install[collapsed=true]\r\e[0KInstall 5G Deployment Helper (5gdeploy)"
+    - echo "********************************************************************************"
+    - echo "********************** CI Install 5G Deployment Helper *************************"
+    - echo "********************************************************************************"
     - cd 5G_Core_Network
     - "sed -i -E 's/^core_to_use:.*/core_to_use: 5gdeploy-oai/' options.yaml"
     - ./full_install.sh
     - cd ..
-  artifacts:
-    expire_in: 1 day
-    when: always
-    # paths:
-    #   - ./
-  retry: 2
+    - echo -e "\e[0Ksection_end:$(date +%s):5gdeploy_install\r\e[0K"
 
-configure_srsran_testbed:
-  stage: install_testbed_2
-  interruptible: true
-  resource_group: testbed
-  needs:        [install_srsran_ue, install_srsran_gnb, install_oran_sc_nearrtric, install_5gdeploy]
-  dependencies: [install_srsran_ue, install_srsran_gnb, install_oran_sc_nearrtric, install_5gdeploy]
-  variables:
-    GIT_STRATEGY: none
-  script:
+    - echo -e "\e[0Ksection_start:$(date +%s):testbed_2_configuration[collapsed=true]\r\e[0KTestbed 2 Configuration"
+    - echo "********************************************************************************"
+    - echo "****************************** CI Configuration ********************************"
+    - echo "********************************************************************************"
     - "sed -i -E 's/^core_to_use:.*/core_to_use: 5gdeploy-oai/' 5G_Core_Network/options.yaml"
     - ./generate_configurations.sh
-  artifacts:
-    expire_in: 1 day
-    when: always
-    # paths:
-    #   - ./
-  retry: 2
+    - echo -e "\e[0Ksection_end:$(date +%s):testbed_2_configuration\r\e[0K"
 
-############################ TODO: END-TO-END TESTS ############################
-
-uninstall_open5gs:
-  stage: uninstall_testbed_1
-  interruptible: true
-  resource_group: testbed
-  needs:
-    - job: configure_srsran_testbed
-      optional: true
-  variables:
-    GIT_STRATEGY: none
-  when: always
-  script:
-    - cd 5G_Core_Network
-    - "sed -i -E 's/^core_to_use:.*/core_to_use: open5gs/' options.yaml"
-    - ./full_uninstall.sh bypass_confirmation
-    - cd ..
-  artifacts:
-    expire_in: 1 day
-    when: always
-  retry: 2
-
-uninstall_oai_ue:
-  stage: uninstall_testbed_1
-  interruptible: true
-  resource_group: testbed
-  needs:
-    - job: uninstall_open5gs
-      optional: true
-  variables:
-    GIT_STRATEGY: none
-  when: always
-  script:
-    - cd OpenAirInterface_Testbed/User_Equipment
-    - ./full_uninstall.sh bypass_confirmation
-    - cd ../..
-  artifacts:
-    expire_in: 1 day
-    when: always
-  retry: 2
-
-uninstall_oai_gnb:
-  stage: uninstall_testbed_1
-  interruptible: true
-  resource_group: testbed
-  needs:
-    - job: uninstall_oai_ue
-      optional: true
-  variables:
-    GIT_STRATEGY: none
-  when: always
-  script:
-    - cd OpenAirInterface_Testbed/Next_Generation_Node_B
-    - ./full_uninstall.sh bypass_confirmation
-    - cd ../..
-  artifacts:
-    expire_in: 1 day
-    when: always
-  retry: 2
-
-uninstall_flexric:
-  stage: uninstall_testbed_1
-  interruptible: true
-  resource_group: testbed
-  needs:
-    - job: uninstall_oai_gnb
-      optional: true
-  variables:
-    GIT_STRATEGY: none
-  when: always
-  script:
-    - cd OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC
-    - ./full_uninstall.sh bypass_confirmation
-    - cd ../../..
-  artifacts:
-    expire_in: 1 day
-    when: always
-  retry: 2
-
-uninstall_srsran_ue:
-  stage: uninstall_testbed_2
-  interruptible: true
-  resource_group: testbed
-  needs:
-    - job: uninstall_flexric
-      optional: true
-  variables:
-    GIT_STRATEGY: none
-  when: always
-  script:
+    - echo -e "\e[0Ksection_start:$(date +%s):srsran_ue_uninstall[collapsed=true]\r\e[0KUninstall srsRAN_4G UE"
+    - echo "********************************************************************************"
+    - echo "*************************** CI Uninstall srsRAN UE *****************************"
+    - echo "********************************************************************************"
     - cd User_Equipment
     - ./full_uninstall.sh bypass_confirmation
     - cd ..
-  artifacts:
-    expire_in: 1 day
-    when: always
-  retry: 2
+    - echo -e "\e[0Ksection_end:$(date +%s):srsran_ue_uninstall\r\e[0K"
 
-uninstall_srsran_gnb:
-  stage: uninstall_testbed_2
-  interruptible: true
-  resource_group: testbed
-  needs:
-    - job: uninstall_srsran_ue
-      optional: true
-  variables:
-    GIT_STRATEGY: none
-  when: always
-  script:
+    - echo -e "\e[0Ksection_start:$(date +%s):srsran_gnb_uninstall[collapsed=true]\r\e[0KUninstall srsRAN_Project gNB"
+    - echo "********************************************************************************"
+    - echo "*************************** CI Uninstall srsRAN gNB ****************************"
+    - echo "********************************************************************************"
     - cd Next_Generation_Node_B
     - ./full_uninstall.sh bypass_confirmation
     - cd ..
-  artifacts:
-    expire_in: 1 day
-    when: always
-  retry: 2
-
-uninstall_oran_sc_nearrtric:
-  stage: uninstall_testbed_2
-  interruptible: true
-  resource_group: testbed
-  needs:
-    - job: uninstall_srsran_gnb
-      optional: true
-  variables:
-    GIT_STRATEGY: none
-  when: always
-  script:
+    - echo -e "\e[0Ksection_end:$(date +%s):srsran_gnb_uninstall\r\e[0K"
+    
+    - echo -e "\e[0Ksection_start:$(date +%s):o-ran-sc_near-rt-ric_uninstall[collapsed=true]\r\e[0KUninstall O-RAN SC Near-RT RIC"
+    - echo "********************************************************************************"
+    - echo "********************* CI Uninstall O-RAN SC Near-RT RIC ************************"
+    - echo "********************************************************************************"
     - cd RAN_Intelligent_Controllers/Near-Real-Time-RIC
     - ./full_uninstall.sh bypass_confirmation
-    - cd ..
-  artifacts:
-    expire_in: 1 day
-    when: always
-  retry: 2
-
-uninstall_5gdeploy:
-  stage: uninstall_testbed_2
-  interruptible: true
-  resource_group: testbed
-  needs:
-    - job: uninstall_oran_sc_nearrtric
-      optional: true
-  variables:
-    GIT_STRATEGY: none
-  when: always
-  script:
+    - cd ../..
+    - echo -e "\e[0Ksection_end:$(date +%s):o-ran-sc_near-rt-ric_uninstall\r\e[0K"
+    
+    - echo -e "\e[0Ksection_start:$(date +%s):5gdeploy_uninstall[collapsed=true]\r\e[0KUninstall 5G Deployment Helper (5gdeploy)"
+    - echo "********************************************************************************"
+    - echo "********************* CI Uninstall 5G Deployment Helper ************************"
+    - echo "********************************************************************************"
     - cd 5G_Core_Network
     - "sed -i -E 's/^core_to_use:.*/core_to_use: 5gdeploy-oai/' options.yaml"
     - ./full_uninstall.sh bypass_confirmation
     - cd ..
-  artifacts:
-    expire_in: 1 day
-    when: always
+    - echo -e "\e[0Ksection_end:$(date +%s):5gdeploy_uninstall\r\e[0K"
   retry: 2
 
+################################################################################
+################################ FINALIZATION ##################################
+################################################################################
+
+post_install_cleanup:
+  stage: finalization
+  interruptible: true
+  resource_group: testbed
+  needs:
+    - job: testbed_2_setup
+      optional: true
+  variables:
+    GIT_STRATEGY: none
+  allow_failure: true
+  script:
+    - |
+      if [[ -f "5G_Core_Network/options.yaml" && -f "full_uninstall.sh" && -f "OpenAirInterface_Testbed/full_uninstall.sh" ]]; then
+        # Testbed 1
+        sed -i -E 's/^core_to_use:.*/core_to_use: open5gs/' 5G_Core_Network/options.yaml
+        ./full_uninstall.sh
+        # Testbed 2
+        sed -i -E 's/^core_to_use:.*/core_to_use: 5gdeploy-oai/' 5G_Core_Network/options.yaml
+        cd OpenAirInterface_Testbed
+        ./full_uninstall.sh
+        cd ..
+        sed -i -E 's/^core_to_use:.*/core_to_use: open5gs/' 5G_Core_Network/options.yaml
+      else
+        echo "Repositories don't exist for uninstall_all_components, skipping."
+      fi
+    - sudo rm -rf * && sudo rm -rf .git*
+  retry: 2

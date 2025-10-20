@@ -84,13 +84,14 @@ fi
 
 # Configure the runner to use 'sudo -n true' as a pre_build_script to ensure sudo permissions
 if ! sudo grep -qE '^\s*pre_clone_script\s*=' /etc/gitlab-runner/config.toml; then
-  echo "Adding pre_clone_script to config.toml..."
-    sudo sed -i -E '1,/^[[:space:]]*executor = "shell"/{s/^([[:space:]]*)executor = "shell"/\1pre_clone_script = "sudo chown -R gitlab-runner:gitlab-runner ."\n\1executor = "shell"/}' /etc/gitlab-runner/config.toml
+    echo "Adding pre_clone_script to config.toml..."
+    sudo sed -i -E '1,/^[[:space:]]*executor = "shell"/{s/^([[:space:]]*)executor = "shell"/\1pre_clone_script = "sudo chown -R gitlab-runner:gitlab-runner . \&\& git config --global --add safe.directory '\''*'\''"\n\1executor = "shell"/}' /etc/gitlab-runner/config.toml
 fi
 
 if ! sudo grep -qE '^\s*pre_build_script\s*=' /etc/gitlab-runner/config.toml; then
   echo "Adding pre_build_script to config.toml..."
   sudo sed -i -E '1,/^\s*executor = "shell"/{s/^([[:space:]]*)executor = "shell"/\1pre_build_script = "sudo -n true"\n\1executor = "shell"/}' /etc/gitlab-runner/config.toml
 fi
+
 
 echo "Successfully registered GitLab runner."

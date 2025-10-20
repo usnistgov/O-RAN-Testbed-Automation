@@ -124,10 +124,9 @@ if [[ "$USE_SYSTEMCTL" == "null" || -z "$USE_SYSTEMCTL" ]]; then
 fi
 
 # Start MongoDB and check if it is healthy
-#./install_scripts/stop_mongodb.sh
-./install_scripts/start_mongodb.sh
 MONGO_HEALTHY=true
 if command -v mongod &>/dev/null; then
+    ./install_scripts/start_mongodb.sh
     if ! mongo --host 127.0.0.1 --port 27017 --quiet --eval 'db.adminCommand({ping:1}).ok' admin &>/dev/null; then
         MONGO_HEALTHY=false
         echo "MongoDB is not responding to ping."

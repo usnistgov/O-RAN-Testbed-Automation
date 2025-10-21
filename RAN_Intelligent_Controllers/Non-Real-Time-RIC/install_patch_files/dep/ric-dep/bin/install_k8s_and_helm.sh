@@ -486,6 +486,16 @@ fi
 echo
 echo
 echo "Stopping and removing existing Docker installations, then installing Docker $DOCKERVERSION..."
+if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
+  if [ -n "$(docker ps -q 2>/dev/null)" ]; then # Graceful attempt first
+    docker stop $(docker ps -q) || true
+  fi
+  if [ -n "$(docker ps -aq 2>/dev/null)" ]; then
+    docker rm -f $(docker ps -aq) || true
+  fi
+  docker network prune -f || true
+  docker volume prune -f || true
+fi
 if [ "$USE_SYSTEMCTL" = true ]; then
     if sudo systemctl is-active --quiet docker.socket; then
         sudo systemctl stop docker.socket
@@ -493,23 +503,36 @@ if [ "$USE_SYSTEMCTL" = true ]; then
     if sudo systemctl is-active --quiet docker.service; then
         sudo systemctl stop docker.service
     fi
+    if sudo systemctl is-active --quiet docker; then
+        sudo systemctl stop docker
+    fi
+    if sudo systemctl is-active --quiet containerd.service; then
+        sudo systemctl stop containerd.service
+    fi
     if sudo systemctl is-enabled --quiet docker.socket; then
         sudo systemctl disable docker.socket
     fi
     if sudo systemctl is-enabled --quiet docker.service; then
         sudo systemctl disable docker.service
     fi
-    if sudo systemctl is-active --quiet docker; then
-        sudo systemctl stop docker
-    fi
     if sudo systemctl is-enabled --quiet docker; then
         sudo systemctl disable docker
+    fi
+    if sudo systemctl is-enabled --quiet containerd.service; then
+        sudo systemctl disable containerd.service
     fi
 else
     if pgrep "dockerd" >/dev/null; then
         echo "Killing dockerd process..."
-        sudo pkill -9 "dockerd" || true
+        sudo pkill -9 -f '^dockerd(\s|$)' 2>/dev/null || true
     fi
+    if pgrep "containerd" >/dev/null; then
+        echo "Killing containerd process..."
+        sudo pkill -9 -f '^containerd(\s|$)' 2>/dev/null || true
+    fi
+    sudo pkill -9 -f 'containerd-shim' 2>/dev/null || true
+    sudo pkill -9 -f 'docker-proxy' 2>/dev/null || true
+    sudo pkill -9 -f 'runc' 2>/dev/null || true
 fi
 
 # Uninstall all possible Docker packages
@@ -517,6 +540,15 @@ sudo apt-get remove --purge -y --allow-change-held-packages \
     docker docker-engine docker-ce docker.io containerd runc \
     docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin \
     docker-ce-rootless-extras docker-scan-plugin || true
+
+# Unmount Docker and containerd mount points
+echo "Unmounting Docker and containerd mount points..."
+# Unmount all mount points under /var/lib/docker and /var/lib/containerd starting at deepest paths
+sudo awk '$5 ~ /^\/var\/lib\/docker/ || $5 ~ /^\/var\/lib\/containerd/ {print $5}' /proc/self/mountinfo | sort -r | xargs -r -n1 sudo umount -l 2>/dev/null || true
+# Unmount common overlay and shm paths
+sudo umount -l /var/lib/docker/overlay2/*/merged 2>/dev/null || true
+sudo umount -l /var/lib/docker/containers/*/mounts/shm 2>/dev/null || true
+sudo umount -l /var/lib/containerd/*/*/*/rootfs 2>/dev/null || true
 
 # Remove Docker directories
 sudo rm -rf /var/lib/docker /etc/docker /home/docker
@@ -541,9 +573,12 @@ fi
 
 sudo apt-get autoremove --purge -y
 
+# Reset the shell's command hash table to recognize changes in available executables
+hash -r
+
 # Install Docker with the specified or latest available version
 echo "Installing Docker..."
-if ! command -v docker &>/dev/null; then
+if ! command -v dockerd &>/dev/null; then
     if [ "$USE_DOCKER_CE" -eq 0 ]; then
         sudo env $APTVARS apt-get install -y $APTOPTS "docker.io=$DOCKERVERSION"
     else
@@ -581,7 +616,7 @@ else
     echo "Skipping Docker configuration validation (unsupported flag)."
 fi
 
-echo "Ensure Docker group exists and add user to the group before starting Docker service..."
+echo "Ensuring Docker group exists and add user to the group before starting Docker service..."
 sudo groupadd -f docker
 if [ -n "$SUDO_USER" ]; then
     sudo usermod -aG docker "${SUDO_USER:-root}"
@@ -621,7 +656,7 @@ else
     DOCKERD_LOG="/tmp/dockerd.log"
     # Stop running dockerd and start in background
     sudo pkill -x dockerd >/dev/null 2>&1 || true
-    sudo rm -f /var/run/docker.pid
+    sudo rm -f /var/run/docker.pid /var/run/docker.sock
     sudo mkdir -p /run /var/run
     sudo sh -c 'nohup dockerd --config-file=/etc/docker/daemon.json >>'"${DOCKERD_LOG}"' 2>&1 &'
     # Wait for Docker to be ready

@@ -87,12 +87,19 @@ open5gs_srsran_oran_sc_ric_setup:
   variables:
     GIT_STRATEGY: clone
   script:
+    - echo -e "\e[0Ksection_start:$(date +%s):open5gs_configure[collapsed=true]\r\e[0KConfigure Open5GS"
+    - echo "***************************** CI Install Open5GS *******************************"
+    - cd OpenAirInterface_Testbed/5G_Core_Network
+    # Configure the core to use: open5gs
+    - "sed -i -E 's/^core_to_use:.*/core_to_use: open5gs/' options.yaml"
+    # Disable systemctl so that components are direct processes running in background
+    - "sed -i -E 's/^use_systemctl:.*/use_systemctl: false/' options.yaml"
+    - cd ../..
+    - echo -e "\e[0Ksection_end:$(date +%s):open5gs_configure\r\e[0K"
+
     - echo -e "\e[0Ksection_start:$(date +%s):open5gs_install[collapsed=true]\r\e[0KInstall Open5GS"
     - echo "***************************** CI Install Open5GS *******************************"
     - cd OpenAirInterface_Testbed/5G_Core_Network
-    - "sed -i -E 's/^core_to_use:.*/core_to_use: open5gs/' options.yaml"
-    # Disable systemctl so that Open5GS components are direct processes running in background
-    - "sed -i -E 's/^use_systemctl:.*/use_systemctl: false/' options.yaml"
     - ./full_install.sh
     - cd ../..
     - echo -e "\e[0Ksection_end:$(date +%s):open5gs_install\r\e[0K"
@@ -120,7 +127,6 @@ open5gs_srsran_oran_sc_ric_setup:
 
     - echo -e "\e[0Ksection_start:$(date +%s):testbed_2_configuration[collapsed=true]\r\e[0KTestbed 2 Configuration"
     - echo "****************************** CI Configuration ********************************"
-    - "sed -i -E 's/^core_to_use:.*/core_to_use: 5gdeploy-open5gs/' 5G_Core_Network/options.yaml"
     - ./generate_configurations.sh --disable-e2-term
     - echo -e "\e[0Ksection_end:$(date +%s):testbed_2_configuration\r\e[0K"
 
@@ -129,7 +135,6 @@ open5gs_srsran_oran_sc_ric_setup:
     - echo -e "\e[0Ksection_start:$(date +%s):open5gs_uninstall[collapsed=true]\r\e[0KUninstall Open5GS"
     - echo "**************************** CI Uninstall Open5GS ******************************"
     - cd 5G_Core_Network
-    - "sed -i -E 's/^core_to_use:.*/core_to_use: open5gs/' options.yaml"
     - ./full_uninstall.sh bypass_confirmation
     - cd ..
     - echo -e "\e[0Ksection_end:$(date +%s):open5gs_uninstall\r\e[0K"
@@ -170,6 +175,16 @@ openairinterface_flexric_5gdeploy_setup:
     GIT_STRATEGY: clone
   script:
 
+    - echo -e "\e[0Ksection_start:$(date +%s):5gdeploy_configure[collapsed=true]\r\e[0KConfigure 5gdeploy"
+    - echo "***************************** CI Install Open5GS *******************************"
+    - cd OpenAirInterface_Testbed/5G_Core_Network
+    # Configure the core to use: 5gdeploy-open5gs
+    - "sed -i -E 's/^core_to_use:.*/core_to_use: 5gdeploy-open5gs/' options.yaml"
+    # Disable systemctl so that components are direct processes running in background
+    - "sed -i -E 's/^use_systemctl:.*/use_systemctl: false/' options.yaml"
+    - cd ../..
+    - echo -e "\e[0Ksection_end:$(date +%s):5gdeploy_configure\r\e[0K"
+    
     - echo -e "\e[0Ksection_start:$(date +%s):oai_ue_install[collapsed=true]\r\e[0KInstall OpenAirInterface UE"
     - echo "***************************** CI Install OAI UE ********************************"
     - cd OpenAirInterface_Testbed/User_Equipment

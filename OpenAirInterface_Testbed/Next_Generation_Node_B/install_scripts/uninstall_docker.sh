@@ -38,28 +38,48 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 BASE_DIR=$(realpath "$SCRIPT_DIR/../..")
 cd "$SCRIPT_DIR"
 
+# Detect if systemctl is available
+USE_SYSTEMCTL=false
+if command -v systemctl >/dev/null 2>&1; then
+    if [ "$(cat /proc/1/comm 2>/dev/null)" = "systemd" ]; then
+        OUTPUT="$(systemctl 2>&1 || true)"
+        if echo "$OUTPUT" | grep -qiE 'not supported|System has not been booted with systemd'; then
+            echo "Detected systemctl is not supported. Using background processes instead."
+        elif systemctl list-units >/dev/null 2>&1 || systemctl is-system-running --quiet >/dev/null 2>&1; then
+            USE_SYSTEMCTL=true
+        fi
+    fi
+fi
+
 echo
 echo
 echo "Stopping and removing existing Docker installations, then uninstalling Docker..."
 
 # Stop and disable Docker services and sockets
-if sudo systemctl is-active --quiet docker.socket; then
-    sudo systemctl stop docker.socket
-fi
-if sudo systemctl is-active --quiet docker.service; then
-    sudo systemctl stop docker.service
-fi
-if sudo systemctl is-enabled --quiet docker.socket; then
-    sudo systemctl disable docker.socket
-fi
-if sudo systemctl is-enabled --quiet docker.service; then
-    sudo systemctl disable docker.service
-fi
-if sudo systemctl is-active --quiet docker; then
-    sudo systemctl stop docker
-fi
-if sudo systemctl is-enabled --quiet docker; then
-    sudo systemctl disable docker
+if [ "$USE_SYSTEMCTL" = true ]; then
+    if sudo systemctl is-active --quiet docker.socket; then
+        sudo systemctl stop docker.socket
+    fi
+    if sudo systemctl is-active --quiet docker.service; then
+        sudo systemctl stop docker.service
+    fi
+    if sudo systemctl is-enabled --quiet docker.socket; then
+        sudo systemctl disable docker.socket
+    fi
+    if sudo systemctl is-enabled --quiet docker.service; then
+        sudo systemctl disable docker.service
+    fi
+    if sudo systemctl is-active --quiet docker; then
+        sudo systemctl stop docker
+    fi
+    if sudo systemctl is-enabled --quiet docker; then
+        sudo systemctl disable docker
+    fi
+else
+    if pgrep "dockerd" >/dev/null; then
+        echo "Killing dockerd process..."
+        sudo pkill -9 "dockerd" || true
+    fi
 fi
 
 echo "Removing Docker and cleaning config..."

@@ -41,6 +41,7 @@ pre_install_cleanup:
     GIT_STRATEGY: none
   allow_failure: true
   script:
+    # Uninstall components then remove files from previous runs
     - |
       if [[ -f "5G_Core_Network/options.yaml" && -f "full_uninstall.sh" && -f "OpenAirInterface_Testbed/full_uninstall.sh" ]]; then
         # Testbed 1
@@ -58,6 +59,21 @@ pre_install_cleanup:
         echo "Repositories don't exist for uninstall_all_components, skipping."
       fi
     - sudo rm -rf * && sudo rm -rf .git*
+    # Get apt into a clean state before testbed setup
+    - sudo rm -f /var/lib/dpkg/lock-frontend /var/lib/dpkg/lock || true
+    - sudo dpkg --configure -a || true
+    - |
+      if dpkg -s mongosh >/dev/null 2>&1 || ls /var/lib/dpkg/info/mongosh* >/dev/null 2>&1; then
+        echo "Purging broken mongosh package..."
+        sudo dpkg --remove --force-remove-reinstreq mongosh || true
+        sudo dpkg --purge mongosh || true
+        sudo rm -f /var/lib/dpkg/info/mongosh.* || true
+      fi
+    - sudo apt-get -y -f install || true
+    - sudo apt-get update
+    - sudo apt-get install -y sudo bash grep coreutils curl wget git gnupg lsb-release tree
+    - sudo apt-get install -y --no-install-recommends tzdata
+    - sudo update-ca-certificates || true
 
 ################################################################################
 ########################### TESTBED 1 INSTALLATION #############################
@@ -67,7 +83,7 @@ open5gs_srsran_oran_sc_ric_setup:
   stage: testbed_1
   interruptible: true
   resource_group: testbed
-  needs: [clone_repo_install_deps]
+  needs: [pre_install_cleanup]
   variables:
     GIT_STRATEGY: clone
   script:
@@ -167,7 +183,7 @@ openairinterface_flexric_5gdeploy_setup:
   stage: testbed_2
   interruptible: true
   resource_group: testbed
-  needs: [testbed_1_setup]
+  needs: [open5gs_srsran_oran_sc_ric_setup]
   variables:
     GIT_STRATEGY: clone
   script:
@@ -267,12 +283,15 @@ post_install_cleanup:
   interruptible: true
   resource_group: testbed
   needs:
-    - job: testbed_2_setup
+    - job: open5gs_srsran_oran_sc_ric_setup
+      optional: true
+    - job: openairinterface_flexric_5gdeploy_setup
       optional: true
   variables:
     GIT_STRATEGY: none
   allow_failure: true
   script:
+    # Uninstall components then remove files from this run
     - |
       if [[ -f "5G_Core_Network/options.yaml" && -f "full_uninstall.sh" && -f "OpenAirInterface_Testbed/full_uninstall.sh" ]]; then
         # Testbed 1

@@ -486,23 +486,60 @@ fi
 echo
 echo
 echo "Stopping and removing existing Docker installations, then installing Docker $DOCKERVERSION..."
-if sudo systemctl is-active --quiet docker.socket; then
-    sudo systemctl stop docker.socket
-fi
-if sudo systemctl is-active --quiet docker.service; then
-    sudo systemctl stop docker.service
-fi
-if sudo systemctl is-enabled --quiet docker.socket; then
-    sudo systemctl disable docker.socket
-fi
-if sudo systemctl is-enabled --quiet docker.service; then
-    sudo systemctl disable docker.service
+if [ "$USE_SYSTEMCTL" = true ]; then
+    if sudo systemctl is-active --quiet docker.socket; then
+        sudo systemctl stop docker.socket
+    fi
+    if sudo systemctl is-active --quiet docker.service; then
+        sudo systemctl stop docker.service
+    fi
+    if sudo systemctl is-enabled --quiet docker.socket; then
+        sudo systemctl disable docker.socket
+    fi
+    if sudo systemctl is-enabled --quiet docker.service; then
+        sudo systemctl disable docker.service
+    fi
+    if sudo systemctl is-active --quiet docker; then
+        sudo systemctl stop docker
+    fi
+    if sudo systemctl is-enabled --quiet docker; then
+        sudo systemctl disable docker
+    fi
+else
+    if pgrep "dockerd" >/dev/null; then
+        echo "Killing dockerd process..."
+        sudo pkill -9 "dockerd" || true
+    fi
 fi
 
-# Uninstall Docker packages and clean up
-sudo apt-get remove --purge -y --allow-change-held-packages docker docker-engine docker-ce docker.io containerd runc || true
-sudo rm -rf /var/lib/docker /etc/docker
-sudo apt-get autoremove -y
+# Uninstall all possible Docker packages
+sudo apt-get remove --purge -y --allow-change-held-packages \
+    docker docker-engine docker-ce docker.io containerd runc \
+    docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin \
+    docker-ce-rootless-extras docker-scan-plugin || true
+
+# Remove Docker directories
+sudo rm -rf /var/lib/docker /etc/docker /home/docker
+
+# # Remove Docker group and user from group
+# if getent group docker >/dev/null; then
+#     sudo groupdel docker
+# fi
+# if id -nG "$(id -un)" | grep -qw docker; then
+#     sudo deluser "$(id -un)" docker
+# fi
+
+# Remove Docker binaries if present
+if [ -f /usr/bin/docker ]; then
+    echo "Removing /usr/bin/docker..."
+    sudo rm -f /usr/bin/docker
+fi
+if [ -f /usr/local/bin/docker ]; then
+    echo "Removing /usr/local/bin/docker..."
+    sudo rm -f /usr/local/bin/docker
+fi
+
+sudo apt-get autoremove --purge -y
 
 # Install Docker with the specified or latest available version
 echo "Installing Docker..."
@@ -1327,5 +1364,8 @@ HELM_REPO_HOST="helm.ricinfra.local"
 sudo sed -i "/$HELM_REPO_HOST/d" /etc/hosts
 # Add the new entry to /etc/hosts
 echo "127.0.0.1 $HELM_REPO_HOST" | sudo tee -a /etc/hosts
+
+# Reset the shell's command hash table to recognize changes in available executables
+hash -r
 
 echo "Script completed successfully."

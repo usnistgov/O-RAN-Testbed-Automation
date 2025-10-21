@@ -40,6 +40,13 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
+# Stop any previous gitlab-runner instances
+if pgrep -x "gitlab-runner" >/dev/null; then
+    echo "Stopping all running gitlab-runner processes..."
+    sudo pkill -9 gitlab-runner
+fi
+
+
 # Run a sudo command every minute to ensure script execution without user interaction
 ./start_sudo_refresh.sh
 

@@ -11,7 +11,6 @@ variables:
   ARTIFACT_COMPRESSION_LEVEL: "slowest"
   CACHE_COMPRESSION_LEVEL: "slowest"
 
-
 default:
   tags: [testbed-ci-runner]
   before_script:

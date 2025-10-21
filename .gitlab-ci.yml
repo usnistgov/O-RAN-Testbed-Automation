@@ -46,50 +46,30 @@ pre_install_cleanup:
         # Testbed 1
         sed -i -E 's/^core_to_use:.*/core_to_use: open5gs/' 5G_Core_Network/options.yaml
         ./full_uninstall.sh
+        
         # Testbed 2
-        sed -i -E 's/^core_to_use:.*/core_to_use: 5gdeploy-oai/' 5G_Core_Network/options.yaml
+        sed -i -E 's/^core_to_use:.*/core_to_use: 5gdeploy-open5gs/' 5G_Core_Network/options.yaml
         cd OpenAirInterface_Testbed
         ./full_uninstall.sh
         cd ..
+        
         sed -i -E 's/^core_to_use:.*/core_to_use: open5gs/' 5G_Core_Network/options.yaml
       else
         echo "Repositories don't exist for uninstall_all_components, skipping."
       fi
     - sudo rm -rf * && sudo rm -rf .git*
 
-clone_repo_install_deps:
-  stage: initialization
-  interruptible: true
-  resource_group: testbed
-  needs: [pre_install_cleanup]
-  variables:
-    GIT_STRATEGY: clone
-  script:
-    - sudo rm -f /var/lib/dpkg/lock-frontend /var/lib/dpkg/lock || true
-    - sudo dpkg --configure -a || true
-    - |
-      if dpkg -s mongosh >/dev/null 2>&1 || ls /var/lib/dpkg/info/mongosh* >/dev/null 2>&1; then
-        echo "Purging broken mongosh package..."
-        sudo dpkg --remove --force-remove-reinstreq mongosh || true
-        sudo dpkg --purge mongosh || true
-        sudo rm -f /var/lib/dpkg/info/mongosh.* || true
-      fi
-    - sudo apt-get -y -f install || true
-    - sudo apt-get update
-    - sudo apt-get install -y sudo bash grep coreutils curl wget git gnupg lsb-release tree
-    - sudo apt-get install -y --no-install-recommends tzdata
-    - sudo update-ca-certificates || true
-  retry: 2
-
 ################################################################################
 ########################### TESTBED 1 INSTALLATION #############################
 ################################################################################
 
-testbed_1_setup:
+open5gs_srsran_oran_sc_ric_setup:
   stage: testbed_1
   interruptible: true
   resource_group: testbed
   needs: [clone_repo_install_deps]
+  variables:
+    GIT_STRATEGY: clone
   script:
     - echo -e "\e[0Ksection_start:$(date +%s):open5gs_install[collapsed=true]\r\e[0KInstall Open5GS"
     - echo "********************************************************************************"
@@ -103,93 +83,6 @@ testbed_1_setup:
     - cd ../..
     - echo -e "\e[0Ksection_end:$(date +%s):open5gs_install\r\e[0K"
 
-    - echo -e "\e[0Ksection_start:$(date +%s):oai_ue_install[collapsed=true]\r\e[0KInstall OpenAirInterface UE"
-    - echo "********************************************************************************"
-    - echo "***************************** CI Install OAI UE ********************************"
-    - echo "********************************************************************************"
-    - cd OpenAirInterface_Testbed/User_Equipment
-    - ./full_install.sh
-    - cd ../..
-    - echo -e "\e[0Ksection_end:$(date +%s):oai_ue_install\r\e[0K"
-
-    - echo -e "\e[0Ksection_start:$(date +%s):oai_gnb_install[collapsed=true]\r\e[0KInstall OpenAirInterface gNB"
-    - echo "********************************************************************************"
-    - echo "***************************** CI Install OAI gNB *******************************"
-    - echo "********************************************************************************"
-    - cd OpenAirInterface_Testbed/Next_Generation_Node_B
-    - ./full_install.sh
-    - cd ../..
-    - echo -e "\e[0Ksection_end:$(date +%s):oai_gnb_install\r\e[0K"
-
-    - echo -e "\e[0Ksection_start:$(date +%s):flexric_install[collapsed=true]\r\e[0KInstall FlexRIC"
-    - echo "********************************************************************************"
-    - echo "***************************** CI Install FlexRIC *******************************"
-    - echo "********************************************************************************"
-    - cd OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC
-    - ./full_install.sh
-    - cd ../../..
-    - echo -e "\e[0Ksection_end:$(date +%s):flexric_install\r\e[0K"
-
-    - echo -e "\e[0Ksection_start:$(date +%s):testbed_1_configuration[collapsed=true]\r\e[0KTestbed 1 Configuration"
-    - echo "********************************************************************************"
-    - echo "****************************** CI Configuration ********************************"
-    - echo "********************************************************************************"
-    - cd OpenAirInterface_Testbed
-    - ./generate_configurations.sh
-    - cd ..
-    - echo -e "\e[0Ksection_end:$(date +%s):testbed_1_configuration\r\e[0K"
-
-    - echo -e "\e[0Ksection_start:$(date +%s):open5gs_uninstall[collapsed=true]\r\e[0KUninstall Open5GS"
-    - echo "********************************************************************************"
-    - echo "**************************** CI Uninstall Open5GS ******************************"
-    - echo "********************************************************************************"
-    - cd 5G_Core_Network
-    - "sed -i -E 's/^core_to_use:.*/core_to_use: open5gs/' options.yaml"
-    - ./full_uninstall.sh bypass_confirmation
-    - cd ..
-    - echo -e "\e[0Ksection_end:$(date +%s):open5gs_uninstall\r\e[0K"
-
-    - echo -e "\e[0Ksection_start:$(date +%s):oai_ue_uninstall[collapsed=true]\r\e[0KUninstall OpenAirInterface UE"
-    - echo "********************************************************************************"
-    - echo "***************************** CI Uninstall OAI UE ******************************"
-    - echo "********************************************************************************"
-    - cd OpenAirInterface_Testbed/User_Equipment
-    - ./full_uninstall.sh bypass_confirmation
-    - cd ../..
-    - echo -e "\e[0Ksection_end:$(date +%s):oai_ue_uninstall\r\e[0K"
-
-    - echo -e "\e[0Ksection_start:$(date +%s):oai_gnb_uninstall[collapsed=true]\r\e[0KUninstall OpenAirInterface gNB"
-    - echo "********************************************************************************"
-    - echo "***************************** CI Uninstall OAI gNB *****************************"
-    - echo "********************************************************************************"
-    - cd OpenAirInterface_Testbed/Next_Generation_Node_B
-    - ./full_uninstall.sh bypass_confirmation
-    - cd ../..
-    - echo -e "\e[0Ksection_end:$(date +%s):oai_gnb_uninstall\r\e[0K"
-
-    - echo -e "\e[0Ksection_start:$(date +%s):flexric_uninstall[collapsed=true]\r\e[0KUninstall FlexRIC"
-    - echo "********************************************************************************"
-    - echo "***************************** CI Uninstall FlexRIC *****************************"
-    - echo "********************************************************************************"
-    - cd OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC
-    - ./full_uninstall.sh bypass_confirmation
-    - cd ../../..
-    - echo -e "\e[0Ksection_end:$(date +%s):flexric_uninstall\r\e[0K"
-  retry: 2
-
-############################ TODO: END-TO-END TESTS ############################
-
-
-################################################################################
-########################### TESTBED 2 INSTALLATION #############################
-################################################################################
-
-testbed_2_setup:
-  stage: testbed_2
-  interruptible: true
-  resource_group: testbed
-  needs: [testbed_1_setup]
-  script:
     - echo -e "\e[0Ksection_start:$(date +%s):srsran_ue_install[collapsed=true]\r\e[0KInstall srsRAN_4G UE"
     - echo "********************************************************************************"
     - echo "**************************** CI Install srsRAN UE ******************************"
@@ -216,24 +109,26 @@ testbed_2_setup:
     - ./full_install.sh
     - cd ../..
     - echo -e "\e[0Ksection_end:$(date +%s):o-ran-sc_near-rt-ric_install\r\e[0K"
-    
-    - echo -e "\e[0Ksection_start:$(date +%s):5gdeploy_install[collapsed=true]\r\e[0KInstall 5G Deployment Helper (5gdeploy)"
-    - echo "********************************************************************************"
-    - echo "********************** CI Install 5G Deployment Helper *************************"
-    - echo "********************************************************************************"
-    - cd 5G_Core_Network
-    - "sed -i -E 's/^core_to_use:.*/core_to_use: 5gdeploy-oai/' options.yaml"
-    - ./full_install.sh
-    - cd ..
-    - echo -e "\e[0Ksection_end:$(date +%s):5gdeploy_install\r\e[0K"
 
     - echo -e "\e[0Ksection_start:$(date +%s):testbed_2_configuration[collapsed=true]\r\e[0KTestbed 2 Configuration"
     - echo "********************************************************************************"
     - echo "****************************** CI Configuration ********************************"
     - echo "********************************************************************************"
-    - "sed -i -E 's/^core_to_use:.*/core_to_use: 5gdeploy-oai/' 5G_Core_Network/options.yaml"
-    - ./generate_configurations.sh
+    - "sed -i -E 's/^core_to_use:.*/core_to_use: 5gdeploy-open5gs/' 5G_Core_Network/options.yaml"
+    - ./generate_configurations.sh --disable-e2-term
     - echo -e "\e[0Ksection_end:$(date +%s):testbed_2_configuration\r\e[0K"
+
+      ############################ TODO: END-TO-END TESTS ############################
+
+    - echo -e "\e[0Ksection_start:$(date +%s):open5gs_uninstall[collapsed=true]\r\e[0KUninstall Open5GS"
+    - echo "********************************************************************************"
+    - echo "**************************** CI Uninstall Open5GS ******************************"
+    - echo "********************************************************************************"
+    - cd 5G_Core_Network
+    - "sed -i -E 's/^core_to_use:.*/core_to_use: open5gs/' options.yaml"
+    - ./full_uninstall.sh bypass_confirmation
+    - cd ..
+    - echo -e "\e[0Ksection_end:$(date +%s):open5gs_uninstall\r\e[0K"
 
     - echo -e "\e[0Ksection_start:$(date +%s):srsran_ue_uninstall[collapsed=true]\r\e[0KUninstall srsRAN_4G UE"
     - echo "********************************************************************************"
@@ -261,13 +156,103 @@ testbed_2_setup:
     - ./full_uninstall.sh bypass_confirmation
     - cd ../..
     - echo -e "\e[0Ksection_end:$(date +%s):o-ran-sc_near-rt-ric_uninstall\r\e[0K"
+  retry: 2
+
+
+################################################################################
+########################### TESTBED 2 INSTALLATION #############################
+################################################################################
+
+openairinterface_flexric_5gdeploy_setup:
+  stage: testbed_2
+  interruptible: true
+  resource_group: testbed
+  needs: [testbed_1_setup]
+  variables:
+    GIT_STRATEGY: clone
+  script:
+
+    - echo -e "\e[0Ksection_start:$(date +%s):oai_ue_install[collapsed=true]\r\e[0KInstall OpenAirInterface UE"
+    - echo "********************************************************************************"
+    - echo "***************************** CI Install OAI UE ********************************"
+    - echo "********************************************************************************"
+    - cd OpenAirInterface_Testbed/User_Equipment
+    - ./full_install.sh
+    - cd ../..
+    - echo -e "\e[0Ksection_end:$(date +%s):oai_ue_install\r\e[0K"
+
+    - echo -e "\e[0Ksection_start:$(date +%s):oai_gnb_install[collapsed=true]\r\e[0KInstall OpenAirInterface gNB"
+    - echo "********************************************************************************"
+    - echo "***************************** CI Install OAI gNB *******************************"
+    - echo "********************************************************************************"
+    - cd OpenAirInterface_Testbed/Next_Generation_Node_B
+    - ./full_install.sh
+    - cd ../..
+    - echo -e "\e[0Ksection_end:$(date +%s):oai_gnb_install\r\e[0K"
+
+    - echo -e "\e[0Ksection_start:$(date +%s):flexric_install[collapsed=true]\r\e[0KInstall FlexRIC"
+    - echo "********************************************************************************"
+    - echo "***************************** CI Install FlexRIC *******************************"
+    - echo "********************************************************************************"
+    - cd OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC
+    - ./full_install.sh
+    - cd ../../..
+    - echo -e "\e[0Ksection_end:$(date +%s):flexric_install\r\e[0K"
+    
+    - echo -e "\e[0Ksection_start:$(date +%s):5gdeploy_install[collapsed=true]\r\e[0KInstall 5G Deployment Helper (5gdeploy)"
+    - echo "********************************************************************************"
+    - echo "********************** CI Install 5G Deployment Helper *************************"
+    - echo "********************************************************************************"
+    - cd 5G_Core_Network
+    - "sed -i -E 's/^core_to_use:.*/core_to_use: 5gdeploy-open5gs/' options.yaml"
+    - ./full_install.sh
+    - cd ..
+    - echo -e "\e[0Ksection_end:$(date +%s):5gdeploy_install\r\e[0K"
+
+    - echo -e "\e[0Ksection_start:$(date +%s):testbed_1_configuration[collapsed=true]\r\e[0KTestbed 1 Configuration"
+    - echo "********************************************************************************"
+    - echo "****************************** CI Configuration ********************************"
+    - echo "********************************************************************************"
+    - cd OpenAirInterface_Testbed
+    - ./generate_configurations.sh
+    - cd ..
+    - echo -e "\e[0Ksection_end:$(date +%s):testbed_1_configuration\r\e[0K"
+
+      ############################ TODO: END-TO-END TESTS ############################
+
+    - echo -e "\e[0Ksection_start:$(date +%s):oai_ue_uninstall[collapsed=true]\r\e[0KUninstall OpenAirInterface UE"
+    - echo "********************************************************************************"
+    - echo "***************************** CI Uninstall OAI UE ******************************"
+    - echo "********************************************************************************"
+    - cd OpenAirInterface_Testbed/User_Equipment
+    - ./full_uninstall.sh bypass_confirmation
+    - cd ../..
+    - echo -e "\e[0Ksection_end:$(date +%s):oai_ue_uninstall\r\e[0K"
+
+    - echo -e "\e[0Ksection_start:$(date +%s):oai_gnb_uninstall[collapsed=true]\r\e[0KUninstall OpenAirInterface gNB"
+    - echo "********************************************************************************"
+    - echo "***************************** CI Uninstall OAI gNB *****************************"
+    - echo "********************************************************************************"
+    - cd OpenAirInterface_Testbed/Next_Generation_Node_B
+    - ./full_uninstall.sh bypass_confirmation
+    - cd ../..
+    - echo -e "\e[0Ksection_end:$(date +%s):oai_gnb_uninstall\r\e[0K"
+
+    - echo -e "\e[0Ksection_start:$(date +%s):flexric_uninstall[collapsed=true]\r\e[0KUninstall FlexRIC"
+    - echo "********************************************************************************"
+    - echo "***************************** CI Uninstall FlexRIC *****************************"
+    - echo "********************************************************************************"
+    - cd OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC
+    - ./full_uninstall.sh bypass_confirmation
+    - cd ../../..
+    - echo -e "\e[0Ksection_end:$(date +%s):flexric_uninstall\r\e[0K"
     
     - echo -e "\e[0Ksection_start:$(date +%s):5gdeploy_uninstall[collapsed=true]\r\e[0KUninstall 5G Deployment Helper (5gdeploy)"
     - echo "********************************************************************************"
     - echo "********************* CI Uninstall 5G Deployment Helper ************************"
     - echo "********************************************************************************"
     - cd 5G_Core_Network
-    - "sed -i -E 's/^core_to_use:.*/core_to_use: 5gdeploy-oai/' options.yaml"
+    - "sed -i -E 's/^core_to_use:.*/core_to_use: 5gdeploy-open5gs/' options.yaml"
     - ./full_uninstall.sh bypass_confirmation
     - cd ..
     - echo -e "\e[0Ksection_end:$(date +%s):5gdeploy_uninstall\r\e[0K"
@@ -294,7 +279,7 @@ post_install_cleanup:
         sed -i -E 's/^core_to_use:.*/core_to_use: open5gs/' 5G_Core_Network/options.yaml
         ./full_uninstall.sh
         # Testbed 2
-        sed -i -E 's/^core_to_use:.*/core_to_use: 5gdeploy-oai/' 5G_Core_Network/options.yaml
+        sed -i -E 's/^core_to_use:.*/core_to_use: 5gdeploy-open5gs/' 5G_Core_Network/options.yaml
         cd OpenAirInterface_Testbed
         ./full_uninstall.sh
         cd ..

@@ -31,6 +31,8 @@
 # Exit immediately if a command fails
 set -e
 
+BASE_EXAMPLE_CONFIG_PATH="$SCRIPT_DIR/srsRAN_Project/configs/gnb_rf_b210_fdd_srsUE.yml"
+
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
@@ -40,7 +42,25 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-BASE_EXAMPLE_CONFIG_PATH="$SCRIPT_DIR/srsRAN_Project/configs/gnb_rf_b210_fdd_srsUE.yml"
+# Parse command-line arguments
+ENABLE_E2_TERM="true"
+E2_ADDRESS="null"
+while [[ $# -gt 0 ]]; do
+    case $1 in
+    --disable-e2-term)
+        ENABLE_E2_TERM="false"
+        shift
+        ;;
+    --e2-term-address)
+        E2_ADDRESS="$2"
+        shift 2
+        ;;
+    *)
+        echo "Unknown argument: $1"
+        exit 1
+        ;;
+    esac
+done
 
 # Define the path to the YAML file
 YAML_PATH="../5G_Core_Network/options.yaml"
@@ -96,64 +116,67 @@ if [ ! -f "$BASE_EXAMPLE_CONFIG_PATH" ]; then
 fi
 cp "$BASE_EXAMPLE_CONFIG_PATH" configs/gnb.yaml
 
-ENABLE_E2_TERM="true"
 if [ ! -d "../RAN_Intelligent_Controllers/Near-Real-Time-RIC" ]; then
     echo "Could not find the Near-Real-Time-RIC directory. Disabling E2 termination support."
     ENABLE_E2_TERM="false"
 fi
 
 if [ "$ENABLE_E2_TERM" = "true" ]; then
-    echo "Fetching E2 termination service IP address..."
     PORT_E2TERM=36422
 
-    # Check if kubectl is installed
-    PROMPT_FOR_E2_ADDRESS="false"
-    if ! command -v kubectl &>/dev/null; then
-        echo "Could not find kubectl."
-        PROMPT_FOR_E2_ADDRESS="true"
-    else
-        SERVICE_INFO=$(kubectl get service -n ricplt 2>/dev/null | grep service-ricplt-e2term-sctp || echo "")
-
-        # Check if SERVICE_INFO is empty
-        if [ -z "$SERVICE_INFO" ]; then
-            echo "No service found or kubectl command failed."
-            PROMPT_FOR_E2_ADDRESS="true"
-        else
-            # Use awk to extract the IP and the correct port based on the connection context
-            IP_E2TERM=$(echo "$SERVICE_INFO" | awk '{print $3}')
-            PORT_E2TERM=$(echo "$SERVICE_INFO" | awk '{print $5}' | cut -d ':' -f1 | cut -d '/' -f1) # 36422
-
-            if [ -z "$IP_E2TERM" ] || [ "$IP_E2TERM" == "<none>" ]; then
-                PROMPT_FOR_E2_ADDRESS="true"
-            fi
-        fi
-    fi
-
-    if [ "$PROMPT_FOR_E2_ADDRESS" = "true" ]; then
-        echo
-        echo "Please enter the IP address where the E2 termination service is located."
-        echo "You can find this by running: kubectl get service -n ricplt | grep service-ricplt-e2term-sctp"
-        echo "Type \"\" to disable E2 support in the gNodeB configuration."
-        read -p "Enter IP Address: " IP_E2TERM
-        IP_E2TERM=$(echo "$IP_E2TERM" | xargs) # Trim whitespace
-    fi
-
-    if [ -z "$IP_E2TERM" ]; then
-        echo
-        echo "No E2 address was provided, disabling E2 termination support."
-        ENABLE_E2_TERM="false"
-    else
-        # Calculate the bind address based on the IP address
-        # if [[ "$IP_E2TERM" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-        #     # Extract the first three octets and append .1
-        #     IP_E2TERM_BIND=$(echo "$IP_E2TERM" | cut -d '.' -f1-3).1
-        # else
-        #     IP_E2TERM_BIND=$IP_E2TERM
-        # fi
-        IP_E2TERM_BIND=$IP_E2TERM
+    # If E2_ADDRESS is provided, override logic and force E2 address
+    if [ "$E2_ADDRESS" != "null" ]; then
+        IP_E2TERM="$E2_ADDRESS"
+        IP_E2TERM_BIND="$E2_ADDRESS"
+        echo "E2_ADDRESS provided: $E2_ADDRESS"
         echo "IP_E2TERM: $IP_E2TERM"
         echo "PORT_E2TERM: $PORT_E2TERM"
         echo "IP_E2TERM_BIND: $IP_E2TERM_BIND"
+    else
+        echo "Fetching E2 termination service IP address..."
+
+        # Check if kubectl is installed
+        PROMPT_FOR_E2_ADDRESS="false"
+        if ! command -v kubectl &>/dev/null; then
+            echo "Could not find kubectl."
+            PROMPT_FOR_E2_ADDRESS="true"
+        else
+            SERVICE_INFO=$(kubectl get service -n ricplt 2>/dev/null | grep service-ricplt-e2term-sctp || echo "")
+
+            # Check if SERVICE_INFO is empty
+            if [ -z "$SERVICE_INFO" ]; then
+                echo "No service found or kubectl command failed."
+                PROMPT_FOR_E2_ADDRESS="true"
+            else
+                # Use awk to extract the IP and the correct port based on the connection context
+                IP_E2TERM=$(echo "$SERVICE_INFO" | awk '{print $3}')
+                PORT_E2TERM=$(echo "$SERVICE_INFO" | awk '{print $5}' | cut -d ':' -f1 | cut -d '/' -f1) # 36422
+
+                if [ -z "$IP_E2TERM" ] || [ "$IP_E2TERM" == "<none>" ]; then
+                    PROMPT_FOR_E2_ADDRESS="true"
+                fi
+            fi
+        fi
+
+        if [ "$PROMPT_FOR_E2_ADDRESS" = "true" ]; then
+            echo
+            echo "Please enter the IP address where the E2 termination service is located."
+            echo "You can find this by running: kubectl get service -n ricplt | grep service-ricplt-e2term-sctp"
+            echo "Type \"\" to disable E2 support in the gNodeB configuration."
+            read -p "Enter IP Address: " IP_E2TERM
+            IP_E2TERM=$(echo "$IP_E2TERM" | xargs) # Trim whitespace
+        fi
+
+        if [ -z "$IP_E2TERM" ]; then
+            echo
+            echo "No E2 address was provided, disabling E2 termination support."
+            ENABLE_E2_TERM="false"
+        else
+            IP_E2TERM_BIND=$IP_E2TERM
+            echo "IP_E2TERM: $IP_E2TERM"
+            echo "PORT_E2TERM: $PORT_E2TERM"
+            echo "IP_E2TERM_BIND: $IP_E2TERM_BIND"
+        fi
     fi
 fi
 

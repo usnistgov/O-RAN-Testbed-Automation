@@ -40,6 +40,7 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
+
 echo "Generating Configurations for 5G Core components..."
 cd 5G_Core_Network
 ./generate_configurations.sh
@@ -48,7 +49,7 @@ cd ..
 echo
 echo "Generating Configuration for Next Generation Node B..."
 cd Next_Generation_Node_B
-./generate_configurations.sh
+./generate_configurations.sh "$@"
 cd ..
 
 echo

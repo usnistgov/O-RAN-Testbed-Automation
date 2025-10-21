@@ -758,6 +758,11 @@ for SERVICE in "${SERVICES[@]}"; do
             echo "$SERVICE process not found."
         fi
     fi
+    # Clean up static manifest files, later created with kubeadm init
+    if sudo test -f /etc/kubernetes/manifests/$SERVICE.yaml; then
+        echo "Removing /etc/kubernetes/manifests/$SERVICE.yaml..."
+        sudo rm -f /etc/kubernetes/manifests/$SERVICE.yaml || true
+    fi
 done
 
 # Stop and remove Docker containers if Docker is used

@@ -31,8 +31,6 @@
 # Exit immediately if a command fails
 set -e
 
-BASE_EXAMPLE_CONFIG_PATH="$SCRIPT_DIR/srsRAN_Project/configs/gnb_rf_b210_fdd_srsUE.yml"
-
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
@@ -41,6 +39,8 @@ fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
+
+BASE_EXAMPLE_CONFIG_PATH="$SCRIPT_DIR/srsRAN_Project/configs/gnb_rf_b210_fdd_srsUE.yml"
 
 # Parse command-line arguments
 ENABLE_E2_TERM="true"

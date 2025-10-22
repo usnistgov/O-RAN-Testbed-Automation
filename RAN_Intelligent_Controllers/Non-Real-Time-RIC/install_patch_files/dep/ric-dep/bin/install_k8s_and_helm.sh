@@ -533,6 +533,8 @@ else
     sudo pkill -9 -f 'containerd-shim' 2>/dev/null || true
     sudo pkill -9 -f 'docker-proxy' 2>/dev/null || true
     sudo pkill -9 -f 'runc' 2>/dev/null || true
+    # If console breaks, reset it
+    stty sane || true
 fi
 
 # Uninstall all possible Docker packages

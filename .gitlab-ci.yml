@@ -1,3 +1,5 @@
+# image: debian:bookworm
+
 variables:
   GIT_DEPTH: "1"
   GIT_STRATEGY: none #fetch
@@ -11,10 +13,22 @@ variables:
   ARTIFACT_COMPRESSION_LEVEL: "slowest"
   CACHE_COMPRESSION_LEVEL: "slowest"
 
+
 default:
   tags: [testbed-ci-runner]
   before_script:
-    - echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections
+    # Handle sudo
+    # - |
+    #   mkdir -p /usr/local/bin
+    #   cat > /usr/local/bin/sudo <<'EOF'
+    #   #!/usr/bin/env bash
+    #   exec "$@"
+    #   EOF
+    #   chmod +x /usr/local/bin/sudo
+    #   hash -r
+
+    # General setup
+    - echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections || true
     - export DEBIAN_FRONTEND=noninteractive
     - cd "$CI_PROJECT_DIR"
     - pwd
@@ -96,6 +110,13 @@ open5gs_srsran_oran_sc_ric_setup:
     - cd ../..
     - echo -e "\e[0Ksection_end:$(date +%s):open5gs_configure\r\e[0K"
 
+    - echo -e "\e[0Ksection_start:$(date +%s):o-ran-sc_near-rt-ric_install[collapsed=true]\r\e[0KInstall O-RAN SC Near-RT RIC"
+    - echo "********************** CI Install O-RAN SC Near-RT RIC *************************"
+    - cd RAN_Intelligent_Controllers/Near-Real-Time-RIC
+    - ./full_install.sh
+    - cd ../..
+    - echo -e "\e[0Ksection_end:$(date +%s):o-ran-sc_near-rt-ric_install\r\e[0K"
+
     - echo -e "\e[0Ksection_start:$(date +%s):open5gs_install[collapsed=true]\r\e[0KInstall Open5GS"
     - echo "***************************** CI Install Open5GS *******************************"
     - cd OpenAirInterface_Testbed/5G_Core_Network
@@ -117,12 +138,12 @@ open5gs_srsran_oran_sc_ric_setup:
     - cd ..
     - echo -e "\e[0Ksection_end:$(date +%s):srsran_gnb_install\r\e[0K"
     
-    - echo -e "\e[0Ksection_start:$(date +%s):o-ran-sc_near-rt-ric_install[collapsed=true]\r\e[0KInstall O-RAN SC Near-RT RIC"
-    - echo "********************** CI Install O-RAN SC Near-RT RIC *************************"
-    - cd RAN_Intelligent_Controllers/Near-Real-Time-RIC
-    - ./full_install.sh
-    - cd ../..
-    - echo -e "\e[0Ksection_end:$(date +%s):o-ran-sc_near-rt-ric_install\r\e[0K"
+    # - echo -e "\e[0Ksection_start:$(date +%s):o-ran-sc_near-rt-ric_install[collapsed=true]\r\e[0KInstall O-RAN SC Near-RT RIC"
+    # - echo "********************** CI Install O-RAN SC Near-RT RIC *************************"
+    # - cd RAN_Intelligent_Controllers/Near-Real-Time-RIC
+    # - ./full_install.sh
+    # - cd ../..
+    # - echo -e "\e[0Ksection_end:$(date +%s):o-ran-sc_near-rt-ric_install\r\e[0K"
 
     - echo -e "\e[0Ksection_start:$(date +%s):testbed_2_configuration[collapsed=true]\r\e[0KTestbed 2 Configuration"
     - echo "****************************** CI Configuration ********************************"
@@ -183,7 +204,7 @@ openairinterface_flexric_5gdeploy_setup:
     - "sed -i -E 's/^use_systemctl:.*/use_systemctl: false/' options.yaml"
     - cd ../..
     - echo -e "\e[0Ksection_end:$(date +%s):5gdeploy_configure\r\e[0K"
-    
+
     - echo -e "\e[0Ksection_start:$(date +%s):oai_ue_install[collapsed=true]\r\e[0KInstall OpenAirInterface UE"
     - echo "***************************** CI Install OAI UE ********************************"
     - cd OpenAirInterface_Testbed/User_Equipment
@@ -208,7 +229,6 @@ openairinterface_flexric_5gdeploy_setup:
     - echo -e "\e[0Ksection_start:$(date +%s):5gdeploy_install[collapsed=true]\r\e[0KInstall 5G Deployment Helper (5gdeploy)"
     - echo "********************** CI Install 5G Deployment Helper *************************"
     - cd 5G_Core_Network
-    - "sed -i -E 's/^core_to_use:.*/core_to_use: 5gdeploy-open5gs/' options.yaml"
     - ./full_install.sh
     - cd ..
     - echo -e "\e[0Ksection_end:$(date +%s):5gdeploy_install\r\e[0K"
@@ -246,7 +266,6 @@ openairinterface_flexric_5gdeploy_setup:
     - echo -e "\e[0Ksection_start:$(date +%s):5gdeploy_uninstall[collapsed=true]\r\e[0KUninstall 5G Deployment Helper (5gdeploy)"
     - echo "********************* CI Uninstall 5G Deployment Helper ************************"
     - cd 5G_Core_Network
-    - "sed -i -E 's/^core_to_use:.*/core_to_use: 5gdeploy-open5gs/' options.yaml"
     - ./full_uninstall.sh bypass_confirmation
     - cd ..
     - echo -e "\e[0Ksection_end:$(date +%s):5gdeploy_uninstall\r\e[0K"

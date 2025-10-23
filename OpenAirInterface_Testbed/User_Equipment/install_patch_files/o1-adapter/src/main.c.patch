@@ -1,0 +1,19 @@
+diff --git a/src/main.c b/src/main.c
+index 5643eaa..72d1698 100644
+--- a/src/main.c
++++ b/src/main.c
+@@ -126,6 +126,14 @@ int main(int argc, char **argv) {
+         goto failure;
+     }
+ 
++    // Register handover RPCs (F1/N2)
++    rc = netconf_data_register_handover_rpcs();
++    if(rc) {
++        log_error("handover RPC registration error");
++        goto failure;
++    }
++
++
+     log("initalizing pm_data...");
+     rc = pm_data_init(config);
+     if(rc) {

@@ -39,10 +39,11 @@ fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 
+RUN_TELNET_SESSION_AFTER=false
 NUM_UES=1
 NUM_DUS=2
-RUN_XAPP_KPM_MONITOR=true
-RUN_GRAFANA_DASHBOARD=true
+RUN_XAPP_KPM_MONITOR=false
+RUN_GRAFANA_DASHBOARD=false
 
 if [ "$RUN_GRAFANA_DASHBOARD" = true ] && [ "$RUN_XAPP_KPM_MONITOR" = false ]; then
     echo "Error: Cannot run Grafana dashboard without running xApp KPM Monitor."
@@ -287,43 +288,50 @@ echo
 echo
 ./is_running.sh
 
-# if ! command -v rlwrap &>/dev/null; then
-#     echo "Package \"rlwrap\" not found, installing..."
-#     sudo env $APTVARS apt-get install -y rlwrap
-# fi
+if [ "$RUN_TELNET_SESSION_AFTER" = true ]; then
+    # if ! command -v rlwrap &>/dev/null; then
+    #     echo "Package \"rlwrap\" not found, installing..."
+    #     sudo env $APTVARS apt-get install -y rlwrap
+    # fi
 
-# mkdir -p logs
-# LOG_FILE="logs/telnet.log"
-# HIST_FILE="logs/telnet_history"
+    # mkdir -p logs
+    # LOG_FILE="logs/telnet.log"
+    # HIST_FILE="logs/telnet_history"
 
-# exec 3<>/dev/tcp/127.0.0.1/9099
-# echo help >&3
-# stdbuf -o0 -i0 -e0 cat <&3 | stdbuf -o0 -i0 -e0 tee -a "$LOG_FILE" &
-# READER_PID=$!
-# trap 'exec 3<&-; exec 3>&-; kill "$READER_PID" 2>/dev/null' EXIT
-# echo "Connected to the CU telnet session."
+    # exec 3<>/dev/tcp/127.0.0.1/9099
+    # echo help >&3
+    # stdbuf -o0 -i0 -e0 cat <&3 | stdbuf -o0 -i0 -e0 tee -a "$LOG_FILE" &
+    # READER_PID=$!
+    # trap 'exec 3<&-; exec 3>&-; kill "$READER_PID" 2>/dev/null' EXIT
+    # echo "Connected to the CU telnet session."
 
-# rlwrap -H "$HIST_FILE" bash -c '
-#     while IFS= read -r line; do
-#         printf "%s\r\n" "$line" >&3
-#     done
-# ' 3>&3
+    # rlwrap -H "$HIST_FILE" bash -c '
+    #     while IFS= read -r line; do
+    #         printf "%s\r\n" "$line" >&3
+    #     done
+    # ' 3>&3
 
-echo
-echo
-echo
-echo "Starting telnet session to CU..."
-echo "    Type 'help' for a list of commands."
-echo "    Type 'ci trigger_f1_ho 1' to trigger a handover for UE 1 from DU 1 to DU 2."
-echo
+    echo
+    echo
+    echo
+    echo "Starting telnet session to CU..."
+    echo "    Type 'help' for a list of commands."
+    echo "    Type 'ci trigger_f1_ho 1' to trigger a handover for UE 1 from DU 1 to DU 2."
+    echo
 
-# Open a single persistent connection for help and interactive session
-exec 3<>/dev/tcp/127.0.0.1/9099
-echo help >&3
-cat <&3 &
-echo "Connected to the CU telnet session."
-# Forward user input to the telnet session
-cat >&3
-# Close the connection when done
-exec 3<&-
-exec 3>&-
+    # Open a single persistent connection for help and interactive session
+    exec 3<>/dev/tcp/127.0.0.1/9099
+    echo help >&3
+    cat <&3 &
+    echo "Connected to the CU telnet session."
+    # Forward user input to the telnet session
+    cat >&3
+    # Close the connection when done
+    exec 3<&-
+    exec 3>&-
+else
+    echo "Successfully started all components. Waiting for user to terminate the script (press Ctrl+C to exit)..."
+    while true; do
+        sleep 10
+    done
+fi

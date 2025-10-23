@@ -1,0 +1,10 @@
+diff --git a/src/netconf/netconf_data.h b/src/netconf/netconf_data.h
+index a318b80..8e35d59 100644
+--- a/src/netconf/netconf_data.h
++++ b/src/netconf/netconf_data.h
+@@ -35,3 +35,5 @@ int netconf_data_update_bwp_dl(const oai_data_t *oai);
+ int netconf_data_update_bwp_ul(const oai_data_t *oai);
+ int netconf_data_update_nrcelldu(const oai_data_t *oai);
+ int netconf_data_update_alarm(const alarm_t *alarm, int notification_id);
++
++int netconf_data_register_handover_rpcs();

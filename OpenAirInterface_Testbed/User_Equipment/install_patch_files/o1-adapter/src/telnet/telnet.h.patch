@@ -1,0 +1,13 @@
+diff --git a/src/telnet/telnet.h b/src/telnet/telnet.h
+index a2eb17b..97097c0 100644
+--- a/src/telnet/telnet.h
++++ b/src/telnet/telnet.h
+@@ -47,6 +47,7 @@ int telnet_local_wait_for_prompt();
+ char *telnet_get_o1_stats();
+ int telnet_change_bandwidth(int new_bandwidth);
+ 
+-
++int telnet_trigger_f1_handover(int rrc_ue_id);
++int telnet_trigger_n2_handover(int neighbour_pci, int ue_id);
+ 
+ int telnet_test_ls();

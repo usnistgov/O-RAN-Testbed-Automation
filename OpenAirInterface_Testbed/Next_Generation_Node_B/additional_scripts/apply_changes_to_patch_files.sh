@@ -53,6 +53,22 @@ git diff openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c >../install_patch_
 git diff openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h >../install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.patch
 git diff openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c >../install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c.patch
 git diff openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c >../install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c.patch
+git diff common/utils/telnetsrv/telnetsrv_o1.c >../install_patch_files/openairinterface/common/utils/telnetsrv/telnetsrv_o1.c.patch
 cd ..
+
+if [ -d o1-adapter ]; then
+    cd o1-adapter
+    git diff docker/Dockerfile.adapter >../install_patch_files/o1-adapter/docker/Dockerfile.adapter.patch
+    git diff docker/scripts/get-yangs.sh >../install_patch_files/o1-adapter/docker/scripts/get-yangs.sh.patch
+    git diff docker/scripts/install-yangs.sh >../install_patch_files/o1-adapter/docker/scripts/install-yangs.sh.patch
+    cp docker/scripts/oai-handover.yang ../install_patch_files/o1-adapter/docker/scripts/oai-handover.yang
+    git diff src/main.c >../install_patch_files/o1-adapter/src/main.c.patch
+    git diff src/netconf/netconf_data.c >../install_patch_files/o1-adapter/src/netconf/netconf_data.c.patch
+    git diff src/netconf/netconf_data.h >../install_patch_files/o1-adapter/src/netconf/netconf_data.h.patch
+    git diff src/telnet/telnet.c >../install_patch_files/o1-adapter/src/telnet/telnet.c.patch
+    git diff src/telnet/telnet.h >../install_patch_files/o1-adapter/src/telnet/telnet.h.patch
+    cp handover_support.md ../install_patch_files/o1-adapter/handover_support.md
+    cd ..
+fi
 
 echo "Successfully created patch files in the FlexRIC/install_patch_files directory."

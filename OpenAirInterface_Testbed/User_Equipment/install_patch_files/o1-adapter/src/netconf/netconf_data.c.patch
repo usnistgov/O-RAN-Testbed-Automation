@@ -1,0 +1,276 @@
+diff --git a/src/netconf/netconf_data.c b/src/netconf/netconf_data.c
+index db2b121..147604f 100644
+--- a/src/netconf/netconf_data.c
++++ b/src/netconf/netconf_data.c
+@@ -56,10 +56,15 @@ static const char *NRSECTORCARRIER_XPATH = 0;
+ static const config_t *netconf_config = 0;
+ static const alarm_t **netconf_alarms = 0;
+ static sr_subscription_ctx_t *netconf_data_subscription = 0;
++static sr_subscription_ctx_t *netconf_rpc_subscription = 0;
++static sr_subscription_ctx_t *netconf_rpc_subscription_f1 = 0;
++static sr_subscription_ctx_t *netconf_rpc_subscription_n2 = 0;
+ 
+ static int netconf_data_register_callbacks();
+ static int netconf_data_unregister_callbacks();
+ static int netconf_data_edit_callback(sr_session_ctx_t *session, uint32_t sub_id, const char *module_name, const char *xpath_running, sr_event_t event, uint32_t request_id, void *private_data);
++static int netconf_data_f1_handover_rpc_callback(sr_session_ctx_t *session, uint32_t sub_id, const char *xpath, const sr_val_t *input, const size_t input_cnt, sr_event_t event, uint32_t request_id, sr_val_t **output, size_t *output_cnt, void *private_data);
++static int netconf_data_n2_handover_rpc_callback(sr_session_ctx_t *session, uint32_t sub_id, const char *xpath, const sr_val_t *input, const size_t input_cnt, sr_event_t event, uint32_t request_id, sr_val_t **output, size_t *output_cnt, void *private_data);
+ 
+ int netconf_data_init(const config_t *config) {
+     if(config == 0) {
+@@ -1008,7 +1013,7 @@ int netconf_data_update_full(const oai_data_t *oai) {
+                 k_running++;
+ 
+ /* **********************************************POPULATING NR SECTOR CARRIER CONFIGS************************************************ */
+-asprintf(&xpath_running[k_running], "%s/_3gpp-nr-nrm-nrsectorcarrier:NRSectorCarrier[id='ManagedElement=%s, GNBDUFunction=%d']", GNBDU_FUNCTION_XPATH);
++asprintf(&xpath_running[k_running], "%s/_3gpp-nr-nrm-nrsectorcarrier:NRSectorCarrier[id='ManagedElement=%s,GNBDUFunction=%d']", GNBDU_FUNCTION_XPATH, netconf_config->info.node_id, netconf_config->info.gnb_du_id);
+             if(xpath_running[k_running] == 0) {
+                   log_error("asprintf failed");
+                   goto failure;
+@@ -1028,11 +1033,11 @@ asprintf(&xpath_running[k_running], "%s/_3gpp-nr-nrm-nrsectorcarrier:NRSectorCar
+                     goto failure;
+                 }
+                 k_running++;
+-asprintf(&values_running[k_running], "%d", oai->nrsectcarr.txDirection);
+-                if(values_running[k_running] == 0) {
+-                    log_error("asprintf failed");
+-                goto failure;
+-           }
++// asprintf(&values_running[k_running], "%d", oai->nrsectcarr.txDirection);
++//                 if(values_running[k_running] == 0) {
++//                     log_error("asprintf failed");
++//                 goto failure;
++//            }
+ 
+             values_running[k_running] = strdup("UL");
+             if(values_running[k_running] == 0) {
+@@ -1048,11 +1053,11 @@ asprintf(&values_running[k_running], "%d", oai->nrsectcarr.txDirection);
+                 k_running++;
+ 
+ 
+- asprintf(&values_running[k_running], "%s", oai->nrsectcarr.configuredMaxTxPower);
+-                if(values_running[k_running] == 0) {
+-                    log_error("asprintf failed");
+-                goto failure;
+-           }
++//  asprintf(&values_running[k_running], "%s", oai->nrsectcarr.configuredMaxTxPower);
++//                 if(values_running[k_running] == 0) {
++//                     log_error("asprintf failed");
++//                 goto failure;
++//            }
+ 
+             values_running[k_running] = strdup("50");
+             if(values_running[k_running] == 0) {
+@@ -2155,6 +2160,15 @@ int netconf_data_update_nrcelldu(const oai_data_t *oai) {
+         goto failure;
+     }
+ 
++    if(netconf_rpc_subscription_f1) {
++        sr_unsubscribe(netconf_rpc_subscription_f1);
++        netconf_rpc_subscription_f1 = 0;
++    }
++    if(netconf_rpc_subscription_n2) {
++        sr_unsubscribe(netconf_rpc_subscription_n2);
++        netconf_rpc_subscription_n2 = 0;
++    }
++
+     return 0;
+ 
+ failure:
+@@ -2498,6 +2512,11 @@ static int netconf_data_unregister_callbacks() {
+         netconf_data_subscription = 0;
+     }
+ 
++    if(netconf_rpc_subscription) {
++        sr_unsubscribe(netconf_rpc_subscription);
++        netconf_rpc_subscription = 0;
++    }
++
+     return 0;
+ }
+ 
+@@ -2633,3 +2652,184 @@ failed_validation:
+     return SR_ERR_VALIDATION_FAILED;
+ }
+ 
++static int netconf_data_f1_handover_rpc_callback(sr_session_ctx_t *session, uint32_t sub_id, const char *xpath, const sr_val_t *input, const size_t input_cnt, sr_event_t event, uint32_t request_id, sr_val_t **output, size_t *output_cnt, void *private_data) {
++    (void)session;
++    (void)sub_id;
++    (void)xpath;
++    (void)event;
++    (void)request_id;
++    (void)private_data;
++
++    int rrc_ue_id = -1; // Default: auto-select
++    int ho_allowed = 1; // Default: allow if attribute missing
++    if (NRCELLDU_XPATH) {
++        char *path = 0;
++        sr_val_t *val = 0;
++        asprintf(&path, "%s/attributes/isHOAllowed", NRCELLDU_XPATH);
++        if (path) {
++            int grc = sr_get_item(netconf_session_running, path, 0, &val);
++            if (grc == SR_ERR_OK && val && val->type == SR_BOOL_T) {
++                ho_allowed = val->data.bool_val ? 1 : 0;
++            } else {
++                if (val) { sr_free_val(val); val = 0; }
++                grc = sr_get_item(netconf_session_operational, path, 0, &val);
++                if (grc == SR_ERR_OK && val && val->type == SR_BOOL_T) {
++                    ho_allowed = val->data.bool_val ? 1 : 0;
++                }
++            }
++        }
++        if (val) { sr_free_val(val); }
++        free(path);
++    }
++    if (!ho_allowed) {
++        log_error("F1 HO rejected: isHOAllowed=false as per 3GPP NRM");
++        return SR_ERR_VALIDATION_FAILED;
++    }
++
++    // Parse input parameters
++    for (size_t i = 0; i < input_cnt; i++) {
++        if (strcmp(input[i].xpath, "/oai-handover:trigger-f1-handover/rrc-ue-id") == 0) {
++            rrc_ue_id = input[i].data.int32_val;
++        }
++    }
++
++    log("F1 Handover RPC called with rrc_ue_id=%d", rrc_ue_id);
++
++    int rc = telnet_trigger_f1_handover(rrc_ue_id);
++    if (rc != 0) {
++        log_error("telnet_trigger_f1_handover failed");
++        return SR_ERR_OPERATION_FAILED;
++    }
++
++    *output_cnt = 1;
++    *output = calloc(*output_cnt, sizeof(**output));
++    if(!*output) {
++        log_error("calloc failed for RPC output");
++        return SR_ERR_OPERATION_FAILED;
++    }
++    (*output)[0].xpath = strdup("/oai-handover:trigger-f1-handover/status");
++    (*output)[0].type = SR_STRING_T;
++    (*output)[0].data.string_val = strdup("success");
++    if(!(*output)[0].xpath || !(*output)[0].data.string_val) {
++        log_error("strdup failed for RPC output");
++        return SR_ERR_OPERATION_FAILED;
++    }
++
++    return SR_ERR_OK;
++}
++
++static int netconf_data_n2_handover_rpc_callback(sr_session_ctx_t *session, uint32_t sub_id, const char *xpath, const sr_val_t *input, const size_t input_cnt, sr_event_t event, uint32_t request_id, sr_val_t **output, size_t *output_cnt, void *private_data) {
++    (void)session;
++    (void)sub_id;
++    (void)xpath;
++    (void)event;
++    (void)request_id;
++    (void)private_data;
++
++    int neighbour_pci = -1;
++    int ue_id = -1;
++
++    int ho_allowed = 1; // Default: allow if attribute missing
++    if (NRCELLDU_XPATH) {
++        char *path = 0;
++        sr_val_t *val = 0;
++        asprintf(&path, "%s/attributes/isHOAllowed", NRCELLDU_XPATH);
++        if (path) {
++            int grc = sr_get_item(netconf_session_running, path, 0, &val);
++            if (grc == SR_ERR_OK && val && val->type == SR_BOOL_T) {
++                ho_allowed = val->data.bool_val ? 1 : 0;
++            } else {
++                if (val) { sr_free_val(val); val = 0; }
++                grc = sr_get_item(netconf_session_operational, path, 0, &val);
++                if (grc == SR_ERR_OK && val && val->type == SR_BOOL_T) {
++                    ho_allowed = val->data.bool_val ? 1 : 0;
++                }
++            }
++        }
++        if (val) { sr_free_val(val); }
++        free(path);
++    }
++    if (!ho_allowed) {
++        log_error("N2 HO rejected: isHOAllowed=false as per 3GPP NRM");
++        return SR_ERR_VALIDATION_FAILED;
++    }
++
++    // Parse input parameters
++    for (size_t i = 0; i < input_cnt; i++) {
++        if (strcmp(input[i].xpath, "/oai-handover:trigger-n2-handover/neighbour-pci") == 0) {
++            neighbour_pci = input[i].data.int32_val;
++        } else if (strcmp(input[i].xpath, "/oai-handover:trigger-n2-handover/ue-id") == 0) {
++            ue_id = input[i].data.int32_val;
++        }
++    }
++
++    if (neighbour_pci < 0 || ue_id < 0) {
++        log_error("N2 Handover RPC: missing required parameters");
++        return SR_ERR_INVAL_ARG;
++    }
++
++    log("N2 Handover RPC called with neighbour_pci=%d, ue_id=%d", neighbour_pci, ue_id);
++
++    int rc = telnet_trigger_n2_handover(neighbour_pci, ue_id);
++    if (rc != 0) {
++        log_error("telnet_trigger_n2_handover failed");
++        return SR_ERR_OPERATION_FAILED;
++    }
++
++    *output_cnt = 1;
++    *output = calloc(*output_cnt, sizeof(**output));
++    if(!*output) {
++        log_error("calloc failed for RPC output");
++        return SR_ERR_OPERATION_FAILED;
++    }
++    (*output)[0].xpath = strdup("/oai-handover:trigger-n2-handover/status");
++    (*output)[0].type = SR_STRING_T;
++    (*output)[0].data.string_val = strdup("success");
++    if(!(*output)[0].xpath || !(*output)[0].data.string_val) {
++        log_error("strdup failed for RPC output");
++        return SR_ERR_OPERATION_FAILED;
++    }
++
++    return SR_ERR_OK;
++}
++
++int netconf_data_register_handover_rpcs() {
++    int rc;
++
++    // Ensure subscription context to reuse for multiple RPCs
++    if(netconf_rpc_subscription) {
++        sr_unsubscribe(netconf_rpc_subscription);
++        netconf_rpc_subscription = 0;
++    }
++
++    // Subscribe to F1 handover RPC
++    rc = sr_rpc_subscribe(netconf_session_running,
++                          "/oai-handover:trigger-f1-handover",
++                          netconf_data_f1_handover_rpc_callback,
++                          NULL,
++                          0,
++                          0,
++                          &netconf_rpc_subscription);
++    if (rc != SR_ERR_OK) {
++        log_error("Failed to subscribe to F1 handover RPC: %s", sr_strerror(rc));
++        return 1;
++    }
++
++    // Subscribe to N2 handover RPC on the same subscription context
++    rc = sr_rpc_subscribe(netconf_session_running,
++                          "/oai-handover:trigger-n2-handover",
++                          netconf_data_n2_handover_rpc_callback,
++                          NULL,
++                          0,
++                          0, // SR_SUBSCR_CTX_REUSE,
++                          &netconf_rpc_subscription);
++    if (rc != SR_ERR_OK) {
++        log_error("Failed to subscribe to N2 handover RPC: %s", sr_strerror(rc));
++        sr_unsubscribe(netconf_rpc_subscription);
++        netconf_rpc_subscription = 0;
++        return 1;
++    }
++
++    log("Handover RPCs registered successfully");
++    return 0;
++}

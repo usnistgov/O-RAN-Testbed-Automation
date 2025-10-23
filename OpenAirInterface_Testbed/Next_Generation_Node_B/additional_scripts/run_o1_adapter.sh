@@ -36,6 +36,9 @@ PARENT_DIR=$(dirname "$SCRIPT_DIR")
 
 cd "$SCRIPT_DIR"
 
+# Upon exit, stop the O1 adapter
+trap 'echo "Stopping O1 adapter..."; "$SCRIPT_DIR/stop_o1_adapter.sh"; exit' EXIT SIGINT SIGTERM
+
 # Check if docker is accessible from the current user, and if not, repair its permissions
 if [ -z "$FIXED_DOCKER_PERMS" ]; then
     if ! OUTPUT=$(docker info 2>&1); then

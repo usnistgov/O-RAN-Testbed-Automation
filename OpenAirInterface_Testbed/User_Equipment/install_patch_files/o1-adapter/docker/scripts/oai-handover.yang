@@ -1,0 +1,63 @@
+module oai-handover {
+    yang-version 1.1;
+    namespace "urn:oai:params:xml:ns:yang:handover";
+    prefix "oai-ho";
+
+    organization "National Institute of Standards and Technology";
+    contact "simeon.wuthier@nist.gov";
+    description "YANG model for OAI handover control over O1 interface. Supports F1 (intra-gNB) and N2 (inter-gNB) triggers.";
+
+    revision 2025-10-22 {
+        description "Initial revision.";
+    }
+
+    rpc trigger-f1-handover {
+        description "Trigger F1 handover (intra-gNB, between DUs). If rrc-ue-id is -1 or unset, gNB auto selects the UE (only when single UE is connected).";
+        
+        input {
+            leaf rrc-ue-id {
+                type int32 {
+                    range "-1..65535";
+                }
+                default -1;
+                description "RRC UE ID to hand over. -1 for auto selection.";
+            }
+        }
+        
+        output {
+            leaf status {
+                type string;
+                description "Handover trigger result.";
+            }
+        }
+    }
+
+    rpc trigger-n2-handover {
+        description "Trigger N2 handover. Requires neighbour-pci and ue-id.";
+        
+        input {
+            leaf neighbour-pci {
+                type uint16 {
+                    range "0..1007";
+                }
+                mandatory true;
+                description "Physical Cell ID of target neighbour cell.";
+            }
+            
+            leaf ue-id {
+                type int32 {
+                    range "0..65535";
+                }
+                mandatory true;
+                description "RRC UE ID of UE to hand over.";
+            }
+        }
+        
+        output {
+            leaf status {
+                type string;
+                description "Handover trigger result.";
+            }
+        }
+    }
+}

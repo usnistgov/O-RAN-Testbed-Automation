@@ -1,0 +1,143 @@
+diff --git a/common/utils/telnetsrv/telnetsrv_o1.c b/common/utils/telnetsrv/telnetsrv_o1.c
+index ac368885f6..ad2fca3942 100644
+--- a/common/utils/telnetsrv/telnetsrv_o1.c
++++ b/common/utils/telnetsrv/telnetsrv_o1.c
+@@ -28,6 +28,7 @@
+ #include <stdlib.h>
+ #include <string.h>
+ #include <stdarg.h>
++#include <time.h>
+ 
+ #define TELNETSERVERCODE
+ #include "telnetsrv.h"
+@@ -39,6 +40,8 @@
+ #include "openair2/LAYER2/nr_rlc/nr_rlc_oai_api.c"
+ #include "common/utils/nr/nr_common.h"
+ 
++extern RAN_CONTEXT_t RC;
++
+ #define ERROR_MSG_RET(mSG, aRGS...) do { prnt("FAILURE: " mSG, ##aRGS); return 1; } while (0)
+ 
+ #define ISINITBWP "bwp3gpp:isInitialBwp"
+@@ -82,25 +85,72 @@ static int get_stats(char *buf, int debug, telnet_printfunc_t prnt)
+   if (buf)
+     ERROR_MSG_RET("no parameter allowed\n");
+ 
++  if (RC.nrmac == NULL)
++    ERROR_MSG_RET("MAC array not initialized (possibly running in CU mode)\n");
++  
+   gNB_MAC_INST *mac = RC.nrmac[0];
+-  AssertFatal(mac != NULL, "need MAC\n");
++  if (mac == NULL)
++    ERROR_MSG_RET("MAC not initialized\n");
++  
+   NR_SCHED_LOCK(&mac->sched_lock);
+ 
+   const f1ap_setup_req_t *sr = mac->f1_config.setup_req;
++  if (sr == NULL) {
++    NR_SCHED_UNLOCK(&mac->sched_lock);
++    ERROR_MSG_RET("F1 setup request not initialized\n");
++  }
+   const f1ap_served_cell_info_t *cell_info = &sr->cell[0].info;
+ 
+   const NR_ServingCellConfigCommon_t *scc = mac->common_channels[0].ServingCellConfigCommon;
++  if (scc == NULL) {
++    NR_SCHED_UNLOCK(&mac->sched_lock);
++    ERROR_MSG_RET("ServingCellConfigCommon not initialized\n");
++  }
++  if (scc->downlinkConfigCommon == NULL || scc->uplinkConfigCommon == NULL) {
++    NR_SCHED_UNLOCK(&mac->sched_lock);
++    ERROR_MSG_RET("DL/UL config not initialized\n");
++  }
+   const NR_FrequencyInfoDL_t *frequencyInfoDL = scc->downlinkConfigCommon->frequencyInfoDL;
+   const NR_FrequencyInfoUL_t *frequencyInfoUL = scc->uplinkConfigCommon->frequencyInfoUL;
++  if (frequencyInfoDL == NULL || frequencyInfoUL == NULL) {
++    NR_SCHED_UNLOCK(&mac->sched_lock);
++    ERROR_MSG_RET("FrequencyInfo not initialized\n");
++  }
++  if (frequencyInfoDL->frequencyBandList.list.count == 0 || frequencyInfoDL->frequencyBandList.list.array[0] == NULL) {
++    NR_SCHED_UNLOCK(&mac->sched_lock);
++    ERROR_MSG_RET("FrequencyBandList not initialized\n");
++  }
++  if (scc->ssbSubcarrierSpacing == NULL) {
++    NR_SCHED_UNLOCK(&mac->sched_lock);
++    ERROR_MSG_RET("ssbSubcarrierSpacing not initialized\n");
++  }
++  if (scc->downlinkConfigCommon->initialDownlinkBWP == NULL || scc->uplinkConfigCommon->initialUplinkBWP == NULL) {
++    NR_SCHED_UNLOCK(&mac->sched_lock);
++    ERROR_MSG_RET("Initial BWP not initialized\n");
++  }
+   frame_type_t frame_type = get_frame_type(*frequencyInfoDL->frequencyBandList.list.array[0], *scc->ssbSubcarrierSpacing);
+   const NR_BWP_t *initialDL = &scc->downlinkConfigCommon->initialDownlinkBWP->genericParameters;
+   const NR_BWP_t *initialUL = &scc->uplinkConfigCommon->initialUplinkBWP->genericParameters;
+ 
+   int scs = initialDL->subcarrierSpacing;
+-  AssertFatal(scs == initialUL->subcarrierSpacing, "different SCS for UL/DL not supported!\n");
++  if (scs != initialUL->subcarrierSpacing) {
++    NR_SCHED_UNLOCK(&mac->sched_lock);
++    ERROR_MSG_RET("different SCS for UL/DL not supported!\n");
++  }
+   int band = *frequencyInfoDL->frequencyBandList.list.array[0];
++  if (frequencyInfoDL->scs_SpecificCarrierList.list.count == 0 || frequencyInfoDL->scs_SpecificCarrierList.list.array[0] == NULL) {
++    NR_SCHED_UNLOCK(&mac->sched_lock);
++    ERROR_MSG_RET("DL scs_SpecificCarrierList not initialized\n");
++  }
++  if (frequencyInfoUL->scs_SpecificCarrierList.list.count == 0 || frequencyInfoUL->scs_SpecificCarrierList.list.array[0] == NULL) {
++    NR_SCHED_UNLOCK(&mac->sched_lock);
++    ERROR_MSG_RET("UL scs_SpecificCarrierList not initialized\n");
++  }
+   int nrb = frequencyInfoDL->scs_SpecificCarrierList.list.array[0]->carrierBandwidth;
+-  AssertFatal(nrb == frequencyInfoUL->scs_SpecificCarrierList.list.array[0]->carrierBandwidth, "different BW for UL/DL not supported!\n");
++  if (nrb != frequencyInfoUL->scs_SpecificCarrierList.list.array[0]->carrierBandwidth) {
++    NR_SCHED_UNLOCK(&mac->sched_lock);
++    ERROR_MSG_RET("different BW for UL/DL not supported!\n");
++  }
+   frequency_range_t fr = band > 256 ? FR2 : FR1;
+   int bw_index = get_supported_band_index(scs, fr, nrb);
+   int bw_mhz = get_supported_bw_mhz(fr, bw_index);
+@@ -163,12 +213,24 @@ static int get_stats(char *buf, int debug, telnet_printfunc_t prnt)
+     prnt("    },\n");
+ 
+     prnt("    \"NRCELLDU\": {\n");
++    if (scc->downlinkConfigCommon->frequencyInfoDL->absoluteFrequencySSB == NULL) {
++      NR_SCHED_UNLOCK(&mac->sched_lock);
++      ERROR_MSG_RET("absoluteFrequencySSB not initialized\n");
++    }
+     prnt("      \"" SSBFREQ "\": %ld,\n", *scc->downlinkConfigCommon->frequencyInfoDL->absoluteFrequencySSB);
+     prnt("      \"" ARFCNDL "\": %ld,\n", frequencyInfoDL->absoluteFrequencyPointA);
+     prnt("      \"" BWDL "\": %ld,\n", bw_mhz);
+     prnt("      \"" ARFCNUL "\": %ld,\n", frequencyInfoUL->absoluteFrequencyPointA ? *frequencyInfoUL->absoluteFrequencyPointA : frequencyInfoDL->absoluteFrequencyPointA);
+     prnt("      \"" BWUL "\": %ld,\n", bw_mhz);
++    if (scc->physCellId == NULL) {
++      NR_SCHED_UNLOCK(&mac->sched_lock);
++      ERROR_MSG_RET("physCellId not initialized\n");
++    }
+     prnt("      \"" PCI "\": %ld,\n", *scc->physCellId);
++    if (cell_info->tac == NULL) {
++      NR_SCHED_UNLOCK(&mac->sched_lock);
++      ERROR_MSG_RET("TAC not initialized\n");
++    }
+     prnt("      \"" TAC "\": %ld,\n", *cell_info->tac);
+     prnt("      \"" MCC "\": \"%03d\",\n", cell_info->plmn.mcc);
+     prnt("      \"" MNC "\": \"%0*d\",\n", cell_info->plmn.mnc_digit_length, cell_info->plmn.mnc);
+@@ -400,13 +462,13 @@ static int remove_mac_ues(char *buf, int debug, telnet_printfunc_t prnt)
+ }
+ 
+ static telnetshell_cmddef_t o1cmds[] = {
+-  {"stats", "", get_stats},
+-  {"config", "[]", set_config},
+-  {"bwconfig", "", set_bwconfig},
+-  {"stop_modem", "", stop_modem},
+-  {"start_modem", "", start_modem},
+-  {"remove_mac_ues", "", remove_mac_ues},
+-  {"", "", NULL},
++  {"stats", "", get_stats, {NULL}, 0, NULL},
++  {"config", "[]", set_config, {NULL}, 0, NULL},
++  {"bwconfig", "", set_bwconfig, {NULL}, 0, NULL},
++  {"stop_modem", "", stop_modem, {NULL}, 0, NULL},
++  {"start_modem", "", start_modem, {NULL}, 0, NULL},
++  {"remove_mac_ues", "", remove_mac_ues, {NULL}, 0, NULL},
++  {"", "", NULL, {NULL}, 0, NULL},
+ };
+ 
+ static telnetshell_vardef_t o1vars[] = {

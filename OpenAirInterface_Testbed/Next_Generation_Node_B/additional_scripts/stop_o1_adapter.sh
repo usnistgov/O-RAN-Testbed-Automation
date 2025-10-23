@@ -56,7 +56,7 @@ if [ -z "$FIXED_DOCKER_PERMS" ]; then
     fi
 fi
 
-docker kill adapter-gnb
-docker rm adapter-gnb
+docker kill adapter-gnb 2>/dev/null || true
+docker rm adapter-gnb 2>/dev/null || true
 
 echo "Successfully stopped and removed the O1 adapter container."

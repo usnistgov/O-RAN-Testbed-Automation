@@ -32,7 +32,7 @@ default:
     - export DEBIAN_FRONTEND=noninteractive
     - cd "$CI_PROJECT_DIR"
     - pwd
-    - tree . -d
+    - command -v tree >/dev/null 2>&1 && tree . -d || true
   after_script:
     - sudo chown -R "$USER:$USER" "$CI_PROJECT_DIR" || true
 
@@ -195,15 +195,17 @@ open5gs_srsran_oran_sc_ric_setup:
         ls -l "/proc/$SHELL_PID/fd" || true
       fi
       PROCESS_GROUP_ID="$(ps -o pgid= -p "$SHELL_PID" | tr -d ' ')"
+      trap '' TERM  # Ignore TERM in this shell
       if command -v pkill >/dev/null 2>&1; then # Graceful stop
-        sudo pkill -TERM -g "$PROCESS_GROUP_ID" || true
+        sudo -n pkill -TERM -g "$PROCESS_GROUP_ID" || true
       fi
-      sudo kill -TERM -- "-$PROCESS_GROUP_ID" 2>/dev/null || true
+      sudo -n kill -TERM -- "-$PROCESS_GROUP_ID" 2>/dev/null || true
       sleep 2
-      if command -v pkill >/dev/null 2>&1; then # Forceful stop
-        sudo pkill -KILL -g "$PROCESS_GROUP_ID" || true
+      REMAINING_PIDS="$(ps -o pid= -g "$PROCESS_GROUP_ID" | awk '{print $1}' | grep -v -E "^\s*${SHELL_PID}\s*$" || true)"
+      if [ -n "$REMAINING_PIDS" ]; then
+        sudo -n kill -KILL $REMAINING_PIDS 2>/dev/null || true
       fi
-      sudo kill -KILL -- "-$PROCESS_GROUP_ID" 2>/dev/null || true
+      trap - TERM # Restore TERM trap
       echo "Successfully stopped leftover processes."
     - echo -e "\e[0Ksection_end:$(date +%s):testbed_1_cleanup\r\e[0K"
 
@@ -312,15 +314,17 @@ openairinterface_flexric_5gdeploy_setup:
         ls -l "/proc/$SHELL_PID/fd" || true
       fi
       PROCESS_GROUP_ID="$(ps -o pgid= -p "$SHELL_PID" | tr -d ' ')"
+      trap '' TERM  # Ignore TERM in this shell
       if command -v pkill >/dev/null 2>&1; then # Graceful stop
-        sudo pkill -TERM -g "$PROCESS_GROUP_ID" || true
+        sudo -n pkill -TERM -g "$PROCESS_GROUP_ID" || true
       fi
-      sudo kill -TERM -- "-$PROCESS_GROUP_ID" 2>/dev/null || true
+      sudo -n kill -TERM -- "-$PROCESS_GROUP_ID" 2>/dev/null || true
       sleep 2
-      if command -v pkill >/dev/null 2>&1; then # Forceful stop
-        sudo pkill -KILL -g "$PROCESS_GROUP_ID" || true
+      REMAINING_PIDS="$(ps -o pid= -g "$PROCESS_GROUP_ID" | awk '{print $1}' | grep -v -E "^\s*${SHELL_PID}\s*$" || true)"
+      if [ -n "$REMAINING_PIDS" ]; then
+        sudo -n kill -KILL $REMAINING_PIDS 2>/dev/null || true
       fi
-      sudo kill -KILL -- "-$PROCESS_GROUP_ID" 2>/dev/null || true
+      trap - TERM # Restore TERM trap
       echo "Successfully stopped leftover processes."
     - echo -e "\e[0Ksection_end:$(date +%s):testbed_2_cleanup\r\e[0K"
   retry: 2

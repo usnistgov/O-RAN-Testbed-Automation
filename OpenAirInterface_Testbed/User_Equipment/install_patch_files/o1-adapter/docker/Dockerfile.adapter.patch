@@ -1,0 +1,12 @@
+diff --git a/docker/Dockerfile.adapter b/docker/Dockerfile.adapter
+index ba3ec4f..ca00284 100644
+--- a/docker/Dockerfile.adapter
++++ b/docker/Dockerfile.adapter
+@@ -68,6 +68,7 @@ RUN \
+ # get and install required YANG libraries
+ COPY ./docker/scripts/get-yangs.sh /adapter/scripts/get-yangs.sh
+ COPY ./docker/scripts/install-yangs.sh /adapter/scripts/install-yangs.sh
++COPY ./docker/scripts/oai-handover.yang /adapter/scripts/oai-handover.yang
+ RUN \
+     cd /adapter/scripts && \
+     mkdir yang && \

@@ -102,14 +102,28 @@ echo "Patching gNB_scheduler_uci.c..."
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c.patch"
 cd ..
 
+cd openairinterface5g
+git restore common/utils/telnetsrv/telnetsrv_o1.c
+if [ ! -f "common/utils/telnetsrv/telnetsrv_o1.c.previous" ]; then
+    cp common/utils/telnetsrv/telnetsrv_o1.c common/utils/telnetsrv/telnetsrv_o1.c.previous
+    cp common/utils/telnetsrv/telnetsrv_o1.c.previous "$PARENT_DIR/install_patch_files/openairinterface/common/utils/telnetsrv/telnetsrv_o1.previous.c"
+fi
+echo "Patching telnetsrv_o1.c..."
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface/common/utils/telnetsrv/telnetsrv_o1.c.patch"
+cd ..
+
 # If using Linux Mint, add support for Linux Mint 20, 21, and 22 to OpenAirInterface
 if grep -q "Linux Mint" /etc/os-release; then
     echo "Linux Mint detected, attempting to patching OpenAirInterface to support Linux Mint 20, 21, and 22..."
     cd openairinterface5g
     git restore cmake_targets/tools/build_helper
+    if [ ! -f "cmake_targets/tools/build_helper.previous" ]; then
+        cp cmake_targets/tools/build_helper cmake_targets/tools/build_helper.previous
+        cp cmake_targets/tools/build_helper.previous "$PARENT_DIR/install_patch_files/openairinterface/cmake_targets/tools/build_helper.previous"
+    fi
+    echo "Patching build_helper to add Linux Mint support..."
     git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface/cmake_targets/tools/build_helper.patch"
     cd ..
-    echo "Patching completed."
     echo
 fi
 

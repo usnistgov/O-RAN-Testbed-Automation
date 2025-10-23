@@ -47,7 +47,7 @@ if $(./is_running.sh | grep -q "FlexRIC: NOT_RUNNING"); then
 fi
 
 # Send a graceful shutdown signal to the FlexRIC process
-sudo pkill -f "nearRT-RIC" >/dev/null 2>&1 &
+sudo pkill -f "nearRT-RIC" >/dev/null 2>&1
 
 # Wait for the process to terminate gracefully
 COUNT=0
@@ -67,7 +67,7 @@ done
 
 # If the process is still running after 20 seconds, send a forceful kill signal
 echo "The FlexRIC did not stop in time, sending forceful kill signal..."
-sudo pkill -9 -f "nearRT-RIC" >/dev/null 2>&1 &
+sudo pkill -9 -f "nearRT-RIC" >/dev/null 2>&1
 
 sleep 2
 ./is_running.sh

@@ -47,7 +47,7 @@ fi
 sudo ls >/dev/null 2>&1
 
 # Send a graceful shutdown signal to the gNodeB process
-sudo pkill -f "gnb" >/dev/null 2>&1 &
+sudo pkill -f "gnb" >/dev/null 2>&1
 
 # Wait for the process to terminate gracefully
 COUNT=0
@@ -67,4 +67,4 @@ done
 
 # If the process is still running after 20 seconds, send a forceful kill signal
 echo "The gNodeB did not stop in time, sending forceful kill signal..."
-sudo pkill -9 -f "gnb" >/dev/null 2>&1 &
+sudo pkill -9 -f "gnb" >/dev/null 2>&1

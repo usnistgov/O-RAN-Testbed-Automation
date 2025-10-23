@@ -91,7 +91,7 @@ sudo ls >/dev/null 2>&1
 
 # Send a graceful shutdown signal to the gNodeB process
 if [ -z "$SELECTOR" ]; then
-    sudo pkill -f "nr-softmodem" >/dev/null 2>&1 &
+    sudo pkill -f "nr-softmodem" >/dev/null 2>&1
     remove_all_du_namespaces
     stty sane
 else
@@ -104,7 +104,7 @@ else
             CONFIG_FILE=$(basename "$CONFIG_PATH")
             if [[ "$CONFIG_FILE" == *"$SELECTOR"* ]]; then
                 #echo "Stopping nr-softmodem with config $CONFIG_FILE (PID $PID)..."
-                sudo kill "$PID" >/dev/null 2>&1 &
+                sudo kill "$PID" >/dev/null 2>&1
             fi
         fi
     done
@@ -140,7 +140,7 @@ done
 # If the process is still running after 20 seconds, send a forceful kill signal
 if [ -z "$SELECTOR" ]; then
     echo "The gNodeB did not stop in time, sending forceful kill signal..."
-    sudo pkill -9 -f "nr-softmodem" >/dev/null 2>&1 &
+    sudo pkill -9 -f "nr-softmodem" >/dev/null 2>&1
     remove_all_du_namespaces
     stty sane
 else
@@ -154,7 +154,7 @@ else
             CONFIG_FILE=$(basename "$CONFIG_PATH")
             if [[ "$CONFIG_FILE" == *"$SELECTOR"* ]]; then
                 #echo "Force stopping nr-softmodem with config $CONFIG_FILE (PID $PID)..."
-                sudo kill -9 "$PID" >/dev/null 2>&1 &
+                sudo kill -9 "$PID" >/dev/null 2>&1
             fi
         fi
     done

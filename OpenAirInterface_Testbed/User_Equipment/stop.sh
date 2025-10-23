@@ -86,11 +86,11 @@ sudo ls >/dev/null 2>&1
 
 # Send a graceful shutdown signal to the UE process
 if [ -z "$UE_NUMBER" ]; then
-    sudo pkill -f "nr-uesoftmodem" >/dev/null 2>&1 &
+    sudo pkill -f "nr-uesoftmodem" >/dev/null 2>&1
     remove_all_ue_namespaces
     stty sane
 else
-    sudo pkill -f "nr-uesoftmodem -O ../../../../configs/ue$UE_NUMBER.conf" >/dev/null 2>&1 &
+    sudo pkill -f "nr-uesoftmodem -O ../../../../configs/ue$UE_NUMBER.conf" >/dev/null 2>&1
     remove_ue_namespace "$UE_NUMBER"
 fi
 
@@ -121,11 +121,11 @@ done
 # If the process is still running after 20 seconds, send a forceful kill signal
 if [ -z "$UE_NUMBER" ]; then
     echo "The User Equipment did not stop in time, sending forceful kill signal..."
-    sudo pkill -9 -f "nr-uesoftmodem" >/dev/null 2>&1 &
+    sudo pkill -9 -f "nr-uesoftmodem" >/dev/null 2>&1
     remove_all_ue_namespaces
 else
     echo "The User Equipment $UE_NUMBER did not stop in time, sending forceful kill signal..."
-    sudo pkill -9 -f "nr-uesoftmodem -O ../../../../configs/ue$UE_NUMBER.conf" >/dev/null 2>&1 &
+    sudo pkill -9 -f "nr-uesoftmodem -O ../../../../configs/ue$UE_NUMBER.conf" >/dev/null 2>&1
     remove_ue_namespace "$UE_NUMBER"
 fi
 

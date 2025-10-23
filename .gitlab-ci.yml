@@ -196,12 +196,15 @@ open5gs_srsran_oran_sc_ric_setup:
       fi
       PROCESS_GROUP_ID="$(ps -o pgid= -p "$SHELL_PID" | tr -d ' ')"
       trap '' TERM  # Ignore TERM in this shell
-      if command -v pkill >/dev/null 2>&1; then # Graceful stop
-        sudo -n pkill -TERM -g "$PROCESS_GROUP_ID" || true
+      if command -v pkill >/dev/null 2>&1; then
+        sudo -n pkill -TERM -P "$SHELL_PID" || true
       fi
-      sudo -n kill -TERM -- "-$PROCESS_GROUP_ID" 2>/dev/null || true
+      # If pkill unavailable send TERM to direct children
+      for pid in $(pgrep -P "$SHELL_PID" 2>/dev/null || true); do
+        sudo -n kill -TERM "$pid" 2>/dev/null || true
+      done
       sleep 2
-      REMAINING_PIDS="$(ps -o pid= -g "$PROCESS_GROUP_ID" | awk '{print $1}' | grep -v -E "^\s*${SHELL_PID}\s*$" || true)"
+      REMAINING_PIDS="$(pgrep -P "$SHELL_PID" 2>/dev/null | grep -v -E "^\s*${SHELL_PID}\s*$" || true)"
       if [ -n "$REMAINING_PIDS" ]; then
         sudo -n kill -KILL $REMAINING_PIDS 2>/dev/null || true
       fi
@@ -315,12 +318,15 @@ openairinterface_flexric_5gdeploy_setup:
       fi
       PROCESS_GROUP_ID="$(ps -o pgid= -p "$SHELL_PID" | tr -d ' ')"
       trap '' TERM  # Ignore TERM in this shell
-      if command -v pkill >/dev/null 2>&1; then # Graceful stop
-        sudo -n pkill -TERM -g "$PROCESS_GROUP_ID" || true
+      if command -v pkill >/dev/null 2>&1; then
+        sudo -n pkill -TERM -P "$SHELL_PID" || true
       fi
-      sudo -n kill -TERM -- "-$PROCESS_GROUP_ID" 2>/dev/null || true
+      # If pkill unavailable send TERM to direct children
+      for pid in $(pgrep -P "$SHELL_PID" 2>/dev/null || true); do
+        sudo -n kill -TERM "$pid" 2>/dev/null || true
+      done
       sleep 2
-      REMAINING_PIDS="$(ps -o pid= -g "$PROCESS_GROUP_ID" | awk '{print $1}' | grep -v -E "^\s*${SHELL_PID}\s*$" || true)"
+      REMAINING_PIDS="$(pgrep -P "$SHELL_PID" 2>/dev/null | grep -v -E "^\s*${SHELL_PID}\s*$" || true)"
       if [ -n "$REMAINING_PIDS" ]; then
         sudo -n kill -KILL $REMAINING_PIDS 2>/dev/null || true
       fi

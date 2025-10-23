@@ -181,36 +181,36 @@ open5gs_srsran_oran_sc_ric_setup:
     - cd ../..
     - echo -e "\e[0Ksection_end:$(date +%s):o-ran-sc_near-rt-ric_uninstall\r\e[0K"
 
-    - echo -e "\e[0Ksection_start:$(date +%s):testbed_1_cleanup[collapsed=true]\r\e[0KStop Leftover Processes"
-    - echo "****************** Stopping leftover processes for testbed 1 ********************"
-    - |
-      SHELL_PID=$$
-      echo "Shell PID: $SHELL_PID"
-      if command -v pstree >/dev/null 2>&1; then
-        pstree -ap "$SHELL_PID"
-      else
-        ps -eo pid,ppid,pgid,sid,stat,etime,cmd --forest
-      fi
-      if [ -d "/proc/$SHELL_PID/fd" ]; then
-        ls -l "/proc/$SHELL_PID/fd" || true
-      fi
-      PROCESS_GROUP_ID="$(ps -o pgid= -p "$SHELL_PID" | tr -d ' ')"
-      trap '' TERM  # Ignore TERM in this shell
-      if command -v pkill >/dev/null 2>&1; then
-        sudo -n pkill -TERM -P "$SHELL_PID" || true
-      fi
-      # If pkill unavailable send TERM to children
-      for pid in $(pgrep -P "$SHELL_PID" 2>/dev/null || true); do
-        sudo -n kill -TERM "$pid" 2>/dev/null || true
-      done
-      sleep 2
-      REMAINING_PIDS="$(pgrep -P "$SHELL_PID" 2>/dev/null | grep -v -E "^\s*${SHELL_PID}\s*$" || true)"
-      if [ -n "$REMAINING_PIDS" ]; then
-        sudo -n kill -KILL $REMAINING_PIDS 2>/dev/null || true
-      fi
-      trap - TERM # Restore TERM trap
-      echo "Successfully stopped leftover processes."
-    - echo -e "\e[0Ksection_end:$(date +%s):testbed_1_cleanup\r\e[0K"
+    # - echo -e "\e[0Ksection_start:$(date +%s):testbed_1_cleanup[collapsed=true]\r\e[0KStop Leftover Processes"
+    # - echo "****************** Stopping leftover processes for testbed 1 ********************"
+    # - |
+    #   SHELL_PID=$$
+    #   echo "Shell PID: $SHELL_PID"
+    #   if command -v pstree >/dev/null 2>&1; then
+    #     pstree -ap "$SHELL_PID"
+    #   else
+    #     ps -eo pid,ppid,pgid,sid,stat,etime,cmd --forest
+    #   fi
+    #   if [ -d "/proc/$SHELL_PID/fd" ]; then
+    #     ls -l "/proc/$SHELL_PID/fd" || true
+    #   fi
+    #   PROCESS_GROUP_ID="$(ps -o pgid= -p "$SHELL_PID" | tr -d ' ')"
+    #   trap '' TERM  # Ignore TERM in this shell
+    #   if command -v pkill >/dev/null 2>&1; then
+    #     sudo -n pkill -TERM -P "$SHELL_PID" || true
+    #   fi
+    #   # If pkill unavailable send TERM to children
+    #   for pid in $(pgrep -P "$SHELL_PID" 2>/dev/null || true); do
+    #     sudo -n kill -TERM "$pid" 2>/dev/null || true
+    #   done
+    #   sleep 2
+    #   REMAINING_PIDS="$(pgrep -P "$SHELL_PID" 2>/dev/null | grep -v -E "^\s*${SHELL_PID}\s*$" || true)"
+    #   if [ -n "$REMAINING_PIDS" ]; then
+    #     sudo -n kill -KILL $REMAINING_PIDS 2>/dev/null || true
+    #   fi
+    #   trap - TERM # Restore TERM trap
+    #   echo "Successfully stopped leftover processes."
+    # - echo -e "\e[0Ksection_end:$(date +%s):testbed_1_cleanup\r\e[0K"
 
   retry: 2
 
@@ -303,36 +303,37 @@ openairinterface_flexric_5gdeploy_setup:
     - cd ..
     - echo -e "\e[0Ksection_end:$(date +%s):5gdeploy_uninstall\r\e[0K"
   
-    - echo -e "\e[0Ksection_start:$(date +%s):testbed_2_cleanup[collapsed=true]\r\e[0KStop Leftover Processes"
-    - echo "****************** Stopping leftover processes for testbed 2 ********************"
-    - |
-      SHELL_PID=$$
-      echo "Shell PID: $SHELL_PID"
-      if command -v pstree >/dev/null 2>&1; then
-        pstree -ap "$SHELL_PID"
-      else
-        ps -eo pid,ppid,pgid,sid,stat,etime,cmd --forest
-      fi
-      if [ -d "/proc/$SHELL_PID/fd" ]; then
-        ls -l "/proc/$SHELL_PID/fd" || true
-      fi
-      PROCESS_GROUP_ID="$(ps -o pgid= -p "$SHELL_PID" | tr -d ' ')"
-      trap '' TERM  # Ignore TERM in this shell
-      if command -v pkill >/dev/null 2>&1; then
-        sudo -n pkill -TERM -P "$SHELL_PID" || true
-      fi
-      # If pkill unavailable send TERM to children
-      for pid in $(pgrep -P "$SHELL_PID" 2>/dev/null || true); do
-        sudo -n kill -TERM "$pid" 2>/dev/null || true
-      done
-      sleep 2
-      REMAINING_PIDS="$(pgrep -P "$SHELL_PID" 2>/dev/null | grep -v -E "^\s*${SHELL_PID}\s*$" || true)"
-      if [ -n "$REMAINING_PIDS" ]; then
-        sudo -n kill -KILL $REMAINING_PIDS 2>/dev/null || true
-      fi
-      trap - TERM # Restore TERM trap
-      echo "Successfully stopped leftover processes."
-    - echo -e "\e[0Ksection_end:$(date +%s):testbed_2_cleanup\r\e[0K"
+    # - echo -e "\e[0Ksection_start:$(date +%s):testbed_2_cleanup[collapsed=true]\r\e[0KStop Leftover Processes"
+    # - echo "****************** Stopping leftover processes for testbed 2 ********************"
+    # - |
+    #   SHELL_PID=$$
+    #   echo "Shell PID: $SHELL_PID"
+    #   if command -v pstree >/dev/null 2>&1; then
+    #     pstree -ap "$SHELL_PID"
+    #   else
+    #     ps -eo pid,ppid,pgid,sid,stat,etime,cmd --forest
+    #   fi
+    #   if [ -d "/proc/$SHELL_PID/fd" ]; then
+    #     ls -l "/proc/$SHELL_PID/fd" || true
+    #   fi
+    #   PROCESS_GROUP_ID="$(ps -o pgid= -p "$SHELL_PID" | tr -d ' ')"
+    #   trap '' TERM  # Ignore TERM in this shell
+    #   if command -v pkill >/dev/null 2>&1; then
+    #     sudo -n pkill -TERM -P "$SHELL_PID" || true
+    #   fi
+    #   # If pkill unavailable send TERM to children
+    #   for pid in $(pgrep -P "$SHELL_PID" 2>/dev/null || true); do
+    #     sudo -n kill -TERM "$pid" 2>/dev/null || true
+    #   done
+    #   sleep 2
+    #   REMAINING_PIDS="$(pgrep -P "$SHELL_PID" 2>/dev/null | grep -v -E "^\s*${SHELL_PID}\s*$" || true)"
+    #   if [ -n "$REMAINING_PIDS" ]; then
+    #     sudo -n kill -KILL $REMAINING_PIDS 2>/dev/null || true
+    #   fi
+    #   trap - TERM # Restore TERM trap
+    #   echo "Successfully stopped leftover processes."
+    # - echo -e "\e[0Ksection_end:$(date +%s):testbed_2_cleanup\r\e[0K"
+
   retry: 2
 
 ################################################################################

@@ -43,8 +43,10 @@ fi
 
 if [[ "$USE_SYSTEMCTL" == "true" ]]; then
     # Point mongodb to the correct configuration file
-    sudo sed -i "s|ExecStart=/usr/bin/mongod --config .*|ExecStart=/usr/bin/mongod --config $CONFIG_FILE|" /lib/systemd/system/mongod.service
-    sudo systemctl daemon-reload
+    if [ -f /lib/systemd/system/mongod.service ]; then
+        sudo sed -i "s|ExecStart=/usr/bin/mongod --config .*|ExecStart=/usr/bin/mongod --config $CONFIG_FILE|" /lib/systemd/system/mongod.service
+        sudo systemctl daemon-reload
+    fi
 
     echo "Checking MongoDB service..."
     if sudo systemctl is-active --quiet mongod; then
@@ -59,12 +61,18 @@ if [[ "$USE_SYSTEMCTL" == "true" ]]; then
 else
     # Ensure that the service is not running and is disabled
     if command -v systemctl &>/dev/null; then
-        sudo systemctl stop mongod &>/dev/null
-        sudo systemctl disable mongod &>/dev/null
+        sudo systemctl stop mongod &>/dev/null || true
+        sudo systemctl disable mongod &>/dev/null || true
     fi
 
     if sudo pgrep -x "mongod" -a >/dev/null; then
         echo "Stopping existing MongoDB process..."
-        sudo pkill -f "mongod"
+        sudo pkill -f "mongod" || true
     fi
+fi
+
+if sudo pgrep -x "mongod" >/dev/null 2>&1; then
+    echo "Stopping remaining MongoDB processes..."
+    sudo pkill -9 mongod 2>/dev/null || true
+    sudo killall -9 mongod 2>/dev/null || true
 fi

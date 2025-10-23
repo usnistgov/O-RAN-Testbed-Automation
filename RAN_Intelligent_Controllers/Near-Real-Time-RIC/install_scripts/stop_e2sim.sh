@@ -36,12 +36,15 @@ set -e
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-if ! docker exec oransim pgrep -f "kpm_sim" >/dev/null; then
-    echo "Stopping previous instance of kpm_sim..."
-    docker exec oransim pkill -f kpm_sim || true
+# Stop kpm_sim process inside container if it exists
+if docker exec oransim pgrep -f "kpm_sim" >/dev/null 2>&1; then
+    echo "Stopping kpm_sim process..."
+    docker exec oransim pkill -9 -f kpm_sim 2>/dev/null || true
 fi
 
-docker stop oransim || true
-docker rm oransim || true
+echo "Stopping oransim container..."
+docker stop oransim 2>/dev/null || true
+docker kill oransim 2>/dev/null || true
+docker rm -f oransim 2>/dev/null || true
 
 echo "E2 simulator stopped."

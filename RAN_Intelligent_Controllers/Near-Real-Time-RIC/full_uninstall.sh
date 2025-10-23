@@ -150,6 +150,13 @@ echo
 echo
 echo "Stopping and removing existing Kubernetes installations..."
 
+# Stop and remove ChartMuseum container if Docker is installed
+if command -v docker &>/dev/null; then
+    echo "Stopping ChartMuseum container..."
+    docker stop chartmuseum 2>/dev/null || true
+    docker rm -f chartmuseum 2>/dev/null || true
+fi
+
 # Stop and remove all Docker containers if Docker is installed
 if command -v docker &>/dev/null; then
     echo "Stopping and removing existing Docker containers..."

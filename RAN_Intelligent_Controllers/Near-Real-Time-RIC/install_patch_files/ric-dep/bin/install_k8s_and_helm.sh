@@ -660,7 +660,7 @@ else
     sudo pkill -x dockerd >/dev/null 2>&1 || true
     sudo rm -f /var/run/docker.pid /var/run/docker.sock
     sudo mkdir -p /run /var/run
-    sudo sh -c 'nohup dockerd --config-file=/etc/docker/daemon.json >>'"${DOCKERD_LOG}"' 2>&1 &'
+    sudo sh -c 'setsid dockerd --config-file=/etc/docker/daemon.json >>'"${DOCKERD_LOG}"' 2>&1 </dev/null &'
     # Wait for Docker to be ready
     for _ in $(seq 1 60); do
         if sudo test -S /var/run/docker.sock && sudo docker version >/dev/null 2>&1; then
@@ -671,7 +671,7 @@ else
     if ! (sudo test -S /var/run/docker.sock && sudo docker version >/dev/null 2>&1); then
         echo "Docker failed to start with configured options. Retrying with cgroupfs driver..."
         sudo pkill -x dockerd >/dev/null 2>&1 || true
-        sudo sh -c 'nohup dockerd --config-file=/etc/docker/daemon.json --exec-opt native.cgroupdriver=cgroupfs >>'"${DOCKERD_LOG}"' 2>&1 &'
+        sudo sh -c 'setsid dockerd --config-file=/etc/docker/daemon.json --exec-opt native.cgroupdriver=cgroupfs >>'"${DOCKERD_LOG}"' 2>&1 </dev/null &'
         for _ in $(seq 1 60); do
             if sudo test -S /var/run/docker.sock && sudo docker version >/dev/null 2>&1; then
                 break

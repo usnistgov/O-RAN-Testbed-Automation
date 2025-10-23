@@ -89,7 +89,7 @@ while true; do
         echo "Starting kpm_sim in the background, writing to $OUTPUT_FILE..."
         >"$OUTPUT_FILE" # Clears the content of the output file
         docker exec oransim mkdir -p /app/logs
-        docker exec -i oransim sh -c "nohup kpm_sim $IP_E2TERM $PORT_E2TERM >> /app/logs/e2sim_output.txt 2>&1 &"
+        docker exec -i oransim sh -c "setsid kpm_sim $IP_E2TERM $PORT_E2TERM >> /app/logs/e2sim_output.txt 2>&1 </dev/null &"
         sleep 2
     fi
 

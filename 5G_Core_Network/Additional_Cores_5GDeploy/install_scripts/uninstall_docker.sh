@@ -56,14 +56,14 @@ echo
 echo "Stopping and removing existing Docker installations, then uninstalling Docker..."
 
 if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
-  if [ -n "$(docker ps -q 2>/dev/null)" ]; then # Graceful attempt first
-    docker stop $(docker ps -q) || true
-  fi
-  if [ -n "$(docker ps -aq 2>/dev/null)" ]; then
-    docker rm -f $(docker ps -aq) || true
-  fi
-  docker network prune -f || true
-  docker volume prune -f || true
+    if [ -n "$(docker ps -q 2>/dev/null)" ]; then # Graceful attempt first
+        docker stop $(docker ps -q) || true
+    fi
+    if [ -n "$(docker ps -aq 2>/dev/null)" ]; then
+        docker rm -f $(docker ps -aq) || true
+    fi
+    docker network prune -f || true
+    docker volume prune -f || true
 fi
 if [ "$USE_SYSTEMCTL" = true ]; then
     if sudo systemctl is-active --quiet docker.socket; then

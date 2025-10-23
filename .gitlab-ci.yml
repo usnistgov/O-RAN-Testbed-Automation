@@ -199,7 +199,7 @@ open5gs_srsran_oran_sc_ric_setup:
       if command -v pkill >/dev/null 2>&1; then
         sudo -n pkill -TERM -P "$SHELL_PID" || true
       fi
-      # If pkill unavailable send TERM to direct children
+      # If pkill unavailable send TERM to children
       for pid in $(pgrep -P "$SHELL_PID" 2>/dev/null || true); do
         sudo -n kill -TERM "$pid" 2>/dev/null || true
       done
@@ -321,7 +321,7 @@ openairinterface_flexric_5gdeploy_setup:
       if command -v pkill >/dev/null 2>&1; then
         sudo -n pkill -TERM -P "$SHELL_PID" || true
       fi
-      # If pkill unavailable send TERM to direct children
+      # If pkill unavailable send TERM to children
       for pid in $(pgrep -P "$SHELL_PID" 2>/dev/null || true); do
         sudo -n kill -TERM "$pid" 2>/dev/null || true
       done

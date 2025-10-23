@@ -487,14 +487,14 @@ echo
 echo
 echo "Stopping and removing existing Docker installations, then installing Docker $DOCKERVERSION..."
 if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
-  if [ -n "$(docker ps -q 2>/dev/null)" ]; then # Graceful attempt first
-    docker stop $(docker ps -q) || true
-  fi
-  if [ -n "$(docker ps -aq 2>/dev/null)" ]; then
-    docker rm -f $(docker ps -aq) || true
-  fi
-  docker network prune -f || true
-  docker volume prune -f || true
+    if [ -n "$(docker ps -q 2>/dev/null)" ]; then # Graceful attempt first
+        docker stop $(docker ps -q) || true
+    fi
+    if [ -n "$(docker ps -aq 2>/dev/null)" ]; then
+        docker rm -f $(docker ps -aq) || true
+    fi
+    docker network prune -f || true
+    docker volume prune -f || true
 fi
 if [ "$USE_SYSTEMCTL" = true ]; then
     if sudo systemctl is-active --quiet docker.socket; then
@@ -959,7 +959,7 @@ if [ "$USE_SYSTEMCTL" = true ]; then
     sudo systemctl restart kubelet || true
 else
     echo "Starting kubelet manually..."
-    ( for i in $(seq 1 120); do
+    (for i in $(seq 1 120); do
         HAS_KUBELET_CONF=$(sudo test -s "/var/lib/kubelet/config.yaml" && echo "true" || echo "false")
         HAS_BOOTSTRAP_KUBELET_CONF=$(sudo test -s "/etc/kubernetes/bootstrap-kubelet.conf" && echo "true" || echo "false")
         HAS_KUBELET_CONF=$(sudo test -s "/etc/kubernetes/kubelet.conf" && echo "true" || echo "false")
@@ -974,11 +974,11 @@ else
             echo "Started kubelet manually with flags: $KUBELET_FLAGS"
             exit 0
         fi
-        if (( i % 6 == 0 )); then
+        if ((i % 6 == 0)); then
             echo "Waiting for kubeadm configs: (config.yaml: $HAS_KUBELET_CONF, bootstrap-kubelet.conf: $HAS_BOOTSTRAP_KUBELET_CONF, kubelet.conf: $HAS_KUBELET_CONF)"
         fi
         sleep 5
-    done ) &
+    done) &
 fi
 
 # Configure crictl to not give endpoint warnings when running: sudo crictl ps -a
@@ -1167,9 +1167,9 @@ fi
 
 # Wait for kube-apiserver to be ready
 until kubectl get --raw='/readyz' >/dev/null 2>&1; do
-  echo "Waiting for API server to be available..."
-  sudo crictl ps -a
-  sleep 2
+    echo "Waiting for API server to be available..."
+    sudo crictl ps -a
+    sleep 2
 done
 
 echo "Applying Flannel CNI (Kube version $KUBEVERSION)..."

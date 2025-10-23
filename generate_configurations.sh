@@ -40,7 +40,6 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-
 echo "Generating Configurations for 5G Core components..."
 cd 5G_Core_Network
 ./generate_configurations.sh

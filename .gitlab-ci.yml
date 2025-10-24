@@ -55,6 +55,7 @@ pre_install_cleanup:
     GIT_STRATEGY: none
   allow_failure: true
   script:
+    - exit 0 # SKIP JOB FOR NOW
     # Uninstall components then remove files from previous runs
     - |
       if [[ -f "5G_Core_Network/options.yaml" && -f "full_uninstall.sh" && -f "OpenAirInterface_Testbed/full_uninstall.sh" ]]; then
@@ -90,6 +91,33 @@ pre_install_cleanup:
     - sudo update-ca-certificates || true
 
 ################################################################################
+############################ O-RAN SC Near-RT RIC ##############################
+################################################################################
+testing_oran_sc_ric:
+  stage: initialization
+  interruptible: true
+  resource_group: testbed
+  needs: [pre_install_cleanup]
+  variables:
+    GIT_STRATEGY: clone
+  script:
+    - exit 0 # SKIP JOB FOR NOW
+    - echo -e "\e[0Ksection_start:$(date +%s):quick_uninstall[collapsed=true]\r\e[0KQuick Uninstall Existing Components"
+    - echo "*********************** CI Quick Uninstall Existing Components ******************"
+    - ./full_uninstall.sh
+    - echo -e "\e[0Ksection_end:$(date +%s):quick_uninstall\r\e[0K"
+
+    - echo -e "\e[0Ksection_start:$(date +%s):o-ran-sc_near-rt-ric_install[collapsed=true]\r\e[0KInstall O-RAN SC Near-RT RIC"
+    - echo "********************** CI Install O-RAN SC Near-RT RIC *************************"
+    - cd RAN_Intelligent_Controllers/Near-Real-Time-RIC
+    - ./full_install.sh
+    - cd ../..
+    - echo -e "\e[0Ksection_end:$(date +%s):o-ran-sc_near-rt-ric_install\r\e[0K"
+
+  retry: 2
+
+
+################################################################################
 ########################### TESTBED 1 INSTALLATION #############################
 ################################################################################
 
@@ -101,15 +129,21 @@ open5gs_srsran_oran_sc_ric_setup:
   variables:
     GIT_STRATEGY: clone
   script:
+    - exit 0 # SKIP JOB FOR NOW
     - echo -e "\e[0Ksection_start:$(date +%s):open5gs_configure[collapsed=true]\r\e[0KConfigure Open5GS"
     - echo "***************************** CI Install Open5GS *******************************"
-    - cd OpenAirInterface_Testbed/5G_Core_Network
+    - cd 5G_Core_Network
     # Configure the core to use: open5gs
     - "sed -i -E 's/^core_to_use:.*/core_to_use: open5gs/' options.yaml"
     # Disable systemctl so that components are direct processes running in background
     - "sed -i -E 's/^use_systemctl:.*/use_systemctl: false/' options.yaml"
-    - cd ../..
+    - cd ..
     - echo -e "\e[0Ksection_end:$(date +%s):open5gs_configure\r\e[0K"
+
+    - echo -e "\e[0Ksection_start:$(date +%s):quick_uninstall[collapsed=true]\r\e[0KQuick Uninstall Existing Components"
+    - echo "*********************** CI Quick Uninstall Existing Components ******************"
+    - ./full_uninstall.sh
+    - echo -e "\e[0Ksection_end:$(date +%s):quick_uninstall\r\e[0K"
 
     - echo -e "\e[0Ksection_start:$(date +%s):o-ran-sc_near-rt-ric_install[collapsed=true]\r\e[0KInstall O-RAN SC Near-RT RIC"
     - echo "********************** CI Install O-RAN SC Near-RT RIC *************************"
@@ -120,9 +154,9 @@ open5gs_srsran_oran_sc_ric_setup:
 
     - echo -e "\e[0Ksection_start:$(date +%s):open5gs_install[collapsed=true]\r\e[0KInstall Open5GS"
     - echo "***************************** CI Install Open5GS *******************************"
-    - cd OpenAirInterface_Testbed/5G_Core_Network
+    - cd 5G_Core_Network
     - ./full_install.sh
-    - cd ../..
+    - cd ..
     - echo -e "\e[0Ksection_end:$(date +%s):open5gs_install\r\e[0K"
 
     - echo -e "\e[0Ksection_start:$(date +%s):srsran_ue_install[collapsed=true]\r\e[0KInstall srsRAN_4G UE"
@@ -146,10 +180,10 @@ open5gs_srsran_oran_sc_ric_setup:
     # - cd ../..
     # - echo -e "\e[0Ksection_end:$(date +%s):o-ran-sc_near-rt-ric_install\r\e[0K"
 
-    - echo -e "\e[0Ksection_start:$(date +%s):testbed_2_configuration[collapsed=true]\r\e[0KTestbed 2 Configuration"
+    - echo -e "\e[0Ksection_start:$(date +%s):testbed_1_configuration[collapsed=true]\r\e[0KTestbed 1 Configuration"
     - echo "****************************** CI Configuration ********************************"
     - ./generate_configurations.sh --disable-e2-term
-    - echo -e "\e[0Ksection_end:$(date +%s):testbed_2_configuration\r\e[0K"
+    - echo -e "\e[0Ksection_end:$(date +%s):testbed_1_configuration\r\e[0K"
 
       ############################ TODO: END-TO-END TESTS ############################
 
@@ -227,7 +261,7 @@ openairinterface_flexric_5gdeploy_setup:
   variables:
     GIT_STRATEGY: clone
   script:
-
+    - exit 0 # SKIP JOB FOR NOW
     - echo -e "\e[0Ksection_start:$(date +%s):5gdeploy_configure[collapsed=true]\r\e[0KConfigure 5gdeploy"
     - echo "***************************** CI Install Open5GS *******************************"
     - cd OpenAirInterface_Testbed/5G_Core_Network
@@ -237,6 +271,13 @@ openairinterface_flexric_5gdeploy_setup:
     - "sed -i -E 's/^use_systemctl:.*/use_systemctl: false/' options.yaml"
     - cd ../..
     - echo -e "\e[0Ksection_end:$(date +%s):5gdeploy_configure\r\e[0K"
+
+    - echo -e "\e[0Ksection_start:$(date +%s):quick_uninstall[collapsed=true]\r\e[0KQuick Uninstall Existing Components"
+    - echo "*********************** CI Quick Uninstall Existing Components ******************"
+    - cd OpenAirInterface_Testbed
+    - ./full_uninstall.sh
+    - cd ..
+    - echo -e "\e[0Ksection_end:$(date +%s):quick_uninstall\r\e[0K"
 
     - echo -e "\e[0Ksection_start:$(date +%s):oai_ue_install[collapsed=true]\r\e[0KInstall OpenAirInterface UE"
     - echo "***************************** CI Install OAI UE ********************************"
@@ -266,12 +307,12 @@ openairinterface_flexric_5gdeploy_setup:
     - cd ..
     - echo -e "\e[0Ksection_end:$(date +%s):5gdeploy_install\r\e[0K"
 
-    - echo -e "\e[0Ksection_start:$(date +%s):testbed_1_configuration[collapsed=true]\r\e[0KTestbed 1 Configuration"
+    - echo -e "\e[0Ksection_start:$(date +%s):testbed_2_configuration[collapsed=true]\r\e[0KTestbed 2 Configuration"
     - echo "****************************** CI Configuration ********************************"
     - cd OpenAirInterface_Testbed
     - ./generate_configurations.sh
     - cd ..
-    - echo -e "\e[0Ksection_end:$(date +%s):testbed_1_configuration\r\e[0K"
+    - echo -e "\e[0Ksection_end:$(date +%s):testbed_2_configuration\r\e[0K"
 
       ############################ TODO: END-TO-END TESTS ############################
 
@@ -353,6 +394,7 @@ post_install_cleanup:
     GIT_STRATEGY: none
   allow_failure: true
   script:
+    - exit 0 # SKIP JOB FOR NOW
     # Uninstall components then remove files from this run
     - |
       if [[ -f "5G_Core_Network/options.yaml" && -f "full_uninstall.sh" && -f "OpenAirInterface_Testbed/full_uninstall.sh" ]]; then

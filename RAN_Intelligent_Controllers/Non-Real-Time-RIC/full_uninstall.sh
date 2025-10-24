@@ -337,6 +337,9 @@ sudo rm -rf tests/venv
 sudo rm -rf tests/requirements.txt
 sudo rm -rf tests/.requirements_hash
 
+# Stop the sudo timeout refresher, it is no longer necessary to run
+./install_scripts/stop_sudo_refresh.sh
+
 echo
 echo
 echo "################################################################################"

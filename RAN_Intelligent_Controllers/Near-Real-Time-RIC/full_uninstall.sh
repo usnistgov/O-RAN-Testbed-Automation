@@ -366,6 +366,9 @@ sudo rm -rf logs/
 sudo rm -rf ric-dep
 sudo rm -rf xApps
 
+# Stop the sudo timeout refresher, it is no longer necessary to run
+./install_scripts/stop_sudo_refresh.sh
+
 echo
 echo
 echo "################################################################################"

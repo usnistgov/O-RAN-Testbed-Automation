@@ -530,9 +530,16 @@ else
         echo "Killing containerd process..."
         sudo pkill -9 -f '^containerd(\s|$)' 2>/dev/null || true
     fi
-    sudo pkill -9 -f 'containerd-shim' 2>/dev/null || true
-    sudo pkill -9 -f 'docker-proxy' 2>/dev/null || true
-    sudo pkill -9 -f 'runc' 2>/dev/null || true
+    if pgrep -f 'containerd-shim' >/dev/null; then
+        sudo pkill -9 -f 'containerd-shim' 2>/dev/null || true
+    fi
+    if pgrep -f 'docker-proxy' >/dev/null; then
+        sudo pkill -9 -f 'docker-proxy' 2>/dev/null || true
+    fi
+    if pgrep -f 'runc' >/dev/null; then
+        sudo pkill -9 -f 'runc' 2>/dev/null || true
+    fi
+
     # If console breaks, reset it
     stty sane || true
 fi
@@ -1135,7 +1142,10 @@ EOF
 ATTEMPT=0
 MAX_ATTEMPTS=5
 until ((ATTEMPT++ == MAX_ATTEMPTS)); do
-    sudo rm -f /etc/kubernetes/manifests/*.yaml 2>/dev/null || true
+    if sudo test -d /etc/kubernetes/manifests; then
+        sudo find /etc/kubernetes/manifests -name "*.yaml" -type f -delete 2>/dev/null || true
+    fi
+
     if [[ $ATTEMPT -eq $MAX_ATTEMPTS ]]; then
         echo "Kubernetes Initialization: Making final attempt with verbose logging enabled..."
         if sudo kubeadm init --config "$HOME/.kube/kube-config.yaml" --v=5; then
@@ -1157,12 +1167,28 @@ else
     echo "Kubernetes initialized successfully."
     # Set the KUBECONFIG variable to the config file's location
     mkdir -p "$HOME/.kube"
+    sudo chown -R $(id -u):$(id -g) "$HOME/.kube"
     export KUBECONFIG="$HOME/.kube/config"
     sudo cp -f /etc/kubernetes/admin.conf "$KUBECONFIG"
     sudo chown $(id -u):$(id -g) "$KUBECONFIG"
-    sudo sed -i '/KUBECONFIG/d' /etc/environment
+    sudo chmod 600 "$KUBECONFIG"
+    # Make the admin.conf readable by all users (only root can write)
+    sudo chmod 644 /etc/kubernetes/admin.conf
+    sudo sed -i '/^KUBECONFIG=/d' /etc/environment
     echo 'KUBECONFIG='"$KUBECONFIG" | sudo tee -a /etc/environment >/dev/null
     source /etc/environment
+    # If running as a non-root user set up kubeconfig for root also
+    if [[ $(id -u) -ne 0 ]]; then
+        sudo mkdir -p /root/.kube
+        sudo cp -f /etc/kubernetes/admin.conf /root/.kube/config
+        sudo chmod 600 /root/.kube/config
+    fi
+    if [ ! -f "$HOME/.bashrc" ]; then
+        touch "$HOME/.bashrc"
+    fi
+    sudo sed -i '/^export KUBECONFIG=/d' "$HOME/.bashrc"
+    echo "export KUBECONFIG=\"$KUBECONFIG\"" >>"$HOME/.bashrc"
+    source "$HOME/.bashrc"
 fi
 
 # Wait for kube-apiserver to be ready

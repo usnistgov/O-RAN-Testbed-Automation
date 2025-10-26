@@ -276,6 +276,16 @@ if command -v kubectl &>/dev/null; then
     sudo rm -f $(which kubectl)
 fi
 
+# Unregister environment variables
+sudo sed -i '/^KUBECONFIG=/d' /etc/environment
+sudo sed -i '/^CHART_REPO_URL=/d' /etc/environment
+if [ -f "$HOME/.bashrc" ]; then
+    sudo sed -i '/^export KUBECONFIG=/d' "$HOME/.bashrc"
+    if [ ! -s "$HOME/.bashrc" ]; then
+        sudo rm -f "$HOME/.bashrc"
+    fi
+fi
+
 # Clean up Kubernetes directories
 sudo find /var/lib/kubelet -type d -exec umount {} \; 2>/dev/null || true
 sudo ipvsadm --clear || true

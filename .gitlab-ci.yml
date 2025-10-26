@@ -55,18 +55,17 @@ pre_install_cleanup:
     GIT_STRATEGY: none
   allow_failure: true
   script:
-    - exit 0 # SKIP JOB FOR NOW
     # Uninstall components then remove files from previous runs
     - |
       if [[ -f "5G_Core_Network/options.yaml" && -f "full_uninstall.sh" && -f "OpenAirInterface_Testbed/full_uninstall.sh" ]]; then
         # Testbed 1
         sed -i -E 's/^core_to_use:.*/core_to_use: open5gs/' 5G_Core_Network/options.yaml
-        ./full_uninstall.sh
+        ./full_uninstall.sh bypass_confirmation
         
         # Testbed 2
         sed -i -E 's/^core_to_use:.*/core_to_use: 5gdeploy-open5gs/' 5G_Core_Network/options.yaml
         cd OpenAirInterface_Testbed
-        ./full_uninstall.sh
+        ./full_uninstall.sh bypass_confirmation
         cd ..
         
         sed -i -E 's/^core_to_use:.*/core_to_use: open5gs/' 5G_Core_Network/options.yaml
@@ -91,33 +90,6 @@ pre_install_cleanup:
     - sudo update-ca-certificates || true
 
 ################################################################################
-############################ O-RAN SC Near-RT RIC ##############################
-################################################################################
-testing_oran_sc_ric:
-  stage: initialization
-  interruptible: true
-  resource_group: testbed
-  needs: [pre_install_cleanup]
-  variables:
-    GIT_STRATEGY: clone
-  script:
-    - exit 0 # SKIP JOB FOR NOW
-    - echo -e "\e[0Ksection_start:$(date +%s):quick_uninstall[collapsed=true]\r\e[0KQuick Uninstall Existing Components"
-    - echo "*********************** CI Quick Uninstall Existing Components ******************"
-    - ./full_uninstall.sh
-    - echo -e "\e[0Ksection_end:$(date +%s):quick_uninstall\r\e[0K"
-
-    - echo -e "\e[0Ksection_start:$(date +%s):o-ran-sc_near-rt-ric_install[collapsed=true]\r\e[0KInstall O-RAN SC Near-RT RIC"
-    - echo "********************** CI Install O-RAN SC Near-RT RIC *************************"
-    - cd RAN_Intelligent_Controllers/Near-Real-Time-RIC
-    - ./full_install.sh
-    - cd ../..
-    - echo -e "\e[0Ksection_end:$(date +%s):o-ran-sc_near-rt-ric_install\r\e[0K"
-
-  retry: 2
-
-
-################################################################################
 ########################### TESTBED 1 INSTALLATION #############################
 ################################################################################
 
@@ -129,7 +101,6 @@ open5gs_srsran_oran_sc_ric_setup:
   variables:
     GIT_STRATEGY: clone
   script:
-    - exit 0 # SKIP JOB FOR NOW
     - echo -e "\e[0Ksection_start:$(date +%s):open5gs_configure[collapsed=true]\r\e[0KConfigure Open5GS"
     - echo "***************************** CI Install Open5GS *******************************"
     - cd 5G_Core_Network
@@ -142,15 +113,15 @@ open5gs_srsran_oran_sc_ric_setup:
 
     - echo -e "\e[0Ksection_start:$(date +%s):quick_uninstall[collapsed=true]\r\e[0KQuick Uninstall Existing Components"
     - echo "*********************** CI Quick Uninstall Existing Components ******************"
-    - ./full_uninstall.sh
+    - ./full_uninstall.sh bypass_confirmation
     - echo -e "\e[0Ksection_end:$(date +%s):quick_uninstall\r\e[0K"
 
-    - echo -e "\e[0Ksection_start:$(date +%s):o-ran-sc_near-rt-ric_install[collapsed=true]\r\e[0KInstall O-RAN SC Near-RT RIC"
-    - echo "********************** CI Install O-RAN SC Near-RT RIC *************************"
-    - cd RAN_Intelligent_Controllers/Near-Real-Time-RIC
-    - ./full_install.sh
-    - cd ../..
-    - echo -e "\e[0Ksection_end:$(date +%s):o-ran-sc_near-rt-ric_install\r\e[0K"
+    # - echo -e "\e[0Ksection_start:$(date +%s):o-ran-sc_near-rt-ric_install[collapsed=true]\r\e[0KInstall O-RAN SC Near-RT RIC"
+    # - echo "********************** CI Install O-RAN SC Near-RT RIC *************************"
+    # - cd RAN_Intelligent_Controllers/Near-Real-Time-RIC
+    # - ./full_install.sh
+    # - cd ../..
+    # - echo -e "\e[0Ksection_end:$(date +%s):o-ran-sc_near-rt-ric_install\r\e[0K"
 
     - echo -e "\e[0Ksection_start:$(date +%s):open5gs_install[collapsed=true]\r\e[0KInstall Open5GS"
     - echo "***************************** CI Install Open5GS *******************************"
@@ -172,13 +143,6 @@ open5gs_srsran_oran_sc_ric_setup:
     - ./full_install.sh
     - cd ..
     - echo -e "\e[0Ksection_end:$(date +%s):srsran_gnb_install\r\e[0K"
-    
-    # - echo -e "\e[0Ksection_start:$(date +%s):o-ran-sc_near-rt-ric_install[collapsed=true]\r\e[0KInstall O-RAN SC Near-RT RIC"
-    # - echo "********************** CI Install O-RAN SC Near-RT RIC *************************"
-    # - cd RAN_Intelligent_Controllers/Near-Real-Time-RIC
-    # - ./full_install.sh
-    # - cd ../..
-    # - echo -e "\e[0Ksection_end:$(date +%s):o-ran-sc_near-rt-ric_install\r\e[0K"
 
     - echo -e "\e[0Ksection_start:$(date +%s):testbed_1_configuration[collapsed=true]\r\e[0KTestbed 1 Configuration"
     - echo "****************************** CI Configuration ********************************"
@@ -186,6 +150,7 @@ open5gs_srsran_oran_sc_ric_setup:
     - echo -e "\e[0Ksection_end:$(date +%s):testbed_1_configuration\r\e[0K"
 
       ############################ TODO: END-TO-END TESTS ############################
+    - ./stop.sh
 
     - echo -e "\e[0Ksection_start:$(date +%s):open5gs_uninstall[collapsed=true]\r\e[0KUninstall Open5GS"
     - echo "**************************** CI Uninstall Open5GS ******************************"
@@ -214,38 +179,6 @@ open5gs_srsran_oran_sc_ric_setup:
     - ./full_uninstall.sh bypass_confirmation
     - cd ../..
     - echo -e "\e[0Ksection_end:$(date +%s):o-ran-sc_near-rt-ric_uninstall\r\e[0K"
-
-    # - echo -e "\e[0Ksection_start:$(date +%s):testbed_1_cleanup[collapsed=true]\r\e[0KStop Leftover Processes"
-    # - echo "****************** Stopping leftover processes for testbed 1 ********************"
-    # - |
-    #   SHELL_PID=$$
-    #   echo "Shell PID: $SHELL_PID"
-    #   if command -v pstree >/dev/null 2>&1; then
-    #     pstree -ap "$SHELL_PID"
-    #   else
-    #     ps -eo pid,ppid,pgid,sid,stat,etime,cmd --forest
-    #   fi
-    #   if [ -d "/proc/$SHELL_PID/fd" ]; then
-    #     ls -l "/proc/$SHELL_PID/fd" || true
-    #   fi
-    #   PROCESS_GROUP_ID="$(ps -o pgid= -p "$SHELL_PID" | tr -d ' ')"
-    #   trap '' TERM  # Ignore TERM in this shell
-    #   if command -v pkill >/dev/null 2>&1; then
-    #     sudo -n pkill -TERM -P "$SHELL_PID" || true
-    #   fi
-    #   # If pkill unavailable send TERM to children
-    #   for pid in $(pgrep -P "$SHELL_PID" 2>/dev/null || true); do
-    #     sudo -n kill -TERM "$pid" 2>/dev/null || true
-    #   done
-    #   sleep 2
-    #   REMAINING_PIDS="$(pgrep -P "$SHELL_PID" 2>/dev/null | grep -v -E "^\s*${SHELL_PID}\s*$" || true)"
-    #   if [ -n "$REMAINING_PIDS" ]; then
-    #     sudo -n kill -KILL $REMAINING_PIDS 2>/dev/null || true
-    #   fi
-    #   trap - TERM # Restore TERM trap
-    #   echo "Successfully stopped leftover processes."
-    # - echo -e "\e[0Ksection_end:$(date +%s):testbed_1_cleanup\r\e[0K"
-
   retry: 2
 
 
@@ -261,7 +194,6 @@ openairinterface_flexric_5gdeploy_setup:
   variables:
     GIT_STRATEGY: clone
   script:
-    - exit 0 # SKIP JOB FOR NOW
     - echo -e "\e[0Ksection_start:$(date +%s):5gdeploy_configure[collapsed=true]\r\e[0KConfigure 5gdeploy"
     - echo "***************************** CI Install Open5GS *******************************"
     - cd OpenAirInterface_Testbed/5G_Core_Network
@@ -275,7 +207,7 @@ openairinterface_flexric_5gdeploy_setup:
     - echo -e "\e[0Ksection_start:$(date +%s):quick_uninstall[collapsed=true]\r\e[0KQuick Uninstall Existing Components"
     - echo "*********************** CI Quick Uninstall Existing Components ******************"
     - cd OpenAirInterface_Testbed
-    - ./full_uninstall.sh
+    - ./full_uninstall.sh bypass_confirmation
     - cd ..
     - echo -e "\e[0Ksection_end:$(date +%s):quick_uninstall\r\e[0K"
 
@@ -315,6 +247,9 @@ openairinterface_flexric_5gdeploy_setup:
     - echo -e "\e[0Ksection_end:$(date +%s):testbed_2_configuration\r\e[0K"
 
       ############################ TODO: END-TO-END TESTS ############################
+    - cd OpenAirInterface_Testbed
+    - ./stop.sh
+    - cd ..
 
     - echo -e "\e[0Ksection_start:$(date +%s):oai_ue_uninstall[collapsed=true]\r\e[0KUninstall OpenAirInterface UE"
     - echo "***************************** CI Uninstall OAI UE ******************************"
@@ -343,38 +278,6 @@ openairinterface_flexric_5gdeploy_setup:
     - ./full_uninstall.sh bypass_confirmation
     - cd ..
     - echo -e "\e[0Ksection_end:$(date +%s):5gdeploy_uninstall\r\e[0K"
-  
-    # - echo -e "\e[0Ksection_start:$(date +%s):testbed_2_cleanup[collapsed=true]\r\e[0KStop Leftover Processes"
-    # - echo "****************** Stopping leftover processes for testbed 2 ********************"
-    # - |
-    #   SHELL_PID=$$
-    #   echo "Shell PID: $SHELL_PID"
-    #   if command -v pstree >/dev/null 2>&1; then
-    #     pstree -ap "$SHELL_PID"
-    #   else
-    #     ps -eo pid,ppid,pgid,sid,stat,etime,cmd --forest
-    #   fi
-    #   if [ -d "/proc/$SHELL_PID/fd" ]; then
-    #     ls -l "/proc/$SHELL_PID/fd" || true
-    #   fi
-    #   PROCESS_GROUP_ID="$(ps -o pgid= -p "$SHELL_PID" | tr -d ' ')"
-    #   trap '' TERM  # Ignore TERM in this shell
-    #   if command -v pkill >/dev/null 2>&1; then
-    #     sudo -n pkill -TERM -P "$SHELL_PID" || true
-    #   fi
-    #   # If pkill unavailable send TERM to children
-    #   for pid in $(pgrep -P "$SHELL_PID" 2>/dev/null || true); do
-    #     sudo -n kill -TERM "$pid" 2>/dev/null || true
-    #   done
-    #   sleep 2
-    #   REMAINING_PIDS="$(pgrep -P "$SHELL_PID" 2>/dev/null | grep -v -E "^\s*${SHELL_PID}\s*$" || true)"
-    #   if [ -n "$REMAINING_PIDS" ]; then
-    #     sudo -n kill -KILL $REMAINING_PIDS 2>/dev/null || true
-    #   fi
-    #   trap - TERM # Restore TERM trap
-    #   echo "Successfully stopped leftover processes."
-    # - echo -e "\e[0Ksection_end:$(date +%s):testbed_2_cleanup\r\e[0K"
-
   retry: 2
 
 ################################################################################
@@ -394,17 +297,16 @@ post_install_cleanup:
     GIT_STRATEGY: none
   allow_failure: true
   script:
-    - exit 0 # SKIP JOB FOR NOW
     # Uninstall components then remove files from this run
     - |
       if [[ -f "5G_Core_Network/options.yaml" && -f "full_uninstall.sh" && -f "OpenAirInterface_Testbed/full_uninstall.sh" ]]; then
         # Testbed 1
         sed -i -E 's/^core_to_use:.*/core_to_use: open5gs/' 5G_Core_Network/options.yaml
-        ./full_uninstall.sh
+        ./full_uninstall.sh bypass_confirmation
         # Testbed 2
         sed -i -E 's/^core_to_use:.*/core_to_use: 5gdeploy-open5gs/' 5G_Core_Network/options.yaml
         cd OpenAirInterface_Testbed
-        ./full_uninstall.sh
+        ./full_uninstall.sh bypass_confirmation
         cd ..
         sed -i -E 's/^core_to_use:.*/core_to_use: open5gs/' 5G_Core_Network/options.yaml
       else

@@ -93,7 +93,7 @@ sudo ls >/dev/null 2>&1
 if [ -z "$SELECTOR" ]; then
     sudo pkill -f "nr-softmodem" >/dev/null 2>&1
     remove_all_du_namespaces
-    stty sane
+    stty sane || true
 else
     # Find all nr-softmodem processes with -O <config> argument
     pgrep -af "nr-softmodem.*-O" | while read -r LINE; do
@@ -142,7 +142,7 @@ if [ -z "$SELECTOR" ]; then
     echo "The gNodeB did not stop in time, sending forceful kill signal..."
     sudo pkill -9 -f "nr-softmodem" >/dev/null 2>&1
     remove_all_du_namespaces
-    stty sane
+    stty sane || true
 else
     echo "The gNodeB component '$SELECTOR' did not stop in time, sending forceful kill signal..."
     # Find all nr-softmodem processes with -O <config> argument

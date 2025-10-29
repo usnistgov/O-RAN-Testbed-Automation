@@ -149,6 +149,6 @@ for ((i = 1; i <= NUM_SAMPLES; i++)); do
     echo "$DURATION" >>"$OUT_FILE"
 
     ./stop.sh
-    stty sane
+    stty sane || true
     sleep 5
 done

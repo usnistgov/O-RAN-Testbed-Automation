@@ -88,7 +88,7 @@ sudo ls >/dev/null 2>&1
 if [ -z "$UE_NUMBER" ]; then
     sudo pkill -f "nr-uesoftmodem" >/dev/null 2>&1
     remove_all_ue_namespaces
-    stty sane
+    stty sane || true
 else
     sudo pkill -f "nr-uesoftmodem -O ../../../../configs/ue$UE_NUMBER.conf" >/dev/null 2>&1
     remove_ue_namespace "$UE_NUMBER"

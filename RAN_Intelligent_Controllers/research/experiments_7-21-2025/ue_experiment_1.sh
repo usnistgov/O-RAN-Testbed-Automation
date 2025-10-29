@@ -122,6 +122,6 @@ for ((i = 1; i <= NUM_SAMPLES; i++)); do
     ./stop.sh
     ./run_background.sh
 
-    stty sane
+    stty sane || true
     sleep 5
 done

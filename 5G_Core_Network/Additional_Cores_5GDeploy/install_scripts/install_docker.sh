@@ -53,6 +53,19 @@ remove_version_suffix() {
     echo $VERSION_WITHOUT_SUFFIX
 }
 
+# Detect if systemctl is available
+USE_SYSTEMCTL=false
+if command -v systemctl >/dev/null 2>&1; then
+    if [ "$(cat /proc/1/comm 2>/dev/null)" = "systemd" ]; then
+        OUTPUT="$(systemctl 2>&1 || true)"
+        if echo "$OUTPUT" | grep -qiE 'not supported|System has not been booted with systemd'; then
+            echo "Detected systemctl is not supported. Using background processes instead."
+        elif systemctl list-units >/dev/null 2>&1 || systemctl is-system-running --quiet >/dev/null 2>&1; then
+            USE_SYSTEMCTL=true
+        fi
+    fi
+fi
+
 # Fetch the Ubuntu release version regardless of the derivative distro
 if [ -f /etc/upstream-release/lsb-release ]; then
     UBUNTU_RELEASE=$(cat /etc/upstream-release/lsb-release | grep 'DISTRIB_RELEASE' | sed 's/.*=\s*//')
@@ -122,7 +135,7 @@ echo
 
 # Install Docker with the specified or latest available version
 echo "Installing Docker..."
-if ! command -v docker &>/dev/null; then
+if ! command -v dockerd &>/dev/null; then
     if [ "$USE_DOCKER_CE" -eq 0 ]; then
         sudo env $APTVARS apt-get install -y $APTOPTS "docker.io=$DOCKERVERSION"
     else
@@ -150,7 +163,7 @@ EOF
 
 # Validate Docker configuration (skip validation if dockerd does not support it)
 if dockerd --help | grep --quiet -- "--validate"; then
-    if ! dockerd --config-file=/etc/docker/daemon.json --validate; then
+    if ! sudo dockerd --config-file=/etc/docker/daemon.json --validate; then
         echo "Invalid Docker configuration detected."
         exit 1
     else
@@ -160,7 +173,7 @@ else
     echo "Skipping Docker configuration validation (unsupported flag)."
 fi
 
-echo "Ensure Docker group exists and add user to the group before starting Docker service..."
+echo "Ensuring Docker group exists and add user to the group before starting Docker service..."
 sudo groupadd -f docker
 if [ -n "$SUDO_USER" ]; then
     sudo usermod -aG docker "${SUDO_USER:-root}"
@@ -170,24 +183,62 @@ fi
 
 # Enable and attempt to start Docker service with retries
 echo "Enabling and starting Docker service..."
-sudo systemctl daemon-reload
-sudo systemctl enable docker
-ATTEMPT=0
-MAX_ATTEMPTS=5
-while ! sudo systemctl restart docker && [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
-    echo "Docker failed to start. Attempt $((ATTEMPT + 1))/$MAX_ATTEMPTS..."
-    echo "Checking service status..."
-    sudo systemctl status docker.service | grep -A 2 "Active:"
-    echo "Reviewing recent logs..."
-    journalctl -xeu docker.service | tail -20
-    sleep 10
-    ((ATTEMPT++))
-done
+if [ "$USE_SYSTEMCTL" = true ]; then
+    sudo systemctl daemon-reload
+    sudo systemctl enable docker
+    ATTEMPT=0
+    MAX_ATTEMPTS=5
+    while ! sudo systemctl restart docker && [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
+        echo "Docker failed to start. Attempt $((ATTEMPT + 1))/$MAX_ATTEMPTS..."
+        echo "Checking service status..."
+        sudo systemctl status docker.service | grep -A 2 "Active:" || true
+        echo "Reviewing recent logs..."
+        journalctl -xeu docker.service | tail -20 || true
+        sleep 10
+        ((ATTEMPT++))
+    done
 
-if ! sudo systemctl is-active --quiet docker; then
-    echo "Failed to start Docker after $MAX_ATTEMPTS attempts."
-    exit 1
+    if ! sudo systemctl is-active --quiet docker; then
+        echo "Failed to start Docker after $MAX_ATTEMPTS attempts."
+        exit 1
+    else
+        echo "Docker started successfully."
+    fi
 else
+    echo "Starting Docker process..."
+    if ! command -v dockerd >/dev/null 2>&1; then
+        echo "dockerd not found in PATH."
+        exit 1
+    fi
+    DOCKERD_LOG="/tmp/dockerd.log"
+    # Stop running dockerd and start in background
+    sudo pkill -x dockerd >/dev/null 2>&1 || true
+    sudo rm -f /var/run/docker.pid /var/run/docker.sock
+    sudo mkdir -p /run /var/run
+    sudo sh -c 'setsid dockerd --config-file=/etc/docker/daemon.json >>'"${DOCKERD_LOG}"' 2>&1 </dev/null &'
+    # Wait for Docker to be ready
+    for _ in $(seq 1 60); do
+        if sudo test -S /var/run/docker.sock && sudo docker version >/dev/null 2>&1; then
+            break
+        fi
+        sleep 1
+    done
+    if ! (sudo test -S /var/run/docker.sock && sudo docker version >/dev/null 2>&1); then
+        echo "Docker failed to start with configured options. Retrying with cgroupfs driver..."
+        sudo pkill -x dockerd >/dev/null 2>&1 || true
+        sudo sh -c 'setsid dockerd --config-file=/etc/docker/daemon.json --exec-opt native.cgroupdriver=cgroupfs >>'"${DOCKERD_LOG}"' 2>&1 </dev/null &'
+        for _ in $(seq 1 60); do
+            if sudo test -S /var/run/docker.sock && sudo docker version >/dev/null 2>&1; then
+                break
+            fi
+            sleep 1
+        done
+        if ! (sudo test -S /var/run/docker.sock && sudo docker version >/dev/null 2>&1); then
+            echo "ERROR: Docker daemon failed to start without systemd."
+            tail -n 200 "${DOCKERD_LOG}" 2>/dev/null || true
+            exit 1
+        fi
+    fi
     echo "Docker started successfully."
 fi
 

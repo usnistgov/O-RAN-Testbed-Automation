@@ -237,7 +237,7 @@ if [ -z "$IP_ADDRESS" ] || [ -z "$HOSTNAME" ]; then
     exit 1
 fi
 # Remove existing entries for the hostname from /etc/hosts
-sudo sed -i "/$HOSTNAME/d" /etc/hosts
+sudo sed -i "/$HOSTNAME/d" /etc/hosts # || true
 # Add the new entry to /etc/hosts
 echo "$IP_ADDRESS $HOSTNAME" | sudo tee -a /etc/hosts
 
@@ -463,10 +463,12 @@ if [ ! -z "$ZRAM_DEVICES" ]; then
         sudo swapoff "$ZRAM_DEVICE_PATH"
     done
     # Disable zram services if they exist
-    systemctl list-units --type=service | grep zram | cut -d' ' -f1 | while read -r SERVICE; do
-        echo "Disabling zram service $SERVICE"
-        sudo systemctl disable --now "$SERVICE"
-    done
+    if [ "$USE_SYSTEMCTL" = true ]; then
+        systemctl list-units --type=service | grep zram | cut -d' ' -f1 | while read -r SERVICE; do
+            echo "Disabling zram service $SERVICE"
+            sudo systemctl disable --now "$SERVICE"
+        done
+    fi
 else
     echo "No zram devices currently active."
 fi

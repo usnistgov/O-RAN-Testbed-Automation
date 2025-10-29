@@ -30,6 +30,19 @@
 
 echo "# Script: $(realpath "$0")..."
 
+# Detect if systemctl is available
+USE_SYSTEMCTL=false
+if command -v systemctl >/dev/null 2>&1; then
+    if [ "$(cat /proc/1/comm 2>/dev/null)" = "systemd" ]; then
+        OUTPUT="$(systemctl 2>&1 || true)"
+        if echo "$OUTPUT" | grep -qiE 'not supported|System has not been booted with systemd'; then
+            echo "Detected systemctl is not supported. Using background processes instead."
+        elif systemctl list-units >/dev/null 2>&1 || systemctl is-system-running --quiet >/dev/null 2>&1; then
+            USE_SYSTEMCTL=true
+        fi
+    fi
+fi
+
 echo "Checking for traditional swap in /etc/fstab..."
 SWAPFILES=$(grep swap /etc/fstab | sed '/^[ \t]*#/ d' | sed 's/[\t ]/ /g' | tr -s " " | cut -f1 -d' ')
 if [ ! -z "$SWAPFILES" ]; then
@@ -59,10 +72,12 @@ if [ ! -z "$ZRAM_DEVICES" ]; then
         sudo swapoff "$ZRAM_DEVICE_PATH"
     done
     # Disable zram services if they exist
-    systemctl list-units --type=service | grep zram | cut -d' ' -f1 | while read -r SERVICE; do
-        echo "Disabling zram service $SERVICE"
-        sudo systemctl disable --now "$SERVICE"
-    done
+    if [ "$USE_SYSTEMCTL" = true ]; then
+        systemctl list-units --type=service | grep zram | cut -d' ' -f1 | while read -r SERVICE; do
+            echo "Disabling zram service $SERVICE"
+            sudo systemctl disable --now "$SERVICE"
+        done
+    fi
 else
     echo "No zram devices currently active."
 fi

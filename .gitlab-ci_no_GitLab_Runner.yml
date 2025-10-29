@@ -1,4 +1,4 @@
-# image: ubuntu:22.04
+image: ubuntu:22.04
 
 variables:
   GIT_DEPTH: "1"
@@ -15,15 +15,15 @@ variables:
 
 
 default:
-  tags: [testbed-ci-runner]
+  #tags: [testbed-ci-runner]
   before_script:
-    # # SUDO ALIAS SETUP
-    # - |
-    #   mkdir -p "$HOME/.local/bin"
-    #   echo -e '#!/usr/bin/env bash\nexec "$@"' > "$HOME/.local/bin/sudo"
-    #   chmod +x "$HOME/.local/bin/sudo"
-    #   export PATH="$HOME/.local/bin:$PATH"
-    #   hash -r
+    # SUDO ALIAS SETUP
+    - |
+      mkdir -p "$HOME/.local/bin"
+      echo -e '#!/usr/bin/env bash\nexec "$@"' > "$HOME/.local/bin/sudo"
+      chmod +x "$HOME/.local/bin/sudo"
+      export PATH="$HOME/.local/bin:$PATH"
+      hash -r
 
     # General setup
     - echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections || true
@@ -336,10 +336,10 @@ post_install_cleanup:
       fi
     - sudo rm -rf * && sudo rm -rf .git*
 
-    # # SUDO ALIAS CLEANUP
-    # - |
-    #   if [ -f "$HOME/.local/bin/sudo" ]; then
-    #     rm -f "$HOME/.local/bin/sudo"
-    #   fi
-    #   hash -r
+    # SUDO ALIAS CLEANUP
+    - |
+      if [ -f "$HOME/.local/bin/sudo" ]; then
+        rm -f "$HOME/.local/bin/sudo"
+      fi
+      hash -r
   retry: 2

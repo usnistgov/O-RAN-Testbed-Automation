@@ -144,8 +144,6 @@ install_open5gs:
   script:
     - cd OpenAirInterface_Testbed/5G_Core_Network
     - "sed -i -E 's/^core_to_use:.*/core_to_use: open5gs/' options.yaml"
-    # Disable systemctl so that Open5GS components are direct processes running in background
-    - "sed -i -E 's/^use_systemctl:.*/use_systemctl: false/' options.yaml"
     - ./full_install.sh
     - cd ../..
   retry: 2

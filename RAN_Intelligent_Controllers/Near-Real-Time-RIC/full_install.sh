@@ -28,6 +28,9 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
+E2_TERM_PORT=36422            # Default is 36422, which will not modify anything
+E2_TERM_PORT_SUBSTITUTE=36420 # If E2_TERM_PORT is used already, substitute it before replacing with E2_TERM_PORT
+
 # Exit immediately if a command fails
 set -e
 
@@ -60,33 +63,48 @@ INSTALL_START_TIME=$(date +%s)
 
 sudo rm -rf logs/
 
-# Prevent the unattended-upgrades service from creating dpkg locks that would error the script
-if systemctl is-active --quiet unattended-upgrades; then
-    sudo systemctl stop unattended-upgrades &>/dev/null && echo "Successfully stopped unattended-upgrades service."
-    sudo systemctl disable unattended-upgrades &>/dev/null && echo "Successfully disabled unattended-upgrades service."
-fi
-if systemctl is-active --quiet apt-daily.timer; then
-    sudo systemctl stop apt-daily.timer &>/dev/null && echo "Successfully stopped apt-daily.timer service."
-    sudo systemctl disable apt-daily.timer &>/dev/null && echo "Successfully disabled apt-daily.timer service."
-fi
-if systemctl is-active --quiet apt-daily-upgrade.timer; then
-    sudo systemctl stop apt-daily-upgrade.timer &>/dev/null && echo "Successfully stopped apt-daily-upgrade.timer service."
-    sudo systemctl disable apt-daily-upgrade.timer &>/dev/null && echo "Successfully disabled apt-daily-upgrade.timer service."
+# Detect if systemctl is available
+USE_SYSTEMCTL=false
+if command -v systemctl >/dev/null 2>&1; then
+    if [ "$(cat /proc/1/comm 2>/dev/null)" = "systemd" ]; then
+        OUTPUT="$(systemctl 2>&1 || true)"
+        if echo "$OUTPUT" | grep -qiE 'not supported|System has not been booted with systemd'; then
+            echo "Detected systemctl is not supported. Using background processes instead."
+        elif systemctl list-units >/dev/null 2>&1 || systemctl is-system-running --quiet >/dev/null 2>&1; then
+            USE_SYSTEMCTL=true
+        fi
+    fi
 fi
 
-# Ensure time synchronization is enabled using chrony
-if ! dpkg -s chrony &>/dev/null; then
-    echo "Chrony is not installed, installing..."
-    sudo apt-get update
-    sudo env $APTVARS apt-get install -y chrony || true
-fi
-if ! systemctl is-enabled --quiet chrony; then
-    echo "Enabling Chrony service..."
-    sudo systemctl enable chrony || true
-fi
-if ! systemctl is-active --quiet chrony; then
-    echo "Starting Chrony service..."
-    sudo systemctl start chrony || true
+# Prevent the unattended-upgrades service from creating dpkg locks that would error the script
+if [[ "$USE_SYSTEMCTL" == "true" ]]; then
+    if systemctl is-active --quiet unattended-upgrades; then
+        sudo systemctl stop unattended-upgrades &>/dev/null && echo "Successfully stopped unattended-upgrades service."
+        sudo systemctl disable unattended-upgrades &>/dev/null && echo "Successfully disabled unattended-upgrades service."
+    fi
+    if systemctl is-active --quiet apt-daily.timer; then
+        sudo systemctl stop apt-daily.timer &>/dev/null && echo "Successfully stopped apt-daily.timer service."
+        sudo systemctl disable apt-daily.timer &>/dev/null && echo "Successfully disabled apt-daily.timer service."
+    fi
+    if systemctl is-active --quiet apt-daily-upgrade.timer; then
+        sudo systemctl stop apt-daily-upgrade.timer &>/dev/null && echo "Successfully stopped apt-daily-upgrade.timer service."
+        sudo systemctl disable apt-daily-upgrade.timer &>/dev/null && echo "Successfully disabled apt-daily-upgrade.timer service."
+    fi
+
+    # Ensure time synchronization is enabled using chrony
+    if ! dpkg -s chrony &>/dev/null; then
+        echo "Chrony is not installed, installing..."
+        sudo apt-get update
+        sudo env $APTVARS apt-get install -y chrony || true
+    fi
+    if ! systemctl is-enabled --quiet chrony; then
+        echo "Enabling Chrony service..."
+        sudo systemctl enable chrony || true
+    fi
+    if ! systemctl is-active --quiet chrony; then
+        echo "Starting Chrony service..."
+        sudo systemctl start chrony || true
+    fi
 fi
 
 echo
@@ -124,6 +142,17 @@ else
     # Download ric-dep from gerrit
     if [ ! -d "ric-dep" ]; then
         ./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep.git ric-dep
+        # Configure the SCTP E2 termination port (not idempotent so only on first clone)
+        if [ "$E2_TERM_PORT" != "36422" ]; then # Default port
+            echo "Configuring E2 Termination Port to $E2_TERM_PORT..."
+            if sudo find ric-dep/ -type f -exec grep -l "$E2_TERM_PORT_SUBSTITUTE" {} + | grep -q .; then
+                echo "ERROR: The E2 Termination Port Substitute ($E2_TERM_PORT_SUBSTITUTE) is already in use in the following files. Please choose a different substitute port."
+                sudo find ric-dep/ -type f -exec grep -l "$E2_TERM_PORT_SUBSTITUTE" {} +
+                exit 1
+            fi
+            sudo find ric-dep/ -type f -exec sed -i "s/$E2_TERM_PORT/$E2_TERM_PORT_SUBSTITUTE/g" {} +
+            sudo find ric-dep/ -type f -exec sed -i "s/36422/$E2_TERM_PORT/g" {} +
+        fi
     fi
     # Patch the install script and save a backup of the original
     if [ ! -f "ric-dep/bin/install_k8s_and_helm.previous.sh" ]; then
@@ -237,6 +266,17 @@ else
     # Download ric-dep from gerrit
     if [ ! -d "ric-dep" ]; then
         ./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep.git ric-dep
+        # Configure the SCTP E2 termination port (not idempotent so only on first clone)
+        if [ "$E2_TERM_PORT" != "36422" ]; then # Default port
+            echo "Configuring E2 Termination Port to $E2_TERM_PORT..."
+            if sudo find ric-dep/ -type f -exec grep -l "$E2_TERM_PORT_SUBSTITUTE" {} + | grep -q .; then
+                echo "ERROR: The E2 Termination Port Substitute ($E2_TERM_PORT_SUBSTITUTE) is already in use in the following files. Please choose a different substitute port."
+                sudo find ric-dep/ -type f -exec grep -l "$E2_TERM_PORT_SUBSTITUTE" {} +
+                exit 1
+            fi
+            sudo find ric-dep/ -type f -exec sed -i "s/$E2_TERM_PORT/$E2_TERM_PORT_SUBSTITUTE/g" {} +
+            sudo find ric-dep/ -type f -exec sed -i "s/36422/$E2_TERM_PORT/g" {} +
+        fi
     fi
 
     echo "Revising RIC Installation YAML File..."
@@ -247,7 +287,9 @@ else
     sudo cp "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME" "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME_UPDATED"
     sudo chown $USER:$USER "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME_UPDATED"
     sudo ./install_scripts/revise_example_recipe_yaml.sh "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME_UPDATED"
-
+    if [ "$E2_TERM_PORT" != "36422" ]; then
+        sudo ./install_scripts/revise_deployment_for_e2_port.sh
+    fi
     # Wait for kube-apiserver to be ready before installing Near-RT RIC
     echo "Waiting for the Kubernetes API server to become ready before installing Near-RT RIC..."
     sudo ./install_scripts/wait_for_kubectl.sh
@@ -343,6 +385,17 @@ if [ "$(docker ps -aq -f name=^/oransim$ | wc -l)" -ge 1 ] && [ -d "e2-interface
 else
     if [ ! -d "e2-interface" ]; then
         ./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/sim/e2-interface.git
+        # Configure the SCTP E2 termination port (not idempotent so only on first clone)
+        if [ "$E2_TERM_PORT" != "36422" ]; then # Default port
+            echo "Configuring E2 Termination Port to $E2_TERM_PORT..."
+            if sudo find e2-interface/ -type f -exec grep -l "$E2_TERM_PORT_SUBSTITUTE" {} + | grep -q .; then
+                echo "ERROR: The E2 Termination Port Substitute ($E2_TERM_PORT_SUBSTITUTE) is already in use in the following files. Please choose a different substitute port."
+                sudo find e2-interface/ -type f -exec grep -l "$E2_TERM_PORT_SUBSTITUTE" {} +
+                exit 1
+            fi
+            sudo find e2-interface/ -type f -exec sed -i "s/$E2_TERM_PORT/$E2_TERM_PORT_SUBSTITUTE/g" {} +
+            sudo find e2-interface/ -type f -exec sed -i "s/36422/$E2_TERM_PORT/g" {} +
+        fi
     fi
     sudo ./install_scripts/install_e2sim.sh
 fi

@@ -67,8 +67,56 @@ else
     echo "{\"dns\": $DNS_SERVERS}" >$DOCKER_CONFIG
 fi
 
+# Detect if systemctl is available
+USE_SYSTEMCTL=false
+if command -v systemctl >/dev/null 2>&1; then
+    if [ "$(cat /proc/1/comm 2>/dev/null)" = "systemd" ]; then
+        OUTPUT="$(systemctl 2>&1 || true)"
+        if echo "$OUTPUT" | grep -qiE 'not supported|System has not been booted with systemd'; then
+            echo "Detected systemctl is not supported. Using background processes instead."
+        elif systemctl list-units >/dev/null 2>&1 || systemctl is-system-running --quiet >/dev/null 2>&1; then
+            USE_SYSTEMCTL=true
+        fi
+    fi
+fi
+
 # Restart Docker service to apply changes
-echo "Restarting Docker service..."
-systemctl restart docker
+if [ "$USE_SYSTEMCTL" = true ]; then
+    systemctl restart docker
+else
+    echo "Restarting Docker process..."
+    if ! command -v dockerd >/dev/null 2>&1; then
+        echo "dockerd not found in PATH."
+        exit 1
+    fi
+    DOCKERD_LOG="/tmp/dockerd.log"
+    sudo pkill -x dockerd >/dev/null 2>&1 || true
+    sudo rm -f /var/run/docker.pid /var/run/docker.sock
+    sudo mkdir -p /run /var/run
+    sudo sh -c 'setsid dockerd --config-file=/etc/docker/daemon.json >>'"${DOCKERD_LOG}"' 2>&1 </dev/null &'
+    for _ in $(seq 1 60); do
+        if sudo test -S /var/run/docker.sock && sudo docker version >/dev/null 2>&1; then
+            break
+        fi
+        sleep 1
+    done
+    if ! (sudo test -S /var/run/docker.sock && sudo docker version >/dev/null 2>&1); then
+        echo "Docker failed to start with configured options. Retrying with cgroupfs driver..."
+        sudo pkill -x dockerd >/dev/null 2>&1 || true
+        sudo sh -c 'setsid dockerd --config-file=/etc/docker/daemon.json --exec-opt native.cgroupdriver=cgroupfs >>'"${DOCKERD_LOG}"' 2>&1 </dev/null &'
+        for _ in $(seq 1 60); do
+            if sudo test -S /var/run/docker.sock && sudo docker version >/dev/null 2>&1; then
+                break
+            fi
+            sleep 1
+        done
+        if ! (sudo test -S /var/run/docker.sock && sudo docker version >/dev/null 2>&1); then
+            echo "ERROR: Docker daemon failed to start without systemd."
+            tail -n 200 "${DOCKERD_LOG}" 2>/dev/null || true
+            exit 1
+        fi
+    fi
+    echo "Docker started successfully."
+fi
 
 echo "Docker DNS configuration updated successfully."

@@ -463,10 +463,12 @@ if [ ! -z "$ZRAM_DEVICES" ]; then
         sudo swapoff "$ZRAM_DEVICE_PATH"
     done
     # Disable zram services if they exist
-    systemctl list-units --type=service | grep zram | cut -d' ' -f1 | while read -r SERVICE; do
-        echo "Disabling zram service $SERVICE"
-        sudo systemctl disable --now "$SERVICE"
-    done
+    if [ "$USE_SYSTEMCTL" = true ]; then
+        systemctl list-units --type=service | grep zram | cut -d' ' -f1 | while read -r SERVICE; do
+            echo "Disabling zram service $SERVICE"
+            sudo systemctl disable --now "$SERVICE"
+        done
+    fi
 else
     echo "No zram devices currently active."
 fi

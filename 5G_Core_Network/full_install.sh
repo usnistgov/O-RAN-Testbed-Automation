@@ -96,9 +96,6 @@ if [ ! -f "options.yaml" ]; then
     echo "" >>"options.yaml"
     echo "ogstun3_ipv4: 10.47.0.0/16" >>"options.yaml"
     echo "ogstun3_ipv6: 2001:db8:face::/48" >>"options.yaml"
-    echo "" >>"options.yaml"
-    echo "# If core_to_use=open5gs, the use of systemctl can be disabled to support installations within Docker. Before changing this value, it is recommended to uninstall the testbed." >>"options.yaml"
-    echo "use_systemctl: true" >>"options.yaml"
 fi
 
 # Ensure that the correct script is used
@@ -118,9 +115,17 @@ if [ "$CORE_TO_USE" != "open5gs" ]; then
     exit $?
 fi
 
-USE_SYSTEMCTL=$(yq eval '.use_systemctl' options.yaml)
-if [[ "$USE_SYSTEMCTL" == "null" || -z "$USE_SYSTEMCTL" ]]; then
-    USE_SYSTEMCTL="true" # Default
+# Detect if systemctl is available
+USE_SYSTEMCTL=false
+if command -v systemctl >/dev/null 2>&1; then
+    if [ "$(cat /proc/1/comm 2>/dev/null)" = "systemd" ]; then
+        OUTPUT="$(systemctl 2>&1 || true)"
+        if echo "$OUTPUT" | grep -qiE 'not supported|System has not been booted with systemd'; then
+            echo "Detected systemctl is not supported. Using background processes instead."
+        elif systemctl list-units >/dev/null 2>&1 || systemctl is-system-running --quiet >/dev/null 2>&1; then
+            USE_SYSTEMCTL=true
+        fi
+    fi
 fi
 
 # Start MongoDB and check if it is healthy

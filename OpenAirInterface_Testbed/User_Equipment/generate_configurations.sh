@@ -56,11 +56,11 @@ fi
 # Check if the input is a number
 for i in "${UE_NUMBERS[@]}"; do
     if ! [[ "$i" =~ ^[0-9]+$ ]]; then
-        echo "Error: UE number must be a number."
+        echo "ERROR: UE number must be a number."
         exit 1
     fi
     if [ "$i" -lt 1 ]; then
-        echo "Error: UE number must be greater than or equal to 1."
+        echo "ERROR: UE number must be greater than or equal to 1."
         exit 1
     fi
     echo "UE $i will be configured."
@@ -181,7 +181,7 @@ fi
 
 UE_CREDENTIAL_GENERATOR_SCRIPT="$SCRIPT_DIR/ue_credentials_generator.sh"
 if [ ! -f "$UE_CREDENTIAL_GENERATOR_SCRIPT" ]; then
-    echo "Error: Cannot find $UE_CREDENTIAL_GENERATOR_SCRIPT to generate UE subscriber credentials."
+    echo "ERROR: Cannot find $UE_CREDENTIAL_GENERATOR_SCRIPT to generate UE subscriber credentials."
     exit 1
 fi
 

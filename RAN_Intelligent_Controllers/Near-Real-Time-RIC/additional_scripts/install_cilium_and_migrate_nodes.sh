@@ -316,7 +316,7 @@ EOF
 echo
 echo "Applying Cilium NetworkPolicy..."
 if ! kubectl apply -f $CILIUM_POLICY_FILE; then
-    echo "Error: Failed to apply Cilium NetworkPolicy. Please check the Cilium logs for errors."
+    echo "ERROR: Failed to apply Cilium NetworkPolicy. Please check the Cilium logs for errors."
     exit 1
 fi
 
@@ -345,7 +345,7 @@ EOF
         echo
         echo "Applying xApp read restriction Role..."
         if ! kubectl apply -f $XAPP_READ_RESTRICTION_FILE; then
-            echo "Error: Failed to apply xApp read restriction Role. Check permissions and Kubernetes API connectivity."
+            echo "ERROR: Failed to apply xApp read restriction Role. Check permissions and Kubernetes API connectivity."
             rm -f $XAPP_READ_RESTRICTION_FILE
             exit 1
         else
@@ -376,7 +376,7 @@ EOF
         echo
         echo "Applying xApp RoleBinding..."
         if ! kubectl apply -f $XAPP_ROLE_BINDING_FILE; then
-            echo "Error: Failed to apply xApp RoleBinding. Check permissions and Kubernetes API connectivity."
+            echo "ERROR: Failed to apply xApp RoleBinding. Check permissions and Kubernetes API connectivity."
             rm -f $XAPP_ROLE_BINDING_FILE
             exit 1
         else

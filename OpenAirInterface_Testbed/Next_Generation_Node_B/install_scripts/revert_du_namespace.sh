@@ -47,12 +47,12 @@ cd "$SCRIPT_DIR"
 DU_NUMBER=$1
 
 if [[ -z "$DU_NUMBER" ]]; then
-    echo "Error: No DU number provided."
+    echo "ERROR: No DU number provided."
     echo "Usage: $0 <DU_NUMBER>"
     exit 1
 fi
 if ! [[ $DU_NUMBER =~ ^[0-9]+$ ]]; then
-    echo "Error: DU number must be a number."
+    echo "ERROR: DU number must be a number."
     exit 1
 fi
 

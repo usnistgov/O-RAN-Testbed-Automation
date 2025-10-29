@@ -330,7 +330,7 @@ else
         COMPONENT_LINE=$(grep "Deploying RIC infra components" "$RIC_INSTALLATION_STDOUT")
         # Check if the component line was found
         if [ -z "$COMPONENT_LINE" ]; then
-            echo "Error: The array of components could not be extracted from $RIC_INSTALLATION_STDOUT"
+            echo "ERROR: The array of components could not be extracted from $RIC_INSTALLATION_STDOUT"
             exit 1
         fi
         # Parse the component names into an array
@@ -347,7 +347,7 @@ else
             $COMPONENTS | all(. as $COMPONENT | $DATA[$COMPONENT] == "deployed")
         ' "$RIC_INSTALLATION_LOG_JSON")"
         if [ "$SUCCESS" != "true" ]; then
-            echo "Error: RIC installation was not successful. Waiting for API server to be available then retrying..."
+            echo "ERROR: RIC installation was not successful. Waiting for API server to be available then retrying..."
             sudo ./install_scripts/wait_for_kubectl.sh
         fi
     done

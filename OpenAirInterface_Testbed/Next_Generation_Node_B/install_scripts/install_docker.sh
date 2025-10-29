@@ -133,22 +133,6 @@ echo "Docker version without suffix: ${DOCKERVERSIONWITHOUTSUFFIX}"
 echo
 echo
 
-# Set DNS servers
-DNS_SERVERS=$(grep 'nameserver' /run/systemd/resolve/resolv.conf | awk '{print $2}' | jq -R . | jq -s .)
-if [ -z "$(echo $DNS_SERVERS | jq '. | select(length > 0)')" ]; then
-    echo "Could not find DNS servers in /run/systemd/resolve/resolv.conf, defaulting Google DNS..."
-    DNS_SERVERS='["8.8.8.8", "8.8.4.4"]'
-fi
-DNS_SERVER=$(echo $DNS_SERVERS | jq -r '.[0]')
-
-# Check for internet connectivity
-if ping -c 1 $DNS_SERVER &>/dev/null; then
-    PUBLIC_IP=$(curl -s ifconfig.co)
-else
-    echo "No internet connectivity detected. Cannot retrieve public IP."
-    PUBLIC_IP="0.0.0.0"
-fi
-
 # Install Docker with the specified or latest available version
 echo "Installing Docker..."
 if ! command -v dockerd &>/dev/null; then
@@ -227,8 +211,9 @@ else
         exit 1
     fi
     DOCKERD_LOG="/tmp/dockerd.log"
-    # Stop running dockerd and start in background
+    # Stop running dockerd and containerd in background
     sudo pkill -x dockerd >/dev/null 2>&1 || true
+    sudo pkill -x containerd >/dev/null 2>&1 || true
     sudo rm -f /var/run/docker.pid /var/run/docker.sock
     sudo mkdir -p /run /var/run
     sudo sh -c 'setsid dockerd --config-file=/etc/docker/daemon.json >>'"${DOCKERD_LOG}"' 2>&1 </dev/null &'
@@ -242,7 +227,10 @@ else
     if ! (sudo test -S /var/run/docker.sock && sudo docker version >/dev/null 2>&1); then
         echo "Docker failed to start with configured options. Retrying with cgroupfs driver..."
         sudo pkill -x dockerd >/dev/null 2>&1 || true
-        sudo sh -c 'setsid dockerd --config-file=/etc/docker/daemon.json --exec-opt native.cgroupdriver=cgroupfs >>'"${DOCKERD_LOG}"' 2>&1 </dev/null &'
+        # Update daemon.json temporarily
+        sudo cp /etc/docker/daemon.json /etc/docker/daemon.json.bak
+        sudo sed -i 's/"native.cgroupdriver=systemd"/"native.cgroupdriver=cgroupfs"/' /etc/docker/daemon.json
+        sudo sh -c 'setsid dockerd --config-file=/etc/docker/daemon.json >>'"${DOCKERD_LOG}"' 2>&1 </dev/null &'
         for _ in $(seq 1 60); do
             if sudo test -S /var/run/docker.sock && sudo docker version >/dev/null 2>&1; then
                 break
@@ -250,6 +238,8 @@ else
             sleep 1
         done
         if ! (sudo test -S /var/run/docker.sock && sudo docker version >/dev/null 2>&1); then
+            # Restore the original daemon.json
+            sudo mv /etc/docker/daemon.json.bak /etc/docker/daemon.json 2>/dev/null || true
             echo "ERROR: Docker daemon failed to start without systemd."
             tail -n 200 "${DOCKERD_LOG}" 2>/dev/null || true
             exit 1
@@ -257,5 +247,9 @@ else
     fi
     echo "Docker started successfully."
 fi
+
+echo "Setting Docker DNS servers..."
+cd "$SCRIPT_DIR"
+sudo ./update_docker_dns.sh
 
 echo "Successfully installed Docker $DOCKERVERSION"

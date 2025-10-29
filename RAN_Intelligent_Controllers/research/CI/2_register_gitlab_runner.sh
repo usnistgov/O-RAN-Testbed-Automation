@@ -41,7 +41,7 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
 if [ -z "$RUNNER_TOKEN" ]; then
-    echo "Error: Environment variable RUNNER_TOKEN is not set."
+    echo "ERROR: Environment variable RUNNER_TOKEN is not set."
     echo "Please set RUNNER_TOKEN to your GitLab runner registration token. The token can be created for your project by doing the following:"
     echo "    - On your GitLab project, go to Settings > CI/CD > Runners"
     echo "    - Click the \"Create project runner\" button"

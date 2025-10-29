@@ -72,7 +72,7 @@ usage() {
 
 # Check if the dbctl file exists
 if [ ! -f "$DBCTL_DIR" ]; then
-    echo "Error: The dbctl script ($DBCTL_DIR) does not exist."
+    echo "ERROR: The dbctl script ($DBCTL_DIR) does not exist."
     usage
 fi
 

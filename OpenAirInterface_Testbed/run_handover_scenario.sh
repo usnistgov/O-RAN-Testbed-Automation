@@ -46,7 +46,7 @@ RUN_XAPP_KPM_MONITOR=false
 RUN_GRAFANA_DASHBOARD=false
 
 if [ "$RUN_GRAFANA_DASHBOARD" = true ] && [ "$RUN_XAPP_KPM_MONITOR" = false ]; then
-    echo "Error: Cannot run Grafana dashboard without running xApp KPM Monitor."
+    echo "ERROR: Cannot run Grafana dashboard without running xApp KPM Monitor."
     exit 1
 fi
 
@@ -80,7 +80,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [ "$NUM_UES" -lt 0 ] || [ "$NUM_DUS" -lt 2 ]; then
-    echo "Error: Number of UEs must be 0 or more, and number of DUs must be 2 or more."
+    echo "ERROR: Number of UEs must be 0 or more, and number of DUs must be 2 or more."
     exit 1
 fi
 
@@ -179,7 +179,7 @@ wait_for_ue_to_connect_to_du_1() {
         if grep -q "Received PDU Session Establishment Accept," User_Equipment/logs/ue${UE_ID}_stdout.txt; then
             break
         elif $(./is_running.sh | grep -q "NOT_RUNNING"); then
-            echo "Error: DU 1 or UE $UE_ID may not be running. Check logs for more information."
+            echo "ERROR: DU 1 or UE $UE_ID may not be running. Check logs for more information."
             exit 1
         fi
     done

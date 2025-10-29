@@ -92,7 +92,7 @@ else # Use docker.ce
     fi
     # Check if UBUNTU_CODENAME is still empty
     if [[ -z "$UBUNTU_CODENAME" ]]; then
-        echo "Error: Ubuntu codename not found in /etc/os-release."
+        echo "ERROR: Ubuntu codename not found in /etc/os-release."
         exit 1
     fi
 
@@ -211,8 +211,9 @@ else
         exit 1
     fi
     DOCKERD_LOG="/tmp/dockerd.log"
-    # Stop running dockerd and start in background
+    # Stop running dockerd and containerd in background
     sudo pkill -x dockerd >/dev/null 2>&1 || true
+    sudo pkill -x containerd >/dev/null 2>&1 || true
     sudo rm -f /var/run/docker.pid /var/run/docker.sock
     sudo mkdir -p /run /var/run
     sudo sh -c 'setsid dockerd --config-file=/etc/docker/daemon.json >>'"${DOCKERD_LOG}"' 2>&1 </dev/null &'
@@ -226,7 +227,10 @@ else
     if ! (sudo test -S /var/run/docker.sock && sudo docker version >/dev/null 2>&1); then
         echo "Docker failed to start with configured options. Retrying with cgroupfs driver..."
         sudo pkill -x dockerd >/dev/null 2>&1 || true
-        sudo sh -c 'setsid dockerd --config-file=/etc/docker/daemon.json --exec-opt native.cgroupdriver=cgroupfs >>'"${DOCKERD_LOG}"' 2>&1 </dev/null &'
+        # Update daemon.json temporarily
+        sudo cp /etc/docker/daemon.json /etc/docker/daemon.json.bak
+        sudo sed -i 's/"native.cgroupdriver=systemd"/"native.cgroupdriver=cgroupfs"/' /etc/docker/daemon.json
+        sudo sh -c 'setsid dockerd --config-file=/etc/docker/daemon.json >>'"${DOCKERD_LOG}"' 2>&1 </dev/null &'
         for _ in $(seq 1 60); do
             if sudo test -S /var/run/docker.sock && sudo docker version >/dev/null 2>&1; then
                 break
@@ -234,6 +238,8 @@ else
             sleep 1
         done
         if ! (sudo test -S /var/run/docker.sock && sudo docker version >/dev/null 2>&1); then
+            # Restore the original daemon.json
+            sudo mv /etc/docker/daemon.json.bak /etc/docker/daemon.json 2>/dev/null || true
             echo "ERROR: Docker daemon failed to start without systemd."
             tail -n 200 "${DOCKERD_LOG}" 2>/dev/null || true
             exit 1

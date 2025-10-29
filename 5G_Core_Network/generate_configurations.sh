@@ -438,7 +438,7 @@ sudo ufw status || true
 
 UE_CREDENTIAL_GENERATOR_SCRIPT="$(dirname "$SCRIPT_DIR")/User_Equipment/ue_credentials_generator.sh"
 if [ ! -f "$UE_CREDENTIAL_GENERATOR_SCRIPT" ]; then
-    echo "Error: Cannot find $UE_CREDENTIAL_GENERATOR_SCRIPT to generate UE subscriber credentials."
+    echo "ERROR: Cannot find $UE_CREDENTIAL_GENERATOR_SCRIPT to generate UE subscriber credentials."
     exit 1
 fi
 

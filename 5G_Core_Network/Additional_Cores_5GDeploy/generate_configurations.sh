@@ -52,11 +52,11 @@ PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$SCRIPT_DIR"
 
 if [ ! -d "5gdeploy" ]; then
-    echo "Error: Cannot find 5gdeploy directory. Please run the full_install.sh script first."
+    echo "ERROR: Cannot find 5gdeploy directory. Please run the full_install.sh script first."
     exit 1
 fi
 if [ ! -d "5gdeploy/scenario" ]; then
-    echo "Error: Cannot find 5gdeploy/scenario directory. Please run the full_install.sh script first."
+    echo "ERROR: Cannot find 5gdeploy/scenario directory. Please run the full_install.sh script first."
     exit 1
 fi
 
@@ -195,7 +195,7 @@ cd "$SCRIPT_DIR"
 
 UE_CREDENTIAL_GENERATOR_SCRIPT="$(dirname "$PARENT_DIR")/User_Equipment/ue_credentials_generator.sh"
 if [ ! -f "$UE_CREDENTIAL_GENERATOR_SCRIPT" ]; then
-    echo "Error: Cannot find $UE_CREDENTIAL_GENERATOR_SCRIPT to generate UE subscriber credentials."
+    echo "ERROR: Cannot find $UE_CREDENTIAL_GENERATOR_SCRIPT to generate UE subscriber credentials."
     exit 1
 fi
 

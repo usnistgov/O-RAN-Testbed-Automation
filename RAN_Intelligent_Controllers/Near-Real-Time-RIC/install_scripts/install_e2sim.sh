@@ -65,7 +65,7 @@ cp *.deb ../e2sm_examples/kpm_e2sm/
 cd ../
 docker build -t oransim:0.0.999 . -f Dockerfile_kpm_updated
 if [ $? -ne 0 ]; then
-    echo "Error: Docker build failed. Cleaning up the E2 simulator..."
+    echo "ERROR: Docker build failed. Cleaning up the E2 simulator..."
     sudo rm -rf e2-interface
     echo
     echo "Please try installing the E2 simulator again."

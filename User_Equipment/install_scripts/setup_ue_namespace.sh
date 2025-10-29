@@ -36,12 +36,12 @@ set -e
 UE_NUMBER=$1
 
 if [[ -z "$UE_NUMBER" ]]; then
-    echo "Error: No UE number provided."
+    echo "ERROR: No UE number provided."
     echo "Usage: $0 <UE_NUMBER>"
     exit 1
 fi
 if ! [[ $UE_NUMBER =~ ^[0-9]+$ ]]; then
-    echo "Error: UE number must be a number."
+    echo "ERROR: UE number must be a number."
     exit 1
 fi
 

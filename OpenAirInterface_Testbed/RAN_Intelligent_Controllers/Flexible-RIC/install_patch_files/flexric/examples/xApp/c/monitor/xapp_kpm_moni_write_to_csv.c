@@ -217,7 +217,7 @@ static void csv_append_real_to_csv_line(meas_record_lst_t meas_record) {
 static void csv_prepend_e2_node_id() {
   // Ensure the current E2 Node ID is valid
   if (current_e2_id_str[0] == '\0') {
-    fprintf(stderr, "Error: No valid E2 Node ID found.\n");
+    fprintf(stderr, "ERROR: No valid E2 Node ID found.\n");
     return;
   }
 
@@ -248,7 +248,7 @@ static void csv_prepend_e2_node_id() {
 static void csv_prepend_ue_id() {
   // Ensure the current UE ID is valid
   if (current_ue_id == 0) {
-    fprintf(stderr, "Error: No valid UE ID found.\n");
+    fprintf(stderr, "ERROR: No valid UE ID found.\n");
     return;
   }
 
@@ -284,7 +284,7 @@ static void csv_prepend_timestamp() {
 
   // Ensure the timestamp is non-negative
   if (now < 0) {
-    fprintf(stderr, "Error: Negative timestamp value encountered.\n");
+    fprintf(stderr, "ERROR: Negative timestamp value encountered.\n");
     return;
   }
 
@@ -768,7 +768,7 @@ int main(int argc, char *argv[]) {
   // Verify the CSV file path ends with ".csv"
   size_t path_len = strlen(csv_file_path);
   if (path_len < 4 || strcmp(csv_file_path + path_len - 4, ".csv") != 0) {
-    fprintf(stderr, "Error: The file path must end with '.csv'.\n");
+    fprintf(stderr, "ERROR: The file path must end with '.csv'.\n");
     return EXIT_FAILURE;
   }
 

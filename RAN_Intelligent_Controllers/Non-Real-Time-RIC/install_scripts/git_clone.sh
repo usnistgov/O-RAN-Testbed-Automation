@@ -38,12 +38,12 @@ NAME=$2 # Optional
 
 # Validate input parameters
 if [[ -z "$URL" ]]; then
-    echo "Error: No URL provided."
+    echo "ERROR: No URL provided."
     echo "Usage: $0 <URL> [name]"
     exit 1
 fi
 if [[ ! "$URL" == *.git ]]; then
-    echo "Error: URL must end in .git"
+    echo "ERROR: URL must end in .git"
     exit 1
 fi
 if [[ -z "$NAME" ]]; then

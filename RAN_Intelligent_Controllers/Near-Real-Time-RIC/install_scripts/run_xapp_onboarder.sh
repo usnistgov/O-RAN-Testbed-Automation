@@ -179,6 +179,6 @@ if [[ $(sudo -E dms_cli health) == "True" ]]; then
 else
     echo "Current PATH: $PATH"
     echo "Current CHART_REPO_URL: $CHART_REPO_URL"
-    echo "Error: Health check failed, ensure that \"CHART_REPO_URL=http://0.0.0.0:8090\" then retry running \"dms_cli health\""
+    echo "ERROR: Health check failed, ensure that \"CHART_REPO_URL=http://0.0.0.0:8090\" then retry running \"dms_cli health\""
     exit 1
 fi

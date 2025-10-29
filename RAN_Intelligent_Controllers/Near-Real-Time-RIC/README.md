@@ -57,6 +57,10 @@ ricxapp        ricxapp-hw-go-c84579888-rtjn9                               1/1  
 
 ---
 
+## Custom SCTP E2 Termination Port
+
+By default, the Near-RT RIC's E2 Terminator (`e2term`) listens on port `36422`. This can be changed by setting the `E2_TERM_PORT` variable in `full_install.sh`. If another RIC component is already using this port, set `E2_TERM_PORT_SUBSTITUTE` to update the conflicting component's port before changing `E2_TERM_PORT` to avoid port conflicts.
+
 ## Installing an xApp
 
 By default, the Hello World Go xApp (hw-go) is installed automatically. Additional xApps can be installed to extend the functionality of the Near-RT RIC. For convenience, installation scripts for the following xApps are included:

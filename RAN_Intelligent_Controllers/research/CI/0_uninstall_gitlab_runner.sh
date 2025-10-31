@@ -55,7 +55,7 @@ gitlab-runner unregister --all-runners 2>/dev/null || true
 sudo apt purge -y gitlab-runner
 sudo apt autoremove -y
 
-# Remove GitLab Runner APT repo and keys
+# Remove GitLab Runner apt repo and keys
 sudo rm -f /etc/apt/sources.list.d/*gitlab-runner*.list
 sudo rm -f /etc/apt/trusted.gpg.d/*gitlab*.gpg /etc/apt/keyrings/*gitlab*.gpg
 sudo apt update

@@ -183,7 +183,7 @@ else # Use docker-ce
     sudo install -m 0755 -d /etc/apt/keyrings
     sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
     sudo chmod a+r /etc/apt/keyrings/docker.asc
-    # Add the repository to Apt sources:
+    # Add the repository to apt sources:
     echo \
         "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
     $(. /etc/os-release && echo "${UBUNTU_CODENAME}") stable" |
@@ -562,7 +562,7 @@ sudo umount -l /var/lib/docker/containers/*/mounts/shm 2>/dev/null || true
 sudo umount -l /var/lib/containerd/*/*/*/rootfs 2>/dev/null || true
 
 # Remove Docker directories
-sudo rm -rf /var/lib/docker /etc/docker /home/docker
+sudo rm -rf /var/lib/docker /etc/docker /home/docker /var/lib/containerd
 
 # # Remove Docker group and user from group
 # if getent group docker >/dev/null; then
@@ -582,6 +582,11 @@ if [ -f /usr/local/bin/docker ]; then
     sudo rm -f /usr/local/bin/docker
 fi
 
+# Remove Docker apt sources and keys
+sudo rm -f /etc/apt/sources.list.d/docker.list /etc/apt/keyrings/docker.asc
+sudo apt-get update || true
+
+# Clean up
 sudo apt-get autoremove --purge -y
 
 # Reset the shell's command hash table to recognize changes in available executables
@@ -600,18 +605,39 @@ fi
 # Configure Docker daemon
 echo "Configuring Docker daemon..."
 sudo mkdir -p /etc/docker
+
+# Select storage driver (see https://docs.docker.com/engine/storage/drivers/select-storage-driver)
+if [ "$USE_SYSTEMCTL" = true ]; then
+    DRIVER="overlay2"
+else
+    DRIVER="vfs"
+fi
+if [ "$DRIVER" = "overlay2" ] && ! grep -qw overlay /proc/filesystems; then
+    if ! sudo modprobe overlay >/dev/null 2>&1; then
+        DRIVER="vfs"
+    fi
+fi
+if [ "$DRIVER" = "overlay2" ]; then
+    if ! sudo mkdir -p /var/lib/docker/test-overlay && ! sudo mount -t overlay overlay -o lowerdir=/bin,upperdir=/tmp,workdir=/tmp /var/lib/docker/test-overlay 2>/dev/null; then
+        DRIVER="vfs"
+    else
+        sudo umount /var/lib/docker/test-overlay 2>/dev/null || true
+        sudo rmdir /var/lib/docker/test-overlay 2>/dev/null || true
+    fi
+fi
+
 sudo tee /etc/docker/daemon.json >/dev/null <<EOF
 {
-  "exec-opts": ["native.cgroupdriver=systemd"],
-  "log-driver": "json-file",
-  "log-opts": {
-    "max-size": "100m"
-  },
-  "storage-driver": "overlay2",
-  "features": {
-    "buildkit": true
-  },
-  "max-concurrent-downloads": 10
+    "exec-opts": ["native.cgroupdriver=systemd"],
+    "log-driver": "json-file",
+    "log-opts": {
+        "max-size": "100m"
+    },
+    "storage-driver": "${DRIVER}",
+    "features": {
+        "buildkit": true
+    },
+    "max-concurrent-downloads": 10
 }
 EOF
 

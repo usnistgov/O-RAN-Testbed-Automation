@@ -213,7 +213,7 @@ openairinterface_flexric_5gdeploy_setup:
     - sudo apt-get install -y linux-modules-extra-$(uname -r) || true
     - sudo apt-get install -y linux-modules-$(uname -r) || true
     - sudo apt-get install -y linux-headers-$(uname -r) || true
-    - sudo apt-get install -y bash bc ca-certificates coreutils curl git gnupg grep kmod lsb-release software-properties-common tree wget
+    - sudo apt-get install -y bash bc ca-certificates coreutils curl git gnupg grep iproute2 kmod lsb-release software-properties-common tree wget
     - sudo apt-get install -y --no-install-recommends tzdata
     - sudo update-ca-certificates || true
 

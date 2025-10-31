@@ -110,7 +110,7 @@ fi
 CMAKE_VERSION=$(cmake --version | head -n1 | awk '{print $3}')
 if [[ "$CMAKE_VERSION" == 3.16.* ]]; then
     echo "Detected CMake 3.16. Updating CMake for compatibility with OpenAirInterface..."
-    # Add Kitware's APT repository
+    # Add Kitware's apt repository
     wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc | sudo apt-key add -
     sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ focal main'
     sudo apt-get update

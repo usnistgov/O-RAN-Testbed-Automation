@@ -122,7 +122,7 @@ sudo umount -l /var/lib/docker/containers/*/mounts/shm 2>/dev/null || true
 sudo umount -l /var/lib/containerd/*/*/*/rootfs 2>/dev/null || true
 
 # Remove Docker directories
-sudo rm -rf /var/lib/docker /etc/docker /home/docker
+sudo rm -rf /var/lib/docker /etc/docker /home/docker /var/lib/containerd
 
 # Remove Docker group and user from group
 if getent group docker >/dev/null; then
@@ -141,6 +141,10 @@ if [ -f /usr/local/bin/docker ]; then
     echo "Removing /usr/local/bin/docker..."
     sudo rm -f /usr/local/bin/docker
 fi
+
+# Remove Docker apt sources and keys
+sudo rm -f /etc/apt/sources.list.d/docker.list /etc/apt/keyrings/docker.asc
+sudo apt-get update || true
 
 # Clean up
 sudo apt-get autoremove --purge -y

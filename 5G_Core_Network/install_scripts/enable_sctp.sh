@@ -54,7 +54,7 @@ if ! dpkg -s "$EXTRA_PKG" >/dev/null 2>&1; then
             echo "NOTE: Failed to install $EXTRA_PKG. Skipping."
         fi
     else
-        echo "NOTE: $EXTRA_PKG not available in APT for $(uname -r). Skipping."
+        echo "NOTE: $EXTRA_PKG not available in apt for $(uname -r). Skipping."
     fi
 fi
 

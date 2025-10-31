@@ -114,20 +114,9 @@ sudo env $APTVARS apt-get install -y libdw-dev libbfd-dev libdwarf-dev
 sudo env $APTVARS apt-get install -y libyaml-cpp-dev
 sudo env $APTVARS apt-get install -y libgtest-dev
 sudo env $APTVARS apt-get install -y libtool
-# Enable SCTP
-sudo env $APTVARS apt-get install -y libsctp-dev
-# Check if SCTP is available and load it if necessary
-if ! lsmod | grep -q sctp; then
-    echo "Loading SCTP module..."
-    sudo modprobe sctp
-fi
-# Verify if SCTP is successfully loaded
-if ! lsmod | grep -q sctp; then
-    echo "SCTP module could not be loaded. Exiting."
-    exit 1
-else
-    echo "SCTP module loaded successfully."
-fi
+
+# Enable SCTP kernel module
+sudo ./install_scripts/enable_sctp.sh
 
 # Check if GCC 13 is installed, if not, install it and set it as the default
 GCC_VERSION=$(gcc -v 2>&1 | grep "gcc version" | awk '{print $3}')

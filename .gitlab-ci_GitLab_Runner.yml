@@ -31,8 +31,6 @@ default:
     - cd "$CI_PROJECT_DIR"
     - pwd
     - command -v tree >/dev/null 2>&1 && tree . -d || true
-  # after_script:
-  #   - sudo chown -R "$USER:$USER" "$CI_PROJECT_DIR" || true
 
 stages:
   - initialization

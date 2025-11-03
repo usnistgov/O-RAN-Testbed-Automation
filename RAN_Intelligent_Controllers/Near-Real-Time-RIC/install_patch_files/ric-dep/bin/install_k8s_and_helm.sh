@@ -438,8 +438,12 @@ net.ipv4.conf.all.arp_announce = 2
 net.ipv4.conf.default.arp_announce = 2
 EOF
 
-# Apply sysctl parameters
 sudo sysctl --system
+# Ensure /sys/fs/cgroup is mounted (for cgroup v2 systems)
+if ! mount | grep -q '/sys/fs/cgroup'; then
+    echo "Mounting /sys/fs/cgroup..."
+    sudo mount -t tmpfs cgroup_root /sys/fs/cgroup || true
+fi
 
 # Kubelet does not support swap. Disable traditional swap entries in /etc/fstab:
 echo "Checking for traditional swap in /etc/fstab..."
@@ -486,7 +490,9 @@ if sudo swapon --show | grep -q 'swap'; then
     echo "WARNING: Swap is still active."
     sudo swapon --show
     echo "Forcibly disabling all swap..."
-    sudo swapoff -a
+    sudo swapoff -a || echo "Failed to disable swap with swapoff -a"
+    sudo rm -f /swap.img || echo "Failed to remove /swap.img"
+    sleep 2
     if sudo swapon --show | grep -q 'swap'; then
         echo "ERROR: Swap could not be disabled."
     else
@@ -1043,6 +1049,10 @@ else
         HAS_KUBELET_CONF=$(sudo test -s "/etc/kubernetes/kubelet.conf" && echo "true" || echo "false")
         if [ "$HAS_KUBELET_CONF" = "true" ] && { [ "$HAS_BOOTSTRAP_KUBELET_CONF" = "true" ] || [ "$HAS_KUBELET_CONF" = "true" ]; }; then
             KUBELET_FLAGS="$(sudo grep '^KUBELET_KUBEADM_ARGS=' /var/lib/kubelet/kubeadm-flags.env 2>/dev/null | cut -d= -f2- | sed -e 's/^\"//' -e 's/\"$//' -e "s/^'//" -e "s/'$//")"
+            if [[ "$KUBELET_FLAGS" != *"--cgroup-driver="* ]]; then
+                KUBELET_FLAGS="$KUBELET_FLAGS --cgroup-driver=$CGROUP_DRIVER"
+            fi
+
             sudo pkill -f '[k]ubelet' >/dev/null 2>&1 || true
             sudo setsid sh -c 'nohup kubelet \
                 --config=/var/lib/kubelet/config.yaml \

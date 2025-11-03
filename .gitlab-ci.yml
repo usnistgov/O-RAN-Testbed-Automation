@@ -31,8 +31,6 @@ default:
     - cd "$CI_PROJECT_DIR"
     - pwd
     - command -v tree >/dev/null 2>&1 && tree . -d || true
-  # after_script:
-  #   - sudo chown -R "$USER:$USER" "$CI_PROJECT_DIR" || true
 
 stages:
   - initialization
@@ -84,7 +82,6 @@ open5gs_srsran_oran_sc_ric_setup:
   variables:
     GIT_STRATEGY: clone
   script:
-    - exit 0  # TEMPORARY: DISABLE TESTBED 1 FOR NOW
     # Get apt into a clean state before testbed setup
     - sudo rm -f /var/lib/dpkg/lock-frontend /var/lib/dpkg/lock || true
     - sudo dpkg --configure -a || true
@@ -233,26 +230,26 @@ openairinterface_flexric_5gdeploy_setup:
     - cd ..
     - echo -e "\e[0Ksection_end:$(date +%s):quick_uninstall\r\e[0K"
 
-    # - echo -e "\e[0Ksection_start:$(date +%s):oai_ue_install[collapsed=true]\r\e[0KInstall OpenAirInterface UE"
-    # - echo "***************************** CI Install OAI UE ********************************"
-    # - cd OpenAirInterface_Testbed/User_Equipment
-    # - ./full_install.sh
-    # - cd ../..
-    # - echo -e "\e[0Ksection_end:$(date +%s):oai_ue_install\r\e[0K"
+    - echo -e "\e[0Ksection_start:$(date +%s):oai_ue_install[collapsed=true]\r\e[0KInstall OpenAirInterface UE"
+    - echo "***************************** CI Install OAI UE ********************************"
+    - cd OpenAirInterface_Testbed/User_Equipment
+    - ./full_install.sh
+    - cd ../..
+    - echo -e "\e[0Ksection_end:$(date +%s):oai_ue_install\r\e[0K"
 
-    # - echo -e "\e[0Ksection_start:$(date +%s):oai_gnb_install[collapsed=true]\r\e[0KInstall OpenAirInterface gNB"
-    # - echo "***************************** CI Install OAI gNB *******************************"
-    # - cd OpenAirInterface_Testbed/Next_Generation_Node_B
-    # - ./full_install.sh
-    # - cd ../..
-    # - echo -e "\e[0Ksection_end:$(date +%s):oai_gnb_install\r\e[0K"
+    - echo -e "\e[0Ksection_start:$(date +%s):oai_gnb_install[collapsed=true]\r\e[0KInstall OpenAirInterface gNB"
+    - echo "***************************** CI Install OAI gNB *******************************"
+    - cd OpenAirInterface_Testbed/Next_Generation_Node_B
+    - ./full_install.sh
+    - cd ../..
+    - echo -e "\e[0Ksection_end:$(date +%s):oai_gnb_install\r\e[0K"
 
-    # - echo -e "\e[0Ksection_start:$(date +%s):flexric_install[collapsed=true]\r\e[0KInstall FlexRIC"
-    # - echo "***************************** CI Install FlexRIC *******************************"
-    # - cd OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC
-    # - ./full_install.sh
-    # - cd ../../..
-    # - echo -e "\e[0Ksection_end:$(date +%s):flexric_install\r\e[0K"
+    - echo -e "\e[0Ksection_start:$(date +%s):flexric_install[collapsed=true]\r\e[0KInstall FlexRIC"
+    - echo "***************************** CI Install FlexRIC *******************************"
+    - cd OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC
+    - ./full_install.sh
+    - cd ../../..
+    - echo -e "\e[0Ksection_end:$(date +%s):flexric_install\r\e[0K"
     
     - echo -e "\e[0Ksection_start:$(date +%s):5gdeploy_install[collapsed=true]\r\e[0KInstall 5G Deployment Helper (5gdeploy)"
     - echo "********************** CI Install 5G Deployment Helper *************************"
@@ -261,12 +258,12 @@ openairinterface_flexric_5gdeploy_setup:
     - cd ..
     - echo -e "\e[0Ksection_end:$(date +%s):5gdeploy_install\r\e[0K"
 
-    # - echo -e "\e[0Ksection_start:$(date +%s):testbed_2_configuration[collapsed=true]\r\e[0KTestbed 2 Configuration"
-    # - echo "****************************** CI Configuration ********************************"
-    # - cd OpenAirInterface_Testbed
-    # - ./generate_configurations.sh
-    # - cd ..
-    # - echo -e "\e[0Ksection_end:$(date +%s):testbed_2_configuration\r\e[0K"
+    - echo -e "\e[0Ksection_start:$(date +%s):testbed_2_configuration[collapsed=true]\r\e[0KTestbed 2 Configuration"
+    - echo "****************************** CI Configuration ********************************"
+    - cd OpenAirInterface_Testbed
+    - ./generate_configurations.sh
+    - cd ..
+    - echo -e "\e[0Ksection_end:$(date +%s):testbed_2_configuration\r\e[0K"
 
       ############################ TODO: END-TO-END TESTS ############################
     - cd OpenAirInterface_Testbed

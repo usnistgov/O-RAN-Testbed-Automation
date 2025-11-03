@@ -157,6 +157,9 @@ else
 fi
 
 USE_DOCKER_CE=1
+if [ "$USE_SYSTEMCTL" = "false" ]; then
+    USE_DOCKER_CE=0
+fi
 if [ "$USE_DOCKER_CE" -eq 0 ]; then # Use docker.io
     DOCKERV="20.10"
     # Select a compatible Docker version for Ubuntu 24.*
@@ -237,9 +240,9 @@ if [ -z "$IP_ADDRESS" ] || [ -z "$HOSTNAME" ]; then
     exit 1
 fi
 # Remove existing entries for the hostname from /etc/hosts
-sudo sed -i "/$HOSTNAME/d" /etc/hosts # || true
+sudo sed -i "/$HOSTNAME/d" /etc/hosts || true
 # Add the new entry to /etc/hosts
-echo "$IP_ADDRESS $HOSTNAME" | sudo tee -a /etc/hosts
+echo "$IP_ADDRESS $HOSTNAME" | sudo tee -a /etc/hosts || true
 
 echo "### Docker version  = "${DOCKERV}
 echo "### k8s version     = "${KUBEV}
@@ -357,10 +360,10 @@ sudo modprobe overlay || true
 sudo modprobe br_netfilter || true
 
 # Load IP Virtual Server (IPVS) modules
-sudo modprobe ip_vs
-sudo modprobe ip_vs_rr
-sudo modprobe ip_vs_wrr
-sudo modprobe ip_vs_sh
+sudo modprobe ip_vs || true
+sudo modprobe ip_vs_rr || true
+sudo modprobe ip_vs_wrr || true
+sudo modprobe ip_vs_sh || true
 
 # Load SCTP module
 sudo modprobe --ignore-install sctp || true
@@ -482,6 +485,13 @@ echo "Verifying swap is disabled..."
 if sudo swapon --show | grep -q 'swap'; then
     echo "WARNING: Swap is still active."
     sudo swapon --show
+    echo "Forcibly disabling all swap..."
+    sudo swapoff -a
+    if sudo swapon --show | grep -q 'swap'; then
+        echo "ERROR: Swap could not be disabled."
+    else
+        echo "All swap has been successfully disabled."
+    fi
 else
     echo "All swap has been successfully disabled."
 fi
@@ -959,12 +969,20 @@ if sudo test -f /etc/containerd/config.toml; then
 fi
 sudo containerd config default | sudo tee /etc/containerd/config.toml >/dev/null
 sudo chmod 644 /etc/containerd/config.toml
-# Set SystemdCgroup = true
-sudo sed -i 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml
+if [ "$CGROUP_DRIVER" = "systemd" ]; then
+    sudo sed -i 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml
+else
+    sudo sed -i 's/SystemdCgroup = true/SystemdCgroup = false/' /etc/containerd/config.toml
+fi
 # Set the sandbox_image to match kubeadm defaults
 sudo sed -i 's#^\(\s*\)sandbox_image = ".*"#\1sandbox_image = "registry.k8s.io/pause:3.10"#' /etc/containerd/config.toml
-sudo sed -i '/^\s*systemd_cgroup\s*=/d' /etc/containerd/config.toml
-sudo sed -i '/^\s*PodSandboxImage\s*=/d' /etc/containerd/config.toml
+sudo sed -i '/^\s*systemd_cgroup\s*=\s*/d' /etc/containerd/config.toml
+sudo sed -i '/^\s*PodSandboxImage\s*=\s*/d' /etc/containerd/config.toml
+# If using the vfs storage driver use native snapshotter instead of overlayfs (see https://hexshift.medium.com/how-to-use-containerd-snapshotters-for-custom-storage-management-c252f574dfaa)
+if [ "$DRIVER" = "vfs" ]; then
+    echo "Docker storage-driver=vfs; configuring containerd to use native snapshotter"
+    sudo sed -i 's/^\(\s*\)snapshotter = "overlayfs"/\1snapshotter = "native"/' /etc/containerd/config.toml
+fi
 
 # if ! sudo sed -i 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml; then
 #     echo "Using backup containerd configuration with SystemdCgroup = true."
@@ -1482,9 +1500,9 @@ kubectl label --overwrite nodes "$PV_NODE_NAME" local-storage=enable
 HELM_REPO_HOST="helm.ricinfra.local"
 
 # Remove existing entries for the hostname from /etc/hosts
-sudo sed -i "/$HELM_REPO_HOST/d" /etc/hosts
+sudo sed -i "/$HELM_REPO_HOST/d" /etc/hosts || true
 # Add the new entry to /etc/hosts
-echo "127.0.0.1 $HELM_REPO_HOST" | sudo tee -a /etc/hosts
+echo "127.0.0.1 $HELM_REPO_HOST" | sudo tee -a /etc/hosts || true
 
 # Reset the shell's command hash table to recognize changes in available executables
 hash -r

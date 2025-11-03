@@ -106,7 +106,7 @@ open5gs_srsran_oran_sc_ric_setup:
     - sudo update-ca-certificates || true
 
     - echo -e "\e[0Ksection_start:$(date +%s):open5gs_configure[collapsed=true]\r\e[0KConfigure Open5GS"
-    - echo "***************************** CI Install Open5GS *******************************"
+    - echo "***************************** CI Configure Open5GS *******************************"
     - cd 5G_Core_Network
     # Configure the core to use: open5gs
     - "sed -i -E 's/^core_to_use:.*/core_to_use: open5gs/' options.yaml"

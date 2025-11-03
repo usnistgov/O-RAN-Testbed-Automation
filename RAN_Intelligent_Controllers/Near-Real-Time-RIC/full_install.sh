@@ -168,6 +168,11 @@ else
     # Increase the file descriptor limits of the system
     sudo "$SCRIPT_DIR/install_scripts/./set_file_descriptor_limits.sh"
 
+    if ! command -v ip &>/dev/null; then
+        echo "Package \"iproute2\" not found, installing..."
+        sudo env $APTVARS apt-get install -y iproute2
+    fi
+
     if ! ./install_k8s_and_helm.sh; then
         echo "An error occured when running $SCRIPT_DIR/install_k8s_and_helm.sh."
         exit 1

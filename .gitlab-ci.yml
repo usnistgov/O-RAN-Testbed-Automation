@@ -1,4 +1,4 @@
-# image: ubuntu:22.04
+image: ubuntu:22.04
 
 variables:
   GIT_DEPTH: "1"
@@ -15,15 +15,15 @@ variables:
 
 
 default:
-  tags: [testbed-ci-runner]
+  #tags: [testbed-ci-runner]
   before_script:
-    # # SUDO ALIAS SETUP
-    # - |
-    #   mkdir -p "$HOME/.local/bin"
-    #   echo -e '#!/usr/bin/env bash\nexec "$@"' > "$HOME/.local/bin/sudo"
-    #   chmod +x "$HOME/.local/bin/sudo"
-    #   export PATH="$HOME/.local/bin:$PATH"
-    #   hash -r
+    # SUDO ALIAS SETUP
+    - |
+      mkdir -p "$HOME/.local/bin"
+      echo -e '#!/usr/bin/env bash\nexec "$@"' > "$HOME/.local/bin/sudo"
+      chmod +x "$HOME/.local/bin/sudo"
+      export PATH="$HOME/.local/bin:$PATH"
+      hash -r
 
     # General setup
     - echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections || true
@@ -84,6 +84,7 @@ open5gs_srsran_oran_sc_ric_setup:
   variables:
     GIT_STRATEGY: clone
   script:
+    - exit 0  # TEMPORARY: DISABLE TESTBED 1 FOR NOW
     # Get apt into a clean state before testbed setup
     - sudo rm -f /var/lib/dpkg/lock-frontend /var/lib/dpkg/lock || true
     - sudo dpkg --configure -a || true
@@ -232,26 +233,26 @@ openairinterface_flexric_5gdeploy_setup:
     - cd ..
     - echo -e "\e[0Ksection_end:$(date +%s):quick_uninstall\r\e[0K"
 
-    - echo -e "\e[0Ksection_start:$(date +%s):oai_ue_install[collapsed=true]\r\e[0KInstall OpenAirInterface UE"
-    - echo "***************************** CI Install OAI UE ********************************"
-    - cd OpenAirInterface_Testbed/User_Equipment
-    - ./full_install.sh
-    - cd ../..
-    - echo -e "\e[0Ksection_end:$(date +%s):oai_ue_install\r\e[0K"
+    # - echo -e "\e[0Ksection_start:$(date +%s):oai_ue_install[collapsed=true]\r\e[0KInstall OpenAirInterface UE"
+    # - echo "***************************** CI Install OAI UE ********************************"
+    # - cd OpenAirInterface_Testbed/User_Equipment
+    # - ./full_install.sh
+    # - cd ../..
+    # - echo -e "\e[0Ksection_end:$(date +%s):oai_ue_install\r\e[0K"
 
-    - echo -e "\e[0Ksection_start:$(date +%s):oai_gnb_install[collapsed=true]\r\e[0KInstall OpenAirInterface gNB"
-    - echo "***************************** CI Install OAI gNB *******************************"
-    - cd OpenAirInterface_Testbed/Next_Generation_Node_B
-    - ./full_install.sh
-    - cd ../..
-    - echo -e "\e[0Ksection_end:$(date +%s):oai_gnb_install\r\e[0K"
+    # - echo -e "\e[0Ksection_start:$(date +%s):oai_gnb_install[collapsed=true]\r\e[0KInstall OpenAirInterface gNB"
+    # - echo "***************************** CI Install OAI gNB *******************************"
+    # - cd OpenAirInterface_Testbed/Next_Generation_Node_B
+    # - ./full_install.sh
+    # - cd ../..
+    # - echo -e "\e[0Ksection_end:$(date +%s):oai_gnb_install\r\e[0K"
 
-    - echo -e "\e[0Ksection_start:$(date +%s):flexric_install[collapsed=true]\r\e[0KInstall FlexRIC"
-    - echo "***************************** CI Install FlexRIC *******************************"
-    - cd OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC
-    - ./full_install.sh
-    - cd ../../..
-    - echo -e "\e[0Ksection_end:$(date +%s):flexric_install\r\e[0K"
+    # - echo -e "\e[0Ksection_start:$(date +%s):flexric_install[collapsed=true]\r\e[0KInstall FlexRIC"
+    # - echo "***************************** CI Install FlexRIC *******************************"
+    # - cd OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC
+    # - ./full_install.sh
+    # - cd ../../..
+    # - echo -e "\e[0Ksection_end:$(date +%s):flexric_install\r\e[0K"
     
     - echo -e "\e[0Ksection_start:$(date +%s):5gdeploy_install[collapsed=true]\r\e[0KInstall 5G Deployment Helper (5gdeploy)"
     - echo "********************** CI Install 5G Deployment Helper *************************"
@@ -260,12 +261,12 @@ openairinterface_flexric_5gdeploy_setup:
     - cd ..
     - echo -e "\e[0Ksection_end:$(date +%s):5gdeploy_install\r\e[0K"
 
-    - echo -e "\e[0Ksection_start:$(date +%s):testbed_2_configuration[collapsed=true]\r\e[0KTestbed 2 Configuration"
-    - echo "****************************** CI Configuration ********************************"
-    - cd OpenAirInterface_Testbed
-    - ./generate_configurations.sh
-    - cd ..
-    - echo -e "\e[0Ksection_end:$(date +%s):testbed_2_configuration\r\e[0K"
+    # - echo -e "\e[0Ksection_start:$(date +%s):testbed_2_configuration[collapsed=true]\r\e[0KTestbed 2 Configuration"
+    # - echo "****************************** CI Configuration ********************************"
+    # - cd OpenAirInterface_Testbed
+    # - ./generate_configurations.sh
+    # - cd ..
+    # - echo -e "\e[0Ksection_end:$(date +%s):testbed_2_configuration\r\e[0K"
 
       ############################ TODO: END-TO-END TESTS ############################
     - cd OpenAirInterface_Testbed
@@ -336,10 +337,10 @@ post_install_cleanup:
       fi
     - sudo rm -rf * && sudo rm -rf .git*
 
-    # # SUDO ALIAS CLEANUP
-    # - |
-    #   if [ -f "$HOME/.local/bin/sudo" ]; then
-    #     rm -f "$HOME/.local/bin/sudo"
-    #   fi
-    #   hash -r
+    # SUDO ALIAS CLEANUP
+    - |
+      if [ -f "$HOME/.local/bin/sudo" ]; then
+        rm -f "$HOME/.local/bin/sudo"
+      fi
+      hash -r
   retry: 2

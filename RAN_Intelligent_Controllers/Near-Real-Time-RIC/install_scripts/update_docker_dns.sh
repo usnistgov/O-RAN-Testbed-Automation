@@ -33,13 +33,17 @@ echo "# Script: $(realpath "$0")..."
 # Exit immediately if a command fails
 set -e
 
-# Set DNS servers
-DNS_SERVERS=$(grep 'nameserver' /run/systemd/resolve/resolv.conf | awk '{print $2}' | jq -R . | jq -s .)
-
-if [ -z "$(echo $DNS_SERVERS | jq '. | select(length > 0)')" ]; then
-    echo "Could not find DNS servers in /run/systemd/resolve/resolv.conf, defaulting Google DNS..."
+# Set DNS servers for Docker daemon
+DNS_SERVERS=$(grep 'nameserver' /run/systemd/resolve/resolv.conf 2>/dev/null | awk '{print $2}' | jq -R . | jq -s . 2>/dev/null || echo '[]')
+if [ -z "$(echo "$DNS_SERVERS" | jq '. | select(length > 0)')" ]; then
+    echo "Could not find DNS servers in /run/systemd/resolve/resolv.conf, trying /etc/resolv.conf..."
+    DNS_SERVERS=$(grep '^nameserver' /etc/resolv.conf 2>/dev/null | awk '{print $2}' | jq -R . | jq -s . 2>/dev/null || echo '[]')
+fi
+if [ -z "$(echo "$DNS_SERVERS" | jq '. | select(length > 0)')" ]; then
+    echo "Could not find DNS servers in system resolv.conf files, defaulting to Google DNS..."
     DNS_SERVERS='["8.8.8.8", "8.8.4.4"]'
 fi
+echo "Using DNS servers: $DNS_SERVERS"
 
 # Docker daemon configuration file
 DOCKER_CONFIG="/etc/docker/daemon.json"

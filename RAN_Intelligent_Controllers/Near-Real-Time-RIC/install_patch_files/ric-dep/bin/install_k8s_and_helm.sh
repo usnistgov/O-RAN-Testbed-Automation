@@ -312,11 +312,16 @@ echo
 echo
 
 # Set DNS servers
-DNS_SERVERS=$(grep 'nameserver' /run/systemd/resolve/resolv.conf | awk '{print $2}' | jq -R . | jq -s .)
-if [ -z "$(echo $DNS_SERVERS | jq '. | select(length > 0)')" ]; then
-    echo "Could not find DNS servers in /run/systemd/resolve/resolv.conf, defaulting Google DNS..."
+DNS_SERVERS=$(grep 'nameserver' /run/systemd/resolve/resolv.conf 2>/dev/null | awk '{print $2}' | jq -R . | jq -s . 2>/dev/null || echo '[]')
+if [ -z "$(echo "$DNS_SERVERS" | jq '. | select(length > 0)')" ]; then
+    echo "Could not find DNS servers in /run/systemd/resolve/resolv.conf, trying /etc/resolv.conf..."
+    DNS_SERVERS=$(grep '^nameserver' /etc/resolv.conf 2>/dev/null | awk '{print $2}' | jq -R . | jq -s . 2>/dev/null || echo '[]')
+fi
+if [ -z "$(echo "$DNS_SERVERS" | jq '. | select(length > 0)')" ]; then
+    echo "Could not find DNS servers in system resolv.conf files, defaulting to Google DNS..."
     DNS_SERVERS='["8.8.8.8", "8.8.4.4"]'
 fi
+echo "Using DNS servers: $DNS_SERVERS"
 DNS_SERVER=$(echo $DNS_SERVERS | jq -r '.[0]')
 
 # Check for internet connectivity
@@ -626,9 +631,18 @@ if [ "$DRIVER" = "overlay2" ]; then
     fi
 fi
 
+# Determine the cgroup driver
+CGROUP_DRIVER="systemd"
+if [ "$USE_SYSTEMCTL" != true ]; then
+    CGROUP_DRIVER="cgroupfs"
+fi
+# Support overriding the cgroup driver from environment variable
+if [ -n "${DOCKER_CGROUP_DRIVER:-}" ]; then
+    CGROUP_DRIVER="${DOCKER_CGROUP_DRIVER}"
+fi
 sudo tee /etc/docker/daemon.json >/dev/null <<EOF
 {
-    "exec-opts": ["native.cgroupdriver=systemd"],
+    "exec-opts": ["native.cgroupdriver=${CGROUP_DRIVER}"],
     "log-driver": "json-file",
     "log-opts": {
         "max-size": "100m"
@@ -637,7 +651,8 @@ sudo tee /etc/docker/daemon.json >/dev/null <<EOF
     "features": {
         "buildkit": true
     },
-    "max-concurrent-downloads": 10
+    "max-concurrent-downloads": 10,
+    "dns": ${DNS_SERVERS}
 }
 EOF
 
@@ -698,7 +713,7 @@ else
     sudo mkdir -p /run /var/run
     sudo sh -c 'setsid dockerd --config-file=/etc/docker/daemon.json >>'"${DOCKERD_LOG}"' 2>&1 </dev/null &'
     # Wait for Docker to be ready
-    for _ in $(seq 1 60); do
+    for ATTEMPT in $(seq 1 60); do
         if sudo test -S /var/run/docker.sock && sudo docker version >/dev/null 2>&1; then
             break
         fi
@@ -709,9 +724,13 @@ else
         sudo pkill -x dockerd >/dev/null 2>&1 || true
         # Update daemon.json temporarily
         sudo cp /etc/docker/daemon.json /etc/docker/daemon.json.bak
-        sudo sed -i 's/"native.cgroupdriver=systemd"/"native.cgroupdriver=cgroupfs"/' /etc/docker/daemon.json
+        sudo sed -i 's/"native.cgroupdriver=systemd"/"native.cgroupdriver=cgroupfs"/' /etc/docker/daemon.json || true
+        # If the above sed did not find the line, add it
+        if ! grep -q 'native.cgroupdriver' /etc/docker/daemon.json; then
+            sudo jq '. + {"exec-opts": ["native.cgroupdriver=cgroupfs"]}' /etc/docker/daemon.json.bak | sudo tee /etc/docker/daemon.json >/dev/null
+        fi
         sudo sh -c 'setsid dockerd --config-file=/etc/docker/daemon.json >>'"${DOCKERD_LOG}"' 2>&1 </dev/null &'
-        for _ in $(seq 1 60); do
+        for ATTEMPT in $(seq 1 60); do
             if sudo test -S /var/run/docker.sock && sudo docker version >/dev/null 2>&1; then
                 break
             fi

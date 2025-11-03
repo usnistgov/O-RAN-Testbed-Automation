@@ -89,6 +89,19 @@ fi
 echo "Using CP: $CORE_TO_USE"
 echo "Using UP: $UPF_TO_USE"
 
+# Detect if systemctl is available
+USE_SYSTEMCTL=false
+if command -v systemctl >/dev/null 2>&1; then
+    if [ "$(cat /proc/1/comm 2>/dev/null)" = "systemd" ]; then
+        OUTPUT="$(systemctl 2>&1 || true)"
+        if echo "$OUTPUT" | grep -qiE 'not supported|System has not been booted with systemd'; then
+            echo "Detected systemctl is not supported. Using background processes instead."
+        elif systemctl list-units >/dev/null 2>&1 || systemctl is-system-running --quiet >/dev/null 2>&1; then
+            USE_SYSTEMCTL=true
+        fi
+    fi
+fi
+
 cd "$SCRIPT_DIR"
 
 if [ "$CORE_TO_USE" == "5gdeploy-phoenix" ]; then

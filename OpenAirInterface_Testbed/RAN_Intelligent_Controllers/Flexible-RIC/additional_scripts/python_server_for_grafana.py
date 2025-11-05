@@ -307,6 +307,8 @@ class SingleFileHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         # NIST.svg handling stays the same
         elif path == 'NIST.svg':
             self.path = os.path.join(base_dir, 'Images', 'NIST_Dark.svg')
+        elif path == 'NIST_Light.svg':
+            self.path = os.path.join(base_dir, 'Images', 'NIST_Light.svg')
         else:
             self.send_error(404, f'File not found: {self.path}')
             return

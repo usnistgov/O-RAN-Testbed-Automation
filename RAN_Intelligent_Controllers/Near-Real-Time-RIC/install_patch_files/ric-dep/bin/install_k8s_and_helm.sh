@@ -603,10 +603,6 @@ if [ -f /usr/local/bin/docker ]; then
     sudo rm -f /usr/local/bin/docker
 fi
 
-# Remove Docker apt sources and keys
-sudo rm -f /etc/apt/sources.list.d/docker.list /etc/apt/keyrings/docker.asc
-sudo apt-get update || true
-
 # Clean up
 sudo apt-get autoremove --purge -y
 
@@ -958,6 +954,12 @@ if ! command -v kubectl >/dev/null 2>&1; then
     fi
 fi
 
+# Install containerd if not already installed
+if ! command -v containerd >/dev/null 2>&1; then
+    echo "containerd not found, installing..."
+    sudo env $APTVARS apt-get install -y containerd.io
+fi
+
 sudo apt-mark hold docker.io kubernetes-cni kubelet kubeadm kubectl
 
 # Unmask and enable kubelet service without starting it
@@ -1020,6 +1022,21 @@ if [ ! /var/run/containerd/containerd.sock -ef /run/containerd/containerd.sock ]
     sudo ln -sf /run/containerd/containerd.sock /var/run/containerd/containerd.sock
 fi
 
+if ! command -v crictl >/dev/null 2>&1; then
+    echo "crictl not found, installing..."
+    sudo env $APTVARS apt-get install -y cri-tools
+fi
+
+# Configure crictl to connect to containerd socket
+cat <<EOF | sudo tee /etc/crictl.yaml >/dev/null
+runtime-endpoint: unix:///run/containerd/containerd.sock
+image-endpoint: unix:///run/containerd/containerd.sock
+timeout: 10
+debug: false
+EOF
+sudo chmod 644 /etc/crictl.yaml
+sleep 2
+
 # Wait up to 30 seconds for containerd CRI to be ready
 for i in $(seq 1 30); do
     if sudo crictl info >/dev/null 2>&1; then
@@ -1029,9 +1046,18 @@ for i in $(seq 1 30); do
 done
 if ! sudo crictl info >/dev/null 2>&1; then
     echo "ERROR: containerd CRI not ready"
-    sudo tail -n 200 /tmp/containerd.log 2>/dev/null || true
-    echo "Log for containerd grpc.v1.cri:"
-    grep -i 'grpc.v1.cri' /tmp/containerd.log | tail -n +1 || true
+    sudo crictl info 2>&1 || true
+    if [ "$USE_SYSTEMCTL" = true ]; then
+        echo "Containerd service status:"
+        sudo systemctl status containerd --no-pager || true
+        echo "Recent containerd logs:"
+        sudo journalctl -u containerd --no-pager -n 50 || true
+    else
+        echo "Containerd process logs:"
+        sudo tail -n 200 /tmp/containerd.log 2>/dev/null || true
+        echo "Log for containerd grpc.v1.cri:"
+        grep -i 'grpc.v1.cri' /tmp/containerd.log 2>/dev/null | tail -n +1 || true
+    fi
     exit 1
 fi
 # Enable br_netfilter module and set sysctl params
@@ -1068,15 +1094,6 @@ else
         sleep 5
     done) &
 fi
-
-# Configure crictl to not give endpoint warnings when running: sudo crictl ps -a
-cat <<EOF | sudo tee /etc/crictl.yaml >/dev/null
-runtime-endpoint: unix:///run/containerd/containerd.sock
-image-endpoint: unix:///run/containerd/containerd.sock
-timeout: 10
-debug: false
-EOF
-sudo chmod 644 /etc/crictl.yaml
 
 # Pull required images for Kubernetes
 echo "Pulling kube-apiserver, kube-controller-manager, kube-scheduler, kube-proxy, pause, etcd, and coredns..."
@@ -1204,7 +1221,13 @@ if sudo test -f /etc/cni/net.d/10-flannel.conflist; then
     sudo rm -rf /etc/cni/net.d/10-flannel.conflist
 fi
 
-echo "Configuring Kube-Proxy ClusterRoleBinding..."
+# echo "Generated kubeadm configuration:"
+# cat "$HOME/.kube/kube-config.yaml"
+
+# # Remove proxy environment variables for kubeadm init
+# unset HTTP_PROXY HTTPS_PROXY http_proxy https_proxy NO_PROXY no_proxy
+
+# Configure Kube-Proxy ClusterRoleBinding
 cat <<EOF | tee "$HOME/.kube/kube-proxy-rbac.yaml" >/dev/null
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -1512,6 +1535,7 @@ HELM_REPO_HOST="helm.ricinfra.local"
 # Remove existing entries for the hostname from /etc/hosts
 sudo sed -i "/$HELM_REPO_HOST/d" /etc/hosts || true
 # Add the new entry to /etc/hosts
+
 echo "127.0.0.1 $HELM_REPO_HOST" | sudo tee -a /etc/hosts || true
 
 # Reset the shell's command hash table to recognize changes in available executables

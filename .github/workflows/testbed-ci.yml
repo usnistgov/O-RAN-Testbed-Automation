@@ -1,0 +1,364 @@
+name: Testbed CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  GIT_DEPTH: "1"
+  GIT_STRATEGY: none
+  GIT_SUBMODULE_STRATEGY: none
+  GIT_CONFIG_COUNT: "1"
+  GIT_CONFIG_KEY_0: "safe.directory"
+  GIT_CONFIG_VALUE_0: "*"
+  GIT_SSL_NO_VERIFY: "1"
+  DEBIAN_FRONTEND: noninteractive
+  FF_USE_FASTZIP: "true"
+  ARTIFACT_COMPRESSION_LEVEL: "slowest"
+  CACHE_COMPRESSION_LEVEL: "slowest"
+
+jobs:
+  ################################################################################
+  ############################### INITIALIZATION #################################
+  ################################################################################
+  pre_install_cleanup:
+    runs-on: ubuntu-22.04
+    concurrency:
+      group: testbed
+      cancel-in-progress: true
+    continue-on-error: true
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Environment
+        shell: bash
+        run: |
+          # Ensure sudo works (GitHub-hosted runners have passwordless sudo)
+          sudo -n true || { echo "sudo is not available"; exit 1; }
+
+          # General setup
+          echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections || true
+          export DEBIAN_FRONTEND=noninteractive
+          cd "$GITHUB_WORKSPACE"
+          pwd
+          command -v tree >/dev/null 2>&1 && tree . -d || true
+
+          # Git safe directory (from variables)
+          git config --global --add safe.directory '*'
+
+      - name: Clean Workspace
+        shell: bash
+        run: |
+          # Uninstall components then remove files from previous runs
+          if [[ -f "5G_Core_Network/options.yaml" && -f "full_uninstall.sh" && -f "OpenAirInterface_Testbed/full_uninstall.sh" ]]; then
+          # Testbed 1
+          sed -i -E 's/^core_to_use:.*/core_to_use: open5gs/' 5G_Core_Network/options.yaml
+          ./full_uninstall.sh bypass_confirmation
+          
+          # Testbed 2
+          sed -i -E 's/^core_to_use:.*/core_to_use: 5gdeploy-open5gs/' 5G_Core_Network/options.yaml
+          cd OpenAirInterface_Testbed
+          ./full_uninstall.sh bypass_confirmation
+          cd ..
+          
+          sed -i -E 's/^core_to_use:.*/core_to_use: open5gs/' 5G_Core_Network/options.yaml
+          else
+          echo "Repositories don't exist for uninstall_all_components, skipping."
+          fi
+
+          # Remove all files in the workspace
+          sudo rm -rf "${GITHUB_WORKSPACE:?}/"* "${GITHUB_WORKSPACE:?}/.git"* || true
+
+  ################################################################################
+  ########################### TESTBED 1 INSTALLATION #############################
+  ################################################################################
+  open5gs_srsran_oran_sc_ric_setup:
+    runs-on: ubuntu-22.04
+    needs: [pre_install_cleanup]
+    concurrency:
+      group: testbed
+      cancel-in-progress: true
+    env:
+      GIT_STRATEGY: clone
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Before script (env, listing)
+        shell: bash
+        run: |
+          # Ensure sudo works (GitHub-hosted runners have passwordless sudo)
+          sudo -n true || { echo "sudo is not available"; exit 1; }
+
+          # General setup
+          echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections || true
+          export DEBIAN_FRONTEND=noninteractive
+          cd "$GITHUB_WORKSPACE"
+          pwd
+          command -v tree >/dev/null 2>&1 && tree . -d || true
+
+          git config --global --add safe.directory '*'
+
+      - name: Configure Open5GS
+        shell: bash
+        run: |
+          cd 5G_Core_Network
+          sed -i -E 's/^core_to_use:.*/core_to_use: open5gs/' options.yaml
+          cd ..
+
+      - name: Quick Uninstall Existing Components
+        shell: bash
+        run: |
+          ./full_uninstall.sh bypass_confirmation
+
+      # - name: Install O-RAN SC Near-RT RIC
+      #   shell: bash
+      #   run: |
+      #     cd RAN_Intelligent_Controllers/Near-Real-Time-RIC
+      #     ./full_install.sh
+      #     cd ../..
+
+      - name: Install Open5GS
+        shell: bash
+        run: |
+          cd 5G_Core_Network
+          ./full_install.sh
+          cd ..
+
+      - name: Install srsRAN_4G UE
+        shell: bash
+        run: |
+          cd User_Equipment
+          ./full_install.sh
+          cd ..
+
+      - name: Install srsRAN_Project gNB
+        shell: bash
+        run: |
+          cd Next_Generation_Node_B
+          ./full_install.sh
+          cd ..
+
+      - name: Testbed 1 Configuration
+        shell: bash
+        run: |
+          ./generate_configurations.sh --disable-e2-term
+
+      # TODO: END-TO-END TESTS
+
+      - name: Stop Testbed 1
+        shell: bash
+        run: |
+          ./stop.sh
+
+      - name: Uninstall Open5GS
+        shell: bash
+        run: |
+          cd 5G_Core_Network
+          ./full_uninstall.sh bypass_confirmation
+          cd ..
+
+      - name: Uninstall srsRAN_4G UE
+        shell: bash
+        run: |
+          cd User_Equipment
+          ./full_uninstall.sh bypass_confirmation
+          cd ..
+
+      - name: Uninstall srsRAN_Project gNB
+        shell: bash
+        run: |
+          cd Next_Generation_Node_B
+          ./full_uninstall.sh bypass_confirmation
+          cd ..
+
+      - name: Uninstall O-RAN SC Near-RT RIC
+        shell: bash
+        run: |
+          cd RAN_Intelligent_Controllers/Near-Real-Time-RIC
+          ./full_uninstall.sh bypass_confirmation
+          cd ../..
+
+  ################################################################################
+  ########################### TESTBED 2 INSTALLATION #############################
+  ################################################################################
+  openairinterface_flexric_5gdeploy_setup:
+    runs-on: ubuntu-22.04
+    needs: [open5gs_srsran_oran_sc_ric_setup]
+    concurrency:
+      group: testbed
+      cancel-in-progress: true
+    env:
+      GIT_STRATEGY: clone
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Before script (env, listing)
+        shell: bash
+        run: |
+          # Ensure sudo works (GitHub-hosted runners have passwordless sudo)
+          sudo -n true || { echo "sudo is not available"; exit 1; }
+
+          echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections || true
+          export DEBIAN_FRONTEND=noninteractive
+          cd "$GITHUB_WORKSPACE"
+          pwd
+          command -v tree >/dev/null 2>&1 && tree . -d || true
+
+          git config --global --add safe.directory '*'
+
+      - name: Configure 5gdeploy
+        shell: bash
+        run: |
+          cd OpenAirInterface_Testbed/5G_Core_Network
+          sed -i -E 's/^core_to_use:.*/core_to_use: 5gdeploy-open5gs/' options.yaml
+          cd ../..
+
+      - name: Quick Uninstall Existing Components
+        shell: bash
+        run: |
+          cd OpenAirInterface_Testbed
+          ./full_uninstall.sh bypass_confirmation
+          cd ..
+
+      - name: Install OpenAirInterface UE
+        shell: bash
+        run: |
+          cd OpenAirInterface_Testbed/User_Equipment
+          ./full_install.sh
+          cd ../..
+
+      - name: Install OpenAirInterface gNB
+        shell: bash
+        run: |
+          cd OpenAirInterface_Testbed/Next_Generation_Node_B
+          ./full_install.sh
+          cd ../..
+
+      - name: Install FlexRIC
+        shell: bash
+        run: |
+          cd OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC
+          ./full_install.sh
+          cd ../../..
+
+      - name: Install 5G Deployment Helper (5gdeploy)
+        shell: bash
+        run: |
+          cd 5G_Core_Network
+          ./full_install.sh
+          cd ..
+
+      - name: Testbed 2 Configuration
+        shell: bash
+        run: |
+          cd OpenAirInterface_Testbed
+          ./generate_configurations.sh
+          cd ..
+
+      # TODO: END-TO-END TESTS
+
+      - name: Stop Testbed 2
+        shell: bash
+        run: |
+          cd OpenAirInterface_Testbed
+          ./stop.sh
+          cd ..
+
+      - name: Uninstall OpenAirInterface UE
+        shell: bash
+        run: |
+          cd OpenAirInterface_Testbed/User_Equipment
+          ./full_uninstall.sh bypass_confirmation
+          cd ../..
+
+      - name: Uninstall OpenAirInterface gNB
+        shell: bash
+        run: |
+          cd OpenAirInterface_Testbed/Next_Generation_Node_B
+          ./full_uninstall.sh bypass_confirmation
+          cd ../..
+
+      - name: Uninstall FlexRIC
+        shell: bash
+        run: |
+          cd OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC
+          ./full_uninstall.sh bypass_confirmation
+          cd ../../..
+
+      - name: Uninstall 5G Deployment Helper (5gdeploy)
+        shell: bash
+        run: |
+          cd 5G_Core_Network
+          ./full_uninstall.sh bypass_confirmation
+          cd ..
+
+  ################################################################################
+  ################################ FINALIZATION ##################################
+  ################################################################################
+  post_install_cleanup:
+    # stage: finalization
+    runs-on: ubuntu-22.04
+    needs:
+      - open5gs_srsran_oran_sc_ric_setup
+      - openairinterface_flexric_5gdeploy_setup
+    if: always()
+    concurrency:
+      group: testbed
+      cancel-in-progress: true
+    continue-on-error: true
+    env:
+      GIT_STRATEGY: none
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Setup Environment
+        shell: bash
+        run: |
+          # Ensure sudo works (GitHub-hosted runners have passwordless sudo)
+          sudo -n true || { echo "sudo is not available"; exit 1; }
+
+          echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections || true
+          export DEBIAN_FRONTEND=noninteractive
+          cd "$GITHUB_WORKSPACE"
+          pwd
+          command -v tree >/dev/null 2>&1 && tree . -d || true
+
+          git config --global --add safe.directory '*'
+
+      - name: Clean Workspace
+        shell: bash
+        run: |
+          # Uninstall components then remove files from this run
+          if [[ -f "5G_Core_Network/options.yaml" && -f "full_uninstall.sh" && -f "OpenAirInterface_Testbed/full_uninstall.sh" ]]; then
+            # Testbed 1
+            sed -i -E 's/^core_to_use:.*/core_to_use: open5gs/' 5G_Core_Network/options.yaml
+            ./full_uninstall.sh bypass_confirmation
+            # Testbed 2
+            sed -i -E 's/^core_to_use:.*/core_to_use: 5gdeploy-open5gs/' 5G_Core_Network/options.yaml
+            cd OpenAirInterface_Testbed
+            ./full_uninstall.sh bypass_confirmation
+            cd ..
+            sed -i -E 's/^core_to_use:.*/core_to_use: open5gs/' 5G_Core_Network/options.yaml
+          else
+            echo "Repositories don't exist for uninstall_all_components, skipping."
+          fi
+
+          # Remove all files in the workspace
+          sudo rm -rf "${GITHUB_WORKSPACE:?}/"* "${GITHUB_WORKSPACE:?}/.git"* || true

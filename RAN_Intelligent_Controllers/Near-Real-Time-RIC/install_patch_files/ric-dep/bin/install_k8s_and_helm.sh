@@ -1221,12 +1221,6 @@ if sudo test -f /etc/cni/net.d/10-flannel.conflist; then
     sudo rm -rf /etc/cni/net.d/10-flannel.conflist
 fi
 
-# echo "Generated kubeadm configuration:"
-# cat "$HOME/.kube/kube-config.yaml"
-
-# # Remove proxy environment variables for kubeadm init
-# unset HTTP_PROXY HTTPS_PROXY http_proxy https_proxy NO_PROXY no_proxy
-
 # Configure Kube-Proxy ClusterRoleBinding
 cat <<EOF | tee "$HOME/.kube/kube-proxy-rbac.yaml" >/dev/null
 apiVersion: rbac.authorization.k8s.io/v1
@@ -1535,7 +1529,6 @@ HELM_REPO_HOST="helm.ricinfra.local"
 # Remove existing entries for the hostname from /etc/hosts
 sudo sed -i "/$HELM_REPO_HOST/d" /etc/hosts || true
 # Add the new entry to /etc/hosts
-
 echo "127.0.0.1 $HELM_REPO_HOST" | sudo tee -a /etc/hosts || true
 
 # Reset the shell's command hash table to recognize changes in available executables

@@ -47,6 +47,7 @@ else
 
     echo "Starting flexric in background..."
     mkdir -p logs
+    sudo chown "$USER":"$USER" logs
     >logs/flexric_stdout.txt
 
     cd "$SCRIPT_DIR/flexric"

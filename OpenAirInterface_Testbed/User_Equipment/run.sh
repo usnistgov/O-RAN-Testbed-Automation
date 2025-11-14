@@ -119,6 +119,7 @@ else
         exit 1
     fi
     mkdir -p logs
+    sudo chown "$USER":"$USER" logs
     >logs/ue${UE_NUMBER}_stdout.txt
     echo "Starting nr-uesoftmodem (ue$UE_NUMBER)..."
 

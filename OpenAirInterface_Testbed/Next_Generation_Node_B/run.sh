@@ -54,6 +54,7 @@ echo "$HOSTNAME_IP" >configs/get_rfsim_server_address.txt
 
 cd "$SCRIPT_DIR"
 mkdir -p logs
+sudo chown "$USER":"$USER" logs
 >logs/gnb_stdout.txt
 
 cd "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build"

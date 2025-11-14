@@ -53,6 +53,7 @@ if pgrep -x "gnb" >/dev/null; then
 else
     echo "Starting gnb..."
     mkdir -p logs
+    sudo chown "$USER":"$USER" logs
     >logs/gnb.log
     >logs/gnb_stdout.txt
 

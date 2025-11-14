@@ -59,6 +59,7 @@ fi
 
 cd "$SCRIPT_DIR"
 mkdir -p logs
+sudo chown "$USER":"$USER" logs
 >logs/split_cu_stdout.txt
 
 cd "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build"

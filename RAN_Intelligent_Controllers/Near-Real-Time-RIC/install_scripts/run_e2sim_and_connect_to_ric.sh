@@ -69,6 +69,7 @@ fi
 
 # Path to the output file
 mkdir -p logs
+sudo chown "$USER":"$USER" logs
 OUTPUT_FILE="logs/e2sim_output.txt"
 
 # Stop the oransim container before starting it again

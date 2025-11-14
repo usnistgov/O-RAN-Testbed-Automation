@@ -97,6 +97,7 @@ if [ ! -f "$DU_CONFIG" ]; then
 fi
 
 mkdir -p logs
+sudo chown "$USER":"$USER" logs
 >logs/split_du${DU_NUMBER}_stdout.txt
 
 # Ensure the following command runs with sudo privileges

@@ -39,7 +39,7 @@ fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 
-RUN_TELNET_SESSION_AFTER=false
+RUN_TELNET_SESSION_AFTER=true
 NUM_UES=1
 NUM_DUS=2
 RUN_XAPP_KPM_MONITOR=false

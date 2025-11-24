@@ -71,7 +71,7 @@ mkdir configs
 # Only remove the logs if not running
 RUNNING_STATUS=$(./is_running.sh)
 if [[ $RUNNING_STATUS != *": RUNNING"* ]]; then
-    rm -rf logs
+    rm -rf logs || sudo rm -rf logs
     mkdir logs
 fi
 

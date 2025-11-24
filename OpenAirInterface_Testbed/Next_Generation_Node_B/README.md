@@ -30,6 +30,12 @@ The gNodeB can be deployed in a split Central Unit (CU) and Distributed Unit (DU
 
 The gNodeB can also be monitored and controlled remotely using the OpenAirInterface O1 adapter [\[6\]][oai-o1-adapter], which runs as a Docker container. Management scripts for the O1 adapter container are located in the `additional_scripts/` directory. Use `./install_o1_adapter.sh` to configure and build the adapter, `./run_o1_adapter.sh` to start the container which connects to the gNodeB's telnet server, `./stop_o1_adapter.sh` to stop the container, and `./uninstall_o1_adapter.sh` to uninstall it. While running, the endpoint `127.0.0.1:830` can be connected to over NETCONF for Non-RT RIC KPM monitoring and RIC control. Endpoints can be configured by updating the variables set in `install_o1_adapter.sh` (which modifies `o1-adapter/docker/config/config.json`), then re-installing the O1 adapter.
 
+### ImScope
+
+ImScope can be enabled for the gNodeB by setting `NRSCOPE_GUI=true` at the beginning of the `full_install.sh` script before running it. For more information about ImScope, see the OpenAirInterface documentation [\[7\]][oai-imscope].
+
+![ImScope Screenshot](../../Images/OpenAirInterface_ImScope.png)
+
 ## References
 
 1. OpenAirInterface 5G Wireless Implementation. OpenAirInterface. [https://gitlab.eurecom.fr/oai/openairinterface5g][oai-gnb]
@@ -38,6 +44,7 @@ The gNodeB can also be monitored and controlled remotely using the OpenAirInterf
 4. 3GPP TS 38.413: NG-RAN; NG Application Protocol (NGAP). [https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=3223][ts3223-3gpp]
 5. Starting the softmodem with the telnet server. OpenAirInterface. [https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/develop/common/utils/telnetsrv/DOC/telnetusage.md][oai-telnet]
 6. OAI O1 Adapter. OpenAirInterface. [https://gitlab.eurecom.fr/oai/o1-adapter][oai-o1-adapter]
+7. ImScope. OpenAirInterface. [https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/develop/openair1/PHY/TOOLS/readme.md?ref_type=heads#imscope][oai-imscope]
 
 <!-- References -->
 
@@ -47,3 +54,4 @@ The gNodeB can also be monitored and controlled remotely using the OpenAirInterf
 [ts3223-3gpp]: https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=3223
 [oai-telnet]: https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/develop/common/utils/telnetsrv/DOC/telnetusage.md
 [oai-o1-adapter]: https://gitlab.eurecom.fr/oai/o1-adapter
+[oai-imscope]: https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/develop/openair1/PHY/TOOLS/readme.md?ref_type=heads#imscope

@@ -175,7 +175,7 @@ fi
 # Only remove the logs if no component is running
 RUNNING_STATUS=$(./is_running.sh)
 if [[ $RUNNING_STATUS != *": RUNNING"* ]]; then
-    rm -rf logs
+    rm -rf logs || sudo rm -rf logs
     mkdir logs
 fi
 

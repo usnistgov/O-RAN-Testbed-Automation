@@ -40,6 +40,7 @@ cd "$SCRIPT_DIR"
 # Default values
 UE_NUMBER=1
 RFSIM_SERVER=0
+DISABLE_NRSCOPE_IF_INSTALLED=false
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -119,7 +120,9 @@ else
         exit 1
     fi
     mkdir -p logs
-    sudo chown "$USER":"$USER" logs
+    if [ -f "logs/ue${UE_NUMBER}_stdout.txt" ]; then
+        sudo chown "$USER":"$USER" logs/ue${UE_NUMBER}_stdout.txt
+    fi
     >logs/ue${UE_NUMBER}_stdout.txt
     echo "Starting nr-uesoftmodem (ue$UE_NUMBER)..."
 
@@ -142,6 +145,11 @@ else
         fi
         RFSIM_SERVER_ARG="--rfsimulator.serveraddr $SERVER_IP"
     fi
+    ADDITIONAL_FLAGS=""
+    if [ "$DISABLE_NRSCOPE_IF_INSTALLED" = false ] && [ -f "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build/libimscope.so" ]; then
+        echo "Enabling ImScope..."
+        ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --imscope -d --log_config.global_log_options utc_time"
+    fi
 
     cd "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build"
 
@@ -151,5 +159,5 @@ else
     DL_CARRIER_FREQUENCY_HZ=3619200000
 
     # sudo ip netns exec ue$UE_NUMBER ./nr-uesoftmodem -O "../../../../configs/ue$UE_NUMBER.conf" --rfsim $RFSIM_SERVER_ARG --rfsimulator.options chanmod -r $BANDWIDTH_RBS --numerology $NUMEROLOGY --band $BAND -C $DL_CARRIER_FREQUENCY_HZ
-    sudo script -q -f -c "ip netns exec ue$UE_NUMBER ./nr-uesoftmodem -O \"../../../../configs/ue$UE_NUMBER.conf\" --rfsim $RFSIM_SERVER_ARG --rfsimulator.options chanmod -r $BANDWIDTH_RBS --numerology $NUMEROLOGY --band $BAND -C $DL_CARRIER_FREQUENCY_HZ" "$SCRIPT_DIR/logs/ue${UE_NUMBER}_stdout.txt"
+    sudo script -q -f -c "ip netns exec ue$UE_NUMBER ./nr-uesoftmodem -O \"../../../../configs/ue$UE_NUMBER.conf\" --rfsim $RFSIM_SERVER_ARG --rfsimulator.options chanmod -r $BANDWIDTH_RBS --numerology $NUMEROLOGY --band $BAND -C $DL_CARRIER_FREQUENCY_HZ $ADDITIONAL_FLAGS" "$SCRIPT_DIR/logs/ue${UE_NUMBER}_stdout.txt"
 fi

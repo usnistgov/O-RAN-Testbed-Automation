@@ -76,7 +76,7 @@ if [ "$DU_NUMBER" -ne 1 ]; then
     RFSIM_SERVER=0
 fi
 
-# ADDITIONAL_FLAGS=""
+ADDITIONAL_FLAGS=""
 # if [ -f "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build/libtelnetsrv.so" ]; then
 #     echo "Found telnet server library. Enabling telnet server..."
 #     TELNET_ADDRESS=127.0.0.1
@@ -88,6 +88,14 @@ fi
 #     ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --telnetsrv.listenstdin 1"
 # fi
 
+# DISABLE_NRSCOPE_IF_INSTALLED=false
+# IMSCOPE=false
+# if [ "$DISABLE_NRSCOPE_IF_INSTALLED" = false ] && [ -f "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build/libimscope.so" ]; then
+#     echo "Enabling ImScope..."
+#     ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --imscope -d --log_config.global_log_options utc_time"
+#     IMSCOPE=true
+# fi
+
 cd "$SCRIPT_DIR"
 
 DU_CONFIG="$SCRIPT_DIR/configs/split_du$DU_NUMBER.conf"
@@ -97,7 +105,9 @@ if [ ! -f "$DU_CONFIG" ]; then
 fi
 
 mkdir -p logs
-sudo chown "$USER":"$USER" logs
+if [ -f "logs/split_du${DU_NUMBER}_stdout.txt" ]; then
+    sudo chown "$USER":"$USER" logs/split_du${DU_NUMBER}_stdout.txt
+fi
 >logs/split_du${DU_NUMBER}_stdout.txt
 
 # Ensure the following command runs with sudo privileges
@@ -126,3 +136,9 @@ cd "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build"
 # Code from (https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/develop/doc/handover-tutorial.md#run-the-setup):
 # sudo ./nr-softmodem -O "$DU_CONFIG" --rfsim $RFSIM_SERVER_ARG --rfsimulator.options chanmod --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS
 sudo script -q -f -c "./nr-softmodem -O \"$DU_CONFIG\" --rfsim $RFSIM_SERVER_ARG --rfsimulator.options chanmod --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS" "$SCRIPT_DIR/logs/split_du${DU_NUMBER}_stdout.txt"
+
+# if [ "$IMSCOPE" = true ]; then
+#     script -q -f -c "./nr-softmodem -O \"$DU_CONFIG\" --rfsim $RFSIM_SERVER_ARG --rfsimulator.options chanmod --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS" "$SCRIPT_DIR/logs/split_du${DU_NUMBER}_stdout.txt"
+# else
+#     sudo script -q -f -c "./nr-softmodem -O \"$DU_CONFIG\" --rfsim $RFSIM_SERVER_ARG --rfsimulator.options chanmod --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS" "$SCRIPT_DIR/logs/split_du${DU_NUMBER}_stdout.txt"
+# fi

@@ -32,6 +32,7 @@
 set -e
 
 TELNET_SERVER=true
+NRSCOPE_GUI=false
 DEBUG_SYMBOLS=false
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
@@ -57,8 +58,10 @@ CLEAN_INSTALL=false
 
 # Check for gNB binary to determine if srsRAN_Project is already installed
 if [ "$CLEAN_INSTALL" = false ] && [ -f "openairinterface5g/cmake_targets/ran_build/build/nr-softmodem" ]; then
-    echo "OpenAirInterface gNB is already installed, skipping."
-    exit 0
+    if [ "$NRSCOPE_GUI" != true ] || [ -f "openairinterface5g/cmake_targets/ran_build/build/libimscope.so" ]; then
+        echo "OpenAirInterface gNB is already installed, skipping."
+        exit 0
+    fi
 fi
 
 # Run a sudo command every minute to ensure script execution without user interaction
@@ -131,6 +134,11 @@ if [ "$TELNET_SERVER" = true ]; then
         echo "Installing telnet client..."
         sudo env $APTVARS apt-get install -y telnet
     fi
+fi
+if [ "$NRSCOPE_GUI" = true ]; then
+    sudo env $APTVARS apt-get install -y libglfw3-dev libopengl-dev
+    sudo env $APTVARS apt-get install -y libforms-bin libforms-dev
+    ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --build-lib imscope"
 fi
 
 cd "$SCRIPT_DIR"

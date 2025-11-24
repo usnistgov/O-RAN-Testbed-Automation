@@ -28,6 +28,8 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
+DISABLE_NRSCOPE_IF_INSTALLED=false
+
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
@@ -47,6 +49,12 @@ if [ -f "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build/libtelnets
     ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --telnetsrv.listenport $TELNET_PORT"
     ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --telnetsrv.listenstdin 1"
 fi
+IMSCOPE=false
+if [ "$DISABLE_NRSCOPE_IF_INSTALLED" = false ] && [ -f "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build/libimscope.so" ]; then
+    echo "Enabling ImScope..."
+    ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --imscope -d --log_config.global_log_options utc_time"
+    IMSCOPE=true
+fi
 
 # Write the hostname IP to the get_rfsim_server_address.txt file
 HOSTNAME_IP=$(hostname -I | awk '{print $1}')
@@ -54,11 +62,17 @@ echo "$HOSTNAME_IP" >configs/get_rfsim_server_address.txt
 
 cd "$SCRIPT_DIR"
 mkdir -p logs
-sudo chown "$USER":"$USER" logs
+if [ -f "logs/gnb_stdout.txt" ]; then
+    sudo chown "$USER":"$USER" logs/gnb_stdout.txt
+fi
 >logs/gnb_stdout.txt
 
 cd "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build"
 
 # Code from (https://github.com/OPENAIRINTERFACE/openairinterface5g/blob/develop/radio/rfsimulator/README.md#5g-case):
 # sudo ./nr-softmodem -O "$SCRIPT_DIR/configs/gnb.conf" --rfsim --rfsimulator.serveraddr server --rfsimulator.options chanmod --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS
-sudo script -q -f -c "./nr-softmodem -O \"$SCRIPT_DIR/configs/gnb.conf\" --rfsim --rfsimulator.serveraddr server --rfsimulator.options chanmod --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS" "$SCRIPT_DIR/logs/gnb_stdout.txt"
+if [ "$IMSCOPE" = true ]; then
+    script -q -f -c "./nr-softmodem -O \"$SCRIPT_DIR/configs/gnb.conf\" --rfsim --rfsimulator.serveraddr server --rfsimulator.options chanmod --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS" "$SCRIPT_DIR/logs/gnb_stdout.txt"
+else
+    sudo script -q -f -c "./nr-softmodem -O \"$SCRIPT_DIR/configs/gnb.conf\" --rfsim --rfsimulator.serveraddr server --rfsimulator.options chanmod --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS" "$SCRIPT_DIR/logs/gnb_stdout.txt"
+fi

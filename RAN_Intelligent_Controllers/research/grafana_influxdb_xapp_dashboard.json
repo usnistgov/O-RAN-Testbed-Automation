@@ -307,12 +307,12 @@
               "type": "number"
             },
             {
-              "selector": "DRB.PdcpSduVolumeDL (kb)",
+              "selector": "DRB.PdcpSduVolumeDL (Mb)",
               "text": "",
               "type": "number"
             },
             {
-              "selector": "DRB.PdcpSduVolumeUL (kb)",
+              "selector": "DRB.PdcpSduVolumeUL (Mb)",
               "text": "",
               "type": "number"
             },
@@ -3565,7 +3565,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "DRB.PdcpSduVolumeUL (kb) (sum) / 8"
+              "options": "DRB.PdcpSduVolumeUL (Mb) (sum) / 8"
             },
             "properties": [
               {
@@ -3584,7 +3584,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "DRB.PdcpSduVolumeDL (kb) (sum) / 8"
+              "options": "DRB.PdcpSduVolumeDL (Mb) (sum) / 8"
             },
             "properties": [
               {
@@ -3651,8 +3651,8 @@
           "options": {
             "include": {
               "names": [
-                "DRB.PdcpSduVolumeDL (kb)",
-                "DRB.PdcpSduVolumeUL (kb)",
+                "DRB.PdcpSduVolumeDL (Mb)",
+                "DRB.PdcpSduVolumeUL (Mb)",
                 "Time (UNIX ms)",
                 "UE ID"
               ]
@@ -3682,13 +3682,13 @@
           "id": "groupBy",
           "options": {
             "fields": {
-              "DRB.PdcpSduVolumeDL (kb)": {
+              "DRB.PdcpSduVolumeDL (Mb)": {
                 "aggregations": [
                   "sum"
                 ],
                 "operation": "aggregate"
               },
-              "DRB.PdcpSduVolumeUL (kb)": {
+              "DRB.PdcpSduVolumeUL (Mb)": {
                 "aggregations": [
                   "sum"
                 ],
@@ -3712,7 +3712,7 @@
               "left": {
                 "matcher": {
                   "id": "byName",
-                  "options": "DRB.PdcpSduVolumeDL (kb) (sum)"
+                  "options": "DRB.PdcpSduVolumeDL (Mb) (sum)"
                 }
               },
               "operator": "/",
@@ -3733,7 +3733,7 @@
               "left": {
                 "matcher": {
                   "id": "byName",
-                  "options": "DRB.PdcpSduVolumeUL (kb) (sum)"
+                  "options": "DRB.PdcpSduVolumeUL (Mb) (sum)"
                 }
               },
               "operator": "/",
@@ -3754,8 +3754,8 @@
             "include": {
               "names": [
                 "Timestamp",
-                "DRB.PdcpSduVolumeDL (kb) (sum) / 8",
-                "DRB.PdcpSduVolumeUL (kb) (sum) / 8"
+                "DRB.PdcpSduVolumeDL (Mb) (sum) / 8",
+                "DRB.PdcpSduVolumeUL (Mb) (sum) / 8"
               ]
             }
           }
@@ -3961,14 +3961,14 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "DRB.PdcpSduVolumeUL (kb) (sum) / 8"
+              "options": "DRB.PdcpSduVolumeUL (Mb) (sum) / 8"
             },
             "properties": []
           },
           {
             "matcher": {
               "id": "byName",
-              "options": "DRB.PdcpSduVolumeDL (kb) (sum) / 8"
+              "options": "DRB.PdcpSduVolumeDL (Mb) (sum) / 8"
             },
             "properties": []
           }
@@ -4012,8 +4012,8 @@
           "options": {
             "include": {
               "names": [
-                "DRB.PdcpSduVolumeDL (kb)",
-                "DRB.PdcpSduVolumeUL (kb)",
+                "DRB.PdcpSduVolumeDL (Mb)",
+                "DRB.PdcpSduVolumeUL (Mb)",
                 "Time (UNIX ms)",
                 "UE ID"
               ]
@@ -4042,13 +4042,13 @@
           "id": "groupBy",
           "options": {
             "fields": {
-              "DRB.PdcpSduVolumeDL (kb)": {
+              "DRB.PdcpSduVolumeDL (Mb)": {
                 "aggregations": [
                   "sum"
                 ],
                 "operation": "aggregate"
               },
-              "DRB.PdcpSduVolumeUL (kb)": {
+              "DRB.PdcpSduVolumeUL (Mb)": {
                 "aggregations": [
                   "sum"
                 ],
@@ -4077,7 +4077,7 @@
               "left": {
                 "matcher": {
                   "id": "byName",
-                  "options": "DRB.PdcpSduVolumeDL (kb) (sum)"
+                  "options": "DRB.PdcpSduVolumeDL (Mb) (sum)"
                 }
               },
               "operator": "/",
@@ -4099,7 +4099,7 @@
               "left": {
                 "matcher": {
                   "id": "byName",
-                  "options": "DRB.PdcpSduVolumeUL (kb) (sum)"
+                  "options": "DRB.PdcpSduVolumeUL (Mb) (sum)"
                 }
               },
               "operator": "/",
@@ -4118,8 +4118,8 @@
           "options": {
             "include": {
               "names": [
-                "DRB.PdcpSduVolumeDL (kb) (sum) / 8",
-                "DRB.PdcpSduVolumeUL (kb) (sum) / 8",
+                "DRB.PdcpSduVolumeDL (Mb) (sum) / 8",
+                "DRB.PdcpSduVolumeUL (Mb) (sum) / 8",
                 "Time (UNIX ms)"
               ]
             }

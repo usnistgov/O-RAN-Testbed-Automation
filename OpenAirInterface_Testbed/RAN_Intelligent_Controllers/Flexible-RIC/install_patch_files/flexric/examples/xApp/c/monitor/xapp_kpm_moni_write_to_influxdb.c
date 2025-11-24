@@ -260,11 +260,11 @@ static void log_int_value(byte_array_t name, meas_record_lst_t meas_record) {
     unit.buf = (uint8_t *)"PRBs";
     unit.len = strlen("PRBs");
   } else if (cmp_str_ba("DRB.PdcpSduVolumeDL", name) == 0) {
-    unit.buf = (uint8_t *)"kb";
-    unit.len = strlen("kb");
+    unit.buf = (uint8_t *)"Mb";
+    unit.len = strlen("Mb");
   } else if (cmp_str_ba("DRB.PdcpSduVolumeUL", name) == 0) {
-    unit.buf = (uint8_t *)"kb";
-    unit.len = strlen("kb");
+    unit.buf = (uint8_t *)"Mb";
+    unit.len = strlen("Mb");
   } else if (cmp_str_ba("RSRP.Count", name) == 0) {
     unit.buf = (uint8_t *)"";
     unit.len = 0;
@@ -289,9 +289,9 @@ static void log_int_value(byte_array_t name, meas_record_lst_t meas_record) {
   // } else if (cmp_str_ba("RRU.PrbTotUl", name) == 0) {
   //   printf("RRU.PrbTotUl = %d [PRBs]\n", meas_record.int_val);
   // } else if (cmp_str_ba("DRB.PdcpSduVolumeDL", name) == 0) {
-  //   printf("DRB.PdcpSduVolumeDL = %d [kb]\n", meas_record.int_val);
+  //   printf("DRB.PdcpSduVolumeDL = %d [Mb]\n", meas_record.int_val);
   // } else if (cmp_str_ba("DRB.PdcpSduVolumeUL", name) == 0) {
-  //   printf("DRB.PdcpSduVolumeUL = %d [kb]\n", meas_record.int_val);
+  //   printf("DRB.PdcpSduVolumeUL = %d [Mb]\n", meas_record.int_val);
   // } else if (...) {
   // } else {
   //   printf("Measurement Name not yet supported\n");

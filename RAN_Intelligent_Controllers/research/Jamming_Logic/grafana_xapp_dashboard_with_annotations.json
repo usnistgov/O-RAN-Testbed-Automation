@@ -21,7 +21,7 @@
       "type": "grafana",
       "id": "grafana",
       "name": "Grafana",
-      "version": "12.1.1"
+      "version": "12.3.0"
     },
     {
       "type": "panel",
@@ -57,7 +57,7 @@
       "type": "datasource",
       "id": "yesoreyeram-infinity-datasource",
       "name": "Infinity",
-      "version": "3.5.0"
+      "version": "3.6.0"
     }
   ],
   "annotations": {
@@ -169,7 +169,6 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
-  "id": null,
   "links": [],
   "panels": [
     {
@@ -189,7 +188,7 @@
         "content": "<img src=\"http://localhost:3030/NIST.svg\" />",
         "mode": "html"
       },
-      "pluginVersion": "12.1.1",
+      "pluginVersion": "12.3.0",
       "transparent": true,
       "type": "text"
     },
@@ -206,12 +205,15 @@
           "custom": {
             "align": "center",
             "cellOptions": {
-              "type": "color-text",
-              "wrapText": false
+              "type": "color-text"
             },
             "filterable": false,
+            "footer": {
+              "reducers": []
+            },
             "inspect": false,
-            "minWidth": 50
+            "minWidth": 50,
+            "wrapText": false
           },
           "mappings": [],
           "thresholds": {
@@ -239,18 +241,10 @@
       "id": 21,
       "options": {
         "cellHeight": "sm",
-        "footer": {
-          "countRows": false,
-          "enablePagination": false,
-          "fields": "",
-          "reducer": [
-            "sum"
-          ],
-          "show": false
-        },
+        "enablePagination": false,
         "showHeader": false
       },
-      "pluginVersion": "12.1.1",
+      "pluginVersion": "12.3.0",
       "targets": [
         {
           "datasource": {
@@ -384,7 +378,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.1.1",
+      "pluginVersion": "12.3.0",
       "targets": [
         {
           "columns": [
@@ -404,12 +398,12 @@
               "type": "string"
             },
             {
-              "selector": "DRB.PdcpSduVolumeDL (kb)",
+              "selector": "DRB.PdcpSduVolumeDL (Mb)",
               "text": "",
               "type": "number"
             },
             {
-              "selector": "DRB.PdcpSduVolumeUL (kb)",
+              "selector": "DRB.PdcpSduVolumeUL (Mb)",
               "text": "",
               "type": "number"
             },
@@ -658,6 +652,7 @@
               "type": "linear"
             },
             "showPoints": "auto",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -707,7 +702,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.1",
+      "pluginVersion": "12.3.0",
       "targets": [
         {
           "datasource": {
@@ -850,7 +845,7 @@
         "sizing": "auto",
         "valueMode": "color"
       },
-      "pluginVersion": "12.1.1",
+      "pluginVersion": "12.3.0",
       "targets": [
         {
           "datasource": {
@@ -1056,7 +1051,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.1.1",
+      "pluginVersion": "12.3.0",
       "targets": [
         {
           "datasource": {
@@ -1120,6 +1115,7 @@
               "type": "linear"
             },
             "showPoints": "always",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -1273,7 +1269,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.1",
+      "pluginVersion": "12.3.0",
       "targets": [
         {
           "datasource": {
@@ -1369,6 +1365,7 @@
               "type": "linear"
             },
             "showPoints": "auto",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -1431,7 +1428,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.1",
+      "pluginVersion": "12.3.0",
       "targets": [
         {
           "datasource": {
@@ -1511,6 +1508,7 @@
               "type": "linear"
             },
             "showPoints": "auto",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -1590,7 +1588,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.1",
+      "pluginVersion": "12.3.0",
       "targets": [
         {
           "datasource": {
@@ -1671,6 +1669,7 @@
               "type": "linear"
             },
             "showPoints": "auto",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -1735,7 +1734,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.1",
+      "pluginVersion": "12.3.0",
       "targets": [
         {
           "datasource": {
@@ -1815,6 +1814,7 @@
               "type": "linear"
             },
             "showPoints": "auto",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -1909,7 +1909,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.1",
+      "pluginVersion": "12.3.0",
       "targets": [
         {
           "datasource": {
@@ -1993,6 +1993,7 @@
               "type": "linear"
             },
             "showPoints": "never",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -2182,7 +2183,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.1",
+      "pluginVersion": "12.3.0",
       "targets": [
         {
           "datasource": {
@@ -2310,6 +2311,7 @@
               "type": "linear"
             },
             "showPoints": "auto",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -2388,7 +2390,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.1",
+      "pluginVersion": "12.3.0",
       "targets": [
         {
           "datasource": {
@@ -2468,6 +2470,7 @@
               "type": "linear"
             },
             "showPoints": "auto",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -2547,7 +2550,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.1",
+      "pluginVersion": "12.3.0",
       "targets": [
         {
           "datasource": {
@@ -2628,6 +2631,7 @@
               "type": "linear"
             },
             "showPoints": "auto",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -2692,7 +2696,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.1",
+      "pluginVersion": "12.3.0",
       "targets": [
         {
           "datasource": {
@@ -2772,6 +2776,7 @@
               "type": "linear"
             },
             "showPoints": "auto",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -2837,7 +2842,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.1",
+      "pluginVersion": "12.3.0",
       "targets": [
         {
           "datasource": {
@@ -2917,6 +2922,7 @@
               "type": "linear"
             },
             "showPoints": "auto",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -2980,7 +2986,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.1",
+      "pluginVersion": "12.3.0",
       "targets": [
         {
           "datasource": {
@@ -3063,6 +3069,7 @@
               "type": "linear"
             },
             "showPoints": "auto",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -3200,7 +3207,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.1",
+      "pluginVersion": "12.3.0",
       "targets": [
         {
           "datasource": {
@@ -3282,6 +3289,7 @@
               "type": "linear"
             },
             "showPoints": "auto",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -3361,7 +3369,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.1",
+      "pluginVersion": "12.3.0",
       "targets": [
         {
           "datasource": {
@@ -3442,6 +3450,7 @@
               "type": "linear"
             },
             "showPoints": "auto",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -3506,7 +3515,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.1",
+      "pluginVersion": "12.3.0",
       "targets": [
         {
           "datasource": {
@@ -3599,6 +3608,7 @@
               "type": "linear"
             },
             "showPoints": "auto",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -3663,7 +3673,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.1",
+      "pluginVersion": "12.3.0",
       "targets": [
         {
           "datasource": {
@@ -3788,7 +3798,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.1",
+      "pluginVersion": "12.3.0",
       "targets": [
         {
           "datasource": {
@@ -3868,6 +3878,7 @@
               "type": "linear"
             },
             "showPoints": "auto",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -3932,7 +3943,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.1",
+      "pluginVersion": "12.3.0",
       "targets": [
         {
           "datasource": {
@@ -4012,6 +4023,7 @@
               "type": "linear"
             },
             "showPoints": "auto",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -4076,7 +4088,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.1",
+      "pluginVersion": "12.3.0",
       "targets": [
         {
           "datasource": {
@@ -4147,13 +4159,13 @@
               }
             ]
           },
-          "unit": "deckbytes"
+          "unit": "decmbytes"
         },
         "overrides": [
           {
             "matcher": {
               "id": "byName",
-              "options": "DRB.PdcpSduVolumeUL (kb) (sum) / 8"
+              "options": "DRB.PdcpSduVolumeUL (Mb) (sum) / 8"
             },
             "properties": [
               {
@@ -4172,7 +4184,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "DRB.PdcpSduVolumeDL (kb) (sum) / 8"
+              "options": "DRB.PdcpSduVolumeDL (Mb) (sum) / 8"
             },
             "properties": [
               {
@@ -4222,7 +4234,7 @@
         "sizing": "auto",
         "valueMode": "color"
       },
-      "pluginVersion": "12.1.1",
+      "pluginVersion": "12.3.0",
       "targets": [
         {
           "datasource": {
@@ -4239,8 +4251,8 @@
           "options": {
             "include": {
               "names": [
-                "DRB.PdcpSduVolumeDL (kb)",
-                "DRB.PdcpSduVolumeUL (kb)",
+                "DRB.PdcpSduVolumeDL (Mb)",
+                "DRB.PdcpSduVolumeUL (Mb)",
                 "Time (UNIX ms)",
                 "UE ID"
               ]
@@ -4270,13 +4282,13 @@
           "id": "groupBy",
           "options": {
             "fields": {
-              "DRB.PdcpSduVolumeDL (kb)": {
+              "DRB.PdcpSduVolumeDL (Mb)": {
                 "aggregations": [
                   "sum"
                 ],
                 "operation": "aggregate"
               },
-              "DRB.PdcpSduVolumeUL (kb)": {
+              "DRB.PdcpSduVolumeUL (Mb)": {
                 "aggregations": [
                   "sum"
                 ],
@@ -4300,7 +4312,7 @@
               "left": {
                 "matcher": {
                   "id": "byName",
-                  "options": "DRB.PdcpSduVolumeDL (kb) (sum)"
+                  "options": "DRB.PdcpSduVolumeDL (Mb) (sum)"
                 }
               },
               "operator": "/",
@@ -4321,7 +4333,7 @@
               "left": {
                 "matcher": {
                   "id": "byName",
-                  "options": "DRB.PdcpSduVolumeUL (kb) (sum)"
+                  "options": "DRB.PdcpSduVolumeUL (Mb) (sum)"
                 }
               },
               "operator": "/",
@@ -4342,8 +4354,8 @@
             "include": {
               "names": [
                 "Timestamp",
-                "DRB.PdcpSduVolumeDL (kb) (sum) / 8",
-                "DRB.PdcpSduVolumeUL (kb) (sum) / 8"
+                "DRB.PdcpSduVolumeDL (Mb) (sum) / 8",
+                "DRB.PdcpSduVolumeUL (Mb) (sum) / 8"
               ]
             }
           }
@@ -4432,7 +4444,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.1",
+      "pluginVersion": "12.3.0",
       "targets": [
         {
           "datasource": {
@@ -4515,6 +4527,7 @@
               "type": "linear"
             },
             "showPoints": "auto",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -4655,7 +4668,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.1",
+      "pluginVersion": "12.3.0",
       "targets": [
         {
           "datasource": {
@@ -4736,6 +4749,7 @@
               "type": "linear"
             },
             "showPoints": "auto",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -4764,14 +4778,14 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "DRB.PdcpSduVolumeUL (kb) (sum) / 8"
+              "options": "DRB.PdcpSduVolumeUL (Mb) (sum) / 8"
             },
             "properties": []
           },
           {
             "matcher": {
               "id": "byName",
-              "options": "DRB.PdcpSduVolumeDL (kb) (sum) / 8"
+              "options": "DRB.PdcpSduVolumeDL (Mb) (sum) / 8"
             },
             "properties": []
           }
@@ -4798,7 +4812,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.1",
+      "pluginVersion": "12.3.0",
       "targets": [
         {
           "datasource": {
@@ -4815,8 +4829,8 @@
           "options": {
             "include": {
               "names": [
-                "DRB.PdcpSduVolumeDL (kb)",
-                "DRB.PdcpSduVolumeUL (kb)",
+                "DRB.PdcpSduVolumeDL (Mb)",
+                "DRB.PdcpSduVolumeUL (Mb)",
                 "Time (UNIX ms)",
                 "UE ID"
               ]
@@ -4845,13 +4859,13 @@
           "id": "groupBy",
           "options": {
             "fields": {
-              "DRB.PdcpSduVolumeDL (kb)": {
+              "DRB.PdcpSduVolumeDL (Mb)": {
                 "aggregations": [
                   "sum"
                 ],
                 "operation": "aggregate"
               },
-              "DRB.PdcpSduVolumeUL (kb)": {
+              "DRB.PdcpSduVolumeUL (Mb)": {
                 "aggregations": [
                   "sum"
                 ],
@@ -4880,7 +4894,7 @@
               "left": {
                 "matcher": {
                   "id": "byName",
-                  "options": "DRB.PdcpSduVolumeDL (kb) (sum)"
+                  "options": "DRB.PdcpSduVolumeDL (Mb) (sum)"
                 }
               },
               "operator": "/",
@@ -4902,7 +4916,7 @@
               "left": {
                 "matcher": {
                   "id": "byName",
-                  "options": "DRB.PdcpSduVolumeUL (kb) (sum)"
+                  "options": "DRB.PdcpSduVolumeUL (Mb) (sum)"
                 }
               },
               "operator": "/",
@@ -4921,8 +4935,8 @@
           "options": {
             "include": {
               "names": [
-                "DRB.PdcpSduVolumeDL (kb) (sum) / 8",
-                "DRB.PdcpSduVolumeUL (kb) (sum) / 8",
+                "DRB.PdcpSduVolumeDL (Mb) (sum) / 8",
+                "DRB.PdcpSduVolumeUL (Mb) (sum) / 8",
                 "Time (UNIX ms)"
               ]
             }
@@ -4965,6 +4979,7 @@
               "type": "linear"
             },
             "showPoints": "auto",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -5027,7 +5042,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.1",
+      "pluginVersion": "12.3.0",
       "targets": [
         {
           "datasource": {
@@ -5150,7 +5165,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.1",
+      "pluginVersion": "12.3.0",
       "targets": [
         {
           "datasource": {
@@ -5197,8 +5212,9 @@
       "type": "histogram"
     }
   ],
+  "preload": false,
   "refresh": "",
-  "schemaVersion": 41,
+  "schemaVersion": 42,
   "tags": [],
   "templating": {
     "list": [

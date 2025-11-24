@@ -588,29 +588,29 @@ static void evaluate_rsrp_report(gNB_MAC_INST *nrmac,
   }
 
   rsrp_report->nr_reports = csi_report->CSI_report_bitlen.nb_ssbri_cri;
-  uint16_t curr_payload;
+  int bitlen = csi_report->CSI_report_bitlen.cri_ssbri_bitlen;
   for (int i = 0; i < rsrp_report->nr_reports; i++) {
-    int bitlen = csi_report->CSI_report_bitlen.cri_ssbri_bitlen;
-    curr_payload = pickandreverse_bits(payload, bitlen, *cumul_bits);
-    rsrp_report->resource_id[i] = *(index_list[bitlen > 0 ? ((curr_payload) & ~(~1U << (bitlen - 1))) : bitlen]);
-    LOG_D(MAC,"SSB/CSI-RS index = %d\n", rsrp_report->resource_id[i]);
+    uint8_t idx_payload = pickandreverse_bits(payload, bitlen, *cumul_bits);
+    rsrp_report->resource_id[i] = *(index_list[bitlen > 0 ? ((idx_payload) & ~(~1U << (bitlen - 1))) : bitlen]);
     *cumul_bits += bitlen;
   }
 
-  curr_payload = pickandreverse_bits(payload, 7, *cumul_bits);
-  int rsrp_index = curr_payload & 0x7f;
+  uint8_t curr_payload = pickandreverse_bits(payload, 7, *cumul_bits);
+  int rsrp = curr_payload & 0x7f;
   *cumul_bits += 7;
-
   csi_report->nb_of_csi_ssb_report++;
-  bool valid = get_measured_rsrp(rsrp_index, &rsrp_report->RSRP[0]);
+  bool valid = get_measured_rsrp(rsrp, &rsrp_report->RSRP[0]);
+  LOG_D(NR_MAC, "SSB/CSI-RS index %d RSRP %d\n", rsrp_report->resource_id[0], rsrp_report->RSRP[0]);
   if (!valid) {
-    LOG_E(NR_MAC, "UE %04x: reported RSRP index %d invalid\n", UE->rnti, rsrp_index);
+    LOG_E(NR_MAC, "UE %04x: reported RSRP index %d invalid\n", UE->rnti, rsrp);
     return;
   }
 
   for (int i = 1; i < rsrp_report->nr_reports; i++) {
     curr_payload = pickandreverse_bits(payload, 4, *cumul_bits);
+    csi_report->nb_of_csi_ssb_report++;
     rsrp_report->RSRP[i] = get_diff_rsrp(curr_payload & 0x0f, rsrp_report->RSRP[0]);
+    LOG_D(NR_MAC, "SSB/CSI-RS index %d RSRP %d\n", rsrp_report->resource_id[i], rsrp_report->RSRP[i]);
     *cumul_bits += 4;
   }
 
@@ -678,6 +678,8 @@ static void evaluate_cqi_report(uint8_t *payload,
   const int cqi_idx = sched_ctrl->CSI_report.cri_ri_li_pmi_cqi_report.wb_cqi_1tb;
   const int mcs_table = UE->current_DL_BWP.mcsTableIdx;
   sched_ctrl->dl_max_mcs = get_mcs_from_cqi(mcs_table, cqi_Table, cqi_idx);
+
+  LOG_D(MAC, "Reported CQI = %d, dl_max_mcs %d\n", temp_cqi, sched_ctrl->dl_max_mcs);
 }
 
 static uint8_t evaluate_pmi_report(uint8_t *payload,

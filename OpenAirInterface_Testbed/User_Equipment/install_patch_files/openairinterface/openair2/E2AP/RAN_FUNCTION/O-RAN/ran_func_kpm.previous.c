@@ -27,6 +27,7 @@
 #include "openair2/E1AP/e1ap_common.h"
 #include "openair2/E2AP/flexric/src/util/time_now_us.h"
 #include "openair2/F1AP/f1ap_ids.h"
+#include "ds/seq_arr.h"
 
 static pthread_once_t once_kpm_mutex = PTHREAD_ONCE_INIT;
 
@@ -53,9 +54,11 @@ typedef struct {
   ue_id_e2sm_t* ue_id;
 
   // Optional
-  // only used to retreive MAC/RLC stats
+  // only used to retrieve MAC/RLC stats
   NR_UE_info_t** ue_info_list;
 }arr_ue_id_t;
+
+static e2_node_level_stats_t node_stats[2] = {0}; // [0] node stats collected in previous reporting period; [1] current node stats
 
 static meas_data_lst_t fill_kpm_meas_data_item(const meas_info_format_1_lst_t* meas_info_lst, const size_t len, const uint32_t gran_period_ms, cudu_ue_info_pair_t ue_info, const size_t ue_idx)
 {
@@ -73,7 +76,7 @@ static meas_data_lst_t fill_kpm_meas_data_item(const meas_info_format_1_lst_t* m
 
     char* meas_info_name_str = cp_ba_to_str(meas_info_lst[i].meas_type.name);
 
-    data_item.meas_record_lst[i] = get_kpm_meas_value(meas_info_name_str, gran_period_ms, ue_info, ue_idx);
+    data_item.meas_record_lst[i] = get_kpm_meas_value(meas_info_name_str, gran_period_ms, ue_info, ue_idx, node_stats);
 
     free(meas_info_name_str);
   }
@@ -152,6 +155,8 @@ static kpm_ind_msg_format_3_t fill_kpm_ind_msg_frm_3(arr_ue_id_t* arr_ue_id, con
     msg_frm_3.meas_report_per_ue[i].ind_msg_format_1 = fill_kpm_ind_msg_frm_1(ue_info, i, act_def_fr_1);
   }
 
+  node_stats[0] = cp_node_level_stats(&node_stats[1]);
+
   return msg_frm_3;
 }
 
@@ -212,8 +217,8 @@ static arr_ue_id_t filter_ues_by_s_nssai_in_cu(const test_info_lst_t test_info)
     /* UE has no AMF UE NGAP ID yet => can't send message */
     if (ue->amf_ue_ngap_id >= (1LL << 40))
       continue;
-    for (int p = 0; p < ue->nb_of_pdusessions; ++p) {
-      pdusession_t *pdu = &ue->pduSession[p].param;
+    FOR_EACH_SEQ_ARR(rrc_pdu_session_param_t*, item, &ue->pduSessions) {
+      pdusession_t* pdu = &item->param;
       if (nssai_matches(pdu->nssai, sst, sd)) {
         arr_ue_id.ue_id[arr_ue_id.sz] = fill_ue_id_data[ngran_gNB_CU](ue, 0, 0);
 
@@ -287,8 +292,10 @@ static arr_ue_id_t filter_ues_by_s_nssai_in_du_or_monolithic(const test_info_lst
 
   const ngran_node_t node_type = get_e2_node_type();
 
+  gNB_MAC_INST *mac = RC.nrmac[0];
+  NR_SCHED_LOCK(&mac->sched_lock);
   // Take MAC info
-  UE_iterator(RC.nrmac[0]->UE_info.connected_ue_list, ue) {
+  UE_iterator(mac->UE_info.connected_ue_list, ue) {
     NR_UE_sched_ctrl_t *sched_ctrl = &ue->UE_sched_ctrl;
     // UE matches if any of its DRBs matches
     for (size_t l = 0; l < seq_arr_size(&sched_ctrl->lc_config); ++l) {
@@ -314,6 +321,10 @@ static arr_ue_id_t filter_ues_by_s_nssai_in_du_or_monolithic(const test_info_lst
     }
     AssertFatal(arr_ue_id.sz < MAX_MOBILES_PER_GNB, "cannot have more UEs than global UE number maximum\n");
   }
+
+  node_stats[1].mac_stats.dl.total_prb_aggregate = mac->mac_stats.dl.total_prb_aggregate;
+  node_stats[1].mac_stats.ul.total_prb_aggregate = mac->mac_stats.ul.total_prb_aggregate;
+  NR_SCHED_UNLOCK(&mac->sched_lock);
 
   free(sd); // if NULL, nothing happens
 

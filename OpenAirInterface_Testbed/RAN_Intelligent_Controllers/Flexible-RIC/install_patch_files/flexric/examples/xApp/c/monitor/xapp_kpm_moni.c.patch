@@ -1,8 +1,8 @@
 diff --git a/examples/xApp/c/monitor/xapp_kpm_moni.c b/examples/xApp/c/monitor/xapp_kpm_moni.c
-index d9f11118..08413f42 100644
+index 5cbb5c3c..f8d559e5 100644
 --- a/examples/xApp/c/monitor/xapp_kpm_moni.c
 +++ b/examples/xApp/c/monitor/xapp_kpm_moni.c
-@@ -26,8 +26,10 @@
+@@ -28,8 +28,10 @@
  #include "../../../../src/util/e.h"
  
  #include <stdlib.h>
@@ -13,9 +13,9 @@ index d9f11118..08413f42 100644
  #include <unistd.h>
  #include <signal.h>
  #include <pthread.h>
-@@ -38,6 +40,16 @@ uint64_t const period_ms = 1000;
+@@ -43,6 +45,16 @@ pthread_mutex_t mtx;
  static
- pthread_mutex_t mtx;
+ assoc_ht_open_t ht = {0};
  
 +// Overwritten if environment variables SST and SD are set
 +static
@@ -28,9 +28,63 @@ index d9f11118..08413f42 100644
 +char current_e2_id_str[256];
 +
  static
- void log_gnb_ue_id(ue_id_e2sm_t ue_id)
+ uint32_t hash_func(const void* key_v)
  {
-@@ -51,6 +63,49 @@ void log_gnb_ue_id(ue_id_e2sm_t ue_id)
+@@ -97,6 +109,53 @@ void init_kpm_meas_unit_hash_table(void)
+ static
+ char *get_meas_unit(char *name)
+ {
++  if (strcmp("RSRP.Count", name) == 0) {
++    return "";
++  } else if (strcmp("PHY.NPrbDl", name) == 0) {
++    return "";
++  } else if (strcmp("DRB.HarqMcsUl", name) == 0) {
++    return "";
++  } else if (strcmp("DRB.HarqMcsDl", name) == 0) {
++    return "";
++  } else if (strcmp("DRB.DerivedCQIDl", name) == 0) {
++    return "";
++  } else if (strcmp("PHY.CqiWb1TbDl", name) == 0) {
++    return "";
++  } else if (strcmp("PHY.CqiWb2TbDl", name) == 0) {
++    return "";
++  } else if (strcmp("RSRP.Mean", name) == 0) {
++    return "[dBm]";
++  } else if (strcmp("RSRP.Minimum", name) == 0) {
++    return "[dBm]";
++  } else if (strcmp("RSRP.Quartile1", name) == 0) {
++    return "[dBm]";
++  } else if (strcmp("RSRP.Median", name) == 0) {
++    return "[dBm]";
++  } else if (strcmp("RSRP.Quartile3", name) == 0) {
++    return "[dBm]";
++  } else if (strcmp("RSRP.Maximum", name) == 0) {
++    return "[dBm]";
++  } else if (strcmp("PHY.DerivedRssiDl", name) == 0) {
++    return "[dBm]";
++  } else if (strcmp("PHY.DerivedRsrqDl", name) == 0) {
++    return "[dB]";
++  } else if (strcmp("PUSCH.Snr", name) == 0) {
++    return "[dB]";
++  } else if (strcmp("PUCCH.Snr", name) == 0) {
++    return "[dB]";
++  } else if (strcmp("DRB.HarqBlockErrorRateUl", name) == 0) {
++    return "[%]";
++  } else if (strcmp("DRB.HarqBlockErrorRateDl", name) == 0) {
++    return "[%]";
++  } else if (strcmp("DRB.MacSduRetransmissionRateUl", name) == 0) {
++    return "[%]";
++  } else if (strcmp("DRB.MacSduRetransmissionRateDl", name) == 0) {
++    return "[%]";
++  } else if (strcmp("DRB.MacSduErrorRateUl", name) == 0) {
++    return "[%]";
++  } else if (strcmp("DRB.MacSduErrorRateDl", name) == 0) {
++    return "[%]";
++  }
+   return assoc_ht_open_value(&ht, &name);
+ }
+ 
+@@ -113,6 +172,49 @@ void log_gnb_ue_id(ue_id_e2sm_t ue_id)
    if (ue_id.gnb.ran_ue_id != NULL) {
      printf("ran_ue_id = %lx\n", *ue_id.gnb.ran_ue_id); // RAN UE NGAP ID
    }
@@ -80,7 +134,7 @@ index d9f11118..08413f42 100644
  }
  
  static
-@@ -60,6 +115,9 @@ void log_du_ue_id(ue_id_e2sm_t ue_id)
+@@ -122,6 +224,9 @@ void log_du_ue_id(ue_id_e2sm_t ue_id)
    if (ue_id.gnb_du.ran_ue_id != NULL) {
      printf("ran_ue_id = %lx\n", *ue_id.gnb_du.ran_ue_id); // RAN UE NGAP ID
    }
@@ -90,7 +144,7 @@ index d9f11118..08413f42 100644
  }
  
  static
-@@ -69,6 +127,9 @@ void log_cuup_ue_id(ue_id_e2sm_t ue_id)
+@@ -131,6 +236,9 @@ void log_cuup_ue_id(ue_id_e2sm_t ue_id)
    if (ue_id.gnb_cu_up.ran_ue_id != NULL) {
      printf("ran_ue_id = %lx\n", *ue_id.gnb_cu_up.ran_ue_id); // RAN UE NGAP ID
    }
@@ -100,80 +154,7 @@ index d9f11118..08413f42 100644
  }
  
  typedef void (*log_ue_id)(ue_id_e2sm_t ue_id);
-@@ -88,13 +149,28 @@ static
- void log_int_value(byte_array_t name, meas_record_lst_t meas_record)
- {
-   if (cmp_str_ba("RRU.PrbTotDl", name) == 0) {
--    printf("RRU.PrbTotDl = %d [PRBs]\n", meas_record.int_val);
-+    printf("RRU.PrbTotDl = %u [PRBs]\n", meas_record.int_val);
-   } else if (cmp_str_ba("RRU.PrbTotUl", name) == 0) {
--    printf("RRU.PrbTotUl = %d [PRBs]\n", meas_record.int_val);
-+    printf("RRU.PrbTotUl = %u [PRBs]\n", meas_record.int_val);
-   } else if (cmp_str_ba("DRB.PdcpSduVolumeDL", name) == 0) {
--    printf("DRB.PdcpSduVolumeDL = %d [kb]\n", meas_record.int_val);
-+    printf("DRB.PdcpSduVolumeDL = %u [kb]\n", meas_record.int_val);
-   } else if (cmp_str_ba("DRB.PdcpSduVolumeUL", name) == 0) {
--    printf("DRB.PdcpSduVolumeUL = %d [kb]\n", meas_record.int_val);
-+    printf("DRB.PdcpSduVolumeUL = %u [kb]\n", meas_record.int_val);
-+  // Added int metrics for KPM research:
-+  } else if (cmp_str_ba("RSRP.Count", name) == 0) {
-+    printf("RSRP.Count = %u\n", meas_record.int_val);
-+  } else if (cmp_str_ba("PHY.NPrbDl", name) == 0) {
-+    printf("PHY.NPrbDl = %u\n", meas_record.int_val);
-+  } else if (cmp_str_ba("DRB.HarqMcsUl", name) == 0) {
-+    printf("DRB.HarqMcsUl = %u\n", meas_record.int_val);
-+  } else if (cmp_str_ba("DRB.HarqMcsDl", name) == 0) {
-+    printf("DRB.HarqMcsDl = %u\n", meas_record.int_val);
-+  } else if (cmp_str_ba("DRB.DerivedCQIDl", name) == 0) {
-+    printf("DRB.DerivedCQIDl = %u\n", meas_record.int_val);
-+  } else if (cmp_str_ba("PHY.CqiWb1TbDl", name) == 0) {
-+    printf("PHY.CqiWb1TbDl = %u\n", meas_record.int_val);
-+  } else if (cmp_str_ba("PHY.CqiWb2TbDl", name) == 0) {
-+    printf("PHY.CqiWb2TbDl = %u\n", meas_record.int_val);
-   } else {
-     printf("Measurement Name not yet supported\n");
-   }
-@@ -109,6 +185,39 @@ void log_real_value(byte_array_t name, meas_record_lst_t meas_record)
-     printf("DRB.UEThpDl = %.2f [kbps]\n", meas_record.real_val);
-   } else if (cmp_str_ba("DRB.UEThpUl", name) == 0) {
-     printf("DRB.UEThpUl = %.2f [kbps]\n", meas_record.real_val);
-+  // Added float metrics for KPM research:
-+  } else if (cmp_str_ba("RSRP.Mean", name) == 0) {
-+    printf("RSRP.Mean = %.2f [dBm]\n", meas_record.real_val);
-+  } else if (cmp_str_ba("RSRP.Minimum", name) == 0) {
-+    printf("RSRP.Minimum = %.2f [dBm]\n", meas_record.real_val);
-+  } else if (cmp_str_ba("RSRP.Quartile1", name) == 0) {
-+    printf("RSRP.Quartile1 = %.2f [dBm]\n", meas_record.real_val);
-+  } else if (cmp_str_ba("RSRP.Median", name) == 0) {
-+    printf("RSRP.Median = %.2f [dBm]\n", meas_record.real_val);
-+  } else if (cmp_str_ba("RSRP.Quartile3", name) == 0) {
-+    printf("RSRP.Quartile3 = %.2f [dBm]\n", meas_record.real_val);
-+  } else if (cmp_str_ba("RSRP.Maximum", name) == 0) {
-+    printf("RSRP.Maximum = %.2f [dBm]\n", meas_record.real_val);
-+  } else if (cmp_str_ba("PHY.DerivedRssiDl", name) == 0) {
-+    printf("PHY.DerivedRssiDl = %.2f [dBm]\n", meas_record.real_val);
-+  } else if (cmp_str_ba("PHY.DerivedRsrqDl", name) == 0) {
-+    printf("PHY.DerivedRsrqDl = %.2f [dB]\n", meas_record.real_val);
-+  } else if (cmp_str_ba("PUSCH.Snr", name) == 0) {
-+    printf("PUSCH.Snr = %.2f [dB]\n", meas_record.real_val);
-+  } else if (cmp_str_ba("PUCCH.Snr", name) == 0) {
-+    printf("PUCCH.Snr = %.2f [dB]\n", meas_record.real_val);
-+  } else if (cmp_str_ba("DRB.HarqBlockErrorRateUl", name) == 0) {
-+    printf("DRB.HarqBlockErrorRateUl = %.2f [%%]\n", meas_record.real_val);
-+  } else if (cmp_str_ba("DRB.HarqBlockErrorRateDl", name) == 0) {
-+    printf("DRB.HarqBlockErrorRateDl = %.2f [%%]\n", meas_record.real_val);
-+  } else if (cmp_str_ba("DRB.MacSduRetransmissionRateUl", name) == 0) {
-+    printf("DRB.MacSduRetransmissionRateUl = %.2f [%%]\n", meas_record.real_val);
-+  } else if (cmp_str_ba("DRB.MacSduRetransmissionRateDl", name) == 0) {
-+    printf("DRB.MacSduRetransmissionRateDl = %.2f [%%]\n", meas_record.real_val);
-+  } else if (cmp_str_ba("DRB.MacSduErrorRateUl", name) == 0) {
-+    printf("DRB.MacSduErrorRateUl = %.2f [%%]\n", meas_record.real_val);
-+  } else if (cmp_str_ba("DRB.MacSduErrorRateDl", name) == 0) {
-+    printf("DRB.MacSduErrorRateDl = %.2f [%%]\n", meas_record.real_val);
-   } else {
-     printf("Measurement Name not yet supported\n");
-   }
-@@ -151,6 +260,8 @@ void log_kpm_measurements(kpm_ind_msg_format_1_t const* msg_frm_1)
+@@ -201,6 +309,8 @@ void log_kpm_measurements(kpm_ind_msg_format_1_t const* msg_frm_1)
  {
    assert(msg_frm_1->meas_info_lst_len > 0 && "Cannot correctly print measurements");
  
@@ -182,7 +163,7 @@ index d9f11118..08413f42 100644
    // UE Measurements per granularity period
    for (size_t j = 0; j < msg_frm_1->meas_data_lst_len; j++) {
      meas_data_lst_t const data_item = msg_frm_1->meas_data_lst[j];
-@@ -168,6 +279,29 @@ void log_kpm_measurements(kpm_ind_msg_format_1_t const* msg_frm_1)
+@@ -218,6 +328,29 @@ void log_kpm_measurements(kpm_ind_msg_format_1_t const* msg_frm_1)
  
  }
  
@@ -212,14 +193,7 @@ index d9f11118..08413f42 100644
  static
  void sm_cb_kpm(sm_ag_if_rd_t const* rd)
  {
-@@ -196,14 +330,13 @@ void sm_cb_kpm(sm_ag_if_rd_t const* rd)
- 
-       // log measurements
-       log_kpm_measurements(&msg_frm_3->meas_report_per_ue[i].ind_msg_format_1);
--      
-     }
-     counter++;
-   }
+@@ -253,7 +386,7 @@ void sm_cb_kpm(sm_ag_if_rd_t const* rd)
  }
  
  static
@@ -228,18 +202,16 @@ index d9f11118..08413f42 100644
  {
    test_info_lst_t dst = {0};
  
-@@ -222,11 +355,19 @@ test_info_lst_t filter_predicate(test_cond_type_e type, test_cond_e cond, int va
+@@ -272,11 +405,17 @@ test_info_lst_t filter_predicate(test_cond_type_e type, test_cond_e cond, int va
  
    dst.test_cond_value->octet_string_value = calloc(1, sizeof(byte_array_t));
    assert(dst.test_cond_value->octet_string_value != NULL && "Memory exhausted");
 -  const size_t len_nssai = 1;
-+
 +  const size_t len_nssai = (sd == 0xFFFFFF) ? 1 : 4;
    dst.test_cond_value->octet_string_value->len = len_nssai;
    dst.test_cond_value->octet_string_value->buf = calloc(len_nssai, sizeof(uint8_t));
    assert(dst.test_cond_value->octet_string_value->buf != NULL && "Memory exhausted");
 -  dst.test_cond_value->octet_string_value->buf[0] = value;
-+
 +  dst.test_cond_value->octet_string_value->buf[0] = (uint8_t)sst;
 +  if (len_nssai == 4) {
 +    sd &= 0xFFFFFF;
@@ -250,24 +222,16 @@ index d9f11118..08413f42 100644
  
    return dst;
  }
-@@ -301,8 +442,7 @@ kpm_act_def_t fill_report_style_4(ric_report_style_item_t const* report_item)
-   // Filter connected UEs by S-NSSAI criteria
+@@ -352,7 +491,7 @@ kpm_act_def_t fill_report_style_4(ric_report_style_item_t const* report_item)
    test_cond_type_e const type = S_NSSAI_TEST_COND_TYPE; // CQI_TEST_COND_TYPE
    test_cond_e const condition = EQUAL_TEST_COND; // GREATERTHAN_TEST_COND
--  int const value = 1;
+   int const value = 1;
 -  act_def.frm_4.matching_cond_lst[0].test_info_lst = filter_predicate(type, condition, value);
 +  act_def.frm_4.matching_cond_lst[0].test_info_lst = filter_predicate(type, condition, cfg_slicing_sst, cfg_slicing_sd);
  
    // Fill Action Definition Format 1
    // 8.2.1.2.1
-@@ -382,12 +522,14 @@ int main(int argc, char* argv[])
- 
-   assert(nodes.len > 0);
- 
--  printf("Connected E2 nodes = %d\n", nodes.len);
-+  printf("Connected E2 nodes = %u\n", nodes.len);
- 
-   pthread_mutexattr_t attr = {0};
+@@ -440,6 +579,8 @@ int main(int argc, char* argv[])
    int rc = pthread_mutex_init(&mtx, &attr);
    assert(rc == 0);
  

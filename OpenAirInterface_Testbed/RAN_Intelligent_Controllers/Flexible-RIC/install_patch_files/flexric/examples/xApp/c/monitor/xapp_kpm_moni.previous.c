@@ -22,7 +22,9 @@
 #include "../../../../src/xApp/e42_xapp_api.h"
 #include "../../../../src/util/alg_ds/alg/defer.h"
 #include "../../../../src/util/time_now_us.h"
+#include "../../../../src/util/alg_ds/alg/murmur_hash_32.h"
 #include "../../../../src/util/alg_ds/ds/lock_guard/lock_guard.h"
+#include "../../../../src/util/alg_ds/ds/assoc_container/assoc_generic.h"
 #include "../../../../src/util/e.h"
 
 #include <stdlib.h>
@@ -37,6 +39,66 @@ uint64_t const period_ms = 1000;
 
 static
 pthread_mutex_t mtx;
+
+static
+assoc_ht_open_t ht = {0};
+
+static
+uint32_t hash_func(const void* key_v)
+{
+  char* key = *(char**)(key_v);
+  static const uint32_t seed = 42;
+  return murmur3_32((uint8_t*)key, strlen(key), seed);
+}
+
+static
+bool cmp_str(const void* a, const void* b)
+{
+  char* a_str = *(char**)(a);
+  char* b_str = *(char**)(b);
+
+  int const ret = strcmp(a_str, b_str);
+  return ret == 0;
+}
+
+static
+void free_str(void* key, void* value)
+{
+  free(*(char**)key);
+  free(value);
+}
+
+static
+void free_kpm_meas_unit_hash_table(void)
+{
+  assoc_ht_open_free(&ht);
+}
+
+static
+void init_kpm_meas_unit_hash_table(void)
+{
+  FILE *fp = fopen(KPM_MEAS_LIST, "r");
+  if (!fp) {
+    printf("Cannot open the file \"%s\".\n", KPM_MEAS_LIST);
+    perror("Error");
+    return;
+  }
+
+  assoc_ht_open_init(&ht, sizeof(char*), cmp_str, free_str, hash_func);
+  char line[128];
+  while (fgets(line, sizeof(line), fp)) {
+    char *col1, *col2;
+    sscanf(line, "%ms %ms", &col1, &col2);
+    assoc_ht_open_insert(&ht, &col1, sizeof(char*), col2);
+  }
+  fclose(fp);
+}
+
+static
+char *get_meas_unit(char *name)
+{
+  return assoc_ht_open_value(&ht, &name);
+}
 
 static
 void log_gnb_ue_id(ue_id_e2sm_t ue_id)
@@ -87,31 +149,19 @@ log_ue_id log_ue_id_e2sm[END_UE_ID_E2SM] = {
 static
 void log_int_value(byte_array_t name, meas_record_lst_t meas_record)
 {
-  if (cmp_str_ba("RRU.PrbTotDl", name) == 0) {
-    printf("RRU.PrbTotDl = %d [PRBs]\n", meas_record.int_val);
-  } else if (cmp_str_ba("RRU.PrbTotUl", name) == 0) {
-    printf("RRU.PrbTotUl = %d [PRBs]\n", meas_record.int_val);
-  } else if (cmp_str_ba("DRB.PdcpSduVolumeDL", name) == 0) {
-    printf("DRB.PdcpSduVolumeDL = %d [kb]\n", meas_record.int_val);
-  } else if (cmp_str_ba("DRB.PdcpSduVolumeUL", name) == 0) {
-    printf("DRB.PdcpSduVolumeUL = %d [kb]\n", meas_record.int_val);
-  } else {
-    printf("Measurement Name not yet supported\n");
-  }
+  char *name_str = cp_ba_to_str(name);
+  char *name_unit = get_meas_unit(name_str);
+  printf("%s = %d %s\n", name_str, meas_record.int_val, name_unit);
+  free(name_str);
 }
 
 static
 void log_real_value(byte_array_t name, meas_record_lst_t meas_record)
 {
-  if (cmp_str_ba("DRB.RlcSduDelayDl", name) == 0) {
-    printf("DRB.RlcSduDelayDl = %.2f [μs]\n", meas_record.real_val);
-  } else if (cmp_str_ba("DRB.UEThpDl", name) == 0) {
-    printf("DRB.UEThpDl = %.2f [kbps]\n", meas_record.real_val);
-  } else if (cmp_str_ba("DRB.UEThpUl", name) == 0) {
-    printf("DRB.UEThpUl = %.2f [kbps]\n", meas_record.real_val);
-  } else {
-    printf("Measurement Name not yet supported\n");
-  }
+  char *name_str = cp_ba_to_str(name);
+  char *name_unit = get_meas_unit(name_str);
+  printf("%s = %.2f %s\n", name_str, meas_record.real_val, name_unit);
+  free(name_str);
 }
 
 typedef void (*log_meas_value)(byte_array_t name, meas_record_lst_t meas_record);
@@ -377,6 +427,8 @@ int main(int argc, char* argv[])
   init_xapp_api(&args);
   sleep(1);
 
+  init_kpm_meas_unit_hash_table();
+
   e2_node_arr_xapp_t nodes = e2_nodes_xapp_api();
   defer({ free_e2_node_arr_xapp(&nodes); });
 
@@ -425,6 +477,8 @@ int main(int argc, char* argv[])
       rm_report_sm_xapp_api(hndl[i].u.handle);
   }
   free(hndl);
+
+  free_kpm_meas_unit_hash_table();
 
   // Stop the xApp
   while (try_stop_xapp_api() == false)

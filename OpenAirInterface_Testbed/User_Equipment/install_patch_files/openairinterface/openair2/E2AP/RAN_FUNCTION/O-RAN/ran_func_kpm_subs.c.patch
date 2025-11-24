@@ -1,5 +1,5 @@
 diff --git a/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c b/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c
-index 80579e1754..9b3de6cd9b 100644
+index d3381cadd3..e0e2d63068 100644
 --- a/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c
 +++ b/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c
 @@ -22,6 +22,7 @@
@@ -8,11 +8,11 @@ index 80579e1754..9b3de6cd9b 100644
  #include <search.h>
 +#include <math.h> // For log10 in fill_RSRQ
  
- /* measurements that need to store values from previous reporting period have a limitation
-    when it comes to multiple subscriptions to the same UEs; ric_req_id is unique per subscription */
-@@ -82,6 +83,457 @@ static meas_record_lst_t fill_DRB_PdcpSduVolumeUL(__attribute__((unused))uint32_
-   return meas_record;
+ e2_node_level_stats_t cp_node_level_stats(const e2_node_level_stats_t *src)
+ {
+@@ -201,6 +202,457 @@ static meas_record_lst_t fill_RRU_PrbTotUl(__attribute__((unused))uint32_t gran_
  }
+ #endif
  
 +// Comparison function for integers used in qsort
 +static int compare_int(const void *a, const void *b) {
@@ -465,13 +465,13 @@ index 80579e1754..9b3de6cd9b 100644
 +  return meas_record;
 +}
 +
- #if defined (NGRAN_GNB_DU)
- static uldlcounter_t last_rlc_pdu_total_bytes[MAX_MOBILES_PER_GNB] = {0};
- static uldlcounter_t last_total_prbs[MAX_MOBILES_PER_GNB] = {0};
-@@ -194,6 +646,29 @@ static meas_record_lst_t fill_RRU_PrbTotUl(__attribute__((unused))uint32_t gran_
  static kv_measure_t lst_measure[] = {
    {.key = "DRB.PdcpSduVolumeDL", .value = fill_DRB_PdcpSduVolumeDL }, 
    {.key = "DRB.PdcpSduVolumeUL", .value = fill_DRB_PdcpSduVolumeUL },
+@@ -211,6 +663,29 @@ static kv_measure_t lst_measure[] = {
+   {.key = "RRU.PrbTotDl", .value =  fill_RRU_PrbTotDl }, 
+   {.key = "RRU.PrbTotUl", .value =  fill_RRU_PrbTotUl }, 
+ #endif
 +  {.key = "RSRP.Mean", .value = fill_RSRP_Mean },
 +  {.key = "RSRP.Minimum", .value = fill_RSRP_Minimum },
 +  {.key = "RSRP.Quartile1", .value = fill_RSRP_Quartile1 },
@@ -495,6 +495,6 @@ index 80579e1754..9b3de6cd9b 100644
 +  {.key = "DRB.DerivedCQIDl", .value = fill_CQI },
 +  {.key = "PHY.CqiWb1TbDl", .value = fill_CQI_SINGLE_CODEWORD },
 +  {.key = "PHY.CqiWb2TbDl", .value = fill_CQI_DUAL_CODEWORD },
- #if defined (NGRAN_GNB_DU)
-   {.key = "DRB.RlcSduDelayDl", .value =  fill_DRB_RlcSduDelayDl }, 
-   {.key = "DRB.UEThpDl", .value =  fill_DRB_UEThpDl }, 
+ }; 
+ 
+ void init_kpm_subs_data(void)

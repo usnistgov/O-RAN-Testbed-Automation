@@ -1,5 +1,5 @@
 diff --git a/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c b/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c
-index 682ea765ac..05a5667a6f 100644
+index 27ecbdcbd0..642e267f4d 100644
 --- a/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c
 +++ b/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c
 @@ -615,6 +615,15 @@ static void evaluate_rsrp_report(gNB_MAC_INST *nrmac,

@@ -105,10 +105,10 @@ static int get_stats(char *buf, int debug, telnet_printfunc_t prnt)
   int bw_index = get_supported_band_index(scs, fr, nrb);
   int bw_mhz = get_supported_bw_mhz(fr, bw_index);
 
-  const mac_stats_t *stat = &mac->mac_stats;
-  static mac_stats_t last = {0};
-  int diff_used = stat->used_prb_aggregate - last.used_prb_aggregate;
-  int diff_total = stat->total_prb_aggregate - last.total_prb_aggregate;
+  const dlul_mac_stats_t *stat = &mac->mac_stats;
+  static dlul_mac_stats_t last = {0};
+  int diff_used = stat->dl.used_prb_aggregate - last.dl.used_prb_aggregate;
+  int diff_total = stat->dl.total_prb_aggregate - last.dl.total_prb_aggregate;
   int load = diff_total > 0 ? 100 * diff_used / diff_total : 0;
   last = *stat;
 

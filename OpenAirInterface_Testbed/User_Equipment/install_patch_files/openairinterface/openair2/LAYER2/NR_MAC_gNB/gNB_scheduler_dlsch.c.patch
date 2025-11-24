@@ -1,8 +1,8 @@
 diff --git a/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c b/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c
-index 552b1fa041..e0097541e8 100644
+index fd1cf7f9f3..d81b7001bd 100644
 --- a/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c
 +++ b/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c
-@@ -380,6 +380,9 @@ void abort_nr_dl_harq(NR_UE_info_t* UE, int8_t harq_pid)
+@@ -375,6 +375,9 @@ void abort_nr_dl_harq(NR_UE_info_t* UE, int8_t harq_pid)
  
    finish_nr_dl_harq(sched_ctrl, harq_pid);
    UE->mac_stats.dl.errors++;
@@ -12,11 +12,11 @@ index 552b1fa041..e0097541e8 100644
  }
  
  bwp_info_t get_pdsch_bwp_start_size(gNB_MAC_INST *nr_mac, NR_UE_info_t *UE)
-@@ -1374,6 +1377,7 @@ void nr_schedule_ue_spec(module_id_t module_id,
-       gNB_mac->mac_stats.used_prb_aggregate += sched_pdsch->rbSize;
+@@ -1340,6 +1343,7 @@ void post_process_dlsch(gNB_MAC_INST *nr_mac, post_process_pdsch_t *pdsch, NR_UE
+     nr_mac->mac_stats.dl.used_prb_aggregate += sched_pdsch->rbSize;
  
-       /* save retransmission information */
-+      harq->num_sdus = sdus;
-       harq->sched_pdsch = *sched_pdsch;
-       /* save which time allocation has been used, to be used on
-        * retransmissions */
+     /* save retransmission information */
++    harq->num_sdus = sdus;
+     harq->sched_pdsch = *sched_pdsch;
+     /* save which time allocation has been used, to be used on
+      * retransmissions */

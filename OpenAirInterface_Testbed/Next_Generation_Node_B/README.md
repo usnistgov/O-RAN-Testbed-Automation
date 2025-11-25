@@ -34,7 +34,12 @@ The gNodeB can also be monitored and controlled remotely using the OpenAirInterf
 
 ImScope can be enabled for the gNodeB by setting `NRSCOPE_GUI=true` at the beginning of the `full_install.sh` script before running it. For more information about ImScope, see the OpenAirInterface documentation [\[7\]][oai-imscope].
 
-![ImScope Screenshot](../../Images/OpenAirInterface_ImScope.png)
+
+
+<details>
+  <summary>View Screenshot</summary>
+  <img src="../../Images/OpenAirInterface_ImScope.png" alt="Screenshot of ImScope" />
+</details>
 
 ## References
 

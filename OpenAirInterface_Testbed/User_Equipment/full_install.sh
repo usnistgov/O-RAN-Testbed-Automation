@@ -80,6 +80,21 @@ fi
 echo "Patching OpenAirInterface..."
 ./install_scripts/apply_patches.sh
 
+# Ensure that the flexric repository is cloned at the right commit (symbolic link to RAN_Intelligent_Controllers/Flexible-RIC/flexric)
+cd openairinterface5g/openair2/E2AP/
+FLEXRIC_PARENT_DIR="../../../../RAN_Intelligent_Controllers/Flexible-RIC"
+FLEXRIC_DIR="$FLEXRIC_PARENT_DIR/flexric"
+if [ ! -L "flexric" ]; then
+    sudo rm -rf flexric
+    ln -s "$FLEXRIC_DIR" flexric
+fi
+if [ ! -d "$FLEXRIC_DIR/src/agent/e2_agent_api.c" ]; then
+    echo "Cloning Flexible RAN Intelligent Controller (FlexRIC)..."
+    cd "$FLEXRIC_PARENT_DIR"
+    ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/mosaic5g/flexric.git flexric
+fi
+cd "$SCRIPT_DIR"
+
 echo
 echo
 echo "Installing OpenAirInterface User Equipment..."

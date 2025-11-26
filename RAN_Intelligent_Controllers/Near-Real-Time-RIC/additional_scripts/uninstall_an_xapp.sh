@@ -69,8 +69,18 @@ if [[ $USER_CHOICE =~ ^[0-9]+$ ]] && [ $USER_CHOICE -ge 1 ] && [ $USER_CHOICE -l
     else
         echo "$UNINSTALL_OUTPUT"
         kubectl get pods -n ricxapp || true
+
+        # Remove Helm and related cache files for $SELECTED_XAPP
+        for HELM_CACHE_DIR in "$HOME/.cache/helm" "$HOME/.helm/cache" "$HOME/.cache"; do
+            if [ -d "$HELM_CACHE_DIR" ]; then
+                find "$HELM_CACHE_DIR" -type f -name "*${SELECTED_XAPP}*" -delete || true
+                echo "Cleaned up Helm cache for $SELECTED_XAPP in $HELM_CACHE_DIR."
+            fi
+        done
+
         echo
         echo "Successfully uninstalled $SELECTED_XAPP version $SELECTED_VERSION."
+        echo "    You may also remove the source code from the xApps/ directory."
     fi
 else
     echo "Invalid input. Exiting."

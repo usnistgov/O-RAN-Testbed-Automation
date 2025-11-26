@@ -33,6 +33,8 @@ set -e
 
 CLEAN_INSTALL=true
 DEBUG_SYMBOLS=false
+E2AP_VERSION="E2AP_V2"  # E2AP_V1, E2AP_V2, E2AP_V3
+KPM_VERSION="KPM_V2_03" # KPM_V2_03, KPM_V3_00
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
@@ -106,7 +108,7 @@ cd flexric
 sudo rm -rf build
 mkdir build
 cd build
-CC=gcc-10 CXX=g++-10 cmake .. -DE2AP_VERSION=E2AP_V3 -DKPM_VERSION=KPM_V3_00 $ADDITIONAL_FLAGS
+CC=gcc-10 CXX=g++-10 cmake .. -DE2AP_VERSION=$E2AP_VERSION -DKPM_VERSION=$KPM_VERSION $ADDITIONAL_FLAGS
 make -j$(nproc)
 
 echo "Installing FlexRIC..."

@@ -56,11 +56,13 @@ if [ "$DISABLE_NRSCOPE_IF_INSTALLED" = false ] && [ -f "$SCRIPT_DIR/openairinter
     IMSCOPE=true
 fi
 
+cd "$SCRIPT_DIR"
+
 # Write the hostname IP to the get_rfsim_server_address.txt file
 HOSTNAME_IP=$(hostname -I | awk '{print $1}')
+mkdir -p configs
 echo "$HOSTNAME_IP" >configs/get_rfsim_server_address.txt
 
-cd "$SCRIPT_DIR"
 mkdir -p logs
 if [ -f "logs/gnb_stdout.txt" ]; then
     sudo chown "$USER":"$USER" logs/gnb_stdout.txt

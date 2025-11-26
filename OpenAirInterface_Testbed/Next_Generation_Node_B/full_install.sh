@@ -31,9 +31,10 @@
 # Exit immediately if a command fails
 set -e
 
+DEBUG_SYMBOLS=false
 TELNET_SERVER=true
 NRSCOPE_GUI=false
-DEBUG_SYMBOLS=false
+E2_TERM_PORT=32222 # Default is 36421, which will not modify anything
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
@@ -75,8 +76,43 @@ if [ ! -d "openairinterface5g" ]; then
     ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/oai/openairinterface5g.git openairinterface5g
 fi
 
+# Ensure the User_Equipment directory can access the openairinterface5g directory (required for apply_patches.sh)
+if [ -d "../User_Equipment" ]; then
+    cd ../User_Equipment
+    # Check if a symbolic link can be created to the openairinterface5g directory
+    if [ ! -f "openairinterface5g/cmake_targets/build_oai" ]; then
+        sudo rm -rf openairinterface5g
+        if [ -f "../Next_Generation_Node_B/openairinterface5g/cmake_targets/build_oai" ]; then
+            echo "Creating symbolic link to openairinterface5g..."
+            ln -s "../Next_Generation_Node_B/openairinterface5g" openairinterface5g
+        fi
+    fi
+    cd "$SCRIPT_DIR"
+fi
+
 echo "Patching OpenAirInterface..."
 ./install_scripts/apply_patches.sh
+
+# Ensure that the flexric repository is cloned at the right commit (symbolic link to RAN_Intelligent_Controllers/Flexible-RIC/flexric)
+cd openairinterface5g/openair2/E2AP/
+FLEXRIC_PARENT_DIR="../../../../RAN_Intelligent_Controllers/Flexible-RIC"
+FLEXRIC_DIR="$FLEXRIC_PARENT_DIR/flexric"
+if [ ! -L "flexric" ]; then
+    sudo rm -rf flexric
+    ln -s "$FLEXRIC_DIR" flexric
+fi
+if [ ! -d "$FLEXRIC_DIR/src/agent/e2_agent_api.c" ]; then
+    echo "Cloning Flexible RAN Intelligent Controller (FlexRIC)..."
+    cd "$FLEXRIC_PARENT_DIR"
+    ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/mosaic5g/flexric.git flexric
+fi
+cd "$SCRIPT_DIR"
+
+# Configure the E2 termination port
+if [ "$E2_TERM_PORT" != "36421" ]; then # Default port
+    sudo find openairinterface5g/openair2/E2AP/flexric/ -type f -exec sed -i "s/36421/$E2_TERM_PORT/g" {} +
+    echo "Configured E2 termination to port $E2_TERM_PORT"
+fi
 
 echo
 echo

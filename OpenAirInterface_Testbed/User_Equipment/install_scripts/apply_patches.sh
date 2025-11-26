@@ -31,6 +31,9 @@
 # Exit immediately if a command fails
 set -e
 
+E2AP_VERSION="E2AP_V2"  # E2AP_V1, E2AP_V2, E2AP_V3
+KPM_VERSION="KPM_V2_03" # KPM_V2_03, KPM_V3_00
+
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
@@ -41,15 +44,17 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$PARENT_DIR"
 
-# Modify CMakeLists.txt to set E2AP_VERSION to E2AP_V3 and KPM_VERSION to KPM_V3_00 (must match FlexRIC)
-if [ -f "openairinterface5g/CMakeLists.txt" ]; then
-    echo "Modifying CMakeLists.txt to set E2AP_VERSION to E2AP_V3..."
-    sed -i 's/set(E2AP_VERSION "[^"]*"/set(E2AP_VERSION "E2AP_V3"/' openairinterface5g/CMakeLists.txt
+# Modify CMakeLists.txt to set E2AP_VERSION and KPM_VERSION (must match FlexRIC)
+cd openairinterface5g
+if [ -f "CMakeLists.txt" ]; then
+    echo "Modifying CMakeLists.txt to set E2AP_VERSION to $E2AP_VERSION..."
+    sed -i "s/set(E2AP_VERSION \"[^\"]*\"/set(E2AP_VERSION \"$E2AP_VERSION\"/" CMakeLists.txt
 fi
-if [ -f "openairinterface5g/CMakeLists.txt" ]; then
-    echo "Modifying CMakeLists.txt to set KPM_VERSION to KPM_V3_00..."
-    sed -i 's/set(KPM_VERSION "[^"]*"/set(KPM_VERSION "KPM_V3_00"/' openairinterface5g/CMakeLists.txt
+if [ -f "CMakeLists.txt" ]; then
+    echo "Modifying CMakeLists.txt to set KPM_VERSION to $KPM_VERSION..."
+    sed -i "s/set(KPM_VERSION \"[^\"]*\"/set(KPM_VERSION \"$KPM_VERSION\"/" CMakeLists.txt
 fi
+cd ..
 
 # Apply patches to OpenAirInterface to add support for additional metrics in the KPI report
 cd openairinterface5g

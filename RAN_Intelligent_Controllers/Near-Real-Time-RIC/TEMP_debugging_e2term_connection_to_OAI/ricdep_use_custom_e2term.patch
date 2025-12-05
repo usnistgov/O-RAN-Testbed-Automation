@@ -1,5 +1,5 @@
 diff --git a/RECIPE_EXAMPLE/example_recipe_latest_unstable.yaml b/RECIPE_EXAMPLE/example_recipe_latest_unstable.yaml
-index eb16b6d..27492ff 100644
+index eb16b6d..a5a352d 100644
 --- a/RECIPE_EXAMPLE/example_recipe_latest_unstable.yaml
 +++ b/RECIPE_EXAMPLE/example_recipe_latest_unstable.yaml
 @@ -111,9 +111,9 @@ e2mgr:
@@ -11,12 +11,12 @@ index eb16b6d..27492ff 100644
 -      tag: 6.0.3
 +      registry: ghcr.io
 +      name: simewu/ric-plt-e2/e2-terminator
-+      tag: master-f0482f9
++      tag: master-9548165
      privilegedmode: false
      hostnetworkmode: false
      env:
 diff --git a/RECIPE_EXAMPLE/example_recipe_oran_cherry_release.yaml b/RECIPE_EXAMPLE/example_recipe_oran_cherry_release.yaml
-index d0c835c..ad72daf 100644
+index d0c835c..d0d6f03 100644
 --- a/RECIPE_EXAMPLE/example_recipe_oran_cherry_release.yaml
 +++ b/RECIPE_EXAMPLE/example_recipe_oran_cherry_release.yaml
 @@ -109,9 +109,9 @@ e2mgr:
@@ -28,12 +28,12 @@ index d0c835c..ad72daf 100644
 -      tag: 5.4.8
 +      registry: ghcr.io
 +      name: simewu/ric-plt-e2/e2-terminator
-+      tag: master-f0482f9
++      tag: master-9548165
      privilegedmode: false
      hostnetworkmode: false
      env:
 diff --git a/RECIPE_EXAMPLE/example_recipe_oran_e_release.yaml b/RECIPE_EXAMPLE/example_recipe_oran_e_release.yaml
-index b680819..ea19056 100644
+index b680819..6fbaea6 100644
 --- a/RECIPE_EXAMPLE/example_recipe_oran_e_release.yaml
 +++ b/RECIPE_EXAMPLE/example_recipe_oran_e_release.yaml
 @@ -110,9 +110,9 @@ e2mgr:
@@ -45,7 +45,7 @@ index b680819..ea19056 100644
 -      tag: 5.5.0
 +      registry: ghcr.io
 +      name: simewu/ric-plt-e2/e2-terminator
-+      tag: master-f0482f9
++      tag: master-9548165
      privilegedmode: false
      hostnetworkmode: false
      env:
@@ -63,7 +63,7 @@ index a7999a9..87cb9a4 100644
  #  image:
  #    init:
 diff --git a/RECIPE_EXAMPLE/example_recipe_oran_g_release.yaml b/RECIPE_EXAMPLE/example_recipe_oran_g_release.yaml
-index f3f9823..57f0636 100644
+index f3f9823..8dc8bdd 100644
 --- a/RECIPE_EXAMPLE/example_recipe_oran_g_release.yaml
 +++ b/RECIPE_EXAMPLE/example_recipe_oran_g_release.yaml
 @@ -111,9 +111,9 @@ e2mgr:
@@ -75,12 +75,12 @@ index f3f9823..57f0636 100644
 -      tag: 6.0.1
 +      registry: ghcr.io
 +      name: simewu/ric-plt-e2/e2-terminator
-+      tag: master-f0482f9
++      tag: master-9548165
      privilegedmode: false
      hostnetworkmode: false
      env:
 diff --git a/RECIPE_EXAMPLE/example_recipe_oran_h_release.yaml b/RECIPE_EXAMPLE/example_recipe_oran_h_release.yaml
-index 71ad931..305dba7 100644
+index 71ad931..b0f51a5 100644
 --- a/RECIPE_EXAMPLE/example_recipe_oran_h_release.yaml
 +++ b/RECIPE_EXAMPLE/example_recipe_oran_h_release.yaml
 @@ -111,9 +111,9 @@ e2mgr:
@@ -92,12 +92,12 @@ index 71ad931..305dba7 100644
 -      tag: 6.0.3
 +      registry: ghcr.io
 +      name: simewu/ric-plt-e2/e2-terminator
-+      tag: master-f0482f9
++      tag: master-9548165
      privilegedmode: false
      hostnetworkmode: false
      env:
 diff --git a/RECIPE_EXAMPLE/example_recipe_oran_i_release.yaml b/RECIPE_EXAMPLE/example_recipe_oran_i_release.yaml
-index 92949ed..43d627a 100644
+index 92949ed..bf93046 100644
 --- a/RECIPE_EXAMPLE/example_recipe_oran_i_release.yaml
 +++ b/RECIPE_EXAMPLE/example_recipe_oran_i_release.yaml
 @@ -111,9 +111,9 @@ e2mgr:
@@ -109,12 +109,12 @@ index 92949ed..43d627a 100644
 -      tag: 6.0.4
 +      registry: ghcr.io
 +      name: simewu/ric-plt-e2/e2-terminator
-+      tag: master-f0482f9
++      tag: master-9548165
      privilegedmode: false
      hostnetworkmode: false
      env:
 diff --git a/RECIPE_EXAMPLE/example_recipe_oran_j_release.yaml b/RECIPE_EXAMPLE/example_recipe_oran_j_release.yaml
-index bbec2fc..3c3e22e 100644
+index bbec2fc..8079ea5 100644
 --- a/RECIPE_EXAMPLE/example_recipe_oran_j_release.yaml
 +++ b/RECIPE_EXAMPLE/example_recipe_oran_j_release.yaml
 @@ -111,9 +111,9 @@ e2mgr:
@@ -126,12 +126,12 @@ index bbec2fc..3c3e22e 100644
 -      tag: 6.0.6
 +      registry: ghcr.io
 +      name: simewu/ric-plt-e2/e2-terminator
-+      tag: master-f0482f9
++      tag: master-9548165
      privilegedmode: false
      hostnetworkmode: false
      env:
 diff --git a/RECIPE_EXAMPLE/example_recipe_oran_k_release.yaml b/RECIPE_EXAMPLE/example_recipe_oran_k_release.yaml
-index bbec2fc..3c3e22e 100644
+index bbec2fc..8079ea5 100644
 --- a/RECIPE_EXAMPLE/example_recipe_oran_k_release.yaml
 +++ b/RECIPE_EXAMPLE/example_recipe_oran_k_release.yaml
 @@ -111,9 +111,9 @@ e2mgr:
@@ -143,12 +143,12 @@ index bbec2fc..3c3e22e 100644
 -      tag: 6.0.6
 +      registry: ghcr.io
 +      name: simewu/ric-plt-e2/e2-terminator
-+      tag: master-f0482f9
++      tag: master-9548165
      privilegedmode: false
      hostnetworkmode: false
      env:
 diff --git a/RECIPE_EXAMPLE/example_recipe_oran_l_release.yaml b/RECIPE_EXAMPLE/example_recipe_oran_l_release.yaml
-index bbec2fc..3c3e22e 100644
+index bbec2fc..8079ea5 100644
 --- a/RECIPE_EXAMPLE/example_recipe_oran_l_release.yaml
 +++ b/RECIPE_EXAMPLE/example_recipe_oran_l_release.yaml
 @@ -111,9 +111,9 @@ e2mgr:
@@ -160,12 +160,12 @@ index bbec2fc..3c3e22e 100644
 -      tag: 6.0.6
 +      registry: ghcr.io
 +      name: simewu/ric-plt-e2/e2-terminator
-+      tag: master-f0482f9
++      tag: master-9548165
      privilegedmode: false
      hostnetworkmode: false
      env:
 diff --git a/depRicKubernetesOperator/internal/controller/getDeployment.go b/depRicKubernetesOperator/internal/controller/getDeployment.go
-index 2e30713..c183ea3 100644
+index 2e30713..e6b9e30 100644
 --- a/depRicKubernetesOperator/internal/controller/getDeployment.go
 +++ b/depRicKubernetesOperator/internal/controller/getDeployment.go
 @@ -795,7 +795,7 @@ func GetDeployment() []*appsv1.Deployment {
@@ -173,12 +173,12 @@ index 2e30713..c183ea3 100644
  								},
  							},
 -							Image: "nexus3.o-ran-sc.org:10002/o-ran-sc/ric-plt-e2:3.0.1",
-+							Image: "ghcr.io/simewu/ric-plt-e2/e2-terminator:master-f0482f9",
++							Image: "ghcr.io/simewu/ric-plt-e2/e2-terminator:master-9548165",
  							LivenessProbe: &corev1.Probe{
  								ProbeHandler: corev1.ProbeHandler{
  									Exec: &corev1.ExecAction{
 diff --git a/helm/e2term/values.yaml b/helm/e2term/values.yaml
-index ab2681e..c68e2ed 100644
+index ab2681e..5ef386f 100644
 --- a/helm/e2term/values.yaml
 +++ b/helm/e2term/values.yaml
 @@ -23,9 +23,9 @@ e2term:
@@ -190,12 +190,12 @@ index ab2681e..c68e2ed 100644
 -      registry: "nexus3.o-ran-sc.org:10002/o-ran-sc"
 +      registry: ghcr.io
 +      name: simewu/ric-plt-e2/e2-terminator
-+      tag: master-f0482f9
++      tag: master-9548165
  
      privilegedmode: false
      hostnetworkmode: false
 diff --git a/new-installer/helm/charts/nearrtric/e2term/values.yaml b/new-installer/helm/charts/nearrtric/e2term/values.yaml
-index ab2681e..c68e2ed 100644
+index ab2681e..5ef386f 100644
 --- a/new-installer/helm/charts/nearrtric/e2term/values.yaml
 +++ b/new-installer/helm/charts/nearrtric/e2term/values.yaml
 @@ -23,9 +23,9 @@ e2term:
@@ -207,7 +207,7 @@ index ab2681e..c68e2ed 100644
 -      registry: "nexus3.o-ran-sc.org:10002/o-ran-sc"
 +      registry: ghcr.io
 +      name: simewu/ric-plt-e2/e2-terminator
-+      tag: master-f0482f9
++      tag: master-9548165
  
      privilegedmode: false
      hostnetworkmode: false

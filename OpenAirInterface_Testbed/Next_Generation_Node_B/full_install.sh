@@ -34,7 +34,7 @@ set -e
 DEBUG_SYMBOLS=false
 TELNET_SERVER=true
 NRSCOPE_GUI=false
-E2_TERM_PORT=32222 # Default is 36421, which will not modify anything
+E2_TERM_PORT=36422 # Default is 36421, which will not modify anything
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then

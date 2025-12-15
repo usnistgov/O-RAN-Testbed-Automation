@@ -34,7 +34,10 @@ set -e
 DEBUG_SYMBOLS=false
 TELNET_SERVER=true
 NRSCOPE_GUI=false
-E2_TERM_PORT=36422 # Default is 36421, which will not modify anything
+E2_TERM_PORT=36421 # Default is 36421, which will not modify anything
+E2_TERM_PORT_SUBSTITUTE=36420 # If E2_TERM_PORT is used already, substitute it before replacing with E2_TERM_PORT
+SHARE_OAI_DIR_FROM_UE=true
+SHARE_FLEXRIC_DIR_FROM_TESTBED=false
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
@@ -46,12 +49,10 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
 # Check if a symbolic link can be created to the openairinterface5g directory
-if [ ! -f "openairinterface5g/cmake_targets/build_oai" ]; then
+if [ "$SHARE_OAI_DIR_FROM_UE" = true ] && [ ! -f "openairinterface5g/cmake_targets/build_oai" ]; then
     sudo rm -rf openairinterface5g
-    if [ -f "../User_Equipment/openairinterface5g/cmake_targets/build_oai" ]; then
-        echo "Creating symbolic link to openairinterface5g..."
-        ln -s "../User_Equipment/openairinterface5g" openairinterface5g
-    fi
+    echo "Creating symbolic link to openairinterface5g..."
+    ln -s "../User_Equipment/openairinterface5g" openairinterface5g
 fi
 
 # Since the UE and gNB share the same openairinterface5g directory, and the UE is installed first, the gNB's CLEAN_INSTALL must be false to prevent cleaning the UE installation
@@ -71,47 +72,66 @@ fi
 # Get the start timestamp in seconds
 INSTALL_START_TIME=$(date +%s)
 
-if [ ! -d "openairinterface5g" ]; then
-    echo "Cloning openairinterface5g..."
-    ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/oai/openairinterface5g.git openairinterface5g
-fi
-
-# Ensure the User_Equipment directory can access the openairinterface5g directory (required for apply_patches.sh)
-if [ -d "../User_Equipment" ]; then
-    cd ../User_Equipment
-    # Check if a symbolic link can be created to the openairinterface5g directory
-    if [ ! -f "openairinterface5g/cmake_targets/build_oai" ]; then
-        sudo rm -rf openairinterface5g
-        if [ -f "../Next_Generation_Node_B/openairinterface5g/cmake_targets/build_oai" ]; then
-            echo "Creating symbolic link to openairinterface5g..."
-            ln -s "../Next_Generation_Node_B/openairinterface5g" openairinterface5g
-        fi
+if [ "$SHARE_OAI_DIR_FROM_UE" = true ]; then
+    # Make sure that the User Equipment has the source openairinterface5g repository
+    mkdir -p "../User_Equipment" || true
+    if [ ! -f "../User_Equipment/openairinterface5g/cmake_targets/build_oai" ]; then
+        echo "Cloning shared openairinterface5g to User Equipment..."
+        sudo rm -rf ../User_Equipment/openairinterface5g
+        ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/oai/openairinterface5g.git ../User_Equipment/openairinterface5g
     fi
-    cd "$SCRIPT_DIR"
+else
+    if [ ! -d "openairinterface5g" ]; then
+        echo "Cloning openairinterface5g..."
+        sudo rm -rf openairinterface5g
+        ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/oai/openairinterface5g.git openairinterface5g
+    fi
 fi
 
 echo "Patching OpenAirInterface..."
 ./install_scripts/apply_patches.sh
 
-# Ensure that the flexric repository is cloned at the right commit (symbolic link to RAN_Intelligent_Controllers/Flexible-RIC/flexric)
+# Ensure that the flexric repository is cloned at the right commit
 cd openairinterface5g/openair2/E2AP/
-FLEXRIC_PARENT_DIR="../../../../RAN_Intelligent_Controllers/Flexible-RIC"
-FLEXRIC_DIR="$FLEXRIC_PARENT_DIR/flexric"
-if [ ! -L "flexric" ]; then
-    sudo rm -rf flexric
-    ln -s "$FLEXRIC_DIR" flexric
+if [ "$SHARE_FLEXRIC_DIR_FROM_TESTBED" = true ]; then
+    # Symbolic link to RAN_Intelligent_Controllers/Flexible-RIC/flexric
+    FLEXRIC_PARENT_DIR="../../../../RAN_Intelligent_Controllers/Flexible-RIC"
+    FLEXRIC_DIR="$FLEXRIC_PARENT_DIR/flexric"
+    if [ ! -L "flexric" ]; then
+        sudo rm -rf flexric
+        ln -s "$FLEXRIC_DIR" flexric
+    fi
+else
+    FLEXRIC_PARENT_DIR="$SCRIPT_DIR/openairinterface5g/openair2/E2AP"
+    FLEXRIC_DIR="$FLEXRIC_PARENT_DIR/flexric"
+    if [ -L "flexric" ]; then
+        sudo rm -rf flexric
+    fi
 fi
+
+cd "$SCRIPT_DIR"
 if [ ! -d "$FLEXRIC_DIR/src/agent/e2_agent_api.c" ]; then
     echo "Cloning Flexible RAN Intelligent Controller (FlexRIC)..."
-    cd "$FLEXRIC_PARENT_DIR"
-    ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/mosaic5g/flexric.git flexric
+    ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/mosaic5g/flexric.git "$FLEXRIC_DIR"
 fi
-cd "$SCRIPT_DIR"
 
+
+CURRENT_E2_PORT=$(sed -nE 's/.*e2ap_server_port *= *([0-9]+);/\1/p' openairinterface5g/openair2/E2AP/flexric/src/agent/e2_agent_api.c)
+if [ -z "$CURRENT_E2_PORT" ]; then
+    echo "Error: e2ap_server_port not found in openairinterface5g/openair2/E2AP/flexric/src/agent/e2_agent_api.c" >&2
+    exit 1
+fi
+# Check if the substitute port is already in use
+if sudo find openairinterface5g/openair2/E2AP/flexric/ -type f -exec grep -l -w "$E2_TERM_PORT_SUBSTITUTE" {} + | grep -q .; then
+    echo "ERROR: The E2 Termination Port Substitute ($E2_TERM_PORT_SUBSTITUTE) is already in use in the following files. Please choose a different substitute port."
+    sudo find openairinterface5g/openair2/E2AP/flexric/ -type f -exec grep -l -w "$E2_TERM_PORT_SUBSTITUTE" {} +
+    exit 1
+fi
 # Configure the E2 termination port
-if [ "$E2_TERM_PORT" != "36421" ]; then # Default port
-    sudo find openairinterface5g/openair2/E2AP/flexric/ -type f -exec sed -i "s/36421/$E2_TERM_PORT/g" {} +
-    echo "Configured E2 termination to port $E2_TERM_PORT"
+if [ "$E2_TERM_PORT" != "$CURRENT_E2_PORT" ]; then
+    sudo find openairinterface5g/openair2/E2AP/flexric/ -type f -exec sed -i "s/$CURRENT_E2_PORT/$E2_TERM_PORT_SUBSTITUTE/g" {} + # Change current port to substitute
+    sudo find openairinterface5g/openair2/E2AP/flexric/ -type f -exec sed -i "s/$E2_TERM_PORT_SUBSTITUTE/$E2_TERM_PORT/g" {} + # Change substitute to specified port
+    echo "Configured E2 termination from port $CURRENT_E2_PORT to port $E2_TERM_PORT"
 fi
 
 echo

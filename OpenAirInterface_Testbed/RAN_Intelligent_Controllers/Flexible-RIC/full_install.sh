@@ -110,7 +110,7 @@ fi
 # Configure the E2 termination port
 if [ "$E2_TERM_PORT" != "$CURRENT_E2_PORT" ]; then
     sudo find flexric/ -type f -exec sed -i "s/$CURRENT_E2_PORT/$E2_TERM_PORT_SUBSTITUTE/g" {} + # Change current port to substitute
-    sudo find flexric/ -type f -exec sed -i "s/$E2_TERM_PORT_SUBSTITUTE/$E2_TERM_PORT/g" {} + # Change substitute to specified port
+    sudo find flexric/ -type f -exec sed -i "s/$E2_TERM_PORT_SUBSTITUTE/$E2_TERM_PORT/g" {} +    # Change substitute to specified port
     echo "Configured E2 termination from port $CURRENT_E2_PORT to port $E2_TERM_PORT"
 fi
 

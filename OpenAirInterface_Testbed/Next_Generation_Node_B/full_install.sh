@@ -35,7 +35,7 @@ DEBUG_SYMBOLS=false
 TELNET_SERVER=true
 NRSCOPE_GUI=false
 SHARE_FLEXRIC_DIR_FROM_TESTBED=false
-E2_TERM_PORT=36422 # Ensure this matches FlexRIC's full_install.sh E2_TERM_PORT. Default is 36421, which will not modify anything
+E2_TERM_PORT=36422            # Ensure this matches FlexRIC's full_install.sh E2_TERM_PORT. Default is 36421, which will not modify anything
 E2_TERM_PORT_SUBSTITUTE=36423 # If E2_TERM_PORT is used already, substitute it before replacing with E2_TERM_PORT
 SHARE_OAI_DIR_FROM_UE=true
 
@@ -115,7 +115,6 @@ if [ ! -d "$FLEXRIC_DIR/src/agent/e2_agent_api.c" ]; then
     ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/mosaic5g/flexric.git "$FLEXRIC_DIR"
 fi
 
-
 CURRENT_E2_PORT=$(sed -nE 's/.*e2ap_server_port *= *([0-9]+);/\1/p' openairinterface5g/openair2/E2AP/flexric/src/agent/e2_agent_api.c)
 if [ -z "$CURRENT_E2_PORT" ]; then
     echo "Error: e2ap_server_port not found in openairinterface5g/openair2/E2AP/flexric/src/agent/e2_agent_api.c" >&2
@@ -130,7 +129,7 @@ fi
 # Configure the E2 termination port
 if [ "$E2_TERM_PORT" != "$CURRENT_E2_PORT" ]; then
     sudo find openairinterface5g/openair2/E2AP/flexric/ -type f -exec sed -i "s/$CURRENT_E2_PORT/$E2_TERM_PORT_SUBSTITUTE/g" {} + # Change current port to substitute
-    sudo find openairinterface5g/openair2/E2AP/flexric/ -type f -exec sed -i "s/$E2_TERM_PORT_SUBSTITUTE/$E2_TERM_PORT/g" {} + # Change substitute to specified port
+    sudo find openairinterface5g/openair2/E2AP/flexric/ -type f -exec sed -i "s/$E2_TERM_PORT_SUBSTITUTE/$E2_TERM_PORT/g" {} +    # Change substitute to specified port
     echo "Configured E2 termination from port $CURRENT_E2_PORT to port $E2_TERM_PORT"
 fi
 

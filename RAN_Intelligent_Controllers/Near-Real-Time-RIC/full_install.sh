@@ -145,9 +145,9 @@ else
         # Configure the SCTP E2 termination port (not idempotent so only on first clone)
         if [ "$E2_TERM_PORT" != "36422" ]; then # Default port
             echo "Configuring E2 Termination Port to $E2_TERM_PORT..."
-            if sudo find ric-dep/ -type f -exec grep -l "$E2_TERM_PORT_SUBSTITUTE" {} + | grep -q .; then
+            if sudo find ric-dep/ -type f -exec grep -l -w "$E2_TERM_PORT_SUBSTITUTE" {} + | grep -q .; then
                 echo "ERROR: The E2 Termination Port Substitute ($E2_TERM_PORT_SUBSTITUTE) is already in use in the following files. Please choose a different substitute port."
-                sudo find ric-dep/ -type f -exec grep -l "$E2_TERM_PORT_SUBSTITUTE" {} +
+                sudo find ric-dep/ -type f -exec grep -l -w "$E2_TERM_PORT_SUBSTITUTE" {} +
                 exit 1
             fi
             sudo find ric-dep/ -type f -exec sed -i "s/$E2_TERM_PORT/$E2_TERM_PORT_SUBSTITUTE/g" {} +
@@ -274,9 +274,9 @@ else
         # Configure the SCTP E2 termination port (not idempotent so only on first clone)
         if [ "$E2_TERM_PORT" != "36422" ]; then # Default port
             echo "Configuring E2 Termination Port to $E2_TERM_PORT..."
-            if sudo find ric-dep/ -type f -exec grep -l "$E2_TERM_PORT_SUBSTITUTE" {} + | grep -q .; then
+            if sudo find ric-dep/ -type f -exec grep -l -w "$E2_TERM_PORT_SUBSTITUTE" {} + | grep -q .; then
                 echo "ERROR: The E2 Termination Port Substitute ($E2_TERM_PORT_SUBSTITUTE) is already in use in the following files. Please choose a different substitute port."
-                sudo find ric-dep/ -type f -exec grep -l "$E2_TERM_PORT_SUBSTITUTE" {} +
+                sudo find ric-dep/ -type f -exec grep -l -w "$E2_TERM_PORT_SUBSTITUTE" {} +
                 exit 1
             fi
             sudo find ric-dep/ -type f -exec sed -i "s/$E2_TERM_PORT/$E2_TERM_PORT_SUBSTITUTE/g" {} +
@@ -393,9 +393,9 @@ else
         # Configure the SCTP E2 termination port (not idempotent so only on first clone)
         if [ "$E2_TERM_PORT" != "36422" ]; then # Default port
             echo "Configuring E2 Termination Port to $E2_TERM_PORT..."
-            if sudo find e2-interface/ -type f -exec grep -l "$E2_TERM_PORT_SUBSTITUTE" {} + | grep -q .; then
+            if sudo find e2-interface/ -type f -exec grep -l -w "$E2_TERM_PORT_SUBSTITUTE" {} + | grep -q .; then
                 echo "ERROR: The E2 Termination Port Substitute ($E2_TERM_PORT_SUBSTITUTE) is already in use in the following files. Please choose a different substitute port."
-                sudo find e2-interface/ -type f -exec grep -l "$E2_TERM_PORT_SUBSTITUTE" {} +
+                sudo find e2-interface/ -type f -exec grep -l -w "$E2_TERM_PORT_SUBSTITUTE" {} +
                 exit 1
             fi
             sudo find e2-interface/ -type f -exec sed -i "s/$E2_TERM_PORT/$E2_TERM_PORT_SUBSTITUTE/g" {} +

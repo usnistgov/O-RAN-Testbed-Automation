@@ -51,15 +51,6 @@ if ! grep -q avx2 /proc/cpuinfo; then
     read -r -n 1 -s
 fi
 
-# Check if a symbolic link can be created to the openairinterface5g directory
-if [ ! -f "openairinterface5g/cmake_targets/build_oai" ]; then
-    sudo rm -rf openairinterface5g
-    if [ -f "../Next_Generation_Node_B/openairinterface5g/cmake_targets/build_oai" ]; then
-        echo "Creating symbolic link to openairinterface5g..."
-        ln -s "../Next_Generation_Node_B/openairinterface5g" openairinterface5g
-    fi
-fi
-
 # Check for UE binary to determine if srsRAN_Project is already installed
 if [ "$CLEAN_INSTALL" = false ] && [ -f "openairinterface5g/cmake_targets/ran_build/build/nr-uesoftmodem" ]; then
     echo "OpenAirInterface UE is already installed, skipping."

@@ -41,29 +41,6 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$PARENT_DIR"
 
-# # Apply patch to improve E2AP verbosity
-# echo "Patching E2AP verbosity..."
-# cd flexric
-# git restore src/lib/e2ap/v1_01/dec/e2ap_msg_dec_asn.c
-# if [ ! -f "src/lib/e2ap/v1_01/dec/e2ap_msg_dec_asn.c.previous" ]; then
-#     cp src/lib/e2ap/v1_01/dec/e2ap_msg_dec_asn.c src/lib/e2ap/v1_01/dec/e2ap_msg_dec_asn.c.previous
-#     cp src/lib/e2ap/v1_01/dec/e2ap_msg_dec_asn.c.previous "$PARENT_DIR/install_patch_files/flexric/src/lib/e2ap/v1_01/dec/e2ap_msg_dec_asn.previous.c"
-# fi
-# git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/src/lib/e2ap/v1_01/dec/e2ap_msg_dec_asn.c.patch"
-# git restore src/lib/e2ap/v2_03/dec/e2ap_msg_dec_asn.c
-# if [ ! -f "src/lib/e2ap/v2_03/dec/e2ap_msg_dec_asn.c.previous" ]; then
-#     cp src/lib/e2ap/v2_03/dec/e2ap_msg_dec_asn.c src/lib/e2ap/v2_03/dec/e2ap_msg_dec_asn.c.previous
-#     cp src/lib/e2ap/v2_03/dec/e2ap_msg_dec_asn.c.previous "$PARENT_DIR/install_patch_files/flexric/src/lib/e2ap/v2_03/dec/e2ap_msg_dec_asn.previous.c"
-# fi
-# git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/src/lib/e2ap/v2_03/dec/e2ap_msg_dec_asn.c.patch"
-# git restore src/lib/e2ap/v3_01/dec/e2ap_msg_dec_asn.c
-# if [ ! -f "src/lib/e2ap/v3_01/dec/e2ap_msg_dec_asn.c.previous" ]; then
-#     cp src/lib/e2ap/v3_01/dec/e2ap_msg_dec_asn.c src/lib/e2ap/v3_01/dec/e2ap_msg_dec_asn.c.previous
-#     cp src/lib/e2ap/v3_01/dec/e2ap_msg_dec_asn.c.previous "$PARENT_DIR/install_patch_files/flexric/src/lib/e2ap/v3_01/dec/e2ap_msg_dec_asn.previous.c"
-# fi
-# git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/src/lib/e2ap/v3_01/dec/e2ap_msg_dec_asn.c.patch"
-# cd ..
-
 # Apply patch to xApps to correct the type printing (as of commit hash 596a1ae67309618a74e09e56dff9a723ea7d99c5)
 echo "Patching xApp type printing..."
 cd flexric

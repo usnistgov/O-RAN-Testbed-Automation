@@ -37,8 +37,20 @@ if ! command -v realpath &>/dev/null; then
     sudo env $APTVARS apt-get install -y coreutils
 fi
 
+if ! command -v tcpdump &>/dev/null; then
+    echo "Package \"tcpdump\" not found, installing..."
+    sudo env $APTVARS apt-get install -y tcpdump
+fi
+
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 BASE_DIR=$(dirname "$SCRIPT_DIR")
+
+cleanup() {
+    echo "Cleaning up..."
+    sudo pkill -2 -f "tcpdump -i ogstun -w .*test_.*_capture.pcap" || true
+}
+
+trap cleanup EXIT INT TERM
 
 TEST_RESULTS_DIR="$SCRIPT_DIR/5.3_test_results"
 sudo rm -rf "$TEST_RESULTS_DIR"
@@ -54,6 +66,7 @@ echo "Stopping any running components from previous runs..."
 
 echo
 echo "Running 5G Core components..."
+sed -i -E 's/^core_to_use:.*/core_to_use: open5gs/' 5G_Core_Network/options.yaml
 cd 5G_Core_Network
 ./run.sh
 cd ..
@@ -88,6 +101,10 @@ for i in {1..10}; do
     echo "################################################################################"
     echo "############################## Starting Test Run $i #############################"
     echo "################################################################################"
+
+    echo "Starting tcpdump capture..."
+    nohup sudo tcpdump -i ogstun -w "$TEST_RESULTS_DIR/test_${i}_capture.pcap" < /dev/null > /dev/null 2>&1 &
+    sleep 2
 
     IS_TEST_SUCCESS=false
 
@@ -161,6 +178,9 @@ for i in {1..10}; do
     ./stop.sh
     cd ..
     
+    echo "Stopping tcpdump capture..."
+    sudo pkill -2 -f "tcpdump -i ogstun -w .*test_${i}_capture.pcap" || true
+
     # Save logs from this test run
     if [ -f Next_Generation_Node_B/logs/gnb_stdout.txt ]; then
         cp Next_Generation_Node_B/logs/gnb_stdout.txt "$TEST_RESULTS_DIR/test_${i}_gnb.log"

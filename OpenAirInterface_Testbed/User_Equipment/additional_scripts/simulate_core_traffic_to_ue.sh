@@ -106,6 +106,10 @@ if [ -z "$FIXED_DOCKER_PERMS" ]; then
 fi
 
 LOG_FILE="logs/ue${UE_NUMBER}_stdout.txt"
+if [ ! -f "$LOG_FILE" ]; then
+    echo "ERROR: Log file $LOG_FILE does not exist. Please start the UE first."
+    exit 1
+fi
 PDU_SESSION_IP=$(cat $LOG_FILE | grep "Received PDU Session Establishment Accept" | cut -d ':' -f2 | xargs | tr -d '\r\n')
 
 if [ -z "$PDU_SESSION_IP" ]; then

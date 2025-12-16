@@ -96,6 +96,10 @@ if ! ip netns list | grep -q "$UE_NAMESPACE"; then
 fi
 
 LOG_FILE="logs/ue${UE_NUMBER}_stdout.txt"
+if [ ! -f "$LOG_FILE" ]; then
+    echo "ERROR: Log file $LOG_FILE does not exist. Please start the UE first."
+    exit 1
+fi
 PDU_SESSION_IP=$(cat $LOG_FILE | grep "PDU Session Establishment successful" | cut -d ':' -f2 | xargs | tr -d '\r\n')
 CORE_IP=$(ip route | grep ogstun | cut -d ' ' -f 9 | xargs)
 if [ -z "$CORE_IP" ]; then # 5GDeploy:

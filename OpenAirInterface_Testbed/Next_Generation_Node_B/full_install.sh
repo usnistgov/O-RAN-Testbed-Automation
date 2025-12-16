@@ -35,7 +35,7 @@ DEBUG_SYMBOLS=false
 TELNET_SERVER=true
 NRSCOPE_GUI=false
 SHARE_FLEXRIC_DIR_FROM_TESTBED=false
-E2_TERM_PORT=36422            # Ensure this matches FlexRIC's full_install.sh E2_TERM_PORT. Default is 36421, which will not modify anything
+E2_TERM_PORT=36421            # Default is 36421, which will result in no modification
 E2_TERM_PORT_SUBSTITUTE=36423 # If E2_TERM_PORT is used already, substitute it before replacing with E2_TERM_PORT
 SHARE_OAI_DIR_FROM_UE=true
 

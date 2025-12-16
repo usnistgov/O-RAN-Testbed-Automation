@@ -6,7 +6,7 @@ index 286b019..7bec053 100755
  # damage to property. The software developed by NIST employees is not subject to
  # copyright protection within the United States.
  
-+E2_TERM_PORT=36421 # Default is 36422, which will not modify anything
++E2_TERM_PORT=36421 # Default is 36422, which will result in no modification
 +E2_TERM_PORT_SUBSTITUTE=36420 # If E2_TERM_PORT is used already, substitute it before replacing with E2_TERM_PORT
 +
  # Exit immediately if a command fails

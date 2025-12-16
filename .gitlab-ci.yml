@@ -1,4 +1,6 @@
+# image: ubuntu:20.04
 image: ubuntu:22.04
+# image: ubuntu:24.04
 
 variables:
   GIT_DEPTH: "1"

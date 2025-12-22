@@ -57,7 +57,7 @@ sudo rm -rf "$TEST_RESULTS_DIR"
 mkdir -p "$TEST_RESULTS_DIR"
 
 CSV_FILE="$TEST_RESULTS_DIR/test_results.csv"
-echo "UNIX Epoch,Test Index,Test Result" > "$CSV_FILE"
+echo "UNIX Epoch,Test Index,Test Result" >"$CSV_FILE"
 
 cd "$BASE_DIR"
 
@@ -103,7 +103,7 @@ for i in {1..10}; do
     echo "################################################################################"
 
     echo "Starting tcpdump capture..."
-    nohup sudo tcpdump -i ogstun -w "$TEST_RESULTS_DIR/test_${i}_capture.pcap" < /dev/null > /dev/null 2>&1 &
+    nohup sudo tcpdump -i ogstun -w "$TEST_RESULTS_DIR/test_${i}_capture.pcap" </dev/null >/dev/null 2>&1 &
     sleep 2
 
     IS_TEST_SUCCESS=false
@@ -155,7 +155,7 @@ for i in {1..10}; do
             break
         fi
     done
-    
+
     if [ "$UE_READY" = true ]; then
         echo -e "\nUE is ready and connected. Starting traffic for three minutes..."
         ./additional_scripts/simulate_ue_traffic_to_core.sh 1 1M 10 # 180
@@ -177,28 +177,28 @@ for i in {1..10}; do
     cd Next_Generation_Node_B
     ./stop.sh
     cd ..
-    
+
     echo "Stopping tcpdump capture..."
     sudo pkill -2 -f "tcpdump -i ogstun -w .*test_${i}_capture.pcap" || true
 
     # Save logs from this test run
     if [ -f Next_Generation_Node_B/logs/gnb_stdout.txt ]; then
         cp Next_Generation_Node_B/logs/gnb_stdout.txt "$TEST_RESULTS_DIR/test_${i}_gnb.log"
-        sudo tee Next_Generation_Node_B/logs/gnb_stdout.txt >/dev/null <<< ""
+        sudo tee Next_Generation_Node_B/logs/gnb_stdout.txt >/dev/null <<<""
     else
         echo "No gNB log found"
         touch "$TEST_RESULTS_DIR/test_${i}_gnb.log"
     fi
     if [ -f User_Equipment/logs/ue1_stdout.txt ]; then
         cp User_Equipment/logs/ue1_stdout.txt "$TEST_RESULTS_DIR/test_${i}_ue.log"
-        sudo tee User_Equipment/logs/ue1_stdout.txt >/dev/null <<< ""
+        sudo tee User_Equipment/logs/ue1_stdout.txt >/dev/null <<<""
     else
         echo "No UE log found"
         touch "$TEST_RESULTS_DIR/test_${i}_ue.log"
     fi
     if [ -f 5G_Core_Network/logs/amf.log ]; then
         cp 5G_Core_Network/logs/amf.log "$TEST_RESULTS_DIR/test_${i}_amf.log"
-        sudo tee 5G_Core_Network/logs/amf.log >/dev/null <<< ""
+        sudo tee 5G_Core_Network/logs/amf.log >/dev/null <<<""
     else
         echo "No AMF log found"
         touch "$TEST_RESULTS_DIR/test_${i}_amf.log"
@@ -212,7 +212,7 @@ for i in {1..10}; do
         echo "Test Run $i: FAILURE"
         RESULT="FAIL"
     fi
-    echo "$(date +%s),$i,$RESULT" >> "$CSV_FILE"
+    echo "$(date +%s),$i,$RESULT" >>"$CSV_FILE"
 
     sleep 5
 done

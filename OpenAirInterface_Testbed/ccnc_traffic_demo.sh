@@ -29,8 +29,12 @@
 # copyright protection within the United States.
 
 UE_NUMBER=1
-BANDWIDTH=1M
-DURATION=20
+BANDWIDTH_FROM_K=500
+BANDWIDTH_TO_K=10000
+DURATION_FROM=10
+DURATION_TO=20
+SLEEP_FROM=15
+SLEEP_TO=15
 
 # Exit immediately if a command fails
 set -e
@@ -49,19 +53,25 @@ cd User_Equipment
 trap 'echo "Stopping traffic generators..."; pkill -P $$ || true; exit 0' SIGINT SIGTERM
 
 while true; do
-    echo "Starting core to UE traffic..."
+    DURATION=$(shuf -i $DURATION_FROM-$DURATION_TO -n 1)
+    BANDWIDTH=$(shuf -i $BANDWIDTH_FROM_K-$BANDWIDTH_TO_K -n 1)K
+    echo "Starting core to UE traffic (Duration: $DURATION, Bandwidth: $BANDWIDTH)..."
     sudo ./additional_scripts/simulate_core_traffic_to_ue.sh "$UE_NUMBER" "$BANDWIDTH" "$DURATION" || {
         echo "simulate_core_traffic_to_ue.sh exited with non-zero status, continuing..."
     }
 
-    echo "Waiting 15 seconds..."
-    sleep 15
+    SLEEP_TIME=$(shuf -i $SLEEP_FROM-$SLEEP_TO -n 1)
+    echo "Waiting $SLEEP_TIME seconds..."
+    sleep $SLEEP_TIME
 
-    echo "Starting UE to core traffic..."
+    DURATION=$(shuf -i $DURATION_FROM-$DURATION_TO -n 1)
+    BANDWIDTH=$(shuf -i $BANDWIDTH_FROM_K-$BANDWIDTH_TO_K -n 1)K
+    echo "Starting UE to core traffic (Duration: $DURATION, Bandwidth: $BANDWIDTH)..."
     sudo ./additional_scripts/simulate_ue_traffic_to_core.sh "$UE_NUMBER" "$BANDWIDTH" "$DURATION" || {
         echo "simulate_ue_traffic_to_core.sh exited with non-zero status, continuing..."
     }
 
-    echo "Waiting 15 seconds..."
-    sleep 15
+    SLEEP_TIME=$(shuf -i $SLEEP_FROM-$SLEEP_TO -n 1)
+    echo "Waiting $SLEEP_TIME seconds..."
+    sleep $SLEEP_TIME
 done

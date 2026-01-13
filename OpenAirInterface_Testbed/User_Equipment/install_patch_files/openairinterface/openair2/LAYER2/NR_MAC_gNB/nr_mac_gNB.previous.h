@@ -186,7 +186,6 @@ typedef enum {
 } nr_config_report_type_t;
 
 typedef struct nr_mac_config_t {
-  int sib1_tda;
   nr_pdsch_AntennaPorts_t pdsch_AntennaPorts;
   int pusch_AntennaPorts;
   int minRXTXTIME;
@@ -319,7 +318,7 @@ typedef struct {
   //Total available prach occasions
   int total_prach_occasions;
   //Max Association period
-  int max_association_period;
+  int association_period;
   //SSB index
   uint8_t ssb_index[MAX_NUM_OF_SSB];
   //CB preambles for each SSB
@@ -475,6 +474,9 @@ typedef struct NR_pdsch_dmrs {
   NR_PTRS_DownlinkConfig_t *phaseTrackingRS;
 } NR_pdsch_dmrs_t;
 
+struct NR_UE_info;
+struct gNB_MAC_INST_s;
+typedef void (*feedback_action_t)(struct gNB_MAC_INST_s *mac, struct NR_UE_info *ue);
 typedef struct NR_sched_pdsch {
   /// RB allocation within active BWP
   uint16_t rbSize;
@@ -501,6 +503,7 @@ typedef struct NR_sched_pdsch {
   // time_domain_allocation is the index of a list of tda
   int time_domain_allocation;
   NR_tda_info_t tda_info;
+  feedback_action_t action;
 } NR_sched_pdsch_t;
 
 typedef struct NR_UE_harq {
@@ -772,7 +775,7 @@ typedef struct measgap_config {
 } measgap_config_t;
 
 /*! \brief UE list used by gNB to order UEs/CC for scheduling*/
-typedef struct {
+typedef struct NR_UE_info {
   rnti_t rnti;
   uid_t uid; // unique ID of this UE
   /// scheduling control info
@@ -784,18 +787,23 @@ typedef struct {
   NR_mac_stats_t mac_stats;
   /// currently active CellGroupConfig
   NR_CellGroupConfig_t *CellGroup;
-  /// in case of reestablishment, old spCellConfig to apply after
-  /// reconfiguration
-  NR_SpCellConfig_t *reconfigSpCellConfig;
+  /// in case of reconfiguration, new CellConfig to apply
+  NR_CellGroupConfig_t *reconfigCellGroup;
   NR_UE_NR_Capability_t *capability;
   measgap_config_t measgap_config;
   // UE selected beam index
-  uint8_t UE_beam_index;
+  uint16_t UE_beam_index;
   float ul_thr_ue;
   float dl_thr_ue;
   long pdsch_HARQ_ACK_Codebook;
   bool is_redcap;
+  bool reestablish_rlc;
   NR_RA_t *ra;
+  // 3GPP mandates that BWPs are enumerated consecutively, but we only send one (dedicated)
+  // BWP to the UE (and modify that BWP on reconfiguration); consequently, the BWP ID for a
+  // dedicated BWP is always 1 from the UE's point of view, even if the gNB has multiple BWPs.
+  // The below ID is the "true" (non-consecutive) BWP ID from the gNB's point of view
+  NR_BWP_Id_t local_bwp_id;
 } NR_UE_info_t;
 
 typedef struct {
@@ -816,7 +824,7 @@ typedef enum {
 
 typedef struct {
   /// list of allocated beams per period
-  int **beam_allocation;
+  int16_t **beam_allocation;
   int beam_duration; // in slots
   int beams_per_period;
   int beam_allocation_size;
@@ -983,7 +991,8 @@ typedef struct gNB_MAC_INST_s {
   uint16_t min_grant_prb;
   bool identity_pm;
   int precoding_matrix_size[NR_MAX_NB_LAYERS];
-  int fapi_beam_index[MAX_NUM_OF_SSB];
+  int beam_index_list[MAX_NUM_OF_SSB];
+  NR_sched_pdsch_t sib1_pdsch[MAX_NUM_OF_SSB];
 
   /// dedicate UL TDA, common for all UEs
   seq_arr_t ul_tda;

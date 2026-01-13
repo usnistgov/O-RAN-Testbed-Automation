@@ -39,7 +39,7 @@ if exist "5G_Core_Network\open5gs" rmdir /s /q "5G_Core_Network\open5gs"
 cd 5G_Core_Network
 git clone https://github.com/open5gs/open5gs.git
 cd open5gs
-git checkout 15b12d756d225fb191b9599ba951749b06e4d4f1
+git checkout 69b53add90a9479d7960b822fc60601d659c328b
 cd ..\..
 
 cd %~dp0..
@@ -47,7 +47,7 @@ if exist "User_Equipment\srsRAN_4G" rmdir /s /q "User_Equipment\srsRAN_4G"
 cd User_Equipment
 git clone https://github.com/srsran/srsRAN_4G.git
 cd srsRAN_4G
-git checkout ec29b0c1ff79cebcbe66caa6d6b90778261c42b8
+git checkout 1fab3df863f66fdb6c3b34f1b39e745dbcb12d5e
 cd ..\..
 
 cd %~dp0..
@@ -55,7 +55,7 @@ if exist "User_Equipment\libzmq" rmdir /s /q "User_Equipment\libzmq"
 cd User_Equipment
 git clone https://github.com/zeromq/libzmq.git
 cd libzmq
-git checkout 7a7bfa10e6b0e99210ed9397369b59f9e69cef8e
+git checkout 900a548a43395a367801e48d9a953cd42c6da545
 cd ..\..
 
 cd %~dp0..
@@ -63,7 +63,7 @@ if exist "User_Equipment\czmq" rmdir /s /q "User_Equipment\czmq"
 cd User_Equipment
 git clone https://github.com/zeromq/czmq.git
 cd czmq
-git checkout 2955e21ebf45dcd3137bee816248a8902878ea22
+git checkout f22f6572fdf63d344e022b956a137ce084fa5d8b
 cd ..\..
 
 cd %~dp0..
@@ -71,7 +71,7 @@ if exist "Next_Generation_Node_B\srsRAN_Project" rmdir /s /q "Next_Generation_No
 cd Next_Generation_Node_B
 git clone https://github.com/srsran/srsRAN_Project.git
 cd srsRAN_Project
-git checkout 11c9bbabb69873752500d676f55e0034f6caa5c5
+git checkout d2f4b70dda8e2c557d5b05a0ac5f92dbddda19bc
 cd ..\..
 
 cd %~dp0..
@@ -184,7 +184,7 @@ if exist "RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\ranpm" rmdir /s /q "
 cd RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep
 git clone https://gerrit.o-ran-sc.org/r/nonrtric/plt/ranpm.git
 cd ranpm
-git checkout b5f4f8698217ce70d3c2e6a454146fbcd2111d35
+git checkout f0ef45cb96961334b9525c546534b822f055e24c
 cd ..\..\..\..
 
 cd %~dp0..
@@ -200,7 +200,7 @@ if exist "RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\smo-install\multiclo
 cd RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\smo-install
 git clone https://github.com/onap/multicloud-k8s.git
 cd multicloud-k8s
-git checkout 59fe7c6c1eb7d3eb12e03924acce84e7a6153df8
+git checkout b79819fd9b5863bbc3083f2060aee37d6f373622
 cd ..\..\..\..\..
 
 cd %~dp0..
@@ -208,7 +208,7 @@ if exist "RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\smo-install\onap_oom
 cd RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\smo-install
 git clone https://gerrit.onap.org/r/oom.git
 cd onap_oom
-git checkout 999e48e47304e97b2444b62e0fb4b1a7d9cc578a
+git checkout 551dedc6827327fe88cbebd671f10ec458776975
 cd ..\..\..\..\..
 
 cd %~dp0..
@@ -216,7 +216,7 @@ if exist "RAN_Intelligent_Controllers\Non-Real-Time-RIC\nonrtric-controlpanel" r
 cd RAN_Intelligent_Controllers\Non-Real-Time-RIC
 git clone https://gerrit.o-ran-sc.org/r/portal/nonrtric-controlpanel.git
 cd nonrtric-controlpanel
-git checkout f337177ece41c036967ece8513e9f29b07deca34
+git checkout 9f0bc855a687f918548d5dcea7a43913256cdd54
 cd ..\..\..
 
 cd %~dp0..
@@ -235,7 +235,7 @@ if exist "OpenAirInterface_Testbed\5G_Core_Network\open5gs" rmdir /s /q "OpenAir
 cd OpenAirInterface_Testbed\5G_Core_Network
 git clone https://github.com/open5gs/open5gs.git
 cd open5gs
-git checkout 15b12d756d225fb191b9599ba951749b06e4d4f1
+git checkout 69b53add90a9479d7960b822fc60601d659c328b
 cd ..\..\..
 
 cd %~dp0..
@@ -243,7 +243,7 @@ if exist "OpenAirInterface_Testbed\User_Equipment\openairinterface5g" rmdir /s /
 cd OpenAirInterface_Testbed\User_Equipment
 git clone https://gitlab.eurecom.fr/oai/openairinterface5g.git
 cd openairinterface5g
-git checkout 92980ceb725a94dbfe97c509d16f1313eee083e0
+git checkout 699a5453a0713b0978944e583357a7b1b6056591
 cd ..\..\..
 
 cd OpenAirInterface_Testbed\Next_Generation_Node_B
@@ -255,7 +255,7 @@ if exist "OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC\swig
 cd OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC
 git clone https://github.com/swig/swig.git
 cd swig
-git checkout 40c82cbc37025d44f1f60fb3381dafab7b78410f
+git checkout ae0cb1acd734c271d128cc1961a5cd552cbf3a5e
 cd ..\..\..\..
 
 cd %~dp0..

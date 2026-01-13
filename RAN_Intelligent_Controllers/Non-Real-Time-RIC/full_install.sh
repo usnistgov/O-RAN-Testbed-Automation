@@ -357,8 +357,8 @@ else
     cd "$SCRIPT_DIR"
 
     echo "Revising the YAML file for the Non-RT RIC pods..."
-    RIC_YAML_FILE_PATH="dep/RECIPE_EXAMPLE/NONRTRIC/example_recipe.yaml"
-    RIC_YAML_FILE_PATH_UPDATED="dep/RECIPE_EXAMPLE/NONRTRIC/example_recipe_updated.yaml"
+    RIC_YAML_FILE_PATH="dep/RECIPE_EXAMPLE/RICAUX/example_recipe.yaml"
+    RIC_YAML_FILE_PATH_UPDATED="dep/RECIPE_EXAMPLE/RICAUX/example_recipe_updated.yaml"
     sudo chown $USER:$USER $RIC_YAML_FILE_PATH
     sudo cp $RIC_YAML_FILE_PATH $RIC_YAML_FILE_PATH_UPDATED
     sudo chown $USER:$USER $RIC_YAML_FILE_PATH_UPDATED
@@ -377,7 +377,7 @@ else
     cd "$SCRIPT_DIR/dep/"
 
     echo "Deploying Non-RT RIC pods..."
-    sudo ./bin/deploy-nonrtric -f ./RECIPE_EXAMPLE/NONRTRIC/example_recipe_updated.yaml
+    sudo ./bin/deploy-nonrtric -f ./RECIPE_EXAMPLE/RICAUX/example_recipe_updated.yaml
 
     echo "Successfully installed Non-RT RIC pods."
 fi

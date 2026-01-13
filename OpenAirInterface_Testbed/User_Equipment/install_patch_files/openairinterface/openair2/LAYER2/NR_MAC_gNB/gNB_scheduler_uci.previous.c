@@ -94,7 +94,8 @@ static void nr_fill_nfapi_pucch(gNB_MAC_INST *nrmac, frame_t frame, slot_t slot,
                      pucch->csi_bits,
                      pucch->dai_c,
                      pucch->sr_flag,
-                     pucch->r_pucch);
+                     pucch->r_pucch,
+                     nrmac->beam_info.beam_mode);
 }
 
 #define MIN_RSRP_VALUE -141
@@ -253,9 +254,10 @@ void nr_csi_meas_reporting(int Mod_idP,frame_t frame, slot_t slot)
                   "Only periodic CSI reporting is implemented currently\n");
 
       const NR_PUCCH_CSI_Resource_t *pucchcsires = csirep->reportConfigType.choice.periodic->pucch_CSI_ResourceList.list.array[0];
-      if(pucchcsires->uplinkBandwidthPartId != ul_bwp->bwp_id)
+      if(pucchcsires->uplinkBandwidthPartId > 1) {
+        LOG_E(NR_MAC, "Invalid PUCCH BWP ID %ld, we only configure BWP up to 1\n", pucchcsires->uplinkBandwidthPartId);
         continue;
-
+      }
       // we schedule CSI reporting max_fb_time slots in advance
       int period, offset;
       csi_period_offset(csirep, NULL, &period, &offset);
@@ -279,7 +281,10 @@ void nr_csi_meas_reporting(int Mod_idP,frame_t frame, slot_t slot)
 
       const int pucch_index = get_pucch_index(sched_frame, sched_slot, &nrmac->frame_structure, sched_ctrl->sched_pucch_size);
       NR_sched_pucch_t *curr_pucch = &sched_ctrl->sched_pucch[pucch_index];
-      AssertFatal(curr_pucch->active == false, "CSI structure is scheduled in advance. It should be free!\n");
+      if (curr_pucch->active) {
+        LOG_E(NR_MAC, "CSI structure is scheduled in advance. It should be free!\n");
+        memset(curr_pucch, 0, sizeof(*curr_pucch));
+      }
       curr_pucch->r_pucch = -1;
       curr_pucch->frame = sched_frame;
       curr_pucch->ul_slot = sched_slot;
@@ -393,16 +398,15 @@ int get_pucch_resourceid(NR_PUCCH_Config_t *pucch_Config, int O_uci, int pucch_r
   return *resource_id;
 }
 
-static void handle_dl_harq(NR_UE_info_t * UE,
-                           int8_t harq_pid,
-                           bool success,
-                           int harq_round_max)
+static void handle_dl_harq(gNB_MAC_INST *mac, NR_UE_info_t * UE, int8_t harq_pid, bool success, int harq_round_max)
 {
   NR_UE_sched_ctrl_t *sched_ctrl = &UE->UE_sched_ctrl;
   NR_UE_harq_t *harq = &sched_ctrl->harq_processes[harq_pid];
   harq->feedback_slot = -1;
   harq->is_waiting = false;
   if (success) {
+    if (harq->sched_pdsch.action)
+      harq->sched_pdsch.action(mac, UE);
     finish_nr_dl_harq(sched_ctrl, harq_pid);
   } else if (harq->round >= harq_round_max - 1) {
     abort_nr_dl_harq(UE, harq_pid);
@@ -749,7 +753,6 @@ static void extract_pucch_csi_report(NR_CSI_MeasConfig_t *csi_MeasConfig,
   NR_CSI_ReportConfig__ext2__reportQuantity_r16_PR reportQuantity_type_r16 =
       NR_CSI_ReportConfig__ext2__reportQuantity_r16_PR_NOTHING;
   NR_UE_sched_ctrl_t *sched_ctrl = &UE->UE_sched_ctrl;
-  NR_UE_UL_BWP_t *ul_bwp = &UE->current_UL_BWP;
   NR_UE_DL_BWP_t *dl_bwp = &UE->current_DL_BWP;
   const int n_slots_frame = nrmac->frame_structure.numb_slots_frame;
   int cumul_bits = 0;
@@ -764,8 +767,10 @@ static void extract_pucch_csi_report(NR_CSI_MeasConfig_t *csi_MeasConfig,
     NR_CSI_ReportConfig_t *csirep = csi_MeasConfig->csi_ReportConfigToAddModList->list.array[csi_report_id];
     uint8_t cqi_table = (dl_bwp->dci_format == NR_DL_DCI_FORMAT_1_1 && csirep->cqi_Table) ? *csirep->cqi_Table : NR_CSI_ReportConfig__cqi_Table_table1;
     const NR_PUCCH_CSI_Resource_t *pucchcsires = csirep->reportConfigType.choice.periodic->pucch_CSI_ResourceList.list.array[0];
-    if(pucchcsires->uplinkBandwidthPartId != ul_bwp->bwp_id)
+    if(pucchcsires->uplinkBandwidthPartId > 1) {
+      LOG_E(NR_MAC, "Invalid PUCCH BWP ID %ld, we only configure BWP up to 1\n", pucchcsires->uplinkBandwidthPartId);
       continue;
+    }
     int period, offset;
     csi_period_offset(csirep, NULL, &period, &offset);
     // verify if report with current id has been scheduled for this frame and slot
@@ -873,7 +878,7 @@ static NR_UE_harq_t *find_harq(frame_t frame, slot_t slot, NR_UE_info_t * UE, in
           frame,
           slot);
     remove_front_nr_list(&sched_ctrl->feedback_dl_harq);
-    handle_dl_harq(UE, pid, 0, harq_round_max);
+    handle_dl_harq(NULL, UE, pid, false, harq_round_max);
     pid = sched_ctrl->feedback_dl_harq.head;
     if (pid < 0)
       return NULL;
@@ -930,7 +935,7 @@ void handle_nr_uci_pucch_0_1(module_id_t mod_id, frame_t frame, slot_t slot, con
       LOG_D(NR_MAC,"%4d.%2d bit %d pid %d ack/nack %d\n",frame, slot, harq_bit,pid,harq_value);
       nr_mac_update_pdcch_closed_loop_adjust(sched_ctrl, harq_confidence != 0);
       bool success = harq_value == 0 && harq_confidence == 0;
-      handle_dl_harq(UE, pid, success, nrmac->dl_bler.harq_round_max);
+      handle_dl_harq(nrmac, UE, pid, success, nrmac->dl_bler.harq_round_max);
       if (is_ra) {
         bool ue_rejected = nr_check_Msg4_MsgB_Ack(mod_id, frame, slot, UE, success);
         if (ue_rejected) {
@@ -976,11 +981,6 @@ void handle_nr_uci_pucch_2_3_4(module_id_t mod_id, frame_t frame, slot_t slot, c
     return;
   }
 
-  NR_CSI_MeasConfig_t *csi_MeasConfig = UE->sc_info.csi_MeasConfig;
-  if (csi_MeasConfig == NULL) {
-    NR_SCHED_UNLOCK(&nrmac->sched_lock);
-    return;
-  }
   NR_UE_sched_ctrl_t *sched_ctrl = &UE->UE_sched_ctrl;
 
   // tpc (power control)
@@ -1009,15 +1009,18 @@ void handle_nr_uci_pucch_2_3_4(module_id_t mod_id, frame_t frame, slot_t slot, c
       const int8_t pid = sched_ctrl->feedback_dl_harq.head;
       remove_front_nr_list(&sched_ctrl->feedback_dl_harq);
       LOG_D(NR_MAC,"%4d.%2d bit %d pid %d ack/nack %d\n",frame, slot, harq_bit, pid, acknack);
-      handle_dl_harq(UE, pid, uci_234->harq.harq_crc != 1 && acknack, nrmac->dl_bler.harq_round_max);
+      handle_dl_harq(nrmac, UE, pid, uci_234->harq.harq_crc != 1 && acknack, nrmac->dl_bler.harq_round_max);
     }
     free(uci_234->harq.harq_payload);
   }
   if ((uci_234->pduBitmap >> 2) & 0x01) {
     LOG_D(NR_MAC, "CSI CRC %d\n", uci_234->csi_part1.csi_part1_crc);
     if (uci_234->csi_part1.csi_part1_crc != 1) {
-      // API to parse the csi report and store it into sched_ctrl
-      extract_pucch_csi_report(csi_MeasConfig, uci_234, frame, slot, UE, nrmac);
+      NR_CSI_MeasConfig_t *csi_MeasConfig = UE->sc_info.csi_MeasConfig;
+      if (csi_MeasConfig != NULL) {
+        // API to parse the csi report and store it into sched_ctrl
+        extract_pucch_csi_report(csi_MeasConfig, uci_234, frame, slot, UE, nrmac);
+      }
     }
     free(uci_234->csi_part1.csi_part1_payload);
   }

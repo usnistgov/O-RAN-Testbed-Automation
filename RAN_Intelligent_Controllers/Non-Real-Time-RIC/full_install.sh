@@ -378,7 +378,7 @@ else
         exit 1
     fi
     git -C "$(dirname "$INSTALL_ONAP_SCRIPT")" restore "$(basename "$INSTALL_ONAP_SCRIPT")" || true
-    sed -i "s|--namespace strimzi-system|--namespace strimzi-system --set extraEnvs[0].name=STRIMZI_KUBERNETES_VERSION --set-string extraEnvs[0].value=\"major=${KUBE_VERSION_MAJOR},minor=${KUBE_VERSION_MINOR}\"|g" "$INSTALL_ONAP_SCRIPT"
+    sed -i "s|--namespace strimzi-system|--namespace strimzi-system --set extraEnvs[0].name=STRIMZI_KUBERNETES_VERSION --set-string extraEnvs[0].value=\"major=${KUBE_VERSION_MAJOR}\\\\,minor=${KUBE_VERSION_MINOR}\"|g" "$INSTALL_ONAP_SCRIPT"
 
     echo "Installing Non-RT RIC pods..."
     ./dep/smo-install/scripts/layer-0/0-setup-helm3.sh

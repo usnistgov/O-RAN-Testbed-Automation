@@ -71,10 +71,10 @@ update_yaml() {
 }
 
 # Guide from the Non-RT RIC wiki:
-# https://lf-o-ran-sc.atlassian.net/wiki/spaces/RICNR/pages/15075609/Release+J+-+Run+in+Kubernetes
+# https://lf-o-ran-sc.atlassian.net/wiki/spaces/RICNR/pages/679903652/Release+M+-+Run+in+Kubernetes
 
 update_yaml $RECIPE_PATH '.nonrtric.installPms' 'true'
-update_yaml $RECIPE_PATH '.nonrtric.installA1controller' 'true'
+update_yaml $RECIPE_PATH '.nonrtric.installA1controller' 'false'
 update_yaml $RECIPE_PATH '.nonrtric.installA1simulator' 'true'
 update_yaml $RECIPE_PATH '.nonrtric.installControlpanel' 'true'
 update_yaml $RECIPE_PATH '.nonrtric.installInformationservice' 'true'

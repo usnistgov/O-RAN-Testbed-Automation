@@ -349,6 +349,8 @@ if [ "$SHOULD_RESET_NONRTRIC" = false ]; then
     done
 fi
 
+set -x
+
 if [ "$SHOULD_RESET_NONRTRIC" = false ]; then
     echo "All nonrtric pods are already running, skipping."
     echo
@@ -357,27 +359,30 @@ else
     cd "$SCRIPT_DIR"
 
     echo "Revising the YAML file for the Non-RT RIC pods..."
-    RIC_YAML_FILE_PATH="dep/RECIPE_EXAMPLE/RICAUX/example_recipe.yaml"
-    RIC_YAML_FILE_PATH_UPDATED="dep/RECIPE_EXAMPLE/RICAUX/example_recipe_updated.yaml"
+    RIC_YAML_FILE_PATH="dep/smo-install/helm-override/default/oran-override.yaml"
+    RIC_YAML_FILE_PATH_UPDATED="dep/smo-install/helm-override/default/oran-override.yaml"
     sudo chown $USER:$USER $RIC_YAML_FILE_PATH
-    sudo cp $RIC_YAML_FILE_PATH $RIC_YAML_FILE_PATH_UPDATED
-    sudo chown $USER:$USER $RIC_YAML_FILE_PATH_UPDATED
+    if [ "$RIC_YAML_FILE_PATH" != "$RIC_YAML_FILE_PATH_UPDATED" ]; then
+        sudo cp $RIC_YAML_FILE_PATH $RIC_YAML_FILE_PATH_UPDATED
+        sudo chown $USER:$USER $RIC_YAML_FILE_PATH_UPDATED
+    fi
     sudo "$SCRIPT_DIR/install_scripts/./revise_example_recipe_yaml.sh" "$RIC_YAML_FILE_PATH_UPDATED"
 
-    echo "Setting default storage class for Kong..."
-    KONG_YAML_FILE_PATH="dep/nonrtric/helm/kongstorage/kongvalues.yaml"
-    KONG_YAML_FILE_PATH_BACKUP="dep/nonrtric/helm/kongstorage/kongvalues.original.yaml"
-    sudo chown $USER:$USER $KONG_YAML_FILE_PATH
-    if [ ! -f "$KONG_YAML_FILE_PATH_BACKUP" ]; then
-        sudo cp $KONG_YAML_FILE_PATH $KONG_YAML_FILE_PATH_BACKUP
-        sudo chown $USER:$USER $KONG_YAML_FILE_PATH_BACKUP
+    # Strimzi needs environment variable STRIMZI_KUBERNETES_VERSION to be set
+    KUBE_VERSION_MAJOR="$(kubectl version -o json | jq -r '.serverVersion.major')"
+    KUBE_VERSION_MINOR="$(kubectl version -o json | jq -r '.serverVersion.minor' | tr -d '+')"
+    echo "Configuring Strimzi to use Kubernetes version ${KUBE_VERSION_MAJOR}.${KUBE_VERSION_MINOR}..."
+    INSTALL_ONAP_SCRIPT="dep/smo-install/scripts/sub-scripts/install-onap.sh"
+    if [ ! -f "$INSTALL_ONAP_SCRIPT" ]; then
+        echo "Error: $INSTALL_ONAP_SCRIPT not found."
+        exit 1
     fi
-    sudo "$SCRIPT_DIR/install_scripts/./ensure_kong_storage_class_set_yaml.sh" "$KONG_YAML_FILE_PATH"
+    git -C "$(dirname "$INSTALL_ONAP_SCRIPT")" restore "$(basename "$INSTALL_ONAP_SCRIPT")" || true
+    sed -i "s|--namespace strimzi-system|--namespace strimzi-system --set extraEnvs[0].name=STRIMZI_KUBERNETES_VERSION --set-string extraEnvs[0].value=\"major=${KUBE_VERSION_MAJOR},minor=${KUBE_VERSION_MINOR}\"|g" "$INSTALL_ONAP_SCRIPT"
 
-    cd "$SCRIPT_DIR/dep/"
-
-    echo "Deploying Non-RT RIC pods..."
-    sudo ./bin/deploy-nonrtric -f ./RECIPE_EXAMPLE/RICAUX/example_recipe_updated.yaml
+    echo "Installing Non-RT RIC pods..."
+    ./dep/smo-install/scripts/layer-0/0-setup-helm3.sh
+    ./dep/smo-install/scripts/layer-2/2-install-oran.sh default
 
     echo "Successfully installed Non-RT RIC pods."
 fi

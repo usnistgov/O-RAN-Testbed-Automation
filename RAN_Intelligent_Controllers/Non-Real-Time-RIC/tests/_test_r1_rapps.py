@@ -1,5 +1,3 @@
-#!/bin/bash
-#
 # NIST-developed software is provided by NIST as a public service. You may use,
 # copy, and distribute copies of the software in any medium, provided that you
 # keep intact this entire notice. You may improve, modify, and create derivative
@@ -93,7 +91,7 @@ def remove_test_rapp_if_exists(rapp_id, file_name):
 ################################################################################
 # Test the creation of a testing rApp
 ################################################################################
-def test_rapp_creation():
+def test_create_rapp():
     global rappmgr_ip, rappmgr_port, rapp_id, rapp_file_name
     remove_test_rapp_if_exists(rapp_id, rapp_file_name)
 
@@ -111,7 +109,7 @@ def test_rapp_creation():
         create_rapp = requests.post(f'http://{rappmgr_ip}:{rappmgr_port}/rapps/{rapp_id}', files=files)
 
     print(f'Console command: curl -X POST http://{rappmgr_ip}:{rappmgr_port}/rapps/{rapp_id} -F "file=@{rapp_binary_path}"')
-    assert create_rapp.status_code == 202, f'Create rApp status code: {create_rapp.status_code}'
+    assert create_rapp.status_code == 202 or create_rapp.status_code == 201, f'Create rApp status code: {create_rapp.status_code}'
 
     # Clean up the testing rApp file
     # os.system(f'sudo rm -rf {os.path.join(rapp_dir, rapp_file_name)}')
@@ -119,7 +117,7 @@ def test_rapp_creation():
 ##################################################################################
 # Test the fetching of the rApp information
 ##################################################################################
-def test_rapp_info():
+def test_get_rapp():
     global rappmgr_ip, rappmgr_port, rapp_id, rapp_file_name
     service_status = requests.get(f'http://{rappmgr_ip}:{rappmgr_port}/rapps/{rapp_id}')
     print(f'Console command: curl -X GET http://{rappmgr_ip}:{rappmgr_port}/rapps/{rapp_id}')
@@ -141,7 +139,7 @@ def test_rapp_info():
 ################################################################################
 # Test that the rApp Manager status is success
 ################################################################################
-def test_rapps_list():
+def test_get_all_rapps():
     global rappmgr_ip, rappmgr_port
     service_status = requests.get(f'http://{rappmgr_ip}:{rappmgr_port}/rapps')
     print(f'Console command: curl -X GET http://{rappmgr_ip}:{rappmgr_port}/rapps')
@@ -154,7 +152,7 @@ def test_rapps_list():
 ################################################################################
 # Test the priming of a testing rApp
 ################################################################################
-def test_rapp_priming():
+def test_prime_rapp():
     global rappmgr_ip, rappmgr_port, rapp_id, rapp_file_name
     import time
     remove_test_rapp_if_exists(rapp_id, rapp_file_name)
@@ -176,7 +174,7 @@ def test_rapp_priming():
     with open(rapp_binary_path, 'rb') as file:
         files = {'file': (rapp_binary_path, file, 'application/octet-stream')}
         create_rapp = requests.post(f'http://{rappmgr_ip}:{rappmgr_port}/rapps/{rapp_id}', files=files)
-    assert create_rapp.status_code == 202, f'Create rApp status code: {create_rapp.status_code}'
+    assert create_rapp.status_code == 202 or create_rapp.status_code == 201, f'Create rApp status code: {create_rapp.status_code}'
 
     # Wait for the rApp to be commissioned before priming
     print("Waiting for rApp to be commissioned...")

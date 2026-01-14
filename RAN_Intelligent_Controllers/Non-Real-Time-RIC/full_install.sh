@@ -349,8 +349,6 @@ if [ "$SHOULD_RESET_NONRTRIC" = false ]; then
     done
 fi
 
-set -x
-
 if [ "$SHOULD_RESET_NONRTRIC" = false ]; then
     echo "All nonrtric pods are already running, skipping."
     echo

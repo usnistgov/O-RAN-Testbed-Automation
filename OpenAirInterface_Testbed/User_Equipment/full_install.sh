@@ -131,7 +131,7 @@ if ! dpkg -s libsimde-dev &>/dev/null; then
     sudo env $APTVARS apt-get install -y libsimde-dev || true
 fi
 if [ -d /usr/include/simde ]; then
-    sudo chown -R root:root /usr/include/simde
+    sudo chown --recursive root:root /usr/include/simde
     sudo find /usr/include/simde -type d -exec chmod 755 {} +
     sudo find /usr/include/simde -type f -exec chmod 644 {} +
 fi

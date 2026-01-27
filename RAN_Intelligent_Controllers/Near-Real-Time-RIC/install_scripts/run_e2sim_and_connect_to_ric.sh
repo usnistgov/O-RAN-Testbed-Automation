@@ -70,7 +70,7 @@ fi
 # Path to the output file
 mkdir -p logs
 if [ -f "logs/e2sim_output.txt" ]; then
-    sudo chown "$USER":"$USER" logs/e2sim_output.txt
+    sudo chown "$USER" logs/e2sim_output.txt
 fi
 OUTPUT_FILE="logs/e2sim_output.txt"
 
@@ -111,7 +111,7 @@ while true; do
     # Create the log file if it does not exist
     if [ ! -f $OUTPUT_FILE ]; then
         sudo touch $OUTPUT_FILE
-        sudo chown $USER:$USER $OUTPUT_FILE
+        sudo chown "$USER" $OUTPUT_FILE
     fi
     # Check if kpm_sim is already running to avoid duplicate runs
     if ! docker exec oransim pgrep -f "kpm_sim" >/dev/null; then

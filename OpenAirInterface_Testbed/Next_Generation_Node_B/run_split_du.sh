@@ -106,7 +106,7 @@ fi
 
 mkdir -p logs
 if [ -f "logs/split_du${DU_NUMBER}_stdout.txt" ]; then
-    sudo chown "$USER":"$USER" logs/split_du${DU_NUMBER}_stdout.txt
+    sudo chown "$USER" logs/split_du${DU_NUMBER}_stdout.txt
 fi
 >logs/split_du${DU_NUMBER}_stdout.txt
 

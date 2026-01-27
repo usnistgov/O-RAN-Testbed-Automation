@@ -111,7 +111,7 @@ if [ ! -f rc.tar ]; then
     docker build -t 127.0.0.1:80/rc:latest .
     docker save -o rc.tar 127.0.0.1:80/rc:latest
     sudo chmod 755 rc.tar
-    sudo chown $USER:$USER rc.tar
+    sudo chown "$USER" rc.tar
 
     # Import the image into the containerd container runtime
     sudo ctr -n=k8s.io image import rc.tar

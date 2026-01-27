@@ -43,7 +43,7 @@ cd "$PARENT_DIR"
 # Path to the output file
 mkdir -p logs
 if [ -f "logs/e2sim_output.txt" ]; then
-    sudo chown "$USER":"$USER" logs/e2sim_output.txt
+    sudo chown "$USER" logs/e2sim_output.txt
 fi
 OUTPUT_FILE="logs/e2sim_output.txt"
 

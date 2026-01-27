@@ -67,7 +67,7 @@ fi
 if [ ! -f "$GRAFANA_LOG_FILE" ]; then
     echo "Creating Grafana log file at $GRAFANA_LOG_FILE..."
     sudo mkdir -p "$(dirname "$GRAFANA_LOG_FILE")"
-    sudo chown "$(whoami):$(whoami)" "$(dirname "$GRAFANA_LOG_FILE")"
+    sudo chown --recursive "$USER" "$(dirname "$GRAFANA_LOG_FILE")"
     touch "$GRAFANA_LOG_FILE"
 fi
 

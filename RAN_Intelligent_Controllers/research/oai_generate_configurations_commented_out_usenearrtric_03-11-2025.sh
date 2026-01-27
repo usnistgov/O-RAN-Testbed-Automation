@@ -206,6 +206,6 @@ update_conf "configs/gnb.conf" "tracking_area_code" "$TAC"
 update_conf "configs/gnb.conf" "plmn_list" "({ mcc = $MCC; mnc = $MNC; mnc_length = $MNC_LENGTH; snssaiList = ({ sst = 1; }) })"
 
 mkdir -p "$SCRIPT_DIR/logs"
-sudo chown $USER:$USER -R "$SCRIPT_DIR/logs"
+sudo chown --recursive "$USER" "$SCRIPT_DIR/logs"
 
 echo "Successfully configured the UE. The configuration file is located in the configs/ directory."

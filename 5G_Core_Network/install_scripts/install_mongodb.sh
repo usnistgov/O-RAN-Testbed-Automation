@@ -224,7 +224,7 @@ security:
 fi
 
 sudo mkdir -p /var/lib/mongodb /var/log/mongodb
-sudo chown -R mongodb:mongodb /var/lib/mongodb /var/log/mongodb
+sudo chown --recursive mongodb:mongodb /var/lib/mongodb /var/log/mongodb
 
 echo "Enabling MongoDB service..."
 sudo ./install_scripts/start_mongodb.sh

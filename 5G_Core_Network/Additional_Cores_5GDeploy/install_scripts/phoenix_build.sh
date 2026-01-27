@@ -45,7 +45,7 @@ fi
 # cd phoenix-repo
 
 # # The /opt directory is used by some scripts in phoenix
-# sudo chown -R $USER:$USER /opt
+# sudo chown --recursive "$USER" /opt
 # mkdir -p /opt/$COMPANY_NAME/open5gcoreRelX
 # if [ ! -e /opt/$COMPANY_NAME/open5gcoreRelX/phoenix-src ]; then
 #     ln -s /opt/$COMPANY_NAME/open5gcoreRelX/phoenix phoenix-src

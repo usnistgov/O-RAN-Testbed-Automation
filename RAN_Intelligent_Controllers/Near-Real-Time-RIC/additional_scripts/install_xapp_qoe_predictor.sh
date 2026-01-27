@@ -169,7 +169,7 @@ if [ ! -f qp.tar ]; then
     docker build -t 127.0.0.1:80/qp:latest .
     docker save -o qp.tar 127.0.0.1:80/qp:latest
     sudo chmod 755 qp.tar
-    sudo chown $USER:$USER qp.tar
+    sudo chown "$USER" qp.tar
 
     # Import the image into the containerd container runtime
     sudo ctr -n=k8s.io image import qp.tar

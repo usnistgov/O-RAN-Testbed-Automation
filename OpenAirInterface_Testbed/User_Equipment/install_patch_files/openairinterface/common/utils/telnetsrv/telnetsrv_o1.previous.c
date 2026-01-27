@@ -345,8 +345,8 @@ static int set_bwconfig(char *buf, int debug, telnet_printfunc_t prnt)
     ERROR_MSG_RET("unhandled option %s\n", buf);
   }
 
-  free(RC.nrmac[0]->sched_ctrlCommon);
-  RC.nrmac[0]->sched_ctrlCommon = NULL;
+  free(RC.nrmac[0]->sched_ctrlSIB1);
+  RC.nrmac[0]->sched_ctrlSIB1 = NULL;
 
   free_MIB_NR(mac->common_channels[0].mib);
   mac->common_channels[0].mib = get_new_MIB_NR(scc);

@@ -1,9 +1,9 @@
 diff --git a/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h b/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h
-index 5914c74a45..4ed9fce505 100644
+index 136fb0365e..c205e89e61 100644
 --- a/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h
 +++ b/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h
-@@ -519,6 +519,8 @@ typedef struct NR_UE_harq {
- 
+@@ -518,6 +518,8 @@ typedef struct NR_UE_harq {
+   bool start_tci_timer;
    /// sched_pdsch keeps information on MCS etc used for the initial transmission
    NR_sched_pdsch_t sched_pdsch;
 +  // number of SDUs associated with this HARQ process
@@ -23,7 +23,7 @@ index 5914c74a45..4ed9fce505 100644
    uint8_t num_rsrp_meas;
    int cumul_sinrx10;
    uint8_t num_sinr_meas;
-+  
++
 +  // Keep track of each individual RSRP measurements for E2 KPM
 +  int e2_rsrp_meas[1024];
 +  uint16_t e2_rsrp_meas_capacity;

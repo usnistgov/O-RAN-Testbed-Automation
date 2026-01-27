@@ -191,6 +191,7 @@ typedef struct nr_mac_config_t {
   int minRXTXTIME;
   int do_CSIRS;
   int do_SRS;
+  int do_TCI;
   int max_num_rsrp;
   bool force_256qam_off;
   bool force_UL256qam_off;
@@ -351,13 +352,11 @@ typedef struct csi_rs_im {
   uint8_t tci_state_id [ MAX_CSI_RESOURCE_SET ];
 } csi_rs_im_t;
 
-typedef struct pdcchStateInd {
+typedef struct tciStateInd {
   bool is_scheduled;
-  uint8_t servingCellId;
-  uint8_t coresetId;
-  uint8_t tciStateId;
-  bool tci_present_inDCI;
-} pdcchStateInd_t;
+  uint32_t coresetId;
+  uint32_t tciStateId;
+} tciStateInd_t;
 
 typedef struct pucchSpatialRelation {
   bool is_scheduled;
@@ -396,7 +395,7 @@ typedef struct pdschTciStatesActDeact {
 typedef struct UE_info {
   sp_zp_csirs_t sp_zp_csi_rs;
   csi_rs_im_t csi_im;
-  pdcchStateInd_t pdcch_state_ind;
+  tciStateInd_t tci_state_ind;
   pucchSpatialRelation_t pucch_spatial_relation;
   SPCSIReportingpucch_t SP_CSI_reporting_pucch;
   aperiodicCSI_triggerStateSelection_t aperi_CSI_trigger;
@@ -516,7 +515,7 @@ typedef struct NR_UE_harq {
   /* Transport block to be sent using this HARQ process */
   byte_array_t transportBlock;
   uint32_t tb_size;  // size of currently stored TB
-
+  bool start_tci_timer;
   /// sched_pdsch keeps information on MCS etc used for the initial transmission
   NR_sched_pdsch_t sched_pdsch;
 } NR_UE_harq_t;
@@ -620,7 +619,7 @@ typedef struct {
   /// CCE index and Aggr. Level are shared for PUSCH/PDSCH allocation decisions
   /// corresponding to the sched_pusch/sched_pdsch structures below
   int cce_index;
-  uint8_t aggregation_level;
+  int aggregation_level;
   uint32_t dl_cce_fail, ul_cce_fail;
 
   /// Array of PUCCH scheduling information
@@ -695,6 +694,7 @@ typedef struct {
 
   /// Timer for RRC processing procedures and transmission activity
   NR_timer_t transm_interrupt;
+  NR_timer_t tci_beam_switch;
 
   /// Timer for timeout before UE is set to UL failure (e.g.,
   /// "TransmissionActionIndicator" handling
@@ -883,6 +883,11 @@ typedef struct dlul_mac_stats {
   mac_stats_t ul;
 } dlul_mac_stats_t;
 
+typedef struct {
+  NR_SearchSpace_t search_space[MAX_NUM_OF_SSB];
+  NR_ControlResourceSet_t coreset;
+} NR_sched_ctrl_sib1_t;
+
 /// helper type to encapsulate a frame/slot combination in a single type.
 /// Currently only used in the UL preprocessor. Note: if you use this type
 /// further, please refactor it into a common type first.
@@ -979,11 +984,11 @@ typedef struct gNB_MAC_INST_s {
   nr_mac_config_t radio_config;
   nr_rlc_configuration_t rlc_config;
 
-  NR_UE_sched_ctrl_t *sched_ctrlCommon;
+  NR_sched_ctrl_sib1_t *sched_ctrlSIB1;
   NR_sched_pdcch_t *sched_pdcch_otherSI;
   uint16_t cset0_bwp_start;
   uint16_t cset0_bwp_size;
-  NR_Type0_PDCCH_CSS_config_t type0_PDCCH_CSS_config[64];
+  NR_Type0_PDCCH_CSS_config_t type0_PDCCH_CSS_config[MAX_NUM_OF_SSB];
 
   bool first_MIB;
   NR_bler_options_t dl_bler;

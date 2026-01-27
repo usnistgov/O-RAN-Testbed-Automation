@@ -71,8 +71,7 @@ int get_dl_tda(const gNB_MAC_INST *nrmac, int slot)
   return 0; // if FDD or not mixed slot in TDD, for now use default TDA
 }
 
-// Compute and write all MAC CEs and subheaders, and return number of written
-// bytes
+// Compute and write all MAC CEs and subheaders, and return number of written bytes
 int nr_write_ce_dlsch_pdu(module_id_t module_idP,
                           const NR_UE_sched_ctrl_t *ue_sched_ctl,
                           unsigned char *mac_pdu,
@@ -151,19 +150,20 @@ int nr_write_ce_dlsch_pdu(module_id_t module_idP,
   }
 
   //TS 38.321 Sec 6.1.3.15 TCI State indication for UE Specific PDCCH MAC CE SubPDU generation
-  if (ue_sched_ctl->UE_mac_ce_ctrl.pdcch_state_ind.is_scheduled) {
+  if (ue_sched_ctl->UE_mac_ce_ctrl.tci_state_ind.is_scheduled) {
     //filling subheader
     mac_pdu_ptr->R = 0;
     mac_pdu_ptr->LCID = DL_SCH_LCID_TCI_STATE_IND_UE_SPEC_PDCCH;
     mac_pdu_ptr++;
     //Creating the instance of CE structure
-    NR_TCI_PDCCH  nr_UESpec_TCI_StateInd_PDCCH;
-    //filling the CE structre
-    nr_UESpec_TCI_StateInd_PDCCH.CoresetId1 = ((ue_sched_ctl->UE_mac_ce_ctrl.pdcch_state_ind.coresetId) & 0xF) >> 1; //extracting MSB 3 bits from LS nibble
-    nr_UESpec_TCI_StateInd_PDCCH.ServingCellId = (ue_sched_ctl->UE_mac_ce_ctrl.pdcch_state_ind.servingCellId) & 0x1F; //extracting LSB 5 Bits
-    nr_UESpec_TCI_StateInd_PDCCH.TciStateId = (ue_sched_ctl->UE_mac_ce_ctrl.pdcch_state_ind.tciStateId) & 0x7F; //extracting LSB 7 bits
-    nr_UESpec_TCI_StateInd_PDCCH.CoresetId2 = (ue_sched_ctl->UE_mac_ce_ctrl.pdcch_state_ind.coresetId) & 0x1; //extracting LSB 1 bit
-    LOG_D(NR_MAC, "NR MAC CE TCI state indication for UE Specific PDCCH = %d \n", nr_UESpec_TCI_StateInd_PDCCH.TciStateId);
+    const tciStateInd_t *tcisi = &ue_sched_ctl->UE_mac_ce_ctrl.tci_state_ind;
+    NR_TCI_PDCCH  nr_UESpec_TCI_StateInd_PDCCH = {
+      .CoresetId1 = (tcisi->coresetId & 0xF) >> 1,
+      .ServingCellId = 0, // TODO this is likely ServingCellIndex, see 38.331
+      .TciStateId = tcisi->tciStateId & 0x7F,
+      .CoresetId2 = tcisi->coresetId & 0x1,
+    };
+    LOG_I(NR_MAC, "NR MAC CE TCI state indication for UE Specific PDCCH = %d \n", nr_UESpec_TCI_StateInd_PDCCH.TciStateId);
     mac_ce_size = sizeof(NR_TCI_PDCCH);
     // Copying  bytes for MAC CEs to the mac pdu pointer
     memcpy((void *) mac_pdu_ptr, (void *)&nr_UESpec_TCI_StateInd_PDCCH, mac_ce_size);
@@ -609,6 +609,19 @@ static void ack_reconfig(gNB_MAC_INST *mac, NR_UE_info_t *UE)
   configure_UE_BWP(mac, scc, UE, false, NR_SearchSpace__searchSpaceType_PR_common, -1, -1);
 }
 
+static bool dlsch_to_schedule(const NR_UE_sched_ctrl_t *sched_ctrl, int frame)
+{
+  /* Check DL buffer, TA to be sent and  beam switch needed*/
+  if (sched_ctrl->num_total_bytes > 0)
+    return true;
+  if (sched_ctrl->ta_apply == true)
+    return true;
+  if (sched_ctrl->UE_mac_ce_ctrl.tci_state_ind.is_scheduled)
+    return true;
+  // if none of the condition for dlsch to be scheduled are met
+  return false;
+}
+
 typedef struct UEsched_s {
   float coef;
   NR_UE_info_t * UE;
@@ -705,8 +718,7 @@ static void pf_dl(gNB_MAC_INST *mac,
 
       update_dlsch_buffer(pp_pdsch->frame, pp_pdsch->slot, UE);
 
-      /* Check DL buffer and skip this UE if no bytes and no TA necessary */
-      if (sched_ctrl->num_total_bytes == 0 && sched_ctrl->ta_apply == false)
+      if (!dlsch_to_schedule(sched_ctrl, frame))
         continue;
 
       /* Calculate coeff */
@@ -1254,6 +1266,8 @@ void post_process_dlsch(gNB_MAC_INST *nr_mac, post_process_pdsch_t *pdsch, NR_UE
     nr_mac->mac_stats.dl.used_prb_aggregate += sched_pdsch->rbSize;
   } else { /* initial transmission */
     LOG_D(NR_MAC, "Initial HARQ transmission in %d.%d\n", frame, slot);
+    // Flag HARQ process to start TCI timer at ACK
+    harq->start_tci_timer = sched_ctrl->UE_mac_ce_ctrl.tci_state_ind.is_scheduled;
     uint8_t *buf = allocate_transportBlock_buffer(&harq->transportBlock, TBS);
     /* first, write all CEs that might be there */
     int written = nr_write_ce_dlsch_pdu(module_id,
@@ -1372,6 +1386,11 @@ void post_process_dlsch(gNB_MAC_INST *nr_mac, post_process_pdsch_t *pdsch, NR_UE
     /* save which time allocation has been used, to be used on
      * retransmissions */
     harq->sched_pdsch.time_domain_allocation = sched_pdsch->time_domain_allocation;
+
+    // reset TCI state
+    if (sched_ctrl->UE_mac_ce_ctrl.tci_state_ind.is_scheduled)
+      sched_ctrl->UE_mac_ce_ctrl.tci_state_ind.is_scheduled = false;
+
 
     // ta command is sent, values are reset
     if (sched_ctrl->ta_apply) {

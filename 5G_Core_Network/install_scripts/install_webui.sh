@@ -40,6 +40,7 @@ APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive
 sudo env $APTVARS apt-get install -y ca-certificates curl gnupg
 sudo mkdir -p /etc/apt/keyrings
 curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor --yes -o /etc/apt/keyrings/nodesource.gpg
+sudo chmod -v a+r /etc/apt/keyrings/nodesource.gpg
 
 NODE_MAJOR=20
 

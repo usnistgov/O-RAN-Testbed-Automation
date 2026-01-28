@@ -938,6 +938,25 @@ else
     sudo env $APTVARS apt-get install -y $APTOPTS kubernetes-cni=${CNIVERSION}
 fi
 
+# Ensure CNI plugins are installed (if missing bridge plugin)
+if [ ! -f "/opt/cni/bin/bridge" ]; then
+    echo "CNI bridge plugin not found in /opt/cni/bin. Installing CNI plugins..."
+    CNI_PLUGINS_VERSION="v1.3.0"
+    CNI_ARCH="amd64"
+    case $(uname -m) in
+        x86_64) CNI_ARCH="amd64" ;;
+        aarch64) CNI_ARCH="arm64" ;;
+        armv7l|armv6l) CNI_ARCH="arm" ;;
+        *) echo "Unsupported architecture for CNI plugins: $(uname -m)" ;;
+    esac
+
+    if [ -n "$CNI_ARCH" ]; then
+        sudo mkdir -p /opt/cni/bin
+        curl -L "https://github.com/containernetworking/plugins/releases/download/${CNI_PLUGINS_VERSION}/cni-plugins-linux-${CNI_ARCH}-${CNI_PLUGINS_VERSION}.tgz" | sudo tar -C /opt/cni/bin -xz
+        echo "Successfully installed CNI plugins"
+    fi
+fi
+
 if [ -z "${KUBEVERSION}" ]; then
     sudo env $APTVARS apt-get install -y kubeadm kubelet kubectl
 else

@@ -49,8 +49,8 @@ fi
 # Extract SST and SD from options.yaml if it exists
 YAML_PATH="$SCRIPT_DIR/../../5G_Core_Network/options.yaml"
 if [ -f "$YAML_PATH" ]; then
-    SST=$(yq eval '.sst' "$YAML_PATH")
-    SD=$(yq eval '.sd' "$YAML_PATH")
+    SST=$(yq eval '.slices[0].sst' "$YAML_PATH")
+    SD=$(yq eval '.slices[0].sd' "$YAML_PATH")
     if [[ -z "$SST" || -z "$SD" || "$SST" == "null" || "$SD" == "null" ]]; then
         SST=""
         SD=""

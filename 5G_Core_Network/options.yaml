@@ -30,8 +30,9 @@ tac: 7
 dnn: nist-dnn
 
 # Configure the Single Network Slice Selection Assistance Information (S-NSSAI)
-sst: 1
-sd: 000001
+slices:
+  - sst: 1
+    sd: 000001
 
 # If core_to_use=open5gs, false means AMF will use the default 127.0.0.5, true means it will use the hostname IP
 expose_amf_over_hostname: false

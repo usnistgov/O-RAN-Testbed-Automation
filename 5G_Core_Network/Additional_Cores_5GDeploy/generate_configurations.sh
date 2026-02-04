@@ -180,8 +180,8 @@ fi
 
 # Configure the DNN, SST, and SD values
 DNN=$(sed -n 's/^dnn: //p' options.yaml)
-SST=$(yq eval '.sst' options.yaml)
-SD=$(yq eval '.sd' options.yaml)
+SST=$(yq eval '.slices[0].sst' options.yaml)
+SD=$(yq eval '.slices[0].sd' options.yaml)
 if [[ -z "$DNN" || "$DNN" == "null" ]]; then
     echo "DNN is not set in options.yaml, please ensure that \"dnn\" is set."
     exit 1

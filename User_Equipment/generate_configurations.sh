@@ -135,8 +135,8 @@ echo "MNC_LENGTH value: $MNC_LENGTH"
 
 # Configure the DNN, SST, and SD values
 DNN=$(sed -n 's/^dnn: //p' "$YAML_PATH")
-SST=$(yq eval '.sst' "$YAML_PATH")
-SD=$(yq eval '.sd' "$YAML_PATH")
+SST=$(yq eval '.slices[0].sst' "$YAML_PATH")
+SD=$(yq eval '.slices[0].sd' "$YAML_PATH")
 if [[ -z "$DNN" || "$DNN" == "null" ]]; then
     echo "DNN is not set in "$YAML_PATH", please ensure that \"dnn\" is set."
     exit 1

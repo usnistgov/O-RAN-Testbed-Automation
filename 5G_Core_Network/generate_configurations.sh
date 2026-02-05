@@ -472,7 +472,7 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
     ./install_scripts/register_subscriber.sh --imsi "$UE_IMSI" --key "$UE_KEY" --opc "$UE_OPC" --apn "$DNN" --sst "${SST[0]}" --sd "${SD[0]}" $IPV4_LINE
 
     # Iterate from the second slice
-    for (( i=1; i<${#SST[@]}; i++ )); do
+    for ((i = 1; i < ${#SST[@]}; i++)); do
         CURRENT_SST="${SST[$i]}"
         CURRENT_SD="${SD[$i]}"
 
@@ -481,7 +481,7 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
 
         # Apply Static IP for the secondary slices
         if [ -n "$UE_IPV4" ]; then
-             mongosh open5gs --eval "
+            mongosh open5gs --eval "
 db.subscribers.updateOne(
   { \"imsi\": \"$UE_IMSI\", \"slice.sd\": \"$CURRENT_SD\" },
   {

@@ -944,10 +944,10 @@ if [ ! -f "/opt/cni/bin/bridge" ]; then
     CNI_PLUGINS_VERSION="v1.3.0"
     CNI_ARCH="amd64"
     case $(uname -m) in
-        x86_64) CNI_ARCH="amd64" ;;
-        aarch64) CNI_ARCH="arm64" ;;
-        armv7l|armv6l) CNI_ARCH="arm" ;;
-        *) echo "Unsupported architecture for CNI plugins: $(uname -m)" ;;
+    x86_64) CNI_ARCH="amd64" ;;
+    aarch64) CNI_ARCH="arm64" ;;
+    armv7l | armv6l) CNI_ARCH="arm" ;;
+    *) echo "Unsupported architecture for CNI plugins: $(uname -m)" ;;
     esac
 
     if [ -n "$CNI_ARCH" ]; then

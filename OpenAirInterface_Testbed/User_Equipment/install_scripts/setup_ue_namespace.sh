@@ -58,9 +58,9 @@ BASE_SUBNET="10.201.0.0/16"
 SUBNET_SIZE=8
 
 # Calculate IP offsets
-SUBNET_OFFSET=$(( UE_NUMBER * SUBNET_SIZE ))
-HOST_IP_OFFSET=$(( SUBNET_OFFSET + 1 )) # .5
-UE_IP_OFFSET=$(( SUBNET_OFFSET + 2 ))   # .6
+SUBNET_OFFSET=$((UE_NUMBER * SUBNET_SIZE))
+HOST_IP_OFFSET=$((SUBNET_OFFSET + 1)) # .5
+UE_IP_OFFSET=$((SUBNET_OFFSET + 2))   # .6
 
 # Fetch IPs from subnet using python script
 UE_SUBNET_ID=$(python3 fetch_nth_ip.py "$BASE_SUBNET" $SUBNET_OFFSET)

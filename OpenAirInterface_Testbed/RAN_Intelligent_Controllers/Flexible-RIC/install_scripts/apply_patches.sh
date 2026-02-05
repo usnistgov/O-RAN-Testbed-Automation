@@ -80,7 +80,7 @@ cd ..
 # Append new intermediate metrics units to 28_552_kpm_meas.txt
 cd flexric
 if ! grep -q "^RSRP.Count" src/sm/kpm_sm/28_552_kpm_meas.txt; then
-    cat >> src/sm/kpm_sm/28_552_kpm_meas.txt << 'EOF'
+    cat >>src/sm/kpm_sm/28_552_kpm_meas.txt <<'EOF'
 RSRP.Count []
 PHY.NPrbDl []
 DRB.HarqMcsUl []

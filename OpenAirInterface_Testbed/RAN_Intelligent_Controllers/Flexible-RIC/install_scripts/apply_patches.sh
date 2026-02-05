@@ -77,4 +77,36 @@ echo "Patching CMakeLists.txt..."
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/CMakeLists.txt.patch"
 cd ..
 
+# Append new intermediate metrics units to 28_552_kpm_meas.txt
+cd flexric
+if ! grep -q "^RSRP.Count" src/sm/kpm_sm/28_552_kpm_meas.txt; then
+    cat >> src/sm/kpm_sm/28_552_kpm_meas.txt << 'EOF'
+RSRP.Count []
+PHY.NPrbDl []
+DRB.HarqMcsUl []
+DRB.HarqMcsDl []
+DRB.DerivedCQIDl []
+PHY.CqiWb1TbDl []
+PHY.CqiWb2TbDl []
+RSRP.Mean [dBm]
+RSRP.Minimum [dBm]
+RSRP.Quartile1 [dBm]
+RSRP.Median [dBm]
+RSRP.Quartile3 [dBm]
+RSRP.Maximum [dBm]
+PHY.DerivedRssiDl [dBm]
+PHY.DerivedRsrqDl [dB]
+PUSCH.Snr [dB]
+PUCCH.Snr [dB]
+DRB.HarqBlockErrorRateUl [%]
+DRB.HarqBlockErrorRateDl [%]
+DRB.MacSduRetransmissionRateUl [%]
+DRB.MacSduRetransmissionRateDl [%]
+DRB.MacSduErrorRateUl [%]
+DRB.MacSduErrorRateDl [%]
+EOF
+fi
+
+cd ..
+
 echo "Successfully patched FlexRIC."

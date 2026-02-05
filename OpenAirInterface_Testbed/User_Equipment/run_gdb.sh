@@ -160,6 +160,6 @@ else
     BAND=78
     DL_CARRIER_FREQUENCY_HZ=3619200000
 
-    # sudo ip netns exec ue$UE_NUMBER sudo gdb --args ./nr-uesoftmodem -O "../../../../configs/ue$UE_NUMBER.conf" --rfsim $RFSIM_SERVER_ARG --rfsimulator.options chanmod -r $BANDWIDTH_RBS --numerology $NUMEROLOGY --band $BAND -C $DL_CARRIER_FREQUENCY_HZ
-    sudo script -q -f -c "ip netns exec ue$UE_NUMBER sudo gdb --args ./nr-uesoftmodem -O \"../../../../configs/ue$UE_NUMBER.conf\" --rfsim $RFSIM_SERVER_ARG --rfsimulator.options chanmod -r $BANDWIDTH_RBS --numerology $NUMEROLOGY --band $BAND -C $DL_CARRIER_FREQUENCY_HZ" "$SCRIPT_DIR/logs/ue${UE_NUMBER}_stdout.txt"
+    # sudo ip netns exec ue$UE_NUMBER sudo gdb --args ./nr-uesoftmodem -O "../../../../configs/ue$UE_NUMBER.conf" --rfsim $RFSIM_SERVER_ARG --rfsimulator.[0].options chanmod -r $BANDWIDTH_RBS --numerology $NUMEROLOGY --band $BAND -C $DL_CARRIER_FREQUENCY_HZ
+    sudo script -q -f -c "ip netns exec ue$UE_NUMBER sudo gdb --args ./nr-uesoftmodem -O \"../../../../configs/ue$UE_NUMBER.conf\" --rfsim $RFSIM_SERVER_ARG --rfsimulator.[0].options chanmod -r $BANDWIDTH_RBS --numerology $NUMEROLOGY --band $BAND -C $DL_CARRIER_FREQUENCY_HZ" "$SCRIPT_DIR/logs/ue${UE_NUMBER}_stdout.txt"
 fi

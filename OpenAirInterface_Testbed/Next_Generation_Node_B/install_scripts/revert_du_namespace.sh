@@ -30,14 +30,6 @@
 
 echo "# Script: $(realpath "$0")..."
 
-UE_DU_NS_SUBNET="10.200.0.0/16" # Must match setup_ue_namespace.sh
-DU_IP_OFFSET=10                 # Must match setup_du_namespace.sh
-
-# Shared bridge (single L2 for all rf-sim instances)
-BRIDGE_NAME="br-rfsim"
-BRIDGE_GW_IP="10.200.0.1"
-BRIDGE_CIDR="$BRIDGE_GW_IP/16"
-
 # Do not exit immediately if a command fails
 set +e
 
@@ -57,36 +49,39 @@ if ! [[ $DU_NUMBER =~ ^[0-9]+$ ]]; then
 fi
 
 DU_NAMESPACE="du$DU_NUMBER"
-DU_NS_IP=$(python3 fetch_nth_ip.py $UE_DU_NS_SUBNET $((DU_IP_OFFSET + DU_NUMBER)))
 
-# Give the DU its own network namespace and configure it to access the host network
 NETWORK_INTERFACE=$(ip route | grep default | awk '{print $5}')
 
+# Recalculate the IPs used during setup to identify resources to clean up
+# Allocated a /29 (8 addresses) subnet per DU
+BASE_SUBNET="10.200.0.0/16"
+SUBNET_SIZE=8
+
+# Calculate IP offsets
+SUBNET_OFFSET=$(( DU_NUMBER * SUBNET_SIZE ))
+HOST_IP_OFFSET=$(( SUBNET_OFFSET + 1 )) # .5
+DU_IP_OFFSET=$(( SUBNET_OFFSET + 2 ))   # .6
+
+# Fetch IPs from subnet using python script
+DU_SUBNET_ID=$(python3 fetch_nth_ip.py "$BASE_SUBNET" $SUBNET_OFFSET)
+DU_HOST_IP=$(python3 fetch_nth_ip.py "$BASE_SUBNET" $HOST_IP_OFFSET)
+DU_NS_IP=$(python3 fetch_nth_ip.py "$BASE_SUBNET" $DU_IP_OFFSET)
+
 echo "Removing IP routes and addresses inside the namespace..."
-sudo ip netns exec $DU_NAMESPACE ip route del default via $BRIDGE_GW_IP 2>/dev/null || true
-# Backward compatibility with previous version not using bridge
-sudo ip netns exec $DU_NAMESPACE ip addr del $DU_NS_IP/16 dev v-$DU_NAMESPACE 2>/dev/null || true
-sudo ip netns exec $DU_NAMESPACE ip link set v-$DU_NAMESPACE down 2>/dev/null || true
+sudo ip netns exec $DU_NAMESPACE ip route del default via $DU_HOST_IP || true
+sudo ip netns exec $DU_NAMESPACE ip addr del $DU_NS_IP/29 dev v-$DU_NAMESPACE || true
+sudo ip netns exec $DU_NAMESPACE ip link set v-$DU_NAMESPACE down || true
 
-echo "Removing host-side veth for DU $DU_NUMBER..."
-sudo ip link set v-eth-du$DU_NUMBER down 2>/dev/null || true
-sudo ip link del v-eth-du$DU_NUMBER 2>/dev/null || true
+echo "Removing iptables rules..."
+sudo iptables -D FORWARD -o "$NETWORK_INTERFACE" -i v-eth-du$DU_NUMBER -j ACCEPT || true
+sudo iptables -D FORWARD -i "$NETWORK_INTERFACE" -o v-eth-du$DU_NUMBER -j ACCEPT || true
+sudo iptables -t nat -D POSTROUTING -s "$DU_SUBNET_ID/29" -o "$NETWORK_INTERFACE" -j MASQUERADE || true
 
-echo "Deleting network namespace $DU_NAMESPACE..."
-sudo ip netns del $DU_NAMESPACE 2>/dev/null || true
+echo "Deleting the network devices..."
+sudo ip link set v-eth-du$DU_NUMBER down
+sudo ip link del v-eth-du$DU_NUMBER
 
-# Decide whether to remove shared bridge and MASQUERADE rule
-REMAINING_NS=$(ip netns list | awk '{print $1}' | grep -E '^(ue|du)[0-9]+$' | wc -l)
-if [ "$REMAINING_NS" -eq 0 ]; then
-    echo "No UE/DU namespaces remain. Cleaning up shared bridge and MASQUERADE..."
-    if sudo iptables -t nat -C POSTROUTING -s "$UE_DU_NS_SUBNET" -o "$NETWORK_INTERFACE" -j MASQUERADE 2>/dev/null; then
-        sudo iptables -t nat -D POSTROUTING -s "$UE_DU_NS_SUBNET" -o "$NETWORK_INTERFACE" -j MASQUERADE
-    fi
-    # Delete bridge if it exists
-    if ip link show "$BRIDGE_NAME" >/dev/null 2>&1; then
-        sudo ip link set "$BRIDGE_NAME" down 2>/dev/null || true
-        sudo ip link del "$BRIDGE_NAME" 2>/dev/null || true
-    fi
-fi
+echo "Deleting the network namespace..."
+sudo ip netns del $DU_NAMESPACE
 
 echo "Successfully reverted the DU $DU_NUMBER namespace."

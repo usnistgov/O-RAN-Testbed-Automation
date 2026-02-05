@@ -200,13 +200,8 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
     # Operator key for the Milenage Authentication and Key Agreement algorithm used for encryption during the authentication process.
     update_conf "configs/ue$UE_NUMBER.conf" "opc" "\"$UE_OPC\""
 
-    # Specifies the name of the data network the UE wishes to connect to
-    update_conf "configs/ue$UE_NUMBER.conf" "dnn" "\"$DNN\""
-
-    # Configure the Single Network Slice Selection Assistance Information (S-NSSAI)
-    update_conf "configs/ue$UE_NUMBER.conf" "nssai_sst" "$((16#$SST))"
-    update_conf "configs/ue$UE_NUMBER.conf" "nssai_sd" "0x$SD"
-    # comment_out "configs/ue$UE_NUMBER.conf" "nssai_sd" # Optionally, comment out the SD from the file
+    # Configure the PDU sessions (DNN, SST, SD)
+    update_conf "configs/ue$UE_NUMBER.conf" "pdu_sessions" "({ dnn = \"$DNN\"; nssai_sst = $((16#$SST)); nssai_sd = 0x$SD; })"
 
     # Finally, ensure that it is referencing the channelmod_rfsimu.conf file
     sed -i "s|channelmod_rfsimu_LEO_satellite.conf|channelmod_rfsimu.conf|" "configs/ue$UE_NUMBER.conf"

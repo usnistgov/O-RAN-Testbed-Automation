@@ -47,7 +47,6 @@
 /////* DLSCH MAC PDU generation (6.1.2 TS 38.321) */////
 ////////////////////////////////////////////////////////
 #define OCTET 8
-#define HALFWORD 16
 #define WORD 32
 //#define SIZE_OF_POINTER sizeof (void *)
 

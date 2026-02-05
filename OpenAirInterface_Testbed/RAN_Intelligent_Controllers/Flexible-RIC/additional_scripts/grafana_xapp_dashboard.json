@@ -21,7 +21,7 @@
       "type": "grafana",
       "id": "grafana",
       "name": "Grafana",
-      "version": "12.3.0"
+      "version": "12.3.2"
     },
     {
       "type": "panel",
@@ -79,6 +79,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
+  "id": null,
   "links": [],
   "panels": [
     {
@@ -98,7 +99,7 @@
         "content": "<img src=\"http://localhost:3030/NIST.svg\" style=\"max-width: 100%; max-height: 100%; height: auto;\" />",
         "mode": "html"
       },
-      "pluginVersion": "12.3.0",
+      "pluginVersion": "12.3.2",
       "transparent": true,
       "type": "text"
     },
@@ -154,7 +155,7 @@
         "enablePagination": false,
         "showHeader": false
       },
-      "pluginVersion": "12.3.0",
+      "pluginVersion": "12.3.2",
       "targets": [
         {
           "datasource": {
@@ -306,7 +307,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.3.0",
+      "pluginVersion": "12.3.2",
       "targets": [
         {
           "columns": [
@@ -356,12 +357,12 @@
               "type": "number"
             },
             {
-              "selector": "RRU.PrbTotDl (PRBs)",
+              "selector": "RRU.PrbTotDl (%)",
               "text": "",
               "type": "number"
             },
             {
-              "selector": "RRU.PrbTotUl (PRBs)",
+              "selector": "RRU.PrbTotUl (%)",
               "text": "",
               "type": "number"
             },
@@ -436,32 +437,32 @@
               "type": "number"
             },
             {
-              "selector": "DRB.HarqBlockErrorRateUl",
+              "selector": "DRB.HarqBlockErrorRateUl (%)",
               "text": "",
               "type": "number"
             },
             {
-              "selector": "DRB.HarqBlockErrorRateDl",
+              "selector": "DRB.HarqBlockErrorRateDl (%)",
               "text": "",
               "type": "number"
             },
             {
-              "selector": "DRB.MacSduRetransmissionRateUl",
+              "selector": "DRB.MacSduRetransmissionRateUl (%)",
               "text": "",
               "type": "number"
             },
             {
-              "selector": "DRB.MacSduRetransmissionRateDl",
+              "selector": "DRB.MacSduRetransmissionRateDl (%)",
               "text": "",
               "type": "number"
             },
             {
-              "selector": "DRB.MacSduErrorRateUl",
+              "selector": "DRB.MacSduErrorRateUl (%)",
               "text": "",
               "type": "number"
             },
             {
-              "selector": "DRB.MacSduErrorRateDl",
+              "selector": "DRB.MacSduErrorRateDl (%)",
               "text": "",
               "type": "number"
             },
@@ -635,7 +636,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.3.0",
+      "pluginVersion": "12.3.2",
       "targets": [
         {
           "datasource": {
@@ -778,7 +779,7 @@
         "sizing": "auto",
         "valueMode": "color"
       },
-      "pluginVersion": "12.3.0",
+      "pluginVersion": "12.3.2",
       "targets": [
         {
           "datasource": {
@@ -984,7 +985,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.3.0",
+      "pluginVersion": "12.3.2",
       "targets": [
         {
           "datasource": {
@@ -1202,7 +1203,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.3.0",
+      "pluginVersion": "12.3.2",
       "targets": [
         {
           "datasource": {
@@ -1361,7 +1362,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.3.0",
+      "pluginVersion": "12.3.2",
       "targets": [
         {
           "datasource": {
@@ -1521,7 +1522,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.3.0",
+      "pluginVersion": "12.3.2",
       "targets": [
         {
           "datasource": {
@@ -1667,7 +1668,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.3.0",
+      "pluginVersion": "12.3.2",
       "targets": [
         {
           "datasource": {
@@ -1793,7 +1794,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "DRB.MacSduRetransmissionRateDl"
+              "options": "DRB.MacSduRetransmissionRateDl (%)"
             },
             "properties": [
               {
@@ -1808,7 +1809,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "DRB.MacSduRetransmissionRateUl"
+              "options": "DRB.MacSduRetransmissionRateUl (%)"
             },
             "properties": [
               {
@@ -1842,7 +1843,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.3.0",
+      "pluginVersion": "12.3.2",
       "targets": [
         {
           "datasource": {
@@ -1860,8 +1861,8 @@
           "options": {
             "include": {
               "names": [
-                "DRB.MacSduRetransmissionRateDl",
-                "DRB.MacSduRetransmissionRateUl",
+                "DRB.MacSduRetransmissionRateDl (%)",
+                "DRB.MacSduRetransmissionRateUl (%)",
                 "Time (UNIX ms)",
                 "UE ID"
               ]
@@ -2116,7 +2117,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.3.0",
+      "pluginVersion": "12.3.2",
       "targets": [
         {
           "datasource": {
@@ -2323,7 +2324,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.3.0",
+      "pluginVersion": "12.3.2",
       "targets": [
         {
           "datasource": {
@@ -2434,7 +2435,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "RRU.PrbTotUl (PRBs)"
+              "options": "RRU.PrbTotUl (%)"
             },
             "properties": [
               {
@@ -2449,7 +2450,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "RRU.PrbTotDl (PRBs)"
+              "options": "RRU.PrbTotDl (%)"
             },
             "properties": [
               {
@@ -2483,7 +2484,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.3.0",
+      "pluginVersion": "12.3.2",
       "targets": [
         {
           "datasource": {
@@ -2494,15 +2495,15 @@
           "refId": "A"
         }
       ],
-      "title": "Number of PRBs Downlink / Uplink Since Last Sample",
+      "title": "PRB Downlink / Uplink Percent Since Last Sample",
       "transformations": [
         {
           "id": "filterFieldsByName",
           "options": {
             "include": {
               "names": [
-                "RRU.PrbTotDl (PRBs)",
-                "RRU.PrbTotUl (PRBs)",
+                "RRU.PrbTotDl (%)",
+                "RRU.PrbTotUl (%)",
                 "Time (UNIX ms)",
                 "UE ID"
               ]
@@ -2595,7 +2596,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "DRB.HarqBlockErrorRateDl"
+              "options": "DRB.HarqBlockErrorRateDl (%)"
             },
             "properties": [
               {
@@ -2629,7 +2630,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.3.0",
+      "pluginVersion": "12.3.2",
       "targets": [
         {
           "datasource": {
@@ -2647,7 +2648,7 @@
           "options": {
             "include": {
               "names": [
-                "DRB.HarqBlockErrorRateDl",
+                "DRB.HarqBlockErrorRateDl (%)",
                 "Time (UNIX ms)",
                 "UE ID"
               ]
@@ -2775,7 +2776,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.3.0",
+      "pluginVersion": "12.3.2",
       "targets": [
         {
           "datasource": {
@@ -2919,7 +2920,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.3.0",
+      "pluginVersion": "12.3.2",
       "targets": [
         {
           "datasource": {
@@ -3061,7 +3062,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "DRB.HarqBlockErrorRateDl"
+              "options": "DRB.HarqBlockErrorRateDl (%)"
             },
             "properties": [
               {
@@ -3076,7 +3077,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "DRB.HarqBlockErrorRateUl"
+              "options": "DRB.HarqBlockErrorRateUl (%)"
             },
             "properties": [
               {
@@ -3140,7 +3141,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.3.0",
+      "pluginVersion": "12.3.2",
       "targets": [
         {
           "datasource": {
@@ -3302,7 +3303,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.3.0",
+      "pluginVersion": "12.3.2",
       "targets": [
         {
           "datasource": {
@@ -3414,7 +3415,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "DRB.HarqBlockErrorRateUl"
+              "options": "DRB.HarqBlockErrorRateUl (%)"
             },
             "properties": [
               {
@@ -3448,7 +3449,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.3.0",
+      "pluginVersion": "12.3.2",
       "targets": [
         {
           "datasource": {
@@ -3466,7 +3467,7 @@
           "options": {
             "include": {
               "names": [
-                "DRB.HarqBlockErrorRateUl",
+                "DRB.HarqBlockErrorRateUl (%)",
                 "Time (UNIX ms)",
                 "UE ID"
               ]
@@ -4498,7 +4499,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "RRU.PrbTotDl (PRBs)"
+              "options": "RRU.PrbTotDl (%)"
             },
             "properties": [
               {
@@ -4550,7 +4551,7 @@
           "options": {
             "include": {
               "names": [
-                "RRU.PrbTotDl (PRBs)",
+                "RRU.PrbTotDl (%)",
                 "Time (UNIX ms)",
                 "UE ID"
               ]
@@ -4677,7 +4678,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "DRB.HarqBlockErrorRateDl"
+              "options": "DRB.HarqBlockErrorRateDl (%)"
             },
             "properties": [
               {
@@ -4692,7 +4693,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "DRB.HarqBlockErrorRateUl"
+              "options": "DRB.HarqBlockErrorRateUl (%)"
             },
             "properties": [
               {
@@ -4707,7 +4708,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "DRB.MacSduErrorRateDl"
+              "options": "DRB.MacSduErrorRateDl (%)"
             },
             "properties": [
               {
@@ -4722,7 +4723,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "DRB.MacSduErrorRateUl"
+              "options": "DRB.MacSduErrorRateUl (%)"
             },
             "properties": [
               {
@@ -4774,10 +4775,10 @@
           "options": {
             "include": {
               "names": [
-                "DRB.MacSduErrorRateDl",
+                "DRB.MacSduErrorRateDl (%)",
                 "Time (UNIX ms)",
                 "UE ID",
-                "DRB.MacSduErrorRateUl"
+                "DRB.MacSduErrorRateUl (%)"
               ]
             }
           }
@@ -5080,7 +5081,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "RRU.PrbTotDl (PRBs)"
+              "options": "RRU.PrbTotDl (%)"
             },
             "properties": [
               {
@@ -5095,7 +5096,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "RRU.PrbTotUl (PRBs)"
+              "options": "RRU.PrbTotUl (%)"
             },
             "properties": [
               {
@@ -5149,7 +5150,7 @@
               "names": [
                 "Time (UNIX ms)",
                 "UE ID",
-                "RRU.PrbTotUl (PRBs)"
+                "RRU.PrbTotUl (%)"
               ]
             }
           }

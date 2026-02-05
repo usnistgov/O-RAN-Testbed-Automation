@@ -78,9 +78,9 @@ fi
 
 cd "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build"
 
-# sudo gdb --args ./nr-softmodem -O "$SCRIPT_DIR/configs/gnb.conf" --rfsim --rfsimulator.serveraddr server --rfsimulator.options chanmod --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS
+# sudo gdb --args ./nr-softmodem -O "$SCRIPT_DIR/configs/gnb.conf" --rfsim --rfsimulator.[0].serveraddr server --rfsimulator.[0].options chanmod --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS
 if [ "$IMSCOPE" = true ]; then
-    script -q -f -c "gdb --args ./nr-softmodem -O \"$SCRIPT_DIR/configs/gnb.conf\" --rfsim --rfsimulator.serveraddr server --rfsimulator.options chanmod --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS" "$SCRIPT_DIR/logs/gnb_stdout.txt"
+    script -q -f -c "gdb --args ./nr-softmodem -O \"$SCRIPT_DIR/configs/gnb.conf\" --rfsim --rfsimulator.[0].serveraddr server --rfsimulator.[0].options chanmod --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS" "$SCRIPT_DIR/logs/gnb_stdout.txt"
 else
-    sudo script -q -f -c "gdb --args ./nr-softmodem -O \"$SCRIPT_DIR/configs/gnb.conf\" --rfsim --rfsimulator.serveraddr server --rfsimulator.options chanmod --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS" "$SCRIPT_DIR/logs/gnb_stdout.txt"
+    sudo script -q -f -c "gdb --args ./nr-softmodem -O \"$SCRIPT_DIR/configs/gnb.conf\" --rfsim --rfsimulator.[0].serveraddr server --rfsimulator.[0].options chanmod --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS" "$SCRIPT_DIR/logs/gnb_stdout.txt"
 fi

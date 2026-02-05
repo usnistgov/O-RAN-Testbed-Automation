@@ -94,7 +94,6 @@
 /* Defs */
 #define MAX_NUM_BWP 5
 #define MAX_NUM_CORESET 12
-#define MAX_NUM_CCE 90
 /*!\brief Maximum number of random access process */
 #define NR_NB_RA_PROC_MAX 4
 #define MAX_NUM_OF_SSB 64
@@ -566,15 +565,6 @@ struct CSI_Report {
   RSRP_report_t csirs_rsrp_report;
 };
 
-#define MAX_SR_BITLEN 8
-
-/*! As per the spec 38.212 and table:  6.3.1.1.2-12 in a single UCI sequence we can have multiple CSI_report 
-  the number of CSI_report will depend on number of CSI resource sets that are configured in CSI-ResourceConfig RRC IE
-  From spec 38.331 from the IE CSI-ResourceConfig for SSB RSRP reporting we can configure only one resource set 
-  From spec 38.214 section 5.2.1.2 For periodic and semi-persistent CSI Resource Settings, the number of CSI-RS Resource Sets configured is limited to S=1
- */
-#define MAX_CSI_RESOURCE_SET_IN_CSI_RESOURCE_CONFIG 16
-
 typedef enum {
   INACTIVE = 0,
   ACTIVE_NOT_SCHED,
@@ -609,7 +599,6 @@ typedef struct nr_lc_config {
 } nr_lc_config_t;
 
 /*! \brief scheduling control information set through an API */
-#define MAX_CSI_REPORTS 48
 typedef struct {
   /// CCE index and aggregation, should be coherent with cce_list
   NR_SearchSpace_t *search_space;

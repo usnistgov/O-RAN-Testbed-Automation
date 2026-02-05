@@ -434,11 +434,11 @@ void log_int_value(const char *name_str, const label_info_lst_t label_info, cons
   }
   csv_append_int_to_csv_line(meas_record);
 
-  if (label_info.noLabel != NULL) {
-    printf("%s = %d%s%s\n", name_str, meas_record.int_val, *name_unit ? " " : "", name_unit);
-  } else if (label_info.distBinX != NULL && meas_record.int_val > 0) {
-    printf("%s[BinX=%d][BinY=%d][BinZ=%d] = %d%s%s\n", name_str, *label_info.distBinX, *label_info.distBinY, *label_info.distBinZ, meas_record.int_val, *name_unit ? " " : "", name_unit);
-  }
+  // if (label_info.noLabel != NULL) {
+  //   printf("%s = %d%s%s\n", name_str, meas_record.int_val, *name_unit ? " " : "", name_unit);
+  // } else if (label_info.distBinX != NULL && meas_record.int_val > 0) {
+  //   printf("%s[BinX=%d][BinY=%d][BinZ=%d] = %d%s%s\n", name_str, *label_info.distBinX, *label_info.distBinY, *label_info.distBinZ, meas_record.int_val, *name_unit ? " " : "", name_unit);
+  // }
 
   // If the measurement is RSRP.Count and the value is 0, the data is invalid
   if (filter_invalid_rsrp_samples && strcmp("RSRP.Count", name_str) == 0) {
@@ -469,7 +469,7 @@ void log_real_value(const char *name_str, const label_info_lst_t label_info, con
   }
   csv_append_real_to_csv_line(meas_record);
 
-  printf("%s = %.2f%s%s\n", name_str, meas_record.real_val, *name_unit ? " " : "", name_unit);
+  // printf("%s = %.2f%s%s\n", name_str, meas_record.real_val, *name_unit ? " " : "", name_unit);
 }
 
 typedef void (*log_meas_value)(const char *name_str, const label_info_lst_t label_info, const meas_record_lst_t meas_record);

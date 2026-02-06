@@ -191,7 +191,7 @@ static void csv_prepend_e2_node_id() {
   }
 
   // Ensure the buffer won't overflow
-  char e2_node_id_buffer[256];
+  char e2_node_id_buffer[264];
   snprintf(e2_node_id_buffer, sizeof(e2_node_id_buffer), "%s,", current_e2_id_str);
   size_t e2_node_id_len = strlen(e2_node_id_buffer);
   size_t current_len = strlen(csv_line_buffer);
@@ -418,6 +418,7 @@ log_ue_id log_ue_id_e2sm[END_UE_ID_E2SM] = {
 static
 void log_int_value(const char *name_str, const label_info_lst_t label_info, const meas_record_lst_t meas_record)
 {
+  (void)label_info;
   char *name_unit = get_meas_unit(name_str);
   if (name_unit && strcmp(name_unit, "[]") == 0) name_unit = "";
   if (name_unit == NULL) name_unit = "";
@@ -876,6 +877,7 @@ size_t find_sm_idx(sm_ran_function_t* rf, size_t sz, bool (*f)(sm_ran_function_t
   }
 
   assert(0 != 0 && "SM ID could not be found in the RAN Function List");
+  return 0;
 }
 
 int main(int argc, char* argv[])

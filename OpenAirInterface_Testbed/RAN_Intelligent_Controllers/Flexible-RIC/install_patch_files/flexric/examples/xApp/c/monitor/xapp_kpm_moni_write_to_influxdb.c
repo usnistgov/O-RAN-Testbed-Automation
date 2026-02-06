@@ -324,6 +324,7 @@ log_ue_id log_ue_id_e2sm[END_UE_ID_E2SM] = {
 static
 void log_int_value(const char *name_str, const label_info_lst_t label_info, const meas_record_lst_t meas_record)
 {
+  (void)label_info;
   char *name_unit = get_meas_unit(name_str);
   if (name_unit && strcmp(name_unit, "[]") == 0) name_unit = "";
   if (name_unit == NULL) name_unit = "";
@@ -334,7 +335,7 @@ void log_int_value(const char *name_str, const label_info_lst_t label_info, cons
     return;
   }
 
-  char influx_field_name[128];
+  char influx_field_name[256];
   
   // Format unit
   char clean_unit[64];
@@ -352,7 +353,7 @@ void log_int_value(const char *name_str, const label_info_lst_t label_info, cons
     snprintf(influx_field_name, sizeof(influx_field_name), "%s", safe_metric_name);
   }
 
-  char influx_field[256];
+  char influx_field[512];
   snprintf(influx_field, sizeof(influx_field), "%s=%di,", influx_field_name, meas_record.int_val);
   strncat(influx_fields_buffer, influx_field, sizeof(influx_fields_buffer) - strlen(influx_fields_buffer) - 1);
 
@@ -379,7 +380,7 @@ void log_real_value(const char *name_str, const label_info_lst_t label_info, con
     return;
   }
 
-  char influx_field_name[128];
+  char influx_field_name[256];
   char clean_unit[64];
   size_t unit_len = strlen(name_unit);
   if (unit_len > 2 && name_unit[0] == '[' && name_unit[unit_len - 1] == ']') {
@@ -397,7 +398,7 @@ void log_real_value(const char *name_str, const label_info_lst_t label_info, con
 
   // Check for NaN
   if (!isnan(meas_record.real_val)) {
-    char influx_field[256];
+    char influx_field[512];
     snprintf(influx_field, sizeof(influx_field), "%s=%.2f,", influx_field_name, meas_record.real_val);
     strncat(influx_fields_buffer, influx_field, sizeof(influx_fields_buffer) - strlen(influx_fields_buffer) - 1);
   }
@@ -792,6 +793,7 @@ size_t find_sm_idx(sm_ran_function_t* rf, size_t sz, bool (*f)(sm_ran_function_t
   }
 
   assert(0 != 0 && "SM ID could not be found in the RAN Function List");
+  return 0;
 }
 
 int main(int argc, char* argv[])

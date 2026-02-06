@@ -53,8 +53,9 @@ if [ -f "$YAML_PATH" ]; then
     sudo "$SCRIPT_DIR/install_scripts/./ensure_consistent_yq.sh"
     SST=$(yq eval '.slices[0].sst' "$YAML_PATH")
     SD=$(yq eval '.slices[0].sd' "$YAML_PATH")
-    if [[ -z "$SST" || -z "$SD" || "$SST" == "null" || "$SD" == "null" ]]; then
+    if [[ -z "$SST" || "$SST" == "null" ]]; then
         SST=""
+    elif [[ -z "$SD" || "$SD" == "null" ]]; then
         SD=""
     else
         echo "Using SST: $SST and SD: $SD for the xApp."

@@ -60,6 +60,17 @@ echo "Patching xapp_kpm_moni.c..."
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni.c.patch"
 cd ..
 
+# Apply patch to FlexRIC to add slice (SST + SD) support in RC xApp
+cd flexric
+git restore examples/xApp/c/kpm_rc/xapp_kpm_rc.c
+if [ ! -f "examples/xApp/c/kpm_rc/xapp_kpm_rc.c.previous" ]; then
+    cp examples/xApp/c/kpm_rc/xapp_kpm_rc.c examples/xApp/c/kpm_rc/xapp_kpm_rc.c.previous
+    cp examples/xApp/c/kpm_rc/xapp_kpm_rc.c.previous "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/kpm_rc/xapp_kpm_rc.previous.c"
+fi
+echo "Patching xapp_kpm_rc.c..."
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/kpm_rc/xapp_kpm_rc.c.patch"
+cd ..
+
 echo "Adding xapp_kpm_moni_write_to_csv.c..."
 cp "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv.c" flexric/examples/xApp/c/monitor/
 

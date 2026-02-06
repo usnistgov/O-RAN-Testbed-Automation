@@ -44,7 +44,7 @@ CURRENT_DIR=$(pwd)
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-echo "Installing Near-Real-Time RAN Intelligent Controller..."
+echo "Installing Near-Real-Time RAN Intelligent Controller (O-RAN SC)..."
 # Modifies the needrestart configuration to suppress interactive prompts
 if [ -d /etc/needrestart ]; then
     sudo install -d -m 0755 /etc/needrestart/conf.d
@@ -239,7 +239,7 @@ fi
 sudo ./install_scripts/enable_docker_build_kit.sh
 
 echo
-echo "Installing Near-Real Time RAN Intelligent Controller..."
+echo "Installing Near-Real Time RAN Intelligent Controller (O-RAN SC)..."
 
 # Determine if RAN Intelligent Controller pods should be reset
 SHOULD_RESET_RIC=false
@@ -295,8 +295,7 @@ else
     if [ "$E2_TERM_PORT" != "36422" ]; then
         sudo ./install_scripts/revise_deployment_for_e2_port.sh
     fi
-    # Wait for kube-apiserver to be ready before installing Near-RT RIC
-    echo "Waiting for the Kubernetes API server to become ready before installing Near-RT RIC..."
+    echo "Waiting for the Kubernetes API server to become ready before deploying Near-RT RIC pods..."
     sudo ./install_scripts/wait_for_kubectl.sh
 
     # Run the installation command
@@ -309,7 +308,7 @@ else
 
         echo
         echo
-        echo "Installing Near-RT RIC..."
+        echo "Deploying Near-RT RIC (O-RAN SC) pods..."
         cd ric-dep/bin/
         sudo ./install -f "../RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME_UPDATED" 2>&1 | tee -a "$RIC_INSTALLATION_STDOUT"
         cd "$SCRIPT_DIR"

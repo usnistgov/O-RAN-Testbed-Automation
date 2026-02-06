@@ -41,7 +41,7 @@ CURRENT_DIR=$(pwd)
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-echo "Installing Non-Real-Time RAN Intelligent Controller..."
+echo "Installing Non-Real-Time RAN Intelligent Controller (O-RAN SC)..."
 # Modifies the needrestart configuration to suppress interactive prompts
 if [ -d /etc/needrestart ]; then
     sudo install -d -m 0755 /etc/needrestart/conf.d
@@ -330,7 +330,7 @@ if ! command -v keytool &>/dev/null; then
 fi
 
 echo
-echo "Installing Non-Real-Time RAN Intelligent Controller..."
+echo "Installing Non-Real-Time RAN Intelligent Controller (O-RAN SC)..."
 # Determine if RAN Intelligent Controller pods should be reset by checking if any of the nonrtric pods are not running
 echo "Checking if any of the nonrtric pods are not running..."
 SHOULD_RESET_NONRTRIC=false
@@ -378,11 +378,11 @@ else
     git -C "$(dirname "$INSTALL_ONAP_SCRIPT")" restore "$(basename "$INSTALL_ONAP_SCRIPT")" || true
     sed -i "s|--namespace strimzi-system|--namespace strimzi-system --set extraEnvs[0].name=STRIMZI_KUBERNETES_VERSION --set-string extraEnvs[0].value=\"major=${KUBE_VERSION_MAJOR}\\\\,minor=${KUBE_VERSION_MINOR}\"|g" "$INSTALL_ONAP_SCRIPT"
 
-    echo "Installing Non-RT RIC pods..."
+    echo "Deploying Non-RT RIC pods..."
     ./dep/smo-install/scripts/layer-0/0-setup-helm3.sh
     ./dep/smo-install/scripts/layer-2/2-install-oran.sh default
 
-    echo "Successfully installed Non-RT RIC pods."
+    echo "Successfully deployed Non-RT RIC pods."
 fi
 
 cd "$SCRIPT_DIR"

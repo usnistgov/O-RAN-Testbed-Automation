@@ -69,7 +69,7 @@ if command -v systemctl >/dev/null 2>&1; then
     fi
 fi
 
-echo "Uninstalling Near-Real-Time RAN Intelligent Controller..."
+echo "Uninstalling Near-Real-Time RAN Intelligent Controller (O-RAN SC)..."
 # Modifies the needrestart configuration to suppress interactive prompts
 if [ -d /etc/needrestart ]; then
     sudo install -d -m 0755 /etc/needrestart/conf.d

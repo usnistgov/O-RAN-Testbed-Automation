@@ -160,7 +160,7 @@ sudo ./../Additional_Scripts/migrate_to_new_version.sh
 echo
 echo
 echo "################################################################################"
-echo "# Installing 5G Core...                                                        #"
+echo "# Installing 5G Core Network...                                                #"
 echo "################################################################################"
 echo
 echo
@@ -173,7 +173,7 @@ cd ..
 echo
 echo
 echo "################################################################################"
-echo "# Installing User Equipment...                                                 #"
+echo "# Installing User Equipment (OpenAirInterface)...                              #"
 echo "################################################################################"
 echo
 echo
@@ -186,7 +186,7 @@ cd ..
 echo
 echo
 echo "################################################################################"
-echo "# Installing Next Generation Node B...                                         #"
+echo "# Installing Next Generation Node B (OpenAirInterface)...                      #"
 echo "################################################################################"
 echo
 echo
@@ -198,7 +198,7 @@ cd ..
 echo
 echo
 echo "################################################################################"
-echo "# Installing Near-Real-Time RAN Intelligent Controller...                      #"
+echo "# Installing Near-Real-Time RAN Intelligent Controller (FlexRIC)...            #"
 echo "################################################################################"
 echo
 echo

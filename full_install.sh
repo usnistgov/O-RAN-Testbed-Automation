@@ -188,7 +188,7 @@ if [ "$CORE_TO_USE" == "open5gs" ]; then
     echo
     echo
     echo "################################################################################"
-    echo "# Installing Open5GS...                                                        #"
+    echo "# Installing 5G Core Network (Open5GS)...                                      #"
     echo "################################################################################"
     echo
     echo
@@ -202,7 +202,7 @@ fi
 echo
 echo
 echo "################################################################################"
-echo "# Installing User Equipment...                                                 #"
+echo "# Installing User Equipment (srsRAN 4G)...                                     #"
 echo "################################################################################"
 echo
 echo
@@ -215,7 +215,7 @@ cd ..
 echo
 echo
 echo "################################################################################"
-echo "# Installing Next Generation Node B...                                         #"
+echo "# Installing Next Generation Node B (srsRAN Project)...                        #"
 echo "################################################################################"
 echo
 echo
@@ -231,7 +231,7 @@ if [ -d "RAN_Intelligent_Controllers/Near-Real-Time-RIC" ]; then
     echo
     echo
     echo "################################################################################"
-    echo "# Installing Near-Real-Time RAN Intelligent Controller...                      #"
+    echo "# Installing Near-Real-Time RAN Intelligent Controller (O-RAN SC)...           #"
     echo "################################################################################"
     echo
     echo
@@ -247,7 +247,7 @@ if [ "$CORE_TO_USE" != "open5gs" ]; then
     echo
     echo
     echo "################################################################################"
-    echo "# Installing Open5GS...                                                        #"
+    echo "# Installing 5G Core Network...                                                #"
     echo "################################################################################"
     echo
     echo

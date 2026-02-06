@@ -54,7 +54,7 @@ if [[ "$1" != "bypass_confirmation" && "$1" != "--yes" && "$1" != "-y" ]]; then
     fi
 fi
 
-echo "Uninstalling Non-Real-Time RAN Intelligent Controller..."
+echo "Uninstalling Non-Real-Time RAN Intelligent Controller (O-RAN SC) ..."
 # Modifies the needrestart configuration to suppress interactive prompts
 if [ -d /etc/needrestart ]; then
     sudo install -d -m 0755 /etc/needrestart/conf.d

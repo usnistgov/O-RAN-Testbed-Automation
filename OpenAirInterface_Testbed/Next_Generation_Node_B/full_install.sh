@@ -135,7 +135,7 @@ fi
 
 echo
 echo
-echo "Installing OpenAirInterface Next Generation Node B..."
+echo "Installing Next Generation Node B (OpenAirInterface)..."
 # Modifies the needrestart configuration to suppress interactive prompts
 if [ -d /etc/needrestart ]; then
     sudo install -d -m 0755 /etc/needrestart/conf.d

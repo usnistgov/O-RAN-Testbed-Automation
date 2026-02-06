@@ -88,7 +88,7 @@ cd "$SCRIPT_DIR"
 
 echo
 echo
-echo "Installing OpenAirInterface User Equipment..."
+echo "Installing User Equipment (OpenAirInterface)..."
 # Modifies the needrestart configuration to suppress interactive prompts
 if [ -d /etc/needrestart ]; then
     sudo install -d -m 0755 /etc/needrestart/conf.d

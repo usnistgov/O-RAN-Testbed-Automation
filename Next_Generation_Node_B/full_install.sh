@@ -100,7 +100,7 @@ fi
 
 echo
 echo
-echo "Installing Next Generation Node B..."
+echo "Installing Next Generation Node B (srsRAN Project)..."
 # Modifies the needrestart configuration to suppress interactive prompts
 if [ -d /etc/needrestart ]; then
     sudo install -d -m 0755 /etc/needrestart/conf.d

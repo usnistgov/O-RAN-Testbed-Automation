@@ -33,7 +33,7 @@ import pytest
 
 # Global variables
 pms_ip = '127.0.0.1'
-pms_port = '54330'
+pms_port = '8081'
 ric_ids = []
 ric_policy_ids = []
 supported_policy_types = []

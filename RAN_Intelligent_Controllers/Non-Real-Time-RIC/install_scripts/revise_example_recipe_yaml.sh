@@ -87,3 +87,16 @@ update_yaml $RECIPE_PATH '.nonrtric.installrAppmanager' 'true'
 update_yaml $RECIPE_PATH '.nonrtric.installCapifcore' 'true'
 update_yaml $RECIPE_PATH '.nonrtric.installServicemanager' 'true'
 update_yaml $RECIPE_PATH '.nonrtric.installRanpm' 'true'
+
+# Add Rics configuration to policymanagementservice
+echo "Updating $RECIPE_PATH: configuring rics"
+yq e '.policymanagementservice.application.app.filepath = "/var/policy-management-service/application_configuration.json"' -i "$RECIPE_PATH"
+yq e '.policymanagementservice.config.config.controller = []' -i "$RECIPE_PATH"
+yq e '.policymanagementservice.config.config.ric = [
+  {"name": "ric1", "baseUrl": "http://a1-sim-osc-0.nonrtric:8085", "managedElementIds": ["kista_1", "kista_2"]},
+  {"name": "ric2", "baseUrl": "http://a1-sim-osc-1.nonrtric:8085", "managedElementIds": ["kista_1", "kista_2"]},
+  {"name": "ric3", "baseUrl": "http://a1-sim-std-0.nonrtric:8085", "managedElementIds": ["kista_1", "kista_2"]},
+  {"name": "ric4", "baseUrl": "http://a1-sim-std-1.nonrtric:8085", "managedElementIds": ["kista_1", "kista_2"]},
+  {"name": "ric5", "baseUrl": "http://a1-sim-std2-0.nonrtric:8085", "managedElementIds": ["kista_1", "kista_2"]},
+  {"name": "ric6", "baseUrl": "http://a1-sim-std2-1.nonrtric:8085", "managedElementIds": ["kista_1", "kista_2"]}
+]' -i "$RECIPE_PATH"

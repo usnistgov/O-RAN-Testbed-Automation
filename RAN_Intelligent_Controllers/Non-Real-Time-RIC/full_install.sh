@@ -114,6 +114,13 @@ if [ ! -d dep ]; then
     cd ..
 fi
 
+# Force Policy Management Service to load latest configuration on startup
+if [ -f dep/smo-install/oran_oom/policymanagementservice/templates/statefulset.yaml ]; then
+    # This removes the "if [ ! -f $FILE ]" check so the config is always copied
+    sed -i 's/if \[ ! -f \$FILE \]; then//' dep/smo-install/oran_oom/policymanagementservice/templates/statefulset.yaml
+    sed -i 's/fi;//' dep/smo-install/oran_oom/policymanagementservice/templates/statefulset.yaml
+fi
+
 if [ ! -d "rappmanager" ]; then
     cd "$SCRIPT_DIR"
     ./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/nonrtric/plt/rappmanager.git rappmanager
@@ -380,7 +387,8 @@ else
 
     echo "Deploying Non-RT RIC pods..."
     ./dep/smo-install/scripts/layer-0/0-setup-helm3.sh
-    ./dep/smo-install/scripts/layer-2/2-install-oran.sh default
+    ./dep/smo-install/scripts/layer-1/1-build-all-charts.sh
+    ./dep/smo-install/scripts/layer-2/2-install-oran.sh default dev
 
     echo "Successfully deployed Non-RT RIC pods."
 fi

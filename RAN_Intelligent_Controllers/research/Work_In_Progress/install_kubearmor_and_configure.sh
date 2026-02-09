@@ -38,8 +38,10 @@ fi
 SUPPORT_MATRIX=$(curl -fs https://raw.githubusercontent.com/kubearmor/KubeArmor/refs/heads/main/getting-started/support_matrix.md)
 if [ $? -ne 0 ]; then
     echo "Failed to fetch the support matrix for KubeArmor (used to verify if this OS version is supported by KubeArmor)."
-    read -p "Do you want to proceed anyway? (y/n): " PROCEED
-    if [[ $PROCEED != "y" && $PROCEED != "yes" ]]; then
+    echo "Do you want to proceed? (Y/n)"
+    read -r CONFIRM
+    CONFIRM=$(echo "${CONFIRM:-y}" | tr '[:upper:]' '[:lower:]')
+    if [[ "$CONFIRM" != "y" && "$CONFIRM" != "yes" ]]; then
         echo "Exiting."
         exit 1
     fi
@@ -47,8 +49,10 @@ fi
 if ! echo "$SUPPORT_MATRIX" | grep -q "Ubuntu.*$UBUNTU_RELEASE"; then
     echo "KubeArmor has not mentioned that Ubuntu $UBUNTU_RELEASE is supported."
     echo "However, you can try to install it and see if it works."
-    read -p "Do you want to proceed anyway? (y/n): " PROCEED
-    if [[ $PROCEED != "y" && $PROCEED != "yes" ]]; then
+    echo "Do you want to proceed? (Y/n)"
+    read -r CONFIRM
+    CONFIRM=$(echo "${CONFIRM:-y}" | tr '[:upper:]' '[:lower:]')
+    if [[ "$CONFIRM" != "y" && "$CONFIRM" != "yes" ]]; then
         echo "Exiting."
         exit 1
     fi

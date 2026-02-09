@@ -58,8 +58,10 @@ if [[ ! -z "$MODULE_NAME" ]]; then
     sudo semodule -i $HOME/selinux_modules/${MODULE_NAME}.pp
 fi
 
-read -p "Are you ready to set SELinux to enforcing mode? (y/n): " RESPONSE
-if [[ "$RESPONSE" == "y" || "$RESPONSE" == "yes" ]]; then
+echo "Do you want to proceed to set SELinux to enforcing mode? (Y/n)"
+read -r CONFIRM
+CONFIRM=$(echo "${CONFIRM:-y}" | tr '[:upper:]' '[:lower:]')
+if [[ "$CONFIRM" == "y" || "$CONFIRM" == "yes" ]]; then
     sudo setenforce 1
     sudo sed -i 's/^SELINUX=permissive$/SELINUX=enforcing/' /etc/selinux/config
     echo "SELinux has been set to enforcing mode."

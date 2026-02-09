@@ -223,14 +223,14 @@ else
     # Remove the prefix if it exists
     CORE="${CORE_TO_USE#5gdeploy-}"
     echo
-    read -p "WARNING: Unknown core: \"$CORE\", 5gdeploy may not support this core. Do you want to proceed? (y/n): " yn
-    case $yn in
-    [Yy]*) ;;
-    *)
+    echo "WARNING: Unknown core: \"$CORE\", 5gdeploy may not support this core."
+    echo "Do you want to proceed? (Y/n)"
+    read -r CONFIRM
+    CONFIRM=$(echo "${CONFIRM:-y}" | tr '[:upper:]' '[:lower:]')
+    if [[ "$CONFIRM" != "y" && "$CONFIRM" != "yes" ]]; then
         echo "Exiting."
         exit 1
-        ;;
-    esac
+    fi
 fi
 
 # Ensure that the UPF is set correctly
@@ -253,16 +253,15 @@ elif [ "$UPF_TO_USE" == "5gdeploy-ndndpdk" ]; then
 else
     # Remove the prefix if it exists
     UPF="${UPF_TO_USE#5gdeploy-}"
-    echo "Unknown UPF: $UPF"
     echo
-    read -p "WARNING: 5gdeploy may not support this UPF. Do you want to proceed? (y/n): " yn
-    case $yn in
-    [Yy]*) ;;
-    *)
+    echo "WARNING: Unknown UPF: \"$UPF\", 5gdeploy may not support this UPF."
+    echo "Do you want to proceed? (Y/n)"
+    read -r CONFIRM
+    CONFIRM=$(echo "${CONFIRM:-y}" | tr '[:upper:]' '[:lower:]')
+    if [[ "$CONFIRM" != "y" && "$CONFIRM" != "yes" ]]; then
         echo "Exiting."
         exit 1
-        ;;
-    esac
+    fi
 fi
 
 cd "$SCRIPT_DIR"

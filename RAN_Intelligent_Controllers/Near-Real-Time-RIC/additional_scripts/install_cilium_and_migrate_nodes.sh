@@ -39,10 +39,11 @@ echo "Drain nodes:    $DRAIN_NODES"
 echo
 echo "This script will install Cilium and migrate all nodes to Cilium for network policy enforcement (replacing the existing network plugin, e.g., Flannel)."
 echo "Since this is a disruptive operation, it is recommended to back up your Kubernetes cluster before proceeding."
-read -p "Would you like to proceed? (y/n): " -r REPLY
-
-if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-    echo "Exiting script."
+echo "Do you want to proceed? (Y/n)"
+read -r CONFIRM
+CONFIRM=$(echo "${CONFIRM:-y}" | tr '[:upper:]' '[:lower:]')
+if [[ "$CONFIRM" != "y" && "$CONFIRM" != "yes" ]]; then
+    echo "Exiting."
     exit 1
 fi
 

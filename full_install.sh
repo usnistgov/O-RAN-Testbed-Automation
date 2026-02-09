@@ -92,9 +92,9 @@ if [ "$KEEP_EXISTING_INSTALLS" != "y" ]; then
         echo " - Near-Real-Time RAN Intelligent Controller (O-RAN SC)"
     fi
     echo
-    echo "Do you want to proceed? (y/n)"
+    echo "Do you want to proceed? (Y/n)"
     read -r CONFIRM
-    CONFIRM=$(echo "$CONFIRM" | tr '[:upper:]' '[:lower:]')
+    CONFIRM=$(echo "${CONFIRM:-y}" | tr '[:upper:]' '[:lower:]')
     if [[ "$CONFIRM" != "y" && "$CONFIRM" != "yes" ]]; then
         echo "Installation aborted."
         exit 0
@@ -119,10 +119,10 @@ fi
 if [[ "$OPEN5GS_INSTALLED" = true || "$GNODEB_INSTALLED" = true || "$UE_INSTALLED" = true ]]; then
     echo
     if [ -z "$KEEP_EXISTING_INSTALLS" ]; then
-        echo "Previous installations were found, do you want to keep the old installations? (y/n)"
+        echo "Previous installations were found, do you want to keep the old installations? (Y/n)"
         read -r KEEP_EXISTING_INSTALLS
-        # Normalize input to lowercase and only accept inputs: y, yes, n, no
-        KEEP_EXISTING_INSTALLS=$(echo "$KEEP_EXISTING_INSTALLS" | tr '[:upper:]' '[:lower:]')
+        # Normalize input to lowercase and default to 'y' if empty
+        KEEP_EXISTING_INSTALLS=$(echo "${KEEP_EXISTING_INSTALLS:-y}" | tr '[:upper:]' '[:lower:]')
         if [[ "$KEEP_EXISTING_INSTALLS" != "y" && "$KEEP_EXISTING_INSTALLS" != "yes" && "$KEEP_EXISTING_INSTALLS" != "n" && "$KEEP_EXISTING_INSTALLS" != "no" ]]; then
             echo "Invalid input. Exiting."
             exit 1

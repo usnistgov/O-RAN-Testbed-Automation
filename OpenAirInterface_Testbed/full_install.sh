@@ -90,9 +90,9 @@ if [ "$KEEP_EXISTING_INSTALLS" != "y" ]; then
     echo " - Next Generation Node B (OpenAirInterface)"
     echo " - Near-Real-Time RAN Intelligent Controller (FlexRIC)"
     echo
-    echo "Do you want to proceed? (y/n)"
+    echo "Do you want to proceed? (Y/n)"
     read -r CONFIRM
-    CONFIRM=$(echo "$CONFIRM" | tr '[:upper:]' '[:lower:]')
+    CONFIRM=$(echo "${CONFIRM:-y}" | tr '[:upper:]' '[:lower:]')
     if [[ "$CONFIRM" != "y" && "$CONFIRM" != "yes" ]]; then
         echo "Installation aborted."
         exit 0

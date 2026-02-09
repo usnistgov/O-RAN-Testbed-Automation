@@ -67,7 +67,7 @@ for i in "${UE_NUMBERS[@]}"; do
 done
 
 # Ensure the correct YAML editor is installed
-sudo "$SCRIPT_DIR/install_scripts/./ensure_consistent_yq.sh"
+"$SCRIPT_DIR/install_scripts/./ensure_consistent_yq.sh"
 
 # Function to update or add configuration properties in .conf files, considering sections and uncommenting if needed
 update_conf() {

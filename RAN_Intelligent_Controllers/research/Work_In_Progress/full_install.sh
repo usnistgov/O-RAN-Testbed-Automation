@@ -374,7 +374,7 @@ fi
 # cp "$SCRIPT_DIR/install_patch_files/dep/ranpm/install/install-nrt.sh" install-nrt.sh
 # # Guide from https://lf-o-ran-sc.atlassian.net/wiki/spaces/RICNR/pages/128483338/Release+J+-+Run+in+Kubernetes+-+Additional+instructions+for+RANPM+Installation
 # echo "Installing the main parts of the ranpm setup..."
-# sudo "$SCRIPT_DIR/install_scripts/./ensure_consistent_yq.sh"
+# "$SCRIPT_DIR/install_scripts/./ensure_consistent_yq.sh"
 # ./install-nrt.sh
 # echo "Installing the producer for influx db..."
 # ./install-pm-log.sh

@@ -60,7 +60,7 @@ if [ "$CORE_TO_USE" != "open5gs" ]; then
 fi
 
 # Ensure the correct YAML editor is installed
-sudo "$SCRIPT_DIR/install_scripts/./ensure_consistent_yq.sh"
+"$SCRIPT_DIR/install_scripts/./ensure_consistent_yq.sh"
 
 echo "Parsing options.yaml..."
 # Check if the YAML file exists, if not, set and save default values

@@ -119,7 +119,7 @@ if [[ -z "$SST" || -z "$SD" || "$SST" == "null" || "$SD" == "null" ]]; then
 fi
 
 # Ensure the correct YAML editor is installed
-sudo "$SCRIPT_DIR/install_scripts/./ensure_consistent_yq.sh"
+"$SCRIPT_DIR/install_scripts/./ensure_consistent_yq.sh"
 
 echo "Saving configuration file example..."
 rm -rf configs

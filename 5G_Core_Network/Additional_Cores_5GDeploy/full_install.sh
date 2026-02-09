@@ -44,7 +44,7 @@ PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$PARENT_DIR"
 
 # Ensure the correct YAML editor is installed
-sudo "$SCRIPT_DIR/install_scripts/./ensure_consistent_yq.sh"
+"$SCRIPT_DIR/install_scripts/./ensure_consistent_yq.sh"
 
 # Ensure that 5G_Core_Network/options.yaml is configured to use 5gdeploy instead of Open5GS
 if [ -f "options.yaml" ]; then

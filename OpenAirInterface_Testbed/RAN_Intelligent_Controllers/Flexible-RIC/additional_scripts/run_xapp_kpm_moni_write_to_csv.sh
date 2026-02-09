@@ -68,7 +68,7 @@ echo
 YAML_PATH="$SCRIPT_DIR/../../../5G_Core_Network/options.yaml"
 if [ -f "$YAML_PATH" ]; then
     # Ensure the correct YAML editor is installed
-    sudo "$PARENT_DIR/install_scripts/./ensure_consistent_yq.sh"
+    "$PARENT_DIR/install_scripts/./ensure_consistent_yq.sh"
     SST=$(yq eval '.slices[0].sst' "$YAML_PATH")
     SD=$(yq eval '.slices[0].sd' "$YAML_PATH")
     if [[ -z "$SST" || "$SST" == "null" ]]; then

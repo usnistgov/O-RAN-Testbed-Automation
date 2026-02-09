@@ -99,7 +99,7 @@ echo "MNC value: $MNC"
 echo "MNC_LENGTH value: $MNC_LENGTH"
 
 # Ensure the correct YAML editor is installed
-sudo "$SCRIPT_DIR/install_scripts/./ensure_consistent_yq.sh"
+"$SCRIPT_DIR/install_scripts/./ensure_consistent_yq.sh"
 
 echo "Saving configuration file example..."
 rm -rf "$SCRIPT_DIR/configs"

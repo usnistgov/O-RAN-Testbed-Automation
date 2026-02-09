@@ -179,7 +179,7 @@ else
     fi
 
     # Ensure the correct YAML editor is installed
-    sudo "$SCRIPT_DIR/install_scripts/./ensure_consistent_yq.sh"
+    "$SCRIPT_DIR/install_scripts/./ensure_consistent_yq.sh"
 
     # If kong gives troubles in Release I or Release J then it can be disabled with the following code.
     # cd "$SCRIPT_DIR/ric-dep"

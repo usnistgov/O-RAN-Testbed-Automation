@@ -118,8 +118,15 @@ cp openairinterface5g/targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band78.fr1.106
 #     echo "Fetching E2 termination service IP address..."
 
 #     INSIDE_CLUSTER="yes"
-#     # echo "Are you connecting to the e2term from inside the Kubernetes cluster? [yes/no]"
-#     # read -p "Enter choice (yes/no): " INSIDE_CLUSTER
+#     echo
+#     echo "Are you connecting to the e2term from inside the Kubernetes cluster? (Y/n)"
+#     read -r CONFIRM
+#     CONFIRM=$(echo "${CONFIRM:-y}" | tr '[:upper:]' '[:lower:]')
+#     if [[ "$CONFIRM" != "y" && "$CONFIRM" != "yes" ]]; then
+#         INSIDE_CLUSTER="no"
+#     else
+#         INSIDE_CLUSTER="yes"
+#     fi
 #     if [ "$INSIDE_CLUSTER" = "yes" ]; then
 #         PORT_E2TERM=36422
 #     else

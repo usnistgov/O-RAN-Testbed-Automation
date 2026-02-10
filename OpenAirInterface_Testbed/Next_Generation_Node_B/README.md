@@ -14,10 +14,6 @@ The Next Generation Node B (gNodeB) is a 5G base station configured with OpenAir
 - **Logs**: Access logs by navigating to the `logs` directory.
 - **Uninstall**: Use `./uninstall.sh` to remove the gNodeB/UE software.
 
-## Telnet Server for Monitoring and Control
-
-This gNodeB supports an optional telnet server for monitoring and controlling the gNodeB [\[5\]][oai-telnet]. Enable it by setting `TELNET_SERVER=true` at the beginning of the `full_install.sh` script before running it. When starting the gNodeB, if the telnet server was installed, it will automatically start and can be accessed by directly typing into the gNodeB terminal or with `telnet 127.0.0.1 9099`. Use the `help` command within the telnet session to view available commands.
-
 ## Split CU-DU Deployment
 
 The gNodeB can be deployed in a split Central Unit (CU) and Distributed Unit (DU) configuration.
@@ -26,15 +22,17 @@ The gNodeB can be deployed in a split Central Unit (CU) and Distributed Unit (DU
   - In the RF simulator, DU 1 functions as the server by default. For handover scenarios where the UE must serve as the server, start DU 1 with the `--no-rfsim-server` argument to disable its server functionality.
 - **Stop the CU/DU/gNodeB**: Use `./stop.sh [selector]` to terminate components. The optional `[selector]` argument specifies which instances to stop: `cu` for all Central Units, `du` for all Distributed Units, a specific DU such as `du1` or `du2`, or `gnb` for all gNodeBs. If no argument is provided, all _nr-softmodem_ components will be stopped.
 
+## Telnet Server for Monitoring and Control
+
+This gNodeB supports an optional telnet server for monitoring and controlling the gNodeB [\[5\]][oai-telnet]. Enable it by setting `TELNET_SERVER=true` at the beginning of the `full_install.sh` script before running it. When starting the gNodeB, if the telnet server was installed, it will automatically start and can be accessed by directly typing into the gNodeB terminal or with `telnet 127.0.0.1 9099`. Use the `help` command within the telnet session to view available commands.
+
 ### Telnet Connection to O1 Interface
 
 The gNodeB can also be monitored and controlled remotely using the OpenAirInterface O1 adapter [\[6\]][oai-o1-adapter], which runs as a Docker container. Management scripts for the O1 adapter container are located in the `additional_scripts/` directory. Use `./install_o1_adapter.sh` to configure and build the adapter, `./run_o1_adapter.sh` to start the container which connects to the gNodeB's telnet server, `./stop_o1_adapter.sh` to stop the container, and `./uninstall_o1_adapter.sh` to uninstall it. While running, the endpoint `127.0.0.1:830` can be connected to over NETCONF for Non-RT RIC KPM monitoring and RIC control. Endpoints can be configured by updating the variables set in `install_o1_adapter.sh` (which modifies `o1-adapter/docker/config/config.json`), then re-installing the O1 adapter.
 
-### ImScope
+## ImScope
 
 ImScope can be enabled for the gNodeB by setting `NRSCOPE_GUI=true` at the beginning of the `full_install.sh` script before running it. For more information about ImScope, see the OpenAirInterface documentation [\[7\]][oai-imscope].
-
-
 
 <details>
   <summary>View Screenshot</summary>

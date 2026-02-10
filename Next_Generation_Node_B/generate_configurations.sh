@@ -85,14 +85,14 @@ echo "TAC value: $TAC"
 
 # Configure the DNN, SST, and SD values
 DNN=$(sed -n 's/^dnn: //p' "$YAML_PATH")
-SST=$(yq eval '.slices[0].sst' "$YAML_PATH")
-SD=$(yq eval '.slices[0].sd' "$YAML_PATH")
+SST=($(yq eval '.slices[].sst' "$YAML_PATH"))
+SD=($(yq eval '.slices[].sd' "$YAML_PATH"))
 if [[ -z "$DNN" || "$DNN" == "null" ]]; then
     echo "DNN is not set in $YAML_PATH, please ensure that \"dnn\" is set."
     exit 1
 fi
-if [[ -z "$SST" || -z "$SD" || "$SST" == "null" || "$SD" == "null" ]]; then
-    echo "SST or SD is not set in $YAML_PATH, please ensure that \"sst\" and \"sd\" are set."
+if [[ -z "${SST[0]}" || "${SST[0]}" == "null" ]]; then
+    echo "SST is not set in $YAML_PATH, please ensure that \"sst\" is set."
     exit 1
 fi
 
@@ -291,13 +291,58 @@ update_yaml "configs/gnb.yaml" "cell_cfg" "plmn" $PLMN
 update_yaml "configs/gnb.yaml" "cell_cfg" "tac" $TAC
 
 # Update configuration values for slicing
-SD_DECIMAL=$((16#${SD}))
-update_yaml "configs/gnb.yaml" "cell_cfg.slicing[0]" "sd" "$SD_DECIMAL"
-update_yaml "configs/gnb.yaml" "cell_cfg.slicing[0]" "sst" "$SST"
-update_yaml "configs/gnb.yaml" "cell_cfg.slicing[0].sched_cfg" "min_prb_policy_ratio" "0"
-update_yaml "configs/gnb.yaml" "cell_cfg.slicing[0].sched_cfg" "max_prb_policy_ratio" "100"
-update_yaml "configs/gnb.yaml" "cu_cp.amf.supported_tracking_areas[0].plmn_list[0].tai_slice_support_list[0]" "sst" "$SST"
-update_yaml "configs/gnb.yaml" "cu_cp.amf.supported_tracking_areas[0].plmn_list[0].tai_slice_support_list[0]" "sd" "$SD_DECIMAL"
+# Clear existing slice configuration
+yq eval -i 'del(.cell_cfg.slicing)' "configs/gnb.yaml"
+yq eval -i 'del(.cu_cp.amf.supported_tracking_areas[0].plmn_list[0].tai_slice_support_list)' "configs/gnb.yaml"
+
+SLICE_IDX=0
+declare -A OMIT_SD
+declare -A OMIT_SD_ADDED
+
+# Check for omitting SD if null or FFFFFF (case insensitive)
+for i in "${!SST[@]}"; do
+    CURRENT_SST="${SST[$i]}"
+    CURRENT_SD="${SD[$i]}"
+    if [[ "$CURRENT_SD" == "null" || "${CURRENT_SD^^}" == "FFFFFF" ]]; then
+        OMIT_SD["$CURRENT_SST"]=1
+    fi
+done
+
+for i in "${!SST[@]}"; do
+    CURRENT_SST="${SST[$i]}"
+    CURRENT_SD="${SD[$i]}"
+
+    # If SST has SD wildcard, only add SST to the list
+    if [[ -n "${OMIT_SD[$CURRENT_SST]}" ]]; then
+        if [[ -z "${OMIT_SD_ADDED[$CURRENT_SST]}" ]]; then # Uniqueness
+            # Add SST to cell config
+            update_yaml "configs/gnb.yaml" "cell_cfg.slicing[$SLICE_IDX]" "sst" "$CURRENT_SST"
+            update_yaml "configs/gnb.yaml" "cell_cfg.slicing[$SLICE_IDX].sched_cfg" "min_prb_policy_ratio" "0"
+            update_yaml "configs/gnb.yaml" "cell_cfg.slicing[$SLICE_IDX].sched_cfg" "max_prb_policy_ratio" "100"
+
+            # Add SST to AMF supported tracking areas
+            update_yaml "configs/gnb.yaml" "cu_cp.amf.supported_tracking_areas[0].plmn_list[0].tai_slice_support_list[$SLICE_IDX]" "sst" "$CURRENT_SST"
+
+            OMIT_SD_ADDED["$CURRENT_SST"]=1
+            SLICE_IDX=$((SLICE_IDX + 1))
+        fi
+    else
+        # Entry with SST and SD
+        SD_DECIMAL=$((16#${CURRENT_SD}))
+
+        # Add SST and SD to cell config
+        update_yaml "configs/gnb.yaml" "cell_cfg.slicing[$SLICE_IDX]" "sst" "$CURRENT_SST"
+        update_yaml "configs/gnb.yaml" "cell_cfg.slicing[$SLICE_IDX]" "sd" "$SD_DECIMAL"
+        update_yaml "configs/gnb.yaml" "cell_cfg.slicing[$SLICE_IDX].sched_cfg" "min_prb_policy_ratio" "0"
+        update_yaml "configs/gnb.yaml" "cell_cfg.slicing[$SLICE_IDX].sched_cfg" "max_prb_policy_ratio" "100"
+
+        # Add SST and SD to AMF supported tracking areas
+        update_yaml "configs/gnb.yaml" "cu_cp.amf.supported_tracking_areas[0].plmn_list[0].tai_slice_support_list[$SLICE_IDX]" "sst" "$CURRENT_SST"
+        update_yaml "configs/gnb.yaml" "cu_cp.amf.supported_tracking_areas[0].plmn_list[0].tai_slice_support_list[$SLICE_IDX]" "sd" "$SD_DECIMAL"
+
+        SLICE_IDX=$((SLICE_IDX + 1))
+    fi
+done
 
 GNB_ID="411"
 RAN_NODE_NAME="srsgnb01"

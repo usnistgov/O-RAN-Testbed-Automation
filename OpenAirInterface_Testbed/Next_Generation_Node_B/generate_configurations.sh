@@ -107,16 +107,51 @@ echo "MNC_LENGTH value: $MNC_LENGTH"
 
 # Configure the DNN, SST, and SD values
 DNN=$(sed -n 's/^dnn: //p' "$YAML_PATH")
-SST=$(yq eval '.slices[0].sst' "$YAML_PATH")
-SD=$(yq eval '.slices[0].sd' "$YAML_PATH")
+SST=($(yq eval '.slices[].sst' "$YAML_PATH"))
+SD=($(yq eval '.slices[].sd' "$YAML_PATH"))
 if [[ -z "$DNN" || "$DNN" == "null" ]]; then
     echo "DNN is not set in $YAML_PATH, please ensure that \"dnn\" is set."
     exit 1
 fi
-if [[ -z "$SST" || -z "$SD" || "$SST" == "null" || "$SD" == "null" ]]; then
-    echo "SST or SD is not set in $YAML_PATH, please ensure that \"sst\" and \"sd\" are set."
+if [[ -z "${SST[0]}" || "${SST[0]}" == "null" ]]; then
+    echo "SST is not set in $YAML_PATH, please ensure that \"sst\" is set."
     exit 1
 fi
+
+SNSSAI_LIST="("
+declare -A OMIT_SD
+declare -A OMIT_SD_ADDED
+
+# Check for omitting SD if null or FFFFFF (case insensitive)
+for i in "${!SST[@]}"; do
+    CURRENT_SST="${SST[$i]}"
+    CURRENT_SD="${SD[$i]}"
+    if [[ "$CURRENT_SD" == "null" || "${CURRENT_SD^^}" == "FFFFFF" ]]; then
+        OMIT_SD["$CURRENT_SST"]=1
+    fi
+done
+
+FIRST_ENTRY=1
+for i in "${!SST[@]}"; do
+    CURRENT_SST="${SST[$i]}"
+    CURRENT_SD="${SD[$i]}"
+
+    # If SST has SD wildcard, only add SST to the list
+    if [[ -n "${OMIT_SD[$CURRENT_SST]}" ]]; then
+        if [[ -z "${OMIT_SD_ADDED[$CURRENT_SST]}" ]]; then # Uniqueness
+            if [ "$FIRST_ENTRY" -eq 0 ]; then SNSSAI_LIST+=", "; fi
+            SNSSAI_LIST+="{ sst = $CURRENT_SST; }"
+            OMIT_SD_ADDED["$CURRENT_SST"]=1
+            FIRST_ENTRY=0
+        fi
+    else
+        # Entry with SST and SD
+        if [ "$FIRST_ENTRY" -eq 0 ]; then SNSSAI_LIST+=", "; fi
+        SNSSAI_LIST+="{ sst = $CURRENT_SST; sd = 0x$CURRENT_SD; }"
+        FIRST_ENTRY=0
+    fi
+done
+SNSSAI_LIST+=")"
 
 # Ensure the correct YAML editor is installed
 "$SCRIPT_DIR/install_scripts/./ensure_consistent_yq.sh"
@@ -194,7 +229,7 @@ for CONF_FILE in gnb.conf split_cu.conf "${SPLIT_DUS[@]}"; do
     update_conf "configs/$CONF_FILE" "tracking_area_code" "$TAC"
 
     # Configure the Single Network Slice Selection Assistance Information (S-NSSAI)
-    update_conf "configs/$CONF_FILE" "plmn_list" "({ mcc = $MCC; mnc = $MNC; mnc_length = $MNC_LENGTH; snssaiList = ({ sst = $SST; sd = 0x$SD; }) })"
+    update_conf "configs/$CONF_FILE" "plmn_list" "({ mcc = $MCC; mnc = $MNC; mnc_length = $MNC_LENGTH; snssaiList = $SNSSAI_LIST })"
 
     if [ "$USE_SSB_RSRP" = "true" ]; then
         update_conf "configs/$CONF_FILE" "do_CSIRS" "0"

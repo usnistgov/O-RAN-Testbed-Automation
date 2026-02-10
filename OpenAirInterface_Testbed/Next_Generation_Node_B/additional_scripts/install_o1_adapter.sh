@@ -35,7 +35,6 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$PARENT_DIR"
 
-INCLUDE_HANDOVER_SUPPORT_PATCH=true
 GNB_DU_ID=3584 # 0xe00
 NETCONF_ADDRESS=0.0.0.0
 NETCONF_PORT=11830
@@ -56,102 +55,6 @@ fi
 if grep -q -- "-p 11221:21 adapter-gnb" o1-adapter/start-adapter.sh; then
     echo "Patching o1-adapter/start-adapter.sh to use host networking for telnet server access..."
     sed -i.bak "s/-p 11221:21 adapter-gnb/-p 11221:21 --network=host adapter-gnb/g" o1-adapter/start-adapter.sh
-fi
-
-if [ "$INCLUDE_HANDOVER_SUPPORT_PATCH" = true ]; then
-    echo "Applying patches to o1-adapter for handover support..."
-    cd o1-adapter
-    git restore docker/Dockerfile.adapter
-    if [ ! -f "docker/Dockerfile.adapter.previous" ]; then
-        cp docker/Dockerfile.adapter docker/Dockerfile.adapter.previous
-        cp docker/Dockerfile.adapter.previous "$PARENT_DIR/install_patch_files/o1-adapter/docker/Dockerfile.previous.adapter"
-    fi
-    echo "Patching Dockerfile.adapter..."
-    git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/o1-adapter/docker/Dockerfile.adapter.patch"
-    cd ..
-
-    cd o1-adapter
-    git restore docker/scripts/get-yangs.sh
-    if [ ! -f "docker/scripts/get-yangs.sh.previous" ]; then
-        cp docker/scripts/get-yangs.sh docker/scripts/get-yangs.sh.previous
-        cp docker/scripts/get-yangs.sh.previous "$PARENT_DIR/install_patch_files/o1-adapter/docker/scripts/get-yangs.previous.sh"
-    fi
-    echo "Patching get-yangs.sh..."
-    git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/o1-adapter/docker/scripts/get-yangs.sh.patch"
-    cd ..
-
-    cd o1-adapter
-    git restore docker/scripts/install-yangs.sh
-    if [ ! -f "docker/scripts/install-yangs.sh.previous" ]; then
-        cp docker/scripts/install-yangs.sh docker/scripts/install-yangs.sh.previous
-        cp docker/scripts/install-yangs.sh.previous "$PARENT_DIR/install_patch_files/o1-adapter/docker/scripts/install-yangs.previous.sh"
-    fi
-    echo "Patching install-yangs.sh..."
-    git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/o1-adapter/docker/scripts/install-yangs.sh.patch"
-    cd ..
-
-    cd o1-adapter
-    git restore src/main.c
-    if [ ! -f "src/main.c.previous" ]; then
-        cp src/main.c src/main.c.previous
-        cp src/main.c.previous "$PARENT_DIR/install_patch_files/o1-adapter/src/main.previous.c"
-    fi
-    echo "Patching main.c..."
-    git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/o1-adapter/src/main.c.patch"
-    cd ..
-
-    cd o1-adapter
-    git restore src/netconf/netconf_data.c
-    if [ ! -f "src/netconf/netconf_data.c.previous" ]; then
-        cp src/netconf/netconf_data.c src/netconf/netconf_data.c.previous
-        cp src/netconf/netconf_data.c.previous "$PARENT_DIR/install_patch_files/o1-adapter/src/netconf/netconf_data.previous.c"
-    fi
-    echo "Patching netconf_data.c..."
-    git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/o1-adapter/src/netconf/netconf_data.c.patch"
-    cd ..
-
-    cd o1-adapter
-    git restore src/netconf/netconf_data.h
-    if [ ! -f "src/netconf/netconf_data.h.previous" ]; then
-        cp src/netconf/netconf_data.h src/netconf/netconf_data.h.previous
-        cp src/netconf/netconf_data.h.previous "$PARENT_DIR/install_patch_files/o1-adapter/src/netconf/netconf_data.previous.h"
-    fi
-    echo "Patching netconf_data.h..."
-    git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/o1-adapter/src/netconf/netconf_data.h.patch"
-    cd ..
-
-    cd o1-adapter
-    git restore src/telnet/telnet.c
-    if [ ! -f "src/telnet/telnet.c.previous" ]; then
-        cp src/telnet/telnet.c src/telnet/telnet.c.previous
-        cp src/telnet/telnet.c.previous "$PARENT_DIR/install_patch_files/o1-adapter/src/telnet/telnet.previous.c"
-    fi
-    echo "Patching telnet.c..."
-    git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/o1-adapter/src/telnet/telnet.c.patch"
-    cd ..
-
-    cd o1-adapter
-    git restore src/telnet/telnet.h
-    if [ ! -f "src/telnet/telnet.h.previous" ]; then
-        cp src/telnet/telnet.h src/telnet/telnet.h.previous
-        cp src/telnet/telnet.h.previous "$PARENT_DIR/install_patch_files/o1-adapter/src/telnet/telnet.previous.h"
-    fi
-    echo "Patching telnet.h..."
-    git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/o1-adapter/src/telnet/telnet.h.patch"
-    cd ..
-
-    cd o1-adapter
-    echo "Copying oai-handover.yang..."
-    cp "$PARENT_DIR/install_patch_files/o1-adapter/docker/scripts/oai-handover.yang" docker/scripts/
-    cd ..
-
-    cd o1-adapter
-    echo "Copying handover_support.md..."
-    cp "$PARENT_DIR/install_patch_files/o1-adapter/handover_support.md" .
-    cd ..
-
-    echo "Successfully patched o1-adapter for handover support."
-    echo
 fi
 
 # If docker is not installed

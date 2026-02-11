@@ -74,6 +74,10 @@ else
 fi
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
+if ! command -v jq >/dev/null 2>&1; then
+    echo "Installing jq to process JSON files..."
+    sudo env $APTVARS apt-get install -y jq
+fi
 
 USE_DOCKER_CE=1
 if [ "$USE_DOCKER_CE" -eq 0 ]; then # Use docker.io

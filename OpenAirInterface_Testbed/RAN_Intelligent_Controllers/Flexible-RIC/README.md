@@ -80,7 +80,7 @@ After the KPM Monitor xApp subscribes to the E2 node, metrics of the gNodeB and 
   ./additional_scripts/start_grafana_with_xapp_kpm_moni.sh
   ```
 
-- **Non-Real Time Metrics**: Since it is not a requirement for the xApp to actively write metrics to `logs/KPI_Metrics.csv`, the Python server and Grafana server can be started without the xApp by running the following.
+- **Historical Metrics**: Since it is not a requirement for the xApp to actively write metrics to `logs/KPI_Metrics.csv`, the Python server and Grafana server can be started without the xApp by running the following.
   ```console
   ./additional_scripts/start_grafana_only.sh
   ```

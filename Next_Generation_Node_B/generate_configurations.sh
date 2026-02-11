@@ -92,7 +92,7 @@ if [[ -z "$DNN" || "$DNN" == "null" ]]; then
     exit 1
 fi
 if [[ -z "${SST[0]}" || "${SST[0]}" == "null" ]]; then
-    echo "SST is not set in $YAML_PATH, please ensure that \"sst\" is set."
+    echo "SST is not set in $YAML_PATH, please ensure that \"slices[].sst\" is set."
     exit 1
 fi
 

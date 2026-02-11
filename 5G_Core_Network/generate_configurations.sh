@@ -158,7 +158,7 @@ if [[ -z "$DNN" || "$DNN" == "null" ]]; then
     exit 1
 fi
 if [[ -z "${SST[0]}" || -z "${SD[0]}" || "${SST[0]}" == "null" || "${SD[0]}" == "null" ]]; then
-    echo "SST or SD is not set in options.yaml, please ensure that \"sst\" and \"sd\" are set."
+    echo "SST or SD is not set in options.yaml, please ensure that \"slices[].sst\" and \"slices[].sd\" are set."
     exit 1
 fi
 

@@ -379,7 +379,7 @@ else
     echo "Configuring Strimzi to use Kubernetes version ${KUBE_VERSION_MAJOR}.${KUBE_VERSION_MINOR}..."
     INSTALL_ONAP_SCRIPT="dep/smo-install/scripts/sub-scripts/install-onap.sh"
     if [ ! -f "$INSTALL_ONAP_SCRIPT" ]; then
-        echo "Error: $INSTALL_ONAP_SCRIPT not found."
+        echo "ERROR: $INSTALL_ONAP_SCRIPT not found."
         exit 1
     fi
     git -C "$(dirname "$INSTALL_ONAP_SCRIPT")" restore "$(basename "$INSTALL_ONAP_SCRIPT")" || true

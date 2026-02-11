@@ -98,7 +98,7 @@ fi
 
 CURRENT_E2_PORT=$(sed -nE 's/.*e2ap_server_port *= *([0-9]+);/\1/p' flexric/src/agent/e2_agent_api.c)
 if [ -z "$CURRENT_E2_PORT" ]; then
-    echo "Error: e2ap_server_port not found in flexric/src/agent/e2_agent_api.c" >&2
+    echo "ERROR: e2ap_server_port not found in flexric/src/agent/e2_agent_api.c" >&2
     exit 1
 fi
 # Check if the substitute port is already in use

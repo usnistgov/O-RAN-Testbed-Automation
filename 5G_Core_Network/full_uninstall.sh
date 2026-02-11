@@ -72,16 +72,6 @@ fi
 
 mkdir -p logs
 cd logs
-if ls ../open5gs-* 1>/dev/null 2>&1; then
-    echo "Removing intermediate open5gs directories..."
-    for INTERMEDIATE_DIR in ../open5gs-*; do
-        if [[ -d "$INTERMEDIATE_DIR" && "$INTERMEDIATE_DIR" != "open5gs-*" ]]; then
-            echo "Removing intermediate open5gs directory: $INTERMEDIATE_DIR"
-            sudo rm -rf "$INTERMEDIATE_DIR"
-        fi
-    done
-fi
-
 echo "Uninstalling WebUI..."
 curl -fsSL https://open5gs.org/open5gs/assets/webui/uninstall | sudo -E bash -
 cd ..

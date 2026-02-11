@@ -48,8 +48,8 @@ if ! dpkg -s libsctp-dev >/dev/null 2>&1; then
 fi
 EXTRA_PKG="linux-modules-extra-$(uname -r)"
 if ! dpkg -s "$EXTRA_PKG" >/dev/null 2>&1; then
+    sudo apt-get update
     if apt-cache show "$EXTRA_PKG" >/dev/null 2>&1; then
-        sudo apt-get update
         if ! sudo env $APTVARS apt-get install -y "$EXTRA_PKG"; then
             echo "NOTE: Failed to install $EXTRA_PKG. Skipping."
         fi

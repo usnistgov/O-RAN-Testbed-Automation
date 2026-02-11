@@ -145,12 +145,14 @@ else
         fi
     fi
     if [ "$DRIVER" = "overlay2" ]; then
-        if ! sudo mkdir -p /var/lib/docker/test-overlay && ! sudo mount -t overlay overlay -o lowerdir=/bin,upperdir=/tmp,workdir=/tmp /var/lib/docker/test-overlay 2>/dev/null; then
+        if ! sudo mkdir -p /var/lib/docker/test-overlay/upper /var/lib/docker/test-overlay/work /var/lib/docker/test-overlay/merged; then
+            DRIVER="vfs"
+        elif ! sudo mount -t overlay overlay -o lowerdir=/bin,upperdir=/var/lib/docker/test-overlay/upper,workdir=/var/lib/docker/test-overlay/work /var/lib/docker/test-overlay/merged 2>/dev/null; then
             DRIVER="vfs"
         else
-            sudo umount /var/lib/docker/test-overlay 2>/dev/null || true
-            sudo rmdir /var/lib/docker/test-overlay 2>/dev/null || true
+            sudo umount /var/lib/docker/test-overlay/merged 2>/dev/null || true
         fi
+        sudo rm -rf /var/lib/docker/test-overlay 2>/dev/null || true
     fi
 
     sudo tee /etc/docker/daemon.json >/dev/null <<EOF

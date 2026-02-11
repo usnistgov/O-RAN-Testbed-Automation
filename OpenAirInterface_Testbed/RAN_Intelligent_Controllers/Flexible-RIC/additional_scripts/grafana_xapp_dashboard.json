@@ -57,7 +57,7 @@
       "type": "datasource",
       "id": "yesoreyeram-infinity-datasource",
       "name": "Infinity",
-      "version": "3.6.0"
+      "version": "3.2.0"
     }
   ],
   "annotations": {
@@ -79,7 +79,6 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
-  "id": null,
   "links": [],
   "panels": [
     {
@@ -241,6 +240,7 @@
           "disabled": true,
           "id": "filterFieldsByName",
           "options": {
+            "byVariable": false,
             "include": {
               "names": [
                 "1"
@@ -3560,7 +3560,7 @@
         "enablePagination": false,
         "showHeader": false
       },
-      "pluginVersion": "12.3.0",
+      "pluginVersion": "12.3.2",
       "targets": [
         {
           "datasource": {
@@ -3742,7 +3742,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.3.0",
+      "pluginVersion": "12.3.2",
       "targets": [
         {
           "datasource": {
@@ -3804,6 +3804,8 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
+            "axisSoftMax": 15,
+            "axisSoftMin": 0,
             "barAlignment": 0,
             "barWidthFactor": 0.6,
             "drawStyle": "line",
@@ -3846,8 +3848,7 @@
                 "value": 80
               }
             ]
-          },
-          "unit": "dB"
+          }
         },
         "overrides": [
           {
@@ -3860,6 +3861,21 @@
                 "id": "color",
                 "value": {
                   "fixedColor": "light-purple",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "PHY.CqiWb1TbDl"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "super-light-blue",
                   "mode": "fixed"
                 }
               }
@@ -3887,7 +3903,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.3.0",
+      "pluginVersion": "12.3.2",
       "targets": [
         {
           "datasource": {
@@ -3979,6 +3995,8 @@
           },
           "fieldMinMax": false,
           "mappings": [],
+          "max": 15,
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -3991,8 +4009,7 @@
                 "value": 80
               }
             ]
-          },
-          "unit": "dB"
+          }
         },
         "overrides": [
           {
@@ -4032,7 +4049,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.3.0",
+      "pluginVersion": "12.3.2",
       "targets": [
         {
           "datasource": {
@@ -4178,7 +4195,7 @@
         "sizing": "auto",
         "valueMode": "color"
       },
-      "pluginVersion": "12.3.0",
+      "pluginVersion": "12.3.2",
       "targets": [
         {
           "datasource": {
@@ -4406,7 +4423,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.3.0",
+      "pluginVersion": "12.3.2",
       "targets": [
         {
           "datasource": {
@@ -4533,7 +4550,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.3.0",
+      "pluginVersion": "12.3.2",
       "targets": [
         {
           "datasource": {
@@ -4757,7 +4774,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.3.0",
+      "pluginVersion": "12.3.2",
       "targets": [
         {
           "datasource": {
@@ -4901,7 +4918,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.3.0",
+      "pluginVersion": "12.3.2",
       "targets": [
         {
           "datasource": {
@@ -5130,7 +5147,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.3.0",
+      "pluginVersion": "12.3.2",
       "targets": [
         {
           "datasource": {
@@ -5273,7 +5290,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.3.0",
+      "pluginVersion": "12.3.2",
       "targets": [
         {
           "datasource": {
@@ -5302,7 +5319,7 @@
     }
   ],
   "preload": false,
-  "refresh": "auto",
+  "refresh": "30s",
   "schemaVersion": 42,
   "tags": [],
   "templating": {
@@ -5441,5 +5458,6 @@
   "title": "FlexRIC KPI Monitor",
   "uid": "ric_dashboard",
   "version": 1,
-  "weekStart": ""
+  "weekStart": "",
+  "id": null
 }

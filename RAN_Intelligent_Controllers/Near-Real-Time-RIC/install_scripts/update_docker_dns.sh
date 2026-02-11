@@ -89,8 +89,8 @@ if [ "$USE_SYSTEMCTL" = true ]; then
     systemctl restart docker
 else
     echo "Restarting Docker process..."
-    if ! command -v dockerd >/dev/null 2>&1; then
-        echo "dockerd not found in PATH."
+    if ! command -v dockerd >/dev/null 2>&1 || ! command -v docker >/dev/null 2>&1; then
+        echo "ERROR: Docker binaries not found in PATH."
         exit 1
     fi
     DOCKERD_LOG="/tmp/dockerd.log"

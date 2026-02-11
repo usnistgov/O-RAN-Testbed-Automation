@@ -139,7 +139,7 @@ echo
 
 # Install Docker with the specified or latest available version
 echo "Installing Docker..."
-if ! command -v dockerd &>/dev/null; then
+if ! command -v dockerd >/dev/null 2>&1 || ! command -v docker >/dev/null 2>&1; then
     if [ "$USE_DOCKER_CE" -eq 0 ]; then
         sudo env $APTVARS apt-get install -y $APTOPTS "docker.io=$DOCKERVERSION"
     else
@@ -255,8 +255,8 @@ if [ "$USE_SYSTEMCTL" = true ]; then
     fi
 else
     echo "Starting Docker process..."
-    if ! command -v dockerd >/dev/null 2>&1; then
-        echo "dockerd not found in PATH."
+    if ! command -v dockerd >/dev/null 2>&1 || ! command -v docker >/dev/null 2>&1; then
+        echo "ERROR: Docker binaries not found in PATH."
         exit 1
     fi
     DOCKERD_LOG="/tmp/dockerd.log"

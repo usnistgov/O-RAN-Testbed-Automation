@@ -350,27 +350,27 @@ set_snssai() {
     # Get the URI from the first NSI entry to copy to others
     local NSI_URI=$(yq eval '.nssf.sbi.client.nsi[0].uri' "$NSSF_FILE_PATH")
 
-    for I in "${!SST[@]}"; do
-        local CURRENT_SST="${SST[$I]}"
-        local CURRENT_SD="${SD[$I]}"
+    for i in "${!SST[@]}"; do
+        local CURRENT_SST="${SST[$i]}"
+        local CURRENT_SD="${SD[$i]}"
 
         # Set S-NSSAI in AMF config
-        yq -i ".amf.plmn_support[0].s_nssai[$I].sst = $CURRENT_SST" "$AMF_FILE_PATH"
-        yq -i ".amf.plmn_support[0].s_nssai[$I].sd = \"$CURRENT_SD\"" "$AMF_FILE_PATH"
+        yq -i ".amf.plmn_support[0].s_nssai[$i].sst = $CURRENT_SST" "$AMF_FILE_PATH"
+        yq -i ".amf.plmn_support[0].s_nssai[$i].sd = \"$CURRENT_SD\"" "$AMF_FILE_PATH"
 
         # Set S-NSSAI in NSSF config
-        yq -i ".nssf.sbi.client.nsi[$I].uri = \"$NSI_URI\"" "$NSSF_FILE_PATH"
-        yq -i ".nssf.sbi.client.nsi[$I].s_nssai.sst = $CURRENT_SST" "$NSSF_FILE_PATH"
-        yq -i ".nssf.sbi.client.nsi[$I].s_nssai.sd = \"$CURRENT_SD\"" "$NSSF_FILE_PATH"
+        yq -i ".nssf.sbi.client.nsi[$i].uri = \"$NSI_URI\"" "$NSSF_FILE_PATH"
+        yq -i ".nssf.sbi.client.nsi[$i].s_nssai.sst = $CURRENT_SST" "$NSSF_FILE_PATH"
+        yq -i ".nssf.sbi.client.nsi[$i].s_nssai.sd = \"$CURRENT_SD\"" "$NSSF_FILE_PATH"
 
         # Set S-NSSAI in SMF config (info.s_nssai[0])
         if ! yq -e '.smf.info[0].s_nssai' "$SMF_FILE_PATH" >/dev/null 2>&1; then
             yq -i '.smf.info = [{}]' "$SMF_FILE_PATH"
             yq -i '.smf.info[0].s_nssai = [{}]' "$SMF_FILE_PATH"
         fi
-        yq -i ".smf.info[0].s_nssai[$I].sst = $CURRENT_SST" "$SMF_FILE_PATH"
-        yq -i ".smf.info[0].s_nssai[$I].sd = \"$CURRENT_SD\"" "$SMF_FILE_PATH"
-        yq -i ".smf.info[0].s_nssai[$I].dnn = [\"$DNN\"]" "$SMF_FILE_PATH"
+        yq -i ".smf.info[0].s_nssai[$i].sst = $CURRENT_SST" "$SMF_FILE_PATH"
+        yq -i ".smf.info[0].s_nssai[$i].sd = \"$CURRENT_SD\"" "$SMF_FILE_PATH"
+        yq -i ".smf.info[0].s_nssai[$i].dnn = [\"$DNN\"]" "$SMF_FILE_PATH"
     done
 }
 

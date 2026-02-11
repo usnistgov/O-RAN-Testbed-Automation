@@ -64,10 +64,10 @@ fi
 cd "$BASE_DIR/5G_Core_Network"
 sudo "install_scripts/./ensure_consistent_yq.sh"
 
-for I in $(seq 1 $NUM_SAMPLES); do
+for i in $(seq 1 $NUM_SAMPLES); do
     echo
     echo
-    echo "Running Install Iteration $I"
+    echo "Running Install Iteration $i"
     echo
     echo
 
@@ -158,7 +158,7 @@ for I in $(seq 1 $NUM_SAMPLES); do
     CSV_LINE+="$SRSRAN_UE_INSTALL_TIME,"
     CSV_LINE+="$ORAN_RIC_INSTALL_TIME"
     echo -e "$CSV_LINE" >>"$CSV_FILE"
-    echo "    Wrote Iteration $I to $CSV_FILE."
+    echo "    Wrote Iteration $i to $CSV_FILE."
 
     cd "$BASE_DIR"
     ./full_uninstall.sh bypass_confirmation

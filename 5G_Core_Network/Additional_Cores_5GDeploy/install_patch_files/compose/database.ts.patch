@@ -1,0 +1,24 @@
+diff --git a/compose/database.ts b/compose/database.ts
+index fb38c29..322bb6a 100644
+--- a/compose/database.ts
++++ b/compose/database.ts
+@@ -10,15 +10,15 @@ export const mysql = {
+    * @param startdb - Host directory containing SQL scripts.
+    */
+   define(ctx: ComposeContext, startdb?: string): ComposeService {
+-    const s = ctx.defineService("sql", "bitnami/mariadb:10.6", ["db"]);
+-    s.environment.ALLOW_EMPTY_PASSWORD = "yes";
+-    s.environment.MARIADB_EXTRA_FLAGS = "--max_connections=1000";
++    const s = ctx.defineService("sql", "mariadb:10.6", ["db"]);
++    s.environment.MARIADB_ALLOW_EMPTY_ROOT_PASSWORD = "yes";
++    s.command = ["mysqld", "--max_connections=1000", "--character-set-server=utf8", "--collation-server=utf8_general_ci"];
+ 
+     if (startdb) {
+       s.volumes.push({
+         type: "bind",
+         source: startdb,
+-        target: "/docker-entrypoint-startdb.d",
++        target: "/docker-entrypoint-initdb.d",
+         read_only: true,
+       });
+     }

@@ -117,22 +117,38 @@ cd $SCRIPT_DIR/5gdeploy
 echo "Patching netdef/helpers.ts to generate NR Cell ID starting at hex 0xE000 (aligning with OAI gNB) instead of 0x10"
 sed -i '0,/^[[:space:]]*nci[[:space:]]*=.*$/s//      nci = hexPad(((3584 + i) << (36 - gnbIdLength)) | 0xF, 9),/' netdef/helpers.ts
 
+echo "Patching compose/database.ts to use official MariaDB image instead of Bitnami image..."
+git restore compose/database.ts
+git apply --verbose --ignore-whitespace "$SCRIPT_DIR/install_patch_files/compose/database.ts.patch"
+
 cd $SCRIPT_DIR
 
-# Step 1: Install dependencies
+# Install dependencies
 mkdir -p logs
+
+# Prevent nvm from interfering with the Node.js installation
+if [ -d "$HOME/.nvm" ]; then
+    export NVM_DIR="$HOME/.nvm"
+    if [ -s "$NVM_DIR/nvm.sh" ]; then
+        source "$NVM_DIR/nvm.sh"
+        echo "Deactivating nvm to prevent interference with Node.js installation..."
+        nvm deactivate || true
+        nvm unload || true
+    fi
+fi
+
+if command -v node &>/dev/null; then
+    NODE_VERSION=$(node --version | sed 's/v//g' | cut -d. -f1)
+    if [ "$NODE_VERSION" -lt 22 ]; then
+        echo "Node.js version is less than 22, reinstalling Node.js 22.x"
+        sudo apt-get purge -y nodejs npm || true
+        rm -f logs/full_install_step_1_complete
+    fi
+fi
+
 if [ -f logs/full_install_step_1_complete ]; then
     if ! command -v docker &>/dev/null; then
         rm logs/full_install_step_1_complete
-    fi
-    # If node version is less than 22, re-run step 1
-    if command -v node &>/dev/null; then
-        NODE_VERSION=$(node --version | sed 's/v//g' | cut -d. -f1)
-        if [ "$NODE_VERSION" -lt 22 ]; then
-            echo "Node.js version is less than 22, reinstalling Node.js 22.x"
-            sudo apt-get purge -y nodejs npm || true
-            rm logs/full_install_step_1_complete
-        fi
     fi
 fi
 if [ ! -f logs/full_install_step_1_complete ]; then
@@ -200,8 +216,7 @@ fi
 
 cd "$SCRIPT_DIR/5gdeploy"
 
-# Step 2: Install 5gdeploy
-# For more information, see the 5gdeploy documentation: https://github.com/usnistgov/5gdeploy/blob/main/docs/INSTALL.md
+# Install 5gdeploy. For more information, see the 5gdeploy documentation: https://github.com/usnistgov/5gdeploy/blob/main/docs/INSTALL.md
 echo "Starting installation of 5G Core Deployment Helper (5gdeploy)..."
 ./install.sh \
     --dpdk-version v24.11 \

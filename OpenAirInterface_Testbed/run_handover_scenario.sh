@@ -64,6 +64,7 @@ while [[ $# -gt 0 ]]; do
         echo "  help, -h       Show this help message"
         exit 0
         ;;
+    # NOTE: RF Simulator's client-server architecture does not currently support a virtual multi-UE handover scenario. However, handovers for multiple COTS UEs are supported over the air.
     # --num-ues)
     #     NUM_UES="$2"
     #     shift 2

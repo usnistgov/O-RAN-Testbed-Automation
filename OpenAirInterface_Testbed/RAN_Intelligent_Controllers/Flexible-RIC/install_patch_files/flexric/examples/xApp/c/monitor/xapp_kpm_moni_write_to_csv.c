@@ -548,7 +548,7 @@ void log_kpm_measurements(kpm_ind_msg_format_1_t const* msg_frm_1)
     csv_prepend_timestamp();
     write_csv_line_to_file();
   } else {
-    // Log an empty measurement row with 26 commas after the 0
+    // Log an empty measurement row after the 0
     printf("Logging empty measurement row\n");
     memset(csv_line_buffer, 0, sizeof(csv_line_buffer));
     snprintf(csv_line_buffer, sizeof(csv_line_buffer), ",,,,,,,,,,,,,,,,,,,,,,,,,,");

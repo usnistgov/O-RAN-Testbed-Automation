@@ -138,7 +138,7 @@ cd "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build"
 # sudo ./nr-softmodem -O "$DU_CONFIG" --rfsim $RFSIM_SERVER_ARG --rfsimulator.[0].options chanmod --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS
 sudo script -q -f -c "./nr-softmodem -O \"$DU_CONFIG\" --rfsim $RFSIM_SERVER_ARG --rfsimulator.[0].options chanmod --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS" "$SCRIPT_DIR/logs/split_du${DU_NUMBER}_stdout.txt"
 
-# if [ "$IMSCOPE" = true ]; then
+# if [ "$IMSCOPE" = true ]; then # ImScope GUI cannot be run with sudo
 #     script -q -f -c "./nr-softmodem -O \"$DU_CONFIG\" --rfsim $RFSIM_SERVER_ARG --rfsimulator.[0].options chanmod --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS" "$SCRIPT_DIR/logs/split_du${DU_NUMBER}_stdout.txt"
 # else
 #     sudo script -q -f -c "./nr-softmodem -O \"$DU_CONFIG\" --rfsim $RFSIM_SERVER_ARG --rfsimulator.[0].options chanmod --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS" "$SCRIPT_DIR/logs/split_du${DU_NUMBER}_stdout.txt"

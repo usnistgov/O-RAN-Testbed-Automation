@@ -73,7 +73,7 @@ cd "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build"
 
 # Code from (https://github.com/OPENAIRINTERFACE/openairinterface5g/blob/develop/radio/rfsimulator/README.md#5g-case):
 # sudo ./nr-softmodem -O "$SCRIPT_DIR/configs/gnb.conf" --rfsim --rfsimulator.[0].serveraddr server --rfsimulator.[0].options chanmod --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS
-if [ "$IMSCOPE" = true ]; then
+if [ "$IMSCOPE" = true ]; then # ImScope GUI cannot be run with sudo
     script -q -f -c "./nr-softmodem -O \"$SCRIPT_DIR/configs/gnb.conf\" --rfsim --rfsimulator.[0].serveraddr server --rfsimulator.[0].options chanmod --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS" "$SCRIPT_DIR/logs/gnb_stdout.txt"
 else
     sudo script -q -f -c "./nr-softmodem -O \"$SCRIPT_DIR/configs/gnb.conf\" --rfsim --rfsimulator.[0].serveraddr server --rfsimulator.[0].options chanmod --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS" "$SCRIPT_DIR/logs/gnb_stdout.txt"

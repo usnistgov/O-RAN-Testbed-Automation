@@ -1,5 +1,5 @@
 {
-  "https://github.com/open5gs/open5gs.git": ["", "81bb35c3909173fa8b85083732555f3e6a61950a"],
+  "https://github.com/open5gs/open5gs.git": ["", "b3169c8ee9cbb5cbb62407a7c19a4fec2f2d9eae"],
   "https://github.com/srsran/srsRAN_4G.git": ["", "6bcbd9e5bf8686aa7085202cd847c5ddd64a9c16"],
   "https://github.com/zeromq/libzmq.git": ["", "51a5a9cbe315ab149357afe063e9e2d41f4c99a8"],
   "https://github.com/zeromq/czmq.git": ["", "6b435f533619a52d9e1c3fa43d5e40e50a046272"],
@@ -9,9 +9,9 @@
   "https://github.com/o-ran-sc/ric-app-hw-python.git": ["g-release", "a6d00525aa2f62f2457d84731da2b7d89e0b1013"],
   "https://github.com/o-ran-sc/ric-app-hw-rust.git": ["m-release", "2e969555fecbbb13c1650aac98176b7bf39b4ad4"],
   "https://gerrit.o-ran-sc.org/r/ric-app/kpimon-go.git": ["m-release", "8bbbbbb90093db01f88820de755bce0ee2189c88"],
-  "https://gerrit.o-ran-sc.org/r/ric-app/ad-cell.git": ["master", "f1338a030f6c2c5a6ab2a970c0fe964c92aafa8f"],
+  "https://gerrit.o-ran-sc.org/r/ric-app/ad-cell.git": ["l-release", "f1338a030f6c2c5a6ab2a970c0fe964c92aafa8f"],
   "https://gerrit.o-ran-sc.org/r/ric-app/ad.git": ["l-release", "f9f97b8c682d890395e3de5a56450ebb04a5630b"],
-  "https://gerrit.o-ran-sc.org/r/ric-app/rc.git": ["k-release", "a2282eedc9e32f60298bf530456ad367bef0824b"],
+  "https://gerrit.o-ran-sc.org/r/ric-app/rc.git": ["m-release", "a2282eedc9e32f60298bf530456ad367bef0824b"],
   "https://gerrit.o-ran-sc.org/r/ric-app/ts.git": ["h-release", "19e169b2e81a0dbaf3d9dc526de0415cc995ee8b"],
   "https://gerrit.o-ran-sc.org/r/ric-app/qp.git": ["l-release", "47a35cafc3f90aed8b6fa711c37b131f06061ca6"],
   "https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep.git": ["m-release", "348562bc2adad5c9e6f8a114db2cbfc469be710a"],
@@ -22,8 +22,8 @@
   "https://gerrit.onap.org/r/oom.git": ["", "2214f66e9d9f757239d0297353d9194f782e9eac"],
   "https://gerrit.o-ran-sc.org/r/portal/nonrtric-controlpanel.git": ["master", "9f0bc855a687f918548d5dcea7a43913256cdd54"],
   "https://gerrit.o-ran-sc.org/r/nonrtric/plt/rappmanager.git": ["m-release", "3b4813b6dab278581601a06185c146ea47b4ebb7"],
-  "https://gitlab.eurecom.fr/oai/openairinterface5g.git": ["develop", "9cb79027e4b06ae608a83c741a0c967be26c4243"],
+  "https://gitlab.eurecom.fr/oai/openairinterface5g.git": ["develop", "9777d23173a740de7cf982659fae13ad6627d3aa"],
   "https://gitlab.eurecom.fr/oai/o1-adapter.git": ["main", "ce1399277ce04ac16c2021268233dc47a830656c"],
-  "https://github.com/swig/swig.git": ["master", "e7b9214754a7ac9c8a39914c1316c368d6e3730a"],
+  "https://github.com/swig/swig.git": ["master", "d4ff22dc9718226c6988001051b13a84f3226cd1"],
   "https://gitlab.eurecom.fr/mosaic5g/flexric.git": ["dev", "41df87030c76b973e27bc3b0aa4969bfa80e0fce"]
 }

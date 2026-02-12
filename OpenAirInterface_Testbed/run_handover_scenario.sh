@@ -295,7 +295,7 @@ if [ "$RUN_TELNET_SESSION_AFTER" = true ]; then
     # fi
 
     # mkdir -p logs
-    # sudo chown --recursive "$USER":"$USER" logs
+    # sudo chown --recursive "$USER" logs
     # LOG_FILE="logs/telnet.log"
     # HIST_FILE="logs/telnet_history"
 

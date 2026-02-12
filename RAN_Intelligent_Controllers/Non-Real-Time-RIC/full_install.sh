@@ -41,7 +41,7 @@ CURRENT_DIR=$(pwd)
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-echo "Installing Non-Real-Time RAN Intelligent Controller..."
+echo "Installing Non-Real-Time RAN Intelligent Controller (O-RAN SC)..."
 # Modifies the needrestart configuration to suppress interactive prompts
 if [ -d /etc/needrestart ]; then
     sudo install -d -m 0755 /etc/needrestart/conf.d
@@ -60,36 +60,51 @@ INSTALL_START_TIME=$(date +%s)
 
 sudo rm -rf logs/
 
+# Detect if systemctl is available
+USE_SYSTEMCTL=false
+if command -v systemctl >/dev/null 2>&1; then
+    if [ "$(cat /proc/1/comm 2>/dev/null)" = "systemd" ]; then
+        OUTPUT="$(systemctl 2>&1 || true)"
+        if echo "$OUTPUT" | grep -qiE 'not supported|System has not been booted with systemd'; then
+            echo "Detected systemctl is not supported. Using background processes instead."
+        elif systemctl list-units >/dev/null 2>&1 || systemctl is-system-running --quiet >/dev/null 2>&1; then
+            USE_SYSTEMCTL=true
+        fi
+    fi
+fi
+
 # Prevent the unattended-upgrades service from creating dpkg locks that would error the script
-if systemctl is-active --quiet unattended-upgrades; then
-    sudo systemctl stop unattended-upgrades &>/dev/null && echo "Successfully stopped unattended-upgrades service."
-    sudo systemctl disable unattended-upgrades &>/dev/null && echo "Successfully disabled unattended-upgrades service."
-fi
-if systemctl is-active --quiet apt-daily.timer; then
-    sudo systemctl stop apt-daily.timer &>/dev/null && echo "Successfully stopped apt-daily.timer service."
-    sudo systemctl disable apt-daily.timer &>/dev/null && echo "Successfully disabled apt-daily.timer service."
-fi
-if systemctl is-active --quiet apt-daily-upgrade.timer; then
-    sudo systemctl stop apt-daily-upgrade.timer &>/dev/null && echo "Successfully stopped apt-daily-upgrade.timer service."
-    sudo systemctl disable apt-daily-upgrade.timer &>/dev/null && echo "Successfully disabled apt-daily-upgrade.timer service."
+if [[ "$USE_SYSTEMCTL" == "true" ]]; then
+    if systemctl is-active --quiet unattended-upgrades; then
+        sudo systemctl stop unattended-upgrades &>/dev/null && echo "Successfully stopped unattended-upgrades service."
+        sudo systemctl disable unattended-upgrades &>/dev/null && echo "Successfully disabled unattended-upgrades service."
+    fi
+    if systemctl is-active --quiet apt-daily.timer; then
+        sudo systemctl stop apt-daily.timer &>/dev/null && echo "Successfully stopped apt-daily.timer service."
+        sudo systemctl disable apt-daily.timer &>/dev/null && echo "Successfully disabled apt-daily.timer service."
+    fi
+    if systemctl is-active --quiet apt-daily-upgrade.timer; then
+        sudo systemctl stop apt-daily-upgrade.timer &>/dev/null && echo "Successfully stopped apt-daily-upgrade.timer service."
+        sudo systemctl disable apt-daily-upgrade.timer &>/dev/null && echo "Successfully disabled apt-daily-upgrade.timer service."
+    fi
+
+    # Ensure time synchronization is enabled using chrony
+    if ! dpkg -s chrony &>/dev/null; then
+        echo "Chrony is not installed, installing..."
+        sudo apt-get update
+        sudo env $APTVARS apt-get install -y chrony || true
+    fi
+    if ! systemctl is-enabled --quiet chrony; then
+        echo "Enabling Chrony service..."
+        sudo systemctl enable chrony || true
+    fi
+    if ! systemctl is-active --quiet chrony; then
+        echo "Starting Chrony service..."
+        sudo systemctl start chrony || true
+    fi
 fi
 
-# Ensure time synchronization is enabled using chrony
-if ! dpkg -s chrony &>/dev/null; then
-    echo "Chrony is not installed, installing..."
-    sudo apt-get update
-    sudo env $APTVARS apt-get install -y chrony || true
-fi
-if ! systemctl is-enabled --quiet chrony; then
-    echo "Enabling Chrony service..."
-    sudo systemctl enable chrony || true
-fi
-if ! systemctl is-active --quiet chrony; then
-    echo "Starting Chrony service..."
-    sudo systemctl start chrony || true
-fi
-
-# Instructions are from: https://lf-o-ran-sc.atlassian.net/wiki/spaces/RICNR/pages/86802787/Release+K+-+Run+in+Kubernetes
+# Instructions are from: https://lf-o-ran-sc.atlassian.net/wiki/spaces/RICNR/pages/679903652/Release+M+-+Run+in+Kubernetes
 if [ ! -d dep ]; then
     echo
     echo "Cloning Non-RT RIC dependencies..."
@@ -97,6 +112,13 @@ if [ ! -d dep ]; then
     cd dep # Ensure that the components are cloned
     git restore --source=HEAD :/
     cd ..
+fi
+
+# Force Policy Management Service to load latest configuration on startup
+if [ -f dep/smo-install/oran_oom/policymanagementservice/templates/statefulset.yaml ]; then
+    # This removes the "if [ ! -f $FILE ]" check so the config is always copied
+    sed -i 's/if \[ ! -f \$FILE \]; then//' dep/smo-install/oran_oom/policymanagementservice/templates/statefulset.yaml
+    sed -i 's/fi;//' dep/smo-install/oran_oom/policymanagementservice/templates/statefulset.yaml
 fi
 
 if [ ! -d "rappmanager" ]; then
@@ -178,6 +200,11 @@ else
 
     # Increase the file descriptor limits of the system
     sudo "$SCRIPT_DIR/install_scripts/./set_file_descriptor_limits.sh"
+
+    if ! command -v ip &>/dev/null; then
+        echo "Package \"iproute2\" not found, installing..."
+        sudo env $APTVARS apt-get install -y iproute2
+    fi
 
     if ! ./install_k8s_and_helm.sh; then
         echo "An error occured when running $(pwd)/install_k8s_and_helm.sh."
@@ -310,7 +337,7 @@ if ! command -v keytool &>/dev/null; then
 fi
 
 echo
-echo "Installing Non-Real-Time RAN Intelligent Controller..."
+echo "Installing Non-Real-Time RAN Intelligent Controller (O-RAN SC)..."
 # Determine if RAN Intelligent Controller pods should be reset by checking if any of the nonrtric pods are not running
 echo "Checking if any of the nonrtric pods are not running..."
 SHOULD_RESET_NONRTRIC=false
@@ -337,29 +364,33 @@ else
     cd "$SCRIPT_DIR"
 
     echo "Revising the YAML file for the Non-RT RIC pods..."
-    RIC_YAML_FILE_PATH="dep/RECIPE_EXAMPLE/NONRTRIC/example_recipe.yaml"
-    RIC_YAML_FILE_PATH_UPDATED="dep/RECIPE_EXAMPLE/NONRTRIC/example_recipe_updated.yaml"
-    sudo chown $USER:$USER $RIC_YAML_FILE_PATH
-    sudo cp $RIC_YAML_FILE_PATH $RIC_YAML_FILE_PATH_UPDATED
-    sudo chown $USER:$USER $RIC_YAML_FILE_PATH_UPDATED
+    RIC_YAML_FILE_PATH="dep/smo-install/helm-override/default/oran-override.yaml"
+    RIC_YAML_FILE_PATH_UPDATED="dep/smo-install/helm-override/default/oran-override.yaml"
+    sudo chown "$USER" $RIC_YAML_FILE_PATH
+    if [ "$RIC_YAML_FILE_PATH" != "$RIC_YAML_FILE_PATH_UPDATED" ]; then
+        sudo cp $RIC_YAML_FILE_PATH $RIC_YAML_FILE_PATH_UPDATED
+        sudo chown "$USER" $RIC_YAML_FILE_PATH_UPDATED
+    fi
     sudo "$SCRIPT_DIR/install_scripts/./revise_example_recipe_yaml.sh" "$RIC_YAML_FILE_PATH_UPDATED"
 
-    echo "Setting default storage class for Kong..."
-    KONG_YAML_FILE_PATH="dep/nonrtric/helm/kongstorage/kongvalues.yaml"
-    KONG_YAML_FILE_PATH_BACKUP="dep/nonrtric/helm/kongstorage/kongvalues.original.yaml"
-    sudo chown $USER:$USER $KONG_YAML_FILE_PATH
-    if [ ! -f "$KONG_YAML_FILE_PATH_BACKUP" ]; then
-        sudo cp $KONG_YAML_FILE_PATH $KONG_YAML_FILE_PATH_BACKUP
-        sudo chown $USER:$USER $KONG_YAML_FILE_PATH_BACKUP
+    # Strimzi needs environment variable STRIMZI_KUBERNETES_VERSION to be set
+    KUBE_VERSION_MAJOR="$(kubectl version -o json | jq -r '.serverVersion.major')"
+    KUBE_VERSION_MINOR="$(kubectl version -o json | jq -r '.serverVersion.minor' | tr -d '+')"
+    echo "Configuring Strimzi to use Kubernetes version ${KUBE_VERSION_MAJOR}.${KUBE_VERSION_MINOR}..."
+    INSTALL_ONAP_SCRIPT="dep/smo-install/scripts/sub-scripts/install-onap.sh"
+    if [ ! -f "$INSTALL_ONAP_SCRIPT" ]; then
+        echo "ERROR: $INSTALL_ONAP_SCRIPT not found."
+        exit 1
     fi
-    sudo "$SCRIPT_DIR/install_scripts/./ensure_kong_storage_class_set_yaml.sh" "$KONG_YAML_FILE_PATH"
-
-    cd "$SCRIPT_DIR/dep/"
+    git -C "$(dirname "$INSTALL_ONAP_SCRIPT")" restore "$(basename "$INSTALL_ONAP_SCRIPT")" || true
+    sed -i "s|--namespace strimzi-system|--namespace strimzi-system --set extraEnvs[0].name=STRIMZI_KUBERNETES_VERSION --set-string extraEnvs[0].value=\"major=${KUBE_VERSION_MAJOR}\\\\,minor=${KUBE_VERSION_MINOR}\"|g" "$INSTALL_ONAP_SCRIPT"
 
     echo "Deploying Non-RT RIC pods..."
-    sudo ./bin/deploy-nonrtric -f ./RECIPE_EXAMPLE/NONRTRIC/example_recipe_updated.yaml
+    ./dep/smo-install/scripts/layer-0/0-setup-helm3.sh
+    ./dep/smo-install/scripts/layer-1/1-build-all-charts.sh
+    ./dep/smo-install/scripts/layer-2/2-install-oran.sh default dev
 
-    echo "Successfully installed Non-RT RIC pods."
+    echo "Successfully deployed Non-RT RIC pods."
 fi
 
 cd "$SCRIPT_DIR"

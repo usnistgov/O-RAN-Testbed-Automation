@@ -43,11 +43,11 @@ if [ "$#" -eq 1 ]; then
     UE_NUMBER=$1
 fi
 if ! [[ $UE_NUMBER =~ ^[0-9]+$ ]]; then
-    echo "Error: UE number must be a number."
+    echo "ERROR: UE number must be a number."
     exit 1
 fi
 if [ $UE_NUMBER -lt 1 ]; then
-    echo "Error: UE number must be greater than or equal to 1."
+    echo "ERROR: UE number must be greater than or equal to 1."
     exit 1
 fi
 
@@ -60,7 +60,7 @@ UE_NAMESPACE="ue$UE_NUMBER"
 
 # If the namespace doesn't exist
 if ! ip netns list | grep -q "$UE_NAMESPACE"; then
-    echo "Error: Namespace $UE_NAMESPACE does not exist. Please start the UE first with: ./run_background.sh $UE_NUMBER"
+    echo "ERROR: Namespace $UE_NAMESPACE does not exist. Please start the UE first with: ./run_background.sh $UE_NUMBER"
     exit 1
 fi
 

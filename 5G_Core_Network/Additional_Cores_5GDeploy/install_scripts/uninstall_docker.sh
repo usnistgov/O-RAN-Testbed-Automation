@@ -38,31 +38,73 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 BASE_DIR=$(realpath "$SCRIPT_DIR/../..")
 cd "$SCRIPT_DIR"
 
+# Detect if systemctl is available
+USE_SYSTEMCTL=false
+if command -v systemctl >/dev/null 2>&1; then
+    if [ "$(cat /proc/1/comm 2>/dev/null)" = "systemd" ]; then
+        OUTPUT="$(systemctl 2>&1 || true)"
+        if echo "$OUTPUT" | grep -qiE 'not supported|System has not been booted with systemd'; then
+            echo "Detected systemctl is not supported. Using background processes instead."
+        elif systemctl list-units >/dev/null 2>&1 || systemctl is-system-running --quiet >/dev/null 2>&1; then
+            USE_SYSTEMCTL=true
+        fi
+    fi
+fi
+
 echo
 echo
 echo "Stopping and removing existing Docker installations, then uninstalling Docker..."
 
-# Stop and disable Docker services and sockets
-if sudo systemctl is-active --quiet docker.socket; then
-    sudo systemctl stop docker.socket
+if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
+    if [ -n "$(docker ps -q 2>/dev/null)" ]; then # Graceful attempt first
+        docker stop $(docker ps -q) || true
+    fi
+    if [ -n "$(docker ps -aq 2>/dev/null)" ]; then
+        docker rm -f $(docker ps -aq) || true
+    fi
+    docker network prune -f || true
+    docker volume prune -f || true
 fi
-if sudo systemctl is-active --quiet docker.service; then
-    sudo systemctl stop docker.service
+if [ "$USE_SYSTEMCTL" = true ]; then
+    if sudo systemctl is-active --quiet docker.socket; then
+        sudo systemctl stop docker.socket
+    fi
+    if sudo systemctl is-active --quiet docker.service; then
+        sudo systemctl stop docker.service
+    fi
+    if sudo systemctl is-active --quiet docker; then
+        sudo systemctl stop docker
+    fi
+    if sudo systemctl is-active --quiet containerd.service; then
+        sudo systemctl stop containerd.service
+    fi
+    if sudo systemctl is-enabled --quiet docker.socket; then
+        sudo systemctl disable docker.socket
+    fi
+    if sudo systemctl is-enabled --quiet docker.service; then
+        sudo systemctl disable docker.service
+    fi
+    if sudo systemctl is-enabled --quiet docker; then
+        sudo systemctl disable docker
+    fi
+    if sudo systemctl is-enabled --quiet containerd.service; then
+        sudo systemctl disable containerd.service
+    fi
+else
+    if pgrep "dockerd" >/dev/null; then
+        echo "Killing dockerd process..."
+        sudo pkill -9 -f '^dockerd(\s|$)' 2>/dev/null || true
+    fi
+    if pgrep "containerd" >/dev/null; then
+        echo "Killing containerd process..."
+        sudo pkill -9 -f '^containerd(\s|$)' 2>/dev/null || true
+    fi
+    sudo pkill -9 -f 'containerd-shim' 2>/dev/null || true
+    sudo pkill -9 -f 'docker-proxy' 2>/dev/null || true
+    sudo pkill -9 -f 'runc' 2>/dev/null || true
+    # If console breaks, reset it
+    stty sane || true
 fi
-if sudo systemctl is-enabled --quiet docker.socket; then
-    sudo systemctl disable docker.socket
-fi
-if sudo systemctl is-enabled --quiet docker.service; then
-    sudo systemctl disable docker.service
-fi
-if sudo systemctl is-active --quiet docker; then
-    sudo systemctl stop docker
-fi
-if sudo systemctl is-enabled --quiet docker; then
-    sudo systemctl disable docker
-fi
-
-echo "Removing Docker and cleaning config..."
 
 # Uninstall all possible Docker packages
 sudo apt-get remove --purge -y --allow-change-held-packages \
@@ -70,8 +112,17 @@ sudo apt-get remove --purge -y --allow-change-held-packages \
     docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin \
     docker-ce-rootless-extras docker-scan-plugin || true
 
+# Unmount Docker and containerd mount points
+echo "Unmounting Docker and containerd mount points..."
+# Unmount all mount points under /var/lib/docker and /var/lib/containerd starting at deepest paths
+sudo awk '$5 ~ /^\/var\/lib\/docker/ || $5 ~ /^\/var\/lib\/containerd/ {print $5}' /proc/self/mountinfo | sort -r | xargs -r -n1 sudo umount -l 2>/dev/null || true
+# Unmount common overlay and shm paths
+sudo umount -l /var/lib/docker/overlay2/*/merged 2>/dev/null || true
+sudo umount -l /var/lib/docker/containers/*/mounts/shm 2>/dev/null || true
+sudo umount -l /var/lib/containerd/*/*/*/rootfs 2>/dev/null || true
+
 # Remove Docker directories
-sudo rm -rf /var/lib/docker /etc/docker /home/docker
+sudo rm -rf /var/lib/docker /etc/docker /home/docker /var/lib/containerd
 
 # Remove Docker group and user from group
 if getent group docker >/dev/null; then
@@ -90,6 +141,10 @@ if [ -f /usr/local/bin/docker ]; then
     echo "Removing /usr/local/bin/docker..."
     sudo rm -f /usr/local/bin/docker
 fi
+
+# Remove Docker apt sources and keys
+sudo rm -f /etc/apt/sources.list.d/docker.list /etc/apt/keyrings/docker.asc
+sudo apt-get update || true
 
 # Clean up
 sudo apt-get autoremove --purge -y

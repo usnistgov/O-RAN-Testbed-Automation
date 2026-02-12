@@ -44,7 +44,7 @@ PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$PARENT_DIR"
 
 # Ensure the correct YAML editor is installed
-sudo "$SCRIPT_DIR/install_scripts/./ensure_consistent_yq.sh"
+"$SCRIPT_DIR/install_scripts/./ensure_consistent_yq.sh"
 
 # Ensure that 5G_Core_Network/options.yaml is configured to use 5gdeploy instead of Open5GS
 if [ -f "options.yaml" ]; then
@@ -89,6 +89,19 @@ fi
 echo "Using CP: $CORE_TO_USE"
 echo "Using UP: $UPF_TO_USE"
 
+# Detect if systemctl is available
+USE_SYSTEMCTL=false
+if command -v systemctl >/dev/null 2>&1; then
+    if [ "$(cat /proc/1/comm 2>/dev/null)" = "systemd" ]; then
+        OUTPUT="$(systemctl 2>&1 || true)"
+        if echo "$OUTPUT" | grep -qiE 'not supported|System has not been booted with systemd'; then
+            echo "Detected systemctl is not supported. Using background processes instead."
+        elif systemctl list-units >/dev/null 2>&1 || systemctl is-system-running --quiet >/dev/null 2>&1; then
+            USE_SYSTEMCTL=true
+        fi
+    fi
+fi
+
 cd "$SCRIPT_DIR"
 
 if [ "$CORE_TO_USE" == "5gdeploy-phoenix" ]; then
@@ -106,20 +119,32 @@ sed -i '0,/^[[:space:]]*nci[[:space:]]*=.*$/s//      nci = hexPad(((3584 + i) <<
 
 cd $SCRIPT_DIR
 
-# Step 1: Install dependencies
+# Install dependencies
 mkdir -p logs
+
+# Prevent nvm from interfering with the Node.js installation
+if [ -d "$HOME/.nvm" ]; then
+    export NVM_DIR="$HOME/.nvm"
+    if [ -s "$NVM_DIR/nvm.sh" ]; then
+        source "$NVM_DIR/nvm.sh"
+        echo "Deactivating nvm to prevent interference with Node.js installation..."
+        nvm deactivate || true
+        nvm unload || true
+    fi
+fi
+
+if command -v node &>/dev/null; then
+    NODE_VERSION=$(node --version | sed 's/v//g' | cut -d. -f1)
+    if [ "$NODE_VERSION" -lt 22 ]; then
+        echo "Node.js version is less than 22, reinstalling Node.js 22.x"
+        sudo apt-get purge -y nodejs npm || true
+        rm -f logs/full_install_step_1_complete
+    fi
+fi
+
 if [ -f logs/full_install_step_1_complete ]; then
     if ! command -v docker &>/dev/null; then
         rm logs/full_install_step_1_complete
-    fi
-    # If node version is less than 22, re-run step 1
-    if command -v node &>/dev/null; then
-        NODE_VERSION=$(node --version | sed 's/v//g' | cut -d. -f1)
-        if [ "$NODE_VERSION" -lt 22 ]; then
-            echo "Node.js version is less than 22, reinstalling Node.js 22.x"
-            sudo apt-get purge -y nodejs npm || true
-            rm logs/full_install_step_1_complete
-        fi
     fi
 fi
 if [ ! -f logs/full_install_step_1_complete ]; then
@@ -187,8 +212,7 @@ fi
 
 cd "$SCRIPT_DIR/5gdeploy"
 
-# Step 2: Install 5gdeploy
-# For more information, see the 5gdeploy documentation: https://github.com/usnistgov/5gdeploy/blob/main/docs/INSTALL.md
+# Install 5gdeploy. For more information, see the 5gdeploy documentation: https://github.com/usnistgov/5gdeploy/blob/main/docs/INSTALL.md
 echo "Starting installation of 5G Core Deployment Helper (5gdeploy)..."
 ./install.sh \
     --dpdk-version v24.11 \

@@ -38,19 +38,19 @@ RECIPE_PATH=$1
 
 # Check if the file path is provided
 if [[ -z "$RECIPE_PATH" ]]; then
-    echo "Error: No file path provided."
+    echo "ERROR: No file path provided."
     echo "Usage: $0 <path_to_yaml_file>"
     exit 1
 fi
 
 # Check if the file exists and is readable
 if [[ ! -f "$RECIPE_PATH" ]]; then
-    echo "Error: File '$RECIPE_PATH' does not exist."
+    echo "ERROR: File '$RECIPE_PATH' does not exist."
     exit 1
 fi
 
 if [[ ! -r "$RECIPE_PATH" ]]; then
-    echo "Error: File '$RECIPE_PATH' is not readable."
+    echo "ERROR: File '$RECIPE_PATH' is not readable."
     exit 1
 fi
 
@@ -71,32 +71,32 @@ update_yaml() {
 }
 
 # Guide from the Non-RT RIC wiki:
-# https://lf-o-ran-sc.atlassian.net/wiki/spaces/RICNR/pages/15075609/Release+J+-+Run+in+Kubernetes
+# https://lf-o-ran-sc.atlassian.net/wiki/spaces/RICNR/pages/679903652/Release+M+-+Run+in+Kubernetes
 
 update_yaml $RECIPE_PATH '.nonrtric.installPms' 'true'
-update_yaml $RECIPE_PATH '.nonrtric.installA1controller' 'true'
+update_yaml $RECIPE_PATH '.nonrtric.installA1controller' 'false'
 update_yaml $RECIPE_PATH '.nonrtric.installA1simulator' 'true'
 update_yaml $RECIPE_PATH '.nonrtric.installControlpanel' 'true'
 update_yaml $RECIPE_PATH '.nonrtric.installInformationservice' 'true'
-update_yaml $RECIPE_PATH '.nonrtric.installRappcatalogueservice' 'true'
-update_yaml $RECIPE_PATH '.nonrtric.installRappcatalogueenhancedservice' 'true'
 update_yaml $RECIPE_PATH '.nonrtric.installNonrtricgateway' 'true'
 update_yaml $RECIPE_PATH '.nonrtric.installKong' 'true'
+update_yaml $RECIPE_PATH '.nonrtric.installTopology' 'true'
 update_yaml $RECIPE_PATH '.nonrtric.installDmaapadapterservice' 'true'
-update_yaml $RECIPE_PATH '.nonrtric.installDmaapmediatorservice' 'true'
-update_yaml $RECIPE_PATH '.nonrtric.installHelmmanager' 'true'
-update_yaml $RECIPE_PATH '.nonrtric.installOrufhrecovery' 'true'
-update_yaml $RECIPE_PATH '.nonrtric.installRansliceassurance' 'true'
+update_yaml $RECIPE_PATH '.nonrtric.installDmeparticipant' 'true'
+update_yaml $RECIPE_PATH '.nonrtric.installrAppmanager' 'true'
 update_yaml $RECIPE_PATH '.nonrtric.installCapifcore' 'true'
 update_yaml $RECIPE_PATH '.nonrtric.installServicemanager' 'true'
-update_yaml $RECIPE_PATH '.nonrtric.installRanpm' 'false'
-update_yaml $RECIPE_PATH '.nonrtric.installrAppmanager' 'true'
-update_yaml $RECIPE_PATH '.nonrtric.installDmeParticipant' 'false'
-update_yaml $RECIPE_PATH '.nonrtric.volume1.size' '2Gi'
-update_yaml $RECIPE_PATH '.nonrtric.volume1.storageClassName' 'pms-storage'
-update_yaml $RECIPE_PATH '.nonrtric.volume1.hostPath' '/var/nonrtric/pms-storage'
-update_yaml $RECIPE_PATH '.nonrtric.volume2.size' '2Gi'
-update_yaml $RECIPE_PATH '.nonrtric.volume2.storageClassName' 'ics-storage'
-update_yaml $RECIPE_PATH '.nonrtric.volume2.hostPath' '/var/nonrtric/ics-storage'
-update_yaml $RECIPE_PATH '.nonrtric.volume3.size' '1Gi'
-update_yaml $RECIPE_PATH '.nonrtric.volume3.storageClassName' 'helmmanager-storage'
+update_yaml $RECIPE_PATH '.nonrtric.installRanpm' 'true'
+
+# Add Rics configuration to policymanagementservice
+echo "Updating $RECIPE_PATH: configuring rics"
+yq e '.policymanagementservice.application.app.filepath = "/var/policy-management-service/application_configuration.json"' -i "$RECIPE_PATH"
+yq e '.policymanagementservice.config.config.controller = []' -i "$RECIPE_PATH"
+yq e '.policymanagementservice.config.config.ric = [
+  {"name": "ric1", "baseUrl": "http://a1-sim-osc-0.nonrtric:8085", "managedElementIds": ["kista_1", "kista_2"]},
+  {"name": "ric2", "baseUrl": "http://a1-sim-osc-1.nonrtric:8085", "managedElementIds": ["kista_1", "kista_2"]},
+  {"name": "ric3", "baseUrl": "http://a1-sim-std-0.nonrtric:8085", "managedElementIds": ["kista_1", "kista_2"]},
+  {"name": "ric4", "baseUrl": "http://a1-sim-std-1.nonrtric:8085", "managedElementIds": ["kista_1", "kista_2"]},
+  {"name": "ric5", "baseUrl": "http://a1-sim-std2-0.nonrtric:8085", "managedElementIds": ["kista_1", "kista_2"]},
+  {"name": "ric6", "baseUrl": "http://a1-sim-std2-1.nonrtric:8085", "managedElementIds": ["kista_1", "kista_2"]}
+]' -i "$RECIPE_PATH"

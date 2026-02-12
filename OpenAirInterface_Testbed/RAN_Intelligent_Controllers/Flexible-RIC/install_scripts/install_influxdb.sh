@@ -52,28 +52,40 @@ PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$PARENT_DIR"
 
 # Code from (https://docs.influxdata.com/influxdb/v2/install/?t=Linux):
-# Ubuntu and Debian
-# Add the InfluxData key to verify downloads and add the repository
-curl --silent --location -O \
-    https://repos.influxdata.com/influxdata-archive.key
-echo "943666881a1b8d9b849b74caebf02d3465d6beb716510d86a39f6c8e8dac7515  influxdata-archive.key" |
-    sha256sum --check - && cat influxdata-archive.key |
+sudo mkdir -p /etc/apt/keyrings
+curl --silent --location -O https://repos.influxdata.com/influxdata-archive.key
+gpg --show-keys --with-fingerprint --with-colons ./influxdata-archive.key 2>&1 |
+    grep -q '^fpr:\+24C975CBA61A024EE1B631787C3D57159FC2F927:$' &&
+    cat influxdata-archive.key |
     gpg --dearmor |
-    sudo tee /etc/apt/trusted.gpg.d/influxdata-archive.gpg >/dev/null &&
-    echo 'deb [signed-by=/etc/apt/trusted.gpg.d/influxdata-archive.gpg] https://repos.influxdata.com/debian stable main' |
+        sudo tee /etc/apt/keyrings/influxdata-archive.gpg >/dev/null &&
+    echo 'deb [signed-by=/etc/apt/keyrings/influxdata-archive.gpg] https://repos.influxdata.com/debian stable main' |
     sudo tee /etc/apt/sources.list.d/influxdata.list
 # Install influxdb
 sudo apt-get update
-sudo env $APTVARS apt-get install -y influxdb2
+sudo env $APTVARS apt-get install -y --reinstall influxdb2
 
 # Make sure InfluxDB does not start on boot (manual start only)
-sudo systemctl disable influxdb
+if [ -f /lib/systemd/system/influxdb.service ] || [ -f /etc/systemd/system/influxdb.service ] || systemctl list-units --full -all | grep -Fq "influxdb.service"; then
+    sudo systemctl unmask influxdb || true
+    sudo systemctl disable influxdb
+    sudo systemctl stop influxdb
+    sudo service influxdb start
 
-# Stop the InfluxDB service if it is running
-sudo systemctl stop influxdb
-
-# Start the InfluxDB service manually
-sudo service influxdb start
+    # Wait for InfluxDB to be up and running before running setup
+    echo "Waiting for InfluxDB to be ready..."
+    COUNT=0
+    while ! curl -s "http://localhost:8086/health" >/dev/null; do
+        if [ $COUNT -gt 30 ]; then
+            echo "Timed out waiting for InfluxDB to start."
+            break
+        fi
+        sleep 1
+        COUNT=$((COUNT + 1))
+    done
+else
+    echo "WARNING: influxdb.service not found after installation."
+fi
 
 if [ -f influxdata-archive.key ]; then
     echo "Initializing InfluxDB 2.x..."

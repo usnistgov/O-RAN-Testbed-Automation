@@ -40,21 +40,66 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-# Loop over all arguments to set KEEP_OLD_DIRS based on -y or -n
-KEEP_OLD_DIRS=""
+# Loop over all arguments to set KEEP_EXISTING_INSTALLS based on -y or -n
+KEEP_EXISTING_INSTALLS=""
 for arg in "$@"; do
     case $arg in
     -y | --yes)
-        KEEP_OLD_DIRS="y"
+        KEEP_EXISTING_INSTALLS="y"
         break
         ;;
     -n | --no)
-        if [ "$KEEP_OLD_DIRS" != "y" ]; then
-            KEEP_OLD_DIRS="n"
+        if [ "$KEEP_EXISTING_INSTALLS" != "y" ]; then
+            KEEP_EXISTING_INSTALLS="n"
         fi
         ;;
     esac
 done
+
+if [ "$KEEP_EXISTING_INSTALLS" != "y" ]; then
+    echo
+    echo "The following components will be installed:"
+    CORE_DISPLAY="Open5GS"
+    if [ -f "5G_Core_Network/options.yaml" ]; then
+        VAL=$(grep "^core_to_use:" "5G_Core_Network/options.yaml" | awk '{print $2}')
+        if [ -n "$VAL" ]; then
+            case $VAL in
+            open5gs)
+                CORE_DISPLAY="Open5GS"
+                ;;
+            5gdeploy-oai)
+                CORE_DISPLAY="OpenAirInterface (via 5GDeploy)"
+                ;;
+            5gdeploy-free5gc)
+                CORE_DISPLAY="Free5GC (via 5GDeploy)"
+                ;;
+            5gdeploy-open5gs)
+                CORE_DISPLAY="Open5GS (via 5GDeploy)"
+                ;;
+            5gdeploy-phoenix)
+                CORE_DISPLAY="Phoenix (via 5GDeploy)"
+                ;;
+            *)
+                CORE_DISPLAY="$VAL"
+                ;;
+            esac
+        fi
+    fi
+    echo " - 5G Core Network ($CORE_DISPLAY)"
+    echo " - User Equipment (srsRAN_4G)"
+    echo " - Next Generation Node B (srsRAN_Project)"
+    if [ -d "RAN_Intelligent_Controllers/Near-Real-Time-RIC" ]; then
+        echo " - Near-Real-Time RAN Intelligent Controller (O-RAN SC)"
+    fi
+    echo
+    echo "Do you want to proceed? (Y/n)"
+    read -r CONFIRM
+    CONFIRM=$(echo "${CONFIRM:-y}" | tr '[:upper:]' '[:lower:]')
+    if [[ "$CONFIRM" != "y" && "$CONFIRM" != "yes" ]]; then
+        echo "Installation aborted."
+        exit 0
+    fi
+fi
 
 # Check if the applications are already installed and ask the user if they should be reset
 OPEN5GS_INSTALLED=false
@@ -73,23 +118,23 @@ fi
 # If any of them are installed then ask the user if they should be reset
 if [[ "$OPEN5GS_INSTALLED" = true || "$GNODEB_INSTALLED" = true || "$UE_INSTALLED" = true ]]; then
     echo
-    if [ -z "$KEEP_OLD_DIRS" ]; then
-        echo "Previous installations were found, do you want to keep the old installations? (y/n)"
-        read -r KEEP_OLD_DIRS
-        # Normalize input to lowercase and only accept inputs: y, yes, n, no
-        KEEP_OLD_DIRS=$(echo "$KEEP_OLD_DIRS" | tr '[:upper:]' '[:lower:]')
-        if [[ "$KEEP_OLD_DIRS" != "y" && "$KEEP_OLD_DIRS" != "yes" && "$KEEP_OLD_DIRS" != "n" && "$KEEP_OLD_DIRS" != "no" ]]; then
+    if [ -z "$KEEP_EXISTING_INSTALLS" ]; then
+        echo "Previous installations were found, do you want to keep the old installations? (Y/n)"
+        read -r KEEP_EXISTING_INSTALLS
+        # Normalize input to lowercase and default to 'y' if empty
+        KEEP_EXISTING_INSTALLS=$(echo "${KEEP_EXISTING_INSTALLS:-y}" | tr '[:upper:]' '[:lower:]')
+        if [[ "$KEEP_EXISTING_INSTALLS" != "y" && "$KEEP_EXISTING_INSTALLS" != "yes" && "$KEEP_EXISTING_INSTALLS" != "n" && "$KEEP_EXISTING_INSTALLS" != "no" ]]; then
             echo "Invalid input. Exiting."
             exit 1
         fi
     else
-        if [[ "$KEEP_OLD_DIRS" == "n" || "$KEEP_OLD_DIRS" == "no" ]]; then
+        if [[ "$KEEP_EXISTING_INSTALLS" == "n" || "$KEEP_EXISTING_INSTALLS" == "no" ]]; then
             echo "Previous installations were found, removing the old installations."
         else
             echo "Previous installations were found, keeping the old installations."
         fi
     fi
-    if [[ "$KEEP_OLD_DIRS" = "n" || "$KEEP_OLD_DIRS" = "no" ]]; then
+    if [[ "$KEEP_EXISTING_INSTALLS" = "n" || "$KEEP_EXISTING_INSTALLS" = "no" ]]; then
         sudo rm -rf 5G_Core_Network/open5gs
         sudo rm -rf 5G_Core_Network/logs
         sudo rm -rf 5G_Core_Network/configs
@@ -143,7 +188,7 @@ if [ "$CORE_TO_USE" == "open5gs" ]; then
     echo
     echo
     echo "################################################################################"
-    echo "# Installing Open5GS...                                                        #"
+    echo "# Installing 5G Core Network (Open5GS)...                                      #"
     echo "################################################################################"
     echo
     echo
@@ -157,7 +202,7 @@ fi
 echo
 echo
 echo "################################################################################"
-echo "# Installing User Equipment...                                                 #"
+echo "# Installing User Equipment (srsRAN 4G)...                                     #"
 echo "################################################################################"
 echo
 echo
@@ -170,7 +215,7 @@ cd ..
 echo
 echo
 echo "################################################################################"
-echo "# Installing Next Generation Node B...                                         #"
+echo "# Installing Next Generation Node B (srsRAN Project)...                        #"
 echo "################################################################################"
 echo
 echo
@@ -186,7 +231,7 @@ if [ -d "RAN_Intelligent_Controllers/Near-Real-Time-RIC" ]; then
     echo
     echo
     echo "################################################################################"
-    echo "# Installing Near-Real-Time RAN Intelligent Controller...                      #"
+    echo "# Installing Near-Real-Time RAN Intelligent Controller (O-RAN SC)...           #"
     echo "################################################################################"
     echo
     echo
@@ -202,7 +247,7 @@ if [ "$CORE_TO_USE" != "open5gs" ]; then
     echo
     echo
     echo "################################################################################"
-    echo "# Installing Open5GS...                                                        #"
+    echo "# Installing 5G Core Network...                                                #"
     echo "################################################################################"
     echo
     echo

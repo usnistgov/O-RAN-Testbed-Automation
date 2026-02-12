@@ -1,8 +1,8 @@
 diff --git a/examples/xApp/c/monitor/xapp_kpm_moni.c b/examples/xApp/c/monitor/xapp_kpm_moni.c
-index d9f11118..1a59322a 100644
+index ab2edd42..b92cbada 100644
 --- a/examples/xApp/c/monitor/xapp_kpm_moni.c
 +++ b/examples/xApp/c/monitor/xapp_kpm_moni.c
-@@ -26,8 +26,10 @@
+@@ -28,8 +28,10 @@
  #include "../../../../src/util/e.h"
  
  #include <stdlib.h>
@@ -13,9 +13,9 @@ index d9f11118..1a59322a 100644
  #include <unistd.h>
  #include <signal.h>
  #include <pthread.h>
-@@ -38,6 +40,12 @@ uint64_t const period_ms = 1000;
+@@ -43,6 +45,16 @@ pthread_mutex_t mtx;
  static
- pthread_mutex_t mtx;
+ assoc_ht_open_t ht = {0};
  
 +// Overwritten if environment variables SST and SD are set
 +static
@@ -23,42 +23,120 @@ index d9f11118..1a59322a 100644
 +static
 +uint32_t cfg_slicing_sd  = 0xFFFFFF; // 0xFFFFFF for any SD
 +
++// Buffer to store the current E2 Node ID
++static
++char current_e2_id_str[256];
++
  static
- void log_gnb_ue_id(ue_id_e2sm_t ue_id)
+ uint32_t hash_func(const void* key_v)
  {
-@@ -88,13 +96,16 @@ static
- void log_int_value(byte_array_t name, meas_record_lst_t meas_record)
- {
-   if (cmp_str_ba("RRU.PrbTotDl", name) == 0) {
--    printf("RRU.PrbTotDl = %d [PRBs]\n", meas_record.int_val);
-+    printf("RRU.PrbTotDl = %u [PRBs]\n", meas_record.int_val);
-   } else if (cmp_str_ba("RRU.PrbTotUl", name) == 0) {
--    printf("RRU.PrbTotUl = %d [PRBs]\n", meas_record.int_val);
-+    printf("RRU.PrbTotUl = %u [PRBs]\n", meas_record.int_val);
-   } else if (cmp_str_ba("DRB.PdcpSduVolumeDL", name) == 0) {
--    printf("DRB.PdcpSduVolumeDL = %d [kb]\n", meas_record.int_val);
-+    printf("DRB.PdcpSduVolumeDL = %u [kb]\n", meas_record.int_val);
-   } else if (cmp_str_ba("DRB.PdcpSduVolumeUL", name) == 0) {
--    printf("DRB.PdcpSduVolumeUL = %d [kb]\n", meas_record.int_val);
-+    printf("DRB.PdcpSduVolumeUL = %u [kb]\n", meas_record.int_val);
-+  // Added int metrics for KPM research:
-+  } else if (cmp_str_ba("RSRP.Count", name) == 0) {
-+    printf("RSRP.Count = %u\n", meas_record.int_val);
-   } else {
-     printf("Measurement Name not yet supported\n");
+@@ -113,6 +125,49 @@ void log_gnb_ue_id(ue_id_e2sm_t ue_id)
+   if (ue_id.gnb.ran_ue_id != NULL) {
+     printf("ran_ue_id = %lx\n", *ue_id.gnb.ran_ue_id); // RAN UE NGAP ID
    }
-@@ -109,6 +120,9 @@ void log_real_value(byte_array_t name, meas_record_lst_t meas_record)
-     printf("DRB.UEThpDl = %.2f [kbps]\n", meas_record.real_val);
-   } else if (cmp_str_ba("DRB.UEThpUl", name) == 0) {
-     printf("DRB.UEThpUl = %.2f [kbps]\n", meas_record.real_val);
-+  // Added float metrics for KPM research:
-+  } else if (cmp_str_ba("RSRP.Mean", name) == 0) {
-+    printf("RSRP.Mean = %.2f [dBm]\n", meas_record.real_val);
-   } else {
-     printf("Measurement Name not yet supported\n");
-   }
-@@ -168,6 +182,29 @@ void log_kpm_measurements(kpm_ind_msg_format_1_t const* msg_frm_1)
++
++  // Store the current E2 Node ID (prefer Global NG-RAN Node ID, then Global gNB ID, then CU F1AP ID)
++  if (ue_id.gnb.global_ng_ran_node_id) {
++    const global_ng_ran_node_id_t *n = ue_id.gnb.global_ng_ran_node_id;
++    switch (n->type) {
++      case GNB_GLOBAL_TYPE_ID: {
++        const global_gnb_id_t *g = &n->global_gnb_id;
++        if (g->type == GNB_TYPE_ID) {
++          snprintf(current_e2_id_str, sizeof(current_e2_id_str), "gNB:%u", (unsigned)g->gnb_id.nb_id);
++        } else {
++          snprintf(current_e2_id_str, sizeof(current_e2_id_str), "gNB:UNKNOWN");
++        }
++        break;
++      }
++      case NG_ENB_GLOBAL_TYPE_ID: {
++        const global_ng_enb_id_t *e = &n->global_ng_enb_id;
++        switch (e->type) {
++          case MACRO_NG_ENB_TYPE_ID:
++            snprintf(current_e2_id_str, sizeof(current_e2_id_str), "ng-eNB-macro:%u", (unsigned)e->macro_ng_enb_id);
++            break;
++          case SHORT_MACRO_NG_ENB_TYPE_ID:
++            snprintf(current_e2_id_str, sizeof(current_e2_id_str), "ng-eNB-short:%u", (unsigned)e->short_macro_ng_enb_id);
++            break;
++          case LONG_MACRO_NG_ENB_TYPE_ID:
++            snprintf(current_e2_id_str, sizeof(current_e2_id_str), "ng-eNB-long:%u", (unsigned)e->long_macro_ng_enb_id);
++            break;
++          default:
++            snprintf(current_e2_id_str, sizeof(current_e2_id_str), "ng-eNB:unsupported:%d", (int)e->type);
++            break;
++        }
++        break;
++      }
++      default:
++        snprintf(current_e2_id_str, sizeof(current_e2_id_str), "UNKNOWN");
++        break;
++    }
++  } else if (ue_id.gnb.global_gnb_id) {
++    snprintf(current_e2_id_str, sizeof(current_e2_id_str), "gNB:%u", (unsigned)ue_id.gnb.global_gnb_id->gnb_id.nb_id);
++  } else if (ue_id.gnb.gnb_cu_ue_f1ap_lst && ue_id.gnb.gnb_cu_ue_f1ap_lst_len > 0) {
++    snprintf(current_e2_id_str, sizeof(current_e2_id_str), "CU:%u", (unsigned)ue_id.gnb.gnb_cu_ue_f1ap_lst[0]);
++  } else {
++    snprintf(current_e2_id_str, sizeof(current_e2_id_str), "gNB");
++  }
+ }
  
+ static
+@@ -122,6 +177,9 @@ void log_du_ue_id(ue_id_e2sm_t ue_id)
+   if (ue_id.gnb_du.ran_ue_id != NULL) {
+     printf("ran_ue_id = %lx\n", *ue_id.gnb_du.ran_ue_id); // RAN UE NGAP ID
+   }
++
++  // Store the current E2 Node ID
++  snprintf(current_e2_id_str, sizeof(current_e2_id_str), "DU:%u", ue_id.gnb_du.gnb_cu_ue_f1ap);
+ }
+ 
+ static
+@@ -131,6 +189,9 @@ void log_cuup_ue_id(ue_id_e2sm_t ue_id)
+   if (ue_id.gnb_cu_up.ran_ue_id != NULL) {
+     printf("ran_ue_id = %lx\n", *ue_id.gnb_cu_up.ran_ue_id); // RAN UE NGAP ID
+   }
++
++  // Store the current E2 Node ID
++  snprintf(current_e2_id_str, sizeof(current_e2_id_str), "CU-UP:%u", ue_id.gnb_cu_up.gnb_cu_cp_ue_e1ap);
+ }
+ 
+ typedef void (*log_ue_id)(ue_id_e2sm_t ue_id);
+@@ -150,10 +211,12 @@ static
+ void log_int_value(const char *name_str, const label_info_lst_t label_info, const meas_record_lst_t meas_record)
+ {
+   char *name_unit = get_meas_unit(name_str);
++  if (name_unit && strcmp(name_unit, "[]") == 0) name_unit = "";
++  if (name_unit == NULL) name_unit = "";
+   if (label_info.noLabel != NULL) {
+-    printf("%s = %d %s\n", name_str, meas_record.int_val, name_unit);
++    printf("%s = %d%s%s\n", name_str, meas_record.int_val, *name_unit ? " " : "", name_unit);
+   } else if (label_info.distBinX != NULL && meas_record.int_val > 0) {
+-    printf("%s[BinX=%d][BinY=%d][BinZ=%d] = %d %s\n", name_str, *label_info.distBinX, *label_info.distBinY, *label_info.distBinZ, meas_record.int_val, name_unit);
++    printf("%s[BinX=%d][BinY=%d][BinZ=%d] = %d%s%s\n", name_str, *label_info.distBinX, *label_info.distBinY, *label_info.distBinZ, meas_record.int_val, *name_unit ? " " : "", name_unit);
+   }
+ }
+ 
+@@ -162,7 +225,9 @@ void log_real_value(const char *name_str, const label_info_lst_t label_info, con
+ {
+   (void)label_info;
+   char *name_unit = get_meas_unit(name_str);
+-  printf("%s = %.2f %s\n", name_str, meas_record.real_val, name_unit);
++  if (name_unit && strcmp(name_unit, "[]") == 0) name_unit = "";
++  if (name_unit == NULL) name_unit = "";
++  printf("%s = %.2f%s%s\n", name_str, meas_record.real_val, *name_unit ? " " : "", name_unit);
+ }
+ 
+ typedef void (*log_meas_value)(const char *name_str, const label_info_lst_t label_info, const meas_record_lst_t meas_record);
+@@ -205,6 +270,8 @@ void log_kpm_measurements(kpm_ind_msg_format_1_t const* msg_frm_1)
+ {
+   assert(msg_frm_1->meas_info_lst_len > 0 && "Cannot correctly print measurements");
+ 
++  printf("Current E2 Node ID: %s\n", current_e2_id_str);
++
+   // UE Measurements per granularity period
+   for (size_t j = 0; j < msg_frm_1->meas_data_lst_len; j++) {
+     meas_data_lst_t const data_item = msg_frm_1->meas_data_lst[j];
+@@ -239,6 +306,29 @@ void log_kpm_ind_msg_frm_3(kpm_ind_msg_format_3_t const* msg)
+   }
  }
  
 +static
@@ -87,14 +165,7 @@ index d9f11118..1a59322a 100644
  static
  void sm_cb_kpm(sm_ag_if_rd_t const* rd)
  {
-@@ -196,14 +233,13 @@ void sm_cb_kpm(sm_ag_if_rd_t const* rd)
- 
-       // log measurements
-       log_kpm_measurements(&msg_frm_3->meas_report_per_ue[i].ind_msg_format_1);
--      
-     }
-     counter++;
-   }
+@@ -269,7 +359,7 @@ void sm_cb_kpm(sm_ag_if_rd_t const* rd)
  }
  
  static
@@ -103,18 +174,16 @@ index d9f11118..1a59322a 100644
  {
    test_info_lst_t dst = {0};
  
-@@ -222,11 +258,19 @@ test_info_lst_t filter_predicate(test_cond_type_e type, test_cond_e cond, int va
+@@ -288,11 +378,17 @@ test_info_lst_t filter_predicate(test_cond_type_e type, test_cond_e cond, int va
  
    dst.test_cond_value->octet_string_value = calloc(1, sizeof(byte_array_t));
    assert(dst.test_cond_value->octet_string_value != NULL && "Memory exhausted");
 -  const size_t len_nssai = 1;
-+
 +  const size_t len_nssai = (sd == 0xFFFFFF) ? 1 : 4;
    dst.test_cond_value->octet_string_value->len = len_nssai;
    dst.test_cond_value->octet_string_value->buf = calloc(len_nssai, sizeof(uint8_t));
    assert(dst.test_cond_value->octet_string_value->buf != NULL && "Memory exhausted");
 -  dst.test_cond_value->octet_string_value->buf[0] = value;
-+
 +  dst.test_cond_value->octet_string_value->buf[0] = (uint8_t)sst;
 +  if (len_nssai == 4) {
 +    sd &= 0xFFFFFF;
@@ -125,29 +194,35 @@ index d9f11118..1a59322a 100644
  
    return dst;
  }
-@@ -301,8 +345,7 @@ kpm_act_def_t fill_report_style_4(ric_report_style_item_t const* report_item)
-   // Filter connected UEs by S-NSSAI criteria
-   test_cond_type_e const type = S_NSSAI_TEST_COND_TYPE; // CQI_TEST_COND_TYPE
-   test_cond_e const condition = EQUAL_TEST_COND; // GREATERTHAN_TEST_COND
+@@ -359,16 +455,16 @@ kpm_act_def_t fill_report_style_4(ric_report_style_item_t const* report_item)
+ 
+   kpm_act_def_t act_def = {.type = FORMAT_4_ACTION_DEFINITION};
+ 
++  // Filter connected UEs by S-NSSAI criteria
++  test_cond_type_e const type = S_NSSAI_TEST_COND_TYPE; // CQI_TEST_COND_TYPE
++  test_cond_e const condition = EQUAL_TEST_COND; // GREATERTHAN_TEST_COND
++
+   // Fill matching condition
+   // [1, 32768]
+   act_def.frm_4.matching_cond_lst_len = 1;
+-  act_def.frm_4.matching_cond_lst = calloc(act_def.frm_4.matching_cond_lst_len, sizeof(matching_condition_format_4_lst_t));
++  act_def.frm_4.matching_cond_lst = calloc(1, sizeof(*act_def.frm_4.matching_cond_lst));
+   assert(act_def.frm_4.matching_cond_lst != NULL && "Memory exhausted");
+-  // Filter connected UEs by S-NSSAI criteria
+-  test_cond_type_e const type = S_NSSAI_TEST_COND_TYPE; // CQI_TEST_COND_TYPE
+-  test_cond_e const condition = EQUAL_TEST_COND; // GREATERTHAN_TEST_COND
 -  int const value = 1;
 -  act_def.frm_4.matching_cond_lst[0].test_info_lst = filter_predicate(type, condition, value);
 +  act_def.frm_4.matching_cond_lst[0].test_info_lst = filter_predicate(type, condition, cfg_slicing_sst, cfg_slicing_sd);
  
    // Fill Action Definition Format 1
    // 8.2.1.2.1
-@@ -382,12 +425,14 @@ int main(int argc, char* argv[])
- 
-   assert(nodes.len > 0);
- 
--  printf("Connected E2 nodes = %d\n", nodes.len);
-+  printf("Connected E2 nodes = %u\n", nodes.len);
- 
-   pthread_mutexattr_t attr = {0};
+@@ -529,6 +625,8 @@ int main(int argc, char* argv[])
    int rc = pthread_mutex_init(&mtx, &attr);
    assert(rc == 0);
  
 +  load_slice_from_env();
 +
-   sm_ans_xapp_t* hndl = calloc(nodes.len, sizeof(sm_ans_xapp_t));
+   sm_ans_xapp_t** hndl = (sm_ans_xapp_t**)calloc(nodes.len, sizeof(sm_ans_xapp_t*));
    assert(hndl != NULL);
  

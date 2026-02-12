@@ -1,8 +1,8 @@
 diff --git a/examples/xApp/c/monitor/CMakeLists.txt b/examples/xApp/c/monitor/CMakeLists.txt
-index b2148e05..9c3c0280 100644
+index caa57e74..49a5833d 100644
 --- a/examples/xApp/c/monitor/CMakeLists.txt
 +++ b/examples/xApp/c/monitor/CMakeLists.txt
-@@ -80,3 +80,29 @@ target_link_libraries(xapp_rc_moni
+@@ -83,3 +83,36 @@ target_link_libraries(xapp_rc_moni
                       -lsctp
                       -ldl
                       )
@@ -10,6 +10,8 @@ index b2148e05..9c3c0280 100644
 +add_executable(xapp_kpm_moni_write_to_csv 
 +		xapp_kpm_moni_write_to_csv.c
 +                ../../../../src/util/alg_ds/alg/defer.c
++                ../../../../src/util/alg_ds/alg/murmur_hash_32.c
++                ../../../../src/util/alg_ds/ds/assoc_container/assoc_ht_open_address.c
 +              )
 +
 +target_link_libraries(xapp_kpm_moni_write_to_csv
@@ -20,9 +22,13 @@ index b2148e05..9c3c0280 100644
 +                    -ldl
 +                    )
 +
++target_compile_definitions(xapp_kpm_moni_write_to_csv PRIVATE KPM_MEAS_LIST="${KPM_MEAS_LIST}")
++
 +add_executable(xapp_kpm_moni_write_to_influxdb 
 +		xapp_kpm_moni_write_to_influxdb.c
 +                ../../../../src/util/alg_ds/alg/defer.c
++                ../../../../src/util/alg_ds/alg/murmur_hash_32.c
++                ../../../../src/util/alg_ds/ds/assoc_container/assoc_ht_open_address.c
 +              )
 +
 +target_link_libraries(xapp_kpm_moni_write_to_influxdb
@@ -32,3 +38,4 @@ index b2148e05..9c3c0280 100644
 +                    -lsctp
 +                    -ldl
 +                    )
++target_compile_definitions(xapp_kpm_moni_write_to_influxdb PRIVATE KPM_MEAS_LIST="${KPM_MEAS_LIST}")

@@ -33,8 +33,34 @@ echo "# Script: $(realpath "$0")..."
 # Exit immediately if a command fails
 set -e
 
+CURRENT_DIR=$(pwd)
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
-cd "$(dirname "$SCRIPT_DIR")"
+PARENT_DIR=$(dirname "$SCRIPT_DIR")
+cd "$PARENT_DIR"
+
+# Check if docker is accessible from the current user, and if not, repair its permissions
+if [ -z "$FIXED_DOCKER_PERMS" ]; then
+    if ! OUTPUT=$(docker info 2>&1); then
+        if echo "$OUTPUT" | grep -qiE 'permission denied|cannot connect to the docker daemon'; then
+            echo "Docker permissions will repair on reboot."
+            sudo groupadd -f docker
+            if [ -n "$SUDO_USER" ]; then
+                sudo usermod -aG docker "${SUDO_USER:-root}"
+            else
+                sudo usermod -aG docker "${USER:-root}"
+            fi
+            # Rather than requiring a reboot to apply docker permissions, set the docker group and re-run the parent script
+            export FIXED_DOCKER_PERMS=1
+            if ! command -v sg &>/dev/null; then
+                echo
+                echo "WARNING: Could not find set group (sg) command, docker may fail without sudo until the system reboots."
+                echo
+            else
+                exec sg docker -c "$(printf '%q ' "$CURRENT_DIR/$0" "$@")"
+            fi
+        fi
+    fi
+fi
 
 # Set the RAN Function ID if not set
 if [ -z "$RAN_FUNC_ID" ]; then
@@ -43,6 +69,9 @@ fi
 
 # Path to the output file
 mkdir -p logs
+if [ -f "logs/e2sim_output.txt" ]; then
+    sudo chown "$USER" logs/e2sim_output.txt
+fi
 OUTPUT_FILE="logs/e2sim_output.txt"
 
 # Stop the oransim container before starting it again
@@ -82,14 +111,14 @@ while true; do
     # Create the log file if it does not exist
     if [ ! -f $OUTPUT_FILE ]; then
         sudo touch $OUTPUT_FILE
-        sudo chown $USER:$USER $OUTPUT_FILE
+        sudo chown "$USER" $OUTPUT_FILE
     fi
     # Check if kpm_sim is already running to avoid duplicate runs
     if ! docker exec oransim pgrep -f "kpm_sim" >/dev/null; then
         echo "Starting kpm_sim in the background, writing to $OUTPUT_FILE..."
         >"$OUTPUT_FILE" # Clears the content of the output file
         docker exec oransim mkdir -p /app/logs
-        docker exec -i oransim sh -c "nohup kpm_sim $IP_E2TERM $PORT_E2TERM >> /app/logs/e2sim_output.txt 2>&1 &"
+        docker exec -i oransim sh -c "setsid kpm_sim $IP_E2TERM $PORT_E2TERM >> /app/logs/e2sim_output.txt 2>&1 </dev/null &"
         sleep 2
     fi
 

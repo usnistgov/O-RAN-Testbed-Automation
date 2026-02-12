@@ -60,11 +60,11 @@ while [[ $# -gt 0 ]]; do
 done
 
 if ! [[ $UE_NUMBER =~ ^[0-9]+$ ]]; then
-    echo "Error: UE number must be a number."
+    echo "ERROR: UE number must be a number."
     exit 1
 fi
 if [ $UE_NUMBER -lt 1 ]; then
-    echo "Error: UE number must be greater than or equal to 1."
+    echo "ERROR: UE number must be greater than or equal to 1."
     exit 1
 fi
 
@@ -114,17 +114,14 @@ HOSTNAME_IP=$(hostname -I | awk '{print $1}')
 if ./is_running.sh | grep -q "ue$UE_NUMBER"; then
     echo "Already running ue$UE_NUMBER."
 else
-    RFSIM_SERVER_ARG="--rfsimulator.serveraddr $HOSTNAME_IP"
-    if [ "$RFSIM_SERVER" -ne 0 ]; then
-        echo "RF simulator server mode enabled."
-        RFSIM_SERVER_ARG="--rfsimulator.serveraddr server"
-    fi
-
     if [ ! -f "$UE_CONF_PATH" ]; then
         echo "Configuration was not found for OAI UE $UE_NUMBER. Please run ./generate_configurations.sh first."
         exit 1
     fi
     mkdir -p logs
+    if [ -f "logs/ue${UE_NUMBER}_stdout.txt" ]; then
+        sudo chown "$USER" logs/ue${UE_NUMBER}_stdout.txt
+    fi
     >logs/ue${UE_NUMBER}_stdout.txt
 
     if ! command -v gdb &>/dev/null; then
@@ -141,6 +138,21 @@ else
     # Give the UE its own network namespace and configure it to access the host network
     sudo ./install_scripts/setup_ue_namespace.sh "$UE_NUMBER"
 
+    if [ "$RFSIM_SERVER" -ne 0 ]; then
+        echo "RF simulator server mode enabled."
+        RFSIM_SERVER_ARG="--rfsimulator.serveraddr server"
+        SERVER_IP=$(sudo ip netns exec ue$UE_NUMBER ip addr show dev v-ue$UE_NUMBER | grep "inet " | awk '{print $2}' | cut -d/ -f1)
+        mkdir -p configs
+        echo "$SERVER_IP" >configs/get_rfsim_server_address.txt
+    else
+        SERVER_IP=$(cat configs/get_rfsim_server_address.txt)
+        if [ -z "$SERVER_IP" ]; then
+            echo "ERROR: Could not find RF simulator server address."
+            exit 1
+        fi
+        RFSIM_SERVER_ARG="--rfsimulator.serveraddr $SERVER_IP"
+    fi
+
     cd "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build"
 
     BANDWIDTH_RBS=106
@@ -148,10 +160,6 @@ else
     BAND=78
     DL_CARRIER_FREQUENCY_HZ=3619200000
 
-    # sudo ip netns exec ue$UE_NUMBER sudo gdb --args ./nr-uesoftmodem -O "../../../../configs/ue$UE_NUMBER.conf" --rfsim $RFSIM_SERVER_ARG --rfsimulator.options chanmod -r $BANDWIDTH_RBS --numerology $NUMEROLOGY --band $BAND -C $DL_CARRIER_FREQUENCY_HZ
-    if [ $RFSIM_SERVER -eq 0 ]; then
-        sudo script -q -f -c "ip netns exec ue$UE_NUMBER sudo gdb --args ./nr-uesoftmodem -O \"../../../../configs/ue$UE_NUMBER.conf\" --rfsim $RFSIM_SERVER_ARG --rfsimulator.options chanmod -r $BANDWIDTH_RBS --numerology $NUMEROLOGY --band $BAND -C $DL_CARRIER_FREQUENCY_HZ" "$SCRIPT_DIR/logs/ue${UE_NUMBER}_stdout.txt"
-    else
-        sudo script -q -f -c "sudo gdb --args ./nr-uesoftmodem -O \"../../../../configs/ue$UE_NUMBER.conf\" --rfsim $RFSIM_SERVER_ARG --rfsimulator.options chanmod -r $BANDWIDTH_RBS --numerology $NUMEROLOGY --band $BAND -C $DL_CARRIER_FREQUENCY_HZ" "$SCRIPT_DIR/logs/ue${UE_NUMBER}_stdout.txt"
-    fi
+    # sudo ip netns exec ue$UE_NUMBER sudo gdb --args ./nr-uesoftmodem -O "../../../../configs/ue$UE_NUMBER.conf" --rfsim $RFSIM_SERVER_ARG --rfsimulator.[0].options chanmod -r $BANDWIDTH_RBS --numerology $NUMEROLOGY --band $BAND -C $DL_CARRIER_FREQUENCY_HZ
+    sudo script -q -f -c "ip netns exec ue$UE_NUMBER sudo gdb --args ./nr-uesoftmodem -O \"../../../../configs/ue$UE_NUMBER.conf\" --rfsim $RFSIM_SERVER_ARG --rfsimulator.[0].options chanmod -r $BANDWIDTH_RBS --numerology $NUMEROLOGY --band $BAND -C $DL_CARRIER_FREQUENCY_HZ" "$SCRIPT_DIR/logs/ue${UE_NUMBER}_stdout.txt"
 fi

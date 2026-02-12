@@ -41,19 +41,19 @@ RECIPE_PATH=$1
 
 # Check if the file path is provided
 if [[ -z "$RECIPE_PATH" ]]; then
-    echo "Error: No file path provided."
+    echo "ERROR: No file path provided."
     echo "Usage: $0 <path_to_yaml_file>"
     exit 1
 fi
 
 # Check if the file exists and is readable
 if [[ ! -f "$RECIPE_PATH" ]]; then
-    echo "Error: File '$RECIPE_PATH' does not exist."
+    echo "ERROR: File '$RECIPE_PATH' does not exist."
     exit 1
 fi
 
 if [[ ! -r "$RECIPE_PATH" ]]; then
-    echo "Error: File '$RECIPE_PATH' is not readable."
+    echo "ERROR: File '$RECIPE_PATH' is not readable."
     exit 1
 fi
 

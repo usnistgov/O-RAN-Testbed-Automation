@@ -1,8 +1,8 @@
-## Near-RT RIC, L-Release
+## Near-RT RIC, M-Release
 
 The Near-RT RIC, conceptualized by the O-RAN Alliance's Working Group 3 (WG3) [\[1\]][oran-wg3] and implemented by the O-RAN Software Community [\[2\]][oransc-nearrtric], enables dynamic management and optimization of Radio Access Networks (RAN).
 
-This automation tool is based on the L-Release of the Near-RT RIC. More information about these releases can be found at [\[3\]][oransc-releases].
+This automation tool is based on the M-Release of the Near-RT RIC. More information about these releases can be found at [\[3\]][oransc-releases].
 
 ## Usage
 

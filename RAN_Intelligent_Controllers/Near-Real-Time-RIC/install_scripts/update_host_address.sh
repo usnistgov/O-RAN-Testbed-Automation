@@ -39,7 +39,7 @@ HOSTNAME=$(hostname)
 
 # Check if the IP address and hostname are not empty
 if [ -z "$IP_ADDRESS" ] || [ -z "$HOSTNAME" ]; then
-    echo "Error: IP address or hostname is empty. Exiting script."
+    echo "ERROR: IP address or hostname is empty. Exiting script."
     exit 1
 fi
 

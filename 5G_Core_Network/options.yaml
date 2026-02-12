@@ -30,8 +30,9 @@ tac: 7
 dnn: nist-dnn
 
 # Configure the Single Network Slice Selection Assistance Information (S-NSSAI)
-sst: 1
-sd: 000001
+slices:
+  - sst: 1
+    sd: FFFFFF
 
 # If core_to_use=open5gs, false means AMF will use the default 127.0.0.5, true means it will use the hostname IP
 expose_amf_over_hostname: false
@@ -48,6 +49,3 @@ ogstun2_ipv6: 2001:db8:babe::/48
 
 ogstun3_ipv4: 10.47.0.0/16
 ogstun3_ipv6: 2001:db8:face::/48
-
-# If core_to_use=open5gs, the use of systemctl can be disabled to support installations within Docker. Before changing this value, it is recommended to uninstall the testbed.
-use_systemctl: true

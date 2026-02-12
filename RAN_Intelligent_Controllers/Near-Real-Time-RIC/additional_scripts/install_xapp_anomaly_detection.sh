@@ -166,7 +166,7 @@ if [ ! -f ad.tar ]; then
     docker build -t 127.0.0.1:80/ad:latest .
     docker save -o ad.tar 127.0.0.1:80/ad:latest
     sudo chmod 755 ad.tar
-    sudo chown $USER:$USER ad.tar
+    sudo chown "$USER" ad.tar
 
     # Import the image into the containerd container runtime
     sudo ctr -n=k8s.io image import ad.tar

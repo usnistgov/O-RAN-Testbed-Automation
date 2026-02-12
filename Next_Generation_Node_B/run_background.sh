@@ -50,6 +50,7 @@ else
 
     echo "Starting gNodeB in background..."
     mkdir -p logs
+    sudo chown --recursive "$USER" logs
     >logs/gnb.log
     >logs/gnb_stdout.txt
     setsid bash -c 'stdbuf -oL -eL srsRAN_Project/build/apps/gnb/gnb -c configs/gnb.yaml > logs/gnb_stdout.txt 2>&1' </dev/null &

@@ -1,10 +1,10 @@
 {
-  "https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep.git": ["l-release", "ee47a347314aa0749881de367e8fedc4a1bba13a"],
-  "https://gerrit.o-ran-sc.org/r/ric-plt/appmgr.git": ["l-release", "4c05932dce72e98db23eaff2b72b58816e1f2d55"],
-  "https://gerrit.o-ran-sc.org/r/it/dep.git": ["l-release", "0671fb2fc28a1fef0f9e04147b8e9c7aa965987c"],
-  "https://gerrit.o-ran-sc.org/r/nonrtric/plt/ranpm.git": ["l-release", "b5f4f8698217ce70d3c2e6a454146fbcd2111d35"],
-  "https://github.com/onap/multicloud-k8s.git": ["", "59fe7c6c1eb7d3eb12e03924acce84e7a6153df8"],
-  "https://gerrit.onap.org/r/oom.git": ["", "999e48e47304e97b2444b62e0fb4b1a7d9cc578a"],
-  "https://gerrit.o-ran-sc.org/r/portal/nonrtric-controlpanel.git": ["master", "f337177ece41c036967ece8513e9f29b07deca34"],
-  "https://gerrit.o-ran-sc.org/r/nonrtric/plt/rappmanager.git": ["l-release", "67b12d9980ca0c14b9c054bba3aa6a9ee58bcbd3"]
+  "https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep.git": ["m-release", "348562bc2adad5c9e6f8a114db2cbfc469be710a"],
+  "https://gerrit.o-ran-sc.org/r/ric-plt/appmgr.git": ["m-release", "b8bdc7bd6931461b7a237ab2cad278bc87ba110e"],
+  "https://gerrit.o-ran-sc.org/r/it/dep.git": ["m-release", "1daedf545ec1b5f6d4a7740c49ea44d80459f24c"],
+  "https://gerrit.o-ran-sc.org/r/nonrtric/plt/ranpm.git": ["l-release", "f0ef45cb96961334b9525c546534b822f055e24c"],
+  "https://github.com/onap/multicloud-k8s.git": ["", "a3c6f080e9a015c7aab0d351af3864f239fb2931"],
+  "https://gerrit.onap.org/r/oom.git": ["", "2214f66e9d9f757239d0297353d9194f782e9eac"],
+  "https://gerrit.o-ran-sc.org/r/portal/nonrtric-controlpanel.git": ["master", "9f0bc855a687f918548d5dcea7a43913256cdd54"],
+  "https://gerrit.o-ran-sc.org/r/nonrtric/plt/rappmanager.git": ["m-release", "3b4813b6dab278581601a06185c146ea47b4ebb7"]
 }

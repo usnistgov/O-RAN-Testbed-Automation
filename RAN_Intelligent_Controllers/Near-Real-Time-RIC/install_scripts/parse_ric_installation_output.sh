@@ -64,7 +64,7 @@ while read -r LINE; do
         APP_STATUSES["$APP_NAME"]="$STATUS"
     elif [[ $LINE == Error:* ]]; then
         # Extract a more specific error name or description
-        ERROR_DESCRIPTION=$(echo "$LINE" | sed -E 's/Error: INSTALLATION FAILED: (.+)/\1/')
+        ERROR_DESCRIPTION=$(echo "$LINE" | sed -E 's/ERROR: INSTALLATION FAILED: (.+)/\1/')
         ERROR_DESCRIPTION=$(echo "$ERROR_DESCRIPTION" | tr -d '\"') # Remove quotes to clean up the message
         APP_NAME="error_$ERROR_DESCRIPTION"
         STATUS="failed"

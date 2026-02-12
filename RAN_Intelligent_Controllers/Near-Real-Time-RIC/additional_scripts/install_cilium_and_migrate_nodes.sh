@@ -39,10 +39,11 @@ echo "Drain nodes:    $DRAIN_NODES"
 echo
 echo "This script will install Cilium and migrate all nodes to Cilium for network policy enforcement (replacing the existing network plugin, e.g., Flannel)."
 echo "Since this is a disruptive operation, it is recommended to back up your Kubernetes cluster before proceeding."
-read -p "Would you like to proceed? (y/n): " -r REPLY
-
-if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-    echo "Exiting script."
+echo "Do you want to proceed? (Y/n)"
+read -r CONFIRM
+CONFIRM=$(echo "${CONFIRM:-y}" | tr '[:upper:]' '[:lower:]')
+if [[ "$CONFIRM" != "y" && "$CONFIRM" != "yes" ]]; then
+    echo "Exiting."
     exit 1
 fi
 
@@ -245,8 +246,8 @@ fi
 echo
 echo "Successfully installed Cilium and migrated node to Cilium."
 
-echo "Ensuring permissions for $USER in ~/.kube directory..."
-sudo chown --recursive $USER:$USER ~/.kube
+echo "Ensuring permissions for $USER in "$HOME/.kube" directory..."
+sudo chown --recursive "$USER" "$HOME/.kube"
 
 echo
 echo "Deleting all existing CiliumNetworkPolicies..."
@@ -316,7 +317,7 @@ EOF
 echo
 echo "Applying Cilium NetworkPolicy..."
 if ! kubectl apply -f $CILIUM_POLICY_FILE; then
-    echo "Error: Failed to apply Cilium NetworkPolicy. Please check the Cilium logs for errors."
+    echo "ERROR: Failed to apply Cilium NetworkPolicy. Please check the Cilium logs for errors."
     exit 1
 fi
 
@@ -345,7 +346,7 @@ EOF
         echo
         echo "Applying xApp read restriction Role..."
         if ! kubectl apply -f $XAPP_READ_RESTRICTION_FILE; then
-            echo "Error: Failed to apply xApp read restriction Role. Check permissions and Kubernetes API connectivity."
+            echo "ERROR: Failed to apply xApp read restriction Role. Check permissions and Kubernetes API connectivity."
             rm -f $XAPP_READ_RESTRICTION_FILE
             exit 1
         else
@@ -376,7 +377,7 @@ EOF
         echo
         echo "Applying xApp RoleBinding..."
         if ! kubectl apply -f $XAPP_ROLE_BINDING_FILE; then
-            echo "Error: Failed to apply xApp RoleBinding. Check permissions and Kubernetes API connectivity."
+            echo "ERROR: Failed to apply xApp RoleBinding. Check permissions and Kubernetes API connectivity."
             rm -f $XAPP_ROLE_BINDING_FILE
             exit 1
         else

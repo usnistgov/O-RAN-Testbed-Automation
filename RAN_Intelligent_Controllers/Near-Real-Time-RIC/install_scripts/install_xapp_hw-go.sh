@@ -72,7 +72,7 @@ fi
 
 docker save -o hw-go.tar example.com:80/hw-go:latest
 sudo chmod 755 hw-go.tar
-sudo chown $USER:$USER hw-go.tar
+sudo chown "$USER" hw-go.tar
 
 # Import the image into the containerd container runtime
 sudo ctr -n=k8s.io image import hw-go.tar

@@ -40,7 +40,7 @@ PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$SCRIPT_DIR"
 
 if [ ! -f "compose/orantestbed/compose.sh" ]; then
-    echo "Error: Cannot find compose.sh in compose/orantestbed/. Please run the generate_configurations.sh script first."
+    echo "ERROR: Cannot find compose.sh in compose/orantestbed/. Please run the generate_configurations.sh script first."
     exit 1
 fi
 

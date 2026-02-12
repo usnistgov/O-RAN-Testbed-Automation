@@ -55,18 +55,18 @@ fi
 # Check if the input is a number
 for i in "${UE_NUMBERS[@]}"; do
     if ! [[ "$i" =~ ^[0-9]+$ ]]; then
-        echo "Error: UE number must be a number."
+        echo "ERROR: UE number must be a number."
         exit 1
     fi
     if [ "$i" -lt 1 ]; then
-        echo "Error: UE number must be greater than or equal to 1."
+        echo "ERROR: UE number must be greater than or equal to 1."
         exit 1
     fi
     echo "UE $i will be configured."
 done
 
 # Ensure the correct YAML editor is installed
-sudo "$SCRIPT_DIR/install_scripts/./ensure_consistent_yq.sh"
+"$SCRIPT_DIR/install_scripts/./ensure_consistent_yq.sh"
 
 echo "Saving configuration file example..."
 if [ "$CLEAR_CONFIGS" = true ]; then
@@ -135,14 +135,14 @@ echo "MNC_LENGTH value: $MNC_LENGTH"
 
 # Configure the DNN, SST, and SD values
 DNN=$(sed -n 's/^dnn: //p' "$YAML_PATH")
-SST=$(yq eval '.sst' "$YAML_PATH")
-SD=$(yq eval '.sd' "$YAML_PATH")
+SST=$(yq eval '.slices[0].sst' "$YAML_PATH")
+SD=$(yq eval '.slices[0].sd' "$YAML_PATH")
 if [[ -z "$DNN" || "$DNN" == "null" ]]; then
     echo "DNN is not set in "$YAML_PATH", please ensure that \"dnn\" is set."
     exit 1
 fi
 if [[ -z "$SST" || -z "$SD" || "$SST" == "null" || "$SD" == "null" ]]; then
-    echo "SST or SD is not set in "$YAML_PATH", please ensure that \"sst\" and \"sd\" are set."
+    echo "SST or SD is not set in "$YAML_PATH", please ensure that \"slices[].sst\" and \"slices[].sd\" are set."
     exit 1
 fi
 
@@ -164,7 +164,7 @@ fi
 
 UE_CREDENTIAL_GENERATOR_SCRIPT="$SCRIPT_DIR/ue_credentials_generator.sh"
 if [ ! -f "$UE_CREDENTIAL_GENERATOR_SCRIPT" ]; then
-    echo "Error: Cannot find $UE_CREDENTIAL_GENERATOR_SCRIPT to generate UE subscriber credentials."
+    echo "ERROR: Cannot find $UE_CREDENTIAL_GENERATOR_SCRIPT to generate UE subscriber credentials."
     exit 1
 fi
 

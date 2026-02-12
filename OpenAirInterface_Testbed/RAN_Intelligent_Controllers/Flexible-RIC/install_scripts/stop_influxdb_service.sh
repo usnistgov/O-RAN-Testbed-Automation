@@ -42,12 +42,15 @@ fi
 echo "# Script: $(realpath "$0")..."
 
 # Stop the InfluxDB service if it is running
-sudo systemctl stop influxdb
+if systemctl list-units --full -all | grep -Fq "influxdb.service"; then
+    sudo systemctl stop influxdb
 
-# Check if the service is stopped
-if systemctl is-active --quiet influxdb; then
-    echo "Failed to stop InfluxDB service."
-    exit 1
+    # Check if the service is stopped
+    if systemctl is-active --quiet influxdb; then
+        echo "Failed to stop InfluxDB service."
+        exit 1
+    fi
+    echo "InfluxDB service stopped."
+else
+    echo "influxdb.service not found. Skipping stop command."
 fi
-
-echo "InfluxDB service stopped."

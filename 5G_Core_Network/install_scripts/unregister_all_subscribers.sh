@@ -40,10 +40,12 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$PARENT_DIR"
 
-DBCTL_DIR="./open5gs/misc/db/open5gs-dbctl"
+DBCTL_PATH="./open5gs/misc/db/open5gs-dbctl"
+
+./start_webui.sh no-browser
 
 # Command to remove all subscribers using the open5gs-dbctl tool
-CMD="$DBCTL_DIR reset"
+CMD="$DBCTL_PATH reset"
 
 echo "Running command: $CMD"
 $CMD
@@ -51,7 +53,7 @@ $CMD
 # Check exit status of the command
 if [ $? -eq 0 ]; then
     echo "Subscribers successfully removed from the database."
-    $DBCTL_DIR showpretty
+    $DBCTL_PATH showpretty
 else
     echo "Failed to remove subscribers from the database."
 fi

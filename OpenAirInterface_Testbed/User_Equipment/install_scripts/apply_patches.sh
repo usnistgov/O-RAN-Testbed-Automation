@@ -31,6 +31,9 @@
 # Exit immediately if a command fails
 set -e
 
+E2AP_VERSION="E2AP_V2"  # E2AP_V1, E2AP_V2, E2AP_V3
+KPM_VERSION="KPM_V2_03" # KPM_V2_03, KPM_V3_00
+
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
@@ -41,55 +44,16 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$PARENT_DIR"
 
-# Modify CMakeLists.txt to set E2AP_VERSION to E2AP_V3 and KPM_VERSION to KPM_V3_00 (must match FlexRIC)
-if [ -f "openairinterface5g/CMakeLists.txt" ]; then
-    echo "Modifying CMakeLists.txt to set E2AP_VERSION to E2AP_V3..."
-    sed -i 's/set(E2AP_VERSION "[^"]*"/set(E2AP_VERSION "E2AP_V3"/' openairinterface5g/CMakeLists.txt
-fi
-if [ -f "openairinterface5g/CMakeLists.txt" ]; then
-    echo "Modifying CMakeLists.txt to set KPM_VERSION to KPM_V3_00..."
-    sed -i 's/set(KPM_VERSION "[^"]*"/set(KPM_VERSION "KPM_V3_00"/' openairinterface5g/CMakeLists.txt
-fi
-
-# Apply patches to OpenAirInterface to add support for additional metrics in the KPI report
+# Modify CMakeLists.txt to set E2AP_VERSION and KPM_VERSION (must match FlexRIC)
 cd openairinterface5g
-git restore openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c
-if [ ! -f "openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c.previous" ]; then
-    cp openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c.previous
-    cp openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c.previous "$PARENT_DIR/install_patch_files/openairinterface/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.previous.c"
+if [ -f "CMakeLists.txt" ]; then
+    echo "Modifying CMakeLists.txt to set E2AP_VERSION to $E2AP_VERSION..."
+    sed -i "s/set(E2AP_VERSION \"[^\"]*\"/set(E2AP_VERSION \"$E2AP_VERSION\"/" CMakeLists.txt
 fi
-echo "Patching ran_func_kpm.c..."
-git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c.patch"
-cd ..
-
-cd openairinterface5g
-git restore openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c
-if [ ! -f "openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c.previous" ]; then
-    cp openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c.previous
-    cp openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c.previous "$PARENT_DIR/install_patch_files/openairinterface/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.previous.c"
+if [ -f "CMakeLists.txt" ]; then
+    echo "Modifying CMakeLists.txt to set KPM_VERSION to $KPM_VERSION..."
+    sed -i "s/set(KPM_VERSION \"[^\"]*\"/set(KPM_VERSION \"$KPM_VERSION\"/" CMakeLists.txt
 fi
-echo "Patching ran_func_kpm_subs.c..."
-git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c.patch"
-cd ..
-
-cd openairinterface5g
-git restore openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h
-if [ ! -f "openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.previous" ]; then
-    cp openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.previous
-    cp openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.previous "$PARENT_DIR/install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.previous.h"
-fi
-echo "Patching nr_mac_gNB.h..."
-git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.patch"
-cd ..
-
-cd openairinterface5g
-git restore openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c
-if [ ! -f "openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c.previous" ]; then
-    cp openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c.previous
-    cp openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c.previous "$PARENT_DIR/install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.previous.c"
-fi
-echo "Patching gNB_scheduler_uci.c..."
-git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c.patch"
 cd ..
 
 # If using Linux Mint, add support for Linux Mint 20, 21, and 22 to OpenAirInterface
@@ -97,9 +61,13 @@ if grep -q "Linux Mint" /etc/os-release; then
     echo "Linux Mint detected, attempting to patching OpenAirInterface to support Linux Mint 20, 21, and 22..."
     cd openairinterface5g
     git restore cmake_targets/tools/build_helper
+    if [ ! -f "cmake_targets/tools/build_helper.previous" ]; then
+        cp cmake_targets/tools/build_helper cmake_targets/tools/build_helper.previous
+        cp cmake_targets/tools/build_helper.previous "$PARENT_DIR/install_patch_files/openairinterface/cmake_targets/tools/build_helper.previous"
+    fi
+    echo "Patching build_helper to add Linux Mint support..."
     git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface/cmake_targets/tools/build_helper.patch"
     cd ..
-    echo "Patching completed."
     echo
 fi
 

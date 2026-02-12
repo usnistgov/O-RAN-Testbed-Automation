@@ -34,15 +34,16 @@ set +e
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-if [ "$1" != "bypass_confirmation" ]; then
+if [[ "$1" != "bypass_confirmation" && "$1" != "--yes" && "$1" != "-y" ]]; then
     clear
     echo "This script will remove Open5GS, srsRAN_Project, srsRAN_4G, and the Near-RT RIC by removing Docker and Kubernetes."
     echo "This is a destructive operation and may result in data loss."
     echo "Please ensure you have backed up any necessary data before proceeding."
     echo
-    echo "Do you want to proceed? (yes/no)"
-    read -r PROCEED
-    if [ "$PROCEED" != "yes" ]; then
+    echo "Do you want to proceed? (Y/n)"
+    read -r CONFIRM
+    CONFIRM=$(echo "${CONFIRM:-y}" | tr '[:upper:]' '[:lower:]')
+    if [[ "$CONFIRM" != "y" && "$CONFIRM" != "yes" ]]; then
         echo "Exiting script."
         exit 0
     fi
@@ -60,7 +61,7 @@ echo "Stopping 5G Core Network, srsRAN_Project, and srsRAN_4G..."
 echo
 echo
 echo "################################################################################"
-echo "# Uninstalling 5G Core...                                                      #"
+echo "# Uninstalling 5G Core Network...                                              #"
 echo "################################################################################"
 echo
 echo
@@ -73,7 +74,7 @@ cd ..
 echo
 echo
 echo "################################################################################"
-echo "# Uninstalling User Equipment...                                               #"
+echo "# Uninstalling User Equipment (srsRAN 4G)...                                   #"
 echo "################################################################################"
 echo
 echo
@@ -86,7 +87,7 @@ cd ..
 echo
 echo
 echo "################################################################################"
-echo "# Uninstalling Next Generation Node B...                                       #"
+echo "# Uninstalling Next Generation Node B (srsRAN Project)...                      #"
 echo "################################################################################"
 echo
 echo
@@ -99,7 +100,7 @@ cd ..
 echo
 echo
 echo "################################################################################"
-echo "# Uninstalling Near-Real-Time RAN Intelligent Controller...                    #"
+echo "# Uninstalling Near-Real-Time RAN Intelligent Controller (O-RAN SC)...         #"
 echo "################################################################################"
 echo
 echo

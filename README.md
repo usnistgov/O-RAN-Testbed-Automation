@@ -21,11 +21,11 @@ This tool supports the deployment of 5G O-RAN testbeds using open-source compone
 
 ```text
 CU/DU
-├── srsRAN_Project gNB: release_25.04
-├── OpenAirInterface gNB: 2025.w38
-└── O-RAN SC E2 Simulator: L-release
+├── srsRAN_Project gNB: release_25.10
+├── OpenAirInterface gNB: 2026.w06
+└── O-RAN SC E2 Simulator: M-Release
 RICs
-├── O-RAN SC Near-RT RIC: L-release
+├── O-RAN SC Near-RT RIC: M-Release
 │   └── xApps
 │       ├── Hello World xApps (Go, Python, and Rust)
 │       ├── KPM Monitor xApp
@@ -40,13 +40,13 @@ RICs
 │       ├── MAC + RLC + PDCP + GTP Monitor xApp
 │       ├── RIC Control xApp
 │       └── RIC Control Monitor xApp
-└── O-RAN SC Non-RT RIC: L-release
+└── O-RAN SC Non-RT RIC: M-Release
     └── Minimal prototype with no rApp support.
 5G Core
 └── Open5GS: v2.7.6
 UEs
-├── srsRAN_4G: release_23_11
-└── OpenAirInterface 5G UE: 2025.w38
+├── srsRAN_4G: release_25_10
+└── OpenAirInterface 5G UE: 2026.w06
 ```
 
 The components that have been verified to support or not support connectivity are included below.

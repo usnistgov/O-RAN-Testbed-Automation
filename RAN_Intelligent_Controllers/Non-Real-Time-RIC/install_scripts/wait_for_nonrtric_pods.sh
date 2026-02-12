@@ -144,7 +144,7 @@ fi
 # Wait for essential system pods and RIC components to be ready
 echo "Waiting for essential system pods and RIC components to be ready..."
 
-wait_for_all_pods_running "kube-flannel" "nonrtric"
+wait_for_all_pods_running "kube-flannel" "nonrtric" "onap" "smo" "openebs" "strimzi-system"
 
 # Initialize the Kong database with the necessary schema and configurations
 POD_INFO=$(kubectl get pods -n nonrtric --no-headers | grep 'oran-nonrtric-kong' | awk '{print $1, $3}')
@@ -157,14 +157,13 @@ if [ ! -z "$POD_INFO" ]; then
     fi
 fi
 
-# Remove the unnecessary tiller-secret-generator pod if it has completed
-CMD="kubectl get pods -n nonrtric --no-headers | grep 'oran-nonrtric-kong-init-migrations' | awk '{print \$1, \$3}'"
-POD_INFO=$(eval $CMD)
-POD_NAME=$(echo $POD_INFO | awk '{print $1}')
-POD_STATUS=$(echo $POD_INFO | awk '{print $2}')
-if [ "$POD_STATUS" == "Completed" ]; then
-    echo "Cleaning up pod $POD_NAME..."
-    kubectl delete pod $POD_NAME -n nonrtric
-fi
+# Remove completed pods as they are no longer needed
+NAMESPACES=("nonrtric" "onap" "smo")
+for NAMESPACE in "${NAMESPACES[@]}"; do
+    kubectl get pods -n $NAMESPACE --no-headers | grep 'Completed' | awk '{print $1}' | while read POD_NAME; do
+        echo "Cleaning up completed pod $POD_NAME in namespace $NAMESPACE..."
+        kubectl delete pod $POD_NAME -n $NAMESPACE
+    done
+done
 
 echo "All required pods are now running."

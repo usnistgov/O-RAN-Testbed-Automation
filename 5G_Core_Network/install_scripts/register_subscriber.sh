@@ -40,7 +40,7 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$PARENT_DIR"
 
-DBCTL_DIR="./open5gs/misc/db/open5gs-dbctl"
+DBCTL_PATH="./open5gs/misc/db/open5gs-dbctl"
 
 # Default values as specified in your documentation
 DEFAULT_IMSI="001010123456780"
@@ -71,8 +71,8 @@ usage() {
 }
 
 # Check if the dbctl file exists
-if [ ! -f "$DBCTL_DIR" ]; then
-    echo "Error: The dbctl script ($DBCTL_DIR) does not exist."
+if [ ! -f "$DBCTL_PATH" ]; then
+    echo "ERROR: The dbctl script ($DBCTL_PATH) does not exist."
     usage
 fi
 
@@ -131,16 +131,16 @@ IPV4="${IPV4:-$DEFAULT_IPV4}"
 IPV6="${IPV6:-$DEFAULT_IPV6}"
 
 # Check if the subscriber already exists
-if $DBCTL_DIR showpretty | grep -q "imsi: '$IMSI'"; then
+if $DBCTL_PATH showpretty | grep -q "imsi: '$IMSI'"; then
     echo "Subscriber with IMSI $IMSI already exists in the database."
     exit 0
 fi
 
 # Command to add subscriber using the open5gs-dbctl tool
 if [[ -n "$SST" && -n "$SD" ]]; then
-    CMD="$DBCTL_DIR add_ue_with_slice $IMSI $KEY $OPC $APN $SST $SD"
+    CMD="$DBCTL_PATH add_ue_with_slice $IMSI $KEY $OPC $APN $SST $SD"
 else
-    CMD="$DBCTL_DIR add_ue_with_apn $IMSI $KEY $OPC $APN"
+    CMD="$DBCTL_PATH add_ue_with_apn $IMSI $KEY $OPC $APN"
 fi
 
 echo "Running command: $CMD"
@@ -149,11 +149,11 @@ $CMD
 # Support for IPv4 and IPv6
 if [[ -n "$IPV4" ]]; then
     echo "Assigning static IPv4 $IPV4 to subscriber $IMSI"
-    $DBCTL_DIR static_ip $IMSI $IPV4
+    $DBCTL_PATH static_ip $IMSI $IPV4
 fi
 if [[ -n "$IPV6" ]]; then
     echo "Assigning static IPv6 $IPV6 to subscriber $IMSI"
-    $DBCTL_DIR static_ip6 $IMSI $IPV6
+    $DBCTL_PATH static_ip6 $IMSI $IPV6
 fi
 TYPE=""
 if [[ -n "$IPV4" && -n "$IPV6" ]]; then # IPv4v6
@@ -165,13 +165,13 @@ elif [[ -n "$IPV6" ]]; then # IPv6
 fi
 if [[ -n "$TYPE" ]]; then
     echo "Assigning PDN-Type $TYPE to subscriber $IMSI"
-    $DBCTL_DIR type $IMSI $TYPE
+    $DBCTL_PATH type $IMSI $TYPE
 fi
 
 # Check exit status of the command
 if [ $? -eq 0 ]; then
     echo "Subscriber successfully added to the database."
-    $DBCTL_DIR showpretty
+    $DBCTL_PATH showpretty
 else
     echo "Failed to add subscriber to the database."
 fi

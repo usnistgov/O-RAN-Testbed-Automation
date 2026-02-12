@@ -30,6 +30,11 @@
 
 echo "# Script: $(realpath "$0")..."
 
+if ! command -v ufw >/dev/null 2>&1; then
+    echo "Command ufw not found, skipping."
+    exit 0
+fi
+
 ATTEMPTS=0
 MAX_ATTEMPTS=10
 while ((ATTEMPTS++ < MAX_ATTEMPTS)); do

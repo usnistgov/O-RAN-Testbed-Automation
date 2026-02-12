@@ -60,7 +60,7 @@ if [ "$CORE_TO_USE" != "open5gs" ]; then
 fi
 
 # Ensure the correct YAML editor is installed
-sudo "$SCRIPT_DIR/install_scripts/./ensure_consistent_yq.sh"
+"$SCRIPT_DIR/install_scripts/./ensure_consistent_yq.sh"
 
 echo "Parsing options.yaml..."
 # Check if the YAML file exists, if not, set and save default values
@@ -115,9 +115,6 @@ if [ ! -f "options.yaml" ]; then
     echo "" >>"options.yaml"
     echo "ogstun3_ipv4: 10.47.0.0/16" >>"options.yaml"
     echo "ogstun3_ipv6: 2001:db8:face::/48" >>"options.yaml"
-    echo "" >>"options.yaml"
-    echo "# If core_to_use=open5gs, the use of systemctl can be disabled to support installations within Docker. Before changing this value, it is recommended to uninstall the testbed." >>"options.yaml"
-    echo "use_systemctl: true" >>"options.yaml"
 fi
 
 # If expose_amf_over_hostname is false, AMF will use the default 127.0.0.5, otherwise, it will use the hostname IP
@@ -154,14 +151,14 @@ echo "TAC value: $TAC"
 
 # Configure the DNN, SST, and SD values
 DNN=$(sed -n 's/^dnn: //p' options.yaml)
-SST=$(yq eval '.sst' options.yaml)
-SD=$(yq eval '.sd' options.yaml)
+SST=($(yq eval '.slices[].sst' options.yaml))
+SD=($(yq eval '.slices[].sd' options.yaml))
 if [[ -z "$DNN" || "$DNN" == "null" ]]; then
     echo "DNN is not set in options.yaml, please ensure that \"dnn\" is set."
     exit 1
 fi
-if [[ -z "$SST" || -z "$SD" || "$SST" == "null" || "$SD" == "null" ]]; then
-    echo "SST or SD is not set in options.yaml, please ensure that \"sst\" and \"sd\" are set."
+if [[ -z "${SST[0]}" || -z "${SD[0]}" || "${SST[0]}" == "null" || "${SD[0]}" == "null" ]]; then
+    echo "SST or SD is not set in options.yaml, please ensure that \"slices[].sst\" and \"slices[].sd\" are set."
     exit 1
 fi
 
@@ -178,7 +175,7 @@ fi
 # Only remove the logs if no component is running
 RUNNING_STATUS=$(./is_running.sh)
 if [[ $RUNNING_STATUS != *": RUNNING"* ]]; then
-    rm -rf logs
+    rm -rf logs || sudo rm -rf logs
     mkdir logs
 fi
 
@@ -346,28 +343,35 @@ set_configuration_session_gateways() {
 }
 
 set_snssai() {
-    local SST=$1
-    local SD=$2
     local AMF_FILE_PATH="configs/amf.yaml"
     local NSSF_FILE_PATH="configs/nssf.yaml"
     local SMF_FILE_PATH="configs/smf.yaml"
 
-    # Set S-NSSAI in AMF config
-    yq -i ".amf.plmn_support[0].s_nssai[0].sst = $SST" "$AMF_FILE_PATH"
-    yq -i ".amf.plmn_support[0].s_nssai[0].sd = \"$SD\"" "$AMF_FILE_PATH"
+    # Get the URI from the first NSI entry to copy to others
+    local NSI_URI=$(yq eval '.nssf.sbi.client.nsi[0].uri' "$NSSF_FILE_PATH")
 
-    # Set S-NSSAI in NSSF config
-    yq -i ".nssf.sbi.client.nsi[0].s_nssai.sst = $SST" "$NSSF_FILE_PATH"
-    yq -i ".nssf.sbi.client.nsi[0].s_nssai.sd = \"$SD\"" "$NSSF_FILE_PATH"
+    for i in "${!SST[@]}"; do
+        local CURRENT_SST="${SST[$i]}"
+        local CURRENT_SD="${SD[$i]}"
 
-    # Set S-NSSAI in SMF config (info.s_nssai[0])
-    if ! yq -e '.smf.info[0].s_nssai' "$SMF_FILE_PATH" >/dev/null 2>&1; then
-        yq -i '.smf.info = [{}]' "$SMF_FILE_PATH"
-        yq -i '.smf.info[0].s_nssai = [{}]' "$SMF_FILE_PATH"
-    fi
-    yq -i ".smf.info[0].s_nssai[0].sst = $SST" "$SMF_FILE_PATH"
-    yq -i ".smf.info[0].s_nssai[0].sd = \"$SD\"" "$SMF_FILE_PATH"
-    yq -i ".smf.info[0].s_nssai[0].dnn = [\"$DNN\"]" "$SMF_FILE_PATH"
+        # Set S-NSSAI in AMF config
+        yq -i ".amf.plmn_support[0].s_nssai[$i].sst = $CURRENT_SST" "$AMF_FILE_PATH"
+        yq -i ".amf.plmn_support[0].s_nssai[$i].sd = \"$CURRENT_SD\"" "$AMF_FILE_PATH"
+
+        # Set S-NSSAI in NSSF config
+        yq -i ".nssf.sbi.client.nsi[$i].uri = \"$NSI_URI\"" "$NSSF_FILE_PATH"
+        yq -i ".nssf.sbi.client.nsi[$i].s_nssai.sst = $CURRENT_SST" "$NSSF_FILE_PATH"
+        yq -i ".nssf.sbi.client.nsi[$i].s_nssai.sd = \"$CURRENT_SD\"" "$NSSF_FILE_PATH"
+
+        # Set S-NSSAI in SMF config (info.s_nssai[0])
+        if ! yq -e '.smf.info[0].s_nssai' "$SMF_FILE_PATH" >/dev/null 2>&1; then
+            yq -i '.smf.info = [{}]' "$SMF_FILE_PATH"
+            yq -i '.smf.info[0].s_nssai = [{}]' "$SMF_FILE_PATH"
+        fi
+        yq -i ".smf.info[0].s_nssai[$i].sst = $CURRENT_SST" "$SMF_FILE_PATH"
+        yq -i ".smf.info[0].s_nssai[$i].sd = \"$CURRENT_SD\"" "$SMF_FILE_PATH"
+        yq -i ".smf.info[0].s_nssai[$i].dnn = [\"$DNN\"]" "$SMF_FILE_PATH"
+    done
 }
 
 OGSTUN_IPV4=$(yq eval '.ogstun_ipv4' options.yaml)
@@ -408,7 +412,7 @@ fi
 set_configuration_session_gateways $OGSTUN_IPV4 $OGSTUN_IPV4_1 $OGSTUN_IPV6 $OGSTUN_IPV6_1
 
 # Configure the Single Network Slice Selection Assistance Information (S-NSSAI)
-set_snssai "$SST" "$SD"
+set_snssai
 
 # Get the following AMF IP, and it will be updated in the configuration file
 AMF_ADDRESSES_OUTPUT="configs/get_amf_address.txt"
@@ -441,7 +445,7 @@ sudo ufw status || true
 
 UE_CREDENTIAL_GENERATOR_SCRIPT="$(dirname "$SCRIPT_DIR")/User_Equipment/ue_credentials_generator.sh"
 if [ ! -f "$UE_CREDENTIAL_GENERATOR_SCRIPT" ]; then
-    echo "Error: Cannot find $UE_CREDENTIAL_GENERATOR_SCRIPT to generate UE subscriber credentials."
+    echo "ERROR: Cannot find $UE_CREDENTIAL_GENERATOR_SCRIPT to generate UE subscriber credentials."
     exit 1
 fi
 
@@ -463,7 +467,32 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
 
     # Fetch the UE's OPc, IMEI, IMSI, KEY, and NAMESPACE
     read -r UE_OPC UE_IMEI UE_IMSI UE_KEY UE_NAMESPACE < <("$UE_CREDENTIAL_GENERATOR_SCRIPT" "$UE_NUMBER" "$PLMN")
-    ./install_scripts/register_subscriber.sh --imsi "$UE_IMSI" --key "$UE_KEY" --opc "$UE_OPC" --apn "$DNN" --sst "$SST" --sd "$SD" $IPV4_LINE
+
+    # Register with the first slice
+    ./install_scripts/register_subscriber.sh --imsi "$UE_IMSI" --key "$UE_KEY" --opc "$UE_OPC" --apn "$DNN" --sst "${SST[0]}" --sd "${SD[0]}" $IPV4_LINE
+
+    # Iterate from the second slice
+    for ((i = 1; i < ${#SST[@]}; i++)); do
+        CURRENT_SST="${SST[$i]}"
+        CURRENT_SD="${SD[$i]}"
+
+        echo "Adding slice $i (SST: $CURRENT_SST, SD: $CURRENT_SD) to UE $UE_NUMBER..."
+        ./open5gs/misc/db/open5gs-dbctl update_slice "$UE_IMSI" "$DNN" "$CURRENT_SST" "$CURRENT_SD"
+
+        # Apply Static IP for the secondary slices
+        if [ -n "$UE_IPV4" ]; then
+            mongosh open5gs --eval "
+db.subscribers.updateOne(
+  { \"imsi\": \"$UE_IMSI\", \"slice.sd\": \"$CURRENT_SD\" },
+  {
+    \$set: {
+      \"slice.$i.session.0.ue\": { \"ipv4\": \"$UE_IPV4\" },
+      \"slice.$i.session.0.type\": 1
+    }
+  }
+)"
+        fi
+    done
 done
 
 # Restart Open5GS services to apply changes

@@ -33,13 +33,17 @@ echo "# Script: $(realpath "$0")..."
 # Exit immediately if a command fails
 set -e
 
-# Set DNS servers
-DNS_SERVERS=$(grep 'nameserver' /run/systemd/resolve/resolv.conf | awk '{print $2}' | jq -R . | jq -s .)
-
-if [ -z "$(echo $DNS_SERVERS | jq '. | select(length > 0)')" ]; then
-    echo "Could not find DNS servers in /run/systemd/resolve/resolv.conf, defaulting Google DNS..."
+# Set DNS servers for Docker daemon
+DNS_SERVERS=$(grep 'nameserver' /run/systemd/resolve/resolv.conf 2>/dev/null | awk '{print $2}' | jq -R . | jq -s . 2>/dev/null || echo '[]')
+if [ -z "$(echo "$DNS_SERVERS" | jq '. | select(length > 0)')" ]; then
+    echo "Could not find DNS servers in /run/systemd/resolve/resolv.conf, trying /etc/resolv.conf..."
+    DNS_SERVERS=$(grep '^nameserver' /etc/resolv.conf 2>/dev/null | awk '{print $2}' | jq -R . | jq -s . 2>/dev/null || echo '[]')
+fi
+if [ -z "$(echo "$DNS_SERVERS" | jq '. | select(length > 0)')" ]; then
+    echo "Could not find DNS servers in system resolv.conf files, defaulting to Google DNS..."
     DNS_SERVERS='["8.8.8.8", "8.8.4.4"]'
 fi
+echo "Using DNS servers: $DNS_SERVERS"
 
 # Docker daemon configuration file
 DOCKER_CONFIG="/etc/docker/daemon.json"
@@ -67,8 +71,63 @@ else
     echo "{\"dns\": $DNS_SERVERS}" >$DOCKER_CONFIG
 fi
 
+# Detect if systemctl is available
+USE_SYSTEMCTL=false
+if command -v systemctl >/dev/null 2>&1; then
+    if [ "$(cat /proc/1/comm 2>/dev/null)" = "systemd" ]; then
+        OUTPUT="$(systemctl 2>&1 || true)"
+        if echo "$OUTPUT" | grep -qiE 'not supported|System has not been booted with systemd'; then
+            echo "Detected systemctl is not supported. Using background processes instead."
+        elif systemctl list-units >/dev/null 2>&1 || systemctl is-system-running --quiet >/dev/null 2>&1; then
+            USE_SYSTEMCTL=true
+        fi
+    fi
+fi
+
 # Restart Docker service to apply changes
-echo "Restarting Docker service..."
-systemctl restart docker
+if [ "$USE_SYSTEMCTL" = true ]; then
+    systemctl restart docker
+else
+    echo "Restarting Docker process..."
+    if ! command -v dockerd >/dev/null 2>&1 || ! command -v docker >/dev/null 2>&1; then
+        echo "ERROR: Docker binaries not found in PATH."
+        exit 1
+    fi
+    DOCKERD_LOG="/tmp/dockerd.log"
+    # Stop running dockerd and containerd in background
+    sudo pkill -x dockerd >/dev/null 2>&1 || true
+    sudo pkill -x containerd >/dev/null 2>&1 || true
+    sudo rm -f /var/run/docker.pid /var/run/docker.sock
+    sudo mkdir -p /run /var/run
+    sudo sh -c 'setsid dockerd --config-file=/etc/docker/daemon.json >>'"${DOCKERD_LOG}"' 2>&1 </dev/null &'
+    for _ in $(seq 1 60); do
+        if sudo test -S /var/run/docker.sock && sudo docker version >/dev/null 2>&1; then
+            break
+        fi
+        sleep 1
+    done
+    if ! (sudo test -S /var/run/docker.sock && sudo docker version >/dev/null 2>&1); then
+        echo "Docker failed to start with configured options. Retrying with cgroupfs driver..."
+        sudo pkill -x dockerd >/dev/null 2>&1 || true
+        # Update daemon.json temporarily
+        sudo cp /etc/docker/daemon.json /etc/docker/daemon.json.bak
+        sudo sed -i 's/"native.cgroupdriver=systemd"/"native.cgroupdriver=cgroupfs"/' /etc/docker/daemon.json
+        sudo sh -c 'setsid dockerd --config-file=/etc/docker/daemon.json >>'"${DOCKERD_LOG}"' 2>&1 </dev/null &'
+        for _ in $(seq 1 60); do
+            if sudo test -S /var/run/docker.sock && sudo docker version >/dev/null 2>&1; then
+                break
+            fi
+            sleep 1
+        done
+        if ! (sudo test -S /var/run/docker.sock && sudo docker version >/dev/null 2>&1); then
+            # Restore the original daemon.json
+            sudo mv /etc/docker/daemon.json.bak /etc/docker/daemon.json 2>/dev/null || true
+            echo "ERROR: Docker daemon failed to start without systemd."
+            tail -n 200 "${DOCKERD_LOG}" 2>/dev/null || true
+            exit 1
+        fi
+    fi
+    echo "Docker started successfully."
+fi
 
 echo "Docker DNS configuration updated successfully."

@@ -56,18 +56,18 @@ fi
 # Check if the input is a number
 for i in "${UE_NUMBERS[@]}"; do
     if ! [[ "$i" =~ ^[0-9]+$ ]]; then
-        echo "Error: UE number must be a number."
+        echo "ERROR: UE number must be a number."
         exit 1
     fi
     if [ "$i" -lt 1 ]; then
-        echo "Error: UE number must be greater than or equal to 1."
+        echo "ERROR: UE number must be greater than or equal to 1."
         exit 1
     fi
     echo "UE $i will be configured."
 done
 
 # Ensure the correct YAML editor is installed
-sudo "$SCRIPT_DIR/install_scripts/./ensure_consistent_yq.sh"
+"$SCRIPT_DIR/install_scripts/./ensure_consistent_yq.sh"
 
 # Function to update or add configuration properties in .conf files, considering sections and uncommenting if needed
 update_conf() {
@@ -129,14 +129,14 @@ echo "MNC_LENGTH value: $MNC_LENGTH"
 
 # Configure the DNN, SST, and SD values
 DNN=$(sed -n 's/^dnn: //p' "$YAML_PATH")
-SST=$(yq eval '.sst' "$YAML_PATH")
-SD=$(yq eval '.sd' "$YAML_PATH")
+SST=$(yq eval '.slices[0].sst' "$YAML_PATH")
+SD=$(yq eval '.slices[0].sd' "$YAML_PATH")
 if [[ -z "$DNN" || "$DNN" == "null" ]]; then
     echo "DNN is not set in "$YAML_PATH", please ensure that \"dnn\" is set."
     exit 1
 fi
 if [[ -z "$SST" || -z "$SD" || "$SST" == "null" || "$SD" == "null" ]]; then
-    echo "SST or SD is not set in "$YAML_PATH", please ensure that \"sst\" and \"sd\" are set."
+    echo "SST or SD is not set in "$YAML_PATH", please ensure that \"slices[].sst\" and \"slices[].sd\" are set."
     exit 1
 fi
 
@@ -166,16 +166,22 @@ mkdir -p logs
 
 if [ "$USE_RFSIM_CHANNELMOD" = true ]; then
     echo "Using the channelmod_rfsimu.conf file for the RFSIM channel model."
-    cp install_patch_files/channelmod_rfsimu.conf "$SCRIPT_DIR/configs/channelmod_rfsimu.conf"
+    #cp install_patch_files/channelmod_rfsimu.conf "$SCRIPT_DIR/configs/channelmod_rfsimu.conf"
+    cd configs
+    ln -sf ../install_patch_files/channelmod_rfsimu.conf channelmod_rfsimu.conf
+    cd ..
 else
     echo "Using the channelmod_rfsimu_LEO_satellite.conf file for the RFSIM channel model."
     # Use the default channelmod_rfsimu_LEO_satellite.conf file
-    cp openairinterface5g/targets/PROJECTS/GENERIC-NR-5GC/CONF/channelmod_rfsimu_LEO_satellite.conf configs/channelmod_rfsimu.conf
+    #cp openairinterface5g/targets/PROJECTS/GENERIC-NR-5GC/CONF/channelmod_rfsimu_LEO_satellite.conf configs/channelmod_rfsimu.conf
+    cd configs
+    ln -sf ../openairinterface5g/targets/PROJECTS/GENERIC-NR-5GC/CONF/channelmod_rfsimu_LEO_satellite.conf channelmod_rfsimu.conf
+    cd ..
 fi
 
 UE_CREDENTIAL_GENERATOR_SCRIPT="$SCRIPT_DIR/ue_credentials_generator.sh"
 if [ ! -f "$UE_CREDENTIAL_GENERATOR_SCRIPT" ]; then
-    echo "Error: Cannot find $UE_CREDENTIAL_GENERATOR_SCRIPT to generate UE subscriber credentials."
+    echo "ERROR: Cannot find $UE_CREDENTIAL_GENERATOR_SCRIPT to generate UE subscriber credentials."
     exit 1
 fi
 
@@ -194,13 +200,8 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
     # Operator key for the Milenage Authentication and Key Agreement algorithm used for encryption during the authentication process.
     update_conf "configs/ue$UE_NUMBER.conf" "opc" "\"$UE_OPC\""
 
-    # Specifies the name of the data network the UE wishes to connect to
-    update_conf "configs/ue$UE_NUMBER.conf" "dnn" "\"$DNN\""
-
-    # Configure the Single Network Slice Selection Assistance Information (S-NSSAI)
-    update_conf "configs/ue$UE_NUMBER.conf" "nssai_sst" "$((16#$SST))"
-    update_conf "configs/ue$UE_NUMBER.conf" "nssai_sd" "0x$SD"
-    # comment_out "configs/ue$UE_NUMBER.conf" "nssai_sd" # Optionally, comment out the SD from the file
+    # Configure the PDU sessions (DNN, SST, SD)
+    update_conf "configs/ue$UE_NUMBER.conf" "pdu_sessions" "({ dnn = \"$DNN\"; nssai_sst = $((16#$SST)); nssai_sd = 0x$SD; })"
 
     # Finally, ensure that it is referencing the channelmod_rfsimu.conf file
     sed -i "s|channelmod_rfsimu_LEO_satellite.conf|channelmod_rfsimu.conf|" "configs/ue$UE_NUMBER.conf"
@@ -242,3 +243,8 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
 
     echo "The configuration file is located in the configs/ directory."
 done
+
+# Create the get_rfsim_server_address.txt file with the current hostname IP
+HOSTNAME_IP=$(hostname -I | awk '{print $1}')
+mkdir -p configs
+echo "$HOSTNAME_IP" >configs/get_rfsim_server_address.txt

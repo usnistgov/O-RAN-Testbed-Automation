@@ -49,8 +49,7 @@ if kubectl get pods -n ricplt | grep r4-influxdb-influxdb2 &>/dev/null; then
     exit 0
 fi
 
-# Wait for kube-apiserver to be ready before installing Near-RT RIC
-echo "Waiting for the Kubernetes API server to become ready before installing Near-RT RIC..."
+echo "Waiting for the Kubernetes API server to become ready before deploying Near-RT RIC pods..."
 sudo ./install_scripts/wait_for_kubectl.sh
 
 echo "Revising InfluxDB NFS Storage Class configuration..."

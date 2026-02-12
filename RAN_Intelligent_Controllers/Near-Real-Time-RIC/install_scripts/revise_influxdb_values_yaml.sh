@@ -48,7 +48,7 @@ fi
 
 # Create the directory for InfluxDB storage and set permissions
 mkdir -p "$INFLUXDB_PATH"
-sudo chown -R nobody:nogroup "$INFLUXDB_PATH"
+sudo chown --recursive nobody:nogroup "$INFLUXDB_PATH"
 sudo chmod 775 "$INFLUXDB_PATH"
 
 # List all the kubectl nodes, and prepare the values string for nodeAffinity

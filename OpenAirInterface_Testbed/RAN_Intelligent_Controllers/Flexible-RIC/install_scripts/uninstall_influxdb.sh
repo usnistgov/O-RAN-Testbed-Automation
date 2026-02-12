@@ -47,13 +47,34 @@ INFLUXDB_TOKEN_PATH="$PARENT_DIR/influxdb_auth_token.json"
 
 echo "Uninstalling InfluxDB 2.x..."
 
+# Fix for broken installations where the service file is missing but prerm/postrm scripts expect it
+if [ ! -f /etc/systemd/system/influxdb.service ]; then
+    echo "Creating dummy influxdb.service to satisfy package removal scripts..."
+    sudo bash -c 'cat > /etc/systemd/system/influxdb.service <<EOF
+[Unit]
+Description=Dummy InfluxDB Service
+[Service]
+ExecStart=/bin/true
+[Install]
+WantedBy=multi-user.target
+EOF'
+    sudo systemctl daemon-reload
+    CREATED_DUMMY_SERVICE=true
+fi
+
 sudo ./install_scripts/stop_influxdb_service.sh
 
 sudo apt-get remove -y influxdb
 sudo apt-get remove -y influxdb-client
-sudo apt-get remove -y influxdb2
+sudo apt-get purge -y influxdb2 influxdb2-cli || true
 sudo apt-get autoclean -y
 sudo apt-get autoremove -y
+
+if [ "$CREATED_DUMMY_SERVICE" = true ]; then
+    echo "Removing dummy service file..."
+    sudo rm -f /etc/systemd/system/influxdb.service
+    sudo systemctl daemon-reload
+fi
 
 sudo rm -rf /var/lib/influxdb/
 sudo rm -rf /var/log/influxdb/
@@ -62,4 +83,12 @@ sudo rm -rf ~/.influxdbv2/configs
 
 if [ -f "$INFLUXDB_TOKEN_PATH" ]; then
     sudo rm -rf "$INFLUXDB_TOKEN_PATH"
+fi
+
+if dpkg -l | grep -q influxdb; then
+    echo "ERROR: InfluxDB packages still appear to be installed."
+    echo "Please check the output above for errors."
+    exit 1
+else
+    echo "Successfully uninstalled InfluxDB 2.x."
 fi

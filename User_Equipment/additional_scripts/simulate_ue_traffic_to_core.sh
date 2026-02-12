@@ -43,7 +43,7 @@ BANDWIDTH=${2:-1M}
 DURATION=${3:-60}
 
 if [[ -z "$UE_NUMBER" ]]; then
-    echo "Error: No UE number provided."
+    echo "ERROR: No UE number provided."
     echo "Usage: $0 <UE_NUMBER> [BANDWIDTH] [DURATION]"
     echo "       BANDWIDTH is optional and can be specified in units [k, K, m, M, g, G]. Default is 1M."
     echo "       DURATION is optional and specifies the duration in seconds. Default is 60."
@@ -51,27 +51,27 @@ if [[ -z "$UE_NUMBER" ]]; then
 fi
 
 if ! [[ $UE_NUMBER =~ ^[0-9]+$ ]]; then
-    echo "Error: UE number must be a number."
+    echo "ERROR: UE number must be a number."
     exit 1
 fi
 
 if [ $UE_NUMBER -lt 1 ]; then
-    echo "Error: UE number must be greater than or equal to 1."
+    echo "ERROR: UE number must be greater than or equal to 1."
     exit 1
 fi
 
 if ! [[ $BANDWIDTH =~ ^[0-9]+[kmgKMG]$ ]]; then
-    echo "Error: BANDWIDTH must be a number followed by a unit [k, K, m, M, g, G]."
+    echo "ERROR: BANDWIDTH must be a number followed by a unit [k, K, m, M, g, G]."
     exit 1
 fi
 
 if ! [[ $DURATION =~ ^[0-9]+$ ]]; then
-    echo "Error: DURATION must be a positive integer."
+    echo "ERROR: DURATION must be a positive integer."
     exit 1
 fi
 
 if [ $DURATION -lt 1 ]; then
-    echo "Error: DURATION must be greater than or equal to 1."
+    echo "ERROR: DURATION must be greater than or equal to 1."
     exit 1
 fi
 
@@ -91,11 +91,15 @@ UE_NAMESPACE="ue$UE_NUMBER"
 
 # If the namespace doesn't exist
 if ! ip netns list | grep -q "$UE_NAMESPACE"; then
-    echo "Error: Namespace $UE_NAMESPACE does not exist. Please start the UE first with: ./run_background.sh $UE_NUMBER"
+    echo "ERROR: Namespace $UE_NAMESPACE does not exist. Please start the UE first with: ./run_background.sh $UE_NUMBER"
     exit 1
 fi
 
 LOG_FILE="logs/ue${UE_NUMBER}_stdout.txt"
+if [ ! -f "$LOG_FILE" ]; then
+    echo "ERROR: Log file $LOG_FILE does not exist. Please start the UE first."
+    exit 1
+fi
 PDU_SESSION_IP=$(cat $LOG_FILE | grep "PDU Session Establishment successful" | cut -d ':' -f2 | xargs | tr -d '\r\n')
 CORE_IP=$(ip route | grep ogstun | cut -d ' ' -f 9 | xargs)
 if [ -z "$CORE_IP" ]; then # 5GDeploy:
@@ -106,7 +110,7 @@ if [ -z "$CORE_IP" ]; then # 5GDeploy:
 fi
 
 if [ -z "$PDU_SESSION_IP" ]; then
-    echo "Error: Unable to find PDU Session IP from the log file $LOG_FILE."
+    echo "ERROR: Unable to find PDU Session IP from the log file $LOG_FILE."
     exit 1
 fi
 
@@ -116,7 +120,7 @@ if [ -z "$CORE_IP" ]; then
     echo "WARNING: Unable to find 5G core IP from the routing table."
     read -p "Please enter the IP address of the 5G core: " CORE_IP
     if [ -z "$CORE_IP" ]; then
-        echo "Error: No IP address provided. Exiting."
+        echo "ERROR: No IP address provided. Exiting."
         exit 1
     fi
 fi

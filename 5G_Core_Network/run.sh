@@ -59,6 +59,7 @@ if [ ! -f "configs/amf.yaml" ] || [ ! -f "configs/mme.yaml" ]; then
     exit 1
 fi
 mkdir -p logs
+sudo chown --recursive "$USER" logs
 
 sudo ./install_scripts/network_config.sh
 

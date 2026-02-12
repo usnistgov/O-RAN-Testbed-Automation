@@ -101,6 +101,19 @@ wait_for_pods_running() {
     done
 }
 
+# Detect if systemctl is available
+USE_SYSTEMCTL=false
+if command -v systemctl >/dev/null 2>&1; then
+    if [ "$(cat /proc/1/comm 2>/dev/null)" = "systemd" ]; then
+        OUTPUT="$(systemctl 2>&1 || true)"
+        if echo "$OUTPUT" | grep -qiE 'not supported|System has not been booted with systemd'; then
+            echo "Detected systemctl is not supported. Using background processes instead."
+        elif systemctl list-units >/dev/null 2>&1 || systemctl is-system-running --quiet >/dev/null 2>&1; then
+            USE_SYSTEMCTL=true
+        fi
+    fi
+fi
+
 # -----------------------------------------------------------------------------
 # Installation of prerequisites
 # -----------------------------------------------------------------------------
@@ -144,6 +157,9 @@ else
 fi
 
 USE_DOCKER_CE=1
+if [ "$USE_SYSTEMCTL" = "false" ]; then
+    USE_DOCKER_CE=0
+fi
 if [ "$USE_DOCKER_CE" -eq 0 ]; then # Use docker.io
     DOCKERV="20.10"
     # Select a compatible Docker version for Ubuntu 24.*
@@ -160,7 +176,7 @@ else # Use docker-ce
     fi
     # Check if UBUNTU_CODENAME is still empty
     if [[ -z "$UBUNTU_CODENAME" ]]; then
-        echo "Error: Ubuntu codename not found in /etc/os-release."
+        echo "ERROR: Ubuntu codename not found in /etc/os-release."
         exit 1
     fi
 
@@ -170,7 +186,7 @@ else # Use docker-ce
     sudo install -m 0755 -d /etc/apt/keyrings
     sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
     sudo chmod a+r /etc/apt/keyrings/docker.asc
-    # Add the repository to Apt sources:
+    # Add the repository to apt sources:
     echo \
         "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
     $(. /etc/os-release && echo "${UBUNTU_CODENAME}") stable" |
@@ -220,13 +236,13 @@ fi
 # Update /etc/hosts to include the user's IP address
 # Check if the IP address and hostname are not empty
 if [ -z "$IP_ADDRESS" ] || [ -z "$HOSTNAME" ]; then
-    echo "Error: IP address or hostname is empty. Exiting script."
+    echo "ERROR: IP address or hostname is empty. Exiting script."
     exit 1
 fi
 # Remove existing entries for the hostname from /etc/hosts
-sudo sed -i "/$HOSTNAME/d" /etc/hosts
+sudo sed -i "/$HOSTNAME/d" /etc/hosts || true
 # Add the new entry to /etc/hosts
-echo "$IP_ADDRESS $HOSTNAME" | sudo tee -a /etc/hosts
+echo "$IP_ADDRESS $HOSTNAME" | sudo tee -a /etc/hosts || true
 
 echo "### Docker version  = "${DOCKERV}
 echo "### k8s version     = "${KUBEV}
@@ -299,11 +315,16 @@ echo
 echo
 
 # Set DNS servers
-DNS_SERVERS=$(grep 'nameserver' /run/systemd/resolve/resolv.conf | awk '{print $2}' | jq -R . | jq -s .)
-if [ -z "$(echo $DNS_SERVERS | jq '. | select(length > 0)')" ]; then
-    echo "Could not find DNS servers in /run/systemd/resolve/resolv.conf, defaulting Google DNS..."
+DNS_SERVERS=$(grep 'nameserver' /run/systemd/resolve/resolv.conf 2>/dev/null | awk '{print $2}' | jq -R . | jq -s . 2>/dev/null || echo '[]')
+if [ -z "$(echo "$DNS_SERVERS" | jq '. | select(length > 0)')" ]; then
+    echo "Could not find DNS servers in /run/systemd/resolve/resolv.conf, trying /etc/resolv.conf..."
+    DNS_SERVERS=$(grep '^nameserver' /etc/resolv.conf 2>/dev/null | awk '{print $2}' | jq -R . | jq -s . 2>/dev/null || echo '[]')
+fi
+if [ -z "$(echo "$DNS_SERVERS" | jq '. | select(length > 0)')" ]; then
+    echo "Could not find DNS servers in system resolv.conf files, defaulting to Google DNS..."
     DNS_SERVERS='["8.8.8.8", "8.8.4.4"]'
 fi
+echo "Using DNS servers: $DNS_SERVERS"
 DNS_SERVER=$(echo $DNS_SERVERS | jq -r '.[0]')
 
 # Check for internet connectivity
@@ -316,7 +337,7 @@ fi
 
 sudo rm -rf /opt/config
 sudo mkdir -p /opt/config
-sudo chown $USER:$USER /opt/config
+sudo chown "$USER" /opt/config
 sudo chmod 755 /opt/config
 echo "$DOCKERVERSIONWITHOUTSUFFIX" >/opt/config/docker_version.txt
 echo "$KUBEVERSIONWITHOUTSUFFIX" >/opt/config/k8s_version.txt
@@ -339,14 +360,16 @@ sudo modprobe overlay || true
 sudo modprobe br_netfilter || true
 
 # Load IP Virtual Server (IPVS) modules
-sudo modprobe ip_vs
-sudo modprobe ip_vs_rr
-sudo modprobe ip_vs_wrr
-sudo modprobe ip_vs_sh
+sudo modprobe ip_vs || true
+sudo modprobe ip_vs_rr || true
+sudo modprobe ip_vs_wrr || true
+sudo modprobe ip_vs_sh || true
 
 # Load SCTP module
 sudo modprobe --ignore-install sctp || true
-modprobe -c | grep -qE '^install[[:space:]]+sctp[[:space:]]+' && echo "NOTE: SCTP has an install override. Used --ignore-install."
+if modprobe -c | grep -qE '^install[[:space:]]+sctp[[:space:]]+'; then
+    echo "NOTE: SCTP has an install override. Used --ignore-install."
+fi
 
 # Get the kernel major version
 KERNEL_VERSION="$(uname -r | cut -d'-' -f1)"
@@ -415,8 +438,12 @@ net.ipv4.conf.all.arp_announce = 2
 net.ipv4.conf.default.arp_announce = 2
 EOF
 
-# Apply sysctl parameters
 sudo sysctl --system
+# Ensure /sys/fs/cgroup is mounted (for cgroup v2 systems)
+if ! mount | grep -q '/sys/fs/cgroup'; then
+    echo "Mounting /sys/fs/cgroup..."
+    sudo mount -t tmpfs cgroup_root /sys/fs/cgroup || true
+fi
 
 # Kubelet does not support swap. Disable traditional swap entries in /etc/fstab:
 echo "Checking for traditional swap in /etc/fstab..."
@@ -448,10 +475,12 @@ if [ ! -z "$ZRAM_DEVICES" ]; then
         sudo swapoff "$ZRAM_DEVICE_PATH"
     done
     # Disable zram services if they exist
-    systemctl list-units --type=service | grep zram | cut -d' ' -f1 | while read -r SERVICE; do
-        echo "Disabling zram service $SERVICE"
-        sudo systemctl disable --now "$SERVICE"
-    done
+    if [ "$USE_SYSTEMCTL" = true ]; then
+        systemctl list-units --type=service | grep zram | cut -d' ' -f1 | while read -r SERVICE; do
+            echo "Disabling zram service $SERVICE"
+            sudo systemctl disable --now "$SERVICE"
+        done
+    fi
 else
     echo "No zram devices currently active."
 fi
@@ -460,6 +489,15 @@ echo "Verifying swap is disabled..."
 if sudo swapon --show | grep -q 'swap'; then
     echo "WARNING: Swap is still active."
     sudo swapon --show
+    echo "Forcibly disabling all swap..."
+    sudo swapoff -a || echo "Failed to disable swap with swapoff -a"
+    sudo rm -f /swap.img || echo "Failed to remove /swap.img"
+    sleep 2
+    if sudo swapon --show | grep -q 'swap'; then
+        echo "ERROR: Swap could not be disabled."
+    else
+        echo "All swap has been successfully disabled."
+    fi
 else
     echo "All swap has been successfully disabled."
 fi
@@ -471,27 +509,109 @@ fi
 echo
 echo
 echo "Stopping and removing existing Docker installations, then installing Docker $DOCKERVERSION..."
-if sudo systemctl is-active --quiet docker.socket; then
-    sudo systemctl stop docker.socket
+if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
+    if [ -n "$(docker ps -q 2>/dev/null)" ]; then # Graceful attempt first
+        docker stop $(docker ps -q) || true
+    fi
+    if [ -n "$(docker ps -aq 2>/dev/null)" ]; then
+        docker rm -f $(docker ps -aq) || true
+    fi
+    docker network prune -f || true
+    docker volume prune -f || true
 fi
-if sudo systemctl is-active --quiet docker.service; then
-    sudo systemctl stop docker.service
-fi
-if sudo systemctl is-enabled --quiet docker.socket; then
-    sudo systemctl disable docker.socket
-fi
-if sudo systemctl is-enabled --quiet docker.service; then
-    sudo systemctl disable docker.service
+if [ "$USE_SYSTEMCTL" = true ]; then
+    if sudo systemctl is-active --quiet docker.socket; then
+        sudo systemctl stop docker.socket
+    fi
+    if sudo systemctl is-active --quiet docker.service; then
+        sudo systemctl stop docker.service
+    fi
+    if sudo systemctl is-active --quiet docker; then
+        sudo systemctl stop docker
+    fi
+    if sudo systemctl is-active --quiet containerd.service; then
+        sudo systemctl stop containerd.service
+    fi
+    if sudo systemctl is-enabled --quiet docker.socket; then
+        sudo systemctl disable docker.socket
+    fi
+    if sudo systemctl is-enabled --quiet docker.service; then
+        sudo systemctl disable docker.service
+    fi
+    if sudo systemctl is-enabled --quiet docker; then
+        sudo systemctl disable docker
+    fi
+    if sudo systemctl is-enabled --quiet containerd.service; then
+        sudo systemctl disable containerd.service
+    fi
+else
+    if pgrep "dockerd" >/dev/null; then
+        echo "Killing dockerd process..."
+        sudo pkill -9 -f '^dockerd(\s|$)' 2>/dev/null || true
+    fi
+    if pgrep "containerd" >/dev/null; then
+        echo "Killing containerd process..."
+        sudo pkill -9 -f '^containerd(\s|$)' 2>/dev/null || true
+    fi
+    if pgrep -f 'containerd-shim' >/dev/null; then
+        sudo pkill -9 -f 'containerd-shim' 2>/dev/null || true
+    fi
+    if pgrep -f 'docker-proxy' >/dev/null; then
+        sudo pkill -9 -f 'docker-proxy' 2>/dev/null || true
+    fi
+    if pgrep -f 'runc' >/dev/null; then
+        sudo pkill -9 -f 'runc' 2>/dev/null || true
+    fi
+
+    # If console breaks, reset it
+    stty sane || true
 fi
 
-# Uninstall Docker packages and clean up
-sudo apt-get remove --purge -y --allow-change-held-packages docker docker-engine docker-ce docker.io containerd runc || true
-sudo rm -rf /var/lib/docker /etc/docker
-sudo apt-get autoremove -y
+# Uninstall all possible Docker packages
+sudo apt-get remove --purge -y --allow-change-held-packages \
+    docker docker-engine docker-ce docker.io containerd runc \
+    docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin \
+    docker-ce-rootless-extras docker-scan-plugin || true
+
+# Unmount Docker and containerd mount points
+echo "Unmounting Docker and containerd mount points..."
+# Unmount all mount points under /var/lib/docker and /var/lib/containerd starting at deepest paths
+sudo awk '$5 ~ /^\/var\/lib\/docker/ || $5 ~ /^\/var\/lib\/containerd/ {print $5}' /proc/self/mountinfo | sort -r | xargs -r -n1 sudo umount -l 2>/dev/null || true
+# Unmount common overlay and shm paths
+sudo umount -l /var/lib/docker/overlay2/*/merged 2>/dev/null || true
+sudo umount -l /var/lib/docker/containers/*/mounts/shm 2>/dev/null || true
+sudo umount -l /var/lib/containerd/*/*/*/rootfs 2>/dev/null || true
+
+# Remove Docker directories
+sudo rm -rf /var/lib/docker /etc/docker /home/docker /var/lib/containerd
+
+# # Remove Docker group and user from group
+# if getent group docker >/dev/null; then
+#     sudo groupdel docker
+# fi
+# if id -nG "$(id -un)" | grep -qw docker; then
+#     sudo deluser "$(id -un)" docker
+# fi
+
+# Remove Docker binaries if present
+if [ -f /usr/bin/docker ]; then
+    echo "Removing /usr/bin/docker..."
+    sudo rm -f /usr/bin/docker
+fi
+if [ -f /usr/local/bin/docker ]; then
+    echo "Removing /usr/local/bin/docker..."
+    sudo rm -f /usr/local/bin/docker
+fi
+
+# Clean up
+sudo apt-get autoremove --purge -y
+
+# Reset the shell's command hash table to recognize changes in available executables
+hash -r
 
 # Install Docker with the specified or latest available version
 echo "Installing Docker..."
-if ! command -v docker &>/dev/null; then
+if ! command -v dockerd >/dev/null 2>&1 || ! command -v docker >/dev/null 2>&1; then
     if [ "$USE_DOCKER_CE" -eq 0 ]; then
         sudo env $APTVARS apt-get install -y $APTOPTS "docker.io=$DOCKERVERSION"
     else
@@ -502,18 +622,51 @@ fi
 # Configure Docker daemon
 echo "Configuring Docker daemon..."
 sudo mkdir -p /etc/docker
+
+# Select storage driver (see https://docs.docker.com/engine/storage/drivers/select-storage-driver)
+if [ "$USE_SYSTEMCTL" = true ]; then
+    DRIVER="overlay2"
+else
+    DRIVER="vfs"
+fi
+if [ "$DRIVER" = "overlay2" ] && ! grep -qw overlay /proc/filesystems; then
+    if ! sudo modprobe overlay >/dev/null 2>&1; then
+        DRIVER="vfs"
+    fi
+fi
+if [ "$DRIVER" = "overlay2" ]; then
+    if ! sudo mkdir -p /var/lib/docker/test-overlay/upper /var/lib/docker/test-overlay/work /var/lib/docker/test-overlay/merged; then
+        DRIVER="vfs"
+    elif ! sudo mount -t overlay overlay -o lowerdir=/bin,upperdir=/var/lib/docker/test-overlay/upper,workdir=/var/lib/docker/test-overlay/work /var/lib/docker/test-overlay/merged 2>/dev/null; then
+        DRIVER="vfs"
+    else
+        sudo umount /var/lib/docker/test-overlay/merged 2>/dev/null || true
+    fi
+    sudo rm -rf /var/lib/docker/test-overlay 2>/dev/null || true
+fi
+
+# Determine the cgroup driver
+CGROUP_DRIVER="systemd"
+if [ "$USE_SYSTEMCTL" != true ]; then
+    CGROUP_DRIVER="cgroupfs"
+fi
+# Support overriding the cgroup driver from environment variable
+if [ -n "${DOCKER_CGROUP_DRIVER:-}" ]; then
+    CGROUP_DRIVER="${DOCKER_CGROUP_DRIVER}"
+fi
 sudo tee /etc/docker/daemon.json >/dev/null <<EOF
 {
-  "exec-opts": ["native.cgroupdriver=systemd"],
-  "log-driver": "json-file",
-  "log-opts": {
-    "max-size": "100m"
-  },
-  "storage-driver": "overlay2",
-  "features": {
-    "buildkit": true
-  },
-  "max-concurrent-downloads": 10
+    "exec-opts": ["native.cgroupdriver=${CGROUP_DRIVER}"],
+    "log-driver": "json-file",
+    "log-opts": {
+        "max-size": "100m"
+    },
+    "storage-driver": "${DRIVER}",
+    "features": {
+        "buildkit": true
+    },
+    "max-concurrent-downloads": 10,
+    "dns": ${DNS_SERVERS}
 }
 EOF
 
@@ -529,7 +682,7 @@ else
     echo "Skipping Docker configuration validation (unsupported flag)."
 fi
 
-echo "Ensure Docker group exists and add user to the group before starting Docker service..."
+echo "Ensuring Docker group exists and add user to the group before starting Docker service..."
 sudo groupadd -f docker
 if [ -n "$SUDO_USER" ]; then
     sudo usermod -aG docker "${SUDO_USER:-root}"
@@ -539,24 +692,72 @@ fi
 
 # Enable and attempt to start Docker service with retries
 echo "Enabling and starting Docker service..."
-sudo systemctl daemon-reload
-sudo systemctl enable docker
-ATTEMPT=0
-MAX_ATTEMPTS=5
-while ! sudo systemctl restart docker && [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
-    echo "Docker failed to start. Attempt $((ATTEMPT + 1))/$MAX_ATTEMPTS..."
-    echo "Checking service status..."
-    sudo systemctl status docker.service | grep -A 2 "Active:"
-    echo "Reviewing recent logs..."
-    journalctl -xeu docker.service | tail -20
-    sleep 10
-    ((ATTEMPT++))
-done
+if [ "$USE_SYSTEMCTL" = true ]; then
+    sudo systemctl daemon-reload
+    sudo systemctl enable docker
+    ATTEMPT=0
+    MAX_ATTEMPTS=5
+    while ! sudo systemctl restart docker && [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
+        echo "Docker failed to start. Attempt $((ATTEMPT + 1))/$MAX_ATTEMPTS..."
+        echo "Checking service status..."
+        sudo systemctl status docker.service | grep -A 2 "Active:" || true
+        echo "Reviewing recent logs..."
+        journalctl -xeu docker.service | tail -20 || true
+        sleep 10
+        ((ATTEMPT++))
+    done
 
-if ! sudo systemctl is-active --quiet docker; then
-    echo "Failed to start Docker after $MAX_ATTEMPTS attempts."
-    exit 1
+    if ! sudo systemctl is-active --quiet docker; then
+        echo "Failed to start Docker after $MAX_ATTEMPTS attempts."
+        exit 1
+    else
+        echo "Docker started successfully."
+    fi
 else
+    echo "Starting Docker process..."
+    if ! command -v dockerd >/dev/null 2>&1 || ! command -v docker >/dev/null 2>&1; then
+        echo "ERROR: Docker binaries not found in PATH."
+        exit 1
+    fi
+    DOCKERD_LOG="/tmp/dockerd.log"
+    # Stop running dockerd and containerd in background
+    sudo pkill -x dockerd >/dev/null 2>&1 || true
+    sudo pkill -x containerd >/dev/null 2>&1 || true
+    sudo rm -f /var/run/docker.pid /var/run/docker.sock
+    sudo mkdir -p /run /var/run
+    sudo sh -c 'setsid dockerd --config-file=/etc/docker/daemon.json >>'"${DOCKERD_LOG}"' 2>&1 </dev/null &'
+    # Wait for Docker to be ready
+    for ATTEMPT in $(seq 1 60); do
+        if sudo test -S /var/run/docker.sock && sudo docker version >/dev/null 2>&1; then
+            break
+        fi
+        sleep 1
+    done
+    if ! (sudo test -S /var/run/docker.sock && sudo docker version >/dev/null 2>&1); then
+        echo "Docker failed to start with configured options. Retrying with cgroupfs driver..."
+        sudo pkill -x dockerd >/dev/null 2>&1 || true
+        # Update daemon.json temporarily
+        sudo cp /etc/docker/daemon.json /etc/docker/daemon.json.bak
+        sudo sed -i 's/"native.cgroupdriver=systemd"/"native.cgroupdriver=cgroupfs"/' /etc/docker/daemon.json || true
+        # If the above sed did not find the line, add it
+        if ! grep -q 'native.cgroupdriver' /etc/docker/daemon.json; then
+            sudo jq '. + {"exec-opts": ["native.cgroupdriver=cgroupfs"]}' /etc/docker/daemon.json.bak | sudo tee /etc/docker/daemon.json >/dev/null
+        fi
+        sudo sh -c 'setsid dockerd --config-file=/etc/docker/daemon.json >>'"${DOCKERD_LOG}"' 2>&1 </dev/null &'
+        for ATTEMPT in $(seq 1 60); do
+            if sudo test -S /var/run/docker.sock && sudo docker version >/dev/null 2>&1; then
+                break
+            fi
+            sleep 1
+        done
+        if ! (sudo test -S /var/run/docker.sock && sudo docker version >/dev/null 2>&1); then
+            # Restore the original daemon.json
+            sudo mv /etc/docker/daemon.json.bak /etc/docker/daemon.json 2>/dev/null || true
+            echo "ERROR: Docker daemon failed to start without systemd."
+            tail -n 200 "${DOCKERD_LOG}" 2>/dev/null || true
+            exit 1
+        fi
+    fi
     echo "Docker started successfully."
 fi
 
@@ -578,19 +779,32 @@ if command -v docker &>/dev/null; then
         echo "No Docker containers to stop or remove."
     fi
 fi
-
-if sudo systemctl is-active --quiet containerd; then
-    echo "Stopping containerd..."
-    sudo systemctl stop containerd
+if [ "$USE_SYSTEMCTL" = true ]; then
+    if sudo systemctl is-active --quiet containerd; then
+        echo "Stopping containerd..."
+        sudo systemctl stop containerd
+    fi
+else
+    if pgrep "containerd" >/dev/null; then
+        echo "Killing containerd process..."
+        sudo pkill -9 "containerd" || true
+    fi
 fi
 
 # Stop, disable, and mask kubelet service if it's running
-if sudo systemctl is-active --quiet kubelet; then
-    echo "Stopping, disabling, and masking kubelet service..."
-    sudo systemctl stop kubelet
-    sudo systemctl disable kubelet
-    sudo systemctl mask kubelet
-    echo "kubelet service stopped, disabled, and masked."
+if [ "$USE_SYSTEMCTL" = true ]; then
+    if sudo systemctl is-active --quiet kubelet; then
+        echo "Stopping, disabling, and masking kubelet service..."
+        sudo systemctl stop kubelet
+        sudo systemctl disable kubelet
+        sudo systemctl mask kubelet
+        echo "kubelet service stopped, disabled, and masked."
+    fi
+else
+    if pgrep "kubelet" >/dev/null; then
+        echo "Killing kubelet process..."
+        sudo pkill -9 "kubelet" || true
+    fi
 fi
 
 # Reset Kubernetes using kubeadm if kubeadm is installed
@@ -605,11 +819,25 @@ fi
 # Stop Kubernetes services using systemd
 SERVICES=("kube-apiserver" "kube-controller-manager" "kube-scheduler" "etcd")
 for SERVICE in "${SERVICES[@]}"; do
-    if systemctl is-active --quiet $SERVICE; then
-        echo "Stopping $SERVICE..."
-        sudo systemctl stop $SERVICE || true
+    if [ "$USE_SYSTEMCTL" = true ]; then
+        if systemctl is-active --quiet $SERVICE; then
+            echo "Stopping $SERVICE..."
+            sudo systemctl stop $SERVICE || true
+        else
+            echo "$SERVICE is not active."
+        fi
     else
-        echo "$SERVICE is not active."
+        if pgrep "$SERVICE" >/dev/null; then
+            echo "Killing $SERVICE process..."
+            sudo pkill -9 "$SERVICE" || true
+        else
+            echo "$SERVICE process not found."
+        fi
+    fi
+    # Clean up static manifest files, later created with kubeadm init
+    if sudo test -f /etc/kubernetes/manifests/$SERVICE.yaml; then
+        echo "Removing /etc/kubernetes/manifests/$SERVICE.yaml..."
+        sudo rm -f /etc/kubernetes/manifests/$SERVICE.yaml || true
     fi
 done
 
@@ -712,6 +940,25 @@ else
     sudo env $APTVARS apt-get install -y $APTOPTS kubernetes-cni=${CNIVERSION}
 fi
 
+# Ensure CNI plugins are installed (if missing bridge plugin)
+if [ ! -f "/opt/cni/bin/bridge" ]; then
+    echo "CNI bridge plugin not found in /opt/cni/bin. Installing CNI plugins..."
+    CNI_PLUGINS_VERSION="v1.3.0"
+    CNI_ARCH="amd64"
+    case $(uname -m) in
+    x86_64) CNI_ARCH="amd64" ;;
+    aarch64) CNI_ARCH="arm64" ;;
+    armv7l | armv6l) CNI_ARCH="arm" ;;
+    *) echo "Unsupported architecture for CNI plugins: $(uname -m)" ;;
+    esac
+
+    if [ -n "$CNI_ARCH" ]; then
+        sudo mkdir -p /opt/cni/bin
+        curl -L "https://github.com/containernetworking/plugins/releases/download/${CNI_PLUGINS_VERSION}/cni-plugins-linux-${CNI_ARCH}-${CNI_PLUGINS_VERSION}.tgz" | sudo tar -C /opt/cni/bin -xz
+        echo "Successfully installed CNI plugins"
+    fi
+fi
+
 if [ -z "${KUBEVERSION}" ]; then
     sudo env $APTVARS apt-get install -y kubeadm kubelet kubectl
 else
@@ -728,41 +975,80 @@ if ! command -v kubectl >/dev/null 2>&1; then
     fi
 fi
 
+# Install containerd if not already installed
+if ! command -v containerd >/dev/null 2>&1; then
+    echo "containerd not found, installing..."
+    sudo env $APTVARS apt-get install -y containerd.io
+fi
+
 sudo apt-mark hold docker.io kubernetes-cni kubelet kubeadm kubectl
 
 # Unmask and enable kubelet service without starting it
-sudo systemctl unmask kubelet
-sudo systemctl enable kubelet
-sudo systemctl daemon-reload
+if [ "$USE_SYSTEMCTL" = true ]; then
+    sudo systemctl unmask kubelet || true
+    sudo systemctl enable kubelet || true
+    sudo systemctl daemon-reload || true
+fi
 
 # Ensure configurations are set for containerd
 sudo mkdir -p /etc/containerd
-sudo containerd config default | sudo tee /etc/containerd/config.toml
+if sudo test -f /etc/containerd/config.toml; then
+    sudo cp -a /etc/containerd/config.toml /etc/containerd/config.toml.bak.$(date +%s)
+    sudo chmod 644 /etc/containerd/config.toml
+fi
+sudo containerd config default | sudo tee /etc/containerd/config.toml >/dev/null
 sudo chmod 644 /etc/containerd/config.toml
-# Set SystemdCgroup = true
-if ! sudo sed -i 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml; then
-    echo "Using backup containerd configuration with SystemdCgroup = true."
-    cat <<EOF | sudo tee /etc/containerd/config.toml >/dev/null
-[plugins."io.containerd.grpc.v1.cri".containerd]
-  default_runtime_name = "runc"
-  [plugins."io.containerd.grpc.v1.cri".containerd.default_runtime.options]
-    SystemdCgroup = true
-  [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
-    runtime_type = "io.containerd.runc.v2"
-    [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
-      PodSandboxImage = "registry.k8s.io/pause:3.9"
-EOF
+if [ "$CGROUP_DRIVER" = "systemd" ]; then
+    sudo sed -i 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml
+else
+    sudo sed -i 's/SystemdCgroup = true/SystemdCgroup = false/' /etc/containerd/config.toml
 fi
-# Restart containerd
-if ! sudo systemctl restart containerd; then
-    echo "Failed to restart containerd."
-    exit 1
+# Set the sandbox_image to match kubeadm defaults
+sudo sed -i 's#^\(\s*\)sandbox_image = ".*"#\1sandbox_image = "registry.k8s.io/pause:3.10"#' /etc/containerd/config.toml
+sudo sed -i '/^\s*systemd_cgroup\s*=\s*/d' /etc/containerd/config.toml
+sudo sed -i '/^\s*PodSandboxImage\s*=\s*/d' /etc/containerd/config.toml
+# If using the vfs storage driver use native snapshotter instead of overlayfs (see https://hexshift.medium.com/how-to-use-containerd-snapshotters-for-custom-storage-management-c252f574dfaa)
+if [ "$DRIVER" = "vfs" ]; then
+    echo "Docker storage-driver=vfs; configuring containerd to use native snapshotter"
+    sudo sed -i 's/^\(\s*\)snapshotter = "overlayfs"/\1snapshotter = "native"/' /etc/containerd/config.toml
 fi
 
-# Restart kubelet to pick up new containerd configuration
-sudo systemctl restart kubelet
+# if ! sudo sed -i 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml; then
+#     echo "Using backup containerd configuration with SystemdCgroup = true."
+#     cat <<EOF | sudo tee /etc/containerd/config.toml >/dev/null
+# [plugins."io.containerd.grpc.v1.cri".containerd]
+#   default_runtime_name = "runc"
+#   [plugins."io.containerd.grpc.v1.cri".containerd.default_runtime.options]
+#     SystemdCgroup = true
+#   [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
+#     runtime_type = "io.containerd.runc.v2"
+#     [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
+#       PodSandboxImage = "registry.k8s.io/pause:3.10"
+# EOF
+# fi
 
-# Configure crictl to not give endpoint warnings when running: sudo crictl ps -a
+# Restart containerd service or start it as background process
+if [ "$USE_SYSTEMCTL" = true ]; then
+    sudo systemctl daemon-reload >/dev/null 2>&1 || true
+    sudo systemctl restart containerd
+else
+    sudo pkill -x containerd >/dev/null 2>&1 || true
+    sudo mkdir -p /run/containerd
+    sudo sh -c 'nohup containerd --config /etc/containerd/config.toml >>/tmp/containerd.log 2>&1 &'
+fi
+
+# Ensure containerd socket directories exist
+sudo mkdir -p /run/containerd /var/run/containerd
+if [ ! /var/run/containerd/containerd.sock -ef /run/containerd/containerd.sock ]; then
+    sudo ln -sf /run/containerd/containerd.sock /var/run/containerd/containerd.sock
+fi
+
+if ! command -v crictl >/dev/null 2>&1; then
+    echo "crictl not found, installing..."
+    sudo env $APTVARS apt-get install -y cri-tools
+fi
+
+# Configure crictl to connect to containerd socket
 cat <<EOF | sudo tee /etc/crictl.yaml >/dev/null
 runtime-endpoint: unix:///run/containerd/containerd.sock
 image-endpoint: unix:///run/containerd/containerd.sock
@@ -770,15 +1056,80 @@ timeout: 10
 debug: false
 EOF
 sudo chmod 644 /etc/crictl.yaml
+sleep 2
+
+# Wait up to 30 seconds for containerd CRI to be ready
+for i in $(seq 1 30); do
+    if sudo crictl info >/dev/null 2>&1; then
+        break
+    fi
+    sleep 1
+done
+if ! sudo crictl info >/dev/null 2>&1; then
+    echo "ERROR: containerd CRI not ready"
+    sudo crictl info 2>&1 || true
+    if [ "$USE_SYSTEMCTL" = true ]; then
+        echo "Containerd service status:"
+        sudo systemctl status containerd --no-pager || true
+        echo "Recent containerd logs:"
+        sudo journalctl -u containerd --no-pager -n 50 || true
+    else
+        echo "Containerd process logs:"
+        sudo tail -n 200 /tmp/containerd.log 2>/dev/null || true
+        echo "Log for containerd grpc.v1.cri:"
+        grep -i 'grpc.v1.cri' /tmp/containerd.log 2>/dev/null | tail -n +1 || true
+    fi
+    exit 1
+fi
+# Enable br_netfilter module and set sysctl params
+sudo modprobe br_netfilter || true
+sudo sysctl -w net.bridge.bridge-nf-call-iptables=1 net.bridge.bridge-nf-call-ip6tables=1 net.ipv4.ip_forward=1 >/dev/null
+
+# Restart kubelet
+if [ "$USE_SYSTEMCTL" = true ]; then
+    sudo systemctl restart kubelet || true
+else
+    echo "Starting kubelet manually..."
+    (for i in $(seq 1 120); do
+        HAS_KUBELET_CONF=$(sudo test -s "/var/lib/kubelet/config.yaml" && echo "true" || echo "false")
+        HAS_BOOTSTRAP_KUBELET_CONF=$(sudo test -s "/etc/kubernetes/bootstrap-kubelet.conf" && echo "true" || echo "false")
+        HAS_KUBELET_CONF=$(sudo test -s "/etc/kubernetes/kubelet.conf" && echo "true" || echo "false")
+        if [ "$HAS_KUBELET_CONF" = "true" ] && { [ "$HAS_BOOTSTRAP_KUBELET_CONF" = "true" ] || [ "$HAS_KUBELET_CONF" = "true" ]; }; then
+            KUBELET_FLAGS="$(sudo grep '^KUBELET_KUBEADM_ARGS=' /var/lib/kubelet/kubeadm-flags.env 2>/dev/null | cut -d= -f2- | sed -e 's/^\"//' -e 's/\"$//' -e "s/^'//" -e "s/'$//")"
+            if [[ "$KUBELET_FLAGS" != *"--cgroup-driver="* ]]; then
+                KUBELET_FLAGS="$KUBELET_FLAGS --cgroup-driver=$CGROUP_DRIVER"
+            fi
+
+            sudo pkill -f '[k]ubelet' >/dev/null 2>&1 || true
+            sudo setsid sh -c 'nohup kubelet \
+                --config=/var/lib/kubelet/config.yaml \
+                --bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf \
+                --kubeconfig=/etc/kubernetes/kubelet.conf \
+                '"$KUBELET_FLAGS"' >>/tmp/kubelet.log 2>&1 < /dev/null &' >/dev/null 2>&1
+            echo "Started kubelet manually with flags: $KUBELET_FLAGS"
+            exit 0
+        fi
+        if ((i % 6 == 0)); then
+            echo "Waiting for kubeadm configs: (config.yaml: $HAS_KUBELET_CONF, bootstrap-kubelet.conf: $HAS_BOOTSTRAP_KUBELET_CONF, kubelet.conf: $HAS_KUBELET_CONF)"
+        fi
+        sleep 5
+    done) &
+fi
 
 # Pull required images for Kubernetes
 echo "Pulling kube-apiserver, kube-controller-manager, kube-scheduler, kube-proxy, pause, etcd, and coredns..."
-sudo kubeadm config images pull --kubernetes-version=${KUBEVERSIONWITHOUTSUFFIX}
+sudo kubeadm config images pull --kubernetes-version=${KUBEVERSIONWITHOUTSUFFIX} --cri-socket=unix:///run/containerd/containerd.sock
 
 echo "Kubernetes components reinstalled and ready for initialization."
 
 mkdir -p "$HOME/.kube"
-sudo chown -R $USER:$USER "$HOME/.kube/"
+sudo chown --recursive "$USER" "$HOME/.kube/"
+
+KUBEPROXY_MODE="ipvs"
+if ! sudo modprobe ip_vs ip_vs_rr ip_vs_wrr ip_vs_sh nf_conntrack 2>/dev/null; then
+    echo "IPVS modules not available, using kube-proxy iptables mode."
+    KUBEPROXY_MODE="iptables"
+fi
 
 if [[ ${KUBEVERSIONWITHOUTSUFFIX} == 1.13.* ]]; then
     cat <<EOF | tee "$HOME/.kube/kube-config.yaml" >/dev/null
@@ -800,7 +1151,7 @@ networking:
 ---
 apiVersion: kubeproxy.config.k8s.io/v1alpha1
 kind: KubeProxyConfiguration
-mode: ipvs
+mode: ${KUBEPROXY_MODE}
 EOF
 
 elif [[ ${KUBEVERSIONWITHOUTSUFFIX} == 1.14.* ]]; then
@@ -823,7 +1174,7 @@ networking:
 ---
 apiVersion: kubeproxy.config.k8s.io/v1alpha1
 kind: KubeProxyConfiguration
-mode: ipvs
+mode: ${KUBEPROXY_MODE}
 EOF
 
 elif [[ ${KUBEVERSIONWITHOUTSUFFIX} == 1.1[5-9].* ]]; then
@@ -846,15 +1197,25 @@ networking:
 ---
 apiVersion: kubeproxy.config.k8s.io/v1alpha1
 kind: KubeProxyConfiguration
-mode: ipvs
+mode: ${KUBEPROXY_MODE}
 EOF
 
 else
     # In Kubernetes v1.20, the SCTPSupport feature gate reached General Availability (GA) and no longer needs to be specified.
+    RESOLV_CONF="/run/systemd/resolve/resolv.conf"
+    if ! sudo test -f "$RESOLV_CONF"; then
+        RESOLV_CONF="/etc/resolv.conf"
+    fi
+
     cat <<EOF | tee "$HOME/.kube/kube-config.yaml" >/dev/null
-apiVersion: kubeadm.k8s.io/v1beta3
-kubernetesVersion: v${KUBEVERSIONWITHOUTSUFFIX}
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: InitConfiguration
+nodeRegistration:
+  criSocket: unix:///run/containerd/containerd.sock
+---
+apiVersion: kubeadm.k8s.io/v1beta4
 kind: ClusterConfiguration
+kubernetesVersion: v${KUBEVERSIONWITHOUTSUFFIX}
 apiServer:
   certSANs:
     - 'localhost'
@@ -868,16 +1229,20 @@ networking:
 ---
 apiVersion: kubeproxy.config.k8s.io/v1alpha1
 kind: KubeProxyConfiguration
-mode: ipvs
+mode: ${KUBEPROXY_MODE}
+---
+apiVersion: kubelet.config.k8s.io/v1beta1
+kind: KubeletConfiguration
+resolvConf: "${RESOLV_CONF}"
 EOF
 fi
 
-if [ -f /etc/cni/net.d/10-flannel.conflist ]; then
-    echo "Removing outdated  Flannel CNI configuration..."
+if sudo test -f /etc/cni/net.d/10-flannel.conflist; then
+    echo "Removing outdated Flannel CNI configuration..."
     sudo rm -rf /etc/cni/net.d/10-flannel.conflist
 fi
 
-echo "Configuring Kube-Proxy ClusterRoleBinding..."
+# Configure Kube-Proxy ClusterRoleBinding
 cat <<EOF | tee "$HOME/.kube/kube-proxy-rbac.yaml" >/dev/null
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -896,16 +1261,21 @@ EOF
 ATTEMPT=0
 MAX_ATTEMPTS=5
 until ((ATTEMPT++ == MAX_ATTEMPTS)); do
+    if sudo test -d /etc/kubernetes/manifests; then
+        sudo find /etc/kubernetes/manifests -name "*.yaml" -type f -delete 2>/dev/null || true
+    fi
+
     if [[ $ATTEMPT -eq $MAX_ATTEMPTS ]]; then
         echo "Kubernetes Initialization: Making final attempt with verbose logging enabled..."
         if sudo kubeadm init --config "$HOME/.kube/kube-config.yaml" --v=5; then
             break
         fi
     else
-        echo "Kubernetes Initialization: Attempt $ATTEMPT failed; trying again in 10 seconds..."
+        echo "Kubernetes Initialization: Attempt $ATTEMPT..."
         if sudo kubeadm init --config "$HOME/.kube/kube-config.yaml"; then
             break
         fi
+        echo "Kubernetes Initialization: Attempt $ATTEMPT failed. Trying again in 10 seconds..."
         sleep 10
     fi
 done
@@ -916,31 +1286,49 @@ else
     echo "Kubernetes initialized successfully."
     # Set the KUBECONFIG variable to the config file's location
     mkdir -p "$HOME/.kube"
+    sudo chown --recursive "$USER" "$HOME/.kube"
     export KUBECONFIG="$HOME/.kube/config"
     sudo cp -f /etc/kubernetes/admin.conf "$KUBECONFIG"
-    sudo chown $(id -u):$(id -g) "$KUBECONFIG"
-    sudo sed -i '/KUBECONFIG/d' /etc/environment
+    sudo chown --recursive "$USER" "$KUBECONFIG"
+    sudo chmod 600 "$KUBECONFIG"
+    # Make the admin.conf readable by all users (only root can write)
+    sudo chmod 644 /etc/kubernetes/admin.conf
+    sudo sed -i '/^KUBECONFIG=/d' /etc/environment
     echo 'KUBECONFIG='"$KUBECONFIG" | sudo tee -a /etc/environment >/dev/null
     source /etc/environment
+    # If running as a non-root user set up kubeconfig for root also
+    if [[ $(id -u) -ne 0 ]]; then
+        sudo mkdir -p /root/.kube
+        sudo cp -f /etc/kubernetes/admin.conf /root/.kube/config
+        sudo chmod 600 /root/.kube/config
+    fi
+    if [ ! -f "$HOME/.bashrc" ]; then
+        touch "$HOME/.bashrc"
+    fi
+    sudo sed -i '/^export KUBECONFIG=/d' "$HOME/.bashrc"
+    echo "export KUBECONFIG=\"$KUBECONFIG\"" >>"$HOME/.bashrc"
+    source "$HOME/.bashrc"
 fi
 
 # Wait for kube-apiserver to be ready
-sleep 1
-until kubectl get pods --all-namespaces; do
+until kubectl get --raw='/readyz' >/dev/null 2>&1; do
     echo "Waiting for API server to be available..."
     sudo crictl ps -a
-    sleep 8
+    sleep 2
 done
 
 echo "Applying Flannel CNI (Kube version $KUBEVERSION)..."
 KUBE_MAJOR=$(echo $KUBEVERSION | cut -d '.' -f1)
 KUBE_MINOR=$(echo $KUBEVERSION | cut -d '.' -f2)
+# Ensure CNI directories exist
+sudo mkdir -p /etc/cni/net.d /opt/cni/bin
 if [[ $KUBE_MAJOR -eq 1 && $KUBE_MINOR -ge 28 ]]; then
     # Apply the latest Flannel configuration for Kubernetes version 1.28 and above
     if ! kubectl apply -f "https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml"; then
         echo "Failed to apply Flannel configuration."
         exit 1
     fi
+    kubectl -n kube-flannel rollout status ds/kube-flannel-ds --timeout=180s || true
 else
     # Use a specific Flannel version that does not include deprecated PSP for other Kubernetes versions
     echo "Removing PSP from Flannel Configuration..."
@@ -954,13 +1342,96 @@ else
         echo "Failed to apply Flannel configuration."
         exit 1
     fi
+    kubectl -n kube-flannel rollout status ds/kube-flannel-ds --timeout=180s || true
 fi
 
 if ! kubectl apply -f "$HOME/.kube/kube-proxy-rbac.yaml"; then
     echo "Failed to apply Kube-Proxy ClusterRoleBinding, skipping."
 fi
 
-# Check for node readiness for conditional taint removal
+echo "Waiting for Flannel CNI configuration to be created..."
+for i in $(seq 1 120); do
+    if sudo test -f /etc/cni/net.d/10-flannel.conflist || sudo ls /etc/cni/net.d/*.conflist >/dev/null 2>&1; then
+        break
+    fi
+    sleep 1
+done
+
+# Restart containerd if CRI shows NetworkReady is false after CNI setup
+if ! sudo crictl info 2>/dev/null | grep -q '"NetworkReady": true'; then
+    echo "Containerd CRI network not ready. Restarting to apply CNI configuration..."
+    if [ "$USE_SYSTEMCTL" = true ]; then
+        sudo systemctl restart containerd
+    else
+        sudo pkill -x containerd || true
+        sudo setsid sh -c 'nohup containerd --config /etc/containerd/config.toml >>/tmp/containerd.log 2>&1 < /dev/null &' >/dev/null 2>&1
+    fi
+    for i in $(seq 1 30); do
+        if sudo crictl info >/dev/null 2>&1; then
+            break
+        fi
+        sleep 1
+    done
+    # Wait for NetworkReady condition
+    for i in $(seq 1 10); do
+        if sudo crictl info -o json | jq -e '.status.conditions[] | select(.type=="NetworkReady" and .status==true)' >/dev/null; then
+            break
+        fi
+        sleep 1
+    done
+fi
+for i in $(seq 1 120); do
+    if ip link show flannel.1 >/dev/null 2>&1; then
+        break
+    fi
+    sleep 1
+done
+
+echo "Waiting for nodes to be Ready..."
+if ! kubectl wait --for=condition=Ready node --all --timeout=300s; then
+    echo "Pods not running. Showing flannel pod status:"
+    kubectl -n kube-flannel get pods -owide || true
+fi
+
+echo "Checking kubelet DNS and cgroupDriver settings..."
+if sudo test -f /var/lib/kubelet/config.yaml; then
+    echo "resolvConf: $(sudo grep -E '^resolvConf:' /var/lib/kubelet/config.yaml || echo '(not set)')"
+    echo "cgroupDriver: $(sudo grep -E '^cgroupDriver:' /var/lib/kubelet/config.yaml || echo '(not set)')"
+fi
+
+echo "Checking CoreDNS rollout..."
+if ! kubectl -n kube-system wait --for=condition=Available deploy/coredns --timeout=120s; then
+    echo "CoreDNS not ready, collecting diagnostics..."
+    kubectl -n kube-system get pods -owide
+    kubectl -n kube-system describe deploy/coredns | tail -n +1 | sed 's/^/DESCRIBE: /'
+    kubectl -n kube-system get events --sort-by=.lastTimestamp | tail -n 50 | sed 's/^/EVENT: /'
+
+    echo "Patching CoreDNS to use DNS ${DNS_SERVER}..."
+    # Wait for ConfigMap creation before patching to avoid mount errors
+    for i in $(seq 1 60); do
+        if kubectl -n kube-system get cm coredns >/dev/null 2>&1; then
+            break
+        fi
+        sleep 1
+    done
+    kubectl -n kube-system get cm coredns -o yaml | sed -E "s|forward[[:space:]]+\.[[:space:]].*|forward . ${DNS_SERVER}|g" | kubectl apply -f -
+    kubectl -n kube-system rollout restart deploy/coredns
+fi
+
+echo "CoreDNS status:"
+kubectl -n kube-system get pods -l k8s-app=kube-dns -owide || true
+kubectl -n kube-system wait --for=condition=Ready pods -l k8s-app=kube-dns --timeout=180s || true
+kubectl -n kube-system wait --for=condition=Available deploy/coredns --timeout=180s || true
+
+if [[ $KUBE_MAJOR -eq 1 && $KUBE_MINOR -ge 28 ]]; then
+    echo "Removing taints from control-plane..."
+    kubectl taint nodes --all node-role.kubernetes.io/control-plane:NoSchedule- >/dev/null 2>&1 || true
+else
+    echo "Removing taints from master..."
+    kubectl taint nodes --all node-role.kubernetes.io/master-:NoSchedule- >/dev/null 2>&1 || true
+fi
+kubectl -n kube-flannel rollout status ds/kube-flannel-ds --timeout=180s || true
+
 echo "Waiting for essential system pods to be ready..."
 if [[ $KUBE_MAJOR -eq 1 && $KUBE_MINOR -ge 28 ]]; then
     wait_for_pods_running 7 kube-system
@@ -1062,7 +1533,7 @@ fi
 
 # Check if the PV_NODE_NAME is set to avoid errors
 if [ -z "$PV_NODE_NAME" ]; then
-    echo "Error: Unable to determine the node name."
+    echo "ERROR: Unable to determine the node name."
     exit 1
 fi
 
@@ -1077,8 +1548,11 @@ kubectl label --overwrite nodes "$PV_NODE_NAME" local-storage=enable
 HELM_REPO_HOST="helm.ricinfra.local"
 
 # Remove existing entries for the hostname from /etc/hosts
-sudo sed -i "/$HELM_REPO_HOST/d" /etc/hosts
+sudo sed -i "/$HELM_REPO_HOST/d" /etc/hosts || true
 # Add the new entry to /etc/hosts
-echo "127.0.0.1 $HELM_REPO_HOST" | sudo tee -a /etc/hosts
+echo "127.0.0.1 $HELM_REPO_HOST" | sudo tee -a /etc/hosts || true
+
+# Reset the shell's command hash table to recognize changes in available executables
+hash -r
 
 echo "Script completed successfully."

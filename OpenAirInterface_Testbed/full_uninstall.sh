@@ -46,7 +46,7 @@ echo "Stopping 5G Core Network, OpenAirInterface components, and FlexRIC..."
 echo
 echo
 echo "################################################################################"
-echo "# Uninstalling 5G Core...                                                      #"
+echo "# Uninstalling 5G Core Network...                                              #"
 echo "################################################################################"
 echo
 echo
@@ -59,7 +59,7 @@ cd ..
 echo
 echo
 echo "################################################################################"
-echo "# Uninstalling User Equipment...                                               #"
+echo "# Uninstalling User Equipment (OpenAirInterface)...                            #"
 echo "################################################################################"
 echo
 echo
@@ -72,7 +72,7 @@ cd ..
 echo
 echo
 echo "################################################################################"
-echo "# Uninstalling Next Generation Node B...                                       #"
+echo "# Uninstalling Next Generation Node B (OpenAirInterface)...                    #"
 echo "################################################################################"
 echo
 echo
@@ -85,7 +85,7 @@ cd ..
 echo
 echo
 echo "################################################################################"
-echo "# Uninstalling Near-Real-Time RAN Intelligent Controller...                    #"
+echo "# Uninstalling Near-Real-Time RAN Intelligent Controller (FlexRIC)...          #"
 echo "################################################################################"
 echo
 echo

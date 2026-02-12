@@ -194,7 +194,7 @@ if [ ! -f kpimon-go.tar ]; then
     docker build -t 127.0.0.1:80/kpimon-go:latest .
     docker save -o kpimon-go.tar 127.0.0.1:80/kpimon-go:latest
     sudo chmod 755 kpimon-go.tar
-    sudo chown $USER:$USER kpimon-go.tar
+    sudo chown "$USER" kpimon-go.tar
 
     # Import the image into the containerd container runtime
     sudo ctr -n=k8s.io image import kpimon-go.tar

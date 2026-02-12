@@ -33,6 +33,19 @@ echo "# Script: $(realpath "$0")..."
 CONFIG_FILE="/etc/docker/daemon.json"
 TEMP_FILE="/tmp/daemon.json.tmp"
 
+# Detect if systemctl is available
+USE_SYSTEMCTL=false
+if command -v systemctl >/dev/null 2>&1; then
+    if [ "$(cat /proc/1/comm 2>/dev/null)" = "systemd" ]; then
+        OUTPUT="$(systemctl 2>&1 || true)"
+        if echo "$OUTPUT" | grep -qiE 'not supported|System has not been booted with systemd'; then
+            echo "Detected systemctl is not supported. Using background processes instead."
+        elif systemctl list-units >/dev/null 2>&1 || systemctl is-system-running --quiet >/dev/null 2>&1; then
+            USE_SYSTEMCTL=true
+        fi
+    fi
+fi
+
 # Check if jq is installed; if not, install it
 if ! command -v jq &>/dev/null; then
     echo "Installing jq..."
@@ -119,18 +132,41 @@ else
     # The file doesn't exist, create it with the required configuration
     echo "Creating new Docker configuration file..."
     sudo mkdir -p /etc/docker
+
+    # Select storage driver (see https://docs.docker.com/engine/storage/drivers/select-storage-driver)
+    if [ "$USE_SYSTEMCTL" = true ]; then
+        DRIVER="overlay2"
+    else
+        DRIVER="vfs"
+    fi
+    if [ "$DRIVER" = "overlay2" ] && ! grep -qw overlay /proc/filesystems; then
+        if ! sudo modprobe overlay >/dev/null 2>&1; then
+            DRIVER="vfs"
+        fi
+    fi
+    if [ "$DRIVER" = "overlay2" ]; then
+        if ! sudo mkdir -p /var/lib/docker/test-overlay/upper /var/lib/docker/test-overlay/work /var/lib/docker/test-overlay/merged; then
+            DRIVER="vfs"
+        elif ! sudo mount -t overlay overlay -o lowerdir=/bin,upperdir=/var/lib/docker/test-overlay/upper,workdir=/var/lib/docker/test-overlay/work /var/lib/docker/test-overlay/merged 2>/dev/null; then
+            DRIVER="vfs"
+        else
+            sudo umount /var/lib/docker/test-overlay/merged 2>/dev/null || true
+        fi
+        sudo rm -rf /var/lib/docker/test-overlay 2>/dev/null || true
+    fi
+
     sudo tee /etc/docker/daemon.json >/dev/null <<EOF
 {
-  "exec-opts": ["native.cgroupdriver=systemd"],
-  "log-driver": "json-file",
-  "log-opts": {
-    "max-size": "100m"
-  },
-  "storage-driver": "overlay2",
-  "features": {
-    "buildkit": true
-  },
-  "max-concurrent-downloads": 10
+    "exec-opts": ["native.cgroupdriver=systemd"],
+    "log-driver": "json-file",
+    "log-opts": {
+        "max-size": "100m"
+    },
+    "storage-driver": "${DRIVER}",
+    "features": {
+        "buildkit": true
+    },
+    "max-concurrent-downloads": 10
 }
 EOF
 

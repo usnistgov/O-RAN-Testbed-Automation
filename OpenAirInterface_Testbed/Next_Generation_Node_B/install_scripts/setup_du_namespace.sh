@@ -39,12 +39,12 @@ cd "$SCRIPT_DIR"
 DU_NUMBER=$1
 
 if [[ -z "$DU_NUMBER" ]]; then
-    echo "Error: No DU number provided."
+    echo "ERROR: No DU number provided."
     echo "Usage: $0 <DU_NUMBER>"
     exit 1
 fi
 if ! [[ $DU_NUMBER =~ ^[0-9]+$ ]]; then
-    echo "Error: DU number must be a number."
+    echo "ERROR: DU number must be a number."
     exit 1
 fi
 
@@ -52,26 +52,43 @@ DU_NAMESPACE="du$DU_NUMBER"
 
 # Give the DU its own network namespace and configure it to access the host network
 NETWORK_INTERFACE=$(ip route | grep default | awk '{print $5}')
-# Fetch the base IP using the Python script
-BASE_IP=$(python3 fetch_nth_ip.py 0.10.202.0/24 $((DU_NUMBER - 1)))
-DU_SUBNET_FIRST_3_OCTETS=$(echo $BASE_IP | cut -d. -f2-4)
-DU_HOST_IP=$DU_SUBNET_FIRST_3_OCTETS.1
-DU_NS_IP=$DU_SUBNET_FIRST_3_OCTETS.2
 
-# Code from (https://open-cells.com/index.php/2021/02/08/rf-simulator-1-enb-2-ues-all-in-one):
+# Allocate a /29 (8 addresses) subnet per DU (e.g., DU 1 -> 10.200.0.8/29, Gateway .9, DU .10)
+BASE_SUBNET="10.200.0.0/16"
+SUBNET_SIZE=8
+
+# Calculate IP offsets
+SUBNET_OFFSET=$((DU_NUMBER * SUBNET_SIZE))
+HOST_IP_OFFSET=$((SUBNET_OFFSET + 1)) # .5
+DU_IP_OFFSET=$((SUBNET_OFFSET + 2))   # .6
+
+# Fetch IPs from subnet using python script
+DU_SUBNET_ID=$(python3 fetch_nth_ip.py "$BASE_SUBNET" $SUBNET_OFFSET)
+DU_HOST_IP=$(python3 fetch_nth_ip.py "$BASE_SUBNET" $HOST_IP_OFFSET)
+DU_NS_IP=$(python3 fetch_nth_ip.py "$BASE_SUBNET" $DU_IP_OFFSET)
+
+# Clean up existing artifacts for this DU
 sudo ip netns delete $DU_NAMESPACE || true
 sudo ip link delete v-eth-du$DU_NUMBER || true
+
+# Create namespace and veth pair
 sudo ip netns add $DU_NAMESPACE
 sudo ip link add v-eth-du$DU_NUMBER type veth peer name v-$DU_NAMESPACE
 sudo ip link set v-$DU_NAMESPACE netns $DU_NAMESPACE
-sudo ip addr add $DU_HOST_IP/24 dev v-eth-du$DU_NUMBER
-sudo ip link set v-eth-du$DU_NUMBER up
-sudo iptables -t nat -A POSTROUTING -s $DU_SUBNET_FIRST_3_OCTETS.0/24 -o $NETWORK_INTERFACE -j MASQUERADE
-# Allow forwarding between host primary interface and the DU veth
-sudo iptables -A FORWARD -i $NETWORK_INTERFACE -o v-eth-du$DU_NUMBER -j ACCEPT
-sudo iptables -A FORWARD -o $NETWORK_INTERFACE -i v-eth-du$DU_NUMBER -j ACCEPT
 
+# Configure host side interface
+sudo ip addr add $DU_HOST_IP/29 dev v-eth-du$DU_NUMBER
+sudo ip link set v-eth-du$DU_NUMBER up
+
+# Configure NAT to masquerade traffic and allow forwarding
+sudo iptables -t nat -A POSTROUTING -s "$DU_SUBNET_ID/29" -o "$NETWORK_INTERFACE" -j MASQUERADE
+sudo iptables -A FORWARD -i "$NETWORK_INTERFACE" -o v-eth-du$DU_NUMBER -j ACCEPT
+sudo iptables -A FORWARD -o "$NETWORK_INTERFACE" -i v-eth-du$DU_NUMBER -j ACCEPT
+
+# Configure namespace side interface
 sudo ip netns exec $DU_NAMESPACE ip link set dev lo up
-sudo ip netns exec $DU_NAMESPACE ip addr add $DU_NS_IP/24 dev v-$DU_NAMESPACE
+sudo ip netns exec $DU_NAMESPACE ip addr add $DU_NS_IP/29 dev v-$DU_NAMESPACE
 sudo ip netns exec $DU_NAMESPACE ip link set v-$DU_NAMESPACE up
+
+# Set default route in namespace to point to host gateway
 sudo ip netns exec $DU_NAMESPACE ip route add default via $DU_HOST_IP

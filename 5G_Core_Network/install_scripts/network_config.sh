@@ -104,6 +104,12 @@ OGSTUN2_IPV6_1=$(grab_first_ipv6_address "$OGSTUN2_IPV6")
 OGSTUN3_IPV4_1=$(grab_first_ipv4_address "$OGSTUN3_IPV4")
 OGSTUN3_IPV6_1=$(grab_first_ipv6_address "$OGSTUN3_IPV6")
 
+APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
+if ! command -v ip &>/dev/null; then
+    echo "Package \"iproute2\" not found, installing..."
+    sudo env $APTVARS apt-get install -y iproute2
+fi
+
 # Check if the tun interface already exists, if not, add it
 if ! ip link show ogstun >/dev/null 2>&1; then
     echo "Adding TUN interface ogstun..."
@@ -178,7 +184,7 @@ cd ..
 
 # Enable IP forwarding
 sudo sysctl -w net.ipv4.ip_forward=1
-sudo sysctl -w net.ipv6.conf.all.forwarding=1
+sudo sysctl -w net.ipv6.conf.all.forwarding=1 || true
 
 # Check if the iptables MASQUERADE rule already exists, if not, add it
 if ! sudo iptables --wait -t nat -C POSTROUTING -s $DEFAULT_OGSTUN_IPV4 ! -o ogstun -j MASQUERADE 2>/dev/null; then

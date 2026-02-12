@@ -39,7 +39,7 @@ PLMN="${2:-""}" # Optional PLMN parameter
 
 # Validate that UE_NUMBER is a positive integer
 if ! [[ "$UE_NUMBER" =~ ^[0-9]+$ ]] || [ "$UE_NUMBER" -lt 1 ]; then
-    echo "Error: UE_NUMBER must be a positive integer."
+    echo "ERROR: UE_NUMBER must be a positive integer."
     exit 1
 fi
 

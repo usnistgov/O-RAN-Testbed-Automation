@@ -31,6 +31,8 @@
 # Do not exit immediately if a command fails
 set +e
 
+RESET_IPTABLES=false
+
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
@@ -40,21 +42,35 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-if [ "$1" != "bypass_confirmation" ]; then
+if [[ "$1" != "bypass_confirmation" && "$1" != "--yes" && "$1" != "-y" ]]; then
     clear
     echo "This script will remove Docker and Kubernetes from the system."
     echo "This is a destructive operation and may result in data loss."
     echo "Please ensure you have backed up any necessary data before proceeding."
     echo
-    echo "Do you want to proceed? (yes/no)"
-    read -r PROCEED
-    if [ "$PROCEED" != "yes" ]; then
+    echo "Do you want to proceed? (Y/n)"
+    read -r CONFIRM
+    CONFIRM=$(echo "${CONFIRM:-y}" | tr '[:upper:]' '[:lower:]')
+    if [[ "$CONFIRM" != "y" && "$CONFIRM" != "yes" ]]; then
         echo "Exiting script."
         exit 0
     fi
 fi
 
-echo "Uninstalling Near-Real-Time RAN Intelligent Controller..."
+# Detect if systemctl is available
+USE_SYSTEMCTL=false
+if command -v systemctl >/dev/null 2>&1; then
+    if [ "$(cat /proc/1/comm 2>/dev/null)" = "systemd" ]; then
+        OUTPUT="$(systemctl 2>&1 || true)"
+        if echo "$OUTPUT" | grep -qiE 'not supported|System has not been booted with systemd'; then
+            echo "Detected systemctl is not supported. Using background processes instead."
+        elif systemctl list-units >/dev/null 2>&1 || systemctl is-system-running --quiet >/dev/null 2>&1; then
+            USE_SYSTEMCTL=true
+        fi
+    fi
+fi
+
+echo "Uninstalling Near-Real-Time RAN Intelligent Controller (O-RAN SC)..."
 # Modifies the needrestart configuration to suppress interactive prompts
 if [ -d /etc/needrestart ]; then
     sudo install -d -m 0755 /etc/needrestart/conf.d
@@ -68,33 +84,35 @@ fi
 # Run a sudo command every minute to ensure script execution without user interaction
 ./install_scripts/start_sudo_refresh.sh
 
-# Prevent the unattended-upgrades service from creating dpkg locks that would error the script
-if systemctl is-active --quiet unattended-upgrades; then
-    sudo systemctl stop unattended-upgrades &>/dev/null && echo "Successfully stopped unattended-upgrades service."
-    sudo systemctl disable unattended-upgrades &>/dev/null && echo "Successfully disabled unattended-upgrades service."
-fi
-if systemctl is-active --quiet apt-daily.timer; then
-    sudo systemctl stop apt-daily.timer &>/dev/null && echo "Successfully stopped apt-daily.timer service."
-    sudo systemctl disable apt-daily.timer &>/dev/null && echo "Successfully disabled apt-daily.timer service."
-fi
-if systemctl is-active --quiet apt-daily-upgrade.timer; then
-    sudo systemctl stop apt-daily-upgrade.timer &>/dev/null && echo "Successfully stopped apt-daily-upgrade.timer service."
-    sudo systemctl disable apt-daily-upgrade.timer &>/dev/null && echo "Successfully disabled apt-daily-upgrade.timer service."
-fi
+if [ "$USE_SYSTEMCTL" = true ]; then
+    # Prevent the unattended-upgrades service from creating dpkg locks that would error the script
+    if systemctl is-active --quiet unattended-upgrades; then
+        sudo systemctl stop unattended-upgrades &>/dev/null && echo "Successfully stopped unattended-upgrades service."
+        sudo systemctl disable unattended-upgrades &>/dev/null && echo "Successfully disabled unattended-upgrades service."
+    fi
+    if systemctl is-active --quiet apt-daily.timer; then
+        sudo systemctl stop apt-daily.timer &>/dev/null && echo "Successfully stopped apt-daily.timer service."
+        sudo systemctl disable apt-daily.timer &>/dev/null && echo "Successfully disabled apt-daily.timer service."
+    fi
+    if systemctl is-active --quiet apt-daily-upgrade.timer; then
+        sudo systemctl stop apt-daily-upgrade.timer &>/dev/null && echo "Successfully stopped apt-daily-upgrade.timer service."
+        sudo systemctl disable apt-daily-upgrade.timer &>/dev/null && echo "Successfully disabled apt-daily-upgrade.timer service."
+    fi
 
-# Ensure time synchronization is enabled using chrony
-if ! dpkg -s chrony &>/dev/null; then
-    echo "Chrony is not installed, installing..."
-    sudo apt-get update
-    sudo env $APTVARS apt-get install -y chrony || true
-fi
-if ! systemctl is-enabled --quiet chrony; then
-    echo "Enabling Chrony service..."
-    sudo systemctl enable chrony || true
-fi
-if ! systemctl is-active --quiet chrony; then
-    echo "Starting Chrony service..."
-    sudo systemctl start chrony || true
+    # Ensure time synchronization is enabled using chrony
+    if ! dpkg -s chrony &>/dev/null; then
+        echo "Chrony is not installed, installing..."
+        sudo apt-get update
+        sudo env $APTVARS apt-get install -y chrony || true
+    fi
+    if ! systemctl is-enabled --quiet chrony; then
+        echo "Enabling Chrony service..."
+        sudo systemctl enable chrony || true
+    fi
+    if ! systemctl is-active --quiet chrony; then
+        echo "Starting Chrony service..."
+        sudo systemctl start chrony || true
+    fi
 fi
 
 ./install_scripts/stop_e2sim.sh
@@ -102,17 +120,26 @@ fi
 echo
 echo
 echo "Stopping and removing existing Docker installations, then installing Docker $DOCKERVERSION..."
-if sudo systemctl is-active --quiet docker.socket; then
-    sudo systemctl stop docker.socket
-fi
-if sudo systemctl is-active --quiet docker.service; then
-    sudo systemctl stop docker.service
-fi
-if sudo systemctl is-enabled --quiet docker.socket; then
-    sudo systemctl disable docker.socket
-fi
-if sudo systemctl is-enabled --quiet docker.service; then
-    sudo systemctl disable docker.service
+if [ "$USE_SYSTEMCTL" = true ]; then
+    if sudo systemctl is-active --quiet docker.socket; then
+        sudo systemctl stop docker.socket
+    fi
+    if sudo systemctl is-active --quiet docker.service; then
+        sudo systemctl stop docker.service
+    fi
+    if sudo systemctl is-enabled --quiet docker.socket; then
+        sudo systemctl disable docker.socket
+    fi
+    if sudo systemctl is-enabled --quiet docker.service; then
+        sudo systemctl disable docker.service
+    fi
+else
+    if command -v docker &>/dev/null; then
+        echo "Stopping existing Docker process..."
+        sudo pkill -x dockerd >/dev/null 2>&1 || true
+    else
+        echo "No existing Docker process found."
+    fi
 fi
 
 # Uninstall Docker packages and clean up
@@ -123,6 +150,13 @@ sudo apt-get autoremove -y
 echo
 echo
 echo "Stopping and removing existing Kubernetes installations..."
+
+# Stop and remove ChartMuseum container if Docker is installed
+if command -v docker &>/dev/null; then
+    echo "Stopping ChartMuseum container..."
+    docker stop chartmuseum 2>/dev/null || true
+    docker rm -f chartmuseum 2>/dev/null || true
+fi
 
 # Stop and remove all Docker containers if Docker is installed
 if command -v docker &>/dev/null; then
@@ -135,18 +169,32 @@ if command -v docker &>/dev/null; then
     fi
 fi
 
-if sudo systemctl is-active --quiet containerd; then
-    echo "Stopping containerd..."
-    sudo systemctl stop containerd
+if [ "$USE_SYSTEMCTL" = true ]; then
+    if sudo systemctl is-active --quiet containerd; then
+        echo "Stopping containerd..."
+        sudo systemctl stop containerd
+    fi
+else
+    if pgrep "containerd" >/dev/null; then
+        echo "Killing containerd process..."
+        sudo pkill -9 "containerd" || true
+    fi
 fi
 
 # Stop, disable, and mask kubelet service if it's running
-if sudo systemctl is-active --quiet kubelet; then
-    echo "Stopping, disabling, and masking kubelet service..."
-    sudo systemctl stop kubelet
-    sudo systemctl disable kubelet
-    sudo systemctl mask kubelet
-    echo "kubelet service stopped, disabled, and masked."
+if [ "$USE_SYSTEMCTL" = true ]; then
+    if sudo systemctl is-active --quiet kubelet; then
+        echo "Stopping, disabling, and masking kubelet service..."
+        sudo systemctl stop kubelet
+        sudo systemctl disable kubelet
+        sudo systemctl mask kubelet
+        echo "kubelet service stopped, disabled, and masked."
+    fi
+else
+    if pgrep "kubelet" >/dev/null; then
+        echo "Killing kubelet process..."
+        sudo pkill -9 "kubelet" || true
+    fi
 fi
 
 # Reset Kubernetes using kubeadm if kubeadm is installed
@@ -161,11 +209,20 @@ fi
 # Stop Kubernetes services using systemd
 SERVICES=("kube-apiserver" "kube-controller-manager" "kube-scheduler" "etcd")
 for SERVICE in "${SERVICES[@]}"; do
-    if systemctl is-active --quiet $SERVICE; then
-        echo "Stopping $SERVICE..."
-        sudo systemctl stop $SERVICE || true
+    if [ "$USE_SYSTEMCTL" = true ]; then
+        if systemctl is-active --quiet $SERVICE; then
+            echo "Stopping $SERVICE..."
+            sudo systemctl stop $SERVICE || true
+        else
+            echo "$SERVICE is not active."
+        fi
     else
-        echo "$SERVICE is not active."
+        if pgrep "$SERVICE" >/dev/null; then
+            echo "Killing $SERVICE process..."
+            sudo pkill -9 "$SERVICE" || true
+        else
+            echo "$SERVICE process not found."
+        fi
     fi
 done
 
@@ -220,6 +277,16 @@ if command -v kubectl &>/dev/null; then
     sudo rm -f $(which kubectl)
 fi
 
+# Unregister environment variables
+sudo sed -i '/^KUBECONFIG=/d' /etc/environment
+sudo sed -i '/^CHART_REPO_URL=/d' /etc/environment
+if [ -f "$HOME/.bashrc" ]; then
+    sudo sed -i '/^export KUBECONFIG=/d' "$HOME/.bashrc"
+    if [ ! -s "$HOME/.bashrc" ]; then
+        sudo rm -f "$HOME/.bashrc"
+    fi
+fi
+
 # Clean up Kubernetes directories
 sudo find /var/lib/kubelet -type d -exec umount {} \; 2>/dev/null || true
 sudo ipvsadm --clear || true
@@ -268,20 +335,23 @@ fi
 rm -rf ~/.config/k9s
 
 # Reset iptables: Flush all default chains
-sudo iptables -F
-sudo iptables -t nat -F
-sudo iptables -t mangle -F
-# Reset iptables: Delete known custom chains safely
-for chain in FLANNEL-FWD FLANNEL-INGRESS FLANNEL-EGRESS; do
-    sudo iptables -D FORWARD -j $chain 2>/dev/null || true
-    sudo iptables -F $chain 2>/dev/null || true
-    sudo iptables -X $chain 2>/dev/null || true
-done
-# Reset iptables: Delete all remaining user-defined chains
-sudo iptables -X || true
-sudo iptables -t nat -X || true
-sudo iptables -t mangle -X || true
-# Reset iptables: Delete CNI interfaces
+if [ "$RESET_IPTABLES" = true ]; then
+    # Reset iptables: Flush all default chains
+    sudo iptables -F
+    sudo iptables -t nat -F
+    sudo iptables -t mangle -F
+    # Reset iptables: Delete known custom chains safely
+    for chain in FLANNEL-FWD FLANNEL-INGRESS FLANNEL-EGRESS; do
+        sudo iptables -D FORWARD -j $chain 2>/dev/null || true
+        sudo iptables -F $chain 2>/dev/null || true
+        sudo iptables -X $chain 2>/dev/null || true
+    done
+    # Reset iptables: Delete all remaining user-defined chains
+    sudo iptables -X || true
+    sudo iptables -t nat -X || true
+    sudo iptables -t mangle -X || true
+fi
+# Delete CNI interfaces
 echo "Removing CNI network interfaces..."
 sudo ip link delete cni0 2>/dev/null || true
 sudo ip link delete flannel.1 2>/dev/null || true
@@ -306,6 +376,9 @@ sudo rm -rf install_time.txt
 sudo rm -rf logs/
 sudo rm -rf ric-dep
 sudo rm -rf xApps
+
+# Stop the sudo timeout refresher, it is no longer necessary to run
+./install_scripts/stop_sudo_refresh.sh
 
 echo
 echo

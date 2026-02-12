@@ -33,11 +33,12 @@ set +e
 
 echo "# Script: $(realpath "$0")..."
 
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+PARENT_DIR=$(dirname "$SCRIPT_DIR")
+cd "$PARENT_DIR"
+
 # Stop and disable the MongoDB service
-if systemctl is-active --quiet mongod; then
-    sudo systemctl stop mongod
-    sudo systemctl disable mongod
-fi
+./install_scripts/stop_mongodb.sh
 
 # Uninstall the MongoDB packages
 sudo apt-get remove --purge -y mongodb-org mongodb-org-server mongodb-org-shell mongodb-org-mongos mongodb-org-tools mongosh

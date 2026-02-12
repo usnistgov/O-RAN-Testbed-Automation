@@ -35,6 +35,7 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$PARENT_DIR"
 
+GNB_DU_ID=3584 # 0xe00
 NETCONF_ADDRESS=0.0.0.0
 NETCONF_PORT=11830
 SFTP_PORT=11221
@@ -109,6 +110,9 @@ fi
 TEMP_CONF="o1-adapter-config.tmp.json"
 jq --arg ip "$NETCONF_ADDRESS" '.network.host = $ip' "$CONFIG_PATH" >"$TEMP_CONF" && mv "$TEMP_CONF" "$CONFIG_PATH"
 jq --arg ip "$NETCONF_ADDRESS" '.telnet.host = $ip' "$CONFIG_PATH" >"$TEMP_CONF" && mv "$TEMP_CONF" "$CONFIG_PATH"
+
+# Update the gNB DU ID
+jq --argjson id "$GNB_DU_ID" '.info["gnb-du-id"] = $id' "$CONFIG_PATH" >"$TEMP_CONF" && mv "$TEMP_CONF" "$CONFIG_PATH"
 
 # Update the ports
 jq --argjson port "$NETCONF_PORT" '.network["netconf-port"] = $port' "$CONFIG_PATH" >"$TEMP_CONF" && mv "$TEMP_CONF" "$CONFIG_PATH"

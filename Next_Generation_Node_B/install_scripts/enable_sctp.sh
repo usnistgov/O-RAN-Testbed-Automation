@@ -49,10 +49,12 @@ fi
 EXTRA_PKG="linux-modules-extra-$(uname -r)"
 if ! dpkg -s "$EXTRA_PKG" >/dev/null 2>&1; then
     sudo apt-get update
-    if apt-cache policy "$EXTRA_PKG" | grep -q 'Candidate: (none)'; then
-        echo "NOTE: $EXTRA_PKG not available in APT for $(uname -r). Continuing without it."
+    if apt-cache show "$EXTRA_PKG" >/dev/null 2>&1; then
+        if ! sudo env $APTVARS apt-get install -y "$EXTRA_PKG"; then
+            echo "NOTE: Failed to install $EXTRA_PKG. Skipping."
+        fi
     else
-        sudo env $APTVARS apt-get install -y "$EXTRA_PKG"
+        echo "NOTE: $EXTRA_PKG not available in apt for $(uname -r). Skipping."
     fi
 fi
 

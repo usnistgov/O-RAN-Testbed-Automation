@@ -52,11 +52,11 @@ PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$SCRIPT_DIR"
 
 if [ ! -d "5gdeploy" ]; then
-    echo "Error: Cannot find 5gdeploy directory. Please run the full_install.sh script first."
+    echo "ERROR: Cannot find 5gdeploy directory. Please run the full_install.sh script first."
     exit 1
 fi
 if [ ! -d "5gdeploy/scenario" ]; then
-    echo "Error: Cannot find 5gdeploy/scenario directory. Please run the full_install.sh script first."
+    echo "ERROR: Cannot find 5gdeploy/scenario directory. Please run the full_install.sh script first."
     exit 1
 fi
 
@@ -87,7 +87,7 @@ fi
 cd "$PARENT_DIR"
 
 # Ensure the correct YAML editor is installed
-sudo "$SCRIPT_DIR/install_scripts/./ensure_consistent_yq.sh"
+"$SCRIPT_DIR/install_scripts/./ensure_consistent_yq.sh"
 
 echo "Parsing options.yaml..."
 # Check if the YAML file exists, if not, set and save default values
@@ -142,9 +142,6 @@ if [ ! -f "options.yaml" ]; then
     echo "" >>"options.yaml"
     echo "ogstun3_ipv4: 10.47.0.0/16" >>"options.yaml"
     echo "ogstun3_ipv6: 2001:db8:face::/48" >>"options.yaml"
-    echo "" >>"options.yaml"
-    echo "# If core_to_use=open5gs, the use of systemctl can be disabled to support installations within Docker. Before changing this value, it is recommended to uninstall the testbed." >>"options.yaml"
-    echo "use_systemctl: true" >>"options.yaml"
 fi
 
 # Read PLMN and TAC values from the YAML file using yq
@@ -183,14 +180,14 @@ fi
 
 # Configure the DNN, SST, and SD values
 DNN=$(sed -n 's/^dnn: //p' options.yaml)
-SST=$(yq eval '.sst' options.yaml)
-SD=$(yq eval '.sd' options.yaml)
+SST=$(yq eval '.slices[0].sst' options.yaml)
+SD=$(yq eval '.slices[0].sd' options.yaml)
 if [[ -z "$DNN" || "$DNN" == "null" ]]; then
     echo "DNN is not set in options.yaml, please ensure that \"dnn\" is set."
     exit 1
 fi
 if [[ -z "$SST" || -z "$SD" || "$SST" == "null" || "$SD" == "null" ]]; then
-    echo "SST or SD is not set in options.yaml, please ensure that \"sst\" and \"sd\" are set."
+    echo "SST or SD is not set in options.yaml, please ensure that \"slices[].sst\" and \"slices[].sd\" are set."
     exit 1
 fi
 
@@ -198,7 +195,7 @@ cd "$SCRIPT_DIR"
 
 UE_CREDENTIAL_GENERATOR_SCRIPT="$(dirname "$PARENT_DIR")/User_Equipment/ue_credentials_generator.sh"
 if [ ! -f "$UE_CREDENTIAL_GENERATOR_SCRIPT" ]; then
-    echo "Error: Cannot find $UE_CREDENTIAL_GENERATOR_SCRIPT to generate UE subscriber credentials."
+    echo "ERROR: Cannot find $UE_CREDENTIAL_GENERATOR_SCRIPT to generate UE subscriber credentials."
     exit 1
 fi
 
@@ -226,14 +223,14 @@ else
     # Remove the prefix if it exists
     CORE="${CORE_TO_USE#5gdeploy-}"
     echo
-    read -p "WARNING: Unknown core: \"$CORE\", 5gdeploy may not support this core. Do you want to proceed? (y/n): " yn
-    case $yn in
-    [Yy]*) ;;
-    *)
+    echo "WARNING: Unknown core: \"$CORE\", 5gdeploy may not support this core."
+    echo "Do you want to proceed? (Y/n)"
+    read -r CONFIRM
+    CONFIRM=$(echo "${CONFIRM:-y}" | tr '[:upper:]' '[:lower:]')
+    if [[ "$CONFIRM" != "y" && "$CONFIRM" != "yes" ]]; then
         echo "Exiting."
         exit 1
-        ;;
-    esac
+    fi
 fi
 
 # Ensure that the UPF is set correctly
@@ -256,16 +253,15 @@ elif [ "$UPF_TO_USE" == "5gdeploy-ndndpdk" ]; then
 else
     # Remove the prefix if it exists
     UPF="${UPF_TO_USE#5gdeploy-}"
-    echo "Unknown UPF: $UPF"
     echo
-    read -p "WARNING: 5gdeploy may not support this UPF. Do you want to proceed? (y/n): " yn
-    case $yn in
-    [Yy]*) ;;
-    *)
+    echo "WARNING: Unknown UPF: \"$UPF\", 5gdeploy may not support this UPF."
+    echo "Do you want to proceed? (Y/n)"
+    read -r CONFIRM
+    CONFIRM=$(echo "${CONFIRM:-y}" | tr '[:upper:]' '[:lower:]')
+    if [[ "$CONFIRM" != "y" && "$CONFIRM" != "yes" ]]; then
         echo "Exiting."
         exit 1
-        ;;
-    esac
+    fi
 fi
 
 cd "$SCRIPT_DIR"

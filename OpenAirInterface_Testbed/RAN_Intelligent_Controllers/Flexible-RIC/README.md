@@ -20,26 +20,22 @@ This installation of the Near-RT RIC supports six xApps.
 - **KPM Monitor xApp (xapp_kpm_moni, revised xApp)**:
   - Run with `./run_xapp_kpm_moni.sh`.
   - Sets `XAPP_DURATION=-1` to run indefinitely and include new metrics (see below).
-    - Pre-existing metrics from OpenAirInterface:
+    - List of metrics printed to console for each UE sample:
       ```console
       DRB.PdcpSduVolumeDL (kb) - Downlink volume of the UE since the last sample
       DRB.PdcpSduVolumeUL (kb) - Uplink volume of the UE since the last sample
       DRB.RlcSduDelayDl (μs) - Delay downlink, (100ms-windowed) per-packet sojourn (SDU to PDU) in microseconds
       DRB.UEThpDl (kbps) - Downlink throughput of the UE since the last sample
       DRB.UEThpUl (kbps) - Uplink throughput of the UE since the last sample
-      RRU.PrbTotDl (PRB count) - Number of resource blocks received since the last sample
-      RRU.PrbTotUl (PRB count) - Number of resource blocks sent since the last sample
-      ```
-    - New metrics for the automation tool:
-      ```console
-      Reporting Time Offset (ms) - Time offset from the expected reporting time in milliseconds (e.g., -1 indicates that the report arrived a millisecond early)
-      RSRP.Mean (dBm) - Averaged SSB/CSI-RS Reference Signal Received Power in the sample
-      RSRP.Count (count) - Number of RSRP measurements in the sample, used to calculate RSRP
+      RRU.PrbTotDl (%) - Percent of resource blocks received since the last sample
+      RRU.PrbTotUl (%) - Percent of resource blocks sent since the last sample
       ```
     - Note that this xApp uses REPORT Style 4 (O-RAN E2SM-KPM clause 7.4.5) with the condition being to match the UE's Slice/Service Type (SST) and Slice Differentiator (SD). The code has been patched to subscribe to 4-octet slice IDs (SST+SD) if SD ≠ 0xFFFFFF, instead of a 1-octet SST (clause 8.3.11).
-- **KPM Monitor to CSV xApp (xapp_kpm_moni_write_to_csv, new xApp)**:
+- **KPM Monitor to CSV xApp**:
+  - Run with `./additional_scripts/run_xapp_kpm_moni_write_to_csv.sh`.
   - Retains all functionality from xapp_kpm_moni, but rather than outputting to stdout, writes to `logs/KPI_Metrics.csv`.
-- **KPM Monitor to InfluxDB v2 xApp (xapp_kpm_moni_write_to_influxdb, new xApp)**:
+- **KPM Monitor to InfluxDB v2 xApp**:
+  - Run with `./additional_scripts/run_xapp_kpm_moni_write_to_influxdb.sh`.
   - Retains all functionality from xapp_kpm_moni, but rather than outputting to stdout, writes to a InfluxDB database (/var/lib/influxdb).
 - **MAC + RLC + PDCP + GTP Monitor xApp (xapp_gtp_mac_rlc_pdcp_moni)**:
   - Run with `./additional_scripts/run_xapp_gtp_mac_rlc_pdcp_moni.sh`.
@@ -52,12 +48,12 @@ This installation of the Near-RT RIC supports six xApps.
 
 After the KPM Monitor xApp subscribes to the E2 node, metrics of the gNodeB and UE are sent through the E2 interface and received by the xApp. An xApp has been made at `flexric/build/examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv` which writes the metrics to logs/KPI_Metrics.csv instead of printing them to the console. The Python server at `additional_scripts/python_server_for_grafana.py` will make this CSV file accessible at `http://localhost:3030/KPI_Metrics.csv`, and a Grafana [\[4\]][grafanalabs-grafana] dashboard has been created to consume this data and visualize it.
 
-- **Real-Time Metrics**: To start the xApp that generates `logs/KPI_Monitor.csv`, the Python server that hosts the file, and the Grafana server, run the following.
+- **Real-Time Metrics**: To start the xApp that generates `logs/KPI_Metrics.csv`, the Python server that hosts the file, and the Grafana server, run the following.
   ```console
   ./additional_scripts/start_grafana_with_xapp_kpm_moni.sh
   ```
 
-- **Non-Real Time Metrics**: Since it is not a requirement for the xApp to actively write metrics to `logs/KPI_Monitor.csv`, the Python server and Grafana server can be started without the xApp by running the following.
+- **Historical Metrics**: Since it is not a requirement for the xApp to actively write metrics to `logs/KPI_Metrics.csv`, the Python server and Grafana server can be started without the xApp by running the following.
   ```console
   ./additional_scripts/start_grafana_only.sh
   ```

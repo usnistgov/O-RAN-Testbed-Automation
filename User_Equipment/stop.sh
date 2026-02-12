@@ -41,11 +41,11 @@ UE_NUMBER=""
 if [ "$#" -eq 1 ]; then
     UE_NUMBER=$1
     if ! [[ $UE_NUMBER =~ ^[0-9]+$ ]]; then
-        echo "Error: UE number must be a number."
+        echo "ERROR: UE number must be a number."
         exit 1
     fi
     if [ $UE_NUMBER -lt 1 ]; then
-        echo "Error: UE number must be greater than or equal to 1."
+        echo "ERROR: UE number must be greater than or equal to 1."
         exit 1
     fi
 fi
@@ -83,10 +83,10 @@ sudo ls >/dev/null 2>&1
 
 # Send a graceful shutdown signal to the UE process
 if [ -z "$UE_NUMBER" ]; then
-    sudo pkill -f "srsue" >/dev/null 2>&1 &
+    sudo pkill -f "srsue" >/dev/null 2>&1
     remove_all_ue_namespaces
 else
-    sudo pkill -f "srsue --config_file configs/ue$UE_NUMBER.conf" >/dev/null 2>&1 &
+    sudo pkill -f "srsue --config_file configs/ue$UE_NUMBER.conf" >/dev/null 2>&1
     remove_ue_namespace "$UE_NUMBER"
 fi
 
@@ -117,11 +117,11 @@ done
 # If the process is still running after 20 seconds, send a forceful kill signal
 if [ -z "$UE_NUMBER" ]; then
     echo "The User Equipment did not stop in time, sending forceful kill signal..."
-    sudo pkill -9 -f "srsue" >/dev/null 2>&1 &
+    sudo pkill -9 -f "srsue" >/dev/null 2>&1
     remove_all_ue_namespaces
 else
     echo "The User Equipment $UE_NUMBER did not stop in time, sending forceful kill signal..."
-    sudo pkill -9 -f "srsue --config_file configs/ue$UE_NUMBER.conf" >/dev/null 2>&1 &
+    sudo pkill -9 -f "srsue --config_file configs/ue$UE_NUMBER.conf" >/dev/null 2>&1
     remove_ue_namespace "$UE_NUMBER"
 fi
 

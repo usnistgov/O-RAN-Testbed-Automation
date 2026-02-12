@@ -107,6 +107,8 @@ else
         echo "Failed to import MongoDB public key. Please check your internet connection and try again. Exiting."
         exit 1
     else
+        echo "Successfully downloaded MongoDB signing key, adjusting permissions"
+        sudo chmod -v a+r /usr/share/keyrings/mongodb-archive-keyring.gpg
         echo "Successfully imported MongoDB public key using the signed-by method. Adding repository..."
         echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/mongodb-archive-keyring.gpg] https://repo.mongodb.org/apt/ubuntu $UBUNTU_CODENAME_MONGODB/mongodb-org/4.4 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-4.4.list
     fi
@@ -222,7 +224,7 @@ security:
 fi
 
 sudo mkdir -p /var/lib/mongodb /var/log/mongodb
-sudo chown -R mongodb:mongodb /var/lib/mongodb /var/log/mongodb
+sudo chown --recursive mongodb:mongodb /var/lib/mongodb /var/log/mongodb
 
 echo "Enabling MongoDB service..."
 sudo ./install_scripts/start_mongodb.sh

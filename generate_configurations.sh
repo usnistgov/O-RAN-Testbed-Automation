@@ -48,7 +48,7 @@ cd ..
 echo
 echo "Generating Configuration for Next Generation Node B..."
 cd Next_Generation_Node_B
-./generate_configurations.sh
+./generate_configurations.sh "$@"
 cd ..
 
 echo

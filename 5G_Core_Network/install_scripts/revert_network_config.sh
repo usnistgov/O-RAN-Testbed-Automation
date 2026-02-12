@@ -107,4 +107,4 @@ sudo ip6tables --wait -t nat -D POSTROUTING -s $OGSTUN3_IPV6 -o ogstun -j MASQUE
 
 # Disable IP forwarding
 sudo sysctl -w net.ipv4.ip_forward=0 >/dev/null 2>&1
-sudo sysctl -w net.ipv6.conf.all.forwarding=0 >/dev/null 2>&1
+sudo sysctl -w net.ipv6.conf.all.forwarding=0 >/dev/null 2>&1 || true

@@ -40,21 +40,22 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-if [ "$1" != "bypass_confirmation" ]; then
+if [[ "$1" != "bypass_confirmation" && "$1" != "--yes" && "$1" != "-y" ]]; then
     clear
     echo "This script will remove Docker and Kubernetes from the system."
     echo "This is a destructive operation and may result in data loss."
     echo "Please ensure you have backed up any necessary data before proceeding."
     echo
-    echo "Do you want to proceed? (yes/no)"
-    read -r PROCEED
-    if [ "$PROCEED" != "yes" ]; then
+    echo "Do you want to proceed? (Y/n)"
+    read -r CONFIRM
+    CONFIRM=$(echo "${CONFIRM:-y}" | tr '[:upper:]' '[:lower:]')
+    if [[ "$CONFIRM" != "y" && "$CONFIRM" != "yes" ]]; then
         echo "Exiting script."
         exit 0
     fi
 fi
 
-echo "Uninstalling Non-Real-Time RAN Intelligent Controller..."
+echo "Uninstalling Non-Real-Time RAN Intelligent Controller (O-RAN SC) ..."
 # Modifies the needrestart configuration to suppress interactive prompts
 if [ -d /etc/needrestart ]; then
     sudo install -d -m 0755 /etc/needrestart/conf.d
@@ -68,33 +69,48 @@ fi
 # Run a sudo command every minute to ensure script execution without user interaction
 ./install_scripts/start_sudo_refresh.sh
 
-# Prevent the unattended-upgrades service from creating dpkg locks that would error the script
-if systemctl is-active --quiet unattended-upgrades; then
-    sudo systemctl stop unattended-upgrades &>/dev/null && echo "Successfully stopped unattended-upgrades service."
-    sudo systemctl disable unattended-upgrades &>/dev/null && echo "Successfully disabled unattended-upgrades service."
-fi
-if systemctl is-active --quiet apt-daily.timer; then
-    sudo systemctl stop apt-daily.timer &>/dev/null && echo "Successfully stopped apt-daily.timer service."
-    sudo systemctl disable apt-daily.timer &>/dev/null && echo "Successfully disabled apt-daily.timer service."
-fi
-if systemctl is-active --quiet apt-daily-upgrade.timer; then
-    sudo systemctl stop apt-daily-upgrade.timer &>/dev/null && echo "Successfully stopped apt-daily-upgrade.timer service."
-    sudo systemctl disable apt-daily-upgrade.timer &>/dev/null && echo "Successfully disabled apt-daily-upgrade.timer service."
+# Detect if systemctl is available
+USE_SYSTEMCTL=false
+if command -v systemctl >/dev/null 2>&1; then
+    if [ "$(cat /proc/1/comm 2>/dev/null)" = "systemd" ]; then
+        OUTPUT="$(systemctl 2>&1 || true)"
+        if echo "$OUTPUT" | grep -qiE 'not supported|System has not been booted with systemd'; then
+            echo "Detected systemctl is not supported. Using background processes instead."
+        elif systemctl list-units >/dev/null 2>&1 || systemctl is-system-running --quiet >/dev/null 2>&1; then
+            USE_SYSTEMCTL=true
+        fi
+    fi
 fi
 
-# Ensure time synchronization is enabled using chrony
-if ! dpkg -s chrony &>/dev/null; then
-    sudo apt-get update
-    echo "Chrony is not installed, installing..."
-    sudo env $APTVARS apt-get install -y chrony || true
-fi
-if ! systemctl is-enabled --quiet chrony; then
-    echo "Enabling Chrony service..."
-    sudo systemctl enable chrony || true
-fi
-if ! systemctl is-active --quiet chrony; then
-    echo "Starting Chrony service..."
-    sudo systemctl start chrony || true
+# Prevent the unattended-upgrades service from creating dpkg locks that would error the script
+if [[ "$USE_SYSTEMCTL" == "true" ]]; then
+    if systemctl is-active --quiet unattended-upgrades; then
+        sudo systemctl stop unattended-upgrades &>/dev/null && echo "Successfully stopped unattended-upgrades service."
+        sudo systemctl disable unattended-upgrades &>/dev/null && echo "Successfully disabled unattended-upgrades service."
+    fi
+    if systemctl is-active --quiet apt-daily.timer; then
+        sudo systemctl stop apt-daily.timer &>/dev/null && echo "Successfully stopped apt-daily.timer service."
+        sudo systemctl disable apt-daily.timer &>/dev/null && echo "Successfully disabled apt-daily.timer service."
+    fi
+    if systemctl is-active --quiet apt-daily-upgrade.timer; then
+        sudo systemctl stop apt-daily-upgrade.timer &>/dev/null && echo "Successfully stopped apt-daily-upgrade.timer service."
+        sudo systemctl disable apt-daily-upgrade.timer &>/dev/null && echo "Successfully disabled apt-daily-upgrade.timer service."
+    fi
+
+    # Ensure time synchronization is enabled using chrony
+    if ! dpkg -s chrony &>/dev/null; then
+        echo "Chrony is not installed, installing..."
+        sudo apt-get update
+        sudo env $APTVARS apt-get install -y chrony || true
+    fi
+    if ! systemctl is-enabled --quiet chrony; then
+        echo "Enabling Chrony service..."
+        sudo systemctl enable chrony || true
+    fi
+    if ! systemctl is-active --quiet chrony; then
+        echo "Starting Chrony service..."
+        sudo systemctl start chrony || true
+    fi
 fi
 
 ./stop_control_panel.sh
@@ -239,6 +255,16 @@ if command -v kubectl &>/dev/null; then
     sudo rm -f $(which kubectl)
 fi
 
+# Unregister environment variables
+sudo sed -i '/^KUBECONFIG=/d' /etc/environment
+sudo sed -i '/^CHART_REPO_URL=/d' /etc/environment
+if [ -f "$HOME/.bashrc" ]; then
+    sudo sed -i '/^export KUBECONFIG=/d' "$HOME/.bashrc"
+    if [ ! -s "$HOME/.bashrc" ]; then
+        sudo rm -f "$HOME/.bashrc"
+    fi
+fi
+
 # Clean up Kubernetes directories
 sudo find /var/lib/kubelet -type d -exec umount {} \; 2>/dev/null || true
 sudo ipvsadm --clear || true
@@ -336,6 +362,9 @@ sudo rm -rf tests/__pycache__
 sudo rm -rf tests/venv
 sudo rm -rf tests/requirements.txt
 sudo rm -rf tests/.requirements_hash
+
+# Stop the sudo timeout refresher, it is no longer necessary to run
+./install_scripts/stop_sudo_refresh.sh
 
 echo
 echo

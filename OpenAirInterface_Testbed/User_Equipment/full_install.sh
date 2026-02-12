@@ -51,15 +51,6 @@ if ! grep -q avx2 /proc/cpuinfo; then
     read -r -n 1 -s
 fi
 
-# Check if a symbolic link can be created to the openairinterface5g directory
-if [ ! -f "openairinterface5g/cmake_targets/build_oai" ]; then
-    sudo rm -rf openairinterface5g
-    if [ -f "../Next_Generation_Node_B/openairinterface5g/cmake_targets/build_oai" ]; then
-        echo "Creating symbolic link to openairinterface5g..."
-        ln -s "../Next_Generation_Node_B/openairinterface5g" openairinterface5g
-    fi
-fi
-
 # Check for UE binary to determine if srsRAN_Project is already installed
 if [ "$CLEAN_INSTALL" = false ] && [ -f "openairinterface5g/cmake_targets/ran_build/build/nr-uesoftmodem" ]; then
     echo "OpenAirInterface UE is already installed, skipping."
@@ -80,9 +71,24 @@ fi
 echo "Patching OpenAirInterface..."
 ./install_scripts/apply_patches.sh
 
+# Ensure that the flexric repository is cloned at the right commit (symbolic link to RAN_Intelligent_Controllers/Flexible-RIC/flexric)
+cd openairinterface5g/openair2/E2AP/
+FLEXRIC_PARENT_DIR="../../../../RAN_Intelligent_Controllers/Flexible-RIC"
+FLEXRIC_DIR="$FLEXRIC_PARENT_DIR/flexric"
+if [ ! -L "flexric" ]; then
+    sudo rm -rf flexric
+    ln -s "$FLEXRIC_DIR" flexric
+fi
+if [ ! -d "$FLEXRIC_DIR/src/agent/e2_agent_api.c" ]; then
+    echo "Cloning Flexible RAN Intelligent Controller (FlexRIC)..."
+    cd "$FLEXRIC_PARENT_DIR"
+    ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/mosaic5g/flexric.git flexric
+fi
+cd "$SCRIPT_DIR"
+
 echo
 echo
-echo "Installing OpenAirInterface User Equipment..."
+echo "Installing User Equipment (OpenAirInterface)..."
 # Modifies the needrestart configuration to suppress interactive prompts
 if [ -d /etc/needrestart ]; then
     sudo install -d -m 0755 /etc/needrestart/conf.d
@@ -112,7 +118,7 @@ fi
 CMAKE_VERSION=$(cmake --version | head -n1 | awk '{print $3}')
 if [[ "$CMAKE_VERSION" == 3.16.* ]]; then
     echo "Detected CMake 3.16. Updating CMake for compatibility with OpenAirInterface..."
-    # Add Kitware's APT repository
+    # Add Kitware's apt repository
     wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc | sudo apt-key add -
     sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ focal main'
     sudo apt-get update
@@ -125,7 +131,7 @@ if ! dpkg -s libsimde-dev &>/dev/null; then
     sudo env $APTVARS apt-get install -y libsimde-dev || true
 fi
 if [ -d /usr/include/simde ]; then
-    sudo chown -R root:root /usr/include/simde
+    sudo chown --recursive root:root /usr/include/simde
     sudo find /usr/include/simde -type d -exec chmod 755 {} +
     sudo find /usr/include/simde -type f -exec chmod 644 {} +
 fi

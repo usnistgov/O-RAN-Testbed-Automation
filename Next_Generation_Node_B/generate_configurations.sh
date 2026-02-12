@@ -42,6 +42,26 @@ cd "$SCRIPT_DIR"
 
 BASE_EXAMPLE_CONFIG_PATH="$SCRIPT_DIR/srsRAN_Project/configs/gnb_rf_b210_fdd_srsUE.yml"
 
+# Parse command-line arguments
+ENABLE_E2_TERM="true"
+E2_ADDRESS="null"
+while [[ $# -gt 0 ]]; do
+    case $1 in
+    --disable-e2-term)
+        ENABLE_E2_TERM="false"
+        shift
+        ;;
+    --e2-term-address)
+        E2_ADDRESS="$2"
+        shift 2
+        ;;
+    *)
+        echo "Unknown argument: $1"
+        exit 1
+        ;;
+    esac
+done
+
 # Define the path to the YAML file
 YAML_PATH="../5G_Core_Network/options.yaml"
 if [ ! -f "$YAML_PATH" ]; then
@@ -65,19 +85,19 @@ echo "TAC value: $TAC"
 
 # Configure the DNN, SST, and SD values
 DNN=$(sed -n 's/^dnn: //p' "$YAML_PATH")
-SST=$(yq eval '.sst' "$YAML_PATH")
-SD=$(yq eval '.sd' "$YAML_PATH")
+SST=($(yq eval '.slices[].sst' "$YAML_PATH"))
+SD=($(yq eval '.slices[].sd' "$YAML_PATH"))
 if [[ -z "$DNN" || "$DNN" == "null" ]]; then
     echo "DNN is not set in $YAML_PATH, please ensure that \"dnn\" is set."
     exit 1
 fi
-if [[ -z "$SST" || -z "$SD" || "$SST" == "null" || "$SD" == "null" ]]; then
-    echo "SST or SD is not set in $YAML_PATH, please ensure that \"sst\" and \"sd\" are set."
+if [[ -z "${SST[0]}" || "${SST[0]}" == "null" ]]; then
+    echo "SST is not set in $YAML_PATH, please ensure that \"slices[].sst\" is set."
     exit 1
 fi
 
 # Ensure the correct YAML editor is installed
-sudo "$SCRIPT_DIR/install_scripts/./ensure_consistent_yq.sh"
+"$SCRIPT_DIR/install_scripts/./ensure_consistent_yq.sh"
 
 echo "Restoring gNodeB configuration file..."
 rm -rf configs
@@ -96,64 +116,67 @@ if [ ! -f "$BASE_EXAMPLE_CONFIG_PATH" ]; then
 fi
 cp "$BASE_EXAMPLE_CONFIG_PATH" configs/gnb.yaml
 
-ENABLE_E2_TERM="true"
 if [ ! -d "../RAN_Intelligent_Controllers/Near-Real-Time-RIC" ]; then
     echo "Could not find the Near-Real-Time-RIC directory. Disabling E2 termination support."
     ENABLE_E2_TERM="false"
 fi
 
 if [ "$ENABLE_E2_TERM" = "true" ]; then
-    echo "Fetching E2 termination service IP address..."
     PORT_E2TERM=36422
 
-    # Check if kubectl is installed
-    PROMPT_FOR_E2_ADDRESS="false"
-    if ! command -v kubectl &>/dev/null; then
-        echo "Could not find kubectl."
-        PROMPT_FOR_E2_ADDRESS="true"
-    else
-        SERVICE_INFO=$(kubectl get service -n ricplt 2>/dev/null | grep service-ricplt-e2term-sctp || echo "")
-
-        # Check if SERVICE_INFO is empty
-        if [ -z "$SERVICE_INFO" ]; then
-            echo "No service found or kubectl command failed."
-            PROMPT_FOR_E2_ADDRESS="true"
-        else
-            # Use awk to extract the IP and the correct port based on the connection context
-            IP_E2TERM=$(echo "$SERVICE_INFO" | awk '{print $3}')
-            PORT_E2TERM=$(echo "$SERVICE_INFO" | awk '{print $5}' | cut -d ':' -f1 | cut -d '/' -f1) # 36422
-
-            if [ -z "$IP_E2TERM" ] || [ "$IP_E2TERM" == "<none>" ]; then
-                PROMPT_FOR_E2_ADDRESS="true"
-            fi
-        fi
-    fi
-
-    if [ "$PROMPT_FOR_E2_ADDRESS" = "true" ]; then
-        echo
-        echo "Please enter the IP address where the E2 termination service is located."
-        echo "You can find this by running: kubectl get service -n ricplt | grep service-ricplt-e2term-sctp"
-        echo "Type \"\" to disable E2 support in the gNodeB configuration."
-        read -p "Enter IP Address: " IP_E2TERM
-        IP_E2TERM=$(echo "$IP_E2TERM" | xargs) # Trim whitespace
-    fi
-
-    if [ -z "$IP_E2TERM" ]; then
-        echo
-        echo "No E2 address was provided, disabling E2 termination support."
-        ENABLE_E2_TERM="false"
-    else
-        # Calculate the bind address based on the IP address
-        # if [[ "$IP_E2TERM" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-        #     # Extract the first three octets and append .1
-        #     IP_E2TERM_BIND=$(echo "$IP_E2TERM" | cut -d '.' -f1-3).1
-        # else
-        #     IP_E2TERM_BIND=$IP_E2TERM
-        # fi
-        IP_E2TERM_BIND=$IP_E2TERM
+    # If E2_ADDRESS is provided, override logic and force E2 address
+    if [ "$E2_ADDRESS" != "null" ]; then
+        IP_E2TERM="$E2_ADDRESS"
+        IP_E2TERM_BIND="$E2_ADDRESS"
+        echo "E2_ADDRESS provided: $E2_ADDRESS"
         echo "IP_E2TERM: $IP_E2TERM"
         echo "PORT_E2TERM: $PORT_E2TERM"
         echo "IP_E2TERM_BIND: $IP_E2TERM_BIND"
+    else
+        echo "Fetching E2 termination service IP address..."
+
+        # Check if kubectl is installed
+        PROMPT_FOR_E2_ADDRESS="false"
+        if ! command -v kubectl &>/dev/null; then
+            echo "Could not find kubectl."
+            PROMPT_FOR_E2_ADDRESS="true"
+        else
+            SERVICE_INFO=$(kubectl get service -n ricplt 2>/dev/null | grep service-ricplt-e2term-sctp || echo "")
+
+            # Check if SERVICE_INFO is empty
+            if [ -z "$SERVICE_INFO" ]; then
+                echo "No service found or kubectl command failed."
+                PROMPT_FOR_E2_ADDRESS="true"
+            else
+                # Use awk to extract the IP and the correct port based on the connection context
+                IP_E2TERM=$(echo "$SERVICE_INFO" | awk '{print $3}')
+                PORT_E2TERM=$(echo "$SERVICE_INFO" | awk '{print $5}' | cut -d ':' -f1 | cut -d '/' -f1) # 36422
+
+                if [ -z "$IP_E2TERM" ] || [ "$IP_E2TERM" == "<none>" ]; then
+                    PROMPT_FOR_E2_ADDRESS="true"
+                fi
+            fi
+        fi
+
+        if [ "$PROMPT_FOR_E2_ADDRESS" = "true" ]; then
+            echo
+            echo "Please enter the IP address where the E2 termination service is located."
+            echo "You can find this by running: kubectl get service -n ricplt | grep service-ricplt-e2term-sctp"
+            echo "Type \"\" to disable E2 support in the gNodeB configuration."
+            read -p "Enter IP Address: " IP_E2TERM
+            IP_E2TERM=$(echo "$IP_E2TERM" | xargs) # Trim whitespace
+        fi
+
+        if [ -z "$IP_E2TERM" ]; then
+            echo
+            echo "No E2 address was provided, disabling E2 termination support."
+            ENABLE_E2_TERM="false"
+        else
+            IP_E2TERM_BIND=$IP_E2TERM
+            echo "IP_E2TERM: $IP_E2TERM"
+            echo "PORT_E2TERM: $PORT_E2TERM"
+            echo "IP_E2TERM_BIND: $IP_E2TERM_BIND"
+        fi
     fi
 fi
 
@@ -268,13 +291,58 @@ update_yaml "configs/gnb.yaml" "cell_cfg" "plmn" $PLMN
 update_yaml "configs/gnb.yaml" "cell_cfg" "tac" $TAC
 
 # Update configuration values for slicing
-SD_DECIMAL=$((16#${SD}))
-update_yaml "configs/gnb.yaml" "cell_cfg.slicing[0]" "sd" "$SD_DECIMAL"
-update_yaml "configs/gnb.yaml" "cell_cfg.slicing[0]" "sst" "$SST"
-update_yaml "configs/gnb.yaml" "cell_cfg.slicing[0].sched_cfg" "min_prb_policy_ratio" "0"
-update_yaml "configs/gnb.yaml" "cell_cfg.slicing[0].sched_cfg" "max_prb_policy_ratio" "100"
-update_yaml "configs/gnb.yaml" "cu_cp.amf.supported_tracking_areas[0].plmn_list[0].tai_slice_support_list[0]" "sst" "$SST"
-update_yaml "configs/gnb.yaml" "cu_cp.amf.supported_tracking_areas[0].plmn_list[0].tai_slice_support_list[0]" "sd" "$SD_DECIMAL"
+# Clear existing slice configuration
+yq eval -i 'del(.cell_cfg.slicing)' "configs/gnb.yaml"
+yq eval -i 'del(.cu_cp.amf.supported_tracking_areas[0].plmn_list[0].tai_slice_support_list)' "configs/gnb.yaml"
+
+SLICE_IDX=0
+declare -A OMIT_SD
+declare -A OMIT_SD_ADDED
+
+# Check for omitting SD if null or FFFFFF (case insensitive)
+for i in "${!SST[@]}"; do
+    CURRENT_SST="${SST[$i]}"
+    CURRENT_SD="${SD[$i]}"
+    if [[ "$CURRENT_SD" == "null" || "${CURRENT_SD^^}" == "FFFFFF" ]]; then
+        OMIT_SD["$CURRENT_SST"]=1
+    fi
+done
+
+for i in "${!SST[@]}"; do
+    CURRENT_SST="${SST[$i]}"
+    CURRENT_SD="${SD[$i]}"
+
+    # If SST has SD wildcard, only add SST to the list
+    if [[ -n "${OMIT_SD[$CURRENT_SST]}" ]]; then
+        if [[ -z "${OMIT_SD_ADDED[$CURRENT_SST]}" ]]; then # Uniqueness
+            # Add SST to cell config
+            update_yaml "configs/gnb.yaml" "cell_cfg.slicing[$SLICE_IDX]" "sst" "$CURRENT_SST"
+            update_yaml "configs/gnb.yaml" "cell_cfg.slicing[$SLICE_IDX].sched_cfg" "min_prb_policy_ratio" "0"
+            update_yaml "configs/gnb.yaml" "cell_cfg.slicing[$SLICE_IDX].sched_cfg" "max_prb_policy_ratio" "100"
+
+            # Add SST to AMF supported tracking areas
+            update_yaml "configs/gnb.yaml" "cu_cp.amf.supported_tracking_areas[0].plmn_list[0].tai_slice_support_list[$SLICE_IDX]" "sst" "$CURRENT_SST"
+
+            OMIT_SD_ADDED["$CURRENT_SST"]=1
+            SLICE_IDX=$((SLICE_IDX + 1))
+        fi
+    else
+        # Entry with SST and SD
+        SD_DECIMAL=$((16#${CURRENT_SD}))
+
+        # Add SST and SD to cell config
+        update_yaml "configs/gnb.yaml" "cell_cfg.slicing[$SLICE_IDX]" "sst" "$CURRENT_SST"
+        update_yaml "configs/gnb.yaml" "cell_cfg.slicing[$SLICE_IDX]" "sd" "$SD_DECIMAL"
+        update_yaml "configs/gnb.yaml" "cell_cfg.slicing[$SLICE_IDX].sched_cfg" "min_prb_policy_ratio" "0"
+        update_yaml "configs/gnb.yaml" "cell_cfg.slicing[$SLICE_IDX].sched_cfg" "max_prb_policy_ratio" "100"
+
+        # Add SST and SD to AMF supported tracking areas
+        update_yaml "configs/gnb.yaml" "cu_cp.amf.supported_tracking_areas[0].plmn_list[0].tai_slice_support_list[$SLICE_IDX]" "sst" "$CURRENT_SST"
+        update_yaml "configs/gnb.yaml" "cu_cp.amf.supported_tracking_areas[0].plmn_list[0].tai_slice_support_list[$SLICE_IDX]" "sd" "$SD_DECIMAL"
+
+        SLICE_IDX=$((SLICE_IDX + 1))
+    fi
+done
 
 GNB_ID="411"
 RAN_NODE_NAME="srsgnb01"

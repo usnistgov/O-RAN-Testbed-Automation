@@ -28,7 +28,7 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-E2_TERM_PORT=36422            # Default is 36422, which will not modify anything
+E2_TERM_PORT=36422            # Default is 36422, which will result in no modification
 E2_TERM_PORT_SUBSTITUTE=36420 # If E2_TERM_PORT is used already, substitute it before replacing with E2_TERM_PORT
 
 # Exit immediately if a command fails
@@ -44,7 +44,7 @@ CURRENT_DIR=$(pwd)
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-echo "Installing Near-Real-Time RAN Intelligent Controller..."
+echo "Installing Near-Real-Time RAN Intelligent Controller (O-RAN SC)..."
 # Modifies the needrestart configuration to suppress interactive prompts
 if [ -d /etc/needrestart ]; then
     sudo install -d -m 0755 /etc/needrestart/conf.d
@@ -63,33 +63,48 @@ INSTALL_START_TIME=$(date +%s)
 
 sudo rm -rf logs/
 
-# Prevent the unattended-upgrades service from creating dpkg locks that would error the script
-if systemctl is-active --quiet unattended-upgrades; then
-    sudo systemctl stop unattended-upgrades &>/dev/null && echo "Successfully stopped unattended-upgrades service."
-    sudo systemctl disable unattended-upgrades &>/dev/null && echo "Successfully disabled unattended-upgrades service."
-fi
-if systemctl is-active --quiet apt-daily.timer; then
-    sudo systemctl stop apt-daily.timer &>/dev/null && echo "Successfully stopped apt-daily.timer service."
-    sudo systemctl disable apt-daily.timer &>/dev/null && echo "Successfully disabled apt-daily.timer service."
-fi
-if systemctl is-active --quiet apt-daily-upgrade.timer; then
-    sudo systemctl stop apt-daily-upgrade.timer &>/dev/null && echo "Successfully stopped apt-daily-upgrade.timer service."
-    sudo systemctl disable apt-daily-upgrade.timer &>/dev/null && echo "Successfully disabled apt-daily-upgrade.timer service."
+# Detect if systemctl is available
+USE_SYSTEMCTL=false
+if command -v systemctl >/dev/null 2>&1; then
+    if [ "$(cat /proc/1/comm 2>/dev/null)" = "systemd" ]; then
+        OUTPUT="$(systemctl 2>&1 || true)"
+        if echo "$OUTPUT" | grep -qiE 'not supported|System has not been booted with systemd'; then
+            echo "Detected systemctl is not supported. Using background processes instead."
+        elif systemctl list-units >/dev/null 2>&1 || systemctl is-system-running --quiet >/dev/null 2>&1; then
+            USE_SYSTEMCTL=true
+        fi
+    fi
 fi
 
-# Ensure time synchronization is enabled using chrony
-if ! dpkg -s chrony &>/dev/null; then
-    echo "Chrony is not installed, installing..."
-    sudo apt-get update
-    sudo env $APTVARS apt-get install -y chrony || true
-fi
-if ! systemctl is-enabled --quiet chrony; then
-    echo "Enabling Chrony service..."
-    sudo systemctl enable chrony || true
-fi
-if ! systemctl is-active --quiet chrony; then
-    echo "Starting Chrony service..."
-    sudo systemctl start chrony || true
+# Prevent the unattended-upgrades service from creating dpkg locks that would error the script
+if [[ "$USE_SYSTEMCTL" == "true" ]]; then
+    if systemctl is-active --quiet unattended-upgrades; then
+        sudo systemctl stop unattended-upgrades &>/dev/null && echo "Successfully stopped unattended-upgrades service."
+        sudo systemctl disable unattended-upgrades &>/dev/null && echo "Successfully disabled unattended-upgrades service."
+    fi
+    if systemctl is-active --quiet apt-daily.timer; then
+        sudo systemctl stop apt-daily.timer &>/dev/null && echo "Successfully stopped apt-daily.timer service."
+        sudo systemctl disable apt-daily.timer &>/dev/null && echo "Successfully disabled apt-daily.timer service."
+    fi
+    if systemctl is-active --quiet apt-daily-upgrade.timer; then
+        sudo systemctl stop apt-daily-upgrade.timer &>/dev/null && echo "Successfully stopped apt-daily-upgrade.timer service."
+        sudo systemctl disable apt-daily-upgrade.timer &>/dev/null && echo "Successfully disabled apt-daily-upgrade.timer service."
+    fi
+
+    # Ensure time synchronization is enabled using chrony
+    if ! dpkg -s chrony &>/dev/null; then
+        echo "Chrony is not installed, installing..."
+        sudo apt-get update
+        sudo env $APTVARS apt-get install -y chrony || true
+    fi
+    if ! systemctl is-enabled --quiet chrony; then
+        echo "Enabling Chrony service..."
+        sudo systemctl enable chrony || true
+    fi
+    if ! systemctl is-active --quiet chrony; then
+        echo "Starting Chrony service..."
+        sudo systemctl start chrony || true
+    fi
 fi
 
 echo
@@ -130,9 +145,9 @@ else
         # Configure the SCTP E2 termination port (not idempotent so only on first clone)
         if [ "$E2_TERM_PORT" != "36422" ]; then # Default port
             echo "Configuring E2 Termination Port to $E2_TERM_PORT..."
-            if sudo find ric-dep/ -type f -exec grep -l "$E2_TERM_PORT_SUBSTITUTE" {} + | grep -q .; then
+            if sudo find ric-dep/ -type f -exec grep -l -w "$E2_TERM_PORT_SUBSTITUTE" {} + | grep -q .; then
                 echo "ERROR: The E2 Termination Port Substitute ($E2_TERM_PORT_SUBSTITUTE) is already in use in the following files. Please choose a different substitute port."
-                sudo find ric-dep/ -type f -exec grep -l "$E2_TERM_PORT_SUBSTITUTE" {} +
+                sudo find ric-dep/ -type f -exec grep -l -w "$E2_TERM_PORT_SUBSTITUTE" {} +
                 exit 1
             fi
             sudo find ric-dep/ -type f -exec sed -i "s/$E2_TERM_PORT/$E2_TERM_PORT_SUBSTITUTE/g" {} +
@@ -153,13 +168,18 @@ else
     # Increase the file descriptor limits of the system
     sudo "$SCRIPT_DIR/install_scripts/./set_file_descriptor_limits.sh"
 
+    if ! command -v ip &>/dev/null; then
+        echo "Package \"iproute2\" not found, installing..."
+        sudo env $APTVARS apt-get install -y iproute2
+    fi
+
     if ! ./install_k8s_and_helm.sh; then
         echo "An error occured when running $SCRIPT_DIR/install_k8s_and_helm.sh."
         exit 1
     fi
 
     # Ensure the correct YAML editor is installed
-    sudo "$SCRIPT_DIR/install_scripts/./ensure_consistent_yq.sh"
+    "$SCRIPT_DIR/install_scripts/./ensure_consistent_yq.sh"
 
     # If kong gives troubles in Release I or Release J then it can be disabled with the following code.
     # cd "$SCRIPT_DIR/ric-dep"
@@ -219,7 +239,7 @@ fi
 sudo ./install_scripts/enable_docker_build_kit.sh
 
 echo
-echo "Installing Near-Real Time RAN Intelligent Controller..."
+echo "Installing Near-Real Time RAN Intelligent Controller (O-RAN SC)..."
 
 # Determine if RAN Intelligent Controller pods should be reset
 SHOULD_RESET_RIC=false
@@ -254,9 +274,9 @@ else
         # Configure the SCTP E2 termination port (not idempotent so only on first clone)
         if [ "$E2_TERM_PORT" != "36422" ]; then # Default port
             echo "Configuring E2 Termination Port to $E2_TERM_PORT..."
-            if sudo find ric-dep/ -type f -exec grep -l "$E2_TERM_PORT_SUBSTITUTE" {} + | grep -q .; then
+            if sudo find ric-dep/ -type f -exec grep -l -w "$E2_TERM_PORT_SUBSTITUTE" {} + | grep -q .; then
                 echo "ERROR: The E2 Termination Port Substitute ($E2_TERM_PORT_SUBSTITUTE) is already in use in the following files. Please choose a different substitute port."
-                sudo find ric-dep/ -type f -exec grep -l "$E2_TERM_PORT_SUBSTITUTE" {} +
+                sudo find ric-dep/ -type f -exec grep -l -w "$E2_TERM_PORT_SUBSTITUTE" {} +
                 exit 1
             fi
             sudo find ric-dep/ -type f -exec sed -i "s/$E2_TERM_PORT/$E2_TERM_PORT_SUBSTITUTE/g" {} +
@@ -268,16 +288,14 @@ else
     RIC_YAML_FILE_NAME="example_recipe_latest_stable.yaml"
     RIC_YAML_FILE_NAME_UPDATED="example_recipe_latest_stable_updated.yaml"
 
-    sudo chown $USER:$USER "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME"
+    sudo chown "$USER" "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME"
     sudo cp "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME" "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME_UPDATED"
-    sudo chown $USER:$USER "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME_UPDATED"
+    sudo chown "$USER" "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME_UPDATED"
     sudo ./install_scripts/revise_example_recipe_yaml.sh "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME_UPDATED"
     if [ "$E2_TERM_PORT" != "36422" ]; then
         sudo ./install_scripts/revise_deployment_for_e2_port.sh
     fi
-
-    # Wait for kube-apiserver to be ready before installing Near-RT RIC
-    echo "Waiting for the Kubernetes API server to become ready before installing Near-RT RIC..."
+    echo "Waiting for the Kubernetes API server to become ready before deploying Near-RT RIC pods..."
     sudo ./install_scripts/wait_for_kubectl.sh
 
     # Run the installation command
@@ -290,7 +308,7 @@ else
 
         echo
         echo
-        echo "Installing Near-RT RIC..."
+        echo "Deploying Near-RT RIC (O-RAN SC) pods..."
         cd ric-dep/bin/
         sudo ./install -f "../RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME_UPDATED" 2>&1 | tee -a "$RIC_INSTALLATION_STDOUT"
         cd "$SCRIPT_DIR"
@@ -316,7 +334,7 @@ else
         COMPONENT_LINE=$(grep "Deploying RIC infra components" "$RIC_INSTALLATION_STDOUT")
         # Check if the component line was found
         if [ -z "$COMPONENT_LINE" ]; then
-            echo "Error: The array of components could not be extracted from $RIC_INSTALLATION_STDOUT"
+            echo "ERROR: The array of components could not be extracted from $RIC_INSTALLATION_STDOUT"
             exit 1
         fi
         # Parse the component names into an array
@@ -333,7 +351,7 @@ else
             $COMPONENTS | all(. as $COMPONENT | $DATA[$COMPONENT] == "deployed")
         ' "$RIC_INSTALLATION_LOG_JSON")"
         if [ "$SUCCESS" != "true" ]; then
-            echo "Error: RIC installation was not successful. Waiting for API server to be available then retrying..."
+            echo "ERROR: RIC installation was not successful. Waiting for API server to be available then retrying..."
             sudo ./install_scripts/wait_for_kubectl.sh
         fi
     done
@@ -374,9 +392,9 @@ else
         # Configure the SCTP E2 termination port (not idempotent so only on first clone)
         if [ "$E2_TERM_PORT" != "36422" ]; then # Default port
             echo "Configuring E2 Termination Port to $E2_TERM_PORT..."
-            if sudo find e2-interface/ -type f -exec grep -l "$E2_TERM_PORT_SUBSTITUTE" {} + | grep -q .; then
+            if sudo find e2-interface/ -type f -exec grep -l -w "$E2_TERM_PORT_SUBSTITUTE" {} + | grep -q .; then
                 echo "ERROR: The E2 Termination Port Substitute ($E2_TERM_PORT_SUBSTITUTE) is already in use in the following files. Please choose a different substitute port."
-                sudo find e2-interface/ -type f -exec grep -l "$E2_TERM_PORT_SUBSTITUTE" {} +
+                sudo find e2-interface/ -type f -exec grep -l -w "$E2_TERM_PORT_SUBSTITUTE" {} +
                 exit 1
             fi
             sudo find e2-interface/ -type f -exec sed -i "s/$E2_TERM_PORT/$E2_TERM_PORT_SUBSTITUTE/g" {} +
@@ -408,8 +426,8 @@ sudo ./install_scripts/wait_for_ricplt_pods.sh
 sudo ./install_scripts/run_e2sim_and_connect_to_ric.sh
 
 echo "Restoring ownership of directories and files created while in root..."
-sudo chown $USER:$USER logs/e2sim_output.txt
-sudo chown -R $USER:$USER charts || true
+sudo chown "$USER" logs/e2sim_output.txt
+sudo chown --recursive "$USER" charts || true
 
 echo
 echo "Installing the xApp Onboarder (dms_cli)..."

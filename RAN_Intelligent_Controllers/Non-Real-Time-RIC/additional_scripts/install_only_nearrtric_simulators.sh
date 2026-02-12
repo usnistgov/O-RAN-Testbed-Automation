@@ -58,36 +58,51 @@ fi
 # Run a sudo command every minute to ensure script execution without user interaction
 ./install_scripts/start_sudo_refresh.sh
 
+# Detect if systemctl is available
+USE_SYSTEMCTL=false
+if command -v systemctl >/dev/null 2>&1; then
+    if [ "$(cat /proc/1/comm 2>/dev/null)" = "systemd" ]; then
+        OUTPUT="$(systemctl 2>&1 || true)"
+        if echo "$OUTPUT" | grep -qiE 'not supported|System has not been booted with systemd'; then
+            echo "Detected systemctl is not supported. Using background processes instead."
+        elif systemctl list-units >/dev/null 2>&1 || systemctl is-system-running --quiet >/dev/null 2>&1; then
+            USE_SYSTEMCTL=true
+        fi
+    fi
+fi
+
 # Prevent the unattended-upgrades service from creating dpkg locks that would error the script
-if systemctl is-active --quiet unattended-upgrades; then
-    sudo systemctl stop unattended-upgrades &>/dev/null && echo "Successfully stopped unattended-upgrades service."
-    sudo systemctl disable unattended-upgrades &>/dev/null && echo "Successfully disabled unattended-upgrades service."
-fi
-if systemctl is-active --quiet apt-daily.timer; then
-    sudo systemctl stop apt-daily.timer &>/dev/null && echo "Successfully stopped apt-daily.timer service."
-    sudo systemctl disable apt-daily.timer &>/dev/null && echo "Successfully disabled apt-daily.timer service."
-fi
-if systemctl is-active --quiet apt-daily-upgrade.timer; then
-    sudo systemctl stop apt-daily-upgrade.timer &>/dev/null && echo "Successfully stopped apt-daily-upgrade.timer service."
-    sudo systemctl disable apt-daily-upgrade.timer &>/dev/null && echo "Successfully disabled apt-daily-upgrade.timer service."
+if [[ "$USE_SYSTEMCTL" == "true" ]]; then
+    if systemctl is-active --quiet unattended-upgrades; then
+        sudo systemctl stop unattended-upgrades &>/dev/null && echo "Successfully stopped unattended-upgrades service."
+        sudo systemctl disable unattended-upgrades &>/dev/null && echo "Successfully disabled unattended-upgrades service."
+    fi
+    if systemctl is-active --quiet apt-daily.timer; then
+        sudo systemctl stop apt-daily.timer &>/dev/null && echo "Successfully stopped apt-daily.timer service."
+        sudo systemctl disable apt-daily.timer &>/dev/null && echo "Successfully disabled apt-daily.timer service."
+    fi
+    if systemctl is-active --quiet apt-daily-upgrade.timer; then
+        sudo systemctl stop apt-daily-upgrade.timer &>/dev/null && echo "Successfully stopped apt-daily-upgrade.timer service."
+        sudo systemctl disable apt-daily-upgrade.timer &>/dev/null && echo "Successfully disabled apt-daily-upgrade.timer service."
+    fi
+
+    # Ensure time synchronization is enabled using chrony
+    if ! dpkg -s chrony &>/dev/null; then
+        echo "Chrony is not installed, installing..."
+        sudo apt-get update
+        sudo env $APTVARS apt-get install -y chrony || true
+    fi
+    if ! systemctl is-enabled --quiet chrony; then
+        echo "Enabling Chrony service..."
+        sudo systemctl enable chrony || true
+    fi
+    if ! systemctl is-active --quiet chrony; then
+        echo "Starting Chrony service..."
+        sudo systemctl start chrony || true
+    fi
 fi
 
-# Ensure time synchronization is enabled using chrony
-if ! dpkg -s chrony &>/dev/null; then
-    echo "Chrony is not installed, installing..."
-    sudo apt-get update
-    sudo env $APTVARS apt-get install -y chrony || true
-fi
-if ! systemctl is-enabled --quiet chrony; then
-    echo "Enabling Chrony service..."
-    sudo systemctl enable chrony || true
-fi
-if ! systemctl is-active --quiet chrony; then
-    echo "Starting Chrony service..."
-    sudo systemctl start chrony || true
-fi
-
-# Instructions are from: https://lf-o-ran-sc.atlassian.net/wiki/spaces/RICNR/pages/86802787/Release+K+-+Run+in+Kubernetes
+# Instructions are from: https://lf-o-ran-sc.atlassian.net/wiki/spaces/RICNR/pages/679903652/Release+M+-+Run+in+Kubernetes
 if [ ! -d dep ]; then
     echo
     echo "Cloning A1 dependencies..."
@@ -238,9 +253,9 @@ else
     echo "Revising the YAML file for the A1 pods..."
     RIC_YAML_FILE_PATH="dep/RECIPE_EXAMPLE/NONRTRIC/example_recipe.yaml"
     RIC_YAML_FILE_PATH_UPDATED="dep/RECIPE_EXAMPLE/NONRTRIC/example_recipe_updated.yaml"
-    sudo chown $USER:$USER $RIC_YAML_FILE_PATH
+    sudo chown "$USER" $RIC_YAML_FILE_PATH
     sudo cp $RIC_YAML_FILE_PATH $RIC_YAML_FILE_PATH_UPDATED
-    sudo chown $USER:$USER $RIC_YAML_FILE_PATH_UPDATED
+    sudo chown "$USER" $RIC_YAML_FILE_PATH_UPDATED
 
     # Function to update YAML configuration files
     update_yaml() {

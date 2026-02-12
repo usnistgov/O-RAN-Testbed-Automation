@@ -111,7 +111,7 @@ if [ ! -f trafficxapp.tar ]; then
     docker build -t 127.0.0.1:80/trafficxapp:latest .
     docker save -o trafficxapp.tar 127.0.0.1:80/trafficxapp:latest
     sudo chmod 755 trafficxapp.tar
-    sudo chown $USER:$USER trafficxapp.tar
+    sudo chown "$USER" trafficxapp.tar
 
     # Import the image into the containerd container runtime
     sudo ctr -n=k8s.io image import trafficxapp.tar

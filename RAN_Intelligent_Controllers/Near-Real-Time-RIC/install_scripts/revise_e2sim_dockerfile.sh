@@ -35,19 +35,19 @@ FILE=$1
 
 # Check if the file path is provided
 if [[ -z "$FILE" ]]; then
-    echo "Error: No file path provided."
+    echo "ERROR: No file path provided."
     echo "Usage: $0 <path_to_yaml_file>"
     exit 1
 fi
 
 # Check if the file exists and is readable
 if [[ ! -f "$FILE" ]]; then
-    echo "Error: File '$FILE' does not exist."
+    echo "ERROR: File '$FILE' does not exist."
     exit 1
 fi
 
 if [[ ! -r "$FILE" ]]; then
-    echo "Error: File '$FILE' is not readable."
+    echo "ERROR: File '$FILE' is not readable."
     exit 1
 fi
 

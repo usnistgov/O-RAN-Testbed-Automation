@@ -67,10 +67,13 @@ echo
 # Extract SST and SD from options.yaml if it exists
 YAML_PATH="$SCRIPT_DIR/../../../5G_Core_Network/options.yaml"
 if [ -f "$YAML_PATH" ]; then
-    SST=$(yq eval '.sst' "$YAML_PATH")
-    SD=$(yq eval '.sd' "$YAML_PATH")
-    if [[ -z "$SST" || -z "$SD" || "$SST" == "null" || "$SD" == "null" ]]; then
+    # Ensure the correct YAML editor is installed
+    "$PARENT_DIR/install_scripts/./ensure_consistent_yq.sh"
+    SST=$(yq eval '.slices[0].sst' "$YAML_PATH")
+    SD=$(yq eval '.slices[0].sd' "$YAML_PATH")
+    if [[ -z "$SST" || "$SST" == "null" ]]; then
         SST=""
+    elif [[ -z "$SD" || "$SD" == "null" ]]; then
         SD=""
     else
         echo "Using SST: $SST and SD: $SD for the xApp."

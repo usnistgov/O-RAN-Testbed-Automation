@@ -53,6 +53,19 @@ remove_version_suffix() {
     echo $VERSION_WITHOUT_SUFFIX
 }
 
+# Detect if systemctl is available
+USE_SYSTEMCTL=false
+if command -v systemctl >/dev/null 2>&1; then
+    if [ "$(cat /proc/1/comm 2>/dev/null)" = "systemd" ]; then
+        OUTPUT="$(systemctl 2>&1 || true)"
+        if echo "$OUTPUT" | grep -qiE 'not supported|System has not been booted with systemd'; then
+            echo "Detected systemctl is not supported. Using background processes instead."
+        elif systemctl list-units >/dev/null 2>&1 || systemctl is-system-running --quiet >/dev/null 2>&1; then
+            USE_SYSTEMCTL=true
+        fi
+    fi
+fi
+
 # Fetch the Ubuntu release version regardless of the derivative distro
 if [ -f /etc/upstream-release/lsb-release ]; then
     UBUNTU_RELEASE=$(cat /etc/upstream-release/lsb-release | grep 'DISTRIB_RELEASE' | sed 's/.*=\s*//')
@@ -61,6 +74,10 @@ else
 fi
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
+if ! command -v jq >/dev/null 2>&1; then
+    echo "Installing jq to process JSON files..."
+    sudo env $APTVARS apt-get install -y jq
+fi
 
 USE_DOCKER_CE=1
 if [ "$USE_DOCKER_CE" -eq 0 ]; then # Use docker.io
@@ -79,7 +96,7 @@ else # Use docker.ce
     fi
     # Check if UBUNTU_CODENAME is still empty
     if [[ -z "$UBUNTU_CODENAME" ]]; then
-        echo "Error: Ubuntu codename not found in /etc/os-release."
+        echo "ERROR: Ubuntu codename not found in /etc/os-release."
         exit 1
     fi
 
@@ -89,7 +106,7 @@ else # Use docker.ce
     sudo install -m 0755 -d /etc/apt/keyrings
     sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
     sudo chmod a+r /etc/apt/keyrings/docker.asc
-    # Add the repository to Apt sources:
+    # Add the repository to apt sources:
     echo \
         "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
     $(. /etc/os-release && echo "${UBUNTU_CODENAME}") stable" |
@@ -122,7 +139,7 @@ echo
 
 # Install Docker with the specified or latest available version
 echo "Installing Docker..."
-if ! command -v docker &>/dev/null; then
+if ! command -v dockerd >/dev/null 2>&1 || ! command -v docker >/dev/null 2>&1; then
     if [ "$USE_DOCKER_CE" -eq 0 ]; then
         sudo env $APTVARS apt-get install -y $APTOPTS "docker.io=$DOCKERVERSION"
     else
@@ -133,24 +150,69 @@ fi
 # Configure Docker daemon
 echo "Configuring Docker daemon..."
 sudo mkdir -p /etc/docker
+
+# Set DNS servers for Docker daemon
+DNS_SERVERS=$(grep 'nameserver' /run/systemd/resolve/resolv.conf 2>/dev/null | awk '{print $2}' | jq -R . | jq -s . 2>/dev/null || echo '[]')
+if [ -z "$(echo "$DNS_SERVERS" | jq '. | select(length > 0)')" ]; then
+    echo "Could not find DNS servers in /run/systemd/resolve/resolv.conf, trying /etc/resolv.conf..."
+    DNS_SERVERS=$(grep '^nameserver' /etc/resolv.conf 2>/dev/null | awk '{print $2}' | jq -R . | jq -s . 2>/dev/null || echo '[]')
+fi
+if [ -z "$(echo "$DNS_SERVERS" | jq '. | select(length > 0)')" ]; then
+    echo "Could not find DNS servers in system resolv.conf files, defaulting to Google DNS..."
+    DNS_SERVERS='["8.8.8.8", "8.8.4.4"]'
+fi
+echo "Using DNS servers: $DNS_SERVERS"
+
+# Select storage driver (see https://docs.docker.com/engine/storage/drivers/select-storage-driver)
+if [ "$USE_SYSTEMCTL" = true ]; then
+    DRIVER="overlay2"
+else
+    DRIVER="vfs"
+fi
+if [ "$DRIVER" = "overlay2" ] && ! grep -qw overlay /proc/filesystems; then
+    if ! sudo modprobe overlay >/dev/null 2>&1; then
+        DRIVER="vfs"
+    fi
+fi
+if [ "$DRIVER" = "overlay2" ]; then
+    if ! sudo mkdir -p /var/lib/docker/test-overlay/upper /var/lib/docker/test-overlay/work /var/lib/docker/test-overlay/merged; then
+        DRIVER="vfs"
+    elif ! sudo mount -t overlay overlay -o lowerdir=/bin,upperdir=/var/lib/docker/test-overlay/upper,workdir=/var/lib/docker/test-overlay/work /var/lib/docker/test-overlay/merged 2>/dev/null; then
+        DRIVER="vfs"
+    else
+        sudo umount /var/lib/docker/test-overlay/merged 2>/dev/null || true
+    fi
+    sudo rm -rf /var/lib/docker/test-overlay 2>/dev/null || true
+fi
+
+# Determine the cgroup driver
+CGROUP_DRIVER="systemd"
+if [ "$USE_SYSTEMCTL" != true ]; then
+    CGROUP_DRIVER="cgroupfs"
+fi
+# Support overriding the cgroup driver from environment variable
+if [ -n "${DOCKER_CGROUP_DRIVER:-}" ]; then
+    CGROUP_DRIVER="${DOCKER_CGROUP_DRIVER}"
+fi
 sudo tee /etc/docker/daemon.json >/dev/null <<EOF
 {
-  "exec-opts": ["native.cgroupdriver=systemd"],
-  "log-driver": "json-file",
-  "log-opts": {
-    "max-size": "100m"
-  },
-  "storage-driver": "overlay2",
-  "features": {
-    "buildkit": true
-  },
-  "max-concurrent-downloads": 10
+    "exec-opts": ["native.cgroupdriver=${CGROUP_DRIVER}"],
+    "log-driver": "json-file",
+    "log-opts": {
+        "max-size": "100m"
+    },
+    "storage-driver": "${DRIVER}",
+    "features": {
+        "buildkit": true
+    },
+    "max-concurrent-downloads": 10,
+    "dns": ${DNS_SERVERS}
 }
 EOF
 
 # Validate Docker configuration (skip validation if dockerd does not support it)
 if dockerd --help | grep --quiet -- "--validate"; then
-    if ! dockerd --config-file=/etc/docker/daemon.json --validate; then
+    if ! sudo dockerd --config-file=/etc/docker/daemon.json --validate; then
         echo "Invalid Docker configuration detected."
         exit 1
     else
@@ -160,7 +222,7 @@ else
     echo "Skipping Docker configuration validation (unsupported flag)."
 fi
 
-echo "Ensure Docker group exists and add user to the group before starting Docker service..."
+echo "Ensuring Docker group exists and add user to the group before starting Docker service..."
 sudo groupadd -f docker
 if [ -n "$SUDO_USER" ]; then
     sudo usermod -aG docker "${SUDO_USER:-root}"
@@ -170,29 +232,73 @@ fi
 
 # Enable and attempt to start Docker service with retries
 echo "Enabling and starting Docker service..."
-sudo systemctl daemon-reload
-sudo systemctl enable docker
-ATTEMPT=0
-MAX_ATTEMPTS=5
-while ! sudo systemctl restart docker && [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
-    echo "Docker failed to start. Attempt $((ATTEMPT + 1))/$MAX_ATTEMPTS..."
-    echo "Checking service status..."
-    sudo systemctl status docker.service | grep -A 2 "Active:"
-    echo "Reviewing recent logs..."
-    journalctl -xeu docker.service | tail -20
-    sleep 10
-    ((ATTEMPT++))
-done
+if [ "$USE_SYSTEMCTL" = true ]; then
+    sudo systemctl daemon-reload
+    sudo systemctl enable docker
+    ATTEMPT=0
+    MAX_ATTEMPTS=5
+    while ! sudo systemctl restart docker && [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
+        echo "Docker failed to start. Attempt $((ATTEMPT + 1))/$MAX_ATTEMPTS..."
+        echo "Checking service status..."
+        sudo systemctl status docker.service | grep -A 2 "Active:" || true
+        echo "Reviewing recent logs..."
+        journalctl -xeu docker.service | tail -20 || true
+        sleep 10
+        ((ATTEMPT++))
+    done
 
-if ! sudo systemctl is-active --quiet docker; then
-    echo "Failed to start Docker after $MAX_ATTEMPTS attempts."
-    exit 1
+    if ! sudo systemctl is-active --quiet docker; then
+        echo "Failed to start Docker after $MAX_ATTEMPTS attempts."
+        exit 1
+    else
+        echo "Docker started successfully."
+    fi
 else
+    echo "Starting Docker process..."
+    if ! command -v dockerd >/dev/null 2>&1 || ! command -v docker >/dev/null 2>&1; then
+        echo "ERROR: Docker binaries not found in PATH."
+        exit 1
+    fi
+    DOCKERD_LOG="/tmp/dockerd.log"
+    # Stop running dockerd and containerd in background
+    sudo pkill -x dockerd >/dev/null 2>&1 || true
+    sudo pkill -x containerd >/dev/null 2>&1 || true
+    sudo rm -f /var/run/docker.pid /var/run/docker.sock
+    sudo mkdir -p /run /var/run
+    sudo sh -c 'setsid dockerd --config-file=/etc/docker/daemon.json >>'"${DOCKERD_LOG}"' 2>&1 </dev/null &'
+    # Wait for Docker to be ready
+    for ATTEMPT in $(seq 1 60); do
+        if sudo test -S /var/run/docker.sock && sudo docker version >/dev/null 2>&1; then
+            break
+        fi
+        sleep 1
+    done
+    if ! (sudo test -S /var/run/docker.sock && sudo docker version >/dev/null 2>&1); then
+        echo "Docker failed to start with configured options. Retrying with cgroupfs driver..."
+        sudo pkill -x dockerd >/dev/null 2>&1 || true
+        # Update daemon.json temporarily
+        sudo cp /etc/docker/daemon.json /etc/docker/daemon.json.bak
+        sudo sed -i 's/"native.cgroupdriver=systemd"/"native.cgroupdriver=cgroupfs"/' /etc/docker/daemon.json || true
+        # If the above sed did not find the line, add it
+        if ! grep -q 'native.cgroupdriver' /etc/docker/daemon.json; then
+            sudo jq '. + {"exec-opts": ["native.cgroupdriver=cgroupfs"]}' /etc/docker/daemon.json.bak | sudo tee /etc/docker/daemon.json >/dev/null
+        fi
+        sudo sh -c 'setsid dockerd --config-file=/etc/docker/daemon.json >>'"${DOCKERD_LOG}"' 2>&1 </dev/null &'
+        for ATTEMPT in $(seq 1 60); do
+            if sudo test -S /var/run/docker.sock && sudo docker version >/dev/null 2>&1; then
+                break
+            fi
+            sleep 1
+        done
+        if ! (sudo test -S /var/run/docker.sock && sudo docker version >/dev/null 2>&1); then
+            # Restore the original daemon.json
+            sudo mv /etc/docker/daemon.json.bak /etc/docker/daemon.json 2>/dev/null || true
+            echo "ERROR: Docker daemon failed to start without systemd."
+            tail -n 200 "${DOCKERD_LOG}" 2>/dev/null || true
+            exit 1
+        fi
+    fi
     echo "Docker started successfully."
 fi
-
-echo "Setting Docker DNS servers..."
-cd "$SCRIPT_DIR"
-sudo ./update_docker_dns.sh
 
 echo "Successfully installed Docker $DOCKERVERSION"

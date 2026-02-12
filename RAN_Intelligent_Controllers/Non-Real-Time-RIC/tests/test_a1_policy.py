@@ -1,5 +1,3 @@
-#!/bin/bash
-#
 # NIST-developed software is provided by NIST as a public service. You may use,
 # copy, and distribute copies of the software in any medium, provided that you
 # keep intact this entire notice. You may improve, modify, and create derivative
@@ -28,10 +26,20 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-from kubernetes import client, config
-import json
-import pytest
 import requests
+import json
+from kubernetes import client, config
+import pytest
+
+# Global variables
+pms_ip = '127.0.0.1'
+pms_port = '8081'
+ric_ids = []
+ric_policy_ids = []
+supported_policy_types = []
+supported_policy_types_ric = []
+policy_id = 0
+service_id = 0
 
 config.load_kube_config()
 v1 = client.CoreV1Api()
@@ -43,7 +51,7 @@ v1 = client.CoreV1Api()
 ################################################################################
 def test_pod_status():
     global pms_pod_name, pms_ip, pms_port
-    pms_pod_name = v1.list_namespaced_pod('nonrtric', label_selector='app=nonrtric-policymanagementservice').items[0].metadata.name
+    pms_pod_name = v1.list_namespaced_pod('nonrtric', label_selector='app.kubernetes.io/name=policymanagementservice').items[0].metadata.name
     pms_ip = v1.read_namespaced_pod(pms_pod_name, 'nonrtric').status.pod_ip
     pms_port=8081
     
@@ -71,7 +79,7 @@ def test_policymanagementservice_status():
 ################################################################################ 
 # Test the retrieval of the RICs list
 ################################################################################
-def test_rics_list():
+def test_get_all_rics():
     global pms_ip, pms_port, ric_ids, ric_policy_ids
     rics_list = requests.get(f'http://{pms_ip}:{pms_port}/a1-policy/v2/rics')   
      
@@ -113,7 +121,7 @@ def delete_policy_if_exists(policy_id):
 ################################################################################
 # Test the creation of a policy
 ################################################################################
-def test_create_policy():
+def test_create_service_policy():
     global pms_ip, pms_port, ric_ids, ric_policy_ids, supported_policy_types, supported_policy_types_ric, policy_id, service_id
     supported_policy_types = []
     supported_policy_types_ric = []
@@ -151,7 +159,7 @@ def test_create_policy():
 ################################################################################
 # Test the retrieval of the created policy
 ################################################################################
-def test_get_policy():
+def test_get_service_policy():
     global pms_ip, pms_port, policy_id, service_id
     get_policy = requests.get(f'http://{pms_ip}:{pms_port}/a1-policy/v2/policies?service_id={service_id}')
     print(f'Console command: curl -X GET http://{pms_ip}:{pms_port}/a1-policy/v2/policies?service_id={service_id}')
@@ -165,7 +173,7 @@ def test_get_policy():
 ################################################################################
 # Test the deletion of the created policy
 ################################################################################
-def test_delete_policy():
+def test_delete_service_policy():
     global pms_ip, pms_port, policy_id
     delete_policy = requests.delete(f'http://{pms_ip}:{pms_port}/a1-policy/v2/policies/{policy_id}')
     print(f'Console command: curl -X DELETE http://{pms_ip}:{pms_port}/a1-policy/v2/policies/{policy_id}')

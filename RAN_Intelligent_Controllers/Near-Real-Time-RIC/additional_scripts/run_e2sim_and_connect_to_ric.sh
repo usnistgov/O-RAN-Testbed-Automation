@@ -1,0 +1,1 @@
+../install_scripts/run_e2sim_and_connect_to_ric.sh

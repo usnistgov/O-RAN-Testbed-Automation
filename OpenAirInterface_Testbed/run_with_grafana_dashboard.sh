@@ -43,6 +43,31 @@ cd "$SCRIPT_DIR"
 # Upon exit, gracefully stop all components and fix console in case it breaks
 trap 'trap - EXIT SIGINT SIGTERM; echo "#################################  STOPPING... #################################"; "$SCRIPT_DIR/RAN_Intelligent_Controllers/Flexible-RIC/additional_scripts/./stop_grafana_and_python_server.sh"; "$SCRIPT_DIR/./stop.sh"; stty sane; exit' EXIT SIGINT SIGTERM
 
+# Install Grafana before starting other components, if necessary
+if ! command -v grafana-server &>/dev/null; then
+    echo "Grafana not found, installing..."
+    # Code from (https://grafana.com/docs/grafana/latest/setup-grafana/installation/debian):
+    sudo env $APTVARS apt-get install -y apt-transport-https software-properties-common wget
+    sudo mkdir -p /etc/apt/keyrings/
+    wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | sudo tee /etc/apt/keyrings/grafana.gpg >/dev/null
+    echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
+    # Updates the list of available packages
+    sudo apt-get update
+    # Installs the latest OSS release:
+    sudo env $APTVARS apt-get install -y grafana
+fi
+
+# Installing and configuring Grafana to use the CSV data source plugin
+if ! sudo grafana-cli plugins ls | grep -q yesoreyeram-infinity-datasource; then
+    echo "CSV data source plugin not found, installing..."
+    sudo grafana-cli plugins install yesoreyeram-infinity-datasource
+fi
+
+if ! command -v python3 &>/dev/null; then
+    echo "Python3 not found, installing..."
+    sudo env $APTVARS apt-get install -y python3
+fi
+
 echo "Running 5G Core components..."
 cd 5G_Core_Network
 ./run.sh
@@ -123,7 +148,7 @@ echo -e "\nUE is ready."
 cd ..
 
 echo
-echo "Running FlexRIC..."
+echo "Running xApp KPM Monitor..."
 cd RAN_Intelligent_Controllers/Flexible-RIC/additional_scripts
 
 # Send metrics to CSV (Grafana dashboard provided)

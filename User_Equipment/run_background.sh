@@ -45,11 +45,11 @@ if [ "$#" -eq 1 ]; then
     UE_NUMBER=$1
 fi
 if ! [[ $UE_NUMBER =~ ^[0-9]+$ ]]; then
-    echo "Error: UE number must be a number."
+    echo "ERROR: UE number must be a number."
     exit 1
 fi
 if [ $UE_NUMBER -lt 1 ]; then
-    echo "Error: UE number must be greater than or equal to 1."
+    echo "ERROR: UE number must be greater than or equal to 1."
     exit 1
 fi
 
@@ -59,6 +59,7 @@ if [ ! -f "configs/ue1.conf" ]; then
 fi
 echo "Starting User Equipment in background..."
 mkdir -p logs
+sudo chown --recursive "$USER" logs
 >logs/ue${UE_NUMBER}_stdout.txt
 
 sudo setsid bash -c "stdbuf -oL -eL \"$SCRIPT_DIR/run.sh\" $UE_NUMBER >/dev/null 2>&1" </dev/null &

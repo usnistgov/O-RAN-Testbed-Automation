@@ -33,7 +33,10 @@ set -e
 
 CLEAN_INSTALL=false
 DEBUG_SYMBOLS=false
-
+E2AP_VERSION="E2AP_V2"        # E2AP_V1, E2AP_V2, E2AP_V3
+KPM_VERSION="KPM_V2_03"       # KPM_V2_03, KPM_V3_00
+E2_TERM_PORT=36421            # Ensure this matches the gNodeB's full_install.sh E2_TERM_PORT. Default is 36421, which will result in no modification
+E2_TERM_PORT_SUBSTITUTE=36423 # If E2_TERM_PORT is used already, substitute it before replacing with E2_TERM_PORT
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
@@ -93,6 +96,24 @@ if [ ! -d "flexric" ]; then
     ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/mosaic5g/flexric.git
 fi
 
+CURRENT_E2_PORT=$(sed -nE 's/.*e2ap_server_port *= *([0-9]+);/\1/p' flexric/src/agent/e2_agent_api.c)
+if [ -z "$CURRENT_E2_PORT" ]; then
+    echo "ERROR: e2ap_server_port not found in flexric/src/agent/e2_agent_api.c" >&2
+    exit 1
+fi
+# Check if the substitute port is already in use
+if sudo find flexric/ -type f -exec grep -l -w "$E2_TERM_PORT_SUBSTITUTE" {} + | grep -q .; then
+    echo "ERROR: The E2 Termination Port Substitute ($E2_TERM_PORT_SUBSTITUTE) is already in use in the following files. Please choose a different substitute port."
+    sudo find flexric/ -type f -exec grep -l -w "$E2_TERM_PORT_SUBSTITUTE" {} +
+    exit 1
+fi
+# Configure the E2 termination port
+if [ "$E2_TERM_PORT" != "$CURRENT_E2_PORT" ]; then
+    sudo find flexric/ -type f -exec sed -i "s/$CURRENT_E2_PORT/$E2_TERM_PORT_SUBSTITUTE/g" {} + # Change current port to substitute
+    sudo find flexric/ -type f -exec sed -i "s/$E2_TERM_PORT_SUBSTITUTE/$E2_TERM_PORT/g" {} +    # Change substitute to specified port
+    echo "Configured E2 termination from port $CURRENT_E2_PORT to port $E2_TERM_PORT"
+fi
+
 echo "Patching FlexRIC..."
 ./install_scripts/apply_patches.sh
 
@@ -106,7 +127,7 @@ cd flexric
 sudo rm -rf build
 mkdir build
 cd build
-CC=gcc-10 CXX=g++-10 cmake .. -DE2AP_VERSION=E2AP_V3 -DKPM_VERSION=KPM_V3_00 $ADDITIONAL_FLAGS
+CC=gcc-10 CXX=g++-10 cmake .. -DE2AP_VERSION=$E2AP_VERSION -DKPM_VERSION=$KPM_VERSION $ADDITIONAL_FLAGS
 make -j$(nproc)
 
 echo "Installing FlexRIC..."

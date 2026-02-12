@@ -48,5 +48,22 @@ CONFIG_PATH=""
 if [ -f "../configs/flexric.conf" ]; then
     CONFIG_PATH="-c ../configs/flexric.conf"
 fi
+# Extract SST and SD from options.yaml if it exists
+YAML_PATH="$SCRIPT_DIR/../../../5G_Core_Network/options.yaml"
+if [ -f "$YAML_PATH" ]; then
+    # Ensure the correct YAML editor is installed
+    "$PARENT_DIR/install_scripts/./ensure_consistent_yq.sh"
+    SST=$(yq eval '.slices[0].sst' "$YAML_PATH")
+    SD=$(yq eval '.slices[0].sd' "$YAML_PATH")
+    if [[ -z "$SST" || "$SST" == "null" ]]; then
+        SST=""
+    elif [[ -z "$SD" || "$SD" == "null" ]]; then
+        SD=""
+    else
+        echo "Using SST: $SST and SD: $SD for the xApp."
+    fi
+fi
 
-XAPP_DURATION=-1 ./build/examples/xApp/c/kpm_rc/xapp_kpm_rc $CONFIG_PATH
+echo "Starting xApp KPM RC..."
+set -x
+XAPP_DURATION=-1 SST=$SST SD=$SD ./build/examples/xApp/c/kpm_rc/xapp_kpm_rc $CONFIG_PATH

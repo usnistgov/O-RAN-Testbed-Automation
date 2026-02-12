@@ -30,7 +30,6 @@
 
 # Exit immediately if a command fails
 set -e
-
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
@@ -59,6 +58,9 @@ fi
 
 cd "$SCRIPT_DIR"
 mkdir -p logs
+if [ -f "logs/split_cu_stdout.txt" ]; then
+    sudo chown "$USER" logs/split_cu_stdout.txt
+fi
 >logs/split_cu_stdout.txt
 
 cd "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build"

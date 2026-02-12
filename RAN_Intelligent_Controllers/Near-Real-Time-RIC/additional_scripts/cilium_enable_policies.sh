@@ -38,7 +38,7 @@ echo
 echo "The Cilium policy is located at: $CILIUM_POLICY_FILE"
 
 if ! kubectl apply -f $CILIUM_POLICY_FILE; then
-    echo "Error: Failed to apply Cilium NetworkPolicy. Please check the Cilium logs for errors."
+    echo "ERROR: Failed to apply Cilium NetworkPolicy. Please check the Cilium logs for errors."
     exit 1
 fi
 

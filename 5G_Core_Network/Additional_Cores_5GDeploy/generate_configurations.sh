@@ -89,6 +89,9 @@ cd "$PARENT_DIR"
 # Ensure the correct YAML editor is installed
 "$SCRIPT_DIR/install_scripts/./ensure_consistent_yq.sh"
 
+# Ensure Node.js is installed and at correct version
+source "$PARENT_DIR/install_scripts/source_ensure_consistent_node.sh"
+
 echo "Parsing options.yaml..."
 # Check if the YAML file exists, if not, set and save default values
 if [ ! -f "options.yaml" ]; then

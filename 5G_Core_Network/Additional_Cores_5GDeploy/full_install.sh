@@ -122,54 +122,22 @@ cd $SCRIPT_DIR
 # Install dependencies
 mkdir -p logs
 
-# Prevent nvm from interfering with the Node.js installation
-if [ -d "$HOME/.nvm" ]; then
-    export NVM_DIR="$HOME/.nvm"
-    if [ -s "$NVM_DIR/nvm.sh" ]; then
-        source "$NVM_DIR/nvm.sh"
-        echo "Deactivating nvm to prevent interference with Node.js installation..."
-        nvm deactivate || true
-        nvm unload || true
-    fi
-fi
+# Ensure Node.js is installed and at correct version
+source "$PARENT_DIR/install_scripts/source_ensure_consistent_node.sh"
 
-if command -v node &>/dev/null; then
-    NODE_VERSION=$(node --version | sed 's/v//g' | cut -d. -f1)
-    if [ "$NODE_VERSION" -lt 22 ]; then
-        echo "Node.js version is less than 22, reinstalling Node.js 22.x"
-        sudo apt-get purge -y nodejs npm || true
-        rm -f logs/full_install_step_1_complete
-    fi
-fi
+APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 
-if [ -f logs/full_install_step_1_complete ]; then
-    if ! command -v docker &>/dev/null; then
-        rm logs/full_install_step_1_complete
+# Install system packages
+sudo apt-get update
+sudo env $APTVARS apt-get install -y linux-generic linux-lowlatency
+echo 'wireshark-common wireshark-common/install-setuid boolean true' | sudo debconf-set-selections
+sudo env $APTVARS apt-get install -y httpie jq wireshark-common
+sudo adduser $(id -un) wireshark
+if ! dpkg -s python3-libconf &>/dev/null; then
+    if ! sudo env $APTVARS apt-get install -y python3-libconf; then
+        echo "Package python3-libconf not found in apt, installing via pip..."
+        python3 -m pip install --user libconf
     fi
-fi
-if [ ! -f logs/full_install_step_1_complete ]; then
-    # Install system packages
-    sudo apt-get update
-    sudo env $APTVARS apt-get install -y linux-generic linux-lowlatency
-    echo 'wireshark-common wireshark-common/install-setuid boolean true' | sudo debconf-set-selections
-    sudo env $APTVARS apt-get install -y httpie jq wireshark-common
-    sudo adduser $(id -un) wireshark
-    if ! dpkg -s python3-libconf &>/dev/null; then
-        if ! sudo env $APTVARS apt-get install -y python3-libconf; then
-            echo "Package python3-libconf not found in apt, installing via pip..."
-            python3 -m pip install --user libconf
-        fi
-    fi
-    # Install Node.js 22.x
-    sudo install -d -m 0755 /etc/apt/keyrings
-    http --ignore-stdin GET https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --batch --yes --dearmor -o /etc/apt/keyrings/nodesource.gpg
-    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
-    sudo apt-get update -o Acquire::Check-Valid-Until=false -o Acquire::Check-Date=false
-
-    sudo env $APTVARS apt-get install -y -t nodistro nodejs
-    touch logs/full_install_step_1_complete
-else
-    echo "Dependencies already installed, skipping step 1."
 fi
 
 if ! command -v docker &>/dev/null; then

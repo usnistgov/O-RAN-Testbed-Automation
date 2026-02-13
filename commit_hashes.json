@@ -9,7 +9,7 @@
   "https://github.com/o-ran-sc/ric-app-hw-python.git": ["g-release", "a6d00525aa2f62f2457d84731da2b7d89e0b1013"],
   "https://github.com/o-ran-sc/ric-app-hw-rust.git": ["m-release", "2e969555fecbbb13c1650aac98176b7bf39b4ad4"],
   "https://gerrit.o-ran-sc.org/r/ric-app/kpimon-go.git": ["m-release", "8bbbbbb90093db01f88820de755bce0ee2189c88"],
-  "https://gerrit.o-ran-sc.org/r/ric-app/ad-cell.git": ["l-release", "f1338a030f6c2c5a6ab2a970c0fe964c92aafa8f"],
+  "https://gerrit.o-ran-sc.org/r/ric-app/ad-cell.git": ["master", "f1338a030f6c2c5a6ab2a970c0fe964c92aafa8f"],
   "https://gerrit.o-ran-sc.org/r/ric-app/ad.git": ["l-release", "f9f97b8c682d890395e3de5a56450ebb04a5630b"],
   "https://gerrit.o-ran-sc.org/r/ric-app/rc.git": ["m-release", "a2282eedc9e32f60298bf530456ad367bef0824b"],
   "https://gerrit.o-ran-sc.org/r/ric-app/ts.git": ["h-release", "19e169b2e81a0dbaf3d9dc526de0415cc995ee8b"],

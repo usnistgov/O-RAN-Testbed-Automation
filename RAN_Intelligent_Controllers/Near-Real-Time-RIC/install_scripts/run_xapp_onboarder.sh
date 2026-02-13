@@ -89,8 +89,9 @@ fi
 echo "Using Python: $(which python)"
 echo "Using pip: $(which pip)"
 
-# Upgrade pip and install wheel
-pip install --upgrade pip setuptools wheel
+# Upgrade pip and install wheel and setuptools
+# NOTE: On setuptools release 82.0.0, pkg_resources (needed for dms_cli) became deprecated (https://github.com/pypa/setuptools/pull/5007)
+pip install --upgrade pip "setuptools<82.0.0" wheel
 
 # Install dependencies ensuring there are no cached packages
 pip cache purge
@@ -131,6 +132,7 @@ termcolor~=2.4
 urllib3~=2.2
 Werkzeug~=3.0
 zipp~=3.20
+setuptools<82.0.0
 EOF
 
 # In case dms_cli binary is already installed, it can be uninstalled using the following command
@@ -174,7 +176,7 @@ else
 fi
 
 # Check if the output is 'True'
-if [[ $(sudo -E dms_cli health) == "True" ]]; then
+if [[ $(sudo -E "$DMS_CLI_PATH" health) == "True" ]]; then
     echo "Health check was successful."
 else
     echo "Current PATH: $PATH"

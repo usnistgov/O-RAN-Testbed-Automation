@@ -131,6 +131,7 @@ termcolor~=2.4
 urllib3~=2.2
 Werkzeug~=3.0
 zipp~=3.20
+setuptools
 EOF
 
 # In case dms_cli binary is already installed, it can be uninstalled using the following command

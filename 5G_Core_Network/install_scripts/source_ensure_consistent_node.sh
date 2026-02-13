@@ -111,10 +111,10 @@ Pin: origin deb.nodesource.com
 Pin-Priority: 1001
 EOF
         sudo apt-get update
-        sudo env $APTVARS apt-get install -y nodejs || {
+        if ! sudo env $APTVARS apt-get install -y nodejs; then
             echo "Failed to install nodejs"
             return 1 2>/dev/null || exit 1
-        }
+        fi
     else
         echo "Node.js is already at compliant version $CURRENT_VERSION (system package)."
     fi

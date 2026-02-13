@@ -45,4 +45,10 @@ source ./install_scripts/source_ensure_consistent_node.sh
 mkdir -p logs
 cd logs
 
-curl -fsSL https://open5gs.org/open5gs/assets/webui/install | sudo -E bash -
+if ! (
+    set -o pipefail
+    curl -fsSL https://open5gs.org/open5gs/assets/webui/install | sudo -E bash -
+); then
+    echo "Failed to install WebUI"
+    return 1 2>/dev/null || exit 1
+fi

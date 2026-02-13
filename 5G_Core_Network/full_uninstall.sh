@@ -73,7 +73,13 @@ fi
 mkdir -p logs
 cd logs
 echo "Uninstalling WebUI..."
-curl -fsSL https://open5gs.org/open5gs/assets/webui/uninstall | sudo -E bash -
+if ! (
+    set -o pipefail
+    curl -fsSL https://open5gs.org/open5gs/assets/webui/uninstall | sudo -E bash -
+); then
+    echo "Failed to uninstall WebUI"
+    return 1 2>/dev/null || exit 1
+fi
 cd ..
 
 echo "Performing general system cleanup..."

@@ -50,17 +50,43 @@ stages:
 ############################### INITIALIZATION #################################
 ################################################################################
 
-webui_check:
+open5gs_core_check:
   stage: initialization
   interruptible: true
   variables:
     GIT_STRATEGY: clone
   script:
-    - sudo apt-get update && sudo apt-get install -y curl
-    - echo "Testing WebUI Install..."
-    - curl -fsSL https://open5gs.org/open5gs/assets/webui/install | sudo -E bash -
-    - echo "Testing WebUI Uninstall..."
-    - curl -fsSL https://open5gs.org/open5gs/assets/webui/uninstall | sudo -E bash -
+    # Get apt into a clean state
+    - sudo rm -f /var/lib/dpkg/lock-frontend /var/lib/dpkg/lock || true
+    - sudo dpkg --configure -a || true
+    - |
+      if dpkg -s mongosh >/dev/null 2>&1 || ls /var/lib/dpkg/info/mongosh* >/dev/null 2>&1; then
+        sudo dpkg --remove --force-remove-reinstreq mongosh || true
+        sudo dpkg --purge mongosh || true
+        sudo rm -f /var/lib/dpkg/info/mongosh.* || true
+      fi
+    - sudo apt-get -y -f install || true
+    - sudo apt-get update
+    - sudo apt-get install -y linux-image-generic || true
+    - sudo apt-get install -y linux-modules-extra-generic || true
+    - sudo apt-get install -y linux-modules-extra-$(uname -r) || true
+    - sudo apt-get install -y linux-modules-$(uname -r) || true
+    - sudo apt-get install -y linux-headers-$(uname -r) || true
+    - sudo apt-get install -y bash bc ca-certificates coreutils curl git gnupg grep kmod lsb-release software-properties-common tree wget
+    - sudo apt-get install -y --no-install-recommends tzdata
+    - sudo update-ca-certificates || true
+
+    - echo "***************************** CI Configure Open5GS *******************************"
+    - cd 5G_Core_Network
+    - sed -i -E 's/^core_to_use:.*/core_to_use: open5gs/' options.yaml
+    
+    - echo "***************************** CI Install Open5GS Core ****************************"
+    - ./full_install.sh
+
+    - echo "**************************** CI Uninstall Open5GS Core ***************************"
+    - ./full_uninstall.sh bypass_confirmation
+    
+    - cd ..
 
 pre_install_cleanup:
   stage: initialization

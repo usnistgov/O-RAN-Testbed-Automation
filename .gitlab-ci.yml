@@ -56,7 +56,6 @@ open5gs_core_check:
   variables:
     GIT_STRATEGY: clone
   script:
-    # Get apt into a clean state
     - sudo rm -f /var/lib/dpkg/lock-frontend /var/lib/dpkg/lock || true
     - sudo dpkg --configure -a || true
     - |
@@ -75,17 +74,13 @@ open5gs_core_check:
     - sudo apt-get install -y bash bc ca-certificates coreutils curl git gnupg grep kmod lsb-release software-properties-common tree wget
     - sudo apt-get install -y --no-install-recommends tzdata
     - sudo update-ca-certificates || true
-
     - echo "***************************** CI Configure Open5GS *******************************"
     - cd 5G_Core_Network
     - sed -i -E 's/^core_to_use:.*/core_to_use: open5gs/' options.yaml
-    
     - echo "***************************** CI Install Open5GS Core ****************************"
     - ./full_install.sh
-
     - echo "**************************** CI Uninstall Open5GS Core ***************************"
     - ./full_uninstall.sh bypass_confirmation
-    
     - cd ..
 
 pre_install_cleanup:

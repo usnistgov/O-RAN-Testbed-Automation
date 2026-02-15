@@ -76,7 +76,7 @@ open5gs_core_check:
     - sudo update-ca-certificates || true
     - echo "***************************** CI Configure Open5GS *******************************"
     - cd 5G_Core_Network
-    - sed -i -E 's/^core_to_use:.*/core_to_use: open5gs/' options.yaml
+    - "sed -i -E 's/^core_to_use:.*/core_to_use: open5gs/' options.yaml"
     - echo "***************************** CI Install Open5GS Core ****************************"
     - ./full_install.sh
     - echo "**************************** CI Uninstall Open5GS Core ***************************"

@@ -47,7 +47,7 @@ BASE_DIR=$(dirname "$SCRIPT_DIR")
 
 cleanup() {
     echo "Cleaning up..."
-    sudo pkill -2 -f "tcpdump -i ogstun -w .*test_.*_capture.pcap" || true
+    sudo pkill -2 -f "tcpdump -i any -w .*test_.*_capture.pcap" || true
 }
 
 trap cleanup EXIT INT TERM
@@ -103,7 +103,7 @@ for i in {1..10}; do
     echo "################################################################################"
 
     echo "Starting tcpdump capture..."
-    nohup sudo tcpdump -i ogstun -w "$TEST_RESULTS_DIR/test_${i}_capture.pcap" </dev/null >/dev/null 2>&1 &
+    nohup sudo tcpdump -i any -w "$TEST_RESULTS_DIR/test_${i}_capture.pcap" </dev/null >/dev/null 2>&1 &
     sleep 2
 
     IS_TEST_SUCCESS=false
@@ -179,7 +179,7 @@ for i in {1..10}; do
     cd ..
 
     echo "Stopping tcpdump capture..."
-    sudo pkill -2 -f "tcpdump -i ogstun -w .*test_${i}_capture.pcap" || true
+    sudo pkill -2 -f "tcpdump -i any -w .*test_${i}_capture.pcap" || true
 
     # Save logs from this test run
     if [ -f Next_Generation_Node_B/logs/gnb_stdout.txt ]; then

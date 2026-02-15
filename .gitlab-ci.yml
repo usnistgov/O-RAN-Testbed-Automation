@@ -22,7 +22,18 @@ default:
     # SUDO ALIAS SETUP
     - |
       mkdir -p "$HOME/.local/bin"
-      echo -e '#!/usr/bin/env bash\nexec "$@"' > "$HOME/.local/bin/sudo"
+      # Create a mock sudo that handles flags
+      cat > "$HOME/.local/bin/sudo" <<'EOF'
+      #!/usr/bin/env bash
+      while [[ "$#" -gt 0 ]]; do
+        case "$1" in
+          -u|--user) shift 2 ;;
+          -*) shift ;;
+          *) break ;;
+        esac
+      done
+      exec "$@"
+      EOF
       chmod +x "$HOME/.local/bin/sudo"
       export PATH="$HOME/.local/bin:$PATH"
       hash -r

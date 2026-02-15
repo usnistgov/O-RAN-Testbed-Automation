@@ -22,20 +22,14 @@ default:
     # SUDO ALIAS SETUP
     - |
       mkdir -p "$HOME/.local/bin"
-      # Create a mock sudo that handles flags
-      cat > "$HOME/.local/bin/sudo" <<'EOF'
-      #!/usr/bin/env bash
-      while [[ "$#" -gt 0 ]]; do
-        case "$1" in
-          -u|--user) shift 2 ;;
-          -*) shift ;;
-          *) break ;;
-        esac
-      done
-      exec "$@"
-      EOF
+      echo -e '#!/bin/bash\nif [[ "$1" == "-E" ]]; then shift; fi\nexec "$@"' > "$HOME/.local/bin/sudo"
       chmod +x "$HOME/.local/bin/sudo"
       export PATH="$HOME/.local/bin:$PATH"
+      
+      # Prevent systemctl calls from installation scripts since systemd isn't running in the CI environment
+      echo -e '#!/bin/bash\nif [[ "$1" =~ ^(start|stop|restart|reload|daemon-reload|enable|disable) ]]; then exit 0; fi\nexec /bin/true' > "$HOME/.local/bin/systemctl"
+      chmod +x "$HOME/.local/bin/systemctl"
+      
       hash -r
 
     # General setup
@@ -55,6 +49,18 @@ stages:
 ################################################################################
 ############################### INITIALIZATION #################################
 ################################################################################
+
+webui_check:
+  stage: initialization
+  interruptible: true
+  variables:
+    GIT_STRATEGY: clone
+  script:
+    - sudo apt-get update && sudo apt-get install -y curl
+    - echo "Testing WebUI Install..."
+    - curl -fsSL https://open5gs.org/open5gs/assets/webui/install | sudo -E bash -
+    - echo "Testing WebUI Uninstall..."
+    - curl -fsSL https://open5gs.org/open5gs/assets/webui/uninstall | sudo -E bash -
 
 pre_install_cleanup:
   stage: initialization

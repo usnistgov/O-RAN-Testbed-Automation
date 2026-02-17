@@ -49,9 +49,12 @@ v1 = client.CoreV1Api()
 ################################################################################
 def test_pod_status():
     global rappmgr_pod_name, rappmgr_ip, rappmgr_port
-    rappmgr_pod_name = v1.list_namespaced_pod('nonrtric', label_selector='app=nonrtric-rappmanager').items[0].metadata.name
+    rappmgr_pod_name = v1.list_namespaced_pod('nonrtric', label_selector='app.kubernetes.io/name=rappmanager').items[0].metadata.name
     rappmgr_ip = v1.read_namespaced_pod(rappmgr_pod_name, 'nonrtric').status.pod_ip
     rappmgr_port=8080
+    
+    if rappmgr_ip is None:
+        pytest.fail(f'rApp Manager IP not available for pod {rappmgr_pod_name}')
     
     assert rappmgr_pod_name is not None, 'rApp Manager pod not found'
     assert rappmgr_ip is not None, 'rApp Manager IP not found'

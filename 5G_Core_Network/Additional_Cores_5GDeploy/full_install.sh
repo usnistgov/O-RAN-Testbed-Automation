@@ -193,6 +193,16 @@ sed -i 's/bookworm-apt-cache/bullseye-apt-cache/g' docker/virt/Dockerfile
 sed -i 's/debian:trixie-slim/debian:bullseye-slim/g' docker/iperf2/Dockerfile
 sed -i 's/trixie-apt-cache/bullseye-apt-cache/g' docker/iperf2/Dockerfile
 
+# # Also remove apt cache mounts to prevent "not enough free space" errors on CI runners
+# echo "Patching Dockerfiles to use debian:bullseye and remove cache mounts..."
+# sed -i 's/buildpack-deps:bookworm/buildpack-deps:bullseye/g' docker/sockperf/Dockerfile
+# sed -i 's/debian:bookworm/debian:bullseye/g' docker/sockperf/Dockerfile
+# sed -i '/--mount=type=cache,id=.*apt-cache/d' docker/sockperf/Dockerfile
+# sed -i 's/debian:bookworm/debian:bullseye/g' docker/virt/Dockerfile
+# sed -i '/--mount=type=cache,id=.*apt-cache/d' docker/virt/Dockerfile
+# sed -i 's/debian:trixie-slim/debian:bullseye-slim/g' docker/iperf2/Dockerfile
+# sed -i '/--mount=type=cache,id=.*apt-cache/d' docker/iperf2/Dockerfile
+
 ./install.sh \
     --dpdk-version v24.11 \
     --eupf-version 54ed069c6cdf1da18b09bd78cb166bc4e4dd1ceb \

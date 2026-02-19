@@ -42,6 +42,9 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
+# Ensure the correct YAML editor is installed
+./install_scripts/./ensure_consistent_yq.sh
+
 # Ensure that the correct script is used
 if [ -f "options.yaml" ]; then
     CORE_TO_USE=$(yq eval '.core_to_use' options.yaml)
@@ -58,9 +61,6 @@ if [ "$CORE_TO_USE" != "open5gs" ]; then
     ./generate_configurations.sh
     exit $?
 fi
-
-# Ensure the correct YAML editor is installed
-"$SCRIPT_DIR/install_scripts/./ensure_consistent_yq.sh"
 
 echo "Parsing options.yaml..."
 # Check if the YAML file exists, if not, set and save default values

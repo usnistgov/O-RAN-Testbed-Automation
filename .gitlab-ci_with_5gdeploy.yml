@@ -62,12 +62,16 @@ pre_install_cleanup:
     - |
       if [[ -f "5G_Core_Network/options.yaml" && -f "full_uninstall.sh" && -f "OpenAirInterface_Testbed/full_uninstall.sh" ]]; then
         # Testbed 1
+        sed -i -E 's/^core_to_use:.*/core_to_use: open5gs/' 5G_Core_Network/options.yaml
         ./full_uninstall.sh bypass_confirmation
         
         # Testbed 2
+        # sed -i -E 's/^core_to_use:.*/core_to_use: 5gdeploy-open5gs/' 5G_Core_Network/options.yaml
         cd OpenAirInterface_Testbed
         ./full_uninstall.sh bypass_confirmation
         cd ..
+        
+        sed -i -E 's/^core_to_use:.*/core_to_use: open5gs/' 5G_Core_Network/options.yaml
       else
         echo "Repositories don't exist for uninstall_all_components, skipping."
       fi
@@ -105,6 +109,14 @@ open5gs_srsran_oran_sc_ric_setup:
     - sudo apt-get install -y bash bc ca-certificates coreutils curl git gnupg grep kmod lsb-release software-properties-common tree wget
     - sudo apt-get install -y --no-install-recommends tzdata
     - sudo update-ca-certificates || true
+
+    - echo -e "\e[0Ksection_start:$(date +%s):open5gs_configure[collapsed=true]\r\e[0KConfigure Open5GS"
+    - echo "***************************** CI Configure Open5GS *******************************"
+    - cd 5G_Core_Network
+    # Configure the core to use: open5gs
+    - "sed -i -E 's/^core_to_use:.*/core_to_use: open5gs/' options.yaml"
+    - cd ..
+    - echo -e "\e[0Ksection_end:$(date +%s):open5gs_configure\r\e[0K"
 
     - echo -e "\e[0Ksection_start:$(date +%s):quick_uninstall[collapsed=true]\r\e[0KQuick Uninstall Existing Components"
     - echo "*********************** CI Quick Uninstall Existing Components ******************"
@@ -181,7 +193,7 @@ open5gs_srsran_oran_sc_ric_setup:
 ########################### TESTBED 2 INSTALLATION #############################
 ################################################################################
 
-openairinterface_flexric_setup:
+openairinterface_flexric_5gdeploy_setup:
   stage: testbed_2
   interruptible: true
   resource_group: testbed
@@ -209,6 +221,14 @@ openairinterface_flexric_setup:
     - sudo apt-get install -y bash bc ca-certificates coreutils curl git gnupg grep iproute2 kmod lsb-release software-properties-common tree wget
     - sudo apt-get install -y --no-install-recommends tzdata
     - sudo update-ca-certificates || true
+
+    - echo -e "\e[0Ksection_start:$(date +%s):5gdeploy_configure[collapsed=true]\r\e[0KConfigure 5gdeploy"
+    - echo "***************************** CI Install Open5GS *******************************"
+    - cd OpenAirInterface_Testbed/5G_Core_Network
+    # Configure the core to use: 5gdeploy-open5gs
+    - "sed -i -E 's/^core_to_use:.*/core_to_use: 5gdeploy-open5gs/' options.yaml"
+    - cd ../..
+    - echo -e "\e[0Ksection_end:$(date +%s):5gdeploy_configure\r\e[0K"
 
     - echo -e "\e[0Ksection_start:$(date +%s):quick_uninstall[collapsed=true]\r\e[0KQuick Uninstall Existing Components"
     - echo "*********************** CI Quick Uninstall Existing Components ******************"
@@ -238,6 +258,13 @@ openairinterface_flexric_setup:
     - cd ../../..
     - echo -e "\e[0Ksection_end:$(date +%s):flexric_install\r\e[0K"
     
+    - echo -e "\e[0Ksection_start:$(date +%s):5gdeploy_install[collapsed=true]\r\e[0KInstall 5G Deployment Helper (5gdeploy)"
+    - echo "********************** CI Install 5G Deployment Helper *************************"
+    - cd 5G_Core_Network
+    - ./full_install.sh
+    - cd ..
+    - echo -e "\e[0Ksection_end:$(date +%s):5gdeploy_install\r\e[0K"
+
     - echo -e "\e[0Ksection_start:$(date +%s):testbed_2_configuration[collapsed=true]\r\e[0KTestbed 2 Configuration"
     - echo "****************************** CI Configuration ********************************"
     - cd OpenAirInterface_Testbed
@@ -270,6 +297,13 @@ openairinterface_flexric_setup:
     - ./full_uninstall.sh bypass_confirmation
     - cd ../../..
     - echo -e "\e[0Ksection_end:$(date +%s):flexric_uninstall\r\e[0K"
+    
+    - echo -e "\e[0Ksection_start:$(date +%s):5gdeploy_uninstall[collapsed=true]\r\e[0KUninstall 5G Deployment Helper (5gdeploy)"
+    - echo "********************* CI Uninstall 5G Deployment Helper ************************"
+    - cd 5G_Core_Network
+    - ./full_uninstall.sh bypass_confirmation
+    - cd ..
+    - echo -e "\e[0Ksection_end:$(date +%s):5gdeploy_uninstall\r\e[0K"
   retry: 2
 
 ################################################################################
@@ -283,7 +317,7 @@ post_install_cleanup:
   needs:
     - job: open5gs_srsran_oran_sc_ric_setup
       optional: true
-    - job: openairinterface_flexric_setup
+    - job: openairinterface_flexric_5gdeploy_setup
       optional: true
   variables:
     GIT_STRATEGY: none
@@ -294,11 +328,14 @@ post_install_cleanup:
     - |
       if [[ -f "5G_Core_Network/options.yaml" && -f "full_uninstall.sh" && -f "OpenAirInterface_Testbed/full_uninstall.sh" ]]; then
         # Testbed 1
+        sed -i -E 's/^core_to_use:.*/core_to_use: open5gs/' 5G_Core_Network/options.yaml
         ./full_uninstall.sh bypass_confirmation
         # Testbed 2
+        sed -i -E 's/^core_to_use:.*/core_to_use: 5gdeploy-open5gs/' 5G_Core_Network/options.yaml
         cd OpenAirInterface_Testbed
         ./full_uninstall.sh bypass_confirmation
         cd ..
+        sed -i -E 's/^core_to_use:.*/core_to_use: open5gs/' 5G_Core_Network/options.yaml
       else
         echo "Repositories don't exist for uninstall_all_components, skipping."
       fi

@@ -36,7 +36,7 @@ cd "$PARENT_DIR"
 
 # Check dependencies
 for CMD in jq curl kubectl uuidgen zip unzip; do
-    if ! command -v "$CMD" &> /dev/null; then
+    if ! command -v "$CMD" &>/dev/null; then
         echo "ERROR: Missing dependency: $CMD" >&2
         exit 1
     fi
@@ -62,20 +62,20 @@ PAYLOAD_FILE="$2"
 if [ -z "$RAPP_FILE" ]; then
     echo "Available rApps:"
     CSAR_FILES=(rApps/*.csar)
-    
+
     if [ ${#CSAR_FILES[@]} -eq 0 ] || [ ! -e "${CSAR_FILES[0]}" ]; then
         echo "ERROR: No .csar files in rApps/." >&2
         exit 1
     fi
 
-    for INDEX in "${!CSAR_FILES[@]}"; do 
-        echo "$((INDEX+1)). $(basename "${CSAR_FILES[$INDEX]}")" 
+    for INDEX in "${!CSAR_FILES[@]}"; do
+        echo "$((INDEX + 1)). $(basename "${CSAR_FILES[$INDEX]}")"
     done
 
     while true; do
         read -p "Select rApp (number): " SELECTION
         if [[ "$SELECTION" =~ ^[0-9]+$ ]] && [ "$SELECTION" -ge 1 ] && [ "$SELECTION" -le "${#CSAR_FILES[@]}" ]; then
-            RAPP_FILE="${CSAR_FILES[$((SELECTION-1))]}"
+            RAPP_FILE="${CSAR_FILES[$((SELECTION - 1))]}"
             break
         else
             echo "Invalid selection."
@@ -93,32 +93,32 @@ HOST_IP=$(hostname -I | awk '{print $1}')
 
 # CSAR Patching (Enabled)
 patch_csar() {
-   local csar_file="$1"
-   local temp_dir=$(mktemp -d)
-   echo "Checking CSAR compatibility..." >&2 
-   unzip -q "$csar_file" -d "$temp_dir" 
-   
-   # Use HOST_IP variable instead of hardcoded IP
-   if grep -r "http://$HOST_IP:8879/api/charts" "$temp_dir" > /dev/null; then
-       echo "WARNING: Patching chartmuseum URL..." >&2
-       grep -rl "http://$HOST_IP:8879/api/charts" "$temp_dir" | while read -r file; do
-           if [[ "$file" == *.tgz ]] || [[ "$file" == *.gz ]] || [[ "$file" == *.zip ]]; then
-               continue
-           fi
-           sed -i "s|http://$HOST_IP:8879/api/charts|http://$HOST_IP:8879/charts/api/charts|g" "$file"
-       done
-       cd "$temp_dir"
-       zip -q -r patched_rapp.csar .
-       cd - > /dev/null
-       PATCHED_FILE="${csar_file%.csar}-patched.csar"
-       mv "$temp_dir/patched_rapp.csar" "$PATCHED_FILE"
-       rm -rf "$temp_dir"
-       echo "$PATCHED_FILE"
-   else
-       echo "No patching needed." >&2
-       rm -rf "$temp_dir"
-       echo "$csar_file"
-   fi
+    local csar_file="$1"
+    local temp_dir=$(mktemp -d)
+    echo "Checking CSAR compatibility..." >&2
+    unzip -q "$csar_file" -d "$temp_dir"
+
+    # Use HOST_IP variable instead of hardcoded IP
+    if grep -r "http://$HOST_IP:8879/api/charts" "$temp_dir" >/dev/null; then
+        echo "WARNING: Patching chartmuseum URL..." >&2
+        grep -rl "http://$HOST_IP:8879/api/charts" "$temp_dir" | while read -r file; do
+            if [[ "$file" == *.tgz ]] || [[ "$file" == *.gz ]] || [[ "$file" == *.zip ]]; then
+                continue
+            fi
+            sed -i "s|http://$HOST_IP:8879/api/charts|http://$HOST_IP:8879/charts/api/charts|g" "$file"
+        done
+        cd "$temp_dir"
+        zip -q -r patched_rapp.csar .
+        cd - >/dev/null
+        PATCHED_FILE="${csar_file%.csar}-patched.csar"
+        mv "$temp_dir/patched_rapp.csar" "$PATCHED_FILE"
+        rm -rf "$temp_dir"
+        echo "$PATCHED_FILE"
+    else
+        echo "No patching needed." >&2
+        rm -rf "$temp_dir"
+        echo "$csar_file"
+    fi
 }
 RAPP_FILE=$(patch_csar "$RAPP_FILE")
 
@@ -142,12 +142,12 @@ fi
 HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/rapps/$RAPP_ID")
 if [ "$HTTP_CODE" == "200" ]; then
     echo "Cleaning up existing rApp..."
-    
+
     INSTANCES=$(curl -s "$BASE_URL/rapps/$RAPP_ID/instance" | jq -r 'keys[] // empty')
     for INSTANCE in $INSTANCES; do
         echo "Undeploying $INSTANCE..."
-        curl -s -X PUT "$BASE_URL/rapps/$RAPP_ID/instance/$INSTANCE" -H 'Content-Type: application/json' -d '{"deployOrder": "UNDEPLOY"}' > /dev/null
-             
+        curl -s -X PUT "$BASE_URL/rapps/$RAPP_ID/instance/$INSTANCE" -H 'Content-Type: application/json' -d '{"deployOrder": "UNDEPLOY"}' >/dev/null
+
         START_TIME=$(date +%s)
         TIMEOUT=30
         while true; do
@@ -161,14 +161,14 @@ if [ "$HTTP_CODE" == "200" ]; then
             fi
             sleep 2
         done
-        
+
         echo "Deleting $INSTANCE..."
         curl -s -X DELETE "$BASE_URL/rapps/$RAPP_ID/instance/$INSTANCE"
     done
 
     echo "Depriming and deleting..."
-    curl -s -X PUT "$BASE_URL/rapps/$RAPP_ID" -H 'Content-Type: application/json' -d '{"primeOrder": "DEPRIME"}' > /dev/null
-    
+    curl -s -X PUT "$BASE_URL/rapps/$RAPP_ID" -H 'Content-Type: application/json' -d '{"primeOrder": "DEPRIME"}' >/dev/null
+
     START_TIME=$(date +%s)
     TIMEOUT=60
     while true; do
@@ -183,7 +183,7 @@ if [ "$HTTP_CODE" == "200" ]; then
         sleep 2
     done
 
-    curl -s -X DELETE "$BASE_URL/rapps/$RAPP_ID" > /dev/null
+    curl -s -X DELETE "$BASE_URL/rapps/$RAPP_ID" >/dev/null
     sleep 2
 fi
 
@@ -196,7 +196,7 @@ if [ "$HTTP_CODE" -ne 200 ] && [ "$HTTP_CODE" -ne 201 ] && [ "$HTTP_CODE" -ne 20
 fi
 
 echo "Priming $RAPP_ID..."
-curl -s -X PUT "$BASE_URL/rapps/$RAPP_ID" -H 'Content-Type: application/json' -d '{"primeOrder": "PRIME"}' > /dev/null
+curl -s -X PUT "$BASE_URL/rapps/$RAPP_ID" -H 'Content-Type: application/json' -d '{"primeOrder": "PRIME"}' >/dev/null
 
 START_TIME=$(date +%s)
 TIMEOUT=30
@@ -224,11 +224,11 @@ if [ -n "$PAYLOAD_FILE" ]; then
     cp "$PAYLOAD_FILE" "$TEMP_PAYLOAD"
 else
     if [[ "$RAPP_ID" == "rapp-simple-ics-consumer" ]]; then
-        echo "{\"rappInstanceId\": \"$INSTANCE_ID\", \"acm\": {\"instance\": \"k8s-instance\"}, \"a1-policy\": {\"policyTypeId\": \"1\", \"policyInstanceId\": \"100\"}, \"dme\": {\"infoTypesProducer\": null, \"infoTypeConsumer\": \"type1\", \"infoProducer\": null, \"infoConsumer\": \"ics-simple-consumer\"}}" > "$TEMP_PAYLOAD"
+        echo "{\"rappInstanceId\": \"$INSTANCE_ID\", \"acm\": {\"instance\": \"k8s-instance\"}, \"a1-policy\": {\"policyTypeId\": \"1\", \"policyInstanceId\": \"100\"}, \"dme\": {\"infoTypesProducer\": null, \"infoTypeConsumer\": \"type1\", \"infoProducer\": null, \"infoConsumer\": \"ics-simple-consumer\"}}" >"$TEMP_PAYLOAD"
     elif [[ "$RAPP_ID" == "rapp-hello-world" ]]; then
-        echo "{\"rappInstanceId\": \"$INSTANCE_ID\", \"acm\": {\"instance\": \"k8s-instance\"}, \"sme\": {\"providerFunction\": \"provider-function-1\", \"serviceApis\": \"api-set-1\"}}" > "$TEMP_PAYLOAD"
+        echo "{\"rappInstanceId\": \"$INSTANCE_ID\", \"acm\": {\"instance\": \"k8s-instance\"}, \"sme\": {\"providerFunction\": \"provider-function-1\", \"serviceApis\": \"api-set-1\"}}" >"$TEMP_PAYLOAD"
     else
-        echo "{}" > "$TEMP_PAYLOAD"
+        echo "{}" >"$TEMP_PAYLOAD"
     fi
 fi
 

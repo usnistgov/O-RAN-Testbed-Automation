@@ -238,6 +238,13 @@ openairinterface_flexric_setup:
     - cd ../../..
     - echo -e "\e[0Ksection_end:$(date +%s):flexric_install\r\e[0K"
     
+    - echo -e "\e[0Ksection_start:$(date +%s):open5gs_install[collapsed=true]\r\e[0KInstall Open5GS"
+    - echo "***************************** CI Install Open5GS *******************************"
+    - cd 5G_Core_Network
+    - ./full_install.sh
+    - cd ..
+    - echo -e "\e[0Ksection_end:$(date +%s):open5gs_install\r\e[0K"
+
     - echo -e "\e[0Ksection_start:$(date +%s):testbed_2_configuration[collapsed=true]\r\e[0KTestbed 2 Configuration"
     - echo "****************************** CI Configuration ********************************"
     - cd OpenAirInterface_Testbed
@@ -249,6 +256,13 @@ openairinterface_flexric_setup:
     - cd OpenAirInterface_Testbed
     - ./stop.sh
     - cd ..
+
+    - echo -e "\e[0Ksection_start:$(date +%s):open5gs_uninstall[collapsed=true]\r\e[0KUninstall Open5GS"
+    - echo "**************************** CI Uninstall Open5GS ******************************"
+    - cd 5G_Core_Network
+    - ./full_uninstall.sh bypass_confirmation
+    - cd ..
+    - echo -e "\e[0Ksection_end:$(date +%s):open5gs_uninstall\r\e[0K"
 
     - echo -e "\e[0Ksection_start:$(date +%s):oai_ue_uninstall[collapsed=true]\r\e[0KUninstall OpenAirInterface UE"
     - echo "***************************** CI Uninstall OAI UE ******************************"

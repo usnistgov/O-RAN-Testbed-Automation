@@ -107,16 +107,6 @@ echo "Patching gNB_scheduler_uci.c..."
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c.patch"
 cd ..
 
-cd openairinterface5g
-git restore openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_rc.c
-if [ ! -f "openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_rc.c.previous" ]; then
-    cp openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_rc.c openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_rc.c.previous
-    cp openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_rc.c.previous "$PARENT_DIR/install_patch_files/openairinterface/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_rc.previous.c"
-fi
-echo "Patching ran_func_rc.c for handover support..."
-git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_rc.c.patch"
-cd ..
-
 # If using Linux Mint, add support for Linux Mint 20, 21, and 22 to OpenAirInterface
 if grep -q "Linux Mint" /etc/os-release; then
     echo "Linux Mint detected, attempting to patching OpenAirInterface to support Linux Mint 20, 21, and 22..."

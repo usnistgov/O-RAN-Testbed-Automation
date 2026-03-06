@@ -69,9 +69,6 @@ cp "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_mon
 echo "Adding xapp_kpm_moni_write_to_influxdb.c..."
 cp "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni_write_to_influxdb.c" flexric/examples/xApp/c/monitor/
 
-echo "Adding xapp_handover_trigger.c..."
-cp "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/xapp_handover_trigger.c" flexric/examples/xApp/c/monitor/
-
 # Apply patch to add new xApp KPI monitor that logs output to logs/KPI_Metrics.csv
 cd flexric
 git restore examples/xApp/c/monitor/CMakeLists.txt

@@ -1,5 +1,11 @@
 # image: ubuntu:22.04
 
+workflow:
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      when: always
+    - when: never
+
 variables:
   GIT_DEPTH: "1"
   GIT_STRATEGY: none #fetch

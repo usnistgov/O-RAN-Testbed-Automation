@@ -31,6 +31,7 @@
 # Exit immediately if a command fails
 set -e
 
+APPLY_PATCHES=true
 DEBUG_SYMBOLS=false
 TELNET_SERVER=true
 NRSCOPE_GUI=false
@@ -88,8 +89,10 @@ else
     fi
 fi
 
-echo "Patching OpenAirInterface..."
-./install_scripts/apply_patches.sh
+if [ "$APPLY_PATCHES" = true ]; then
+    echo "Patching OpenAirInterface..."
+    ./install_scripts/apply_patches.sh
+fi
 
 # Ensure that the flexric repository is cloned at the right commit
 cd openairinterface5g/openair2/E2AP/

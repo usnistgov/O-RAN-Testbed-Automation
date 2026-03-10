@@ -31,6 +31,7 @@
 # Exit immediately if a command fails
 set -e
 
+APPLY_PATCHES=true
 CLEAN_INSTALL=false
 DEBUG_SYMBOLS=false
 E2AP_VERSION="E2AP_V2"        # E2AP_V1, E2AP_V2, E2AP_V3
@@ -114,8 +115,10 @@ if [ "$E2_TERM_PORT" != "$CURRENT_E2_PORT" ]; then
     echo "Configured E2 termination from port $CURRENT_E2_PORT to port $E2_TERM_PORT"
 fi
 
-echo "Patching FlexRIC..."
-./install_scripts/apply_patches.sh
+if [ "$APPLY_PATCHES" = true ]; then
+    echo "Patching FlexRIC..."
+    ./install_scripts/apply_patches.sh
+fi
 
 ADDITIONAL_FLAGS=""
 if [ "$DEBUG_SYMBOLS" = true ]; then

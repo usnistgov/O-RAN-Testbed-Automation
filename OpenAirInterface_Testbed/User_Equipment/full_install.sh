@@ -31,6 +31,7 @@
 # Exit immediately if a command fails
 set -e
 
+APPLY_PATCHES=true
 CLEAN_INSTALL=false # Note: If set to true, then full_install.sh needs to be ran in the Next_Generation_Node_B directory too.
 DEBUG_SYMBOLS=false
 
@@ -68,8 +69,10 @@ if [ ! -d "openairinterface5g" ]; then
     ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/oai/openairinterface5g.git openairinterface5g
 fi
 
-echo "Patching OpenAirInterface..."
-./install_scripts/apply_patches.sh
+if [ "$APPLY_PATCHES" = true ]; then
+    echo "Patching OpenAirInterface..."
+    ./install_scripts/apply_patches.sh
+fi
 
 # Ensure that the flexric repository is cloned at the right commit (symbolic link to RAN_Intelligent_Controllers/Flexible-RIC/flexric)
 cd openairinterface5g/openair2/E2AP/

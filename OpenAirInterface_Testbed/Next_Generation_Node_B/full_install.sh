@@ -178,6 +178,12 @@ if [[ "$CMAKE_VERSION" == 3.16.* ]]; then
     sudo env $APTVARS apt-get install -y cmake
 fi
 
+if ! command -v ccache &>/dev/null; then
+    echo "Installing ccache..."
+    sudo apt-get update
+    sudo env $APTVARS apt-get install -y ccache
+fi
+
 ADDITIONAL_FLAGS=""
 if [ "$CLEAN_INSTALL" = true ]; then
     ADDITIONAL_FLAGS="-C"

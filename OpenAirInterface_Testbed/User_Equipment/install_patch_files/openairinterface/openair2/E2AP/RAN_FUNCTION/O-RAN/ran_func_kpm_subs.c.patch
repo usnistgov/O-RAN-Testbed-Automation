@@ -1,5 +1,5 @@
 diff --git a/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c b/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c
-index d3381cadd3..2223ff8ff9 100644
+index d3381cadd3..113dcacb0b 100644
 --- a/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c
 +++ b/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c
 @@ -22,6 +22,7 @@
@@ -10,7 +10,7 @@ index d3381cadd3..2223ff8ff9 100644
  
  e2_node_level_stats_t cp_node_level_stats(const e2_node_level_stats_t *src)
  {
-@@ -201,6 +202,457 @@ static meas_record_lst_t fill_RRU_PrbTotUl(__attribute__((unused))uint32_t gran_
+@@ -201,6 +202,520 @@ static meas_record_lst_t fill_RRU_PrbTotUl(__attribute__((unused))uint32_t gran_
  }
  #endif
  
@@ -39,7 +39,7 @@ index d3381cadd3..2223ff8ff9 100644
 +  } else {
 +    meas_record.real_val = NAN;
 +  }
-+  
++
 +  return meas_record;
 +}
 +
@@ -61,7 +61,7 @@ index d3381cadd3..2223ff8ff9 100644
 +      meas_record.real_val = (double)ue_info.ue->mac_stats.e2_rsrp_meas_sorted[i]; // [dBm]
 +    }
 +  }
-+  
++
 +  return meas_record;
 +}
 +
@@ -118,7 +118,7 @@ index d3381cadd3..2223ff8ff9 100644
 +  } else {
 +    meas_record.real_val = NAN;
 +  }
-+  
++
 +  return meas_record;
 +}
 +
@@ -169,7 +169,7 @@ index d3381cadd3..2223ff8ff9 100644
 +      meas_record.real_val = (double)ue_info.ue->mac_stats.e2_rsrp_meas_sorted[i]; // [dBm]
 +    }
 +  }
-+  
++
 +  return meas_record;
 +}
 +
@@ -217,7 +217,6 @@ index d3381cadd3..2223ff8ff9 100644
 +
 +  // Retrieve the number of Resource Blocks over which RSSI is measured
 +  double N = ue_info.ue->mac_stats.NPRB;
-+
 +
 +  // Based on https://www.techplayon.com/rssi : RSRP (dBM) = RSSI - 10*log(12*N)
 +  double RSSI = RSRP + 10 * log10(12 * N);
@@ -394,7 +393,6 @@ index d3381cadd3..2223ff8ff9 100644
 +  return meas_record;
 +}
 +
-+
 +// Added metric for research purposes only
 +static meas_record_lst_t fill_CQI(__attribute__((unused))uint32_t gran_period_ms, cudu_ue_info_pair_t ue_info, __attribute__((unused))const size_t ue_idx, __attribute__((unused))e2_node_level_stats_t* node_stats)
 +{
@@ -465,12 +463,79 @@ index d3381cadd3..2223ff8ff9 100644
 +  return meas_record;
 +}
 +
++static __thread const label_info_lst_t* current_label_info = NULL;
++
++void set_kpm_label_info(const label_info_lst_t* label_info) {
++  current_label_info = label_info;
++}
++
++const label_info_lst_t* get_kpm_label_info(void) {
++  return current_label_info;
++}
++
++static meas_record_lst_t fill_CARR_PDSCHMCSDist(__attribute__((unused))uint32_t gran_period_ms, __attribute__((unused))cudu_ue_info_pair_t ue_info, __attribute__((unused))const size_t ue_idx, __attribute__((unused))e2_node_level_stats_t* node_stats)
++{
++  uint32_t rank = 1, table = 1, mcs = 0;
++  meas_record_lst_t res = { .value = NO_VALUE_MEAS_VALUE };
++
++  if (current_label_info != NULL) {
++    if (current_label_info->noLabel != NULL && *current_label_info->noLabel == TRUE_ENUM_VALUE) {
++       res.value = INTEGER_MEAS_VALUE;
++       res.int_val = 0;
++       return res;
++    }
++
++    if (current_label_info->distBinX != NULL) {
++        rank = *current_label_info->distBinX;
++    }
++    if (current_label_info->distBinY != NULL) {
++        table = *current_label_info->distBinY;
++    }
++    if (current_label_info->distBinZ != NULL) {
++        mcs = *current_label_info->distBinZ;
++    }
++  }
++
++  uint32_t bincount = 0;
++#if defined (NGRAN_GNB_DU)
++  if (RC.nrmac == NULL || RC.nrmac[0] == NULL) {
++      goto done;
++  }
++  gNB_MAC_INST *gNB_mac = RC.nrmac[0];
++  NR_SCHED_LOCK(&gNB_mac->sched_lock);
++
++  if (ue_info.ue != NULL) {
++    if (ue_info.ue->UE_sched_ctrl.dl_bler_stats.mcs == mcs && table == 1 && rank == 1) {
++        bincount = ue_info.ue->mac_stats.dl.current_rbs;
++    }
++  } else {
++    for (int i = 0; i < MAX_MOBILES_PER_GNB; i++) {
++      NR_UE_info_t *ue = gNB_mac->UE_info.connected_ue_list[i];
++      if (ue != NULL) {
++          if (ue->UE_sched_ctrl.dl_bler_stats.mcs == mcs && table == 1 && rank == 1) {
++              bincount += ue->mac_stats.dl.current_rbs;
++          }
++      }
++    }
++  }
++
++  NR_SCHED_UNLOCK(&gNB_mac->sched_lock);
++#endif
++
++done:
++  res.value = INTEGER_MEAS_VALUE;
++  res.int_val = bincount;
++  return res;
++}
++
  static kv_measure_t lst_measure[] = {
    {.key = "DRB.PdcpSduVolumeDL", .value = fill_DRB_PdcpSduVolumeDL }, 
    {.key = "DRB.PdcpSduVolumeUL", .value = fill_DRB_PdcpSduVolumeUL },
-@@ -211,6 +663,29 @@ static kv_measure_t lst_measure[] = {
+@@ -210,7 +725,31 @@ static kv_measure_t lst_measure[] = {
+   {.key = "DRB.UEThpUl", .value =  fill_DRB_UEThpUl }, 
    {.key = "RRU.PrbTotDl", .value =  fill_RRU_PrbTotDl }, 
    {.key = "RRU.PrbTotUl", .value =  fill_RRU_PrbTotUl }, 
++  {.key = "CARR.PDSCHMCSDist", .value = fill_CARR_PDSCHMCSDist },
  #endif
 +  {.key = "RSRP.Mean", .value = fill_RSRP_Mean },
 +  {.key = "RSRP.Minimum", .value = fill_RSRP_Minimum },

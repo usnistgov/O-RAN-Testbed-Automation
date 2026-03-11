@@ -128,6 +128,12 @@ if [[ "$CMAKE_VERSION" == 3.16.* ]]; then
     sudo env $APTVARS apt-get install -y cmake
 fi
 
+if ! command -v ccache &>/dev/null; then
+    echo "Installing ccache..."
+    sudo apt-get update
+    sudo env $APTVARS apt-get install -y ccache
+fi
+
 if ! dpkg -s libsimde-dev &>/dev/null; then
     echo "Attempting to install libsimde-dev..."
     sudo apt-get update

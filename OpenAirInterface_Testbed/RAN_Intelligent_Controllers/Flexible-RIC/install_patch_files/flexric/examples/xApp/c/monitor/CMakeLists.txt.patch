@@ -1,8 +1,16 @@
 diff --git a/examples/xApp/c/monitor/CMakeLists.txt b/examples/xApp/c/monitor/CMakeLists.txt
-index caa57e74..49a5833d 100644
+index caa57e74..7a82f255 100644
 --- a/examples/xApp/c/monitor/CMakeLists.txt
 +++ b/examples/xApp/c/monitor/CMakeLists.txt
-@@ -83,3 +83,36 @@ target_link_libraries(xapp_rc_moni
+@@ -16,6 +16,7 @@ add_executable(xapp_kpm_moni
+ 		      )
+ target_compile_definitions(xapp_kpm_moni PRIVATE KPM_MEAS_LIST="${KPM_MEAS_LIST}")
+ 
++
+ add_executable(xapp_gtp_mac_rlc_pdcp_moni 
+ 		xapp_gtp_mac_rlc_pdcp_moni.c
+                 ../../../../src/util/alg_ds/alg/defer.c
+@@ -83,3 +84,36 @@ target_link_libraries(xapp_rc_moni
                       -lsctp
                       -ldl
                       )

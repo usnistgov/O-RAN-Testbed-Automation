@@ -68,6 +68,16 @@ git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openair
 cd ..
 
 cd openairinterface5g
+git restore openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.h
+if [ ! -f "openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.h.previous" ]; then
+    cp openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.h openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.h.previous
+    cp openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.h.previous "$PARENT_DIR/install_patch_files/openairinterface/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.previous.c"
+fi
+echo "Patching ran_func_kpm_subs.h..."
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.h.patch"
+cd ..
+
+cd openairinterface5g
 git restore openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c
 if [ ! -f "openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c.previous" ]; then
     cp openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c.previous
@@ -105,6 +115,16 @@ if [ ! -f "openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c.previous" ]; then
 fi
 echo "Patching gNB_scheduler_uci.c..."
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c.patch"
+cd ..
+
+cd openairinterface5g
+git restore openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_rc.c
+if [ ! -f "openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_rc.c.previous" ]; then
+    cp openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_rc.c openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_rc.c.previous
+    cp openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_rc.c.previous "$PARENT_DIR/install_patch_files/openairinterface/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_rc.previous.c"
+fi
+echo "Patching ran_func_rc.c for handover support..."
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_rc.c.patch"
 cd ..
 
 # If using Linux Mint, add support for Linux Mint 20, 21, and 22 to OpenAirInterface

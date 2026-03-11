@@ -1,11 +1,59 @@
 diff --git a/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c b/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c
-index 8933b802a0..d2792e6556 100644
+index 8933b802a0..cbe5c46c9d 100644
 --- a/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c
 +++ b/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c
-@@ -449,6 +449,29 @@ static const char* kpm_meas_du[] = {
+@@ -64,23 +64,41 @@ static meas_data_lst_t fill_kpm_meas_data_item(const meas_info_format_1_lst_t* m
+ {
+   meas_data_lst_t data_item = {0};
+ 
+-  // Measurement Record
+-  data_item.meas_record_len = len;  // record data list length corresponds to info list length from action definition
++  size_t total_records = 0;
++  for (size_t i = 0; i < len; i++) {
++    if (meas_info_lst[i].label_info_lst_len > 0) {
++      total_records += meas_info_lst[i].label_info_lst_len;
++    } else {
++      total_records += 1;
++    }
++  }
+ 
+-  data_item.meas_record_lst = calloc(len, sizeof(meas_record_lst_t));
++  // Measurement Record
++  data_item.meas_record_len = total_records;
++  data_item.meas_record_lst = calloc(total_records, sizeof(meas_record_lst_t));
+   assert(data_item.meas_record_lst != NULL && "Memory exhausted");
+ 
++  size_t rec_idx = 0;
+   for (size_t i = 0; i < len; i++) {
+     // Measurement Type as requested in Action Definition
+     assert(meas_info_lst[i].meas_type.type == NAME_MEAS_TYPE && "Only NAME supported");
+-
+     char* meas_info_name_str = cp_ba_to_str(meas_info_lst[i].meas_type.name);
+ 
+-    data_item.meas_record_lst[i] = get_kpm_meas_value(meas_info_name_str, gran_period_ms, ue_info, ue_idx, node_stats);
++    if (meas_info_lst[i].label_info_lst_len > 0) {
++      for (size_t l = 0; l < meas_info_lst[i].label_info_lst_len; l++) {
++        set_kpm_label_info(&meas_info_lst[i].label_info_lst[l]);
++        data_item.meas_record_lst[rec_idx++] = get_kpm_meas_value(meas_info_name_str, gran_period_ms, ue_info, ue_idx, node_stats);
++      }
++    } else {
++      set_kpm_label_info(NULL);
++      data_item.meas_record_lst[rec_idx++] = get_kpm_meas_value(meas_info_name_str, gran_period_ms, ue_info, ue_idx, node_stats);
++    }
+ 
+     free(meas_info_name_str);
+   }
+ 
++  set_kpm_label_info(NULL);
++
+   return data_item;
+ }
+ 
+@@ -449,6 +467,30 @@ static const char* kpm_meas_du[] = {
    "DRB.UEThpUl",
    "RRU.PrbTotDl",
    "RRU.PrbTotUl",
++  "CARR.PDSCHMCSDist",
 +  "RSRP.Mean",
 +  "RSRP.Minimum",
 +  "RSRP.Quartile1",
@@ -32,10 +80,11 @@ index 8933b802a0..d2792e6556 100644
    NULL,
  };
  
-@@ -460,6 +483,29 @@ static const char* kpm_meas_gnb[] = {
+@@ -460,6 +502,30 @@ static const char* kpm_meas_gnb[] = {
    "DRB.UEThpUl",
    "RRU.PrbTotDl",
    "RRU.PrbTotUl",
++  "CARR.PDSCHMCSDist",
 +  "RSRP.Mean",
 +  "RSRP.Minimum",
 +  "RSRP.Quartile1",

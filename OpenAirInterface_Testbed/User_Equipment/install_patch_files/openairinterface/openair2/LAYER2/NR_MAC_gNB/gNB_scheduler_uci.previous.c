@@ -98,28 +98,6 @@ static void nr_fill_nfapi_pucch(gNB_MAC_INST *nrmac, frame_t frame, slot_t slot,
                      nrmac->beam_info.beam_mode);
 }
 
-#define MIN_RSRP_VALUE -141
-#define MAX_RSRP_VALUE -43
-
-//Measured RSRP Values Table 10.1.16.1-1 from 38.133
-//Stored all the upper limits[Max RSRP Value of corresponding index]
-//stored -1 for invalid values
-static const int L1_SSB_CSI_RSRP_measReport_mapping_38133_10_1_6_1_1[128] = {
-    -1,   -1,   -1,   -1,   -1,      -1,   -1,      -1,   -1,   -1, // 0 - 9
-    -1,   -1,   -1,   -1,   -1, -1, MIN_RSRP_VALUE, -140, -139, -138, // 10 - 19
-    -137, -136, -135, -134, -133,    -132, -131,    -130, -129, -128, // 20 - 29
-    -127, -126, -125, -124, -123,    -122, -121,    -120, -119, -118, // 30 - 39
-    -117, -116, -115, -114, -113,    -112, -111,    -110, -109, -108, // 40 - 49
-    -107, -106, -105, -104, -103,    -102, -101,    -100, -99,  -98, // 50 - 59
-    -97,  -96,  -95,  -94,  -93,     -92,  -91,     -90,  -89,  -88, // 60 - 69
-    -87,  -86,  -85,  -84,  -83,     -82,  -81,     -80,  -79,  -78, // 70 - 79
-    -77,  -76,  -75,  -74,  -73,     -72,  -71,     -70,  -69,  -68, // 80 - 89
-    -67,  -66,  -65,  -64,  -63,     -62,  -61,     -60,  -59,  -58, // 90 - 99
-    -57,  -56,  -55,  -54,  -53,     -52,  -51,     -50,  -49,  -48, // 100 - 109
-    -47,  -46,  -45,  -44, MAX_RSRP_VALUE, -1, -1,  -1,   -1,   -1, // 110 - 119
-    -1,   -1,   -1,   -1,   -1,      -1,   -1,      -1 // 120 - 127
-};
-
 //Differential RSRP values Table 10.1.6.1-2 from 38.133
 //Stored the upper limits[MAX RSRP Value]
 static const int diff_rsrp_ssb_csi_meas_10_1_6_1_2[16] = {
@@ -440,23 +418,16 @@ static int get_diff_sinr(int index, int best_SINRx10)
 //returns the measured RSRP value (upper limit)
 static bool get_measured_rsrp(uint8_t index, int *rsrp)
 {
-  //if index is invalid returning minimum rsrp -140
-  if (index <= 15)
+  *rsrp = -156 + index;
+  if (index < 16 || index > 113)
     return false;
-  if (index >= 114)
-    return false;
-
-  *rsrp = L1_SSB_CSI_RSRP_measReport_mapping_38133_10_1_6_1_1[index];
   return true;
 }
 
 //returns the differential RSRP value (upper limit)
 static int get_diff_rsrp(uint8_t index, int strongest_rsrp)
 {
-  if(strongest_rsrp != -1)
-    return strongest_rsrp + diff_rsrp_ssb_csi_meas_10_1_6_1_2[index];
-  else
-    return MIN_RSRP_VALUE;
+  return strongest_rsrp + diff_rsrp_ssb_csi_meas_10_1_6_1_2[index];
 }
 
 static uint8_t pickandreverse_bits(uint8_t *payload, uint16_t bitlen, uint8_t start_bit)
@@ -495,7 +466,7 @@ static void evaluate_sinr_report(gNB_MAC_INST *nrmac,
   */
 
   nr_csi_report_t *csi_report = &UE->csi_report_template[csi_report_id];
-  RSRP_report_t *sinr_report;
+  RSRP_report_list_t *sinr_report;
   long **index_list;
   switch (reportQuantity_type_r16) {
     case NR_CSI_ReportConfig__ext2__reportQuantity_r16_PR_ssb_Index_SINR_r16:
@@ -510,13 +481,13 @@ static void evaluate_sinr_report(gNB_MAC_INST *nrmac,
       AssertFatal(false, "Invalid RSRP report type\n");
   }
 
-  sinr_report->nr_reports = csi_report->CSI_report_bitlen.nb_ssbri_cri;
+  sinr_report->nb = csi_report->CSI_report_bitlen.nb_ssbri_cri;
   uint16_t curr_payload;
-  for (int i = 0; i < sinr_report->nr_reports; i++) {
+  for (RSRP_report_t *i = sinr_report->r; i < sinr_report->r + sinr_report->nb; i++) {
     int bitlen = csi_report->CSI_report_bitlen.cri_ssbri_bitlen;
     curr_payload = pickandreverse_bits(payload, bitlen, *cumul_bits);
-    sinr_report->resource_id[i] = *(index_list[bitlen > 0 ? ((curr_payload) & ~(~1U << (bitlen - 1))) : bitlen]);
-    LOG_D(MAC, "SSB/CSI-RS index = %d\n", sinr_report->resource_id[i]);
+    i->resource_id = *(index_list[bitlen > 0 ? (curr_payload & ~(~1U << (bitlen - 1))) : bitlen]);
+    LOG_D(MAC, "SSB/CSI-RS index = %d\n", i->resource_id);
     *cumul_bits += bitlen;
   }
 
@@ -525,29 +496,29 @@ static void evaluate_sinr_report(gNB_MAC_INST *nrmac,
   *cumul_bits += 7;
 
   csi_report->nb_of_csi_ssb_report++;
-  int SINRx10 = get_measured_sinr(sinr_index);
+  const int SINRx10 = get_measured_sinr(sinr_index);
   if (SINRx10 == INT_MAX) {
     LOG_E(NR_MAC, "UE %04x: reported SINR index %d invalid\n", UE->rnti, sinr_index);
     return;
   }
-  sinr_report->SINRx10[0] = SINRx10;
+  sinr_report->r[0].SINRx10 = SINRx10;
 
-  for (int i = 1; i < sinr_report->nr_reports; i++) {
+  for (RSRP_report_t *i = sinr_report->r + 1; i < sinr_report->r + sinr_report->nb; i++) {
     curr_payload = pickandreverse_bits(payload, 4, *cumul_bits);
-    sinr_report->SINRx10[i] = get_diff_sinr(curr_payload & 0x0f, sinr_report->SINRx10[0]);
+    i->SINRx10 = get_diff_sinr(curr_payload & 0x0f, SINRx10);
     *cumul_bits += 4;
   }
 
   NR_mac_stats_t *stats = &UE->mac_stats;
   // including ssb SINR in mac stats
-  stats->cumul_sinrx10 += sinr_report->SINRx10[0];
+  stats->cumul_sinrx10 += sinr_report->r[0].SINRx10;
   stats->num_sinr_meas++;
 
   const int mcs_table = UE->current_DL_BWP.mcsTableIdx;
   const int nrOfLayers = get_dl_nrOfLayers(sched_ctrl, UE->current_DL_BWP.dci_format);
-  sched_ctrl->dl_max_mcs = get_mcs_from_SINRx10(mcs_table, sinr_report->SINRx10[0], nrOfLayers);
+  sched_ctrl->dl_max_mcs = get_mcs_from_SINRx10(mcs_table, sinr_report->r[0].SINRx10, nrOfLayers);
 
-  LOG_D(MAC, "Reported SSB-SINR = %d.%d, dl_max_mcs %d\n", sinr_report->SINRx10[0] / 10, sinr_report->SINRx10[0] % 10, sched_ctrl->dl_max_mcs);
+  LOG_D(MAC, "Reported SSB-SINR = %01f, dl_max_mcs %d\n", sinr_report->r[0].SINRx10 / 10.0, sched_ctrl->dl_max_mcs);
 }
 
 static void evaluate_rsrp_report(gNB_MAC_INST *nrmac,
@@ -576,7 +547,7 @@ static void evaluate_rsrp_report(gNB_MAC_INST *nrmac,
     multiple simultaneous spatial domain receive filter
   */
   nr_csi_report_t *csi_report = &UE->csi_report_template[csi_report_id];
-  RSRP_report_t *rsrp_report;
+  RSRP_report_list_t *rsrp_report;
   long **index_list;
   switch (reportQuantity_type) {
     case NR_CSI_ReportConfig__reportQuantity_PR_ssb_Index_RSRP:
@@ -591,11 +562,11 @@ static void evaluate_rsrp_report(gNB_MAC_INST *nrmac,
       AssertFatal(false, "Invalid RSRP report type\n");
   }
 
-  rsrp_report->nr_reports = csi_report->CSI_report_bitlen.nb_ssbri_cri;
+  rsrp_report->nb = csi_report->CSI_report_bitlen.nb_ssbri_cri;
   int bitlen = csi_report->CSI_report_bitlen.cri_ssbri_bitlen;
-  for (int i = 0; i < rsrp_report->nr_reports; i++) {
+  for (RSRP_report_t *i = rsrp_report->r; i < rsrp_report->r + rsrp_report->nb; i++) {
     uint8_t idx_payload = pickandreverse_bits(payload, bitlen, *cumul_bits);
-    rsrp_report->resource_id[i] = *(index_list[bitlen > 0 ? ((idx_payload) & ~(~1U << (bitlen - 1))) : bitlen]);
+    i->resource_id = *(index_list[bitlen > 0 ? (idx_payload & ~(~1U << (bitlen - 1))) : bitlen]);
     *cumul_bits += bitlen;
   }
 
@@ -603,24 +574,24 @@ static void evaluate_rsrp_report(gNB_MAC_INST *nrmac,
   int rsrp = curr_payload & 0x7f;
   *cumul_bits += 7;
   csi_report->nb_of_csi_ssb_report++;
-  bool valid = get_measured_rsrp(rsrp, &rsrp_report->RSRP[0]);
-  LOG_D(NR_MAC, "SSB/CSI-RS index %d RSRP %d\n", rsrp_report->resource_id[0], rsrp_report->RSRP[0]);
+  bool valid = get_measured_rsrp(rsrp, &rsrp_report->r[0].RSRP);
+  LOG_D(NR_MAC, "SSB/CSI-RS index %d RSRP %d\n", rsrp_report->r[0].resource_id, rsrp_report->r[0].RSRP);
   if (!valid) {
-    LOG_E(NR_MAC, "UE %04x: reported RSRP index %d invalid\n", UE->rnti, rsrp);
+    LOG_I(NR_MAC, "UE %04x: reported RSRP out of 5G usable range %d dBm\n", UE->rnti, rsrp_report->r[0].RSRP);
     return;
   }
 
-  for (int i = 1; i < rsrp_report->nr_reports; i++) {
+  for (RSRP_report_t *i = rsrp_report->r + 1; i < rsrp_report->r + rsrp_report->nb; i++) {
     curr_payload = pickandreverse_bits(payload, 4, *cumul_bits);
     csi_report->nb_of_csi_ssb_report++;
-    rsrp_report->RSRP[i] = get_diff_rsrp(curr_payload & 0x0f, rsrp_report->RSRP[0]);
-    LOG_D(NR_MAC, "SSB/CSI-RS index %d RSRP %d\n", rsrp_report->resource_id[i], rsrp_report->RSRP[i]);
+    i->RSRP = get_diff_rsrp(curr_payload & 0x0f, rsrp_report->r[0].RSRP);
+    LOG_D(NR_MAC, "SSB/CSI-RS index %d RSRP %d\n", i->resource_id, i->RSRP);
     *cumul_bits += 4;
   }
 
   NR_mac_stats_t *stats = &UE->mac_stats;
   // including ssb rsrp in mac stats
-  stats->cumul_rsrp += rsrp_report->RSRP[0];
+  stats->cumul_rsrp += rsrp_report->r[0].RSRP;
   stats->num_rsrp_meas++;
 }
 
@@ -757,6 +728,7 @@ static void extract_pucch_csi_report(NR_CSI_MeasConfig_t *csi_MeasConfig,
   const int n_slots_frame = nrmac->frame_structure.numb_slots_frame;
   int cumul_bits = 0;
   int r_index = -1;
+  int new_bf_index = -1;
   for (int csi_report_id = 0; csi_report_id < csi_MeasConfig->csi_ReportConfigToAddModList->list.count; csi_report_id++) {
     nr_csi_report_t *csi_report = &UE->csi_report_template[csi_report_id];
     csi_report->nb_of_csi_ssb_report = 0;
@@ -793,7 +765,7 @@ static void extract_pucch_csi_report(NR_CSI_MeasConfig_t *csi_MeasConfig,
             break;
           case NR_CSI_ReportConfig__reportQuantity_PR_ssb_Index_RSRP:
             evaluate_rsrp_report(nrmac, UE, sched_ctrl, csi_report_id, payload, &cumul_bits, reportQuantity_type);
-            beam_selection_procedures(nrmac, UE);
+            new_bf_index = beam_selection_procedures(nrmac, UE);
             break;
           case NR_CSI_ReportConfig__reportQuantity_PR_cri_RI_CQI:
             sched_ctrl->CSI_report.cri_ri_li_pmi_cqi_report.print_report = true;
@@ -851,6 +823,9 @@ static void extract_pucch_csi_report(NR_CSI_MeasConfig_t *csi_MeasConfig,
       }
     }
   }
+  if ((new_bf_index !=-1) && !nrmac->radio_config.do_TCI)
+    // Trigger RRCReconfiguration. Need to be out of the for loop as it may modify csi_MeasConfig
+    beam_switching_procedure(nrmac, UE, new_bf_index);
 }
 
 static NR_UE_harq_t *find_harq(frame_t frame, slot_t slot, NR_UE_info_t * UE, int harq_round_max)

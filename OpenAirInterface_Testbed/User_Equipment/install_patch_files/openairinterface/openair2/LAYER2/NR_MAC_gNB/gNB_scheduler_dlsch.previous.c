@@ -1079,9 +1079,7 @@ void post_process_dlsch(gNB_MAC_INST *nr_mac, post_process_pdsch_t *pdsch, NR_UE
   NR_UE_harq_t *harq = &sched_ctrl->harq_processes[current_harq_pid];
   NR_sched_pucch_t *pucch = NULL;
   DevAssert(!harq->is_waiting);
-  if (sched_pdsch->pucch_allocation < 0) {
-    finish_nr_dl_harq(sched_ctrl, current_harq_pid);
-  } else {
+  if (sched_pdsch->pucch_allocation >= 0) {
     pucch = &sched_ctrl->sched_pucch[sched_pdsch->pucch_allocation];
     add_tail_nr_list(&sched_ctrl->feedback_dl_harq, current_harq_pid);
     harq->feedback_frame = pucch->frame;
@@ -1414,6 +1412,12 @@ void post_process_dlsch(gNB_MAC_INST *nr_mac, post_process_pdsch_t *pdsch, NR_UE
   pdsch->TX_req->Number_of_PDUs++;
   pdsch->TX_req->SFN = frame;
   pdsch->TX_req->Slot = slot;
+
+  // RESET HARQ NDI and ROUND once they are used.
+  // as HARQ is disabled and there will no PUCCH being received.
+  if (sched_pdsch->pucch_allocation < 0) {
+    finish_nr_dl_harq(sched_ctrl, current_harq_pid);
+  }
 }
 
 void nr_schedule_ue_spec(module_id_t module_id,

@@ -1,5 +1,5 @@
 diff --git a/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_rc.c b/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_rc.c
-index 14c357496c..d0ade2ce80 100644
+index 14c357496c..e768b1389b 100644
 --- a/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_rc.c
 +++ b/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_rc.c
 @@ -28,6 +28,11 @@
@@ -14,7 +14,7 @@ index 14c357496c..d0ade2ce80 100644
  
  #include <stdio.h>
  #include <unistd.h>
-@@ -898,12 +903,112 @@ sm_ag_if_ans_t write_ctrl_rc_sm(void const* data)
+@@ -898,12 +903,116 @@ sm_ag_if_ans_t write_ctrl_rc_sm(void const* data)
  
    assert(ctrl->hdr.format == FORMAT_1_E2SM_RC_CTRL_HDR && "Indication Header Format received not valid");
    assert(ctrl->msg.format == FORMAT_1_E2SM_RC_CTRL_MSG && "Indication Message Format received not valid");
@@ -94,13 +94,17 @@ index 14c357496c..d0ade2ce80 100644
 +
 +            if (ue_context) {
 +              gNB_RRC_UE_t *ue = &ue_context->ue_context;
-+              nr_rrc_du_container_t *source_du = get_du_for_ue(rrc, rrc_ue_id);
-+              nr_rrc_du_container_t *target_du = get_du_by_cell_id(rrc, target_cell_id);
++              nr_rrc_cell_container_t *source_cell = NULL;
++              if (ue->serving_cells.size > 0) {
++                 ue_serving_cell_t *sc = (ue_serving_cell_t *)seq_arr_at(&ue->serving_cells, 0);
++                 source_cell = get_cell_by_cell_id(&rrc->cells, sc->nci);
++              }
++              nr_rrc_cell_container_t *target_cell = get_cell_by_cell_id(&rrc->cells, target_cell_id);
 +
-+              if (source_du && target_du) {
-+                nr_rrc_trigger_f1_ho(rrc, ue, source_du, target_du);
++              if (source_cell && target_cell) {
++                nr_rrc_trigger_f1_ho(rrc, ue, source_cell, target_cell);
 +              } else {
-+                printf("[E2SM-RC] Source or Target DU not found (Source: %p, Target: %p)\n", source_du, target_du);
++                printf("[E2SM-RC] Source or Target Cell not found (Source: %p, Target: %p)\n", source_cell, target_cell);
 +              }
 +            } else {
 +              printf("[E2SM-RC] UE Context not found for ID %u\n", rrc_ue_id);
@@ -129,7 +133,7 @@ index 14c357496c..d0ade2ce80 100644
    // DRB ID
    assert(ran_param[0].ran_param_id == 1 && "First RAN Parameter ID has to be DRB ID");
    assert(ran_param[0].ran_param_val.type == ELEMENT_KEY_FLAG_TRUE_RAN_PARAMETER_VAL_TYPE);
-@@ -933,7 +1038,7 @@ sm_ag_if_ans_t write_ctrl_rc_sm(void const* data)
+@@ -933,7 +1042,7 @@ sm_ag_if_ans_t write_ctrl_rc_sm(void const* data)
    assert(dir == 0 || dir == 1);
  
    printf("qfi = %ld, dir %ld \n", qfi, dir);

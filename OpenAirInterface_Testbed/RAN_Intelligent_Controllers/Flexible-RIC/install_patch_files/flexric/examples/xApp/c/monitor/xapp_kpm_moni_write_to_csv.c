@@ -75,7 +75,7 @@ uint32_t cfg_slicing_sd  = 0xFFFFFF; // 0xFFFFFF for any SD
 bool csv_wrote_header = false;
 const char *csv_file_path = NULL;
 char csv_header_buffer[2048];
-char csv_line_buffer[2048];
+char csv_line_buffer[9000];
 unsigned int csv_num_rows = 0;
 uint64_t current_ue_id = 0;
 bool filter_current_sample = false;
@@ -178,6 +178,16 @@ static void csv_append_real_to_csv_line(meas_record_lst_t meas_record) {
     } else {
       snprintf(csv_line_buffer + current_len, sizeof(csv_line_buffer) - current_len, "%.2f,", meas_record.real_val);
     }
+  } else {
+    fprintf(stderr, "CSV line buffer is full, cannot append more values.\n");
+  }
+}
+
+static void csv_append_string_to_csv_line(const char *str) {
+  size_t current_len = strlen(csv_line_buffer);
+
+  if (current_len + strlen(str) + 32 < sizeof(csv_line_buffer)) {
+    snprintf(csv_line_buffer + current_len, sizeof(csv_line_buffer) - current_len, "\"%s\",", str);
   } else {
     fprintf(stderr, "CSV line buffer is full, cannot append more values.\n");
   }
@@ -519,16 +529,77 @@ void log_kpm_measurements(kpm_ind_msg_format_1_t const* msg_frm_1)
   for (size_t j = 0; j < msg_frm_1->meas_data_lst_len; j++) {
     meas_data_lst_t const data_item = msg_frm_1->meas_data_lst[j];
 
+    size_t rec_idx = 0;
     for (size_t i = 0; i < msg_frm_1->meas_info_lst_len; i++) {
       const meas_info_format_1_lst_t info_item = msg_frm_1->meas_info_lst[i];
-      for (size_t z = 0; z < info_item.label_info_lst_len; z++) {
-        const label_info_lst_t label_info = info_item.label_info_lst[z];
-        const meas_record_lst_t record_item = data_item.meas_record_lst[i + z];
 
-        match_meas_type[info_item.meas_type.type](info_item.meas_type, label_info, record_item);
+      if (info_item.label_info_lst_len > 1 && info_item.meas_type.type == NAME_MEAS_TYPE && info_item.label_info_lst[0].distBinX != NULL) {
+        char *name_str = cp_ba_to_str(info_item.meas_type.name);
+        char *name_unit = get_meas_unit(name_str);
+        if (name_unit && strcmp(name_unit, "[]") == 0) name_unit = "";
+        if (name_unit == NULL) name_unit = "";
 
-        if (data_item.incomplete_flag && *data_item.incomplete_flag == TRUE_ENUM_VALUE)
-          printf("Measurement Record not reliable");
+        if (!csv_wrote_header) {
+          char clean_unit[64];
+          size_t len = strlen(name_unit);
+          if (len > 2 && name_unit[0] == '[' && name_unit[len - 1] == ']') {
+            snprintf(clean_unit, sizeof(clean_unit), "%.*s", (int)(len - 2), name_unit + 1);
+          } else {
+            snprintf(clean_unit, sizeof(clean_unit), "%s", name_unit);
+          }
+          csv_append_name_to_csv_header(name_str, clean_unit);
+        }
+
+        // Build the JSON array string
+        char arr_str[8192];
+        size_t arr_len = 0;
+        arr_str[0] = '\0';
+        uint32_t last_x = 0, last_y = 0;
+
+        for (size_t z = 0; z < info_item.label_info_lst_len; z++) {
+
+          const label_info_lst_t label_info = info_item.label_info_lst[z];
+          const meas_record_lst_t record_item = data_item.meas_record_lst[rec_idx++];
+
+          uint32_t cur_x = *label_info.distBinX;
+          uint32_t cur_y = *label_info.distBinY;
+
+          if (z == 0) {
+            arr_len += snprintf(arr_str + arr_len, sizeof(arr_str) - arr_len, "[[");
+          } else {
+            if (cur_x != last_x) {
+              arr_len += snprintf(arr_str + arr_len, sizeof(arr_str) - arr_len, "]], [[");
+            } else if (cur_y != last_y) {
+              arr_len += snprintf(arr_str + arr_len, sizeof(arr_str) - arr_len, "], [");
+            } else {
+              arr_len += snprintf(arr_str + arr_len, sizeof(arr_str) - arr_len, ", ");
+            }
+          }
+          if (record_item.value == 0) {
+            arr_len += snprintf(arr_str + arr_len, sizeof(arr_str) - arr_len, "%d", record_item.int_val);
+          } else if (record_item.value == 1) {
+            arr_len += snprintf(arr_str + arr_len, sizeof(arr_str) - arr_len, "%.2f", record_item.real_val);
+          } else {
+            arr_len += snprintf(arr_str + arr_len, sizeof(arr_str) - arr_len, "null");
+          }
+          last_x = cur_x;
+          last_y = cur_y;
+        }
+        arr_len += snprintf(arr_str + arr_len, sizeof(arr_str) - arr_len, "]]]");
+
+        csv_append_string_to_csv_line(arr_str);
+
+        free(name_str);
+      } else {
+        for (size_t z = 0; z < info_item.label_info_lst_len; z++) {
+          const label_info_lst_t label_info = info_item.label_info_lst[z];
+          const meas_record_lst_t record_item = data_item.meas_record_lst[rec_idx++];
+
+          match_meas_type[info_item.meas_type.type](info_item.meas_type, label_info, record_item);
+
+          if (data_item.incomplete_flag && *data_item.incomplete_flag == TRUE_ENUM_VALUE)
+            printf("Measurement Record not reliable\n");
+        }
       }
     }
   }
@@ -680,6 +751,26 @@ label_info_lst_t fill_kpm_label(void)
 }
 
 static
+label_info_lst_t fill_distribution_bin_label(const uint32_t x, const uint32_t y, const uint32_t z)
+{
+  label_info_lst_t label_item = {0};
+
+  label_item.distBinX = calloc(1, sizeof(uint32_t));
+  assert(label_item.distBinX != NULL);
+  *label_item.distBinX = x;
+
+  label_item.distBinY = calloc(1, sizeof(uint32_t));
+  assert(label_item.distBinY != NULL);
+  *label_item.distBinY = y;
+
+  label_item.distBinZ = calloc(1, sizeof(uint32_t));
+  assert(label_item.distBinZ != NULL);
+  *label_item.distBinZ = z;
+
+  return label_item;
+}
+
+static
 kpm_act_def_format_1_t fill_act_def_frm_1(ric_report_style_item_t const* report_item)
 {
   assert(report_item != NULL);
@@ -702,9 +793,23 @@ kpm_act_def_format_1_t fill_act_def_frm_1(ric_report_style_item_t const* report_
 
     // [1, 2147483647]
     // 8.3.11
-    meas_item->label_info_lst_len = 1;
-    meas_item->label_info_lst = ecalloc(1, sizeof(label_info_lst_t));
-    meas_item->label_info_lst[0] = fill_kpm_label();
+    if (cmp_str_ba("CARR.PDSCHMCSDist", meas_item->meas_type.name) == 0) {
+      /// 1-8 RI, 1-3 MCS table, 0-31 MCS value
+      meas_item->label_info_lst_len = 8 * 3 * 32;
+      meas_item->label_info_lst = ecalloc(meas_item->label_info_lst_len, sizeof(label_info_lst_t));
+      size_t idx = 0;
+      for (uint32_t x = 1; x <= 8; x++) {
+        for (uint32_t y = 1; y <= 3; y++) {
+          for(uint32_t z = 0; z <= 31; z++) {
+            meas_item->label_info_lst[idx++] = fill_distribution_bin_label(x, y, z);
+          }
+        }
+      }
+    } else {
+      meas_item->label_info_lst_len = 1;
+      meas_item->label_info_lst = ecalloc(meas_item->label_info_lst_len, sizeof(label_info_lst_t));
+      meas_item->label_info_lst[0] = fill_kpm_label();
+    }
   }
 
   // 8.3.8 [0, 4294967295]
@@ -746,26 +851,6 @@ kpm_act_def_t fill_report_style_4(ric_report_style_item_t const* report_item)
   act_def.frm_4.action_def_format_1 = fill_act_def_frm_1(report_item);
 
   return act_def;
-}
-
-static
-label_info_lst_t fill_distribution_bin_label(const uint32_t x, const uint32_t y, const uint32_t z)
-{
-  label_info_lst_t label_item = {0};
-
-  label_item.distBinX = calloc(1, sizeof(uint32_t));
-  assert(label_item.distBinX != NULL);
-  *label_item.distBinX = x;
-
-  label_item.distBinY = calloc(1, sizeof(uint32_t));
-  assert(label_item.distBinY != NULL);
-  *label_item.distBinY = y;
-
-  label_item.distBinZ = calloc(1, sizeof(uint32_t));
-  assert(label_item.distBinZ != NULL);
-  *label_item.distBinZ = z;
-
-  return label_item;
 }
 
 static

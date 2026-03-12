@@ -1,8 +1,8 @@
 diff --git a/examples/xApp/c/monitor/xapp_kpm_moni.c b/examples/xApp/c/monitor/xapp_kpm_moni.c
-index 2918080e..52b8c5fc 100644
+index 2f71d1d5..24772a75 100644
 --- a/examples/xApp/c/monitor/xapp_kpm_moni.c
 +++ b/examples/xApp/c/monitor/xapp_kpm_moni.c
-@@ -276,16 +276,63 @@ void log_kpm_measurements(kpm_ind_msg_format_1_t const* msg_frm_1)
+@@ -209,16 +209,63 @@ void log_kpm_measurements(kpm_ind_msg_format_1_t const* msg_frm_1)
    for (size_t j = 0; j < msg_frm_1->meas_data_lst_len; j++) {
      meas_data_lst_t const data_item = msg_frm_1->meas_data_lst[j];
  
@@ -20,7 +20,7 @@ index 2918080e..52b8c5fc 100644
 +        if (name_unit && strcmp(name_unit, "[]") == 0) name_unit = "";
 +        if (name_unit == NULL) name_unit = "";
 +
-+        printf("%s = [", name_str);
++        printf("%s = ", name_str);
 +        uint32_t last_x = 0, last_y = 0;
 +
 +        for (size_t z = 0; z < info_item.label_info_lst_len; z++) {
@@ -32,7 +32,7 @@ index 2918080e..52b8c5fc 100644
 +          uint32_t cur_y = *label_info.distBinY;
 +
 +          if (z == 0) {
-+            printf("[[");
++            printf("[[[");
 +          } else {
 +            if (cur_x != last_x) {
 +              printf("]], [[");
@@ -72,7 +72,7 @@ index 2918080e..52b8c5fc 100644
        }
      }
    }
-@@ -404,6 +451,9 @@ label_info_lst_t fill_kpm_label(void)
+@@ -308,6 +355,9 @@ label_info_lst_t fill_kpm_label(void)
    return label_item;
  }
  
@@ -82,7 +82,7 @@ index 2918080e..52b8c5fc 100644
  static
  kpm_act_def_format_1_t fill_act_def_frm_1(ric_report_style_item_t const* report_item)
  {
-@@ -427,9 +477,23 @@ kpm_act_def_format_1_t fill_act_def_frm_1(ric_report_style_item_t const* report_
+@@ -331,9 +381,23 @@ kpm_act_def_format_1_t fill_act_def_frm_1(ric_report_style_item_t const* report_
  
      // [1, 2147483647]
      // 8.3.11

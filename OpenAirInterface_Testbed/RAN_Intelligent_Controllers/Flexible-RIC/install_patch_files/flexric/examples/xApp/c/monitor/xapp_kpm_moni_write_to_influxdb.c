@@ -498,7 +498,7 @@ void log_kpm_measurements(kpm_ind_msg_format_1_t const* msg_frm_1)
           uint32_t cur_y = *label_info.distBinY;
 
           if (z == 0) {
-            arr_len += snprintf(arr_str + arr_len, sizeof(arr_str) - arr_len, "[[");
+            arr_len += snprintf(arr_str + arr_len, sizeof(arr_str) - arr_len, "[[[");
           } else {
             if (cur_x != last_x) {
               arr_len += snprintf(arr_str + arr_len, sizeof(arr_str) - arr_len, "]], [[");

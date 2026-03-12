@@ -1,8 +1,8 @@
 diff --git a/examples/xApp/c/kpm_rc/xapp_kpm_rc.c b/examples/xApp/c/kpm_rc/xapp_kpm_rc.c
-index c21a5b16..ee99f224 100644
+index f9052686..5e67f5e2 100644
 --- a/examples/xApp/c/kpm_rc/xapp_kpm_rc.c
 +++ b/examples/xApp/c/kpm_rc/xapp_kpm_rc.c
-@@ -159,9 +159,11 @@ static
+@@ -152,9 +152,11 @@ static
  void log_int_value(const char *name_str, const label_info_lst_t label_info, const meas_record_lst_t meas_record)
  {
    char *name_unit = get_meas_unit(name_str);
@@ -15,7 +15,7 @@ index c21a5b16..ee99f224 100644
      printf("%s[BinX=%d][BinY=%d][BinZ=%d] = %d %s\n", name_str, *label_info.distBinX, *label_info.distBinY, *label_info.distBinZ, meas_record.int_val, name_unit);
    }
  }
-@@ -171,6 +173,8 @@ void log_real_value(const char *name_str, const label_info_lst_t label_info, con
+@@ -164,6 +166,8 @@ void log_real_value(const char *name_str, const label_info_lst_t label_info, con
  {
    (void)label_info;
    char *name_unit = get_meas_unit(name_str);
@@ -24,7 +24,7 @@ index c21a5b16..ee99f224 100644
    printf("%s = %.2f %s\n", name_str, meas_record.real_val, name_unit);
  }
  
-@@ -218,16 +222,63 @@ void log_kpm_measurements(kpm_ind_msg_format_1_t const* msg_frm_1)
+@@ -211,16 +215,63 @@ void log_kpm_measurements(kpm_ind_msg_format_1_t const* msg_frm_1)
    for (size_t j = 0; j < msg_frm_1->meas_data_lst_len; j++) {
      meas_data_lst_t const data_item = msg_frm_1->meas_data_lst[j];
  
@@ -42,7 +42,7 @@ index c21a5b16..ee99f224 100644
 +        if (name_unit && strcmp(name_unit, "[]") == 0) name_unit = "";
 +        if (name_unit == NULL) name_unit = "";
 +
-+        printf("%s = [", name_str);
++        printf("%s = ", name_str);
 +        uint32_t last_x = 0, last_y = 0;
 +
 +        for (size_t z = 0; z < info_item.label_info_lst_len; z++) {
@@ -54,7 +54,7 @@ index c21a5b16..ee99f224 100644
 +          uint32_t cur_y = *label_info.distBinY;
 +
 +          if (z == 0) {
-+            printf("[[");
++            printf("[[[");
 +          } else {
 +            if (cur_x != last_x) {
 +              printf("]], [[");
@@ -94,7 +94,7 @@ index c21a5b16..ee99f224 100644
        }
      }
    }
-@@ -476,6 +527,9 @@ label_info_lst_t fill_kpm_label(void)
+@@ -463,6 +514,9 @@ label_info_lst_t fill_kpm_label(void)
    return label_item;
  }
  
@@ -104,7 +104,7 @@ index c21a5b16..ee99f224 100644
  static
  kpm_act_def_format_1_t fill_act_def_frm_1(ric_report_style_item_t const* report_item)
  {
-@@ -499,9 +553,23 @@ kpm_act_def_format_1_t fill_act_def_frm_1(ric_report_style_item_t const* report_
+@@ -486,9 +540,23 @@ kpm_act_def_format_1_t fill_act_def_frm_1(ric_report_style_item_t const* report_
  
      // [1, 2147483647]
      // 8.3.11

@@ -756,15 +756,15 @@ kpm_act_def_t fill_report_style_4(ric_report_style_item_t const* report_item)
 
   kpm_act_def_t act_def = {.type = FORMAT_4_ACTION_DEFINITION};
 
-  // Filter connected UEs by S-NSSAI criteria
-  test_cond_type_e const type = S_NSSAI_TEST_COND_TYPE; // CQI_TEST_COND_TYPE
-  test_cond_e const condition = EQUAL_TEST_COND; // GREATERTHAN_TEST_COND
-
   // Fill matching condition
   // [1, 32768]
   act_def.frm_4.matching_cond_lst_len = 1;
   act_def.frm_4.matching_cond_lst = calloc(1, sizeof(*act_def.frm_4.matching_cond_lst));
   assert(act_def.frm_4.matching_cond_lst != NULL && "Memory exhausted");
+
+  // Filter connected UEs by S-NSSAI criteria
+  test_cond_type_e const type = S_NSSAI_TEST_COND_TYPE; // CQI_TEST_COND_TYPE
+  test_cond_e const condition = EQUAL_TEST_COND; // GREATERTHAN_TEST_COND
   act_def.frm_4.matching_cond_lst[0].test_info_lst = filter_predicate(type, condition, cfg_slicing_sst, cfg_slicing_sd);
 
   // Fill Action Definition Format 1

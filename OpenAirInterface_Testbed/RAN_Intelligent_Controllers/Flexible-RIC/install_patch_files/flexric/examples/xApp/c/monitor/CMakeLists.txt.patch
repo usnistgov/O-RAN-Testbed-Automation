@@ -1,5 +1,5 @@
 diff --git a/examples/xApp/c/monitor/CMakeLists.txt b/examples/xApp/c/monitor/CMakeLists.txt
-index caa57e74..7a82f255 100644
+index caa57e74..ce96d0a5 100644
 --- a/examples/xApp/c/monitor/CMakeLists.txt
 +++ b/examples/xApp/c/monitor/CMakeLists.txt
 @@ -16,6 +16,7 @@ add_executable(xapp_kpm_moni
@@ -15,7 +15,7 @@ index caa57e74..7a82f255 100644
                       -ldl
                       )
 +
-+add_executable(xapp_kpm_moni_write_to_csv 
++add_executable(xapp_kpm_moni_write_to_csv
 +		xapp_kpm_moni_write_to_csv.c
 +                ../../../../src/util/alg_ds/alg/defer.c
 +                ../../../../src/util/alg_ds/alg/murmur_hash_32.c
@@ -32,7 +32,7 @@ index caa57e74..7a82f255 100644
 +
 +target_compile_definitions(xapp_kpm_moni_write_to_csv PRIVATE KPM_MEAS_LIST="${KPM_MEAS_LIST}")
 +
-+add_executable(xapp_kpm_moni_write_to_influxdb 
++add_executable(xapp_kpm_moni_write_to_influxdb
 +		xapp_kpm_moni_write_to_influxdb.c
 +                ../../../../src/util/alg_ds/alg/defer.c
 +                ../../../../src/util/alg_ds/alg/murmur_hash_32.c

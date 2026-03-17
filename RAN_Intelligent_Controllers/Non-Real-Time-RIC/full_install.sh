@@ -286,6 +286,11 @@ kubectl label namespace nonrtric istio-injection=enabled --overwrite
 
 cd "$SCRIPT_DIR"
 
+if ! command -v docker &>/dev/null; then
+    echo "Docker command not found, installing Docker..."
+    sudo ./install_scripts/install_docker.sh
+fi
+
 # Check if docker is accessible from the current user, and if not, repair its permissions
 if [ -z "$FIXED_DOCKER_PERMS" ]; then
     if ! OUTPUT=$(docker info 2>&1); then

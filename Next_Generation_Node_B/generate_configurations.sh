@@ -40,7 +40,7 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-BASE_EXAMPLE_CONFIG_PATH="$SCRIPT_DIR/srsRAN_Project/configs/gnb_rf_b210_fdd_srsUE.yml"
+BASE_EXAMPLE_CONFIG_PATH="$SCRIPT_DIR/ocudu/configs/gnb_rf_b210_fdd_srsUE.yml"
 
 # Parse command-line arguments
 ENABLE_E2_TERM="true"
@@ -436,9 +436,9 @@ update_yaml "configs/gnb.yaml" "pcap" "mac_filename" "$SCRIPT_DIR/logs/gnb_mac.p
 # For ZeroMQ, change otw_format to default
 update_yaml "configs/gnb.yaml" "ru_sdr" "otw_format" "default"
 
-if [ $(nproc) -lt 4 ]; then
-    echo "The number of threads is less than 4. Setting nof_non_rt_threads to $(nproc)."
-    update_yaml "configs/gnb.yaml" "expert_execution.threads.non_rt" "nof_non_rt_threads" "$(nproc)"
-fi
+# if [ $(nproc) -lt 4 ]; then
+#     echo "The number of threads is less than 4. Setting nof_threads to $(nproc)."
+#     update_yaml "configs/gnb.yaml" "expert_execution.main_pool" "nof_threads" "$(nproc)"
+# fi
 
 echo "Successfully configured the gNodeB. The configuration file is located in the configs/ directory."

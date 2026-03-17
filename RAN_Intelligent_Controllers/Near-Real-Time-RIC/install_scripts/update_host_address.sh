@@ -33,8 +33,8 @@ echo "# Script: $(realpath "$0")..."
 # Exit immediately if a command fails
 set -e
 
-# Fetch the current IP address and hostname of the primary network interface
-IP_ADDRESS=$(ip route get 1 | awk '{print $(NF-2); exit}')
+INTERFACE=$(ip route | grep default | awk '{print $5}' | head -n 1)
+IP_ADDRESS=$(ip addr show $INTERFACE | grep 'inet ' | awk '{print $2}' | cut -d/ -f1)
 HOSTNAME=$(hostname)
 
 # Check if the IP address and hostname are not empty

@@ -46,8 +46,8 @@ usage() {
     exit 1
 }
 
-PRIMARY_INTERFACE=$(ip route | grep default | awk '{print $5}')
-IP_ADDRESS=$(ip -f inet addr show $PRIMARY_INTERFACE | grep -Po 'inet \K[\d.]+')
+INTERFACE=$(ip route | grep default | awk '{print $5}' | head -n 1)
+IP_ADDRESS=$(ip addr show $INTERFACE | grep 'inet ' | awk '{print $2}' | cut -d/ -f1)
 HOSTNAME=$(hostname)
 
 get_latest_package_version() {

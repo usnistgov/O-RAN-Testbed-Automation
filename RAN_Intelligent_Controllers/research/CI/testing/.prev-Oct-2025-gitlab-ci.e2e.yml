@@ -202,7 +202,7 @@ install_srsran_ue:
     - cd ..
   retry: 2
 
-install_srsran_gnb:
+install_ocudu_gnb:
   stage: install_testbed_2
   interruptible: true
   resource_group: testbed
@@ -217,7 +217,7 @@ install_oran_sc_nearrtric:
   stage: install_testbed_2
   interruptible: true
   resource_group: testbed
-  needs: [install_srsran_gnb]
+  needs: [install_ocudu_gnb]
   script:
     - cd RAN_Intelligent_Controllers/Near-Real-Time-RIC
     - ./full_install.sh
@@ -319,7 +319,7 @@ uninstall_srsran_ue:
     - cd ..
   retry: 2
 
-uninstall_srsran_gnb:
+uninstall_ocudu_gnb:
   stage: uninstall_testbed_2
   interruptible: true
   resource_group: testbed
@@ -338,7 +338,7 @@ uninstall_oran_sc_nearrtric:
   interruptible: true
   resource_group: testbed
   needs:
-    - job: uninstall_srsran_gnb
+    - job: uninstall_ocudu_gnb
       optional: true
   when: always
   script:

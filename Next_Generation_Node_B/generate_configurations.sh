@@ -31,6 +31,8 @@
 # Exit immediately if a command fails
 set -e
 
+EXPOSE_GNB_TO_HOSTNAME=false
+
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
@@ -270,8 +272,15 @@ DEVICE_ARGS="tx_port0=tcp://127.0.0.1:2000,rx_port0=tcp://127.0.0.1:2001,base_sr
 # DEVICE_ARGS+="base_srate=23.04e6"
 
 # Update configuration values for AMF connection
-update_yaml "configs/gnb.yaml" "cu_cp.amf" "addr" "$AMF_ADDR"
-update_yaml "configs/gnb.yaml" "cu_cp.amf" "bind_addr" "$N2_ADDR_BIND"
+update_yaml "configs/gnb.yaml" "cu_cp.amf" "addrs" "$AMF_ADDR"
+
+if [ "$EXPOSE_GNB_TO_HOSTNAME" = "false" ]; then
+    update_yaml "configs/gnb.yaml" "cu_cp.amf" "bind_addrs" "127.0.0.1"
+else
+    INTERFACE=$(ip route | grep default | awk '{print $5}' | head -n 1)
+    IP_ADDRESS=$(ip addr show $INTERFACE | grep 'inet ' | awk '{print $2}' | cut -d/ -f1)
+    update_yaml "configs/gnb.yaml" "cu_cp.amf" "bind_addrs" "$IP_ADDRESS"
+fi
 update_yaml "configs/gnb.yaml" "cu_cp.amf.supported_tracking_areas[0]" "tac" $TAC
 update_yaml "configs/gnb.yaml" "cu_cp.amf.supported_tracking_areas[0].plmn_list[0]" "plmn" $PLMN
 update_yaml "configs/gnb.yaml" "cu_cp.inactivity_timer" "7200"

@@ -52,7 +52,7 @@ if ! grep -q avx2 /proc/cpuinfo; then
     read -r -n 1 -s
 fi
 
-# Check for UE binary to determine if srsRAN_Project is already installed
+# Check for UE binary to determine if OpenAirInterface is already installed
 if [ "$CLEAN_INSTALL" = false ] && [ -f "openairinterface5g/cmake_targets/ran_build/build/nr-uesoftmodem" ]; then
     echo "OpenAirInterface UE is already installed, skipping."
     exit 0

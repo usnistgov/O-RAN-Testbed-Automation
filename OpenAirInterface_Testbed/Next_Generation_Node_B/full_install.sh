@@ -59,7 +59,7 @@ fi
 # Since the UE and gNB share the same openairinterface5g directory, and the UE is installed first, the gNB's CLEAN_INSTALL must be false to prevent cleaning the UE installation
 CLEAN_INSTALL=false
 
-# Check for gNB binary to determine if srsRAN_Project is already installed
+# Check for gNB binary to determine if OpenAirInterface is already installed
 if [ "$CLEAN_INSTALL" = false ] && [ -f "openairinterface5g/cmake_targets/ran_build/build/nr-softmodem" ]; then
     if [ "$NRSCOPE_GUI" != true ] || [ -f "openairinterface5g/cmake_targets/ran_build/build/libimscope.so" ]; then
         echo "OpenAirInterface gNB is already installed, skipping."

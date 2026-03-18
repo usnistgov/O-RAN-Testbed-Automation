@@ -43,29 +43,18 @@ cd "$SCRIPT_DIR"
 echo "Stopping Next Generation Node B..."
 ./stop.sh
 
-echo "Uninstalling ZeroMQ libzmq..."
-if [ -d libzmq ]; then
-    cd libzmq
-    sudo make uninstall
-    cd ..
-fi
-sudo rm -rf libzmq
-
-echo "Uninstalling ZeroMQ czmq..."
-if [ -d czmq ]; then
-    cd czmq
-    sudo make uninstall
-    cd ..
-fi
-sudo rm -rf czmq
-
-echo "Uninstalling srsRAN_Project..."
-if [ -d srsRAN_Project/build ]; then
-    cd srsRAN_Project/build
-    sudo make uninstall &>/dev/null
+echo "Uninstalling OCUDU..."
+if [ -d ocudu/build ]; then
+    cd ocudu/build
+    if [ -f install_manifest.txt ]; then
+        echo "Removing installed files from manifest..."
+        xargs sudo rm -f <install_manifest.txt
+    else
+        sudo make uninstall || true
+    fi
     cd ../..
 fi
-sudo rm -rf srsRAN_Project
+sudo rm -rf ocudu
 
 sudo rm -rf logs/
 sudo rm -rf configs/

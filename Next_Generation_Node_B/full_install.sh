@@ -125,16 +125,72 @@ if command -v gcc >/dev/null 2>&1; then
 fi
 
 # Code from (https://gitlab.com/ocudu/ocudu):
-sudo env $APTVARS apt-get install -y cmake make gcc g++ pkg-config libmbedtls-dev libsctp-dev libyaml-cpp-dev
+sudo env $APTVARS apt-get install -y cmake make gcc g++ pkg-config libmbedtls-dev libsctp-dev libyaml-cpp-dev libtool
 if [[ "$RUN_TESTS" == "true" ]]; then
     sudo env $APTVARS apt-get install -y libgtest-dev
 fi
-sudo apt-get install libfftw3-dev
+sudo apt-get install -y libfftw3-dev
 
 sudo env $APTVARS apt-get install -y ccache
 
 echo "Ensuring that SCTP is enabled..."
 sudo ./install_scripts/enable_sctp.sh
+
+cd "$SCRIPT_DIR"
+
+echo
+echo "Building ZeroMQ libzmq..."
+if [ -d ../User_Equipment/libzmq ]; then
+    if [ ! -L libzmq ]; then
+        echo "Found UE library. Creating libzmq link instead."
+        ln -s ../User_Equipment/libzmq libzmq
+    else
+        echo "Link to libzmq already created."
+    fi
+else
+    if [ ! -d libzmq ]; then
+        ./install_scripts/git_clone.sh https://github.com/zeromq/libzmq.git
+    fi
+    cd libzmq
+    ./autogen.sh
+    ./configure
+    make -j$(nproc)
+    sudo make install
+    sudo ldconfig
+    cd ..
+fi
+
+cd "$SCRIPT_DIR"
+
+echo
+echo "Building ZeroMQ czmq..."
+if [ -d ../User_Equipment/czmq ]; then
+    if [ ! -L czmq ]; then
+        echo "Found UE library. Creating czmq link instead."
+        ln -s ../User_Equipment/czmq czmq
+    else
+        echo "Link to czmq already created."
+    fi
+else
+    if [ ! -d czmq ]; then
+        ./install_scripts/git_clone.sh https://github.com/zeromq/czmq.git
+    fi
+    cd czmq
+    ./autogen.sh
+    ./configure
+    make -j$(nproc)
+    sudo make install
+    sudo ldconfig
+    cd ..
+fi
+
+# Verify ZeroMQ installation
+if ! pkg-config --exists libzmq; then
+    echo "ZeroMQ was not installed correctly. Exiting."
+    exit 1
+else
+    echo "ZeroMQ installed successfully."
+fi
 
 cd "$SCRIPT_DIR"
 

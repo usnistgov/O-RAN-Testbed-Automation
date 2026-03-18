@@ -46,6 +46,13 @@ fi
 # Prevent the subsequent command from requiring credential input
 sudo ls >/dev/null 2>&1
 
+if command -v docker &>/dev/null; then
+    # Check if the grafana container is running
+    if docker ps --format '{{.Names}}' 2>/dev/null | grep -Eq "^grafana$"; then
+        ./stop_grafana_webui.sh
+    fi
+fi
+
 # Send a graceful shutdown signal to the gNodeB process
 sudo pkill -f "gnb" >/dev/null 2>&1
 

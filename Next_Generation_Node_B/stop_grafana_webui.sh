@@ -28,8 +28,8 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-# Do not exit immediately if a command fails
-set +e
+# Exit immediately if a command fails
+set -e
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
@@ -37,47 +37,33 @@ if ! command -v realpath &>/dev/null; then
     sudo env $APTVARS apt-get install -y coreutils
 fi
 
+if ! command -v docker &>/dev/null; then
+    exit 0
+fi
+
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-echo "Stopping Next Generation Node B..."
-./stop.sh
+COMPOSE_FILE="ocudu/docker/docker-compose.ui.yml"
 
-echo "Uninstalling ZeroMQ libzmq..."
-if [ -d libzmq ]; then
-    cd libzmq
-    sudo make uninstall
-    cd ..
+if [ ! -f "$COMPOSE_FILE" ]; then
+    exit 0
 fi
-sudo rm -rf libzmq
 
-echo "Uninstalling ZeroMQ czmq..."
-if [ -d czmq ]; then
-    cd czmq
-    sudo make uninstall
-    cd ..
+DOCKER_COMPOSE_CMD=""
+if docker compose version &>/dev/null; then
+    DOCKER_COMPOSE_CMD="docker compose"
+elif command -v docker-compose &>/dev/null; then
+    DOCKER_COMPOSE_CMD="docker-compose"
+else
+    exit 0
 fi
-sudo rm -rf czmq
 
-echo "Uninstalling OCUDU..."
-if [ -d ocudu/build ]; then
-    cd ocudu/build
-    if [ -f install_manifest.txt ]; then
-        echo "Removing installed files from manifest..."
-        xargs sudo rm -f <install_manifest.txt
-    else
-        sudo make uninstall || true
+if command -v docker &>/dev/null; then
+    # Check if the grafana container is running
+    if docker ps --format '{{.Names}}' 2>/dev/null | grep -Eq "^grafana$"; then
+        sudo $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" down
+        echo "Grafana WebUI has been successfully stopped."
     fi
-    cd ../..
 fi
-sudo rm -rf ocudu
 
-sudo rm -rf logs/
-sudo rm -rf configs/
-sudo rm -rf install_time.txt
-
-echo
-echo
-echo "################################################################################"
-echo "# Successfully uninstalled Next Generation Node B                              #"
-echo "################################################################################"

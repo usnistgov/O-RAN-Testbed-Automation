@@ -1,5 +1,7 @@
 # Ignore testbed subdirectories
 /configs/
+/czmq/
+/libzmq/
 /logs/
 /o1-adapter/
 /ocudu/

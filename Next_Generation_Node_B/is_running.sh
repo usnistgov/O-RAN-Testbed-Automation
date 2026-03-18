@@ -42,3 +42,10 @@ if pgrep -x "gnb" >/dev/null; then
 else
     echo "gNodeB: NOT_RUNNING"
 fi
+
+if command -v docker &>/dev/null; then
+    # Check if the grafana container is running
+    if docker ps --format '{{.Names}}' 2>/dev/null | grep -Eq "^grafana$"; then
+        echo "Grafana: RUNNING"
+    fi
+fi

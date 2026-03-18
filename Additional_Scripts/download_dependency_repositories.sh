@@ -52,7 +52,7 @@ cd User_Equipment
 cd ..
 
 cd Next_Generation_Node_B
-./install_scripts/git_clone.sh https://github.com/srsran/srsRAN_Project.git
+./install_scripts/git_clone.sh https://gitlab.com/ocudu/ocudu.git
 cd ..
 
 cd RAN_Intelligent_Controllers/Near-Real-Time-RIC

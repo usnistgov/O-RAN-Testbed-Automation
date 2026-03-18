@@ -153,7 +153,7 @@ generate_commands "https://github.com/open5gs/open5gs.git" "5G_Core_Network" "op
 generate_commands "https://github.com/srsran/srsRAN_4G.git" "User_Equipment" "srsRAN_4G"
 generate_commands "https://github.com/zeromq/libzmq.git" "User_Equipment" "libzmq"
 generate_commands "https://github.com/zeromq/czmq.git" "User_Equipment" "czmq"
-generate_commands "https://github.com/srsran/srsRAN_Project.git" "Next_Generation_Node_B" "srsRAN_Project"
+generate_commands "https://gitlab.com/ocudu/ocudu.git" "Next_Generation_Node_B" "ocudu"
 generate_commands "https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep.git" "RAN_Intelligent_Controllers\\Near-Real-Time-RIC" "ric-dep"
 generate_commands "https://gerrit.o-ran-sc.org/r/sim/e2-interface.git" "RAN_Intelligent_Controllers\\Near-Real-Time-RIC" "e2-interface"
 generate_commands "https://gerrit.o-ran-sc.org/r/ric-plt/appmgr.git" "RAN_Intelligent_Controllers\\Near-Real-Time-RIC" "appmgr"

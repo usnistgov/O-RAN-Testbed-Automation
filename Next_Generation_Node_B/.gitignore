@@ -1,11 +1,7 @@
 # Ignore testbed subdirectories
 /configs/
-/czmq/
-/libzmq/
 /logs/
 /o1-adapter/
-/srsRAN_Project/
-czmq
+/ocudu/
 install_time.txt
-libzmq
 !install_patch_files/

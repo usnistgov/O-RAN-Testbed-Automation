@@ -53,7 +53,7 @@ else
     sudo chown --recursive "$USER" logs
     >logs/gnb.log
     >logs/gnb_stdout.txt
-    setsid bash -c 'stdbuf -oL -eL srsRAN_Project/build/apps/gnb/gnb -c configs/gnb.yaml > logs/gnb_stdout.txt 2>&1' </dev/null &
+    setsid bash -c 'stdbuf -oL -eL ocudu/build/apps/gnb/gnb -c configs/gnb.yaml > logs/gnb_stdout.txt 2>&1' </dev/null &
 
     ATTEMPT=0
     while [ ! -f Next_Generation_Node_B/logs/gnb_stdout.txt ] || ! grep -q "gNB started" Next_Generation_Node_B/logs/gnb_stdout.txt; do

@@ -95,10 +95,10 @@ cd ../../..
 
 echo
 echo "Running tests for Next_Generation_Node_B..."
-cd Next_Generation_Node_B/srsRAN_Project/build
+cd Next_Generation_Node_B/ocudu/build
 if ! make test; then
     if ! ctest --rerun-failed --output-on-failure; then
-        echo "The srsRAN_Project test cases failed."
+        echo "The OCUDU test cases failed."
         exit 1
     fi
 fi

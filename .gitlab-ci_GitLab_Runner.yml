@@ -143,7 +143,7 @@ open5gs_srsran_oran_sc_ric_setup:
     - cd ..
     - echo -e "\e[0Ksection_end:$(date +%s):srsran_ue_install\r\e[0K"
     
-    - echo -e "\e[0Ksection_start:$(date +%s):srsran_gnb_install[collapsed=true]\r\e[0KInstall srsRAN_Project gNB"
+    - echo -e "\e[0Ksection_start:$(date +%s):srsran_gnb_install[collapsed=true]\r\e[0KInstall OCUDU"
     - echo "*************************** CI Install srsRAN gNB ******************************"
     - cd Next_Generation_Node_B
     - ./full_install.sh
@@ -172,7 +172,7 @@ open5gs_srsran_oran_sc_ric_setup:
     - cd ..
     - echo -e "\e[0Ksection_end:$(date +%s):srsran_ue_uninstall\r\e[0K"
 
-    - echo -e "\e[0Ksection_start:$(date +%s):srsran_gnb_uninstall[collapsed=true]\r\e[0KUninstall srsRAN_Project gNB"
+    - echo -e "\e[0Ksection_start:$(date +%s):srsran_gnb_uninstall[collapsed=true]\r\e[0KUninstall OCUDU"
     - echo "*************************** CI Uninstall srsRAN gNB ****************************"
     - cd Next_Generation_Node_B
     - ./full_uninstall.sh bypass_confirmation

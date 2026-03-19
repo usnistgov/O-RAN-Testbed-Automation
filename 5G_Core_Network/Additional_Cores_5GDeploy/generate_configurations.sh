@@ -28,7 +28,8 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-AMF_IP=192.168.62.11 # N2 interface
+RESET_ORANTESTBED_SCENARIO=true # Set to false to not modify the 5gdeploy/scenario/orantestbed scenario files before generation
+AMF_IP=192.168.62.11            # N2 interface
 N2_IP_BIND=192.168.62.1
 N3_IP_BIND=$(ip route get 1 | awk '{print $(NF-2); exit}') # Get the IP of the primary network interface
 UPF1_IP=192.168.63.21
@@ -318,18 +319,23 @@ echo "$N2_IP_BIND" >>$AMF_ADDRESSES_OUTPUT
 ### Start of pre-generation patching ###
 cd "$SCRIPT_DIR/5gdeploy/scenario"
 
-if [ -d "orantestbed" ]; then
-    echo "Removing existing orantestbed directory..."
-    sudo rm -rf "orantestbed"
+if [ "$RESET_ORANTESTBED_SCENARIO" = true ]; then
+    echo "Resetting \"orantestbed\" scenario in \"$SCRIPT_DIR/5gdeploy/scenario\"..."
+    if [ -d "orantestbed" ]; then
+        echo "Removing existing orantestbed directory..."
+        sudo rm -rf "orantestbed"
+    fi
+    cp -r 20230817 orantestbed
 fi
-cp -r 20230817 orantestbed
 
 SST_PADDED=$(printf "%02x" "$SST") # For example, 1 -> 01
 
-echo "Revising scenario files..."
-sed -i "s/01000000/$SST_PADDED$SD/g" orantestbed/scenario.ts
-sed -i "s/20230817/orantestbed/g" orantestbed/sonic-dl.ts
-sed -i "s/20230817/orantestbed/g" orantestbed/sonic-ul.ts
+if [ "$RESET_ORANTESTBED_SCENARIO" = true ]; then
+    echo "Revising scenario files..."
+    sed -i "s/01000000/$SST_PADDED$SD/g" orantestbed/scenario.ts
+    sed -i "s/20230817/orantestbed/g" orantestbed/sonic-dl.ts
+    sed -i "s/20230817/orantestbed/g" orantestbed/sonic-ul.ts
+fi
 
 TAC_PADDED=$(printf "%06x" "$TAC") # For example, 7 -> 000007
 # Edit the common scenario template

@@ -42,3 +42,20 @@ if pgrep -x "gnb" >/dev/null; then
 else
     echo "gNodeB: NOT_RUNNING"
 fi
+
+if pgrep -f "python3 zmq_broker/multi_ue_scenario\.py" >/dev/null; then
+    echo "ZMQ_Broker: RUNNING"
+else
+    echo "ZMQ_Broker: NOT_RUNNING"
+fi
+
+if command -v docker &>/dev/null; then
+    # Check if the grafana container is running
+    if docker ps --format '{{.Names}}' 2>/dev/null | grep -Eq "^grafana$"; then
+        echo "Grafana: RUNNING"
+    else
+        echo "Grafana: NOT_RUNNING"
+    fi
+else
+    echo "Grafana: NOT_RUNNING"
+fi

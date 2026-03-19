@@ -171,15 +171,23 @@ fi
 for UE_NUMBER in "${UE_NUMBERS[@]}"; do
     cp "$EXAMPLE_CONFIG_PATH" "configs/ue${UE_NUMBER}.conf"
 
-    UE_TX_PORT=2001
-    UE_RX_PORT=2000
+    UE_TX_PORT=$((2001 + UE_NUMBER * 100))
+    UE_RX_PORT=$((2000 + UE_NUMBER * 100))
 
     # Fetch the UE's OPc, IMEI, IMSI, KEY, and NAMESPACE
     read -r UE_OPC UE_IMEI UE_IMSI UE_KEY UE_NAMESPACE < <("$UE_CREDENTIAL_GENERATOR_SCRIPT" "$UE_NUMBER" "$PLMN")
 
     # Update configuration values for RF front-end device
     update_conf "configs/ue${UE_NUMBER}.conf" "rf" "device_name" "zmq"
-    update_conf "configs/ue${UE_NUMBER}.conf" "rf" "device_args" "tx_port=tcp://127.0.0.1:$UE_TX_PORT,rx_port=tcp://127.0.0.1:$UE_RX_PORT,base_srate=23.04e6"
+
+    # Calculate IP offsets for this UE using the same subnetting scheme as in setup_ue_namespace.sh
+    BASE_SUBNET="10.201.0.0/16"
+    SUBNET_SIZE=8
+    SUBNET_OFFSET=$((UE_NUMBER * SUBNET_SIZE))
+    HOST_IP_OFFSET=$((SUBNET_OFFSET + 1))
+    UE_HOST_IP=$(python3 install_scripts/fetch_nth_ip.py "$BASE_SUBNET" $HOST_IP_OFFSET)
+
+    update_conf "configs/ue${UE_NUMBER}.conf" "rf" "device_args" "tx_port=tcp://*:$UE_TX_PORT,rx_port=tcp://$UE_HOST_IP:$UE_RX_PORT,base_srate=23.04e6"
     update_conf "configs/ue${UE_NUMBER}.conf" "rf" "nof_antennas" "1"
     update_conf "configs/ue${UE_NUMBER}.conf" "rf" "freq_offset" "0"
     update_conf "configs/ue${UE_NUMBER}.conf" "rf" "tx_gain" "35"
@@ -196,7 +204,7 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
     update_conf "configs/ue${UE_NUMBER}.conf" "rat.nr" "nof_prb" "106"
 
     # Update configuration values for PCAP
-    update_conf "configs/ue${UE_NUMBER}.conf" "pcap" "enable" "none"
+    update_conf "configs/ue${UE_NUMBER}.conf" "pcap" "enable" "info"
     # Uncomment for log files:
     # update_conf "configs/ue${UE_NUMBER}.conf" "pcap" "enable" "mac,mac_nr,nas"
     update_conf "configs/ue${UE_NUMBER}.conf" "pcap" "mac_filename" "$SCRIPT_DIR/logs/ue${UE_NUMBER}_mac.pcap"
@@ -204,8 +212,8 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
     update_conf "configs/ue${UE_NUMBER}.conf" "pcap" "nas_filename" "$SCRIPT_DIR/logs/ue${UE_NUMBER}_nas.pcap"
 
     # Update configuration values for Logging
-    update_conf "configs/ue${UE_NUMBER}.conf" "log" "all_level" "none" #warning
-    update_conf "configs/ue${UE_NUMBER}.conf" "log" "phy_lib_level" "none"
+    update_conf "configs/ue${UE_NUMBER}.conf" "log" "all_level" "info" #warning
+    update_conf "configs/ue${UE_NUMBER}.conf" "log" "phy_lib_level" "info"
     update_conf "configs/ue${UE_NUMBER}.conf" "log" "all_hex_limit" "32"
     update_conf "configs/ue${UE_NUMBER}.conf" "log" "filename" "$SCRIPT_DIR/logs/ue${UE_NUMBER}.log"
     update_conf "configs/ue${UE_NUMBER}.conf" "log" "file_max_size" "-1"

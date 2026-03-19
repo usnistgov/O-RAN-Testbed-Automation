@@ -28,30 +28,41 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
+# Exit immediately if a command fails
+set -e
+
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
     sudo env $APTVARS apt-get install -y coreutils
 fi
 
+if ! command -v docker &>/dev/null; then
+    exit 0
+fi
+
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-echo "Stopping User Equipment..."
-cd User_Equipment
-sudo ./stop.sh
-cd ..
+COMPOSE_FILE="ocudu/docker/docker-compose.ui.yml"
 
-echo
-echo "Stopping gNodeB..."
-cd Next_Generation_Node_B
-sudo ./stop.sh
-cd ..
+if [ ! -f "$COMPOSE_FILE" ]; then
+    exit 0
+fi
 
-echo
-echo "Stopping 5G Core components..."
-cd 5G_Core_Network
-sudo ./stop.sh
-cd ..
+DOCKER_COMPOSE_CMD=""
+if docker compose version &>/dev/null; then
+    DOCKER_COMPOSE_CMD="docker compose"
+elif command -v docker-compose &>/dev/null; then
+    DOCKER_COMPOSE_CMD="docker-compose"
+else
+    exit 0
+fi
 
-stty sane
+if command -v docker &>/dev/null; then
+    # Check if the grafana container is running
+    if docker ps --format '{{.Names}}' 2>/dev/null | grep -Eq "^grafana$"; then
+        sudo $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" down
+        echo "Grafana WebUI has been successfully stopped."
+    fi
+fi

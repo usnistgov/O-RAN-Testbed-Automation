@@ -43,6 +43,37 @@ cd "$SCRIPT_DIR"
 echo "Stopping Next Generation Node B..."
 ./stop.sh
 
+echo "Uninstalling ZeroMQ libzmq..."
+if [ -d libzmq ]; then
+    cd libzmq
+    sudo make uninstall
+    cd ..
+fi
+sudo rm -rf libzmq
+
+echo "Uninstalling ZeroMQ czmq..."
+if [ -d czmq ]; then
+    cd czmq
+    sudo make uninstall
+    cd ..
+fi
+sudo rm -rf czmq
+
+COMPOSE_FILE="ocudu/docker/docker-compose.ui.yml"
+if [ -f "$COMPOSE_FILE" ]; then
+    DOCKER_COMPOSE_CMD=""
+    if command -v docker &>/dev/null && docker compose version &>/dev/null; then
+        DOCKER_COMPOSE_CMD="docker compose"
+    elif command -v docker-compose &>/dev/null; then
+        DOCKER_COMPOSE_CMD="docker-compose"
+    fi
+
+    if [ -n "$DOCKER_COMPOSE_CMD" ]; then
+        echo "Cleaning up Grafana Docker containers and images..."
+        sudo $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" down -v --rmi all || true
+    fi
+fi
+
 echo "Uninstalling OCUDU..."
 if [ -d ocudu/build ]; then
     cd ocudu/build
@@ -54,6 +85,7 @@ if [ -d ocudu/build ]; then
     fi
     cd ../..
 fi
+sudo rm -rf zmq_broker/
 sudo rm -rf ocudu
 
 sudo rm -rf logs/

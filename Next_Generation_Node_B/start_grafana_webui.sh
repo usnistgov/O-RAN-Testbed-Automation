@@ -28,6 +28,9 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
+# Exit immediately if a command fails
+set -e
+
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
@@ -37,21 +40,68 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-echo "Stopping User Equipment..."
-cd User_Equipment
-sudo ./stop.sh
-cd ..
+echo "Starting Grafana WebUI setup..."
+
+COMPOSE_FILE="ocudu/docker/docker-compose.ui.yml"
+
+if [ ! -f "$COMPOSE_FILE" ]; then
+    echo "ERROR: Could not find docker-compose file with Grafana configuration."
+    exit 1
+fi
+
+ENV_FILE="ocudu/docker/.env"
+if [ -f "$ENV_FILE" ]; then
+    echo "Configuring WS_URL in .env..."
+    if getent hosts host.docker.internal >/dev/null 2>&1 || ping -c 1 -W 1 host.docker.internal >/dev/null 2>&1; then
+        echo "Using host.docker.internal for WS_URL"
+        sed -i 's/^WS_URL=.*/WS_URL=host.docker.internal:8001/' "$ENV_FILE"
+    else
+        HOST_IP=$(hostname -I | awk '{print $1}')
+        echo "Falling back to Host IP $HOST_IP for WS_URL"
+        sed -i "s/^WS_URL=.*/WS_URL=${HOST_IP}:8001/" "$ENV_FILE"
+    fi
+fi
+
+# If docker is not installed
+if ! command -v docker &>/dev/null; then
+    ./install_scripts/install_docker.sh
+fi
+
+if ! command -v lazydocker &>/dev/null; then
+    ./install_scripts/install_lazydocker.sh
+fi
+
+echo "Checking for docker compose..."
+DOCKER_COMPOSE_CMD=""
+if docker compose version &>/dev/null; then
+    DOCKER_COMPOSE_CMD="docker compose"
+elif command -v docker-compose &>/dev/null; then
+    DOCKER_COMPOSE_CMD="docker-compose"
+else
+    echo "Error: Docker compose not found. Please install Docker Compose V2."
+    exit 1
+fi
+
+echo "Starting Grafana container..."
+sudo $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" up -d grafana
+
+# Wait briefly for initialization
+echo "Waiting for Grafana to initialize..."
+sleep 5
+
+# Open WebUI
+echo "Grafana is running at: http://localhost:3300"
+
+if command -v xdg-open &>/dev/null; then
+    echo "Opening Grafana in default web browser at http://localhost:3300..."
+    xdg-open "http://localhost:3300" >/dev/null 2>&1 &
+else
+    echo "No default browser detected. Visit http://localhost:3300 to access the Grafana WebUI."
+    echo "Please open http://localhost:3300 in your web browser."
+fi
 
 echo
-echo "Stopping gNodeB..."
-cd Next_Generation_Node_B
-sudo ./stop.sh
-cd ..
-
+echo "The default login credentials are as follows."
+echo "    - U: \"admin\""
+echo "    - P: \"admin\""
 echo
-echo "Stopping 5G Core components..."
-cd 5G_Core_Network
-sudo ./stop.sh
-cd ..
-
-stty sane

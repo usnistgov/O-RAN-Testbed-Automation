@@ -94,7 +94,9 @@ mkdir -p rApps
 cd ../..
 
 cd OpenAirInterface_Testbed/5G_Core_Network
-./install_scripts/git_clone.sh https://github.com/open5gs/open5gs.git
+if [ ! -d "open5gs" ]; then
+    ./install_scripts/git_clone.sh https://github.com/open5gs/open5gs.git
+fi
 cd ../..
 
 cd OpenAirInterface_Testbed/5G_Core_Network/Additional_Cores_5GDeploy

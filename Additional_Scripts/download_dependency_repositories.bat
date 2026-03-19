@@ -92,14 +92,22 @@ cd %~dp0..
 if exist "Next_Generation_Node_B\ocudu_netconf" rmdir /s /q "Next_Generation_Node_B\ocudu_netconf"
 cd Next_Generation_Node_B
 git clone https://gitlab.com/ocudu/ocudu_elements/ocudu_oran_apps/ocudu_netconf.git
-cd ..
+cd ocudu_netconf
+git checkout f14ebf3b47e954cb86407c14c9146ded684db910
+cd ..\..
 
 cd Next_Generation_Node_B
 mklink /D libzmq ..\User_Equipment\libzmq
 mklink /D czmq ..\User_Equipment\czmq
 if not exist zmq_broker mkdir zmq_broker
 cd zmq_broker
-curl -o multi_ue_scenario.grc https://gitlab.com/ocudu/ocudu_docs/-/raw/main/docs/user_manual/tutorials/srsue/assets/multi_ue_scenario.grc
+if not exist "multi_ue_scenario.grc" (
+    curl -L --fail --silent --show-error -o multi_ue_scenario.grc https://gitlab.com/ocudu/ocudu_docs/-/raw/main/docs/user_manual/tutorials/srsue/assets/multi_ue_scenario.grc
+    if errorlevel 1 (
+        echo ERROR: Failed to download multi_ue_scenario.grc
+        exit /b 1
+    )
+)
 cd ..
 cd ..\..
 
@@ -259,13 +267,15 @@ cd ..\..\..
 cd RAN_Intelligent_Controllers\Non-Real-Time-RIC
 mkdir rApps
 cd ..\..
+
 cd %~dp0..
-if exist "OpenAirInterface_Testbed\5G_Core_Network\open5gs" rmdir /s /q "OpenAirInterface_Testbed\5G_Core_Network\open5gs"
-cd OpenAirInterface_Testbed\5G_Core_Network
-git clone https://github.com/open5gs/open5gs.git
-cd open5gs
-git checkout 318eeb49a7dcdff733dec60e02d9c60aefca2fb9
-cd ..\..\..
+if not exist "OpenAirInterface_Testbed\5G_Core_Network\open5gs" (
+    cd OpenAirInterface_Testbed\5G_Core_Network
+    git clone https://github.com/open5gs/open5gs.git
+    cd open5gs
+    git checkout 318eeb49a7dcdff733dec60e02d9c60aefca2fb9
+    cd ..\..\..
+)
 
 cd %~dp0..
 if exist "OpenAirInterface_Testbed\User_Equipment\openairinterface5g" rmdir /s /q "OpenAirInterface_Testbed\User_Equipment\openairinterface5g"

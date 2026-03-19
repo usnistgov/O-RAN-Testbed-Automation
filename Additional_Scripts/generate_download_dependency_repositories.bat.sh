@@ -91,6 +91,7 @@ function generate_commands() {
     local URL="$1"
     local CLONE_PATH="$2"
     local SUBDIRECTORY="$3"
+    local ONLY_IF_NOT_EXIST="$4" # Optional parameter to skip cloning if the directory already exists
 
     local DEPTH_COUNT=$(tr -cd '\\' <<<"$CLONE_PATH" | wc -c)
 
@@ -101,10 +102,17 @@ function generate_commands() {
     # Reset the current directory
     echo "cd %~dp0.." >>download_dependency_repositories.bat
 
-    # Generate commands for batch script
-    echo "if exist \"$CLONE_PATH\\$SUBDIRECTORY\" rmdir /s /q \"$CLONE_PATH\\$SUBDIRECTORY\"" >>download_dependency_repositories.bat
-    echo "cd $CLONE_PATH" >>download_dependency_repositories.bat
-    echo "git clone $URL" >>download_dependency_repositories.bat
+    local INDENT=""
+    if [[ "$ONLY_IF_NOT_EXIST" == "ONLY_IF_NOT_EXIST" ]]; then
+        echo "if not exist \"$CLONE_PATH\\$SUBDIRECTORY\" (" >>download_dependency_repositories.bat
+        INDENT="    "
+    else
+        # Generate commands for batch script
+        echo "if exist \"$CLONE_PATH\\$SUBDIRECTORY\" rmdir /s /q \"$CLONE_PATH\\$SUBDIRECTORY\"" >>download_dependency_repositories.bat
+    fi
+
+    echo "${INDENT}cd $CLONE_PATH" >>download_dependency_repositories.bat
+    echo "${INDENT}git clone $URL" >>download_dependency_repositories.bat
 
     APPEND_LINE=""
     if [[ "$SUBDIRECTORY" == "dep" ]]; then
@@ -112,23 +120,23 @@ function generate_commands() {
     fi
 
     if [[ "$COMMIT" != "null" && "$COMMIT" != "" ]]; then
-        echo "cd $SUBDIRECTORY" >>download_dependency_repositories.bat
-        echo "git checkout $COMMIT" >>download_dependency_repositories.bat
+        echo "${INDENT}cd $SUBDIRECTORY" >>download_dependency_repositories.bat
+        echo "${INDENT}git checkout $COMMIT" >>download_dependency_repositories.bat
         if [ ! -z "$APPEND_LINE" ]; then
-            echo "$APPEND_LINE" >>download_dependency_repositories.bat
+            echo "${INDENT}$APPEND_LINE" >>download_dependency_repositories.bat
         fi
         DEPTH_COUNT=$((DEPTH_COUNT + 1))
     elif [[ "$BRANCH" != "null" && "$BRANCH" != "" ]]; then
-        echo "cd $SUBDIRECTORY" >>download_dependency_repositories.bat
-        echo "git checkout $BRANCH" >>download_dependency_repositories.bat
+        echo "${INDENT}cd $SUBDIRECTORY" >>download_dependency_repositories.bat
+        echo "${INDENT}git checkout $BRANCH" >>download_dependency_repositories.bat
         if [ ! -z "$APPEND_LINE" ]; then
-            echo "$APPEND_LINE" >>download_dependency_repositories.bat
+            echo "${INDENT}$APPEND_LINE" >>download_dependency_repositories.bat
         fi
         DEPTH_COUNT=$((DEPTH_COUNT + 1))
     else
         if [ ! -z "$APPEND_LINE" ]; then
-            echo "cd $SUBDIRECTORY" >>download_dependency_repositories.bat
-            echo "$APPEND_LINE" >>download_dependency_repositories.bat
+            echo "${INDENT}cd $SUBDIRECTORY" >>download_dependency_repositories.bat
+            echo "${INDENT}$APPEND_LINE" >>download_dependency_repositories.bat
             DEPTH_COUNT=$((DEPTH_COUNT + 1))
         fi
     fi
@@ -143,7 +151,10 @@ function generate_commands() {
         let DEPTH_COUNT--
     done
 
-    echo "$BACK_COMMAND" >>download_dependency_repositories.bat
+    echo "${INDENT}$BACK_COMMAND" >>download_dependency_repositories.bat
+    if [[ "$ONLY_IF_NOT_EXIST" == "ONLY_IF_NOT_EXIST" ]]; then
+        echo ")" >>download_dependency_repositories.bat
+    fi
     echo "" >>download_dependency_repositories.bat
 }
 
@@ -162,7 +173,13 @@ echo "mklink /D libzmq ..\\User_Equipment\\libzmq" >>download_dependency_reposit
 echo "mklink /D czmq ..\\User_Equipment\\czmq" >>download_dependency_repositories.bat
 echo "if not exist zmq_broker mkdir zmq_broker" >>download_dependency_repositories.bat
 echo "cd zmq_broker" >>download_dependency_repositories.bat
-echo "curl -o multi_ue_scenario.grc https://gitlab.com/ocudu/ocudu_docs/-/raw/main/docs/user_manual/tutorials/srsue/assets/multi_ue_scenario.grc" >>download_dependency_repositories.bat
+echo "if not exist \"multi_ue_scenario.grc\" (" >>download_dependency_repositories.bat
+echo "    curl -L --fail --silent --show-error -o multi_ue_scenario.grc https://gitlab.com/ocudu/ocudu_docs/-/raw/main/docs/user_manual/tutorials/srsue/assets/multi_ue_scenario.grc" >>download_dependency_repositories.bat
+echo "    if errorlevel 1 (" >>download_dependency_repositories.bat
+echo "        echo ERROR: Failed to download multi_ue_scenario.grc" >>download_dependency_repositories.bat
+echo "        exit /b 1" >>download_dependency_repositories.bat
+echo "    )" >>download_dependency_repositories.bat
+echo ")" >>download_dependency_repositories.bat
 echo "cd .." >>download_dependency_repositories.bat
 
 echo "cd ..\\.." >>download_dependency_repositories.bat
@@ -196,9 +213,10 @@ generate_commands "https://gerrit.o-ran-sc.org/r/portal/nonrtric-controlpanel.gi
 echo "cd RAN_Intelligent_Controllers\\Non-Real-Time-RIC" >>download_dependency_repositories.bat
 echo "mkdir rApps" >>download_dependency_repositories.bat
 echo "cd ..\\.." >>download_dependency_repositories.bat
+echo "" >>download_dependency_repositories.bat
 
 # OpenAirInterface testbed repositories
-generate_commands "https://github.com/open5gs/open5gs.git" "OpenAirInterface_Testbed\\5G_Core_Network" "open5gs"
+generate_commands "https://github.com/open5gs/open5gs.git" "OpenAirInterface_Testbed\\5G_Core_Network" "open5gs" "ONLY_IF_NOT_EXIST"
 generate_commands "https://gitlab.eurecom.fr/oai/openairinterface5g.git" "OpenAirInterface_Testbed\\User_Equipment" "openairinterface5g"
 echo "cd OpenAirInterface_Testbed\\Next_Generation_Node_B" >>download_dependency_repositories.bat
 echo "mklink /D openairinterface5g ..\\User_Equipment\\openairinterface5g" >>download_dependency_repositories.bat

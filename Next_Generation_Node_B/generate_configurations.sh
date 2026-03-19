@@ -31,6 +31,7 @@
 # Exit immediately if a command fails
 set -e
 
+UE_NUMBERS=(1 2 3 4)
 EXPOSE_GNB_TO_HOSTNAME=false
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
@@ -264,12 +265,9 @@ update_yaml() {
 
 mkdir -p "$SCRIPT_DIR/logs"
 
-DEVICE_ARGS="tx_port0=tcp://127.0.0.1:2000,rx_port0=tcp://127.0.0.1:2001,base_srate=23.04e6"
-# DEVICE_ARGS="" # Multiple RF devices:
-# DEVICE_ARGS+="tx_port0=tcp://127.0.0.1:2100,rx_port0=tcp://127.0.0.1:2101,"
-# DEVICE_ARGS+="tx_port1=tcp://127.0.0.1:2200,rx_port1=tcp://127.0.0.1:2201,"
-# DEVICE_ARGS+="tx_port2=tcp://127.0.0.1:2300,rx_port2=tcp://127.0.0.1:2301,"
-# DEVICE_ARGS+="base_srate=23.04e6"
+DEVICE_ARGS="fail_unlocked=true,tx_port=tcp://127.0.0.1:2000,rx_port=tcp://127.0.0.1:2001,"
+
+DEVICE_ARGS+="base_srate=23.04e6"
 
 # Update configuration values for AMF connection
 update_yaml "configs/gnb.yaml" "cu_cp.amf" "addrs" "$AMF_ADDR"
@@ -388,7 +386,7 @@ update_yaml "configs/gnb.yaml" "cu_cp" "request_pdu_session_timeout" "3"
 
 # Update configuration values for gNodeB logging
 update_yaml "configs/gnb.yaml" "log" "filename" "$SCRIPT_DIR/logs/gnb.log"
-update_yaml "configs/gnb.yaml" "log" "all_level" "none"
+update_yaml "configs/gnb.yaml" "log" "all_level" "info"
 update_yaml "configs/gnb.yaml" "log" "hex_max_size" "0"
 
 # Packet capture for NGAP
@@ -452,5 +450,38 @@ update_yaml "configs/gnb.yaml" "ru_sdr" "otw_format" "default"
 #     echo "The number of threads is less than 4. Setting nof_threads to $(nproc)."
 #     update_yaml "configs/gnb.yaml" "expert_execution.main_pool" "nof_threads" "$(nproc)"
 # fi
+
+if [ ! -f "zmq_broker/multi_ue_scenario.py" ]; then
+    echo "Compiling ZeroMQ Broker GNU Radio Companion flowgraph..."
+    grcc -o zmq_broker zmq_broker/multi_ue_scenario.grc
+
+    ZMQ_BROKER_PYTHON_FILE="zmq_broker/multi_ue_scenario.py"
+    BASE_SUBNET="10.201.0.0/16"
+    SUBNET_SIZE=8
+
+    UE_NUMBER=1
+    while true; do
+        PORT_RX=$((2100 + (UE_NUMBER - 1) * 100))
+        PORT_TX=$((2101 + (UE_NUMBER - 1) * 100))
+
+        # If the port string is missing, all UE configurations have been patched
+        if ! grep -q "'tcp://127\.0\.0\.1:$PORT_TX'" "$ZMQ_BROKER_PYTHON_FILE"; then
+            break
+        fi
+
+        SUBNET_OFFSET=$((UE_NUMBER * SUBNET_SIZE))
+        UE_IP_OFFSET=$((SUBNET_OFFSET + 2))
+        UE_IP=$(python3 install_scripts/fetch_nth_ip.py "$BASE_SUBNET" "$UE_IP_OFFSET")
+
+        # Connect req_sink to listen on all interfaces instead of just localhost
+        sed -i "s/'tcp:\/\/127\.0\.0\.1:$PORT_RX'/'tcp:\/\/*:$PORT_RX'/g" "$ZMQ_BROKER_PYTHON_FILE"
+        # Connect req_source to send to the UE IP instead of localhost
+        sed -i "s/'tcp:\/\/127\.0\.0\.1:$PORT_TX'/'tcp:\/\/$UE_IP:$PORT_TX'/g" "$ZMQ_BROKER_PYTHON_FILE"
+
+        UE_NUMBER=$((UE_NUMBER + 1))
+    done
+
+    echo "Successfully patched ZMQ Broker Python script for $((UE_NUMBER - 1)) UEs."
+fi
 
 echo "Successfully configured the gNodeB. The configuration file is located in the configs/ directory."

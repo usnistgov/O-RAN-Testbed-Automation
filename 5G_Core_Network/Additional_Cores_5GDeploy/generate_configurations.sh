@@ -29,7 +29,7 @@
 # copyright protection within the United States.
 
 RESET_ORANTESTBED_SCENARIO=true # Set to false to not modify the 5gdeploy/scenario/orantestbed scenario files before generation
-AMF_IP=192.168.62.11 # N2 interface
+AMF_IP=192.168.62.11            # N2 interface
 N2_IP_BIND=192.168.62.1
 N3_IP_BIND=$(ip route get 1 | awk '{print $(NF-2); exit}') # Get the IP of the primary network interface
 UPF1_IP=192.168.63.21

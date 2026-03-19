@@ -33,6 +33,9 @@ echo "# Script: $(realpath "$0")..."
 # Exit immediately if a command fails
 set -e
 
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+cd "$SCRIPT_DIR"
+
 UE_NUMBER=$1
 
 if [[ -z "$UE_NUMBER" ]]; then
@@ -47,7 +50,45 @@ fi
 
 UE_NAMESPACE="ue$UE_NUMBER"
 
-if ! ip netns list | grep -q "^$UE_NAMESPACE$"; then
-    echo "Setting user equipment namespace..."
-    sudo ip netns add $UE_NAMESPACE
-fi
+# Give the UE its own network namespace and configure it to access the host network
+NETWORK_INTERFACE=$(ip route | grep default | awk '{print $5}')
+
+# Allocate a /29 (8 addresses) subnet per UE (e.g., UE 1 -> 10.201.0.8/29, Gateway .9, UE .10)
+BASE_SUBNET="10.201.0.0/16"
+SUBNET_SIZE=8
+
+# Calculate IP offsets
+SUBNET_OFFSET=$((UE_NUMBER * SUBNET_SIZE))
+HOST_IP_OFFSET=$((SUBNET_OFFSET + 1)) # .5
+UE_IP_OFFSET=$((SUBNET_OFFSET + 2))   # .6
+
+# Fetch IPs from subnet using python script
+UE_SUBNET_ID=$(python3 fetch_nth_ip.py "$BASE_SUBNET" $SUBNET_OFFSET)
+UE_HOST_IP=$(python3 fetch_nth_ip.py "$BASE_SUBNET" $HOST_IP_OFFSET)
+UE_NS_IP=$(python3 fetch_nth_ip.py "$BASE_SUBNET" $UE_IP_OFFSET)
+
+# Clean up existing artifacts for this UE
+sudo ip netns delete $UE_NAMESPACE || true
+sudo ip link delete v-eth$UE_NUMBER || true
+
+# Create namespace and veth pair
+sudo ip netns add $UE_NAMESPACE
+sudo ip link add v-eth$UE_NUMBER type veth peer name v-$UE_NAMESPACE
+sudo ip link set v-$UE_NAMESPACE netns $UE_NAMESPACE
+
+# Configure host side interface
+sudo ip addr add $UE_HOST_IP/29 dev v-eth$UE_NUMBER
+sudo ip link set v-eth$UE_NUMBER up
+
+# Configure NAT to masquerade traffic and allow forwarding
+sudo iptables -t nat -A POSTROUTING -s "$UE_SUBNET_ID/29" -o "$NETWORK_INTERFACE" -j MASQUERADE
+sudo iptables -A FORWARD -i "$NETWORK_INTERFACE" -o v-eth$UE_NUMBER -j ACCEPT
+sudo iptables -A FORWARD -o "$NETWORK_INTERFACE" -i v-eth$UE_NUMBER -j ACCEPT
+
+# Configure namespace side interface
+sudo ip netns exec $UE_NAMESPACE ip link set dev lo up
+sudo ip netns exec $UE_NAMESPACE ip addr add $UE_NS_IP/29 dev v-$UE_NAMESPACE
+sudo ip netns exec $UE_NAMESPACE ip link set v-$UE_NAMESPACE up
+
+# Set default route in namespace to point to host gateway
+sudo ip netns exec $UE_NAMESPACE ip route add default via $UE_HOST_IP

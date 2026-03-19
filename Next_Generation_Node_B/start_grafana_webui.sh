@@ -52,7 +52,7 @@ fi
 ENV_FILE="ocudu/docker/.env"
 if [ -f "$ENV_FILE" ]; then
     echo "Configuring WS_URL in .env..."
-    if getent hosts host.docker.internal > /dev/null 2>&1 || ping -c 1 -W 1 host.docker.internal > /dev/null 2>&1; then
+    if getent hosts host.docker.internal >/dev/null 2>&1 || ping -c 1 -W 1 host.docker.internal >/dev/null 2>&1; then
         echo "Using host.docker.internal for WS_URL"
         sed -i 's/^WS_URL=.*/WS_URL=host.docker.internal:8001/' "$ENV_FILE"
     else

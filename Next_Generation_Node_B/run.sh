@@ -31,6 +31,8 @@
 # Exit immediately if a command fails
 set -e
 
+SHOW_ZMQ_BROKER_UI=false
+
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
@@ -56,6 +58,19 @@ else
     sudo chown --recursive "$USER" logs
     >logs/gnb.log
     >logs/gnb_stdout.txt
+
+    if pgrep -f "python3 zmq_broker/multi_ue_scenario\.py" >/dev/null; then
+        echo "Already running ZMQ Broker."
+    else
+        >logs/zmq_broker.log
+        echo "Starting ZMQ Broker..."
+        if [ "$SHOW_ZMQ_BROKER_UI" = true ]; then
+            nohup python3 zmq_broker/multi_ue_scenario.py >logs/zmq_broker.log 2>&1 &
+        else
+            QT_QPA_PLATFORM=offscreen nohup python3 zmq_broker/multi_ue_scenario.py >logs/zmq_broker.log 2>&1 &
+        fi
+        sleep 2
+    fi
 
     # ocudu/build/apps/gnb/gnb -c configs/gnb.yaml # cell_cfg prach --ports 0 1 2
     sudo script -q -f -c "./ocudu/build/apps/gnb/gnb -c configs/gnb.yaml" logs/gnb_stdout.txt # cell_cfg prach --ports 0 1 2

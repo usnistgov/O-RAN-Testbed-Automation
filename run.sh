@@ -71,5 +71,7 @@ cd ..
 echo
 echo "Running User Equipment..."
 cd User_Equipment
+./run_background.sh 3
+./run_background.sh 2
 ./run.sh
 cd ..

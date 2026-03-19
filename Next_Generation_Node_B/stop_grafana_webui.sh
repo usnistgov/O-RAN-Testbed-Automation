@@ -66,4 +66,3 @@ if command -v docker &>/dev/null; then
         echo "Grafana WebUI has been successfully stopped."
     fi
 fi
-

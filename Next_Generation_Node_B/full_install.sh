@@ -194,6 +194,21 @@ fi
 
 cd "$SCRIPT_DIR"
 
+if [ ! -f "zmq_broker/multi_ue_scenario.py" ]; then
+    if ! command -v grcc >/dev/null 2>&1; then
+        echo "Installing GNU Radio Companion Compiler (grcc) for the ZeroMQ Broker..."
+        sudo env $APTVARS apt-get install -y gnuradio
+    fi
+fi
+
+echo
+echo
+if [ ! -d "zmq_broker" ] || [ ! -f "zmq_broker/multi_ue_scenario.grc" ]; then
+    echo "Downloading ZeroMQ Broker GNU Radio Companion flowgraph..."
+    mkdir -p zmq_broker
+    wget -qO zmq_broker/multi_ue_scenario.grc https://gitlab.com/ocudu/ocudu_docs/-/raw/main/docs/user_manual/tutorials/srsue/assets/multi_ue_scenario.grc
+fi
+
 echo
 echo
 echo "Compiling and Installing OCUDU..."

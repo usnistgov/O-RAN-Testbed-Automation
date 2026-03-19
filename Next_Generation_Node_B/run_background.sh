@@ -48,15 +48,24 @@ else
         exit 1
     fi
 
+    # Allow ZMQ Broker UI to access the display if xhost is available
+    ZMQ_BROKER_UI_ENV=""
+    if [ -n "$DISPLAY" ]; then
+        ZMQ_BROKER_UI_ENV="DISPLAY=$DISPLAY XAUTHORITY=${XAUTHORITY:-$HOME/.Xauthority}"
+        if command -v xhost &>/dev/null; then
+            xhost +SI:localuser:root >/dev/null 2>&1 || true
+        fi
+    fi
+
     echo "Starting gNodeB in background..."
     mkdir -p logs
     sudo chown --recursive "$USER" logs
-    >logs/gnb.log
     >logs/gnb_stdout.txt
-    setsid bash -c 'stdbuf -oL -eL ocudu/build/apps/gnb/gnb -c configs/gnb.yaml > logs/gnb_stdout.txt 2>&1' </dev/null &
+
+    sudo env $ZMQ_BROKER_UI_ENV setsid bash -c "stdbuf -oL -eL \"$SCRIPT_DIR/run.sh\" >/dev/null 2>&1" </dev/null &
 
     ATTEMPT=0
-    while [ ! -f Next_Generation_Node_B/logs/gnb_stdout.txt ] || ! grep -q "gNB started" Next_Generation_Node_B/logs/gnb_stdout.txt; do
+    while [ ! -f logs/gnb_stdout.txt ] || ! grep -q "gNB started" logs/gnb_stdout.txt; do
         sleep 0.5
         ATTEMPT=$((ATTEMPT + 1))
         if [ $ATTEMPT -ge 120 ]; then
@@ -65,7 +74,7 @@ else
         fi
         if grep -q " gNB started " logs/gnb_stdout.txt; then
             break
-        elif [ $(grep -q "Error" logs/gnb_stdout.txt) ] || [ $(grep -q "srsRAN ERROR:" logs/gnb_stdout.txt) ]; then
+        elif grep -q "Error" logs/gnb_stdout.txt || grep -q "OCUDU ERROR:" logs/gnb_stdout.txt; then
             echo "Error starting gNodeB. Check logs/gnb_stdout.txt for more information."
             exit 1
         fi

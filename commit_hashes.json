@@ -4,6 +4,8 @@
   "https://github.com/zeromq/libzmq.git": ["", "7d95ac02ae1af9a2f6896794d12b9de2ae30a3a8"],
   "https://github.com/zeromq/czmq.git": ["", "6b435f533619a52d9e1c3fa43d5e40e50a046272"],
   "https://gitlab.com/ocudu/ocudu.git": ["", "b62a782f6ee159bf9ac1a3487bd112da982feb87"],
+  "https://gitlab.com/ocudu/ocudu_elements/ocudu_oran_apps/ocudu_o1_adapter.git": ["", "4671536856562f90df7d308bdefeae161381dc12"],
+  "https://gitlab.com/ocudu/ocudu_elements/ocudu_oran_apps/ocudu_netconf.git": ["", "f14ebf3b47e954cb86407c14c9146ded684db910"],
   "https://gerrit.o-ran-sc.org/r/sim/e2-interface.git": ["m-release", "da6f82f286cdbb38af1178f82f85877b12c2f85b"],
   "https://gerrit.o-ran-sc.org/r/ric-app/hw-go.git": ["h-release", "3a0d348e429ea0f3f3d2a1d5eb54ec8758d1a262"],
   "https://github.com/o-ran-sc/ric-app-hw-python.git": ["g-release", "a6d00525aa2f62f2457d84731da2b7d89e0b1013"],

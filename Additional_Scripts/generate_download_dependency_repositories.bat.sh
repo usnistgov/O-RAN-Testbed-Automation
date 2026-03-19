@@ -150,10 +150,23 @@ function generate_commands() {
 # Using the function to generate commands for each repository in the blueprint testbed
 echo "REM Change to the parent directory of the script" >>download_dependency_repositories.bat
 generate_commands "https://github.com/open5gs/open5gs.git" "5G_Core_Network" "open5gs"
+generate_commands "https://github.com/usnistgov/5gdeploy.git" "5G_Core_Network/Additional_Cores_5GDeploy" "5gdeploy"
 generate_commands "https://github.com/srsran/srsRAN_4G.git" "User_Equipment" "srsRAN_4G"
 generate_commands "https://github.com/zeromq/libzmq.git" "User_Equipment" "libzmq"
 generate_commands "https://github.com/zeromq/czmq.git" "User_Equipment" "czmq"
 generate_commands "https://gitlab.com/ocudu/ocudu.git" "Next_Generation_Node_B" "ocudu"
+generate_commands "https://gitlab.com/ocudu/ocudu_elements/ocudu_oran_apps/ocudu_o1_adapter.git" "Next_Generation_Node_B" "ocudu_o1_adapter"
+generate_commands "https://gitlab.com/ocudu/ocudu_elements/ocudu_oran_apps/ocudu_netconf.git" "Next_Generation_Node_B" "ocudu_netconf"
+echo "cd Next_Generation_Node_B" >>download_dependency_repositories.bat
+echo "mklink /D libzmq ..\\User_Equipment\\libzmq" >>download_dependency_repositories.bat # Use User_Equipment's ZMQ
+echo "mklink /D czmq ..\\User_Equipment\\czmq" >>download_dependency_repositories.bat
+echo "if not exist zmq_broker mkdir zmq_broker" >>download_dependency_repositories.bat
+echo "cd zmq_broker" >>download_dependency_repositories.bat
+echo "curl -o multi_ue_scenario.grc https://gitlab.com/ocudu/ocudu_docs/-/raw/main/docs/user_manual/tutorials/srsue/assets/multi_ue_scenario.grc" >>download_dependency_repositories.bat
+echo "cd .." >>download_dependency_repositories.bat
+
+echo "cd ..\\.." >>download_dependency_repositories.bat
+echo "" >>download_dependency_repositories.bat
 generate_commands "https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep.git" "RAN_Intelligent_Controllers\\Near-Real-Time-RIC" "ric-dep"
 generate_commands "https://gerrit.o-ran-sc.org/r/sim/e2-interface.git" "RAN_Intelligent_Controllers\\Near-Real-Time-RIC" "e2-interface"
 generate_commands "https://gerrit.o-ran-sc.org/r/ric-plt/appmgr.git" "RAN_Intelligent_Controllers\\Near-Real-Time-RIC" "appmgr"
@@ -174,12 +187,12 @@ generate_commands "https://gerrit.o-ran-sc.org/r/ric-app/ts.git" "RAN_Intelligen
 
 # O-RAN SC Non-RT RIC repositories
 generate_commands "https://gerrit.o-ran-sc.org/r/it/dep.git" "RAN_Intelligent_Controllers\\Non-Real-Time-RIC" "dep"
+generate_commands "https://gerrit.o-ran-sc.org/r/nonrtric/plt/rappmanager.git" "RAN_Intelligent_Controllers\\Non-Real-Time-RIC" "rappmanager"
 generate_commands "https://gerrit.o-ran-sc.org/r/nonrtric/plt/ranpm.git" "RAN_Intelligent_Controllers\\Non-Real-Time-RIC\\dep" "ranpm"
 generate_commands "https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep.git" "RAN_Intelligent_Controllers\\Non-Real-Time-RIC\\dep" "ric-dep"
 generate_commands "https://github.com/onap/multicloud-k8s.git" "RAN_Intelligent_Controllers\\Non-Real-Time-RIC\\dep\\smo-install" "multicloud-k8s"
 generate_commands "https://gerrit.onap.org/r/oom.git" "RAN_Intelligent_Controllers\\Non-Real-Time-RIC\\dep\\smo-install" "onap_oom"
 generate_commands "https://gerrit.o-ran-sc.org/r/portal/nonrtric-controlpanel.git" "RAN_Intelligent_Controllers\\Non-Real-Time-RIC" "nonrtric-controlpanel"
-generate_commands "https://gerrit.o-ran-sc.org/r/nonrtric/plt/rappmanager.git" "RAN_Intelligent_Controllers\\Non-Real-Time-RIC" "rappmanager"
 echo "cd RAN_Intelligent_Controllers\\Non-Real-Time-RIC" >>download_dependency_repositories.bat
 echo "mkdir rApps" >>download_dependency_repositories.bat
 echo "cd ..\\.." >>download_dependency_repositories.bat
@@ -191,6 +204,7 @@ echo "cd OpenAirInterface_Testbed\\Next_Generation_Node_B" >>download_dependency
 echo "mklink /D openairinterface5g ..\\User_Equipment\\openairinterface5g" >>download_dependency_repositories.bat
 echo "cd ..\\.." >>download_dependency_repositories.bat
 echo "" >>download_dependency_repositories.bat
+generate_commands "https://gitlab.eurecom.fr/oai/o1-adapter.git" "OpenAirInterface_Testbed\\Next_Generation_Node_B" "o1-adapter"
 generate_commands "https://github.com/swig/swig.git" "OpenAirInterface_Testbed\\RAN_Intelligent_Controllers\\Flexible-RIC" "swig"
 generate_commands "https://gitlab.eurecom.fr/mosaic5g/flexric.git" "OpenAirInterface_Testbed\\RAN_Intelligent_Controllers\\Flexible-RIC" "flexric"
 

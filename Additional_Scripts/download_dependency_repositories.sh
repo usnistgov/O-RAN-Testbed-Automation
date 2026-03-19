@@ -53,6 +53,12 @@ cd ..
 
 cd Next_Generation_Node_B
 ./install_scripts/git_clone.sh https://gitlab.com/ocudu/ocudu.git
+./install_scripts/git_clone.sh https://gitlab.com/ocudu/ocudu_elements/ocudu_oran_apps/ocudu_o1_adapter.git
+./install_scripts/git_clone.sh https://gitlab.com/ocudu/ocudu_elements/ocudu_oran_apps/ocudu_netconf.git
+ln -s "../User_Equipment/libzmq" libzmq  # Use User_Equipment's ZMQ
+ln -s "../User_Equipment/czmq" czmq
+mkdir -p zmq_broker
+wget -qO zmq_broker/multi_ue_scenario.grc https://gitlab.com/ocudu/ocudu_docs/-/raw/main/docs/user_manual/tutorials/srsue/assets/multi_ue_scenario.grc
 cd ..
 
 cd RAN_Intelligent_Controllers/Near-Real-Time-RIC
@@ -78,12 +84,12 @@ cd RAN_Intelligent_Controllers/Non-Real-Time-RIC
 cd dep
 git restore --source=HEAD :/
 cd ..
+./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/nonrtric/plt/rappmanager.git
 ./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/nonrtric/plt/ranpm.git dep/ranpm
 ./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep.git dep/ric-dep
 ./install_scripts/git_clone.sh https://github.com/onap/multicloud-k8s.git dep/smo-install/multicloud-k8s
 ./install_scripts/git_clone.sh https://gerrit.onap.org/r/oom.git dep/smo-install/onap_oom
 ./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/portal/nonrtric-controlpanel.git
-./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/nonrtric/plt/rappmanager.git
 mkdir -p rApps
 cd ../..
 
@@ -91,12 +97,17 @@ cd OpenAirInterface_Testbed/5G_Core_Network
 ./install_scripts/git_clone.sh https://github.com/open5gs/open5gs.git
 cd ../..
 
+cd OpenAirInterface_Testbed/5G_Core_Network/Additional_Cores_5GDeploy
+./install_scripts/git_clone.sh https://github.com/usnistgov/5gdeploy.git
+cd ../../..
+
 cd OpenAirInterface_Testbed/User_Equipment
 ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/oai/openairinterface5g.git
 cd ../..
 
 cd OpenAirInterface_Testbed/Next_Generation_Node_B
 ln -s "../User_Equipment/openairinterface5g" openairinterface5g
+./install_scripts/git_clone.sh https://gitlab.eurecom.fr/oai/o1-adapter.git o1-adapter
 cd ../..
 
 cd OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC

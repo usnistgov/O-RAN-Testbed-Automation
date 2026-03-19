@@ -6,7 +6,8 @@ install_time.txt
 libzmq
 libzmq/
 logs/
-o1-adapter/
 ocudu/
+ocudu_netconf/
+ocudu_o1_adapter/
 zmq_broker/
 !install_patch_files/

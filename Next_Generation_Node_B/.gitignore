@@ -1,10 +1,12 @@
 # Ignore testbed subdirectories
 configs/
+czmq
 czmq/
+install_time.txt
+libzmq
 libzmq/
 logs/
 o1-adapter/
 ocudu/
 zmq_broker/
-install_time.txt
 !install_patch_files/

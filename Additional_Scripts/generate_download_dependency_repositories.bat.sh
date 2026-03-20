@@ -111,8 +111,11 @@ function generate_commands() {
         echo "if exist \"$CLONE_PATH\\$SUBDIRECTORY\" rmdir /s /q \"$CLONE_PATH\\$SUBDIRECTORY\"" >>download_dependency_repositories.bat
     fi
 
-    echo "${INDENT}cd $CLONE_PATH" >>download_dependency_repositories.bat
-    echo "${INDENT}git clone $URL" >>download_dependency_repositories.bat
+    echo "${INDENT}cd $CLONE_PATH >nul 2>&1" >>download_dependency_repositories.bat
+    echo "${INDENT}if not errorlevel 1 (" >>download_dependency_repositories.bat
+    
+    local INNER_INDENT="${INDENT}    "
+    echo "${INNER_INDENT}git clone $URL" >>download_dependency_repositories.bat
 
     APPEND_LINE=""
     if [[ "$SUBDIRECTORY" == "dep" ]]; then
@@ -120,23 +123,23 @@ function generate_commands() {
     fi
 
     if [[ "$COMMIT" != "null" && "$COMMIT" != "" ]]; then
-        echo "${INDENT}cd $SUBDIRECTORY" >>download_dependency_repositories.bat
-        echo "${INDENT}git checkout $COMMIT" >>download_dependency_repositories.bat
+        echo "${INNER_INDENT}cd $SUBDIRECTORY" >>download_dependency_repositories.bat
+        echo "${INNER_INDENT}git checkout $COMMIT" >>download_dependency_repositories.bat
         if [ ! -z "$APPEND_LINE" ]; then
-            echo "${INDENT}$APPEND_LINE" >>download_dependency_repositories.bat
+            echo "${INNER_INDENT}$APPEND_LINE" >>download_dependency_repositories.bat
         fi
         DEPTH_COUNT=$((DEPTH_COUNT + 1))
     elif [[ "$BRANCH" != "null" && "$BRANCH" != "" ]]; then
-        echo "${INDENT}cd $SUBDIRECTORY" >>download_dependency_repositories.bat
-        echo "${INDENT}git checkout $BRANCH" >>download_dependency_repositories.bat
+        echo "${INNER_INDENT}cd $SUBDIRECTORY" >>download_dependency_repositories.bat
+        echo "${INNER_INDENT}git checkout $BRANCH" >>download_dependency_repositories.bat
         if [ ! -z "$APPEND_LINE" ]; then
-            echo "${INDENT}$APPEND_LINE" >>download_dependency_repositories.bat
+            echo "${INNER_INDENT}$APPEND_LINE" >>download_dependency_repositories.bat
         fi
         DEPTH_COUNT=$((DEPTH_COUNT + 1))
     else
         if [ ! -z "$APPEND_LINE" ]; then
-            echo "${INDENT}cd $SUBDIRECTORY" >>download_dependency_repositories.bat
-            echo "${INDENT}$APPEND_LINE" >>download_dependency_repositories.bat
+            echo "${INNER_INDENT}cd $SUBDIRECTORY" >>download_dependency_repositories.bat
+            echo "${INNER_INDENT}$APPEND_LINE" >>download_dependency_repositories.bat
             DEPTH_COUNT=$((DEPTH_COUNT + 1))
         fi
     fi
@@ -151,7 +154,11 @@ function generate_commands() {
         let DEPTH_COUNT--
     done
 
-    echo "${INDENT}$BACK_COMMAND" >>download_dependency_repositories.bat
+    echo "${INNER_INDENT}$BACK_COMMAND" >>download_dependency_repositories.bat
+    echo "${INDENT}) else (" >>download_dependency_repositories.bat
+    echo "${INNER_INDENT}echo ERROR: Failed to cd to $CLONE_PATH. Skipping clone." >>download_dependency_repositories.bat
+    echo "${INDENT})" >>download_dependency_repositories.bat
+
     if [[ "$ONLY_IF_NOT_EXIST" == "ONLY_IF_NOT_EXIST" ]]; then
         echo ")" >>download_dependency_repositories.bat
     fi

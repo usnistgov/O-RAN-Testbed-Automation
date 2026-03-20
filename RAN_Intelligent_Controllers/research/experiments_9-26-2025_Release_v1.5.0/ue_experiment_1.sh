@@ -37,7 +37,7 @@ NUM_SAMPLES=100
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 BASE_DIR=$(dirname "$(dirname "$(dirname "$SCRIPT_DIR")")")
 
-trap '"$BASE_DIR"/stop.sh; stty sane; exit' SIGINT
+trap '"$BASE_DIR"/stop.sh; stty sane || true; exit' SIGINT
 
 UE_DIR="$BASE_DIR/User_Equipment"
 LOG_FILE="$UE_DIR/logs/ue1_stdout.txt"

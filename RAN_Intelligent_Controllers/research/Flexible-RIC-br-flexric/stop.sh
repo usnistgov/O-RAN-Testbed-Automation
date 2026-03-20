@@ -38,7 +38,7 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
 # Upon exit, restore the terminal to a sane state
-trap 'stty sane; exit' EXIT SIGINT SIGTERM
+trap 'stty sane || true; exit' EXIT SIGINT SIGTERM
 
 # Check if the FlexRIC is already stopped
 if $(./is_running.sh | grep -q "FlexRIC: NOT_RUNNING"); then

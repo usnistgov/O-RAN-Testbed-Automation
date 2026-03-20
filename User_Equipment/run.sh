@@ -62,7 +62,7 @@ fi
 graceful_shutdown() {
     echo "Shutting down UE $UE_NUMBER gracefully..."
     ./stop.sh
-    stty sane
+    stty sane || true
     exit
 }
 trap graceful_shutdown SIGINT SIGTERM SIGQUIT

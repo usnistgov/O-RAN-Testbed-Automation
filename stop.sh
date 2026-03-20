@@ -54,4 +54,4 @@ cd 5G_Core_Network
 sudo ./stop.sh
 cd ..
 
-stty sane
+stty sane || true

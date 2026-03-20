@@ -46,7 +46,7 @@ if [ ! -f "Next_Generation_Node_B/openairinterface5g/cmake_targets/ran_build/bui
 fi
 
 # Upon exit, gracefully stop all components and fix console in case it breaks
-trap 'trap - EXIT SIGINT SIGTERM; echo "#################################  STOPPING... #################################"; "$SCRIPT_DIR/./stop.sh"; stty sane; exit' EXIT SIGINT SIGTERM
+trap 'trap - EXIT SIGINT SIGTERM; echo "#################################  STOPPING... #################################"; "$SCRIPT_DIR/./stop.sh"; stty sane || true; exit' EXIT SIGINT SIGTERM
 
 echo "Running 5G Core components..."
 cd 5G_Core_Network

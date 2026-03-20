@@ -28,10 +28,65 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-echo "# Script: $(realpath "$0")..."
+APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
+if ! command -v realpath &>/dev/null; then
+    echo "Package \"coreutils\" not found, installing..."
+    sudo env $APTVARS apt-get install -y coreutils
+fi
+
+CURRENT_DIR=$(pwd)
+REAL_PATH=$(realpath "$0")
+SCRIPT_DIR=$(dirname $REAL_PATH)
+PARENT_DIR=$(dirname "$SCRIPT_DIR")
+HOME_DIR=$(dirname "$(dirname "$(dirname "$SCRIPT_DIR")")")
+
+if ! command -v jq &>/dev/null; then
+    echo "Installing jq..."
+    sudo env $APTVARS apt-get install -y jq
+fi
+
+echo "# Script: $REAL_PATH..."
+
+
+if [[ -f "$SCRIPT_DIR/utils.sh" ]]; then
+    source "$SCRIPT_DIR/utils.sh"
+else
+    echo "Error: utils.sh not found in $SCRIPT_DIR"
+    exit 1
+fi
 
 # Exit immediately if a command fails
 set -e
+
+# Variables for parsing
+POSITIONAL_ARGS=()
+
+if [[ "$USE_GIT_SSH" == "true" ]]; then
+    USE_SSH=true
+else
+    USE_SSH=false
+fi
+
+# Parse arguments (Supports flags at the beginning, middle, or end)
+while [[ "$#" -gt 0 ]]; do
+    case "$1" in
+        --ssh)
+            USE_SSH=true
+            shift
+            ;;
+        --https) #Force HTTPS override
+            USE_SSH=false
+            shift
+            ;;
+        *)
+	    POSITIONAL_ARGS+=("$1")
+	    shift
+	    ;;
+    esac
+done
+
+# Restore positional arguments ($1 = URL, $2 = NAME)
+set -- "${POSITIONAL_ARGS[@]}"
 
 URL=$1  # Required
 NAME=$2 # Optional
@@ -39,7 +94,7 @@ NAME=$2 # Optional
 # Validate input parameters
 if [[ -z "$URL" ]]; then
     echo "ERROR: No URL provided."
-    echo "Usage: $0 <URL> [name]"
+    echo "Usage: $0 <URL> [name] [--ssh]"
     exit 1
 fi
 if [[ ! "$URL" == *.git ]]; then
@@ -50,20 +105,11 @@ if [[ -z "$NAME" ]]; then
     NAME=$(basename "$URL" .git)
 fi
 
-APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
-if ! command -v realpath &>/dev/null; then
-    echo "Package \"coreutils\" not found, installing..."
-    sudo env $APTVARS apt-get install -y coreutils
-fi
-
-CURRENT_DIR=$(pwd)
-SCRIPT_DIR=$(dirname "$(realpath "$0")")
-PARENT_DIR=$(dirname "$SCRIPT_DIR")
-HOME_DIR=$(dirname "$(dirname "$(dirname "$SCRIPT_DIR")")")
-
-if ! command -v jq &>/dev/null; then
-    echo "Installing jq..."
-    sudo env $APTVARS apt-get install -y jq
+# Determine the final URL to use
+if [ "$USE_SSH" = true ]; then
+    FINAL_URL=$(convert_to_ssh "$URL")
+else
+    FINAL_URL="$URL"
 fi
 
 # First check the directory containing install_scripts/, otherwise, use the home directory
@@ -94,11 +140,11 @@ if jq -e --arg url "$URL" '.[$url][1]' "$JSON_FILE" &>/dev/null; then
     # If the repository does not exist, clone it
     if [[ ! -d "$NAME" ]]; then
         if [[ ! -z "$BRANCH" ]]; then
-            echo "Cloning $URL at branch $BRANCH..."
-            git clone "$URL" "$NAME" -b $BRANCH
+            echo "Cloning $FINAL_URL at branch $BRANCH..."
+            git clone "$FINAL_URL" "$NAME" -b $BRANCH
         else
-            echo "Cloning $URL..."
-            git clone "$URL" "$NAME"
+            echo "Cloning $FINAL_URL..."
+            git clone "$FINAL_URL" "$NAME"
         fi
     fi
     cd "$NAME"
@@ -118,10 +164,10 @@ if jq -e --arg url "$URL" '.[$url][1]' "$JSON_FILE" &>/dev/null; then
 else
     # Repository not found in JSON file, if the repository does not exist, clone it
     if [[ ! -d "$NAME" ]]; then
-        echo "Cloning $URL..."
-        git clone "$URL" "$NAME"
+        echo "Cloning $FINAL_URL..."
+        git clone "$FINAL_URL" "$NAME"
     fi
 fi
 
-echo "Repository $URL is cloned to $CURRENT_DIR/$NAME."
+echo "Repository $FINAL_URL is cloned to $CURRENT_DIR/$NAME."
 echo

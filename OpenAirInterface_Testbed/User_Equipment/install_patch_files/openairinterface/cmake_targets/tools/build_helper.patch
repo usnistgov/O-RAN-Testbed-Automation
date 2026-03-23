@@ -1,5 +1,5 @@
 diff --git a/cmake_targets/tools/build_helper b/cmake_targets/tools/build_helper
-index 3fc1db7b56..9f68588ea6 100755
+index 2652b29634..4ebdee3bf7 100755
 --- a/cmake_targets/tools/build_helper
 +++ b/cmake_targets/tools/build_helper
 @@ -37,6 +37,7 @@ case "$OS_DISTRO" in
@@ -29,3 +29,11 @@ index 3fc1db7b56..9f68588ea6 100755
      if [[ ! -z "$OS_DISTRO$OS_RELEASE" ]]; then
          echo "$OS_DISTRO$OS_RELEASE"
      else
+@@ -105,6 +118,7 @@ check_supported_distribution() {
+     case "$distribution" in
+         "ubuntu24.04") return 0 ;;
+         "ubuntu22.04") return 0 ;;
++        "ubuntu20.04") return 0 ;;
+         "debian11")    return 0 ;;
+         "debian12")    return 0 ;;
+         "fedora43")    return 0 ;;

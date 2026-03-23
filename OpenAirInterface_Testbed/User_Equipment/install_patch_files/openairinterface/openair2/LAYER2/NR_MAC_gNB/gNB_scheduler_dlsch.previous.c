@@ -50,6 +50,8 @@
 #define WORD 32
 //#define SIZE_OF_POINTER sizeof (void *)
 
+#define MAX_NUM_DATA_REQ 1024
+
 int get_dl_tda(const gNB_MAC_INST *nrmac, int slot)
 {
   /* we assume that this function is mutex-protected from outside */
@@ -326,31 +328,38 @@ static uint32_t update_dlsch_buffer(frame_t frame, slot_t slot, NR_UE_info_t *UE
   sched_ctrl->num_total_bytes = 0;
   sched_ctrl->dl_pdus_total = 0;
 
+  logical_chan_id_t ch[NR_MAX_NUM_LCID] = {0};
+  int n = 0;
   /* loop over all activated logical channels */
-  for (int i = 0; i < seq_arr_size(&sched_ctrl->lc_config); ++i) {
-    const nr_lc_config_t *c = seq_arr_at(&sched_ctrl->lc_config, i);
-    const int lcid = c->lcid;
-    const uint16_t rnti = UE->rnti;
-    LOG_D(NR_MAC, "UE %x: LCID %d\n", rnti, lcid);
-    memset(&sched_ctrl->rlc_status[lcid], 0, sizeof(sched_ctrl->rlc_status[lcid]));
-    if (c->suspended)
+  FOR_EACH_SEQ_ARR(const nr_lc_config_t *, c, &sched_ctrl->lc_config ) {
+    logical_chan_id_t lcid = c->lcid;
+    if (c->suspended || (lcid == DL_SCH_LCID_DTCH && nr_timer_is_active(&sched_ctrl->transm_interrupt))) {
+      memset(&sched_ctrl->rlc_status[lcid], 0, sizeof(sched_ctrl->rlc_status[lcid]));
       continue;
-    if (lcid == DL_SCH_LCID_DTCH && nr_timer_is_active(&sched_ctrl->transm_interrupt))
-      continue;
-    sched_ctrl->rlc_status[lcid] = nr_mac_rlc_status_ind(rnti, frame, lcid);
+    }
+    ch[n++] = lcid;
+  }
 
-    if (sched_ctrl->rlc_status[lcid].bytes_in_buffer == 0)
+  mac_rlc_status_resp_t ret[NR_MAX_NUM_LCID] = {0};
+  nr_mac_rlc_status_ind(UE->rnti, frame, n, ch, ret);
+
+  for (int i = 0; i < n; ++i) {
+    logical_chan_id_t lcid = ch[i];
+
+    if (ret[i].bytes_in_buffer == 0)
       continue;
 
+    sched_ctrl->rlc_status[lcid] = ret[i];
     sched_ctrl->dl_pdus_total += sched_ctrl->rlc_status[lcid].pdus_in_buffer;
     sched_ctrl->num_total_bytes += sched_ctrl->rlc_status[lcid].bytes_in_buffer;
     LOG_D(MAC,
-          "%4d.%2d UE %04x LCID %d status: %d bytes, total buffer %d bytes %d PDUs\n",
+          "%4d.%2d UE %04x LCID %d status: %d bytes, %d PDUs, total buffer %d bytes %d PDUs\n",
           frame,
           slot,
           UE->rnti,
           lcid,
-          sched_ctrl->rlc_status[lcid].bytes_in_buffer,
+          ret[i].bytes_in_buffer,
+          ret[i].pdus_in_buffer,
           sched_ctrl->num_total_bytes,
           sched_ctrl->dl_pdus_total);
   }
@@ -1289,47 +1298,25 @@ void post_process_dlsch(gNB_MAC_INST *nr_mac, post_process_pdsch_t *pdsch, NR_UE
         if (sched_ctrl->rlc_status[lcid].bytes_in_buffer == 0)
           continue; // no data for this LC        tbs_size_t len = 0;
 
-        int lcid_bytes=0;
-        while (bufEnd-buf > sizeof(NR_MAC_SUBHEADER_LONG) + 1 ) {
-          // we do not know how much data we will get from RLC, i.e., whether it
-          // will be longer than 256B or not. Therefore, reserve space for long header, then
-          // fetch data, then fill real length
+
+        tb_size_t pdu_siz[MAX_NUM_DATA_REQ];
+        int num = nr_mac_rlc_multi_data_req(module_id, rnti, true, lcid, bufEnd - buf, (char *)buf, pdu_siz, sizeofArray(pdu_siz));
+        DevAssert(num <= sizeofArray(pdu_siz));
+
+        sdus += num;
+        int lcid_bytes = 0;
+        for (int j = 0; j < num; ++j) {
           NR_MAC_SUBHEADER_LONG *header = (NR_MAC_SUBHEADER_LONG *) buf;
-          /* limit requested number of bytes to what preprocessor specified, or
-           * such that TBS is full */
-          const rlc_buffer_occupancy_t ndata = min(sched_ctrl->rlc_status[lcid].bytes_in_buffer,
-                                                   bufEnd-buf-sizeof(NR_MAC_SUBHEADER_LONG));
-          tbs_size_t len = nr_mac_rlc_data_req(module_id,
-                                               rnti,
-                                               true,
-                                               lcid,
-                                               ndata,
-                                               (char *)buf+sizeof(NR_MAC_SUBHEADER_LONG));
-          LOG_D(NR_MAC,
-                "%4d.%2d RNTI %04x: %d bytes from %s %d (ndata %d, remaining size %ld)\n",
-                frame,
-                slot,
-                rnti,
-                len,
-                lcid < 4 ? "DCCH" : "DTCH",
-                lcid,
-                ndata,
-                bufEnd-buf-sizeof(NR_MAC_SUBHEADER_LONG));
-
-          if (len == 0)
-            break;
-
-          T(T_GNB_MAC_LCID_DL, T_INT(rnti), T_INT(frame), T_INT(slot), T_INT(lcid), T_INT(len * 8), T_INT(nr_rlc_tx_list_occupancy(rnti, lcid)));
           header->R = 0;
           header->F = 1;
           header->LCID = lcid;
-          header->L = htons(len);
-          buf += len+sizeof(NR_MAC_SUBHEADER_LONG);
-          dlsch_total_bytes += len;
-          lcid_bytes += len;
-          sdus += 1;
+          header->L = htons(pdu_siz[j]);
+          buf += pdu_siz[j] + sizeof(NR_MAC_SUBHEADER_LONG);
+          dlsch_total_bytes += pdu_siz[j];
+          lcid_bytes += pdu_siz[j];
         }
 
+        T(T_GNB_MAC_LCID_DL, T_INT(rnti), T_INT(frame), T_INT(slot), T_INT(lcid), T_INT(lcid_bytes), T_INT(nr_rlc_tx_list_occupancy(rnti, lcid)));
         UE->mac_stats.dl.lc_bytes[lcid] += lcid_bytes;
       }
     } else if (get_softmodem_params()->phy_test || get_softmodem_params()->do_ra) {

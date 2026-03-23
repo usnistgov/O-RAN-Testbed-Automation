@@ -1,7 +1,0 @@
-# Ignore testbed subdirectories
-/configs/
-/flexric/
-/logs/
-/swig/
-install_time.txt
-!install_patch_files/

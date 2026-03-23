@@ -46,17 +46,11 @@ sudo apt-get upgrade -y
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 sudo env $APTVARS apt-get install -y git
 
-# rm -rf O-RAN-Testbed-Init
-if [ ! -d O-RAN-Testbed-Init ]; then
-    git clone https://github.com/Simewu/O-RAN-Testbed-Init.git
+# rm -rf O-RAN-Testbed-Automation
+if [ ! -d O-RAN-Testbed-Automation ]; then
+    git clone https://github.com/USNISTGOV/O-RAN-Testbed-Automation.git
 fi
-cd O-RAN-Testbed-Init
-
-# # rm -rf O-RAN-Testbed-Automation
-# if [ ! -d O-RAN-Testbed-Automation ]; then
-#     git clone https://github.com/USNISTGOV/O-RAN-Testbed-Automation.git
-# fi
-# cd O-RAN-Testbed-Automation
+cd O-RAN-Testbed-Automation
 
 # # rm -rf o-ran-testbed-init
 # if [ ! -d o-ran-testbed-init ]; then

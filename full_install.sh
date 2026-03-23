@@ -106,7 +106,6 @@ OPEN5GS_INSTALLED=false
 if [ -f "5G_Core_Network/open5gs/install/bin/open5gs-amfd" ] && [ -f "5G_Core_Network/open5gs/install/bin/open5gs-upfd" ]; then
     OPEN5GS_INSTALLED=true
 fi
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 GNODEB_INSTALLED=false
 if [ -f "Next_Generation_Node_B/ocudu/build/apps/gnb/gnb" ]; then
     GNODEB_INSTALLED=true

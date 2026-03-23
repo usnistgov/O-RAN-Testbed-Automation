@@ -48,7 +48,7 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-# Check for gnb binary to determine if FlexRIC is already installed
+# Check for binary to determine if FlexRIC is already installed
 if [ "$CLEAN_INSTALL" != "true" ] && [ -f "flexric/build/examples/ric/nearRT-RIC" ]; then
     echo "FlexRIC is already installed, skipping."
     exit 0

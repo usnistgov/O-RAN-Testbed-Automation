@@ -226,11 +226,18 @@ echo "Compiling and Installing OCUDU..."
 cd ocudu
 mkdir -p build
 cd build
+CMAKE_FLAGS="-DENABLE_WERROR=OFF"
 if [[ "$DEBUG_SYMBOLS" == "true" ]]; then
-    cmake ../ -DCMAKE_BUILD_TYPE=Debug
-else
-    cmake ../
+    CMAKE_FLAGS="$CMAKE_FLAGS -DCMAKE_BUILD_TYPE=Debug"
 fi
+
+if [[ "$RUN_TESTS" == "true" ]]; then
+    CMAKE_FLAGS="$CMAKE_FLAGS -DBUILD_TESTING=ON"
+else
+    CMAKE_FLAGS="$CMAKE_FLAGS -DBUILD_TESTING=OFF"
+fi
+
+cmake ../ $CMAKE_FLAGS
 make -j$(nproc)
 if [[ "$RUN_TESTS" == "true" ]]; then
     ctest -j$(nproc)

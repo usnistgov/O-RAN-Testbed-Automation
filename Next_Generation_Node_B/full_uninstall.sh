@@ -87,6 +87,8 @@ if [ -d ocudu/build ]; then
 fi
 sudo rm -rf zmq_broker/
 sudo rm -rf ocudu
+sudo rm -rf ocudu_o1_adapter
+sudo rm -rf ocudu_netconf
 
 sudo rm -rf logs/
 sudo rm -rf configs/

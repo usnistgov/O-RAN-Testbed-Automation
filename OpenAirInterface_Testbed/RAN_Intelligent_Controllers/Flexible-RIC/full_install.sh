@@ -34,11 +34,12 @@ set -e
 APPLY_PATCHES=true
 CLEAN_INSTALL=false
 DEBUG_SYMBOLS=false
-E2AP_VERSION="E2AP_V2"        # E2AP_V1, E2AP_V2, E2AP_V3
-KPM_VERSION="KPM_V2_03"       # KPM_V2_03, KPM_V3_00
+E2AP_VERSION="E2AP_V2"  # E2AP_V1, E2AP_V2, E2AP_V3
+KPM_VERSION="KPM_V2_03" # KPM_V2_03, KPM_V3_00
 E2_TERM_PORT=36421            # Ensure this matches the gNodeB's full_install.sh E2_TERM_PORT. Default is 36421, which will result in no modification
 E2_TERM_PORT_SUBSTITUTE=36423 # If E2_TERM_PORT is used already, substitute it before replacing with E2_TERM_PORT
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
+
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
     sudo env $APTVARS apt-get install -y coreutils
@@ -94,7 +95,7 @@ cd "$SCRIPT_DIR"
 
 if [ ! -d "flexric" ]; then
     echo "Cloning Flexible RAN Intelligent Controller (FlexRIC)..."
-    ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/mosaic5g/flexric.git
+    ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/mosaic5g/flexric.git --https
 fi
 
 CURRENT_E2_PORT=$(sed -nE 's/.*e2ap_server_port *= *([0-9]+);/\1/p' flexric/src/agent/e2_agent_api.c)

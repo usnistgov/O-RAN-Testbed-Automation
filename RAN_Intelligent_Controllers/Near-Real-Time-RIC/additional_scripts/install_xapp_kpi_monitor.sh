@@ -61,7 +61,7 @@ cd xApps
 
 if [ ! -d "kpimon-go" ]; then
     echo "Cloning KPI Monitor xApp (kpimon-go)..."
-    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/kpimon-go.git
+    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/kpimon-go.git --https
 fi
 
 cd kpimon-go

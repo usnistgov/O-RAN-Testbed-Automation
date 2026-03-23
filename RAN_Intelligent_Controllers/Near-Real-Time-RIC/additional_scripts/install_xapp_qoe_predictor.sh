@@ -61,7 +61,7 @@ cd xApps
 
 if [ ! -d "qp" ]; then
     echo "Cloning Quality of Experience (QoE) Predictor xApp (qp)..."
-    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/qp.git
+    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/qp.git --https
 fi
 
 cd qp

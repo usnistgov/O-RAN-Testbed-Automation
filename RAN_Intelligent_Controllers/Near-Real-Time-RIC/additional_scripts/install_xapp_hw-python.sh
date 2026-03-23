@@ -56,7 +56,7 @@ cd xApps
 
 if [ ! -d "hw-python" ]; then
     echo "Cloning the Hello World Python xApp (hw-python)..."
-    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/hw-python.git
+    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/hw-python.git --https
 fi
 
 cd hw-python

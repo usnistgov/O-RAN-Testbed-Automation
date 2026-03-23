@@ -225,7 +225,7 @@ rm -rf build
 # Check if Open5GS has already been built and installed
 if [ ! -d "build" ]; then
     echo "Compiling Open5GS with Meson..."
-    meson build --prefix="$(pwd)/install" # -Dc_args="-fPIC" -Dc_link_args=""
+    meson build --prefix="$(pwd)/install" -Dc_args="-fPIC" -Dcpp_args="-fPIC" -Dc_link_args="-fPIC" -Dcpp_link_args="-fPIC"
 else
     echo "Open5GS build directory already exists."
 fi

@@ -56,7 +56,7 @@ cd xApps
 
 if [ ! -d "hw-rust" ]; then
     echo "Cloning the Hello World Rust xApp (hw-rust)..."
-    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/hw-rust.git
+    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/hw-rust.git --https
 fi
 
 cd hw-rust

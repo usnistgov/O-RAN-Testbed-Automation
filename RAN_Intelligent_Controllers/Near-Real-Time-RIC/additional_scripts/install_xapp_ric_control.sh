@@ -61,7 +61,7 @@ cd xApps
 
 if [ ! -d "rc" ]; then
     echo "Cloning RIC Control xApp (rc)..."
-    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/rc.git
+    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/rc.git --https
 fi
 
 cd rc

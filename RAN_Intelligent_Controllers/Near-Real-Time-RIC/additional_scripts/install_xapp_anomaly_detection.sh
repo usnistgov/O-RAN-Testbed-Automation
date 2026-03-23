@@ -61,7 +61,7 @@ cd xApps
 
 if [ ! -d "ad" ]; then
     echo "Cloning Anamoly Detection xApp (ad)..."
-    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/ad.git
+    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/ad.git --https
 fi
 
 cd ad

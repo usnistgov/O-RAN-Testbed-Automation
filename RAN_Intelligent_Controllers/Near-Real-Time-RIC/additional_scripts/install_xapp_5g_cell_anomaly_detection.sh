@@ -61,7 +61,7 @@ cd xApps
 
 if [ ! -d "ad-cell" ]; then
     echo "Cloning 5G Cell Anamoly Detection xApp (ad-cell)..."
-    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/ad-cell.git
+    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/ad-cell.git --https
 fi
 
 cd ad-cell

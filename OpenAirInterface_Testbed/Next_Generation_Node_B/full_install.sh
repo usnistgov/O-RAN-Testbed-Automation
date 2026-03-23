@@ -79,13 +79,13 @@ if [ "$SHARE_OAI_DIR_FROM_UE" = true ]; then
     if [ ! -f "../User_Equipment/openairinterface5g/cmake_targets/build_oai" ]; then
         echo "Cloning shared openairinterface5g to User Equipment..."
         sudo rm -rf ../User_Equipment/openairinterface5g
-        ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/oai/openairinterface5g.git ../User_Equipment/openairinterface5g
+        ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/oai/openairinterface5g.git ../User_Equipment/openairinterface5g --https
     fi
 else
     if [ ! -d "openairinterface5g" ]; then
         echo "Cloning openairinterface5g..."
         sudo rm -rf openairinterface5g
-        ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/oai/openairinterface5g.git openairinterface5g
+        ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/oai/openairinterface5g.git openairinterface5g --https
     fi
 fi
 
@@ -115,7 +115,7 @@ fi
 cd "$SCRIPT_DIR"
 if [ ! -d "$FLEXRIC_DIR/src/agent/e2_agent_api.c" ]; then
     echo "Cloning Flexible RAN Intelligent Controller (FlexRIC)..."
-    ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/mosaic5g/flexric.git "$FLEXRIC_DIR"
+    ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/mosaic5g/flexric.git "$FLEXRIC_DIR" --https
 fi
 
 CURRENT_E2_PORT=$(sed -nE 's/.*e2ap_server_port *= *([0-9]+);/\1/p' openairinterface5g/openair2/E2AP/flexric/src/agent/e2_agent_api.c)

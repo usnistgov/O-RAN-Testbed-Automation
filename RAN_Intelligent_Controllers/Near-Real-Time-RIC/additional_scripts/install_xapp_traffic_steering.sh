@@ -61,7 +61,7 @@ cd xApps
 
 if [ ! -d "ts" ]; then
     echo "Cloning Traffic Steering xApp (trafficxapp)..."
-    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/ts.git
+    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/ts.git --https
 fi
 
 cd ts

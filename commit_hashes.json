@@ -1,6 +1,7 @@
 {
   "https://github.com/open5gs/open5gs.git": ["", "318eeb49a7dcdff733dec60e02d9c60aefca2fb9"],
   "https://github.com/srsran/srsRAN_4G.git": ["", "6bcbd9e5bf8686aa7085202cd847c5ddd64a9c16"],
+  "https://github.com/srsran/oran-sc-ric.git": ["", "621ade26251f69a4ad079ba98bb708d8e5aeeb98"],
   "https://github.com/zeromq/libzmq.git": ["", "7d95ac02ae1af9a2f6896794d12b9de2ae30a3a8"],
   "https://github.com/zeromq/czmq.git": ["", "6b435f533619a52d9e1c3fa43d5e40e50a046272"],
   "https://gitlab.com/ocudu/ocudu.git": ["", "b62a782f6ee159bf9ac1a3487bd112da982feb87"],

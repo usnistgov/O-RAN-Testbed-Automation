@@ -66,7 +66,7 @@ INSTALL_START_TIME=$(date +%s)
 
 if [ ! -d "openairinterface5g" ]; then
     echo "Cloning openairinterface5g..."
-    ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/oai/openairinterface5g.git openairinterface5g
+    ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/oai/openairinterface5g.git openairinterface5g --https
 fi
 
 if [ "$APPLY_PATCHES" = true ]; then
@@ -85,7 +85,7 @@ fi
 if [ ! -d "$FLEXRIC_DIR/src/agent/e2_agent_api.c" ]; then
     echo "Cloning Flexible RAN Intelligent Controller (FlexRIC)..."
     cd "$FLEXRIC_PARENT_DIR"
-    ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/mosaic5g/flexric.git flexric
+    ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/mosaic5g/flexric.git flexric --https
 fi
 cd "$SCRIPT_DIR"
 

@@ -106,7 +106,7 @@ fi
 if [ ! -d dep ]; then
     echo
     echo "Cloning A1 dependencies..."
-    ./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/it/dep.git
+    ./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/it/dep.git --https
     cd dep # Ensure that the components are cloned
     git restore --source=HEAD :/
     cd ..
@@ -146,7 +146,7 @@ else
     # Download ric-dep from gerrit
     if [ ! -f "ric-dep/bin/install_k8s_and_helm.sh" ]; then
         sudo rm -rf ric-dep
-        ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep.git ric-dep
+        ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep.git ric-dep --https
     fi
     # Patch the install script and save a backup of the original
     if [ ! -f "ric-dep/bin/install_k8s_and_helm.previous.sh" ]; then

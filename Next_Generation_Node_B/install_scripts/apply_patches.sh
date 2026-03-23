@@ -49,7 +49,7 @@ cd ocudu
 git restore lib/gateways/sctp_network_gateway_common_impl.cpp
 if [ ! -f "lib/gateways/sctp_network_gateway_common_impl.cpp.previous" ]; then
     cp lib/gateways/sctp_network_gateway_common_impl.cpp lib/gateways/sctp_network_gateway_common_impl.cpp.previous
-    cp lib/gateways/sctp_network_gateway_common_impl.cpp.previous "$PARENT_DIR/install_patch_files/ocudu/lib/gateways/sctp_network_gateway_common_impl.cpp.previous"
+    cp lib/gateways/sctp_network_gateway_common_impl.cpp.previous "$PARENT_DIR/install_patch_files/ocudu/lib/gateways/sctp_network_gateway_common_impl.previous.cpp"
 fi
 echo "Patching sctp_network_gateway_common_impl.cpp..."
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/ocudu/lib/gateways/sctp_network_gateway_common_impl.cpp.patch"

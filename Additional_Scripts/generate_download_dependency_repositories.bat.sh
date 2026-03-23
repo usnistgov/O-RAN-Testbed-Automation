@@ -113,7 +113,7 @@ function generate_commands() {
 
     echo "${INDENT}cd \"$CLONE_PATH\" >nul 2>&1" >>download_dependency_repositories.bat
     echo "${INDENT}if not errorlevel 1 (" >>download_dependency_repositories.bat
-    
+
     local INNER_INDENT="${INDENT}    "
     echo "${INNER_INDENT}git clone $URL" >>download_dependency_repositories.bat
 

@@ -44,7 +44,6 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
 HOME_DIR=$(dirname "$(dirname "$(dirname "$SCRIPT_DIR")")")
 
-APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v jq &>/dev/null; then
     echo "Installing jq..."
     sudo env $APTVARS apt-get install -y jq
@@ -53,8 +52,11 @@ fi
 if [[ -f "$SCRIPT_DIR/utils.sh" ]]; then
     source "$SCRIPT_DIR/utils.sh"
 else
-    echo "Error: utils.sh not found in $SCRIPT_DIR"
+    echo "ERROR: utils.sh not found in $SCRIPT_DIR"
     exit 1
+fi
+if [[ -n "$USE_GIT_SSH" ]]; then
+    echo "Found env variable: USE_GIT_SSH=$USE_GIT_SSH"
 fi
 
 # Variables for parsing

@@ -55,7 +55,7 @@ cd Next_Generation_Node_B
 ./install_scripts/git_clone.sh https://gitlab.com/ocudu/ocudu.git
 ./install_scripts/git_clone.sh https://gitlab.com/ocudu/ocudu_elements/ocudu_oran_apps/ocudu_o1_adapter.git
 ./install_scripts/git_clone.sh https://gitlab.com/ocudu/ocudu_elements/ocudu_oran_apps/ocudu_netconf.git
-ln -s "../User_Equipment/libzmq" libzmq  # Use User_Equipment's ZMQ
+ln -s "../User_Equipment/libzmq" libzmq # Use User_Equipment's ZMQ
 ln -s "../User_Equipment/czmq" czmq
 mkdir -p zmq_broker
 wget -qO zmq_broker/multi_ue_scenario.grc https://gitlab.com/ocudu/ocudu_docs/-/raw/main/docs/user_manual/tutorials/srsue/assets/multi_ue_scenario.grc

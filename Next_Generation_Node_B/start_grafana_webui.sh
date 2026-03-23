@@ -78,7 +78,7 @@ if docker compose version &>/dev/null; then
 elif command -v docker-compose &>/dev/null; then
     DOCKER_COMPOSE_CMD="docker-compose"
 else
-    echo "Error: Docker compose not found. Please install Docker Compose V2."
+    echo "ERROR: Docker compose not found. Please install Docker Compose V2."
     exit 1
 fi
 

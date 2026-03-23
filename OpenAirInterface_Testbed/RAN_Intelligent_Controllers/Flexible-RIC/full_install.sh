@@ -34,8 +34,8 @@ set -e
 APPLY_PATCHES=true
 CLEAN_INSTALL=false
 DEBUG_SYMBOLS=false
-E2AP_VERSION="E2AP_V2"  # E2AP_V1, E2AP_V2, E2AP_V3
-KPM_VERSION="KPM_V2_03" # KPM_V2_03, KPM_V3_00
+E2AP_VERSION="E2AP_V2"        # E2AP_V1, E2AP_V2, E2AP_V3
+KPM_VERSION="KPM_V2_03"       # KPM_V2_03, KPM_V3_00
 E2_TERM_PORT=36421            # Ensure this matches the gNodeB's full_install.sh E2_TERM_PORT. Default is 36421, which will result in no modification
 E2_TERM_PORT_SUBSTITUTE=36423 # If E2_TERM_PORT is used already, substitute it before replacing with E2_TERM_PORT
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"

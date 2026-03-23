@@ -114,11 +114,9 @@ struct fmt::formatter<sctp_sn_type> : fmt::formatter<std::string_view> {
       case SCTP_STREAM_CHANGE_EVENT:
         name = "SCTP_STREAM_CHANGE_EVENT";
         break;
-#ifdef SCTP_SEND_FAILED_EVENT
       case SCTP_SEND_FAILED_EVENT:
         name = "SCTP_SEND_FAILED_EVENT";
         break;
-#endif
     }
     return fmt::formatter<std::string_view>::format(name, ctx);
   }

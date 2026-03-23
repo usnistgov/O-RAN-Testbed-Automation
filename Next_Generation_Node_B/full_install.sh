@@ -31,6 +31,8 @@
 # Exit immediately if a command fails
 set -e
 
+APPLY_PATCHES=true
+DEBUG_SYMBOLS=false
 RUN_TESTS=false
 TUNE_PERFORMANCE=false
 
@@ -89,6 +91,11 @@ fi
 if [ ! -d "ocudu" ]; then
     echo "Cloning OCUDU..."
     ./install_scripts/git_clone.sh https://gitlab.com/ocudu/ocudu.git
+fi
+
+if [ "$APPLY_PATCHES" = true ]; then
+    echo "Patching OCUDU..."
+    ./install_scripts/apply_patches.sh
 fi
 
 echo "Updating package lists..."
@@ -219,7 +226,11 @@ echo "Compiling and Installing OCUDU..."
 cd ocudu
 mkdir -p build
 cd build
-cmake ../
+if [[ "$DEBUG_SYMBOLS" == "true" ]]; then
+    cmake ../ -DCMAKE_BUILD_TYPE=Debug
+else
+    cmake ../
+fi
 make -j$(nproc)
 if [[ "$RUN_TESTS" == "true" ]]; then
     ctest -j$(nproc)

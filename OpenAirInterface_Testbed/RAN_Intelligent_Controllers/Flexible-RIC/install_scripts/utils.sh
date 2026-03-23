@@ -28,41 +28,28 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-# utils.sh - Shared utilities for installation procedures.
+shopt -s extglob # Extended globbing for pattern matching
 
-# Ensure extended globbing is on for pattern matching
-shopt -s extglob
-
-# Define prefixes that appear in web URLs but NOT in SSH URLs
-# To add others use | as separator.
+# Define prefixes that appear in web URLs but not in SSH URLs (delimiter: |)
 GIT_WEB_PREFIXES="gitlab|git|repolist"
 
 convert_to_ssh() {
     local input="$1"
-
-    # 1. Guard Clause: If it's already SSH, return as-is
+    # If already SSH, return input unchanged
     if [[ "$input" == git@* || "$input" == ssh://* ]]; then
         echo "$input"
         return
     fi
 
-    # 2. Process HTTPS URLs
+    # Process HTTPS URLs
     if [[ "$input" == https://* ]]; then
-        # Strip protocol
-        local no_proto="${input#https://}"
-        # Capture domain (everything before first slash)
-        local domain="${no_proto%%/*}"
-        # Capture path (everything after first slash)
-        local path="${no_proto#*/}"
+        local no_proto="${input#https://}"   # Strip protocol
+        local domain="${no_proto%%/*}"       # Capture everything before first slash
+        local path="${no_proto#*/}"          # Capture everything after first slash
+        path="${path#@($GIT_WEB_PREFIXES)/}" # Remove known web prefixes from the path
+        echo "git@${domain}:${path}"
 
-        # Automated Prefix Removal (e.g., strips 'gitlab/' from URLs)
-        path="${path#@($GIT_WEB_PREFIXES)/}"
-       
-	# Return formatted SSH string
-	echo "git@${domain}:${path}"
-     
     else
-        # 3. Fallback for local paths or unknown formats
-	echo "$input"
+        echo "$input" # Unknown format, return unchanged
     fi
 }

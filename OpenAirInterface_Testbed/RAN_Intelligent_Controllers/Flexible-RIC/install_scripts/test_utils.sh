@@ -63,16 +63,16 @@ test_suite_url_conversion() {
     echo "Running Suite: URL Conversion..."
 
     assert_eq "git@gitlab.someorg.org:projectname/test.git" \
-              "$(convert_to_ssh https://gitlab.someorg.org/gitlab/projectname/test.git)" \
-              "gitlab prefix removal"
+        "$(convert_to_ssh https://gitlab.someorg.org/gitlab/projectname/test.git)" \
+        "gitlab prefix removal"
 
     assert_eq "git@github.com:user/repo.git" \
-              "$(convert_to_ssh https://github.com/user/repo.git)" \
-              "Standard GitHub conversion"
+        "$(convert_to_ssh https://github.com/user/repo.git)" \
+        "Standard GitHub conversion"
 
     assert_eq "git@github.com:user/repo.git" \
-              "$(convert_to_ssh git@github.com:user/repo.git)" \
-              "Already SSH (no-operation)"
+        "$(convert_to_ssh git@github.com:user/repo.git)" \
+        "Already SSH (no-operation)"
 }
 
 # --- MAIN RUNNER ---
@@ -86,11 +86,11 @@ test_suite_url_conversion
 echo "========================================"
 
 if [ $FAILED_TESTS -eq 0 ]; then
-   echo -e "\e[32mOVERALL RESULT: SUCCESS\e[0m"
-   echo "Tests Passed: $TOTAL_TESTS / $TOTAL_TESTS"
-   exit 0
+    echo -e "\e[32mOVERALL RESULT: SUCCESS\e[0m"
+    echo "Tests Passed: $TOTAL_TESTS / $TOTAL_TESTS"
+    exit 0
 else
-   echo -e "\e[31mOVERALL RESULT: FAILED\e[0m"
-   echo "Tests Failed: $FAILED_TESTS / $TOTAL_TESTS"
-   exit 1
+    echo -e "\e[31mOVERALL RESULT: FAILED\e[0m"
+    echo "Tests Failed: $FAILED_TESTS / $TOTAL_TESTS"
+    exit 1
 fi

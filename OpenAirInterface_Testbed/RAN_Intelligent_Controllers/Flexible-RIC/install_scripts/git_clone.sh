@@ -28,6 +28,11 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
+echo "# Script: $(realpath "$0")..."
+
+# Exit immediately if a command fails
+set -e
+
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
@@ -35,18 +40,15 @@ if ! command -v realpath &>/dev/null; then
 fi
 
 CURRENT_DIR=$(pwd)
-REAL_PATH=$(realpath "$0")
-SCRIPT_DIR=$(dirname $REAL_PATH)
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
 HOME_DIR=$(dirname "$(dirname "$(dirname "$SCRIPT_DIR")")")
 
+APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v jq &>/dev/null; then
     echo "Installing jq..."
     sudo env $APTVARS apt-get install -y jq
 fi
-
-echo "# Script: $REAL_PATH..."
-
 
 if [[ -f "$SCRIPT_DIR/utils.sh" ]]; then
     source "$SCRIPT_DIR/utils.sh"
@@ -55,39 +57,34 @@ else
     exit 1
 fi
 
-# Exit immediately if a command fails
-set -e
-
 # Variables for parsing
 POSITIONAL_ARGS=()
-
 if [[ "$USE_GIT_SSH" == "true" ]]; then
     USE_SSH=true
 else
     USE_SSH=false
 fi
 
-# Parse arguments (Supports flags at the beginning, middle, or end)
+# Parse arguments
 while [[ "$#" -gt 0 ]]; do
     case "$1" in
-        --ssh)
-            USE_SSH=true
-            shift
-            ;;
-        --https) #Force HTTPS override
-            USE_SSH=false
-            shift
-            ;;
-        *)
-	    POSITIONAL_ARGS+=("$1")
-	    shift
-	    ;;
+    --ssh) # Force SSH
+        USE_SSH=true
+        shift
+        ;;
+    --https) # Force HTTPS
+        USE_SSH=false
+        shift
+        ;;
+    *)
+        POSITIONAL_ARGS+=("$1")
+        shift
+        ;;
     esac
 done
 
 # Restore positional arguments ($1 = URL, $2 = NAME)
 set -- "${POSITIONAL_ARGS[@]}"
-
 URL=$1  # Required
 NAME=$2 # Optional
 
@@ -107,9 +104,9 @@ fi
 
 # Determine the final URL to use
 if [ "$USE_SSH" = true ]; then
-    FINAL_URL=$(convert_to_ssh "$URL")
+    CONVERTED_URL=$(convert_to_ssh "$URL")
 else
-    FINAL_URL="$URL"
+    CONVERTED_URL="$URL"
 fi
 
 # First check the directory containing install_scripts/, otherwise, use the home directory
@@ -140,11 +137,19 @@ if jq -e --arg url "$URL" '.[$url][1]' "$JSON_FILE" &>/dev/null; then
     # If the repository does not exist, clone it
     if [[ ! -d "$NAME" ]]; then
         if [[ ! -z "$BRANCH" ]]; then
-            echo "Cloning $FINAL_URL at branch $BRANCH..."
-            git clone "$FINAL_URL" "$NAME" -b $BRANCH
+            echo "Cloning $CONVERTED_URL at branch $BRANCH..."
+            if [ "$USE_SSH" = true ]; then
+                git clone -c core.sshCommand="ssh -o StrictHostKeyChecking=no" "$CONVERTED_URL" "$NAME" -b $BRANCH
+            else
+                git clone "$CONVERTED_URL" "$NAME" -b $BRANCH
+            fi
         else
-            echo "Cloning $FINAL_URL..."
-            git clone "$FINAL_URL" "$NAME"
+            echo "Cloning $CONVERTED_URL..."
+            if [ "$USE_SSH" = true ]; then
+                git clone -c core.sshCommand="ssh -o StrictHostKeyChecking=no" "$CONVERTED_URL" "$NAME"
+            else
+                git clone "$CONVERTED_URL" "$NAME"
+            fi
         fi
     fi
     cd "$NAME"
@@ -164,10 +169,14 @@ if jq -e --arg url "$URL" '.[$url][1]' "$JSON_FILE" &>/dev/null; then
 else
     # Repository not found in JSON file, if the repository does not exist, clone it
     if [[ ! -d "$NAME" ]]; then
-        echo "Cloning $FINAL_URL..."
-        git clone "$FINAL_URL" "$NAME"
+        echo "Cloning $CONVERTED_URL..."
+        if [ "$USE_SSH" = true ]; then
+            git clone -c core.sshCommand="ssh -o StrictHostKeyChecking=no" "$CONVERTED_URL" "$NAME"
+        else
+            git clone "$CONVERTED_URL" "$NAME"
+        fi
     fi
 fi
 
-echo "Repository $FINAL_URL is cloned to $CURRENT_DIR/$NAME."
+echo "Repository $CONVERTED_URL is cloned to $CURRENT_DIR/$NAME."
 echo

@@ -4,7 +4,7 @@
   "https://github.com/srsran/oran-sc-ric.git": ["", "621ade26251f69a4ad079ba98bb708d8e5aeeb98"],
   "https://github.com/zeromq/libzmq.git": ["", "7d95ac02ae1af9a2f6896794d12b9de2ae30a3a8"],
   "https://github.com/zeromq/czmq.git": ["", "6b435f533619a52d9e1c3fa43d5e40e50a046272"],
-  "https://gitlab.com/ocudu/ocudu.git": ["", "b62a782f6ee159bf9ac1a3487bd112da982feb87"],
+  "https://gitlab.com/ocudu/ocudu.git": ["", "bddf6b29afbb1289c7613c73ef04a5a6d8e21af9"],
   "https://gitlab.com/ocudu/ocudu_elements/ocudu_oran_apps/ocudu_o1_adapter.git": ["", "4671536856562f90df7d308bdefeae161381dc12"],
   "https://gitlab.com/ocudu/ocudu_elements/ocudu_oran_apps/ocudu_netconf.git": ["", "f14ebf3b47e954cb86407c14c9146ded684db910"],
   "https://gerrit.o-ran-sc.org/r/sim/e2-interface.git": ["m-release", "da6f82f286cdbb38af1178f82f85877b12c2f85b"],
@@ -22,11 +22,11 @@
   "https://gerrit.o-ran-sc.org/r/it/dep.git": ["m-release", "1daedf545ec1b5f6d4a7740c49ea44d80459f24c"],
   "https://gerrit.o-ran-sc.org/r/nonrtric/plt/ranpm.git": ["l-release", "f0ef45cb96961334b9525c546534b822f055e24c"],
   "https://github.com/onap/multicloud-k8s.git": ["", "5a3cddd314716a5e4ea9d3e56194fadd1f5591a1"],
-  "https://gerrit.onap.org/r/oom.git": ["", "a1c60ef6e0f2ee4c68bf3d6c0000ed232be29809"],
+  "https://gerrit.onap.org/r/oom.git": ["", "d08a66000a390162e4c0f63cd48ec4812c93ecac"],
   "https://gerrit.o-ran-sc.org/r/portal/nonrtric-controlpanel.git": ["master", "9f0bc855a687f918548d5dcea7a43913256cdd54"],
   "https://gerrit.o-ran-sc.org/r/nonrtric/plt/rappmanager.git": ["m-release", "1eca521d8fd88de890e4fc7f3e5e2d262673d8c9"],
-  "https://gitlab.eurecom.fr/oai/openairinterface5g.git": ["develop", "582ce818d70aaa905ae7022fdbd04a5abd579d34"],
+  "https://gitlab.eurecom.fr/oai/openairinterface5g.git": ["develop", "0ba31c0f89dd3162c7d87142da2b0f4e08abeb58"],
   "https://gitlab.eurecom.fr/oai/o1-adapter.git": ["main", "ce1399277ce04ac16c2021268233dc47a830656c"],
-  "https://github.com/swig/swig.git": ["master", "be56529251dbef7d92d5777c0691331f412adac0"],
+  "https://github.com/swig/swig.git": ["master", "846d392ab4a7f010a5c48f4b7adf83a2a8a0e0af"],
   "https://gitlab.eurecom.fr/mosaic5g/flexric.git": ["dev", "340c36bc8385dc0b9f5d8b2d51d16ff288acee79"]
 }

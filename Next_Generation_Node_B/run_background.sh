@@ -44,7 +44,7 @@ if pgrep -x "gnb" >/dev/null; then
     echo "Already running gnb."
 else
     if [ ! -f "configs/gnb.yaml" ]; then
-        echo "Configuration was not found for SRS gNodeB. Please run ./generate_configurations.sh first."
+        echo "Configuration was not found for OCUDU. Please run ./generate_configurations.sh first."
         exit 1
     fi
 

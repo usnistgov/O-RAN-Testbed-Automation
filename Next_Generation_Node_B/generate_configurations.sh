@@ -352,7 +352,7 @@ for i in "${!SST[@]}"; do
 done
 
 GNB_ID="411"
-RAN_NODE_NAME="srsgnb01"
+RAN_NODE_NAME="ocudugnb01"
 GNB_DU_ID="0"
 update_yaml "configs/gnb.yaml" "" "gnb_id" "$GNB_ID"
 update_yaml "configs/gnb.yaml" "" "gnb_id_bit_length" "22" # Supported: 22-32

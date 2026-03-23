@@ -113,11 +113,11 @@ if [ ! -d "5gdeploy" ]; then
     "$PARENT_DIR/./install_scripts/git_clone.sh" https://github.com/usnistgov/5gdeploy.git
 fi
 
-cd $SCRIPT_DIR/5gdeploy
+cd "$SCRIPT_DIR/5gdeploy"
 echo "Patching netdef/helpers.ts to generate NR Cell ID starting at hex 0xE000 (aligning with OAI gNB) instead of 0x10"
 sed -i '0,/^[[:space:]]*nci[[:space:]]*=.*$/s//      nci = hexPad(((3584 + i) << (36 - gnbIdLength)) | 0xF, 9),/' netdef/helpers.ts
 
-cd $SCRIPT_DIR
+cd "$SCRIPT_DIR"
 
 # Install dependencies
 mkdir -p logs

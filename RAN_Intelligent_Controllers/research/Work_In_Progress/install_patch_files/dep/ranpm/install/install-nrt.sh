@@ -249,17 +249,16 @@ echo ""
 echo "##### Installing chart: nrt-pm"
 ##################################################################################
 
-cwd=$PWD
 echo "Updating dfc truststore"
 cd helm/nrt-pm/charts/dfc/truststore
 cp template-truststore.jks truststore.jks
 check_error $?
 
 echo " Adding https ca cert to dfc truststore"
-cat <<__EOF__ | keytool -importcert -alias pm-https -file $cwd/helm/ran/certs/httpsca.crt -keystore truststore.jks -storetype JKS -storepass $(<truststore.pass)
+cat <<__EOF__ | keytool -importcert -alias pm-https -file "$PWD/helm/ran/certs/httpsca.crt" -keystore truststore.jks -storetype JKS -storepass "$(<truststore.pass)"
 yes
 __EOF__
-cd $cwd
+cd "$PWD"
 
 cid="kafka-producer-pm-xml2json"
 create_clients nonrtric-realm $cid

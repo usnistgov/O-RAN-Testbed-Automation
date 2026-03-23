@@ -111,7 +111,7 @@ function generate_commands() {
         echo "if exist \"$CLONE_PATH\\$SUBDIRECTORY\" rmdir /s /q \"$CLONE_PATH\\$SUBDIRECTORY\"" >>download_dependency_repositories.bat
     fi
 
-    echo "${INDENT}cd $CLONE_PATH >nul 2>&1" >>download_dependency_repositories.bat
+    echo "${INDENT}cd \"$CLONE_PATH\" >nul 2>&1" >>download_dependency_repositories.bat
     echo "${INDENT}if not errorlevel 1 (" >>download_dependency_repositories.bat
     
     local INNER_INDENT="${INDENT}    "
@@ -123,14 +123,14 @@ function generate_commands() {
     fi
 
     if [[ "$COMMIT" != "null" && "$COMMIT" != "" ]]; then
-        echo "${INNER_INDENT}cd $SUBDIRECTORY" >>download_dependency_repositories.bat
+        echo "${INNER_INDENT}cd \"$SUBDIRECTORY\"" >>download_dependency_repositories.bat
         echo "${INNER_INDENT}git checkout $COMMIT" >>download_dependency_repositories.bat
         if [ ! -z "$APPEND_LINE" ]; then
             echo "${INNER_INDENT}$APPEND_LINE" >>download_dependency_repositories.bat
         fi
         DEPTH_COUNT=$((DEPTH_COUNT + 1))
     elif [[ "$BRANCH" != "null" && "$BRANCH" != "" ]]; then
-        echo "${INNER_INDENT}cd $SUBDIRECTORY" >>download_dependency_repositories.bat
+        echo "${INNER_INDENT}cd \"$SUBDIRECTORY\"" >>download_dependency_repositories.bat
         echo "${INNER_INDENT}git checkout $BRANCH" >>download_dependency_repositories.bat
         if [ ! -z "$APPEND_LINE" ]; then
             echo "${INNER_INDENT}$APPEND_LINE" >>download_dependency_repositories.bat
@@ -138,7 +138,7 @@ function generate_commands() {
         DEPTH_COUNT=$((DEPTH_COUNT + 1))
     else
         if [ ! -z "$APPEND_LINE" ]; then
-            echo "${INNER_INDENT}cd $SUBDIRECTORY" >>download_dependency_repositories.bat
+            echo "${INNER_INDENT}cd \"$SUBDIRECTORY\"" >>download_dependency_repositories.bat
             echo "${INNER_INDENT}$APPEND_LINE" >>download_dependency_repositories.bat
             DEPTH_COUNT=$((DEPTH_COUNT + 1))
         fi

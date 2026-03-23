@@ -176,7 +176,7 @@ if [ ! -d "open5gs" ]; then
     ./install_scripts/git_clone.sh https://github.com/open5gs/open5gs.git
 fi
 
-cd $SCRIPT_DIR/open5gs
+cd "$SCRIPT_DIR/open5gs"
 
 echo
 echo

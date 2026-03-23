@@ -301,7 +301,7 @@ if [ ! -f /usr/local/lib/librmr_si.so ]; then
     echo "Downloading librmr_si.so..."
     PREV_DIR=$(pwd)
     TEMP_DIR=$(mktemp -d)
-    cd $TEMP_DIR
+    cd "$TEMP_DIR"
     wget -nv --content-disposition https://packagecloud.io/o-ran-sc/release/packages/debian/stretch/rmr_${RMR_VERSION}_amd64.deb/download.deb
     wget -nv --content-disposition https://packagecloud.io/o-ran-sc/release/packages/debian/stretch/rmr-dev_${RMR_VERSION}_amd64.deb/download.deb
     dpkg -i rmr_${RMR_VERSION}_amd64.deb
@@ -315,15 +315,15 @@ if [ ! -f /usr/local/lib/librmr_si.so ]; then
             exit 1
         fi
     fi
-    cd $PREV_DIR
-    rm -rf $TEMP_DIR
+    cd "$PREV_DIR"
+    rm -rf "$TEMP_DIR"
 fi
 
 if [ ! -f /usr/local/lib/libriclibe2ap.so ]; then
     echo "Downloading libriclibe2ap.so..."
     PREV_DIR=$(pwd)
     TEMP_DIR=$(mktemp -d)
-    cd $TEMP_DIR
+    cd "$TEMP_DIR"
     wget -nv --content-disposition https://packagecloud.io/o-ran-sc/release/packages/debian/stretch/riclibe2ap_${E2AP_VERSION}_amd64.deb/download.deb
     wget -nv --content-disposition https://packagecloud.io/o-ran-sc/release/packages/debian/stretch/riclibe2ap-dev_${E2AP_VERSION}_amd64.deb/download.deb
     dpkg -i riclibe2ap_${E2AP_VERSION}_amd64.deb
@@ -337,8 +337,8 @@ if [ ! -f /usr/local/lib/libriclibe2ap.so ]; then
             exit 1
         fi
     fi
-    cd $PREV_DIR
-    rm -rf $TEMP_DIR
+    cd "$PREV_DIR"
+    rm -rf "$TEMP_DIR"
 fi
 
 # Add the library path to the bashrc file

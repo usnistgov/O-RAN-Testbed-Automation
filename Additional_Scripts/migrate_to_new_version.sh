@@ -147,7 +147,7 @@ if [ -d Next_Generation_Node_B/srsRAN_Project ]; then
 fi
 
 echo "Updating package lists..."
-cd $SCRIPT_DIR
+cd "$SCRIPT_DIR"
 if ! sudo apt-get update; then
     sudo ./remove_expired_apt_keys.sh
     echo "Trying to update package lists again..."

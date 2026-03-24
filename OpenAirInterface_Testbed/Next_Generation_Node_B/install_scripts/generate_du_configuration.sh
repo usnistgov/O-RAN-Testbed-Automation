@@ -99,6 +99,9 @@ sed -i "s|^\([[:space:]]*\)gNB_name\s*=.*|\1gNB_name = \"du${DU_NUMBER}-rfsim\";
 sed -i "s|^\([[:space:]]*\)nr_cellid\s*=.*|\1nr_cellid = $((11111111 + DU_NUMBER - 1))L;|" "$DU_CONF"
 sed -i "s|^\([[:space:]]*\)physCellId\s*=.*|\1physCellId = $((DU_NUMBER - 1));|" "$DU_CONF"
 
+SSB_BITMAP=$((1 << (DU_NUMBER - 1)))
+sed -i "s|^\([[:space:]]*\)ssb_PositionsInBurst_Bitmap\s*=.*|\1ssb_PositionsInBurst_Bitmap = $SSB_BITMAP;|" "$DU_CONF"
+
 if ! command -v python3 &>/dev/null; then
     echo "Python is not installed. Installing Python..."
     sudo apt-get update

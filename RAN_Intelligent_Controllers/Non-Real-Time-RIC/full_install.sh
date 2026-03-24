@@ -391,6 +391,7 @@ else
     sed -i "s|--namespace strimzi-system|--namespace strimzi-system --set extraEnvs[0].name=STRIMZI_KUBERNETES_VERSION --set-string extraEnvs[0].value=\"major=${KUBE_VERSION_MAJOR}\\\\,minor=${KUBE_VERSION_MINOR}\"|g" "$INSTALL_ONAP_SCRIPT"
 
     echo "Deploying Non-RT RIC pods..."
+    ./dep/smo-install/scripts/layer-0/0-setup-charts-museum.sh
     ./dep/smo-install/scripts/layer-0/0-setup-helm3.sh
     ./dep/smo-install/scripts/layer-1/1-build-all-charts.sh
     ./dep/smo-install/scripts/layer-2/2-install-oran.sh default dev

@@ -48,13 +48,15 @@ echo "Stopping all Open5GS processes..."
 echo "Reverting network configurations..."
 ./install_scripts/revert_network_config.sh
 
-sudo apt-get remove --purge -y open5gs || true
+if dpkg -l | grep -q "^ii  open5gs"; then
+    sudo env $APTVARS apt-get remove --purge -y open5gs >/dev/null 2>&1 || true
+fi
 
 sudo ./install_scripts/uninstall_mongodb.sh
 
 echo "Removing Open5GS user and group..."
-sudo userdel open5gs
-sudo groupdel open5gs
+if getent passwd open5gs >/dev/null; then sudo userdel open5gs; fi
+if getent group open5gs >/dev/null; then sudo groupdel open5gs; fi
 
 echo "Removing Open5GS installation directory..."
 sudo rm -rf open5gs/
@@ -82,10 +84,6 @@ if ! (
 fi
 cd ..
 
-echo "Performing general system cleanup..."
-sudo apt-get autoremove -y
-sudo apt-get autoclean
-
 echo "Unsetting LD_LIBRARY_PATH..."
 sudo rm -f /etc/profile.d/open5gs_ld_library_path.sh
 unset LD_LIBRARY_PATH
@@ -94,8 +92,11 @@ sudo rm -rf logs/
 sudo rm -rf configs/
 sudo rm -rf install_time.txt
 
-cd Additional_Cores_5GDeploy
-./full_uninstall.sh
+if command -v docker &>/dev/null && [ -n "$(sudo docker images -q 5gdeploy.localhost/bridge 2>/dev/null)" ]; then
+    cd Additional_Cores_5GDeploy
+    ./full_uninstall.sh
+    cd ..
+fi
 
 echo
 echo

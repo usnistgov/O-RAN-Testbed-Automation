@@ -325,7 +325,7 @@ install_bladerf_driver_from_source(){
     rm -rf /tmp/bladeRF
     git clone https://github.com/Nuand/bladeRF.git
     cd bladeRF
-    git checkout tags/2016.06
+    git checkout tags/2025.10
     mkdir -p build
     cd build
     $CMAKE ../
@@ -337,14 +337,12 @@ install_bladerf_driver_from_source(){
 
 check_install_bladerf_driver(){
     if [[ "$OS_BASEDISTRO" == "debian" ]]; then
-        $SUDO apt-get install -y  bladerf libbladerf-dev
-        $SUDO apt-get install -y bladerf-firmware-fx3
-        $SUDO apt-get install -y bladerf-fpga-hostedx40
-   elif [[ "$OS_BASEDISTRO" == "fedora" ]]; then
-        install_bladerf_driver_from_source
-   else
-        echo_error "BladeRF Installer for OAI does not support automatic build. Install BladeRF compiling sources manually from BladeRF website"
-   fi
+      $SUDO apt-get update
+      $SUDO apt-get install -y libcurl4-openssl-dev
+    elif [[ "$OS_BASEDISTRO" == "fedora" ]]; then
+      $SUDO dnf -y install libcurl-devel
+    fi
+    install_bladerf_driver_from_source
 }
 
 check_install_lmssdr_driver(){
@@ -358,8 +356,6 @@ check_install_lmssdr_driver(){
                 echo_info "https://wiki.myriadrf.org/Lime_Suite"
                 echo_fatal "Cannot compile lmssdr device"
 	fi
-
-
 }
 
 install_soapy_from_source(){

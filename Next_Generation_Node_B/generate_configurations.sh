@@ -453,6 +453,21 @@ update_yaml "configs/gnb.yaml" "ru_sdr" "otw_format" "default"
 
 if [ ! -f "zmq_broker/multi_ue_scenario.py" ]; then
     echo "Compiling ZeroMQ Broker GNU Radio Companion flowgraph..."
+    mkdir -p zmq_broker
+    if [ ! -f "zmq_broker/multi_ue_scenario.grc" ]; then
+        wget -qO zmq_broker/multi_ue_scenario.grc https://gitlab.com/ocudu/ocudu_docs/-/raw/main/docs/user_manual/tutorials/srsue/assets/multi_ue_scenario.grc
+    fi
+
+    # GNU Radio 3.8 issue with vmcircbuf_default_factory
+    mkdir -p ~/.gnuradio/prefs
+    if [ ! -f ~/.gnuradio/prefs/vmcircbuf_default_factory ]; then
+        echo "gr::vmcircbuf_sysv_shm_factory" > ~/.gnuradio/prefs/vmcircbuf_default_factory
+    fi
+    sudo mkdir -p /root/.gnuradio/prefs
+    if ! sudo test -f /root/.gnuradio/prefs/vmcircbuf_default_factory; then
+        sudo bash -c 'echo "gr::vmcircbuf_sysv_shm_factory" > /root/.gnuradio/prefs/vmcircbuf_default_factory'
+    fi
+
     grcc -o zmq_broker zmq_broker/multi_ue_scenario.grc
 
     ZMQ_BROKER_PYTHON_FILE="zmq_broker/multi_ue_scenario.py"

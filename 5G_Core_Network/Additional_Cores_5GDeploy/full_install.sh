@@ -183,15 +183,20 @@ cd "$SCRIPT_DIR/5gdeploy"
 # Install 5gdeploy. For more information, see the 5gdeploy documentation: https://github.com/usnistgov/5gdeploy/blob/main/docs/INSTALL.md
 echo "Starting installation of 5G Core Deployment Helper (5gdeploy)..."
 
-# Downgrade to debian:bullseye for compatibility with older Docker versions
-echo "Patching Dockerfiles to use debian:bullseye for compatibility..."
-sed -i 's/buildpack-deps:bookworm/buildpack-deps:bullseye/g' docker/sockperf/Dockerfile
-sed -i 's/debian:bookworm/debian:bullseye/g' docker/sockperf/Dockerfile
-sed -i 's/bookworm-apt-cache/bullseye-apt-cache/g' docker/sockperf/Dockerfile
-sed -i 's/debian:bookworm/debian:bullseye/g' docker/virt/Dockerfile
-sed -i 's/bookworm-apt-cache/bullseye-apt-cache/g' docker/virt/Dockerfile
-sed -i 's/debian:trixie-slim/debian:bullseye-slim/g' docker/iperf2/Dockerfile
-sed -i 's/trixie-apt-cache/bullseye-apt-cache/g' docker/iperf2/Dockerfile
+# # Downgrade to debian:bullseye for compatibility with older Docker versions
+# echo "Patching Dockerfiles to use debian:bullseye for compatibility..."
+# sed -i 's/buildpack-deps:bookworm/buildpack-deps:bullseye/g' docker/sockperf/Dockerfile
+# sed -i 's/debian:bookworm/debian:bullseye/g' docker/sockperf/Dockerfile
+# sed -i 's/bookworm-apt-cache/bullseye-apt-cache/g' docker/sockperf/Dockerfile
+# sed -i 's/debian:bookworm/debian:bullseye/g' docker/virt/Dockerfile
+# sed -i 's/bookworm-apt-cache/bullseye-apt-cache/g' docker/virt/Dockerfile
+# sed -i 's/debian:trixie-slim/debian:bullseye-slim/g' docker/iperf2/Dockerfile
+# sed -i 's/trixie-apt-cache/bullseye-apt-cache/g' docker/iperf2/Dockerfile
+
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! APPLY PATCHES
+git apply ../docker--build.sh.patch
+git apply ../docker--virt--Dockerfile.patch
+git apply ../open5gs--cp.ts.patch
 
 ./install.sh \
     --dpdk-version v24.11 \

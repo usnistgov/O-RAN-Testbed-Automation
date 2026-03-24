@@ -1,0 +1,13 @@
+diff --git a/open5gs/cp.ts b/open5gs/cp.ts
+index 102a541..f68f093 100644
+--- a/open5gs/cp.ts
++++ b/open5gs/cp.ts
+@@ -262,7 +262,7 @@ class O5CPBuilder {
+ 
+ function* makeDbctlCommands(network: N.Network, dbUri: URL) {
+   yield* scriptHead;
+-  yield `export DB_URI=${dbUri}`;
++  yield `export DB_URI=mongodb://127.0.0.1:${dbUri.port}${dbUri.pathname}`;
+   yield `PATH=${compose.mongo.initdbPath}:$PATH`;
+   for (const { supi, k, opc, subscribedNSSAI, dlAmbr, ulAmbr } of netdef.listSubscribers(network)) {
+     yield `msg Creating subscriber ${supi}`;

@@ -1,0 +1,21 @@
+diff --git a/docker/build.sh b/docker/build.sh
+index efad1a4..bcd79e1 100755
+--- a/docker/build.sh
++++ b/docker/build.sh
+@@ -23,14 +23,14 @@ build_image() {
+   if grep -q localhost/ docker/$NAME/Dockerfile; then
+     PULL1=''
+   fi
+-  docker build $PULL1 --progress=plain -t 5gdeploy.localhost/$NAME "$@" docker/$NAME "${TAG_ARG[@]}"
++  docker build --network=host $PULL1 --progress=plain -t 5gdeploy.localhost/$NAME "$@" docker/$NAME "${TAG_ARG[@]}"
+ }
+ 
+ build_oai_nwdaf_microservice() {
+   local MS=$1
+   local TAG=$2
+   shift 2
+-  docker build $PULL --progress=plain -t 5gdeploy.localhost/oai-nwdaf-$MS \
++  docker build --network=host $PULL --progress=plain -t 5gdeploy.localhost/oai-nwdaf-$MS \
+     "$@" -f docker/Dockerfile.$MS \
+     https://gitlab.eurecom.fr/oai/cn5g/oai-cn5g-nwdaf.git#$TAG:components/oai-nwdaf-$MS
+ }

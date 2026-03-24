@@ -224,6 +224,39 @@ void send_metrics_to_influxdb(uint64_t ue_id, const char *e2_node_id, int64_t ti
 }
 
 static
+int get_mapped_node_id(const char *node_type, uint32_t orig_id)
+{
+  static struct {
+    char type[32];
+    uint32_t orig_id;
+    int mapped_id;
+  } id_map[256];
+  static int id_map_count = 0;
+
+  for (int i = 0; i < id_map_count; i++) {
+    if (strcmp(id_map[i].type, node_type) == 0 && id_map[i].orig_id == orig_id) {
+      return id_map[i].mapped_id;
+    }
+  }
+
+  int new_id = 1;
+  for (int i = 0; i < id_map_count; i++) {
+    if (strcmp(id_map[i].type, node_type) == 0) {
+      new_id++;
+    }
+  }
+
+  if (id_map_count < 256) {
+    strncpy(id_map[id_map_count].type, node_type, sizeof(id_map[0].type) - 1);
+    id_map[id_map_count].orig_id = orig_id;
+    id_map[id_map_count].mapped_id = new_id;
+    id_map_count++;
+  }
+
+  return new_id;
+}
+
+static
 void log_gnb_ue_id(ue_id_e2sm_t ue_id)
 {
   if (ue_id.gnb.gnb_cu_ue_f1ap_lst != NULL) {
@@ -245,9 +278,9 @@ void log_gnb_ue_id(ue_id_e2sm_t ue_id)
       case GNB_GLOBAL_TYPE_ID: {
         const global_gnb_id_t *g = &n->global_gnb_id;
         if (g->type == GNB_TYPE_ID) {
-          snprintf(current_e2_id_str, sizeof(current_e2_id_str), "gNB:%u", (unsigned)g->gnb_id.nb_id);
+          snprintf(current_e2_id_str, sizeof(current_e2_id_str), "gNB:%d", get_mapped_node_id("gNB", (unsigned)g->gnb_id.nb_id));
         } else {
-          snprintf(current_e2_id_str, sizeof(current_e2_id_str), "gNB:UNKNOWN");
+          snprintf(current_e2_id_str, sizeof(current_e2_id_str), "gNB");
         }
         break;
       }
@@ -255,28 +288,28 @@ void log_gnb_ue_id(ue_id_e2sm_t ue_id)
         const global_ng_enb_id_t *e = &n->global_ng_enb_id;
         switch (e->type) {
           case MACRO_NG_ENB_TYPE_ID:
-            snprintf(current_e2_id_str, sizeof(current_e2_id_str), "ng-eNB-macro:%u", (unsigned)e->macro_ng_enb_id);
+            snprintf(current_e2_id_str, sizeof(current_e2_id_str), "ng-eNB-macro:%d", get_mapped_node_id("ng-eNB-macro", (unsigned)e->macro_ng_enb_id));
             break;
           case SHORT_MACRO_NG_ENB_TYPE_ID:
-            snprintf(current_e2_id_str, sizeof(current_e2_id_str), "ng-eNB-short:%u", (unsigned)e->short_macro_ng_enb_id);
+            snprintf(current_e2_id_str, sizeof(current_e2_id_str), "ng-eNB-short:%d", get_mapped_node_id("ng-eNB-short", (unsigned)e->short_macro_ng_enb_id));
             break;
           case LONG_MACRO_NG_ENB_TYPE_ID:
-            snprintf(current_e2_id_str, sizeof(current_e2_id_str), "ng-eNB-long:%u", (unsigned)e->long_macro_ng_enb_id);
+            snprintf(current_e2_id_str, sizeof(current_e2_id_str), "ng-eNB-long:%d", get_mapped_node_id("ng-eNB-long", (unsigned)e->long_macro_ng_enb_id));
             break;
           default:
-            snprintf(current_e2_id_str, sizeof(current_e2_id_str), "ng-eNB:unsupported:%d", (int)e->type);
+            snprintf(current_e2_id_str, sizeof(current_e2_id_str), "ng-eNB");
             break;
         }
         break;
       }
       default:
-        snprintf(current_e2_id_str, sizeof(current_e2_id_str), "UNKNOWN");
+        snprintf(current_e2_id_str, sizeof(current_e2_id_str), "gNB");
         break;
     }
   } else if (ue_id.gnb.global_gnb_id) {
-    snprintf(current_e2_id_str, sizeof(current_e2_id_str), "gNB:%u", (unsigned)ue_id.gnb.global_gnb_id->gnb_id.nb_id);
+    snprintf(current_e2_id_str, sizeof(current_e2_id_str), "gNB:%d", get_mapped_node_id("gNB", (unsigned)ue_id.gnb.global_gnb_id->gnb_id.nb_id));
   } else if (ue_id.gnb.gnb_cu_ue_f1ap_lst && ue_id.gnb.gnb_cu_ue_f1ap_lst_len > 0) {
-    snprintf(current_e2_id_str, sizeof(current_e2_id_str), "CU:%u", (unsigned)ue_id.gnb.gnb_cu_ue_f1ap_lst[0]);
+    snprintf(current_e2_id_str, sizeof(current_e2_id_str), "CU:%d", get_mapped_node_id("CU", (unsigned)ue_id.gnb.gnb_cu_ue_f1ap_lst[0]));
   } else {
     snprintf(current_e2_id_str, sizeof(current_e2_id_str), "gNB");
   }
@@ -292,7 +325,7 @@ void log_du_ue_id(ue_id_e2sm_t ue_id)
   current_ue_id = ue_id.gnb_du.gnb_cu_ue_f1ap; // Update the global UE ID
 
   // Store the current E2 Node ID
-  snprintf(current_e2_id_str, sizeof(current_e2_id_str), "DU:%u", ue_id.gnb_du.gnb_cu_ue_f1ap);
+  snprintf(current_e2_id_str, sizeof(current_e2_id_str), "DU:%d", get_mapped_node_id("DU", ue_id.gnb_du.gnb_cu_ue_f1ap));
 }
 
 static
@@ -305,7 +338,7 @@ void log_cuup_ue_id(ue_id_e2sm_t ue_id)
   current_ue_id = ue_id.gnb_cu_up.gnb_cu_cp_ue_e1ap; // Update the global UE ID
 
   // Store the current E2 Node ID
-  snprintf(current_e2_id_str, sizeof(current_e2_id_str), "CU-UP:%u", ue_id.gnb_cu_up.gnb_cu_cp_ue_e1ap);
+  snprintf(current_e2_id_str, sizeof(current_e2_id_str), "CU-UP:%d", get_mapped_node_id("CU-UP", ue_id.gnb_cu_up.gnb_cu_cp_ue_e1ap));
 }
 
 typedef void (*log_ue_id)(ue_id_e2sm_t ue_id);

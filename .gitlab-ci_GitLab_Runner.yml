@@ -23,13 +23,19 @@ variables:
 default:
   tags: [testbed-ci-runner]
   before_script:
+    # # # SUDO ALIAS SETUP
+    # # - |
+    # #   mkdir -p "$HOME/.local/bin"
+    # #   echo -e '#!/usr/bin/env bash\nexec "$@"' > "$HOME/.local/bin/sudo"
+    # #   chmod +x "$HOME/.local/bin/sudo"
+    # #   export PATH="$HOME/.local/bin:$PATH"
+    # #   hash -r
     # # SUDO ALIAS SETUP
     # - |
     #   mkdir -p "$HOME/.local/bin"
-    #   echo -e '#!/usr/bin/env bash\nexec "$@"' > "$HOME/.local/bin/sudo"
+    #   echo -e '#!/bin/bash\nwhile [[ "$1" == "-E" || "$1" == "-H" ]]; do shift; done\nexec "$@"' > "$HOME/.local/bin/sudo"
     #   chmod +x "$HOME/.local/bin/sudo"
     #   export PATH="$HOME/.local/bin:$PATH"
-    #   hash -r
 
     # General setup
     - echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections || true

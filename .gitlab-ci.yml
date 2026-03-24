@@ -28,7 +28,7 @@ default:
     # SUDO ALIAS SETUP
     - |
       mkdir -p "$HOME/.local/bin"
-      echo -e '#!/bin/bash\nif [[ "$1" == "-E" ]]; then shift; fi\nexec "$@"' > "$HOME/.local/bin/sudo"
+      echo -e '#!/bin/bash\nwhile [[ "$1" == "-E" || "$1" == "-H" ]]; do shift; done\nexec "$@"' > "$HOME/.local/bin/sudo"
       chmod +x "$HOME/.local/bin/sudo"
       export PATH="$HOME/.local/bin:$PATH"
       

@@ -637,6 +637,12 @@ static void evaluate_cqi_report(uint8_t *payload,
 
   uint8_t temp_cqi = pickandreverse_bits(payload, 4, cumul_bits);
 
+  DevAssert(temp_cqi >= 0 && temp_cqi <= 15);  // binX: value is 0-indexed, so it uses temp_cqi below
+  DevAssert(ri >= 0 && ri <= 7);               // binY: value is 0-indexed, so it used ri below
+  DevAssert(cqi_Table >= 0 && cqi_Table <= 2); // binZ: value is 0-indexed, so it uses cqi_Table below
+  NR_du_stats_t *stats = &RC.nrmac[0]->du_stats;
+  stats->wb_cqi_dist[temp_cqi][ri][cqi_Table] += 1;
+
   // NR_CSI_ReportConfig__cqi_Table_table1	= 0
   // NR_CSI_ReportConfig__cqi_Table_table2	= 1
   // NR_CSI_ReportConfig__cqi_Table_table3	= 2

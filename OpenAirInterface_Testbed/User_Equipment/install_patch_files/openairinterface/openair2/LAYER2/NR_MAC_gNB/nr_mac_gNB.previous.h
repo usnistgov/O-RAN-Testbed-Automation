@@ -889,6 +889,20 @@ typedef struct fsn {
   slot_t s;
 } fsn_t;
 
+typedef struct NR_du_stats {
+  /// cell-wide wide-band CQI distribution, see 28.552 5.1.1.11.1;
+  /// 0-15 CQI, 1-8 RI, 1-3 CQI table
+  uint32_t wb_cqi_dist[16][8][3];
+
+  /// cell-wide MCS distribution in PDSCH, see 28.552 5.1.1.12.1
+  /// 1-8 RI, 1-3 MCS table, 0-31 MCS value
+  uint32_t pdsch_mcs_dist[8][3][32];
+
+  /// cell-wide MCS distribution in PUSCH, see 28.552 5.1.1.12.1
+  /// 1-8 RI, 1-2 MCS table, 0-31 MCS value
+  uint32_t pusch_mcs_dist[8][2][32];
+} NR_du_stats_t;
+
 /*! \brief top level eNB MAC structure */
 typedef struct gNB_MAC_INST_s {
   /// Ethernet parameters for northbound midhaul interface
@@ -1010,6 +1024,9 @@ typedef struct gNB_MAC_INST_s {
 
   dlul_mac_stats_t mac_stats;
   uint64_t num_scheduled_prach_rx;
+
+  NR_du_stats_t du_stats;
+
 } gNB_MAC_INST;
 
 #endif /*__LAYER2_NR_MAC_GNB_H__ */

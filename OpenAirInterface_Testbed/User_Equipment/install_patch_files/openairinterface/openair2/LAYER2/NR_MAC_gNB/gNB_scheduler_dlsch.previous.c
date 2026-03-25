@@ -1389,6 +1389,12 @@ void post_process_dlsch(gNB_MAC_INST *nr_mac, post_process_pdsch_t *pdsch, NR_UE
     T(T_GNB_MAC_DL, T_INT(rnti), T_INT(frame), T_INT(slot), T_INT(sched_pdsch->mcs), T_INT(TBS));
   }
 
+  DevAssert(nrOfLayers >= 1 && nrOfLayers <= 8);
+  DevAssert(current_BWP->mcsTableIdx >= 0 && current_BWP->mcsTableIdx <= 1);
+  DevAssert(sched_pdsch->mcs >= 0 && sched_pdsch->mcs <= 31);
+  NR_du_stats_t *stats = &nr_mac->du_stats;
+  stats->pdsch_mcs_dist[nrOfLayers - 1][current_BWP->mcsTableIdx][sched_pdsch->mcs] += sched_pdsch->rbSize;
+
   const int ntx_req = pdsch->TX_req->Number_of_PDUs;
   nfapi_nr_pdu_t *tx_req = &pdsch->TX_req->pdu_list[ntx_req];
   tx_req->PDU_index  = pduindex;

@@ -68,16 +68,6 @@ git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openair
 cd ..
 
 cd openairinterface5g
-git restore openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.h
-if [ ! -f "openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.h.previous" ]; then
-    cp openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.h openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.h.previous
-    cp openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.h.previous "$PARENT_DIR/install_patch_files/openairinterface/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.previous.h"
-fi
-echo "Patching ran_func_kpm_subs.h..."
-git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.h.patch"
-cd ..
-
-cd openairinterface5g
 git restore openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c
 if [ ! -f "openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c.previous" ]; then
     cp openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c.previous

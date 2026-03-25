@@ -88,6 +88,7 @@ pre_install_cleanup:
 
 open5gs_ocudu_srsran_oran_sc_ric_setup:
   stage: testbed_1
+  timeout: 6h
   interruptible: true
   resource_group: testbed
   needs: [pre_install_cleanup]
@@ -200,6 +201,7 @@ open5gs_ocudu_srsran_oran_sc_ric_setup:
 
 openairinterface_flexric_5gdeploy_setup:
   stage: testbed_2
+  timeout: 6h
   interruptible: true
   resource_group: testbed
   needs: [open5gs_ocudu_srsran_oran_sc_ric_setup]

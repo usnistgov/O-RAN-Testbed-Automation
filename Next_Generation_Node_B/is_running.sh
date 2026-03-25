@@ -51,9 +51,7 @@ fi
 
 if command -v docker &>/dev/null; then
     # Check if the grafana container is running
-    if docker ps --format '{{.Names}}' 2>/dev/null | grep -Eq "^grafana$"; then
+    if docker ps --format '{{.Names}}' 2>/dev/null | grep -Eq "^ocudu-grafana$"; then
         echo "Grafana: RUNNING"
     fi
-else
-    echo "Grafana: NOT_RUNNING"
 fi

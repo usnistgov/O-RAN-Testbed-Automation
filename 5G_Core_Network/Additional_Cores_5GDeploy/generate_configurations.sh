@@ -441,6 +441,8 @@ fi
 if [ -f "cp-sql/oai_db.sql" ]; then
     # Ensure that the database is dropped before creating it
     sed -i '1i DROP DATABASE IF EXISTS oai_db;' cp-sql/oai_db.sql
+    # Fix primary key for SessionManagementSubscriptionData to allow multiple SDs per UE
+    sed -i '/ALTER TABLE `SessionManagementSubscriptionData`/,/ADD PRIMARY KEY/ s/ADD PRIMARY KEY (`ueid`,`servingPlmnid`)/ADD PRIMARY KEY (`ueid`,`servingPlmnid`,`singleNssai`(64))/' cp-sql/oai_db.sql
 fi
 
 # Revise cp-sql/smf.sql

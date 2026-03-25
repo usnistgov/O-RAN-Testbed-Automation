@@ -43,6 +43,7 @@ cd "$SCRIPT_DIR"
 echo "Starting Grafana WebUI setup..."
 
 COMPOSE_FILE="ocudu/docker/docker-compose.ui.yml"
+OVERRIDE_FILE="ocudu/docker/docker-compose.override.yml"
 
 if [ ! -f "$COMPOSE_FILE" ]; then
     echo "ERROR: Could not find docker-compose file with Grafana configuration."
@@ -83,7 +84,17 @@ else
 fi
 
 echo "Starting Grafana container..."
-sudo $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" up -d grafana
+cat << 'EOF' > "$OVERRIDE_FILE"
+services:
+  grafana:
+    container_name: ocudu-grafana
+  telegraf:
+    container_name: ocudu-telegraf
+  influxdb:
+    container_name: ocudu-influxdb
+EOF
+
+sudo $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" -f "$OVERRIDE_FILE" up -d grafana
 
 # Wait briefly for initialization
 echo "Waiting for Grafana to initialize..."

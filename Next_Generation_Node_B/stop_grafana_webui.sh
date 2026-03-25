@@ -45,6 +45,7 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
 COMPOSE_FILE="ocudu/docker/docker-compose.ui.yml"
+OVERRIDE_FILE="ocudu/docker/docker-compose.override.yml"
 
 if [ ! -f "$COMPOSE_FILE" ]; then
     exit 0
@@ -61,8 +62,12 @@ fi
 
 if command -v docker &>/dev/null; then
     # Check if the grafana container is running
-    if docker ps --format '{{.Names}}' 2>/dev/null | grep -Eq "^grafana$"; then
-        sudo $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" down
+    if docker ps --format '{{.Names}}' 2>/dev/null | grep -Eq "^ocudu-grafana$"; then
+        if [ -f "$OVERRIDE_FILE" ]; then
+            sudo $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" -f "$OVERRIDE_FILE" down
+        else
+            sudo $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" down
+        fi
         echo "Grafana WebUI has been successfully stopped."
     fi
 fi

@@ -31,12 +31,11 @@
 RESET_ORANTESTBED_SCENARIO=true # Set to false to not modify the 5gdeploy/scenario/orantestbed scenario files before generation
 AMF_IP=192.168.62.11            # N2 interface
 N2_IP_BIND=192.168.62.1
-N3_IP_BIND=$(ip route get 1 | awk '{print $(NF-2); exit}') # Get the IP of the primary network interface
 UPF1_IP=192.168.63.21
 UPF4_IP=192.168.63.24
 SUBNET_INTERNAL="172.25.160.0/20" # Sets the subnet for internal core network
 
-UE_NUMBERS=($(seq 1 100)) # Subscribers from UE 1 to UE 100
+UE_NUMBERS=($(seq 1 10)) # Subscribers from UE 1 to UE 10
 
 # Exit immediately if a command fails
 set -e
@@ -151,6 +150,15 @@ fi
 # Read PLMN and TAC values from the YAML file using yq
 PLMN=$(yq eval '.plmn' options.yaml)
 TAC=$(yq eval '.tac' options.yaml)
+EXPOSE_AMF=$(yq eval '.expose_amf_over_hostname' options.yaml)
+
+if [ "$EXPOSE_AMF" = "true" ]; then
+    N3_IP_BIND=$(ip route get 1 | awk '{print $(NF-2); exit}') # Get the IP of the primary network interface
+    N2_IP_BIND=$(ip route get 1 | awk '{print $(NF-2); exit}') # Expose N2 over primary network interface
+else
+    N3_IP_BIND="192.168.63.1" # Internal dockerd network bind for UPF
+    N2_IP_BIND="192.168.62.1" # Internal dockerd network bind for AMF
+fi
 
 # Parse Mobile Country Code (MCC) and Mobile Network Code (MNC) from PLMN
 MCC="${PLMN:0:3}"

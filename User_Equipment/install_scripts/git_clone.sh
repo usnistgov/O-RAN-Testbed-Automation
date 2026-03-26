@@ -141,14 +141,14 @@ if jq -e --arg url "$URL" '.[$url][1]' "$JSON_FILE" &>/dev/null; then
         if [[ ! -z "$BRANCH" ]]; then
             echo "Cloning $CONVERTED_URL at branch $BRANCH..."
             if [ "$USE_SSH" = true ]; then
-                git clone -c core.sshCommand="ssh -o StrictHostKeyChecking=no" "$CONVERTED_URL" "$NAME" -b $BRANCH
+                git clone -c core.sshCommand="ssh -o StrictHostKeyChecking=accept-new" "$CONVERTED_URL" "$NAME" -b $BRANCH
             else
                 git clone "$CONVERTED_URL" "$NAME" -b $BRANCH
             fi
         else
             echo "Cloning $CONVERTED_URL..."
             if [ "$USE_SSH" = true ]; then
-                git clone -c core.sshCommand="ssh -o StrictHostKeyChecking=no" "$CONVERTED_URL" "$NAME"
+                git clone -c core.sshCommand="ssh -o StrictHostKeyChecking=accept-new" "$CONVERTED_URL" "$NAME"
             else
                 git clone "$CONVERTED_URL" "$NAME"
             fi
@@ -173,7 +173,7 @@ else
     if [[ ! -d "$NAME" ]]; then
         echo "Cloning $CONVERTED_URL..."
         if [ "$USE_SSH" = true ]; then
-            git clone -c core.sshCommand="ssh -o StrictHostKeyChecking=no" "$CONVERTED_URL" "$NAME"
+            git clone -c core.sshCommand="ssh -o StrictHostKeyChecking=accept-new" "$CONVERTED_URL" "$NAME"
         else
             git clone "$CONVERTED_URL" "$NAME"
         fi

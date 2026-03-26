@@ -84,7 +84,7 @@ else
 fi
 
 echo "Starting Grafana container..."
-cat << 'EOF' > "$OVERRIDE_FILE"
+cat <<'EOF' >"$OVERRIDE_FILE"
 services:
   grafana:
     container_name: ocudu-grafana

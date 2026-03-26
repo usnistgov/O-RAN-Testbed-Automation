@@ -91,7 +91,7 @@ fi
 if [[ "$CORE_TO_USE" == "5gdeploy-open5gs" ]]; then
     if echo "$AMF_LOG" | grep -q "NF registered"; then
         # Wait for all subscribers to be created
-        NUM_SUBS=$(($(wc -l < configs/sims.tsv) - 1))
+        NUM_SUBS=$(($(wc -l <configs/sims.tsv) - 1))
         if [ "$(docker logs mongo 2>&1 | grep -c "Creating subscriber")" -ge "$NUM_SUBS" ]; then
             echo true
             exit 0
@@ -110,7 +110,7 @@ elif [[ "$CORE_TO_USE" == "5gdeploy-oai" ]]; then
 elif [[ "$CORE_TO_USE" == "5gdeploy-free5gc" ]]; then
     if echo "$AMF_LOG" | grep -q "Start SBI server"; then
         # Wait for all subscribers to be created
-        NUM_SUBS=$(($(wc -l < configs/sims.tsv) - 1))
+        NUM_SUBS=$(($(wc -l <configs/sims.tsv) - 1))
         if [ "$(docker logs webui 2>&1 | grep -c "Post One Subscriber Data")" -ge "$NUM_SUBS" ]; then
             echo true
             exit 0

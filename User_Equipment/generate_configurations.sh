@@ -246,8 +246,12 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
 
     # Update configuration values for Slicing
     SD_DECIMAL=$((16#${SD}))
+    if [ "$SD_DECIMAL" -eq 16777215 ]; then # 0xFFFFFF
+        SD_DECIMAL=0 # SRS UE expects 0 to indicate "no SD" instead of 16777215 (3GPP TS 23.003 clause 28.4.2)
+    fi
     update_conf "configs/ue${UE_NUMBER}.conf" "slicing" "nssai-sd" "$SD_DECIMAL"
     update_conf "configs/ue${UE_NUMBER}.conf" "slicing" "nssai-sst" "$SST"
+    update_conf "configs/ue${UE_NUMBER}.conf" "slicing" "enable" "true"
 
     # Update configuration values for Gateway
     update_conf "configs/ue${UE_NUMBER}.conf" "gw" "netns" "$UE_NAMESPACE"

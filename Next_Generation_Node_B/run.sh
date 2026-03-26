@@ -44,6 +44,7 @@ cd "$SCRIPT_DIR"
 
 # Function to handle graceful shutdown
 graceful_shutdown() {
+    trap - SIGINT SIGTERM SIGQUIT
     echo "Shutting down gNodeB gracefully..."
     ./stop.sh
     exit

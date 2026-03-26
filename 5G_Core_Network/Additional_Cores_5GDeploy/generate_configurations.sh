@@ -31,12 +31,11 @@
 RESET_ORANTESTBED_SCENARIO=true # Set to false to not modify the 5gdeploy/scenario/orantestbed scenario files before generation
 AMF_IP=192.168.62.11            # N2 interface
 N2_IP_BIND=192.168.62.1
-N3_IP_BIND=$(ip route get 1 | awk '{print $(NF-2); exit}') # Get the IP of the primary network interface
 UPF1_IP=192.168.63.21
 UPF4_IP=192.168.63.24
 SUBNET_INTERNAL="172.25.160.0/20" # Sets the subnet for internal core network
 
-UE_NUMBERS=($(seq 1 100)) # Subscribers from UE 1 to UE 100
+UE_NUMBERS=($(seq 1 10)) # Subscribers from UE 1 to UE 10
 
 # Exit immediately if a command fails
 set -e
@@ -131,7 +130,7 @@ if [ ! -f "options.yaml" ]; then
     echo "sst: 1" >>"options.yaml"
     echo "sd: 000001" >>"options.yaml"
     echo "" >>"options.yaml"
-    echo "# If core_to_use=open5gs, false means AMF will use the default 127.0.0.5, true means it will use the hostname IP" >>"options.yaml"
+    echo "# If false, AMF will use a local IP, otherwise it will use the hostname IP" >>"options.yaml"
     echo "expose_amf_over_hostname: false" >>"options.yaml"
     echo "" >>"options.yaml"
     echo "# If core_to_use=open5gs, toggle whether or not to include the Security Edge Protection Proxies (SEPP1 and SEPP2)" >>"options.yaml"
@@ -151,6 +150,15 @@ fi
 # Read PLMN and TAC values from the YAML file using yq
 PLMN=$(yq eval '.plmn' options.yaml)
 TAC=$(yq eval '.tac' options.yaml)
+EXPOSE_AMF=$(yq eval '.expose_amf_over_hostname' options.yaml)
+
+if [ "$EXPOSE_AMF" = "true" ]; then
+    N3_IP_BIND=$(ip route get 1 | awk '{print $(NF-2); exit}') # Get the IP of the primary network interface
+    N2_IP_BIND=$(ip route get 1 | awk '{print $(NF-2); exit}') # Expose N2 over primary network interface
+else
+    N3_IP_BIND="192.168.63.1" # Internal dockerd network bind for UPF
+    N2_IP_BIND="192.168.62.1" # Internal dockerd network bind for AMF
+fi
 
 # Parse Mobile Country Code (MCC) and Mobile Network Code (MNC) from PLMN
 MCC="${PLMN:0:3}"
@@ -186,6 +194,7 @@ fi
 DNN=$(sed -n 's/^dnn: //p' options.yaml)
 SST=$(yq eval '.slices[0].sst' options.yaml)
 SD=$(yq eval '.slices[0].sd' options.yaml)
+SD=$(echo "$SD" | tr '[:upper:]' '[:lower:]') # Lowercase is required for free5GC
 if [[ -z "$DNN" || "$DNN" == "null" ]]; then
     echo "DNN is not set in options.yaml, please ensure that \"dnn\" is set."
     exit 1

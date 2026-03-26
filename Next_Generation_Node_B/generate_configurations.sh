@@ -272,7 +272,9 @@ DEVICE_ARGS+="base_srate=23.04e6"
 # Update configuration values for AMF connection
 update_yaml "configs/gnb.yaml" "cu_cp.amf" "addrs" "$AMF_ADDR"
 
-if [ "$EXPOSE_GNB_TO_HOSTNAME" = "false" ]; then
+if [ -n "$N2_ADDR_BIND" ]; then
+    update_yaml "configs/gnb.yaml" "cu_cp.amf" "bind_addrs" "$N2_ADDR_BIND"
+elif [ "$EXPOSE_GNB_TO_HOSTNAME" = "false" ]; then
     update_yaml "configs/gnb.yaml" "cu_cp.amf" "bind_addrs" "127.0.0.1"
 else
     INTERFACE=$(ip route | grep default | awk '{print $5}' | head -n 1)

@@ -58,7 +58,7 @@ index 3dc28b0..ebd372e 100644
  FROM buildpack-deps:$BUILDPACK_TAG
  SHELL ["/bin/bash", "-c"]
 -ARG TAG=v0.9.13
-+ARG TAG=v0.10.2
++ARG TAG=v0.9.16
  
  RUN --mount=type=cache,id=gtp5g-apt-cache,target=/var/cache/apt,sharing=locked \
      --mount=type=cache,id=gtp5g-apt-cache,target=/var/lib/apt,sharing=locked \
@@ -98,7 +98,7 @@ index ddce1e7..b7be6a8 100644
  * `--gnbsim-version <version>`: Specify a **branch**, **tag**, or **commit hash** to use for gNBSim (_default: [d3fce7e](https://github.com/omec-project/gnbsim)_)
 -* `--gtp5g-version <version>`: Specify a **branch**, **tag**, or **commit hash** to use for gtp5g (_default: [v0.9.13](https://github.com/free5gc/gtp5g)_)
 -* `--oai-fed-version <version>`: Specify a **branch**, **tag**, or **commit hash** to use for OAI-CN5G (_default: [2024.w45](https://gitlab.eurecom.fr/oai/cn5g/oai-cn5g-fed)_)
-+* `--gtp5g-version <version>`: Specify a **branch**, **tag**, or **commit hash** to use for gtp5g (_default: [v0.10.2](https://github.com/free5gc/gtp5g)_)
++* `--gtp5g-version <version>`: Specify a **branch**, **tag**, or **commit hash** to use for gtp5g (_default: [v0.9.16](https://github.com/free5gc/gtp5g)_)
 +* `--oai-fed-version <version>`: Specify a **branch**, **tag**, or **commit hash** to use for OAI-CN5G (_default: [v2.2.0](https://gitlab.eurecom.fr/oai/cn5g/oai-cn5g-fed)_)
  * `--oai-nwdaf-version <version>`: Specify a **branch**, **tag**, or **commit hash** to use for OAI-CN5G-NWDAF (_default: [6a1408c](https://gitlab.eurecom.fr/oai/cn5g/oai-cn5g-nwdaf)_)
  * `--open5gs-dbctl-version <version>`: Specify a **branch**, **tag**, or **commit hash** to use for Open5GS DBCTL (_default: [v2.7.6](https://github.com/open5gs/open5gs)_)

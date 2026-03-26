@@ -130,7 +130,7 @@ if [ ! -f "options.yaml" ]; then
     echo "sst: 1" >>"options.yaml"
     echo "sd: 000001" >>"options.yaml"
     echo "" >>"options.yaml"
-    echo "# If core_to_use=open5gs, false means AMF will use the default 127.0.0.5, true means it will use the hostname IP" >>"options.yaml"
+    echo "# If false, AMF will use a local IP, otherwise it will use the hostname IP" >>"options.yaml"
     echo "expose_amf_over_hostname: false" >>"options.yaml"
     echo "" >>"options.yaml"
     echo "# If core_to_use=open5gs, toggle whether or not to include the Security Edge Protection Proxies (SEPP1 and SEPP2)" >>"options.yaml"
@@ -194,6 +194,7 @@ fi
 DNN=$(sed -n 's/^dnn: //p' options.yaml)
 SST=$(yq eval '.slices[0].sst' options.yaml)
 SD=$(yq eval '.slices[0].sd' options.yaml)
+SD=$(echo "$SD" | tr '[:upper:]' '[:lower:]') # Lowercase is required for free5GC
 if [[ -z "$DNN" || "$DNN" == "null" ]]; then
     echo "DNN is not set in options.yaml, please ensure that \"dnn\" is set."
     exit 1

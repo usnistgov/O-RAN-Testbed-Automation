@@ -203,7 +203,7 @@ git apply ../5gdeploy-patches.patch
     --free5gc-version v4.2.1 \
     --free5gc-webconsole-version v1.4.4 \
     --gnbsim-version d3fce7e35a69b9f5d670242a93b7d1bee8842ecf \
-    --gtp5g-version v0.10.2 \
+    --gtp5g-version v0.9.16 \
     --oai-fed-version v2.2.0 \
     --oai-nwdaf-version 6a1408c9be6f5cf0ddb6c1f1b527a04e36205471 \
     --open5gs-dbctl-version v2.7.6 \

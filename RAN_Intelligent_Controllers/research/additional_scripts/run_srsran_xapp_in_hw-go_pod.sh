@@ -29,7 +29,7 @@
 # copyright protection within the United States.
 
 ################################################################################
-# There are xApps released by the srsRAN project that can be run in the RIC:
+# There are xApps released by the OCUDU that can be run in the RIC:
 # https://github.com/srsran/oran-sc-ric/tree/main/xApps/python
 # This script will ask the user to select an xApp to run, then install it from
 # within the hw-go pod in the RIC and directing the output to the console.

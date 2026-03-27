@@ -137,11 +137,17 @@ if [[ "$OPEN5GS_INSTALLED" = true || "$GNODEB_INSTALLED" = true || "$UE_INSTALLE
         sudo rm -rf 5G_Core_Network/logs
         sudo rm -rf 5G_Core_Network/configs
         sudo rm -rf 5G_Core_Network/install_time.txt
+        sudo rm -rf 5G_Core_Network/Additional_Cores_5GDeploy/5gdeploy
+        sudo rm -rf 5G_Core_Network/Additional_Cores_5GDeploy/compose
+        sudo rm -rf 5G_Core_Network/Additional_Cores_5GDeploy/logs
+        sudo rm -rf 5G_Core_Network/Additional_Cores_5GDeploy/configs
+        sudo rm -rf 5G_Core_Network/Additional_Cores_5GDeploy/install_time.txt
         sudo rm -rf User_Equipment/openairinterface5g
         sudo rm -rf User_Equipment/logs
         sudo rm -rf User_Equipment/configs
         sudo rm -rf User_Equipment/install_time.txt
         sudo rm -rf Next_Generation_Node_B/openairinterface5g
+        sudo rm -rf Next_Generation_Node_B/o1-adapter
         sudo rm -rf Next_Generation_Node_B/logs
         sudo rm -rf Next_Generation_Node_B/configs
         sudo rm -rf Next_Generation_Node_B/install_time.txt

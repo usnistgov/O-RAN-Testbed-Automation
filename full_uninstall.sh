@@ -87,7 +87,7 @@ cd ..
 echo
 echo
 echo "################################################################################"
-echo "# Uninstalling Next Generation Node B (srsRAN Project)...                      #"
+echo "# Uninstalling Next Generation Node B (OCUDU)...                               #"
 echo "################################################################################"
 echo
 echo

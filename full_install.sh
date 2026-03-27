@@ -151,6 +151,9 @@ if [[ "$OPEN5GS_INSTALLED" = true || "$GNODEB_INSTALLED" = true || "$UE_INSTALLE
         sudo rm -rf User_Equipment/configs
         sudo rm -rf User_Equipment/install_time.txt
         sudo rm -rf Next_Generation_Node_B/ocudu
+        sudo rm -rf Next_Generation_Node_B/ocudu_o1_adapter
+        sudo rm -rf Next_Generation_Node_B/ocudu_netconf
+        sudo rm -rf Next_Generation_Node_B/zmq_broker
         sudo rm -rf Next_Generation_Node_B/czmq
         sudo rm -rf Next_Generation_Node_B/libzmq
         sudo rm -rf Next_Generation_Node_B/logs
@@ -166,6 +169,13 @@ if [[ "$OPEN5GS_INSTALLED" = true || "$GNODEB_INSTALLED" = true || "$UE_INSTALLE
         sudo rm -rf RAN_Intelligent_Controllers/Near-Real-Time-RIC/influxdb_auth_token.json
         sudo rm -rf RAN_Intelligent_Controllers/Near-Real-Time-RIC/additional_scripts/pod_pcaps
         sudo rm -rf RAN_Intelligent_Controllers/Near-Real-Time-RIC/install_time.txt
+        # sudo rm -rf RAN_Intelligent_Controllers/Non-Real-Time-RIC/dep
+        # sudo rm -rf RAN_Intelligent_Controllers/Non-Real-Time-RIC/rappmanager
+        # sudo rm -rf RAN_Intelligent_Controllers/Non-Real-Time-RIC/nonrtric-controlpanel
+        # sudo rm -rf RAN_Intelligent_Controllers/Non-Real-Time-RIC/rApps
+        # sudo rm -rf RAN_Intelligent_Controllers/Non-Real-Time-RIC/logs
+        # sudo rm -rf RAN_Intelligent_Controllers/Non-Real-Time-RIC/configs
+        # sudo rm -rf RAN_Intelligent_Controllers/Non-Real-Time-RIC/install_time.txt
         echo "Successfully removed previous installations."
     fi
 fi
@@ -215,7 +225,7 @@ cd ..
 echo
 echo
 echo "################################################################################"
-echo "# Installing Next Generation Node B (srsRAN Project)...                        #"
+echo "# Installing Next Generation Node B (OCUDU)...                                 #"
 echo "################################################################################"
 echo
 echo

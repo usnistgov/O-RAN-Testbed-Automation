@@ -28,7 +28,7 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-# This script will download the 5G_Core_Network, gNodeB, User_Equipment and RAN_Intelligent_Controllers repositories for analyzing the source code without requiring a full testbed build and installation.
+# This script will download the untracked 5G_Core_Network, Next_Generation_Node_B, User_Equipment and RAN_Intelligent_Controllers repositories for analyzing the source code without requiring a full testbed build and installation.
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
@@ -43,6 +43,9 @@ cd "$(dirname "$SCRIPT_DIR")"
 
 cd 5G_Core_Network
 ./install_scripts/git_clone.sh https://github.com/open5gs/open5gs.git
+cd Additional_Cores_5GDeploy
+../install_scripts/git_clone.sh https://github.com/usnistgov/5gdeploy.git
+cd ..
 cd ..
 
 cd User_Equipment

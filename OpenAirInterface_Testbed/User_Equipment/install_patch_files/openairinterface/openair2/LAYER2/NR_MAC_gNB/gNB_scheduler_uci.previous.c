@@ -885,7 +885,6 @@ static NR_UE_harq_t *find_harq(frame_t frame, slot_t slot, NR_UE_info_t * UE, in
 void handle_nr_uci_pucch_0_1(module_id_t mod_id, frame_t frame, slot_t slot, const nfapi_nr_uci_pucch_pdu_format_0_1_t *uci_01)
 {
   gNB_MAC_INST *nrmac = RC.nrmac[mod_id];
-  int rssi_threshold = nrmac->pucch_rssi_threshold;
   NR_SCHED_LOCK(&nrmac->sched_lock);
   NR_UE_info_t *UE = find_nr_UE(&nrmac->UE_info, uci_01->rnti);
   bool is_ra = false;
@@ -931,17 +930,26 @@ void handle_nr_uci_pucch_0_1(module_id_t mod_id, frame_t frame, slot_t slot, con
           return;
         }
       }
-      if (harq_confidence == 1)
+      if (harq_confidence == 1) {
         UE->mac_stats.pucch0_DTX++;
+        // DTX for each _bit_, but maybe once for PUCCH is enough? not sure
+        nr_mac_signal_dtx(&sched_ctrl->pucch_pc);
+      }
     }
 
     // tpc (power control) only if we received AckNack
     if (uci_01->harq.harq_confidence_level == 0 && uci_01->ul_cqi != 0xff) {
-      sched_ctrl->pucch_snrx10 = uci_01->ul_cqi * 5 - 640;
-      sched_ctrl->tpc1 = nr_get_tpc(nrmac->pucch_target_snrx10, uci_01->ul_cqi, 30, 0);
-    } else
-      sched_ctrl->tpc1 = 1;
-    sched_ctrl->tpc1 = nr_limit_tpc(sched_ctrl->tpc1, uci_01->rssi, rssi_threshold);
+      int pucch_snrx10 = uci_01->ul_cqi * 5 - 640;
+      nr_mac_pc_snr(&sched_ctrl->pucch_pc, pucch_snrx10, uci_01->rssi);
+
+      T(T_GNB_MAC_PUCCH_POWER_CONTROL,
+        T_INT(uci_01->rnti),
+        T_INT(frame),
+        T_INT(slot),
+        T_INT(pucch_snrx10),
+        T_INT(1),
+        T_INT(uci_01->rssi));
+    }
   }
 
   // check scheduling request result, confidence_level == 0 is good
@@ -960,7 +968,6 @@ void handle_nr_uci_pucch_2_3_4(module_id_t mod_id, frame_t frame, slot_t slot, c
 {
   gNB_MAC_INST *nrmac = RC.nrmac[mod_id];
   NR_SCHED_LOCK(&nrmac->sched_lock);
-  int rssi_threshold = nrmac->pucch_rssi_threshold;
 
   NR_UE_info_t *UE = find_nr_UE(&nrmac->UE_info, uci_234->rnti);
   if (!UE) {
@@ -974,9 +981,16 @@ void handle_nr_uci_pucch_2_3_4(module_id_t mod_id, frame_t frame, slot_t slot, c
   // tpc (power control)
   // TODO PUCCH2 SNR computation is not correct -> ignore the following
   if (uci_234->ul_cqi != 0xff) {
-    sched_ctrl->pucch_snrx10 = uci_234->ul_cqi * 5 - 640;
-    sched_ctrl->tpc1 = nr_get_tpc(nrmac->pucch_target_snrx10, uci_234->ul_cqi, 30, 0);
-    sched_ctrl->tpc1 = nr_limit_tpc(sched_ctrl->tpc1, uci_234->rssi, rssi_threshold);
+    int pucch_snrx10 = uci_234->ul_cqi * 5 - 640;
+    nr_mac_pc_snr(&sched_ctrl->pucch_pc, pucch_snrx10, uci_234->rssi);
+
+    T(T_GNB_MAC_PUCCH_POWER_CONTROL,
+      T_INT(uci_234->rnti),
+      T_INT(frame),
+      T_INT(slot),
+      T_INT(pucch_snrx10),
+      T_INT(1),
+      T_INT(uci_234->rssi));
   }
 
   // TODO: handle SR

@@ -41,6 +41,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <complex.h>
 #include <pthread.h>
 #include "common/utils/ds/seq_arr.h"
 #include "common/utils/nr/nr_common.h"
@@ -184,6 +185,22 @@ typedef enum {
   SSB_SINR,
 } nr_config_report_type_t;
 
+typedef struct nr_beam_table {
+  int num_weights_per_beam;
+  int num_beams;
+  uint16_t *beam_ids;
+  double complex **beam_weights;
+} nr_beam_table_t;
+
+typedef struct nr_power_config {
+  /// target SNR
+  int target_snrx10;
+  /// RSSI threshold for power control. Limits power control commands when RSSI reaches threshold.
+  int rssi_threshold;
+  /// Failure threshold (compared to consecutive PUSCH DTX)
+  int failure_thres;
+} nr_power_config_t;
+
 typedef struct nr_mac_config_s {
   nr_pdsch_AntennaPorts_t pdsch_AntennaPorts;
   int pusch_AntennaPorts;
@@ -197,8 +214,10 @@ typedef struct nr_mac_config_s {
   bool use_deltaMCS;
   int maxMIMO_layers;
   bool disable_harq;
-  //int pusch_TargetSNRx10;
-  //int pucch_TargetSNRx10;
+  nr_power_config_t pusch;
+  /// SNR threshold needed to put or not a PRB in the black list
+  int ul_prbblack_SNR_threshold;
+  nr_power_config_t pucch;
   nr_mac_timers_t timer_config;
   int num_dlharq;
   int num_ulharq;
@@ -213,6 +232,7 @@ typedef struct nr_mac_config_s {
   nr_redcap_config_t *redcap;
   nr_ptrs_config_t *ptrs;
   nr_config_report_type_t report_type;
+  nr_beam_table_t bt;
 } nr_mac_config_t;
 
 typedef struct NR_preamble_ue {
@@ -458,6 +478,9 @@ typedef struct NR_sched_pusch {
   NR_pusch_dmrs_t dmrs_info;
   bwp_info_t bwp_info;
   int phr_txpower_calc;
+
+  /// TPC command for this PUSCH
+  int tpc_pusch;
 } NR_sched_pusch_t;
 
 typedef struct NR_pdsch_dmrs {
@@ -602,6 +625,14 @@ typedef struct nr_lc_config {
   NR_QoS_config_t qos_config[NR_MAX_NUM_QFI];
 } nr_lc_config_t;
 
+typedef struct nr_power_control {
+  float avg_snr; /// average SNR (in dB)
+  int target_snrx10; /// UE-specific target SNR x10
+  float avg_rssi; /// average RSSI
+  int rssi_threshold; /// UE-specific RSSI threshld in 0.1dBm/dBFS, range -1280 to 0
+  float tpc_in_flight; /// TPCs applied by UE but not yet in average SNR
+} nr_power_control_t;
+
 /*! \brief scheduling control information set through an API */
 typedef struct {
   /// CCE index and aggregation, should be coherent with cce_list
@@ -628,8 +659,6 @@ typedef struct {
 
   /// PHR info: power headroom level (dB)
   int ph;
-  /// PHR info: power headroom level (dB) for 1 PRB
-  int ph0;
 
   /// PHR info: nominal UE transmit power levels (dBm)
   int pcmax;
@@ -643,7 +672,6 @@ typedef struct {
 
   /// total amount of data awaiting for this UE
   uint32_t num_total_bytes;
-  uint16_t dl_pdus_total;
   /// per-LC status data
   mac_rlc_status_resp_t rlc_status[NR_MAX_NUM_LCID];
 
@@ -654,12 +682,6 @@ typedef struct {
   uint16_t ta_frame;
   int16_t ta_update;
   bool ta_apply;
-  uint8_t tpc0;
-  uint8_t tpc1;
-  int raw_rssi;
-  int pusch_snrx10;
-  int pucch_snrx10;
-  uint16_t ul_rssi;
   int pusch_consecutive_dtx_cnt;
   int pucch_consecutive_dtx_cnt;
   bool ul_failure;
@@ -702,6 +724,9 @@ typedef struct {
   // pdcch closed loop adjust for PDCCH aggregation level, range <0, 1>
   // 0 - good channel, 1 - bad channel
   float pdcch_cl_adjust;
+
+  nr_power_control_t pusch_pc;
+  nr_power_control_t pucch_pc;
 } NR_UE_sched_ctrl_t;
 
 typedef struct NR_mac_dir_stats {
@@ -728,7 +753,6 @@ typedef struct NR_mac_stats {
   int cumul_sinrx10;
   uint8_t num_sinr_meas;
   char srs_stats[50]; // Statistics may differ depending on SRS usage
-  int pusch_snrx10;
   int deltaMCS;
   int NPRB;
 } NR_mac_stats_t;
@@ -920,20 +944,6 @@ typedef struct gNB_MAC_INST_s {
   /// Pointer to IF module instance for PHY
   NR_IF_Module_t                  *if_inst;
   pthread_t                       stats_thread;
-  /// Pusch target SNR
-  int                             pusch_target_snrx10;
-  /// RSSI threshold for power control. Limits power control commands when RSSI reaches threshold.
-  int                             pusch_rssi_threshold;
-  /// Pucch target SNR
-  int                             pucch_target_snrx10;
-  /// RSSI threshold for PUCCH power control. Limits power control commands when RSSI reaches threshold.
-  int                             pucch_rssi_threshold;
-  /// SNR threshold needed to put or not a PRB in the black list
-  int                             ul_prbblack_SNR_threshold;
-  /// PUCCH Failure threshold (compared to consecutive PUCCH DTX)
-  int                             pucch_failure_thres;
-  /// PUSCH Failure threshold (compared to consecutive PUSCH DTX)
-  int                             pusch_failure_thres;
   /// Subcarrier Offset
   int                             ssb_SubcarrierOffset;
   int                             ssb_OffsetPointA;

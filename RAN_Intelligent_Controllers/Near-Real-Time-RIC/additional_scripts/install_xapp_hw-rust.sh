@@ -103,6 +103,9 @@ if [ -z "$FIXED_DOCKER_PERMS" ]; then
 fi
 
 if [ ! -f hw-rust.tar ]; then
+    # Fix the Dockerfile to include RMR library paths during Rust compilation
+    sed -i 's|ENV PATH=/usr/local/cargo/bin:$PATH|ENV PATH=/usr/local/cargo/bin:$PATH\nENV LIBRARY_PATH=/usr/local/lib\nENV LD_LIBRARY_PATH=/usr/local/lib|g' Dockerfile
+
     docker build -t 127.0.0.1:80/hw-rust:latest .
     docker save -o hw-rust.tar 127.0.0.1:80/hw-rust:latest
     sudo chmod 755 hw-rust.tar

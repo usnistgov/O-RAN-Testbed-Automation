@@ -1,8 +1,8 @@
 diff --git a/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h b/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h
-index a9d7e638b5..4882fe3d89 100644
+index 08d2ab4d08..106cb76e40 100644
 --- a/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h
 +++ b/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h
-@@ -517,6 +517,8 @@ typedef struct NR_UE_harq {
+@@ -540,6 +540,8 @@ typedef struct NR_UE_harq {
    bool start_tci_timer;
    /// sched_pdsch keeps information on MCS etc used for the initial transmission
    NR_sched_pdsch_t sched_pdsch;
@@ -11,7 +11,7 @@ index a9d7e638b5..4882fe3d89 100644
  } NR_UE_harq_t;
  
  //! fixme : need to enhace for the multiple TB CQI report
-@@ -715,6 +717,7 @@ typedef struct NR_mac_dir_stats {
+@@ -740,6 +742,7 @@ typedef struct NR_mac_dir_stats {
    uint32_t total_rbs_retx;
    uint32_t num_mac_sdu;
    uint32_t current_rbs;
@@ -19,7 +19,7 @@ index a9d7e638b5..4882fe3d89 100644
  } NR_mac_dir_stats_t;
  
  typedef struct NR_mac_stats {
-@@ -727,6 +730,15 @@ typedef struct NR_mac_stats {
+@@ -752,6 +755,15 @@ typedef struct NR_mac_stats {
    uint8_t num_rsrp_meas;
    int cumul_sinrx10;
    uint8_t num_sinr_meas;
@@ -33,5 +33,5 @@ index a9d7e638b5..4882fe3d89 100644
 +  uint8_t e2_num_rsrp_meas;
 +
    char srs_stats[50]; // Statistics may differ depending on SRS usage
-   int pusch_snrx10;
    int deltaMCS;
+   int NPRB;

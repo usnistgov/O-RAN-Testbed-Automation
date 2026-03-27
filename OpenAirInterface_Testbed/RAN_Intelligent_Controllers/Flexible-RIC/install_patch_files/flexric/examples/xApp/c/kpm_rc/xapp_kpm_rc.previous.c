@@ -37,7 +37,7 @@ static
 ue_id_e2sm_t ue_id;
 
 static
-uint64_t const period_ms = 100;
+uint64_t const period_ms = 1000;
 
 static
 pthread_mutex_t mtx;

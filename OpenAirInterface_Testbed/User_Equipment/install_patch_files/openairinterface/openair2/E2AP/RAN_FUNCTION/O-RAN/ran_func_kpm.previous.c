@@ -51,12 +51,19 @@ static ngran_node_t get_e2_node_type(void)
 
 typedef struct {
   size_t sz;
-  ue_id_e2sm_t* ue_id;
+  ue_id_e2sm_t ue_id[MAX_MOBILES_PER_GNB];
 
   // Optional
   // only used to retrieve MAC/RLC stats
-  NR_UE_info_t** ue_info_list;
+  NR_UE_info_t* ue_info_list[MAX_MOBILES_PER_GNB];
 }arr_ue_id_t;
+
+static void free_arr_ue_id(arr_ue_id_t arr_ue_id)
+{
+  for (size_t i = 0; i < arr_ue_id.sz; i++) {
+    free_ue_id_e2sm(&arr_ue_id.ue_id[i]);
+  }
+}
 
 static e2_node_level_stats_t node_stats[2] = {0}; // [0] node stats collected in previous reporting period; [1] current node stats
 
@@ -124,9 +131,7 @@ static cudu_ue_info_pair_t fill_ue_related_info(arr_ue_id_t* arr_ue_id, const si
 
   if (arr_ue_id->ue_id[ue_idx].type == GNB_UE_ID_E2SM) {
     ue_info.rrc_ue_id = *arr_ue_id->ue_id[ue_idx].gnb.ran_ue_id;  // rrc_ue_id
-    if (arr_ue_id->ue_info_list != NULL) {
-      ue_info.ue = arr_ue_id->ue_info_list[ue_idx];
-    }
+    ue_info.ue = arr_ue_id->ue_info_list[ue_idx];
   } else if (arr_ue_id->ue_id[ue_idx].type == GNB_CU_UP_UE_ID_E2SM) {
     /* in OAI implementation, CU-UP ue id = CU-CP ue id
                            => CU-UP ue id = rrc_ue_id, but it should not be the case by the spec */
@@ -214,8 +219,6 @@ static arr_ue_id_t filter_ues_by_s_nssai_in_cu(const test_info_lst_t test_info)
   capture_sst_sd(test_info.test_cond_value, &sst, &sd);
 
   arr_ue_id_t arr_ue_id = {.sz = 0};
-  arr_ue_id.ue_id = calloc(MAX_MOBILES_PER_GNB, sizeof(ue_id_e2sm_t));
-  assert(arr_ue_id.ue_id != NULL);
 
   struct rrc_gNB_ue_context_s* rrc_ue_context = NULL;
   RB_FOREACH(rrc_ue_context, rrc_nr_ue_tree_s, &RC.nrrrc[0]->rrc_ue_head) {
@@ -252,8 +255,6 @@ static arr_ue_id_t filter_ues_by_s_nssai_in_cuup(const test_info_lst_t test_info
   capture_sst_sd(test_info.test_cond_value, &sst, &sd);
 
   arr_ue_id_t arr_ue_id = {.sz = 0};
-  arr_ue_id.ue_id = calloc(MAX_MOBILES_PER_GNB, sizeof(ue_id_e2sm_t));
-  assert(arr_ue_id.ue_id != NULL);
 
   // Get NSSAI info from E1 context
   const instance_t e1_inst = 0;
@@ -290,11 +291,6 @@ static arr_ue_id_t filter_ues_by_s_nssai_in_du_or_monolithic(const test_info_lst
   capture_sst_sd(test_info.test_cond_value, &sst, &sd);
 
   arr_ue_id_t arr_ue_id = {.sz = 0};
-  arr_ue_id.ue_id = calloc(MAX_MOBILES_PER_GNB, sizeof(ue_id_e2sm_t));
-  assert(arr_ue_id.ue_id != NULL);
-
-  arr_ue_id.ue_info_list = calloc(MAX_MOBILES_PER_GNB, sizeof(*arr_ue_id.ue_info_list));
-  assert(arr_ue_id.ue_info_list != NULL);
 
   const ngran_node_t node_type = get_e2_node_type();
 
@@ -437,6 +433,7 @@ bool read_kpm_sm(void* data)
           return false;
         }
         kpm->ind.msg.frm_3 = fill_kpm_ind_msg_frm_3(&arr_ue_id, &frm_4->action_def_format_1);
+        free_arr_ue_id(arr_ue_id);
       }
       break;
     }

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: LicenseRef-CSSL-1.0
+
 add_subdirectory(RRC_MESSAGES)
 
 add_executable(xapp_kpm_moni 

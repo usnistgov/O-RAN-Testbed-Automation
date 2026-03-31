@@ -5,9 +5,9 @@
   "https://github.com/srsran/oran-sc-ric.git": ["", "621ade26251f69a4ad079ba98bb708d8e5aeeb98"],
   "https://github.com/zeromq/libzmq.git": ["", "7d95ac02ae1af9a2f6896794d12b9de2ae30a3a8"],
   "https://github.com/zeromq/czmq.git": ["", "6b435f533619a52d9e1c3fa43d5e40e50a046272"],
-  "https://gitlab.com/ocudu/ocudu.git": ["", "7f4e23f158e7603298f28a28767269e1c45cc985"],
-  "https://gitlab.com/ocudu/ocudu_elements/ocudu_oran_apps/ocudu_o1_adapter.git": ["", "4671536856562f90df7d308bdefeae161381dc12"],
-  "https://gitlab.com/ocudu/ocudu_elements/ocudu_oran_apps/ocudu_netconf.git": ["", "f14ebf3b47e954cb86407c14c9146ded684db910"],
+  "https://gitlab.com/ocudu/ocudu.git": ["", "77512ff345e0888da0ad63b535b66ed75abf03c8"],
+  "https://gitlab.com/ocudu/ocudu_elements/ocudu_oran_apps/ocudu_o1_adapter.git": ["", "b3877cc0944f2e416e4f2ac1f2764c08963b1999"],
+  "https://gitlab.com/ocudu/ocudu_elements/ocudu_oran_apps/ocudu_netconf.git": ["", "6ed7cfbd031210fceeeb0d99f977dd3b85dfd183"],
   "https://gerrit.o-ran-sc.org/r/sim/e2-interface.git": ["m-release", "da6f82f286cdbb38af1178f82f85877b12c2f85b"],
   "https://gerrit.o-ran-sc.org/r/ric-app/hw-go.git": ["h-release", "3a0d348e429ea0f3f3d2a1d5eb54ec8758d1a262"],
   "https://github.com/o-ran-sc/ric-app-hw-python.git": ["g-release", "a6d00525aa2f62f2457d84731da2b7d89e0b1013"],
@@ -29,5 +29,5 @@
   "https://gitlab.eurecom.fr/oai/openairinterface5g.git": ["", "af4b0d53e9f4c3bf0e5f82f58781eac07f312b86"],
   "https://gitlab.eurecom.fr/oai/o1-adapter.git": ["main", "bac7fb147e97b4a25a20921d70128f5e8b710b80"],
   "https://github.com/swig/swig.git": ["master", "b8f7a107cbd81058f8c5818bbad48d78903f6c14"],
-  "https://gitlab.eurecom.fr/mosaic5g/flexric.git": ["dev", "e10bae8e30366aa171556a39ad3eef6e5b1f379e"]
+  "https://gitlab.eurecom.fr/mosaic5g/flexric.git": ["dev", "e5e5873f36911c14095a6733275d16464f74d3bf"]
 }

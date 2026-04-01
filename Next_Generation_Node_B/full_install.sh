@@ -246,14 +246,6 @@ sudo make install
 
 cd "$SCRIPT_DIR"
 
-# if [ ! -d "ocudu_o1_adapter" ]; then
-#     echo "Cloning OCUDU O1 Adapter..."
-#     ./install_scripts/git_clone.sh https://gitlab.com/ocudu/ocudu_elements/ocudu_oran_apps/ocudu_o1_adapter.git
-# fi
-# if [ ! -d "ocudu_netconf" ]; then
-#     echo "Cloning OCUDU Netconf..."
-#     ./install_scripts/git_clone.sh https://gitlab.com/ocudu/ocudu_elements/ocudu_oran_apps/ocudu_netconf.git
-# fi
 
 # Stop the sudo timeout refresher, it is no longer necessary to run
 ./install_scripts/stop_sudo_refresh.sh

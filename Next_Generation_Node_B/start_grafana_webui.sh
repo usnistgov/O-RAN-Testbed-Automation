@@ -96,7 +96,6 @@ EOF
 
 sudo $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" -f "$OVERRIDE_FILE" up -d grafana
 
-# Wait briefly for initialization
 echo "Waiting for Grafana to initialize..."
 sleep 5
 

@@ -28,38 +28,37 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
-if ! command -v realpath &>/dev/null; then
-    echo "Package \"coreutils\" not found, installing..."
-    sudo env $APTVARS apt-get install -y coreutils
-fi
+set -e
 
-SCRIPT_DIR=$(dirname "$(realpath "$0")")
-cd "$SCRIPT_DIR"
+CURRENT_DIR=$(pwd)
 
-if pgrep -x "gnb" >/dev/null; then
-    echo "gNodeB: RUNNING"
-else
-    echo "gNodeB: NOT_RUNNING"
-fi
-
-if pgrep -f "python3 zmq_broker/multi_ue_scenario\.py" >/dev/null; then
-    echo "ZMQ_Broker: RUNNING"
-else
-    echo "ZMQ_Broker: NOT_RUNNING"
-fi
-
-if command -v docker &>/dev/null; then
-    # Check if the grafana container is running
-    if docker ps --format '{{.Names}}' 2>/dev/null | grep -Eq "^ocudu-grafana$"; then
-        echo "Grafana: RUNNING"
-    fi
-    # Check if the netconf container is running
-    if docker ps --format '{{.Names}}' 2>/dev/null | grep -Eq "^ocudu_netconf$"; then
-        echo "Netconf: RUNNING"
+# Check if docker is accessible from the current user, and if not, repair its permissions
+if [ -z "$FIXED_DOCKER_PERMS" ]; then
+    if ! OUTPUT=$(docker info 2>&1); then
+        if echo "$OUTPUT" | grep -qiE 'permission denied|cannot connect to the docker daemon'; then
+            echo "Docker permissions will repair on reboot."
+            sudo groupadd -f docker
+            if [ -n "$SUDO_USER" ]; then
+                sudo usermod -aG docker "${SUDO_USER:-root}"
+            else
+                sudo usermod -aG docker "${USER:-root}"
+            fi
+            # Rather than requiring a reboot to apply docker permissions, set the docker group and re-run the parent script
+            export FIXED_DOCKER_PERMS=1
+            if ! command -v sg &>/dev/null; then
+                echo
+                echo "WARNING: Could not find set group (sg) command, docker may fail without sudo until the system reboots."
+                echo
+            else
+                exec sg docker -c "$(printf '%q ' "$CURRENT_DIR/$0" "$@")"
+            fi
+        fi
     fi
 fi
 
-if pgrep -f "src/o1_adapter" >/dev/null; then
-    echo "O1_Adapter: RUNNING"
-fi
+docker kill ocudu_netconf 2>/dev/null || true
+docker rm ocudu_netconf 2>/dev/null || true
+
+pkill -f "src/o1_adapter" || true
+
+echo "Successfully stopped and removed the O1 adapter."

@@ -54,6 +54,11 @@ if command -v docker &>/dev/null; then
     fi
 fi
 
+if pgrep -f "src/o1_adapter" >/dev/null || docker ps --format '{{.Names}}' 2>/dev/null | grep -Eq "^ocudu_netconf$"; then
+    echo "Stopping O1 Adapter..."
+    ./additional_scripts/stop_o1_adapter.sh
+fi
+
 # Send a graceful shutdown signal to the gNodeB process
 sudo pkill -f "gnb" >/dev/null 2>&1
 pkill -f "python3 zmq_broker/multi_ue_scenario\.py" >/dev/null 2>&1

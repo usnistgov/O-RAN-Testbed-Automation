@@ -1,8 +1,8 @@
 diff --git a/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_rc.c b/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_rc.c
-index 14c357496c..4f73f88416 100644
+index 8ab3e431af..144d183847 100644
 --- a/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_rc.c
 +++ b/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_rc.c
-@@ -28,6 +28,11 @@
+@@ -11,6 +11,11 @@
  #include "../../flexric/src/agent/e2_agent_api.h"
  #include "openair2/E2AP/flexric/src/lib/sm/enc/enc_ue_id.h"
  #include "openair2/E2AP/flexric/src/sm/rc_sm/rc_sm_id.h"
@@ -14,7 +14,7 @@ index 14c357496c..4f73f88416 100644
  
  #include <stdio.h>
  #include <unistd.h>
-@@ -898,12 +903,116 @@ sm_ag_if_ans_t write_ctrl_rc_sm(void const* data)
+@@ -881,6 +886,110 @@ sm_ag_if_ans_t write_ctrl_rc_sm(void const* data)
  
    assert(ctrl->hdr.format == FORMAT_1_E2SM_RC_CTRL_HDR && "Indication Header Format received not valid");
    assert(ctrl->msg.format == FORMAT_1_E2SM_RC_CTRL_MSG && "Indication Message Format received not valid");
@@ -32,33 +32,40 @@ index 14c357496c..4f73f88416 100644
 +    if (ue_id->type != GNB_UE_ID_E2SM) {
 +      printf("[E2SM-RC] Unsupported UE ID for Handover Control\n");
 +    } else {
-+      uint32_t rrc_ue_id = (uint32_t) *ue_id->gnb.ran_ue_id;
-+      const seq_ran_param_t* ran_param = ctrl->msg.frmt_1.ran_param;
++      uint32_t rrc_ue_id = (uint32_t)*ue_id->gnb.ran_ue_id;
++      const seq_ran_param_t *ran_param = ctrl->msg.frmt_1.ran_param;
 +      // Find Target Primary Cell ID
 +      for (size_t i = 0; i < ctrl->msg.frmt_1.sz_ran_param; i++) {
 +        if (ran_param[i].ran_param_id == TARGET_PRIMARY_CELL_ID_8_4_4_1) { // Target Primary Cell ID
-+          if (ran_param[i].ran_param_val.type != STRUCTURE_RAN_PARAMETER_VAL_TYPE) continue;
++          if (ran_param[i].ran_param_val.type != STRUCTURE_RAN_PARAMETER_VAL_TYPE)
++            continue;
 +
-+          const ran_param_struct_t * s1 = ran_param[i].ran_param_val.strct; // Target Primary Cell ID
-+          if (s1->sz_ran_param_struct == 0) continue;
++          const ran_param_struct_t *s1 = ran_param[i].ran_param_val.strct; // Target Primary Cell ID
++          if (s1->sz_ran_param_struct == 0)
++            continue;
 +
 +          // CHOICE Target Cell (ID 2)
-+          const seq_ran_param_t * p2 = &s1->ran_param_struct[0];
-+          if (p2->ran_param_id != CHOICE_TARGET_CELL_8_4_4_1 || p2->ran_param_val.type != STRUCTURE_RAN_PARAMETER_VAL_TYPE) continue;
++          const seq_ran_param_t *p2 = &s1->ran_param_struct[0];
++          if (p2->ran_param_id != CHOICE_TARGET_CELL_8_4_4_1 || p2->ran_param_val.type != STRUCTURE_RAN_PARAMETER_VAL_TYPE)
++            continue;
 +
-+          const ran_param_struct_t * s2 = p2->ran_param_val.strct; // CHOICE Target Cell
-+          if (s2->sz_ran_param_struct == 0) continue;
++          const ran_param_struct_t *s2 = p2->ran_param_val.strct; // CHOICE Target Cell
++          if (s2->sz_ran_param_struct == 0)
++            continue;
 +
 +          // NR Cell (ID 3)
-+          const seq_ran_param_t * p3 = &s2->ran_param_struct[0];
-+          if (p3->ran_param_id != NR_CELL_8_4_4_1 || p3->ran_param_val.type != STRUCTURE_RAN_PARAMETER_VAL_TYPE) continue;
++          const seq_ran_param_t *p3 = &s2->ran_param_struct[0];
++          if (p3->ran_param_id != NR_CELL_8_4_4_1 || p3->ran_param_val.type != STRUCTURE_RAN_PARAMETER_VAL_TYPE)
++            continue;
 +
-+          const ran_param_struct_t * s3 = p3->ran_param_val.strct; // NR Cell
-+          if (s3->sz_ran_param_struct == 0) continue;
++          const ran_param_struct_t *s3 = p3->ran_param_val.strct; // NR Cell
++          if (s3->sz_ran_param_struct == 0)
++            continue;
 +
 +          // NR CGI (ID 4)
-+          const seq_ran_param_t * p4 = &s3->ran_param_struct[0];
-+          if (p4->ran_param_id != NR_CGI_8_4_4_1 || p4->ran_param_val.type != ELEMENT_KEY_FLAG_FALSE_RAN_PARAMETER_VAL_TYPE) continue;
++          const seq_ran_param_t *p4 = &s3->ran_param_struct[0];
++          if (p4->ran_param_id != NR_CGI_8_4_4_1 || p4->ran_param_val.type != ELEMENT_KEY_FLAG_FALSE_RAN_PARAMETER_VAL_TYPE)
++            continue;
 +
 +          // Extract cell ID from Octet String
 +          if (p4->ran_param_val.flag_false->octet_str_ran.len > 0) {
@@ -69,14 +76,11 @@ index 14c357496c..4f73f88416 100644
 +            uint64_t target_cell_id = 0;
 +            if (len == 8) {
 +              // Extract 36-bit NCI from NR CGI (first three are PLMN)
-+              target_cell_id = ((uint64_t)buf[3] << 28) |
-+                               ((uint64_t)buf[4] << 20) |
-+                               ((uint64_t)buf[5] << 12) |
-+                               ((uint64_t)buf[6] << 4) |
-+                               ((uint64_t)buf[7] >> 4);
++              target_cell_id = ((uint64_t)buf[3] << 28) | ((uint64_t)buf[4] << 20) | ((uint64_t)buf[5] << 12)
++                               | ((uint64_t)buf[6] << 4) | ((uint64_t)buf[7] >> 4);
 +            } else {
 +              // Otherwise, unpack integer from bytes
-+              for(int i=0; i<len; i++) {
++              for (int i = 0; i < len; i++) {
 +                target_cell_id = (target_cell_id << 8) | buf[i];
 +              }
 +            }
@@ -94,31 +98,25 @@ index 14c357496c..4f73f88416 100644
 +
 +            if (ue_context) {
 +              gNB_RRC_UE_t *ue = &ue_context->ue_context;
-+              nr_rrc_cell_container_t *source_cell = NULL;
 +              if (ue->serving_cells.size > 0) {
-+                 ue_serving_cell_t *sc = (ue_serving_cell_t *)seq_arr_at(&ue->serving_cells, 0);
-+                 source_cell = get_cell_by_cell_id(&rrc->cells, sc->nci);
-+              }
-+              nr_rrc_cell_container_t *target_cell = get_cell_by_cell_id(&rrc->cells, target_cell_id);
++                ue_serving_cell_t *sc = (ue_serving_cell_t *)seq_arr_at(&ue->serving_cells, 0);
++                void *source_cell = get_cell_by_cell_id(&rrc->cells, sc->nci);
++                void *target_cell = get_cell_by_cell_id(&rrc->cells, target_cell_id);
 +
-+              if (source_cell && target_cell) {
-+                nr_rrc_trigger_f1_ho(rrc, ue, source_cell, target_cell);
++                if (source_cell && target_cell) {
++                  nr_rrc_trigger_f1_ho(rrc, ue, source_cell, target_cell);
++                } else {
++                  printf("[E2SM-RC] Handover failed: Source or Target Cell not found\n");
++                }
 +              } else {
-+                printf("[E2SM-RC] Source or Target Cell not found (Source: %p, Target: %p)\n", source_cell, target_cell);
++                printf("[E2SM-RC] Handover failed: UE %u has no serving cells\n", rrc_ue_id);
 +              }
 +            } else {
-+              printf("[E2SM-RC] UE Context not found for ID %u\n", rrc_ue_id);
-+              printf("[E2SM-RC] Available UEs:\n");
-+              rrc_gNB_ue_context_t *ue_c;
-+              RB_FOREACH(ue_c, rrc_nr_ue_tree_s, &rrc->rrc_ue_head) {
-+                  const gNB_RRC_UE_t* ue = &ue_c->ue_context;
-+                  printf("[E2SM-RC]  - rrc_ue_id: %u, rnti: %04x\n", ue->rrc_ue_id, ue->rnti);
-+              }
++              printf("[E2SM-RC] Handover failed: UE Context not found for ID %u\n", rrc_ue_id);
 +            }
 +#else
 +            printf("[E2SM-RC] Handover not supported for this node type\n");
 +#endif
-+
 +          }
 +        }
 +      }
@@ -127,13 +125,7 @@ index 14c357496c..4f73f88416 100644
    assert(ctrl->hdr.frmt_1.ctrl_act_id == 2 && "Currently only QoS flow mapping configuration supported");
  
    printf("QoS flow mapping configuration\n");
--
-   const seq_ran_param_t* ran_param = ctrl->msg.frmt_1.ran_param;
--
-   // DRB ID
-   assert(ran_param[0].ran_param_id == 1 && "First RAN Parameter ID has to be DRB ID");
-   assert(ran_param[0].ran_param_val.type == ELEMENT_KEY_FLAG_TRUE_RAN_PARAMETER_VAL_TYPE);
-@@ -933,7 +1042,7 @@ sm_ag_if_ans_t write_ctrl_rc_sm(void const* data)
+@@ -916,7 +1025,7 @@ sm_ag_if_ans_t write_ctrl_rc_sm(void const* data)
    assert(dir == 0 || dir == 1);
  
    printf("qfi = %ld, dir %ld \n", qfi, dir);

@@ -93,7 +93,7 @@ NAME=$2 # Optional
 # Validate input parameters
 if [[ -z "$URL" ]]; then
     echo "ERROR: No URL provided."
-    echo "Usage: $0 <URL> [name] [--ssh]"
+    echo "Usage: $0 <URL> [name] [--ssh|--https]"
     exit 1
 fi
 if [[ ! "$URL" == *.git ]]; then

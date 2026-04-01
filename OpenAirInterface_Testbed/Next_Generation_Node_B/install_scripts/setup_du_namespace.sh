@@ -53,14 +53,14 @@ DU_NAMESPACE="du$DU_NUMBER"
 # Give the DU its own network namespace and configure it to access the host network
 NETWORK_INTERFACE=$(ip route | grep default | awk '{print $5}')
 
-# Allocate a /29 (8 addresses) subnet per DU (e.g., DU 1 -> 10.200.0.8/29, Gateway .9, DU .10)
+# Allocate a /30 (4 addresses) subnet per DU (e.g., DU 1 -> 10.200.0.0/29, Gateway .1, DU .2)
 BASE_SUBNET="10.200.0.0/16"
-SUBNET_SIZE=8
+SUBNET_SIZE=4
 
 # Calculate IP offsets
-SUBNET_OFFSET=$((DU_NUMBER * SUBNET_SIZE))
-HOST_IP_OFFSET=$((SUBNET_OFFSET + 1)) # .5
-DU_IP_OFFSET=$((SUBNET_OFFSET + 2))   # .6
+SUBNET_OFFSET=$(((DU_NUMBER - 1) * SUBNET_SIZE))
+HOST_IP_OFFSET=$((SUBNET_OFFSET + 1)) # .1
+DU_IP_OFFSET=$((SUBNET_OFFSET + 2))   # .2
 
 # Fetch IPs from subnet using python script
 DU_SUBNET_ID=$(python3 fetch_nth_ip.py "$BASE_SUBNET" $SUBNET_OFFSET)

@@ -53,14 +53,14 @@ UE_NAMESPACE="ue$UE_NUMBER"
 # Give the UE its own network namespace and configure it to access the host network
 NETWORK_INTERFACE=$(ip route | grep default | awk '{print $5}')
 
-# Allocate a /29 (8 addresses) subnet per UE (e.g., UE 1 -> 10.201.0.8/29, Gateway .9, UE .10)
+# Allocate a /30 (4 addresses) subnet per UE (e.g., UE 1 -> 10.201.0.0/29, Gateway .1, UE .2)
 BASE_SUBNET="10.201.0.0/16"
-SUBNET_SIZE=8
+SUBNET_SIZE=4
 
 # Calculate IP offsets
-SUBNET_OFFSET=$((UE_NUMBER * SUBNET_SIZE))
-HOST_IP_OFFSET=$((SUBNET_OFFSET + 1)) # .5
-UE_IP_OFFSET=$((SUBNET_OFFSET + 2))   # .6
+SUBNET_OFFSET=$(((UE_NUMBER - 1) * SUBNET_SIZE))
+HOST_IP_OFFSET=$((SUBNET_OFFSET + 1)) # .1
+UE_IP_OFFSET=$((SUBNET_OFFSET + 2))   # .2
 
 # Fetch IPs from subnet using python script
 UE_SUBNET_ID=$(python3 fetch_nth_ip.py "$BASE_SUBNET" $SUBNET_OFFSET)

@@ -327,9 +327,9 @@ else
     # Revise the YAML file for the Non-RT RIC pods
     RIC_YAML_FILE_PATH="dep/RECIPE_EXAMPLE/NONRTRIC/example_recipe.yaml"
     RIC_YAML_FILE_PATH_UPDATED="dep/RECIPE_EXAMPLE/NONRTRIC/example_recipe_updated.yaml"
-    sudo chown "$USER" $RIC_YAML_FILE_PATH
+    sudo chown "${SUDO_USER:-$USER}" $RIC_YAML_FILE_PATH
     sudo cp $RIC_YAML_FILE_PATH $RIC_YAML_FILE_PATH_UPDATED
-    sudo chown "$USER" $RIC_YAML_FILE_PATH_UPDATED
+    sudo chown "${SUDO_USER:-$USER}" $RIC_YAML_FILE_PATH_UPDATED
     sudo "$SCRIPT_DIR/install_scripts/./revise_example_recipe_yaml.sh" "$RIC_YAML_FILE_PATH_UPDATED"
 
     cd "$SCRIPT_DIR/dep/"

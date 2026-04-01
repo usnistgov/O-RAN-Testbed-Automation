@@ -326,18 +326,18 @@ else
     echo "Revising the YAML file for the Non-RT RIC pods..."
     RIC_YAML_FILE_PATH="dep/RECIPE_EXAMPLE/NONRTRIC/example_recipe.yaml"
     RIC_YAML_FILE_PATH_UPDATED="dep/RECIPE_EXAMPLE/NONRTRIC/example_recipe_updated.yaml"
-    sudo chown "$USER" $RIC_YAML_FILE_PATH
+    sudo chown "${SUDO_USER:-$USER}" $RIC_YAML_FILE_PATH
     sudo cp $RIC_YAML_FILE_PATH $RIC_YAML_FILE_PATH_UPDATED
-    sudo chown "$USER" $RIC_YAML_FILE_PATH_UPDATED
+    sudo chown "${SUDO_USER:-$USER}" $RIC_YAML_FILE_PATH_UPDATED
     sudo "$SCRIPT_DIR/install_scripts/./revise_example_recipe_yaml.sh" "$RIC_YAML_FILE_PATH_UPDATED"
 
     echo "Setting default storage class for Kong..."
     KONG_YAML_FILE_PATH="dep/nonrtric/helm/kongstorage/kongvalues.yaml"
     KONG_YAML_FILE_PATH_BACKUP="dep/nonrtric/helm/kongstorage/kongvalues.original.yaml"
-    sudo chown "$USER" $KONG_YAML_FILE_PATH
+    sudo chown "${SUDO_USER:-$USER}" $KONG_YAML_FILE_PATH
     if [ ! -f "$KONG_YAML_FILE_PATH_BACKUP" ]; then
         sudo cp $KONG_YAML_FILE_PATH $KONG_YAML_FILE_PATH_BACKUP
-        sudo chown "$USER" $KONG_YAML_FILE_PATH_BACKUP
+        sudo chown "${SUDO_USER:-$USER}" $KONG_YAML_FILE_PATH_BACKUP
     fi
     sudo "$SCRIPT_DIR/install_scripts/./ensure_kong_storage_class_set_yaml.sh" "$KONG_YAML_FILE_PATH"
 

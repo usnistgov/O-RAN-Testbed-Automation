@@ -59,7 +59,7 @@ fi
 cd "$SCRIPT_DIR"
 mkdir -p logs
 if [ -f "logs/split_cu_stdout.txt" ]; then
-    sudo chown "$USER" logs/split_cu_stdout.txt
+    sudo chown "${SUDO_USER:-$USER}" logs/split_cu_stdout.txt
 fi
 >logs/split_cu_stdout.txt
 

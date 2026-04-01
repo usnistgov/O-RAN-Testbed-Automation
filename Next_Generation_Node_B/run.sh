@@ -56,7 +56,6 @@ if pgrep -x "gnb" >/dev/null; then
 else
     echo "Starting gnb..."
     mkdir -p logs
-    sudo chown --recursive "$USER" logs
     >logs/gnb.log
     >logs/gnb_stdout.txt
 
@@ -72,6 +71,8 @@ else
         fi
         sleep 2
     fi
+
+    sudo chown --recursive "${SUDO_USER:-$USER}" logs
 
     # ocudu/build/apps/gnb/gnb -c configs/gnb.yaml # cell_cfg prach --ports 0 1 2
     sudo script -q -f -c "./ocudu/build/apps/gnb/gnb -c configs/gnb.yaml" logs/gnb_stdout.txt # cell_cfg prach --ports 0 1 2

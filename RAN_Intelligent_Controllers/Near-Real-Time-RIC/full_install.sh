@@ -293,9 +293,9 @@ else
     RIC_YAML_FILE_NAME="example_recipe_latest_stable.yaml"
     RIC_YAML_FILE_NAME_UPDATED="example_recipe_latest_stable_updated.yaml"
 
-    sudo chown "$USER" "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME"
+    sudo chown "${SUDO_USER:-$USER}" "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME"
     sudo cp "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME" "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME_UPDATED"
-    sudo chown "$USER" "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME_UPDATED"
+    sudo chown "${SUDO_USER:-$USER}" "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME_UPDATED"
     sudo ./install_scripts/revise_example_recipe_yaml.sh "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME_UPDATED"
     if [ "$E2_TERM_PORT" != "36422" ]; then
         sudo ./install_scripts/revise_deployment_for_e2_port.sh
@@ -431,8 +431,8 @@ sudo ./install_scripts/wait_for_ricplt_pods.sh
 sudo ./install_scripts/run_e2sim_and_connect_to_ric.sh
 
 echo "Restoring ownership of directories and files created while in root..."
-sudo chown "$USER" logs/e2sim_output.txt
-sudo chown --recursive "$USER" charts || true
+sudo chown "${SUDO_USER:-$USER}" logs/e2sim_output.txt
+sudo chown --recursive "${SUDO_USER:-$USER}" charts || true
 
 echo
 echo "Installing the xApp Onboarder (dms_cli)..."

@@ -59,8 +59,8 @@ else
 
     echo "Starting gNodeB in background..."
     mkdir -p logs
-    sudo chown --recursive "$USER" logs
     >logs/gnb_stdout.txt
+    sudo chown --recursive "${SUDO_USER:-$USER}" logs
 
     sudo env $ZMQ_BROKER_UI_ENV setsid bash -c "stdbuf -oL -eL \"$SCRIPT_DIR/run.sh\" >/dev/null 2>&1" </dev/null &
 

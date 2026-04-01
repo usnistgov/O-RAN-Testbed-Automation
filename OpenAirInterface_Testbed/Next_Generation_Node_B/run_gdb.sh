@@ -72,7 +72,7 @@ echo "$HOSTNAME_IP" >configs/get_rfsim_server_address.txt
 
 mkdir -p logs
 if [ -f "logs/gnb_stdout.txt" ]; then
-    sudo chown "$USER" logs/gnb_stdout.txt
+    sudo chown "${SUDO_USER:-$USER}" logs/gnb_stdout.txt
 fi
 >logs/gnb_stdout.txt
 

@@ -1,8 +1,8 @@
 diff --git a/examples/xApp/c/monitor/xapp_kpm_moni.c b/examples/xApp/c/monitor/xapp_kpm_moni.c
-index 2f71d1d5..1558e39a 100644
+index 22f70850..39e5acec 100644
 --- a/examples/xApp/c/monitor/xapp_kpm_moni.c
 +++ b/examples/xApp/c/monitor/xapp_kpm_moni.c
-@@ -28,8 +28,10 @@
+@@ -11,8 +11,10 @@
  #include "../../../../src/util/e.h"
  
  #include <stdlib.h>
@@ -13,7 +13,7 @@ index 2f71d1d5..1558e39a 100644
  #include <unistd.h>
  #include <signal.h>
  #include <pthread.h>
-@@ -43,6 +45,16 @@ pthread_mutex_t mtx;
+@@ -26,6 +28,16 @@ pthread_mutex_t mtx;
  static
  assoc_ht_open_t ht = {0};
  
@@ -30,7 +30,7 @@ index 2f71d1d5..1558e39a 100644
  static
  uint32_t hash_func(const void* key_v)
  {
-@@ -100,6 +112,39 @@ char *get_meas_unit(const char *name)
+@@ -83,6 +95,39 @@ char *get_meas_unit(const char *name)
    return assoc_ht_open_value(&ht, &name);
  }
  
@@ -70,7 +70,7 @@ index 2f71d1d5..1558e39a 100644
  static
  void log_gnb_ue_id(ue_id_e2sm_t ue_id)
  {
-@@ -113,6 +158,49 @@ void log_gnb_ue_id(ue_id_e2sm_t ue_id)
+@@ -96,6 +141,49 @@ void log_gnb_ue_id(ue_id_e2sm_t ue_id)
    if (ue_id.gnb.ran_ue_id != NULL) {
      printf("ran_ue_id = %lx\n", *ue_id.gnb.ran_ue_id); // RAN UE NGAP ID
    }
@@ -120,7 +120,7 @@ index 2f71d1d5..1558e39a 100644
  }
  
  static
-@@ -122,6 +210,9 @@ void log_du_ue_id(ue_id_e2sm_t ue_id)
+@@ -105,6 +193,9 @@ void log_du_ue_id(ue_id_e2sm_t ue_id)
    if (ue_id.gnb_du.ran_ue_id != NULL) {
      printf("ran_ue_id = %lx\n", *ue_id.gnb_du.ran_ue_id); // RAN UE NGAP ID
    }
@@ -130,7 +130,7 @@ index 2f71d1d5..1558e39a 100644
  }
  
  static
-@@ -131,6 +222,9 @@ void log_cuup_ue_id(ue_id_e2sm_t ue_id)
+@@ -114,6 +205,9 @@ void log_cuup_ue_id(ue_id_e2sm_t ue_id)
    if (ue_id.gnb_cu_up.ran_ue_id != NULL) {
      printf("ran_ue_id = %lx\n", *ue_id.gnb_cu_up.ran_ue_id); // RAN UE NGAP ID
    }
@@ -140,7 +140,7 @@ index 2f71d1d5..1558e39a 100644
  }
  
  typedef void (*log_ue_id)(ue_id_e2sm_t ue_id);
-@@ -150,6 +244,8 @@ static
+@@ -133,6 +227,8 @@ static
  void log_int_value(const char *name_str, const label_info_lst_t label_info, const meas_record_lst_t meas_record)
  {
    char *name_unit = get_meas_unit(name_str);
@@ -149,7 +149,7 @@ index 2f71d1d5..1558e39a 100644
    if (label_info.noLabel != NULL) {
      printf("%s = %d %s\n", name_str, meas_record.int_val, name_unit);
    } else if (label_info.distBinX != NULL && meas_record.int_val > 0) {
-@@ -162,6 +258,8 @@ void log_real_value(const char *name_str, const label_info_lst_t label_info, con
+@@ -145,6 +241,8 @@ void log_real_value(const char *name_str, const label_info_lst_t label_info, con
  {
    (void)label_info;
    char *name_unit = get_meas_unit(name_str);
@@ -158,7 +158,7 @@ index 2f71d1d5..1558e39a 100644
    printf("%s = %.2f %s\n", name_str, meas_record.real_val, name_unit);
  }
  
-@@ -205,21 +303,70 @@ void log_kpm_measurements(kpm_ind_msg_format_1_t const* msg_frm_1)
+@@ -188,21 +286,70 @@ void log_kpm_measurements(kpm_ind_msg_format_1_t const* msg_frm_1)
  {
    assert(msg_frm_1->meas_info_lst_len > 0 && "Cannot correctly print measurements");
  
@@ -230,7 +230,7 @@ index 2f71d1d5..1558e39a 100644
      }
    }
  }
-@@ -239,6 +386,29 @@ void log_kpm_ind_msg_frm_3(kpm_ind_msg_format_3_t const* msg)
+@@ -222,6 +369,29 @@ void log_kpm_ind_msg_frm_3(kpm_ind_msg_format_3_t const* msg)
    }
  }
  
@@ -260,7 +260,7 @@ index 2f71d1d5..1558e39a 100644
  static
  void sm_cb_kpm(sm_ag_if_rd_t const* rd)
  {
-@@ -269,7 +439,7 @@ void sm_cb_kpm(sm_ag_if_rd_t const* rd)
+@@ -252,7 +422,7 @@ void sm_cb_kpm(sm_ag_if_rd_t const* rd)
  }
  
  static
@@ -269,7 +269,7 @@ index 2f71d1d5..1558e39a 100644
  {
    test_info_lst_t dst = {0};
  
-@@ -288,11 +458,17 @@ test_info_lst_t filter_predicate(test_cond_type_e type, test_cond_e cond, int va
+@@ -271,11 +441,17 @@ test_info_lst_t filter_predicate(test_cond_type_e type, test_cond_e cond, int va
  
    dst.test_cond_value->octet_string_value = calloc(1, sizeof(byte_array_t));
    assert(dst.test_cond_value->octet_string_value != NULL && "Memory exhausted");
@@ -289,7 +289,7 @@ index 2f71d1d5..1558e39a 100644
  
    return dst;
  }
-@@ -308,6 +484,8 @@ label_info_lst_t fill_kpm_label(void)
+@@ -291,6 +467,8 @@ label_info_lst_t fill_kpm_label(void)
    return label_item;
  }
  
@@ -298,7 +298,7 @@ index 2f71d1d5..1558e39a 100644
  static
  kpm_act_def_format_1_t fill_act_def_frm_1(ric_report_style_item_t const* report_item)
  {
-@@ -331,9 +509,23 @@ kpm_act_def_format_1_t fill_act_def_frm_1(ric_report_style_item_t const* report_
+@@ -314,9 +492,23 @@ kpm_act_def_format_1_t fill_act_def_frm_1(ric_report_style_item_t const* report_
  
      // [1, 2147483647]
      // 8.3.11
@@ -323,7 +323,7 @@ index 2f71d1d5..1558e39a 100644
    }
  
    // 8.3.8 [0, 4294967295]
-@@ -362,13 +554,13 @@ kpm_act_def_t fill_report_style_4(ric_report_style_item_t const* report_item)
+@@ -345,13 +537,13 @@ kpm_act_def_t fill_report_style_4(ric_report_style_item_t const* report_item)
    // Fill matching condition
    // [1, 32768]
    act_def.frm_4.matching_cond_lst_len = 1;
@@ -340,7 +340,7 @@ index 2f71d1d5..1558e39a 100644
  
    // Fill Action Definition Format 1
    // 8.2.1.2.1
-@@ -530,6 +722,8 @@ int main(int argc, char* argv[])
+@@ -513,6 +705,8 @@ int main(int argc, char* argv[])
    int rc = pthread_mutex_init(&mtx, &attr);
    assert(rc == 0);
  

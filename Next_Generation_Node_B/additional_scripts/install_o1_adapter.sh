@@ -84,7 +84,6 @@ cd "$PARENT_DIR"
 echo "Building OCUDU Netconf Docker container..."
 cd ocudu_netconf
 
-# Fix DNS issues during docker build just in case
 if [ -z "$DOCKER_BUILD_NETWORK" ]; then
     export DOCKER_BUILD_NETWORK="--network=host"
 fi

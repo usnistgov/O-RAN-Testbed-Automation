@@ -181,10 +181,15 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
     update_conf "configs/ue${UE_NUMBER}.conf" "rf" "device_name" "zmq"
 
     # Calculate IP offsets for this UE using the same subnetting scheme as in setup_ue_namespace.sh
+    # Allocate a /30 (4 addresses) subnet per UE (e.g., UE 1 -> 10.201.0.0/29, Gateway .1, UE .2)
     BASE_SUBNET="10.201.0.0/16"
-    SUBNET_SIZE=8
-    SUBNET_OFFSET=$((UE_NUMBER * SUBNET_SIZE))
-    HOST_IP_OFFSET=$((SUBNET_OFFSET + 1))
+    SUBNET_SIZE=4
+
+    # Calculate IP offsets
+    SUBNET_OFFSET=$(((UE_NUMBER - 1) * SUBNET_SIZE))
+    HOST_IP_OFFSET=$((SUBNET_OFFSET + 1)) # .1
+    UE_IP_OFFSET=$((SUBNET_OFFSET + 2))   # .2
+
     UE_HOST_IP=$(python3 install_scripts/fetch_nth_ip.py "$BASE_SUBNET" $HOST_IP_OFFSET)
 
     update_conf "configs/ue${UE_NUMBER}.conf" "rf" "device_args" "tx_port=tcp://*:$UE_TX_PORT,rx_port=tcp://$UE_HOST_IP:$UE_RX_PORT,base_srate=23.04e6"
@@ -204,7 +209,7 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
     update_conf "configs/ue${UE_NUMBER}.conf" "rat.nr" "nof_prb" "106"
 
     # Update configuration values for PCAP
-    update_conf "configs/ue${UE_NUMBER}.conf" "pcap" "enable" "info"
+    update_conf "configs/ue${UE_NUMBER}.conf" "pcap" "enable" "none"
     # Uncomment for log files:
     # update_conf "configs/ue${UE_NUMBER}.conf" "pcap" "enable" "mac,mac_nr,nas"
     update_conf "configs/ue${UE_NUMBER}.conf" "pcap" "mac_filename" "$SCRIPT_DIR/logs/ue${UE_NUMBER}_mac.pcap"
@@ -212,8 +217,8 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
     update_conf "configs/ue${UE_NUMBER}.conf" "pcap" "nas_filename" "$SCRIPT_DIR/logs/ue${UE_NUMBER}_nas.pcap"
 
     # Update configuration values for Logging
-    update_conf "configs/ue${UE_NUMBER}.conf" "log" "all_level" "info" #warning
-    update_conf "configs/ue${UE_NUMBER}.conf" "log" "phy_lib_level" "info"
+    update_conf "configs/ue${UE_NUMBER}.conf" "log" "all_level" "none" #warning
+    update_conf "configs/ue${UE_NUMBER}.conf" "log" "phy_lib_level" "none"
     update_conf "configs/ue${UE_NUMBER}.conf" "log" "all_hex_limit" "32"
     update_conf "configs/ue${UE_NUMBER}.conf" "log" "filename" "$SCRIPT_DIR/logs/ue${UE_NUMBER}.log"
     update_conf "configs/ue${UE_NUMBER}.conf" "log" "file_max_size" "-1"

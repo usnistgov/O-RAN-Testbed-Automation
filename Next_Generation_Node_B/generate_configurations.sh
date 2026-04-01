@@ -473,8 +473,10 @@ if [ ! -f "zmq_broker/multi_ue_scenario.py" ]; then
     grcc -o zmq_broker zmq_broker/multi_ue_scenario.grc
 
     ZMQ_BROKER_PYTHON_FILE="zmq_broker/multi_ue_scenario.py"
+
+    # Allocate a /30 (4 addresses) subnet per UE (e.g., UE 1 -> 10.201.0.0/29, Gateway .1, UE .2)
     BASE_SUBNET="10.201.0.0/16"
-    SUBNET_SIZE=8
+    SUBNET_SIZE=4
 
     UE_NUMBER=1
     while true; do
@@ -486,8 +488,9 @@ if [ ! -f "zmq_broker/multi_ue_scenario.py" ]; then
             break
         fi
 
-        SUBNET_OFFSET=$((UE_NUMBER * SUBNET_SIZE))
-        UE_IP_OFFSET=$((SUBNET_OFFSET + 2))
+        SUBNET_OFFSET=$(((UE_NUMBER - 1) * SUBNET_SIZE))
+        HOST_IP_OFFSET=$((SUBNET_OFFSET + 1)) # .1
+        UE_IP_OFFSET=$((SUBNET_OFFSET + 2))   # .2
         UE_IP=$(python3 install_scripts/fetch_nth_ip.py "$BASE_SUBNET" "$UE_IP_OFFSET")
 
         # Connect req_sink to listen on all interfaces instead of just localhost

@@ -585,43 +585,47 @@ static void log_kpm_measurements(kpm_ind_msg_format_1_t const *msg_frm_1, bool i
           uint32_t cur_x = *label_info.distBinX;
           uint32_t cur_y = *label_info.distBinY;
 
+          int n = 0;
           if (z == 0)
           {
-            arr_len += snprintf(arr_str + arr_len, sizeof(arr_str) - arr_len, "[[[");
+            n = snprintf(arr_str + arr_len, sizeof(arr_str) - arr_len, "[[[");
           }
           else
           {
             if (cur_x != last_x)
             {
-              arr_len += snprintf(arr_str + arr_len, sizeof(arr_str) - arr_len, "]], [[");
+              n = snprintf(arr_str + arr_len, sizeof(arr_str) - arr_len, "]], [[");
             }
             else if (cur_y != last_y)
             {
-              arr_len += snprintf(arr_str + arr_len, sizeof(arr_str) - arr_len, "], [");
+              n = snprintf(arr_str + arr_len, sizeof(arr_str) - arr_len, "], [");
             }
             else
             {
-              arr_len += snprintf(arr_str + arr_len, sizeof(arr_str) - arr_len, ", ");
+              n = snprintf(arr_str + arr_len, sizeof(arr_str) - arr_len, ", ");
             }
           }
+          if (n > 0) arr_len += ((size_t)n < sizeof(arr_str) - arr_len) ? (size_t)n : sizeof(arr_str) - arr_len - 1;
 
           if (record_item.value == 0)
           {
-            arr_len += snprintf(arr_str + arr_len, sizeof(arr_str) - arr_len, "%d", record_item.int_val);
+            n = snprintf(arr_str + arr_len, sizeof(arr_str) - arr_len, "%d", record_item.int_val);
           }
           else if (record_item.value == 1)
           {
-            arr_len += snprintf(arr_str + arr_len, sizeof(arr_str) - arr_len, "%.2f", record_item.real_val);
+            n = snprintf(arr_str + arr_len, sizeof(arr_str) - arr_len, "%.2f", record_item.real_val);
           }
           else
           {
-            arr_len += snprintf(arr_str + arr_len, sizeof(arr_str) - arr_len, "null");
+            n = snprintf(arr_str + arr_len, sizeof(arr_str) - arr_len, "null");
           }
+          if (n > 0) arr_len += ((size_t)n < sizeof(arr_str) - arr_len) ? (size_t)n : sizeof(arr_str) - arr_len - 1;
 
           last_x = cur_x;
           last_y = cur_y;
         }
-        arr_len += snprintf(arr_str + arr_len, sizeof(arr_str) - arr_len, "]]]");
+        int n = snprintf(arr_str + arr_len, sizeof(arr_str) - arr_len, "]]]");
+        if (n > 0) arr_len += ((size_t)n < sizeof(arr_str) - arr_len) ? (size_t)n : sizeof(arr_str) - arr_len - 1;
 
         char influx_field[9000];
         // Use double quotes around string values in InfluxDB line protocol

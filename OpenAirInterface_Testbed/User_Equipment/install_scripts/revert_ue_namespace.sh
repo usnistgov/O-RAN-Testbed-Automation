@@ -73,9 +73,9 @@ sudo ip netns exec $UE_NAMESPACE ip addr del $UE_NS_IP/29 dev v-$UE_NAMESPACE ||
 sudo ip netns exec $UE_NAMESPACE ip link set v-$UE_NAMESPACE down || true
 
 echo "Removing iptables rules..."
-sudo iptables -D FORWARD -o "$NETWORK_INTERFACE" -i v-eth$UE_NUMBER -j ACCEPT || true
-sudo iptables -D FORWARD -i "$NETWORK_INTERFACE" -o v-eth$UE_NUMBER -j ACCEPT || true
-sudo iptables -t nat -D POSTROUTING -s "$UE_SUBNET_ID/29" -o "$NETWORK_INTERFACE" -j MASQUERADE || true
+while sudo iptables -D FORWARD -o "$NETWORK_INTERFACE" -i v-eth$UE_NUMBER -j ACCEPT 2>/dev/null; do :; done
+while sudo iptables -D FORWARD -i "$NETWORK_INTERFACE" -o v-eth$UE_NUMBER -j ACCEPT 2>/dev/null; do :; done
+while sudo iptables -t nat -D POSTROUTING -s "$UE_SUBNET_ID/29" -o "$NETWORK_INTERFACE" -j MASQUERADE 2>/dev/null; do :; done
 
 echo "Deleting the network devices..."
 sudo ip link set v-eth$UE_NUMBER down

@@ -85,10 +85,9 @@ while true; do
         echo -e "-------------------------------"
 
         echo -e "Enter arguments for 'influx'. (Org ($INFLUXDB_ORG) and Token are automatically appended)"
-        read -e -p "influx " CUSTOM_CMD
-        if [ -n "$CUSTOM_CMD" ]; then
-            # Use eval to handle quoted arguments correctly
-            eval influx "$CUSTOM_CMD" --org "$INFLUXDB_ORG" --token "$INFLUXDB_TOKEN"
+        read -e -r -p "influx " -a CUSTOM_ARGS
+        if [ ${#CUSTOM_ARGS[@]} -gt 0 ]; then
+            influx "${CUSTOM_ARGS[@]}" --org "$INFLUXDB_ORG" --token "$INFLUXDB_TOKEN"
         fi
         ;;
     6)

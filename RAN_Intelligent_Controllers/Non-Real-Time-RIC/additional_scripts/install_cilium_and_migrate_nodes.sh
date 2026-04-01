@@ -247,7 +247,7 @@ echo
 echo "Successfully installed Cilium and migrated node to Cilium."
 
 echo "Ensuring permissions for $USER in $HOME/.kube directory..."
-sudo chown --recursive "$USER" "$HOME/.kube"
+sudo chown --recursive "${SUDO_USER:-$USER}" "$HOME/.kube"
 
 echo
 echo "Deleting all existing CiliumNetworkPolicies..."

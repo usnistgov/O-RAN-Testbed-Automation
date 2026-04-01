@@ -109,7 +109,7 @@ if [ ! -f hw-rust.tar ]; then
     docker build -t 127.0.0.1:80/hw-rust:latest .
     docker save -o hw-rust.tar 127.0.0.1:80/hw-rust:latest
     sudo chmod 755 hw-rust.tar
-    sudo chown "$USER" hw-rust.tar
+    sudo chown "${SUDO_USER:-$USER}" hw-rust.tar
 
     # Import the image into the containerd container runtime
     sudo ctr -n=k8s.io image import hw-rust.tar

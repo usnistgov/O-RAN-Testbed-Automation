@@ -48,7 +48,7 @@ else
     echo "Starting flexric in background..."
     mkdir -p logs
     if [ -f "logs/flexric_stdout.txt" ]; then
-        sudo chown "$USER" logs/flexric_stdout.txt
+        sudo chown "${SUDO_USER:-$USER}" logs/flexric_stdout.txt
     fi
     >logs/flexric_stdout.txt
 

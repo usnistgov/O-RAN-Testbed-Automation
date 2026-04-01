@@ -121,7 +121,7 @@ else
     fi
     mkdir -p logs
     if [ -f "logs/ue${UE_NUMBER}_stdout.txt" ]; then
-        sudo chown "$USER" logs/ue${UE_NUMBER}_stdout.txt
+        sudo chown "${SUDO_USER:-$USER}" logs/ue${UE_NUMBER}_stdout.txt
     fi
     >logs/ue${UE_NUMBER}_stdout.txt
 

@@ -32,7 +32,7 @@ default:
     - pwd
     - tree . -d
   after_script:
-    - sudo chown --recursive "$USER" "$CI_PROJECT_DIR" || true
+    - sudo chown --recursive "${SUDO_USER:-$USER}" "$CI_PROJECT_DIR" || true
 
 stages:
   - initialization

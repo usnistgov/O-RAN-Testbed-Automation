@@ -337,7 +337,7 @@ fi
 
 sudo rm -rf /opt/config
 sudo mkdir -p /opt/config
-sudo chown "$USER" /opt/config
+sudo chown "${SUDO_USER:-$USER}" /opt/config
 sudo chmod 755 /opt/config
 echo "$DOCKERVERSIONWITHOUTSUFFIX" >/opt/config/docker_version.txt
 echo "$KUBEVERSIONWITHOUTSUFFIX" >/opt/config/k8s_version.txt
@@ -1131,7 +1131,7 @@ sudo kubeadm config images pull --kubernetes-version=${KUBEVERSIONWITHOUTSUFFIX}
 echo "Kubernetes components reinstalled and ready for initialization."
 
 mkdir -p "$HOME/.kube"
-sudo chown --recursive "$USER" "$HOME/.kube/"
+sudo chown --recursive "${SUDO_USER:-$USER}" "$HOME/.kube/"
 
 KUBEPROXY_MODE="ipvs"
 if ! sudo modprobe ip_vs ip_vs_rr ip_vs_wrr ip_vs_sh nf_conntrack 2>/dev/null; then
@@ -1294,10 +1294,10 @@ else
     echo "Kubernetes initialized successfully."
     # Set the KUBECONFIG variable to the config file's location
     mkdir -p "$HOME/.kube"
-    sudo chown --recursive "$USER" "$HOME/.kube"
+    sudo chown --recursive "${SUDO_USER:-$USER}" "$HOME/.kube"
     export KUBECONFIG="$HOME/.kube/config"
     sudo cp -f /etc/kubernetes/admin.conf "$KUBECONFIG"
-    sudo chown --recursive "$USER" "$KUBECONFIG"
+    sudo chown --recursive "${SUDO_USER:-$USER}" "$KUBECONFIG"
     sudo chmod 600 "$KUBECONFIG"
     # Make the admin.conf readable by all users (only root can write)
     sudo chmod 644 /etc/kubernetes/admin.conf

@@ -90,8 +90,8 @@ else
         exit 1
     fi
     mkdir -p logs
-    sudo chown --recursive "$USER" logs
     >logs/ue${UE_NUMBER}_stdout.txt
+    sudo chown --recursive "${SUDO_USER:-$USER}" logs
     echo "Starting srsue (ue$UE_NUMBER) in namespace ue$UE_NUMBER..."
     # sudo ./srsRAN_4G/build/srsue/src/srsue --config_file "$UE_CONF_PATH"
     sudo ip netns exec "ue$UE_NUMBER" script -q -f -c "./srsRAN_4G/build/srsue/src/srsue --config_file \"$UE_CONF_PATH\"" logs/ue${UE_NUMBER}_stdout.txt

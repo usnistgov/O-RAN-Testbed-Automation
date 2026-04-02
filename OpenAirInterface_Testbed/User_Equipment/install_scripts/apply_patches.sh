@@ -117,6 +117,17 @@ echo "Patching ran_func_rc.c for handover support..."
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_rc.c.patch"
 cd ..
 
+# Support SST values greater than 4
+cd openairinterface5g
+git restore openair3/UICC/pdu_session.c
+if [ ! -f "openair3/UICC/pdu_session.c.previous" ]; then
+    cp openair3/UICC/pdu_session.c openair3/UICC/pdu_session.c.previous
+    cp openair3/UICC/pdu_session.c.previous "$PARENT_DIR/install_patch_files/openairinterface/openair3/UICC/pdu_session.c.previous"
+fi
+echo "Patching pdu_session.c to support SST values greater than 4..."
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface/openair3/UICC/pdu_session.c.patch"
+cd ..
+
 # This patch adds support for Linux Mint and Ubuntu 20.04
 cd openairinterface5g
 git restore cmake_targets/tools/build_helper

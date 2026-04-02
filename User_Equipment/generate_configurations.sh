@@ -181,14 +181,14 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
     update_conf "configs/ue${UE_NUMBER}.conf" "rf" "device_name" "zmq"
 
     # Calculate IP offsets for this UE using the same subnetting scheme as in setup_ue_namespace.sh
-    # Allocate a /30 (4 addresses) subnet per UE (e.g., UE 1 -> 10.201.0.0/29, Gateway .1, UE .2)
+    # Allocate a /30 (4 addresses) subnet per UE (e.g., UE 1 -> 10.201.0.4/30, Gateway .5, UE .6)
     BASE_SUBNET="10.201.0.0/16"
     SUBNET_SIZE=4
 
     # Calculate IP offsets
-    SUBNET_OFFSET=$(((UE_NUMBER - 1) * SUBNET_SIZE))
-    HOST_IP_OFFSET=$((SUBNET_OFFSET + 1)) # .1
-    UE_IP_OFFSET=$((SUBNET_OFFSET + 2))   # .2
+    SUBNET_OFFSET=$((UE_NUMBER * SUBNET_SIZE))
+    HOST_IP_OFFSET=$((SUBNET_OFFSET))   # .5
+    UE_IP_OFFSET=$((SUBNET_OFFSET + 1)) # .6
 
     UE_HOST_IP=$(python3 install_scripts/fetch_nth_ip.py "$BASE_SUBNET" $HOST_IP_OFFSET)
 

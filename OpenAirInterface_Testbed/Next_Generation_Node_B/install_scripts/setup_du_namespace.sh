@@ -53,17 +53,17 @@ DU_NAMESPACE="du$DU_NUMBER"
 # Give the DU its own network namespace and configure it to access the host network
 NETWORK_INTERFACE=$(ip route | grep default | awk '{print $5}')
 
-# Allocate a /30 (4 addresses) subnet per DU (e.g., DU 1 -> 10.200.0.0/29, Gateway .1, DU .2)
+# Allocate a /30 (4 addresses) subnet per DU (e.g., DU 1 -> 10.200.0.4/30, Gateway .5, DU .6)
 BASE_SUBNET="10.200.0.0/16"
 SUBNET_SIZE=4
 
 # Calculate IP offsets
-SUBNET_OFFSET=$(((DU_NUMBER - 1) * SUBNET_SIZE))
-HOST_IP_OFFSET=$((SUBNET_OFFSET + 1)) # .1
-DU_IP_OFFSET=$((SUBNET_OFFSET + 2))   # .2
+SUBNET_OFFSET=$((DU_NUMBER * SUBNET_SIZE))
+HOST_IP_OFFSET=$((SUBNET_OFFSET))   # .5
+DU_IP_OFFSET=$((SUBNET_OFFSET + 1)) # .6
 
 # Fetch IPs from subnet using python script
-DU_SUBNET_ID=$(python3 fetch_nth_ip.py "$BASE_SUBNET" $SUBNET_OFFSET)
+DU_SUBNET_ID=$(python3 fetch_nth_ip.py "$BASE_SUBNET" $((SUBNET_OFFSET - 1)))
 DU_HOST_IP=$(python3 fetch_nth_ip.py "$BASE_SUBNET" $HOST_IP_OFFSET)
 DU_NS_IP=$(python3 fetch_nth_ip.py "$BASE_SUBNET" $DU_IP_OFFSET)
 
@@ -77,12 +77,12 @@ sudo ip link add v-eth-du$DU_NUMBER type veth peer name v-$DU_NAMESPACE
 sudo ip link set v-$DU_NAMESPACE netns $DU_NAMESPACE
 
 # Configure host side interface
-sudo ip addr add $DU_HOST_IP/29 dev v-eth-du$DU_NUMBER
+sudo ip addr add $DU_HOST_IP/30 dev v-eth-du$DU_NUMBER
 sudo ip link set v-eth-du$DU_NUMBER up
 
 # Configure NAT to masquerade traffic and allow forwarding
-if ! sudo iptables -t nat -C POSTROUTING -s "$DU_SUBNET_ID/29" -o "$NETWORK_INTERFACE" -j MASQUERADE 2>/dev/null; then
-    sudo iptables -t nat -A POSTROUTING -s "$DU_SUBNET_ID/29" -o "$NETWORK_INTERFACE" -j MASQUERADE
+if ! sudo iptables -t nat -C POSTROUTING -s "$DU_SUBNET_ID/30" -o "$NETWORK_INTERFACE" -j MASQUERADE 2>/dev/null; then
+    sudo iptables -t nat -A POSTROUTING -s "$DU_SUBNET_ID/30" -o "$NETWORK_INTERFACE" -j MASQUERADE
 fi
 if ! sudo iptables -C FORWARD -i "$NETWORK_INTERFACE" -o v-eth-du$DU_NUMBER -j ACCEPT 2>/dev/null; then
     sudo iptables -A FORWARD -i "$NETWORK_INTERFACE" -o v-eth-du$DU_NUMBER -j ACCEPT
@@ -93,7 +93,7 @@ fi
 
 # Configure namespace side interface
 sudo ip netns exec $DU_NAMESPACE ip link set dev lo up
-sudo ip netns exec $DU_NAMESPACE ip addr add $DU_NS_IP/29 dev v-$DU_NAMESPACE
+sudo ip netns exec $DU_NAMESPACE ip addr add $DU_NS_IP/30 dev v-$DU_NAMESPACE
 sudo ip netns exec $DU_NAMESPACE ip link set v-$DU_NAMESPACE up
 
 # Set default route in namespace to point to host gateway

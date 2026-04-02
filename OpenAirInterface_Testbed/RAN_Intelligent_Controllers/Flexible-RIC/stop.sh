@@ -38,7 +38,7 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
 # Upon exit, restore the terminal to a sane state
-trap 'stty sane || true; exit' EXIT SIGINT SIGTERM
+trap 'trap - EXIT SIGINT SIGTERM; stty sane || true; exit' EXIT SIGINT SIGTERM
 
 # Check if the components are already stopped
 if ! $(./is_running.sh | grep -q ": RUNNING"); then

@@ -24,6 +24,12 @@ To facilitate multi-UE emulation, the testbed utilizes a ZeroMQ (ZMQ) Broker bas
 > [!NOTE]
 > The default `multi_ue_scenario.grc` flowgraph supports three UEs. To change emulated UE scenario, modify the `.grc` file using GNU Radio Companion to add or remove ZeroMQ blocks, delete the existing `zmq_broker/multi_ue_scenario.py`, and run `./generate_configurations.sh` to compile the `.grc` file into a new Python script and automatically patch the required IP addresses.
 
+## O1 Interface
+
+The gNodeB can also be monitored and controlled through the OCUDU O1 Adapter [\[7\]][ocudu-o1-adapter]. Management scripts for the O1 interface are located in the `additional_scripts/` directory. Use `./additional_scripts/install_o1_adapter.sh` to install and build the required components, `./additional_scripts/run_o1_adapter.sh` to start the O1 services, `./additional_scripts/stop_o1_adapter.sh` to stop them, and `./additional_scripts/uninstall_o1_adapter.sh` to remove them.
+
+When running, the O1 setup starts a NETCONF Docker container `ocudu_netconf` and the OCUDU O1 adapter system process. The NETCONF endpoint is exposed at `127.0.0.1:830`.
+
 ## OCUDU Grafana WebUI
 
 The gNodeB includes support for visualizing performance metrics via a Grafana dashboard hosted at `http://localhost:3300`.
@@ -41,6 +47,7 @@ The gNodeB includes support for visualizing performance metrics via a Grafana da
 4. 3GPP TS 38.413: NG-RAN; NG Application Protocol (NGAP). [https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=3223][ts3223-3gpp]
 5. OCUDU Project Documentation: OCUDU with srsUE [https://ocudu.gitlab.io/ocudu_docs/user_manual/tutorials/srsue/#multi-ue-emulation][ocudu-multi-ue]
 6. OCUDU Multi-UE Emulation GRC [https://gitlab.com/ocudu/ocudu_docs/-/blob/main/docs/user_manual/tutorials/srsue/assets/multi_ue_scenario.grc][ocudu-multi-ue-grc]
+7. OCUDU O1 Adapter [https://ocudu.gitlab.io/ocudu_docs/oran_apps/ocudu_o1_adapter/][ocudu-o1-adapter]
 
 <!-- References -->
 
@@ -50,3 +57,4 @@ The gNodeB includes support for visualizing performance metrics via a Grafana da
 [ts3223-3gpp]: https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=3223
 [ocudu-multi-ue]: https://ocudu.gitlab.io/ocudu_docs/user_manual/tutorials/srsue/#multi-ue-emulation
 [ocudu-multi-ue-grc]: https://gitlab.com/ocudu/ocudu_docs/-/blob/main/docs/user_manual/tutorials/srsue/assets/multi_ue_scenario.grc
+[ocudu-o1-adapter]: https://ocudu.gitlab.io/ocudu_docs/oran_apps/ocudu_o1_adapter/

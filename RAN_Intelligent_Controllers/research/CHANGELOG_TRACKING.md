@@ -4,33 +4,43 @@
 - Switched gNodeB implementation from srsRAN_Project 25.10 to OCUDU 26.04 [\[1\]][ocudu-announcement].
   - As the continuation of srsRAN_Project, OCUDU offers a high-performance open-source O-CU and O-DU [\[2\]][ocudu], [\[3\]][ocudu-docs].
   - Integrated ZeroMQ Broker for concurrent UE connections; default scenario now starts three UEs [\[4\]][ocudu-multi-ue].
-  - Added Grafana dashboard for OCUDU metrics monitoring and visualization [\[5\]][ocudu-grafana].
-  - See the Next_Generation_Node_B documentation for configuration details [\[6\]][automation-ocudu].
+  - Added support for OCUDU's O1 interface for configuration management and performance monitoring [\[5\]][ocudu-o1-adapter].
+  - Added Grafana dashboard for OCUDU metrics monitoring and visualization [\[6\]][ocudu-grafana].
+  - See the Next_Generation_Node_B documentation for configuration details [\[7\]][automation-ocudu].
 
 ### User Equipment
-- OpenAirInterface: Fixed UE synchronization and handover issues by shifting DU PBCH and SIB1 in the time domain [\[7\]][oai-handover-tutorial].
+- OpenAirInterface: Fixed UE synchronization and handover issues by shifting DU PBCH and SIB1 in the time domain [\[8\]][oai-handover-tutorial].
   - Added script `check_rrc_state.sh` to check the current RRC state from the gNodeB.
-- SRS UE: Updated network namespace setup to be same as OpenAirInterface namespaces for concurrent instances.
+- SRS UE: Updated network namespace setup to be the same as OpenAirInterface namespaces for concurrent instances.
 - SRS UE: Improved build idempotence by checking for existing ZeroMQ installations.
+- OpenAirInterface, OCUDU, SRS UE: Updated DU/UE network namespace IP allocation for clarity and consistency.
+- OpenAirInterface, OCUDU, SRS UE: Improved idempotence of network namespace setup and cleanup.
 
 ### 5G Core Network
-- 5gdeploy: Fix race condition by waiting for all subscribers to be added to database before proceeding with other components.
-- 5gdeploy: Enable UE slicing to correctly transmit S-NSSAI (SD=FFFFFF), fixing PDU session failures with free5GC NSSF.
+- 5gdeploy: Fixed race condition by waiting for all subscribers to be added to database before proceeding with other components.
+- 5gdeploy: Enabled UE slicing to correctly transmit S-NSSAI (SD=FFFFFF), fixing PDU session failures with free5GC NSSF.
+- 5gdeploy: Patched OAI database to allow multiple SDs per UE for custom network slice configurations.
 - 5gdeploy: Added option to toggle resetting `orantestbed` scenario upon generating configurations.
 - Open5GS: More efficient Open5GS install/uninstall, and fixed a segfault by using `meson` via `pip3` instead of `apt`.
 - Open5GS: Enabled Position-Independent Code (PIC) in Open5GS builds for shared library support.
 - Open5GS: Enabled `pipefail` for Open5GS WebUI installer and uninstaller scripts.
 
 ### RAN Intelligence Controllers
-- O-RAN SC Non-RT RIC: Fixed ChartMuseum registration to improve Non-RT RIC installation reliability.
-- O-RAN SC Near-RT RIC: Restored deprecated `pkg_resources` from `setuptools` for the DMS CLI.
+- FlexRIC: Migrated xApps to utilize the new NRCellDU-level distribution metric `CARR.PDSCHMCSDist.BinX.BinY.BinZ (PDSCH_RBs)`.
 - FlexRIC: Added script to interact with the InfluxDB database from the KPM monitor xApp.
+- FlexRIC: Fixed E2 identification in KPM monitoring xApps for improved RAN controller messaging.
+- O-RAN SC Near-RT RIC: To prevent hanging gNodeB, added detection of unhealthy/inaccessible E2 termination.
+- O-RAN SC Near-RT RIC: Restored deprecated `pkg_resources` from `setuptools` for the DMS CLI.
+- O-RAN SC Non-RT RIC: Fixed ChartMuseum registration to improve Non-RT RIC installation reliability.
 
 ### General
-- Instead of HTTPS, added optional SSH support for `git clone` (enable via `export USE_GIT_SSH=true`).
+- Instead of HTTPS, added optional SSH support for `git clone` (enable with `export USE_GIT_SSH=true`).
 - Made `IP_ADDRESS` fetching consistent and added a toggle for code patching (`APPLY_PATCHES=true`).
 - Enhanced error handling and coverage in dependency download scripts (`Additional_Scripts/`).
 - Added optional Node Version Manager (`nvm`) support for consistent Node.js versioning.
+- Fixed file permissions when `$SUDO_USER` is set and differs from `$USER`.
+- Fixed exit trap loop behavior to not persist when cancelled by the user.
+- Improved cleanup of directories and added dependency removal scripts in `Additional_Scripts/`.
 - Updated software commit hashes to the latest versions; additional tweaks and improvements.
 
 **Full Changelog**: https://github.com/usnistgov/O-RAN-Testbed-Automation/compare/v1.6.0...v1.7.0
@@ -41,10 +51,10 @@
 2. Open-Centralized-Unit-Distributed-Unit (OCUDU). OCUDU. [https://ocudu.org/][ocudu]
 3. OCUDU Documentation. GitLab Pages. [https://ocudu.gitlab.io/ocudu_docs][ocudu-docs]
 4. OCUDU Multi-UE Emulation Tutorial. GitLab Pages. [https://ocudu.gitlab.io/ocudu_docs/user_manual/tutorials/srsue/#multi-ue-emulation][ocudu-multi-ue]
-5. OCUDU Grafana Dashboard WebUI. NIST. [https://github.com/usnistgov/O-RAN-Testbed-Automation/tree/main/Next_Generation_Node_B#ocudu-grafana-webui][ocudu-grafana]
-6. O-RAN-Testbed-Automation, gNodeB Documentation. NIST. [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/Next_Generation_Node_B/README.md][automation-ocudu]
-7. Handover Tutorial for OAI. OpenAirInterface. [https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/0ba31c0f89dd3162c7d87142da2b0f4e08abeb58/doc/handover-tutorial.md#run-the-setup:~:text=DU0%20and%20DU1%20should%20use%20different%20SSBs][oai-handover-tutorial]
-
+5. OCUDU O1 Adapter [https://ocudu.gitlab.io/ocudu_docs/oran_apps/ocudu_o1_adapter/][ocudu-o1-adapter]
+6. OCUDU Grafana Dashboard WebUI. NIST. [https://github.com/usnistgov/O-RAN-Testbed-Automation/tree/main/Next_Generation_Node_B#ocudu-grafana-webui][ocudu-grafana]
+7. O-RAN-Testbed-Automation, gNodeB Documentation. NIST. [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/Next_Generation_Node_B/README.md][automation-ocudu]
+8. Handover Tutorial for OAI. OpenAirInterface. [https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/0ba31c0f89dd3162c7d87142da2b0f4e08abeb58/doc/handover-tutorial.md#run-the-setup:~:text=DU0%20and%20DU1%20should%20use%20different%20SSBs][oai-handover-tutorial]
 
 <!-- References -->
 
@@ -52,9 +62,13 @@
 [ocudu]: https://ocudu.org/
 [ocudu-docs]: https://ocudu.gitlab.io/ocudu_docs
 [ocudu-multi-ue]: https://ocudu.gitlab.io/ocudu_docs/user_manual/tutorials/srsue/#multi-ue-emulation
+[ocudu-o1-adapter]: https://ocudu.gitlab.io/ocudu_docs/oran_apps/ocudu_o1_adapter/
 [ocudu-grafana]: https://github.com/usnistgov/O-RAN-Testbed-Automation/tree/main/Next_Generation_Node_B#ocudu-grafana-webui
 [automation-ocudu]: https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/Next_Generation_Node_B/README.md
 [oai-handover-tutorial]: https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/0ba31c0f89dd3162c7d87142da2b0f4e08abeb58/doc/handover-tutorial.md#run-the-setup:~:text=DU0%20and%20DU1%20should%20use%20different%20SSBs
+
+
+
 
 ============= PREVIOUS CHANGELOGS BELOW =============
 

@@ -29,7 +29,7 @@
 # copyright protection within the United States.
 
 # Upon exit, restore the terminal to a sane state
-trap 'stty sane || true; exit' EXIT SIGINT SIGTERM
+trap 'trap - EXIT SIGINT SIGTERM; stty sane || true; exit' EXIT SIGINT SIGTERM
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then

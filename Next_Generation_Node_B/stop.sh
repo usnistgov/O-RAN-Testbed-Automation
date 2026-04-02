@@ -49,12 +49,12 @@ sudo ls >/dev/null 2>&1
 
 if command -v docker &>/dev/null; then
     # Check if the grafana container is running
-    if docker ps --format '{{.Names}}' 2>/dev/null | grep -Eq "^grafana$"; then
+    if docker ps --format '{{.Names}}' 2>/dev/null | grep -Eq "^ocudu-grafana$"; then
         ./stop_grafana_webui.sh
     fi
 fi
 
-if pgrep -f "src/o1_adapter" >/dev/null || docker ps --format '{{.Names}}' 2>/dev/null | grep -Eq "^ocudu_netconf$"; then
+if pgrep -f "src/o1_adapter" >/dev/null || (command -v docker &>/dev/null && docker ps --format '{{.Names}}' 2>/dev/null | grep -Eq "^ocudu_netconf$"); then
     echo "Stopping O1 Adapter..."
     ./additional_scripts/stop_o1_adapter.sh
 fi

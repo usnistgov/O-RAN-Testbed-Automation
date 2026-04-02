@@ -124,6 +124,19 @@ if [ ! -d "../RAN_Intelligent_Controllers/Near-Real-Time-RIC" ]; then
     ENABLE_E2_TERM="false"
 fi
 
+is_tcp_endpoint_reachable() {
+    local host="$1"
+    local port="$2"
+    if [ -z "$host" ] || [ -z "$port" ]; then
+        return 1
+    fi
+    if command -v timeout &>/dev/null; then
+        timeout 2 bash -c "cat </dev/null >/dev/tcp/${host}/${port}" &>/dev/null
+    else
+        bash -c "cat </dev/null >/dev/tcp/${host}/${port}" &>/dev/null
+    fi
+}
+
 if [ "$ENABLE_E2_TERM" = "true" ]; then
     PORT_E2TERM=36422
 
@@ -175,10 +188,17 @@ if [ "$ENABLE_E2_TERM" = "true" ]; then
             echo "No E2 address was provided, disabling E2 termination support."
             ENABLE_E2_TERM="false"
         else
-            IP_E2TERM_BIND=$IP_E2TERM
-            echo "IP_E2TERM: $IP_E2TERM"
-            echo "PORT_E2TERM: $PORT_E2TERM"
-            echo "IP_E2TERM_BIND: $IP_E2TERM_BIND"
+            if ! is_tcp_endpoint_reachable "$IP_E2TERM" "$PORT_E2TERM"; then
+                echo
+                echo "Could not reach E2 termination service at $IP_E2TERM:$PORT_E2TERM from this host."
+                echo "Disabling E2 termination support to prevent gNodeB startup failure."
+                ENABLE_E2_TERM="false"
+            else
+                IP_E2TERM_BIND=$IP_E2TERM
+                echo "IP_E2TERM: $IP_E2TERM"
+                echo "PORT_E2TERM: $PORT_E2TERM"
+                echo "IP_E2TERM_BIND: $IP_E2TERM_BIND"
+            fi
         fi
     fi
 fi
@@ -471,37 +491,44 @@ if [ ! -f "zmq_broker/multi_ue_scenario.py" ]; then
     fi
 
     grcc -o zmq_broker zmq_broker/multi_ue_scenario.grc
-
-    ZMQ_BROKER_PYTHON_FILE="zmq_broker/multi_ue_scenario.py"
-
-    # Allocate a /30 (4 addresses) subnet per UE (e.g., UE 1 -> 10.201.0.4/30, Gateway .5, UE .6)
-    BASE_SUBNET="10.201.0.0/16"
-    SUBNET_SIZE=4
-
-    UE_NUMBER=1
-    while true; do
-        PORT_RX=$((2100 + (UE_NUMBER - 1) * 100))
-        PORT_TX=$((2101 + (UE_NUMBER - 1) * 100))
-
-        # If the port string is missing, all UE configurations have been patched
-        if ! grep -q "'tcp://127\.0\.0\.1:$PORT_TX'" "$ZMQ_BROKER_PYTHON_FILE"; then
-            break
-        fi
-
-        SUBNET_OFFSET=$((UE_NUMBER * SUBNET_SIZE))
-        HOST_IP_OFFSET=$((SUBNET_OFFSET))   # .5
-        UE_IP_OFFSET=$((SUBNET_OFFSET + 1)) # .6
-        UE_IP=$(python3 install_scripts/fetch_nth_ip.py "$BASE_SUBNET" "$UE_IP_OFFSET")
-
-        # Connect req_sink to listen on all interfaces instead of just localhost
-        sed -i "s/'tcp:\/\/127\.0\.0\.1:$PORT_RX'/'tcp:\/\/*:$PORT_RX'/g" "$ZMQ_BROKER_PYTHON_FILE"
-        # Connect req_source to send to the UE IP instead of localhost
-        sed -i "s/'tcp:\/\/127\.0\.0\.1:$PORT_TX'/'tcp:\/\/$UE_IP:$PORT_TX'/g" "$ZMQ_BROKER_PYTHON_FILE"
-
-        UE_NUMBER=$((UE_NUMBER + 1))
-    done
-
-    echo "Successfully patched ZMQ Broker Python script for $((UE_NUMBER - 1)) UEs."
 fi
+
+ZMQ_BROKER_PYTHON_FILE="zmq_broker/multi_ue_scenario.py"
+if [ ! -f "$ZMQ_BROKER_PYTHON_FILE" ]; then
+    echo "Failed to locate $ZMQ_BROKER_PYTHON_FILE after generation."
+    exit 1
+fi
+
+echo "Synchronizing ZeroMQ Broker endpoints with UE subnet mapping..."
+
+# Allocate a /30 (4 addresses) subnet per UE (e.g., UE 1 -> 10.201.0.4/30, Gateway .5, UE .6)
+BASE_SUBNET="10.201.0.0/16"
+SUBNET_SIZE=4
+
+UE_NUMBER=1
+while true; do
+    PORT_RX=$((2100 + (UE_NUMBER - 1) * 100))
+    PORT_TX=$((2101 + (UE_NUMBER - 1) * 100))
+
+    # Stop when the UE endpoint does not exist in the broker graph
+    if ! grep -qE "'tcp://(127\\.0\\.0\\.1|\*):$PORT_RX'" "$ZMQ_BROKER_PYTHON_FILE"; then
+        break
+    fi
+
+    SUBNET_OFFSET=$((UE_NUMBER * SUBNET_SIZE))
+    UE_IP_OFFSET=$((SUBNET_OFFSET + 1)) # .6
+    UE_IP=$(python3 install_scripts/fetch_nth_ip.py "$BASE_SUBNET" "$UE_IP_OFFSET")
+
+    # UE RX: broker should listen on all interfaces in the host namespace
+    sed -i "s|'tcp://127\\.0\\.0\\.1:$PORT_RX'|'tcp://*:$PORT_RX'|g" "$ZMQ_BROKER_PYTHON_FILE"
+
+    # UE TX: force broker to connect to current UE namespace IP every run
+    sed -i "s|'tcp://127\\.0\\.0\\.1:$PORT_TX'|'tcp://$UE_IP:$PORT_TX'|g" "$ZMQ_BROKER_PYTHON_FILE"
+    sed -i "s|'tcp://10\\.[0-9]\\+\\.[0-9]\\+\\.[0-9]\\+:$PORT_TX'|'tcp://$UE_IP:$PORT_TX'|g" "$ZMQ_BROKER_PYTHON_FILE"
+
+    UE_NUMBER=$((UE_NUMBER + 1))
+done
+
+echo "Successfully synchronized ZMQ Broker Python script for $((UE_NUMBER - 1)) UEs."
 
 echo "Successfully configured the gNodeB. The configuration file is located in the configs/ directory."

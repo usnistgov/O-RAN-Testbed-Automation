@@ -118,12 +118,12 @@ if [[ "$OPEN5GS_INSTALLED" = true || "$GNODEB_INSTALLED" = true || "$UE_INSTALLE
     echo
     if [ -z "$KEEP_EXISTING_INSTALLS" ]; then
         echo "Previous installations were found, do you want to keep the old installations? (Y/n)"
-        read -r CONFIRM
-        CONFIRM=$(echo "${CONFIRM:-y}" | tr '[:upper:]' '[:lower:]')
-        if [[ "$CONFIRM" != "y" && "$CONFIRM" != "yes" ]]; then
-            KEEP_EXISTING_INSTALLS="n"
-        else
-            KEEP_EXISTING_INSTALLS="y"
+        read -r KEEP_EXISTING_INSTALLS
+        # Normalize input to lowercase and default to 'y' if empty
+        KEEP_EXISTING_INSTALLS=$(echo "${KEEP_EXISTING_INSTALLS:-y}" | tr '[:upper:]' '[:lower:]')
+        if [[ "$KEEP_EXISTING_INSTALLS" != "y" && "$KEEP_EXISTING_INSTALLS" != "yes" && "$KEEP_EXISTING_INSTALLS" != "n" && "$KEEP_EXISTING_INSTALLS" != "no" ]]; then
+            echo "Invalid input. Exiting."
+            exit 1
         fi
     else
         if [[ "$KEEP_EXISTING_INSTALLS" == "n" || "$KEEP_EXISTING_INSTALLS" == "no" ]]; then

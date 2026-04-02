@@ -100,7 +100,7 @@ cd "Next_Generation_Node_B" >nul 2>&1
 if not errorlevel 1 (
     git clone https://gitlab.com/ocudu/ocudu.git
     cd "ocudu"
-    git checkout 7f4e23f158e7603298f28a28767269e1c45cc985
+    git checkout 4d1fe417268ef19b5dd8677263f696602735eb85
     cd ..\..
 ) else (
     echo ERROR: Failed to cd to Next_Generation_Node_B. Skipping clone.
@@ -112,7 +112,7 @@ cd "Next_Generation_Node_B" >nul 2>&1
 if not errorlevel 1 (
     git clone https://gitlab.com/ocudu/ocudu_elements/ocudu_oran_apps/ocudu_o1_adapter.git
     cd "ocudu_o1_adapter"
-    git checkout 4671536856562f90df7d308bdefeae161381dc12
+    git checkout cbc03d78e9901c9a3df541194102529702d15991
     cd ..\..
 ) else (
     echo ERROR: Failed to cd to Next_Generation_Node_B. Skipping clone.
@@ -124,7 +124,7 @@ cd "Next_Generation_Node_B" >nul 2>&1
 if not errorlevel 1 (
     git clone https://gitlab.com/ocudu/ocudu_elements/ocudu_oran_apps/ocudu_netconf.git
     cd "ocudu_netconf"
-    git checkout f14ebf3b47e954cb86407c14c9146ded684db910
+    git checkout 6ed7cfbd031210fceeeb0d99f977dd3b85dfd183
     cd ..\..
 ) else (
     echo ERROR: Failed to cd to Next_Generation_Node_B. Skipping clone.
@@ -425,7 +425,7 @@ cd "OpenAirInterface_Testbed\Next_Generation_Node_B" >nul 2>&1
 if not errorlevel 1 (
     git clone https://gitlab.eurecom.fr/oai/o1-adapter.git
     cd "o1-adapter"
-    git checkout bac7fb147e97b4a25a20921d70128f5e8b710b80
+    git checkout 1cd696960d9b3d28461caa61ced4b173eff1eec9
     cd ..\..\..
 ) else (
     echo ERROR: Failed to cd to OpenAirInterface_Testbed\Next_Generation_Node_B. Skipping clone.
@@ -449,7 +449,7 @@ cd "OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC" >nul 2>&1
 if not errorlevel 1 (
     git clone https://gitlab.eurecom.fr/mosaic5g/flexric.git
     cd "flexric"
-    git checkout e10bae8e30366aa171556a39ad3eef6e5b1f379e
+    git checkout e5e5873f36911c14095a6733275d16464f74d3bf
     cd ..\..\..\..
 ) else (
     echo ERROR: Failed to cd to OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC. Skipping clone.

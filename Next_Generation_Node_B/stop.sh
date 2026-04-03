@@ -44,9 +44,6 @@ if echo "$IS_RUNNING" | grep -q "gNodeB: NOT_RUNNING" && echo "$IS_RUNNING" | gr
     exit 0
 fi
 
-# Prevent the subsequent command from requiring credential input
-sudo ls >/dev/null 2>&1
-
 if command -v docker &>/dev/null; then
     # Check if the grafana container is running
     if docker ps --format '{{.Names}}' 2>/dev/null | grep -Eq "^ocudu-grafana$"; then

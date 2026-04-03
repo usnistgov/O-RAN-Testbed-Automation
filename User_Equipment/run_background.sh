@@ -62,6 +62,7 @@ mkdir -p logs
 >logs/ue${UE_NUMBER}_stdout.txt
 sudo chown --recursive "${SUDO_USER:-$USER}" logs
 
+sudo -v # Pre-authenticate sudo
 sudo setsid bash -c "stdbuf -oL -eL \"$SCRIPT_DIR/run.sh\" $UE_NUMBER >/dev/null 2>&1" </dev/null &
 
 ATTEMPT=0

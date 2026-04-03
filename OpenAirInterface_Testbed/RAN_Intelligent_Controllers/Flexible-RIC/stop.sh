@@ -50,9 +50,6 @@ fi
 
 ./additional_scripts/stop_grafana_and_python_server.sh
 
-# Prevent the subsequent command from requiring credential input
-sudo ls >/dev/null 2>&1
-
 # Send a graceful shutdown signal to the FlexRIC process
 sudo pkill -f "nearRT-RIC" >/dev/null 2>&1
 

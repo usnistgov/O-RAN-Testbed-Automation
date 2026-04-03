@@ -110,9 +110,6 @@ if [ -f "logs/split_du${DU_NUMBER}_stdout.txt" ]; then
 fi
 >logs/split_du${DU_NUMBER}_stdout.txt
 
-# Ensure the following command runs with sudo privileges
-sudo ls >/dev/null
-
 # Give the DU its own network namespace and configure it to access the host network
 sudo ./install_scripts/setup_du_namespace.sh "$DU_NUMBER"
 

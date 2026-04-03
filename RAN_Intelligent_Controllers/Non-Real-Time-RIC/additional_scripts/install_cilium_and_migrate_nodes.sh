@@ -47,7 +47,7 @@ if [[ "$CONFIRM" != "y" && "$CONFIRM" != "yes" ]]; then
     exit 1
 fi
 
-sudo ls &>/dev/null
+sudo -v # Pre-authenticate sudo
 
 if cilium status &>/dev/null; then
     echo "Cilium is already installed. Uninstalling Cilium first..."

@@ -81,9 +81,6 @@ if $(./is_running.sh | grep -q "User Equipment: NOT_RUNNING"); then
     exit 0
 fi
 
-# Prevent the subsequent commands from requiring credential input
-sudo ls >/dev/null 2>&1
-
 # Send a graceful shutdown signal to the UE process
 if [ -z "$UE_NUMBER" ]; then
     sudo pkill -f "nr-uesoftmodem" >/dev/null 2>&1

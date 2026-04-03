@@ -733,6 +733,7 @@ else
     sudo pkill -x containerd >/dev/null 2>&1 || true
     sudo rm -f /var/run/docker.pid /var/run/docker.sock
     sudo mkdir -p /run /var/run
+    sudo -v # Pre-authenticate sudo
     sudo sh -c 'setsid dockerd --config-file=/etc/docker/daemon.json >>'"${DOCKERD_LOG}"' 2>&1 </dev/null &'
     # Wait for Docker to be ready
     for ATTEMPT in $(seq 1 60); do
@@ -751,6 +752,7 @@ else
         if ! grep -q 'native.cgroupdriver' /etc/docker/daemon.json; then
             sudo jq '. + {"exec-opts": ["native.cgroupdriver=cgroupfs"]}' /etc/docker/daemon.json.bak | sudo tee /etc/docker/daemon.json >/dev/null
         fi
+        sudo -v # Pre-authenticate sudo
         sudo sh -c 'setsid dockerd --config-file=/etc/docker/daemon.json >>'"${DOCKERD_LOG}"' 2>&1 </dev/null &'
         for ATTEMPT in $(seq 1 60); do
             if sudo test -S /var/run/docker.sock && sudo docker version >/dev/null 2>&1; then
@@ -1359,7 +1361,7 @@ fi
 
 echo "Waiting for Flannel CNI configuration to be created..."
 for i in $(seq 1 120); do
-    if sudo test -f /etc/cni/net.d/10-flannel.conflist || sudo ls /etc/cni/net.d/*.conflist >/dev/null 2>&1; then
+    if sudo test -f /etc/cni/net.d/10-flannel.conflist || sudo find /etc/cni/net.d -maxdepth 1 -name '*.conflist' -print -quit | grep -q .; then
         break
     fi
     sleep 1

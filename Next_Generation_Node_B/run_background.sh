@@ -62,6 +62,7 @@ else
     >logs/gnb_stdout.txt
     sudo chown --recursive "${SUDO_USER:-$USER}" logs
 
+    sudo -v # Pre-authenticate sudo
     sudo env $ZMQ_BROKER_UI_ENV setsid bash -c "stdbuf -oL -eL \"$SCRIPT_DIR/run.sh\" >/dev/null 2>&1" </dev/null &
 
     ATTEMPT=0

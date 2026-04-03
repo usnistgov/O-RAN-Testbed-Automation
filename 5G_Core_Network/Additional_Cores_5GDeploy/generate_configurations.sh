@@ -127,6 +127,7 @@ if [ ! -f "options.yaml" ]; then
     echo "dnn: nist-dnn" >>"options.yaml"
     echo "" >>"options.yaml"
     echo "# Configure the Single Network Slice Selection Assistance Information (S-NSSAI)" >>"options.yaml"
+    echo "# NOTE: \"sst\" and \"sd\" are interpreted as hexadecimal values (no 0x prefix)." >>"options.yaml"
     echo "slices:" >>"options.yaml"
     echo "  - sst: 1" >>"options.yaml"
     echo "    sd: FFFFFF" >>"options.yaml"
@@ -203,6 +204,26 @@ if [[ -z "$SST" || -z "$SD" || "$SST" == "null" || "$SD" == "null" ]]; then
     echo "SST or SD is not set in options.yaml, please ensure that \"slices[].sst\" and \"slices[].sd\" are set."
     exit 1
 fi
+
+# SST/SD are configured in options.yaml as hex without 0x prefix.
+SST_HEX="${SST#0x}"
+SST_HEX="${SST_HEX#0X}"
+SST_HEX="${SST_HEX^^}"
+SD_HEX="${SD#0x}"
+SD_HEX="${SD_HEX#0X}"
+SD_HEX="${SD_HEX^^}"
+
+if [[ ! "$SST_HEX" =~ ^[0-9A-F]{1,2}$ ]]; then
+    echo "Invalid slices[0].sst '$SST'. Use hexadecimal (00-FF), no 0x prefix."
+    exit 1
+fi
+if [[ ! "$SD_HEX" =~ ^[0-9A-F]{1,6}$ ]]; then
+    echo "Invalid slices[0].sd '$SD'. Use hexadecimal (up to 6 hex digits), no 0x prefix."
+    exit 1
+fi
+
+SST_DEC=$((16#$SST_HEX))
+SD_HEX=$(printf "%06X" "$((16#$SD_HEX))")
 
 cd "$SCRIPT_DIR"
 
@@ -337,11 +358,11 @@ if [ "$RESET_ORANTESTBED_SCENARIO" = true ]; then
     cp -r 20230817 orantestbed
 fi
 
-SST_PADDED=$(printf "%02x" "$SST") # For example, 1 -> 01
+SST_PADDED=$(printf "%02x" "$SST_DEC") # For example, 0x01 -> 01
 
 if [ "$RESET_ORANTESTBED_SCENARIO" = true ]; then
     echo "Revising scenario files..."
-    sed -i "s/01000000/$SST_PADDED$SD/g" orantestbed/scenario.ts
+    sed -i "s/01000000/$SST_PADDED$SD_HEX/g" orantestbed/scenario.ts
     sed -i "s/20230817/orantestbed/g" orantestbed/sonic-dl.ts
     sed -i "s/20230817/orantestbed/g" orantestbed/sonic-ul.ts
 fi
@@ -420,7 +441,7 @@ done
 for FILE in up-cfg/upf1.yaml up-cfg/upf140.yaml up-cfg/upf141.yaml; do
     if [ -f "$FILE" ]; then
         # Patch all "sd" fields to the correct SD value, but only for top-level or first element arrays
-        SD="$SD" yq '
+        SD="$SD_HEX" yq '
             with(select(has("sd")); .sd = env(SD)) |
             (
                 (.. | select(kind == "seq" and length > 0) | .[0]
@@ -440,10 +461,10 @@ if [ -f "compose.yml" ]; then
     sed -i -E 's/"dnn"[[:space:]]*:[[:space:]]*\[[[:space:]]*"internet"[[:space:]]*\]/"dnn":["'"$DNN"'"]/g' compose.yml
     # Replace "dnn":"internet" with "dnn":"$DNN"
     sed -i -E 's/"dnn"[[:space:]]*:[[:space:]]*"internet"/"dnn":"'"$DNN"'"/g' compose.yml
-    # Replace ${SST_PADDED}${SD}_internet with ${SST_PADDED}${SD}_${DNN}
-    sed -i -E "s/${SST_PADDED}${SD}_internet/${SST_PADDED}${SD}_${DNN}/g" compose.yml
-    # Replace ${SST_PADDED}${SD}:internet with ${SST_PADDED}${SD}:${DNN}
-    sed -i -E "s/${SST_PADDED}${SD}:internet/${SST_PADDED}${SD}:${DNN}/g" compose.yml
+    # Replace ${SST_PADDED}${SD_HEX}_internet with ${SST_PADDED}${SD_HEX}_${DNN}
+    sed -i -E "s/${SST_PADDED}${SD_HEX}_internet/${SST_PADDED}${SD_HEX}_${DNN}/g" compose.yml
+    # Replace ${SST_PADDED}${SD_HEX}:internet with ${SST_PADDED}${SD_HEX}:${DNN}
+    sed -i -E "s/${SST_PADDED}${SD_HEX}:internet/${SST_PADDED}${SD_HEX}:${DNN}/g" compose.yml
 fi
 
 # Revise cp-sql/oai_db.sql

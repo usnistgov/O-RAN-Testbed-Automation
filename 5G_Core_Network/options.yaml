@@ -30,8 +30,9 @@ tac: 7
 dnn: nist-dnn
 
 # Configure the Single Network Slice Selection Assistance Information (S-NSSAI)
+# NOTE: "sst" and "sd" are interpreted as hexadecimal values (no 0x prefix).
 slices:
-  - sst: 1
+  - sst: EE
     sd: FFFFFF
 
 # If false, AMF will use a local IP, otherwise it will use the hostname IP

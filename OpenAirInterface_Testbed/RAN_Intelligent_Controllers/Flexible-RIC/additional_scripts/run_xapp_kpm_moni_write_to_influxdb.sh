@@ -105,6 +105,18 @@ if [ -f "$YAML_PATH" ]; then
     elif [[ -z "$SD" || "$SD" == "null" ]]; then
         SD=""
     else
+        SST_HEX="${SST#0x}"
+        SST_HEX="${SST_HEX#0X}"
+        SST_HEX="${SST_HEX^^}"
+        SD_HEX="${SD#0x}"
+        SD_HEX="${SD_HEX#0X}"
+        SD_HEX="${SD_HEX^^}"
+        if [[ ! "$SST_HEX" =~ ^[0-9A-F]{1,2}$ || ! "$SD_HEX" =~ ^[0-9A-F]{1,6}$ ]]; then
+            echo "Invalid slices[0].sst/sd in $YAML_PATH. Expected hex values (no 0x prefix)."
+            exit 1
+        fi
+        SST="$((16#$SST_HEX))"
+        SD="0x$(printf "%06X" "$((16#$SD_HEX))")"
         echo "Using SST: $SST and SD: $SD for the xApp."
     fi
 fi

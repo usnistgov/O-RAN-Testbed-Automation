@@ -62,8 +62,8 @@ usage() {
     echo "  --key [Key]                   Set the authentication key (default: $DEFAULT_KEY)"
     echo "  --opc [OPC]                   Set the OPC value (default: $DEFAULT_OPC)"
     echo "  --apn [APN]                   Set the APN value (default: $DEFAULT_APN)"
-    echo "  --sst [SST]                   Set the SST value (optional)"
-    echo "  --sd [SD]                     Set the SD value (optional)"
+    echo "  --sst [SST]                   Set SST in decimal (optional). Hex is also accepted with 0x prefix"
+    echo "  --sd [SD]                     Set SD in hex (optional, no 0x prefix)"
     echo "  --ipv4 [IPv4]                 Set the IPv4 address (optional)"
     echo "  --ipv6 [IPv6]                 Set the IPv6 address (optional)"
     echo "  -h, --help                    Display this help message and exit"
@@ -130,6 +130,38 @@ SD="${SD:-$DEFAULT_SD}"
 IPV4="${IPV4:-$DEFAULT_IPV4}"
 IPV6="${IPV6:-$DEFAULT_IPV6}"
 
+if [[ -n "$SST" && -n "$SD" ]]; then
+    if [[ "$SST" =~ ^0[xX][0-9A-Fa-f]{1,2}$ ]]; then
+        SST_DEC="$((16#${SST:2}))"
+    elif [[ "$SST" =~ [A-Fa-f] ]]; then
+        SST_HEX="${SST^^}"
+        if [[ ! "$SST_HEX" =~ ^[0-9A-F]{1,2}$ ]]; then
+            echo "Invalid --sst '$SST'. Use decimal (0-255) or hexadecimal (00-FF)."
+            exit 1
+        fi
+        SST_DEC="$((16#$SST_HEX))"
+    elif [[ "$SST" =~ ^[0-9]{1,3}$ ]]; then
+        SST_DEC="$SST"
+    else
+        echo "Invalid --sst '$SST'. Use decimal (0-255) or hexadecimal (00-FF)."
+        exit 1
+    fi
+
+    if ((SST_DEC < 0 || SST_DEC > 255)); then
+        echo "Invalid --sst '$SST'. SST must be in range 0-255."
+        exit 1
+    fi
+
+    SD_HEX="${SD#0x}"
+    SD_HEX="${SD_HEX#0X}"
+    SD_HEX="${SD_HEX^^}"
+    if [[ ! "$SD_HEX" =~ ^[0-9A-F]{1,6}$ ]]; then
+        echo "Invalid --sd '$SD'. Use hexadecimal (up to 6 hex digits), no 0x prefix."
+        exit 1
+    fi
+    SD_HEX="$(printf "%06X" "$((16#$SD_HEX))")"
+fi
+
 # Check if the subscriber already exists
 if $DBCTL_PATH showpretty | grep -q "imsi: '$IMSI'"; then
     echo "Subscriber with IMSI $IMSI already exists in the database."
@@ -138,7 +170,7 @@ fi
 
 # Command to add subscriber using the open5gs-dbctl tool
 if [[ -n "$SST" && -n "$SD" ]]; then
-    CMD="$DBCTL_PATH add_ue_with_slice $IMSI $KEY $OPC $APN $SST $SD"
+    CMD="$DBCTL_PATH add_ue_with_slice $IMSI $KEY $OPC $APN $SST_DEC $SD_HEX"
 else
     CMD="$DBCTL_PATH add_ue_with_apn $IMSI $KEY $OPC $APN"
 fi

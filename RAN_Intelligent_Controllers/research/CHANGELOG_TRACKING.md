@@ -13,6 +13,7 @@
   - Added script `check_rrc_state.sh` to check the current RRC state from the gNodeB.
 - SRS UE: Updated network namespace setup to be the same as OpenAirInterface namespaces for concurrent instances.
 - SRS UE: Improved build idempotence by checking for existing ZeroMQ installations.
+- SRS UE, OpenAirInterface: Fixed fetching of core address for 5gdeploy when simulating traffic to the core.
 - OpenAirInterface, OCUDU, SRS UE: Updated DU/UE network namespace IP allocation for clarity and consistency.
 - OpenAirInterface, OCUDU, SRS UE: Improved idempotence of network namespace setup and cleanup.
 
@@ -29,6 +30,7 @@
 - FlexRIC: Migrated xApps to utilize the new NRCellDU-level distribution metric `CARR.PDSCHMCSDist.BinX.BinY.BinZ (PDSCH_RBs)`.
 - FlexRIC: Added script to interact with the InfluxDB database from the KPM monitor xApp.
 - FlexRIC: Fixed E2 identification in KPM monitoring xApps for improved RAN controller messaging.
+- O-RAN SC: Moved backup J, K, and L release `commit_hashes.json` files to their respective directories.
 - O-RAN SC Near-RT RIC: To prevent hanging gNodeB, added detection of unhealthy/inaccessible E2 termination.
 - O-RAN SC Near-RT RIC: Restored deprecated `pkg_resources` from `setuptools` for the DMS CLI.
 - O-RAN SC Non-RT RIC: Fixed ChartMuseum registration to improve Non-RT RIC installation reliability.
@@ -38,6 +40,8 @@
 - Made `IP_ADDRESS` fetching consistent and added a toggle for code patching (`APPLY_PATCHES=true`).
 - Enhanced error handling and coverage in dependency download scripts (`Additional_Scripts/`).
 - Added optional Node Version Manager (`nvm`) support for consistent Node.js versioning.
+- When stopping an application, used square brackets to prevent self-matching.
+- Normalized and cleaned up usage of sudo pre-authentication across scripts.
 - Fixed file permissions when `$SUDO_USER` is set and differs from `$USER`.
 - Fixed exit trap loop behavior to not persist when cancelled by the user.
 - Improved cleanup of directories and added dependency removal scripts in `Additional_Scripts/`.
@@ -66,6 +70,7 @@
 [ocudu-grafana]: https://github.com/usnistgov/O-RAN-Testbed-Automation/tree/main/Next_Generation_Node_B#ocudu-grafana-webui
 [automation-ocudu]: https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/Next_Generation_Node_B/README.md
 [oai-handover-tutorial]: https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/0ba31c0f89dd3162c7d87142da2b0f4e08abeb58/doc/handover-tutorial.md#run-the-setup:~:text=DU0%20and%20DU1%20should%20use%20different%20SSBs
+
 
 
 

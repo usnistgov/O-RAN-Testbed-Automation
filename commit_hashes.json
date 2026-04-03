@@ -1,5 +1,5 @@
 {
-  "https://github.com/usnistgov/5gdeploy.git": ["", "6bb359424fe3400b9fc12b9d5a2aa9ca45b7ba72"],
+  "https://github.com/usnistgov/5gdeploy.git": ["", ""],
   "https://github.com/open5gs/open5gs.git": ["", "318eeb49a7dcdff733dec60e02d9c60aefca2fb9"],
   "https://github.com/srsran/srsRAN_4G.git": ["", "6bcbd9e5bf8686aa7085202cd847c5ddd64a9c16"],
   "https://github.com/srsran/oran-sc-ric.git": ["", "621ade26251f69a4ad079ba98bb708d8e5aeeb98"],

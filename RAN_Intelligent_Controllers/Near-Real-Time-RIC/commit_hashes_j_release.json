@@ -1,4 +1,5 @@
 {
+  "https://github.com/usnistgov/5gdeploy.git": ["", ""],
   "https://github.com/open5gs/open5gs.git": ["", "ba05380f5b6ecb954f6991271bed163ade4de8d6"],
   "https://github.com/srsran/srsRAN_4G.git": ["", "ec29b0c1ff79cebcbe66caa6d6b90778261c42b8"],
   "https://github.com/zeromq/libzmq.git": ["", "34f7fa22022bed9e0e390ed3580a1c83ac4a2834"],

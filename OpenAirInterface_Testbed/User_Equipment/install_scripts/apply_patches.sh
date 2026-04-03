@@ -135,7 +135,7 @@ if [ ! -f "cmake_targets/tools/build_helper.previous" ]; then
     cp cmake_targets/tools/build_helper cmake_targets/tools/build_helper.previous
     cp cmake_targets/tools/build_helper.previous "$PARENT_DIR/install_patch_files/openairinterface/cmake_targets/tools/build_helper.previous"
 fi
-echo "Patching build_helper to add Linux Mint support..."
+echo "Patching build_helper to extend Linux support..."
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface/cmake_targets/tools/build_helper.patch"
 cd ..
 

@@ -62,7 +62,7 @@ fi
 
 if command -v docker &>/dev/null; then
     # Check if the grafana container is running
-    if docker ps --format '{{.Names}}' 2>/dev/null | grep -Eq "^ocudu-grafana$"; then
+    if docker ps --format '{{.Names}}' 2>/dev/null | grep -Eq "^ocudu-grafana$" || sudo docker ps --format '{{.Names}}' 2>/dev/null | grep -Eq "^ocudu-grafana$"; then
         if [ -f "$OVERRIDE_FILE" ]; then
             sudo $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" -f "$OVERRIDE_FILE" down
         else

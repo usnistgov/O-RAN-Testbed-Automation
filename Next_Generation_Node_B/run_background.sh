@@ -74,7 +74,7 @@ else
             echo "gNodeB did not start after 60 seconds, exiting..."
             exit 1
         fi
-        if grep -q "Error" logs/gnb_stdout.txt || grep -q "OCUDU ERROR:" logs/gnb_stdout.txt; then
+        if [ -f logs/gnb_stdout.txt ] && (grep -q "Error" logs/gnb_stdout.txt || grep -q "OCUDU ERROR:" logs/gnb_stdout.txt); then
             echo "Error starting gNodeB. Check logs/gnb_stdout.txt for more information."
             exit 1
         fi

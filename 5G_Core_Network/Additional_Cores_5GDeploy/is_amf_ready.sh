@@ -90,8 +90,9 @@ fi
 
 if [[ "$CORE_TO_USE" == "5gdeploy-open5gs" ]]; then
     if echo "$AMF_LOG" | grep -q "NF registered"; then
-        # Also ensure that at least three subscribers have been created in MongoDB
-        if [ "$(docker logs mongo 2>&1 | grep -c "Creating subscriber")" -gt 3 ]; then
+        # Wait for all subscribers to be created
+        NUM_SUBS=$(($(wc -l <configs/sims.tsv) - 1))
+        if [ "$(docker logs mongo 2>&1 | grep -c "Creating subscriber")" -ge "$NUM_SUBS" ]; then
             echo true
             exit 0
         fi
@@ -100,7 +101,7 @@ if [[ "$CORE_TO_USE" == "5gdeploy-open5gs" ]]; then
     exit 0
 elif [[ "$CORE_TO_USE" == "5gdeploy-oai" ]]; then
     if echo "$AMF_LOG" | grep -q "AMF has successfully registered to NRF"; then
-        if [ "$(docker logs sql 2>&1 | grep -c "MariaDB setup finished")" -gt 0 ] &&
+        if [ "$(docker logs sql 2>&1 | grep -c "MariaDB init process done")" -gt 0 ] &&
             docker logs udr 2>&1 | grep -q "Sending NF Registration request"; then
             echo true
             exit 0
@@ -108,8 +109,12 @@ elif [[ "$CORE_TO_USE" == "5gdeploy-oai" ]]; then
     fi
 elif [[ "$CORE_TO_USE" == "5gdeploy-free5gc" ]]; then
     if echo "$AMF_LOG" | grep -q "Start SBI server"; then
-        echo true
-        exit 0
+        # Wait for all subscribers to be created
+        NUM_SUBS=$(($(wc -l <configs/sims.tsv) - 1))
+        if [ "$(docker logs webui 2>&1 | grep -c "Post One Subscriber Data")" -ge "$NUM_SUBS" ]; then
+            echo true
+            exit 0
+        fi
     fi
 elif [[ "$CORE_TO_USE" == "5gdeploy-phoenix" ]]; then
     if echo "$AMF_LOG" | grep -q "Successfully parsed command line"; then # TODO: Improve this check

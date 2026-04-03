@@ -183,6 +183,7 @@ cd "$SCRIPT_DIR/5gdeploy"
 # Install 5gdeploy. For more information, see the 5gdeploy documentation: https://github.com/usnistgov/5gdeploy/blob/main/docs/INSTALL.md
 echo "Starting installation of 5G Core Deployment Helper (5gdeploy)..."
 ./install.sh \
+    --build-network host \
     --dpdk-version v24.11 \
     --eupf-version 54ed069c6cdf1da18b09bd78cb166bc4e4dd1ceb \
     --free5gc-version v4.0.1 \

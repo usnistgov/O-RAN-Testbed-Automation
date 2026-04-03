@@ -56,6 +56,17 @@ if [ -f "CMakeLists.txt" ]; then
 fi
 cd ..
 
+# Support SST values greater than 4
+cd openairinterface5g
+git restore openair3/UICC/pdu_session.c
+if [ ! -f "openair3/UICC/pdu_session.c.previous" ]; then
+    cp openair3/UICC/pdu_session.c openair3/UICC/pdu_session.c.previous
+    cp openair3/UICC/pdu_session.c.previous "$PARENT_DIR/install_patch_files/openairinterface/openair3/UICC/pdu_session.c.previous"
+fi
+echo "Patching pdu_session.c to support SST values greater than 4..."
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface/openair3/UICC/pdu_session.c.patch"
+cd ..
+
 # If using Linux Mint, add support for Linux Mint 20, 21, and 22 to OpenAirInterface
 if grep -q "Linux Mint" /etc/os-release; then
     echo "Linux Mint detected, attempting to patching OpenAirInterface to support Linux Mint 20, 21, and 22..."

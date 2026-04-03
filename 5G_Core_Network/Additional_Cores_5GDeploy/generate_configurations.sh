@@ -28,14 +28,14 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-AMF_IP=192.168.62.11 # N2 interface
+RESET_ORANTESTBED_SCENARIO=true # Set to false to not modify the 5gdeploy/scenario/orantestbed scenario files before generation
+AMF_IP=192.168.62.11            # N2 interface
 N2_IP_BIND=192.168.62.1
-N3_IP_BIND=$(ip route get 1 | awk '{print $(NF-2); exit}') # Get the IP of the primary network interface
 UPF1_IP=192.168.63.21
 UPF4_IP=192.168.63.24
 SUBNET_INTERNAL="172.25.160.0/20" # Sets the subnet for internal core network
 
-UE_NUMBERS=($(seq 1 100)) # Subscribers from UE 1 to UE 100
+UE_NUMBERS=($(seq 1 10)) # Subscribers from UE 1 to UE 10
 
 # Exit immediately if a command fails
 set -e
@@ -127,10 +127,12 @@ if [ ! -f "options.yaml" ]; then
     echo "dnn: nist-dnn" >>"options.yaml"
     echo "" >>"options.yaml"
     echo "# Configure the Single Network Slice Selection Assistance Information (S-NSSAI)" >>"options.yaml"
-    echo "sst: 1" >>"options.yaml"
-    echo "sd: 000001" >>"options.yaml"
+    echo "# NOTE: \"sst\" and \"sd\" are interpreted as hexadecimal values (no 0x prefix)." >>"options.yaml"
+    echo "slices:" >>"options.yaml"
+    echo "  - sst: 1" >>"options.yaml"
+    echo "    sd: FFFFFF" >>"options.yaml"
     echo "" >>"options.yaml"
-    echo "# If core_to_use=open5gs, false means AMF will use the default 127.0.0.5, true means it will use the hostname IP" >>"options.yaml"
+    echo "# If false, AMF will use a local IP, otherwise it will use the hostname IP" >>"options.yaml"
     echo "expose_amf_over_hostname: false" >>"options.yaml"
     echo "" >>"options.yaml"
     echo "# If core_to_use=open5gs, toggle whether or not to include the Security Edge Protection Proxies (SEPP1 and SEPP2)" >>"options.yaml"
@@ -150,6 +152,15 @@ fi
 # Read PLMN and TAC values from the YAML file using yq
 PLMN=$(yq eval '.plmn' options.yaml)
 TAC=$(yq eval '.tac' options.yaml)
+EXPOSE_AMF=$(yq eval '.expose_amf_over_hostname' options.yaml)
+
+if [ "$EXPOSE_AMF" = "true" ]; then
+    N3_IP_BIND=$(ip route get 1 | awk '{print $(NF-2); exit}') # Get the IP of the primary network interface
+    N2_IP_BIND=$(ip route get 1 | awk '{print $(NF-2); exit}') # Expose N2 over primary network interface
+else
+    N3_IP_BIND="192.168.63.1" # Internal dockerd network bind for UPF
+    N2_IP_BIND="192.168.62.1" # Internal dockerd network bind for AMF
+fi
 
 # Parse Mobile Country Code (MCC) and Mobile Network Code (MNC) from PLMN
 MCC="${PLMN:0:3}"
@@ -193,6 +204,26 @@ if [[ -z "$SST" || -z "$SD" || "$SST" == "null" || "$SD" == "null" ]]; then
     echo "SST or SD is not set in options.yaml, please ensure that \"slices[].sst\" and \"slices[].sd\" are set."
     exit 1
 fi
+
+# SST/SD are configured in options.yaml as hex without 0x prefix.
+SST_HEX="${SST#0x}"
+SST_HEX="${SST_HEX#0X}"
+SST_HEX="${SST_HEX^^}"
+SD_HEX="${SD#0x}"
+SD_HEX="${SD_HEX#0X}"
+SD_HEX="${SD_HEX^^}"
+
+if [[ ! "$SST_HEX" =~ ^[0-9A-F]{1,2}$ ]]; then
+    echo "Invalid slices[0].sst '$SST'. Use hexadecimal (00-FF), no 0x prefix."
+    exit 1
+fi
+if [[ ! "$SD_HEX" =~ ^[0-9A-F]{1,6}$ ]]; then
+    echo "Invalid slices[0].sd '$SD'. Use hexadecimal (up to 6 hex digits), no 0x prefix."
+    exit 1
+fi
+
+SST_DEC=$((16#$SST_HEX))
+SD_HEX=$(printf "%06X" "$((16#$SD_HEX))")
 
 cd "$SCRIPT_DIR"
 
@@ -318,18 +349,23 @@ echo "$N2_IP_BIND" >>$AMF_ADDRESSES_OUTPUT
 ### Start of pre-generation patching ###
 cd "$SCRIPT_DIR/5gdeploy/scenario"
 
-if [ -d "orantestbed" ]; then
-    echo "Removing existing orantestbed directory..."
-    sudo rm -rf "orantestbed"
+if [ "$RESET_ORANTESTBED_SCENARIO" = true ]; then
+    echo "Resetting \"orantestbed\" scenario in \"$SCRIPT_DIR/5gdeploy/scenario\"..."
+    if [ -d "orantestbed" ]; then
+        echo "Removing existing orantestbed directory..."
+        sudo rm -rf "orantestbed"
+    fi
+    cp -r 20230817 orantestbed
 fi
-cp -r 20230817 orantestbed
 
-SST_PADDED=$(printf "%02x" "$SST") # For example, 1 -> 01
+SST_PADDED=$(printf "%02x" "$SST_DEC") # For example, 0x01 -> 01
 
-echo "Revising scenario files..."
-sed -i "s/01000000/$SST_PADDED$SD/g" orantestbed/scenario.ts
-sed -i "s/20230817/orantestbed/g" orantestbed/sonic-dl.ts
-sed -i "s/20230817/orantestbed/g" orantestbed/sonic-ul.ts
+if [ "$RESET_ORANTESTBED_SCENARIO" = true ]; then
+    echo "Revising scenario files..."
+    sed -i "s/01000000/$SST_PADDED$SD_HEX/g" orantestbed/scenario.ts
+    sed -i "s/20230817/orantestbed/g" orantestbed/sonic-dl.ts
+    sed -i "s/20230817/orantestbed/g" orantestbed/sonic-ul.ts
+fi
 
 TAC_PADDED=$(printf "%06x" "$TAC") # For example, 7 -> 000007
 # Edit the common scenario template
@@ -405,7 +441,7 @@ done
 for FILE in up-cfg/upf1.yaml up-cfg/upf140.yaml up-cfg/upf141.yaml; do
     if [ -f "$FILE" ]; then
         # Patch all "sd" fields to the correct SD value, but only for top-level or first element arrays
-        SD="$SD" yq '
+        SD="$SD_HEX" yq '
             with(select(has("sd")); .sd = env(SD)) |
             (
                 (.. | select(kind == "seq" and length > 0) | .[0]
@@ -425,16 +461,18 @@ if [ -f "compose.yml" ]; then
     sed -i -E 's/"dnn"[[:space:]]*:[[:space:]]*\[[[:space:]]*"internet"[[:space:]]*\]/"dnn":["'"$DNN"'"]/g' compose.yml
     # Replace "dnn":"internet" with "dnn":"$DNN"
     sed -i -E 's/"dnn"[[:space:]]*:[[:space:]]*"internet"/"dnn":"'"$DNN"'"/g' compose.yml
-    # Replace ${SST_PADDED}${SD}_internet with ${SST_PADDED}${SD}_${DNN}
-    sed -i -E "s/${SST_PADDED}${SD}_internet/${SST_PADDED}${SD}_${DNN}/g" compose.yml
-    # Replace ${SST_PADDED}${SD}:internet with ${SST_PADDED}${SD}:${DNN}
-    sed -i -E "s/${SST_PADDED}${SD}:internet/${SST_PADDED}${SD}:${DNN}/g" compose.yml
+    # Replace ${SST_PADDED}${SD_HEX}_internet with ${SST_PADDED}${SD_HEX}_${DNN}
+    sed -i -E "s/${SST_PADDED}${SD_HEX}_internet/${SST_PADDED}${SD_HEX}_${DNN}/g" compose.yml
+    # Replace ${SST_PADDED}${SD_HEX}:internet with ${SST_PADDED}${SD_HEX}:${DNN}
+    sed -i -E "s/${SST_PADDED}${SD_HEX}:internet/${SST_PADDED}${SD_HEX}:${DNN}/g" compose.yml
 fi
 
 # Revise cp-sql/oai_db.sql
 if [ -f "cp-sql/oai_db.sql" ]; then
     # Ensure that the database is dropped before creating it
     sed -i '1i DROP DATABASE IF EXISTS oai_db;' cp-sql/oai_db.sql
+    # Fix primary key for SessionManagementSubscriptionData to allow multiple SDs per UE
+    sed -i '/ALTER TABLE `SessionManagementSubscriptionData`/,/ADD PRIMARY KEY/ s/ADD PRIMARY KEY (`ueid`,`servingPlmnid`)/ADD PRIMARY KEY (`ueid`,`servingPlmnid`,`singleNssai`(64))/' cp-sql/oai_db.sql
 fi
 
 # Revise cp-sql/smf.sql

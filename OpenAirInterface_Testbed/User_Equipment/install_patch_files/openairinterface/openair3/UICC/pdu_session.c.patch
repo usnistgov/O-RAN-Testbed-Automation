@@ -1,0 +1,13 @@
+diff --git a/openair3/UICC/pdu_session.c b/openair3/UICC/pdu_session.c
+index 879eabebdf..e7e26449c4 100644
+--- a/openair3/UICC/pdu_session.c
++++ b/openair3/UICC/pdu_session.c
+@@ -34,7 +34,7 @@
+               3 /*PDU_SESSION_TYPE_IPV4V6*/,         \
+               5 /*PDU_SESSION_TYPE_ETHER*/},         \
+              4}},                                    \
+-    {.s2 = {config_check_intrange, {1, 4}}},         \
++    {.s2 = {config_check_intrange, {0, 255}}},       \
+     {.s2 = {config_check_intrange, {1, 0xffffff}}},  \
+     {.s4 = {config_check_dnn}},                      \
+ }

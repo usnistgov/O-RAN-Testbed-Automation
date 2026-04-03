@@ -78,6 +78,7 @@ if [ ! -f "options.yaml" ]; then
     echo "dnn: nist-dnn" >>"options.yaml"
     echo "" >>"options.yaml"
     echo "# Configure the Single Network Slice Selection Assistance Information (S-NSSAI)" >>"options.yaml"
+    echo "# NOTE: \"sst\" and \"sd\" are interpreted as hexadecimal values (no 0x prefix)." >>"options.yaml"
     echo "sst: 1" >>"options.yaml"
     echo "sd: 000001" >>"options.yaml"
     echo "" >>"options.yaml"

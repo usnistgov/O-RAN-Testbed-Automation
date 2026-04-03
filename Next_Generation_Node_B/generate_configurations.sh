@@ -96,6 +96,33 @@ if [[ -z "${SST[0]}" || "${SST[0]}" == "null" ]]; then
     exit 1
 fi
 
+# SST/SD are configured in options.yaml as hex without 0x prefix.
+for i in "${!SST[@]}"; do
+    CURRENT_SST="${SST[$i]}"
+    CURRENT_SD="${SD[$i]}"
+
+    CURRENT_SST="${CURRENT_SST#0x}"
+    CURRENT_SST="${CURRENT_SST#0X}"
+    CURRENT_SST="${CURRENT_SST^^}"
+
+    if [[ ! "$CURRENT_SST" =~ ^[0-9A-F]{1,2}$ ]]; then
+        echo "Invalid slices[$i].sst '${SST[$i]}'. Use hexadecimal (00-FF), no 0x prefix."
+        exit 1
+    fi
+    SST[$i]="$((16#$CURRENT_SST))"
+
+    if [[ "$CURRENT_SD" != "null" ]]; then
+        CURRENT_SD="${CURRENT_SD#0x}"
+        CURRENT_SD="${CURRENT_SD#0X}"
+        CURRENT_SD="${CURRENT_SD^^}"
+        if [[ ! "$CURRENT_SD" =~ ^[0-9A-F]{1,6}$ ]]; then
+            echo "Invalid slices[$i].sd '${SD[$i]}'. Use hexadecimal (up to 6 hex digits), no 0x prefix."
+            exit 1
+        fi
+        SD[$i]="$(printf "%06X" "$((16#$CURRENT_SD))")"
+    fi
+done
+
 # Ensure the correct YAML editor is installed
 "$SCRIPT_DIR/install_scripts/./ensure_consistent_yq.sh"
 

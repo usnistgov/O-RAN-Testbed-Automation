@@ -97,6 +97,7 @@ if [ ! -f "options.yaml" ]; then
     echo "dnn: nist-dnn" >>"options.yaml"
     echo "" >>"options.yaml"
     echo "# Configure the Single Network Slice Selection Assistance Information (S-NSSAI)" >>"options.yaml"
+    echo "# NOTE: \"sst\" and \"sd\" are interpreted as hexadecimal values (no 0x prefix)." >>"options.yaml"
     echo "sst: 1" >>"options.yaml"
     echo "sd: 000001" >>"options.yaml"
     echo "" >>"options.yaml"
@@ -161,6 +162,32 @@ if [[ -z "${SST[0]}" || -z "${SD[0]}" || "${SST[0]}" == "null" || "${SD[0]}" == 
     echo "SST or SD is not set in options.yaml, please ensure that \"slices[].sst\" and \"slices[].sd\" are set."
     exit 1
 fi
+
+# SST/SD are configured in options.yaml as hex without 0x prefix.
+for i in "${!SST[@]}"; do
+    CURRENT_SST="${SST[$i]}"
+    CURRENT_SD="${SD[$i]}"
+
+    CURRENT_SST="${CURRENT_SST#0x}"
+    CURRENT_SST="${CURRENT_SST#0X}"
+    CURRENT_SST="${CURRENT_SST^^}"
+
+    CURRENT_SD="${CURRENT_SD#0x}"
+    CURRENT_SD="${CURRENT_SD#0X}"
+    CURRENT_SD="${CURRENT_SD^^}"
+
+    if [[ ! "$CURRENT_SST" =~ ^[0-9A-F]{1,2}$ ]]; then
+        echo "Invalid slices[$i].sst '${SST[$i]}'. Use hexadecimal (00-FF), no 0x prefix."
+        exit 1
+    fi
+    if [[ ! "$CURRENT_SD" =~ ^[0-9A-F]{1,6}$ ]]; then
+        echo "Invalid slices[$i].sd '${SD[$i]}'. Use hexadecimal (up to 6 hex digits), no 0x prefix."
+        exit 1
+    fi
+
+    SST[$i]="$((16#$CURRENT_SST))"
+    SD[$i]="$(printf "%06X" "$((16#$CURRENT_SD))")"
+done
 
 echo "Creating configs directory..."
 rm -rf configs

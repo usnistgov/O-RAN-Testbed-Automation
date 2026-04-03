@@ -146,6 +146,26 @@ if [[ -z "$SST" || -z "$SD" || "$SST" == "null" || "$SD" == "null" ]]; then
     exit 1
 fi
 
+# SST/SD are configured in options.yaml as hex without 0x prefix.
+SST_HEX="${SST#0x}"
+SST_HEX="${SST_HEX#0X}"
+SST_HEX="${SST_HEX^^}"
+SD_HEX="${SD#0x}"
+SD_HEX="${SD_HEX#0X}"
+SD_HEX="${SD_HEX^^}"
+
+if [[ ! "$SST_HEX" =~ ^[0-9A-F]{1,2}$ ]]; then
+    echo "Invalid slices[0].sst '$SST'. Use hexadecimal (00-FF), no 0x prefix."
+    exit 1
+fi
+if [[ ! "$SD_HEX" =~ ^[0-9A-F]{1,6}$ ]]; then
+    echo "Invalid slices[0].sd '$SD'. Use hexadecimal (up to 6 hex digits), no 0x prefix."
+    exit 1
+fi
+
+SST_DEC=$((16#$SST_HEX))
+SD_HEX=$(printf "%06X" "$((16#$SD_HEX))")
+
 OGSTUN_IPV4=$(yq eval '.ogstun_ipv4' "$YAML_PATH")
 OGSTUN_IPV6=$(yq eval '.ogstun_ipv6' "$YAML_PATH")
 if [[ "$OGSTUN_IPV4" == "null" || -z "$OGSTUN_IPV4" ]]; then
@@ -210,6 +230,14 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
     update_conf "configs/ue${UE_NUMBER}.conf" "log" "filename" "$SCRIPT_DIR/logs/ue${UE_NUMBER}.log"
     update_conf "configs/ue${UE_NUMBER}.conf" "log" "file_max_size" "-1"
 
+    # Update configuration values for Slicing
+    SD_DEC=$((16#$SD_HEX))
+    if [ "$SD_DEC" -eq 16777215 ]; then # 0xFFFFFF
+        SD_DEC=0                        # SRS UE expects 0 to indicate "no SD" instead of 16777215 (3GPP TS 23.003 clause 28.4.2)
+    fi
+    update_conf "configs/ue${UE_NUMBER}.conf" "slicing" "nssai-sd" "$SD_DEC"
+    update_conf "configs/ue${UE_NUMBER}.conf" "slicing" "nssai-sst" "$SST_DEC"
+
     # Update configuration values for Metrics
     update_conf "configs/ue${UE_NUMBER}.conf" "general" "metrics_period_secs" "1"
     update_conf "configs/ue${UE_NUMBER}.conf" "general" "metrics_csv_enable" "false"
@@ -236,11 +264,6 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
     update_conf "configs/ue${UE_NUMBER}.conf" "nas" "apn" "$DNN"
     update_conf "configs/ue${UE_NUMBER}.conf" "nas" "apn_protocol" "ipv4"
 
-    # Update configuration values for Slicing
-    SD_DECIMAL=$((16#${SD}))
-    update_conf "configs/ue${UE_NUMBER}.conf" "slicing" "nssai-sd" "$SD_DECIMAL"
-    update_conf "configs/ue${UE_NUMBER}.conf" "slicing" "nssai-sst" "$SST"
-
     # Update configuration values for Gateway
     update_conf "configs/ue${UE_NUMBER}.conf" "gw" "netns" "$UE_NAMESPACE"
     update_conf "configs/ue${UE_NUMBER}.conf" "gw" "ip_devname" "tun_srsue"
@@ -261,7 +284,7 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
             else
                 IPV4_LINE=""
             fi
-            "$REGISTRATION_DIR/./register_subscriber.sh" --imsi "$UE_IMSI" --key "$UE_KEY" --opc "$UE_OPC" --apn "$DNN" --sst "$SST" --sd "$SD" $IPV4_LINE || true
+            "$REGISTRATION_DIR/./register_subscriber.sh" --imsi "$UE_IMSI" --key "$UE_KEY" --opc "$UE_OPC" --apn "$DNN" --sst "$SST_DEC" --sd "$SD_HEX" $IPV4_LINE || true
         fi
     fi
 
@@ -273,8 +296,8 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
     echo "    KEY:  $UE_KEY"
     echo "    PLMN: $PLMN"
     echo "    DNN:  $DNN"
-    echo "    SST:  $SST"
-    echo "    SD:   $SD"
+    echo "    SST:  $SST_HEX (hex)"
+    echo "    SD:   $SD_HEX (hex)"
     if [ -n "$UE_IPV4" ]; then
         echo "    IPv4: $UE_IPV4"
     fi

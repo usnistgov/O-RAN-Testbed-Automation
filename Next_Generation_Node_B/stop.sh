@@ -51,14 +51,14 @@ if command -v docker &>/dev/null; then
     fi
 fi
 
-if pgrep -f "src/o1_adapter" >/dev/null || (command -v docker &>/dev/null && (docker ps --format '{{.Names}}' 2>/dev/null | grep -Eq "^ocudu_netconf$" || sudo docker ps --format '{{.Names}}' 2>/dev/null | grep -Eq "^ocudu_netconf$")); then
+if pgrep -f "[s]rc/o1_adapter" >/dev/null || (command -v docker &>/dev/null && (docker ps --format '{{.Names}}' 2>/dev/null | grep -Eq "^ocudu_netconf$" || sudo docker ps --format '{{.Names}}' 2>/dev/null | grep -Eq "^ocudu_netconf$")); then
     echo "Stopping O1 Adapter..."
     ./additional_scripts/stop_o1_adapter.sh
 fi
 
 # Send a graceful shutdown signal to the gNodeB process
-sudo pkill -f "gnb" >/dev/null 2>&1
-sudo pkill -f "python3 zmq_broker/multi_ue_scenario\.py" >/dev/null 2>&1
+sudo pkill -f "[g]nb" >/dev/null 2>&1
+sudo pkill -f "[p]ython3 zmq_broker/multi_ue_scenario\.py" >/dev/null 2>&1
 
 # Wait for the process to terminate gracefully
 COUNT=0
@@ -78,5 +78,5 @@ done
 
 # If the process is still running after 20 seconds, send a forceful kill signal
 echo "The gNodeB did not stop in time, sending forceful kill signal..."
-sudo pkill -9 -f "gnb" >/dev/null 2>&1
-sudo pkill -9 -f "python3 zmq_broker/multi_ue_scenario\.py" >/dev/null 2>&1
+sudo pkill -9 -f "[g]nb" >/dev/null 2>&1
+sudo pkill -9 -f "[p]ython3 zmq_broker/multi_ue_scenario\.py" >/dev/null 2>&1

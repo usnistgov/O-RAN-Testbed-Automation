@@ -470,7 +470,7 @@ update_yaml "configs/gnb.yaml" "pcap" "mac_filename" "$SCRIPT_DIR/logs/gnb_mac.p
 # Update configuration for metrics (for Grafana)
 update_yaml "configs/gnb.yaml" "metrics" "autostart_stdout_metrics" "true"
 update_yaml "configs/gnb.yaml" "metrics" "enable_json" "true"
-update_yaml "configs/gnb.yaml" "remote_control" "bind_addr" "127.0.0.1"
+update_yaml "configs/gnb.yaml" "remote_control" "bind_addr" "0.0.0.0" # Grafana
 update_yaml "configs/gnb.yaml" "remote_control" "enabled" "true"
 # update_yaml "configs/gnb.yaml" "metrics" "addr" "127.0.0.1"
 # update_yaml "configs/gnb.yaml" "metrics" "port" "55555"

@@ -59,7 +59,7 @@ else
     >logs/gnb.log
     >logs/gnb_stdout.txt
 
-    if pgrep -f "python3 zmq_broker/multi_ue_scenario\.py" >/dev/null; then
+    if pgrep -f "[p]ython3 zmq_broker/multi_ue_scenario\.py" >/dev/null; then
         echo "Already running ZMQ Broker."
     else
         >logs/zmq_broker.log

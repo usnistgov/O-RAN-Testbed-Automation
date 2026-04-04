@@ -59,6 +59,6 @@ fi
 docker kill ocudu_netconf 2>/dev/null || true
 docker rm ocudu_netconf 2>/dev/null || true
 
-pkill -f "src/o1_adapter" || true
+pkill -f "[s]rc/o1_adapter" || true
 
 echo "Successfully stopped and removed the O1 adapter."

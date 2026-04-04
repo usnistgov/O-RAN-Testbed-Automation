@@ -88,8 +88,7 @@ fi
 
 # Send a graceful shutdown signal to the gNodeB process
 if [ -z "$SELECTOR" ]; then
-    sudo pkill -f "nr-softmodem" >/dev/null 2>&1
-    remove_all_du_namespaces
+    sudo pkill -f "[n]r-softmodem" >/dev/null 2>&1
     stty sane || true
 else
     # Find all nr-softmodem processes with -O <config> argument
@@ -105,9 +104,6 @@ else
             fi
         fi
     done
-    if [ -n "$DU_NUMBER" ]; then
-        remove_du_namespace "$DU_NUMBER"
-    fi
 fi
 
 # Wait for the process to terminate gracefully
@@ -119,12 +115,16 @@ while [ $COUNT -lt $MAX_COUNT ]; do
     if [ -z "$SELECTOR" ]; then
         if echo "$IS_RUNNING" | grep -q "gNodeB: NOT_RUNNING"; then
             echo "The gNodeB has stopped gracefully."
+            remove_all_du_namespaces
             ./is_running.sh
             exit 0
         fi
     else
         if ! echo "$IS_RUNNING" | grep -q "$SELECTOR"; then
             echo "The gNodeB component '$SELECTOR' has stopped gracefully."
+            if [ -n "$DU_NUMBER" ]; then
+                remove_du_namespace "$DU_NUMBER"
+            fi
             ./is_running.sh
             exit 0
         fi
@@ -137,7 +137,7 @@ done
 # If the process is still running after 20 seconds, send a forceful kill signal
 if [ -z "$SELECTOR" ]; then
     echo "The gNodeB did not stop in time, sending forceful kill signal..."
-    sudo pkill -9 -f "nr-softmodem" >/dev/null 2>&1
+    sudo pkill -9 -f "[n]r-softmodem" >/dev/null 2>&1
     remove_all_du_namespaces
     stty sane || true
 else

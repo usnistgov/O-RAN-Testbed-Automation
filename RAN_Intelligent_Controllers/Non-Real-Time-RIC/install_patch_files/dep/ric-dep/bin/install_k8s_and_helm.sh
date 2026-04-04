@@ -553,14 +553,14 @@ else
         echo "Killing containerd process..."
         sudo pkill -9 -f '^containerd(\s|$)' 2>/dev/null || true
     fi
-    if pgrep -f 'containerd-shim' >/dev/null; then
-        sudo pkill -9 -f 'containerd-shim' 2>/dev/null || true
+    if pgrep -f '[c]ontainerd-shim' >/dev/null; then
+        sudo pkill -9 -f '[c]ontainerd-shim' 2>/dev/null || true
     fi
-    if pgrep -f 'docker-proxy' >/dev/null; then
-        sudo pkill -9 -f 'docker-proxy' 2>/dev/null || true
+    if pgrep -f '[d]ocker-proxy' >/dev/null; then
+        sudo pkill -9 -f '[d]ocker-proxy' 2>/dev/null || true
     fi
-    if pgrep -f 'runc' >/dev/null; then
-        sudo pkill -9 -f 'runc' 2>/dev/null || true
+    if pgrep -f '[r]unc' >/dev/null; then
+        sudo pkill -9 -f '[r]unc' 2>/dev/null || true
     fi
 
     # If console breaks, reset it

@@ -66,9 +66,6 @@ REM This script will remove the untracked 5G_Core_Network, Next_Generation_Node_
 
 echo "# Script: $(realpath "$0")..."
 
-
-REM Echo every command as it is ran
-
 REM Main Testbed Repositories
 if exist "5G_Core_Network\open5gs" rmdir /s /q "5G_Core_Network\open5gs"
 if exist "5G_Core_Network\logs" rmdir /s /q "5G_Core_Network\logs"
@@ -145,7 +142,5 @@ if exist "OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC\flex
 if exist "OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC\logs" rmdir /s /q "OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC\logs"
 if exist "OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC\configs" rmdir /s /q "OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC\configs"
 if exist "OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC\install_time.txt" del /f /q "OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC\install_time.txt"
-
-REM Echo every command as it is ran
 
 echo "Repositories were removed successfully."

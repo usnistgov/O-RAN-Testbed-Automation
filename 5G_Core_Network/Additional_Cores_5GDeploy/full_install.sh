@@ -193,9 +193,6 @@ echo "Starting installation of 5G Core Deployment Helper (5gdeploy)..."
 # sed -i 's/debian:trixie-slim/debian:bullseye-slim/g' docker/iperf2/Dockerfile
 # sed -i 's/trixie-apt-cache/bullseye-apt-cache/g' docker/iperf2/Dockerfile
 
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! APPLY PATCHES
-git apply ../5gdeploy-patches.patch
-
 ./install.sh \
     --build-network host \
     --dpdk-version v24.11 \

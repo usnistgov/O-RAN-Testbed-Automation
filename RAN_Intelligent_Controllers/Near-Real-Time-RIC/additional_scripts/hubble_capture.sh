@@ -56,7 +56,7 @@ fi
 LOG_PATH="$PARENT_DIR/logs/hubble_captured_flows.csv"
 mkdir -p "$PARENT_DIR/logs"
 
-if ! pgrep -f "cilium hubble port-forward" >/dev/null; then
+if ! pgrep -f "[c]ilium hubble port-forward" >/dev/null; then
     echo "Starting Hubble port-forward..."
     cilium hubble port-forward &
 fi

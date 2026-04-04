@@ -69,8 +69,8 @@ run_in_background() {
     local APP_NAME="open5gs-$1"
     if [ "$1" == "seppd" ]; then
         if [ "$INCLUDE_SEPP" == true ]; then
-            local SEPP1_RUNNING=$(pgrep -f "$APP_NAME.*sepp1.yaml")
-            local SEPP2_RUNNING=$(pgrep -f "$APP_NAME.*sepp2.yaml")
+            local SEPP1_RUNNING=$(pgrep -f "[o]pen5gs-sepp.*sepp1\.yaml")
+            local SEPP2_RUNNING=$(pgrep -f "[o]pen5gs-sepp.*sepp2\.yaml")
             if [ -z "$SEPP1_RUNNING" ]; then
                 CONFIG_FILE_1="$SCRIPT_DIR/configs/sepp1.yaml"
                 if [ ! -f "$CONFIG_FILE_1" ]; then
@@ -127,8 +127,8 @@ run_in_terminal() {
     local APP_NAME="open5gs-$1"
     if [ "$1" == "seppd" ]; then
         if [ "$INCLUDE_SEPP" == true ]; then
-            local SEPP1_RUNNING=$(pgrep -f "$APP_NAME.*sepp1.yaml")
-            local SEPP2_RUNNING=$(pgrep -f "$APP_NAME.*sepp2.yaml")
+            local SEPP1_RUNNING=$(pgrep -f "[o]pen5gs-sepp.*sepp1\.yaml")
+            local SEPP2_RUNNING=$(pgrep -f "[o]pen5gs-sepp.*sepp2\.yaml")
             if [ -z "$SEPP1_RUNNING" ]; then
                 CONFIG_FILE_1="$SCRIPT_DIR/configs/sepp1.yaml"
                 if [ ! -f "$CONFIG_FILE_1" ]; then

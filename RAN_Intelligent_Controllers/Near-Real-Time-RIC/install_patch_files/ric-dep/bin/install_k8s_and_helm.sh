@@ -733,7 +733,7 @@ else
     sudo pkill -x containerd >/dev/null 2>&1 || true
     sudo rm -f /var/run/docker.pid /var/run/docker.sock
     sudo mkdir -p /run /var/run
-    sudo -v # Pre-authenticate sudo
+    sudo -v # Ensure sudo session is active
     sudo sh -c 'setsid dockerd --config-file=/etc/docker/daemon.json >>'"${DOCKERD_LOG}"' 2>&1 </dev/null &'
     # Wait for Docker to be ready
     for ATTEMPT in $(seq 1 60); do
@@ -752,7 +752,7 @@ else
         if ! grep -q 'native.cgroupdriver' /etc/docker/daemon.json; then
             sudo jq '. + {"exec-opts": ["native.cgroupdriver=cgroupfs"]}' /etc/docker/daemon.json.bak | sudo tee /etc/docker/daemon.json >/dev/null
         fi
-        sudo -v # Pre-authenticate sudo
+        sudo -v # Ensure sudo session is active
         sudo sh -c 'setsid dockerd --config-file=/etc/docker/daemon.json >>'"${DOCKERD_LOG}"' 2>&1 </dev/null &'
         for ATTEMPT in $(seq 1 60); do
             if sudo test -S /var/run/docker.sock && sudo docker version >/dev/null 2>&1; then

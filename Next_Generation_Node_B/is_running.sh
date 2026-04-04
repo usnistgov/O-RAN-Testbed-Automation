@@ -43,7 +43,7 @@ else
     echo "gNodeB: NOT_RUNNING"
 fi
 
-if pgrep -f "python3 zmq_broker/multi_ue_scenario\.py" >/dev/null; then
+if pgrep -f "[p]ython3 zmq_broker/multi_ue_scenario\.py" >/dev/null; then
     echo "ZMQ_Broker: RUNNING"
 else
     echo "ZMQ_Broker: NOT_RUNNING"
@@ -60,6 +60,6 @@ if command -v docker &>/dev/null; then
     fi
 fi
 
-if pgrep -f "src/o1_adapter" >/dev/null; then
+if pgrep -f "[s]rc/o1_adapter" >/dev/null; then
     echo "O1_Adapter: RUNNING"
 fi

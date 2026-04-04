@@ -63,7 +63,7 @@ usage() {
     echo "  --opc [OPC]                   Set the OPC value (default: $DEFAULT_OPC)"
     echo "  --apn [APN]                   Set the APN value (default: $DEFAULT_APN)"
     echo "  --sst [SST]                   Set SST in decimal (optional). Hex is also accepted with 0x prefix"
-    echo "  --sd [SD]                     Set SD in hex (optional, no 0x prefix)"
+    echo "  --sd [SD]                     Set SD in hex (optional). A 0x prefix is also accepted"
     echo "  --ipv4 [IPv4]                 Set the IPv4 address (optional)"
     echo "  --ipv6 [IPv6]                 Set the IPv6 address (optional)"
     echo "  -h, --help                    Display this help message and exit"
@@ -156,7 +156,7 @@ if [[ -n "$SST" && -n "$SD" ]]; then
     SD_HEX="${SD_HEX#0X}"
     SD_HEX="${SD_HEX^^}"
     if [[ ! "$SD_HEX" =~ ^[0-9A-F]{1,6}$ ]]; then
-        echo "Invalid --sd '$SD'. Use hexadecimal (up to 6 hex digits), no 0x prefix."
+        echo "Invalid --sd '$SD'. Use hexadecimal (up to 6 hex digits). A 0x prefix is also accepted."
         exit 1
     fi
     SD_HEX="$(printf "%06X" "$((16#$SD_HEX))")"

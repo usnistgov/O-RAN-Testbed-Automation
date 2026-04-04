@@ -100,7 +100,7 @@ By default, the Hello World Go xApp (hw-go) is installed automatically. Addition
   - More information can be found in the code [\[18\]][hw-rust-code].
  
 > [!NOTE]
-> The metrics collected using these xApps are simulated by default. Similarly, radio metrics provided by OCUDU's gNodeB when connected as an E2 node to the RIC may also be simulated [\[19\]][ocudu-lim]. Therefore, for radio metrics collected via a KPI monitoring xApp, it is recommended to use OpenAirInterface's Near-RT RIC with Mosiac5G's monitoring xApps (see the [OpenAirInterface Testbed](../../OpenAirInterface_Testbed)).
+> The metrics collected using these xApps are simulated by default. Similarly, radio metrics provided by OCUDU's gNodeB when connected as an E2 node to the RIC may also be simulated [\[19\]][ocudu-lim]. Therefore, for radio metrics collected via a KPI monitoring xApp, it is recommended to use OpenAirInterface's Near-RT RIC with Mosaic5G's monitoring xApps (see the [OpenAirInterface Testbed](../../OpenAirInterface_Testbed)).
 
 ## Uninstalling an xApp
 

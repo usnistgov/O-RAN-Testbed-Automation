@@ -40,7 +40,7 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-sudo -v # Pre-authenticate sudo
+sudo -v # Ensure sudo session is active
 
 # Upon exit, gracefully stop all components and fix console in case it breaks
 trap 'trap - EXIT SIGINT SIGTERM; echo "#################################  STOPPING... #################################"; "$SCRIPT_DIR/./stop.sh"; stty sane || true; exit' EXIT SIGINT SIGTERM

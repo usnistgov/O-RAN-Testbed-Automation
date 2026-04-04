@@ -80,7 +80,7 @@ if [ "$RFSIM_SERVER" -ne 0 ]; then
     RFSIM_SERVER_ARG="--rfsim-server"
 fi
 
-sudo -v # Pre-authenticate sudo
+sudo -v # Ensure sudo session is active
 sudo setsid bash -c "stdbuf -oL -eL \"$SCRIPT_DIR/run.sh\" $UE_NUMBER $RFSIM_SERVER_ARG >/dev/null 2>&1" </dev/null &
 
 ATTEMPT=0

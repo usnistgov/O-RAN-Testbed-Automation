@@ -1,0 +1,15 @@
+diff --git a/cmake/modules/FindYAMLCPP.cmake b/cmake/modules/FindYAMLCPP.cmake
+index 3fd9fca650..880d12faef 100644
+--- a/cmake/modules/FindYAMLCPP.cmake
++++ b/cmake/modules/FindYAMLCPP.cmake
+@@ -17,8 +17,10 @@ if (yaml-cpp_FOUND)
+     set(YAML_CPP_FOUND TRUE)
+     set(YAML_CPP_VERSION ${yaml-cpp_VERSION})
+     if(TARGET yaml-cpp::yaml-cpp)
++        set_property(TARGET yaml-cpp::yaml-cpp PROPERTY IMPORTED_GLOBAL TRUE)
+         add_library(ocudu::yaml-cpp ALIAS yaml-cpp::yaml-cpp)
+     elseif(TARGET yaml-cpp)
++        set_property(TARGET yaml-cpp PROPERTY IMPORTED_GLOBAL TRUE)
+         add_library(ocudu::yaml-cpp ALIAS yaml-cpp)
+     endif()
+ else (yaml-cpp_FOUND)

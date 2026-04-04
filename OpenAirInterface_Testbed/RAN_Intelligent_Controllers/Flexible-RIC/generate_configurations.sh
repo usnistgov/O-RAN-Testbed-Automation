@@ -59,7 +59,7 @@ update_conf() {
 }
 
 echo "Saving configuration file example..."
-rm -rf configs
+rm -rf configs || sudo rm -rf configs
 
 if [ ! -d flexric ]; then
     echo "FlexRIC cannot be configured because it is not installed. Skipping."

@@ -179,7 +179,7 @@ wait_for_ue_to_connect_to_du_1() {
         fi
         if grep -q "Received PDU Session Establishment Accept," User_Equipment/logs/ue${UE_ID}_stdout.txt; then
             break
-        elif $(./is_running.sh | grep -q "NOT_RUNNING"); then
+        elif ./User_Equipment/is_running.sh | grep -q "NOT_RUNNING" || ./Next_Generation_Node_B/is_running.sh | grep -q "NOT_RUNNING"; then
             echo "ERROR: DU 1 or UE $UE_ID may not be running. Check logs for more information."
             exit 1
         fi

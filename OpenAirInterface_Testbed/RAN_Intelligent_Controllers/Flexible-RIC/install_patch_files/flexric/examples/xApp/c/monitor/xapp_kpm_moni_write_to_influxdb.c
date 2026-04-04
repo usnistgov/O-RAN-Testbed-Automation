@@ -659,7 +659,10 @@ static void log_kpm_measurements(kpm_ind_msg_format_1_t const *msg_frm_1, bool i
   {
     // Send to InfluxDB
     int64_t now_ms = time_now_us() / 1000;
-    send_metrics_to_influxdb(current_ue_id, current_e2_id_str, now_ms, influx_fields_buffer, is_cell_metric);
+    
+    // Ensure E2 node ID is valid for InfluxDB protocol
+    const char* safe_e2_node_id = (current_e2_id_str[0] == '\0') ? "unknown" : current_e2_id_str;
+    send_metrics_to_influxdb(current_ue_id, safe_e2_node_id, now_ms, influx_fields_buffer, is_cell_metric);
   }
 
   filter_current_sample = false;
@@ -728,6 +731,13 @@ static void sm_cb_kpm(sm_ag_if_rd_t const *rd)
 
     if (ind->msg.type == FORMAT_1_INDICATION_MESSAGE)
     {
+      // If Cell Metric, there is no UE ID attached to derive the node ID so use the sender_name from the Indication Header so it doesn't use the previous UE's node ID
+      if (hdr_frm_1->sender_name != NULL && hdr_frm_1->sender_name->len > 0) {
+        snprintf(current_e2_id_str, sizeof(current_e2_id_str), "%.*s", (int)hdr_frm_1->sender_name->len, hdr_frm_1->sender_name->buf);
+      } else {
+        snprintf(current_e2_id_str, sizeof(current_e2_id_str), "Unknown-Cell-Node");
+      }
+
       log_kpm_measurements(&ind->msg.frm_1, true);
     }
     else if (ind->msg.type == FORMAT_3_INDICATION_MESSAGE)

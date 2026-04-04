@@ -191,7 +191,7 @@ for i in "${!SST[@]}"; do
 done
 
 echo "Creating configs directory..."
-rm -rf configs
+rm -rf configs || sudo rm -rf configs
 mkdir configs
 
 MONGODB_CONFIG_FILE="/etc/mongod/mongod.conf"

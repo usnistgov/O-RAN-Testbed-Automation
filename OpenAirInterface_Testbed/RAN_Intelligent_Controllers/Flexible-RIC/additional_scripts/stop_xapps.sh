@@ -52,3 +52,6 @@ if pgrep -f "[x]app_gtp_mac_rlc_pdcp_moni" >/dev/null; then
     echo "Stopping xApp GTP MAC RLC PDCP Moni..."
     pkill -9 -f "[x]app_gtp_mac_rlc_pdcp_moni"
 fi
+
+# Clean up leftover database files
+rm -f /tmp/xapp_db1 /tmp/xapp_db1-shm /tmp/xapp_db1-wal

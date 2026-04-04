@@ -223,16 +223,16 @@ static void csv_append_string_to_csv_line(const char *str)
 
 static void csv_prepend_e2_node_id()
 {
-  // Ensure the current E2 Node ID is valid
+  char e2_node_id_buffer[264];
   if (current_e2_id_str[0] == '\0')
   {
-    fprintf(stderr, "ERROR: No valid E2 Node ID found.\n");
-    return;
+    snprintf(e2_node_id_buffer, sizeof(e2_node_id_buffer), ",");
+  }
+  else
+  {
+    snprintf(e2_node_id_buffer, sizeof(e2_node_id_buffer), "%s,", current_e2_id_str);
   }
 
-  // Ensure the buffer won't overflow
-  char e2_node_id_buffer[264];
-  snprintf(e2_node_id_buffer, sizeof(e2_node_id_buffer), "%s,", current_e2_id_str);
   size_t e2_node_id_len = strlen(e2_node_id_buffer);
   char *target_buffer = is_cell_metric ? csv_cell_line_buffer : csv_line_buffer;
   size_t buffer_size = is_cell_metric ? sizeof(csv_cell_line_buffer) : sizeof(csv_line_buffer);
@@ -685,7 +685,6 @@ static void log_kpm_measurements(kpm_ind_msg_format_1_t const *msg_frm_1, bool i
 
   assert(msg_frm_1->meas_info_lst_len > 0 && "Cannot correctly print measurements");
 
-  printf("Current E2 Node ID: %s\n", current_e2_id_str);
 
   // UE Measurements per granularity period
   for (size_t j = 0; j < msg_frm_1->meas_data_lst_len; j++)
@@ -895,6 +894,13 @@ static void sm_cb_kpm(sm_ag_if_rd_t const *rd)
 
     if (ind->msg.type == FORMAT_1_INDICATION_MESSAGE)
     {
+      // If Cell Metric, there is no UE ID attached to derive the node ID so use the sender_name from the Indication Header so it doesn't use the previous UE's node ID
+      if (hdr_frm_1->sender_name != NULL && hdr_frm_1->sender_name->len > 0) {
+        snprintf(current_e2_id_str, sizeof(current_e2_id_str), "%.*s", (int)hdr_frm_1->sender_name->len, hdr_frm_1->sender_name->buf);
+      } else {
+        snprintf(current_e2_id_str, sizeof(current_e2_id_str), "Unknown-Cell-Node");
+      }
+
       log_kpm_measurements(&ind->msg.frm_1, true);
     }
     else if (ind->msg.type == FORMAT_3_INDICATION_MESSAGE)

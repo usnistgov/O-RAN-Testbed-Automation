@@ -44,7 +44,7 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$PARENT_DIR"
 
-# Apply patches to OCUDU to support kernel headers that don't define SCTP_SEND_FAILED_EVENT
+# Apply patch to OCUDU to support kernel headers that don't define SCTP_SEND_FAILED_EVENT
 cd ocudu
 git restore lib/gateways/sctp_network_gateway_common_impl.cpp
 if [ ! -f "lib/gateways/sctp_network_gateway_common_impl.cpp.previous" ]; then
@@ -53,6 +53,17 @@ if [ ! -f "lib/gateways/sctp_network_gateway_common_impl.cpp.previous" ]; then
 fi
 echo "Patching sctp_network_gateway_common_impl.cpp..."
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/ocudu/lib/gateways/sctp_network_gateway_common_impl.cpp.patch"
+cd ..
+
+# Apply patch to OCUDU to ensure yaml-cpp imported targets are globally visible before aliasing.
+cd ocudu
+git restore cmake/modules/FindYAMLCPP.cmake
+if [ ! -f "cmake/modules/FindYAMLCPP.cmake.previous" ]; then
+    cp cmake/modules/FindYAMLCPP.cmake cmake/modules/FindYAMLCPP.cmake.previous
+    cp cmake/modules/FindYAMLCPP.cmake.previous "$PARENT_DIR/install_patch_files/ocudu/cmake/modules/FindYAMLCPP.previous.cmake"
+fi
+echo "Patching FindYAMLCPP.cmake..."
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/ocudu/cmake/modules/FindYAMLCPP.cmake.patch"
 cd ..
 
 echo

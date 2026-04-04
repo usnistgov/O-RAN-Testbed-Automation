@@ -22,12 +22,13 @@
 - 5gdeploy: Enabled UE slicing to correctly transmit S-NSSAI (SD=FFFFFF), fixing PDU session failures with free5GC NSSF.
 - 5gdeploy: Patched OAI database to allow multiple SDs per UE for custom network slice configurations.
 - 5gdeploy: Added option to toggle resetting `orantestbed` scenario upon generating configurations.
+- 5gdeploy: Bumped core component versions to latest releases (e.g., free5GC v4.2.1, oai-fed v2.2.0, gtp5g v0.9.16).
 - Open5GS: More efficient Open5GS install/uninstall, and fixed a segfault by using `meson` via `pip3` instead of `apt`.
 - Open5GS: Enabled Position-Independent Code (PIC) in Open5GS builds for shared library support.
 - Open5GS: Enabled `pipefail` for Open5GS WebUI installer and uninstaller scripts.
 
 ### RAN Intelligence Controllers
-- FlexRIC: Migrated xApps to utilize the new NRCellDU-level distribution metric `CARR.PDSCHMCSDist.BinX.BinY.BinZ (PDSCH_RBs)`.
+- FlexRIC: Migrated xApps to use new NRCellDU-level distribution metric `CARR.PDSCHMCSDist.BinX.BinY.BinZ (PDSCH_RBs)` [\[9\]][flexric-xapp].
 - FlexRIC: Added script to interact with the InfluxDB database from the KPM monitor xApp.
 - FlexRIC: Fixed E2 identification in KPM monitoring xApps for improved RAN controller messaging.
 - O-RAN SC: Moved backup J, K, and L release `commit_hashes.json` files to their respective directories.
@@ -40,6 +41,7 @@
 - Made `IP_ADDRESS` fetching consistent and added a toggle for code patching (`APPLY_PATCHES=true`).
 - Enhanced error handling and coverage in dependency download scripts (`Additional_Scripts/`).
 - Added optional Node Version Manager (`nvm`) support for consistent Node.js versioning.
+- Improved robustness of Docker and MongoDB installation scripts with better state-checking.
 - When stopping an application, used square brackets to prevent self-matching.
 - Normalized and cleaned up usage of sudo pre-authentication across scripts.
 - Fixed file permissions when `$SUDO_USER` is set and differs from `$USER`.
@@ -59,6 +61,7 @@
 6. OCUDU Grafana Dashboard WebUI. NIST. [https://github.com/usnistgov/O-RAN-Testbed-Automation/tree/main/Next_Generation_Node_B#ocudu-grafana-webui][ocudu-grafana]
 7. O-RAN-Testbed-Automation, gNodeB Documentation. NIST. [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/Next_Generation_Node_B/README.md][automation-ocudu]
 8. Handover Tutorial for OAI. OpenAirInterface. [https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/0ba31c0f89dd3162c7d87142da2b0f4e08abeb58/doc/handover-tutorial.md#run-the-setup:~:text=DU0%20and%20DU1%20should%20use%20different%20SSBs][oai-handover-tutorial]
+9. Flexible-RIC xApp Deployment. NIST. [https://github.com/usnistgov/O-RAN-Testbed-Automation/tree/main/OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC/Flexible-RIC#running-an-xapp][flexric-xapp]
 
 <!-- References -->
 
@@ -70,6 +73,7 @@
 [ocudu-grafana]: https://github.com/usnistgov/O-RAN-Testbed-Automation/tree/main/Next_Generation_Node_B#ocudu-grafana-webui
 [automation-ocudu]: https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/Next_Generation_Node_B/README.md
 [oai-handover-tutorial]: https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/0ba31c0f89dd3162c7d87142da2b0f4e08abeb58/doc/handover-tutorial.md#run-the-setup:~:text=DU0%20and%20DU1%20should%20use%20different%20SSBs
+[flexric-xapp]: https://github.com/usnistgov/O-RAN-Testbed-Automation/tree/main/OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC/Flexible-RIC#running-an-xapp
 
 
 

@@ -77,5 +77,9 @@ if [ -f "$YAML_PATH" ]; then
 fi
 
 echo "Starting xApp KPM RC..."
+
+# Clean up database files to prevent sqlite failures
+rm -f /tmp/xapp_db1 /tmp/xapp_db1-shm /tmp/xapp_db1-wal
+
 set -x
 XAPP_DURATION=-1 SST=$SST SD=$SD ./build/examples/xApp/c/kpm_rc/xapp_kpm_rc $CONFIG_PATH

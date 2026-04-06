@@ -88,7 +88,7 @@ fi
 cd "$SCRIPT_DIR"
 
 # Upon exit, gracefully stop all components and fix console in case it breaks
-trap 'trap - EXIT SIGINT SIGTERM; echo "#################################  STOPPING... #################################"; "$SCRIPT_DIR/./stop.sh"; stty sane; exit' EXIT SIGINT SIGTERM
+trap 'trap - EXIT SIGINT SIGTERM; echo "#################################  STOPPING... #################################"; "$SCRIPT_DIR/./stop.sh"; stty sane || true; exit' EXIT SIGINT SIGTERM
 
 echo "Running 5G Core components..."
 cd 5G_Core_Network
@@ -179,7 +179,7 @@ wait_for_ue_to_connect_to_du_1() {
         fi
         if grep -q "Received PDU Session Establishment Accept," User_Equipment/logs/ue${UE_ID}_stdout.txt; then
             break
-        elif $(./is_running.sh | grep -q "NOT_RUNNING"); then
+        elif ./User_Equipment/is_running.sh | grep -q "NOT_RUNNING" || ./Next_Generation_Node_B/is_running.sh | grep -q "NOT_RUNNING"; then
             echo "ERROR: DU 1 or UE $UE_ID may not be running. Check logs for more information."
             exit 1
         fi
@@ -296,7 +296,7 @@ if [ "$RUN_TELNET_SESSION_AFTER" = true ]; then
     # fi
 
     # mkdir -p logs
-    # sudo chown --recursive "$USER" logs
+    # sudo chown --recursive "${SUDO_USER:-$USER}" logs
     # LOG_FILE="logs/telnet.log"
     # HIST_FILE="logs/telnet_history"
 

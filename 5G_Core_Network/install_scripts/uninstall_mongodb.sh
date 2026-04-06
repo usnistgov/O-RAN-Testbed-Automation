@@ -41,11 +41,14 @@ cd "$PARENT_DIR"
 ./install_scripts/stop_mongodb.sh
 
 # Uninstall the MongoDB packages
-sudo apt-get remove --purge -y mongodb-org mongodb-org-server mongodb-org-shell mongodb-org-mongos mongodb-org-tools mongosh
+APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
+if dpkg -l | grep -E '^ii.*mongodb' >/dev/null; then
+    sudo env $APTVARS apt-get remove --purge -y mongodb-org mongodb-org-server mongodb-org-shell mongodb-org-mongos mongodb-org-tools mongosh >/dev/null 2>&1 || true
+fi
 
 # Remove MongoDB and its user and group
-sudo userdel mongodb
-sudo groupdel mongodb
+if getent passwd mongodb >/dev/null; then sudo userdel mongodb; fi
+if getent group mongodb >/dev/null; then sudo groupdel mongodb; fi
 
 # Remove MongoDB data and log directories
 sudo rm -rf /var/lib/mongodb
@@ -53,17 +56,13 @@ sudo rm -rf /var/log/mongodb
 
 # Remove MongoDB configurations and system modifications
 sudo rm -rf /etc/mongod
-sudo rm /etc/apt/sources.list.d/mongodb-org-4.4.list
-sudo rm /etc/apt/sources.list.d/mongodb-org-5.0.list
-sudo rm /usr/share/keyrings/mongodb-archive-keyring.gpg
+sudo rm -f /etc/apt/sources.list.d/mongodb-org-*.list
+sudo rm -f /usr/share/keyrings/mongodb-archive-keyring.gpg
 
 # Unpin MongoDB packages
-echo "mongodb-org install" | sudo dpkg --set-selections
-echo "mongodb-org-database install" | sudo dpkg --set-selections
-echo "mongodb-org-server install" | sudo dpkg --set-selections
-echo "mongodb-mongosh install" | sudo dpkg --set-selections
-echo "mongodb-org-mongos install" | sudo dpkg --set-selections
-echo "mongodb-org-tools install" | sudo dpkg --set-selections
-
-sudo apt-get autoremove -y
-sudo apt-get clean
+echo "mongodb-org install" | sudo dpkg --set-selections 2>/dev/null || true
+echo "mongodb-org-database install" | sudo dpkg --set-selections 2>/dev/null || true
+echo "mongodb-org-server install" | sudo dpkg --set-selections 2>/dev/null || true
+echo "mongodb-mongosh install" | sudo dpkg --set-selections 2>/dev/null || true
+echo "mongodb-org-mongos install" | sudo dpkg --set-selections 2>/dev/null || true
+echo "mongodb-org-tools install" | sudo dpkg --set-selections 2>/dev/null || true

@@ -141,7 +141,7 @@ else
 
     # Download ric-dep from gerrit
     if [ ! -d "ric-dep" ]; then
-        ./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep.git ric-dep
+        ./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep.git ric-dep --https
         # Configure the SCTP E2 termination port (not idempotent so only on first clone)
         if [ "$E2_TERM_PORT" != "36422" ]; then # Default port
             echo "Configuring E2 Termination Port to $E2_TERM_PORT..."
@@ -211,6 +211,11 @@ fi
 
 cd "$SCRIPT_DIR"
 
+if ! command -v docker &>/dev/null; then
+    echo "Docker command not found, installing Docker..."
+    sudo ./install_scripts/install_docker.sh
+fi
+
 # Check if docker is accessible from the current user, and if not, repair its permissions
 if [ -z "$FIXED_DOCKER_PERMS" ]; then
     if ! OUTPUT=$(docker info 2>&1); then
@@ -270,7 +275,7 @@ else
 
     # Download ric-dep from gerrit
     if [ ! -d "ric-dep" ]; then
-        ./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep.git ric-dep
+        ./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep.git ric-dep --https
         # Configure the SCTP E2 termination port (not idempotent so only on first clone)
         if [ "$E2_TERM_PORT" != "36422" ]; then # Default port
             echo "Configuring E2 Termination Port to $E2_TERM_PORT..."
@@ -288,9 +293,9 @@ else
     RIC_YAML_FILE_NAME="example_recipe_latest_stable.yaml"
     RIC_YAML_FILE_NAME_UPDATED="example_recipe_latest_stable_updated.yaml"
 
-    sudo chown "$USER" "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME"
+    sudo chown "${SUDO_USER:-$USER}" "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME"
     sudo cp "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME" "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME_UPDATED"
-    sudo chown "$USER" "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME_UPDATED"
+    sudo chown "${SUDO_USER:-$USER}" "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME_UPDATED"
     sudo ./install_scripts/revise_example_recipe_yaml.sh "ric-dep/RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME_UPDATED"
     if [ "$E2_TERM_PORT" != "36422" ]; then
         sudo ./install_scripts/revise_deployment_for_e2_port.sh
@@ -388,7 +393,7 @@ if [ "$(docker ps -aq -f name=^/oransim$ | wc -l)" -ge 1 ] && [ -d "e2-interface
     echo
 else
     if [ ! -d "e2-interface" ]; then
-        ./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/sim/e2-interface.git
+        ./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/sim/e2-interface.git --https
         # Configure the SCTP E2 termination port (not idempotent so only on first clone)
         if [ "$E2_TERM_PORT" != "36422" ]; then # Default port
             echo "Configuring E2 Termination Port to $E2_TERM_PORT..."
@@ -426,14 +431,14 @@ sudo ./install_scripts/wait_for_ricplt_pods.sh
 sudo ./install_scripts/run_e2sim_and_connect_to_ric.sh
 
 echo "Restoring ownership of directories and files created while in root..."
-sudo chown "$USER" logs/e2sim_output.txt
-sudo chown --recursive "$USER" charts || true
+sudo chown "${SUDO_USER:-$USER}" logs/e2sim_output.txt
+sudo chown --recursive "${SUDO_USER:-$USER}" charts || true
 
 echo
 echo "Installing the xApp Onboarder (dms_cli)..."
 # Download appmgr from gerrit
 if [ ! -d "appmgr" ]; then
-    ./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-plt/appmgr.git
+    ./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-plt/appmgr.git --https
 fi
 sudo ./install_scripts/run_xapp_onboarder.sh
 
@@ -442,39 +447,39 @@ mkdir -p xApps
 cd xApps
 if [ ! -d "hw-go" ]; then
     echo "Cloning Hello World Go (hw-go) xApp..."
-    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/hw-go.git
+    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/hw-go.git --https
 fi
 if [ ! -d "hw-python" ]; then
     echo "Cloning the Hello World Python (hw-python) xApp..."
-    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/hw-python.git
+    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/hw-python.git --https
 fi
 if [ ! -d "hw-rust" ]; then
     echo "Cloning the Hello World Rust (hw-rust) xApp..."
-    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/hw-rust.git
+    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/hw-rust.git --https
 fi
 if [ ! -d "kpimon-go" ]; then
     echo "Cloning KPI Monitor (kpimon) xApp..."
-    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/kpimon-go.git
+    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/kpimon-go.git --https
 fi
 if [ ! -d "ad-cell" ]; then
     echo "Cloning 5G Cell Anamoly Detection (ad-cell) xApp..."
-    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/ad-cell.git
+    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/ad-cell.git --https
 fi
 if [ ! -d "ad" ]; then
     echo "Cloning Anamoly Detection (ad) xApp..."
-    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/ad.git
+    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/ad.git --https
 fi
 if [ ! -d "qp" ]; then
     echo "Cloning Quality of Experience (QoE) Predictor (qp) xApp..."
-    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/qp.git
+    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/qp.git --https
 fi
 if [ ! -d "rc" ]; then
     echo "Cloning RIC Control xApp (rc)..."
-    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/rc.git
+    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/rc.git --https
 fi
 if [ ! -d "ts" ]; then
     echo "Cloning Traffic Steering xApp (trafficxapp)..."
-    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/ts.git
+    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/ts.git --https
 fi
 cd ..
 

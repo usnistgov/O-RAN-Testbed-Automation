@@ -81,8 +81,8 @@ sed -i "s|^\([[:space:]]*\)Active_gNBs\s*=.*|\1Active_gNBs = ( \"du${DU_NUMBER}-
 
 HEX=$(printf '%x' $((0xe00 + DU_NUMBER - 1)))
 
-# Set unique gNB_ID, gNB_DU_ID, gNB_name, nr_cellid, physCellId, local_n_address, and remote_n_address
-sed -i "s|^\([[:space:]]*\)gNB_ID\s*=.*|\1gNB_ID = 0x$HEX;|" "$DU_CONF"
+# Set unique gNB_DU_ID, gNB_name, nr_cellid, physCellId, local_n_address, and remote_n_address
+# sed -i "s|^\([[:space:]]*\)gNB_ID\s*=.*|\1gNB_ID = 0x$HEX;|" "$DU_CONF" # Does not need to be unique
 sed -i "s|^\([[:space:]]*\)gNB_DU_ID\s*=.*|\1gNB_DU_ID = 0x$HEX;|" "$DU_CONF"
 awk -v hex="$HEX" '
 FNR==NR { if ($0 ~ /^\s*gNB_DU_ID\s*=/) found=1; next }
@@ -98,6 +98,9 @@ FNR==NR { if ($0 ~ /^\s*gNB_DU_ID\s*=/) found=1; next }
 sed -i "s|^\([[:space:]]*\)gNB_name\s*=.*|\1gNB_name = \"du${DU_NUMBER}-rfsim\";|" "$DU_CONF"
 sed -i "s|^\([[:space:]]*\)nr_cellid\s*=.*|\1nr_cellid = $((11111111 + DU_NUMBER - 1))L;|" "$DU_CONF"
 sed -i "s|^\([[:space:]]*\)physCellId\s*=.*|\1physCellId = $((DU_NUMBER - 1));|" "$DU_CONF"
+
+SSB_BITMAP=$((1 << (DU_NUMBER - 1)))
+sed -i "s|^\([[:space:]]*\)ssb_PositionsInBurst_Bitmap\s*=.*|\1ssb_PositionsInBurst_Bitmap = $SSB_BITMAP;|" "$DU_CONF"
 
 if ! command -v python3 &>/dev/null; then
     echo "Python is not installed. Installing Python..."

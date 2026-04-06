@@ -31,6 +31,7 @@
 # Exit immediately if a command fails
 set -e
 
+APPLY_PATCHES=true
 DEBUG_SYMBOLS=false
 TELNET_SERVER=true
 NRSCOPE_GUI=false
@@ -58,7 +59,7 @@ fi
 # Since the UE and gNB share the same openairinterface5g directory, and the UE is installed first, the gNB's CLEAN_INSTALL must be false to prevent cleaning the UE installation
 CLEAN_INSTALL=false
 
-# Check for gNB binary to determine if srsRAN_Project is already installed
+# Check for binary to determine if OpenAirInterface is already installed
 if [ "$CLEAN_INSTALL" = false ] && [ -f "openairinterface5g/cmake_targets/ran_build/build/nr-softmodem" ]; then
     if [ "$NRSCOPE_GUI" != true ] || [ -f "openairinterface5g/cmake_targets/ran_build/build/libimscope.so" ]; then
         echo "OpenAirInterface gNB is already installed, skipping."
@@ -78,18 +79,20 @@ if [ "$SHARE_OAI_DIR_FROM_UE" = true ]; then
     if [ ! -f "../User_Equipment/openairinterface5g/cmake_targets/build_oai" ]; then
         echo "Cloning shared openairinterface5g to User Equipment..."
         sudo rm -rf ../User_Equipment/openairinterface5g
-        ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/oai/openairinterface5g.git ../User_Equipment/openairinterface5g
+        ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/oai/openairinterface5g.git ../User_Equipment/openairinterface5g --https
     fi
 else
     if [ ! -d "openairinterface5g" ]; then
         echo "Cloning openairinterface5g..."
         sudo rm -rf openairinterface5g
-        ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/oai/openairinterface5g.git openairinterface5g
+        ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/oai/openairinterface5g.git openairinterface5g --https
     fi
 fi
 
-echo "Patching OpenAirInterface..."
-./install_scripts/apply_patches.sh
+if [ "$APPLY_PATCHES" = true ]; then
+    echo "Patching OpenAirInterface..."
+    ./install_scripts/apply_patches.sh
+fi
 
 # Ensure that the flexric repository is cloned at the right commit
 cd openairinterface5g/openair2/E2AP/
@@ -112,7 +115,7 @@ fi
 cd "$SCRIPT_DIR"
 if [ ! -d "$FLEXRIC_DIR/src/agent/e2_agent_api.c" ]; then
     echo "Cloning Flexible RAN Intelligent Controller (FlexRIC)..."
-    ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/mosaic5g/flexric.git "$FLEXRIC_DIR"
+    ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/mosaic5g/flexric.git "$FLEXRIC_DIR" --https
 fi
 
 CURRENT_E2_PORT=$(sed -nE 's/.*e2ap_server_port *= *([0-9]+);/\1/p' openairinterface5g/openair2/E2AP/flexric/src/agent/e2_agent_api.c)
@@ -173,6 +176,12 @@ if [[ "$CMAKE_VERSION" == 3.16.* ]]; then
     sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ focal main'
     sudo apt-get update
     sudo env $APTVARS apt-get install -y cmake
+fi
+
+if ! command -v ccache &>/dev/null; then
+    echo "Installing ccache..."
+    sudo apt-get update
+    sudo env $APTVARS apt-get install -y ccache
 fi
 
 ADDITIONAL_FLAGS=""

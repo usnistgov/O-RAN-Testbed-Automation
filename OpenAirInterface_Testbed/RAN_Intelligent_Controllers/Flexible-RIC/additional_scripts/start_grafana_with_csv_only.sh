@@ -67,7 +67,7 @@ fi
 if [ ! -f "$GRAFANA_LOG_FILE" ]; then
     echo "Creating Grafana log file at $GRAFANA_LOG_FILE..."
     sudo mkdir -p "$(dirname "$GRAFANA_LOG_FILE")"
-    sudo chown --recursive "$USER" "$(dirname "$GRAFANA_LOG_FILE")"
+    sudo chown --recursive "${SUDO_USER:-$USER}" "$(dirname "$GRAFANA_LOG_FILE")"
     touch "$GRAFANA_LOG_FILE"
 fi
 
@@ -77,7 +77,7 @@ if ! command -v python3 &>/dev/null; then
 fi
 
 cd additional_scripts
-if ! pgrep -f "python_server_for_grafana.py" >/dev/null; then
+if ! pgrep -f "[p]ython_server_for_grafana.py" >/dev/null; then
     echo "Hosting file: http://localhost:3030/KPI_Metrics.csv"
     # Optionally, redirect the server output to logs/python_server.log
     # SERVER_LOG_FILE="$PARENT_DIR/logs/python_server.log"

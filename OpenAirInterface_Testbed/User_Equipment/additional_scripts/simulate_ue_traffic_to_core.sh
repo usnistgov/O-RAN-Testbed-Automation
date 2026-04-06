@@ -104,8 +104,11 @@ PDU_SESSION_IP=$(cat $LOG_FILE | grep "Received PDU Session Establishment Accept
 CORE_IP=$(ip route | grep ogstun | cut -d ' ' -f 9 | xargs)
 if [ -z "$CORE_IP" ]; then # 5GDeploy:
     if sudo ip netns exec "$UE_NAMESPACE" ip route | grep -q "oaitun_ue$UE_NUMBER"; then
-        SUBNET=$(sudo ip netns exec "$UE_NAMESPACE" ip route | awk "/oaitun_ue$UE_NUMBER/ {print \$1}")
-        CORE_IP=$(remove_cidr_suffix "$SUBNET")
+        SUBNET=$(sudo ip netns exec "$UE_NAMESPACE" ip route | grep "oaitun_ue$UE_NUMBER" | grep -v "default" | awk '{print $1}')
+        if [ -n "$SUBNET" ]; then
+            CORE_IP=$(remove_cidr_suffix "$SUBNET")
+            CORE_IP="${CORE_IP%.0}.1"
+        fi
     fi
 fi
 

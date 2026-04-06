@@ -68,4 +68,4 @@ git apply --verbose --ignore-whitespace ../install_patch_files/flexric/examples/
 
 cd ..
 
-echo "Successfully created patch files in the FlexRIC/install_patch_files directory."
+echo "Successfully updated patch files in the install_patch_files directory."

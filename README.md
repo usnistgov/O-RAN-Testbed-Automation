@@ -22,7 +22,7 @@ This tool supports the deployment of 5G O-RAN testbeds using open-source compone
 ```text
 CU/DU
 ├── OCUDU: 26.04
-├── OpenAirInterface gNB: 2026.w06
+├── OpenAirInterface gNB: 2026.w13
 └── O-RAN SC E2 Simulator: M-Release
 RICs
 ├── O-RAN SC Near-RT RIC: M-Release
@@ -43,13 +43,13 @@ RICs
 └── O-RAN SC Non-RT RIC: M-Release
     └── Minimal prototype with no rApp support.
 5G Core
-├── Open5GS: v2.7.6
+├── Open5GS: v2.7.7
 ├── OPENAIR-CN-5G: v2.2.0
 └── free5GC: v4.2.1
 
 UEs
 ├── srsRAN_4G: release_25_10
-└── OpenAirInterface 5G UE: 2026.w06
+└── OpenAirInterface 5G UE: 2026.w13
 ```
 
 The components that have been verified to support or not support connectivity are included below.
@@ -120,7 +120,7 @@ git clone https://github.com/USNISTGOV/O-RAN-Testbed-Automation.git
 cd O-RAN-Testbed-Automation
 ```
 
-Alternatively, the repository may be cloned over SSH: `git clone git@github.com:USNISTGOV/O-RAN-Testbed-Automation.git`
+Alternatively, the repository may be cloned over SSH: `git clone git@github.com:USNISTGOV/O-RAN-Testbed-Automation.git`. To use SSH instead of HTTPS for all subsequent `git clone` operations during the installation, set `export USE_GIT_SSH=true` in your terminal before proceeding.
 
 ---
 

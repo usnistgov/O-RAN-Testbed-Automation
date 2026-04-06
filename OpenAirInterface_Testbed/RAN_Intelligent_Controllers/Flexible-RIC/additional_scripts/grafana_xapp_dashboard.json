@@ -21,7 +21,7 @@
       "type": "grafana",
       "id": "grafana",
       "name": "Grafana",
-      "version": "12.3.2+security-01"
+      "version": "12.4.2"
     },
     {
       "type": "panel",
@@ -57,7 +57,7 @@
       "type": "datasource",
       "id": "yesoreyeram-infinity-datasource",
       "name": "Infinity",
-      "version": "3.6.0"
+      "version": "3.7.4"
     }
   ],
   "annotations": {
@@ -98,7 +98,7 @@
         "content": "<img src=\"http://localhost:3030/NIST.svg\" style=\"max-width: 100%; max-height: 100%; height: auto;\" />",
         "mode": "html"
       },
-      "pluginVersion": "12.3.2+security-01",
+      "pluginVersion": "12.4.2",
       "transparent": true,
       "type": "text"
     },
@@ -154,7 +154,7 @@
         "enablePagination": false,
         "showHeader": false
       },
-      "pluginVersion": "12.3.2+security-01",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
           "datasource": {
@@ -238,7 +238,6 @@
         "type": "yesoreyeram-infinity-datasource",
         "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
       },
-      "description": "",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -288,7 +287,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.3.2+security-01",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
           "columns": [
@@ -416,7 +415,6 @@
         "type": "datasource",
         "uid": "-- Dashboard --"
       },
-      "description": "",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -497,7 +495,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.3.2+security-01",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
           "datasource": {
@@ -640,7 +638,7 @@
         "sizing": "auto",
         "valueMode": "color"
       },
-      "pluginVersion": "12.3.2+security-01",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
           "datasource": {
@@ -846,7 +844,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.3.2+security-01",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
           "datasource": {
@@ -987,7 +985,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.3.2+security-01",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
           "datasource": {
@@ -1133,7 +1131,7 @@
         "sizing": "auto",
         "valueMode": "color"
       },
-      "pluginVersion": "12.3.2+security-01",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
           "datasource": {
@@ -1343,7 +1341,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.3.2+security-01",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
           "datasource": {
@@ -1488,7 +1486,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.3.2+security-01",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
           "datasource": {
@@ -1648,7 +1646,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.3.2+security-01",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
           "datasource": {
@@ -1742,21 +1740,6 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "RRU.PrbTotDl (%)"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "light-blue",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
               "options": "RRU.PrbTotUl (%)"
             },
             "properties": [
@@ -1791,7 +1774,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.3.2+security-01",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
           "datasource": {
@@ -1900,6 +1883,7 @@
         },
         "refresh": 2,
         "regex": "",
+        "regexApplyTo": "value",
         "type": "query"
       },
       {
@@ -1948,7 +1932,8 @@
           }
         ],
         "query": "10,25,50,100,200,500,1000",
-        "type": "custom"
+        "type": "custom",
+        "valuesFormat": "csv"
       },
       {
         "current": {
@@ -1977,7 +1962,7 @@
   "timezone": "browser",
   "title": "FlexRIC KPI Monitor",
   "uid": "ric_dashboard",
-  "version": 2,
+  "version": 1,
   "weekStart": "",
   "id": null
 }

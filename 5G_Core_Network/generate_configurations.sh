@@ -42,6 +42,9 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
+# Ensure the correct YAML editor is installed
+./install_scripts/./ensure_consistent_yq.sh
+
 # Ensure that the correct script is used
 if [ -f "options.yaml" ]; then
     CORE_TO_USE=$(yq eval '.core_to_use' options.yaml)
@@ -58,9 +61,6 @@ if [ "$CORE_TO_USE" != "open5gs" ]; then
     ./generate_configurations.sh
     exit $?
 fi
-
-# Ensure the correct YAML editor is installed
-"$SCRIPT_DIR/install_scripts/./ensure_consistent_yq.sh"
 
 echo "Parsing options.yaml..."
 # Check if the YAML file exists, if not, set and save default values
@@ -98,10 +98,11 @@ if [ ! -f "options.yaml" ]; then
     echo "" >>"options.yaml"
     echo "# Configure the Single Network Slice Selection Assistance Information (S-NSSAI)" >>"options.yaml"
     echo "# NOTE: \"sst\" and \"sd\" are interpreted as hexadecimal values (no 0x prefix)." >>"options.yaml"
-    echo "sst: 1" >>"options.yaml"
-    echo "sd: 000001" >>"options.yaml"
+    echo "slices:" >>"options.yaml"
+    echo "  - sst: 1" >>"options.yaml"
+    echo "    sd: FFFFFF" >>"options.yaml"
     echo "" >>"options.yaml"
-    echo "# If core_to_use=open5gs, false means AMF will use the default 127.0.0.5, true means it will use the hostname IP" >>"options.yaml"
+    echo "# If false, AMF will use a local IP, otherwise it will use the hostname IP" >>"options.yaml"
     echo "expose_amf_over_hostname: false" >>"options.yaml"
     echo "" >>"options.yaml"
     echo "# If core_to_use=open5gs, toggle whether or not to include the Security Edge Protection Proxies (SEPP1 and SEPP2)" >>"options.yaml"
@@ -190,7 +191,7 @@ for i in "${!SST[@]}"; do
 done
 
 echo "Creating configs directory..."
-rm -rf configs
+rm -rf configs || sudo rm -rf configs
 mkdir configs
 
 MONGODB_CONFIG_FILE="/etc/mongod/mongod.conf"

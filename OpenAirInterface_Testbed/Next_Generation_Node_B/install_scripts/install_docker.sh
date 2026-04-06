@@ -146,6 +146,14 @@ if ! command -v dockerd >/dev/null 2>&1 || ! command -v docker >/dev/null 2>&1; 
         sudo env $APTVARS apt-get install -y $APTOPTS "docker-ce=$DOCKERVERSION"
     fi
 fi
+if ! command -v docker >/dev/null 2>&1 || [ ! -e /usr/bin/docker ]; then
+    echo "Docker CLI not found. Attempting to reinstall..."
+    if [ "$USE_DOCKER_CE" -eq 0 ]; then
+        sudo env $APTVARS apt-get install --reinstall -y $APTOPTS "docker.io=$DOCKERVERSION"
+    else
+        sudo env $APTVARS apt-get install --reinstall -y $APTOPTS "docker-ce-cli=$DOCKERVERSION"
+    fi
+fi
 
 # Configure Docker daemon
 echo "Configuring Docker daemon..."
@@ -265,6 +273,7 @@ else
     sudo pkill -x containerd >/dev/null 2>&1 || true
     sudo rm -f /var/run/docker.pid /var/run/docker.sock
     sudo mkdir -p /run /var/run
+    sudo -v # Ensure sudo session is active
     sudo sh -c 'setsid dockerd --config-file=/etc/docker/daemon.json >>'"${DOCKERD_LOG}"' 2>&1 </dev/null &'
     # Wait for Docker to be ready
     for ATTEMPT in $(seq 1 60); do
@@ -283,6 +292,7 @@ else
         if ! grep -q 'native.cgroupdriver' /etc/docker/daemon.json; then
             sudo jq '. + {"exec-opts": ["native.cgroupdriver=cgroupfs"]}' /etc/docker/daemon.json.bak | sudo tee /etc/docker/daemon.json >/dev/null
         fi
+        sudo -v # Ensure sudo session is active
         sudo sh -c 'setsid dockerd --config-file=/etc/docker/daemon.json >>'"${DOCKERD_LOG}"' 2>&1 </dev/null &'
         for ATTEMPT in $(seq 1 60); do
             if sudo test -S /var/run/docker.sock && sudo docker version >/dev/null 2>&1; then

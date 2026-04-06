@@ -32,6 +32,6 @@ echo "# Script: $(realpath "$0")..."
 
 # Simple script to keep sudo active by refreshing it every minute
 while true; do
-    sudo -v
+    sudo -v # Ensure sudo session is active
     sleep 60
 done

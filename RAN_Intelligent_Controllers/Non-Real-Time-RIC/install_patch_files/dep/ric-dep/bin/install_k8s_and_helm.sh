@@ -46,8 +46,8 @@ usage() {
     exit 1
 }
 
-PRIMARY_INTERFACE=$(ip route | grep default | awk '{print $5}')
-IP_ADDRESS=$(ip -f inet addr show $PRIMARY_INTERFACE | grep -Po 'inet \K[\d.]+')
+INTERFACE=$(ip route | grep default | awk '{print $5}' | head -n 1)
+IP_ADDRESS=$(ip addr show $INTERFACE | grep 'inet ' | awk '{print $2}' | cut -d/ -f1)
 HOSTNAME=$(hostname)
 
 get_latest_package_version() {
@@ -337,7 +337,7 @@ fi
 
 sudo rm -rf /opt/config
 sudo mkdir -p /opt/config
-sudo chown "$USER" /opt/config
+sudo chown "${SUDO_USER:-$USER}" /opt/config
 sudo chmod 755 /opt/config
 echo "$DOCKERVERSIONWITHOUTSUFFIX" >/opt/config/docker_version.txt
 echo "$KUBEVERSIONWITHOUTSUFFIX" >/opt/config/k8s_version.txt
@@ -553,14 +553,14 @@ else
         echo "Killing containerd process..."
         sudo pkill -9 -f '^containerd(\s|$)' 2>/dev/null || true
     fi
-    if pgrep -f 'containerd-shim' >/dev/null; then
-        sudo pkill -9 -f 'containerd-shim' 2>/dev/null || true
+    if pgrep -f '[c]ontainerd-shim' >/dev/null; then
+        sudo pkill -9 -f '[c]ontainerd-shim' 2>/dev/null || true
     fi
-    if pgrep -f 'docker-proxy' >/dev/null; then
-        sudo pkill -9 -f 'docker-proxy' 2>/dev/null || true
+    if pgrep -f '[d]ocker-proxy' >/dev/null; then
+        sudo pkill -9 -f '[d]ocker-proxy' 2>/dev/null || true
     fi
-    if pgrep -f 'runc' >/dev/null; then
-        sudo pkill -9 -f 'runc' 2>/dev/null || true
+    if pgrep -f '[r]unc' >/dev/null; then
+        sudo pkill -9 -f '[r]unc' 2>/dev/null || true
     fi
 
     # If console breaks, reset it
@@ -616,6 +616,14 @@ if ! command -v dockerd >/dev/null 2>&1 || ! command -v docker >/dev/null 2>&1; 
         sudo env $APTVARS apt-get install -y $APTOPTS "docker.io=$DOCKERVERSION"
     else
         sudo env $APTVARS apt-get install -y $APTOPTS "docker-ce=$DOCKERVERSION"
+    fi
+fi
+if ! command -v docker >/dev/null 2>&1 || [ ! -e /usr/bin/docker ]; then
+    echo "Docker CLI not found. Attempting to reinstall..."
+    if [ "$USE_DOCKER_CE" -eq 0 ]; then
+        sudo env $APTVARS apt-get install --reinstall -y $APTOPTS "docker.io=$DOCKERVERSION"
+    else
+        sudo env $APTVARS apt-get install --reinstall -y $APTOPTS "docker-ce-cli=$DOCKERVERSION"
     fi
 fi
 
@@ -725,6 +733,7 @@ else
     sudo pkill -x containerd >/dev/null 2>&1 || true
     sudo rm -f /var/run/docker.pid /var/run/docker.sock
     sudo mkdir -p /run /var/run
+    sudo -v # Ensure sudo session is active
     sudo sh -c 'setsid dockerd --config-file=/etc/docker/daemon.json >>'"${DOCKERD_LOG}"' 2>&1 </dev/null &'
     # Wait for Docker to be ready
     for ATTEMPT in $(seq 1 60); do
@@ -743,6 +752,7 @@ else
         if ! grep -q 'native.cgroupdriver' /etc/docker/daemon.json; then
             sudo jq '. + {"exec-opts": ["native.cgroupdriver=cgroupfs"]}' /etc/docker/daemon.json.bak | sudo tee /etc/docker/daemon.json >/dev/null
         fi
+        sudo -v # Ensure sudo session is active
         sudo sh -c 'setsid dockerd --config-file=/etc/docker/daemon.json >>'"${DOCKERD_LOG}"' 2>&1 </dev/null &'
         for ATTEMPT in $(seq 1 60); do
             if sudo test -S /var/run/docker.sock && sudo docker version >/dev/null 2>&1; then
@@ -1123,7 +1133,7 @@ sudo kubeadm config images pull --kubernetes-version=${KUBEVERSIONWITHOUTSUFFIX}
 echo "Kubernetes components reinstalled and ready for initialization."
 
 mkdir -p "$HOME/.kube"
-sudo chown --recursive "$USER" "$HOME/.kube/"
+sudo chown --recursive "${SUDO_USER:-$USER}" "$HOME/.kube/"
 
 KUBEPROXY_MODE="ipvs"
 if ! sudo modprobe ip_vs ip_vs_rr ip_vs_wrr ip_vs_sh nf_conntrack 2>/dev/null; then
@@ -1286,10 +1296,10 @@ else
     echo "Kubernetes initialized successfully."
     # Set the KUBECONFIG variable to the config file's location
     mkdir -p "$HOME/.kube"
-    sudo chown --recursive "$USER" "$HOME/.kube"
+    sudo chown --recursive "${SUDO_USER:-$USER}" "$HOME/.kube"
     export KUBECONFIG="$HOME/.kube/config"
     sudo cp -f /etc/kubernetes/admin.conf "$KUBECONFIG"
-    sudo chown --recursive "$USER" "$KUBECONFIG"
+    sudo chown --recursive "${SUDO_USER:-$USER}" "$KUBECONFIG"
     sudo chmod 600 "$KUBECONFIG"
     # Make the admin.conf readable by all users (only root can write)
     sudo chmod 644 /etc/kubernetes/admin.conf
@@ -1351,7 +1361,7 @@ fi
 
 echo "Waiting for Flannel CNI configuration to be created..."
 for i in $(seq 1 120); do
-    if sudo test -f /etc/cni/net.d/10-flannel.conflist || sudo ls /etc/cni/net.d/*.conflist >/dev/null 2>&1; then
+    if sudo test -f /etc/cni/net.d/10-flannel.conflist || sudo find /etc/cni/net.d -maxdepth 1 -name '*.conflist' -print -quit | grep -q .; then
         break
     fi
     sleep 1

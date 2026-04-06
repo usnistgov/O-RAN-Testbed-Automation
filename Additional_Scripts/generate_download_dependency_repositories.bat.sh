@@ -28,7 +28,7 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-# This script will download the 5G_Core_Network, gNodeB, User_Equipment and RAN_Intelligent_Controllers repositories for analyzing the source code without requiring a full testbed build and installation.
+# This script will download the untracked 5G_Core_Network, Next_Generation_Node_B, User_Equipment and RAN_Intelligent_Controllers repositories for analyzing the source code without requiring a full testbed build and installation.
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
@@ -91,6 +91,7 @@ function generate_commands() {
     local URL="$1"
     local CLONE_PATH="$2"
     local SUBDIRECTORY="$3"
+    local ONLY_IF_NOT_EXIST="$4" # Optional parameter to skip cloning if the directory already exists
 
     local DEPTH_COUNT=$(tr -cd '\\' <<<"$CLONE_PATH" | wc -c)
 
@@ -101,10 +102,20 @@ function generate_commands() {
     # Reset the current directory
     echo "cd %~dp0.." >>download_dependency_repositories.bat
 
-    # Generate commands for batch script
-    echo "if exist \"$CLONE_PATH\\$SUBDIRECTORY\" rmdir /s /q \"$CLONE_PATH\\$SUBDIRECTORY\"" >>download_dependency_repositories.bat
-    echo "cd $CLONE_PATH" >>download_dependency_repositories.bat
-    echo "git clone $URL" >>download_dependency_repositories.bat
+    local INDENT=""
+    if [[ "$ONLY_IF_NOT_EXIST" == "ONLY_IF_NOT_EXIST" ]]; then
+        echo "if not exist \"$CLONE_PATH\\$SUBDIRECTORY\" (" >>download_dependency_repositories.bat
+        INDENT="    "
+    else
+        # Generate commands for batch script
+        echo "if exist \"$CLONE_PATH\\$SUBDIRECTORY\" rmdir /s /q \"$CLONE_PATH\\$SUBDIRECTORY\"" >>download_dependency_repositories.bat
+    fi
+
+    echo "${INDENT}cd \"$CLONE_PATH\" >nul 2>&1" >>download_dependency_repositories.bat
+    echo "${INDENT}if not errorlevel 1 (" >>download_dependency_repositories.bat
+
+    local INNER_INDENT="${INDENT}    "
+    echo "${INNER_INDENT}git clone $URL" >>download_dependency_repositories.bat
 
     APPEND_LINE=""
     if [[ "$SUBDIRECTORY" == "dep" ]]; then
@@ -112,23 +123,23 @@ function generate_commands() {
     fi
 
     if [[ "$COMMIT" != "null" && "$COMMIT" != "" ]]; then
-        echo "cd $SUBDIRECTORY" >>download_dependency_repositories.bat
-        echo "git checkout $COMMIT" >>download_dependency_repositories.bat
+        echo "${INNER_INDENT}cd \"$SUBDIRECTORY\"" >>download_dependency_repositories.bat
+        echo "${INNER_INDENT}git checkout $COMMIT" >>download_dependency_repositories.bat
         if [ ! -z "$APPEND_LINE" ]; then
-            echo "$APPEND_LINE" >>download_dependency_repositories.bat
+            echo "${INNER_INDENT}$APPEND_LINE" >>download_dependency_repositories.bat
         fi
         DEPTH_COUNT=$((DEPTH_COUNT + 1))
     elif [[ "$BRANCH" != "null" && "$BRANCH" != "" ]]; then
-        echo "cd $SUBDIRECTORY" >>download_dependency_repositories.bat
-        echo "git checkout $BRANCH" >>download_dependency_repositories.bat
+        echo "${INNER_INDENT}cd \"$SUBDIRECTORY\"" >>download_dependency_repositories.bat
+        echo "${INNER_INDENT}git checkout $BRANCH" >>download_dependency_repositories.bat
         if [ ! -z "$APPEND_LINE" ]; then
-            echo "$APPEND_LINE" >>download_dependency_repositories.bat
+            echo "${INNER_INDENT}$APPEND_LINE" >>download_dependency_repositories.bat
         fi
         DEPTH_COUNT=$((DEPTH_COUNT + 1))
     else
         if [ ! -z "$APPEND_LINE" ]; then
-            echo "cd $SUBDIRECTORY" >>download_dependency_repositories.bat
-            echo "$APPEND_LINE" >>download_dependency_repositories.bat
+            echo "${INNER_INDENT}cd \"$SUBDIRECTORY\"" >>download_dependency_repositories.bat
+            echo "${INNER_INDENT}$APPEND_LINE" >>download_dependency_repositories.bat
             DEPTH_COUNT=$((DEPTH_COUNT + 1))
         fi
     fi
@@ -143,13 +154,21 @@ function generate_commands() {
         let DEPTH_COUNT--
     done
 
-    echo "$BACK_COMMAND" >>download_dependency_repositories.bat
+    echo "${INNER_INDENT}$BACK_COMMAND" >>download_dependency_repositories.bat
+    echo "${INDENT}) else (" >>download_dependency_repositories.bat
+    echo "${INNER_INDENT}echo ERROR: Failed to cd to $CLONE_PATH. Skipping clone." >>download_dependency_repositories.bat
+    echo "${INDENT})" >>download_dependency_repositories.bat
+
+    if [[ "$ONLY_IF_NOT_EXIST" == "ONLY_IF_NOT_EXIST" ]]; then
+        echo ")" >>download_dependency_repositories.bat
+    fi
     echo "" >>download_dependency_repositories.bat
 }
 
 # Using the function to generate commands for each repository in the blueprint testbed
 echo "REM Change to the parent directory of the script" >>download_dependency_repositories.bat
 generate_commands "https://github.com/open5gs/open5gs.git" "5G_Core_Network" "open5gs"
+generate_commands "https://github.com/usnistgov/5gdeploy.git" "5G_Core_Network/Additional_Cores_5GDeploy" "5gdeploy"
 generate_commands "https://github.com/srsran/srsRAN_4G.git" "User_Equipment" "srsRAN_4G"
 generate_commands "https://github.com/zeromq/libzmq.git" "User_Equipment" "libzmq"
 generate_commands "https://github.com/zeromq/czmq.git" "User_Equipment" "czmq"
@@ -172,7 +191,6 @@ echo "cd .." >>download_dependency_repositories.bat
 
 echo "cd ..\\.." >>download_dependency_repositories.bat
 echo "" >>download_dependency_repositories.bat
-
 generate_commands "https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep.git" "RAN_Intelligent_Controllers\\Near-Real-Time-RIC" "ric-dep"
 generate_commands "https://gerrit.o-ran-sc.org/r/sim/e2-interface.git" "RAN_Intelligent_Controllers\\Near-Real-Time-RIC" "e2-interface"
 generate_commands "https://gerrit.o-ran-sc.org/r/ric-plt/appmgr.git" "RAN_Intelligent_Controllers\\Near-Real-Time-RIC" "appmgr"
@@ -193,23 +211,26 @@ generate_commands "https://gerrit.o-ran-sc.org/r/ric-app/ts.git" "RAN_Intelligen
 
 # O-RAN SC Non-RT RIC repositories
 generate_commands "https://gerrit.o-ran-sc.org/r/it/dep.git" "RAN_Intelligent_Controllers\\Non-Real-Time-RIC" "dep"
+generate_commands "https://gerrit.o-ran-sc.org/r/nonrtric/plt/rappmanager.git" "RAN_Intelligent_Controllers\\Non-Real-Time-RIC" "rappmanager"
 generate_commands "https://gerrit.o-ran-sc.org/r/nonrtric/plt/ranpm.git" "RAN_Intelligent_Controllers\\Non-Real-Time-RIC\\dep" "ranpm"
 generate_commands "https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep.git" "RAN_Intelligent_Controllers\\Non-Real-Time-RIC\\dep" "ric-dep"
 generate_commands "https://github.com/onap/multicloud-k8s.git" "RAN_Intelligent_Controllers\\Non-Real-Time-RIC\\dep\\smo-install" "multicloud-k8s"
 generate_commands "https://gerrit.onap.org/r/oom.git" "RAN_Intelligent_Controllers\\Non-Real-Time-RIC\\dep\\smo-install" "onap_oom"
 generate_commands "https://gerrit.o-ran-sc.org/r/portal/nonrtric-controlpanel.git" "RAN_Intelligent_Controllers\\Non-Real-Time-RIC" "nonrtric-controlpanel"
-generate_commands "https://gerrit.o-ran-sc.org/r/nonrtric/plt/rappmanager.git" "RAN_Intelligent_Controllers\\Non-Real-Time-RIC" "rappmanager"
 echo "cd RAN_Intelligent_Controllers\\Non-Real-Time-RIC" >>download_dependency_repositories.bat
 echo "mkdir rApps" >>download_dependency_repositories.bat
 echo "cd ..\\.." >>download_dependency_repositories.bat
+echo "" >>download_dependency_repositories.bat
 
 # OpenAirInterface testbed repositories
-generate_commands "https://github.com/open5gs/open5gs.git" "OpenAirInterface_Testbed\\5G_Core_Network" "open5gs"
+generate_commands "https://github.com/open5gs/open5gs.git" "OpenAirInterface_Testbed\\5G_Core_Network" "open5gs" "ONLY_IF_NOT_EXIST"
+generate_commands "https://github.com/usnistgov/5gdeploy.git" "OpenAirInterface_Testbed\\5G_Core_Network\\Additional_Cores_5GDeploy" "5gdeploy"
 generate_commands "https://gitlab.eurecom.fr/oai/openairinterface5g.git" "OpenAirInterface_Testbed\\User_Equipment" "openairinterface5g"
 echo "cd OpenAirInterface_Testbed\\Next_Generation_Node_B" >>download_dependency_repositories.bat
 echo "mklink /D openairinterface5g ..\\User_Equipment\\openairinterface5g" >>download_dependency_repositories.bat
 echo "cd ..\\.." >>download_dependency_repositories.bat
 echo "" >>download_dependency_repositories.bat
+generate_commands "https://gitlab.eurecom.fr/oai/o1-adapter.git" "OpenAirInterface_Testbed\\Next_Generation_Node_B" "o1-adapter"
 generate_commands "https://github.com/swig/swig.git" "OpenAirInterface_Testbed\\RAN_Intelligent_Controllers\\Flexible-RIC" "swig"
 generate_commands "https://gitlab.eurecom.fr/mosaic5g/flexric.git" "OpenAirInterface_Testbed\\RAN_Intelligent_Controllers\\Flexible-RIC" "flexric"
 

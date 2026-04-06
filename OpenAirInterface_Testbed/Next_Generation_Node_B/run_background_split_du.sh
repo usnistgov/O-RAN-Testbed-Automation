@@ -88,6 +88,7 @@ else
         RFSIM_SERVER_ARG="--no-rfsim-server"
     fi
 
+    sudo -v # Ensure sudo session is active
     sudo setsid bash -c "stdbuf -oL -eL \"$SCRIPT_DIR/run_split_du.sh\" $DU_NUMBER $RFSIM_SERVER_ARG  >/dev/null 2>&1" </dev/null &
 
     ATTEMPT=0

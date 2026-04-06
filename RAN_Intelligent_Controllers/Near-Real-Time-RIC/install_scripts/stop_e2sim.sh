@@ -62,7 +62,7 @@ if [ -z "$FIXED_DOCKER_PERMS" ]; then
 fi
 
 # Stop kpm_sim process inside container if it exists
-if docker exec oransim pgrep -f "kpm_sim" >/dev/null 2>&1; then
+if docker exec oransim pgrep -f "[k]pm_sim" >/dev/null 2>&1; then
     echo "Stopping kpm_sim process..."
     docker exec oransim pkill -9 -f kpm_sim 2>/dev/null || true
 fi

@@ -38,7 +38,7 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
 # Upon exit, restore the terminal to a sane state
-trap 'stty sane; exit' EXIT SIGINT SIGTERM
+trap 'trap - EXIT SIGINT SIGTERM; stty sane || true; exit' EXIT SIGINT SIGTERM
 
 # Check if the components are already stopped
 if ! $(./is_running.sh | grep -q ": RUNNING"); then
@@ -50,11 +50,8 @@ fi
 
 ./additional_scripts/stop_grafana_and_python_server.sh
 
-# Prevent the subsequent command from requiring credential input
-sudo ls >/dev/null 2>&1
-
 # Send a graceful shutdown signal to the FlexRIC process
-sudo pkill -f "nearRT-RIC" >/dev/null 2>&1
+sudo pkill -f "[n]earRT-RIC" >/dev/null 2>&1
 
 # Wait for the process to terminate gracefully
 COUNT=0
@@ -74,7 +71,7 @@ done
 
 # If the process is still running after 20 seconds, send a forceful kill signal
 echo "The FlexRIC did not stop in time, sending forceful kill signal..."
-sudo pkill -9 -f "nearRT-RIC" >/dev/null 2>&1
+sudo pkill -9 -f "[n]earRT-RIC" >/dev/null 2>&1
 
 sleep 2
 ./is_running.sh

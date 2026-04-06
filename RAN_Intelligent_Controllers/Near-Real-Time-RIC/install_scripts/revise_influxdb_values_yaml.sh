@@ -35,7 +35,7 @@ set -e
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR="$(dirname "$SCRIPT_DIR")"
-cd $PARENT_DIR
+cd "$PARENT_DIR"
 
 INFLUXDB_PATH="$PARENT_DIR/influxdb"
 

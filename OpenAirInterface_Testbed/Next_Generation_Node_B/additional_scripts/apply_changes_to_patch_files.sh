@@ -48,10 +48,10 @@ if [ ! -d install_patch_files ]; then
 fi
 
 cd openairinterface5g
-git diff openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c >../install_patch_files/openairinterface/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c.patch
-git diff openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c >../install_patch_files/openairinterface/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c.patch
-git diff openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h >../install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.patch
-git diff openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c >../install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c.patch
+
+# Update the patch files
+git diff cmake_targets/tools/build_helper >../install_patch_files/openairinterface/cmake_targets/tools/build_helper.patch
+
 cd ..
 
-echo "Successfully created patch files in the FlexRIC/install_patch_files directory."
+echo "Successfully updated patch files in the install_patch_files directory."

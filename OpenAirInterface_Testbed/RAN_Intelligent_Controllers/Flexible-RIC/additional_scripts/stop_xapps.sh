@@ -28,27 +28,30 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-if pgrep -f "xapp_kpm_moni_write_to_csv" >/dev/null; then
+if pgrep -f "[x]app_kpm_moni_write_to_csv" >/dev/null; then
     echo "Stopping xApp KPM Moni (CSV)..."
-    pkill -9 -f "xapp_kpm_moni_write_to_csv"
+    pkill -9 -f "[x]app_kpm_moni_write_to_csv"
 fi
 
-if pgrep -f "xapp_kpm_moni " >/dev/null; then
+if pgrep -f "[x]app_kpm_moni " >/dev/null; then
     echo "Stopping xApp KPM Moni..."
-    pkill -9 -f "xapp_kpm_moni"
+    pkill -9 -f "[x]app_kpm_moni"
 fi
 
-if pgrep -f "xapp_rc_moni" >/dev/null; then
+if pgrep -f "[x]app_rc_moni" >/dev/null; then
     echo "Stopping xApp RC Moni..."
-    pkill -9 -f "xapp_rc_moni"
+    pkill -9 -f "[x]app_rc_moni"
 fi
 
-if pgrep -f "xapp_kpm_rc" >/dev/null; then
+if pgrep -f "[x]app_kpm_rc" >/dev/null; then
     echo "Stopping xApp KPM RC..."
-    pkill -9 -f "xapp_kpm_rc"
+    pkill -9 -f "[x]app_kpm_rc"
 fi
 
-if pgrep -f "xapp_gtp_mac_rlc_pdcp_moni" >/dev/null; then
+if pgrep -f "[x]app_gtp_mac_rlc_pdcp_moni" >/dev/null; then
     echo "Stopping xApp GTP MAC RLC PDCP Moni..."
-    pkill -9 -f "xapp_gtp_mac_rlc_pdcp_moni"
+    pkill -9 -f "[x]app_gtp_mac_rlc_pdcp_moni"
 fi
+
+# Clean up leftover database files
+rm -f /tmp/xapp_db1 /tmp/xapp_db1-shm /tmp/xapp_db1-wal

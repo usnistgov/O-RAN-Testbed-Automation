@@ -61,7 +61,7 @@ cd xApps
 
 if [ ! -d "ts" ]; then
     echo "Cloning Traffic Steering xApp (trafficxapp)..."
-    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/ts.git
+    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/ts.git --https
 fi
 
 cd ts
@@ -111,7 +111,7 @@ if [ ! -f trafficxapp.tar ]; then
     docker build -t 127.0.0.1:80/trafficxapp:latest .
     docker save -o trafficxapp.tar 127.0.0.1:80/trafficxapp:latest
     sudo chmod 755 trafficxapp.tar
-    sudo chown "$USER" trafficxapp.tar
+    sudo chown "${SUDO_USER:-$USER}" trafficxapp.tar
 
     # Import the image into the containerd container runtime
     sudo ctr -n=k8s.io image import trafficxapp.tar

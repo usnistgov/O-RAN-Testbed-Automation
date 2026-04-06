@@ -117,10 +117,10 @@ fi
 if [[ "$OPEN5GS_INSTALLED" = true || "$GNODEB_INSTALLED" = true || "$UE_INSTALLED" = true ]]; then
     echo
     if [ -z "$KEEP_EXISTING_INSTALLS" ]; then
-        echo "Previous installations were found, do you want to keep the old installations? (y/n)"
+        echo "Previous installations were found, do you want to keep the old installations? (Y/n)"
         read -r KEEP_EXISTING_INSTALLS
-        # Normalize input to lowercase and only accept inputs: y, yes, n, no
-        KEEP_EXISTING_INSTALLS=$(echo "$KEEP_EXISTING_INSTALLS" | tr '[:upper:]' '[:lower:]')
+        # Normalize input to lowercase and default to 'y' if empty
+        KEEP_EXISTING_INSTALLS=$(echo "${KEEP_EXISTING_INSTALLS:-y}" | tr '[:upper:]' '[:lower:]')
         if [[ "$KEEP_EXISTING_INSTALLS" != "y" && "$KEEP_EXISTING_INSTALLS" != "yes" && "$KEEP_EXISTING_INSTALLS" != "n" && "$KEEP_EXISTING_INSTALLS" != "no" ]]; then
             echo "Invalid input. Exiting."
             exit 1
@@ -137,11 +137,17 @@ if [[ "$OPEN5GS_INSTALLED" = true || "$GNODEB_INSTALLED" = true || "$UE_INSTALLE
         sudo rm -rf 5G_Core_Network/logs
         sudo rm -rf 5G_Core_Network/configs
         sudo rm -rf 5G_Core_Network/install_time.txt
+        sudo rm -rf 5G_Core_Network/Additional_Cores_5GDeploy/5gdeploy
+        sudo rm -rf 5G_Core_Network/Additional_Cores_5GDeploy/compose
+        sudo rm -rf 5G_Core_Network/Additional_Cores_5GDeploy/logs
+        sudo rm -rf 5G_Core_Network/Additional_Cores_5GDeploy/configs
+        sudo rm -rf 5G_Core_Network/Additional_Cores_5GDeploy/install_time.txt
         sudo rm -rf User_Equipment/openairinterface5g
         sudo rm -rf User_Equipment/logs
         sudo rm -rf User_Equipment/configs
         sudo rm -rf User_Equipment/install_time.txt
         sudo rm -rf Next_Generation_Node_B/openairinterface5g
+        sudo rm -rf Next_Generation_Node_B/o1-adapter
         sudo rm -rf Next_Generation_Node_B/logs
         sudo rm -rf Next_Generation_Node_B/configs
         sudo rm -rf Next_Generation_Node_B/install_time.txt

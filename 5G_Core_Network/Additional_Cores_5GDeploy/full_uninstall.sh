@@ -46,7 +46,7 @@ echo "Stopping all 5G Core Deployment Helper (5gdeploy) containers..."
 
 ./install_scripts/uninstall_lazydocker.sh
 
-cd $SCRIPT_DIR/5gdeploy
+cd "$SCRIPT_DIR/5gdeploy"
 
 echo "Removing system packages (httpie, jq, python3-libconf, wireshark-common, nodejs, npm)..."
 sudo apt-get remove --purge -y httpie jq python3-libconf wireshark-common nodejs npm
@@ -76,7 +76,7 @@ sudo rm -f /etc/apt/keyrings/nodesource.gpg
 echo "Removing yq snap..."
 sudo snap remove yq
 
-cd $SCRIPT_DIR
+cd "$SCRIPT_DIR"
 
 echo "Removing Docker and cleaning config..."
 ./install_scripts/uninstall_docker.sh

@@ -56,7 +56,7 @@ cd xApps
 
 if [ ! -d "hw-python" ]; then
     echo "Cloning the Hello World Python xApp (hw-python)..."
-    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/hw-python.git
+    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/hw-python.git --https
 fi
 
 cd hw-python
@@ -106,7 +106,7 @@ if [ ! -f hw-python.tar ]; then
     docker build -t 127.0.0.1:80/hw-python:latest .
     docker save -o hw-python.tar 127.0.0.1:80/hw-python:latest
     sudo chmod 755 hw-python.tar
-    sudo chown "$USER" hw-python.tar
+    sudo chown "${SUDO_USER:-$USER}" hw-python.tar
 
     # Import the image into the containerd container runtime
     sudo ctr -n=k8s.io image import hw-python.tar

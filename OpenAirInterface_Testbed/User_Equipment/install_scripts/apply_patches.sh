@@ -67,19 +67,16 @@ echo "Patching pdu_session.c to support SST values greater than 4..."
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface/openair3/UICC/pdu_session.c.patch"
 cd ..
 
-# If using Linux Mint, add support for Linux Mint 20, 21, and 22 to OpenAirInterface
-if grep -q "Linux Mint" /etc/os-release; then
-    echo "Linux Mint detected, attempting to patching OpenAirInterface to support Linux Mint 20, 21, and 22..."
-    cd openairinterface5g
-    git restore cmake_targets/tools/build_helper
-    if [ ! -f "cmake_targets/tools/build_helper.previous" ]; then
-        cp cmake_targets/tools/build_helper cmake_targets/tools/build_helper.previous
-        cp cmake_targets/tools/build_helper.previous "$PARENT_DIR/install_patch_files/openairinterface/cmake_targets/tools/build_helper.previous"
-    fi
-    echo "Patching build_helper to add Linux Mint support..."
-    git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface/cmake_targets/tools/build_helper.patch"
-    cd ..
-    echo
+# This patch adds support for Linux Mint and Ubuntu 20.04
+cd openairinterface5g
+git restore cmake_targets/tools/build_helper
+if [ ! -f "cmake_targets/tools/build_helper.previous" ]; then
+    cp cmake_targets/tools/build_helper cmake_targets/tools/build_helper.previous
+    cp cmake_targets/tools/build_helper.previous "$PARENT_DIR/install_patch_files/openairinterface/cmake_targets/tools/build_helper.previous"
 fi
+echo "Patching build_helper to extend Linux support..."
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface/cmake_targets/tools/build_helper.patch"
+cd ..
 
+echo
 echo "Successfully patched OpenAirInterface."

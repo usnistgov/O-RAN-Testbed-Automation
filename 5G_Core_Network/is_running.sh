@@ -73,7 +73,7 @@ if command -v systemctl >/dev/null 2>&1; then
 fi
 
 check_service() {
-    local SEARCH_PATTERN="open5gs-$1"
+    local SEARCH_PATTERN="[o]pen5gs-$1"
     local DISPLAY_NAME="$2"
     if pgrep -f "$SEARCH_PATTERN" >/dev/null; then
         echo "$DISPLAY_NAME: RUNNING"

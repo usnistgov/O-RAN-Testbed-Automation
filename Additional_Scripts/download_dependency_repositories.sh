@@ -43,6 +43,9 @@ cd "$(dirname "$SCRIPT_DIR")"
 
 cd 5G_Core_Network
 ./install_scripts/git_clone.sh https://github.com/open5gs/open5gs.git
+cd Additional_Cores_5GDeploy
+../install_scripts/git_clone.sh https://github.com/usnistgov/5gdeploy.git
+cd ..
 cd ..
 
 cd User_Equipment
@@ -62,52 +65,59 @@ wget -qO zmq_broker/multi_ue_scenario.grc https://gitlab.com/ocudu/ocudu_docs/-/
 cd ..
 
 cd RAN_Intelligent_Controllers/Near-Real-Time-RIC
-./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep.git
-./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/sim/e2-interface.git
-./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-plt/appmgr.git
+./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep.git --https
+./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/sim/e2-interface.git --https
+./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-plt/appmgr.git --https
 mkdir -p xApps
 cd xApps
-./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/hw-go.git
-./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/hw-python.git
-./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/hw-rust.git
-./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/kpimon-go.git
-./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/ad-cell.git
-./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/ad.git
-./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/qp.git
-./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/rc.git
-./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/ts.git
+./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/hw-go.git --https
+./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/hw-python.git --https
+./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/hw-rust.git --https
+./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/kpimon-go.git --https
+./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/ad-cell.git --https
+./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/ad.git --https
+./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/qp.git --https
+./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/rc.git --https
+./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/ts.git --https
 
 cd ../../..
 
 cd RAN_Intelligent_Controllers/Non-Real-Time-RIC
-./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/it/dep.git
+./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/it/dep.git --https
 cd dep
 git restore --source=HEAD :/
 cd ..
-./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/nonrtric/plt/ranpm.git dep/ranpm
-./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep.git dep/ric-dep
+./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/nonrtric/plt/rappmanager.git --https
+./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/nonrtric/plt/ranpm.git dep/ranpm --https
+./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep.git dep/ric-dep --https
 ./install_scripts/git_clone.sh https://github.com/onap/multicloud-k8s.git dep/smo-install/multicloud-k8s
-./install_scripts/git_clone.sh https://gerrit.onap.org/r/oom.git dep/smo-install/onap_oom
-./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/portal/nonrtric-controlpanel.git
-./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/nonrtric/plt/rappmanager.git
+./install_scripts/git_clone.sh https://gerrit.onap.org/r/oom.git dep/smo-install/onap_oom --https
+./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/portal/nonrtric-controlpanel.git --https
 mkdir -p rApps
 cd ../..
 
 cd OpenAirInterface_Testbed/5G_Core_Network
-./install_scripts/git_clone.sh https://github.com/open5gs/open5gs.git
+if [ ! -d "open5gs" ]; then
+    ./install_scripts/git_clone.sh https://github.com/open5gs/open5gs.git
+fi
 cd ../..
 
+cd OpenAirInterface_Testbed/5G_Core_Network/Additional_Cores_5GDeploy
+./install_scripts/git_clone.sh https://github.com/usnistgov/5gdeploy.git
+cd ../../..
+
 cd OpenAirInterface_Testbed/User_Equipment
-./install_scripts/git_clone.sh https://gitlab.eurecom.fr/oai/openairinterface5g.git
+./install_scripts/git_clone.sh https://gitlab.eurecom.fr/oai/openairinterface5g.git --https
 cd ../..
 
 cd OpenAirInterface_Testbed/Next_Generation_Node_B
 ln -s "../User_Equipment/openairinterface5g" openairinterface5g
+./install_scripts/git_clone.sh https://gitlab.eurecom.fr/oai/o1-adapter.git o1-adapter --https
 cd ../..
 
 cd OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC
 ./install_scripts/git_clone.sh https://github.com/swig/swig.git
-./install_scripts/git_clone.sh https://gitlab.eurecom.fr/mosaic5g/flexric.git
+./install_scripts/git_clone.sh https://gitlab.eurecom.fr/mosaic5g/flexric.git --https
 cd ../..
 
 echo "Repositories were cloned successfully."

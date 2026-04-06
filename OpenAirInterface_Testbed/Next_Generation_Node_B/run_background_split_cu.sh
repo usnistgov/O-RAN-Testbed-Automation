@@ -51,6 +51,7 @@ else
 
     echo "Starting CU in background..."
 
+    sudo -v # Ensure sudo session is active
     sudo setsid bash -c "stdbuf -oL -eL \"$SCRIPT_DIR/run_split_cu.sh\" >/dev/null 2>&1" </dev/null &
 
     ATTEMPT=0

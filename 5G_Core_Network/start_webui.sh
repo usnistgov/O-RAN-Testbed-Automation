@@ -62,7 +62,7 @@ if [[ "$USE_SYSTEMCTL" == "true" ]]; then
     fi
 else
     # Check if the WebUI server is already running by looking for the Node.js process in the correct directory
-    if ! pgrep -f "open5gs-webui" >/dev/null; then
+    if ! pgrep -f "[o]pen5gs-webui" >/dev/null; then
         echo "Starting webui process..."
         cd open5gs/webui
         npm install

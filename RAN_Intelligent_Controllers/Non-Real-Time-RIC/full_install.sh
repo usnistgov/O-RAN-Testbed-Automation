@@ -108,7 +108,7 @@ fi
 if [ ! -d dep ]; then
     echo
     echo "Cloning Non-RT RIC dependencies..."
-    ./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/it/dep.git
+    ./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/it/dep.git --https
     cd dep # Ensure that the components are cloned
     git restore --source=HEAD :/
     cd ..
@@ -123,7 +123,7 @@ fi
 
 if [ ! -d "rappmanager" ]; then
     cd "$SCRIPT_DIR"
-    ./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/nonrtric/plt/rappmanager.git rappmanager
+    ./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/nonrtric/plt/rappmanager.git rappmanager --https
 fi
 
 cd "$SCRIPT_DIR/dep/"
@@ -132,13 +132,13 @@ if [ ! -d ranpm ] || [ -z "$(ls -A ranpm)" ]; then
     [ -d ranpm ] && rm -rf ranpm # Remove the directory if it is empty
     echo
     echo "Cloning selected release of dep/ranpm..."
-    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/nonrtric/plt/ranpm.git ranpm
+    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/nonrtric/plt/ranpm.git ranpm --https
 fi
 if [ ! -d ric-dep ] || [ -z "$(ls -A ric-dep)" ]; then
     [ -d ric-dep ] && rm -rf ric-dep # Remove the directory if it is empty
     echo
     echo "Cloning selected release of dep/ric-dep..."
-    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep.git ric-dep
+    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep.git ric-dep --https
 fi
 if [ ! -d smo-install/multicloud-k8s ] || [ -z "$(ls -A smo-install/multicloud-k8s)" ]; then
     [ -d smo-install/multicloud-k8s ] && rm -rf smo-install/multicloud-k8s # Remove the directory if it is empty
@@ -150,7 +150,7 @@ if [ ! -d smo-install/onap_oom ] || [ -z "$(ls -A smo-install/onap_oom)" ]; then
     [ -d smo-install/onap_oom ] && rm -rf smo-install/onap_oom # Remove the directory if it is empty
     echo
     echo "Cloning dep/smo-install/onap_oom..."
-    ./../install_scripts/git_clone.sh https://gerrit.onap.org/r/oom.git smo-install/onap_oom
+    ./../install_scripts/git_clone.sh https://gerrit.onap.org/r/oom.git smo-install/onap_oom --https
 fi
 
 echo
@@ -185,7 +185,7 @@ else
     # Download ric-dep from gerrit
     if [ ! -f "ric-dep/bin/install_k8s_and_helm.sh" ]; then
         sudo rm -rf ric-dep
-        ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep.git ric-dep
+        ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep.git ric-dep --https
     fi
     # Patch the install script and save a backup of the original
     if [ ! -f "ric-dep/bin/install_k8s_and_helm.previous.sh" ]; then
@@ -286,6 +286,11 @@ kubectl label namespace nonrtric istio-injection=enabled --overwrite
 
 cd "$SCRIPT_DIR"
 
+if ! command -v docker &>/dev/null; then
+    echo "Docker command not found, installing Docker..."
+    sudo ./install_scripts/install_docker.sh
+fi
+
 # Check if docker is accessible from the current user, and if not, repair its permissions
 if [ -z "$FIXED_DOCKER_PERMS" ]; then
     if ! OUTPUT=$(docker info 2>&1); then
@@ -366,10 +371,10 @@ else
     echo "Revising the YAML file for the Non-RT RIC pods..."
     RIC_YAML_FILE_PATH="dep/smo-install/helm-override/default/oran-override.yaml"
     RIC_YAML_FILE_PATH_UPDATED="dep/smo-install/helm-override/default/oran-override.yaml"
-    sudo chown "$USER" $RIC_YAML_FILE_PATH
+    sudo chown "${SUDO_USER:-$USER}" $RIC_YAML_FILE_PATH
     if [ "$RIC_YAML_FILE_PATH" != "$RIC_YAML_FILE_PATH_UPDATED" ]; then
         sudo cp $RIC_YAML_FILE_PATH $RIC_YAML_FILE_PATH_UPDATED
-        sudo chown "$USER" $RIC_YAML_FILE_PATH_UPDATED
+        sudo chown "${SUDO_USER:-$USER}" $RIC_YAML_FILE_PATH_UPDATED
     fi
     sudo "$SCRIPT_DIR/install_scripts/./revise_example_recipe_yaml.sh" "$RIC_YAML_FILE_PATH_UPDATED"
 
@@ -386,6 +391,7 @@ else
     sed -i "s|--namespace strimzi-system|--namespace strimzi-system --set extraEnvs[0].name=STRIMZI_KUBERNETES_VERSION --set-string extraEnvs[0].value=\"major=${KUBE_VERSION_MAJOR}\\\\,minor=${KUBE_VERSION_MINOR}\"|g" "$INSTALL_ONAP_SCRIPT"
 
     echo "Deploying Non-RT RIC pods..."
+    ./dep/smo-install/scripts/layer-0/0-setup-charts-museum.sh
     ./dep/smo-install/scripts/layer-0/0-setup-helm3.sh
     ./dep/smo-install/scripts/layer-1/1-build-all-charts.sh
     ./dep/smo-install/scripts/layer-2/2-install-oran.sh default dev

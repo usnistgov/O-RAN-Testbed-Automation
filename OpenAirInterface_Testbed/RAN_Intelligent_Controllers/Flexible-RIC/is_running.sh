@@ -44,33 +44,33 @@ else
 fi
 
 if systemctl is-active grafana-server &>/dev/null; then
-    if pgrep -f "python_server_for_grafana.py" >/dev/null; then
+    if pgrep -f "[p]ython_server_for_grafana.py" >/dev/null; then
         echo "Grafana: RUNNING (with HTTP server)"
     else
         echo "Grafana: RUNNING"
     fi
 else
-    if pgrep -f "python_server_for_grafana.py" >/dev/null; then
+    if pgrep -f "[p]ython_server_for_grafana.py" >/dev/null; then
         echo "Grafana: NOT_RUNNING (with HTTP server)"
     fi
 fi
 
-if pgrep -f "xapp_kpm_moni_write_to_csv" >/dev/null; then
+if pgrep -f "[x]app_kpm_moni_write_to_csv" >/dev/null; then
     echo "xApp KPM Moni (CSV): RUNNING"
 fi
 
-if pgrep -f "xapp_kpm_moni " >/dev/null; then
+if pgrep -f "[x]app_kpm_moni " >/dev/null; then
     echo "xApp KPM Moni: RUNNING"
 fi
 
-if pgrep -f "xapp_rc_moni" >/dev/null; then
+if pgrep -f "[x]app_rc_moni" >/dev/null; then
     echo "xApp RC Moni: RUNNING"
 fi
 
-if pgrep -f "xapp_kpm_rc" >/dev/null; then
+if pgrep -f "[x]app_kpm_rc" >/dev/null; then
     echo "xApp KPM RC: RUNNING"
 fi
 
-if pgrep -f "xapp_gtp_mac_rlc_pdcp_moni" >/dev/null; then
+if pgrep -f "[x]app_gtp_mac_rlc_pdcp_moni" >/dev/null; then
     echo "xApp GTP MAC RLC PDCP Moni: RUNNING"
 fi

@@ -85,7 +85,7 @@ if ! command -v docker-compose &>/dev/null; then
 fi
 
 if [ ! -d nonrtric-controlpanel ]; then
-    ./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/portal/nonrtric-controlpanel.git nonrtric-controlpanel
+    ./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/portal/nonrtric-controlpanel.git nonrtric-controlpanel --https
 fi
 
 # Ensure the correct YAML editor is installed

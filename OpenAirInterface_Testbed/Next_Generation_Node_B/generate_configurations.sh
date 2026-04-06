@@ -33,6 +33,9 @@ set -e
 
 SPLIT_DU_IDS=$(seq 1 3)
 USE_RFSIM_CHANNELMOD=true
+MAKE_GNB_E2_NODE=true
+MAKE_CU_E2_NODE=false
+MAKE_DU_E2_NODE=true
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
@@ -184,7 +187,7 @@ SNSSAI_LIST+=")"
 "$SCRIPT_DIR/install_scripts/./ensure_consistent_yq.sh"
 
 echo "Saving configuration file example..."
-rm -rf configs
+rm -rf configs || sudo rm -rf configs
 mkdir configs
 
 # Only remove the logs if not running
@@ -276,6 +279,14 @@ for CONF_FILE in gnb.conf split_cu.conf "${SPLIT_DUS[@]}"; do
             ln -sf ../install_patch_files/channelmod_rfsimu.conf channelmod_rfsimu.conf
             cd ..
         fi
+    fi
+
+    if [[ "$CONF_FILE" == "gnb.conf" ]] && [ "$MAKE_GNB_E2_NODE" = "false" ]; then
+        sed -i '/^e2_agent *= *{/,/^};/ s/^/#/' "configs/$CONF_FILE"
+    elif [[ "$CONF_FILE" == "split_cu.conf" ]] && [ "$MAKE_CU_E2_NODE" = "false" ]; then
+        sed -i '/^e2_agent *= *{/,/^};/ s/^/#/' "configs/$CONF_FILE"
+    elif [[ "$CONF_FILE" == *"du"* ]] && [ "$MAKE_DU_E2_NODE" = "false" ]; then
+        sed -i '/^e2_agent *= *{/,/^};/ s/^/#/' "configs/$CONF_FILE"
     fi
 done
 

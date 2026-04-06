@@ -76,6 +76,7 @@ fi
 
 # Function to handle graceful shutdown
 graceful_shutdown() {
+    trap - SIGINT SIGTERM SIGQUIT
     echo "Shutting down UE $UE_NUMBER gracefully..."
     "$SCRIPT_DIR/stop.sh" $UE_NUMBER
     exit
@@ -121,13 +122,10 @@ else
     fi
     mkdir -p logs
     if [ -f "logs/ue${UE_NUMBER}_stdout.txt" ]; then
-        sudo chown "$USER" logs/ue${UE_NUMBER}_stdout.txt
+        sudo chown "${SUDO_USER:-$USER}" logs/ue${UE_NUMBER}_stdout.txt
     fi
     >logs/ue${UE_NUMBER}_stdout.txt
     echo "Starting nr-uesoftmodem (ue$UE_NUMBER)..."
-
-    # Ensure the following command runs with sudo privileges
-    sudo ls >/dev/null
 
     # Give the UE its own network namespace and configure it to access the host network
     sudo ./install_scripts/setup_ue_namespace.sh "$UE_NUMBER"

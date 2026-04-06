@@ -61,7 +61,7 @@ cd xApps
 
 if [ ! -d "ad" ]; then
     echo "Cloning Anamoly Detection xApp (ad)..."
-    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/ad.git
+    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/ad.git --https
 fi
 
 cd ad
@@ -166,7 +166,7 @@ if [ ! -f ad.tar ]; then
     docker build -t 127.0.0.1:80/ad:latest .
     docker save -o ad.tar 127.0.0.1:80/ad:latest
     sudo chmod 755 ad.tar
-    sudo chown "$USER" ad.tar
+    sudo chown "${SUDO_USER:-$USER}" ad.tar
 
     # Import the image into the containerd container runtime
     sudo ctr -n=k8s.io image import ad.tar

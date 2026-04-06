@@ -61,7 +61,7 @@ cd xApps
 
 if [ ! -d "rc" ]; then
     echo "Cloning RIC Control xApp (rc)..."
-    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/rc.git
+    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/rc.git --https
 fi
 
 cd rc
@@ -111,7 +111,7 @@ if [ ! -f rc.tar ]; then
     docker build -t 127.0.0.1:80/rc:latest .
     docker save -o rc.tar 127.0.0.1:80/rc:latest
     sudo chmod 755 rc.tar
-    sudo chown "$USER" rc.tar
+    sudo chown "${SUDO_USER:-$USER}" rc.tar
 
     # Import the image into the containerd container runtime
     sudo ctr -n=k8s.io image import rc.tar

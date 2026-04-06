@@ -38,16 +38,27 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
 # Check if the gNodeB is already stopped
-if $(./is_running.sh | grep -q "gNodeB: NOT_RUNNING"); then
-    ./is_running.sh
+IS_RUNNING=$(./is_running.sh)
+if echo "$IS_RUNNING" | grep -q "gNodeB: NOT_RUNNING" && echo "$IS_RUNNING" | grep -q "ZMQ_Broker: NOT_RUNNING"; then
+    echo "$IS_RUNNING"
     exit 0
 fi
 
-# Prevent the subsequent command from requiring credential input
-sudo ls >/dev/null 2>&1
+if command -v docker &>/dev/null; then
+    # Check if the grafana container is running
+    if docker ps --format '{{.Names}}' 2>/dev/null | grep -Eq "^ocudu-grafana$" || sudo docker ps --format '{{.Names}}' 2>/dev/null | grep -Eq "^ocudu-grafana$"; then
+        ./stop_grafana_webui.sh
+    fi
+fi
+
+if pgrep -f "[s]rc/o1_adapter" >/dev/null || (command -v docker &>/dev/null && (docker ps --format '{{.Names}}' 2>/dev/null | grep -Eq "^ocudu_netconf$" || sudo docker ps --format '{{.Names}}' 2>/dev/null | grep -Eq "^ocudu_netconf$")); then
+    echo "Stopping O1 Adapter..."
+    ./additional_scripts/stop_o1_adapter.sh
+fi
 
 # Send a graceful shutdown signal to the gNodeB process
-sudo pkill -f "gnb" >/dev/null 2>&1
+sudo pkill -f "[g]nb" >/dev/null 2>&1
+sudo pkill -f "[p]ython3 zmq_broker/multi_ue_scenario\.py" >/dev/null 2>&1
 
 # Wait for the process to terminate gracefully
 COUNT=0
@@ -55,7 +66,7 @@ MAX_COUNT=10
 sleep 1
 while [ $COUNT -lt $MAX_COUNT ]; do
     IS_RUNNING=$(./is_running.sh)
-    if echo "$IS_RUNNING" | grep -q "gNodeB: NOT_RUNNING"; then
+    if echo "$IS_RUNNING" | grep -q "gNodeB: NOT_RUNNING" && echo "$IS_RUNNING" | grep -q "ZMQ_Broker: NOT_RUNNING"; then
         echo "The gNodeB has stopped gracefully."
         ./is_running.sh
         exit 0
@@ -67,4 +78,5 @@ done
 
 # If the process is still running after 20 seconds, send a forceful kill signal
 echo "The gNodeB did not stop in time, sending forceful kill signal..."
-sudo pkill -9 -f "gnb" >/dev/null 2>&1
+sudo pkill -9 -f "[g]nb" >/dev/null 2>&1
+sudo pkill -9 -f "[p]ython3 zmq_broker/multi_ue_scenario\.py" >/dev/null 2>&1

@@ -1,0 +1,16 @@
+diff --git a/lib/gateways/sctp_network_gateway_common_impl.cpp b/lib/gateways/sctp_network_gateway_common_impl.cpp
+index 5ec0362fcf..a5ba364c1d 100644
+--- a/lib/gateways/sctp_network_gateway_common_impl.cpp
++++ b/lib/gateways/sctp_network_gateway_common_impl.cpp
+@@ -114,9 +114,11 @@ struct fmt::formatter<sctp_sn_type> : fmt::formatter<std::string_view> {
+       case SCTP_STREAM_CHANGE_EVENT:
+         name = "SCTP_STREAM_CHANGE_EVENT";
+         break;
++#ifdef SCTP_SEND_FAILED_EVENT
+       case SCTP_SEND_FAILED_EVENT:
+         name = "SCTP_SEND_FAILED_EVENT";
+         break;
++#endif
+     }
+     return fmt::formatter<std::string_view>::format(name, ctx);
+   }

@@ -254,7 +254,7 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
     echo "    KEY:  $UE_KEY"
     echo "    PLMN: $PLMN"
     echo "    DNN:  $DNN"
-    echo "    SST:  $SST_HEX (hex, dec $SST_DEC)"
+    echo "    SST:  $SST_HEX (hex)"
     echo "    SD:   $SD_HEX (hex)"
     if [ -n "$UE_IPV4" ]; then
         echo "    IPv4: $UE_IPV4"

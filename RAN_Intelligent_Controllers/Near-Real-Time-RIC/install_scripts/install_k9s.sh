@@ -65,6 +65,7 @@ case $(uname -m) in
     ;;
 *)
     echo "Unsupported architecture: $(uname -m)"
+    exit 1
     ;;
 esac
 
@@ -74,8 +75,9 @@ DOWNLOAD_URL="https://github.com/derailed/k9s/releases/latest/download/k9s_${ARC
 # Download and check if the curl command was successful
 if curl -fLO "$DOWNLOAD_URL"; then
     tar -xzf k9s_${ARCH_SUFFIX}.tar.gz
-    sudo mv k9s /usr/local/bin
+    sudo install -m 755 k9s /usr/local/bin/k9s
     rm k9s_${ARCH_SUFFIX}.tar.gz
+    mkdir -p "$HOME/.config/k9s"
     echo "Successfully installed k9s."
 else
     echo "Failed to download k9s for the architecture: ${ARCH_SUFFIX}"

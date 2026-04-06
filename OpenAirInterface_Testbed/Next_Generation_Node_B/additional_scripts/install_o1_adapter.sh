@@ -49,7 +49,7 @@ fi
 
 if [ ! -d "o1-adapter" ]; then
     echo "Cloning o1-adapter..."
-    ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/oai/o1-adapter.git o1-adapter
+    ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/oai/o1-adapter.git o1-adapter --https
 fi
 
 if grep -q -- "-p 11221:21 adapter-gnb" o1-adapter/start-adapter.sh; then

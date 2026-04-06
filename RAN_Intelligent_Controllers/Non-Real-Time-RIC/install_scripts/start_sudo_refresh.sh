@@ -30,7 +30,7 @@
 
 echo "# Script: $(realpath "$0")..."
 
-sudo ls &>/dev/null
+sudo -v # Ensure sudo session is active
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$(dirname "$SCRIPT_DIR")"
 

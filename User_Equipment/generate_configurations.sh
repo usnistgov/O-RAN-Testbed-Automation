@@ -191,15 +191,28 @@ fi
 for UE_NUMBER in "${UE_NUMBERS[@]}"; do
     cp "$EXAMPLE_CONFIG_PATH" "configs/ue${UE_NUMBER}.conf"
 
-    UE_TX_PORT=2001
-    UE_RX_PORT=2000
+    UE_TX_PORT=$((2001 + UE_NUMBER * 100))
+    UE_RX_PORT=$((2000 + UE_NUMBER * 100))
 
     # Fetch the UE's OPc, IMEI, IMSI, KEY, and NAMESPACE
     read -r UE_OPC UE_IMEI UE_IMSI UE_KEY UE_NAMESPACE < <("$UE_CREDENTIAL_GENERATOR_SCRIPT" "$UE_NUMBER" "$PLMN")
 
     # Update configuration values for RF front-end device
     update_conf "configs/ue${UE_NUMBER}.conf" "rf" "device_name" "zmq"
-    update_conf "configs/ue${UE_NUMBER}.conf" "rf" "device_args" "tx_port=tcp://127.0.0.1:$UE_TX_PORT,rx_port=tcp://127.0.0.1:$UE_RX_PORT,base_srate=23.04e6"
+
+    # Calculate IP offsets for this UE using the same subnetting scheme as in setup_ue_namespace.sh
+    # Allocate a /30 (4 addresses) subnet per UE (e.g., UE 1 -> 10.201.0.4/30, Gateway .5, UE .6)
+    BASE_SUBNET="10.201.0.0/16"
+    SUBNET_SIZE=4
+
+    # Calculate IP offsets
+    SUBNET_OFFSET=$((UE_NUMBER * SUBNET_SIZE))
+    HOST_IP_OFFSET=$((SUBNET_OFFSET))   # .5
+    UE_IP_OFFSET=$((SUBNET_OFFSET + 1)) # .6
+
+    UE_HOST_IP=$(python3 install_scripts/fetch_nth_ip.py "$BASE_SUBNET" $HOST_IP_OFFSET)
+
+    update_conf "configs/ue${UE_NUMBER}.conf" "rf" "device_args" "tx_port=tcp://*:$UE_TX_PORT,rx_port=tcp://$UE_HOST_IP:$UE_RX_PORT,base_srate=23.04e6"
     update_conf "configs/ue${UE_NUMBER}.conf" "rf" "nof_antennas" "1"
     update_conf "configs/ue${UE_NUMBER}.conf" "rf" "freq_offset" "0"
     update_conf "configs/ue${UE_NUMBER}.conf" "rf" "tx_gain" "35"
@@ -263,6 +276,15 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
     # Update configuration values for NAS
     update_conf "configs/ue${UE_NUMBER}.conf" "nas" "apn" "$DNN"
     update_conf "configs/ue${UE_NUMBER}.conf" "nas" "apn_protocol" "ipv4"
+
+    # Update configuration values for Slicing
+    SD_DEC=$((16#$SD_HEX))
+    if [ "$SD_DEC" -eq 16777215 ]; then # 0xFFFFFF
+        SD_DEC=0                        # SRS UE expects 0 to indicate "no SD" instead of 16777215 (3GPP TS 23.003 clause 28.4.2)
+    fi
+    update_conf "configs/ue${UE_NUMBER}.conf" "slicing" "nssai-sd" "$SD_DEC"
+    update_conf "configs/ue${UE_NUMBER}.conf" "slicing" "nssai-sst" "$SST_DEC"
+    update_conf "configs/ue${UE_NUMBER}.conf" "slicing" "enable" "true"
 
     # Update configuration values for Gateway
     update_conf "configs/ue${UE_NUMBER}.conf" "gw" "netns" "$UE_NAMESPACE"

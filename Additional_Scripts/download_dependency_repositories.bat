@@ -36,67 +36,148 @@ echo Script: %~f0...
 REM Change to the parent directory of the script
 cd %~dp0..
 if exist "5G_Core_Network\open5gs" rmdir /s /q "5G_Core_Network\open5gs"
-cd 5G_Core_Network
-git clone https://github.com/open5gs/open5gs.git
-cd open5gs
-git checkout 69b53add90a9479d7960b822fc60601d659c328b
-cd ..\..
+cd "5G_Core_Network" >nul 2>&1
+if not errorlevel 1 (
+    git clone https://github.com/open5gs/open5gs.git
+    cd "open5gs"
+    git checkout 318eeb49a7dcdff733dec60e02d9c60aefca2fb9
+    cd ..\..
+) else (
+    echo ERROR: Failed to cd to 5G_Core_Network. Skipping clone.
+)
+
+cd %~dp0..
+if exist "5G_Core_Network/Additional_Cores_5GDeploy\5gdeploy" rmdir /s /q "5G_Core_Network/Additional_Cores_5GDeploy\5gdeploy"
+cd "5G_Core_Network/Additional_Cores_5GDeploy" >nul 2>&1
+if not errorlevel 1 (
+    git clone https://github.com/usnistgov/5gdeploy.git
+    cd ..
+) else (
+    echo ERROR: Failed to cd to 5G_Core_Network/Additional_Cores_5GDeploy. Skipping clone.
+)
 
 cd %~dp0..
 if exist "User_Equipment\srsRAN_4G" rmdir /s /q "User_Equipment\srsRAN_4G"
-cd User_Equipment
-git clone https://github.com/srsran/srsRAN_4G.git
-cd srsRAN_4G
-git checkout 1fab3df863f66fdb6c3b34f1b39e745dbcb12d5e
-cd ..\..
+cd "User_Equipment" >nul 2>&1
+if not errorlevel 1 (
+    git clone https://github.com/srsran/srsRAN_4G.git
+    cd "srsRAN_4G"
+    git checkout 6bcbd9e5bf8686aa7085202cd847c5ddd64a9c16
+    cd ..\..
+) else (
+    echo ERROR: Failed to cd to User_Equipment. Skipping clone.
+)
 
 cd %~dp0..
 if exist "User_Equipment\libzmq" rmdir /s /q "User_Equipment\libzmq"
-cd User_Equipment
-git clone https://github.com/zeromq/libzmq.git
-cd libzmq
-git checkout 900a548a43395a367801e48d9a953cd42c6da545
-cd ..\..
+cd "User_Equipment" >nul 2>&1
+if not errorlevel 1 (
+    git clone https://github.com/zeromq/libzmq.git
+    cd "libzmq"
+    git checkout 7d95ac02ae1af9a2f6896794d12b9de2ae30a3a8
+    cd ..\..
+) else (
+    echo ERROR: Failed to cd to User_Equipment. Skipping clone.
+)
 
 cd %~dp0..
 if exist "User_Equipment\czmq" rmdir /s /q "User_Equipment\czmq"
-cd User_Equipment
-git clone https://github.com/zeromq/czmq.git
-cd czmq
-git checkout f22f6572fdf63d344e022b956a137ce084fa5d8b
-cd ..\..
+cd "User_Equipment" >nul 2>&1
+if not errorlevel 1 (
+    git clone https://github.com/zeromq/czmq.git
+    cd "czmq"
+    git checkout 6b435f533619a52d9e1c3fa43d5e40e50a046272
+    cd ..\..
+) else (
+    echo ERROR: Failed to cd to User_Equipment. Skipping clone.
+)
 
 cd %~dp0..
-if exist "Next_Generation_Node_B\srsRAN_Project" rmdir /s /q "Next_Generation_Node_B\srsRAN_Project"
+if exist "Next_Generation_Node_B\ocudu" rmdir /s /q "Next_Generation_Node_B\ocudu"
+cd "Next_Generation_Node_B" >nul 2>&1
+if not errorlevel 1 (
+    git clone https://gitlab.com/ocudu/ocudu.git
+    cd "ocudu"
+    git checkout 4d1fe417268ef19b5dd8677263f696602735eb85
+    cd ..\..
+) else (
+    echo ERROR: Failed to cd to Next_Generation_Node_B. Skipping clone.
+)
+
+cd %~dp0..
+if exist "Next_Generation_Node_B\ocudu_o1_adapter" rmdir /s /q "Next_Generation_Node_B\ocudu_o1_adapter"
+cd "Next_Generation_Node_B" >nul 2>&1
+if not errorlevel 1 (
+    git clone https://gitlab.com/ocudu/ocudu_elements/ocudu_oran_apps/ocudu_o1_adapter.git
+    cd "ocudu_o1_adapter"
+    git checkout cbc03d78e9901c9a3df541194102529702d15991
+    cd ..\..
+) else (
+    echo ERROR: Failed to cd to Next_Generation_Node_B. Skipping clone.
+)
+
+cd %~dp0..
+if exist "Next_Generation_Node_B\ocudu_netconf" rmdir /s /q "Next_Generation_Node_B\ocudu_netconf"
+cd "Next_Generation_Node_B" >nul 2>&1
+if not errorlevel 1 (
+    git clone https://gitlab.com/ocudu/ocudu_elements/ocudu_oran_apps/ocudu_netconf.git
+    cd "ocudu_netconf"
+    git checkout 6ed7cfbd031210fceeeb0d99f977dd3b85dfd183
+    cd ..\..
+) else (
+    echo ERROR: Failed to cd to Next_Generation_Node_B. Skipping clone.
+)
+
 cd Next_Generation_Node_B
-git clone https://github.com/srsran/srsRAN_Project.git
-cd srsRAN_Project
-git checkout d2f4b70dda8e2c557d5b05a0ac5f92dbddda19bc
+mklink /D libzmq ..\User_Equipment\libzmq
+mklink /D czmq ..\User_Equipment\czmq
+if not exist zmq_broker mkdir zmq_broker
+cd zmq_broker
+if not exist "multi_ue_scenario.grc" (
+    curl -L --fail --silent --show-error -o multi_ue_scenario.grc https://gitlab.com/ocudu/ocudu_docs/-/raw/main/docs/user_manual/tutorials/srsue/assets/multi_ue_scenario.grc
+    if errorlevel 1 (
+        echo ERROR: Failed to download multi_ue_scenario.grc
+        exit /b 1
+    )
+)
+cd ..
 cd ..\..
 
 cd %~dp0..
 if exist "RAN_Intelligent_Controllers\Near-Real-Time-RIC\ric-dep" rmdir /s /q "RAN_Intelligent_Controllers\Near-Real-Time-RIC\ric-dep"
-cd RAN_Intelligent_Controllers\Near-Real-Time-RIC
-git clone https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep.git
-cd ric-dep
-git checkout 348562bc2adad5c9e6f8a114db2cbfc469be710a
-cd ..\..\..
+cd "RAN_Intelligent_Controllers\Near-Real-Time-RIC" >nul 2>&1
+if not errorlevel 1 (
+    git clone https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep.git
+    cd "ric-dep"
+    git checkout d9298b0865b69847c2ed0885f5077e703e5a6638
+    cd ..\..\..
+) else (
+    echo ERROR: Failed to cd to RAN_Intelligent_Controllers\Near-Real-Time-RIC. Skipping clone.
+)
 
 cd %~dp0..
 if exist "RAN_Intelligent_Controllers\Near-Real-Time-RIC\e2-interface" rmdir /s /q "RAN_Intelligent_Controllers\Near-Real-Time-RIC\e2-interface"
-cd RAN_Intelligent_Controllers\Near-Real-Time-RIC
-git clone https://gerrit.o-ran-sc.org/r/sim/e2-interface.git
-cd e2-interface
-git checkout da6f82f286cdbb38af1178f82f85877b12c2f85b
-cd ..\..\..
+cd "RAN_Intelligent_Controllers\Near-Real-Time-RIC" >nul 2>&1
+if not errorlevel 1 (
+    git clone https://gerrit.o-ran-sc.org/r/sim/e2-interface.git
+    cd "e2-interface"
+    git checkout da6f82f286cdbb38af1178f82f85877b12c2f85b
+    cd ..\..\..
+) else (
+    echo ERROR: Failed to cd to RAN_Intelligent_Controllers\Near-Real-Time-RIC. Skipping clone.
+)
 
 cd %~dp0..
 if exist "RAN_Intelligent_Controllers\Near-Real-Time-RIC\appmgr" rmdir /s /q "RAN_Intelligent_Controllers\Near-Real-Time-RIC\appmgr"
-cd RAN_Intelligent_Controllers\Near-Real-Time-RIC
-git clone https://gerrit.o-ran-sc.org/r/ric-plt/appmgr.git
-cd appmgr
-git checkout b8bdc7bd6931461b7a237ab2cad278bc87ba110e
-cd ..\..\..
+cd "RAN_Intelligent_Controllers\Near-Real-Time-RIC" >nul 2>&1
+if not errorlevel 1 (
+    git clone https://gerrit.o-ran-sc.org/r/ric-plt/appmgr.git
+    cd "appmgr"
+    git checkout 2f70f24239e3f9281b899b7d5b4807cf36e062d1
+    cd ..\..\..
+) else (
+    echo ERROR: Failed to cd to RAN_Intelligent_Controllers\Near-Real-Time-RIC. Skipping clone.
+)
 
 cd RAN_Intelligent_Controllers\Near-Real-Time-RIC
 mkdir xApps
@@ -104,167 +185,271 @@ cd ..\..
 
 cd %~dp0..
 if exist "RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps\hw-go" rmdir /s /q "RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps\hw-go"
-cd RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps
-git clone https://gerrit.o-ran-sc.org/r/ric-app/hw-go.git
-cd hw-go
-git checkout 3a0d348e429ea0f3f3d2a1d5eb54ec8758d1a262
-cd ..\..\..\..
+cd "RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps" >nul 2>&1
+if not errorlevel 1 (
+    git clone https://gerrit.o-ran-sc.org/r/ric-app/hw-go.git
+    cd "hw-go"
+    git checkout 3a0d348e429ea0f3f3d2a1d5eb54ec8758d1a262
+    cd ..\..\..\..
+) else (
+    echo ERROR: Failed to cd to RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps. Skipping clone.
+)
 
 cd %~dp0..
 if exist "RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps\hw-python" rmdir /s /q "RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps\hw-python"
-cd RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps
-git clone https://gerrit.o-ran-sc.org/r/ric-app/hw-python.git
-cd ..\..\..
+cd "RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps" >nul 2>&1
+if not errorlevel 1 (
+    git clone https://gerrit.o-ran-sc.org/r/ric-app/hw-python.git
+    cd ..\..\..
+) else (
+    echo ERROR: Failed to cd to RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps. Skipping clone.
+)
 
 cd %~dp0..
 if exist "RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps\hw-rust" rmdir /s /q "RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps\hw-rust"
-cd RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps
-git clone https://gerrit.o-ran-sc.org/r/ric-app/hw-rust.git
-cd ..\..\..
+cd "RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps" >nul 2>&1
+if not errorlevel 1 (
+    git clone https://gerrit.o-ran-sc.org/r/ric-app/hw-rust.git
+    cd ..\..\..
+) else (
+    echo ERROR: Failed to cd to RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps. Skipping clone.
+)
 
 cd %~dp0..
 if exist "RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps\kpimon-go" rmdir /s /q "RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps\kpimon-go"
-cd RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps
-git clone https://gerrit.o-ran-sc.org/r/ric-app/kpimon-go.git
-cd kpimon-go
-git checkout 8bbbbbb90093db01f88820de755bce0ee2189c88
-cd ..\..\..\..
+cd "RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps" >nul 2>&1
+if not errorlevel 1 (
+    git clone https://gerrit.o-ran-sc.org/r/ric-app/kpimon-go.git
+    cd "kpimon-go"
+    git checkout 8bbbbbb90093db01f88820de755bce0ee2189c88
+    cd ..\..\..\..
+) else (
+    echo ERROR: Failed to cd to RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps. Skipping clone.
+)
 
 cd %~dp0..
 if exist "RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps\ad-cell" rmdir /s /q "RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps\ad-cell"
-cd RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps
-git clone https://gerrit.o-ran-sc.org/r/ric-app/ad-cell.git
-cd ad-cell
-git checkout f1338a030f6c2c5a6ab2a970c0fe964c92aafa8f
-cd ..\..\..\..
+cd "RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps" >nul 2>&1
+if not errorlevel 1 (
+    git clone https://gerrit.o-ran-sc.org/r/ric-app/ad-cell.git
+    cd "ad-cell"
+    git checkout f1338a030f6c2c5a6ab2a970c0fe964c92aafa8f
+    cd ..\..\..\..
+) else (
+    echo ERROR: Failed to cd to RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps. Skipping clone.
+)
 
 cd %~dp0..
 if exist "RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps\ad" rmdir /s /q "RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps\ad"
-cd RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps
-git clone https://gerrit.o-ran-sc.org/r/ric-app/ad.git
-cd ad
-git checkout f9f97b8c682d890395e3de5a56450ebb04a5630b
-cd ..\..\..\..
+cd "RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps" >nul 2>&1
+if not errorlevel 1 (
+    git clone https://gerrit.o-ran-sc.org/r/ric-app/ad.git
+    cd "ad"
+    git checkout f9f97b8c682d890395e3de5a56450ebb04a5630b
+    cd ..\..\..\..
+) else (
+    echo ERROR: Failed to cd to RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps. Skipping clone.
+)
 
 cd %~dp0..
 if exist "RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps\qp" rmdir /s /q "RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps\qp"
-cd RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps
-git clone https://gerrit.o-ran-sc.org/r/ric-app/qp.git
-cd qp
-git checkout 47a35cafc3f90aed8b6fa711c37b131f06061ca6
-cd ..\..\..\..
+cd "RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps" >nul 2>&1
+if not errorlevel 1 (
+    git clone https://gerrit.o-ran-sc.org/r/ric-app/qp.git
+    cd "qp"
+    git checkout 47a35cafc3f90aed8b6fa711c37b131f06061ca6
+    cd ..\..\..\..
+) else (
+    echo ERROR: Failed to cd to RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps. Skipping clone.
+)
 
 cd %~dp0..
 if exist "RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps\rc" rmdir /s /q "RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps\rc"
-cd RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps
-git clone https://gerrit.o-ran-sc.org/r/ric-app/rc.git
-cd rc
-git checkout a2282eedc9e32f60298bf530456ad367bef0824b
-cd ..\..\..\..
+cd "RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps" >nul 2>&1
+if not errorlevel 1 (
+    git clone https://gerrit.o-ran-sc.org/r/ric-app/rc.git
+    cd "rc"
+    git checkout a2282eedc9e32f60298bf530456ad367bef0824b
+    cd ..\..\..\..
+) else (
+    echo ERROR: Failed to cd to RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps. Skipping clone.
+)
 
 cd %~dp0..
 if exist "RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps\ts" rmdir /s /q "RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps\ts"
-cd RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps
-git clone https://gerrit.o-ran-sc.org/r/ric-app/ts.git
-cd ts
-git checkout 19e169b2e81a0dbaf3d9dc526de0415cc995ee8b
-cd ..\..\..\..
+cd "RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps" >nul 2>&1
+if not errorlevel 1 (
+    git clone https://gerrit.o-ran-sc.org/r/ric-app/ts.git
+    cd "ts"
+    git checkout 19e169b2e81a0dbaf3d9dc526de0415cc995ee8b
+    cd ..\..\..\..
+) else (
+    echo ERROR: Failed to cd to RAN_Intelligent_Controllers\Near-Real-Time-RIC\xApps. Skipping clone.
+)
 
 cd %~dp0..
 if exist "RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep" rmdir /s /q "RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep"
-cd RAN_Intelligent_Controllers\Non-Real-Time-RIC
-git clone https://gerrit.o-ran-sc.org/r/it/dep.git
-cd dep
-git checkout 1daedf545ec1b5f6d4a7740c49ea44d80459f24c
-git restore --source=HEAD :/
-cd ..\..\..
-
-cd %~dp0..
-if exist "RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\ranpm" rmdir /s /q "RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\ranpm"
-cd RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep
-git clone https://gerrit.o-ran-sc.org/r/nonrtric/plt/ranpm.git
-cd ranpm
-git checkout f0ef45cb96961334b9525c546534b822f055e24c
-cd ..\..\..\..
-
-cd %~dp0..
-if exist "RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\ric-dep" rmdir /s /q "RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\ric-dep"
-cd RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep
-git clone https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep.git
-cd ric-dep
-git checkout 348562bc2adad5c9e6f8a114db2cbfc469be710a
-cd ..\..\..\..
-
-cd %~dp0..
-if exist "RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\smo-install\multicloud-k8s" rmdir /s /q "RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\smo-install\multicloud-k8s"
-cd RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\smo-install
-git clone https://github.com/onap/multicloud-k8s.git
-cd multicloud-k8s
-git checkout b79819fd9b5863bbc3083f2060aee37d6f373622
-cd ..\..\..\..\..
-
-cd %~dp0..
-if exist "RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\smo-install\onap_oom" rmdir /s /q "RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\smo-install\onap_oom"
-cd RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\smo-install
-git clone https://gerrit.onap.org/r/oom.git
-cd onap_oom
-git checkout 551dedc6827327fe88cbebd671f10ec458776975
-cd ..\..\..\..\..
-
-cd %~dp0..
-if exist "RAN_Intelligent_Controllers\Non-Real-Time-RIC\nonrtric-controlpanel" rmdir /s /q "RAN_Intelligent_Controllers\Non-Real-Time-RIC\nonrtric-controlpanel"
-cd RAN_Intelligent_Controllers\Non-Real-Time-RIC
-git clone https://gerrit.o-ran-sc.org/r/portal/nonrtric-controlpanel.git
-cd nonrtric-controlpanel
-git checkout 9f0bc855a687f918548d5dcea7a43913256cdd54
-cd ..\..\..
+cd "RAN_Intelligent_Controllers\Non-Real-Time-RIC" >nul 2>&1
+if not errorlevel 1 (
+    git clone https://gerrit.o-ran-sc.org/r/it/dep.git
+    cd "dep"
+    git checkout 1daedf545ec1b5f6d4a7740c49ea44d80459f24c
+    git restore --source=HEAD :/
+    cd ..\..\..
+) else (
+    echo ERROR: Failed to cd to RAN_Intelligent_Controllers\Non-Real-Time-RIC. Skipping clone.
+)
 
 cd %~dp0..
 if exist "RAN_Intelligent_Controllers\Non-Real-Time-RIC\rappmanager" rmdir /s /q "RAN_Intelligent_Controllers\Non-Real-Time-RIC\rappmanager"
-cd RAN_Intelligent_Controllers\Non-Real-Time-RIC
-git clone https://gerrit.o-ran-sc.org/r/nonrtric/plt/rappmanager.git
-cd rappmanager
-git checkout 3b4813b6dab278581601a06185c146ea47b4ebb7
-cd ..\..\..
+cd "RAN_Intelligent_Controllers\Non-Real-Time-RIC" >nul 2>&1
+if not errorlevel 1 (
+    git clone https://gerrit.o-ran-sc.org/r/nonrtric/plt/rappmanager.git
+    cd "rappmanager"
+    git checkout 3b4813b6dab278581601a06185c146ea47b4ebb7
+    cd ..\..\..
+) else (
+    echo ERROR: Failed to cd to RAN_Intelligent_Controllers\Non-Real-Time-RIC. Skipping clone.
+)
+
+cd %~dp0..
+if exist "RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\ranpm" rmdir /s /q "RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\ranpm"
+cd "RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep" >nul 2>&1
+if not errorlevel 1 (
+    git clone https://gerrit.o-ran-sc.org/r/nonrtric/plt/ranpm.git
+    cd "ranpm"
+    git checkout f0ef45cb96961334b9525c546534b822f055e24c
+    cd ..\..\..\..
+) else (
+    echo ERROR: Failed to cd to RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep. Skipping clone.
+)
+
+cd %~dp0..
+if exist "RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\ric-dep" rmdir /s /q "RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\ric-dep"
+cd "RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep" >nul 2>&1
+if not errorlevel 1 (
+    git clone https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep.git
+    cd "ric-dep"
+    git checkout d9298b0865b69847c2ed0885f5077e703e5a6638
+    cd ..\..\..\..
+) else (
+    echo ERROR: Failed to cd to RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep. Skipping clone.
+)
+
+cd %~dp0..
+if exist "RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\smo-install\multicloud-k8s" rmdir /s /q "RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\smo-install\multicloud-k8s"
+cd "RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\smo-install" >nul 2>&1
+if not errorlevel 1 (
+    git clone https://github.com/onap/multicloud-k8s.git
+    cd "multicloud-k8s"
+    git checkout a3c6f080e9a015c7aab0d351af3864f239fb2931
+    cd ..\..\..\..\..
+) else (
+    echo ERROR: Failed to cd to RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\smo-install. Skipping clone.
+)
+
+cd %~dp0..
+if exist "RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\smo-install\onap_oom" rmdir /s /q "RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\smo-install\onap_oom"
+cd "RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\smo-install" >nul 2>&1
+if not errorlevel 1 (
+    git clone https://gerrit.onap.org/r/oom.git
+    cd "onap_oom"
+    git checkout 2214f66e9d9f757239d0297353d9194f782e9eac
+    cd ..\..\..\..\..
+) else (
+    echo ERROR: Failed to cd to RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\smo-install. Skipping clone.
+)
+
+cd %~dp0..
+if exist "RAN_Intelligent_Controllers\Non-Real-Time-RIC\nonrtric-controlpanel" rmdir /s /q "RAN_Intelligent_Controllers\Non-Real-Time-RIC\nonrtric-controlpanel"
+cd "RAN_Intelligent_Controllers\Non-Real-Time-RIC" >nul 2>&1
+if not errorlevel 1 (
+    git clone https://gerrit.o-ran-sc.org/r/portal/nonrtric-controlpanel.git
+    cd "nonrtric-controlpanel"
+    git checkout 9f0bc855a687f918548d5dcea7a43913256cdd54
+    cd ..\..\..
+) else (
+    echo ERROR: Failed to cd to RAN_Intelligent_Controllers\Non-Real-Time-RIC. Skipping clone.
+)
 
 cd RAN_Intelligent_Controllers\Non-Real-Time-RIC
 mkdir rApps
 cd ..\..
+
 cd %~dp0..
-if exist "OpenAirInterface_Testbed\5G_Core_Network\open5gs" rmdir /s /q "OpenAirInterface_Testbed\5G_Core_Network\open5gs"
-cd OpenAirInterface_Testbed\5G_Core_Network
-git clone https://github.com/open5gs/open5gs.git
-cd open5gs
-git checkout 69b53add90a9479d7960b822fc60601d659c328b
-cd ..\..\..
+if not exist "OpenAirInterface_Testbed\5G_Core_Network\open5gs" (
+    cd "OpenAirInterface_Testbed\5G_Core_Network" >nul 2>&1
+    if not errorlevel 1 (
+        git clone https://github.com/open5gs/open5gs.git
+        cd "open5gs"
+        git checkout 318eeb49a7dcdff733dec60e02d9c60aefca2fb9
+        cd ..\..\..
+    ) else (
+        echo ERROR: Failed to cd to OpenAirInterface_Testbed\5G_Core_Network. Skipping clone.
+    )
+)
+
+cd %~dp0..
+if exist "OpenAirInterface_Testbed\5G_Core_Network\Additional_Cores_5GDeploy\5gdeploy" rmdir /s /q "OpenAirInterface_Testbed\5G_Core_Network\Additional_Cores_5GDeploy\5gdeploy"
+cd "OpenAirInterface_Testbed\5G_Core_Network\Additional_Cores_5GDeploy" >nul 2>&1
+if not errorlevel 1 (
+    git clone https://github.com/usnistgov/5gdeploy.git
+    cd ..\..\..
+) else (
+    echo ERROR: Failed to cd to OpenAirInterface_Testbed\5G_Core_Network\Additional_Cores_5GDeploy. Skipping clone.
+)
 
 cd %~dp0..
 if exist "OpenAirInterface_Testbed\User_Equipment\openairinterface5g" rmdir /s /q "OpenAirInterface_Testbed\User_Equipment\openairinterface5g"
-cd OpenAirInterface_Testbed\User_Equipment
-git clone https://gitlab.eurecom.fr/oai/openairinterface5g.git
-cd openairinterface5g
-git checkout ed4cca814a0585d2ad664c3a13f4f0c3b8b45ecc
-cd ..\..\..
+cd "OpenAirInterface_Testbed\User_Equipment" >nul 2>&1
+if not errorlevel 1 (
+    git clone https://gitlab.eurecom.fr/oai/openairinterface5g.git
+    cd "openairinterface5g"
+    git checkout af4b0d53e9f4c3bf0e5f82f58781eac07f312b86
+    cd ..\..\..
+) else (
+    echo ERROR: Failed to cd to OpenAirInterface_Testbed\User_Equipment. Skipping clone.
+)
 
 cd OpenAirInterface_Testbed\Next_Generation_Node_B
 mklink /D openairinterface5g ..\User_Equipment\openairinterface5g
 cd ..\..
 
 cd %~dp0..
+if exist "OpenAirInterface_Testbed\Next_Generation_Node_B\o1-adapter" rmdir /s /q "OpenAirInterface_Testbed\Next_Generation_Node_B\o1-adapter"
+cd "OpenAirInterface_Testbed\Next_Generation_Node_B" >nul 2>&1
+if not errorlevel 1 (
+    git clone https://gitlab.eurecom.fr/oai/o1-adapter.git
+    cd "o1-adapter"
+    git checkout 1cd696960d9b3d28461caa61ced4b173eff1eec9
+    cd ..\..\..
+) else (
+    echo ERROR: Failed to cd to OpenAirInterface_Testbed\Next_Generation_Node_B. Skipping clone.
+)
+
+cd %~dp0..
 if exist "OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC\swig" rmdir /s /q "OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC\swig"
-cd OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC
-git clone https://github.com/swig/swig.git
-cd swig
-git checkout eb6723132ec11be2974ca3a77ce984a0efca74cb
-cd ..\..\..\..
+cd "OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC" >nul 2>&1
+if not errorlevel 1 (
+    git clone https://github.com/swig/swig.git
+    cd "swig"
+    git checkout b8f7a107cbd81058f8c5818bbad48d78903f6c14
+    cd ..\..\..\..
+) else (
+    echo ERROR: Failed to cd to OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC. Skipping clone.
+)
 
 cd %~dp0..
 if exist "OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC\flexric" rmdir /s /q "OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC\flexric"
-cd OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC
-git clone https://gitlab.eurecom.fr/mosaic5g/flexric.git
-cd flexric
-git checkout 6a595d8b243601b7148f60b5cb2cec47658e58c5
-cd ..\..\..\..
+cd "OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC" >nul 2>&1
+if not errorlevel 1 (
+    git clone https://gitlab.eurecom.fr/mosaic5g/flexric.git
+    cd "flexric"
+    git checkout e5e5873f36911c14095a6733275d16464f74d3bf
+    cd ..\..\..\..
+) else (
+    echo ERROR: Failed to cd to OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC. Skipping clone.
+)
 
 
 echo Repositories were cloned successfully.

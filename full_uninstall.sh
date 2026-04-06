@@ -36,7 +36,7 @@ cd "$SCRIPT_DIR"
 
 if [[ "$1" != "bypass_confirmation" && "$1" != "--yes" && "$1" != "-y" ]]; then
     clear
-    echo "This script will remove Open5GS, srsRAN_Project, srsRAN_4G, and the Near-RT RIC by removing Docker and Kubernetes."
+    echo "This script will remove Open5GS, OCUDU, srsRAN_4G, and the Near-RT RIC by removing Docker and Kubernetes."
     echo "This is a destructive operation and may result in data loss."
     echo "Please ensure you have backed up any necessary data before proceeding."
     echo
@@ -55,7 +55,7 @@ if ! command -v realpath &>/dev/null; then
     sudo env $APTVARS apt-get install -y coreutils
 fi
 
-echo "Stopping 5G Core Network, srsRAN_Project, and srsRAN_4G..."
+echo "Stopping 5G Core Network, OCUDU, and srsRAN_4G..."
 ./stop.sh
 
 echo
@@ -87,7 +87,7 @@ cd ..
 echo
 echo
 echo "################################################################################"
-echo "# Uninstalling Next Generation Node B (srsRAN Project)...                      #"
+echo "# Uninstalling Next Generation Node B (OCUDU)...                               #"
 echo "################################################################################"
 echo
 echo

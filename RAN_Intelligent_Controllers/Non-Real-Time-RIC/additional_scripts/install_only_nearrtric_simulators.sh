@@ -106,7 +106,7 @@ fi
 if [ ! -d dep ]; then
     echo
     echo "Cloning A1 dependencies..."
-    ./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/it/dep.git
+    ./install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/it/dep.git --https
     cd dep # Ensure that the components are cloned
     git restore --source=HEAD :/
     cd ..
@@ -146,7 +146,7 @@ else
     # Download ric-dep from gerrit
     if [ ! -f "ric-dep/bin/install_k8s_and_helm.sh" ]; then
         sudo rm -rf ric-dep
-        ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep.git ric-dep
+        ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep.git ric-dep --https
     fi
     # Patch the install script and save a backup of the original
     if [ ! -f "ric-dep/bin/install_k8s_and_helm.previous.sh" ]; then
@@ -253,9 +253,9 @@ else
     echo "Revising the YAML file for the A1 pods..."
     RIC_YAML_FILE_PATH="dep/RECIPE_EXAMPLE/NONRTRIC/example_recipe.yaml"
     RIC_YAML_FILE_PATH_UPDATED="dep/RECIPE_EXAMPLE/NONRTRIC/example_recipe_updated.yaml"
-    sudo chown "$USER" $RIC_YAML_FILE_PATH
+    sudo chown "${SUDO_USER:-$USER}" $RIC_YAML_FILE_PATH
     sudo cp $RIC_YAML_FILE_PATH $RIC_YAML_FILE_PATH_UPDATED
-    sudo chown "$USER" $RIC_YAML_FILE_PATH_UPDATED
+    sudo chown "${SUDO_USER:-$USER}" $RIC_YAML_FILE_PATH_UPDATED
 
     # Function to update YAML configuration files
     update_yaml() {

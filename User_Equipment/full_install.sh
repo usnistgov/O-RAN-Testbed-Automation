@@ -144,16 +144,17 @@ else
     if [ ! -d libzmq ]; then
         ./install_scripts/git_clone.sh https://github.com/zeromq/libzmq.git
     fi
+fi
+
+if ! pkg-config --exists libzmq; then
     cd libzmq
     ./autogen.sh
     ./configure
     make -j$(nproc)
     sudo make install
     sudo ldconfig
-    cd ..
+    cd "$SCRIPT_DIR"
 fi
-
-cd "$SCRIPT_DIR"
 
 echo
 echo "Building ZeroMQ czmq..."
@@ -168,13 +169,16 @@ else
     if [ ! -d czmq ]; then
         ./install_scripts/git_clone.sh https://github.com/zeromq/czmq.git
     fi
+fi
+
+if ! pkg-config --exists libczmq; then
     cd czmq
     ./autogen.sh
     ./configure
     make -j$(nproc)
     sudo make install
     sudo ldconfig
-    cd ..
+    cd "$SCRIPT_DIR"
 fi
 
 cd "$SCRIPT_DIR"

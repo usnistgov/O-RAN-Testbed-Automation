@@ -109,8 +109,45 @@ if [ -d OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Near-Real-Time-RIC 
     echo
 fi
 
+if [ -d Next_Generation_Node_B/srsRAN_Project ]; then
+    echo
+    echo
+    echo "################################################################################"
+    echo "# Migrating from commit 09bb4a5bf215d666f64d5df560cbd29f1dd2457e               #"
+    echo "################################################################################"
+    echo
+    echo
+    echo "Uninstalling srsRAN_Project so that OCUDU can be installed..."
+    cd Next_Generation_Node_B/
+    ./stop.sh
+    if [ -d libzmq ]; then
+        cd libzmq
+        sudo make uninstall
+        cd ..
+    fi
+    sudo rm -rf libzmq
+    if [ -d czmq ]; then
+        cd czmq
+        sudo make uninstall
+        cd ..
+    fi
+    sudo rm -rf czmq
+    if [ -d srsRAN_Project/build ]; then
+        cd srsRAN_Project/build
+        sudo make uninstall &>/dev/null
+        cd ../..
+    fi
+    sudo rm -rf srsRAN_Project
+    sudo rm -rf logs/
+    sudo rm -rf configs/
+    sudo rm -rf install_time.txt
+    cd ..
+    echo "Successfully migrated from commit 09bb4a5bf215d666f64d5df560cbd29f1dd2457e to the new version. OCUDU will be installed on full_install.sh."
+    echo
+fi
+
 echo "Updating package lists..."
-cd $SCRIPT_DIR
+cd "$SCRIPT_DIR"
 if ! sudo apt-get update; then
     sudo ./remove_expired_apt_keys.sh
     echo "Trying to update package lists again..."

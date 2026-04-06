@@ -70,7 +70,7 @@ fi
 # Path to the output file
 mkdir -p logs
 if [ -f "logs/e2sim_output.txt" ]; then
-    sudo chown "$USER" logs/e2sim_output.txt
+    sudo chown "${SUDO_USER:-$USER}" logs/e2sim_output.txt
 fi
 OUTPUT_FILE="logs/e2sim_output.txt"
 
@@ -111,10 +111,10 @@ while true; do
     # Create the log file if it does not exist
     if [ ! -f $OUTPUT_FILE ]; then
         sudo touch $OUTPUT_FILE
-        sudo chown "$USER" $OUTPUT_FILE
+        sudo chown "${SUDO_USER:-$USER}" $OUTPUT_FILE
     fi
     # Check if kpm_sim is already running to avoid duplicate runs
-    if ! docker exec oransim pgrep -f "kpm_sim" >/dev/null; then
+    if ! docker exec oransim pgrep -f "[k]pm_sim" >/dev/null; then
         echo "Starting kpm_sim in the background, writing to $OUTPUT_FILE..."
         >"$OUTPUT_FILE" # Clears the content of the output file
         docker exec oransim mkdir -p /app/logs
@@ -133,7 +133,7 @@ while true; do
     if [ "$ATTEMPTS" -eq "$MAX_ATTEMPTS" ]; then
         cat $OUTPUT_FILE
         kubectl get pods -A || true
-        if docker exec oransim pgrep -f "kpm_sim" >/dev/null; then
+        if docker exec oransim pgrep -f "[k]pm_sim" >/dev/null; then
             echo
             echo "Restarting kpm_sim inside of oransim..."
             docker exec oransim pkill -f kpm_sim || true

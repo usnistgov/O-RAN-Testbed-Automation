@@ -113,11 +113,11 @@ if [ ! -d "5gdeploy" ]; then
     "$PARENT_DIR/./install_scripts/git_clone.sh" https://github.com/usnistgov/5gdeploy.git
 fi
 
-cd $SCRIPT_DIR/5gdeploy
+cd "$SCRIPT_DIR/5gdeploy"
 echo "Patching netdef/helpers.ts to generate NR Cell ID starting at hex 0xE000 (aligning with OAI gNB) instead of 0x10"
 sed -i '0,/^[[:space:]]*nci[[:space:]]*=.*$/s//      nci = hexPad(((3584 + i) << (36 - gnbIdLength)) | 0xF, 9),/' netdef/helpers.ts
 
-cd $SCRIPT_DIR
+cd "$SCRIPT_DIR"
 
 # Install dependencies
 mkdir -p logs
@@ -182,15 +182,26 @@ cd "$SCRIPT_DIR/5gdeploy"
 
 # Install 5gdeploy. For more information, see the 5gdeploy documentation: https://github.com/usnistgov/5gdeploy/blob/main/docs/INSTALL.md
 echo "Starting installation of 5G Core Deployment Helper (5gdeploy)..."
+
+# # Downgrade to debian:bullseye for compatibility with older Docker versions
+# echo "Patching Dockerfiles to use debian:bullseye for compatibility..."
+# sed -i 's/buildpack-deps:bookworm/buildpack-deps:bullseye/g' docker/sockperf/Dockerfile
+# sed -i 's/debian:bookworm/debian:bullseye/g' docker/sockperf/Dockerfile
+# sed -i 's/bookworm-apt-cache/bullseye-apt-cache/g' docker/sockperf/Dockerfile
+# sed -i 's/debian:bookworm/debian:bullseye/g' docker/virt/Dockerfile
+# sed -i 's/bookworm-apt-cache/bullseye-apt-cache/g' docker/virt/Dockerfile
+# sed -i 's/debian:trixie-slim/debian:bullseye-slim/g' docker/iperf2/Dockerfile
+# sed -i 's/trixie-apt-cache/bullseye-apt-cache/g' docker/iperf2/Dockerfile
+
 ./install.sh \
     --build-network host \
     --dpdk-version v24.11 \
     --eupf-version 54ed069c6cdf1da18b09bd78cb166bc4e4dd1ceb \
-    --free5gc-version v4.0.1 \
-    --free5gc-webconsole-version v1.4.1 \
+    --free5gc-version v4.2.1 \
+    --free5gc-webconsole-version v1.4.4 \
     --gnbsim-version d3fce7e35a69b9f5d670242a93b7d1bee8842ecf \
-    --gtp5g-version v0.9.13 \
-    --oai-fed-version 2024.w45 \
+    --gtp5g-version v0.9.16 \
+    --oai-fed-version v2.2.0 \
     --oai-nwdaf-version 6a1408c9be6f5cf0ddb6c1f1b527a04e36205471 \
     --open5gs-dbctl-version v2.7.6 \
     --open5gs-version 2.7.6 \

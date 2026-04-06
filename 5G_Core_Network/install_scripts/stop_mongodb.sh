@@ -75,7 +75,7 @@ else
 
     if sudo pgrep -x "mongod" -a >/dev/null; then
         echo "Stopping existing MongoDB process..."
-        sudo pkill -f "mongod" || true
+        sudo pkill -f "[m]ongod" || true
     fi
 fi
 

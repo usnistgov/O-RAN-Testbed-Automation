@@ -53,3 +53,5 @@ echo "Stopping 5G Core components..."
 cd 5G_Core_Network
 sudo ./stop.sh
 cd ..
+
+stty sane || true

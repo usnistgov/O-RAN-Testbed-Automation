@@ -59,13 +59,41 @@ if [ -d czmq ]; then
 fi
 sudo rm -rf czmq
 
-echo "Uninstalling srsRAN_Project..."
-if [ -d srsRAN_Project/build ]; then
-    cd srsRAN_Project/build
-    sudo make uninstall &>/dev/null
+COMPOSE_FILE="ocudu/docker/docker-compose.ui.yml"
+if [ -f "$COMPOSE_FILE" ]; then
+    DOCKER_COMPOSE_CMD=""
+    if command -v docker &>/dev/null && docker compose version &>/dev/null; then
+        DOCKER_COMPOSE_CMD="docker compose"
+    elif command -v docker-compose &>/dev/null; then
+        DOCKER_COMPOSE_CMD="docker-compose"
+    fi
+
+    if [ -n "$DOCKER_COMPOSE_CMD" ]; then
+        echo "Cleaning up Grafana Docker containers and images..."
+        sudo $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" down -v --rmi all || true
+    fi
+fi
+
+echo "Uninstalling OCUDU..."
+if [ -d ocudu/build ]; then
+    cd ocudu/build
+    if [ -f install_manifest.txt ]; then
+        echo "Removing installed files from manifest..."
+        xargs sudo rm -f <install_manifest.txt
+    else
+        sudo make uninstall || true
+    fi
     cd ../..
 fi
-sudo rm -rf srsRAN_Project
+if command -v docker &>/dev/null && [ -n "$(sudo docker images -q ocudu-netconf/ocudu-netconf:latest 2>/dev/null)" ]; then
+    echo "Uninstalling O1 Adapter and Netconf..."
+    ./additional_scripts/uninstall_o1_adapter.sh bypass_confirmation || true
+fi
+
+sudo rm -rf zmq_broker/
+sudo rm -rf ocudu
+sudo rm -rf ocudu_o1_adapter
+sudo rm -rf ocudu_netconf
 
 sudo rm -rf logs/
 sudo rm -rf configs/

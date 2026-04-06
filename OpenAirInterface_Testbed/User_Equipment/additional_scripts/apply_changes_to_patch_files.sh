@@ -50,32 +50,8 @@ fi
 cd openairinterface5g
 
 # Update the patch files
-git diff openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c >../install_patch_files/openairinterface/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c.patch
-git diff openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c >../install_patch_files/openairinterface/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c.patch
-git diff openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h >../install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.patch
-git diff openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c >../install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c.patch
 git diff openair3/UICC/pdu_session.c >../install_patch_files/openairinterface/openair3/UICC/pdu_session.c.patch
-
-# Update the previous versions of the files
-git restore openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c
-cp openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c ../install_patch_files/openairinterface/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.previous.c
-cp openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c.previous
-git apply --verbose --ignore-whitespace ../install_patch_files/openairinterface/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c.patch
-
-git restore openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c
-cp openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c ../install_patch_files/openairinterface/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.previous.c
-cp openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c.previous
-git apply --verbose --ignore-whitespace ../install_patch_files/openairinterface/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c.patch
-
-git restore openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h
-cp openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h ../install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.previous.h
-cp openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.previous
-git apply --verbose --ignore-whitespace ../install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.patch
-
-git restore openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c
-cp openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c ../install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.previous.c
-cp openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c.previous
-git apply --verbose --ignore-whitespace ../install_patch_files/openairinterface/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c.patch
+git diff cmake_targets/tools/build_helper >../install_patch_files/openairinterface/cmake_targets/tools/build_helper.patch
 
 git restore openair3/UICC/pdu_session.c
 cp openair3/UICC/pdu_session.c ../install_patch_files/openairinterface/openair3/UICC/pdu_session.c.previous
@@ -84,4 +60,4 @@ git apply --verbose --ignore-whitespace ../install_patch_files/openairinterface/
 
 cd ..
 
-echo "Successfully created patch files in the FlexRIC/install_patch_files directory."
+echo "Successfully updated patch files in the install_patch_files directory."

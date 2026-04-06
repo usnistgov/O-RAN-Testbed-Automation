@@ -61,7 +61,7 @@ cd xApps
 
 if [ ! -d "ad-cell" ]; then
     echo "Cloning 5G Cell Anamoly Detection xApp (ad-cell)..."
-    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/ad-cell.git
+    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/ad-cell.git --https
 fi
 
 cd ad-cell
@@ -161,7 +161,7 @@ if [ ! -f ad-cell.tar ]; then
     docker build -t 127.0.0.1:80/ad-cell:latest .
     docker save -o ad-cell.tar 127.0.0.1:80/ad-cell:latest
     sudo chmod 755 ad-cell.tar
-    sudo chown "$USER" ad-cell.tar
+    sudo chown "${SUDO_USER:-$USER}" ad-cell.tar
 
     # Import the image into the containerd container runtime
     sudo ctr -n=k8s.io image import ad-cell.tar

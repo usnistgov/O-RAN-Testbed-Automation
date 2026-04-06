@@ -48,6 +48,7 @@ else
 
     echo "Starting gNodeB in background..."
 
+    sudo -v # Ensure sudo session is active
     sudo setsid bash -c "stdbuf -oL -eL \"$SCRIPT_DIR/run.sh\" >/dev/null 2>&1" </dev/null &
 
     ATTEMPT=0

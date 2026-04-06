@@ -56,7 +56,7 @@ cd xApps
 
 if [ ! -d "hw-rust" ]; then
     echo "Cloning the Hello World Rust xApp (hw-rust)..."
-    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/hw-rust.git
+    ./../install_scripts/git_clone.sh https://gerrit.o-ran-sc.org/r/ric-app/hw-rust.git --https
 fi
 
 cd hw-rust
@@ -103,10 +103,13 @@ if [ -z "$FIXED_DOCKER_PERMS" ]; then
 fi
 
 if [ ! -f hw-rust.tar ]; then
+    # Fix the Dockerfile to include RMR library paths during Rust compilation
+    sed -i 's|ENV PATH=/usr/local/cargo/bin:$PATH|ENV PATH=/usr/local/cargo/bin:$PATH\nENV LIBRARY_PATH=/usr/local/lib\nENV LD_LIBRARY_PATH=/usr/local/lib|g' Dockerfile
+
     docker build -t 127.0.0.1:80/hw-rust:latest .
     docker save -o hw-rust.tar 127.0.0.1:80/hw-rust:latest
     sudo chmod 755 hw-rust.tar
-    sudo chown "$USER" hw-rust.tar
+    sudo chown "${SUDO_USER:-$USER}" hw-rust.tar
 
     # Import the image into the containerd container runtime
     sudo ctr -n=k8s.io image import hw-rust.tar

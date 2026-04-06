@@ -100,7 +100,7 @@ By default, the Hello World Go xApp (hw-go) is installed automatically. Addition
   - More information can be found in the code [\[18\]][hw-rust-code].
  
 > [!NOTE]
-> The metrics collected using these xApps are simulated by default. Similarly, radio metrics provided by srsRAN_Project's gNodeB when connected as an E2 node to the RIC may also be simulated [\[19\]][srsran-lim]. Therefore, for radio metrics collected via a KPI monitoring xApp, it is recommended to use OpenAirInterface's Near-RT RIC with Mosiac5G's monitoring xApps (see the [OpenAirInterface Testbed](../../OpenAirInterface_Testbed)).
+> The metrics collected using these xApps are simulated by default. Similarly, radio metrics provided by OCUDU's gNodeB when connected as an E2 node to the RIC may also be simulated [\[19\]][ocudu-lim]. Therefore, for radio metrics collected via a KPI monitoring xApp, it is recommended to use OpenAirInterface's Near-RT RIC with Mosaic5G's monitoring xApps (see the [OpenAirInterface Testbed](../../OpenAirInterface_Testbed)).
 
 ## Uninstalling an xApp
 
@@ -164,7 +164,7 @@ The cluster is installed with Flannel as the default network plugin. There are s
 16. Traffic Steering xApp project page. O-RAN Software Community. [https://github.com/o-ran-sc/ric-app-ts][trafficxapp-code]
 17. HW Python xApp project page. O-RAN Software Community. [https://github.com/o-ran-sc/ric-app-hw-python][hw-python-code]
 18. HW Rust xApp project page. O-RAN Software Community. [https://github.com/o-ran-sc/ric-app-hw-rust][hw-rust-code]
-19. O-RAN NearRT-RIC and xApp. srsRAN Project Documentation. [https://docs.srsran.com/projects/project/en/latest/tutorials/source/near-rt-ric/source/index.html#limitations]
+19. O-RAN NearRT-RIC and xApp. OCUDU Documentation. [https://ocudu.gitlab.io/ocudu_docs/user_manual/tutorials/near-rt-ric/#limitations][ocudu-lim]
 20. eBPF-based Networking, Observability, Security. Cilium. [https://cilium.io][cilium-io]
 21. Hubble - Network, Service & Security Observability for Kubernetes using eBPF. Hubble. [https://cilium.io/hubble][cilium-hubble]
 
@@ -188,6 +188,6 @@ The cluster is installed with Flannel as the default network plugin. There are s
 [trafficxapp-docs]: https://docs.o-ran-sc.org/projects/o-ran-sc-ric-app-ts/en/latest/user-guide.html
 [hw-python-code]: https://github.com/o-ran-sc/ric-app-hw-python
 [hw-rust-code]: https://github.com/o-ran-sc/ric-app-hw-rust
-[srsran-lim]: https://docs.srsran.com/projects/project/en/latest/tutorials/source/near-rt-ric/source/index.html#limitations
+[ocudu-lim]: https://ocudu.gitlab.io/ocudu_docs/user_manual/tutorials/near-rt-ric/#limitations
 [cilium-io]: https://cilium.io
 [cilium-hubble]: https://cilium.io/hubble

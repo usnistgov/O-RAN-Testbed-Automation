@@ -33,8 +33,8 @@ echo "# Script: $(realpath "$0")..."
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$(dirname "$SCRIPT_DIR")"
 
-# Get the local IP address
-IP_ADDRESS=$(hostname -I | awk '{print $1}')
+INTERFACE=$(ip route | grep default | awk '{print $5}' | head -n 1)
+IP_ADDRESS=$(ip addr show $INTERFACE | grep 'inet ' | awk '{print $2}' | cut -d/ -f1)
 
 # Get the file path from the command line argument
 RECIPE_PATH=$1

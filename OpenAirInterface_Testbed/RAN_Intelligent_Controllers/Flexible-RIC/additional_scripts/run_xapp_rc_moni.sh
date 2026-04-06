@@ -49,4 +49,7 @@ if [ -f "../configs/flexric.conf" ]; then
     CONFIG_PATH="-c ../configs/flexric.conf"
 fi
 
+# Clean up database files to prevent sqlite failures
+rm -f /tmp/xapp_db1 /tmp/xapp_db1-shm /tmp/xapp_db1-wal
+
 XAPP_DURATION=-1 ./build/examples/xApp/c/monitor/xapp_rc_moni $CONFIG_PATH

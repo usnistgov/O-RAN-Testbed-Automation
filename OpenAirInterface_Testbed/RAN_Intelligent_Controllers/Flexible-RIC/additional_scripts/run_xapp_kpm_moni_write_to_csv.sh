@@ -93,5 +93,9 @@ if [ -f "$YAML_PATH" ]; then
 fi
 
 echo "Starting xApp KPM monitor to CSV..."
+
+# Clean up database files to prevent sqlite failures
+rm -f /tmp/xapp_db1 /tmp/xapp_db1-shm /tmp/xapp_db1-wal
+
 set -x
 XAPP_DURATION=-1 SST=$SST SD=$SD ./build/examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv "$OUTPUT_CSV_PATH" "$XAPP_PERIODICITY_MS" $CONFIG_PATH

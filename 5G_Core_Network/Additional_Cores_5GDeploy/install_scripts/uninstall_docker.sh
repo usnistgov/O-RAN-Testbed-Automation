@@ -31,9 +31,6 @@
 # Exit immediately if a command fails
 set -e
 
-# Echo every command as it is ran
-set -x
-
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 BASE_DIR=$(realpath "$SCRIPT_DIR/../..")
 cd "$SCRIPT_DIR"

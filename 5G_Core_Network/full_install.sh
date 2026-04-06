@@ -79,10 +79,11 @@ if [ ! -f "options.yaml" ]; then
     echo "" >>"options.yaml"
     echo "# Configure the Single Network Slice Selection Assistance Information (S-NSSAI)" >>"options.yaml"
     echo "# NOTE: \"sst\" and \"sd\" are interpreted as hexadecimal values (no 0x prefix)." >>"options.yaml"
-    echo "sst: 1" >>"options.yaml"
-    echo "sd: 000001" >>"options.yaml"
+    echo "slices:" >>"options.yaml"
+    echo "  - sst: 1" >>"options.yaml"
+    echo "    sd: FFFFFF" >>"options.yaml"
     echo "" >>"options.yaml"
-    echo "# If core_to_use=open5gs, false means AMF will use the default 127.0.0.5, true means it will use the hostname IP" >>"options.yaml"
+    echo "# If false, AMF will use a local IP, otherwise it will use the hostname IP" >>"options.yaml"
     echo "expose_amf_over_hostname: false" >>"options.yaml"
     echo "" >>"options.yaml"
     echo "# If core_to_use=open5gs, toggle whether or not to include the Security Edge Protection Proxies (SEPP1 and SEPP2)" >>"options.yaml"
@@ -177,7 +178,7 @@ if [ ! -d "open5gs" ]; then
     ./install_scripts/git_clone.sh https://github.com/open5gs/open5gs.git
 fi
 
-cd $SCRIPT_DIR/open5gs
+cd "$SCRIPT_DIR/open5gs"
 
 echo
 echo
@@ -214,7 +215,8 @@ sudo usermod -a -G open5gs open5gs
 echo "Installing dependencies for building Open5GS..."
 
 # Code from (https://open5gs.org/open5gs/docs/guide/02-building-open5gs-from-sources#building-open5gs):
-sudo env $APTVARS apt-get install -y python3-pip python3-setuptools python3-wheel ninja-build build-essential flex bison git cmake libsctp-dev libgnutls28-dev libgcrypt-dev libssl-dev libmongoc-dev libbson-dev libyaml-dev libmicrohttpd-dev libcurl4-gnutls-dev libnghttp2-dev libtins-dev libtalloc-dev meson
+sudo env $APTVARS apt-get install -y python3-pip python3-setuptools python3-wheel ninja-build build-essential flex bison git cmake libsctp-dev libgnutls28-dev libgcrypt-dev libssl-dev libmongoc-dev libbson-dev libyaml-dev libmicrohttpd-dev libcurl4-gnutls-dev libnghttp2-dev libtins-dev libtalloc-dev
+sudo -H pip3 install --upgrade meson # Ensure pip3 version overrides apt version to prevent segmentation faults
 if apt-cache show libidn-dev >/dev/null 2>&1; then
     sudo env $APTVARS apt-get install -y --no-install-recommends libidn-dev
 else
@@ -226,7 +228,7 @@ rm -rf build
 # Check if Open5GS has already been built and installed
 if [ ! -d "build" ]; then
     echo "Compiling Open5GS with Meson..."
-    meson build --prefix="$(pwd)/install" # -Dc_args="-fPIC" -Dc_link_args=""
+    meson build --prefix="$(pwd)/install" -Dc_args="-fPIC" -Dcpp_args="-fPIC" -Dc_link_args="-fPIC" -Dcpp_link_args="-fPIC"
 else
     echo "Open5GS build directory already exists."
 fi

@@ -33,6 +33,9 @@ echo "# Script: $(realpath "$0")..."
 # Do not exit immediately if a command fails
 set +e
 
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+cd "$SCRIPT_DIR"
+
 UE_NUMBER=$1
 
 if [[ -z "$UE_NUMBER" ]]; then
@@ -46,6 +49,37 @@ if ! [[ $UE_NUMBER =~ ^[0-9]+$ ]]; then
 fi
 
 UE_NAMESPACE="ue$UE_NUMBER"
+
+NETWORK_INTERFACE=$(ip route | grep default | awk '{print $5}')
+
+# Recalculate the IPs used during setup to identify resources to clean up
+# Allocate a /30 (4 addresses) subnet per UE (e.g., UE 1 -> 10.201.0.4/30, Gateway .5, UE .6)
+BASE_SUBNET="10.201.0.0/16"
+SUBNET_SIZE=4
+
+# Calculate IP offsets
+SUBNET_OFFSET=$((UE_NUMBER * SUBNET_SIZE))
+HOST_IP_OFFSET=$((SUBNET_OFFSET))   # .5
+UE_IP_OFFSET=$((SUBNET_OFFSET + 1)) # .6
+
+# Fetch IPs from subnet using python script
+UE_SUBNET_ID=$(python3 fetch_nth_ip.py "$BASE_SUBNET" $((SUBNET_OFFSET - 1)))
+UE_HOST_IP=$(python3 fetch_nth_ip.py "$BASE_SUBNET" $HOST_IP_OFFSET)
+UE_NS_IP=$(python3 fetch_nth_ip.py "$BASE_SUBNET" $UE_IP_OFFSET)
+
+echo "Removing IP routes and addresses inside the namespace..."
+sudo ip netns exec $UE_NAMESPACE ip route del default via $UE_HOST_IP || true
+sudo ip netns exec $UE_NAMESPACE ip addr del $UE_NS_IP/30 dev v-$UE_NAMESPACE || true
+sudo ip netns exec $UE_NAMESPACE ip link set v-$UE_NAMESPACE down || true
+
+echo "Removing iptables rules..."
+while sudo iptables -D FORWARD -o "$NETWORK_INTERFACE" -i v-eth$UE_NUMBER -j ACCEPT 2>/dev/null; do :; done
+while sudo iptables -D FORWARD -i "$NETWORK_INTERFACE" -o v-eth$UE_NUMBER -j ACCEPT 2>/dev/null; do :; done
+while sudo iptables -t nat -D POSTROUTING -s "$UE_SUBNET_ID/30" -o "$NETWORK_INTERFACE" -j MASQUERADE 2>/dev/null; do :; done
+
+echo "Deleting the network devices..."
+sudo ip link set v-eth$UE_NUMBER down
+sudo ip link del v-eth$UE_NUMBER
 
 echo "Deleting the network namespace..."
 sudo ip netns del $UE_NAMESPACE

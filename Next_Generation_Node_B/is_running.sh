@@ -42,3 +42,24 @@ if pgrep -x "gnb" >/dev/null; then
 else
     echo "gNodeB: NOT_RUNNING"
 fi
+
+if pgrep -f "[p]ython3 zmq_broker/multi_ue_scenario\.py" >/dev/null; then
+    echo "ZMQ_Broker: RUNNING"
+else
+    echo "ZMQ_Broker: NOT_RUNNING"
+fi
+
+if command -v docker &>/dev/null; then
+    # Check if the grafana container is running
+    if docker ps --format '{{.Names}}' 2>/dev/null | grep -Eq "^ocudu-grafana$"; then
+        echo "Grafana: RUNNING"
+    fi
+    # Check if the netconf container is running
+    if docker ps --format '{{.Names}}' 2>/dev/null | grep -Eq "^ocudu_netconf$"; then
+        echo "Netconf: RUNNING"
+    fi
+fi
+
+if pgrep -f "[s]rc/o1_adapter" >/dev/null; then
+    echo "O1_Adapter: RUNNING"
+fi

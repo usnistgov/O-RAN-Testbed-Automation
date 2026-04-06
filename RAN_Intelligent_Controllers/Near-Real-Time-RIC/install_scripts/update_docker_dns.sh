@@ -99,6 +99,7 @@ else
     sudo pkill -x containerd >/dev/null 2>&1 || true
     sudo rm -f /var/run/docker.pid /var/run/docker.sock
     sudo mkdir -p /run /var/run
+    sudo -v # Ensure sudo session is active
     sudo sh -c 'setsid dockerd --config-file=/etc/docker/daemon.json >>'"${DOCKERD_LOG}"' 2>&1 </dev/null &'
     for _ in $(seq 1 60); do
         if sudo test -S /var/run/docker.sock && sudo docker version >/dev/null 2>&1; then
@@ -112,6 +113,7 @@ else
         # Update daemon.json temporarily
         sudo cp /etc/docker/daemon.json /etc/docker/daemon.json.bak
         sudo sed -i 's/"native.cgroupdriver=systemd"/"native.cgroupdriver=cgroupfs"/' /etc/docker/daemon.json
+        sudo -v # Ensure sudo session is active
         sudo sh -c 'setsid dockerd --config-file=/etc/docker/daemon.json >>'"${DOCKERD_LOG}"' 2>&1 </dev/null &'
         for _ in $(seq 1 60); do
             if sudo test -S /var/run/docker.sock && sudo docker version >/dev/null 2>&1; then

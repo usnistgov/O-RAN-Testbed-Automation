@@ -59,9 +59,10 @@ if [ ! -f "configs/ue1.conf" ]; then
 fi
 echo "Starting User Equipment in background..."
 mkdir -p logs
-sudo chown --recursive "$USER" logs
 >logs/ue${UE_NUMBER}_stdout.txt
+sudo chown --recursive "${SUDO_USER:-$USER}" logs
 
+sudo -v # Ensure sudo session is active
 sudo setsid bash -c "stdbuf -oL -eL \"$SCRIPT_DIR/run.sh\" $UE_NUMBER >/dev/null 2>&1" </dev/null &
 
 ATTEMPT=0

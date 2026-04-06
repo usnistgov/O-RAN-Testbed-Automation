@@ -111,7 +111,14 @@ fi
 # # Dynamic AMF IP support: Fetch the AMF IP, and it will be updated in the configuration file
 # # This code is optional since the AMF IP is fixed on configuration; dynamic IP is not needed
 # AMF_IP=$(docker inspect amf | jq -r '.[0].NetworkSettings.Networks["br-n2"].IPAddress')
-# AMF_IP_BIND=$(ip route get 1 | awk '{print $(NF-2); exit}') # Get the IP of the primary network interface
+# if [ -f "$PARENT_DIR/options.yaml" ]; then
+#     EXPOSE_AMF=$(yq eval '.expose_amf_over_hostname' "$PARENT_DIR/options.yaml")
+# fi
+# if [ "$EXPOSE_AMF" = "true" ]; then
+#     AMF_IP_BIND=$(ip route get 1 | awk '{print $(NF-2); exit}') # Get the IP of the primary network interface
+# else
+#     AMF_IP_BIND="127.0.0.1"
+# fi
 # AMF_ADDRESSES_OUTPUT="configs/get_amf_address.txt"
 # echo "$AMF_IP" >$AMF_ADDRESSES_OUTPUT
 # echo "$AMF_IP_BIND" >>$AMF_ADDRESSES_OUTPUT

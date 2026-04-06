@@ -30,6 +30,10 @@ This installation of the Near-RT RIC supports six xApps.
       RRU.PrbTotDl (%) - Percent of resource blocks received since the last sample
       RRU.PrbTotUl (%) - Percent of resource blocks sent since the last sample
       ```
+      - `CARR.PDSCHMCSDist.BinX.BinY.BinZ (PDSCH_RBs)` - Unlike the other listed metrics (which are per-UE), this one is per-cell (NRCellDU). It reports the distribution of MCS scheduled for PDSCH resource blocks, aligned with 3GPP TS 28.552 [\[4\]][ts28552-3gpp] clause 5.1.1.12.1 (MCS Distribution in PDSCH). Each bin is incremented by the number of scheduled PDSCH RBs for the corresponding MCS. When SU-MIMO is used, both rank indicators are considered. Different PDSCH MCS index tables are considered when configured differently (TS 38.214 [\[5\]][ts38214-3gpp] clause 5.1.3.1). RBs used for broadcast are excluded. Each BinX/BinY/BinZ measurement is a single integer value.
+        - BinX: Rank index (1-8)
+        - BinY: PDSCH MCS table index (1-3)
+        - BinZ: MCS index (0-31)
     - Note that this xApp uses REPORT Style 4 (O-RAN E2SM-KPM clause 7.4.5) with the condition being to match the UE's Slice/Service Type (SST) and Slice Differentiator (SD). The code has been patched to subscribe to 4-octet slice IDs (SST+SD) if SD ≠ 0xFFFFFF, instead of a 1-octet SST (clause 8.3.11).
 - **KPM Monitor to CSV xApp**:
   - Run with `./additional_scripts/run_xapp_kpm_moni_write_to_csv.sh`.
@@ -46,7 +50,7 @@ This installation of the Near-RT RIC supports six xApps.
 
 ## KPM Monitor Visualization in Grafana
 
-After the KPM Monitor xApp subscribes to the E2 node, metrics of the gNodeB and UE are sent through the E2 interface and received by the xApp. An xApp has been made at `flexric/build/examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv` which writes the metrics to logs/KPI_Metrics.csv instead of printing them to the console. The Python server at `additional_scripts/python_server_for_grafana.py` will make this CSV file accessible at `http://localhost:3030/KPI_Metrics.csv`, and a Grafana [\[4\]][grafanalabs-grafana] dashboard has been created to consume this data and visualize it.
+After the KPM Monitor xApp subscribes to the E2 node, metrics of the gNodeB and UE are sent through the E2 interface and received by the xApp. An xApp has been made at `flexric/build/examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv` which writes the metrics to logs/KPI_Metrics.csv instead of printing them to the console. The Python server at `additional_scripts/python_server_for_grafana.py` will make this CSV file accessible at `http://localhost:3030/KPI_Metrics.csv`, and a Grafana [\[6\]][grafanalabs-grafana] dashboard has been created to consume this data and visualize it.
 
 - **Real-Time Metrics**: To start the xApp that generates `logs/KPI_Metrics.csv`, the Python server that hosts the file, and the Grafana server, run the following.
   ```console
@@ -59,7 +63,7 @@ After the KPM Monitor xApp subscribes to the E2 node, metrics of the gNodeB and 
   ```
   A sample KPI_Metrics.csv file has been provided, and can be applied with `cp additional_scripts/sample_KPI_Metrics.csv logs/KPI_Metrics.csv`.
 
-- **Initial Configuration**: The dashboard uses the Infinity plugin (yesoreyeram-infinity-datasource [\[5\]][grafana-infinity]), which will require creating a data source under Connections → Data sources → Add data source → Infinity. Configure it under URL, Headers & Params → Base URL → Type "`http://localhost:3030/`" → Save & test.
+- **Initial Configuration**: The dashboard uses the Infinity plugin (yesoreyeram-infinity-datasource [\[7\]][grafana-infinity]), which will require creating a data source under Connections → Data sources → Add data source → Infinity. Configure it under URL, Headers & Params → Base URL → Type "`http://localhost:3030/`" → Save & test.
 
 - **Stop Grafana**: To stop the Grafana server, Python server, and xApp, use `./additional_scripts/stop_grafana_and_python_server.sh`.
 
@@ -74,13 +78,17 @@ The Grafana dashboard is accessible at `http://localhost:3000` with default cred
 1. Working Group 3: Near-Real-time RAN Intelligent Controller and E2 Interface Workgroup. O-RAN Alliance. [https://public.o-ran.org/display/WG3/Introduction][oran-wg3]
 2. FlexRIC: an SDK for next-generation SD-RANs. R. Schmidt, M. Irazabal, N. Nikaein. [https://dl.acm.org/doi/10.1145/3485983.3494870][mosaic5g-flexric]
 3. Flexible RAN Intelligent Controller (FlexRIC) and E2 Agent. Mosaic5G. [https://gitlab.eurecom.fr/mosaic5g/flexric][eurecom-nearrtric]
-4. The open-source platform for monitoring and observability. Grafana Labs. [https://github.com/grafana/grafana][grafanalabs-grafana]
-5. Grafana Infinity Datasource. yesoreyeram. [https://github.com/grafana/grafana-infinity-datasource][grafana-infinity]
+4. 3GPP TS 28.552: 5G; Management and orchestration; 5G performance measurements. [https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=3413][ts28552-3gpp]
+5. 3GPP TS 38.214: 5G; NR; Physical layer procedures for data. [https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=3216][ts38214-3gpp]
+6. The open-source platform for monitoring and observability. Grafana Labs. [https://github.com/grafana/grafana][grafanalabs-grafana]
+7. Grafana Infinity Datasource. yesoreyeram. [https://github.com/grafana/grafana-infinity-datasource][grafana-infinity]
 
 <!-- References -->
 
 [oran-wg3]: https://public.o-ran.org/display/WG3/Introduction
 [mosaic5g-flexric]: https://dl.acm.org/doi/10.1145/3485983.3494870
 [eurecom-nearrtric]: https://gitlab.eurecom.fr/mosaic5g/flexric
+[ts28552-3gpp]: https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=3413
+[ts38214-3gpp]: https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=3216
 [grafanalabs-grafana]: https://github.com/grafana/grafana
 [grafana-infinity]: https://github.com/grafana/grafana-infinity-datasource

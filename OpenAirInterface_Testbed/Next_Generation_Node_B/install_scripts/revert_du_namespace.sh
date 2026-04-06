@@ -53,29 +53,29 @@ DU_NAMESPACE="du$DU_NUMBER"
 NETWORK_INTERFACE=$(ip route | grep default | awk '{print $5}')
 
 # Recalculate the IPs used during setup to identify resources to clean up
-# Allocated a /29 (8 addresses) subnet per DU
+# Allocate a /30 (4 addresses) subnet per DU (e.g., DU 1 -> 10.200.0.4/30, Gateway .5, DU .6)
 BASE_SUBNET="10.200.0.0/16"
-SUBNET_SIZE=8
+SUBNET_SIZE=4
 
 # Calculate IP offsets
 SUBNET_OFFSET=$((DU_NUMBER * SUBNET_SIZE))
-HOST_IP_OFFSET=$((SUBNET_OFFSET + 1)) # .5
-DU_IP_OFFSET=$((SUBNET_OFFSET + 2))   # .6
+HOST_IP_OFFSET=$((SUBNET_OFFSET))   # .5
+DU_IP_OFFSET=$((SUBNET_OFFSET + 1)) # .6
 
 # Fetch IPs from subnet using python script
-DU_SUBNET_ID=$(python3 fetch_nth_ip.py "$BASE_SUBNET" $SUBNET_OFFSET)
+DU_SUBNET_ID=$(python3 fetch_nth_ip.py "$BASE_SUBNET" $((SUBNET_OFFSET - 1)))
 DU_HOST_IP=$(python3 fetch_nth_ip.py "$BASE_SUBNET" $HOST_IP_OFFSET)
 DU_NS_IP=$(python3 fetch_nth_ip.py "$BASE_SUBNET" $DU_IP_OFFSET)
 
 echo "Removing IP routes and addresses inside the namespace..."
 sudo ip netns exec $DU_NAMESPACE ip route del default via $DU_HOST_IP || true
-sudo ip netns exec $DU_NAMESPACE ip addr del $DU_NS_IP/29 dev v-$DU_NAMESPACE || true
+sudo ip netns exec $DU_NAMESPACE ip addr del $DU_NS_IP/30 dev v-$DU_NAMESPACE || true
 sudo ip netns exec $DU_NAMESPACE ip link set v-$DU_NAMESPACE down || true
 
 echo "Removing iptables rules..."
-sudo iptables -D FORWARD -o "$NETWORK_INTERFACE" -i v-eth-du$DU_NUMBER -j ACCEPT || true
-sudo iptables -D FORWARD -i "$NETWORK_INTERFACE" -o v-eth-du$DU_NUMBER -j ACCEPT || true
-sudo iptables -t nat -D POSTROUTING -s "$DU_SUBNET_ID/29" -o "$NETWORK_INTERFACE" -j MASQUERADE || true
+while sudo iptables -D FORWARD -o "$NETWORK_INTERFACE" -i v-eth-du$DU_NUMBER -j ACCEPT 2>/dev/null; do :; done
+while sudo iptables -D FORWARD -i "$NETWORK_INTERFACE" -o v-eth-du$DU_NUMBER -j ACCEPT 2>/dev/null; do :; done
+while sudo iptables -t nat -D POSTROUTING -s "$DU_SUBNET_ID/30" -o "$NETWORK_INTERFACE" -j MASQUERADE 2>/dev/null; do :; done
 
 echo "Deleting the network devices..."
 sudo ip link set v-eth-du$DU_NUMBER down

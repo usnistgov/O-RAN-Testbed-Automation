@@ -60,8 +60,10 @@ fi
 
 # Function to handle graceful shutdown
 graceful_shutdown() {
+    trap - SIGINT SIGTERM SIGQUIT
     echo "Shutting down UE $UE_NUMBER gracefully..."
     ./stop.sh
+    stty sane || true
     exit
 }
 trap graceful_shutdown SIGINT SIGTERM SIGQUIT
@@ -88,9 +90,9 @@ else
         exit 1
     fi
     mkdir -p logs
-    sudo chown --recursive "$USER" logs
     >logs/ue${UE_NUMBER}_stdout.txt
-    echo "Starting srsue (ue$UE_NUMBER)..."
+    sudo chown --recursive "${SUDO_USER:-$USER}" logs
+    echo "Starting srsue (ue$UE_NUMBER) in namespace ue$UE_NUMBER..."
     # sudo ./srsRAN_4G/build/srsue/src/srsue --config_file "$UE_CONF_PATH"
-    sudo script -q -f -c "./srsRAN_4G/build/srsue/src/srsue --config_file \"$UE_CONF_PATH\"" logs/ue${UE_NUMBER}_stdout.txt
+    sudo ip netns exec "ue$UE_NUMBER" script -q -f -c "./srsRAN_4G/build/srsue/src/srsue --config_file \"$UE_CONF_PATH\"" logs/ue${UE_NUMBER}_stdout.txt
 fi

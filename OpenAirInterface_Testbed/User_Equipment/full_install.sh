@@ -31,6 +31,7 @@
 # Exit immediately if a command fails
 set -e
 
+APPLY_PATCHES=true
 CLEAN_INSTALL=false # Note: If set to true, then full_install.sh needs to be ran in the Next_Generation_Node_B directory too.
 DEBUG_SYMBOLS=false
 
@@ -51,7 +52,7 @@ if ! grep -q avx2 /proc/cpuinfo; then
     read -r -n 1 -s
 fi
 
-# Check for UE binary to determine if srsRAN_Project is already installed
+# Check for binary to determine if OpenAirInterface is already installed
 if [ "$CLEAN_INSTALL" = false ] && [ -f "openairinterface5g/cmake_targets/ran_build/build/nr-uesoftmodem" ]; then
     echo "OpenAirInterface UE is already installed, skipping."
     exit 0
@@ -65,11 +66,13 @@ INSTALL_START_TIME=$(date +%s)
 
 if [ ! -d "openairinterface5g" ]; then
     echo "Cloning openairinterface5g..."
-    ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/oai/openairinterface5g.git openairinterface5g
+    ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/oai/openairinterface5g.git openairinterface5g --https
 fi
 
-echo "Patching OpenAirInterface..."
-./install_scripts/apply_patches.sh
+if [ "$APPLY_PATCHES" = true ]; then
+    echo "Patching OpenAirInterface..."
+    ./install_scripts/apply_patches.sh
+fi
 
 # Ensure that the flexric repository is cloned at the right commit (symbolic link to RAN_Intelligent_Controllers/Flexible-RIC/flexric)
 cd openairinterface5g/openair2/E2AP/
@@ -82,7 +85,7 @@ fi
 if [ ! -d "$FLEXRIC_DIR/src/agent/e2_agent_api.c" ]; then
     echo "Cloning Flexible RAN Intelligent Controller (FlexRIC)..."
     cd "$FLEXRIC_PARENT_DIR"
-    ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/mosaic5g/flexric.git flexric
+    ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/mosaic5g/flexric.git flexric --https
 fi
 cd "$SCRIPT_DIR"
 
@@ -123,6 +126,12 @@ if [[ "$CMAKE_VERSION" == 3.16.* ]]; then
     sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ focal main'
     sudo apt-get update
     sudo env $APTVARS apt-get install -y cmake
+fi
+
+if ! command -v ccache &>/dev/null; then
+    echo "Installing ccache..."
+    sudo apt-get update
+    sudo env $APTVARS apt-get install -y ccache
 fi
 
 if ! dpkg -s libsimde-dev &>/dev/null; then

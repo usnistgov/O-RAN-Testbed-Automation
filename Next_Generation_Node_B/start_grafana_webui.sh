@@ -28,8 +28,8 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-# Do not exit immediately if a command fails
-set +e
+# Exit immediately if a command fails
+set -e
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
@@ -40,67 +40,78 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-echo "Stopping Next Generation Node B..."
-./stop.sh
-
-echo "Uninstalling ZeroMQ libzmq..."
-if [ -d libzmq ]; then
-    cd libzmq
-    sudo make uninstall
-    cd ..
-fi
-sudo rm -rf libzmq
-
-echo "Uninstalling ZeroMQ czmq..."
-if [ -d czmq ]; then
-    cd czmq
-    sudo make uninstall
-    cd ..
-fi
-sudo rm -rf czmq
+echo "Starting Grafana WebUI setup..."
 
 COMPOSE_FILE="ocudu/docker/docker-compose.ui.yml"
-if [ -f "$COMPOSE_FILE" ]; then
-    DOCKER_COMPOSE_CMD=""
-    if command -v docker &>/dev/null && docker compose version &>/dev/null; then
-        DOCKER_COMPOSE_CMD="docker compose"
-    elif command -v docker-compose &>/dev/null; then
-        DOCKER_COMPOSE_CMD="docker-compose"
-    fi
+OVERRIDE_FILE="ocudu/docker/docker-compose.override.yml"
 
-    if [ -n "$DOCKER_COMPOSE_CMD" ]; then
-        echo "Cleaning up Grafana Docker containers and images..."
-        sudo $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" down -v --rmi all || true
-    fi
+if [ ! -f "$COMPOSE_FILE" ]; then
+    echo "ERROR: Could not find docker-compose file with Grafana configuration."
+    exit 1
 fi
 
-echo "Uninstalling OCUDU..."
-if [ -d ocudu/build ]; then
-    cd ocudu/build
-    if [ -f install_manifest.txt ]; then
-        echo "Removing installed files from manifest..."
-        xargs sudo rm -f <install_manifest.txt
+ENV_FILE="ocudu/docker/.env"
+if [ -f "$ENV_FILE" ]; then
+    echo "Configuring WS_URL in .env..."
+    if getent hosts host.docker.internal >/dev/null 2>&1 || ping -c 1 -W 1 host.docker.internal >/dev/null 2>&1; then
+        echo "Using host.docker.internal for WS_URL"
+        sed -i 's/^WS_URL=.*/WS_URL=host.docker.internal:8001/' "$ENV_FILE"
     else
-        sudo make uninstall || true
+        HOST_IP=$(hostname -I | awk '{print $1}')
+        echo "Falling back to Host IP $HOST_IP for WS_URL"
+        sed -i "s/^WS_URL=.*/WS_URL=${HOST_IP}:8001/" "$ENV_FILE"
     fi
-    cd ../..
-fi
-if command -v docker &>/dev/null && [ -n "$(sudo docker images -q ocudu-netconf/ocudu-netconf:latest 2>/dev/null)" ]; then
-    echo "Uninstalling O1 Adapter and Netconf..."
-    ./additional_scripts/uninstall_o1_adapter.sh bypass_confirmation || true
 fi
 
-sudo rm -rf zmq_broker/
-sudo rm -rf ocudu
-sudo rm -rf ocudu_o1_adapter
-sudo rm -rf ocudu_netconf
+# If docker is not installed
+if ! command -v docker &>/dev/null; then
+    ./install_scripts/install_docker.sh
+fi
 
-sudo rm -rf logs/
-sudo rm -rf configs/
-sudo rm -rf install_time.txt
+if ! command -v lazydocker &>/dev/null; then
+    ./install_scripts/install_lazydocker.sh
+fi
+
+echo "Checking for docker compose..."
+DOCKER_COMPOSE_CMD=""
+if docker compose version &>/dev/null; then
+    DOCKER_COMPOSE_CMD="docker compose"
+elif command -v docker-compose &>/dev/null; then
+    DOCKER_COMPOSE_CMD="docker-compose"
+else
+    echo "ERROR: Docker compose not found. Please install Docker Compose V2."
+    exit 1
+fi
+
+echo "Starting Grafana container..."
+cat <<'EOF' >"$OVERRIDE_FILE"
+services:
+  grafana:
+    container_name: ocudu-grafana
+  telegraf:
+    container_name: ocudu-telegraf
+  influxdb:
+    container_name: ocudu-influxdb
+EOF
+
+sudo $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" -f "$OVERRIDE_FILE" up -d grafana
+
+echo "Waiting for Grafana to initialize..."
+sleep 5
+
+# Open WebUI
+echo "Grafana is running at: http://localhost:3300"
+
+if command -v xdg-open &>/dev/null; then
+    echo "Opening Grafana in default web browser at http://localhost:3300..."
+    xdg-open "http://localhost:3300" >/dev/null 2>&1 &
+else
+    echo "No default browser detected. Visit http://localhost:3300 to access the Grafana WebUI."
+    echo "Please open http://localhost:3300 in your web browser."
+fi
 
 echo
+echo "The default login credentials are as follows."
+echo "    - U: \"admin\""
+echo "    - P: \"admin\""
 echo
-echo "################################################################################"
-echo "# Successfully uninstalled Next Generation Node B                              #"
-echo "################################################################################"

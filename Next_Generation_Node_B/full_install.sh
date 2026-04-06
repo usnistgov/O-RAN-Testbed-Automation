@@ -31,6 +31,11 @@
 # Exit immediately if a command fails
 set -e
 
+APPLY_PATCHES=true
+DEBUG_SYMBOLS=false
+RUN_TESTS=false
+TUNE_PERFORMANCE=false
+
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
@@ -40,9 +45,9 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-# Check for gnb binary to determine if srsRAN_Project is already installed
-if [ -f "srsRAN_Project/build/apps/gnb/gnb" ]; then
-    echo "srsRAN_Project is already installed, skipping."
+# Check for binary to determine if OCUDU is already installed
+if [ -f "ocudu/build/apps/gnb/gnb" ]; then
+    echo "OCUDU is already installed, skipping."
     exit 0
 fi
 
@@ -83,9 +88,14 @@ if [[ "$USE_SYSTEMCTL" == "true" ]]; then
     fi
 fi
 
-if [ ! -d "srsRAN_Project" ]; then
-    echo "Cloning srsRAN_Project..."
-    ./install_scripts/git_clone.sh https://github.com/srsran/srsRAN_Project.git
+if [ ! -d "ocudu" ]; then
+    echo "Cloning OCUDU..."
+    ./install_scripts/git_clone.sh https://gitlab.com/ocudu/ocudu.git
+fi
+
+if [ "$APPLY_PATCHES" = true ]; then
+    echo "Patching OCUDU..."
+    ./install_scripts/apply_patches.sh
 fi
 
 echo "Updating package lists..."
@@ -100,7 +110,7 @@ fi
 
 echo
 echo
-echo "Installing Next Generation Node B (srsRAN Project)..."
+echo "Installing Next Generation Node B (OCUDU)..."
 # Modifies the needrestart configuration to suppress interactive prompts
 if [ -d /etc/needrestart ]; then
     sudo install -d -m 0755 /etc/needrestart/conf.d
@@ -111,30 +121,27 @@ EOF
     echo "Configured needrestart to list-only (no service restarts)."
 fi
 
-# Code from (https://docs.srsran.com/projects/project/en/latest/user_manuals/source/installation.html#manual-installation-dependencies):
-sudo env $APTVARS apt-get install -y build-essential cmake cmake-data make gcc g++ pkg-config libfftw3-dev libmbedtls-dev libsctp-dev libyaml-cpp-dev libgtest-dev
+# Code from (https://gitlab.com/ocudu/ocudu):
+MIN_GCC_VERSION="11.4.0"
+if command -v gcc >/dev/null 2>&1; then
+    GCC_VERSION=$(gcc -dumpfullversion -dumpversion)
+    if dpkg --compare-versions "$GCC_VERSION" lt "$MIN_GCC_VERSION"; then
+        echo "Detected GCC $GCC_VERSION, which is below required $MIN_GCC_VERSION. Removing gcc/g++ before reinstalling."
+        sudo env $APTVARS apt-get remove -y gcc g++
+    fi
+fi
 
-sudo env $APTVARS apt-get install -y autoconf automake libtool
-sudo env $APTVARS apt-get install -y libuhd-dev
-sudo env $APTVARS apt-get install -y uhd-host
-sudo env $APTVARS apt-get install -y libdw-dev libbfd-dev libdwarf-dev
-sudo env $APTVARS apt-get install -y libgtest-dev
-sudo env $APTVARS apt-get install -y libyaml-cpp-dev
-sudo env $APTVARS apt-get install -y timelimit
+# Code from (https://gitlab.com/ocudu/ocudu):
+sudo env $APTVARS apt-get install -y cmake make gcc g++ pkg-config libmbedtls-dev libsctp-dev libyaml-cpp-dev libtool
+if [[ "$RUN_TESTS" == "true" ]]; then
+    sudo env $APTVARS apt-get install -y libgtest-dev
+fi
+sudo apt-get install -y libfftw3-dev
+
+sudo env $APTVARS apt-get install -y ccache
 
 echo "Ensuring that SCTP is enabled..."
 sudo ./install_scripts/enable_sctp.sh
-
-# Check if GCC 13 is installed, if not, install it and set it as the default
-GCC_VERSION=$(gcc -v 2>&1 | grep "gcc version" | awk '{print $3}')
-if [[ -z "$GCC_VERSION" || ! "$GCC_VERSION" == 13.* ]]; then
-    echo "Installing GCC 13..."
-    sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
-    sudo apt-get update
-    sudo env $APTVARS apt-get install -y gcc-13 g++-13
-    sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 100
-    sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-13 100
-fi
 
 cd "$SCRIPT_DIR"
 
@@ -151,16 +158,17 @@ else
     if [ ! -d libzmq ]; then
         ./install_scripts/git_clone.sh https://github.com/zeromq/libzmq.git
     fi
+fi
+
+if ! pkg-config --exists libzmq; then
     cd libzmq
     ./autogen.sh
     ./configure
     make -j$(nproc)
     sudo make install
     sudo ldconfig
-    cd ..
+    cd "$SCRIPT_DIR"
 fi
-
-cd "$SCRIPT_DIR"
 
 echo
 echo "Building ZeroMQ czmq..."
@@ -175,17 +183,20 @@ else
     if [ ! -d czmq ]; then
         ./install_scripts/git_clone.sh https://github.com/zeromq/czmq.git
     fi
+fi
+
+if ! pkg-config --exists libczmq; then
     cd czmq
     ./autogen.sh
     ./configure
     make -j$(nproc)
     sudo make install
     sudo ldconfig
-    cd ..
+    cd "$SCRIPT_DIR"
 fi
 
 # Verify ZeroMQ installation
-if ! pkg-config --exists libzmq; then
+if ! pkg-config --exists libzmq || ! pkg-config --exists libczmq; then
     echo "ZeroMQ was not installed correctly. Exiting."
     exit 1
 else
@@ -194,20 +205,44 @@ fi
 
 cd "$SCRIPT_DIR"
 
+if [ ! -f "zmq_broker/multi_ue_scenario.py" ]; then
+    if ! command -v grcc >/dev/null 2>&1; then
+        echo "Installing GNU Radio Companion Compiler (grcc) for the ZeroMQ Broker..."
+        sudo env $APTVARS apt-get install -y gnuradio
+    fi
+fi
+
 echo
 echo
-echo "Compiling and Installing srsRAN_Project..."
-cd srsRAN_Project
-# rm -rf build
+if [ ! -d "zmq_broker" ] || [ ! -f "zmq_broker/multi_ue_scenario.grc" ]; then
+    echo "Downloading ZeroMQ Broker GNU Radio Companion flowgraph..."
+    mkdir -p zmq_broker
+    wget -qO zmq_broker/multi_ue_scenario.grc https://gitlab.com/ocudu/ocudu_docs/-/raw/main/docs/user_manual/tutorials/srsue/assets/multi_ue_scenario.grc
+fi
+
+echo
+echo
+echo "Compiling and Installing OCUDU..."
+cd ocudu
 mkdir -p build
 cd build
-SUPPRESS_WARNINGS="-Wno-error=array-bounds -Wno-error=unused-but-set-variable -Wno-error=unused-function -Wno-error=unused-parameter -Wno-error=unused-result -Wno-error=unused-variable -Wno-error=all -Wno-return-type"
-cmake .. -DENABLE_EXPORT=ON -DENABLE_ZEROMQ=ON -DCMAKE_CXX_FLAGS="$SUPPRESS_WARNINGS"
-make clean
-# Remove -Werror from the flags.make files to prevent the build from failing due to warnings
+CMAKE_FLAGS="-DENABLE_WERROR=OFF"
+if [[ "$DEBUG_SYMBOLS" == "true" ]]; then
+    CMAKE_FLAGS="$CMAKE_FLAGS -DCMAKE_BUILD_TYPE=Debug"
+fi
+
+if [[ "$RUN_TESTS" == "true" ]]; then
+    CMAKE_FLAGS="$CMAKE_FLAGS -DBUILD_TESTING=ON"
+else
+    CMAKE_FLAGS="$CMAKE_FLAGS -DBUILD_TESTING=OFF"
+fi
+
+cmake ../ $CMAKE_FLAGS
 make -j$(nproc)
-# sudo make test -j$(nproc)
-sudo make -j$(nproc) install
+if [[ "$RUN_TESTS" == "true" ]]; then
+    ctest -j$(nproc)
+fi
+sudo make install
 
 cd "$SCRIPT_DIR"
 
@@ -222,6 +257,15 @@ if [ -n "$INSTALL_START_TIME" ]; then
     echo "The gNodeB installation process took $DURATION_MINUTES minutes to complete."
     mkdir -p logs
     echo "$DURATION_MINUTES minutes" >>install_time.txt
+fi
+
+if [[ "$TUNE_PERFORMANCE" == "true" ]]; then
+    echo
+    echo
+    echo "Tuning OCUDU performance..."
+    cd ocudu
+    sudo ./scripts/ocudu_performance
+    cd ..
 fi
 
 echo "The gNodeB installation completed successfully."

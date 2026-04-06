@@ -17,11 +17,11 @@ The automation tool can be used in virtual machines and physical machines with t
   <!-- <img src="Images/Architecture_Light.svg" alt="Diagram of Testbed Open-Source Components" width="70%"> -->
 </div>
 
-This tool supports the deployment of 5G O-RAN testbeds using open-source components in two main scenarios: Software Radio Systems with O-RAN SC's Near-RT RIC, and OpenAirInterface with Mosaic5G's FlexRIC. Below is the list of the supported testbed open-source components.
+This tool supports the deployment of 5G O-RAN testbeds using open-source components in two main scenarios: OCUDU with O-RAN SC's Near-RT RIC, and OpenAirInterface with Mosaic5G's FlexRIC. Below is the list of the supported testbed open-source components.
 
 ```text
 CU/DU
-├── srsRAN_Project gNB: release_25.10
+├── OCUDU: 26.04
 ├── OpenAirInterface gNB: 2026.w06
 └── O-RAN SC E2 Simulator: M-Release
 RICs
@@ -43,7 +43,10 @@ RICs
 └── O-RAN SC Non-RT RIC: M-Release
     └── Minimal prototype with no rApp support.
 5G Core
-└── Open5GS: v2.7.6
+├── Open5GS: v2.7.6
+├── OPENAIR-CN-5G: v2.2.0
+└── free5GC: v4.2.1
+
 UEs
 ├── srsRAN_4G: release_25_10
 └── OpenAirInterface 5G UE: 2026.w06
@@ -140,21 +143,27 @@ Begin the installation process, recommended to be run as the current user rather
 ```
 
 <details>
-  <summary><b>Software Radio Systems and O-RAN SC Near-RT RIC Output</b></summary>
+  <summary><b>OCUDU and O-RAN SC Near-RT RIC Output</b></summary>
   <hr>
 
-Run the testbed with `./run.sh` to start the 5G Core and gNodeB as background processes, and the UE in the foreground. Use `./is_running.sh` to check if the components are running, and `./stop.sh` to stop the components. The RIC starts automatically on boot and can be accessed with `k9s -A`.
+Run the testbed with `./run.sh` to start the 5G Core, gNodeB, and UEs 2 and 3 as background processes, and UE 1 in the foreground. Use `./is_running.sh` to check if the components are running, and `./stop.sh` to stop the components. The optional RIC starts automatically on boot and can be accessed with `k9s -A`.
 
 ```console
 Attaching UE...
-Random Access Transmission: prach_occasion=0, preamble_index=0, ra-rnti=0x39, tti=4174
+Random Access Transmission: prach_occasion=0, preamble_index=0, ra-rnti=0x39, tti=174
 Random Access Complete.     c-rnti=0x4601, ta=0
 RRC Connected
-PDU Session Establishment successful. IP: 10.45.0.2
+PDU Session Establishment successful. IP: 10.45.0.101
 RRC NR reconfiguration successful.
 ```
 
-<b>Supplementary Network Monitoring, Visualization, and Control</b><div align="center">
+<b>OCUDU Grafana WebUI and ZMQ Broker Visualization</b><div align="center">
+  <img src="Images/OCUDU_Grafana_WebUI.png" alt="OCUDU Grafana WebUI and ZMQ Broker" width="75%">
+</div>
+
+See <a href="Next_Generation_Node_B/README.md#ocudu-grafana-webui">this section</a> for more information.
+
+<b>Supplementary O-RAN SC Network Monitoring, Visualization, and Control</b><div align="center">
   <img src="Images/Cilium_Hubble_UI.png" alt="Hubble UI showing network flows" width="70%">
 </div>
 
@@ -232,7 +241,7 @@ USNISTGOV/O-RAN-Testbed-Automation is developed and maintained by the NIST Wirel
 3. Documentation of Base Directory. [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/README.md][gh-readme]
 4. Documentation of 5G Core Network (Open5GS). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/5G_Core_Network/README.md][gh-5gcore].
 5. Documentation of Additional Cores for 5G Deployment. [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/5G_Core_Network/Additional_Cores_5GDeploy/README.md][gh-5gdeploy].
-6. Documentation of Next Generation Node B (srsRAN_Project). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/Next_Generation_Node_B/README.md][gh-gnodeb].
+6. Documentation of Next Generation Node B (OCUDU). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/Next_Generation_Node_B/README.md][gh-gnodeb].
 7. Documentation of User Equipment (srsRAN_4G). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/User_Equipment/README.md][gh-ue].
 8. Documentation of Near-Real Time RAN Intelligent Controller (O-RAN SC). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/RAN_Intelligent_Controllers/Near-Real-Time-RIC/README.md][gh-nearrtric].
 9. Documentation of Non-Real Time RAN Intelligent Controller (O-RAN SC). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/RAN_Intelligent_Controllers/Non-Real-Time-RIC/README.md][gh-nonrtric].

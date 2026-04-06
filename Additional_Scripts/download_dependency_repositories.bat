@@ -39,7 +39,7 @@ if exist "5G_Core_Network\open5gs" rmdir /s /q "5G_Core_Network\open5gs"
 cd 5G_Core_Network
 git clone https://github.com/open5gs/open5gs.git
 cd open5gs
-git checkout 69b53add90a9479d7960b822fc60601d659c328b
+git checkout b3169c8ee9cbb5cbb62407a7c19a4fec2f2d9eae
 cd ..\..
 
 cd %~dp0..
@@ -47,7 +47,7 @@ if exist "User_Equipment\srsRAN_4G" rmdir /s /q "User_Equipment\srsRAN_4G"
 cd User_Equipment
 git clone https://github.com/srsran/srsRAN_4G.git
 cd srsRAN_4G
-git checkout 1fab3df863f66fdb6c3b34f1b39e745dbcb12d5e
+git checkout 6bcbd9e5bf8686aa7085202cd847c5ddd64a9c16
 cd ..\..
 
 cd %~dp0..
@@ -55,7 +55,7 @@ if exist "User_Equipment\libzmq" rmdir /s /q "User_Equipment\libzmq"
 cd User_Equipment
 git clone https://github.com/zeromq/libzmq.git
 cd libzmq
-git checkout 900a548a43395a367801e48d9a953cd42c6da545
+git checkout 51a5a9cbe315ab149357afe063e9e2d41f4c99a8
 cd ..\..
 
 cd %~dp0..
@@ -63,15 +63,46 @@ if exist "User_Equipment\czmq" rmdir /s /q "User_Equipment\czmq"
 cd User_Equipment
 git clone https://github.com/zeromq/czmq.git
 cd czmq
-git checkout f22f6572fdf63d344e022b956a137ce084fa5d8b
+git checkout 6b435f533619a52d9e1c3fa43d5e40e50a046272
 cd ..\..
 
 cd %~dp0..
-if exist "Next_Generation_Node_B\srsRAN_Project" rmdir /s /q "Next_Generation_Node_B\srsRAN_Project"
+if exist "Next_Generation_Node_B\ocudu" rmdir /s /q "Next_Generation_Node_B\ocudu"
 cd Next_Generation_Node_B
-git clone https://github.com/srsran/srsRAN_Project.git
-cd srsRAN_Project
-git checkout d2f4b70dda8e2c557d5b05a0ac5f92dbddda19bc
+git clone https://gitlab.com/ocudu/ocudu.git
+cd ocudu
+git checkout 4d1fe417268ef19b5dd8677263f696602735eb85
+cd ..\..
+
+cd %~dp0..
+if exist "Next_Generation_Node_B\ocudu_o1_adapter" rmdir /s /q "Next_Generation_Node_B\ocudu_o1_adapter"
+cd Next_Generation_Node_B
+git clone https://gitlab.com/ocudu/ocudu_elements/ocudu_oran_apps/ocudu_o1_adapter.git
+cd ocudu_o1_adapter
+git checkout cbc03d78e9901c9a3df541194102529702d15991
+cd ..\..
+
+cd %~dp0..
+if exist "Next_Generation_Node_B\ocudu_netconf" rmdir /s /q "Next_Generation_Node_B\ocudu_netconf"
+cd Next_Generation_Node_B
+git clone https://gitlab.com/ocudu/ocudu_elements/ocudu_oran_apps/ocudu_netconf.git
+cd ocudu_netconf
+git checkout 6ed7cfbd031210fceeeb0d99f977dd3b85dfd183
+cd ..\..
+
+cd Next_Generation_Node_B
+mklink /D libzmq ..\User_Equipment\libzmq
+mklink /D czmq ..\User_Equipment\czmq
+if not exist zmq_broker mkdir zmq_broker
+cd zmq_broker
+if not exist "multi_ue_scenario.grc" (
+    curl -L --fail --silent --show-error -o multi_ue_scenario.grc https://gitlab.com/ocudu/ocudu_docs/-/raw/main/docs/user_manual/tutorials/srsue/assets/multi_ue_scenario.grc
+    if errorlevel 1 (
+        echo ERROR: Failed to download multi_ue_scenario.grc
+        exit /b 1
+    )
+)
+cd ..
 cd ..\..
 
 cd %~dp0..
@@ -200,7 +231,7 @@ if exist "RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\smo-install\multiclo
 cd RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\smo-install
 git clone https://github.com/onap/multicloud-k8s.git
 cd multicloud-k8s
-git checkout b79819fd9b5863bbc3083f2060aee37d6f373622
+git checkout a3c6f080e9a015c7aab0d351af3864f239fb2931
 cd ..\..\..\..\..
 
 cd %~dp0..
@@ -208,7 +239,7 @@ if exist "RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\smo-install\onap_oom
 cd RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\smo-install
 git clone https://gerrit.onap.org/r/oom.git
 cd onap_oom
-git checkout 551dedc6827327fe88cbebd671f10ec458776975
+git checkout 2214f66e9d9f757239d0297353d9194f782e9eac
 cd ..\..\..\..\..
 
 cd %~dp0..
@@ -235,7 +266,7 @@ if exist "OpenAirInterface_Testbed\5G_Core_Network\open5gs" rmdir /s /q "OpenAir
 cd OpenAirInterface_Testbed\5G_Core_Network
 git clone https://github.com/open5gs/open5gs.git
 cd open5gs
-git checkout 69b53add90a9479d7960b822fc60601d659c328b
+git checkout b3169c8ee9cbb5cbb62407a7c19a4fec2f2d9eae
 cd ..\..\..
 
 cd %~dp0..
@@ -243,7 +274,7 @@ if exist "OpenAirInterface_Testbed\User_Equipment\openairinterface5g" rmdir /s /
 cd OpenAirInterface_Testbed\User_Equipment
 git clone https://gitlab.eurecom.fr/oai/openairinterface5g.git
 cd openairinterface5g
-git checkout ed4cca814a0585d2ad664c3a13f4f0c3b8b45ecc
+git checkout 9777d23173a740de7cf982659fae13ad6627d3aa
 cd ..\..\..
 
 cd OpenAirInterface_Testbed\Next_Generation_Node_B
@@ -255,7 +286,7 @@ if exist "OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC\swig
 cd OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC
 git clone https://github.com/swig/swig.git
 cd swig
-git checkout eb6723132ec11be2974ca3a77ce984a0efca74cb
+git checkout d4ff22dc9718226c6988001051b13a84f3226cd1
 cd ..\..\..\..
 
 cd %~dp0..
@@ -263,7 +294,7 @@ if exist "OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC\flex
 cd OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC
 git clone https://gitlab.eurecom.fr/mosaic5g/flexric.git
 cd flexric
-git checkout 6a595d8b243601b7148f60b5cb2cec47658e58c5
+git checkout 41df87030c76b973e27bc3b0aa4969bfa80e0fce
 cd ..\..\..\..
 
 

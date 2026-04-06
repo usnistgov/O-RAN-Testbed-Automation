@@ -28,50 +28,37 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-# Exit immediately if a command fails
 set -e
 
-APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
-if ! command -v realpath &>/dev/null; then
-    echo "Package \"coreutils\" not found, installing..."
-    sudo env $APTVARS apt-get install -y coreutils
+CURRENT_DIR=$(pwd)
+
+# Check if docker is accessible from the current user, and if not, repair its permissions
+if [ -z "$FIXED_DOCKER_PERMS" ]; then
+    if ! OUTPUT=$(docker info 2>&1); then
+        if echo "$OUTPUT" | grep -qiE 'permission denied|cannot connect to the docker daemon'; then
+            echo "Docker permissions will repair on reboot."
+            sudo groupadd -f docker
+            if [ -n "$SUDO_USER" ]; then
+                sudo usermod -aG docker "${SUDO_USER:-root}"
+            else
+                sudo usermod -aG docker "${USER:-root}"
+            fi
+            # Rather than requiring a reboot to apply docker permissions, set the docker group and re-run the parent script
+            export FIXED_DOCKER_PERMS=1
+            if ! command -v sg &>/dev/null; then
+                echo
+                echo "WARNING: Could not find set group (sg) command, docker may fail without sudo until the system reboots."
+                echo
+            else
+                exec sg docker -c "$(printf '%q ' "$CURRENT_DIR/$0" "$@")"
+            fi
+        fi
+    fi
 fi
 
-SCRIPT_DIR=$(dirname "$(realpath "$0")")
-cd "$SCRIPT_DIR"
+docker kill ocudu_netconf 2>/dev/null || true
+docker rm ocudu_netconf 2>/dev/null || true
 
-# Upon exit, gracefully stop all components and fix console in case it breaks
-trap "echo \"#################################  STOPPING... #################################\"; \"$SCRIPT_DIR/./stop.sh\"; stty sane; exit" EXIT SIGINT SIGTERM
+pkill -f "[s]rc/o1_adapter" || true
 
-echo "Running 5G Core components..."
-cd 5G_Core_Network
-./run.sh
-cd ..
-
-echo
-echo -n "Waiting for AMF to be ready"
-attempt=0
-while ! ./5G_Core_Network/is_amf_ready.sh | grep -q "true"; do
-    echo -n "."
-    sleep 0.5
-    attempt=$((attempt + 1))
-    if [ $attempt -ge 120 ]; then
-        echo "5G Core components did not start after 60 seconds, exiting..."
-        exit 1
-    fi
-done
-echo -e "\nAMF is ready."
-
-echo
-echo "Running gNodeB..."
-cd Next_Generation_Node_B
-./run_background.sh
-cd ..
-
-echo
-echo "Running User Equipment..."
-cd User_Equipment
-./run_background.sh 3
-./run_background.sh 2
-./run.sh
-cd ..
+echo "Successfully stopped and removed the O1 adapter."

@@ -28,50 +28,28 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-# Exit immediately if a command fails
-set -e
+shopt -s extglob # Extended globbing for pattern matching
 
-APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
-if ! command -v realpath &>/dev/null; then
-    echo "Package \"coreutils\" not found, installing..."
-    sudo env $APTVARS apt-get install -y coreutils
-fi
+# Define prefixes that appear in web URLs but not in SSH URLs (delimiter: |)
+GIT_WEB_PREFIXES="gitlab|git|repolist"
 
-SCRIPT_DIR=$(dirname "$(realpath "$0")")
-cd "$SCRIPT_DIR"
-
-# Upon exit, gracefully stop all components and fix console in case it breaks
-trap "echo \"#################################  STOPPING... #################################\"; \"$SCRIPT_DIR/./stop.sh\"; stty sane; exit" EXIT SIGINT SIGTERM
-
-echo "Running 5G Core components..."
-cd 5G_Core_Network
-./run.sh
-cd ..
-
-echo
-echo -n "Waiting for AMF to be ready"
-attempt=0
-while ! ./5G_Core_Network/is_amf_ready.sh | grep -q "true"; do
-    echo -n "."
-    sleep 0.5
-    attempt=$((attempt + 1))
-    if [ $attempt -ge 120 ]; then
-        echo "5G Core components did not start after 60 seconds, exiting..."
-        exit 1
+convert_to_ssh() {
+    local input="$1"
+    # If already SSH, return input unchanged
+    if [[ "$input" == git@* || "$input" == ssh://* ]]; then
+        echo "$input"
+        return
     fi
-done
-echo -e "\nAMF is ready."
 
-echo
-echo "Running gNodeB..."
-cd Next_Generation_Node_B
-./run_background.sh
-cd ..
+    # Process HTTPS URLs
+    if [[ "$input" == https://* ]]; then
+        local no_proto="${input#https://}"   # Strip protocol
+        local domain="${no_proto%%/*}"       # Capture everything before first slash
+        local path="${no_proto#*/}"          # Capture everything after first slash
+        path="${path#@($GIT_WEB_PREFIXES)/}" # Remove known web prefixes from the path
+        echo "git@${domain}:${path}"
 
-echo
-echo "Running User Equipment..."
-cd User_Equipment
-./run_background.sh 3
-./run_background.sh 2
-./run.sh
-cd ..
+    else
+        echo "$input" # Unknown format, return unchanged
+    fi
+}

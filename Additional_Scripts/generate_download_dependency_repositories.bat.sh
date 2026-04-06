@@ -153,7 +153,26 @@ generate_commands "https://github.com/open5gs/open5gs.git" "5G_Core_Network" "op
 generate_commands "https://github.com/srsran/srsRAN_4G.git" "User_Equipment" "srsRAN_4G"
 generate_commands "https://github.com/zeromq/libzmq.git" "User_Equipment" "libzmq"
 generate_commands "https://github.com/zeromq/czmq.git" "User_Equipment" "czmq"
-generate_commands "https://github.com/srsran/srsRAN_Project.git" "Next_Generation_Node_B" "srsRAN_Project"
+generate_commands "https://gitlab.com/ocudu/ocudu.git" "Next_Generation_Node_B" "ocudu"
+generate_commands "https://gitlab.com/ocudu/ocudu_elements/ocudu_oran_apps/ocudu_o1_adapter.git" "Next_Generation_Node_B" "ocudu_o1_adapter"
+generate_commands "https://gitlab.com/ocudu/ocudu_elements/ocudu_oran_apps/ocudu_netconf.git" "Next_Generation_Node_B" "ocudu_netconf"
+echo "cd Next_Generation_Node_B" >>download_dependency_repositories.bat
+echo "mklink /D libzmq ..\\User_Equipment\\libzmq" >>download_dependency_repositories.bat # Use User_Equipment's ZMQ
+echo "mklink /D czmq ..\\User_Equipment\\czmq" >>download_dependency_repositories.bat
+echo "if not exist zmq_broker mkdir zmq_broker" >>download_dependency_repositories.bat
+echo "cd zmq_broker" >>download_dependency_repositories.bat
+echo "if not exist \"multi_ue_scenario.grc\" (" >>download_dependency_repositories.bat
+echo "    curl -L --fail --silent --show-error -o multi_ue_scenario.grc https://gitlab.com/ocudu/ocudu_docs/-/raw/main/docs/user_manual/tutorials/srsue/assets/multi_ue_scenario.grc" >>download_dependency_repositories.bat
+echo "    if errorlevel 1 (" >>download_dependency_repositories.bat
+echo "        echo ERROR: Failed to download multi_ue_scenario.grc" >>download_dependency_repositories.bat
+echo "        exit /b 1" >>download_dependency_repositories.bat
+echo "    )" >>download_dependency_repositories.bat
+echo ")" >>download_dependency_repositories.bat
+echo "cd .." >>download_dependency_repositories.bat
+
+echo "cd ..\\.." >>download_dependency_repositories.bat
+echo "" >>download_dependency_repositories.bat
+
 generate_commands "https://gerrit.o-ran-sc.org/r/ric-plt/ric-dep.git" "RAN_Intelligent_Controllers\\Near-Real-Time-RIC" "ric-dep"
 generate_commands "https://gerrit.o-ran-sc.org/r/sim/e2-interface.git" "RAN_Intelligent_Controllers\\Near-Real-Time-RIC" "e2-interface"
 generate_commands "https://gerrit.o-ran-sc.org/r/ric-plt/appmgr.git" "RAN_Intelligent_Controllers\\Near-Real-Time-RIC" "appmgr"

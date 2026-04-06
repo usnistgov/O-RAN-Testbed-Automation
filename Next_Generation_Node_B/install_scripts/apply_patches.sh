@@ -28,8 +28,11 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-# Do not exit immediately if a command fails
-set +e
+# Exit immediately if a command fails
+set -e
+
+E2AP_VERSION="E2AP_V2"  # E2AP_V1, E2AP_V2, E2AP_V3
+KPM_VERSION="KPM_V2_03" # KPM_V2_03, KPM_V3_00
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
@@ -38,69 +41,30 @@ if ! command -v realpath &>/dev/null; then
 fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
-cd "$SCRIPT_DIR"
+PARENT_DIR=$(dirname "$SCRIPT_DIR")
+cd "$PARENT_DIR"
 
-echo "Stopping Next Generation Node B..."
-./stop.sh
-
-echo "Uninstalling ZeroMQ libzmq..."
-if [ -d libzmq ]; then
-    cd libzmq
-    sudo make uninstall
-    cd ..
+# Apply patch to OCUDU to support kernel headers that don't define SCTP_SEND_FAILED_EVENT
+cd ocudu
+git restore lib/gateways/sctp_network_gateway_common_impl.cpp
+if [ ! -f "lib/gateways/sctp_network_gateway_common_impl.cpp.previous" ]; then
+    cp lib/gateways/sctp_network_gateway_common_impl.cpp lib/gateways/sctp_network_gateway_common_impl.cpp.previous
+    cp lib/gateways/sctp_network_gateway_common_impl.cpp.previous "$PARENT_DIR/install_patch_files/ocudu/lib/gateways/sctp_network_gateway_common_impl.previous.cpp"
 fi
-sudo rm -rf libzmq
+echo "Patching sctp_network_gateway_common_impl.cpp..."
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/ocudu/lib/gateways/sctp_network_gateway_common_impl.cpp.patch"
+cd ..
 
-echo "Uninstalling ZeroMQ czmq..."
-if [ -d czmq ]; then
-    cd czmq
-    sudo make uninstall
-    cd ..
+# Apply patch to OCUDU to ensure yaml-cpp imported targets are globally visible before aliasing.
+cd ocudu
+git restore cmake/modules/FindYAMLCPP.cmake
+if [ ! -f "cmake/modules/FindYAMLCPP.cmake.previous" ]; then
+    cp cmake/modules/FindYAMLCPP.cmake cmake/modules/FindYAMLCPP.cmake.previous
+    cp cmake/modules/FindYAMLCPP.cmake.previous "$PARENT_DIR/install_patch_files/ocudu/cmake/modules/FindYAMLCPP.previous.cmake"
 fi
-sudo rm -rf czmq
-
-COMPOSE_FILE="ocudu/docker/docker-compose.ui.yml"
-if [ -f "$COMPOSE_FILE" ]; then
-    DOCKER_COMPOSE_CMD=""
-    if command -v docker &>/dev/null && docker compose version &>/dev/null; then
-        DOCKER_COMPOSE_CMD="docker compose"
-    elif command -v docker-compose &>/dev/null; then
-        DOCKER_COMPOSE_CMD="docker-compose"
-    fi
-
-    if [ -n "$DOCKER_COMPOSE_CMD" ]; then
-        echo "Cleaning up Grafana Docker containers and images..."
-        sudo $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" down -v --rmi all || true
-    fi
-fi
-
-echo "Uninstalling OCUDU..."
-if [ -d ocudu/build ]; then
-    cd ocudu/build
-    if [ -f install_manifest.txt ]; then
-        echo "Removing installed files from manifest..."
-        xargs sudo rm -f <install_manifest.txt
-    else
-        sudo make uninstall || true
-    fi
-    cd ../..
-fi
-if command -v docker &>/dev/null && [ -n "$(sudo docker images -q ocudu-netconf/ocudu-netconf:latest 2>/dev/null)" ]; then
-    echo "Uninstalling O1 Adapter and Netconf..."
-    ./additional_scripts/uninstall_o1_adapter.sh bypass_confirmation || true
-fi
-
-sudo rm -rf zmq_broker/
-sudo rm -rf ocudu
-sudo rm -rf ocudu_o1_adapter
-sudo rm -rf ocudu_netconf
-
-sudo rm -rf logs/
-sudo rm -rf configs/
-sudo rm -rf install_time.txt
+echo "Patching FindYAMLCPP.cmake..."
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/ocudu/cmake/modules/FindYAMLCPP.cmake.patch"
+cd ..
 
 echo
-echo
-echo "################################################################################"
-echo "# Successfully uninstalled Next Generation Node B                              #"
-echo "################################################################################"
+echo "Successfully patched OCUDU."

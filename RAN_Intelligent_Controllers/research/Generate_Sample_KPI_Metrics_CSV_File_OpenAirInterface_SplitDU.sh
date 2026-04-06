@@ -40,6 +40,18 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
+echo -e "\nWARNING: Since this is a split CU-DU setup, the following CU-only metrics will be omitted from the sample file:"
+echo " - DRB.PdcpSduVolumeDL (kb)"
+echo " - DRB.PdcpSduVolumeUL (kb)"
+echo "Please use the standard gNB sample file generator to include these metrics."
+echo ""
+read -p "Do you want to proceed? (Y/n) " -r REPLY
+if [[ $REPLY =~ ^[Nn]$ ]]; then
+    echo "Exiting..."
+    exit 1
+fi
+echo ""
+
 sudo -v # Ensure sudo session is active
 
 # Upon exit, gracefully stop all components and fix console in case it breaks

@@ -110,6 +110,11 @@ DRB.MacSduErrorRateDl [%]
 EOF
 fi
 
+# Append L1M.SS-RSRP [dBm] after L1M.SS-RSRP.Bin [] if not already present
+if ! grep -q "^L1M\.SS-RSRP\.Bin \[dBm\]" src/sm/kpm_sm/28_552_kpm_meas.txt; then
+    sed -i '/^L1M\.SS-RSRP\.Bin \[\]$/a L1M.SS-RSRP [dBm]' src/sm/kpm_sm/28_552_kpm_meas.txt
+fi
+
 cd ..
 
 echo "Successfully patched FlexRIC."

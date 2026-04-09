@@ -1,19 +1,22 @@
 diff --git a/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c b/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c
-index 2202dfa646..8c669fd9b3 100644
+index b779489abd..2e83b43034 100644
 --- a/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c
 +++ b/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c
-@@ -590,6 +590,15 @@ static void evaluate_rsrp_report(gNB_MAC_INST *nrmac,
+@@ -564,6 +564,10 @@ static void evaluate_rsrp_report(gNB_MAC_INST *nrmac,
+     return;
+   }
+ 
++  // cell-wide SS-RSRP distribution, see 28.552 5.1.1.22.1
++  NR_du_stats_t *du_stats = &RC.nrmac[0]->du_stats;
++  du_stats->ss_rsrp_dist[rsrp] += 1;
++
+   for (RSRP_report_t *i = rsrp_report->r + 1; i < rsrp_report->r + rsrp_report->nb; i++) {
+     curr_payload = pickandreverse_bits(payload, 4, *cumul_bits);
+     csi_report->nb_of_csi_ssb_report++;
+@@ -573,6 +577,7 @@ static void evaluate_rsrp_report(gNB_MAC_INST *nrmac,
    }
  
    NR_mac_stats_t *stats = &UE->mac_stats;
-+
-+  // Log each individual RSRP measurement for E2 reporting
-+  if (stats->e2_rsrp_meas_capacity < sizeof(stats->e2_rsrp_meas) / sizeof(stats->e2_rsrp_meas[0])) {
-+    stats->e2_rsrp_meas[stats->e2_rsrp_meas_capacity] = rsrp_report->r[0].RSRP;
-+    stats->e2_rsrp_meas_capacity++;
-+  }
-+  stats->e2_cumul_rsrp += rsrp_report->r[0].RSRP;
-+  stats->e2_num_rsrp_meas++;
 +
    // including ssb rsrp in mac stats
    stats->cumul_rsrp += rsrp_report->r[0].RSRP;

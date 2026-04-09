@@ -1,19 +1,26 @@
 diff --git a/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c b/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c
-index 602464de1f..cbb2d75a90 100644
+index a45d2e462b..83613c1c46 100644
 --- a/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c
 +++ b/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c
-@@ -474,6 +474,30 @@ static const char* kpm_meas_du[] = {
+@@ -440,11 +440,13 @@ bool read_kpm_sm(void* data)
+ 
+ static const char* kpm_node_meas_du[] = {
+   "CARR.PDSCHMCSDist",
++  "L1M.SS-RSRP",
+   NULL,
+ };
+ 
+ static const char* kpm_node_meas_gnb[] = {
+   "CARR.PDSCHMCSDist",
++  "L1M.SS-RSRP",
+   NULL,
+ };
+ 
+@@ -454,6 +456,23 @@ static const char* kpm_meas_du[] = {
    "DRB.UEThpUl",
    "RRU.PrbTotDl",
    "RRU.PrbTotUl",
-+
-+  "RSRP.Mean",
-+  "RSRP.Minimum",
-+  "RSRP.Quartile1",
-+  "RSRP.Median",
-+  "RSRP.Quartile3",
-+  "RSRP.Maximum",
-+  "RSRP.Count",
++  
 +  "PHY.NPrbDl",
 +  "PHY.DerivedRssiDl",
 +  "PHY.DerivedRsrqDl",
@@ -33,18 +40,11 @@ index 602464de1f..cbb2d75a90 100644
    NULL,
  };
  
-@@ -485,6 +509,30 @@ static const char* kpm_meas_gnb[] = {
+@@ -465,6 +484,23 @@ static const char* kpm_meas_gnb[] = {
    "DRB.UEThpUl",
    "RRU.PrbTotDl",
    "RRU.PrbTotUl",
-+  
-+  "RSRP.Mean",
-+  "RSRP.Minimum",
-+  "RSRP.Quartile1",
-+  "RSRP.Median",
-+  "RSRP.Quartile3",
-+  "RSRP.Maximum",
-+  "RSRP.Count",
++
 +  "PHY.NPrbDl",
 +  "PHY.DerivedRssiDl",
 +  "PHY.DerivedRsrqDl",

@@ -1,8 +1,8 @@
 diff --git a/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c b/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c
-index ea9be2f41a..02267301ba 100644
+index 9bd6ecc686..b0186c03f5 100644
 --- a/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c
 +++ b/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c
-@@ -383,6 +383,9 @@ void abort_nr_dl_harq(NR_UE_info_t* UE, int8_t harq_pid)
+@@ -360,6 +360,9 @@ void abort_nr_dl_harq(NR_UE_info_t* UE, int8_t harq_pid)
  
    finish_nr_dl_harq(sched_ctrl, harq_pid);
    UE->mac_stats.dl.errors++;
@@ -12,7 +12,7 @@ index ea9be2f41a..02267301ba 100644
  }
  
  bwp_info_t get_pdsch_bwp_start_size(gNB_MAC_INST *nr_mac, NR_UE_info_t *UE)
-@@ -1366,6 +1369,7 @@ void post_process_dlsch(gNB_MAC_INST *nr_mac, post_process_pdsch_t *pdsch, NR_UE
+@@ -1317,6 +1320,7 @@ void post_process_dlsch(gNB_MAC_INST *nr_mac, post_process_pdsch_t *pdsch, NR_UE
      nr_mac->mac_stats.dl.used_prb_aggregate += sched_pdsch->rbSize;
  
      /* save retransmission information */

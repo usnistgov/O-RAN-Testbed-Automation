@@ -679,12 +679,134 @@ static check_meas_type match_meas_type[END_MEAS_TYPE] = {
     match_id_meas_type,
 };
 
+#define MAX_E2_NODES 16
+
+typedef struct
+{
+  char node_id_str[256];
+  uint32_t last_ss_rsrp_dist[128];
+} e2_node_rsrp_state_t;
+
+static e2_node_rsrp_state_t rsrp_state[MAX_E2_NODES] = {0};
+static int rsrp_state_count = 0;
+
+static e2_node_rsrp_state_t *get_rsrp_state(const char *e2_id)
+{
+  for (int i = 0; i < rsrp_state_count; i++)
+  {
+    if (strcmp(rsrp_state[i].node_id_str, e2_id) == 0)
+      return &rsrp_state[i];
+  }
+  if (rsrp_state_count < MAX_E2_NODES)
+  {
+    strncpy(rsrp_state[rsrp_state_count].node_id_str, e2_id, 255);
+    return &rsrp_state[rsrp_state_count++];
+  }
+  return NULL;
+}
+
+static int get_percentile_val(uint32_t *dist, size_t index)
+{
+  uint32_t cumulative = 0;
+  for (int i = 0; i < 128; i++)
+  {
+    cumulative += dist[i];
+    if (cumulative > index)
+      return -156 + i;
+  }
+  return -156 + 127;
+}
+
+static __attribute__((unused)) void process_rsrp_metric(const char *node_id, const uint32_t *current_dist)
+{
+  e2_node_rsrp_state_t *state = get_rsrp_state(node_id);
+  if (!state)
+    return;
+
+  uint32_t diff_dist[128] = {0};
+  uint32_t total_count = 0;
+
+  for (int i = 0; i < 128; i++)
+  {
+    if (current_dist[i] >= state->last_ss_rsrp_dist[i])
+    {
+      diff_dist[i] = current_dist[i] - state->last_ss_rsrp_dist[i];
+    }
+    else
+    {
+      diff_dist[i] = current_dist[i];
+    }
+    total_count += diff_dist[i];
+    state->last_ss_rsrp_dist[i] = current_dist[i];
+  }
+
+  if (total_count == 0)
+  {
+    char rsrp_line[512];
+    snprintf(rsrp_line, sizeof(rsrp_line), ",0,0,0,0,0,0,0");
+    strncat(csv_line_buffer, rsrp_line, sizeof(csv_line_buffer) - strlen(csv_line_buffer) - 1);
+    return;
+  }
+
+  double sum = 0;
+  int min_val = 9999, max_val = -9999;
+  for (int i = 0; i < 128; i++)
+  {
+    if (diff_dist[i] > 0)
+    {
+      int dbm = -156 + i;
+      sum += (double)dbm * diff_dist[i];
+      if (dbm < min_val)
+        min_val = dbm;
+      if (dbm > max_val)
+        max_val = dbm;
+    }
+  }
+
+  double q1, median, q3;
+  size_t n = total_count;
+
+  size_t q1_idx = n / 4;
+  if (n % 4 == 0 && n > 0 && q1_idx > 0)
+  {
+    q1 = (get_percentile_val(diff_dist, q1_idx - 1) + get_percentile_val(diff_dist, q1_idx)) / 2.0;
+  }
+  else
+  {
+    q1 = get_percentile_val(diff_dist, q1_idx);
+  }
+
+  size_t med_idx = n / 2;
+  if (n % 2 == 0 && n > 0 && med_idx > 0)
+  {
+    median = (get_percentile_val(diff_dist, med_idx - 1) + get_percentile_val(diff_dist, med_idx)) / 2.0;
+  }
+  else
+  {
+    median = get_percentile_val(diff_dist, med_idx);
+  }
+
+  size_t q3_idx = (3 * n) / 4;
+  if (n % 4 == 0 && n > 0 && q3_idx > 0)
+  {
+    q3 = (get_percentile_val(diff_dist, q3_idx - 1) + get_percentile_val(diff_dist, q3_idx)) / 2.0;
+  }
+  else
+  {
+    q3 = get_percentile_val(diff_dist, q3_idx);
+  }
+
+  char rsrp_line[512];
+  snprintf(rsrp_line, sizeof(rsrp_line), ",%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%u",
+           sum / total_count, (double)min_val, q1, median, q3, (double)max_val, total_count);
+  strncat(csv_line_buffer, rsrp_line, sizeof(csv_line_buffer) - strlen(csv_line_buffer) - 1);
+}
+
 static void log_kpm_measurements(kpm_ind_msg_format_1_t const *msg_frm_1, bool is_cell_metric_local)
 {
   is_cell_metric = is_cell_metric_local;
 
   assert(msg_frm_1->meas_info_lst_len > 0 && "Cannot correctly print measurements");
-
 
   // UE Measurements per granularity period
   for (size_t j = 0; j < msg_frm_1->meas_data_lst_len; j++)
@@ -725,6 +847,8 @@ static void log_kpm_measurements(kpm_ind_msg_format_1_t const *msg_frm_1, bool i
         size_t arr_len = 0;
         arr_str[0] = '\0';
         uint32_t last_x = 0, last_y = 0;
+        bool has_y = info_item.label_info_lst[0].distBinY != NULL;
+        bool has_z = info_item.label_info_lst[0].distBinZ != NULL;
 
         for (size_t z = 0; z < info_item.label_info_lst_len; z++)
         {
@@ -732,20 +856,35 @@ static void log_kpm_measurements(kpm_ind_msg_format_1_t const *msg_frm_1, bool i
           const label_info_lst_t label_info = info_item.label_info_lst[z];
           const meas_record_lst_t record_item = data_item.meas_record_lst[rec_idx++];
 
-          uint32_t cur_x = *label_info.distBinX;
-          uint32_t cur_y = *label_info.distBinY;
+          uint32_t cur_x = label_info.distBinX ? *label_info.distBinX : 0;
+          uint32_t cur_y = label_info.distBinY ? *label_info.distBinY : 0;
 
           if (z == 0)
           {
-            arr_len += snprintf(arr_str + arr_len, sizeof(arr_str) - arr_len, "[[[");
+            if (has_z)
+            {
+              arr_len += snprintf(arr_str + arr_len, sizeof(arr_str) - arr_len, "[[[");
+            }
+            else if (has_y)
+            {
+              arr_len += snprintf(arr_str + arr_len, sizeof(arr_str) - arr_len, "[[");
+            }
+            else
+            {
+              arr_len += snprintf(arr_str + arr_len, sizeof(arr_str) - arr_len, "[");
+            }
           }
           else
           {
-            if (cur_x != last_x)
+            if (has_z && cur_x != last_x)
             {
               arr_len += snprintf(arr_str + arr_len, sizeof(arr_str) - arr_len, "]], [[");
             }
-            else if (cur_y != last_y)
+            else if (has_z && cur_y != last_y)
+            {
+              arr_len += snprintf(arr_str + arr_len, sizeof(arr_str) - arr_len, "], [");
+            }
+            else if (has_y && cur_x != last_x)
             {
               arr_len += snprintf(arr_str + arr_len, sizeof(arr_str) - arr_len, "], [");
             }
@@ -769,7 +908,18 @@ static void log_kpm_measurements(kpm_ind_msg_format_1_t const *msg_frm_1, bool i
           last_x = cur_x;
           last_y = cur_y;
         }
-        arr_len += snprintf(arr_str + arr_len, sizeof(arr_str) - arr_len, "]]]");
+        if (has_z)
+        {
+          arr_len += snprintf(arr_str + arr_len, sizeof(arr_str) - arr_len, "]]]");
+        }
+        else if (has_y)
+        {
+          arr_len += snprintf(arr_str + arr_len, sizeof(arr_str) - arr_len, "]]");
+        }
+        else
+        {
+          arr_len += snprintf(arr_str + arr_len, sizeof(arr_str) - arr_len, "]");
+        }
 
         csv_append_string_to_csv_line(arr_str);
 
@@ -895,9 +1045,12 @@ static void sm_cb_kpm(sm_ag_if_rd_t const *rd)
     if (ind->msg.type == FORMAT_1_INDICATION_MESSAGE)
     {
       // If Cell Metric, there is no UE ID attached to derive the node ID so use the sender_name from the Indication Header so it doesn't use the previous UE's node ID
-      if (hdr_frm_1->sender_name != NULL && hdr_frm_1->sender_name->len > 0) {
+      if (hdr_frm_1->sender_name != NULL && hdr_frm_1->sender_name->len > 0)
+      {
         snprintf(current_e2_id_str, sizeof(current_e2_id_str), "%.*s", (int)hdr_frm_1->sender_name->len, hdr_frm_1->sender_name->buf);
-      } else {
+      }
+      else
+      {
         snprintf(current_e2_id_str, sizeof(current_e2_id_str), "Unknown-Cell-Node");
       }
 
@@ -961,6 +1114,15 @@ static label_info_lst_t fill_kpm_label(void)
   return label_item;
 }
 
+static label_info_lst_t fill_distribution_bin_1d_label(const uint32_t x)
+{
+  label_info_lst_t label_item = {0};
+  label_item.distBinX = calloc(1, sizeof(uint32_t));
+  assert(label_item.distBinX != NULL);
+  *label_item.distBinX = x;
+  return label_item;
+}
+
 static label_info_lst_t fill_distribution_bin_label(const uint32_t x, const uint32_t y, const uint32_t z)
 {
   label_info_lst_t label_item = {0};
@@ -1018,6 +1180,15 @@ static kpm_act_def_format_1_t fill_act_def_frm_1(ric_report_style_item_t const *
             meas_item->label_info_lst[idx++] = fill_distribution_bin_label(x, y, z);
           }
         }
+      }
+    }
+    else if (cmp_str_ba("L1M.SS-RSRP", meas_item->meas_type.name) == 0)
+    {
+      meas_item->label_info_lst_len = 128;
+      meas_item->label_info_lst = ecalloc(meas_item->label_info_lst_len, sizeof(label_info_lst_t));
+      for (uint32_t x = 1; x <= 128; x++)
+      {
+        meas_item->label_info_lst[x - 1] = fill_distribution_bin_1d_label(x);
       }
     }
     else
@@ -1103,6 +1274,15 @@ static kpm_act_def_t fill_report_style_1(ric_report_style_item_t const *report_i
             meas_item->label_info_lst[idx++] = fill_distribution_bin_label(x, y, z);
           }
         }
+      }
+    }
+    else if (cmp_str_ba("L1M.SS-RSRP", meas_item->meas_type.name) == 0)
+    {
+      meas_item->label_info_lst_len = 128;
+      meas_item->label_info_lst = ecalloc(meas_item->label_info_lst_len, sizeof(label_info_lst_t));
+      for (uint32_t x = 1; x <= 128; x++)
+      {
+        meas_item->label_info_lst[x - 1] = fill_distribution_bin_1d_label(x);
       }
     }
     else

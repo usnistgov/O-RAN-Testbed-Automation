@@ -1,5 +1,5 @@
 diff --git a/examples/xApp/c/kpm_rc/xapp_kpm_rc.c b/examples/xApp/c/kpm_rc/xapp_kpm_rc.c
-index ba0ccd3a..15858573 100644
+index ba0ccd3a..087d465e 100644
 --- a/examples/xApp/c/kpm_rc/xapp_kpm_rc.c
 +++ b/examples/xApp/c/kpm_rc/xapp_kpm_rc.c
 @@ -15,6 +15,8 @@
@@ -24,7 +24,78 @@ index ba0ccd3a..15858573 100644
  static
  assoc_ht_open_t ht = {0};
  
-@@ -407,7 +415,7 @@ rc_ctrl_req_data_t gen_rc_ctrl_msg(ran_func_def_ctrl_t const* ran_func)
+@@ -191,19 +199,62 @@ void log_kpm_measurements(kpm_ind_msg_format_1_t const* msg_frm_1)
+   assert(msg_frm_1->meas_info_lst_len > 0 && "Cannot correctly print measurements");
+ 
+   // UE Measurements per granularity period
+-  for (size_t j = 0; j < msg_frm_1->meas_data_lst_len; j++) {
++  for (size_t j = 0; j < msg_frm_1->meas_data_lst_len; j++)
++  {
+     meas_data_lst_t const data_item = msg_frm_1->meas_data_lst[j];
+ 
+-    for (size_t i = 0; i < msg_frm_1->meas_info_lst_len; i++) {
++    size_t rec_idx = 0;
++    for (size_t i = 0; i < msg_frm_1->meas_info_lst_len; i++)
++    {
+       const meas_info_format_1_lst_t info_item = msg_frm_1->meas_info_lst[i];
+-      for (size_t z = 0; z < info_item.label_info_lst_len; z++) {
+-        const label_info_lst_t label_info = info_item.label_info_lst[z];
+-        const meas_record_lst_t record_item = data_item.meas_record_lst[i + z];
+ 
+-        match_meas_type[info_item.meas_type.type](info_item.meas_type, label_info, record_item);
++      if (info_item.label_info_lst_len > 1 && info_item.meas_type.type == NAME_MEAS_TYPE)
++      {
++        char *name_str = cp_ba_to_str(info_item.meas_type.name);
++        char *name_unit = get_meas_unit(name_str);
++        if (name_unit && strcmp(name_unit, "[]") == 0)
++          name_unit = "";
++        if (name_unit == NULL)
++          name_unit = "";
++
++        derived_metrics_array_t generated_metrics = process_metric_factory(
++            "", name_str,
++            info_item.label_info_lst, info_item.label_info_lst_len,
++            data_item.meas_record_lst, rec_idx);
++
++        for (size_t k = 0; k < generated_metrics.count; k++)
++        {
++          derived_metric_t m = generated_metrics.metrics[k];
++          if (m.value_type == 0)
++          {
++            printf("%s = %d\n", m.name, m.int_val);
++          }
++          else
++          {
++            printf("%s = %.2f\n", m.name, m.real_val);
++          }
++        }
++        free_derived_metrics(&generated_metrics);
++
++        char arr_str[8192];
++        format_meas_record_array(arr_str, sizeof(arr_str), info_item.label_info_lst, info_item.label_info_lst_len, data_item.meas_record_lst, rec_idx);
++        printf("%s = %s %s\n", name_str, arr_str, name_unit);
+ 
+-        if (data_item.incomplete_flag && *data_item.incomplete_flag == TRUE_ENUM_VALUE)
+-          printf("Measurement Record not reliable");
++        rec_idx += info_item.label_info_lst_len;
++        free(name_str);
++      }
++      else
++      {
++        for (size_t z = 0; z < info_item.label_info_lst_len; z++)
++        {
++          const label_info_lst_t label_info = info_item.label_info_lst[z];
++          const meas_record_lst_t record_item = data_item.meas_record_lst[rec_idx++];
++
++          match_meas_type[info_item.meas_type.type](info_item.meas_type, label_info, record_item);
++
++          if (data_item.incomplete_flag && *data_item.incomplete_flag == TRUE_ENUM_VALUE)
++            printf("Measurement Record not reliable");
++        }
+       }
+     }
+   }
+@@ -407,7 +458,7 @@ rc_ctrl_req_data_t gen_rc_ctrl_msg(ran_func_def_ctrl_t const* ran_func)
  }
  
  static
@@ -33,7 +104,7 @@ index ba0ccd3a..15858573 100644
  {
    test_info_lst_t dst = {0};
  
-@@ -426,11 +434,17 @@ test_info_lst_t filter_predicate(test_cond_type_e type, test_cond_e cond, int va
+@@ -426,11 +477,17 @@ test_info_lst_t filter_predicate(test_cond_type_e type, test_cond_e cond, int va
  
    dst.test_cond_value->octet_string_value = calloc(1, sizeof(byte_array_t));
    assert(dst.test_cond_value->octet_string_value != NULL && "Memory exhausted");
@@ -53,7 +124,7 @@ index ba0ccd3a..15858573 100644
  
    return dst;
  }
-@@ -505,8 +519,7 @@ kpm_act_def_t fill_report_style_4(ric_report_style_item_t const* report_item)
+@@ -505,8 +562,7 @@ kpm_act_def_t fill_report_style_4(ric_report_style_item_t const* report_item)
    // Filter connected UEs by S-NSSAI criteria
    test_cond_type_e const type = S_NSSAI_TEST_COND_TYPE; // CQI_TEST_COND_TYPE
    test_cond_e const condition = EQUAL_TEST_COND; // GREATERTHAN_TEST_COND
@@ -63,7 +134,7 @@ index ba0ccd3a..15858573 100644
  
    // Fill Action Definition Format 1
    // 8.2.1.2.1
-@@ -555,23 +568,7 @@ kpm_act_def_t fill_report_style_1(ric_report_style_item_t const* report_item)
+@@ -555,23 +611,7 @@ kpm_act_def_t fill_report_style_1(ric_report_style_item_t const* report_item)
  
      // [1, 2147483647]
      // 8.3.11
@@ -88,7 +159,7 @@ index ba0ccd3a..15858573 100644
    }
  
    // 8.3.8 [0, 4294967295]
-@@ -647,6 +644,29 @@ size_t find_sm_idx(sm_ran_function_t* rf, size_t sz, bool (*f)(sm_ran_function_t
+@@ -647,6 +687,29 @@ size_t find_sm_idx(sm_ran_function_t* rf, size_t sz, bool (*f)(sm_ran_function_t
    return 0;
  }
  
@@ -118,7 +189,7 @@ index ba0ccd3a..15858573 100644
  int main(int argc, char* argv[])
  {
    fr_args_t args = init_fr_args(argc, argv);
-@@ -655,6 +675,7 @@ int main(int argc, char* argv[])
+@@ -655,6 +718,7 @@ int main(int argc, char* argv[])
    init_xapp_api(&args);
    sleep(1);
  

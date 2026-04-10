@@ -50,10 +50,16 @@ fi
 cd flexric/
 
 # Update the patch files
+cp examples/xApp/c/metrics_factory.h ../install_patch_files/flexric/examples/xApp/c/metrics_factory.h
+cp examples/xApp/c/metrics_factory.c ../install_patch_files/flexric/examples/xApp/c/metrics_factory.c
+
 git diff examples/xApp/c/monitor/xapp_kpm_moni.c >../install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni.c.patch
 git diff examples/xApp/c/monitor/CMakeLists.txt >../install_patch_files/flexric/examples/xApp/c/monitor/CMakeLists.txt.patch
 cp examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv.c ../install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv.c
 cp examples/xApp/c/monitor/xapp_kpm_moni_write_to_influxdb.c ../install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni_write_to_influxdb.c
+
+git diff examples/xApp/c/kpm_rc/xapp_kpm_rc.c >../install_patch_files/flexric/examples/xApp/c/kpm_rc/xapp_kpm_rc.c.patch
+git diff examples/xApp/c/kpm_rc/CMakeLists.txt >../install_patch_files/flexric/examples/xApp/c/kpm_rc/CMakeLists.txt.patch
 
 # Update the previous versions of the files
 git restore examples/xApp/c/monitor/xapp_kpm_moni.c
@@ -65,6 +71,16 @@ git restore examples/xApp/c/monitor/CMakeLists.txt
 cp examples/xApp/c/monitor/CMakeLists.txt ../install_patch_files/flexric/examples/xApp/c/monitor/CMakeLists.previous.txt
 cp examples/xApp/c/monitor/CMakeLists.txt examples/xApp/c/monitor/CMakeLists.txt.previous
 git apply --verbose --ignore-whitespace ../install_patch_files/flexric/examples/xApp/c/monitor/CMakeLists.txt.patch
+
+git restore examples/xApp/c/kpm_rc/xapp_kpm_rc.c
+cp examples/xApp/c/kpm_rc/xapp_kpm_rc.c ../install_patch_files/flexric/examples/xApp/c/kpm_rc/xapp_kpm_rc.previous.c
+cp examples/xApp/c/kpm_rc/xapp_kpm_rc.c examples/xApp/c/kpm_rc/xapp_kpm_rc.c.previous
+git apply --verbose --ignore-whitespace ../install_patch_files/flexric/examples/xApp/c/kpm_rc/xapp_kpm_rc.c.patch
+
+git restore examples/xApp/c/kpm_rc/CMakeLists.txt
+cp examples/xApp/c/kpm_rc/CMakeLists.txt ../install_patch_files/flexric/examples/xApp/c/kpm_rc/CMakeLists.previous.txt
+cp examples/xApp/c/kpm_rc/CMakeLists.txt examples/xApp/c/kpm_rc/CMakeLists.txt.previous
+git apply --verbose --ignore-whitespace ../install_patch_files/flexric/examples/xApp/c/kpm_rc/CMakeLists.txt.patch
 
 cd ..
 

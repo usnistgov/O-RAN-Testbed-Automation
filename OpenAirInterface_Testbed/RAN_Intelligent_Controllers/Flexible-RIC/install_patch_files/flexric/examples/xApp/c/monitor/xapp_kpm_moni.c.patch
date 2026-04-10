@@ -1,8 +1,8 @@
 diff --git a/examples/xApp/c/monitor/xapp_kpm_moni.c b/examples/xApp/c/monitor/xapp_kpm_moni.c
-index 22f70850..ed44a0bd 100644
+index 22f70850..93d753f7 100644
 --- a/examples/xApp/c/monitor/xapp_kpm_moni.c
 +++ b/examples/xApp/c/monitor/xapp_kpm_moni.c
-@@ -11,8 +11,10 @@
+@@ -11,14 +11,20 @@
  #include "../../../../src/util/e.h"
  
  #include <stdlib.h>
@@ -13,27 +13,23 @@ index 22f70850..ed44a0bd 100644
  #include <unistd.h>
  #include <signal.h>
  #include <pthread.h>
-@@ -26,6 +28,16 @@ pthread_mutex_t mtx;
- static
- assoc_ht_open_t ht = {0};
++#include "../metrics_factory.h"
  
-+// Overwritten if environment variables SST and SD are set
-+static
-+uint8_t  cfg_slicing_sst = 1;
-+static
-+uint32_t cfg_slicing_sd  = 0xFFFFFF; // 0xFFFFFF for any SD
-+
-+// Buffer to store the current E2 Node ID
-+static
-+char current_e2_id_str[256];
-+
  static
- uint32_t hash_func(const void* key_v)
- {
-@@ -83,6 +95,40 @@ char *get_meas_unit(const char *name)
+ uint64_t const period_ms = 1000;
++static char current_e2_id_str[64] = {0};
++static uint8_t cfg_slicing_sst = 1;
++static uint32_t cfg_slicing_sd = 0xFFFFFF;
+ 
+ static
+ pthread_mutex_t mtx;
+@@ -83,6 +89,43 @@ char *get_meas_unit(const char *name)
    return assoc_ht_open_value(&ht, &name);
  }
  
++
++
++
 +static
 +int get_mapped_node_id(const char *node_type, uint32_t orig_id)
 +{
@@ -71,7 +67,7 @@ index 22f70850..ed44a0bd 100644
  static
  void log_gnb_ue_id(ue_id_e2sm_t ue_id)
  {
-@@ -96,6 +142,51 @@ void log_gnb_ue_id(ue_id_e2sm_t ue_id)
+@@ -96,6 +139,51 @@ void log_gnb_ue_id(ue_id_e2sm_t ue_id)
    if (ue_id.gnb.ran_ue_id != NULL) {
      printf("ran_ue_id = %lx\n", *ue_id.gnb.ran_ue_id); // RAN UE NGAP ID
    }
@@ -123,7 +119,7 @@ index 22f70850..ed44a0bd 100644
  }
  
  static
-@@ -105,6 +196,9 @@ void log_du_ue_id(ue_id_e2sm_t ue_id)
+@@ -105,6 +193,9 @@ void log_du_ue_id(ue_id_e2sm_t ue_id)
    if (ue_id.gnb_du.ran_ue_id != NULL) {
      printf("ran_ue_id = %lx\n", *ue_id.gnb_du.ran_ue_id); // RAN UE NGAP ID
    }
@@ -133,7 +129,7 @@ index 22f70850..ed44a0bd 100644
  }
  
  static
-@@ -114,6 +208,9 @@ void log_cuup_ue_id(ue_id_e2sm_t ue_id)
+@@ -114,6 +205,9 @@ void log_cuup_ue_id(ue_id_e2sm_t ue_id)
    if (ue_id.gnb_cu_up.ran_ue_id != NULL) {
      printf("ran_ue_id = %lx\n", *ue_id.gnb_cu_up.ran_ue_id); // RAN UE NGAP ID
    }
@@ -143,7 +139,7 @@ index 22f70850..ed44a0bd 100644
  }
  
  typedef void (*log_ue_id)(ue_id_e2sm_t ue_id);
-@@ -133,6 +230,8 @@ static
+@@ -133,6 +227,8 @@ static
  void log_int_value(const char *name_str, const label_info_lst_t label_info, const meas_record_lst_t meas_record)
  {
    char *name_unit = get_meas_unit(name_str);
@@ -152,7 +148,7 @@ index 22f70850..ed44a0bd 100644
    if (label_info.noLabel != NULL) {
      printf("%s = %d %s\n", name_str, meas_record.int_val, name_unit);
    } else if (label_info.distBinX != NULL && meas_record.int_val > 0) {
-@@ -145,6 +244,8 @@ void log_real_value(const char *name_str, const label_info_lst_t label_info, con
+@@ -145,6 +241,8 @@ void log_real_value(const char *name_str, const label_info_lst_t label_info, con
  {
    (void)label_info;
    char *name_unit = get_meas_unit(name_str);
@@ -161,124 +157,11 @@ index 22f70850..ed44a0bd 100644
    printf("%s = %.2f %s\n", name_str, meas_record.real_val, name_unit);
  }
  
-@@ -183,26 +284,227 @@ check_meas_type match_meas_type[END_MEAS_TYPE] = {
+@@ -183,26 +281,64 @@ check_meas_type match_meas_type[END_MEAS_TYPE] = {
      match_id_meas_type,
  };
  
 +#define MAX_E2_NODES 16
-+
-+typedef struct
-+{
-+  char current_e2_id_str[256];
-+  uint32_t last_ss_rsrp_dist[128];
-+} e2_node_meas_state_t;
-+
-+static e2_node_meas_state_t meas_state[MAX_E2_NODES] = {0};
-+static int meas_state_count = 0;
-+
-+static e2_node_meas_state_t *get_meas_state(const char *e2_id) {
-+  for (int i = 0; i < meas_state_count; i++) {
-+    if (strcmp(meas_state[i].current_e2_id_str, e2_id) == 0)
-+      return &meas_state[i];
-+  }
-+  if (meas_state_count < MAX_E2_NODES) {
-+    strncpy(meas_state[meas_state_count].current_e2_id_str, e2_id, 255);
-+    return &meas_state[meas_state_count++];
-+  }
-+  return NULL;
-+}
-+
-+static
-+int get_percentile_val(uint32_t *dist, size_t index)
-+{
-+  uint32_t cumulative = 0;
-+  for (int i = 0; i < 128; i++) {
-+    cumulative += dist[i];
-+    if (cumulative > index)
-+      return -156 + i;
-+  }
-+  return -156 + 127;
-+}
-+
-+static
-+void process_rsrp_metric(const char *node_id, const uint32_t *current_dist)
-+{
-+  e2_node_meas_state_t *state = get_meas_state(node_id);
-+  if (!state)
-+    return;
-+
-+  uint32_t diff_dist[128] = {0};
-+  uint32_t total_count = 0;
-+
-+  for (int i = 0; i < 128; i++) {
-+    if (current_dist[i] >= state->last_ss_rsrp_dist[i]) {
-+      diff_dist[i] = current_dist[i] - state->last_ss_rsrp_dist[i];
-+    } else {
-+      diff_dist[i] = current_dist[i];
-+    }
-+    total_count += diff_dist[i];
-+    state->last_ss_rsrp_dist[i] = current_dist[i];
-+  }
-+
-+  if (total_count == 0) {
-+    printf("RSRP.Mean = null\n");
-+    printf("RSRP.Minimum = null\n");
-+    printf("RSRP.Quartile1 = null\n");
-+    printf("RSRP.Median = null\n");
-+    printf("RSRP.Quartile3 = null\n");
-+    printf("RSRP.Maximum = null\n");
-+    printf("RSRP.Count = 0\n");
-+    return;
-+  }
-+
-+  double sum = 0;
-+  int min_val = 9999, max_val = -9999;
-+  for (int i = 0; i < 128; i++) {
-+    if (diff_dist[i] > 0) {
-+      int dbm = -156 + i;
-+      sum += (double)dbm * diff_dist[i];
-+      if (dbm < min_val)
-+        min_val = dbm;
-+      if (dbm > max_val)
-+        max_val = dbm;
-+    }
-+  }
-+
-+  double q1, median, q3;
-+  size_t n = total_count;
-+
-+  // Quartile 1
-+  size_t q1_idx = n / 4;
-+  if (n % 4 == 0 && n > 0 && q1_idx > 0) {
-+    q1 = (get_percentile_val(diff_dist, q1_idx - 1) + get_percentile_val(diff_dist, q1_idx)) / 2.0;
-+  } else {
-+    q1 = get_percentile_val(diff_dist, q1_idx);
-+  }
-+
-+  // Median
-+  size_t med_idx = n / 2;
-+  if (n % 2 == 0 && n > 0 && med_idx > 0) {
-+    median = (get_percentile_val(diff_dist, med_idx - 1) + get_percentile_val(diff_dist, med_idx)) / 2.0;
-+  } else {
-+    median = get_percentile_val(diff_dist, med_idx);
-+  }
-+
-+  // Quartile 3
-+  size_t q3_idx = (3 * n) / 4;
-+  if (n % 4 == 0 && n > 0 && q3_idx > 0) {
-+    q3 = (get_percentile_val(diff_dist, q3_idx - 1) + get_percentile_val(diff_dist, q3_idx)) / 2.0;
-+  } else {
-+    q3 = get_percentile_val(diff_dist, q3_idx);
-+  }
-+
-+  printf("RSRP.Mean = %.2f\n", sum / total_count);
-+  printf("RSRP.Minimum = %.2f\n", (double)min_val);
-+  printf("RSRP.Quartile1 = %.2f\n", q1);
-+  printf("RSRP.Median = %.2f\n", median);
-+  printf("RSRP.Quartile3 = %.2f\n", q3);
-+  printf("RSRP.Maximum = %.2f\n", (double)max_val);
-+  printf("RSRP.Count = %u\n", total_count);
-+}
 +
  static
  void log_kpm_measurements(kpm_ind_msg_format_1_t const* msg_frm_1)
@@ -295,85 +178,35 @@ index 22f70850..ed44a0bd 100644
      for (size_t i = 0; i < msg_frm_1->meas_info_lst_len; i++) {
        const meas_info_format_1_lst_t info_item = msg_frm_1->meas_info_lst[i];
 +
-+      if (info_item.label_info_lst_len > 1 && info_item.meas_type.type == NAME_MEAS_TYPE && info_item.label_info_lst[0].distBinX != NULL) {
++      if (info_item.label_info_lst_len > 1 && info_item.meas_type.type == NAME_MEAS_TYPE) {
 +        char *name_str = cp_ba_to_str(info_item.meas_type.name);
 +        char *name_unit = get_meas_unit(name_str);
 +        if (name_unit && strcmp(name_unit, "[]") == 0)
 +          name_unit = "";
 +        if (name_unit == NULL)
 +          name_unit = "";
-+        bool has_y = info_item.label_info_lst[0].distBinY != NULL;
-+        bool has_z = info_item.label_info_lst[0].distBinZ != NULL;
 +
-+        printf("%s = ", name_str);
-+        uint32_t last_x = 0, last_y = 0;
++        derived_metrics_array_t generated_metrics = process_metric_factory(
++            current_e2_id_str, name_str,
++            info_item.label_info_lst, info_item.label_info_lst_len,
++            data_item.meas_record_lst, rec_idx
++        );
 +
-+        bool is_rsrp_bin = (strcmp(name_str, "L1M.SS-RSRP") == 0);
-+        uint32_t rsrp_dist[128] = {0};
-+
-+        for (size_t z = 0; z < info_item.label_info_lst_len; z++) {
-+
-+          const label_info_lst_t label_info = info_item.label_info_lst[z];
-+          const meas_record_lst_t record_item = data_item.meas_record_lst[rec_idx++];
-+
-+          uint32_t cur_x = label_info.distBinX ? *label_info.distBinX : 0;
-+          uint32_t cur_y = label_info.distBinY ? *label_info.distBinY : 0;
-+
-+          if (is_rsrp_bin && cur_x >= 1 && cur_x <= 128) {
-+            rsrp_dist[cur_x - 1] = record_item.int_val;
-+          }
-+
-+          if (z == 0) {
-+            if (has_z) {
-+              printf("[[[");
-+            } else if (has_y) {
-+              printf("[[");
++        for (size_t k = 0; k < generated_metrics.count; k++) {
++            derived_metric_t m = generated_metrics.metrics[k];
++            if (m.value_type == 0) {
++                printf("%s = %d\n", m.name, m.int_val);
 +            } else {
-+              printf("[");
++                printf("%s = %.2f\n", m.name, m.real_val);
 +            }
-+          } else {
-+            if (has_z) {
-+              if (cur_x != last_x) {
-+                printf("]], [[");
-+              } else if (cur_y != last_y) {
-+                printf("], [");
-+              } else {
-+                printf(", ");
-+              }
-+            } else if (has_y) {
-+              if (cur_x != last_x) {
-+                printf("], [");
-+              } else {
-+                printf(", ");
-+              }
-+            } else {
-+              printf(", ");
-+            }
-+          }
-+          if (record_item.value == 0) {
-+            printf("%d", record_item.int_val);
-+          } else if (record_item.value == 1) {
-+            printf("%.2f", record_item.real_val);
-+          } else {
-+            printf("null");
-+          }
-+          last_x = cur_x;
-+          last_y = cur_y;
-+          if (data_item.incomplete_flag && *data_item.incomplete_flag == TRUE_ENUM_VALUE) {
-+            printf(" /* Record not reliable */");
-+          }
 +        }
-+        if (has_z) {
-+          printf("]]] %s\n", name_unit);
-+        } else if (has_y) {
-+          printf("]] %s\n", name_unit);
-+        } else {
-+          printf("] %s\n", name_unit);
-+        }
++        free_derived_metrics(&generated_metrics);
 +
-+        if (is_rsrp_bin) {
-+          process_rsrp_metric(current_e2_id_str, rsrp_dist);
-+        }
++          char arr_str[8192];
++          format_meas_record_array(arr_str, sizeof(arr_str), info_item.label_info_lst, info_item.label_info_lst_len, data_item.meas_record_lst, rec_idx);
++          printf("%s = %s %s\n", name_str, arr_str, name_unit);
++          rec_idx += info_item.label_info_lst_len;
++
 +        free(name_str);
 +      } else {
        for (size_t z = 0; z < info_item.label_info_lst_len; z++) {
@@ -390,7 +223,7 @@ index 22f70850..ed44a0bd 100644
      }
    }
  }
-@@ -222,6 +524,32 @@ void log_kpm_ind_msg_frm_3(kpm_ind_msg_format_3_t const* msg)
+@@ -222,6 +358,32 @@ void log_kpm_ind_msg_frm_3(kpm_ind_msg_format_3_t const* msg)
    }
  }
  
@@ -423,7 +256,7 @@ index 22f70850..ed44a0bd 100644
  static
  void sm_cb_kpm(sm_ag_if_rd_t const* rd)
  {
-@@ -252,7 +580,7 @@ void sm_cb_kpm(sm_ag_if_rd_t const* rd)
+@@ -252,7 +414,7 @@ void sm_cb_kpm(sm_ag_if_rd_t const* rd)
  }
  
  static
@@ -432,7 +265,7 @@ index 22f70850..ed44a0bd 100644
  {
    test_info_lst_t dst = {0};
  
-@@ -271,11 +599,17 @@ test_info_lst_t filter_predicate(test_cond_type_e type, test_cond_e cond, int va
+@@ -271,26 +433,21 @@ test_info_lst_t filter_predicate(test_cond_type_e type, test_cond_e cond, int va
  
    dst.test_cond_value->octet_string_value = calloc(1, sizeof(byte_array_t));
    assert(dst.test_cond_value->octet_string_value != NULL && "Memory exhausted");
@@ -452,58 +285,33 @@ index 22f70850..ed44a0bd 100644
  
    return dst;
  }
-@@ -291,6 +625,19 @@ label_info_lst_t fill_kpm_label(void)
-   return label_item;
- }
  
-+static label_info_lst_t fill_distribution_bin_label(const uint32_t x, const uint32_t y, const uint32_t z);
-+
-+static label_info_lst_t fill_distribution_bin_1d_label(const uint32_t x)
-+{
-+  label_info_lst_t label_item = {0};
-+
-+  label_item.distBinX = calloc(1, sizeof(uint32_t));
-+  assert(label_item.distBinX != NULL);
-+  *label_item.distBinX = x;
-+
-+  return label_item;
-+}
-+
+-static
+-label_info_lst_t fill_kpm_label(void)
+-{
+-  label_info_lst_t label_item = {0};
+-
+-  label_item.noLabel = ecalloc(1, sizeof(enum_value_e));
+-  *label_item.noLabel = TRUE_ENUM_VALUE;
+-
+-  return label_item;
+-}
+-
  static
  kpm_act_def_format_1_t fill_act_def_frm_1(ric_report_style_item_t const* report_item)
  {
-@@ -314,9 +661,29 @@ kpm_act_def_format_1_t fill_act_def_frm_1(ric_report_style_item_t const* report_
+@@ -314,9 +471,7 @@ kpm_act_def_format_1_t fill_act_def_frm_1(ric_report_style_item_t const* report_
  
      // [1, 2147483647]
      // 8.3.11
-+    if (cmp_str_ba("CARR.PDSCHMCSDist", meas_item->meas_type.name) == 0) {
-+      /// 1-8 RI, 1-3 MCS table, 0-31 MCS value
-+      meas_item->label_info_lst_len = 8 * 3 * 32;
-+      meas_item->label_info_lst = ecalloc(meas_item->label_info_lst_len, sizeof(label_info_lst_t));
-+      size_t idx = 0;
-+      for (uint32_t x = 1; x <= 8; x++) {
-+        for (uint32_t y = 1; y <= 3; y++) {
-+          for (uint32_t z = 0; z <= 31; z++) {
-+            meas_item->label_info_lst[idx++] = fill_distribution_bin_label(x, y, z);
-+          }
-+        }
-+      }
-+    } else if (cmp_str_ba("L1M.SS-RSRP", meas_item->meas_type.name) == 0) {
-+      meas_item->label_info_lst_len = 128;
-+      meas_item->label_info_lst = ecalloc(meas_item->label_info_lst_len, sizeof(label_info_lst_t));
-+      for (uint32_t x = 1; x <= 128; x++) {
-+        meas_item->label_info_lst[x - 1] = fill_distribution_bin_1d_label(x);
-+      }
-+    } else {
-     meas_item->label_info_lst_len = 1;
+-    meas_item->label_info_lst_len = 1;
 -    meas_item->label_info_lst = ecalloc(1, sizeof(label_info_lst_t));
-+    meas_item->label_info_lst = ecalloc(meas_item->label_info_lst_len, sizeof(label_info_lst_t));
-     meas_item->label_info_lst[0] = fill_kpm_label();
-+    }
+-    meas_item->label_info_lst[0] = fill_kpm_label();
++    populate_label_info(meas_item);
    }
  
    // 8.3.8 [0, 4294967295]
-@@ -345,13 +712,13 @@ kpm_act_def_t fill_report_style_4(ric_report_style_item_t const* report_item)
+@@ -345,13 +500,13 @@ kpm_act_def_t fill_report_style_4(ric_report_style_item_t const* report_item)
    // Fill matching condition
    // [1, 32768]
    act_def.frm_4.matching_cond_lst_len = 1;
@@ -520,20 +328,59 @@ index 22f70850..ed44a0bd 100644
  
    // Fill Action Definition Format 1
    // 8.2.1.2.1
-@@ -412,6 +779,12 @@ kpm_act_def_t fill_report_style_1(ric_report_style_item_t const* report_item)
-           }
-         }
-       }
-+    } else if (cmp_str_ba("L1M.SS-RSRP", meas_item->meas_type.name) == 0) {
-+      meas_item->label_info_lst_len = 128;
-+      meas_item->label_info_lst = ecalloc(meas_item->label_info_lst_len, sizeof(label_info_lst_t));
-+      for (uint32_t x = 1; x <= 128; x++) {
-+        meas_item->label_info_lst[x - 1] = fill_distribution_bin_1d_label(x);
-+      }
-     } else {
-       meas_item->label_info_lst_len = 1;
-       meas_item->label_info_lst = ecalloc(meas_item->label_info_lst_len, sizeof(label_info_lst_t));
-@@ -513,6 +886,8 @@ int main(int argc, char* argv[])
+@@ -360,26 +515,6 @@ kpm_act_def_t fill_report_style_4(ric_report_style_item_t const* report_item)
+   return act_def;
+ }
+ 
+-static
+-label_info_lst_t fill_distribution_bin_label(const uint32_t x, const uint32_t y, const uint32_t z)
+-{
+-  label_info_lst_t label_item = {0};
+-
+-  label_item.distBinX = calloc(1, sizeof(uint32_t));
+-  assert(label_item.distBinX != NULL);
+-  *label_item.distBinX = x;
+-
+-  label_item.distBinY = calloc(1, sizeof(uint32_t));
+-  assert(label_item.distBinY != NULL);
+-  *label_item.distBinY = y;
+-
+-  label_item.distBinZ = calloc(1, sizeof(uint32_t));
+-  assert(label_item.distBinZ != NULL);
+-  *label_item.distBinZ = z;
+-
+-  return label_item;
+-}
+-
+ static
+ kpm_act_def_t fill_report_style_1(ric_report_style_item_t const* report_item)
+ {
+@@ -400,23 +535,7 @@ kpm_act_def_t fill_report_style_1(ric_report_style_item_t const* report_item)
+ 
+     // [1, 2147483647]
+     // 8.3.11
+-    if (cmp_str_ba("CARR.PDSCHMCSDist", meas_item->meas_type.name) == 0) {
+-      /// 1-8 RI, 1-3 MCS table, 0-31 MCS value
+-      meas_item->label_info_lst_len = 8 * 3 * 32;
+-      meas_item->label_info_lst = ecalloc(meas_item->label_info_lst_len, sizeof(label_info_lst_t));
+-      size_t idx = 0;
+-      for (uint32_t x = 1; x <= 8; x++) {
+-        for (uint32_t y = 1; y <= 3; y++) {
+-          for(uint32_t z = 0; z <= 31; z++) {
+-            meas_item->label_info_lst[idx++] = fill_distribution_bin_label(x, y, z);
+-          }
+-        }
+-      }
+-    } else {
+-      meas_item->label_info_lst_len = 1;
+-      meas_item->label_info_lst = ecalloc(meas_item->label_info_lst_len, sizeof(label_info_lst_t));
+-      meas_item->label_info_lst[0] = fill_kpm_label();
+-    }
++    populate_label_info(meas_item);
+   }
+ 
+   // 8.3.8 [0, 4294967295]
+@@ -513,6 +632,8 @@ int main(int argc, char* argv[])
    int rc = pthread_mutex_init(&mtx, &attr);
    assert(rc == 0);
  

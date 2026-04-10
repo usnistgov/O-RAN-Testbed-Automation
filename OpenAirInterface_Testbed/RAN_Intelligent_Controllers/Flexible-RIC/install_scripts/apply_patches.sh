@@ -61,7 +61,21 @@ if [ ! -f "examples/xApp/c/kpm_rc/xapp_kpm_rc.c.previous" ]; then
 fi
 echo "Patching xapp_kpm_rc.c..."
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/kpm_rc/xapp_kpm_rc.c.patch"
+
+git restore examples/xApp/c/kpm_rc/CMakeLists.txt
+if [ ! -f "examples/xApp/c/kpm_rc/CMakeLists.txt.previous" ]; then
+    cp examples/xApp/c/kpm_rc/CMakeLists.txt examples/xApp/c/kpm_rc/CMakeLists.txt.previous
+    cp examples/xApp/c/kpm_rc/CMakeLists.txt.previous "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/kpm_rc/CMakeLists.previous.txt"
+fi
+echo "Patching CMakeLists.txt..."
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/kpm_rc/CMakeLists.txt.patch"
 cd ..
+
+echo "Adding metrics_factory.h..."
+cp "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/metrics_factory.h" flexric/examples/xApp/c/
+
+echo "Adding metrics_factory.c..."
+cp "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/metrics_factory.c" flexric/examples/xApp/c/
 
 echo "Adding xapp_kpm_moni_write_to_csv.c..."
 cp "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv.c" flexric/examples/xApp/c/monitor/
@@ -84,19 +98,12 @@ cd ..
 cd flexric
 if ! grep -q "^RSRP.Count" src/sm/kpm_sm/28_552_kpm_meas.txt; then
     cat >>src/sm/kpm_sm/28_552_kpm_meas.txt <<'EOF'
-RSRP.Count []
 PHY.NPrbDl []
 DRB.HarqMcsUl []
 DRB.HarqMcsDl []
 DRB.DerivedCQIDl []
 PHY.CqiWb1TbDl []
 PHY.CqiWb2TbDl []
-RSRP.Mean [dBm]
-RSRP.Minimum [dBm]
-RSRP.Quartile1 [dBm]
-RSRP.Median [dBm]
-RSRP.Quartile3 [dBm]
-RSRP.Maximum [dBm]
 PHY.DerivedRssiDl [dBm]
 PHY.DerivedRsrqDl [dB]
 PUSCH.Snr [dB]

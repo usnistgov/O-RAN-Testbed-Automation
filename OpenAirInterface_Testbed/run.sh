@@ -129,4 +129,7 @@ echo
 echo "Running xApp KPM Monitor..."
 cd RAN_Intelligent_Controllers/Flexible-RIC
 ./run_xapp_kpm_moni.sh
+# ./additional_scripts/run_xapp_rc_moni.sh
+# ./additional_scripts/run_xapp_kpm_moni_write_to_csv.sh
+# ./additional_scripts/run_xapp_kpm_moni_write_to_influxdb.sh
 cd ../..

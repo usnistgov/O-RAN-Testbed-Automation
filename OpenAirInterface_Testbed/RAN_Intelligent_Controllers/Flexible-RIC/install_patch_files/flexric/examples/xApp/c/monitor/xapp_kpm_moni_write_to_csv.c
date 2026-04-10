@@ -717,7 +717,7 @@ static int get_percentile_val(uint32_t *dist, size_t index)
   return -156 + 127;
 }
 
-static __attribute__((unused)) void process_rsrp_metric(const char *node_id, const uint32_t *current_dist)
+static void process_rsrp_metric(const char *node_id, const uint32_t *current_dist)
 {
   e2_node_rsrp_state_t *state = get_rsrp_state(node_id);
   if (!state)
@@ -742,9 +742,23 @@ static __attribute__((unused)) void process_rsrp_metric(const char *node_id, con
 
   if (total_count == 0)
   {
+    char *target_buffer = is_cell_metric ? csv_cell_line_buffer : csv_line_buffer;
+    size_t buffer_size = is_cell_metric ? sizeof(csv_cell_line_buffer) : sizeof(csv_line_buffer);
+
     char rsrp_line[512];
-    snprintf(rsrp_line, sizeof(rsrp_line), ",0,0,0,0,0,0,0");
-    strncat(csv_line_buffer, rsrp_line, sizeof(csv_line_buffer) - strlen(csv_line_buffer) - 1);
+    snprintf(rsrp_line, sizeof(rsrp_line), "0,0,0,0,0,0,0,");
+    strncat(target_buffer, rsrp_line, buffer_size - strlen(target_buffer) - 1);
+
+    if (!(is_cell_metric ? csv_wrote_cell_header : csv_wrote_header))
+    {
+      csv_append_name_to_csv_header("RSRP.Mean", "dBm");
+      csv_append_name_to_csv_header("RSRP.Minimum", "dBm");
+      csv_append_name_to_csv_header("RSRP.Quartile1", "dBm");
+      csv_append_name_to_csv_header("RSRP.Median", "dBm");
+      csv_append_name_to_csv_header("RSRP.Quartile3", "dBm");
+      csv_append_name_to_csv_header("RSRP.Maximum", "dBm");
+      csv_append_name_to_csv_header("RSRP.Count", "");
+    }
     return;
   }
 
@@ -797,9 +811,23 @@ static __attribute__((unused)) void process_rsrp_metric(const char *node_id, con
   }
 
   char rsrp_line[512];
-  snprintf(rsrp_line, sizeof(rsrp_line), ",%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%u",
+  snprintf(rsrp_line, sizeof(rsrp_line), "%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%u,",
            sum / total_count, (double)min_val, q1, median, q3, (double)max_val, total_count);
-  strncat(csv_line_buffer, rsrp_line, sizeof(csv_line_buffer) - strlen(csv_line_buffer) - 1);
+
+  char *target_buffer = is_cell_metric ? csv_cell_line_buffer : csv_line_buffer;
+  size_t buffer_size = is_cell_metric ? sizeof(csv_cell_line_buffer) : sizeof(csv_line_buffer);
+  strncat(target_buffer, rsrp_line, buffer_size - strlen(target_buffer) - 1);
+
+  if (!(is_cell_metric ? csv_wrote_cell_header : csv_wrote_header))
+  {
+    csv_append_name_to_csv_header("RSRP.Mean", "dBm");
+    csv_append_name_to_csv_header("RSRP.Minimum", "dBm");
+    csv_append_name_to_csv_header("RSRP.Quartile1", "dBm");
+    csv_append_name_to_csv_header("RSRP.Median", "dBm");
+    csv_append_name_to_csv_header("RSRP.Quartile3", "dBm");
+    csv_append_name_to_csv_header("RSRP.Maximum", "dBm");
+    csv_append_name_to_csv_header("RSRP.Count", "");
+  }
 }
 
 static void log_kpm_measurements(kpm_ind_msg_format_1_t const *msg_frm_1, bool is_cell_metric_local)
@@ -826,6 +854,22 @@ static void log_kpm_measurements(kpm_ind_msg_format_1_t const *msg_frm_1, bool i
           name_unit = "";
         if (name_unit == NULL)
           name_unit = "";
+
+        bool is_rsrp_bin = (strcmp(name_str, "L1M.SS-RSRP") == 0);
+        uint32_t rsrp_dist[128] = {0};
+
+        if (is_rsrp_bin) {
+          size_t tmp_idx = rec_idx;
+          for (size_t z = 0; z < info_item.label_info_lst_len; z++) {
+            const label_info_lst_t label_info = info_item.label_info_lst[z];
+            const meas_record_lst_t record_item = data_item.meas_record_lst[tmp_idx++];
+            uint32_t cur_x = label_info.distBinX ? *label_info.distBinX : 0;
+            if (cur_x >= 1 && cur_x <= 128) {
+              rsrp_dist[cur_x - 1] = record_item.int_val;
+            }
+          }
+          process_rsrp_metric(current_e2_id_str, rsrp_dist);
+        }
 
         if (!(is_cell_metric ? csv_wrote_cell_header : csv_wrote_header))
         {

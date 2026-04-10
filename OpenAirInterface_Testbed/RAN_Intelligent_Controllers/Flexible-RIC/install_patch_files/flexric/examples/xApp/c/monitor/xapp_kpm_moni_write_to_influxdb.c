@@ -553,7 +553,7 @@ static int get_percentile_val(uint32_t *dist, size_t index)
   return -156 + 127;
 }
 
-static __attribute__((unused)) void process_rsrp_metric(const char *node_id, const uint32_t *current_dist)
+static void process_rsrp_metric(const char *node_id, const uint32_t *current_dist)
 {
   e2_node_rsrp_state_t *state = get_rsrp_state(node_id);
   if (!state)
@@ -701,6 +701,22 @@ static void log_kpm_measurements(kpm_ind_msg_format_1_t const *msg_frm_1, bool i
         uint32_t last_x = 0, last_y = 0;
         bool has_y = info_item.label_info_lst[0].distBinY != NULL;
         bool has_z = info_item.label_info_lst[0].distBinZ != NULL;
+
+        bool is_rsrp_bin = (strcmp(name_str, "L1M.SS-RSRP") == 0);
+        uint32_t rsrp_dist[128] = {0};
+
+        if (is_rsrp_bin) {
+          size_t tmp_idx = rec_idx;
+          for (size_t z = 0; z < info_item.label_info_lst_len; z++) {
+            const label_info_lst_t label_info = info_item.label_info_lst[z];
+            const meas_record_lst_t record_item = data_item.meas_record_lst[tmp_idx++];
+            uint32_t cur_x = label_info.distBinX ? *label_info.distBinX : 0;
+            if (cur_x >= 1 && cur_x <= 128) {
+              rsrp_dist[cur_x - 1] = record_item.int_val;
+            }
+          }
+          process_rsrp_metric(current_e2_id_str, rsrp_dist);
+        }
 
         for (size_t z = 0; z < info_item.label_info_lst_len; z++)
         {

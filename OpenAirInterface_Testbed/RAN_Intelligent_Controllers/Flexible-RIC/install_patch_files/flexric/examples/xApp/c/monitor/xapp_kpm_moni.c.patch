@@ -1,5 +1,5 @@
 diff --git a/examples/xApp/c/monitor/xapp_kpm_moni.c b/examples/xApp/c/monitor/xapp_kpm_moni.c
-index 22f70850..ed44a0bd 100644
+index 22f70850..736af5f1 100644
 --- a/examples/xApp/c/monitor/xapp_kpm_moni.c
 +++ b/examples/xApp/c/monitor/xapp_kpm_moni.c
 @@ -11,8 +11,10 @@
@@ -161,7 +161,7 @@ index 22f70850..ed44a0bd 100644
    printf("%s = %.2f %s\n", name_str, meas_record.real_val, name_unit);
  }
  
-@@ -183,26 +284,227 @@ check_meas_type match_meas_type[END_MEAS_TYPE] = {
+@@ -183,26 +284,233 @@ check_meas_type match_meas_type[END_MEAS_TYPE] = {
      match_id_meas_type,
  };
  
@@ -305,11 +305,24 @@ index 22f70850..ed44a0bd 100644
 +        bool has_y = info_item.label_info_lst[0].distBinY != NULL;
 +        bool has_z = info_item.label_info_lst[0].distBinZ != NULL;
 +
-+        printf("%s = ", name_str);
-+        uint32_t last_x = 0, last_y = 0;
-+
 +        bool is_rsrp_bin = (strcmp(name_str, "L1M.SS-RSRP") == 0);
 +        uint32_t rsrp_dist[128] = {0};
++
++        if (is_rsrp_bin) {
++          size_t tmp_idx = rec_idx;
++          for (size_t z = 0; z < info_item.label_info_lst_len; z++) {
++            const label_info_lst_t label_info = info_item.label_info_lst[z];
++            const meas_record_lst_t record_item = data_item.meas_record_lst[tmp_idx++];
++            uint32_t cur_x = label_info.distBinX ? *label_info.distBinX : 0;
++            if (cur_x >= 1 && cur_x <= 128) {
++              rsrp_dist[cur_x - 1] = record_item.int_val;
++            }
++          }
++          process_rsrp_metric(current_e2_id_str, rsrp_dist);
++        }
++
++        printf("%s = ", name_str);
++        uint32_t last_x = 0, last_y = 0;
 +
 +        for (size_t z = 0; z < info_item.label_info_lst_len; z++) {
 +
@@ -318,10 +331,6 @@ index 22f70850..ed44a0bd 100644
 +
 +          uint32_t cur_x = label_info.distBinX ? *label_info.distBinX : 0;
 +          uint32_t cur_y = label_info.distBinY ? *label_info.distBinY : 0;
-+
-+          if (is_rsrp_bin && cur_x >= 1 && cur_x <= 128) {
-+            rsrp_dist[cur_x - 1] = record_item.int_val;
-+          }
 +
 +          if (z == 0) {
 +            if (has_z) {
@@ -371,9 +380,6 @@ index 22f70850..ed44a0bd 100644
 +          printf("] %s\n", name_unit);
 +        }
 +
-+        if (is_rsrp_bin) {
-+          process_rsrp_metric(current_e2_id_str, rsrp_dist);
-+        }
 +        free(name_str);
 +      } else {
        for (size_t z = 0; z < info_item.label_info_lst_len; z++) {
@@ -390,7 +396,7 @@ index 22f70850..ed44a0bd 100644
      }
    }
  }
-@@ -222,6 +524,32 @@ void log_kpm_ind_msg_frm_3(kpm_ind_msg_format_3_t const* msg)
+@@ -222,6 +530,32 @@ void log_kpm_ind_msg_frm_3(kpm_ind_msg_format_3_t const* msg)
    }
  }
  
@@ -423,7 +429,7 @@ index 22f70850..ed44a0bd 100644
  static
  void sm_cb_kpm(sm_ag_if_rd_t const* rd)
  {
-@@ -252,7 +580,7 @@ void sm_cb_kpm(sm_ag_if_rd_t const* rd)
+@@ -252,7 +586,7 @@ void sm_cb_kpm(sm_ag_if_rd_t const* rd)
  }
  
  static
@@ -432,7 +438,7 @@ index 22f70850..ed44a0bd 100644
  {
    test_info_lst_t dst = {0};
  
-@@ -271,11 +599,17 @@ test_info_lst_t filter_predicate(test_cond_type_e type, test_cond_e cond, int va
+@@ -271,11 +605,17 @@ test_info_lst_t filter_predicate(test_cond_type_e type, test_cond_e cond, int va
  
    dst.test_cond_value->octet_string_value = calloc(1, sizeof(byte_array_t));
    assert(dst.test_cond_value->octet_string_value != NULL && "Memory exhausted");
@@ -452,7 +458,7 @@ index 22f70850..ed44a0bd 100644
  
    return dst;
  }
-@@ -291,6 +625,19 @@ label_info_lst_t fill_kpm_label(void)
+@@ -291,6 +631,19 @@ label_info_lst_t fill_kpm_label(void)
    return label_item;
  }
  
@@ -472,7 +478,7 @@ index 22f70850..ed44a0bd 100644
  static
  kpm_act_def_format_1_t fill_act_def_frm_1(ric_report_style_item_t const* report_item)
  {
-@@ -314,9 +661,29 @@ kpm_act_def_format_1_t fill_act_def_frm_1(ric_report_style_item_t const* report_
+@@ -314,9 +667,29 @@ kpm_act_def_format_1_t fill_act_def_frm_1(ric_report_style_item_t const* report_
  
      // [1, 2147483647]
      // 8.3.11
@@ -503,7 +509,7 @@ index 22f70850..ed44a0bd 100644
    }
  
    // 8.3.8 [0, 4294967295]
-@@ -345,13 +712,13 @@ kpm_act_def_t fill_report_style_4(ric_report_style_item_t const* report_item)
+@@ -345,13 +718,13 @@ kpm_act_def_t fill_report_style_4(ric_report_style_item_t const* report_item)
    // Fill matching condition
    // [1, 32768]
    act_def.frm_4.matching_cond_lst_len = 1;
@@ -520,7 +526,7 @@ index 22f70850..ed44a0bd 100644
  
    // Fill Action Definition Format 1
    // 8.2.1.2.1
-@@ -412,6 +779,12 @@ kpm_act_def_t fill_report_style_1(ric_report_style_item_t const* report_item)
+@@ -412,6 +785,12 @@ kpm_act_def_t fill_report_style_1(ric_report_style_item_t const* report_item)
            }
          }
        }
@@ -533,7 +539,7 @@ index 22f70850..ed44a0bd 100644
      } else {
        meas_item->label_info_lst_len = 1;
        meas_item->label_info_lst = ecalloc(meas_item->label_info_lst_len, sizeof(label_info_lst_t));
-@@ -513,6 +886,8 @@ int main(int argc, char* argv[])
+@@ -513,6 +892,8 @@ int main(int argc, char* argv[])
    int rc = pthread_mutex_init(&mtx, &attr);
    assert(rc == 0);
  

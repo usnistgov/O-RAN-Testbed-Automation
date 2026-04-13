@@ -109,10 +109,10 @@ echo "MNC value: $MNC"
 echo "MNC_LENGTH value: $MNC_LENGTH"
 
 # Configure the DNN, SST, and SD values
-DNN=$(sed -n 's/^dnn: //p' "$YAML_PATH")
+DNN=($(yq eval '.slices[].dnn' "$YAML_PATH"))
 SST=($(yq eval '.slices[].sst' "$YAML_PATH"))
 SD=($(yq eval '.slices[].sd' "$YAML_PATH"))
-if [[ -z "$DNN" || "$DNN" == "null" ]]; then
+if [[ -z "${DNN[0]}" || "${DNN[0]}" == "null" ]]; then
     echo "DNN is not set in $YAML_PATH, please ensure that \"dnn\" is set."
     exit 1
 fi
@@ -123,6 +123,7 @@ fi
 
 # SST/SD are configured in options.yaml as hex without 0x prefix.
 for i in "${!SST[@]}"; do
+    CURRENT_DNN="${DNN[$i]}"
     CURRENT_SST="${SST[$i]}"
     CURRENT_SD="${SD[$i]}"
 
@@ -154,6 +155,7 @@ declare -A OMIT_SD_ADDED
 
 # Check for omitting SD if null or FFFFFF (case insensitive)
 for i in "${!SST[@]}"; do
+    CURRENT_DNN="${DNN[$i]}"
     CURRENT_SST="${SST[$i]}"
     CURRENT_SD="${SD[$i]}"
     if [[ "$CURRENT_SD" == "null" || "${CURRENT_SD^^}" == "FFFFFF" ]]; then
@@ -163,6 +165,7 @@ done
 
 FIRST_ENTRY=1
 for i in "${!SST[@]}"; do
+    CURRENT_DNN="${DNN[$i]}"
     CURRENT_SST="${SST[$i]}"
     CURRENT_SD="${SD[$i]}"
 

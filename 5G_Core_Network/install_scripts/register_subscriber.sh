@@ -52,6 +52,9 @@ DEFAULT_SD=""
 DEFAULT_IPV4=""
 DEFAULT_IPV6=""
 
+APNS=()
+IPV4S=()
+
 ./start_webui.sh no-browser
 
 # Function to display usage
@@ -61,10 +64,10 @@ usage() {
     echo "  --imsi [IMSI]                 Set the IMSI value (default: $DEFAULT_IMSI)"
     echo "  --key [Key]                   Set the authentication key (default: $DEFAULT_KEY)"
     echo "  --opc [OPC]                   Set the OPC value (default: $DEFAULT_OPC)"
-    echo "  --apn [APN]                   Set the APN value (default: $DEFAULT_APN)"
+    echo "  --apn [APN]                   Set the APN value (default: $DEFAULT_APN). Can be specified multiple times."
     echo "  --sst [SST]                   Set SST in decimal (optional). Hex is also accepted with 0x prefix"
     echo "  --sd [SD]                     Set SD in hex (optional). A 0x prefix is also accepted"
-    echo "  --ipv4 [IPv4]                 Set the IPv4 address (optional)"
+    echo "  --ipv4 [IPv4]                 Set the IPv4 address (optional). Can be specified multiple times."
     echo "  --ipv6 [IPv6]                 Set the IPv6 address (optional)"
     echo "  -h, --help                    Display this help message and exit"
     exit 1
@@ -92,19 +95,19 @@ while [[ "$#" -gt 0 ]]; do
         shift
         ;;
     --apn)
-        APN="${2}"
+        APNS+=("${2}")
         shift
         ;;
     --sst)
-        SST="${2}"
+        SSTS+=("${2}")
         shift
         ;;
     --sd)
-        SD="${2}"
+        SDS+=("${2}")
         shift
         ;;
     --ipv4)
-        IPV4="${2}"
+        IPV4S+=("${2}")
         shift
         ;;
     --ipv6)
@@ -124,43 +127,66 @@ done
 IMSI="${IMSI:-$DEFAULT_IMSI}"
 KEY="${KEY:-$DEFAULT_KEY}"
 OPC="${OPC:-$DEFAULT_OPC}"
-APN="${APN:-$DEFAULT_APN}"
-SST="${SST:-$DEFAULT_SST}"
-SD="${SD:-$DEFAULT_SD}"
-IPV4="${IPV4:-$DEFAULT_IPV4}"
 IPV6="${IPV6:-$DEFAULT_IPV6}"
 
-if [[ -n "$SST" && -n "$SD" ]]; then
-    if [[ "$SST" =~ ^0[xX][0-9A-Fa-f]{1,2}$ ]]; then
-        SST_DEC="$((16#${SST:2}))"
-    elif [[ "$SST" =~ [A-Fa-f] ]]; then
-        SST_HEX="${SST^^}"
-        if [[ ! "$SST_HEX" =~ ^[0-9A-F]{1,2}$ ]]; then
-            echo "Invalid --sst '$SST'. Use decimal (0-255) or hexadecimal (00-FF)."
+if [ ${#APNS[@]} -eq 0 ]; then
+    APNS=("$DEFAULT_APN")
+    if [ -n "$DEFAULT_IPV4" ]; then
+        IPV4S=("$DEFAULT_IPV4")
+    fi
+fi
+if [ ${#SSTS[@]} -eq 0 ]; then
+    if [ -n "$DEFAULT_SST" ]; then
+        SSTS=("$DEFAULT_SST")
+    fi
+fi
+if [ ${#SDS[@]} -eq 0 ]; then
+    if [ -n "$DEFAULT_SD" ]; then
+        SDS=("$DEFAULT_SD")
+    fi
+fi
+
+# Parse and validate SST/SD values
+parse_sst_sd() {
+    local RAW_SST="$1"
+    local RAW_SD="$2"
+    local RESULTING_SST=""
+    local RESULTING_SD=""
+
+    if [[ -n "$RAW_SST" && -n "$RAW_SD" ]]; then
+        if [[ "$RAW_SST" =~ ^0[xX][0-9A-Fa-f]{1,2}$ ]]; then
+            RESULTING_SST="$((16#${RAW_SST:2}))" # Remove 0x
+        elif [[ "$RAW_SST" =~ [A-Fa-f] ]]; then
+            SST_HEX="${RAW_SST^^}" # Uppercase
+            if [[ ! "$SST_HEX" =~ ^[0-9A-F]{1,2}$ ]]; then
+                echo "Invalid --sst '$RAW_SST'"
+                exit 1
+            fi
+            RESULTING_SST="$((16#$SST_HEX))" # Hex to decimal
+        elif [[ "$RAW_SST" =~ ^[0-9]{1,3}$ ]]; then
+            RESULTING_SST="$RAW_SST"
+        else
+            echo "Invalid --sst '$RAW_SST'"
             exit 1
         fi
-        SST_DEC="$((16#$SST_HEX))"
-    elif [[ "$SST" =~ ^[0-9]{1,3}$ ]]; then
-        SST_DEC="$SST"
-    else
-        echo "Invalid --sst '$SST'. Use decimal (0-255) or hexadecimal (00-FF)."
-        exit 1
-    fi
 
-    if ((SST_DEC < 0 || SST_DEC > 255)); then
-        echo "Invalid --sst '$SST'. SST must be in range 0-255."
-        exit 1
-    fi
+        if ((RESULTING_SST < 0 || RESULTING_SST > 255)); then
+            echo "Invalid --sst '$RAW_SST'"
+            exit 1
+        fi
 
-    SD_HEX="${SD#0x}"
-    SD_HEX="${SD_HEX#0X}"
-    SD_HEX="${SD_HEX^^}"
-    if [[ ! "$SD_HEX" =~ ^[0-9A-F]{1,6}$ ]]; then
-        echo "Invalid --sd '$SD'. Use hexadecimal (up to 6 hex digits). A 0x prefix is also accepted."
-        exit 1
+        SD_HEX="${RAW_SD#0x}"
+        SD_HEX="${SD_HEX#0X}"
+        SD_HEX="${SD_HEX^^}"
+        if [[ ! "$SD_HEX" =~ ^[0-9A-F]{1,6}$ ]]; then
+            echo "Invalid --sd '$RAW_SD'"
+            exit 1
+        fi
+        RESULTING_SD="$(printf "%06X" "$((16#$SD_HEX))")" # Hex to decimal
     fi
-    SD_HEX="$(printf "%06X" "$((16#$SD_HEX))")"
-fi
+    echo "$RESULTING_SST"
+    echo "$RESULTING_SD"
+}
 
 # Check if the subscriber already exists
 if $DBCTL_PATH showpretty | grep -q "imsi: '$IMSI'"; then
@@ -168,29 +194,34 @@ if $DBCTL_PATH showpretty | grep -q "imsi: '$IMSI'"; then
     exit 0
 fi
 
+# Parse the initial SST/SD
+OUTPUT=$(parse_sst_sd "${SSTS[0]}" "${SDS[0]}")
+SST_DEC=$(echo "$OUTPUT" | sed -n '1p')
+SD_HEX=$(echo "$OUTPUT" | sed -n '2p')
+
 # Command to add subscriber using the open5gs-dbctl tool
-if [[ -n "$SST" && -n "$SD" ]]; then
-    CMD="$DBCTL_PATH add_ue_with_slice $IMSI $KEY $OPC $APN $SST_DEC $SD_HEX"
+if [[ -n "$SST_DEC" && -n "$SD_HEX" ]]; then
+    CMD="$DBCTL_PATH add_ue_with_slice $IMSI $KEY $OPC ${APNS[0]} $SST_DEC $SD_HEX"
 else
-    CMD="$DBCTL_PATH add_ue_with_apn $IMSI $KEY $OPC $APN"
+    CMD="$DBCTL_PATH add_ue_with_apn $IMSI $KEY $OPC ${APNS[0]}"
 fi
 
 echo "Running command: $CMD"
 $CMD
 
 # Support for IPv4 and IPv6
-if [[ -n "$IPV4" ]]; then
-    echo "Assigning static IPv4 $IPV4 to subscriber $IMSI"
-    $DBCTL_PATH static_ip $IMSI $IPV4
+if [[ -n "${IPV4S[0]}" ]]; then
+    echo "Assigning static IPv4 ${IPV4S[0]} to subscriber $IMSI"
+    $DBCTL_PATH static_ip $IMSI "${IPV4S[0]}"
 fi
 if [[ -n "$IPV6" ]]; then
     echo "Assigning static IPv6 $IPV6 to subscriber $IMSI"
     $DBCTL_PATH static_ip6 $IMSI $IPV6
 fi
 TYPE=""
-if [[ -n "$IPV4" && -n "$IPV6" ]]; then # IPv4v6
+if [[ -n "${IPV4S[0]}" && -n "$IPV6" ]]; then # IPv4v6
     TYPE="3"
-elif [[ -n "$IPV4" ]]; then # IPv4
+elif [[ -n "${IPV4S[0]}" ]]; then # IPv4
     TYPE="1"
 elif [[ -n "$IPV6" ]]; then # IPv6
     TYPE="2"
@@ -199,6 +230,68 @@ if [[ -n "$TYPE" ]]; then
     echo "Assigning PDN-Type $TYPE to subscriber $IMSI"
     $DBCTL_PATH type $IMSI $TYPE
 fi
+
+ACTIVE_SST="${SSTS[0]}"
+ACTIVE_SD="${SDS[0]}"
+SLICE_INDEX=0
+COUNTER=0
+
+APN_LENGTH=${#APNS[@]}
+if [ ${#SSTS[@]} -gt $APN_LENGTH ]; then
+    APN_LENGTH=${#SSTS[@]}
+fi
+
+for ((i = 1; i < $APN_LENGTH; i++)); do
+    CURRENT_APN="${APNS[$i]:-${APNS[0]}}"
+    CURRENT_SST="${SSTS[$i]}"
+    CURRENT_SD="${SDS[$i]}"
+    CURRENT_IPV4="${IPV4S[$i]}"
+
+    if [[ -n "$CURRENT_SST" && -n "$CURRENT_SD" && ("$CURRENT_SST" != "$ACTIVE_SST" || "$CURRENT_SD" != "$ACTIVE_SD") ]]; then
+        OUTPUT=$(parse_sst_sd "$CURRENT_SST" "$CURRENT_SD")
+        PARSED_SST=$(echo "$OUTPUT" | sed -n '1p')
+        PARSED_SD=$(echo "$OUTPUT" | sed -n '2p')
+        echo "Adding slice (index $i) SST: $PARSED_SST, SD: $PARSED_SD for subscriber $IMSI"
+        $DBCTL_PATH update_slice "$IMSI" "$CURRENT_APN" "$PARSED_SST" "$PARSED_SD"
+
+        ACTIVE_SST="$CURRENT_SST"
+        ACTIVE_SD="$CURRENT_SD"
+        SLICE_INDEX=$((SLICE_INDEX + 1))
+        COUNTER=0
+
+        if [[ -n "$CURRENT_IPV4" ]]; then
+            echo "Assigning static IPv4 $CURRENT_IPV4 to new slice $CURRENT_SD on subscriber $IMSI"
+            mongosh mongodb://localhost/open5gs --quiet --eval "
+db.subscribers.updateOne(
+  { \"imsi\": \"$IMSI\", \"slice.sd\": \"$PARSED_SD\" },
+  {
+    \$set: {
+      \"slice.$SLICE_INDEX.session.$COUNTER.ue\": { \"ipv4\": \"$CURRENT_IPV4\" },
+      \"slice.$SLICE_INDEX.session.$COUNTER.type\": NumberInt(1)
+    }
+  }
+)"
+        fi
+    else
+        # Add to existing slice
+        COUNTER=$((COUNTER + 1))
+        echo "Assigning secondary APN $CURRENT_APN (session $COUNTER) for subscriber $IMSI"
+        $DBCTL_PATH update_apn "$IMSI" "$CURRENT_APN" "$SLICE_INDEX"
+        if [[ -n "$CURRENT_IPV4" ]]; then
+            echo "Assigning static IPv4 $CURRENT_IPV4 to session $COUNTER on subscriber $IMSI"
+            mongosh mongodb://localhost/open5gs --quiet --eval "
+db.subscribers.updateOne(
+  { \"imsi\": \"$IMSI\" },
+  {
+    \$set: {
+      \"slice.$SLICE_INDEX.session.$COUNTER.ue\": { \"ipv4\": \"$CURRENT_IPV4\" },
+      \"slice.$SLICE_INDEX.session.$COUNTER.type\": NumberInt(1)
+    }
+  }
+)"
+        fi
+    fi
+done
 
 # Check exit status of the command
 if [ $? -eq 0 ]; then

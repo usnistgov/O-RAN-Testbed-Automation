@@ -26,14 +26,12 @@ upf_to_use: null
 plmn: 00101
 tac: 7
 
-# Configure the DNN/APN
-dnn: nist-dnn
-
 # Configure the Single Network Slice Selection Assistance Information (S-NSSAI)
 # NOTE: "sst" and "sd" are interpreted as hexadecimal values (no 0x prefix).
 slices:
   - sst: 1
     sd: FFFFFF
+    dnn: nist-dnn
 
 # If false, AMF will use a local IP, otherwise it will use the hostname IP
 expose_amf_over_hostname: false

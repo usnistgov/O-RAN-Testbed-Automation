@@ -123,14 +123,12 @@ if [ ! -f "options.yaml" ]; then
     echo "plmn: 00101" >>"options.yaml"
     echo "tac: 7" >>"options.yaml"
     echo "" >>"options.yaml"
-    echo "# Configure the DNN/APN" >>"options.yaml"
-    echo "dnn: nist-dnn" >>"options.yaml"
-    echo "" >>"options.yaml"
     echo "# Configure the Single Network Slice Selection Assistance Information (S-NSSAI)" >>"options.yaml"
     echo "# NOTE: \"sst\" and \"sd\" are interpreted as hexadecimal values (no 0x prefix)." >>"options.yaml"
     echo "slices:" >>"options.yaml"
     echo "  - sst: 1" >>"options.yaml"
     echo "    sd: FFFFFF" >>"options.yaml"
+    echo "    dnn: nist-dnn" >>"options.yaml"
     echo "" >>"options.yaml"
     echo "# If false, AMF will use a local IP, otherwise it will use the hostname IP" >>"options.yaml"
     echo "expose_amf_over_hostname: false" >>"options.yaml"
@@ -193,10 +191,10 @@ if [ "$CORE_TO_USE" == "open5gs" ]; then
 fi
 
 # Configure the DNN, SST, and SD values
-DNN=$(sed -n 's/^dnn: //p' options.yaml)
+CURRENT_DNN=$(yq eval '.slices[0].dnn' options.yaml)
 SST=$(yq eval '.slices[0].sst' options.yaml)
 SD=$(yq eval '.slices[0].sd' options.yaml)
-if [[ -z "$DNN" || "$DNN" == "null" ]]; then
+if [[ -z "$CURRENT_DNN" || "$CURRENT_DNN" == "null" ]]; then
     echo "DNN is not set in options.yaml, please ensure that \"dnn\" is set."
     exit 1
 fi
@@ -241,7 +239,7 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
     echo "Registering UE $UE_NUMBER..."
     # Fetch the UE's OPc, IMEI, IMSI, KEY, and NAMESPACE
     read -r UE_OPC UE_IMEI UE_IMSI UE_KEY UE_NAMESPACE < <("$UE_CREDENTIAL_GENERATOR_SCRIPT" "$UE_NUMBER" "$PLMN")
-    ./install_scripts/register_subscriber.sh --imsi "$UE_IMSI" --key "$UE_KEY" --opc "$UE_OPC" --apn "$DNN"
+    ./install_scripts/register_subscriber.sh --imsi "$UE_IMSI" --key "$UE_KEY" --opc "$UE_OPC" --apn "$CURRENT_DNN"
 done
 
 # Ensure that the core is set correctly
@@ -425,15 +423,15 @@ echo "$UPF_TO_USE" >>core_upf_used.txt
 # Revise configuration file netdef.json
 if [ -f "netdef.json" ]; then
     echo "Setting subscribers field in netdef.json..."
-    sed -i "s/\"internet\"/\"$DNN\"/g" netdef.json
-    sed -i "s/'internet'/'$DNN'/g" netdef.json
+    sed -i "s/\"internet\"/\"$CURRENT_DNN\"/g" netdef.json
+    sed -i "s/'internet'/'$CURRENT_DNN'/g" netdef.json
 fi
 
 # Revise configuration files in the cp-cfg directory
 for CPFILE in cp-cfg/*; do
     if [ -f "$CPFILE" ]; then
-        sed -i "s/\"internet\"/\"$DNN\"/g" "$CPFILE"
-        sed -i "s/'internet'/'$DNN'/g" "$CPFILE"
+        sed -i "s/\"internet\"/\"$CURRENT_DNN\"/g" "$CPFILE"
+        sed -i "s/'internet'/'$CURRENT_DNN'/g" "$CPFILE"
     fi
 done
 
@@ -450,21 +448,21 @@ for FILE in up-cfg/upf1.yaml up-cfg/upf140.yaml up-cfg/upf141.yaml; do
             )
         ' "$FILE" >tmp.yaml && mv tmp.yaml "$FILE"
 
-        sed -i "s/\"internet\"/\"$DNN\"/g" "$FILE"
-        sed -i "s/'internet'/'$DNN'/g" "$FILE"
+        sed -i "s/\"internet\"/\"$CURRENT_DNN\"/g" "$FILE"
+        sed -i "s/'internet'/'$CURRENT_DNN'/g" "$FILE"
     fi
 done
 
 # Revise compose.yml
 if [ -f "compose.yml" ]; then
-    # Replace "dnn":["internet"] with dnn:["$DNN"]
-    sed -i -E 's/"dnn"[[:space:]]*:[[:space:]]*\[[[:space:]]*"internet"[[:space:]]*\]/"dnn":["'"$DNN"'"]/g' compose.yml
-    # Replace "dnn":"internet" with "dnn":"$DNN"
-    sed -i -E 's/"dnn"[[:space:]]*:[[:space:]]*"internet"/"dnn":"'"$DNN"'"/g' compose.yml
-    # Replace ${SST_PADDED}${SD_HEX}_internet with ${SST_PADDED}${SD_HEX}_${DNN}
-    sed -i -E "s/${SST_PADDED}${SD_HEX}_internet/${SST_PADDED}${SD_HEX}_${DNN}/g" compose.yml
-    # Replace ${SST_PADDED}${SD_HEX}:internet with ${SST_PADDED}${SD_HEX}:${DNN}
-    sed -i -E "s/${SST_PADDED}${SD_HEX}:internet/${SST_PADDED}${SD_HEX}:${DNN}/g" compose.yml
+    # Replace "dnn":["internet"] with dnn:["$CURRENT_DNN"]
+    sed -i -E 's/"dnn"[[:space:]]*:[[:space:]]*\[[[:space:]]*"internet"[[:space:]]*\]/"dnn":["'"$CURRENT_DNN"'"]/g' compose.yml
+    # Replace "dnn":"internet" with "dnn":"$CURRENT_DNN"
+    sed -i -E 's/"dnn"[[:space:]]*:[[:space:]]*"internet"/"dnn":"'"$CURRENT_DNN"'"/g' compose.yml
+    # Replace ${SST_PADDED}${SD_HEX}_internet with ${SST_PADDED}${SD_HEX}_${CURRENT_DNN}
+    sed -i -E "s/${SST_PADDED}${SD_HEX}_internet/${SST_PADDED}${SD_HEX}_${CURRENT_DNN}/g" compose.yml
+    # Replace ${SST_PADDED}${SD_HEX}:internet with ${SST_PADDED}${SD_HEX}:${CURRENT_DNN}
+    sed -i -E "s/${SST_PADDED}${SD_HEX}:internet/${SST_PADDED}${SD_HEX}:${CURRENT_DNN}/g" compose.yml
 fi
 
 # Revise cp-sql/oai_db.sql
@@ -477,19 +475,19 @@ fi
 
 # Revise cp-sql/smf.sql
 if [ -f "cp-sql/smf.sql" ]; then
-    # Replace "'internet'" with "'$DNN'"
-    sed -i "s/'internet'/'$DNN'/g" cp-sql/smf.sql
+    # Replace "'internet'" with "'$CURRENT_DNN'"
+    sed -i "s/'internet'/'$CURRENT_DNN'/g" cp-sql/smf.sql
 fi
 
 # Revise cp-sql/udm.sql
 if [ -f "cp-sql/udm.sql" ]; then
-    # Replace "'internet'" with "'$DNN'"
-    sed -i "s/'internet'/'$DNN'/g" cp-sql/udm.sql
+    # Replace "'internet'" with "'$CURRENT_DNN'"
+    sed -i "s/'internet'/'$CURRENT_DNN'/g" cp-sql/udm.sql
 fi
 
 if [ -f "cp-db/open5gs.sh" ]; then
-    # Replace " internet " with " $DNN "
-    sed -i "s/ internet / $DNN /g" cp-db/open5gs.sh
+    # Replace " internet " with " $CURRENT_DNN "
+    sed -i "s/ internet / $CURRENT_DNN /g" cp-db/open5gs.sh
 fi
 
 ### End of post-generation patching ###

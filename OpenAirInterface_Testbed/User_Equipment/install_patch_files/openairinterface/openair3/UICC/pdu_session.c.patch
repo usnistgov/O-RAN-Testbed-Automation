@@ -1,5 +1,5 @@
 diff --git a/openair3/UICC/pdu_session.c b/openair3/UICC/pdu_session.c
-index 879eabebdf..e7e26449c4 100644
+index 7cc22ae054..effc0ca9d6 100644
 --- a/openair3/UICC/pdu_session.c
 +++ b/openair3/UICC/pdu_session.c
 @@ -34,7 +34,7 @@

@@ -1,8 +1,8 @@
 diff --git a/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c b/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c
-index b779489abd..2e83b43034 100644
+index a6f66d738a..5ed89584a7 100644
 --- a/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c
 +++ b/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c
-@@ -564,6 +564,10 @@ static void evaluate_rsrp_report(gNB_MAC_INST *nrmac,
+@@ -562,6 +562,10 @@ static void evaluate_rsrp_report(NR_UE_info_t *UE,
      return;
    }
  
@@ -13,7 +13,7 @@ index b779489abd..2e83b43034 100644
    for (RSRP_report_t *i = rsrp_report->r + 1; i < rsrp_report->r + rsrp_report->nb; i++) {
      curr_payload = pickandreverse_bits(payload, 4, *cumul_bits);
      csi_report->nb_of_csi_ssb_report++;
-@@ -573,6 +577,7 @@ static void evaluate_rsrp_report(gNB_MAC_INST *nrmac,
+@@ -571,6 +575,7 @@ static void evaluate_rsrp_report(NR_UE_info_t *UE,
    }
  
    NR_mac_stats_t *stats = &UE->mac_stats;

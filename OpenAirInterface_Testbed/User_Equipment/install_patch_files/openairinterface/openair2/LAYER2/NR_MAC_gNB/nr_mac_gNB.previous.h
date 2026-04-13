@@ -906,8 +906,6 @@ typedef struct gNB_MAC_INST_s {
   eth_params_t                    eth_params_n;
   /// address for F1U to bind, ports in eth_params_n
   char *f1u_addr;
-  /// Ethernet parameters for fronthaul interface
-  eth_params_t                    eth_params_s;
   /// Nvipc parameters for FAPI interface with Aerial
   nvipc_params_t nvipc_params_s;
   /// Module

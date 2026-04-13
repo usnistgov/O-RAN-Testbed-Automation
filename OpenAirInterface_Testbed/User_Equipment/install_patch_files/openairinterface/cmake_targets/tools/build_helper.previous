@@ -120,32 +120,6 @@ handler_EXIT() {
 
 trap handler_EXIT EXIT
 
-###########################
-# Cleaners
-###########################
-
-clean_kernel() {
-    $SUDO modprobe ip_tables
-    $SUDO modprobe x_tables
-    $SUDO iptables -P INPUT ACCEPT
-    $SUDO iptables -F INPUT
-    $SUDO iptables -P OUTPUT ACCEPT
-    $SUDO iptables -F OUTPUT
-    $SUDO iptables -P FORWARD ACCEPT
-    $SUDO iptables -F FORWARD
-    $SUDO iptables -t nat -F
-    $SUDO iptables -t mangle -F
-    $SUDO iptables -t filter -F
-    $SUDO iptables -t raw -F
-    echo_info "Flushed iptables"
-}
-
-clean_all_files() {
- set_openair_env
- dir=$OPENAIR_DIR/cmake_targets
- rm -rf $dir/ran_build $dir/ran_build_noLOG
-}
-
 ############################################
 # External packages installers
 ############################################

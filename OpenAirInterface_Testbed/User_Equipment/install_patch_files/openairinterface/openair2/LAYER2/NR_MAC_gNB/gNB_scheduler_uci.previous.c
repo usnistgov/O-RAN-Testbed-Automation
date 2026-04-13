@@ -421,8 +421,7 @@ static uint8_t pickandreverse_bits(uint8_t *payload, uint16_t bitlen, uint8_t st
   return rev_bits;
 }
 
-static void evaluate_sinr_report(gNB_MAC_INST *nrmac,
-                                 NR_UE_info_t *UE,
+static void evaluate_sinr_report(NR_UE_info_t *UE,
                                  NR_UE_sched_ctrl_t *sched_ctrl,
                                  uint8_t csi_report_id,
                                  uint8_t *payload,
@@ -504,8 +503,7 @@ static void evaluate_sinr_report(gNB_MAC_INST *nrmac,
   LOG_D(MAC, "Reported SSB-SINR = %01f, dl_max_mcs %d\n", sinr_report->r[0].SINRx10 / 10.0, sched_ctrl->dl_max_mcs);
 }
 
-static void evaluate_rsrp_report(gNB_MAC_INST *nrmac,
-                                 NR_UE_info_t *UE,
+static void evaluate_rsrp_report(NR_UE_info_t *UE,
                                  NR_UE_sched_ctrl_t *sched_ctrl,
                                  uint8_t csi_report_id,
                                  uint8_t *payload,
@@ -741,7 +739,7 @@ static void extract_pucch_csi_report(NR_CSI_MeasConfig_t *csi_MeasConfig,
       LOG_D(MAC, "SFN/SF:%d/%d reportQuantity type = %d, type_r16 = %d\n", frame, slot, reportQuantity_type, reportQuantity_type_r16);
       if (reportQuantity_type_r16 == NR_CSI_ReportConfig__ext2__reportQuantity_r16_PR_cri_SINR_r16
           || reportQuantity_type_r16 == NR_CSI_ReportConfig__ext2__reportQuantity_r16_PR_ssb_Index_SINR_r16) {
-        evaluate_sinr_report(nrmac, UE, sched_ctrl, csi_report_id, payload, &cumul_bits, reportQuantity_type_r16);
+        evaluate_sinr_report(UE, sched_ctrl, csi_report_id, payload, &cumul_bits, reportQuantity_type_r16);
       } else {
         // phy-test has hardcoded allocation, so no use to handle CSI reports except RSRP
         if (get_softmodem_params()->phy_test
@@ -750,10 +748,10 @@ static void extract_pucch_csi_report(NR_CSI_MeasConfig_t *csi_MeasConfig,
           continue;
         switch (reportQuantity_type) {
           case NR_CSI_ReportConfig__reportQuantity_PR_cri_RSRP:
-            evaluate_rsrp_report(nrmac, UE, sched_ctrl, csi_report_id, payload, &cumul_bits, reportQuantity_type);
+            evaluate_rsrp_report(UE, sched_ctrl, csi_report_id, payload, &cumul_bits, reportQuantity_type);
             break;
           case NR_CSI_ReportConfig__reportQuantity_PR_ssb_Index_RSRP:
-            evaluate_rsrp_report(nrmac, UE, sched_ctrl, csi_report_id, payload, &cumul_bits, reportQuantity_type);
+            evaluate_rsrp_report(UE, sched_ctrl, csi_report_id, payload, &cumul_bits, reportQuantity_type);
             new_bf_index = beam_selection_procedures(nrmac, UE);
             break;
           case NR_CSI_ReportConfig__reportQuantity_PR_cri_RI_CQI:
@@ -1046,7 +1044,7 @@ static void set_pucch_allocation(const NR_UE_UL_BWP_t *ul_bwp, const int r_pucch
   }
 }
 
-static bool test_pucch0_vrb_occupation(const NR_sched_pucch_t *pucch, uint16_t *vrb_map_UL, const int bwp_start, const int bwp_size)
+static bool test_pucch0_vrb_occupation(const NR_sched_pucch_t *pucch, uint16_t *vrb_map_UL, const int bwp_start)
 {
   // We assume initial cyclic shift is always 0 so different pucch resources can't overlap
 
@@ -1235,7 +1233,7 @@ int nr_acknack_scheduling(gNB_MAC_INST *mac,
       }
       const int index = ul_buffer_index(pucch_frame, pucch_slot, n_slots_frame, mac->vrb_map_UL_size);
       uint16_t *vrb_map_UL = &mac->common_channels[CC_id].vrb_map_UL[beam.idx][index * MAX_BWP_SIZE];
-      bool ret = test_pucch0_vrb_occupation(curr_pucch, vrb_map_UL, bwp_start, bwp_size);
+      bool ret = test_pucch0_vrb_occupation(curr_pucch, vrb_map_UL, bwp_start);
       if(!ret) {
         LOG_D(NR_MAC,
               "DL %4d.%2d, UL_ACK %4d.%2d PRB resources for this occasion are already occupied, move to the following occasion\n",
@@ -1336,10 +1334,7 @@ void nr_sr_reporting(gNB_MAC_INST *nrmac, frame_t SFN, slot_t slot)
         const int bwp_start = ul_bwp->BWPStart;
         const int bwp_size = ul_bwp->BWPSize;
         set_pucch_allocation(ul_bwp, -1, bwp_size, curr_pucch);
-        bool ret = test_pucch0_vrb_occupation(curr_pucch,
-                                              vrb_map_UL,
-                                              bwp_start,
-                                              bwp_size);
+        bool ret = test_pucch0_vrb_occupation(curr_pucch, vrb_map_UL, bwp_start);
         if (!ret) {
           LOG_E(NR_MAC,"Cannot schedule SR. PRBs not available\n");
           continue;

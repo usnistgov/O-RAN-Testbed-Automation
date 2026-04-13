@@ -42,6 +42,7 @@
 
 static int config_check_dnn(configmodule_interface_t *cfg, paramdef_t *param)
 {
+  UNUSED(cfg);
   const char *dnn = *param->strptr;
   int dnn_len = strlen(dnn);
   if (dnn_len > 102) {

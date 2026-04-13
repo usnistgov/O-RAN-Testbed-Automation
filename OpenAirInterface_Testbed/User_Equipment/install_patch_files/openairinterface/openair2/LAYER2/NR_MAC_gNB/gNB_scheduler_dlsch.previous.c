@@ -577,7 +577,7 @@ static void ack_reconfig(gNB_MAC_INST *mac, NR_UE_info_t *UE)
   configure_UE_BWP(mac, scc, UE, false, NR_SearchSpace__searchSpaceType_PR_common, -1, -1);
 }
 
-static bool dlsch_to_schedule(const NR_UE_sched_ctrl_t *sched_ctrl, int frame)
+static bool dlsch_to_schedule(const NR_UE_sched_ctrl_t *sched_ctrl)
 {
   /* Check DL buffer, TA to be sent and  beam switch needed*/
   if (sched_ctrl->num_total_bytes > 0)
@@ -686,7 +686,7 @@ static void pf_dl(gNB_MAC_INST *mac,
 
       update_dlsch_buffer(pp_pdsch->frame, pp_pdsch->slot, UE);
 
-      if (!dlsch_to_schedule(sched_ctrl, frame))
+      if (!dlsch_to_schedule(sched_ctrl))
         continue;
 
       /* Calculate coeff */
@@ -915,7 +915,7 @@ static void nr_dlsch_preprocessor(gNB_MAC_INST *mac, post_process_pdsch_t *pp_pd
   pf_dl(mac, pp_pdsch, UE_info->connected_ue_list, max_sched_ues, num_beams, n_rb_sched);
 }
 
-nr_pp_impl_dl nr_init_dlsch_preprocessor(int CC_id)
+nr_pp_impl_dl nr_init_dlsch_preprocessor()
 {
   return nr_dlsch_preprocessor;
 }

@@ -103,7 +103,7 @@ bool compute_rsrp_metrics(const char *node_id, const uint32_t *current_dist, rsr
   size_t q1_idx = n / 4;
   if (n % 4 == 0 && n > 0 && q1_idx > 0)
   {
-    q1 = (get_percentile_val(diff_dist, q1_idx - 1) + get_percentile_val(diff_dist, q1_idx)) / 2.0;
+    q1 = (get_percentile_val(diff_dist, q1_idx - 1) + get_percentile_val(diff_dist, q1_idx)) / 2.0; // Average the two middle values for Q1 if n is divisible by 4
   }
   else
   {
@@ -113,7 +113,7 @@ bool compute_rsrp_metrics(const char *node_id, const uint32_t *current_dist, rsr
   size_t med_idx = n / 2;
   if (n % 2 == 0 && n > 0 && med_idx > 0)
   {
-    median = (get_percentile_val(diff_dist, med_idx - 1) + get_percentile_val(diff_dist, med_idx)) / 2.0;
+    median = (get_percentile_val(diff_dist, med_idx - 1) + get_percentile_val(diff_dist, med_idx)) / 2.0; // Average the two middle values for median if n is even
   }
   else
   {
@@ -123,7 +123,7 @@ bool compute_rsrp_metrics(const char *node_id, const uint32_t *current_dist, rsr
   size_t q3_idx = (3 * n) / 4;
   if (n % 4 == 0 && n > 0 && q3_idx > 0)
   {
-    q3 = (get_percentile_val(diff_dist, q3_idx - 1) + get_percentile_val(diff_dist, q3_idx)) / 2.0;
+    q3 = (get_percentile_val(diff_dist, q3_idx - 1) + get_percentile_val(diff_dist, q3_idx)) / 2.0; // Average the two middle values for Q3 if n is divisible by 4
   }
   else
   {
@@ -141,10 +141,10 @@ bool compute_rsrp_metrics(const char *node_id, const uint32_t *current_dist, rsr
   return true;
 }
 
-derived_metrics_array_t process_metric_factory(const char *node_id, const char *metric_name, const label_info_lst_t *label_info_lst, size_t label_info_lst_len, const meas_record_lst_t *meas_record_lst, size_t rec_idx_start)
+factory_metrics_array_t process_metric_factory(const char *node_id, const char *metric_name, const label_info_lst_t *label_info_lst, size_t label_info_lst_len, const meas_record_lst_t *meas_record_lst, size_t rec_idx_start)
 {
   (void)label_info_lst;
-  derived_metrics_array_t ret = {0};
+  factory_metrics_array_t ret = {0};
 
   // Derive RSRP.Mean, RSRP.Minimum, RSRP.Quartile1, RSRP.Median, RSRP.Quartile3, RSRP.Maximum, and RSRP.Count from L1M.SS-RSRP
   if (strcmp(metric_name, "L1M.SS-RSRP") == 0 && label_info_lst_len == 128)
@@ -160,7 +160,7 @@ derived_metrics_array_t process_metric_factory(const char *node_id, const char *
     if (compute_rsrp_metrics(node_id, current_dist, &metrics) && metrics.count > 0)
     {
       ret.count = 7;
-      ret.metrics = calloc(ret.count, sizeof(derived_metric_t));
+      ret.metrics = calloc(ret.count, sizeof(factory_metric_t));
 
       snprintf(ret.metrics[0].name, sizeof(ret.metrics[0].name), "RSRP.Mean");
       ret.metrics[0].value_type = 1;
@@ -195,7 +195,7 @@ derived_metrics_array_t process_metric_factory(const char *node_id, const char *
   return ret;
 }
 
-void free_derived_metrics(derived_metrics_array_t *arr)
+void free_factory_metrics(factory_metrics_array_t *arr)
 {
   if (arr->metrics)
   {

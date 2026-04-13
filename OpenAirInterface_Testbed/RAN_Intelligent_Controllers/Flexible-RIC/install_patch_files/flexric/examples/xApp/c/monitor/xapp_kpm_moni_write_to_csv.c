@@ -707,14 +707,14 @@ static void log_kpm_measurements(kpm_ind_msg_format_1_t const *msg_frm_1, bool i
         if (name_unit == NULL)
           name_unit = "";
 
-        derived_metrics_array_t generated_metrics = process_metric_factory(
+        factory_metrics_array_t generated_metrics = process_metric_factory(
             current_e2_id_str, name_str,
             info_item.label_info_lst, info_item.label_info_lst_len,
             data_item.meas_record_lst, rec_idx);
 
         for (size_t k = 0; k < generated_metrics.count; k++)
         {
-          derived_metric_t m = generated_metrics.metrics[k];
+          factory_metric_t m = generated_metrics.metrics[k];
 
           char rsrp_line[512];
           if (m.value_type == 0)
@@ -735,7 +735,7 @@ static void log_kpm_measurements(kpm_ind_msg_format_1_t const *msg_frm_1, bool i
             csv_append_name_to_csv_header(m.name, m.name && strstr(m.name, ".Count") ? "" : "dBm");
           }
         }
-        free_derived_metrics(&generated_metrics);
+        free_factory_metrics(&generated_metrics);
 
         if (!(is_cell_metric ? csv_wrote_cell_header : csv_wrote_header))
         {

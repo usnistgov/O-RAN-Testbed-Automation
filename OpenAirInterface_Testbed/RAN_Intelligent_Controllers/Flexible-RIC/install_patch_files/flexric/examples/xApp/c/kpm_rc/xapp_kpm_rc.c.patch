@@ -1,5 +1,5 @@
 diff --git a/examples/xApp/c/kpm_rc/xapp_kpm_rc.c b/examples/xApp/c/kpm_rc/xapp_kpm_rc.c
-index ba0ccd3a..087d465e 100644
+index ba0ccd3a..f25d21aa 100644
 --- a/examples/xApp/c/kpm_rc/xapp_kpm_rc.c
 +++ b/examples/xApp/c/kpm_rc/xapp_kpm_rc.c
 @@ -15,6 +15,8 @@
@@ -52,14 +52,14 @@ index ba0ccd3a..087d465e 100644
 +        if (name_unit == NULL)
 +          name_unit = "";
 +
-+        derived_metrics_array_t generated_metrics = process_metric_factory(
++        factory_metrics_array_t generated_metrics = process_metric_factory(
 +            "", name_str,
 +            info_item.label_info_lst, info_item.label_info_lst_len,
 +            data_item.meas_record_lst, rec_idx);
 +
 +        for (size_t k = 0; k < generated_metrics.count; k++)
 +        {
-+          derived_metric_t m = generated_metrics.metrics[k];
++          factory_metric_t m = generated_metrics.metrics[k];
 +          if (m.value_type == 0)
 +          {
 +            printf("%s = %d\n", m.name, m.int_val);
@@ -69,7 +69,7 @@ index ba0ccd3a..087d465e 100644
 +            printf("%s = %.2f\n", m.name, m.real_val);
 +          }
 +        }
-+        free_derived_metrics(&generated_metrics);
++        free_factory_metrics(&generated_metrics);
 +
 +        char arr_str[8192];
 +        format_meas_record_array(arr_str, sizeof(arr_str), info_item.label_info_lst, info_item.label_info_lst_len, data_item.meas_record_lst, rec_idx);

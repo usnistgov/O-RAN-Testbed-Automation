@@ -577,14 +577,14 @@ static void log_kpm_measurements(kpm_ind_msg_format_1_t const *msg_frm_1, bool i
         char arr_str[8192];
         format_meas_record_array(arr_str, sizeof(arr_str), info_item.label_info_lst, info_item.label_info_lst_len, data_item.meas_record_lst, rec_idx);
 
-        derived_metrics_array_t generated_metrics = process_metric_factory(
+        factory_metrics_array_t generated_metrics = process_metric_factory(
             current_e2_id_str, name_str,
             info_item.label_info_lst, info_item.label_info_lst_len,
             data_item.meas_record_lst, rec_idx);
 
         for (size_t k = 0; k < generated_metrics.count; k++)
         {
-          derived_metric_t m = generated_metrics.metrics[k];
+          factory_metric_t m = generated_metrics.metrics[k];
 
           char m_safe_metric_name[128];
           if (!sanitize_metric_name(m.name, m_safe_metric_name, sizeof(m_safe_metric_name)))
@@ -606,7 +606,7 @@ static void log_kpm_measurements(kpm_ind_msg_format_1_t const *msg_frm_1, bool i
           }
           strncat(influx_fields_buffer, influx_field, sizeof(influx_fields_buffer) - strlen(influx_fields_buffer) - 1);
         }
-        free_derived_metrics(&generated_metrics);
+        free_factory_metrics(&generated_metrics);
 
         rec_idx += info_item.label_info_lst_len;
 

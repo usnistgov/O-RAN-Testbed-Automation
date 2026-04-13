@@ -520,6 +520,14 @@ if [ ! -f "zmq_broker/multi_ue_scenario.py" ]; then
         sudo bash -c 'echo "gr::vmcircbuf_sysv_shm_factory" > /root/.gnuradio/prefs/vmcircbuf_default_factory'
     fi
 
+    # Numpy version must be less than 2 to avoid grcc compatibility issue
+    NUMPY_VERSION=$(python3 -c "import numpy; print(numpy.__version__)" 2>/dev/null || echo "0")
+    NUMPY_MAJOR=$(echo "$NUMPY_VERSION" | cut -d. -f1)
+    if [ "$NUMPY_MAJOR" -ge 2 ]; then
+        echo "Downgrading NumPy to version < 2 for GNU Radio compatibility..."
+        pip3 install "numpy<2" --break-system-packages
+    fi
+
     grcc -o zmq_broker zmq_broker/multi_ue_scenario.grc
 fi
 

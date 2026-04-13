@@ -128,10 +128,10 @@ echo "MNC value: $MNC"
 echo "MNC_LENGTH value: $MNC_LENGTH"
 
 # Configure the DNN, SST, and SD values
-DNN=$(sed -n 's/^dnn: //p' "$YAML_PATH")
+CURRENT_DNN=$(yq eval '.slices[0].dnn' "$YAML_PATH")
 SST=$(yq eval '.slices[0].sst' "$YAML_PATH")
 SD=$(yq eval '.slices[0].sd' "$YAML_PATH")
-if [[ -z "$DNN" || "$DNN" == "null" ]]; then
+if [[ -z "$CURRENT_DNN" || "$CURRENT_DNN" == "null" ]]; then
     echo "DNN is not set in "$YAML_PATH", please ensure that \"dnn\" is set."
     exit 1
 fi
@@ -221,7 +221,7 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
     update_conf "configs/ue$UE_NUMBER.conf" "opc" "\"$UE_OPC\""
 
     # Configure the PDU sessions (DNN, SST, SD)
-    update_conf "configs/ue$UE_NUMBER.conf" "pdu_sessions" "({ dnn = \"$DNN\"; nssai_sst = $SST_DEC; nssai_sd = 0x$SD_HEX; })"
+    update_conf "configs/ue$UE_NUMBER.conf" "pdu_sessions" "({ dnn = \"$CURRENT_DNN\"; nssai_sst = $SST_DEC; nssai_sd = 0x$SD_HEX; })"
 
     # Finally, ensure that it is referencing the channelmod_rfsimu.conf file
     sed -i "s|channelmod_rfsimu_LEO_satellite.conf|channelmod_rfsimu.conf|" "configs/ue$UE_NUMBER.conf"
@@ -242,7 +242,7 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
             else
                 IPV4_LINE=""
             fi
-            "$REGISTRATION_DIR/./register_subscriber.sh" --imsi "$UE_IMSI" --key "$UE_KEY" --opc "$UE_OPC" --apn "$DNN" --sst "$SST_DEC" --sd "$SD_HEX" $IPV4_LINE || true
+            "$REGISTRATION_DIR/./register_subscriber.sh" --imsi "$UE_IMSI" --key "$UE_KEY" --opc "$UE_OPC" --apn "$CURRENT_DNN" --sst "$SST_DEC" --sd "$SD_HEX" $IPV4_LINE || true
         fi
     fi
 
@@ -253,7 +253,7 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
     echo "    IMSI: $UE_IMSI"
     echo "    KEY:  $UE_KEY"
     echo "    PLMN: $PLMN"
-    echo "    DNN:  $DNN"
+    echo "    DNN:  $CURRENT_DNN"
     echo "    SST:  $SST_HEX (hex)"
     echo "    SD:   $SD_HEX (hex)"
     if [ -n "$UE_IPV4" ]; then

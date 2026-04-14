@@ -38,10 +38,11 @@ int get_percentile_val(uint32_t *dist, size_t index)
     cumulative += dist[i];
     if (cumulative > index)
     {
-      return -156 + i;
+      // 38.133 Table 10.1.6.1-1: SS-RSRP and CSI-RSRP measurement report mapping
+      return -157 + i;
     }
   }
-  return -156 + 127;
+  return -157 + 127;
 }
 
 bool compute_rsrp_metrics(const char *node_id, const uint32_t *current_dist, rsrp_metrics_t *out_metrics)
@@ -88,7 +89,8 @@ bool compute_rsrp_metrics(const char *node_id, const uint32_t *current_dist, rsr
   {
     if (diff_dist[i] > 0)
     {
-      int dbm_val = -156 + i;
+      // 38.133 Table 10.1.6.1-1: SS-RSRP and CSI-RSRP measurement report mapping
+      int dbm_val = -157 + i;
       sum += (double)dbm_val * diff_dist[i];
       if (dbm_val < min_val)
         min_val = dbm_val;

@@ -1,8 +1,8 @@
 diff --git a/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c b/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c
-index a6f66d738a..5ed89584a7 100644
+index a6f66d738a..966a90f5cc 100644
 --- a/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c
 +++ b/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c
-@@ -562,6 +562,10 @@ static void evaluate_rsrp_report(NR_UE_info_t *UE,
+@@ -562,18 +562,30 @@ static void evaluate_rsrp_report(NR_UE_info_t *UE,
      return;
    }
  
@@ -13,11 +13,25 @@ index a6f66d738a..5ed89584a7 100644
    for (RSRP_report_t *i = rsrp_report->r + 1; i < rsrp_report->r + rsrp_report->nb; i++) {
      curr_payload = pickandreverse_bits(payload, 4, *cumul_bits);
      csi_report->nb_of_csi_ssb_report++;
-@@ -571,6 +575,7 @@ static void evaluate_rsrp_report(NR_UE_info_t *UE,
+     i->RSRP = get_diff_rsrp(curr_payload & 0x0f, rsrp_report->r[0].RSRP);
+     LOG_D(NR_MAC, "SSB/CSI-RS index %d RSRP %d\n", i->resource_id, i->RSRP);
+     *cumul_bits += 4;
++
++    uint8_t rsrp_index = get_rsrp_index(i->RSRP);
++    if (rsrp_index <= 127) {
++      du_stats->ss_rsrp_dist[rsrp_index] += 1;
++    }
    }
  
    NR_mac_stats_t *stats = &UE->mac_stats;
 +
    // including ssb rsrp in mac stats
-   stats->cumul_rsrp += rsrp_report->r[0].RSRP;
-   stats->num_rsrp_meas++;
+-  stats->cumul_rsrp += rsrp_report->r[0].RSRP;
+-  stats->num_rsrp_meas++;
++  for (RSRP_report_t *i = rsrp_report->r; i < rsrp_report->r + rsrp_report->nb; i++) {
++    stats->cumul_rsrp += i->RSRP;
++    stats->num_rsrp_meas++;
++  }
+ }
+ 
+ static void evaluate_cri_report(uint8_t *payload, uint8_t cri_bitlen, int cumul_bits, NR_UE_sched_ctrl_t *sched_ctrl)

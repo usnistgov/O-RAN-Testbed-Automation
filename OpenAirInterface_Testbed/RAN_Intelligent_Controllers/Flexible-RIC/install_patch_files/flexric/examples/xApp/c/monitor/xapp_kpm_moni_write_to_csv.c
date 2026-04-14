@@ -145,6 +145,8 @@ static void csv_append_name_to_csv_header(const char *name, const char *unit)
   char *target_buffer = is_cell_metric ? csv_cell_header_buffer : csv_header_buffer;
   size_t buffer_size = is_cell_metric ? sizeof(csv_cell_header_buffer) : sizeof(csv_header_buffer);
 
+  if (!name) name = "";
+  if (!unit) unit = "";
   size_t current_len = strlen(target_buffer);
   size_t name_len = strlen(name);
   size_t unit_len = strlen(unit);
@@ -208,6 +210,7 @@ static void csv_append_real_to_csv_line(meas_record_lst_t meas_record)
 
 static void csv_append_string_to_csv_line(const char *str)
 {
+  if (!str) str = "";
   char *target_buffer = is_cell_metric ? csv_cell_line_buffer : csv_line_buffer;
   size_t buffer_size = is_cell_metric ? sizeof(csv_cell_line_buffer) : sizeof(csv_line_buffer);
   size_t current_len = strlen(target_buffer);

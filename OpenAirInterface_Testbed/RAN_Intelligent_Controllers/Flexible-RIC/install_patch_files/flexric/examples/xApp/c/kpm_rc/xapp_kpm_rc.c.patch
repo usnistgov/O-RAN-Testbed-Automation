@@ -1,5 +1,5 @@
 diff --git a/examples/xApp/c/kpm_rc/xapp_kpm_rc.c b/examples/xApp/c/kpm_rc/xapp_kpm_rc.c
-index ba0ccd3a..f89733ba 100644
+index ba0ccd3a..282465ce 100644
 --- a/examples/xApp/c/kpm_rc/xapp_kpm_rc.c
 +++ b/examples/xApp/c/kpm_rc/xapp_kpm_rc.c
 @@ -15,6 +15,8 @@
@@ -17,85 +17,66 @@ index ba0ccd3a..f89733ba 100644
  
 +// Overwritten if environment variables SST and SD are set
 +static
-+uint8_t  cfg_slicing_sst = 1;
++uint8_t cfg_slicing_sst = 1;
 +static
-+uint32_t cfg_slicing_sd  = 0xFFFFFF; // 0xFFFFFF for any SD
++uint32_t cfg_slicing_sd = 0xFFFFFF; // 0xFFFFFF for any SD
 +
  static
  assoc_ht_open_t ht = {0};
  
-@@ -191,19 +199,62 @@ void log_kpm_measurements(kpm_ind_msg_format_1_t const* msg_frm_1)
+@@ -190,20 +198,43 @@ void log_kpm_measurements(kpm_ind_msg_format_1_t const* msg_frm_1)
+ {
    assert(msg_frm_1->meas_info_lst_len > 0 && "Cannot correctly print measurements");
  
++  const char *current_e2_id_str = "gNB";
++
    // UE Measurements per granularity period
--  for (size_t j = 0; j < msg_frm_1->meas_data_lst_len; j++) {
-+  for (size_t j = 0; j < msg_frm_1->meas_data_lst_len; j++)
-+  {
+   for (size_t j = 0; j < msg_frm_1->meas_data_lst_len; j++) {
      meas_data_lst_t const data_item = msg_frm_1->meas_data_lst[j];
  
--    for (size_t i = 0; i < msg_frm_1->meas_info_lst_len; i++) {
 +    size_t rec_idx = 0;
-+    for (size_t i = 0; i < msg_frm_1->meas_info_lst_len; i++)
-+    {
+     for (size_t i = 0; i < msg_frm_1->meas_info_lst_len; i++) {
        const meas_info_format_1_lst_t info_item = msg_frm_1->meas_info_lst[i];
 -      for (size_t z = 0; z < info_item.label_info_lst_len; z++) {
 -        const label_info_lst_t label_info = info_item.label_info_lst[z];
 -        const meas_record_lst_t record_item = data_item.meas_record_lst[i + z];
- 
+-
 -        match_meas_type[info_item.meas_type.type](info_item.meas_type, label_info, record_item);
-+      if (info_item.label_info_lst_len > 1 && info_item.meas_type.type == NAME_MEAS_TYPE)
-+      {
-+        char *name_str = cp_ba_to_str(info_item.meas_type.name);
-+        char *name_unit = get_meas_unit(name_str);
-+        if (name_unit && strcmp(name_unit, "[]") == 0)
-+          name_unit = "";
-+        if (name_unit == NULL)
-+          name_unit = "";
-+
-+        factory_metrics_array_t generated_metrics = process_metric_factory(
-+            "", name_str,
-+            info_item.label_info_lst, info_item.label_info_lst_len,
-+            data_item.meas_record_lst, rec_idx);
-+
-+        for (size_t k = 0; k < generated_metrics.count; k++)
-+        {
-+          factory_metric_t m = generated_metrics.metrics[k];
-+          if (m.value_type == 0)
-+          {
-+            printf("%s = %d\n", m.name, m.int_val);
-+          }
-+          else
-+          {
-+            printf("%s = %.2f\n", m.name, m.real_val);
-+          }
-+        }
-+        free_factory_metrics(&generated_metrics);
-+
-+        char arr_str[8192];
-+        format_meas_record_array(arr_str, sizeof(arr_str), info_item.label_info_lst, info_item.label_info_lst_len, data_item.meas_record_lst, rec_idx);
-+        printf("%s = %s %s\n", name_str, arr_str, name_unit);
- 
+-
 -        if (data_item.incomplete_flag && *data_item.incomplete_flag == TRUE_ENUM_VALUE)
 -          printf("Measurement Record not reliable");
-+        rec_idx += info_item.label_info_lst_len;
++      if (info_item.label_info_lst_len > 1 && info_item.meas_type.type == NAME_MEAS_TYPE) {
++        char *name_str = cp_ba_to_str(info_item.meas_type.name);
++        char *name_unit = get_meas_unit(name_str);
++        char arr_str[8192];
++        format_meas_record_array(arr_str, sizeof(arr_str), info_item.label_info_lst, info_item.label_info_lst_len, data_item.meas_record_lst, rec_idx);
++        printf("%s = %s [%s]\n", name_str, arr_str, name_unit);
++
++        factory_metrics_array_t f_metrics = process_metric_factory(current_e2_id_str ? current_e2_id_str : "gNB", name_str, info_item.label_info_lst, info_item.label_info_lst_len, data_item.meas_record_lst, rec_idx);
++        for (size_t m = 0; m < f_metrics.count; m++) {
++          if (f_metrics.metrics[m].value_type == 0) {
++            printf("%s = %d\n", f_metrics.metrics[m].name, f_metrics.metrics[m].int_val);
++          } else {
++            printf("%s = %.2f\n", f_metrics.metrics[m].name, f_metrics.metrics[m].real_val);
++          }
++        }
++        free_factory_metrics(&f_metrics);
 +        free(name_str);
-+      }
-+      else
-+      {
-+        for (size_t z = 0; z < info_item.label_info_lst_len; z++)
-+        {
++        rec_idx += info_item.label_info_lst_len;
++      } else {
++        for (size_t z = 0; z < info_item.label_info_lst_len; z++) {
 +          const label_info_lst_t label_info = info_item.label_info_lst[z];
 +          const meas_record_lst_t record_item = data_item.meas_record_lst[rec_idx++];
 +
 +          match_meas_type[info_item.meas_type.type](info_item.meas_type, label_info, record_item);
 +
 +          if (data_item.incomplete_flag && *data_item.incomplete_flag == TRUE_ENUM_VALUE)
-+            printf("Measurement Record not reliable");
++            printf("Measurement Record not reliable\n");
 +        }
        }
      }
    }
-@@ -407,7 +458,7 @@ rc_ctrl_req_data_t gen_rc_ctrl_msg(ran_func_def_ctrl_t const* ran_func)
+@@ -407,7 +438,7 @@ rc_ctrl_req_data_t gen_rc_ctrl_msg(ran_func_def_ctrl_t const* ran_func)
  }
  
  static
@@ -104,7 +85,7 @@ index ba0ccd3a..f89733ba 100644
  {
    test_info_lst_t dst = {0};
  
-@@ -426,11 +477,17 @@ test_info_lst_t filter_predicate(test_cond_type_e type, test_cond_e cond, int va
+@@ -426,26 +457,21 @@ test_info_lst_t filter_predicate(test_cond_type_e type, test_cond_e cond, int va
  
    dst.test_cond_value->octet_string_value = calloc(1, sizeof(byte_array_t));
    assert(dst.test_cond_value->octet_string_value != NULL && "Memory exhausted");
@@ -124,7 +105,33 @@ index ba0ccd3a..f89733ba 100644
  
    return dst;
  }
-@@ -505,8 +562,7 @@ kpm_act_def_t fill_report_style_4(ric_report_style_item_t const* report_item)
+ 
+-static
+-label_info_lst_t fill_kpm_label(void)
+-{
+-  label_info_lst_t label_item = {0};
+-
+-  label_item.noLabel = ecalloc(1, sizeof(enum_value_e));
+-  *label_item.noLabel = TRUE_ENUM_VALUE;
+-
+-  return label_item;
+-}
+-
+ static
+ kpm_act_def_format_1_t fill_act_def_frm_1(ric_report_style_item_t const* report_item)
+ {
+@@ -469,9 +495,7 @@ kpm_act_def_format_1_t fill_act_def_frm_1(ric_report_style_item_t const* report_
+ 
+     // [1, 2147483647]
+     // 8.3.11
+-    meas_item->label_info_lst_len = 1;
+-    meas_item->label_info_lst = ecalloc(1, sizeof(label_info_lst_t));
+-    meas_item->label_info_lst[0] = fill_kpm_label();
++    populate_label_info(meas_item);
+   }
+ 
+   // 8.3.8 [0, 4294967295]
+@@ -505,8 +529,7 @@ kpm_act_def_t fill_report_style_4(ric_report_style_item_t const* report_item)
    // Filter connected UEs by S-NSSAI criteria
    test_cond_type_e const type = S_NSSAI_TEST_COND_TYPE; // CQI_TEST_COND_TYPE
    test_cond_e const condition = EQUAL_TEST_COND; // GREATERTHAN_TEST_COND
@@ -134,7 +141,7 @@ index ba0ccd3a..f89733ba 100644
  
    // Fill Action Definition Format 1
    // 8.2.1.2.1
-@@ -515,25 +571,6 @@ kpm_act_def_t fill_report_style_4(ric_report_style_item_t const* report_item)
+@@ -515,26 +538,6 @@ kpm_act_def_t fill_report_style_4(ric_report_style_item_t const* report_item)
    return act_def;
  }
  
@@ -157,10 +164,11 @@ index ba0ccd3a..f89733ba 100644
 -
 -  return label_item;
 -}
- 
+-
  static
  kpm_act_def_t fill_report_style_1(ric_report_style_item_t const* report_item)
-@@ -555,23 +592,7 @@ kpm_act_def_t fill_report_style_1(ric_report_style_item_t const* report_item)
+ {
+@@ -555,23 +558,7 @@ kpm_act_def_t fill_report_style_1(ric_report_style_item_t const* report_item)
  
      // [1, 2147483647]
      // 8.3.11
@@ -181,45 +189,7 @@ index ba0ccd3a..f89733ba 100644
 -      meas_item->label_info_lst = ecalloc(meas_item->label_info_lst_len, sizeof(label_info_lst_t));
 -      meas_item->label_info_lst[0] = fill_kpm_label();
 -    }
-+      populate_label_info(meas_item);
++    populate_label_info(meas_item);
    }
  
    // 8.3.8 [0, 4294967295]
-@@ -647,6 +668,29 @@ size_t find_sm_idx(sm_ran_function_t* rf, size_t sz, bool (*f)(sm_ran_function_t
-   return 0;
- }
- 
-+static
-+void load_slice_from_env(void)
-+{
-+  const char *s;
-+  char *end = NULL;
-+  errno = 0;
-+
-+  s = getenv("SST");
-+  if (s && *s) {
-+    unsigned long v = strtoul(s, &end, 0);
-+    if (end != s && errno == 0 && v <= 0xFFul) cfg_slicing_sst = (uint8_t)v;
-+  }
-+
-+  errno = 0; end = NULL;
-+  s = getenv("SD");
-+  if (s && *s) {
-+    unsigned long v = strtoul(s, &end, 0);
-+    if (end != s && errno == 0) cfg_slicing_sd = ((uint32_t)v) & 0xFFFFFFu;
-+  }
-+
-+  printf("[xApp] Using S-NSSAI SST=%u SD=%06x (env SST/SD can override)\n", (unsigned)cfg_slicing_sst, (unsigned)(cfg_slicing_sd & 0xFFFFFFu));
-+}
-+
- int main(int argc, char* argv[])
- {
-   fr_args_t args = init_fr_args(argc, argv);
-@@ -655,6 +699,7 @@ int main(int argc, char* argv[])
-   init_xapp_api(&args);
-   sleep(1);
- 
-+  load_slice_from_env();
-   init_kpm_meas_unit_hash_table();
- 
-   e2_node_arr_xapp_t nodes = e2_nodes_xapp_api();

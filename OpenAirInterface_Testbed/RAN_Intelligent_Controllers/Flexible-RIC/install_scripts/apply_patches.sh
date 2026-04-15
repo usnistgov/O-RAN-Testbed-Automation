@@ -117,8 +117,18 @@ DRB.MacSduErrorRateDl [%]
 EOF
 fi
 
+# Append CARR.PUSCHMCSDist [PUSCH_RBs] after CARR.PUSCHMCSDist.BinX.BinY.BinZ [] if not already present
+if ! grep -q "^CARR\.PUSCHMCSDist \[PUSCH_RBs\]" src/sm/kpm_sm/28_552_kpm_meas.txt; then
+    sed -i '/^CARR\.PUSCHMCSDist\.BinX\.BinY\.BinZ \[\]$/a CARR.PUSCHMCSDist [PUSCH_RBs]' src/sm/kpm_sm/28_552_kpm_meas.txt
+fi
+
+# Append CARR.WBCQIDist [] after CARR.WBCQIDist.BinX.BinY.BinZ [] if not already present
+if ! grep -q "^CARR\.WBCQIDist \[\]" src/sm/kpm_sm/28_552_kpm_meas.txt; then
+    sed -i '/^CARR\.WBCQIDist\.BinX\.BinY\.BinZ \[\]$/a CARR.WBCQIDist []' src/sm/kpm_sm/28_552_kpm_meas.txt
+fi
+
 # Append L1M.SS-RSRP [dBm] after L1M.SS-RSRP.Bin [] if not already present
-if ! grep -q "^L1M\.SS-RSRP\.Bin \[dBm\]" src/sm/kpm_sm/28_552_kpm_meas.txt; then
+if ! grep -q "^L1M\.SS-RSRP \[dBm\]" src/sm/kpm_sm/28_552_kpm_meas.txt; then
     sed -i '/^L1M\.SS-RSRP\.Bin \[\]$/a L1M.SS-RSRP [dBm]' src/sm/kpm_sm/28_552_kpm_meas.txt
 fi
 

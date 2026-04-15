@@ -1,0 +1,72 @@
+diff --git a/examples/xApp/c/monitor/CMakeLists.txt b/examples/xApp/c/monitor/CMakeLists.txt
+index 2105b69e..b2825e00 100644
+--- a/examples/xApp/c/monitor/CMakeLists.txt
++++ b/examples/xApp/c/monitor/CMakeLists.txt
+@@ -2,8 +2,9 @@
+ 
+ add_subdirectory(RRC_MESSAGES)
+ 
+-add_executable(xapp_kpm_moni 
++add_executable(xapp_kpm_moni
+ 		xapp_kpm_moni.c
++                ../metrics_factory.c
+                 ../../../../src/util/alg_ds/alg/defer.c
+ 		../../../../src/util/alg_ds/alg/murmur_hash_32.c
+ 		../../../../src/util/alg_ds/ds/assoc_container/assoc_ht_open_address.c
+@@ -18,6 +19,7 @@ add_executable(xapp_kpm_moni
+ 		      )
+ target_compile_definitions(xapp_kpm_moni PRIVATE KPM_MEAS_LIST="${KPM_MEAS_LIST}")
+ 
++
+ add_executable(xapp_gtp_mac_rlc_pdcp_moni 
+ 		xapp_gtp_mac_rlc_pdcp_moni.c
+                 ../../../../src/util/alg_ds/alg/defer.c
+@@ -70,7 +72,7 @@ set(UE_ID_COMMON_E2SM_SRCS
+   ../../../../src/sm/rc_sm/ie/asn/UEID-NG-ENB.c
+ )
+ 
+-add_executable(xapp_rc_moni 
++add_executable(xapp_rc_moni
+                xapp_rc_moni.c
+                ${UE_ID_COMMON_E2SM_SRCS}
+                ../../../../src/util/alg_ds/alg/defer.c
+@@ -85,3 +87,39 @@ target_link_libraries(xapp_rc_moni
+                      -lsctp
+                      -ldl
+                      )
++
++add_executable(xapp_kpm_moni_write_to_csv
++		xapp_kpm_moni_write_to_csv.c
++                ../metrics_factory.c
++                ../../../../src/util/alg_ds/alg/defer.c
++                ../../../../src/util/alg_ds/alg/murmur_hash_32.c
++                ../../../../src/util/alg_ds/ds/assoc_container/assoc_ht_open_address.c
++              )
++
++target_link_libraries(xapp_kpm_moni_write_to_csv
++                    PUBLIC
++                    e42_xapp
++                    -pthread
++                    -lsctp
++                    -ldl
++                    )
++
++target_compile_definitions(xapp_kpm_moni_write_to_csv PRIVATE KPM_MEAS_LIST="${KPM_MEAS_LIST}")
++
++add_executable(xapp_kpm_moni_write_to_influxdb
++		xapp_kpm_moni_write_to_influxdb.c
++                ../metrics_factory.c
++                ../../../../src/util/alg_ds/alg/defer.c
++                ../../../../src/util/alg_ds/alg/murmur_hash_32.c
++                ../../../../src/util/alg_ds/ds/assoc_container/assoc_ht_open_address.c
++              )
++
++target_link_libraries(xapp_kpm_moni_write_to_influxdb
++                    PUBLIC
++                    e42_xapp
++                    -pthread
++                    -lsctp
++                    -ldl
++                    )
++target_compile_definitions(xapp_kpm_moni_write_to_influxdb PRIVATE KPM_MEAS_LIST="${KPM_MEAS_LIST}")
++

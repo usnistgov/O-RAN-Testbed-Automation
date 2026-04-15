@@ -28,49 +28,25 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-# Do not exit immediately if a command fails
-set +e
+# Exit immediately if a command fails
+set -e
 
-APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
-if ! command -v realpath &>/dev/null; then
-    echo "Package \"coreutils\" not found, installing..."
-    sudo env $APTVARS apt-get install -y coreutils
+DIR="/usr/local/lib/flexric"
+
+if [ -d "$DIR" ]; then
+    MODIFIED_TIME=$(stat -c '%y' "$DIR")
+    FORMATTED=$(date -d "$MODIFIED_TIME" '+%a %b %d %Y, %I:%M:%S %p')
+
+    MODIFIED_EPOCH=$(date -d "$MODIFIED_TIME" +%s)
+    NOW_EPOCH=$(date +%s)
+    DIFF=$((NOW_EPOCH - MODIFIED_EPOCH))
+
+    DAYS=$((DIFF / 86400))
+    HOURS=$(( (DIFF % 86400) / 3600 ))
+    MINUTES=$(( (DIFF % 3600) / 60 ))
+
+    echo "FlexRIC libraries were last modified: $FORMATTED"
+    printf "    %d days %d hours %d minutes ago\n" "$DAYS" "$HOURS" "$MINUTES"
+else
+    echo "FlexRIC libraries do not exist: $DIR"
 fi
-
-SCRIPT_DIR=$(dirname "$(realpath "$0")")
-cd "$SCRIPT_DIR"
-
-echo "Stopping User Equipment..."
-./stop.sh
-
-if [ -d openairinterface5g ]; then
-    cd "openairinterface5g/cmake_targets"
-    ./build_oai --clean-all # --clean-kernel
-    cd ../..
-fi
-sudo rm -rf openairinterface5g
-
-sudo rm -rf logs/
-sudo rm -rf configs/
-sudo rm -rf install_time.txt
-
-cd ../Next_Generation_Node_B
-
-if [ -d openairinterface5g ]; then
-    cd "openairinterface5g/cmake_targets"
-    ./build_oai --clean-all # --clean-kernel
-    cd ../..
-fi
-sudo rm -rf openairinterface5g
-
-sudo rm -rf logs/
-sudo rm -rf configs/
-sudo rm -rf install_time.txt
-
-cd "$SCRIPT_DIR"
-
-echo
-echo
-echo "################################################################################"
-echo "# Successfully uninstalled OpenAirInterface UE and gNodeB                      #"
-echo "################################################################################"

@@ -40,8 +40,9 @@ if ! command -v realpath &>/dev/null; then
     sudo env $APTVARS apt-get install -y coreutils
 fi
 
-SCRIPT_DIR=$(dirname "$(realpath "$0")")
-PARENT_DIR=$(dirname "$SCRIPT_DIR")
+# The script directory respects symbolic links so that the gNB and UE can patch their own openairinterface5g
+SCRIPT_DIR="$(cd "$(dirname "$0")" >/dev/null 2>&1 && pwd)"
+PARENT_DIR="$(dirname "$SCRIPT_DIR")"
 cd "$PARENT_DIR"
 
 # Modify CMakeLists.txt to set E2AP_VERSION and KPM_VERSION (must match FlexRIC)

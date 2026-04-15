@@ -48,7 +48,7 @@ cd ../User_Equipment
 
 if [ -d openairinterface5g ]; then
     cd "openairinterface5g/cmake_targets"
-    ./build_oai -C --clean-kernel
+    ./build_oai --clean-all # --clean-kernel
     cd ../..
 fi
 sudo rm -rf openairinterface5g
@@ -62,7 +62,7 @@ cd "$SCRIPT_DIR"
 
 if [ -d openairinterface5g ]; then
     cd "openairinterface5g/cmake_targets"
-    ./build_oai -C --clean-kernel
+    ./build_oai --clean-all # --clean-kernel
     cd ../..
 fi
 sudo rm -rf openairinterface5g

@@ -42,8 +42,8 @@ if [ -d "$DIR" ]; then
     DIFF=$((NOW_EPOCH - MODIFIED_EPOCH))
 
     DAYS=$((DIFF / 86400))
-    HOURS=$(( (DIFF % 86400) / 3600 ))
-    MINUTES=$(( (DIFF % 3600) / 60 ))
+    HOURS=$(((DIFF % 86400) / 3600))
+    MINUTES=$(((DIFF % 3600) / 60))
 
     echo "FlexRIC libraries were last modified: $FORMATTED"
     printf "    %d days %d hours %d minutes ago\n" "$DAYS" "$HOURS" "$MINUTES"

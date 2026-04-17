@@ -11,7 +11,7 @@
 typedef struct
 {
   char node_id_str[256];
-  uint32_t last_ss_rsrp_dist[128];
+  uint32_t last_ss_rsrp_dist[156];
 } e2_node_rsrp_state_t;
 
 typedef struct
@@ -44,7 +44,7 @@ e2_node_rsrp_state_t *get_rsrp_state(const char *e2_id);
 
 int get_percentile_val(uint32_t *dist, size_t index);
 
-bool compute_rsrp_metrics(const char *node_id, const uint32_t *current_dist, rsrp_metrics_t *out_metrics);
+bool compute_rsrp_metrics(const char *node_id, const uint32_t *current_dist, size_t limit, rsrp_metrics_t *out_metrics);
 
 factory_metrics_array_t process_metric_factory(const char *node_id, const char *metric_name, const label_info_lst_t *label_info_lst, size_t label_info_lst_len, const meas_record_lst_t *meas_record_lst, size_t rec_idx_start);
 

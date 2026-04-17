@@ -33,19 +33,19 @@ e2_node_rsrp_state_t *get_rsrp_state(const char *e2_id)
 int get_percentile_val(uint32_t *dist, size_t index)
 {
   uint32_t cumulative = 0;
-  for (int i = 0; i < 128; i++)
+  for (int i = 0; i < 156; i++)
   {
     cumulative += dist[i];
     if (cumulative > index)
     {
       // 38.133 Table 10.1.6.1-1: SS-RSRP and CSI-RSRP measurement report mapping
-      return -157 + i;
+      return -(156 + 1) + i;
     }
   }
-  return -157 + 127;
+  return -(156 + 1) + 127;
 }
 
-bool compute_rsrp_metrics(const char *node_id, const uint32_t *current_dist, rsrp_metrics_t *out_metrics)
+bool compute_rsrp_metrics(const char *node_id, const uint32_t *current_dist, size_t limit, rsrp_metrics_t *out_metrics)
 {
   if (!out_metrics)
     return false;
@@ -61,10 +61,22 @@ bool compute_rsrp_metrics(const char *node_id, const uint32_t *current_dist, rsr
   if (!state)
     return false;
 
-  uint32_t diff_dist[128] = {0};
+  uint32_t diff_dist[156] = {0};
   uint32_t total_count = 0;
+  uint32_t total_current = 0;
 
-  for (int i = 0; i < 128; i++)
+  for (size_t i = 0; i < limit; i++)
+  {
+    total_current += current_dist[i];
+  }
+
+  // Per-UE metrics don't have RSRP; return early
+  if (total_current == 0)
+  {
+    return true;
+  }
+
+  for (size_t i = 0; i < limit; i++)
   {
     if (current_dist[i] >= state->last_ss_rsrp_dist[i])
     {
@@ -85,12 +97,12 @@ bool compute_rsrp_metrics(const char *node_id, const uint32_t *current_dist, rsr
 
   double sum = 0;
   int min_val = 9999, max_val = -9999;
-  for (int i = 0; i < 128; i++)
+  for (size_t i = 0; i < limit; i++)
   {
     if (diff_dist[i] > 0)
     {
       // 38.133 Table 10.1.6.1-1: SS-RSRP and CSI-RSRP measurement report mapping
-      int dbm_val = -157 + i;
+      int dbm_val = -(156 + 1) + i;
       sum += (double)dbm_val * diff_dist[i];
       if (dbm_val < min_val)
         min_val = dbm_val;
@@ -149,17 +161,17 @@ factory_metrics_array_t process_metric_factory(const char *node_id, const char *
   factory_metrics_array_t ret = {0};
 
   // Derive RSRP.Mean, RSRP.Minimum, RSRP.Quartile1, RSRP.Median, RSRP.Quartile3, RSRP.Maximum, and RSRP.Count from L1M.SS-RSRP
-  if (strcmp(metric_name, "L1M.SS-RSRP") == 0 && label_info_lst_len == 128)
+  if (strcmp(metric_name, "L1M.SS-RSRP") == 0 && label_info_lst_len <= 156)
   {
-    uint32_t current_dist[128] = {0};
-    for (size_t i = 0; i < 128; i++)
+    uint32_t current_dist[156] = {0};
+    for (size_t i = 0; i < label_info_lst_len; i++)
     {
       if (meas_record_lst[rec_idx_start + i].value == 0)
         current_dist[i] = meas_record_lst[rec_idx_start + i].int_val;
     }
 
     rsrp_metrics_t metrics;
-    if (compute_rsrp_metrics(node_id, current_dist, &metrics) && metrics.count > 0)
+    if (compute_rsrp_metrics(node_id, current_dist, label_info_lst_len, &metrics) && metrics.count > 0)
     {
       ret.count = 7;
       ret.metrics = calloc(ret.count, sizeof(factory_metric_t));

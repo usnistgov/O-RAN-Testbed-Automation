@@ -1176,7 +1176,7 @@ int main(int argc, char *argv[])
   // Init the xApp
   init_xapp_api(&args);
   sleep(1);
-
+  rm_stale_allocations_xapp_api(2);
   init_kpm_meas_unit_hash_table();
 
   e2_node_arr_xapp_t nodes = e2_nodes_xapp_api();

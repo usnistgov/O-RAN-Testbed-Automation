@@ -1,0 +1,327 @@
+diff --git a/examples/xApp/c/ctrl/mac_ctrl.c b/examples/xApp/c/ctrl/mac_ctrl.c
+index 62237858..e0a3457a 100644
+--- a/examples/xApp/c/ctrl/mac_ctrl.c
++++ b/examples/xApp/c/ctrl/mac_ctrl.c
+@@ -19,6 +19,7 @@ int main(int argc, char *argv[])
+   //Init the xApp
+   init_xapp_api(&args);
+   sleep(1);
++  rm_stale_allocations_xapp_api(142);
+ 
+   e2_node_arr_xapp_t nodes = e2_nodes_xapp_api();
+   defer({ free_e2_node_arr_xapp(&nodes); });
+diff --git a/examples/xApp/c/helloworld/hw.c b/examples/xApp/c/helloworld/hw.c
+index 7918c461..3201fea8 100644
+--- a/examples/xApp/c/helloworld/hw.c
++++ b/examples/xApp/c/helloworld/hw.c
+@@ -19,6 +19,7 @@ int main(int argc, char *argv[])
+   //Init the xApp
+   init_xapp_api(&args);
+   sleep(1);
++  rm_stale_allocations_xapp_api(1);
+ 
+   e2_node_arr_xapp_t nodes = e2_nodes_xapp_api();
+   defer({ free_e2_node_arr_xapp(&nodes); });
+diff --git a/examples/xApp/c/keysight/xapp_keysight_kpm_rc.c b/examples/xApp/c/keysight/xapp_keysight_kpm_rc.c
+index a536d534..441b1922 100644
+--- a/examples/xApp/c/keysight/xapp_keysight_kpm_rc.c
++++ b/examples/xApp/c/keysight/xapp_keysight_kpm_rc.c
+@@ -869,7 +869,8 @@ int main(int argc, char *argv[])
+   // Init the xApp
+   init_xapp_api(&args);
+   sleep(1);
+-
++  rm_stale_allocations_xapp_api(2);
++  rm_stale_allocations_xapp_api(3);
+   e2_node_arr_xapp_t nodes = e2_nodes_xapp_api();
+   defer({ free_e2_node_arr_xapp(&nodes); });
+   assert(nodes.len > 0);
+diff --git a/examples/xApp/c/monitor/xapp_rc_moni.c b/examples/xApp/c/monitor/xapp_rc_moni.c
+index 345892a8..5d5ed7f9 100644
+--- a/examples/xApp/c/monitor/xapp_rc_moni.c
++++ b/examples/xApp/c/monitor/xapp_rc_moni.c
+@@ -634,7 +634,7 @@ int main(int argc, char* argv[])
+   // Init the xApp
+   init_xapp_api(&args);
+   sleep(1);
+-
++  rm_stale_allocations_xapp_api(3);
+   e2_node_arr_xapp_t nodes = e2_nodes_xapp_api();
+   defer({ free_e2_node_arr_xapp(&nodes); });
+ 
+diff --git a/examples/xApp/c/orange/xapp_es_with_cell_util.c b/examples/xApp/c/orange/xapp_es_with_cell_util.c
+index 693561b5..afe23ef4 100644
+--- a/examples/xApp/c/orange/xapp_es_with_cell_util.c
++++ b/examples/xApp/c/orange/xapp_es_with_cell_util.c
+@@ -1190,7 +1190,8 @@ int main(int argc, char* argv[])
+   fr_args_t args = init_fr_args(argc, argv);
+   init_xapp_api(&args);
+   sleep(1);
+-
++  rm_stale_allocations_xapp_api(2);
++  rm_stale_allocations_xapp_api(3);
+   e2_node_arr_xapp_t nodes = e2_nodes_xapp_api();
+   defer({ free_e2_node_arr_xapp(&nodes); });
+   assert(nodes.len > 0);
+diff --git a/examples/xApp/c/slice/xapp_slice_moni_ctrl.c b/examples/xApp/c/slice/xapp_slice_moni_ctrl.c
+index c685b40e..0dfe6334 100644
+--- a/examples/xApp/c/slice/xapp_slice_moni_ctrl.c
++++ b/examples/xApp/c/slice/xapp_slice_moni_ctrl.c
+@@ -214,7 +214,7 @@ int main(int argc, char *argv[])
+   //Init the xApp
+   init_xapp_api(&args);
+   sleep(1);
+-
++  rm_stale_allocations_xapp_api(145);
+   e2_node_arr_xapp_t nodes = e2_nodes_xapp_api();
+   defer({ free_e2_node_arr_xapp(&nodes); });
+ 
+diff --git a/examples/xApp/c/tc/xapp_tc_all.c b/examples/xApp/c/tc/xapp_tc_all.c
+index faf379ed..f52bcf4b 100644
+--- a/examples/xApp/c/tc/xapp_tc_all.c
++++ b/examples/xApp/c/tc/xapp_tc_all.c
+@@ -176,7 +176,10 @@ int main()
+   //Init the xApp
+   init_xapp_api(&args);
+   sleep(1);
+-
++  rm_stale_allocations_xapp_api(142);
++  rm_stale_allocations_xapp_api(143);
++  rm_stale_allocations_xapp_api(145);
++  rm_stale_allocations_xapp_api(146);
+   e2_node_arr_xapp_t nodes = e2_nodes_xapp_api();
+   defer({ free_e2_node_arr_xapp(&nodes); });
+ 
+diff --git a/examples/xApp/c/tc/xapp_tc_codel.c b/examples/xApp/c/tc/xapp_tc_codel.c
+index 35a4b70e..de01ddf6 100644
+--- a/examples/xApp/c/tc/xapp_tc_codel.c
++++ b/examples/xApp/c/tc/xapp_tc_codel.c
+@@ -71,7 +71,7 @@ int main(int argc, char* argv[])
+   //Init the xApp
+   init_xapp_api(&args);
+   sleep(1);
+-
++  rm_stale_allocations_xapp_api(146);
+   e2_node_arr_xapp_t nodes = e2_nodes_xapp_api();
+   defer({ free_e2_node_arr_xapp(&nodes); });
+ 
+diff --git a/examples/xApp/c/tc/xapp_tc_ecn.c b/examples/xApp/c/tc/xapp_tc_ecn.c
+index 296663cf..c08c3ad4 100644
+--- a/examples/xApp/c/tc/xapp_tc_ecn.c
++++ b/examples/xApp/c/tc/xapp_tc_ecn.c
+@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
+   //Init the xApp
+   init_xapp_api(&args);
+   sleep(1);
+-
++  rm_stale_allocations_xapp_api(146);
+   e2_node_arr_xapp_t nodes = e2_nodes_xapp_api();
+   defer({ free_e2_node_arr_xapp(&nodes); });
+ 
+diff --git a/examples/xApp/c/tc/xapp_tc_partition.c b/examples/xApp/c/tc/xapp_tc_partition.c
+index 5ba4558e..b94200e2 100644
+--- a/examples/xApp/c/tc/xapp_tc_partition.c
++++ b/examples/xApp/c/tc/xapp_tc_partition.c
+@@ -66,7 +66,7 @@ int main(int argc, char* argv[])
+   //Init the xApp
+   init_xapp_api(&args);
+   sleep(1);
+-
++  rm_stale_allocations_xapp_api(146);
+   e2_node_arr_xapp_t nodes = e2_nodes_xapp_api();
+   defer({ free_e2_node_arr_xapp(&nodes); });
+ 
+diff --git a/src/ric/iApp/map_ric_id.c b/src/ric/iApp/map_ric_id.c
+index c397af1f..b14c4892 100644
+--- a/src/ric/iApp/map_ric_id.c
++++ b/src/ric/iApp/map_ric_id.c
+@@ -196,8 +196,17 @@ xapp_ric_id_xpct_t find_xapp_map_ric_id(map_ric_id_t* map, uint16_t ric_req_id)
+ }
+ 
+ e2_node_ric_id_t find_ric_req_map_ric_id(map_ric_id_t* map, xapp_ric_id_t* x)
++{
++  bool found;
++  e2_node_ric_id_t id = find_ric_req_map_ric_id_safe(map, x, &found);
++  assert(found == true && "Not found xApp RIC ID ");
++  return id;
++}
++
++e2_node_ric_id_t find_ric_req_map_ric_id_safe(map_ric_id_t* map, xapp_ric_id_t* x, bool* found)
+ {
+   assert(map != NULL);
++  assert(found != NULL);
+ 
+   int rc = pthread_rwlock_rdlock(&map->rw);
+   assert(rc == 0);
+@@ -207,8 +216,15 @@ e2_node_ric_id_t find_ric_req_map_ric_id(map_ric_id_t* map, xapp_ric_id_t* x)
+   void* it = assoc_front(r);
+   void* end = assoc_end(r);
+   it = find_if(r , it, end, x , eq_xapp_ric_gen_id_wrapper);
+-  assert(it != end && "Not found xApp RIC ID ");
++  if(it == end){
++    *found = false;
++    e2_node_ric_id_t const id = {0};
++    rc = pthread_rwlock_unlock(&map->rw);
++    assert(rc == 0);
++    return id;
++  }
+ 
++  *found = true;
+   e2_node_ric_id_t const id = *(e2_node_ric_id_t*)assoc_value(r, it);
+ 
+   rc = pthread_rwlock_unlock(&map->rw);
+diff --git a/src/ric/iApp/map_ric_id.h b/src/ric/iApp/map_ric_id.h
+index 3aff8b10..ed75e235 100644
+--- a/src/ric/iApp/map_ric_id.h
++++ b/src/ric/iApp/map_ric_id.h
+@@ -37,6 +37,8 @@ xapp_ric_id_xpct_t find_xapp_map_ric_id(map_ric_id_t* map, uint16_t ric_req_id);
+ 
+ e2_node_ric_id_t find_ric_req_map_ric_id(map_ric_id_t* map, xapp_ric_id_t* x);
+ 
++e2_node_ric_id_t find_ric_req_map_ric_id_safe(map_ric_id_t* map, xapp_ric_id_t* x, bool* found);
++
+ // array of e2_node_ric_id_t 
+ seq_arr_t find_all_subs_map_ric_id(map_ric_id_t* map, uint16_t xapp_id); 
+ 
+diff --git a/src/ric/iApp/msg_handler_iapp.c b/src/ric/iApp/msg_handler_iapp.c
+index 6ff45113..d6e6986b 100644
+--- a/src/ric/iApp/msg_handler_iapp.c
++++ b/src/ric/iApp/msg_handler_iapp.c
+@@ -18,6 +18,8 @@
+ 
+ #include <stdio.h>
+ 
++static const uint32_t MAX_STALE_SWEEPS = 10;
++
+ 
+ 
+ 
+@@ -337,7 +339,25 @@ e2ap_msg_t e2ap_handle_e42_ric_subscription_delete_request_iapp(e42_iapp_t* iapp
+                       .xapp_id = src->xapp_id 
+                     };
+ 
+-  e2_node_ric_id_t n = find_ric_req_map_ric_id(&iapp->map_ric_id, &x);
++  bool found_mapping = false;
++  e2_node_ric_id_t n = find_ric_req_map_ric_id_safe(&iapp->map_ric_id, &x, &found_mapping);
++
++  if (!found_mapping) {
++    if (src->sdr.ric_id.ric_req_id <= MAX_STALE_SWEEPS) {
++      // Stale subscription, delete subscription even if the mapping is not found
++      e2_node_arr_t nodes = generate_e2_node_arr(&iapp->e2_nodes);
++      ric_subscription_delete_request_t dst = cp_ric_subscription_delete_request(&src->sdr);
++      for (size_t i = 0; i < nodes.len; ++i) {
++        fwd_ric_subscription_request_delete_gen(iapp->ric_if.type, &nodes.n[i].id, &dst, notify_msg_iapp_api);
++      }
++      free_e2_node_arr(&nodes);
++    } else {
++      printf("[iApp]: RIC_SUBSCRIPTION_DELETE_REQUEST rx RIC_REQ_ID %d xapp %d not mapped\n", src->sdr.ric_id.ric_req_id, src->xapp_id);
++    }
++    e2ap_msg_t none = {.type = NONE_E2_MSG_TYPE};
++    return none;
++  }
++
+   assert(n.ric_req_type == SUBSCRIPTION_RIC_REQUEST_TYPE);
+ 
+   ric_subscription_delete_request_t dst = cp_ric_subscription_delete_request(&src->sdr);
+diff --git a/src/xApp/e42_xapp.c b/src/xApp/e42_xapp.c
+index 36fc73f1..260c363e 100644
+--- a/src/xApp/e42_xapp.c
++++ b/src/xApp/e42_xapp.c
+@@ -5,6 +5,8 @@
+ 
+ #include "e42_xapp.h"
+ 
++static const uint32_t MAX_STALE_SWEEPS = 10;
++
+ #include "act_proc.h"
+ #include "asio_xapp.h"
+ #include "async_event_xapp.h"
+@@ -188,6 +190,7 @@ e42_xapp_t* init_e42_xapp(fr_args_t const* args)
+   init_reg_e2_node(&xapp->e2_nodes); 
+ 
+   init_sync_ui(&xapp->sync);
++  xapp->sync.wait_ms = 5000;
+ 
+   init_pending_events(&xapp->pending);
+ 
+@@ -539,3 +542,12 @@ size_t not_dispatch_msg(e42_xapp_t* xapp)
+   return size_msg_dispatcher(&xapp->msg_disp );
+ }
+ 
++
++void rm_stale_allocations_sync_xapp(e42_xapp_t* xapp, uint16_t ran_func_id) {
++  assert(xapp != NULL);
++  for (uint32_t id = 1; id <= MAX_STALE_SWEEPS; ++id) {
++    ric_gen_id_t ric_id = {.ric_req_id = id, .ric_inst_id = 0, .ran_func_id = ran_func_id};
++    send_ric_subscription_delete(xapp, ric_id);
++    usleep(1000);
++  }
++}
+diff --git a/src/xApp/e42_xapp.h b/src/xApp/e42_xapp.h
+index 5cbd31b3..6ecb4716 100644
+--- a/src/xApp/e42_xapp.h
++++ b/src/xApp/e42_xapp.h
+@@ -105,6 +105,7 @@ void rm_report_sm_sync_xapp(e42_xapp_t* xapp, int handle);
+ 
+ // We wait for the message to come back and avoid asyncronous programming
+ sm_ans_xapp_t control_sm_sync_xapp(e42_xapp_t* xapp, global_e2_node_id_t* id, uint16_t ran_func_id, void* ctrl_msg);
++void rm_stale_allocations_sync_xapp(e42_xapp_t* xapp, uint16_t ran_func_id);
+ 
+ #undef HANDLE_MSG_NUM 
+ 
+diff --git a/src/xApp/e42_xapp_api.c b/src/xApp/e42_xapp_api.c
+index d3764595..c03a23e7 100644
+--- a/src/xApp/e42_xapp_api.c
++++ b/src/xApp/e42_xapp_api.c
+@@ -185,3 +185,8 @@ sm_ans_xapp_t control_sm_xapp_api(global_e2_node_id_t* id, uint32_t ran_func_id,
+ }
+ 
+ 
++void rm_stale_allocations_xapp_api(uint16_t ran_func_id) {
++  assert(xapp != NULL);
++  rm_stale_allocations_sync_xapp(xapp, ran_func_id);
++}
++
+diff --git a/src/xApp/e42_xapp_api.h b/src/xApp/e42_xapp_api.h
+index 2e1bbb24..8e65ece9 100644
+--- a/src/xApp/e42_xapp_api.h
++++ b/src/xApp/e42_xapp_api.h
+@@ -53,6 +53,7 @@ sm_ans_xapp_t report_sm_xapp_api(global_e2_node_id_t* id, uint32_t rf_id, void*
+ 
+ // Remove the handle previously returned
+ void rm_report_sm_xapp_api(int const handle);
++void rm_stale_allocations_xapp_api(uint16_t ran_func_id);
+ 
+ // Send control message
+ // return void but sm_ag_if_ans_ctrl_t should be returned. Add it in the future if needed
+diff --git a/src/xApp/msg_handler_xapp.c b/src/xApp/msg_handler_xapp.c
+index 4bb56979..c100a7b4 100644
+--- a/src/xApp/msg_handler_xapp.c
++++ b/src/xApp/msg_handler_xapp.c
+@@ -8,6 +8,9 @@
+ #include <stdio.h>
+ #include <string.h>
+ 
++#include <stdint.h>
++static const uint32_t MAX_STALE_SWEEPS = 10;
++
+ #include "act_proc.h"
+ #include "endpoint_xapp.h"
+ #include "msg_handler_xapp.h"
+@@ -564,10 +567,12 @@ e2ap_msg_t e2ap_handle_e42_subscription_delete_request_xapp(e42_xapp_t* xapp, co
+ 
+   // A pending event is created along with a timer of 10000 ms,
+   // after which an event will be generated
+-  pending_event_xapp_t ev = {.ev = E42_RIC_SUBSCRIPTION_DELETE_REQUEST_PENDING_EVENT, 
+-                              .id = e42_sdr->sdr.ric_id,
+-                              .wait_ms = 10000};
+-  add_pending_event_xapp(xapp, &ev);
++  if (e42_sdr->sdr.ric_id.ric_req_id > MAX_STALE_SWEEPS) {
++    pending_event_xapp_t ev = {.ev = E42_RIC_SUBSCRIPTION_DELETE_REQUEST_PENDING_EVENT,
++                                .id = e42_sdr->sdr.ric_id,
++                                .wait_ms = 10000};
++    add_pending_event_xapp(xapp, &ev);
++  }
+ 
+ 
+   e2ap_msg_t ans = {.type = NONE_E2_MSG_TYPE};

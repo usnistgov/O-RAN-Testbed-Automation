@@ -92,6 +92,9 @@ if [ ! -f "examples/xApp/c/monitor/CMakeLists.txt.previous" ]; then
 fi
 echo "Patching CMakeLists.txt..."
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/CMakeLists.txt.patch"
+
+echo "Adding stale subscription cleanup support patch to FlexRIC..."
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/stale_subscription_cleanup_support.patch"
 cd ..
 
 # Append new intermediate metrics units to 28_552_kpm_meas.txt

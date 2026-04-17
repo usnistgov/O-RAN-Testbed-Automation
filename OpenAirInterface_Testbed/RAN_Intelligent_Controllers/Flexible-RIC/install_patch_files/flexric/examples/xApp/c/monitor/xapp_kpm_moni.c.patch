@@ -1,5 +1,5 @@
 diff --git a/examples/xApp/c/monitor/xapp_kpm_moni.c b/examples/xApp/c/monitor/xapp_kpm_moni.c
-index 22f70850..d39fec6b 100644
+index 22f70850..0c60c967 100644
 --- a/examples/xApp/c/monitor/xapp_kpm_moni.c
 +++ b/examples/xApp/c/monitor/xapp_kpm_moni.c
 @@ -11,11 +11,14 @@
@@ -265,3 +265,12 @@ index 22f70850..d39fec6b 100644
    }
  
    // 8.3.8 [0, 4294967295]
+@@ -499,7 +543,7 @@ int main(int argc, char* argv[])
+   // Init the xApp
+   init_xapp_api(&args);
+   sleep(1);
+-
++  rm_stale_allocations_xapp_api(2);
+   init_kpm_meas_unit_hash_table();
+ 
+   e2_node_arr_xapp_t nodes = e2_nodes_xapp_api();

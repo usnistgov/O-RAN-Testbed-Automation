@@ -218,7 +218,7 @@ echo "Installing dependencies for building Open5GS..."
 sudo env $APTVARS apt-get install -y python3-pip python3-setuptools python3-wheel python3-venv ninja-build build-essential flex bison git cmake libsctp-dev libgnutls28-dev libgcrypt-dev libssl-dev libmongoc-dev libbson-dev libyaml-dev libmicrohttpd-dev libcurl4-gnutls-dev libnghttp2-dev libtins-dev libtalloc-dev
 python3 -m venv .venv
 source .venv/bin/activate
-pip install --upgrade meson # Ensure pip version overrides apt version to prevent segmentation faults
+python3 -m pip install --upgrade meson # Ensure pip version overrides apt version to prevent segmentation faults
 if apt-cache show libidn-dev >/dev/null 2>&1; then
     sudo env $APTVARS apt-get install -y --no-install-recommends libidn-dev
 else
@@ -230,7 +230,7 @@ rm -rf build
 # Check if Open5GS has already been built and installed
 if [ ! -d "build" ]; then
     echo "Compiling Open5GS with Meson..."
-    meson build --prefix="$(pwd)/install" -Dc_args="-fPIC" -Dcpp_args="-fPIC" -Dc_link_args="-fPIC" -Dcpp_link_args="-fPIC"
+    meson setup build --prefix="$(pwd)/install" -Dc_args="-fPIC" -Dcpp_args="-fPIC" -Dc_link_args="-fPIC" -Dcpp_link_args="-fPIC"
 else
     echo "Open5GS build directory already exists."
 fi

@@ -47,6 +47,10 @@ cd logs
 
 if ! (
     set -o pipefail
+    export npm_config_loglevel=error
+    export npm_config_audit=false
+    export npm_config_fund=false
+    export npm_config_update_notifier=false
     curl -fsSL https://open5gs.org/open5gs/assets/webui/install | sudo -E bash -
 ); then
     echo "Failed to install WebUI"

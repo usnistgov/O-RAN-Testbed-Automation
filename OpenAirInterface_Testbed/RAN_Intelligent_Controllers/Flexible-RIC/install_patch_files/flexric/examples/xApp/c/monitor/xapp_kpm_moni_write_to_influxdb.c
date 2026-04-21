@@ -113,7 +113,9 @@ static void init_kpm_meas_unit_hash_table(void)
 
 static char *get_meas_unit(const char *name)
 {
-  return assoc_ht_open_value(&ht, &name);
+  char *val = assoc_ht_open_value(&ht, &name);
+  if (!val || strcmp(val, "[]") == 0) return "";
+  return val;
 }
 
 // Overwritten if environment variables SST and SD are set
@@ -593,7 +595,16 @@ static void log_kpm_measurements(kpm_ind_msg_format_1_t const *msg_frm_1, bool i
           }
 
           char m_influx_field_name[256];
-          snprintf(m_influx_field_name, sizeof(m_influx_field_name), "%s%s", m_safe_metric_name, m.name && strstr(m.name, ".Count") ? "" : "_dBm");
+          const char *unit = "";
+          if (!strstr(m.name, ".Count")) {
+              if (strstr(m.name, "SINR")) unit = "_dB";
+              else unit = "_dBm";
+          }
+          snprintf(m_influx_field_name, sizeof(m_influx_field_name), "%s%s", m_safe_metric_name, unit);
+
+          if (m.value_type != 0 && isnan(m.real_val)) {
+            continue; // Omit NaN values from InfluxDB
+          }
 
           char influx_field[512];
           if (m.value_type == 0)

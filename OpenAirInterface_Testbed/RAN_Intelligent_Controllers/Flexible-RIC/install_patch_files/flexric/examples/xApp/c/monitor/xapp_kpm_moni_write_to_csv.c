@@ -113,7 +113,9 @@ static void init_kpm_meas_unit_hash_table(void)
 
 static char *get_meas_unit(const char *name)
 {
-  return assoc_ht_open_value(&ht, &name);
+  char *val = assoc_ht_open_value(&ht, &name);
+  if (!val || strcmp(val, "[]") == 0) return "";
+  return val;
 }
 
 // Overwritten if environment variables SST and SD are set

@@ -7,27 +7,44 @@
 #include <string.h>
 #include <stdio.h>
 #include <assert.h>
+#include <math.h>
 
-static e2_node_rsrp_state_t rsrp_state[MAX_E2_NODES] = {0};
-static int rsrp_state_count = 0;
+static e2_node_dist_state_t dist_state[MAX_E2_NODES] = {0};
+static int dist_state_count = 0;
 
-e2_node_rsrp_state_t *get_rsrp_state(const char *e2_id)
+e2_node_dist_state_t *get_dist_state(const char *e2_id)
 {
-  for (int i = 0; i < rsrp_state_count; i++)
+  for (int i = 0; i < dist_state_count; i++)
   {
-    if (strncmp(rsrp_state[i].node_id_str, e2_id, sizeof(rsrp_state[i].node_id_str)) == 0)
+    if (strncmp(dist_state[i].node_id_str, e2_id, sizeof(dist_state[i].node_id_str)) == 0)
     {
-      return &rsrp_state[i];
+      return &dist_state[i];
     }
   }
 
-  if (rsrp_state_count < MAX_E2_NODES)
+  if (dist_state_count < MAX_E2_NODES)
   {
-    strncpy(rsrp_state[rsrp_state_count].node_id_str, e2_id, sizeof(rsrp_state[rsrp_state_count].node_id_str) - 1);
-    return &rsrp_state[rsrp_state_count++];
+    strncpy(dist_state[dist_state_count].node_id_str, e2_id, sizeof(dist_state[dist_state_count].node_id_str) - 1);
+    return &dist_state[dist_state_count++];
   }
 
   return NULL;
+}
+
+double get_sinr_percentile_val(uint32_t *dist, size_t index)
+{
+  uint32_t cumulative = 0;
+  for (int i = 0; i < 128; i++)
+  {
+    cumulative += dist[i];
+    if (cumulative > index)
+    {
+      if (i == 0)
+        return -23.5;
+      return -23.5 + 0.5 * i;
+    }
+  }
+  return 40.0;
 }
 
 int get_percentile_val(uint32_t *dist, size_t index)
@@ -45,19 +62,19 @@ int get_percentile_val(uint32_t *dist, size_t index)
   return -(156 + 1) + 127;
 }
 
-bool compute_rsrp_metrics(const char *node_id, const uint32_t *current_dist, size_t limit, rsrp_metrics_t *out_metrics)
+bool compute_rsrp_metrics(const char *node_id, const uint32_t *current_dist, size_t limit, dist_metrics_t *out_metrics)
 {
   if (!out_metrics)
     return false;
-  out_metrics->mean = 0;
-  out_metrics->min = 0;
-  out_metrics->q1 = 0;
-  out_metrics->median = 0;
-  out_metrics->q3 = 0;
-  out_metrics->max = 0;
+  out_metrics->mean = NAN;
+  out_metrics->min = NAN;
+  out_metrics->q1 = NAN;
+  out_metrics->median = NAN;
+  out_metrics->q3 = NAN;
+  out_metrics->max = NAN;
   out_metrics->count = 0;
 
-  e2_node_rsrp_state_t *state = get_rsrp_state(node_id);
+  e2_node_dist_state_t *state = get_dist_state(node_id);
   if (!state)
     return false;
 
@@ -103,7 +120,8 @@ bool compute_rsrp_metrics(const char *node_id, const uint32_t *current_dist, siz
     {
       // 38.133 Table 10.1.6.1-1: SS-RSRP and CSI-RSRP measurement report mapping
       int dbm_val = -(156 + 1) + i;
-      sum += (double)dbm_val * diff_dist[i];
+      double linear_val = pow(10.0, dbm_val / 10.0);
+      sum += linear_val * diff_dist[i];
       if (dbm_val < min_val)
         min_val = dbm_val;
       if (dbm_val > max_val)
@@ -144,12 +162,121 @@ bool compute_rsrp_metrics(const char *node_id, const uint32_t *current_dist, siz
     q3 = get_percentile_val(diff_dist, q3_idx);
   }
 
-  out_metrics->mean = sum / total_count;
+  out_metrics->mean = 10.0 * log10(sum / total_count);
   out_metrics->min = (double)min_val;
   out_metrics->q1 = q1;
   out_metrics->median = median;
   out_metrics->q3 = q3;
   out_metrics->max = (double)max_val;
+  out_metrics->count = total_count;
+
+  return true;
+}
+
+bool compute_sinr_metrics(const char *node_id, const uint32_t *current_dist, size_t limit, dist_metrics_t *out_metrics)
+{
+  if (!out_metrics)
+    return false;
+  out_metrics->mean = NAN;
+  out_metrics->min = NAN;
+  out_metrics->q1 = NAN;
+  out_metrics->median = NAN;
+  out_metrics->q3 = NAN;
+  out_metrics->max = NAN;
+  out_metrics->count = 0;
+
+  e2_node_dist_state_t *state = get_dist_state(node_id);
+  if (!state)
+    return false;
+
+  uint32_t diff_dist[128] = {0};
+  uint32_t total_count = 0;
+  uint32_t total_current = 0;
+
+  for (size_t i = 0; i < limit; i++)
+  {
+    total_current += current_dist[i];
+  }
+
+  if (total_current == 0)
+  {
+    return true;
+  }
+
+  for (size_t i = 0; i < limit; i++)
+  {
+    if (current_dist[i] >= state->last_ss_sinr_dist[i])
+    {
+      diff_dist[i] = current_dist[i] - state->last_ss_sinr_dist[i];
+    }
+    else
+    {
+      diff_dist[i] = current_dist[i];
+    }
+    total_count += diff_dist[i];
+    state->last_ss_sinr_dist[i] = current_dist[i];
+  }
+
+  if (total_count == 0)
+  {
+    return true;
+  }
+
+  double sum = 0;
+  double min_val = 9999.0, max_val = -9999.0;
+  for (size_t i = 0; i < limit; i++)
+  {
+    if (diff_dist[i] > 0)
+    {
+      double db_val = (i == 0) ? -23.5 : (-23.5 + 0.5 * i);
+      double linear_val = pow(10.0, db_val / 10.0);
+      sum += linear_val * diff_dist[i];
+      if (db_val < min_val)
+        min_val = db_val;
+      if (db_val > max_val)
+        max_val = db_val;
+    }
+  }
+
+  double q1, median, q3;
+  size_t n = total_count;
+
+  size_t q1_idx = n / 4;
+  if (n % 4 == 0 && n > 0 && q1_idx > 0)
+  {
+    q1 = (get_sinr_percentile_val(diff_dist, q1_idx - 1) + get_sinr_percentile_val(diff_dist, q1_idx)) / 2.0;
+  }
+  else
+  {
+    q1 = get_sinr_percentile_val(diff_dist, q1_idx);
+  }
+
+  size_t med_idx = n / 2;
+  if (n % 2 == 0 && n > 0 && med_idx > 0)
+  {
+    median = (get_sinr_percentile_val(diff_dist, med_idx - 1) + get_sinr_percentile_val(diff_dist, med_idx)) / 2.0;
+  }
+  else
+  {
+    median = get_sinr_percentile_val(diff_dist, med_idx);
+  }
+
+  size_t q3_idx = (3 * n) / 4;
+  if (n % 4 == 0 && n > 0 && q3_idx > 0)
+  {
+    q3 = (get_sinr_percentile_val(diff_dist, q3_idx - 1) + get_sinr_percentile_val(diff_dist, q3_idx)) / 2.0;
+  }
+  else
+  {
+    q3 = get_sinr_percentile_val(diff_dist, q3_idx);
+  }
+
+  out_metrics->mean = 10.0 * log10(sum / total_count);
+  out_metrics->min = min_val;
+  out_metrics->q1 = q1;
+  out_metrics->median = median;
+  out_metrics->q3 = q3;
+  out_metrics->max = max_val;
   out_metrics->count = total_count;
 
   return true;
@@ -168,10 +295,12 @@ factory_metrics_array_t process_metric_factory(const char *node_id, const char *
     {
       if (meas_record_lst[rec_idx_start + i].value == 0)
         current_dist[i] = meas_record_lst[rec_idx_start + i].int_val;
+      else if (meas_record_lst[rec_idx_start + i].value == 1)
+        current_dist[i] = (uint32_t)meas_record_lst[rec_idx_start + i].real_val;
     }
 
-    rsrp_metrics_t metrics;
-    if (compute_rsrp_metrics(node_id, current_dist, label_info_lst_len, &metrics) && metrics.count > 0)
+    dist_metrics_t metrics;
+    if (compute_rsrp_metrics(node_id, current_dist, label_info_lst_len, &metrics))
     {
       ret.count = 7;
       ret.metrics = calloc(ret.count, sizeof(factory_metric_t));
@@ -201,6 +330,54 @@ factory_metrics_array_t process_metric_factory(const char *node_id, const char *
       ret.metrics[5].real_val = metrics.max;
 
       snprintf(ret.metrics[6].name, sizeof(ret.metrics[6].name), "RSRP.Count");
+      ret.metrics[6].value_type = 0;
+      ret.metrics[6].int_val = metrics.count;
+    }
+  }
+
+  // Derive SINR metrics
+  if (strcmp(metric_name, "MR.NRScSSSINR") == 0 && label_info_lst_len <= 128)
+  {
+    uint32_t current_dist[128] = {0};
+    for (size_t i = 0; i < label_info_lst_len; i++)
+    {
+      if (meas_record_lst[rec_idx_start + i].value == 0)
+        current_dist[i] = meas_record_lst[rec_idx_start + i].int_val;
+      else if (meas_record_lst[rec_idx_start + i].value == 1)
+        current_dist[i] = (uint32_t)meas_record_lst[rec_idx_start + i].real_val;
+    }
+
+    dist_metrics_t metrics;
+    if (compute_sinr_metrics(node_id, current_dist, label_info_lst_len, &metrics))
+    {
+      ret.count = 7;
+      ret.metrics = calloc(ret.count, sizeof(factory_metric_t));
+
+      snprintf(ret.metrics[0].name, sizeof(ret.metrics[0].name), "SINR.Mean");
+      ret.metrics[0].value_type = 1;
+      ret.metrics[0].real_val = metrics.mean;
+
+      snprintf(ret.metrics[1].name, sizeof(ret.metrics[1].name), "SINR.Minimum");
+      ret.metrics[1].value_type = 1;
+      ret.metrics[1].real_val = metrics.min;
+
+      snprintf(ret.metrics[2].name, sizeof(ret.metrics[2].name), "SINR.Quartile1");
+      ret.metrics[2].value_type = 1;
+      ret.metrics[2].real_val = metrics.q1;
+
+      snprintf(ret.metrics[3].name, sizeof(ret.metrics[3].name), "SINR.Median");
+      ret.metrics[3].value_type = 1;
+      ret.metrics[3].real_val = metrics.median;
+
+      snprintf(ret.metrics[4].name, sizeof(ret.metrics[4].name), "SINR.Quartile3");
+      ret.metrics[4].value_type = 1;
+      ret.metrics[4].real_val = metrics.q3;
+
+      snprintf(ret.metrics[5].name, sizeof(ret.metrics[5].name), "SINR.Maximum");
+      ret.metrics[5].value_type = 1;
+      ret.metrics[5].real_val = metrics.max;
+
+      snprintf(ret.metrics[6].name, sizeof(ret.metrics[6].name), "SINR.Count");
       ret.metrics[6].value_type = 0;
       ret.metrics[6].int_val = metrics.count;
     }
@@ -377,6 +554,15 @@ void populate_label_info(meas_info_format_1_lst_t *meas_item)
     }
   }
   else if (cmp_str_ba("L1M.SS-RSRP", meas_item->meas_type.name) == 0)
+  {
+    meas_item->label_info_lst_len = 128;
+    meas_item->label_info_lst = ecalloc(meas_item->label_info_lst_len, sizeof(label_info_lst_t));
+    for (uint32_t x = 1; x <= 128; x++)
+    {
+      meas_item->label_info_lst[x - 1] = fill_distribution_bin_1d_label(x);
+    }
+  }
+  else if (cmp_str_ba("MR.NRScSSSINR", meas_item->meas_type.name) == 0)
   {
     meas_item->label_info_lst_len = 128;
     meas_item->label_info_lst = ecalloc(meas_item->label_info_lst_len, sizeof(label_info_lst_t));

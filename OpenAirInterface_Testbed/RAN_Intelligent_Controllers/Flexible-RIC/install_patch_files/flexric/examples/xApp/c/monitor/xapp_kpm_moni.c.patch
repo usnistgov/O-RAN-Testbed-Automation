@@ -1,5 +1,5 @@
 diff --git a/examples/xApp/c/monitor/xapp_kpm_moni.c b/examples/xApp/c/monitor/xapp_kpm_moni.c
-index 22f70850..0c60c967 100644
+index 22f70850..56da075d 100644
 --- a/examples/xApp/c/monitor/xapp_kpm_moni.c
 +++ b/examples/xApp/c/monitor/xapp_kpm_moni.c
 @@ -11,11 +11,14 @@
@@ -28,13 +28,23 @@ index 22f70850..0c60c967 100644
  static
  assoc_ht_open_t ht = {0};
  
-@@ -83,6 +90,40 @@ char *get_meas_unit(const char *name)
-   return assoc_ht_open_value(&ht, &name);
+@@ -77,10 +84,45 @@ void init_kpm_meas_unit_hash_table(void)
+   fclose(fp);
  }
  
+-static
+-char *get_meas_unit(const char *name)
++static char *get_meas_unit(const char *name)
++{
++  char *val = assoc_ht_open_value(&ht, &name);
++  if (!val || strcmp(val, "[]") == 0) return "";
++  return val;
++}
++
 +static __attribute__((unused))
 +int get_mapped_node_id(const char *node_type, uint32_t orig_id)
-+{
+ {
+-  return assoc_ht_open_value(&ht, &name);
 +  static struct
 +  {
 +    char type[32];
@@ -64,12 +74,10 @@ index 22f70850..0c60c967 100644
 +  }
 +
 +  return new_id;
-+}
-+
+ }
+ 
  static
- void log_gnb_ue_id(ue_id_e2sm_t ue_id)
- {
-@@ -192,16 +233,37 @@ void log_kpm_measurements(kpm_ind_msg_format_1_t const* msg_frm_1)
+@@ -192,16 +234,37 @@ void log_kpm_measurements(kpm_ind_msg_format_1_t const* msg_frm_1)
    for (size_t j = 0; j < msg_frm_1->meas_data_lst_len; j++) {
      meas_data_lst_t const data_item = msg_frm_1->meas_data_lst[j];
  
@@ -89,7 +97,7 @@ index 22f70850..0c60c967 100644
 +        char *name_unit = get_meas_unit(name_str);
 +        char arr_str[8192];
 +        format_meas_record_array(arr_str, sizeof(arr_str), info_item.label_info_lst, info_item.label_info_lst_len, data_item.meas_record_lst, rec_idx);
-+        printf("%s = %s [%s]\n", name_str, arr_str, name_unit);
++        printf("%s = %s %s\n", name_str, arr_str, name_unit);
 +
 +        factory_metrics_array_t f_metrics = process_metric_factory(current_e2_id_str[0] != '\0' ? current_e2_id_str : "gNB", name_str, info_item.label_info_lst, info_item.label_info_lst_len, data_item.meas_record_lst, rec_idx);
 +        for (size_t m = 0; m < f_metrics.count; m++) {
@@ -115,7 +123,7 @@ index 22f70850..0c60c967 100644
        }
      }
    }
-@@ -222,6 +284,32 @@ void log_kpm_ind_msg_frm_3(kpm_ind_msg_format_3_t const* msg)
+@@ -222,6 +285,32 @@ void log_kpm_ind_msg_frm_3(kpm_ind_msg_format_3_t const* msg)
    }
  }
  
@@ -148,7 +156,7 @@ index 22f70850..0c60c967 100644
  static
  void sm_cb_kpm(sm_ag_if_rd_t const* rd)
  {
-@@ -252,7 +340,7 @@ void sm_cb_kpm(sm_ag_if_rd_t const* rd)
+@@ -252,7 +341,7 @@ void sm_cb_kpm(sm_ag_if_rd_t const* rd)
  }
  
  static
@@ -157,7 +165,7 @@ index 22f70850..0c60c967 100644
  {
    test_info_lst_t dst = {0};
  
-@@ -271,26 +359,21 @@ test_info_lst_t filter_predicate(test_cond_type_e type, test_cond_e cond, int va
+@@ -271,26 +360,21 @@ test_info_lst_t filter_predicate(test_cond_type_e type, test_cond_e cond, int va
  
    dst.test_cond_value->octet_string_value = calloc(1, sizeof(byte_array_t));
    assert(dst.test_cond_value->octet_string_value != NULL && "Memory exhausted");
@@ -192,7 +200,7 @@ index 22f70850..0c60c967 100644
  static
  kpm_act_def_format_1_t fill_act_def_frm_1(ric_report_style_item_t const* report_item)
  {
-@@ -314,9 +397,7 @@ kpm_act_def_format_1_t fill_act_def_frm_1(ric_report_style_item_t const* report_
+@@ -314,9 +398,7 @@ kpm_act_def_format_1_t fill_act_def_frm_1(ric_report_style_item_t const* report_
  
      // [1, 2147483647]
      // 8.3.11
@@ -203,7 +211,7 @@ index 22f70850..0c60c967 100644
    }
  
    // 8.3.8 [0, 4294967295]
-@@ -350,8 +431,7 @@ kpm_act_def_t fill_report_style_4(ric_report_style_item_t const* report_item)
+@@ -350,8 +432,7 @@ kpm_act_def_t fill_report_style_4(ric_report_style_item_t const* report_item)
    // Filter connected UEs by S-NSSAI criteria
    test_cond_type_e const type = S_NSSAI_TEST_COND_TYPE; // CQI_TEST_COND_TYPE
    test_cond_e const condition = EQUAL_TEST_COND; // GREATERTHAN_TEST_COND
@@ -213,7 +221,7 @@ index 22f70850..0c60c967 100644
  
    // Fill Action Definition Format 1
    // 8.2.1.2.1
-@@ -360,26 +440,6 @@ kpm_act_def_t fill_report_style_4(ric_report_style_item_t const* report_item)
+@@ -360,26 +441,6 @@ kpm_act_def_t fill_report_style_4(ric_report_style_item_t const* report_item)
    return act_def;
  }
  
@@ -240,7 +248,7 @@ index 22f70850..0c60c967 100644
  static
  kpm_act_def_t fill_report_style_1(ric_report_style_item_t const* report_item)
  {
-@@ -400,23 +460,7 @@ kpm_act_def_t fill_report_style_1(ric_report_style_item_t const* report_item)
+@@ -400,23 +461,7 @@ kpm_act_def_t fill_report_style_1(ric_report_style_item_t const* report_item)
  
      // [1, 2147483647]
      // 8.3.11
@@ -265,7 +273,7 @@ index 22f70850..0c60c967 100644
    }
  
    // 8.3.8 [0, 4294967295]
-@@ -499,7 +543,7 @@ int main(int argc, char* argv[])
+@@ -499,7 +544,7 @@ int main(int argc, char* argv[])
    // Init the xApp
    init_xapp_api(&args);
    sleep(1);

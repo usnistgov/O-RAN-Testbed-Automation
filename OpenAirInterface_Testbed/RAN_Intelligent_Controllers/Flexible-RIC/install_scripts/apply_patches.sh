@@ -135,6 +135,11 @@ if ! grep -q "^L1M\.SS-RSRP \[dBm\]" src/sm/kpm_sm/28_552_kpm_meas.txt; then
     sed -i '/^L1M\.SS-RSRP\.Bin \[\]$/a L1M.SS-RSRP [dBm]' src/sm/kpm_sm/28_552_kpm_meas.txt
 fi
 
+# Append MR.NRScSSSINR [dB] after MR.NRScSSSINR.BinX [] if not already present
+if ! grep -q "^MR\.NRScSSSINR \[dB\]" src/sm/kpm_sm/28_552_kpm_meas.txt; then
+    sed -i '/^MR\.NRScSSSINR\.BinX \[\]$/a MR.NRScSSSINR [dB]' src/sm/kpm_sm/28_552_kpm_meas.txt
+fi
+
 cd ..
 
 echo "Successfully patched FlexRIC."

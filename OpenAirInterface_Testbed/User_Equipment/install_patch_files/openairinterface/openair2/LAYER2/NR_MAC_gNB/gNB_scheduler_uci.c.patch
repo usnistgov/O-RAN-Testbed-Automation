@@ -1,8 +1,28 @@
 diff --git a/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c b/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c
-index a6f66d738a..966a90f5cc 100644
+index a6f66d738a..2518747f82 100644
 --- a/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c
 +++ b/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c
-@@ -562,18 +562,30 @@ static void evaluate_rsrp_report(NR_UE_info_t *UE,
+@@ -485,10 +485,19 @@ static void evaluate_sinr_report(NR_UE_info_t *UE,
+   }
+   sinr_report->r[0].SINRx10 = SINRx10;
+ 
++  // cell-wide SS-SINR distribution from 28.552 5.1.1.32.1
++  NR_du_stats_t *du_stats = &RC.nrmac[0]->du_stats;
++  du_stats->ss_sinr_dist[sinr_index] += 1;
++
+   for (RSRP_report_t *i = sinr_report->r + 1; i < sinr_report->r + sinr_report->nb; i++) {
+     curr_payload = pickandreverse_bits(payload, 4, *cumul_bits);
+     i->SINRx10 = get_diff_sinr(curr_payload & 0x0f, SINRx10);
+     *cumul_bits += 4;
++
++    int diff_sinr_index = (i->SINRx10 + 235) / 5;
++    if (diff_sinr_index >= 0 && diff_sinr_index <= 127) {
++      du_stats->ss_sinr_dist[diff_sinr_index] += 1;
++    }
+   }
+ 
+   NR_mac_stats_t *stats = &UE->mac_stats;
+@@ -562,18 +571,30 @@ static void evaluate_rsrp_report(NR_UE_info_t *UE,
      return;
    }
  

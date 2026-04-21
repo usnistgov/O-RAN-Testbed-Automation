@@ -184,22 +184,22 @@ echo "mongodb-org-tools hold" | sudo dpkg --set-selections
 
 echo "Ensuring MongoDB service is properly configured..."
 
-# Check if the mongodb user exists
-if ! getent passwd mongodb >/dev/null 2>&1; then
-    echo "mongodb user does not exist. Creating..."
-    sudo useradd -r -M -d /var/lib/mongodb -s /bin/false mongodb
-else
-    echo "mongodb user already exists."
-fi
-
 # Check if the mongodb group exists
 if ! getent group mongodb >/dev/null 2>&1; then
     echo "mongodb group does not exist. Creating..."
     sudo groupadd mongodb
-    # Add the mongodb user to the mongodb group, if not already added
-    sudo usermod -a -G mongodb mongodb
 else
     echo "mongodb group already exists."
+fi
+
+# Check if the mongodb user exists
+if ! getent passwd mongodb >/dev/null 2>&1; then
+    echo "mongodb user does not exist. Creating..."
+    sudo useradd -r -M -d /var/lib/mongodb -s /bin/false -g mongodb mongodb
+else
+    echo "mongodb user already exists."
+    # Add the mongodb user to the mongodb group, if not already added
+    sudo usermod -a -G mongodb mongodb
 fi
 # Ensure the MongoDB configuration directory and file are correctly set up
 CONFIG_DIR="/etc/mongod"

@@ -82,6 +82,40 @@ cp examples/xApp/c/kpm_rc/CMakeLists.txt ../install_patch_files/flexric/examples
 cp examples/xApp/c/kpm_rc/CMakeLists.txt examples/xApp/c/kpm_rc/CMakeLists.txt.previous
 git apply --verbose --ignore-whitespace ../install_patch_files/flexric/examples/xApp/c/kpm_rc/CMakeLists.txt.patch
 
+STALE_SUBSCRIPTION_PATCH_DIR="../install_patch_files/flexric/stale_subscription_cleanup_support"
+STALE_SUBSCRIPTION_PATCH_FILES=(
+    "examples/xApp/c/ctrl/mac_ctrl.c"
+    "examples/xApp/c/helloworld/hw.c"
+    "examples/xApp/c/keysight/xapp_keysight_kpm_rc.c"
+    "examples/xApp/c/monitor/xapp_rc_moni.c"
+    "examples/xApp/c/orange/xapp_es_with_cell_util.c"
+    "examples/xApp/c/slice/xapp_slice_moni_ctrl.c"
+    "examples/xApp/c/tc/xapp_tc_all.c"
+    "examples/xApp/c/tc/xapp_tc_codel.c"
+    "examples/xApp/c/tc/xapp_tc_ecn.c"
+    "examples/xApp/c/tc/xapp_tc_partition.c"
+    "src/ric/iApp/map_ric_id.c"
+    "src/ric/iApp/map_ric_id.h"
+    "src/ric/iApp/msg_handler_iapp.c"
+    "src/xApp/e42_xapp.c"
+    "src/xApp/e42_xapp.h"
+    "src/xApp/e42_xapp_api.c"
+    "src/xApp/e42_xapp_api.h"
+    "src/xApp/msg_handler_xapp.c"
+)
+
+mkdir -p "$STALE_SUBSCRIPTION_PATCH_DIR"
+
+git diff "${STALE_SUBSCRIPTION_PATCH_FILES[@]}" > "$STALE_SUBSCRIPTION_PATCH_DIR/patch.patch"
+
+for FILE in "${STALE_SUBSCRIPTION_PATCH_FILES[@]}"; do
+    git restore "$FILE"
+    mkdir -p "$(dirname "$STALE_SUBSCRIPTION_PATCH_DIR/$FILE")"
+    cp "$FILE" "$STALE_SUBSCRIPTION_PATCH_DIR/$FILE.previous"
+    cp "$FILE" "$FILE.previous"
+done
+git apply --verbose --ignore-whitespace "$STALE_SUBSCRIPTION_PATCH_DIR/patch.patch"
+
 cd ..
 
 echo "Successfully updated patch files in the install_patch_files directory."

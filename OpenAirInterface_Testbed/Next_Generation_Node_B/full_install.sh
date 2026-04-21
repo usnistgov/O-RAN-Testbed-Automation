@@ -32,13 +32,14 @@
 set -e
 
 APPLY_PATCHES=true
+CLEAN_INSTALL=false # If SHARE_OAI_DIR_FROM_UE is true, set to false since the UE hosts openairinterface5g
 DEBUG_SYMBOLS=false
-TELNET_SERVER=true
 NRSCOPE_GUI=false
-SHARE_FLEXRIC_DIR_FROM_TESTBED=false
+TELNET_SERVER=true
 E2_TERM_PORT=36421            # Default is 36421, which will result in no modification
 E2_TERM_PORT_SUBSTITUTE=36423 # If E2_TERM_PORT is used already, substitute it before replacing with E2_TERM_PORT
-SHARE_OAI_DIR_FROM_UE=false
+SHARE_FLEXRIC_DIR_FROM_TESTBED=false
+SHARE_OAI_DIR_FROM_UE=true
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
@@ -55,9 +56,6 @@ if [ "$SHARE_OAI_DIR_FROM_UE" = true ] && [ ! -f "openairinterface5g/cmake_targe
     echo "Creating symbolic link to openairinterface5g..."
     ln -s "../User_Equipment/openairinterface5g" openairinterface5g
 fi
-
-# Since the UE and gNB share the same openairinterface5g directory, and the UE is installed first, the gNB's CLEAN_INSTALL must be false to prevent cleaning the UE installation
-CLEAN_INSTALL=false
 
 # Check for binary to determine if OpenAirInterface is already installed
 if [ "$CLEAN_INSTALL" = false ] && [ -f "openairinterface5g/cmake_targets/ran_build/build/nr-softmodem" ]; then

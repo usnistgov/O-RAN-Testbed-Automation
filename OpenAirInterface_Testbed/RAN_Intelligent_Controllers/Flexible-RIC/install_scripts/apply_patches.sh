@@ -94,7 +94,40 @@ echo "Patching CMakeLists.txt..."
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/CMakeLists.txt.patch"
 
 echo "Adding stale subscription cleanup support patch to FlexRIC..."
-git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/stale_subscription_cleanup_support.patch"
+STALE_SUBSCRIPTION_PATCH_DIR="$PARENT_DIR/install_patch_files/flexric/stale_subscription_cleanup_support"
+mkdir -p "$STALE_SUBSCRIPTION_PATCH_DIR"
+
+STALE_SUBSCRIPTION_PATCH_FILES=(
+    "examples/xApp/c/ctrl/mac_ctrl.c"
+    "examples/xApp/c/helloworld/hw.c"
+    "examples/xApp/c/keysight/xapp_keysight_kpm_rc.c"
+    "examples/xApp/c/monitor/xapp_rc_moni.c"
+    "examples/xApp/c/orange/xapp_es_with_cell_util.c"
+    "examples/xApp/c/slice/xapp_slice_moni_ctrl.c"
+    "examples/xApp/c/tc/xapp_tc_all.c"
+    "examples/xApp/c/tc/xapp_tc_codel.c"
+    "examples/xApp/c/tc/xapp_tc_ecn.c"
+    "examples/xApp/c/tc/xapp_tc_partition.c"
+    "src/ric/iApp/map_ric_id.c"
+    "src/ric/iApp/map_ric_id.h"
+    "src/ric/iApp/msg_handler_iapp.c"
+    "src/xApp/e42_xapp.c"
+    "src/xApp/e42_xapp.h"
+    "src/xApp/e42_xapp_api.c"
+    "src/xApp/e42_xapp_api.h"
+    "src/xApp/msg_handler_xapp.c"
+)
+
+for FILE in "${STALE_SUBSCRIPTION_PATCH_FILES[@]}"; do
+    git restore "$FILE"
+    if [ ! -f "$FILE.previous" ]; then
+        cp "$FILE" "$FILE.previous"
+        mkdir -p "$(dirname "$STALE_SUBSCRIPTION_PATCH_DIR/$FILE")"
+        cp "$FILE.previous" "$STALE_SUBSCRIPTION_PATCH_DIR/$FILE.previous"
+    fi
+done
+
+git apply --verbose --ignore-whitespace "$STALE_SUBSCRIPTION_PATCH_DIR/patch.patch"
 cd ..
 
 # Append new intermediate metrics units to 28_552_kpm_meas.txt

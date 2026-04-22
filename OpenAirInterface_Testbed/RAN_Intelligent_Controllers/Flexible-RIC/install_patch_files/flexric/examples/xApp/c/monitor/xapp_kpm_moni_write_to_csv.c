@@ -114,7 +114,8 @@ static void init_kpm_meas_unit_hash_table(void)
 static char *get_meas_unit(const char *name)
 {
   char *val = assoc_ht_open_value(&ht, &name);
-  if (!val || strcmp(val, "[]") == 0) return "";
+  if (!val || strcmp(val, "[]") == 0)
+    return "";
   return val;
 }
 
@@ -737,7 +738,14 @@ static void log_kpm_measurements(kpm_ind_msg_format_1_t const *msg_frm_1, bool i
           }
           else
           {
-            snprintf(rsrp_line, sizeof(rsrp_line), "%.2f,", m.real_val);
+            if (isnan(m.real_val))
+            {
+              snprintf(rsrp_line, sizeof(rsrp_line), ",");
+            }
+            else
+            {
+              snprintf(rsrp_line, sizeof(rsrp_line), "%.2f,", m.real_val);
+            }
           }
 
           char *target_buffer = is_cell_metric ? csv_cell_line_buffer : csv_line_buffer;

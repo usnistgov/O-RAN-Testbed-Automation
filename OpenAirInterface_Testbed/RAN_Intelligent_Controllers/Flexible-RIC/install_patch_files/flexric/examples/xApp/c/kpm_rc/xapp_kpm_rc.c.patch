@@ -1,8 +1,13 @@
 diff --git a/examples/xApp/c/kpm_rc/xapp_kpm_rc.c b/examples/xApp/c/kpm_rc/xapp_kpm_rc.c
-index ba0ccd3a..609717de 100644
+index ba0ccd3a..0e6373fd 100644
 --- a/examples/xApp/c/kpm_rc/xapp_kpm_rc.c
 +++ b/examples/xApp/c/kpm_rc/xapp_kpm_rc.c
-@@ -15,6 +15,8 @@
+@@ -1,3 +1,4 @@
++#include <math.h>
+ /*
+  * SPDX-License-Identifier: LicenseRef-CSSL-1.0
+  */
+@@ -15,16 +16,32 @@
  #include <time.h>
  #include <unistd.h>
  #include <pthread.h>
@@ -11,7 +16,18 @@ index ba0ccd3a..609717de 100644
  
  static
  ue_id_e2sm_t ue_id;
-@@ -25,6 +27,12 @@ uint64_t const period_ms = 1000;
+ 
++#define COLOR_RED "\x1b[31m"
++#define COLOR_GREEN "\x1b[32m"
++#define COLOR_YELLOW "\x1b[33m"
++#define COLOR_BLUE "\x1b[34m"
++#define COLOR_MAGENTA "\x1b[35m"
++#define COLOR_CYAN "\x1b[36m"
++#define COLOR_RESET "\x1b[0m"
++
+ static
+ uint64_t const period_ms = 1000;
+ 
  static
  pthread_mutex_t mtx;
  
@@ -24,7 +40,7 @@ index ba0ccd3a..609717de 100644
  static
  assoc_ht_open_t ht = {0};
  
-@@ -79,10 +87,11 @@ void init_kpm_meas_unit_hash_table(void)
+@@ -79,10 +96,11 @@ void init_kpm_meas_unit_hash_table(void)
    fclose(fp);
  }
  
@@ -39,7 +55,29 @@ index ba0ccd3a..609717de 100644
  }
  
  static
-@@ -190,20 +199,43 @@ void log_kpm_measurements(kpm_ind_msg_format_1_t const* msg_frm_1)
+@@ -136,9 +154,9 @@ void log_int_value(const char *name_str, const label_info_lst_t label_info, cons
+ {
+   char *name_unit = get_meas_unit(name_str);
+   if (label_info.noLabel != NULL) {
+-    printf("%s = %d %s\n", name_str, meas_record.int_val, name_unit);
++    printf(COLOR_CYAN "%s" COLOR_RESET " = %d " COLOR_MAGENTA "%s" COLOR_RESET "\n", name_str, meas_record.int_val, name_unit);
+   } else if (label_info.distBinX != NULL && meas_record.int_val > 0) {
+-    printf("%s[BinX=%d][BinY=%d][BinZ=%d] = %d %s\n", name_str, *label_info.distBinX, *label_info.distBinY, *label_info.distBinZ, meas_record.int_val, name_unit);
++    printf(COLOR_CYAN "%s[BinX=%d][BinY=%d][BinZ=%d]" COLOR_RESET " = %d " COLOR_MAGENTA "%s" COLOR_RESET "\n", name_str, *label_info.distBinX, *label_info.distBinY, *label_info.distBinZ, meas_record.int_val, name_unit);
+   }
+ }
+ 
+@@ -147,7 +165,8 @@ void log_real_value(const char *name_str, const label_info_lst_t label_info, con
+ {
+   (void)label_info;
+   char *name_unit = get_meas_unit(name_str);
+-  printf("%s = %.2f %s\n", name_str, meas_record.real_val, name_unit);
++  if (isnan(meas_record.real_val)) printf(COLOR_CYAN "%s" COLOR_RESET " =  " COLOR_MAGENTA "%s" COLOR_RESET "\n", name_str, name_unit);
++  else printf(COLOR_CYAN "%s" COLOR_RESET " = %.2f " COLOR_MAGENTA "%s" COLOR_RESET "\n", name_str, meas_record.real_val, name_unit);
+ }
+ 
+ typedef void (*log_meas_value)(const char *name_str, const label_info_lst_t label_info, const meas_record_lst_t meas_record);
+@@ -190,20 +209,54 @@ void log_kpm_measurements(kpm_ind_msg_format_1_t const* msg_frm_1)
  {
    assert(msg_frm_1->meas_info_lst_len > 0 && "Cannot correctly print measurements");
  
@@ -57,22 +95,32 @@ index ba0ccd3a..609717de 100644
 -        const meas_record_lst_t record_item = data_item.meas_record_lst[i + z];
 -
 -        match_meas_type[info_item.meas_type.type](info_item.meas_type, label_info, record_item);
--
--        if (data_item.incomplete_flag && *data_item.incomplete_flag == TRUE_ENUM_VALUE)
--          printf("Measurement Record not reliable");
 +      if (info_item.label_info_lst_len > 1 && info_item.meas_type.type == NAME_MEAS_TYPE) {
 +        char *name_str = cp_ba_to_str(info_item.meas_type.name);
 +        char *name_unit = get_meas_unit(name_str);
 +        char arr_str[8192];
 +        format_meas_record_array(arr_str, sizeof(arr_str), info_item.label_info_lst, info_item.label_info_lst_len, data_item.meas_record_lst, rec_idx);
-+        printf("%s = %s %s\n", name_str, arr_str, name_unit);
++        printf(COLOR_CYAN "%s" COLOR_RESET " = %s " COLOR_MAGENTA "%s" COLOR_RESET "\n", name_str, arr_str, name_unit);
 +
 +        factory_metrics_array_t f_metrics = process_metric_factory(current_e2_id_str ? current_e2_id_str : "gNB", name_str, info_item.label_info_lst, info_item.label_info_lst_len, data_item.meas_record_lst, rec_idx);
 +        for (size_t m = 0; m < f_metrics.count; m++) {
++          char *f_name_unit = get_meas_unit(f_metrics.metrics[m].name);
++          if (!f_name_unit || f_name_unit[0] == '\0') {
++            if (strncmp(f_metrics.metrics[m].name, "RSRP", 4) == 0) f_name_unit = "[dBm]";
++            else if (strncmp(f_metrics.metrics[m].name, "SINR", 4) == 0) f_name_unit = "[dB]";
++            else f_name_unit = "";
++          }
+ 
+-        if (data_item.incomplete_flag && *data_item.incomplete_flag == TRUE_ENUM_VALUE)
+-          printf("Measurement Record not reliable");
 +          if (f_metrics.metrics[m].value_type == 0) {
-+            printf("%s = %d\n", f_metrics.metrics[m].name, f_metrics.metrics[m].int_val);
++            printf(COLOR_CYAN "%s" COLOR_RESET " = %d " COLOR_MAGENTA "%s" COLOR_RESET "\n", f_metrics.metrics[m].name, f_metrics.metrics[m].int_val, f_name_unit);
 +          } else {
-+            printf("%s = %.2f\n", f_metrics.metrics[m].name, f_metrics.metrics[m].real_val);
++            if (isnan(f_metrics.metrics[m].real_val)) {
++              printf(COLOR_CYAN "%s" COLOR_RESET " =  " COLOR_MAGENTA "%s" COLOR_RESET "\n", f_metrics.metrics[m].name, f_name_unit);
++            } else {
++              printf(COLOR_CYAN "%s" COLOR_RESET " = %.2f " COLOR_MAGENTA "%s" COLOR_RESET "\n", f_metrics.metrics[m].name, f_metrics.metrics[m].real_val, f_name_unit);
++            }
 +          }
 +        }
 +        free_factory_metrics(&f_metrics);
@@ -91,7 +139,7 @@ index ba0ccd3a..609717de 100644
        }
      }
    }
-@@ -407,7 +439,7 @@ rc_ctrl_req_data_t gen_rc_ctrl_msg(ran_func_def_ctrl_t const* ran_func)
+@@ -407,7 +460,7 @@ rc_ctrl_req_data_t gen_rc_ctrl_msg(ran_func_def_ctrl_t const* ran_func)
  }
  
  static
@@ -100,7 +148,7 @@ index ba0ccd3a..609717de 100644
  {
    test_info_lst_t dst = {0};
  
-@@ -426,26 +458,21 @@ test_info_lst_t filter_predicate(test_cond_type_e type, test_cond_e cond, int va
+@@ -426,26 +479,21 @@ test_info_lst_t filter_predicate(test_cond_type_e type, test_cond_e cond, int va
  
    dst.test_cond_value->octet_string_value = calloc(1, sizeof(byte_array_t));
    assert(dst.test_cond_value->octet_string_value != NULL && "Memory exhausted");
@@ -135,7 +183,7 @@ index ba0ccd3a..609717de 100644
  static
  kpm_act_def_format_1_t fill_act_def_frm_1(ric_report_style_item_t const* report_item)
  {
-@@ -469,9 +496,7 @@ kpm_act_def_format_1_t fill_act_def_frm_1(ric_report_style_item_t const* report_
+@@ -469,9 +517,7 @@ kpm_act_def_format_1_t fill_act_def_frm_1(ric_report_style_item_t const* report_
  
      // [1, 2147483647]
      // 8.3.11
@@ -146,7 +194,7 @@ index ba0ccd3a..609717de 100644
    }
  
    // 8.3.8 [0, 4294967295]
-@@ -505,8 +530,7 @@ kpm_act_def_t fill_report_style_4(ric_report_style_item_t const* report_item)
+@@ -505,8 +551,7 @@ kpm_act_def_t fill_report_style_4(ric_report_style_item_t const* report_item)
    // Filter connected UEs by S-NSSAI criteria
    test_cond_type_e const type = S_NSSAI_TEST_COND_TYPE; // CQI_TEST_COND_TYPE
    test_cond_e const condition = EQUAL_TEST_COND; // GREATERTHAN_TEST_COND
@@ -156,7 +204,7 @@ index ba0ccd3a..609717de 100644
  
    // Fill Action Definition Format 1
    // 8.2.1.2.1
-@@ -515,26 +539,6 @@ kpm_act_def_t fill_report_style_4(ric_report_style_item_t const* report_item)
+@@ -515,26 +560,6 @@ kpm_act_def_t fill_report_style_4(ric_report_style_item_t const* report_item)
    return act_def;
  }
  
@@ -183,7 +231,7 @@ index ba0ccd3a..609717de 100644
  static
  kpm_act_def_t fill_report_style_1(ric_report_style_item_t const* report_item)
  {
-@@ -555,23 +559,7 @@ kpm_act_def_t fill_report_style_1(ric_report_style_item_t const* report_item)
+@@ -555,23 +580,7 @@ kpm_act_def_t fill_report_style_1(ric_report_style_item_t const* report_item)
  
      // [1, 2147483647]
      // 8.3.11
@@ -208,7 +256,7 @@ index ba0ccd3a..609717de 100644
    }
  
    // 8.3.8 [0, 4294967295]
-@@ -654,7 +642,8 @@ int main(int argc, char* argv[])
+@@ -654,7 +663,8 @@ int main(int argc, char* argv[])
    // Init the xApp
    init_xapp_api(&args);
    sleep(1);

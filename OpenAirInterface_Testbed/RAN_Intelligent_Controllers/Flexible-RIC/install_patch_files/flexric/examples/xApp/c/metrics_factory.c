@@ -90,7 +90,7 @@ bool compute_rsrp_metrics(const char *node_id, const uint32_t *current_dist, siz
   // Per-UE metrics don't have RSRP; return early
   if (total_current == 0)
   {
-    return false;
+    return true;
   }
 
   for (size_t i = 0; i < limit; i++)
@@ -109,7 +109,7 @@ bool compute_rsrp_metrics(const char *node_id, const uint32_t *current_dist, siz
 
   if (total_count == 0)
   {
-    return false;
+    return true;
   }
 
   double sum = 0;
@@ -167,7 +167,7 @@ bool compute_sinr_metrics(const char *node_id, const uint32_t *current_dist, siz
 
   if (total_current == 0)
   {
-    return false;
+    return true;
   }
 
   for (size_t i = 0; i < limit; i++)
@@ -186,7 +186,7 @@ bool compute_sinr_metrics(const char *node_id, const uint32_t *current_dist, siz
 
   if (total_count == 0)
   {
-    return false;
+    return true;
   }
 
   double sum = 0;

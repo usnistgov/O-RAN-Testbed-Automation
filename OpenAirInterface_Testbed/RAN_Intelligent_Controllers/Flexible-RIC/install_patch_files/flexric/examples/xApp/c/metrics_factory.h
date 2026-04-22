@@ -11,7 +11,7 @@
 typedef struct
 {
   char node_id_str[256];
-  uint32_t last_ss_rsrp_dist[156];
+  uint32_t last_ss_rsrp_dist[128];
   uint32_t last_ss_sinr_dist[128];
 } e2_node_dist_state_t;
 

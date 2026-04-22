@@ -50,7 +50,7 @@ double get_sinr_percentile_val(uint32_t *dist, size_t index)
 int get_percentile_val(uint32_t *dist, size_t index)
 {
   uint32_t cumulative = 0;
-  for (int i = 0; i < 156; i++)
+  for (int i = 0; i < 128; i++)
   {
     cumulative += dist[i];
     if (cumulative > index)
@@ -78,7 +78,7 @@ bool compute_rsrp_metrics(const char *node_id, const uint32_t *current_dist, siz
   if (!state)
     return false;
 
-  uint32_t diff_dist[156] = {0};
+  uint32_t diff_dist[128] = {0};
   uint32_t total_count = 0;
   uint32_t total_current = 0;
 
@@ -90,7 +90,7 @@ bool compute_rsrp_metrics(const char *node_id, const uint32_t *current_dist, siz
   // Per-UE metrics don't have RSRP; return early
   if (total_current == 0)
   {
-    return true;
+    return false;
   }
 
   for (size_t i = 0; i < limit; i++)
@@ -109,7 +109,7 @@ bool compute_rsrp_metrics(const char *node_id, const uint32_t *current_dist, siz
 
   if (total_count == 0)
   {
-    return true;
+    return false;
   }
 
   double sum = 0;
@@ -167,7 +167,7 @@ bool compute_sinr_metrics(const char *node_id, const uint32_t *current_dist, siz
 
   if (total_current == 0)
   {
-    return true;
+    return false;
   }
 
   for (size_t i = 0; i < limit; i++)
@@ -186,7 +186,7 @@ bool compute_sinr_metrics(const char *node_id, const uint32_t *current_dist, siz
 
   if (total_count == 0)
   {
-    return true;
+    return false;
   }
 
   double sum = 0;
@@ -222,9 +222,9 @@ factory_metrics_array_t process_metric_factory(const char *node_id, const char *
   factory_metrics_array_t ret = {0};
 
   // Derive RSRP.Mean, RSRP.Minimum, RSRP.Maximum, and RSRP.Count from L1M.SS-RSRP
-  if (strcmp(metric_name, "L1M.SS-RSRP") == 0 && label_info_lst_len <= 156)
+  if (strcmp(metric_name, "L1M.SS-RSRP") == 0 && label_info_lst_len <= 128)
   {
-    uint32_t current_dist[156] = {0};
+    uint32_t current_dist[128] = {0};
     for (size_t i = 0; i < label_info_lst_len; i++)
     {
       if (meas_record_lst[rec_idx_start + i].value == 0)

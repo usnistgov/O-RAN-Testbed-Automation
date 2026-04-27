@@ -40,10 +40,23 @@ cd "$PARENT_DIR"
 # Stop and disable the MongoDB service
 ./install_scripts/stop_mongodb.sh
 
+# Unpin MongoDB packages
+echo "mongodb-org install" | sudo dpkg --set-selections 2>/dev/null || true
+echo "mongodb-org-database install" | sudo dpkg --set-selections 2>/dev/null || true
+echo "mongodb-org-server install" | sudo dpkg --set-selections 2>/dev/null || true
+echo "mongodb-org-shell install" | sudo dpkg --set-selections 2>/dev/null || true
+echo "mongodb-mongosh install" | sudo dpkg --set-selections 2>/dev/null || true
+echo "mongodb-org-mongos install" | sudo dpkg --set-selections 2>/dev/null || true
+echo "mongodb-org-tools install" | sudo dpkg --set-selections 2>/dev/null || true
+
 # Uninstall the MongoDB packages
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
-if dpkg -l | grep -E '^ii.*mongodb' >/dev/null; then
-    sudo env $APTVARS apt-get remove --purge -y mongodb-org mongodb-org-server mongodb-org-shell mongodb-org-mongos mongodb-org-tools mongosh >/dev/null 2>&1 || true
+
+sudo env $APTVARS apt-get remove --purge -y mongodb-org mongodb-org-database mongodb-org-server mongodb-org-shell mongodb-org-mongos mongodb-org-tools mongodb-server mongodb-server-core mongodb-clients mongo-tools mongosh mongodb-mongosh mongodb-mongosh-shared-openssl11 mongodb-mongosh-shared-openssl3 >/dev/null 2>&1 || true
+sudo env $APTVARS apt-get --fix-broken install -y >/dev/null 2>&1 || true
+
+if dpkg -l | grep -E '^ii\s+.*(mongodb|mongosh)' >/dev/null; then
+    sudo env $APTVARS apt-get remove --purge -y mongodb-org mongodb-org-database mongodb-org-server mongodb-org-shell mongodb-org-mongos mongodb-org-tools mongodb-server mongodb-server-core mongodb-clients mongo-tools mongosh mongodb-mongosh >/dev/null 2>&1 || true
 fi
 
 # Remove MongoDB and its user and group
@@ -57,12 +70,4 @@ sudo rm -rf /var/log/mongodb
 # Remove MongoDB configurations and system modifications
 sudo rm -rf /etc/mongod
 sudo rm -f /etc/apt/sources.list.d/mongodb-org-*.list
-sudo rm -f /usr/share/keyrings/mongodb-archive-keyring.gpg
-
-# Unpin MongoDB packages
-echo "mongodb-org install" | sudo dpkg --set-selections 2>/dev/null || true
-echo "mongodb-org-database install" | sudo dpkg --set-selections 2>/dev/null || true
-echo "mongodb-org-server install" | sudo dpkg --set-selections 2>/dev/null || true
-echo "mongodb-mongosh install" | sudo dpkg --set-selections 2>/dev/null || true
-echo "mongodb-org-mongos install" | sudo dpkg --set-selections 2>/dev/null || true
-echo "mongodb-org-tools install" | sudo dpkg --set-selections 2>/dev/null || true
+sudo rm -f /usr/share/keyrings/mongodb-server-*.gpg /usr/share/keyrings/mongodb-archive-keyring.gpg

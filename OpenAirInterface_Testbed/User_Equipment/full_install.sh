@@ -33,6 +33,7 @@ set -e
 
 APPLY_PATCHES=true
 CLEAN_INSTALL=false # Note: If set to true, then full_install.sh needs to be ran in the Next_Generation_Node_B directory too.
+RADIO_TYPE="SIMU"   # Set to "SIMU", "ZMQ", or "USRP"
 DEBUG_SYMBOLS=false
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
@@ -134,6 +135,12 @@ if ! command -v ccache &>/dev/null; then
     sudo env $APTVARS apt-get install -y ccache
 fi
 
+if ! dpkg -s libtool &>/dev/null; then
+    echo "Installing libtool..."
+    sudo apt-get update
+    sudo env $APTVARS apt-get install -y libtool
+fi
+
 if ! dpkg -s libsimde-dev &>/dev/null; then
     echo "Attempting to install libsimde-dev..."
     sudo apt-get update
@@ -157,6 +164,68 @@ cd "$SCRIPT_DIR"
 
 echo
 echo
+
+if [ "$RADIO_TYPE" = "ZMQ" ]; then
+    echo "Building ZeroMQ libzmq..."
+    if [ -d ../Next_Generation_Node_B/libzmq ]; then
+        if [ ! -L libzmq ]; then
+            echo "Found gNodeB library. Creating libzmq link instead."
+            ln -s ../Next_Generation_Node_B/libzmq libzmq
+        else
+            echo "Link to libzmq already created."
+        fi
+    else
+        if [ ! -d libzmq ]; then
+            ./install_scripts/git_clone.sh https://github.com/zeromq/libzmq.git
+        fi
+    fi
+
+    if ! pkg-config --exists libzmq; then
+        cd libzmq
+        ./autogen.sh
+        ./configure
+        make -j$(nproc)
+        sudo make install
+        sudo ldconfig
+        cd "$SCRIPT_DIR"
+    fi
+
+    echo
+    echo "Building ZeroMQ czmq..."
+    if [ -d ../Next_Generation_Node_B/czmq ]; then
+        if [ ! -L czmq ]; then
+            echo "Found gNodeB library. Creating czmq link instead."
+            ln -s ../Next_Generation_Node_B/czmq czmq
+        else
+            echo "Link to czmq already created."
+        fi
+    else
+        if [ ! -d czmq ]; then
+            ./install_scripts/git_clone.sh https://github.com/zeromq/czmq.git
+        fi
+    fi
+
+    if ! pkg-config --exists libczmq; then
+        cd czmq
+        ./autogen.sh
+        ./configure
+        make -j$(nproc)
+        sudo make install
+        sudo ldconfig
+        cd "$SCRIPT_DIR"
+    fi
+
+    # Verify ZeroMQ installation
+    if ! pkg-config --exists libzmq || ! pkg-config --exists libczmq; then
+        echo "ZeroMQ was not installed correctly. Exiting."
+        exit 1
+    else
+        echo "ZeroMQ installed successfully."
+    fi
+
+    cd "$SCRIPT_DIR"
+fi
+
 echo "Compiling and Installing OpenAirInterface UE..."
 
 cd "$SCRIPT_DIR/openairinterface5g"
@@ -168,7 +237,12 @@ cd "$SCRIPT_DIR/openairinterface5g/cmake_targets"
 
 # Build OAI 5G UE
 cd "$SCRIPT_DIR/openairinterface5g/cmake_targets"
-./build_oai --ninja --nrUE -w SIMU $ADDITIONAL_FLAGS # -w USRP
+if [ "$RADIO_TYPE" = "SIMU" ] || [ "$RADIO_TYPE" = "ZMQ" ]; then
+    ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS -w $RADIO_TYPE"
+else
+    ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS -w USRP"
+fi
+./build_oai --ninja --nrUE $ADDITIONAL_FLAGS
 
 cd "$SCRIPT_DIR"
 

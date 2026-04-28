@@ -151,6 +151,18 @@ else
         RFSIM_SERVER_ARG="--rfsimulator.serveraddr $SERVER_IP"
     fi
 
+    RADIO_TYPE=$(cat "$SCRIPT_DIR/configs/radio_type.txt" 2>/dev/null || echo "RFSIM")
+    if [ "$RADIO_TYPE" = "ZMQ" ]; then
+        ZMQ_TX_PORT=$((4555 + UE_NUMBER * 2))
+        ZMQ_RX_PORT=$((4554 + UE_NUMBER * 2))
+        UE_HOST_IP=$(python3 "$SCRIPT_DIR/install_scripts/fetch_nth_ip.py" "10.201.0.0/16" $((UE_NUMBER * 4)))
+        RADIO_ARGS="--device.name oai_zmqdevif --zmq.[0].tx_channels tcp://0.0.0.0:$ZMQ_TX_PORT --zmq.[0].rx_channels tcp://$UE_HOST_IP:$ZMQ_RX_PORT"
+    elif [ "$RADIO_TYPE" = "USRP" ]; then
+        RADIO_ARGS=""
+    else
+        RADIO_ARGS="$RADIO_ARGS"
+    fi
+
     cd "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build"
 
     BANDWIDTH_RBS=106

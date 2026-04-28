@@ -105,12 +105,16 @@ sudo rm -rf OpenAirInterface_Testbed/5G_Core_Network/Additional_Cores_5GDeploy/c
 sudo rm -rf OpenAirInterface_Testbed/5G_Core_Network/Additional_Cores_5GDeploy/install_time.txt
 
 sudo rm -rf OpenAirInterface_Testbed/User_Equipment/openairinterface5g
+sudo rm -rf OpenAirInterface_Testbed/User_Equipment/czmq
+sudo rm -rf OpenAirInterface_Testbed/User_Equipment/libzmq
 sudo rm -rf OpenAirInterface_Testbed/User_Equipment/logs
 sudo rm -rf OpenAirInterface_Testbed/User_Equipment/configs
 sudo rm -rf OpenAirInterface_Testbed/User_Equipment/install_time.txt
 
 sudo rm -rf OpenAirInterface_Testbed/Next_Generation_Node_B/openairinterface5g
 sudo rm -rf OpenAirInterface_Testbed/Next_Generation_Node_B/o1-adapter
+sudo rm -rf OpenAirInterface_Testbed/Next_Generation_Node_B/czmq
+sudo rm -rf OpenAirInterface_Testbed/Next_Generation_Node_B/libzmq
 sudo rm -rf OpenAirInterface_Testbed/Next_Generation_Node_B/logs
 sudo rm -rf OpenAirInterface_Testbed/Next_Generation_Node_B/configs
 sudo rm -rf OpenAirInterface_Testbed/Next_Generation_Node_B/install_time.txt

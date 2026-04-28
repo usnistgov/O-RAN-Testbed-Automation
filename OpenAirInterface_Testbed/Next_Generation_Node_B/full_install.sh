@@ -33,6 +33,7 @@ set -e
 
 APPLY_PATCHES=true
 CLEAN_INSTALL=false # If SHARE_OAI_DIR_FROM_UE is true, set to false since the UE hosts openairinterface5g
+RADIO_TYPE="SIMU"   # Set to "SIMU", "ZMQ", or "USRP"
 DEBUG_SYMBOLS=false
 NRSCOPE_GUI=false
 TELNET_SERVER=true
@@ -182,6 +183,12 @@ if ! command -v ccache &>/dev/null; then
     sudo env $APTVARS apt-get install -y ccache
 fi
 
+if ! dpkg -s libtool &>/dev/null; then
+    echo "Installing libtool..."
+    sudo apt-get update
+    sudo env $APTVARS apt-get install -y libtool
+fi
+
 ADDITIONAL_FLAGS=""
 if [ "$CLEAN_INSTALL" = true ]; then
     ADDITIONAL_FLAGS="-C"
@@ -207,6 +214,68 @@ cd "$SCRIPT_DIR"
 
 echo
 echo
+
+if [ "$RADIO_TYPE" = "ZMQ" ]; then
+    echo "Building ZeroMQ libzmq..."
+    if [ -d ../User_Equipment/libzmq ]; then
+        if [ ! -L libzmq ]; then
+            echo "Found UE library. Creating libzmq link instead."
+            ln -s ../User_Equipment/libzmq libzmq
+        else
+            echo "Link to libzmq already created."
+        fi
+    else
+        if [ ! -d libzmq ]; then
+            ./install_scripts/git_clone.sh https://github.com/zeromq/libzmq.git
+        fi
+    fi
+
+    if ! pkg-config --exists libzmq; then
+        cd libzmq
+        ./autogen.sh
+        ./configure
+        make -j$(nproc)
+        sudo make install
+        sudo ldconfig
+        cd "$SCRIPT_DIR"
+    fi
+
+    echo
+    echo "Building ZeroMQ czmq..."
+    if [ -d ../User_Equipment/czmq ]; then
+        if [ ! -L czmq ]; then
+            echo "Found UE library. Creating czmq link instead."
+            ln -s ../User_Equipment/czmq czmq
+        else
+            echo "Link to czmq already created."
+        fi
+    else
+        if [ ! -d czmq ]; then
+            ./install_scripts/git_clone.sh https://github.com/zeromq/czmq.git
+        fi
+    fi
+
+    if ! pkg-config --exists libczmq; then
+        cd czmq
+        ./autogen.sh
+        ./configure
+        make -j$(nproc)
+        sudo make install
+        sudo ldconfig
+        cd "$SCRIPT_DIR"
+    fi
+
+    # Verify ZeroMQ installation
+    if ! pkg-config --exists libzmq || ! pkg-config --exists libczmq; then
+        echo "ZeroMQ was not installed correctly. Exiting."
+        exit 1
+    else
+        echo "ZeroMQ installed successfully."
+    fi
+
+    cd "$SCRIPT_DIR"
+fi
+
 echo "Compiling and Installing OpenAirInterface gNB..."
 
 cd "$SCRIPT_DIR/openairinterface5g"
@@ -218,7 +287,12 @@ cd "$SCRIPT_DIR/openairinterface5g/cmake_targets"
 
 # Build OAI 5G gNB
 cd "$SCRIPT_DIR/openairinterface5g/cmake_targets"
-./build_oai --ninja --gNB --build-e2 -w SIMU $ADDITIONAL_FLAGS # -w USRP
+if [ "$RADIO_TYPE" = "SIMU" ] || [ "$RADIO_TYPE" = "ZMQ" ]; then
+    ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS -w $RADIO_TYPE"
+else
+    ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS -w USRP"
+fi
+./build_oai --ninja --gNB --build-e2 $ADDITIONAL_FLAGS
 
 cd "$SCRIPT_DIR"
 

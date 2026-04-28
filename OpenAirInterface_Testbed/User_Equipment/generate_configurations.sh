@@ -31,7 +31,7 @@
 # Exit immediately if a command fails
 set -e
 
-USE_RFSIM_CHANNELMOD=true
+RADIO_TYPE="SIMU" # Set to "SIMU", "ZMQ", or "USRP"
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
@@ -183,8 +183,9 @@ if [ "$CLEAR_CONFIGS" = true ]; then
 fi
 mkdir -p configs
 mkdir -p logs
+echo "$RADIO_TYPE" >configs/radio_type.txt
 
-if [ "$USE_RFSIM_CHANNELMOD" = true ]; then
+if [ "$RADIO_TYPE" = "SIMU" ]; then
     echo "Using the channelmod_rfsimu.conf file for the RFSIM channel model."
     #cp install_patch_files/channelmod_rfsimu.conf "$SCRIPT_DIR/configs/channelmod_rfsimu.conf"
     cd configs

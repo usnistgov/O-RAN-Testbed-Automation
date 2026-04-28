@@ -32,7 +32,7 @@
 set -e
 
 SPLIT_DU_IDS=$(seq 1 3)
-USE_RFSIM_CHANNELMOD=true
+RADIO_TYPE="SIMU" # Set to "SIMU", "ZMQ", or "USRP"
 MAKE_GNB_E2_NODE=true
 MAKE_CU_E2_NODE=false
 MAKE_DU_E2_NODE=true
@@ -192,6 +192,7 @@ SNSSAI_LIST+=")"
 echo "Saving configuration file example..."
 rm -rf configs || sudo rm -rf configs
 mkdir configs
+echo "$RADIO_TYPE" >configs/radio_type.txt
 
 # Only remove the logs if not running
 RUNNING_STATUS=$(./is_running.sh)
@@ -270,7 +271,7 @@ for CONF_FILE in gnb.conf split_cu.conf "${SPLIT_DUS[@]}"; do
         update_conf "configs/$CONF_FILE" "do_CSIRS" "1"
     fi
 
-    if [ "$USE_RFSIM_CHANNELMOD" = true ]; then
+    if [ "$RADIO_TYPE" = "SIMU" ]; then
         # Finally, ensure that it is referencing the channelmod_rfsimu.conf file
         if ! grep -q "@include \"channelmod_rfsimu.conf\"" "configs/$CONF_FILE"; then
             echo "" >>"configs/$CONF_FILE"

@@ -142,3 +142,33 @@ cd ..
 
 echo
 echo "Successfully patched OpenAirInterface."
+
+cd openairinterface5g
+git restore radio/zmq/ring_buffer.cpp
+if [ ! -f "radio/zmq/ring_buffer.cpp.previous" ]; then
+    cp radio/zmq/ring_buffer.cpp radio/zmq/ring_buffer.cpp.previous
+    cp radio/zmq/ring_buffer.cpp.previous "$PARENT_DIR/install_patch_files/openairinterface/radio/zmq/ring_buffer.previous.cpp"
+fi
+echo "Patching ring_buffer.cpp for C++11 compatibility..."
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface/radio/zmq/ring_buffer.cpp.patch"
+cd ..
+
+cd openairinterface5g
+git restore radio/zmq/zmq_imported.cpp
+if [ ! -f "radio/zmq/zmq_imported.cpp.previous" ]; then
+    cp radio/zmq/zmq_imported.cpp radio/zmq/zmq_imported.cpp.previous
+    cp radio/zmq/zmq_imported.cpp.previous "$PARENT_DIR/install_patch_files/openairinterface/radio/zmq/zmq_imported.previous.cpp"
+fi
+echo "Patching zmq_imported.cpp for C++11 compatibility..."
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface/radio/zmq/zmq_imported.cpp.patch"
+cd ..
+
+cd openairinterface5g
+git restore radio/zmq/zmq_imported.h
+if [ ! -f "radio/zmq/zmq_imported.h.previous" ]; then
+    cp radio/zmq/zmq_imported.h radio/zmq/zmq_imported.h.previous
+    cp radio/zmq/zmq_imported.h.previous "$PARENT_DIR/install_patch_files/openairinterface/radio/zmq/zmq_imported.previous.h"
+fi
+echo "Patching zmq_imported.h for C++11 compatibility..."
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface/radio/zmq/zmq_imported.h.patch"
+cd ..

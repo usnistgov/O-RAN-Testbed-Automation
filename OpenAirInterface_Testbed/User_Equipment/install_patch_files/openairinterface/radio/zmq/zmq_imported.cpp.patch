@@ -1,0 +1,11 @@
+--- a/radio/zmq/zmq_imported.cpp
++++ b/radio/zmq/zmq_imported.cpp
+@@ -13,7 +13,7 @@
+ 
+ void zmq_tx_channel::transmit(c16_t *samples, size_t nsamps, uint64_t timestamp)
+ {
+-  std::scoped_lock lock(transmit_alignment_mutex_);
++  std::lock_guard<std::mutex> lock(transmit_alignment_mutex_);
+   size_t overflow = 0;
+   if (timestamp > sample_count_) {
+     overflow += buffer_.push_zeros(timestamp - sample_count_);

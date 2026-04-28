@@ -910,6 +910,9 @@ void handle_nr_uci_pucch_0_1(module_id_t mod_id, frame_t frame, slot_t slot, con
           NR_SCHED_UNLOCK(&nrmac->sched_lock);
           return;
         }
+        // Msg4 Ack: reset average with first measurement
+        if (uci_01->ul_cqi != 0xff)
+          nr_mac_pc_reset_snr(&UE->UE_sched_ctrl.pucch_pc, uci_01->ul_cqi * 5 - 640, uci_01->rssi);
       }
       if (harq_confidence == 1) {
         UE->mac_stats.pucch0_DTX++;

@@ -65,10 +65,10 @@ fi
 INSTALL_START_TIME=$(date +%s)
 
 echo "Installing dependencies..."
-if ! command -v gcc &>/dev/null || ! command -v g++ &>/dev/null || ! command -v swig &>/dev/null; then
+if ! command -v gcc-13 &>/dev/null || ! command -v g++-13 &>/dev/null || ! command -v swig &>/dev/null; then
     sudo apt-get update || true
     sudo env $APTVARS apt-get install -y build-essential automake
-    sudo env $APTVARS apt-get install -y gcc g++
+    sudo env $APTVARS apt-get install -y gcc-13 g++-13
     sudo env $APTVARS apt-get install -y libsctp-dev python3 cmake-curses-gui libpcre2-dev python3-dev
 fi
 
@@ -131,7 +131,7 @@ cd flexric
 sudo rm -rf build
 mkdir build
 cd build
-CC=gcc CXX=g++ cmake .. -DE2AP_VERSION=$E2AP_VERSION -DKPM_VERSION=$KPM_VERSION $ADDITIONAL_FLAGS
+CC=gcc-13 CXX=g++-13 cmake .. -DE2AP_VERSION=$E2AP_VERSION -DKPM_VERSION=$KPM_VERSION $ADDITIONAL_FLAGS
 make -j$(nproc)
 
 echo "Installing FlexRIC..."

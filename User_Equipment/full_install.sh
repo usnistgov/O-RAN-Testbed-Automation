@@ -194,6 +194,13 @@ cd srsRAN_4G
 echo
 echo
 echo "Building srsRAN_4G..."
+
+BOOST_VERSION=$(dpkg -s libboost-dev | grep '^Version:' | awk '{print $2}' | cut -d. -f1,2)
+if [[ $(echo -e "$BOOST_VERSION\n1.89" | sort -V | head -n1) == "1.89" ]]; then # If version 1.89 or higher
+    # Remove system from list of components since no longer available (https://www.boost.org/doc/libs/latest/libs/system/doc/html/system.html#changes_in_boost_1_89)
+    sed -i 's/list(APPEND BOOST_REQUIRED_COMPONENTS "system")/#list(APPEND BOOST_REQUIRED_COMPONENTS "system")/g' CMakeLists.txt
+fi
+
 # rm -rf build
 mkdir -p build
 cd build

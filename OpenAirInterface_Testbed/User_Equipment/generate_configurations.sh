@@ -185,14 +185,14 @@ mkdir -p configs
 mkdir -p logs
 echo "$RADIO_TYPE" >configs/radio_type.txt
 
-if [ "$RADIO_TYPE" = "SIMU" ]; then
-    echo "Using the channelmod_rfsimu.conf file for the RFSIM channel model."
+if [ "$RADIO_TYPE" = "SIMU" ] || [ "$RADIO_TYPE" = "ZMQ" ]; then
+    echo "Using the channelmod_rfsimu.conf file for the SIMU/ZMQ channel model."
     #cp install_patch_files/channelmod_rfsimu.conf "$SCRIPT_DIR/configs/channelmod_rfsimu.conf"
     cd configs
     ln -sf ../install_patch_files/channelmod_rfsimu.conf channelmod_rfsimu.conf
     cd ..
 else
-    echo "Using the channelmod_rfsimu_LEO_satellite.conf file for the RFSIM channel model."
+    echo "Using the channelmod_rfsimu_LEO_satellite.conf channel model."
     # Use the default channelmod_rfsimu_LEO_satellite.conf file
     #cp openairinterface5g/targets/PROJECTS/GENERIC-NR-5GC/CONF/channelmod_rfsimu_LEO_satellite.conf configs/channelmod_rfsimu.conf
     cd configs

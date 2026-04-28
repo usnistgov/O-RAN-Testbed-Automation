@@ -271,8 +271,7 @@ for CONF_FILE in gnb.conf split_cu.conf "${SPLIT_DUS[@]}"; do
         update_conf "configs/$CONF_FILE" "do_CSIRS" "1"
     fi
 
-    if [ "$RADIO_TYPE" = "SIMU" ]; then
-        # Finally, ensure that it is referencing the channelmod_rfsimu.conf file
+    if [ "$RADIO_TYPE" = "SIMU" ] || [ "$RADIO_TYPE" = "ZMQ" ]; then
         if ! grep -q "@include \"channelmod_rfsimu.conf\"" "configs/$CONF_FILE"; then
             echo "" >>"configs/$CONF_FILE"
             echo "@include \"channelmod_rfsimu.conf\"" >>"configs/$CONF_FILE"

@@ -119,8 +119,17 @@ sudo env $APTVARS apt-get install -y libtool
 sudo ./install_scripts/enable_sctp.sh
 
 # Check if GCC 13 or newer is installed, if not, install it and set it as the default
-GCC_VERSION=$(gcc -v 2>&1 | grep "gcc version" | awk '{print $3}')
-if [[ -z "$GCC_VERSION" || $(echo -e "13\n$GCC_VERSION" | sort -V | head -n1) != "13"* && ! "$GCC_VERSION" == 13.* ]]; then
+MIN_GCC_VERSION="13.0.0"
+INSTALL_GCC=false
+if ! command -v gcc >/dev/null 2>&1; then
+    INSTALL_GCC=true
+else
+    GCC_VERSION=$(gcc -dumpfullversion -dumpversion)
+    if dpkg --compare-versions "$GCC_VERSION" lt "$MIN_GCC_VERSION"; then
+        INSTALL_GCC=true
+    fi
+fi
+if [[ "$INSTALL_GCC" == "true" ]]; then
     echo "Installing GCC 13..."
     sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
     sudo apt-get update

@@ -121,7 +121,7 @@ EOF
     echo "Configured needrestart to list-only (no service restarts)."
 fi
 
-# Code from (https://gitlab.com/ocudu/ocudu):
+# Code from (https://ocudu.gitlab.io/ocudu_docs/user_manual/installation/#build-tools-and-dependencies):
 MIN_GCC_VERSION="11.4.0"
 if command -v gcc >/dev/null 2>&1; then
     GCC_VERSION=$(gcc -dumpfullversion -dumpversion)
@@ -131,7 +131,7 @@ if command -v gcc >/dev/null 2>&1; then
     fi
 fi
 
-# Code from (https://gitlab.com/ocudu/ocudu):
+# Code from (https://ocudu.gitlab.io/ocudu_docs/user_manual/installation/#build-tools-and-dependencies):
 sudo env $APTVARS apt-get install -y cmake make gcc g++ pkg-config libmbedtls-dev libsctp-dev libyaml-cpp-dev libtool
 if [[ "$RUN_TESTS" == "true" ]]; then
     sudo env $APTVARS apt-get install -y libgtest-dev

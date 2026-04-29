@@ -151,9 +151,9 @@ fi
 echo "Ensuring that SCTP is enabled..."
 sudo ./install_scripts/enable_sctp.sh
 
-# Check if GCC 13 is installed, if not, install it and set it as the default
+# Check if GCC 13 or newer is installed, if not, install it and set it as the default
 GCC_VERSION=$(gcc -v 2>&1 | grep "gcc version" | awk '{print $3}')
-if [[ -z "$GCC_VERSION" || ! "$GCC_VERSION" == 13.* ]]; then
+if [[ -z "$GCC_VERSION" || $(echo -e "13\n$GCC_VERSION" | sort -V | head -n1) != "13"* && ! "$GCC_VERSION" == 13.* ]]; then
     echo "Installing GCC 13..."
     sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
     sudo apt-get update

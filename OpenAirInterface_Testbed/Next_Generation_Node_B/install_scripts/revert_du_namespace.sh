@@ -82,6 +82,6 @@ sudo ip link set v-eth-du$DU_NUMBER down
 sudo ip link del v-eth-du$DU_NUMBER
 
 echo "Deleting the network namespace..."
-sudo ip netns del $DU_NAMESPACE
+sudo ip netns delete $DU_NAMESPACE
 
 echo "Successfully reverted the DU $DU_NUMBER namespace."

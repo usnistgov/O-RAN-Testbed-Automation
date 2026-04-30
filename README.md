@@ -67,7 +67,7 @@ The components that have been verified to support or not support connectivity ar
 
 Before beginning the installation and setup of the testbed, verify that the system meets the following minimum specifications to prevent issues like pods remaining in pending or crash loop states if using an O-RAN SC RIC.
 
-- **Operating System**: Linux distributions based on Ubuntu 20.04 LTS, Ubuntu 22.04 LTS, and Ubuntu 24.04 LTS are supported.
+- **Operating System**: Linux distributions based on Ubuntu 20.04 LTS, Ubuntu 22.04 LTS, Ubuntu 24.04 LTS, and Ubuntu 26.04 LTS are supported.
   - _Recommendation: Ubuntu 22.04._
 - **Hard Drive Storage**: Must be `≥ 57` GB.
 - **Base Memory/RAM**: Must be `≥ 6000` MB.

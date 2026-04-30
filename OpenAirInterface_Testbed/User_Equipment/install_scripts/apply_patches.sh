@@ -172,3 +172,14 @@ fi
 echo "Patching zmq_imported.h for C++11 compatibility..."
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface/radio/zmq/zmq_imported.h.patch"
 cd ..
+
+# Patch nr_nas_msg.c for OpenSSL 1.1.x build compatibility
+cd openairinterface5g
+git restore openair3/NAS/NR_UE/nr_nas_msg.c
+if [ ! -f "openair3/NAS/NR_UE/nr_nas_msg.c.previous" ]; then
+    cp openair3/NAS/NR_UE/nr_nas_msg.c openair3/NAS/NR_UE/nr_nas_msg.c.previous
+    cp openair3/NAS/NR_UE/nr_nas_msg.c.previous "$PARENT_DIR/install_patch_files/openairinterface/openair3/NAS/NR_UE/nr_nas_msg.previous.c"
+fi
+echo "Patching nr_nas_msg.c for OpenSSL 1.1.x build compatibility..."
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface/openair3/NAS/NR_UE/nr_nas_msg.c.patch"
+cd ..

@@ -151,7 +151,6 @@ fi
 echo "Ensuring that SCTP is enabled..."
 sudo ./install_scripts/enable_sctp.sh
 
-
 # Check if GCC 13 or newer is installed, if not, install it and set it as the default
 MIN_GCC_VERSION="13.0.0"
 INSTALL_GCC=false

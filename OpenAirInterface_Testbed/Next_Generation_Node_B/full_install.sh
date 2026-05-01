@@ -117,23 +117,26 @@ if [ ! -d "$FLEXRIC_DIR/src/agent/e2_agent_api.c" ]; then
     ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/mosaic5g/flexric.git "$FLEXRIC_DIR" --https
 fi
 
-CURRENT_E2_PORT=$(sed -nE 's/.*e2ap_server_port *= *([0-9]+);/\1/p' openairinterface5g/openair2/E2AP/flexric/src/agent/e2_agent_api.c)
+CURRENT_E2_PORT=$(sed -nE 's/.*e2ap_server_port *= *([0-9]+);/\1/p' $FLEXRIC_DIR/src/agent/e2_agent_api.c)
 if [ -z "$CURRENT_E2_PORT" ]; then
-    echo "ERROR: e2ap_server_port not found in openairinterface5g/openair2/E2AP/flexric/src/agent/e2_agent_api.c" >&2
+    echo "ERROR: e2ap_server_port not found in $FLEXRIC_DIR/src/agent/e2_agent_api.c" >&2
     exit 1
 fi
 # Check if the substitute port is already in use
-if sudo find openairinterface5g/openair2/E2AP/flexric/ -type f -exec grep -l -w "$E2_TERM_PORT_SUBSTITUTE" {} + | grep -q .; then
+if sudo find $FLEXRIC_DIR/ -type f -exec grep -l -w "$E2_TERM_PORT_SUBSTITUTE" {} + | grep -q .; then
     echo "ERROR: The E2 Termination Port Substitute ($E2_TERM_PORT_SUBSTITUTE) is already in use in the following files. Please choose a different substitute port."
-    sudo find openairinterface5g/openair2/E2AP/flexric/ -type f -exec grep -l -w "$E2_TERM_PORT_SUBSTITUTE" {} +
+    sudo find $FLEXRIC_DIR/ -type f -exec grep -l -w "$E2_TERM_PORT_SUBSTITUTE" {} +
     exit 1
 fi
 # Configure the E2 termination port
 if [ "$E2_TERM_PORT" != "$CURRENT_E2_PORT" ]; then
-    sudo find openairinterface5g/openair2/E2AP/flexric/ -type f -exec sed -i "s/$CURRENT_E2_PORT/$E2_TERM_PORT_SUBSTITUTE/g" {} + # Change current port to substitute
-    sudo find openairinterface5g/openair2/E2AP/flexric/ -type f -exec sed -i "s/$E2_TERM_PORT_SUBSTITUTE/$E2_TERM_PORT/g" {} +    # Change substitute to specified port
+    sudo find $FLEXRIC_DIR/ -type f -exec sed -i "s/$CURRENT_E2_PORT/$E2_TERM_PORT_SUBSTITUTE/g" {} + # Change current port to substitute
+    sudo find $FLEXRIC_DIR/ -type f -exec sed -i "s/$E2_TERM_PORT_SUBSTITUTE/$E2_TERM_PORT/g" {} +    # Change substitute to specified port
     echo "Configured E2 termination from port $CURRENT_E2_PORT to port $E2_TERM_PORT"
 fi
+
+# Increase FR_CONF_FILE_LEN from 128 to 1024 to prevent buffer overflows with long paths
+sed -i 's/#define FR_CONF_FILE_LEN 128/#define FR_CONF_FILE_LEN 1024/g' "$FLEXRIC_DIR/src/util/conf_file.h"
 
 echo
 echo
@@ -150,7 +153,6 @@ fi
 
 echo "Ensuring that SCTP is enabled..."
 sudo ./install_scripts/enable_sctp.sh
-
 
 # Check if GCC 13 or newer is installed, if not, install it and set it as the default
 MIN_GCC_VERSION="13.0.0"

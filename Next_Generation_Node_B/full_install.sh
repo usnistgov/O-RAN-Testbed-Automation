@@ -131,7 +131,6 @@ if command -v gcc >/dev/null 2>&1; then
     fi
 fi
 
-# Code from (https://ocudu.gitlab.io/ocudu_docs/user_manual/installation/#build-tools-and-dependencies):
 sudo env $APTVARS apt-get install -y cmake make gcc g++ pkg-config libmbedtls-dev libsctp-dev libyaml-cpp-dev libtool
 if [[ "$RUN_TESTS" == "true" ]]; then
     sudo env $APTVARS apt-get install -y libgtest-dev

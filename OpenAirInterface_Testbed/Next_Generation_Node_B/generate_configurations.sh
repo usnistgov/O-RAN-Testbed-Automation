@@ -37,6 +37,9 @@ MAKE_GNB_E2_NODE=true
 MAKE_CU_E2_NODE=false
 MAKE_DU_E2_NODE=true
 
+# FLEXRIC_LIBRARY_DIR="/usr/local/lib/flexric/" # Default
+FLEXRIC_LIBRARY_DIR="flexric/build/flexric_libraries/lib/flexric/"
+
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
@@ -45,6 +48,16 @@ fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
+
+FLEXRIC_LIBRARY_DIR="../RAN_Intelligent_Controllers/Flexible-RIC/$FLEXRIC_LIBRARY_DIR"
+if [[ "$FLEXRIC_LIBRARY_DIR" != /* ]]; then
+    FULL_SM_DIR="$(realpath "$SCRIPT_DIR/$FLEXRIC_LIBRARY_DIR" 2>/dev/null || echo "$SCRIPT_DIR/$FLEXRIC_LIBRARY_DIR")"
+else
+    FULL_SM_DIR="$FLEXRIC_LIBRARY_DIR"
+fi
+if [[ "$FULL_SM_DIR" != */ ]]; then
+    FULL_SM_DIR="${FULL_SM_DIR}/"
+fi
 
 # There are two types of RSRP measurements: SSB and CSI
 # If using MIMO, then USE_SSB_RSRP must be set to false (https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/develop/doc/RUNMODEM.md#5g-gnb-mimo-configuration)
@@ -261,6 +274,7 @@ for CONF_FILE in gnb.conf split_cu.conf "${SPLIT_DUS[@]}"; do
     update_conf "configs/$CONF_FILE" "GNB_IPV4_ADDRESS_FOR_NG_AMF" "\"$N2_ADDR_BIND/24\""
     update_conf "configs/$CONF_FILE" "GNB_IPV4_ADDRESS_FOR_NGU" "\"$N3_ADDR_BIND/24\""
     update_conf "configs/$CONF_FILE" "tracking_area_code" "$TAC"
+    update_conf "configs/$CONF_FILE" "sm_dir" "\"$FULL_SM_DIR\""
 
     # Configure the Single Network Slice Selection Assistance Information (S-NSSAI)
     update_conf "configs/$CONF_FILE" "plmn_list" "({ mcc = $MCC; mnc = $MNC; mnc_length = $MNC_LENGTH; snssaiList = $SNSSAI_LIST })"

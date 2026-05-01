@@ -31,6 +31,9 @@
 # Exit immediately if a command fails
 set -e
 
+# FLEXRIC_LIBRARY_DIR="/usr/local/lib/flexric/" # Default
+FLEXRIC_LIBRARY_DIR="flexric/build/flexric_libraries/lib/flexric/"
+
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
@@ -75,7 +78,14 @@ if [[ $RUNNING_STATUS != *": RUNNING"* ]]; then
     mkdir logs
 fi
 
-if [ -f /usr/local/etc/flexric/flexric.conf ]; then
+PREFIX_DIR="${FLEXRIC_LIBRARY_DIR%/lib/flexric*}"
+if [[ "$PREFIX_DIR" != /* ]]; then
+    PREFIX_DIR="$SCRIPT_DIR/$PREFIX_DIR"
+fi
+
+if [ -f "$PREFIX_DIR/etc/flexric/flexric.conf" ]; then
+    cp "$PREFIX_DIR/etc/flexric/flexric.conf" "$SCRIPT_DIR/configs/flexric.conf"
+elif [ -f /usr/local/etc/flexric/flexric.conf ]; then
     cp /usr/local/etc/flexric/flexric.conf "$SCRIPT_DIR/configs/flexric.conf"
 else
     cp flexric/flexric.conf "$SCRIPT_DIR/configs/flexric.conf"

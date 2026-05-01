@@ -101,6 +101,12 @@ The Grafana dashboard is accessible at `http://localhost:3000` with default cred
   <img src="../../../Images/xApp_Dashboard.png" alt="Grafana dashboard of xApp KPM metrics" width="75%">
 </p>
 
+### Customizing the Service Model Path
+
+To maintain an isolated environment, this testbed configures the FlexRIC Service Model (SM) shared libraries (`.so` files) to install into `flexric/build/flexric_libraries/lib/flexric/` rather than the default `/usr/local/lib/flexric/`. 
+
+This location can be configured by modifying the `FLEXRIC_LIBRARY_DIR` variable across the scripts prior to installing the OpenAirInterface gNodeB and FlexRIC.
+
 ## References
 
 1. Working Group 3: Near-Real-time RAN Intelligent Controller and E2 Interface Workgroup. O-RAN Alliance. [https://public.o-ran.org/display/WG3/Introduction][oran-wg3]

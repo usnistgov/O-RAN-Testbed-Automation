@@ -166,7 +166,7 @@ fi
 sudo ln -s "$DMS_CLI_PATH" /usr/local/bin/dms_cli
 echo "Symbolic link created for dms_cli at /usr/local/bin/dms_cli"
 
-cd ../../../../ # Main directory
+cd ../../../.. # Main directory
 
 if ! curl -s $CHART_REPO_URL >/dev/null; then
     echo "Server at http://0.0.0.0:8090 is not running. Attempting to start..."

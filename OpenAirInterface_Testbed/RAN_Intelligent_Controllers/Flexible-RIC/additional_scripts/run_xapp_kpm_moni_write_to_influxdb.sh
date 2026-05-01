@@ -41,6 +41,16 @@ echo "# Script: $(realpath "$0")..."
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
+
+FLEXRIC_LIBRARY_DIR="flexric/build/flexric_libraries/lib/flexric/"
+if [[ "$FLEXRIC_LIBRARY_DIR" != /* ]]; then
+    FULL_SM_DIR="$PARENT_DIR/$FLEXRIC_LIBRARY_DIR"
+else
+    FULL_SM_DIR="$FLEXRIC_LIBRARY_DIR"
+fi
+if [[ "$FULL_SM_DIR" != */ ]]; then
+    FULL_SM_DIR="${FULL_SM_DIR}/"
+fi
 cd "$PARENT_DIR"
 
 # Check that the xApp binary exists
@@ -127,4 +137,4 @@ echo "Starting xApp KPM monitor to InfluxDB..."
 rm -f /tmp/xapp_db1 /tmp/xapp_db1-shm /tmp/xapp_db1-wal
 
 set -x
-XAPP_DURATION=-1 SST=$SST SD=$SD ./build/examples/xApp/c/monitor/xapp_kpm_moni_write_to_influxdb "$INFLUXDB_TOKEN" $CONFIG_PATH
+XAPP_DURATION=-1 SST=$SST SD=$SD ./build/examples/xApp/c/monitor/xapp_kpm_moni_write_to_influxdb "$INFLUXDB_TOKEN" $CONFIG_PATH -p "$FULL_SM_DIR"

@@ -173,6 +173,10 @@ if ! grep -q "^MR\.NRScSSSINR \[dB\]" src/sm/kpm_sm/28_552_kpm_meas.txt; then
     sed -i '/^MR\.NRScSSSINR\.BinX \[\]$/a MR.NRScSSSINR [dB]' src/sm/kpm_sm/28_552_kpm_meas.txt
 fi
 
+# Increase FR_CONF_FILE_LEN from 128 to 1024 to prevent buffer overflows with long paths
+echo "Patching FlexRIC conf_file.h to prevent long path buffer overflow..."
+sed -i 's/#define FR_CONF_FILE_LEN 128/#define FR_CONF_FILE_LEN 1024/g' src/util/conf_file.h
+
 cd ..
 
 echo "Successfully patched FlexRIC."

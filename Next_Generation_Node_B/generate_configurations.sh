@@ -34,6 +34,9 @@ set -e
 UE_NUMBERS=(1 2 3 4)
 EXPOSE_GNB_TO_HOSTNAME=false
 
+# FLEXRIC_LIBRARY_DIR="/usr/local/lib/flexric/" # Default
+FLEXRIC_LIBRARY_DIR="flexric/build/flexric_libraries/lib/flexric/"
+
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
@@ -411,6 +414,15 @@ update_yaml "configs/gnb.yaml" "" "gnb_id_bit_length" "22" # Supported: 22-32
 update_yaml "configs/gnb.yaml" "" "ran_node_name" "$RAN_NODE_NAME"
 update_yaml "configs/gnb.yaml" "" "gnb_du_id" "$GNB_DU_ID"
 
+if [[ "$FLEXRIC_LIBRARY_DIR" != /* ]]; then
+    FULL_SM_DIR="$(realpath "$SCRIPT_DIR/../RAN_Intelligent_Controllers/Flexible-RIC/$FLEXRIC_LIBRARY_DIR" 2>/dev/null || echo "$SCRIPT_DIR/../RAN_Intelligent_Controllers/Flexible-RIC/$FLEXRIC_LIBRARY_DIR")"
+else
+    FULL_SM_DIR="$FLEXRIC_LIBRARY_DIR"
+fi
+if [[ "$FULL_SM_DIR" != */ ]]; then
+    FULL_SM_DIR="${FULL_SM_DIR}/"
+fi
+
 # Update configuration values to connect RIC by e2 interface
 if [ "$ENABLE_E2_TERM" = "true" ]; then
     update_yaml "configs/gnb.yaml" "e2" "enable_du_e2" "true"
@@ -421,6 +433,7 @@ if [ "$ENABLE_E2_TERM" = "true" ]; then
     update_yaml "configs/gnb.yaml" "e2" "addr" "$IP_E2TERM"
     update_yaml "configs/gnb.yaml" "e2" "bind_addr" "$IP_E2TERM_BIND"
     update_yaml "configs/gnb.yaml" "e2" "port" "$PORT_E2TERM"
+    update_yaml "configs/gnb.yaml" "e2" "sm_dir" "$FULL_SM_DIR"
 else
     update_yaml "configs/gnb.yaml" "e2" "enable_cu_cp_e2" "false"
     update_yaml "configs/gnb.yaml" "e2" "enable_cu_up_e2" "false"

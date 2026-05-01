@@ -31,10 +31,22 @@
 # Exit immediately if a command fails
 set -e
 
-DIR="/usr/local/lib/flexric"
+# FLEXRIC_LIBRARY_DIR="/usr/local/lib/flexric/" # Default
+FLEXRIC_LIBRARY_DIR="flexric/build/flexric_libraries/lib/flexric/"
 
-if [ -d "$DIR" ]; then
-    MODIFIED_TIME=$(stat -c '%y' "$DIR")
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+
+if [[ "$FLEXRIC_LIBRARY_DIR" != /* ]]; then
+    FULL_SM_DIR="$SCRIPT_DIR/../$FLEXRIC_LIBRARY_DIR"
+else
+    FULL_SM_DIR="$FLEXRIC_LIBRARY_DIR"
+fi
+if [[ "$FULL_SM_DIR" != */ ]]; then
+    FULL_SM_DIR="${FULL_SM_DIR}/"
+fi
+
+if [ -d "$FULL_SM_DIR" ]; then
+    MODIFIED_TIME=$(stat -c '%y' "$FULL_SM_DIR")
     FORMATTED=$(date -d "$MODIFIED_TIME" '+%a %b %d %Y, %I:%M:%S %p')
 
     MODIFIED_EPOCH=$(date -d "$MODIFIED_TIME" +%s)
@@ -48,5 +60,5 @@ if [ -d "$DIR" ]; then
     echo "FlexRIC libraries were last modified: $FORMATTED"
     printf "    %d days %d hours %d minutes ago\n" "$DAYS" "$HOURS" "$MINUTES"
 else
-    echo "FlexRIC libraries do not exist: $DIR"
+    echo "FlexRIC libraries do not exist: $FULL_SM_DIR"
 fi

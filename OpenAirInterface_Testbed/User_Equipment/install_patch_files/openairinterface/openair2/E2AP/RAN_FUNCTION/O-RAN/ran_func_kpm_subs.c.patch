@@ -1,5 +1,5 @@
 diff --git a/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c b/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c
-index e4ffbbdaed..5da60568c6 100644
+index e4ffbbdaed..92ede64f6e 100644
 --- a/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c
 +++ b/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c
 @@ -5,6 +5,7 @@
@@ -49,7 +49,7 @@ index e4ffbbdaed..5da60568c6 100644
      meas_record.int_val = du_stats->pdsch_mcs_dist[bin_x - 1][bin_y - 1][bin_z];
    } else {
      printf("[E2 AGENT] Unknown binX %d, binY %d, binZ %d for \"CARR.PDSCHMCSDist\" measurement\n", bin_x, bin_y, bin_z);
-@@ -232,6 +256,394 @@ static meas_record_lst_t fill_CARR_PDSCHMCSDist(const label_info_lst_t label,
+@@ -232,6 +256,410 @@ static meas_record_lst_t fill_CARR_PDSCHMCSDist(const label_info_lst_t label,
  
    return meas_record;
  }
@@ -124,7 +124,8 @@ index e4ffbbdaed..5da60568c6 100644
 +}
 +
 +// Added metric for research purposes only
-+static meas_record_lst_t fill_N_PRB(__attribute__((unused)) uint32_t gran_period_ms,
++static meas_record_lst_t fill_N_PRB(__attribute__((unused)) const label_info_lst_t label,
++                                    __attribute__((unused)) uint32_t gran_period_ms,
 +                                    cudu_ue_info_pair_t ue_info,
 +                                    __attribute__((unused)) const size_t ue_idx,
 +                                    __attribute__((unused)) e2_node_level_stats_t* node_stats)
@@ -140,7 +141,8 @@ index e4ffbbdaed..5da60568c6 100644
 +}
 +
 +// Added metric for research purposes only
-+static meas_record_lst_t fill_RSSI(__attribute__((unused)) uint32_t gran_period_ms,
++static meas_record_lst_t fill_RSSI(__attribute__((unused)) const label_info_lst_t label,
++                                   __attribute__((unused)) uint32_t gran_period_ms,
 +                                   cudu_ue_info_pair_t ue_info,
 +                                   __attribute__((unused)) const size_t ue_idx,
 +                                   __attribute__((unused)) e2_node_level_stats_t* node_stats)
@@ -171,7 +173,8 @@ index e4ffbbdaed..5da60568c6 100644
 +}
 +
 +// Added metric for research purposes only
-+static meas_record_lst_t fill_RSRQ(__attribute__((unused)) uint32_t gran_period_ms,
++static meas_record_lst_t fill_RSRQ(__attribute__((unused)) const label_info_lst_t label,
++                                   __attribute__((unused)) uint32_t gran_period_ms,
 +                                   cudu_ue_info_pair_t ue_info,
 +                                   __attribute__((unused)) const size_t ue_idx,
 +                                   __attribute__((unused)) e2_node_level_stats_t* node_stats)
@@ -200,7 +203,8 @@ index e4ffbbdaed..5da60568c6 100644
 +}
 +
 +// Added metric for research purposes only
-+static meas_record_lst_t fill_PUSCH_SNR(__attribute__((unused)) uint32_t gran_period_ms,
++static meas_record_lst_t fill_PUSCH_SNR(__attribute__((unused)) const label_info_lst_t label,
++                                        __attribute__((unused)) uint32_t gran_period_ms,
 +                                        cudu_ue_info_pair_t ue_info,
 +                                        __attribute__((unused)) const size_t ue_idx,
 +                                        __attribute__((unused)) e2_node_level_stats_t* node_stats)
@@ -215,7 +219,8 @@ index e4ffbbdaed..5da60568c6 100644
 +}
 +
 +// Added metric for research purposes only
-+static meas_record_lst_t fill_PUCCH_SNR(__attribute__((unused)) uint32_t gran_period_ms,
++static meas_record_lst_t fill_PUCCH_SNR(__attribute__((unused)) const label_info_lst_t label,
++                                        __attribute__((unused)) uint32_t gran_period_ms,
 +                                        cudu_ue_info_pair_t ue_info,
 +                                        __attribute__((unused)) const size_t ue_idx,
 +                                        __attribute__((unused)) e2_node_level_stats_t* node_stats)
@@ -230,7 +235,8 @@ index e4ffbbdaed..5da60568c6 100644
 +}
 +
 +// Added metric for research purposes only
-+static meas_record_lst_t fill_MCS_UL(__attribute__((unused)) uint32_t gran_period_ms,
++static meas_record_lst_t fill_MCS_UL(__attribute__((unused)) const label_info_lst_t label,
++                                     __attribute__((unused)) uint32_t gran_period_ms,
 +                                     cudu_ue_info_pair_t ue_info,
 +                                     __attribute__((unused)) const size_t ue_idx,
 +                                     __attribute__((unused)) e2_node_level_stats_t* node_stats)
@@ -246,7 +252,8 @@ index e4ffbbdaed..5da60568c6 100644
 +}
 +
 +// Added metric for research purposes only
-+static meas_record_lst_t fill_MCS_DL(__attribute__((unused)) uint32_t gran_period_ms,
++static meas_record_lst_t fill_MCS_DL(__attribute__((unused)) const label_info_lst_t label,
++                                     __attribute__((unused)) uint32_t gran_period_ms,
 +                                     cudu_ue_info_pair_t ue_info,
 +                                     __attribute__((unused)) const size_t ue_idx,
 +                                     __attribute__((unused)) e2_node_level_stats_t* node_stats)
@@ -262,7 +269,8 @@ index e4ffbbdaed..5da60568c6 100644
 +}
 +
 +// Added metric for research purposes only
-+static meas_record_lst_t fill_BLER_UL(__attribute__((unused)) uint32_t gran_period_ms,
++static meas_record_lst_t fill_BLER_UL(__attribute__((unused)) const label_info_lst_t label,
++                                      __attribute__((unused)) uint32_t gran_period_ms,
 +                                      cudu_ue_info_pair_t ue_info,
 +                                      __attribute__((unused)) const size_t ue_idx,
 +                                      __attribute__((unused)) e2_node_level_stats_t* node_stats)
@@ -278,7 +286,8 @@ index e4ffbbdaed..5da60568c6 100644
 +}
 +
 +// Added metric for research purposes only
-+static meas_record_lst_t fill_BLER_DL(__attribute__((unused)) uint32_t gran_period_ms,
++static meas_record_lst_t fill_BLER_DL(__attribute__((unused)) const label_info_lst_t label,
++                                      __attribute__((unused)) uint32_t gran_period_ms,
 +                                      cudu_ue_info_pair_t ue_info,
 +                                      __attribute__((unused)) const size_t ue_idx,
 +                                      __attribute__((unused)) e2_node_level_stats_t* node_stats)
@@ -294,7 +303,8 @@ index e4ffbbdaed..5da60568c6 100644
 +}
 +
 +// Added metric for research purposes only
-+static meas_record_lst_t fill_DRB_MacSduRetransmissionRateDl(__attribute__((unused)) uint32_t gran_period_ms,
++static meas_record_lst_t fill_DRB_MacSduRetransmissionRateDl(__attribute__((unused)) const label_info_lst_t label,
++                                                             __attribute__((unused)) uint32_t gran_period_ms,
 +                                                             cudu_ue_info_pair_t ue_info,
 +                                                             __attribute__((unused)) const size_t ue_idx,
 +                                                             __attribute__((unused)) e2_node_level_stats_t* node_stats)
@@ -310,7 +320,8 @@ index e4ffbbdaed..5da60568c6 100644
 +}
 +
 +// Added metric for research purposes only
-+static meas_record_lst_t fill_DRB_MacSduErrorRateDl(__attribute__((unused)) uint32_t gran_period_ms,
++static meas_record_lst_t fill_DRB_MacSduErrorRateDl(__attribute__((unused)) const label_info_lst_t label,
++                                                    __attribute__((unused)) uint32_t gran_period_ms,
 +                                                    cudu_ue_info_pair_t ue_info,
 +                                                    __attribute__((unused)) const size_t ue_idx,
 +                                                    __attribute__((unused)) e2_node_level_stats_t* node_stats)
@@ -325,7 +336,8 @@ index e4ffbbdaed..5da60568c6 100644
 +}
 +
 +// Added metric for research purposes only
-+static meas_record_lst_t fill_DRB_MacSduRetransmissionRateUl(__attribute__((unused)) uint32_t gran_period_ms,
++static meas_record_lst_t fill_DRB_MacSduRetransmissionRateUl(__attribute__((unused)) const label_info_lst_t label,
++                                                             __attribute__((unused)) uint32_t gran_period_ms,
 +                                                             cudu_ue_info_pair_t ue_info,
 +                                                             __attribute__((unused)) const size_t ue_idx,
 +                                                             __attribute__((unused)) e2_node_level_stats_t* node_stats)
@@ -341,7 +353,8 @@ index e4ffbbdaed..5da60568c6 100644
 +}
 +
 +// Added metric for research purposes only
-+static meas_record_lst_t fill_DRB_MacSduErrorRateUl(__attribute__((unused)) uint32_t gran_period_ms,
++static meas_record_lst_t fill_DRB_MacSduErrorRateUl(__attribute__((unused)) const label_info_lst_t label,
++                                                    __attribute__((unused)) uint32_t gran_period_ms,
 +                                                    cudu_ue_info_pair_t ue_info,
 +                                                    __attribute__((unused)) const size_t ue_idx,
 +                                                    __attribute__((unused)) e2_node_level_stats_t* node_stats)
@@ -356,7 +369,8 @@ index e4ffbbdaed..5da60568c6 100644
 +}
 +
 +// Added metric for research purposes only
-+static meas_record_lst_t fill_CQI(__attribute__((unused)) uint32_t gran_period_ms,
++static meas_record_lst_t fill_CQI(__attribute__((unused)) const label_info_lst_t label,
++                                  __attribute__((unused)) uint32_t gran_period_ms,
 +                                  cudu_ue_info_pair_t ue_info,
 +                                  __attribute__((unused)) const size_t ue_idx,
 +                                  __attribute__((unused)) e2_node_level_stats_t* node_stats)
@@ -411,7 +425,8 @@ index e4ffbbdaed..5da60568c6 100644
 +}
 +
 +// Added metric for research purposes only
-+static meas_record_lst_t fill_CQI_SINGLE_CODEWORD(__attribute__((unused)) uint32_t gran_period_ms,
++static meas_record_lst_t fill_CQI_SINGLE_CODEWORD(__attribute__((unused)) const label_info_lst_t label,
++                                                  __attribute__((unused)) uint32_t gran_period_ms,
 +                                                  cudu_ue_info_pair_t ue_info,
 +                                                  __attribute__((unused)) const size_t ue_idx,
 +                                                  __attribute__((unused)) e2_node_level_stats_t* node_stats)
@@ -427,7 +442,8 @@ index e4ffbbdaed..5da60568c6 100644
 +}
 +
 +// Added metric for research purposes only
-+static meas_record_lst_t fill_CQI_DUAL_CODEWORD(__attribute__((unused)) uint32_t gran_period_ms,
++static meas_record_lst_t fill_CQI_DUAL_CODEWORD(__attribute__((unused)) const label_info_lst_t label,
++                                                __attribute__((unused)) uint32_t gran_period_ms,
 +                                                cudu_ue_info_pair_t ue_info,
 +                                                __attribute__((unused)) const size_t ue_idx,
 +                                                __attribute__((unused)) e2_node_level_stats_t* node_stats)
@@ -444,7 +460,7 @@ index e4ffbbdaed..5da60568c6 100644
  #endif
  
  static kv_measure_t lst_measure[] = {
-@@ -243,7 +655,30 @@ static kv_measure_t lst_measure[] = {
+@@ -243,7 +671,30 @@ static kv_measure_t lst_measure[] = {
    {.key = "DRB.UEThpUl", .value =  fill_DRB_UEThpUl }, 
    {.key = "RRU.PrbTotDl", .value =  fill_RRU_PrbTotDl }, 
    {.key = "RRU.PrbTotUl", .value =  fill_RRU_PrbTotUl }, 

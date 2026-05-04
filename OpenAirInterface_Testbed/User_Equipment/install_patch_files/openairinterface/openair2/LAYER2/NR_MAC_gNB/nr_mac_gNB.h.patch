@@ -1,8 +1,8 @@
 diff --git a/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h b/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h
-index f7ea466a94..9dd6769563 100644
+index 391bfeabe8..1a885c1e8b 100644
 --- a/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h
 +++ b/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h
-@@ -513,6 +513,8 @@ typedef struct NR_UE_harq {
+@@ -514,6 +514,8 @@ typedef struct NR_UE_harq {
    bool start_tci_timer;
    /// sched_pdsch keeps information on MCS etc used for the initial transmission
    NR_sched_pdsch_t sched_pdsch;
@@ -11,7 +11,7 @@ index f7ea466a94..9dd6769563 100644
  } NR_UE_harq_t;
  
  //! fixme : need to enhace for the multiple TB CQI report
-@@ -713,6 +715,7 @@ typedef struct NR_mac_dir_stats {
+@@ -714,6 +716,7 @@ typedef struct NR_mac_dir_stats {
    uint32_t total_rbs_retx;
    uint32_t num_mac_sdu;
    uint32_t current_rbs;
@@ -19,7 +19,7 @@ index f7ea466a94..9dd6769563 100644
  } NR_mac_dir_stats_t;
  
  typedef struct NR_mac_stats {
-@@ -725,6 +728,7 @@ typedef struct NR_mac_stats {
+@@ -726,6 +729,7 @@ typedef struct NR_mac_stats {
    uint8_t num_rsrp_meas;
    int cumul_sinrx10;
    uint8_t num_sinr_meas;
@@ -27,7 +27,7 @@ index f7ea466a94..9dd6769563 100644
    char srs_stats[50]; // Statistics may differ depending on SRS usage
    int deltaMCS;
    int NPRB;
-@@ -898,6 +902,14 @@ typedef struct NR_du_stats {
+@@ -891,6 +895,14 @@ typedef struct NR_du_stats {
    /// cell-wide MCS distribution in PUSCH, see 28.552 5.1.1.12.1
    /// 1-8 RI, 1-2 MCS table, 0-31 MCS value
    uint32_t pusch_mcs_dist[8][2][32];

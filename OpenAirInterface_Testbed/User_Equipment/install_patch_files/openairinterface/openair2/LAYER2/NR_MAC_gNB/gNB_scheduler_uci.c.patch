@@ -1,5 +1,5 @@
 diff --git a/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c b/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c
-index a6f66d738a..8d07dd0126 100644
+index d0ab235276..252081595d 100644
 --- a/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c
 +++ b/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c
 @@ -492,9 +492,19 @@ static void evaluate_sinr_report(NR_UE_info_t *UE,

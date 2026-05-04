@@ -103,6 +103,7 @@ open5gs_ocudu_srsran_oran_sc_ric_setup:
         sudo rm -f /var/lib/dpkg/info/mongosh.* || true
       fi
     - sudo apt-get -y -f install || true
+    - sudo rm -rf /var/lib/apt/lists/* || true
     - sudo apt-get update
     - sudo apt-get install -y linux-image-generic || true
     - sudo apt-get install -y linux-modules-extra-generic || true
@@ -208,6 +209,7 @@ openairinterface_flexric_setup:
         sudo rm -f /var/lib/dpkg/info/mongosh.* || true
       fi
     - sudo apt-get -y -f install || true
+    - sudo rm -rf /var/lib/apt/lists/* || true
     - sudo apt-get update
     - sudo apt-get install -y linux-image-generic || true
     - sudo apt-get install -y linux-modules-extra-generic || true

@@ -754,7 +754,7 @@ static void log_kpm_measurements(kpm_ind_msg_format_1_t const *msg_frm_1, bool i
 
           if (!(is_cell_metric ? csv_wrote_cell_header : csv_wrote_header))
           {
-            csv_append_name_to_csv_header(m.name, m.name && strstr(m.name, ".Count") ? "" : "dBm");
+            csv_append_name_to_csv_header(m.name, strstr(m.name, ".Count") ? "" : "dBm");
           }
         }
         free_factory_metrics(&generated_metrics);
@@ -1147,7 +1147,7 @@ int main(int argc, char *argv[])
 
   if (path_len + 6 < sizeof(csv_cell_file_path))
   {
-    strncpy(csv_cell_file_path, csv_file_path, path_len - 4);
+    snprintf(csv_cell_file_path, sizeof(csv_cell_file_path), "%.*s", (int)(path_len - 4), csv_file_path);
     csv_cell_file_path[path_len - 4] = '\0';
     strcat(csv_cell_file_path, "_Cells.csv");
     printf("CSV cell file path constructed: %s\n", csv_cell_file_path);

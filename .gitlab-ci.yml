@@ -216,7 +216,7 @@ openairinterface_flexric_setup:
     - sudo apt-get install -y linux-modules-extra-$(uname -r) || true
     - sudo apt-get install -y linux-modules-$(uname -r) || true
     - sudo apt-get install -y linux-headers-$(uname -r) || true
-    - sudo apt-get install -y bash bc ca-certificates coreutils curl git gnupg grep iproute2 kmod lsb-release software-properties-common tree wget
+    - sudo apt-get install -y bash bc ca-certificates coreutils curl git gnupg grep iproute2 kmod lsb-release software-properties-common tree wget libpcre2-dev
     - sudo apt-get install -y --no-install-recommends tzdata
     - sudo update-ca-certificates || true
 

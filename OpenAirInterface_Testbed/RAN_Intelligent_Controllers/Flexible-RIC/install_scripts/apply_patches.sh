@@ -130,6 +130,39 @@ done
 git apply --verbose --ignore-whitespace "$STALE_SUBSCRIPTION_PATCH_DIR/patch.patch"
 cd ..
 
+# Apply patch to FlexRIC to add support for disabling the SQLite database with cmake .. -DXAPP_DB=NONE_XAPP
+cd flexric
+echo "Adding option to disable SQLite database..."
+git restore README.md
+if [ ! -f "README.previous.md" ]; then
+	cp README.md README.previous.md
+	cp README.previous.md "$PARENT_DIR/install_patch_files/flexric/disable_database_option/README.previous.md"
+fi
+git restore src/xApp/db/CMakeLists.txt
+if [ ! -f "src/xApp/db/CMakeLists.txt.previous" ]; then
+	cp src/xApp/db/CMakeLists.txt src/xApp/db/CMakeLists.txt.previous
+	cp src/xApp/db/CMakeLists.txt.previous "$PARENT_DIR/install_patch_files/flexric/disable_database_option/src/xApp/db/CMakeLists.previous.txt"
+fi
+git restore src/xApp/db/db.h
+if [ ! -f "src/xApp/db/db.h.previous" ]; then
+	cp src/xApp/db/db.h src/xApp/db/db.h.previous
+	cp src/xApp/db/db.h.previous "$PARENT_DIR/install_patch_files/flexric/disable_database_option/src/xApp/db/db.previous.h"
+fi
+git restore src/xApp/db/db_generic.h
+if [ ! -f "src/xApp/db/db_generic.h.previous" ]; then
+	cp src/xApp/db/db_generic.h src/xApp/db/db_generic.h.previous
+	cp src/xApp/db/db_generic.h.previous "$PARENT_DIR/install_patch_files/flexric/disable_database_option/src/xApp/db/db_generic.previous.h"
+fi
+# Omit e42_xapp.c since the stale subscription patch already modified it
+# git restore src/xApp/e42_xapp.c
+# if [ ! -f "src/xApp/e42_xapp.c.previous" ]; then
+# 	cp src/xApp/e42_xapp.c src/xApp/e42_xapp.c.previous
+# 	cp src/xApp/e42_xapp.c.previous "$PARENT_DIR/install_patch_files/flexric/disable_database_option/src/xApp/e42_xapp.previous.c"
+# fi
+cp $STALE_SUBSCRIPTION_PATCH_DIR/src/xApp/e42_xapp.c.previous src/xApp/e42_xapp.previous.c
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/disable_database_option/patch.patch"
+cd ..
+
 # Append new intermediate metrics units to 28_552_kpm_meas.txt
 cd flexric
 if ! grep -q "^RSRP.Count" src/sm/kpm_sm/28_552_kpm_meas.txt; then

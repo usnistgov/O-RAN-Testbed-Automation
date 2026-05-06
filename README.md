@@ -259,11 +259,11 @@ USNISTGOV/O-RAN-Testbed-Automation is developed and maintained by the NIST Wirel
 <div align="center">
   <a href="https://www.nist.gov" target="_blank">
     <!-- <picture>
-      <source media="(prefers-color-scheme: light)" srcset="./Images/NIST_Light.png">
-      <source media="(prefers-color-scheme: dark)" srcset="./Images/NIST_Dark.png">
+      <source media="(prefers-color-scheme: light)" srcset="./Images/125_NIST_Light.png">
+      <source media="(prefers-color-scheme: dark)" srcset="./Images/125_NIST_Dark.png">
       <img alt="National Institute of Standards and Technology" width="85%">
     </picture> -->
-    <img src="Images/NIST_Light.png" alt="National Institute of Standards and Technology" width="85%">
+    <img src="Images/125_NIST_Light.png" alt="National Institute of Standards and Technology" width="85%">
   </a>
 </div>
 

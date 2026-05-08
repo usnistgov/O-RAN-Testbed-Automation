@@ -1,5 +1,5 @@
 diff --git a/examples/xApp/c/monitor/CMakeLists.txt b/examples/xApp/c/monitor/CMakeLists.txt
-index 2105b69e3..a25c82377 100644
+index 2105b69e..a25c8237 100644
 --- a/examples/xApp/c/monitor/CMakeLists.txt
 +++ b/examples/xApp/c/monitor/CMakeLists.txt
 @@ -2,8 +2,9 @@

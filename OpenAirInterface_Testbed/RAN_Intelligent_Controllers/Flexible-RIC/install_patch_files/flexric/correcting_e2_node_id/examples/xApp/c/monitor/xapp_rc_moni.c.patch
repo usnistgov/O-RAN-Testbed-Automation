@@ -1,0 +1,13 @@
+diff --git a/examples/xApp/c/monitor/xapp_rc_moni.c b/examples/xApp/c/monitor/xapp_rc_moni.c
+index 345892a8..06708c4d 100644
+--- a/examples/xApp/c/monitor/xapp_rc_moni.c
++++ b/examples/xApp/c/monitor/xapp_rc_moni.c
+@@ -318,7 +318,7 @@ void log_ind_1_2(const e2sm_rc_ind_hdr_frmt_1_t *hdr, const e2sm_rc_ind_msg_frmt
+ }
+ 
+ static
+-void sm_cb_rc(sm_ag_if_rd_t const* rd)
++void sm_cb_rc(sm_ag_if_rd_t const* rd, global_e2_node_id_t const* node_id)
+ {
+   assert(rd != NULL);
+   assert(rd->type == INDICATION_MSG_AGENT_IF_ANS_V0);

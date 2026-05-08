@@ -1,5 +1,5 @@
 diff --git a/examples/xApp/c/monitor/xapp_kpm_moni.c b/examples/xApp/c/monitor/xapp_kpm_moni.c
-index 22f70850c..5b9c92c84 100644
+index 22f70850..86236647 100644
 --- a/examples/xApp/c/monitor/xapp_kpm_moni.c
 +++ b/examples/xApp/c/monitor/xapp_kpm_moni.c
 @@ -1,3 +1,4 @@
@@ -168,7 +168,7 @@ index 22f70850c..5b9c92c84 100644
        }
      }
    }
-@@ -222,6 +306,32 @@ void log_kpm_ind_msg_frm_3(kpm_ind_msg_format_3_t const* msg)
+@@ -222,8 +306,34 @@ void log_kpm_ind_msg_frm_3(kpm_ind_msg_format_3_t const* msg)
    }
  }
  
@@ -199,8 +199,11 @@ index 22f70850c..5b9c92c84 100644
 +}
 +
  static
- void sm_cb_kpm(sm_ag_if_rd_t const* rd)
+-void sm_cb_kpm(sm_ag_if_rd_t const* rd)
++void sm_cb_kpm(sm_ag_if_rd_t const* rd, global_e2_node_id_t const* node_id)
  {
+   assert(rd != NULL);
+   assert(rd->type == INDICATION_MSG_AGENT_IF_ANS_V0);
 @@ -252,7 +362,7 @@ void sm_cb_kpm(sm_ag_if_rd_t const* rd)
  }
  

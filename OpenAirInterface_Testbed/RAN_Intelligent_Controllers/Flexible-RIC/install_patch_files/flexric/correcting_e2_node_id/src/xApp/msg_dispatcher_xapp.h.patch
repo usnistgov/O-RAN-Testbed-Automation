@@ -1,0 +1,22 @@
+diff --git a/src/xApp/msg_dispatcher_xapp.h b/src/xApp/msg_dispatcher_xapp.h
+index 6a1fb1a7..b083d5a5 100644
+--- a/src/xApp/msg_dispatcher_xapp.h
++++ b/src/xApp/msg_dispatcher_xapp.h
+@@ -12,6 +12,7 @@
+ #include "../sm/agent_if/read/sm_ag_if_rd.h"
+ 
+ #include <pthread.h>
++#include "../lib/e2ap/e2ap_global_node_id_wrapper.h"
+ 
+ 
+ typedef struct{
+@@ -21,7 +22,8 @@ typedef struct{
+ 
+ typedef struct{
+   sm_ag_if_rd_t rd; 
+-  void (*sm_cb)(sm_ag_if_rd_t const*);
++  global_e2_node_id_t e2_node;
++  void (*sm_cb)(sm_ag_if_rd_t const*, global_e2_node_id_t const*);
+ } msg_dispatch_t ;
+ 
+ void init_msg_dispatcher( msg_dispatcher_xapp_t* d);

@@ -1,5 +1,5 @@
 diff --git a/examples/xApp/c/kpm_rc/CMakeLists.txt b/examples/xApp/c/kpm_rc/CMakeLists.txt
-index d9630ac66..bcbfc1332 100644
+index d9630ac6..bcbfc133 100644
 --- a/examples/xApp/c/kpm_rc/CMakeLists.txt
 +++ b/examples/xApp/c/kpm_rc/CMakeLists.txt
 @@ -1,7 +1,8 @@

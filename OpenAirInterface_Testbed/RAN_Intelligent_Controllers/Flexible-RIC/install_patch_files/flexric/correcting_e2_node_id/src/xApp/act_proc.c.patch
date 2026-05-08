@@ -1,0 +1,13 @@
+diff --git a/src/xApp/act_proc.c b/src/xApp/act_proc.c
+index f1e1c6ae..3c529424 100644
+--- a/src/xApp/act_proc.c
++++ b/src/xApp/act_proc.c
+@@ -54,7 +54,7 @@ bool valid_proc_type(act_proc_val_e type)
+   return false;
+ }
+ 
+-uint32_t add_act_proc(act_proc_t* p, act_proc_val_e type, ric_gen_id_t id, global_e2_node_id_t const* e2_node, void(*sm_cb)(sm_ag_if_rd_t const *))
++uint32_t add_act_proc(act_proc_t* p, act_proc_val_e type, ric_gen_id_t id, global_e2_node_id_t const* e2_node, void(*sm_cb)(sm_ag_if_rd_t const*, global_e2_node_id_t const*))
+ {
+   assert(p != NULL);
+   assert(valid_proc_type(type) == true );

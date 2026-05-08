@@ -123,7 +123,7 @@ cd openairinterface5g
 git restore openair3/UICC/pdu_session.c
 if [ ! -f "openair3/UICC/pdu_session.c.previous" ]; then
     cp openair3/UICC/pdu_session.c openair3/UICC/pdu_session.c.previous
-    cp openair3/UICC/pdu_session.c.previous "$PARENT_DIR/install_patch_files/openairinterface/openair3/UICC/pdu_session.c.previous"
+    cp openair3/UICC/pdu_session.c.previous "$PARENT_DIR/install_patch_files/openairinterface/openair3/UICC/pdu_session.previous.c"
 fi
 echo "Patching pdu_session.c to support SST values greater than 4..."
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface/openair3/UICC/pdu_session.c.patch"
@@ -140,9 +140,7 @@ echo "Patching build_helper to extend Linux support..."
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface/cmake_targets/tools/build_helper.patch"
 cd ..
 
-echo
-echo "Successfully patched OpenAirInterface."
-
+# This patch adds C++11 compatibility to the ZeroMQ ring buffer code
 cd openairinterface5g
 git restore radio/zmq/ring_buffer.cpp
 if [ ! -f "radio/zmq/ring_buffer.cpp.previous" ]; then
@@ -172,3 +170,17 @@ fi
 echo "Patching zmq_imported.h for C++11 compatibility..."
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface/radio/zmq/zmq_imported.h.patch"
 cd ..
+
+# This patch fixes the bug where the gNB ID was swapped with the DU ID when sent over E2AP
+cd openairinterface5g
+git restore executables/nr-softmodem.c
+if [ ! -f "executables/nr-softmodem.c.previous" ]; then
+	cp executables/nr-softmodem.c executables/nr-softmodem.c.previous
+	cp executables/nr-softmodem.c.previous "$PARENT_DIR/install_patch_files/openairinterface/executables/nr-softmodem.previous.c"
+fi
+echo "Patching nr-softmodem.c to fix bug with gNB ID handling for DUs and CUs..."
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface/executables/nr-softmodem.c.patch"
+cd ..
+
+echo
+echo "Successfully patched OpenAirInterface."

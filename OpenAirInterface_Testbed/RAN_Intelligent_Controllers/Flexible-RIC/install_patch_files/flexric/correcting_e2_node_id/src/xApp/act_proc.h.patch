@@ -1,0 +1,13 @@
+diff --git a/src/xApp/act_proc.h b/src/xApp/act_proc.h
+index 06ddf92e..b669513f 100644
+--- a/src/xApp/act_proc.h
++++ b/src/xApp/act_proc.h
+@@ -49,7 +49,7 @@ void free_act_proc(act_proc_t* proc);
+ 
+ void free_act_proc_val(void* val);
+ 
+-uint32_t add_act_proc(act_proc_t* proc, act_proc_val_e type, ric_gen_id_t id, global_e2_node_id_t const* e2_node, void(*sm_cb)(sm_ag_if_rd_t const *));
++uint32_t add_act_proc(act_proc_t* proc, act_proc_val_e type, ric_gen_id_t id, global_e2_node_id_t const* e2_node, void(*sm_cb)(sm_ag_if_rd_t const*, global_e2_node_id_t const*));
+ 
+ void rm_act_proc(act_proc_t* act, uint16_t ric_req_id );
+ 

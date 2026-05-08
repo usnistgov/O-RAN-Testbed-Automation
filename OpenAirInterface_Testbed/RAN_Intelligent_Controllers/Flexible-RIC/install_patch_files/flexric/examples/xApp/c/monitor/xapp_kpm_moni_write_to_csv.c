@@ -435,43 +435,7 @@ static void write_csv_line_to_file()
   }
 }
 
-static int get_mapped_node_id(const char *node_type, uint32_t orig_id)
-{
-  static struct
-  {
-    char type[32];
-    uint32_t orig_id;
-    int mapped_id;
-  } id_map[256];
-  static int id_map_count = 0;
 
-  for (int i = 0; i < id_map_count; i++)
-  {
-    if (strcmp(id_map[i].type, node_type) == 0 && id_map[i].orig_id == orig_id)
-    {
-      return id_map[i].mapped_id;
-    }
-  }
-
-  int new_id = 1;
-  for (int i = 0; i < id_map_count; i++)
-  {
-    if (strcmp(id_map[i].type, node_type) == 0)
-    {
-      new_id++;
-    }
-  }
-
-  if (id_map_count < 256)
-  {
-    strncpy(id_map[id_map_count].type, node_type, sizeof(id_map[0].type) - 1);
-    id_map[id_map_count].orig_id = orig_id;
-    id_map[id_map_count].mapped_id = new_id;
-    id_map_count++;
-  }
-
-  return new_id;
-}
 
 static void log_gnb_ue_id(ue_id_e2sm_t ue_id)
 {
@@ -492,62 +456,6 @@ static void log_gnb_ue_id(ue_id_e2sm_t ue_id)
   }
   current_ue_id = ue_id.gnb.amf_ue_ngap_id; // Update the global UE ID
 
-  // Store the current E2 Node ID (prefer Global NG-RAN Node ID, then Global gNB ID, then CU F1AP ID)
-  if (ue_id.gnb.global_ng_ran_node_id)
-  {
-    const global_ng_ran_node_id_t *n = ue_id.gnb.global_ng_ran_node_id;
-    switch (n->type)
-    {
-    case GNB_GLOBAL_TYPE_ID:
-    {
-      const global_gnb_id_t *g = &n->global_gnb_id;
-      if (g->type == GNB_TYPE_ID)
-      {
-        snprintf(current_e2_id_str, sizeof(current_e2_id_str), "gNB:%d", get_mapped_node_id("gNB", (unsigned)g->gnb_id.nb_id));
-      }
-      else
-      {
-        snprintf(current_e2_id_str, sizeof(current_e2_id_str), "gNB");
-      }
-      break;
-    }
-    case NG_ENB_GLOBAL_TYPE_ID:
-    {
-      const global_ng_enb_id_t *e = &n->global_ng_enb_id;
-      switch (e->type)
-      {
-      case MACRO_NG_ENB_TYPE_ID:
-        snprintf(current_e2_id_str, sizeof(current_e2_id_str), "ng-eNB-macro:%d", get_mapped_node_id("ng-eNB-macro", (unsigned)e->macro_ng_enb_id));
-        break;
-      case SHORT_MACRO_NG_ENB_TYPE_ID:
-        snprintf(current_e2_id_str, sizeof(current_e2_id_str), "ng-eNB-short:%d", get_mapped_node_id("ng-eNB-short", (unsigned)e->short_macro_ng_enb_id));
-        break;
-      case LONG_MACRO_NG_ENB_TYPE_ID:
-        snprintf(current_e2_id_str, sizeof(current_e2_id_str), "ng-eNB-long:%d", get_mapped_node_id("ng-eNB-long", (unsigned)e->long_macro_ng_enb_id));
-        break;
-      default:
-        snprintf(current_e2_id_str, sizeof(current_e2_id_str), "ng-eNB");
-        break;
-      }
-      break;
-    }
-    default:
-      snprintf(current_e2_id_str, sizeof(current_e2_id_str), "gNB");
-      break;
-    }
-  }
-  else if (ue_id.gnb.global_gnb_id)
-  {
-    snprintf(current_e2_id_str, sizeof(current_e2_id_str), "gNB:%d", get_mapped_node_id("gNB", (unsigned)ue_id.gnb.global_gnb_id->gnb_id.nb_id));
-  }
-  else if (ue_id.gnb.gnb_cu_ue_f1ap_lst && ue_id.gnb.gnb_cu_ue_f1ap_lst_len > 0)
-  {
-    snprintf(current_e2_id_str, sizeof(current_e2_id_str), "CU:%d", get_mapped_node_id("CU", (unsigned)ue_id.gnb.gnb_cu_ue_f1ap_lst[0]));
-  }
-  else
-  {
-    snprintf(current_e2_id_str, sizeof(current_e2_id_str), "gNB");
-  }
 }
 
 static void log_du_ue_id(ue_id_e2sm_t ue_id)
@@ -558,9 +466,6 @@ static void log_du_ue_id(ue_id_e2sm_t ue_id)
     printf("ran_ue_id = %lx\n", *ue_id.gnb_du.ran_ue_id); // RAN UE NGAP ID
   }
   current_ue_id = ue_id.gnb_du.gnb_cu_ue_f1ap; // Update the global UE ID
-
-  // Store the current E2 Node ID
-  snprintf(current_e2_id_str, sizeof(current_e2_id_str), "DU:%d", get_mapped_node_id("DU", ue_id.gnb_du.gnb_cu_ue_f1ap));
 }
 
 static void log_cuup_ue_id(ue_id_e2sm_t ue_id)
@@ -571,9 +476,6 @@ static void log_cuup_ue_id(ue_id_e2sm_t ue_id)
     printf("ran_ue_id = %lx\n", *ue_id.gnb_cu_up.ran_ue_id); // RAN UE NGAP ID
   }
   current_ue_id = ue_id.gnb_cu_up.gnb_cu_cp_ue_e1ap; // Update the global UE ID
-
-  // Store the current E2 Node ID
-  snprintf(current_e2_id_str, sizeof(current_e2_id_str), "CU-UP:%d", get_mapped_node_id("CU-UP", ue_id.gnb_cu_up.gnb_cu_cp_ue_e1ap));
 }
 
 typedef void (*log_ue_id)(ue_id_e2sm_t ue_id);
@@ -883,7 +785,7 @@ static void load_slice_from_env(void)
   printf("[xApp] Using S-NSSAI SST=%u SD=%06x (env SST/SD can override)\n", (unsigned)cfg_slicing_sst, (unsigned)(cfg_slicing_sd & 0xFFFFFFu));
 }
 
-static void sm_cb_kpm(sm_ag_if_rd_t const *rd)
+static void sm_cb_kpm(sm_ag_if_rd_t const* rd, global_e2_node_id_t const* node_id)
 {
   assert(rd != NULL);
   assert(rd->type == INDICATION_MSG_AGENT_IF_ANS_V0);
@@ -893,6 +795,22 @@ static void sm_cb_kpm(sm_ag_if_rd_t const *rd)
   kpm_ind_data_t const *ind = &rd->ind.kpm.ind;
   kpm_ric_ind_hdr_format_1_t const *hdr_frm_1 = &ind->hdr.kpm_ric_ind_hdr_format_1;
 
+  // Set current E2 node ID globally
+  if (node_id) {
+    if (node_id->type == ngran_gNB_DU) {
+        snprintf(current_e2_id_str, sizeof(current_e2_id_str), "DU:%" PRIu64, *node_id->cu_du_id);
+    } else if (node_id->type == ngran_gNB_CU) {
+        snprintf(current_e2_id_str, sizeof(current_e2_id_str), "CU:%" PRIu64, *node_id->cu_du_id);
+    } else if (node_id->type == ngran_gNB_CUUP) {
+        snprintf(current_e2_id_str, sizeof(current_e2_id_str), "CUUP:%" PRIu64, *node_id->cu_du_id);
+    } else if (node_id->type == ngran_gNB_CUCP) {
+        snprintf(current_e2_id_str, sizeof(current_e2_id_str), "CUCP:%" PRIu64, *node_id->cu_du_id);
+    } else {
+        snprintf(current_e2_id_str, sizeof(current_e2_id_str), "gNB:%u", node_id->nb_id.nb_id);
+    }
+  } else {
+    snprintf(current_e2_id_str, sizeof(current_e2_id_str), "Unknown");
+  }
   int64_t const now = time_now_us();
   static int counter = 1;
   {
@@ -902,15 +820,6 @@ static void sm_cb_kpm(sm_ag_if_rd_t const *rd)
 
     if (ind->msg.type == FORMAT_1_INDICATION_MESSAGE)
     {
-      // If Cell Metric, there is no UE ID attached to derive the node ID so use the sender_name from the Indication Header so it doesn't use the previous UE's node ID
-      if (hdr_frm_1->sender_name != NULL && hdr_frm_1->sender_name->len > 0)
-      {
-        snprintf(current_e2_id_str, sizeof(current_e2_id_str), "%.*s", (int)hdr_frm_1->sender_name->len, hdr_frm_1->sender_name->buf);
-      }
-      else
-      {
-        snprintf(current_e2_id_str, sizeof(current_e2_id_str), "Unknown-Cell-Node");
-      }
 
       log_kpm_measurements(&ind->msg.frm_1, true);
     }

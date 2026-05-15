@@ -28,7 +28,7 @@ To customize the SIM subscriber information or to get more information about how
 
 ## Supported Radio Devices
 
-The UE software supports multiple radio configurations, including the RF Simulator (`SIMU`), ZeroMQ (`ZMQ`), and Universal Software Radio Peripheral (`USRP`). To specify the desired radio device, assign the `RADIO_TYPE` variable at the beginning of both the `full_install.sh` and `generate_configurations.sh` scripts prior to compiling and installing the software.
+The UE software supports multiple radio configurations, including the RF Simulator (`SIMU`), ZeroMQ (`ZMQ`), and Universal Software Radio Peripheral (`USRP`). To specify the desired radio device, set the `RADIO_TYPE` variable at the beginning of both the `full_install.sh` and `generate_configurations.sh` scripts prior to compiling and installing the software.
 
 *Note: Currently, the ZeroMQ (`ZMQ`) configuration is limited to supporting a maximum of one User Equipment.*
 

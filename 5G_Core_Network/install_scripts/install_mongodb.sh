@@ -125,7 +125,7 @@ else
     fi
 fi
 
-echo "Pinning MongoDB $MONGODB_MAJOR packages to prevent automatic major updates..."
+echo "Pinning MongoDB $MONGODB_MAJOR packages to prevent automatic updates..."
 echo "mongodb-org hold" | sudo dpkg --set-selections
 echo "mongodb-org-database hold" | sudo dpkg --set-selections
 echo "mongodb-org-server hold" | sudo dpkg --set-selections

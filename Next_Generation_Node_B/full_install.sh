@@ -213,10 +213,19 @@ fi
 
 echo
 echo
-if [ ! -d "zmq_broker" ] || [ ! -f "zmq_broker/multi_ue_scenario.grc" ]; then
-    echo "Downloading ZeroMQ Broker GNU Radio Companion flowgraph..."
-    mkdir -p zmq_broker
-    wget -qO zmq_broker/multi_ue_scenario.grc https://gitlab.com/ocudu/ocudu_docs/-/raw/main/docs/user_manual/tutorials/srsue/assets/multi_ue_scenario.grc
+mkdir -p zmq_broker
+if [ ! -f "zmq_broker/multi_ue_scenario.grc" ]; then
+    if ! command -v jq &>/dev/null; then
+        echo "Installing jq..."
+        sudo env $APTVARS apt-get install -y jq
+    fi
+    DOCS_HASH=$(jq -r '."https://gitlab.com/ocudu/ocudu_docs.git"[1]' ../commit_hashes.json 2>/dev/null)
+    if [ -z "$DOCS_HASH" ] || [ "$DOCS_HASH" = "null" ]; then
+        DOCS_HASH="main"
+    fi
+    echo "Downloading ZeroMQ Broker GNU Radio Companion flowgraph (${DOCS_HASH})..."
+    wget -qO zmq_broker/multi_ue_scenario.grc "https://gitlab.com/ocudu/ocudu_docs/-/raw/${DOCS_HASH}/docs/tutorials/srsue/assets/multi_ue_scenario.grc"
+    wget -qO zmq_broker/multi_ue_scenario.grc.license "https://gitlab.com/ocudu/ocudu_docs/-/raw/${DOCS_HASH}/docs/tutorials/srsue/assets/multi_ue_scenario.grc.license"
 fi
 
 echo

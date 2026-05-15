@@ -40,7 +40,7 @@ cd "5G_Core_Network" >nul 2>&1
 if not errorlevel 1 (
     git clone https://github.com/open5gs/open5gs.git
     cd "open5gs"
-    git checkout 318eeb49a7dcdff733dec60e02d9c60aefca2fb9
+    git checkout fcebc6d4b98ac3b7cb30170763cee9d2a88ba8fd
     cd ..\..
 ) else (
     echo ERROR: Failed to cd to 5G_Core_Network. Skipping clone.
@@ -51,7 +51,9 @@ if exist "5G_Core_Network/Additional_Cores_5GDeploy\5gdeploy" rmdir /s /q "5G_Co
 cd "5G_Core_Network/Additional_Cores_5GDeploy" >nul 2>&1
 if not errorlevel 1 (
     git clone https://github.com/usnistgov/5gdeploy.git
-    cd ..
+    cd "5gdeploy"
+    git checkout 83c359ab57c7ae482f2834ff731b545caf6b3a3f
+    cd ..\..
 ) else (
     echo ERROR: Failed to cd to 5G_Core_Network/Additional_Cores_5GDeploy. Skipping clone.
 )
@@ -74,7 +76,7 @@ cd "User_Equipment" >nul 2>&1
 if not errorlevel 1 (
     git clone https://github.com/zeromq/libzmq.git
     cd "libzmq"
-    git checkout 7d95ac02ae1af9a2f6896794d12b9de2ae30a3a8
+    git checkout b946c18f676760387276cd095bbdd8c0e18c09bf
     cd ..\..
 ) else (
     echo ERROR: Failed to cd to User_Equipment. Skipping clone.
@@ -86,7 +88,7 @@ cd "User_Equipment" >nul 2>&1
 if not errorlevel 1 (
     git clone https://github.com/zeromq/czmq.git
     cd "czmq"
-    git checkout 6b435f533619a52d9e1c3fa43d5e40e50a046272
+    git checkout b669c7eb60cb8f587071ac6ece7cd68d30ac4017
     cd ..\..
 ) else (
     echo ERROR: Failed to cd to User_Equipment. Skipping clone.
@@ -98,7 +100,7 @@ cd "Next_Generation_Node_B" >nul 2>&1
 if not errorlevel 1 (
     git clone https://gitlab.com/ocudu/ocudu.git
     cd "ocudu"
-    git checkout 4d1fe417268ef19b5dd8677263f696602735eb85
+    git checkout 5014f69d5bfd84fc00e7ed598cbc3fb18ac84451
     cd ..\..
 ) else (
     echo ERROR: Failed to cd to Next_Generation_Node_B. Skipping clone.
@@ -110,7 +112,7 @@ cd "Next_Generation_Node_B" >nul 2>&1
 if not errorlevel 1 (
     git clone https://gitlab.com/ocudu/ocudu_elements/ocudu_oran_apps/ocudu_o1_adapter.git
     cd "ocudu_o1_adapter"
-    git checkout cbc03d78e9901c9a3df541194102529702d15991
+    git checkout e357804d18f5cc3509daa66b2c7b379352bf76fc
     cd ..\..
 ) else (
     echo ERROR: Failed to cd to Next_Generation_Node_B. Skipping clone.
@@ -122,7 +124,7 @@ cd "Next_Generation_Node_B" >nul 2>&1
 if not errorlevel 1 (
     git clone https://gitlab.com/ocudu/ocudu_elements/ocudu_oran_apps/ocudu_netconf.git
     cd "ocudu_netconf"
-    git checkout 6ed7cfbd031210fceeeb0d99f977dd3b85dfd183
+    git checkout db6e983c620f89e4111bed9211c4f3d8731fb86a
     cd ..\..
 ) else (
     echo ERROR: Failed to cd to Next_Generation_Node_B. Skipping clone.
@@ -382,7 +384,7 @@ if not exist "OpenAirInterface_Testbed\5G_Core_Network\open5gs" (
     if not errorlevel 1 (
         git clone https://github.com/open5gs/open5gs.git
         cd "open5gs"
-        git checkout 318eeb49a7dcdff733dec60e02d9c60aefca2fb9
+        git checkout fcebc6d4b98ac3b7cb30170763cee9d2a88ba8fd
         cd ..\..\..
     ) else (
         echo ERROR: Failed to cd to OpenAirInterface_Testbed\5G_Core_Network. Skipping clone.
@@ -394,7 +396,9 @@ if exist "OpenAirInterface_Testbed\5G_Core_Network\Additional_Cores_5GDeploy\5gd
 cd "OpenAirInterface_Testbed\5G_Core_Network\Additional_Cores_5GDeploy" >nul 2>&1
 if not errorlevel 1 (
     git clone https://github.com/usnistgov/5gdeploy.git
-    cd ..\..\..
+    cd "5gdeploy"
+    git checkout 83c359ab57c7ae482f2834ff731b545caf6b3a3f
+    cd ..\..\..\..
 ) else (
     echo ERROR: Failed to cd to OpenAirInterface_Testbed\5G_Core_Network\Additional_Cores_5GDeploy. Skipping clone.
 )
@@ -405,7 +409,7 @@ cd "OpenAirInterface_Testbed\User_Equipment" >nul 2>&1
 if not errorlevel 1 (
     git clone https://gitlab.eurecom.fr/oai/openairinterface5g.git
     cd "openairinterface5g"
-    git checkout bfb177c38e6cf0aa7ac517604519f66d0152a513
+    git checkout d420f8c1231e9651e299b714fde53e392c6880ec
     cd ..\..\..
 ) else (
     echo ERROR: Failed to cd to OpenAirInterface_Testbed\User_Equipment. Skipping clone.
@@ -433,7 +437,7 @@ cd "OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC" >nul 2>&1
 if not errorlevel 1 (
     git clone https://github.com/swig/swig.git
     cd "swig"
-    git checkout b8f7a107cbd81058f8c5818bbad48d78903f6c14
+    git checkout 45c0bd45008892fc1820d5da130063d53e4e5f01
     cd ..\..\..\..
 ) else (
     echo ERROR: Failed to cd to OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC. Skipping clone.

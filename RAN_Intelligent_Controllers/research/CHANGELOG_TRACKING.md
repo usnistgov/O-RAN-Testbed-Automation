@@ -1,3 +1,29 @@
+## Changelog for v1.7.1
+
+- Extend testbed support to Ubuntu 26.04 LTS.
+- OCUDU: Pin OCUDU Documentation commit hash for stable ZeroMQ broker download URL.
+- Fix GCC version
+- Open5GS: Update MongoDB from 4.4 to 7.0 for significantly faster subscriber updating.
+- Open5GS: Make Data Network Name (DNN) configurable at the slice level in options.yaml.
+- OpenAirInterface: Add optional UE support for ZeroMQ instead of RF simulator.
+- OpenAirInterface, FlexRIC: Add E2 node IDs to match NR CGI (3GPP 38.423 clause 9.2.3.25) for E2SM KPM monitoring xApps.
+- OpenAirInterface, SRS UE: Suppress UE namespace cleanup before reinitializing namespaces.
+- FlexRIC: Add a metrics factory (metrics_factory.c) to simplify and centralize management of E2SM-KPM metrics across xApps.
+- FlexRIC: Changed default service model install dir from system to local flexric/build, making it configurable across testbed.
+- FlexRIC: Add installation flag to ensure the optimized release binary is generated upon building rather than debug.
+- FlexRIC: Add build option to disable SQLite to prevent unnecessary database write operations during runtime.
+- FlexRIC KPM Monitoring xApps: Add color coding to distinguish the metric's name, value, and unit while logging.
+
+- Improve handling of GCC versioning
+
+- Updated NIST logo on main README.md.
+- Updated software commit hashes and configuration files to ensure compatibility with the most recent versions.
+- Revised documentation, diagrams, and source code to reflect the changes listed above.
+
+
+============= PREVIOUS CHANGELOGS BELOW =============
+
+
 ## Changelog for v1.7.0: OCUDU Integration
 
 ### Next Generation Node B
@@ -74,13 +100,6 @@
 [automation-ocudu]: https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/Next_Generation_Node_B/README.md
 [oai-handover-tutorial]: https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/0ba31c0f89dd3162c7d87142da2b0f4e08abeb58/doc/handover-tutorial.md#run-the-setup:~:text=DU0%20and%20DU1%20should%20use%20different%20SSBs
 [flexric-xapp]: https://github.com/usnistgov/O-RAN-Testbed-Automation/tree/main/OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC/Flexible-RIC#running-an-xapp
-
-
-
-
-
-============= PREVIOUS CHANGELOGS BELOW =============
-
 
 ## Changelog for v1.6.0
 

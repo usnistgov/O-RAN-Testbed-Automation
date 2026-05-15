@@ -16,7 +16,7 @@ The Next Generation Node B (gNodeB) is a 5G base station configured with OpenAir
 
 ## Supported Radio Devices
 
-The gNodeB software supports multiple radio configurations, including the RF Simulator (`SIMU`), ZeroMQ (`ZMQ`), and Universal Software Radio Peripheral (`USRP`). To specify the desired radio device, assign the `RADIO_TYPE` variable at the beginning of both the `full_install.sh` and `generate_configurations.sh` scripts prior to compiling and installing the software.
+The gNodeB software supports multiple radio configurations, including the RF Simulator (`SIMU`), ZeroMQ (`ZMQ`), and Universal Software Radio Peripheral (`USRP`). To specify the desired radio device, set the `RADIO_TYPE` variable at the beginning of both the `full_install.sh` and `generate_configurations.sh` scripts prior to compiling and installing the software.
 
 *Note: Currently, the ZeroMQ (`ZMQ`) configuration is limited to supporting a maximum of one connected User Equipment.*
 

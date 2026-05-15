@@ -1,0 +1,32 @@
+diff --git a/openair3/NAS/NR_UE/nr_nas_msg.c b/openair3/NAS/NR_UE/nr_nas_msg.c
+index 75145a48c2..d3bbc09746 100644
+--- a/openair3/NAS/NR_UE/nr_nas_msg.c
++++ b/openair3/NAS/NR_UE/nr_nas_msg.c
+@@ -60,8 +60,9 @@
+ #include "x963_kdf.h"
+ #include "sha_256_hmac.h"
+ static const char hex[] = "0123456789abcdef";
+-#elif OPENSSL_VERSION_NUMBER >= 0x10100000L
+-#define MY_OPENSSL_VERSION_STR OpenSSL_version(OPENSSL_VERSION)
++#endif
++#if OPENSSL_VERSION_NUMBER >= 0x10100000L
++#define MY_OPENSSL_VERSION_STR OPENSSL_VERSION_TEXT
+ #else
+ #define MY_OPENSSL_VERSION_STR SSLeay_version(SSLEAY_VERSION)
+ #endif
+@@ -400,6 +401,7 @@ static security_state_t nas_security_rx_process(nr_ue_nas_t *nas, byte_array_t b
+   return NAS_SECURITY_INTEGRITY_PASSED;
+ }
+ 
++#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+ static void suci_profile_scheme_a_generate_output(const uint8_t home_network_public_key[32],
+                                                   const char *msin,
+                                                   const size_t msin_len,
+@@ -476,6 +478,7 @@ static void suci_profile_scheme_a_generate_output(const uint8_t home_network_pub
+     *schemeoutput++ = hex[mac_full[i] & 0x0F];
+   }
+ }
++#endif /* OPENSSL_VERSION_NUMBER >= 0x30000000L */
+ 
+ static int fill_suci(FGSMobileIdentity *mi, const uicc_t *uicc)
+ {

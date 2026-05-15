@@ -162,7 +162,6 @@ fi
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/disable_database_option/patch.patch"
 cd ..
 
-
 # Apply patch to FlexRIC to fix the E2 node ID
 cd flexric
 echo "Patching FlexRIC to fix E2 node IDs..."
@@ -178,48 +177,48 @@ git restore src/xApp/msg_dispatcher_xapp.c
 git restore src/xApp/msg_dispatcher_xapp.h
 git restore src/xApp/msg_handler_xapp.c
 if [ ! -f "examples/xApp/c/monitor/xapp_gtp_mac_rlc_pdcp_moni.c.previous" ]; then
-	cp examples/xApp/c/monitor/xapp_gtp_mac_rlc_pdcp_moni.c examples/xApp/c/monitor/xapp_gtp_mac_rlc_pdcp_moni.c.previous
-	cp examples/xApp/c/monitor/xapp_gtp_mac_rlc_pdcp_moni.c.previous "$PARENT_DIR/install_patch_files/flexric/correcting_e2_node_id/examples/xApp/c/monitor/xapp_gtp_mac_rlc_pdcp_moni.previous.c"
+    cp examples/xApp/c/monitor/xapp_gtp_mac_rlc_pdcp_moni.c examples/xApp/c/monitor/xapp_gtp_mac_rlc_pdcp_moni.c.previous
+    cp examples/xApp/c/monitor/xapp_gtp_mac_rlc_pdcp_moni.c.previous "$PARENT_DIR/install_patch_files/flexric/correcting_e2_node_id/examples/xApp/c/monitor/xapp_gtp_mac_rlc_pdcp_moni.previous.c"
 fi
 if [ ! -f "examples/xApp/c/monitor/xapp_rc_moni.c.previous" ]; then
-	cp examples/xApp/c/monitor/xapp_rc_moni.c examples/xApp/c/monitor/xapp_rc_moni.c.previous
-	cp examples/xApp/c/monitor/xapp_rc_moni.c.previous "$PARENT_DIR/install_patch_files/flexric/correcting_e2_node_id/examples/xApp/c/monitor/xapp_rc_moni.previous.c"
+    cp examples/xApp/c/monitor/xapp_rc_moni.c examples/xApp/c/monitor/xapp_rc_moni.c.previous
+    cp examples/xApp/c/monitor/xapp_rc_moni.c.previous "$PARENT_DIR/install_patch_files/flexric/correcting_e2_node_id/examples/xApp/c/monitor/xapp_rc_moni.previous.c"
 fi
 if [ ! -f "examples/xApp/c/orange/xapp_es_with_cell_util.c.previous" ]; then
-	cp examples/xApp/c/orange/xapp_es_with_cell_util.c examples/xApp/c/orange/xapp_es_with_cell_util.c.previous
-	cp examples/xApp/c/orange/xapp_es_with_cell_util.c.previous "$PARENT_DIR/install_patch_files/flexric/correcting_e2_node_id/examples/xApp/c/orange/xapp_es_with_cell_util.previous.c"
+    cp examples/xApp/c/orange/xapp_es_with_cell_util.c examples/xApp/c/orange/xapp_es_with_cell_util.c.previous
+    cp examples/xApp/c/orange/xapp_es_with_cell_util.c.previous "$PARENT_DIR/install_patch_files/flexric/correcting_e2_node_id/examples/xApp/c/orange/xapp_es_with_cell_util.previous.c"
 fi
 if [ ! -f "examples/xApp/c/slice/xapp_slice_moni_ctrl.c.previous" ]; then
-	cp examples/xApp/c/slice/xapp_slice_moni_ctrl.c examples/xApp/c/slice/xapp_slice_moni_ctrl.c.previous
-	cp examples/xApp/c/slice/xapp_slice_moni_ctrl.c.previous "$PARENT_DIR/install_patch_files/flexric/correcting_e2_node_id/examples/xApp/c/slice/xapp_slice_moni_ctrl.previous.c"
+    cp examples/xApp/c/slice/xapp_slice_moni_ctrl.c examples/xApp/c/slice/xapp_slice_moni_ctrl.c.previous
+    cp examples/xApp/c/slice/xapp_slice_moni_ctrl.c.previous "$PARENT_DIR/install_patch_files/flexric/correcting_e2_node_id/examples/xApp/c/slice/xapp_slice_moni_ctrl.previous.c"
 fi
 if [ ! -f "examples/xApp/c/tc/xapp_tc_all.c.previous" ]; then
-	cp examples/xApp/c/tc/xapp_tc_all.c examples/xApp/c/tc/xapp_tc_all.c.previous
-	cp examples/xApp/c/tc/xapp_tc_all.c.previous "$PARENT_DIR/install_patch_files/flexric/correcting_e2_node_id/examples/xApp/c/tc/xapp_tc_all.previous.c"
+    cp examples/xApp/c/tc/xapp_tc_all.c examples/xApp/c/tc/xapp_tc_all.c.previous
+    cp examples/xApp/c/tc/xapp_tc_all.c.previous "$PARENT_DIR/install_patch_files/flexric/correcting_e2_node_id/examples/xApp/c/tc/xapp_tc_all.previous.c"
 fi
 if [ ! -f "src/xApp/act_proc.c.previous" ]; then
-	cp src/xApp/act_proc.c src/xApp/act_proc.c.previous
-	cp src/xApp/act_proc.c.previous "$PARENT_DIR/install_patch_files/flexric/correcting_e2_node_id/src/xApp/act_proc.previous.c"
+    cp src/xApp/act_proc.c src/xApp/act_proc.c.previous
+    cp src/xApp/act_proc.c.previous "$PARENT_DIR/install_patch_files/flexric/correcting_e2_node_id/src/xApp/act_proc.previous.c"
 fi
 if [ ! -f "src/xApp/act_proc.h.previous" ]; then
-	cp src/xApp/act_proc.h src/xApp/act_proc.h.previous
-	cp src/xApp/act_proc.h.previous "$PARENT_DIR/install_patch_files/flexric/correcting_e2_node_id/src/xApp/act_proc.previous.h"
+    cp src/xApp/act_proc.h src/xApp/act_proc.h.previous
+    cp src/xApp/act_proc.h.previous "$PARENT_DIR/install_patch_files/flexric/correcting_e2_node_id/src/xApp/act_proc.previous.h"
 fi
 if [ ! -f "src/xApp/e42_xapp_api.h.previous" ]; then
-	cp src/xApp/e42_xapp_api.h src/xApp/e42_xapp_api.h.previous
-	cp src/xApp/e42_xapp_api.h.previous "$PARENT_DIR/install_patch_files/flexric/correcting_e2_node_id/src/xApp/e42_xapp_api.previous.h"
+    cp src/xApp/e42_xapp_api.h src/xApp/e42_xapp_api.h.previous
+    cp src/xApp/e42_xapp_api.h.previous "$PARENT_DIR/install_patch_files/flexric/correcting_e2_node_id/src/xApp/e42_xapp_api.previous.h"
 fi
 if [ ! -f "src/xApp/msg_dispatcher_xapp.c.previous" ]; then
-	cp src/xApp/msg_dispatcher_xapp.c src/xApp/msg_dispatcher_xapp.c.previous
-	cp src/xApp/msg_dispatcher_xapp.c.previous "$PARENT_DIR/install_patch_files/flexric/correcting_e2_node_id/src/xApp/msg_dispatcher_xapp.previous.c"
+    cp src/xApp/msg_dispatcher_xapp.c src/xApp/msg_dispatcher_xapp.c.previous
+    cp src/xApp/msg_dispatcher_xapp.c.previous "$PARENT_DIR/install_patch_files/flexric/correcting_e2_node_id/src/xApp/msg_dispatcher_xapp.previous.c"
 fi
 if [ ! -f "src/xApp/msg_dispatcher_xapp.h.previous" ]; then
-	cp src/xApp/msg_dispatcher_xapp.h src/xApp/msg_dispatcher_xapp.h.previous
-	cp src/xApp/msg_dispatcher_xapp.h.previous "$PARENT_DIR/install_patch_files/flexric/correcting_e2_node_id/src/xApp/msg_dispatcher_xapp.previous.h"
+    cp src/xApp/msg_dispatcher_xapp.h src/xApp/msg_dispatcher_xapp.h.previous
+    cp src/xApp/msg_dispatcher_xapp.h.previous "$PARENT_DIR/install_patch_files/flexric/correcting_e2_node_id/src/xApp/msg_dispatcher_xapp.previous.h"
 fi
 if [ ! -f "src/xApp/msg_handler_xapp.c.previous" ]; then
-	cp src/xApp/msg_handler_xapp.c src/xApp/msg_handler_xapp.c.previous
-	cp src/xApp/msg_handler_xapp.c.previous "$PARENT_DIR/install_patch_files/flexric/correcting_e2_node_id/src/xApp/msg_handler_xapp.previous.c"
+    cp src/xApp/msg_handler_xapp.c src/xApp/msg_handler_xapp.c.previous
+    cp src/xApp/msg_handler_xapp.c.previous "$PARENT_DIR/install_patch_files/flexric/correcting_e2_node_id/src/xApp/msg_handler_xapp.previous.c"
 fi
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/correcting_e2_node_id/patch.patch"
 cd ..

@@ -175,8 +175,8 @@ cd ..
 cd openairinterface5g
 git restore executables/nr-softmodem.c
 if [ ! -f "executables/nr-softmodem.c.previous" ]; then
-	cp executables/nr-softmodem.c executables/nr-softmodem.c.previous
-	cp executables/nr-softmodem.c.previous "$PARENT_DIR/install_patch_files/openairinterface/executables/nr-softmodem.previous.c"
+    cp executables/nr-softmodem.c executables/nr-softmodem.c.previous
+    cp executables/nr-softmodem.c.previous "$PARENT_DIR/install_patch_files/openairinterface/executables/nr-softmodem.previous.c"
 fi
 echo "Patching nr-softmodem.c to fix bug with gNB ID handling for DUs and CUs..."
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface/executables/nr-softmodem.c.patch"

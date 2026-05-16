@@ -59,9 +59,9 @@ if ! command -v grafana-server &>/dev/null; then
 fi
 
 # Installing and configuring Grafana to use the CSV data source plugin
-if ! sudo grafana-cli plugins ls | grep -q yesoreyeram-infinity-datasource; then
+if ! sudo grafana cli --homepath /usr/share/grafana plugins ls | grep -q yesoreyeram-infinity-datasource; then
     echo "CSV data source plugin not found, installing..."
-    sudo grafana-cli plugins install yesoreyeram-infinity-datasource
+    sudo grafana cli --homepath /usr/share/grafana plugins install yesoreyeram-infinity-datasource
 fi
 
 if [ ! -f "$GRAFANA_LOG_FILE" ]; then

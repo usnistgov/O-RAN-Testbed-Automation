@@ -1,22 +1,22 @@
 ## Changelog for v1.7.1
 
-- Extend testbed support to Ubuntu 26.04 LTS.
-- OCUDU: Pin OCUDU Documentation commit hash for stable ZeroMQ broker download URL.
-- Fix GCC version
-- Open5GS: Update MongoDB from 4.4 to 7.0 for significantly faster subscriber updating.
-- Open5GS: Make Data Network Name (DNN) configurable at the slice level in options.yaml.
-- OpenAirInterface: Add optional UE support for ZeroMQ instead of RF simulator.
-- OpenAirInterface, FlexRIC: Add E2 node IDs to match NR CGI (3GPP 38.423 clause 9.2.3.25) for E2SM KPM monitoring xApps.
-- OpenAirInterface, SRS UE: Suppress UE namespace cleanup before reinitializing namespaces.
-- FlexRIC: Add a metrics factory (metrics_factory.c) to simplify and centralize management of E2SM-KPM metrics across xApps.
-- FlexRIC: Changed default service model install dir from system to local flexric/build, making it configurable across testbed.
-- FlexRIC: Add installation flag to ensure the optimized release binary is generated upon building rather than debug.
-- FlexRIC: Add build option to disable SQLite to prevent unnecessary database write operations during runtime.
-- FlexRIC KPM Monitoring xApps: Add color coding to distinguish the metric's name, value, and unit while logging.
-
-- Improve handling of GCC versioning
-
-- Updated NIST logo on main README.md.
+- Extended testbed support to Ubuntu 26.04 LTS.
+- Open5GS: Updated MongoDB from 4.4 to 7.0 for faster subscriber reading and writing.
+  - Added `pkg-config` compatibility shim for `libmongoc-1.0` mapping to `mongoc2` during compilation, and migrated ping checks to support `mongosh` alongside legacy `mongo` shell.
+- Open5GS: Made Data Network Name (DNN) configurable at the slice level in `options.yaml`.
+- 5gdeploy: Bumped Open5GS component versions to `v2.7.7`.
+- FlexRIC: Changed default service model install directory from system to local `flexric/build`, making it configurable across testbed.
+  - Added script to check when the FlexRIC libraries were last modified.
+- FlexRIC: Added a metrics factory (`metrics_factory.c`) to centralize management of E2SM-KPM metrics across xApps.
+- FlexRIC KPM Monitoring xApps: Added color coding to distinguish the metric's name, value, and unit while logging.
+- FlexRIC: Added E2 node IDs to match NR CGI (3GPP 38.423 clause 9.2.3.25) for E2SM KPM monitoring xApps.
+- FlexRIC: Added option to disable SQLite to prevent unnecessary database write operations during runtime.
+- FlexRIC: Added build flag to ensure the optimized Release binary is generated rather than Debug.
+- OCUDU: Pinned OCUDU Documentation commit hash for stable ZeroMQ broker download URL.
+- SRS UE, OpenAirInterface: Suppressed UE namespace cleanup before re-initializing namespaces.
+- OpenAirInterface: Added optional UE support for ZeroMQ instead of RF simulator.
+- Improved handling of GCC versioning checks to ensure consistent installations.
+- Updated NIST logo on main `README.md`.
 - Updated software commit hashes and configuration files to ensure compatibility with the most recent versions.
 - Revised documentation, diagrams, and source code to reflect the changes listed above.
 

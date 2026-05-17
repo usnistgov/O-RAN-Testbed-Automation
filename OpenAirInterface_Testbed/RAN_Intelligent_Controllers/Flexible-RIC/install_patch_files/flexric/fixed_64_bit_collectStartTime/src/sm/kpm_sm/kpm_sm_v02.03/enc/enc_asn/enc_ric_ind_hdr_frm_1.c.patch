@@ -1,0 +1,50 @@
+diff --git a/src/sm/kpm_sm/kpm_sm_v02.03/enc/enc_asn/enc_ric_ind_hdr_frm_1.c b/src/sm/kpm_sm/kpm_sm_v02.03/enc/enc_asn/enc_ric_ind_hdr_frm_1.c
+index 25578f99..9c52837c 100644
+--- a/src/sm/kpm_sm/kpm_sm_v02.03/enc/enc_asn/enc_ric_ind_hdr_frm_1.c
++++ b/src/sm/kpm_sm/kpm_sm_v02.03/enc/enc_asn/enc_ric_ind_hdr_frm_1.c
+@@ -2,22 +2,42 @@
+  * SPDX-License-Identifier: LicenseRef-CSSL-1.0
+  */
+ 
+-#include <arpa/inet.h>
+ #include <assert.h>
+ #include <stdint.h>
+ #include <stdlib.h>
++#include <arpa/inet.h> // htonl
+ 
+ #include "../../../../../util/conversions.h"
+ 
+ #include "enc_ric_ind_hdr_frm_1.h"
+ 
++// #define htonll(x) ((1==htonl(1)) ? (x) : ((uint64_t)htonl((x) & 0xFFFFFFFF) << 32) | htonl((x) >> 32))
++
++// uint64_t htonll(uint64_t x)
++// {
++//   return (uint64_t)((uint64_t)htonl((x) & 0xFFFFFFFFLL) << 32) | (uint32_t)htonl(x);
++// }
++
++uint64_t htonll(uint64_t x)
++{
++    uint32_t x1 = (uint32_t)((x & 0xFFFFFFFF00000000LL) >> 32);
++    uint32_t x2 = (uint32_t)(x & 0xFFFFFFFFLL);
++    x1 = htonl(x1);
++    x2 = htonl(x2);
++    uint64_t v = ((uint64_t)x1) << 32 | x2;
++
++    return v;
++}
++
+ E2SM_KPM_IndicationHeader_Format1_t * kpm_enc_ind_hdr_frm_1_asn(const kpm_ric_ind_hdr_format_1_t * ind_hdr)
+ {
+     E2SM_KPM_IndicationHeader_Format1_t * ind_hdr_asn = calloc(1, sizeof(E2SM_KPM_IndicationHeader_Format1_t));
+     assert(ind_hdr_asn != NULL && "Memory exhausted");
+ 
+-    uint32_t ts = htonl(ind_hdr->collectStartTime);
+-    INT32_TO_OCTET_STRING(ts, &ind_hdr_asn->colletStartTime);
++
++    uint64_t ts = htonll(ind_hdr->collectStartTime);
++    ind_hdr_asn->colletStartTime = int_64_to_octet_string(ts);
++
+ 
+     int ret;
+ 

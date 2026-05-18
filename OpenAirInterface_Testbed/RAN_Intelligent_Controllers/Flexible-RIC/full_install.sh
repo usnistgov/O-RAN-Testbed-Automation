@@ -88,8 +88,8 @@ if [[ "$INSTALL_GCC" == "true" ]]; then
     sudo env $APTVARS apt-get install -y gcc-13 g++-13
     sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 100
     sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-13 100
-    sudo env $APTVARS apt-get install -y libsctp-dev python3 cmake-curses-gui libpcre2-dev python3-dev
 fi
+sudo env $APTVARS apt-get install -y libsctp-dev python3 cmake-curses-gui libpcre2-dev python3-dev
 
 if [ ! -d "swig" ]; then
     echo "Cloning SWIG..."

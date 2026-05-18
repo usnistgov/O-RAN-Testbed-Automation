@@ -229,51 +229,51 @@ fi
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/correcting_e2_node_id/patch.patch"
 cd "$PARENT_DIR"
 
-# Apply patch to FlexRIC to make collectStartTime 64 bits for v02.01 and v02.03 (already fixed in v03.00) as per E2SM-KPM clause 8.3.12 and IETF RFC 5905 clause 6
-cd "$FLEXRIC_DIR"
-echo "Adding patch to make collectStartTime 64 bits in v02.01 and v02.03 as per E2SM-KPM clause 8.3.12 and IETF RFC 5905 clause 6..."
-git restore src/sm/kpm_sm/kpm_sm_v02.01/ie/kpm_data_ie/kpm_ric_info/kpm_ric_ind_hdr_frm_1.h
-git restore src/sm/kpm_sm/kpm_sm_v02.01/enc/enc_asn/enc_ric_ind_hdr_frm_1.c
-git restore src/sm/kpm_sm/kpm_sm_v02.01/dec/dec_asn/dec_ric_ind_hdr_frm_1.c
-git restore src/sm/kpm_sm/kpm_sm_v02.01/ie/asn/TimeStamp.c
-git restore src/sm/kpm_sm/kpm_sm_v02.03/ie/kpm_data_ie/kpm_ric_info/kpm_ric_ind_hdr_frm_1.h
-git restore src/sm/kpm_sm/kpm_sm_v02.03/enc/enc_asn/enc_ric_ind_hdr_frm_1.c
-git restore src/sm/kpm_sm/kpm_sm_v02.03/dec/dec_asn/dec_ric_ind_hdr_frm_1.c
-git restore src/sm/kpm_sm/kpm_sm_v02.03/ie/asn/TimeStamp.c
-if [ ! -f "src/sm/kpm_sm/kpm_sm_v02.01/ie/kpm_data_ie/kpm_ric_info/kpm_ric_ind_hdr_frm_1.h.previous" ]; then
-	cp src/sm/kpm_sm/kpm_sm_v02.01/ie/kpm_data_ie/kpm_ric_info/kpm_ric_ind_hdr_frm_1.h src/sm/kpm_sm/kpm_sm_v02.01/ie/kpm_data_ie/kpm_ric_info/kpm_ric_ind_hdr_frm_1.h.previous
-	cp src/sm/kpm_sm/kpm_sm_v02.01/ie/kpm_data_ie/kpm_ric_info/kpm_ric_ind_hdr_frm_1.h.previous "$PARENT_DIR/install_patch_files/flexric/fixed_64_bit_collectStartTime/src/sm/kpm_sm/kpm_sm_v02.01/ie/kpm_data_ie/kpm_ric_info/kpm_ric_ind_hdr_frm_1.previous.h"
-fi
-if [ ! -f "src/sm/kpm_sm/kpm_sm_v02.01/enc/enc_asn/enc_ric_ind_hdr_frm_1.c.previous" ]; then
-	cp src/sm/kpm_sm/kpm_sm_v02.01/enc/enc_asn/enc_ric_ind_hdr_frm_1.c src/sm/kpm_sm/kpm_sm_v02.01/enc/enc_asn/enc_ric_ind_hdr_frm_1.c.previous
-	cp src/sm/kpm_sm/kpm_sm_v02.01/enc/enc_asn/enc_ric_ind_hdr_frm_1.c.previous "$PARENT_DIR/install_patch_files/flexric/fixed_64_bit_collectStartTime/src/sm/kpm_sm/kpm_sm_v02.01/enc/enc_asn/enc_ric_ind_hdr_frm_1.previous.c"
-fi
-if [ ! -f "src/sm/kpm_sm/kpm_sm_v02.01/dec/dec_asn/dec_ric_ind_hdr_frm_1.c.previous" ]; then
-	cp src/sm/kpm_sm/kpm_sm_v02.01/dec/dec_asn/dec_ric_ind_hdr_frm_1.c src/sm/kpm_sm/kpm_sm_v02.01/dec/dec_asn/dec_ric_ind_hdr_frm_1.c.previous
-	cp src/sm/kpm_sm/kpm_sm_v02.01/dec/dec_asn/dec_ric_ind_hdr_frm_1.c.previous "$PARENT_DIR/install_patch_files/flexric/fixed_64_bit_collectStartTime/src/sm/kpm_sm/kpm_sm_v02.01/dec/dec_asn/dec_ric_ind_hdr_frm_1.previous.c"
-fi
-if [ ! -f "src/sm/kpm_sm/kpm_sm_v02.01/ie/asn/TimeStamp.c.previous" ]; then
-	cp src/sm/kpm_sm/kpm_sm_v02.01/ie/asn/TimeStamp.c src/sm/kpm_sm/kpm_sm_v02.01/ie/asn/TimeStamp.c.previous
-	cp src/sm/kpm_sm/kpm_sm_v02.01/ie/asn/TimeStamp.c.previous "$PARENT_DIR/install_patch_files/flexric/fixed_64_bit_collectStartTime/src/sm/kpm_sm/kpm_sm_v02.01/ie/asn/TimeStamp.previous.c"
-fi
-if [ ! -f "src/sm/kpm_sm/kpm_sm_v02.03/ie/kpm_data_ie/kpm_ric_info/kpm_ric_ind_hdr_frm_1.h.previous" ]; then
-	cp src/sm/kpm_sm/kpm_sm_v02.03/ie/kpm_data_ie/kpm_ric_info/kpm_ric_ind_hdr_frm_1.h src/sm/kpm_sm/kpm_sm_v02.03/ie/kpm_data_ie/kpm_ric_info/kpm_ric_ind_hdr_frm_1.h.previous
-	cp src/sm/kpm_sm/kpm_sm_v02.03/ie/kpm_data_ie/kpm_ric_info/kpm_ric_ind_hdr_frm_1.h.previous "$PARENT_DIR/install_patch_files/flexric/fixed_64_bit_collectStartTime/src/sm/kpm_sm/kpm_sm_v02.03/ie/kpm_data_ie/kpm_ric_info/kpm_ric_ind_hdr_frm_1.previous.h"
-fi
-if [ ! -f "src/sm/kpm_sm/kpm_sm_v02.03/enc/enc_asn/enc_ric_ind_hdr_frm_1.c.previous" ]; then
-	cp src/sm/kpm_sm/kpm_sm_v02.03/enc/enc_asn/enc_ric_ind_hdr_frm_1.c src/sm/kpm_sm/kpm_sm_v02.03/enc/enc_asn/enc_ric_ind_hdr_frm_1.c.previous
-	cp src/sm/kpm_sm/kpm_sm_v02.03/enc/enc_asn/enc_ric_ind_hdr_frm_1.c.previous "$PARENT_DIR/install_patch_files/flexric/fixed_64_bit_collectStartTime/src/sm/kpm_sm/kpm_sm_v02.03/enc/enc_asn/enc_ric_ind_hdr_frm_1.previous.c"
-fi
-if [ ! -f "src/sm/kpm_sm/kpm_sm_v02.03/dec/dec_asn/dec_ric_ind_hdr_frm_1.c.previous" ]; then
-	cp src/sm/kpm_sm/kpm_sm_v02.03/dec/dec_asn/dec_ric_ind_hdr_frm_1.c src/sm/kpm_sm/kpm_sm_v02.03/dec/dec_asn/dec_ric_ind_hdr_frm_1.c.previous
-	cp src/sm/kpm_sm/kpm_sm_v02.03/dec/dec_asn/dec_ric_ind_hdr_frm_1.c.previous "$PARENT_DIR/install_patch_files/flexric/fixed_64_bit_collectStartTime/src/sm/kpm_sm/kpm_sm_v02.03/dec/dec_asn/dec_ric_ind_hdr_frm_1.previous.c"
-fi
-if [ ! -f "src/sm/kpm_sm/kpm_sm_v02.03/ie/asn/TimeStamp.c.previous" ]; then
-	cp src/sm/kpm_sm/kpm_sm_v02.03/ie/asn/TimeStamp.c src/sm/kpm_sm/kpm_sm_v02.03/ie/asn/TimeStamp.c.previous
-	cp src/sm/kpm_sm/kpm_sm_v02.03/ie/asn/TimeStamp.c.previous "$PARENT_DIR/install_patch_files/flexric/fixed_64_bit_collectStartTime/src/sm/kpm_sm/kpm_sm_v02.03/ie/asn/TimeStamp.previous.c"
-fi
-git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/fixed_64_bit_collectStartTime/patch.patch"
-cd "$PARENT_DIR"
+# # Apply patch to FlexRIC to make collectStartTime 64 bits for v02.01 and v02.03 (already fixed in v03.00) as per E2SM-KPM clause 8.3.12 and IETF RFC 5905 clause 6
+# cd "$FLEXRIC_DIR"
+# echo "Adding patch to make collectStartTime 64 bits in v02.01 and v02.03 as per E2SM-KPM clause 8.3.12 and IETF RFC 5905 clause 6..."
+# git restore src/sm/kpm_sm/kpm_sm_v02.01/ie/kpm_data_ie/kpm_ric_info/kpm_ric_ind_hdr_frm_1.h
+# git restore src/sm/kpm_sm/kpm_sm_v02.01/enc/enc_asn/enc_ric_ind_hdr_frm_1.c
+# git restore src/sm/kpm_sm/kpm_sm_v02.01/dec/dec_asn/dec_ric_ind_hdr_frm_1.c
+# git restore src/sm/kpm_sm/kpm_sm_v02.01/ie/asn/TimeStamp.c
+# git restore src/sm/kpm_sm/kpm_sm_v02.03/ie/kpm_data_ie/kpm_ric_info/kpm_ric_ind_hdr_frm_1.h
+# git restore src/sm/kpm_sm/kpm_sm_v02.03/enc/enc_asn/enc_ric_ind_hdr_frm_1.c
+# git restore src/sm/kpm_sm/kpm_sm_v02.03/dec/dec_asn/dec_ric_ind_hdr_frm_1.c
+# git restore src/sm/kpm_sm/kpm_sm_v02.03/ie/asn/TimeStamp.c
+# if [ ! -f "src/sm/kpm_sm/kpm_sm_v02.01/ie/kpm_data_ie/kpm_ric_info/kpm_ric_ind_hdr_frm_1.h.previous" ]; then
+# 	cp src/sm/kpm_sm/kpm_sm_v02.01/ie/kpm_data_ie/kpm_ric_info/kpm_ric_ind_hdr_frm_1.h src/sm/kpm_sm/kpm_sm_v02.01/ie/kpm_data_ie/kpm_ric_info/kpm_ric_ind_hdr_frm_1.h.previous
+# 	cp src/sm/kpm_sm/kpm_sm_v02.01/ie/kpm_data_ie/kpm_ric_info/kpm_ric_ind_hdr_frm_1.h.previous "$PARENT_DIR/install_patch_files/flexric/fixed_64_bit_collectStartTime/src/sm/kpm_sm/kpm_sm_v02.01/ie/kpm_data_ie/kpm_ric_info/kpm_ric_ind_hdr_frm_1.previous.h"
+# fi
+# if [ ! -f "src/sm/kpm_sm/kpm_sm_v02.01/enc/enc_asn/enc_ric_ind_hdr_frm_1.c.previous" ]; then
+# 	cp src/sm/kpm_sm/kpm_sm_v02.01/enc/enc_asn/enc_ric_ind_hdr_frm_1.c src/sm/kpm_sm/kpm_sm_v02.01/enc/enc_asn/enc_ric_ind_hdr_frm_1.c.previous
+# 	cp src/sm/kpm_sm/kpm_sm_v02.01/enc/enc_asn/enc_ric_ind_hdr_frm_1.c.previous "$PARENT_DIR/install_patch_files/flexric/fixed_64_bit_collectStartTime/src/sm/kpm_sm/kpm_sm_v02.01/enc/enc_asn/enc_ric_ind_hdr_frm_1.previous.c"
+# fi
+# if [ ! -f "src/sm/kpm_sm/kpm_sm_v02.01/dec/dec_asn/dec_ric_ind_hdr_frm_1.c.previous" ]; then
+# 	cp src/sm/kpm_sm/kpm_sm_v02.01/dec/dec_asn/dec_ric_ind_hdr_frm_1.c src/sm/kpm_sm/kpm_sm_v02.01/dec/dec_asn/dec_ric_ind_hdr_frm_1.c.previous
+# 	cp src/sm/kpm_sm/kpm_sm_v02.01/dec/dec_asn/dec_ric_ind_hdr_frm_1.c.previous "$PARENT_DIR/install_patch_files/flexric/fixed_64_bit_collectStartTime/src/sm/kpm_sm/kpm_sm_v02.01/dec/dec_asn/dec_ric_ind_hdr_frm_1.previous.c"
+# fi
+# if [ ! -f "src/sm/kpm_sm/kpm_sm_v02.01/ie/asn/TimeStamp.c.previous" ]; then
+# 	cp src/sm/kpm_sm/kpm_sm_v02.01/ie/asn/TimeStamp.c src/sm/kpm_sm/kpm_sm_v02.01/ie/asn/TimeStamp.c.previous
+# 	cp src/sm/kpm_sm/kpm_sm_v02.01/ie/asn/TimeStamp.c.previous "$PARENT_DIR/install_patch_files/flexric/fixed_64_bit_collectStartTime/src/sm/kpm_sm/kpm_sm_v02.01/ie/asn/TimeStamp.previous.c"
+# fi
+# if [ ! -f "src/sm/kpm_sm/kpm_sm_v02.03/ie/kpm_data_ie/kpm_ric_info/kpm_ric_ind_hdr_frm_1.h.previous" ]; then
+# 	cp src/sm/kpm_sm/kpm_sm_v02.03/ie/kpm_data_ie/kpm_ric_info/kpm_ric_ind_hdr_frm_1.h src/sm/kpm_sm/kpm_sm_v02.03/ie/kpm_data_ie/kpm_ric_info/kpm_ric_ind_hdr_frm_1.h.previous
+# 	cp src/sm/kpm_sm/kpm_sm_v02.03/ie/kpm_data_ie/kpm_ric_info/kpm_ric_ind_hdr_frm_1.h.previous "$PARENT_DIR/install_patch_files/flexric/fixed_64_bit_collectStartTime/src/sm/kpm_sm/kpm_sm_v02.03/ie/kpm_data_ie/kpm_ric_info/kpm_ric_ind_hdr_frm_1.previous.h"
+# fi
+# if [ ! -f "src/sm/kpm_sm/kpm_sm_v02.03/enc/enc_asn/enc_ric_ind_hdr_frm_1.c.previous" ]; then
+# 	cp src/sm/kpm_sm/kpm_sm_v02.03/enc/enc_asn/enc_ric_ind_hdr_frm_1.c src/sm/kpm_sm/kpm_sm_v02.03/enc/enc_asn/enc_ric_ind_hdr_frm_1.c.previous
+# 	cp src/sm/kpm_sm/kpm_sm_v02.03/enc/enc_asn/enc_ric_ind_hdr_frm_1.c.previous "$PARENT_DIR/install_patch_files/flexric/fixed_64_bit_collectStartTime/src/sm/kpm_sm/kpm_sm_v02.03/enc/enc_asn/enc_ric_ind_hdr_frm_1.previous.c"
+# fi
+# if [ ! -f "src/sm/kpm_sm/kpm_sm_v02.03/dec/dec_asn/dec_ric_ind_hdr_frm_1.c.previous" ]; then
+# 	cp src/sm/kpm_sm/kpm_sm_v02.03/dec/dec_asn/dec_ric_ind_hdr_frm_1.c src/sm/kpm_sm/kpm_sm_v02.03/dec/dec_asn/dec_ric_ind_hdr_frm_1.c.previous
+# 	cp src/sm/kpm_sm/kpm_sm_v02.03/dec/dec_asn/dec_ric_ind_hdr_frm_1.c.previous "$PARENT_DIR/install_patch_files/flexric/fixed_64_bit_collectStartTime/src/sm/kpm_sm/kpm_sm_v02.03/dec/dec_asn/dec_ric_ind_hdr_frm_1.previous.c"
+# fi
+# if [ ! -f "src/sm/kpm_sm/kpm_sm_v02.03/ie/asn/TimeStamp.c.previous" ]; then
+# 	cp src/sm/kpm_sm/kpm_sm_v02.03/ie/asn/TimeStamp.c src/sm/kpm_sm/kpm_sm_v02.03/ie/asn/TimeStamp.c.previous
+# 	cp src/sm/kpm_sm/kpm_sm_v02.03/ie/asn/TimeStamp.c.previous "$PARENT_DIR/install_patch_files/flexric/fixed_64_bit_collectStartTime/src/sm/kpm_sm/kpm_sm_v02.03/ie/asn/TimeStamp.previous.c"
+# fi
+# git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/fixed_64_bit_collectStartTime/patch.patch"
+# cd "$PARENT_DIR"
 
 # Append new intermediate metrics units to 28_552_kpm_meas.txt
 cd "$FLEXRIC_DIR"

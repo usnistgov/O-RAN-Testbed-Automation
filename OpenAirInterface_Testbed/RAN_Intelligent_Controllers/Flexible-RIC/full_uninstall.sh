@@ -58,7 +58,7 @@ if [ -d flexric/build ]; then
     echo "Uninstalling FlexRIC..."
     cd flexric/build
     if [ -f install_manifest.txt ]; then
-        sudo xargs rm -f < install_manifest.txt || true
+        sudo xargs rm -f <install_manifest.txt || true
     else
         sudo make uninstall || true
     fi

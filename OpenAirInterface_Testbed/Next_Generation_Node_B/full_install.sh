@@ -119,12 +119,12 @@ fi
 
 FLEXRIC_PATCH_DIR="../RAN_Intelligent_Controllers/Flexible-RIC"
 if [ -f "$FLEXRIC_PATCH_DIR/install_scripts/apply_patches.sh" ] && [ ! -f "$FLEXRIC_DIR/README.previous.md" ]; then
-	echo "Applying FlexRIC patches to openairinterface5g/openair2/E2AP/flexric..."
-	"$FLEXRIC_PATCH_DIR/install_scripts/apply_patches.sh" "$FLEXRIC_DIR"
-	if [ ! -f "$FLEXRIC_DIR/README.previous.md" ]; then
-		echo "WARNING: Could not verify that FlexRIC patches were applied successfully."
-		sleep 10
-	fi
+    echo "Applying FlexRIC patches to openairinterface5g/openair2/E2AP/flexric..."
+    "$FLEXRIC_PATCH_DIR/install_scripts/apply_patches.sh" "$FLEXRIC_DIR"
+    if [ ! -f "$FLEXRIC_DIR/README.previous.md" ]; then
+        echo "WARNING: Could not verify that FlexRIC patches were applied successfully."
+        sleep 10
+    fi
 fi
 
 CURRENT_E2_PORT=$(sed -nE 's/.*e2ap_server_port *= *([0-9]+);/\1/p' $FLEXRIC_DIR/src/agent/e2_agent_api.c)

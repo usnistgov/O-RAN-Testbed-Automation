@@ -47,7 +47,9 @@ echo "Stopping Near-RT RIC..."
 if [ -d swig ]; then
     echo "Uninstalling Swig..."
     cd swig
-    sudo make uninstall
+    if [ -f Makefile ]; then
+        sudo make uninstall || true
+    fi
     cd ..
 fi
 sudo rm -rf swig
@@ -55,7 +57,11 @@ sudo rm -rf swig
 if [ -d flexric/build ]; then
     echo "Uninstalling FlexRIC..."
     cd flexric/build
-    sudo make uninstall
+    if [ -f install_manifest.txt ]; then
+        sudo xargs rm -f <install_manifest.txt || true
+    else
+        sudo make uninstall || true
+    fi
     cd ../..
 fi
 sudo rm -rf flexric
@@ -83,7 +89,6 @@ if [ -f influxdb_auth_token.json ]; then
     sudo rm -f influxdb_auth_token.json
 fi
 
-echo
 echo
 echo "################################################################################"
 echo "# Successfully uninstalled FlexRIC                                             #"

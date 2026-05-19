@@ -41,8 +41,13 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$PARENT_DIR"
 
+FLEXRIC_DIR="${1:-"$PARENT_DIR/flexric"}"
+if [ "$FLEXRIC_DIR" != "$PARENT_DIR/flexric" ]; then
+    echo "Using alternative FlexRIC path for patching: $FLEXRIC_DIR"
+fi
+
 # Apply patch to FlexRIC to add support for RSRP in the KPI report
-cd flexric
+cd "$FLEXRIC_DIR"
 git restore examples/xApp/c/monitor/xapp_kpm_moni.c
 if [ ! -f "examples/xApp/c/monitor/xapp_kpm_moni.c.previous" ]; then
     cp examples/xApp/c/monitor/xapp_kpm_moni.c examples/xApp/c/monitor/xapp_kpm_moni.c.previous
@@ -50,10 +55,10 @@ if [ ! -f "examples/xApp/c/monitor/xapp_kpm_moni.c.previous" ]; then
 fi
 echo "Patching xapp_kpm_moni.c..."
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni.c.patch"
-cd ..
+cd "$PARENT_DIR"
 
 # Apply patch to FlexRIC to add slice (SST + SD) support in RC xApp
-cd flexric
+cd "$FLEXRIC_DIR"
 git restore examples/xApp/c/kpm_rc/xapp_kpm_rc.c
 if [ ! -f "examples/xApp/c/kpm_rc/xapp_kpm_rc.c.previous" ]; then
     cp examples/xApp/c/kpm_rc/xapp_kpm_rc.c examples/xApp/c/kpm_rc/xapp_kpm_rc.c.previous
@@ -69,22 +74,22 @@ if [ ! -f "examples/xApp/c/kpm_rc/CMakeLists.txt.previous" ]; then
 fi
 echo "Patching CMakeLists.txt..."
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/kpm_rc/CMakeLists.txt.patch"
-cd ..
+cd "$PARENT_DIR"
 
 echo "Adding metrics_factory.h..."
-cp "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/metrics_factory.h" flexric/examples/xApp/c/
+cp "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/metrics_factory.h" "$FLEXRIC_DIR"/examples/xApp/c/
 
 echo "Adding metrics_factory.c..."
-cp "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/metrics_factory.c" flexric/examples/xApp/c/
+cp "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/metrics_factory.c" "$FLEXRIC_DIR"/examples/xApp/c/
 
 echo "Adding xapp_kpm_moni_write_to_csv.c..."
-cp "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv.c" flexric/examples/xApp/c/monitor/
+cp "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv.c" "$FLEXRIC_DIR"/examples/xApp/c/monitor/
 
 echo "Adding xapp_kpm_moni_write_to_influxdb.c..."
-cp "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni_write_to_influxdb.c" flexric/examples/xApp/c/monitor/
+cp "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni_write_to_influxdb.c" "$FLEXRIC_DIR"/examples/xApp/c/monitor/
 
 # Apply patch to add new xApp KPI monitor that logs output to logs/KPI_Metrics.csv
-cd flexric
+cd "$FLEXRIC_DIR"
 git restore examples/xApp/c/monitor/CMakeLists.txt
 if [ ! -f "examples/xApp/c/monitor/CMakeLists.txt.previous" ]; then
     cp examples/xApp/c/monitor/CMakeLists.txt examples/xApp/c/monitor/CMakeLists.txt.previous
@@ -93,6 +98,7 @@ fi
 echo "Patching CMakeLists.txt to list the new xApps for building..."
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/CMakeLists.txt.patch"
 
+# cd "$FLEXRIC_DIR"
 # echo "Adding stale subscription cleanup support patch to FlexRIC..."
 # STALE_SUBSCRIPTION_PATCH_DIR="$PARENT_DIR/install_patch_files/flexric/stale_subscription_cleanup_support"
 # mkdir -p "$STALE_SUBSCRIPTION_PATCH_DIR"
@@ -127,10 +133,10 @@ git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric
 # done
 # git apply --verbose --ignore-whitespace "$STALE_SUBSCRIPTION_PATCH_DIR/patch.patch"
 
-cd ..
+cd "$PARENT_DIR"
 
 # Apply patch to FlexRIC to add support for disabling the SQLite database with cmake .. -DXAPP_DB=NONE_XAPP
-cd flexric
+cd "$FLEXRIC_DIR"
 echo "Adding option to disable SQLite database..."
 git restore README.md
 if [ ! -f "README.previous.md" ]; then
@@ -160,10 +166,10 @@ fi
 # # Omit e42_xapp.c since the stale subscription patch already modified it
 # cp $STALE_SUBSCRIPTION_PATCH_DIR/src/xApp/e42_xapp.c.previous src/xApp/e42_xapp.previous.c
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/disable_database_option/patch.patch"
-cd ..
+cd "$PARENT_DIR"
 
 # Apply patch to FlexRIC to fix the E2 node ID
-cd flexric
+cd "$FLEXRIC_DIR"
 echo "Patching FlexRIC to fix E2 node IDs..."
 git restore examples/xApp/c/monitor/xapp_gtp_mac_rlc_pdcp_moni.c
 git restore examples/xApp/c/monitor/xapp_rc_moni.c
@@ -221,10 +227,56 @@ if [ ! -f "src/xApp/msg_handler_xapp.c.previous" ]; then
     cp src/xApp/msg_handler_xapp.c.previous "$PARENT_DIR/install_patch_files/flexric/correcting_e2_node_id/src/xApp/msg_handler_xapp.previous.c"
 fi
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/correcting_e2_node_id/patch.patch"
-cd ..
+cd "$PARENT_DIR"
+
+# # Apply patch to FlexRIC to make collectStartTime 64 bits for v02.01 and v02.03 (already fixed in v03.00) as per E2SM-KPM clause 8.3.12 and IETF RFC 5905 clause 6
+# cd "$FLEXRIC_DIR"
+# echo "Adding patch to make collectStartTime 64 bits in v02.01 and v02.03 as per E2SM-KPM clause 8.3.12 and IETF RFC 5905 clause 6..."
+# git restore src/sm/kpm_sm/kpm_sm_v02.01/ie/kpm_data_ie/kpm_ric_info/kpm_ric_ind_hdr_frm_1.h
+# git restore src/sm/kpm_sm/kpm_sm_v02.01/enc/enc_asn/enc_ric_ind_hdr_frm_1.c
+# git restore src/sm/kpm_sm/kpm_sm_v02.01/dec/dec_asn/dec_ric_ind_hdr_frm_1.c
+# git restore src/sm/kpm_sm/kpm_sm_v02.01/ie/asn/TimeStamp.c
+# git restore src/sm/kpm_sm/kpm_sm_v02.03/ie/kpm_data_ie/kpm_ric_info/kpm_ric_ind_hdr_frm_1.h
+# git restore src/sm/kpm_sm/kpm_sm_v02.03/enc/enc_asn/enc_ric_ind_hdr_frm_1.c
+# git restore src/sm/kpm_sm/kpm_sm_v02.03/dec/dec_asn/dec_ric_ind_hdr_frm_1.c
+# git restore src/sm/kpm_sm/kpm_sm_v02.03/ie/asn/TimeStamp.c
+# if [ ! -f "src/sm/kpm_sm/kpm_sm_v02.01/ie/kpm_data_ie/kpm_ric_info/kpm_ric_ind_hdr_frm_1.h.previous" ]; then
+# 	cp src/sm/kpm_sm/kpm_sm_v02.01/ie/kpm_data_ie/kpm_ric_info/kpm_ric_ind_hdr_frm_1.h src/sm/kpm_sm/kpm_sm_v02.01/ie/kpm_data_ie/kpm_ric_info/kpm_ric_ind_hdr_frm_1.h.previous
+# 	cp src/sm/kpm_sm/kpm_sm_v02.01/ie/kpm_data_ie/kpm_ric_info/kpm_ric_ind_hdr_frm_1.h.previous "$PARENT_DIR/install_patch_files/flexric/fixed_64_bit_collectStartTime/src/sm/kpm_sm/kpm_sm_v02.01/ie/kpm_data_ie/kpm_ric_info/kpm_ric_ind_hdr_frm_1.previous.h"
+# fi
+# if [ ! -f "src/sm/kpm_sm/kpm_sm_v02.01/enc/enc_asn/enc_ric_ind_hdr_frm_1.c.previous" ]; then
+# 	cp src/sm/kpm_sm/kpm_sm_v02.01/enc/enc_asn/enc_ric_ind_hdr_frm_1.c src/sm/kpm_sm/kpm_sm_v02.01/enc/enc_asn/enc_ric_ind_hdr_frm_1.c.previous
+# 	cp src/sm/kpm_sm/kpm_sm_v02.01/enc/enc_asn/enc_ric_ind_hdr_frm_1.c.previous "$PARENT_DIR/install_patch_files/flexric/fixed_64_bit_collectStartTime/src/sm/kpm_sm/kpm_sm_v02.01/enc/enc_asn/enc_ric_ind_hdr_frm_1.previous.c"
+# fi
+# if [ ! -f "src/sm/kpm_sm/kpm_sm_v02.01/dec/dec_asn/dec_ric_ind_hdr_frm_1.c.previous" ]; then
+# 	cp src/sm/kpm_sm/kpm_sm_v02.01/dec/dec_asn/dec_ric_ind_hdr_frm_1.c src/sm/kpm_sm/kpm_sm_v02.01/dec/dec_asn/dec_ric_ind_hdr_frm_1.c.previous
+# 	cp src/sm/kpm_sm/kpm_sm_v02.01/dec/dec_asn/dec_ric_ind_hdr_frm_1.c.previous "$PARENT_DIR/install_patch_files/flexric/fixed_64_bit_collectStartTime/src/sm/kpm_sm/kpm_sm_v02.01/dec/dec_asn/dec_ric_ind_hdr_frm_1.previous.c"
+# fi
+# if [ ! -f "src/sm/kpm_sm/kpm_sm_v02.01/ie/asn/TimeStamp.c.previous" ]; then
+# 	cp src/sm/kpm_sm/kpm_sm_v02.01/ie/asn/TimeStamp.c src/sm/kpm_sm/kpm_sm_v02.01/ie/asn/TimeStamp.c.previous
+# 	cp src/sm/kpm_sm/kpm_sm_v02.01/ie/asn/TimeStamp.c.previous "$PARENT_DIR/install_patch_files/flexric/fixed_64_bit_collectStartTime/src/sm/kpm_sm/kpm_sm_v02.01/ie/asn/TimeStamp.previous.c"
+# fi
+# if [ ! -f "src/sm/kpm_sm/kpm_sm_v02.03/ie/kpm_data_ie/kpm_ric_info/kpm_ric_ind_hdr_frm_1.h.previous" ]; then
+# 	cp src/sm/kpm_sm/kpm_sm_v02.03/ie/kpm_data_ie/kpm_ric_info/kpm_ric_ind_hdr_frm_1.h src/sm/kpm_sm/kpm_sm_v02.03/ie/kpm_data_ie/kpm_ric_info/kpm_ric_ind_hdr_frm_1.h.previous
+# 	cp src/sm/kpm_sm/kpm_sm_v02.03/ie/kpm_data_ie/kpm_ric_info/kpm_ric_ind_hdr_frm_1.h.previous "$PARENT_DIR/install_patch_files/flexric/fixed_64_bit_collectStartTime/src/sm/kpm_sm/kpm_sm_v02.03/ie/kpm_data_ie/kpm_ric_info/kpm_ric_ind_hdr_frm_1.previous.h"
+# fi
+# if [ ! -f "src/sm/kpm_sm/kpm_sm_v02.03/enc/enc_asn/enc_ric_ind_hdr_frm_1.c.previous" ]; then
+# 	cp src/sm/kpm_sm/kpm_sm_v02.03/enc/enc_asn/enc_ric_ind_hdr_frm_1.c src/sm/kpm_sm/kpm_sm_v02.03/enc/enc_asn/enc_ric_ind_hdr_frm_1.c.previous
+# 	cp src/sm/kpm_sm/kpm_sm_v02.03/enc/enc_asn/enc_ric_ind_hdr_frm_1.c.previous "$PARENT_DIR/install_patch_files/flexric/fixed_64_bit_collectStartTime/src/sm/kpm_sm/kpm_sm_v02.03/enc/enc_asn/enc_ric_ind_hdr_frm_1.previous.c"
+# fi
+# if [ ! -f "src/sm/kpm_sm/kpm_sm_v02.03/dec/dec_asn/dec_ric_ind_hdr_frm_1.c.previous" ]; then
+# 	cp src/sm/kpm_sm/kpm_sm_v02.03/dec/dec_asn/dec_ric_ind_hdr_frm_1.c src/sm/kpm_sm/kpm_sm_v02.03/dec/dec_asn/dec_ric_ind_hdr_frm_1.c.previous
+# 	cp src/sm/kpm_sm/kpm_sm_v02.03/dec/dec_asn/dec_ric_ind_hdr_frm_1.c.previous "$PARENT_DIR/install_patch_files/flexric/fixed_64_bit_collectStartTime/src/sm/kpm_sm/kpm_sm_v02.03/dec/dec_asn/dec_ric_ind_hdr_frm_1.previous.c"
+# fi
+# if [ ! -f "src/sm/kpm_sm/kpm_sm_v02.03/ie/asn/TimeStamp.c.previous" ]; then
+# 	cp src/sm/kpm_sm/kpm_sm_v02.03/ie/asn/TimeStamp.c src/sm/kpm_sm/kpm_sm_v02.03/ie/asn/TimeStamp.c.previous
+# 	cp src/sm/kpm_sm/kpm_sm_v02.03/ie/asn/TimeStamp.c.previous "$PARENT_DIR/install_patch_files/flexric/fixed_64_bit_collectStartTime/src/sm/kpm_sm/kpm_sm_v02.03/ie/asn/TimeStamp.previous.c"
+# fi
+# git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/fixed_64_bit_collectStartTime/patch.patch"
+# cd "$PARENT_DIR"
 
 # Append new intermediate metrics units to 28_552_kpm_meas.txt
-cd flexric
+cd "$FLEXRIC_DIR"
 if ! grep -q "^RSRP.Count" src/sm/kpm_sm/28_552_kpm_meas.txt; then
     cat >>src/sm/kpm_sm/28_552_kpm_meas.txt <<'EOF'
 PHY.NPrbDl []
@@ -270,6 +322,6 @@ fi
 echo "Patching FlexRIC conf_file.h to prevent long path buffer overflow..."
 sed -i 's/#define FR_CONF_FILE_LEN 128/#define FR_CONF_FILE_LEN 1024/g' src/util/conf_file.h
 
-cd ..
+cd "$PARENT_DIR"
 
 echo "Successfully patched FlexRIC."

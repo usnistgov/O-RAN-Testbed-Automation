@@ -1,0 +1,271 @@
+diff --git a/src/sm/kpm_sm/kpm_sm_v02.01/dec/dec_asn/dec_ric_ind_hdr_frm_1.c b/src/sm/kpm_sm/kpm_sm_v02.01/dec/dec_asn/dec_ric_ind_hdr_frm_1.c
+index e2bfc058..f29e79ae 100644
+--- a/src/sm/kpm_sm/kpm_sm_v02.01/dec/dec_asn/dec_ric_ind_hdr_frm_1.c
++++ b/src/sm/kpm_sm/kpm_sm_v02.01/dec/dec_asn/dec_ric_ind_hdr_frm_1.c
+@@ -2,18 +2,41 @@
+  * SPDX-License-Identifier: LicenseRef-CSSL-1.0
+  */
+ 
+-#include "../../../../../util/conversions.h"
+ #include <assert.h>
+-#include <arpa/inet.h>
++#include "../../../../../util/conversions.h"
++#include <arpa/inet.h> // ntohl
++
+ #include "dec_ric_ind_hdr_frm_1.h"
+ 
++// #define ntohll(x) ((1==ntohl(1)) ? (x) : ((uint64_t)ntohl((x) & 0xFFFFFFFF) << 32) | ntohl((x) >> 32))
++
++// uint64_t ntohll(uint64_t x)
++// {
++//   return (uint64_t)((uint64_t)ntohl((x) & 0xFFFFFFFFLL) << 32) | (uint32_t)ntohl(x);
++// }
++
++// #define ntohll(x) ((((uint64_t)ntohl(x)) << 32) + ntohl((x) >> 32))
++
++// #define NTOHLL(x) ((1==ntohl(1)) ? (x) : (((uint64_t)ntohl((x) & 0xFFFFFFFFUL)) << 32) | ntohl((uint32_t)((x) >> 32)))
++
++uint64_t ntohll(uint64_t x)
++{
++    uint32_t x1 = (uint32_t)((x & 0xFFFFFFFF00000000LL) >> 32);
++    uint32_t x2 = (uint32_t)(x & 0xFFFFFFFFLL);
++    x1 = ntohl(x1);
++    x2 = ntohl(x2);
++    uint64_t v = ((uint64_t)x1) << 32 | x2;
++
++    return v;
++}
++
+ kpm_ric_ind_hdr_format_1_t kpm_dec_ind_hdr_frm_1_asn(const E2SM_KPM_IndicationHeader_Format1_t * ind_hdr_asn)
+ {
+     kpm_ric_ind_hdr_format_1_t ind_hdr = {0};
+ 
+-    uint32_t reversed_ts;
+-    OCTET_STRING_TO_INT32(&ind_hdr_asn->colletStartTime, reversed_ts);
+-    ind_hdr.collectStartTime = ntohl(reversed_ts);
++    uint64_t reversed_ts;
++    reversed_ts = octet_string_to_int_64(ind_hdr_asn->colletStartTime);
++    ind_hdr.collectStartTime = ntohll(reversed_ts);
+     
+     if (ind_hdr_asn->fileFormatversion != NULL){
+       ind_hdr.fileformat_version = calloc(1, sizeof(byte_array_t));
+diff --git a/src/sm/kpm_sm/kpm_sm_v02.01/enc/enc_asn/enc_ric_ind_hdr_frm_1.c b/src/sm/kpm_sm/kpm_sm_v02.01/enc/enc_asn/enc_ric_ind_hdr_frm_1.c
+index 25578f99..9c52837c 100644
+--- a/src/sm/kpm_sm/kpm_sm_v02.01/enc/enc_asn/enc_ric_ind_hdr_frm_1.c
++++ b/src/sm/kpm_sm/kpm_sm_v02.01/enc/enc_asn/enc_ric_ind_hdr_frm_1.c
+@@ -2,22 +2,42 @@
+  * SPDX-License-Identifier: LicenseRef-CSSL-1.0
+  */
+ 
+-#include <arpa/inet.h>
+ #include <assert.h>
+ #include <stdint.h>
+ #include <stdlib.h>
++#include <arpa/inet.h> // htonl
+ 
+ #include "../../../../../util/conversions.h"
+ 
+ #include "enc_ric_ind_hdr_frm_1.h"
+ 
++// #define htonll(x) ((1==htonl(1)) ? (x) : ((uint64_t)htonl((x) & 0xFFFFFFFF) << 32) | htonl((x) >> 32))
++
++// uint64_t htonll(uint64_t x)
++// {
++//   return (uint64_t)((uint64_t)htonl((x) & 0xFFFFFFFFLL) << 32) | (uint32_t)htonl(x);
++// }
++
++uint64_t htonll(uint64_t x)
++{
++    uint32_t x1 = (uint32_t)((x & 0xFFFFFFFF00000000LL) >> 32);
++    uint32_t x2 = (uint32_t)(x & 0xFFFFFFFFLL);
++    x1 = htonl(x1);
++    x2 = htonl(x2);
++    uint64_t v = ((uint64_t)x1) << 32 | x2;
++
++    return v;
++}
++
+ E2SM_KPM_IndicationHeader_Format1_t * kpm_enc_ind_hdr_frm_1_asn(const kpm_ric_ind_hdr_format_1_t * ind_hdr)
+ {
+     E2SM_KPM_IndicationHeader_Format1_t * ind_hdr_asn = calloc(1, sizeof(E2SM_KPM_IndicationHeader_Format1_t));
+     assert(ind_hdr_asn != NULL && "Memory exhausted");
+ 
+-    uint32_t ts = htonl(ind_hdr->collectStartTime);
+-    INT32_TO_OCTET_STRING(ts, &ind_hdr_asn->colletStartTime);
++
++    uint64_t ts = htonll(ind_hdr->collectStartTime);
++    ind_hdr_asn->colletStartTime = int_64_to_octet_string(ts);
++
+ 
+     int ret;
+ 
+diff --git a/src/sm/kpm_sm/kpm_sm_v02.01/ie/asn/TimeStamp.c b/src/sm/kpm_sm/kpm_sm_v02.01/ie/asn/TimeStamp.c
+index 3ce34d47..2e89090f 100644
+--- a/src/sm/kpm_sm/kpm_sm_v02.01/ie/asn/TimeStamp.c
++++ b/src/sm/kpm_sm/kpm_sm_v02.01/ie/asn/TimeStamp.c
+@@ -22,7 +22,7 @@ TimeStamp_constraint(const asn_TYPE_descriptor_t *td, const void *sptr,
+ 	
+ 	size = st->size;
+ 	
+-	if(size == 4UL) {
++	if(size == 8UL) {
+ 		/* Constraint check succeeded */
+ 		return 0;
+ 	} else {
+@@ -40,7 +40,7 @@ TimeStamp_constraint(const asn_TYPE_descriptor_t *td, const void *sptr,
+ #if !defined(ASN_DISABLE_UPER_SUPPORT) || !defined(ASN_DISABLE_APER_SUPPORT)
+ asn_per_constraints_t asn_PER_type_TimeStamp_constr_1 CC_NOTUSED = {
+ 	{ APC_UNCONSTRAINED,	-1, -1,  0,  0 },
+-	{ APC_CONSTRAINED,	 0,  0,  4,  4 }	/* (SIZE(4..4)) */,
++	{ APC_CONSTRAINED,	 0,  0,  8,  8 }	/* (SIZE(8..8)) */,
+ 	0, 0	/* No PER value map */
+ };
+ #endif  /* !defined(ASN_DISABLE_UPER_SUPPORT) || !defined(ASN_DISABLE_APER_SUPPORT) */
+diff --git a/src/sm/kpm_sm/kpm_sm_v02.01/ie/kpm_data_ie/kpm_ric_info/kpm_ric_ind_hdr_frm_1.h b/src/sm/kpm_sm/kpm_sm_v02.01/ie/kpm_data_ie/kpm_ric_info/kpm_ric_ind_hdr_frm_1.h
+index 1462cf87..704ea502 100644
+--- a/src/sm/kpm_sm/kpm_sm_v02.01/ie/kpm_data_ie/kpm_ric_info/kpm_ric_ind_hdr_frm_1.h
++++ b/src/sm/kpm_sm/kpm_sm_v02.01/ie/kpm_data_ie/kpm_ric_info/kpm_ric_ind_hdr_frm_1.h
+@@ -15,7 +15,7 @@ extern "C" {
+ // 8.2.1.3.1  E2SM-KPM Indication Header Format 1
+ 
+ typedef struct {
+-    uint32_t collectStartTime;  // 8.3.12
++    uint64_t collectStartTime;  // 8.3.12
+     byte_array_t *fileformat_version;  /* OPTIONAL */
+     byte_array_t *sender_name;         /* OPTIONAL */
+     byte_array_t *sender_type;         /* OPTIONAL */
+diff --git a/src/sm/kpm_sm/kpm_sm_v02.03/dec/dec_asn/dec_ric_ind_hdr_frm_1.c b/src/sm/kpm_sm/kpm_sm_v02.03/dec/dec_asn/dec_ric_ind_hdr_frm_1.c
+index 15daea16..f29e79ae 100644
+--- a/src/sm/kpm_sm/kpm_sm_v02.03/dec/dec_asn/dec_ric_ind_hdr_frm_1.c
++++ b/src/sm/kpm_sm/kpm_sm_v02.03/dec/dec_asn/dec_ric_ind_hdr_frm_1.c
+@@ -2,20 +2,41 @@
+  * SPDX-License-Identifier: LicenseRef-CSSL-1.0
+  */
+ 
+-#include "../../../../../util/conversions.h"
+ #include <assert.h>
+ #include "../../../../../util/conversions.h"
+ #include <arpa/inet.h> // ntohl
+ 
+ #include "dec_ric_ind_hdr_frm_1.h"
+ 
++// #define ntohll(x) ((1==ntohl(1)) ? (x) : ((uint64_t)ntohl((x) & 0xFFFFFFFF) << 32) | ntohl((x) >> 32))
++
++// uint64_t ntohll(uint64_t x)
++// {
++//   return (uint64_t)((uint64_t)ntohl((x) & 0xFFFFFFFFLL) << 32) | (uint32_t)ntohl(x);
++// }
++
++// #define ntohll(x) ((((uint64_t)ntohl(x)) << 32) + ntohl((x) >> 32))
++
++// #define NTOHLL(x) ((1==ntohl(1)) ? (x) : (((uint64_t)ntohl((x) & 0xFFFFFFFFUL)) << 32) | ntohl((uint32_t)((x) >> 32)))
++
++uint64_t ntohll(uint64_t x)
++{
++    uint32_t x1 = (uint32_t)((x & 0xFFFFFFFF00000000LL) >> 32);
++    uint32_t x2 = (uint32_t)(x & 0xFFFFFFFFLL);
++    x1 = ntohl(x1);
++    x2 = ntohl(x2);
++    uint64_t v = ((uint64_t)x1) << 32 | x2;
++
++    return v;
++}
++
+ kpm_ric_ind_hdr_format_1_t kpm_dec_ind_hdr_frm_1_asn(const E2SM_KPM_IndicationHeader_Format1_t * ind_hdr_asn)
+ {
+     kpm_ric_ind_hdr_format_1_t ind_hdr = {0};
+ 
+-    uint32_t reversed_ts;
+-    OCTET_STRING_TO_INT32(&ind_hdr_asn->colletStartTime, reversed_ts);
+-    ind_hdr.collectStartTime = ntohl(reversed_ts);
++    uint64_t reversed_ts;
++    reversed_ts = octet_string_to_int_64(ind_hdr_asn->colletStartTime);
++    ind_hdr.collectStartTime = ntohll(reversed_ts);
+     
+     if (ind_hdr_asn->fileFormatversion != NULL){
+       ind_hdr.fileformat_version = calloc(1, sizeof(byte_array_t));
+diff --git a/src/sm/kpm_sm/kpm_sm_v02.03/enc/enc_asn/enc_ric_ind_hdr_frm_1.c b/src/sm/kpm_sm/kpm_sm_v02.03/enc/enc_asn/enc_ric_ind_hdr_frm_1.c
+index 25578f99..9c52837c 100644
+--- a/src/sm/kpm_sm/kpm_sm_v02.03/enc/enc_asn/enc_ric_ind_hdr_frm_1.c
++++ b/src/sm/kpm_sm/kpm_sm_v02.03/enc/enc_asn/enc_ric_ind_hdr_frm_1.c
+@@ -2,22 +2,42 @@
+  * SPDX-License-Identifier: LicenseRef-CSSL-1.0
+  */
+ 
+-#include <arpa/inet.h>
+ #include <assert.h>
+ #include <stdint.h>
+ #include <stdlib.h>
++#include <arpa/inet.h> // htonl
+ 
+ #include "../../../../../util/conversions.h"
+ 
+ #include "enc_ric_ind_hdr_frm_1.h"
+ 
++// #define htonll(x) ((1==htonl(1)) ? (x) : ((uint64_t)htonl((x) & 0xFFFFFFFF) << 32) | htonl((x) >> 32))
++
++// uint64_t htonll(uint64_t x)
++// {
++//   return (uint64_t)((uint64_t)htonl((x) & 0xFFFFFFFFLL) << 32) | (uint32_t)htonl(x);
++// }
++
++uint64_t htonll(uint64_t x)
++{
++    uint32_t x1 = (uint32_t)((x & 0xFFFFFFFF00000000LL) >> 32);
++    uint32_t x2 = (uint32_t)(x & 0xFFFFFFFFLL);
++    x1 = htonl(x1);
++    x2 = htonl(x2);
++    uint64_t v = ((uint64_t)x1) << 32 | x2;
++
++    return v;
++}
++
+ E2SM_KPM_IndicationHeader_Format1_t * kpm_enc_ind_hdr_frm_1_asn(const kpm_ric_ind_hdr_format_1_t * ind_hdr)
+ {
+     E2SM_KPM_IndicationHeader_Format1_t * ind_hdr_asn = calloc(1, sizeof(E2SM_KPM_IndicationHeader_Format1_t));
+     assert(ind_hdr_asn != NULL && "Memory exhausted");
+ 
+-    uint32_t ts = htonl(ind_hdr->collectStartTime);
+-    INT32_TO_OCTET_STRING(ts, &ind_hdr_asn->colletStartTime);
++
++    uint64_t ts = htonll(ind_hdr->collectStartTime);
++    ind_hdr_asn->colletStartTime = int_64_to_octet_string(ts);
++
+ 
+     int ret;
+ 
+diff --git a/src/sm/kpm_sm/kpm_sm_v02.03/ie/asn/TimeStamp.c b/src/sm/kpm_sm/kpm_sm_v02.03/ie/asn/TimeStamp.c
+index cfc105d0..ae7a07e2 100644
+--- a/src/sm/kpm_sm/kpm_sm_v02.03/ie/asn/TimeStamp.c
++++ b/src/sm/kpm_sm/kpm_sm_v02.03/ie/asn/TimeStamp.c
+@@ -22,7 +22,7 @@ TimeStamp_constraint(const asn_TYPE_descriptor_t *td, const void *sptr,
+ 	
+ 	size = st->size;
+ 	
+-	if(size == 4UL) {
++	if(size == 8UL) {
+ 		/* Constraint check succeeded */
+ 		return 0;
+ 	} else {
+@@ -40,7 +40,7 @@ TimeStamp_constraint(const asn_TYPE_descriptor_t *td, const void *sptr,
+ #if !defined(ASN_DISABLE_UPER_SUPPORT) || !defined(ASN_DISABLE_APER_SUPPORT)
+ asn_per_constraints_t asn_PER_type_TimeStamp_constr_1 CC_NOTUSED = {
+ 	{ APC_UNCONSTRAINED,	-1, -1,  0,  0 },
+-	{ APC_CONSTRAINED,	 0,  0,  4,  4 }	/* (SIZE(4..4)) */,
++	{ APC_CONSTRAINED,	 0,  0,  8,  8 }	/* (SIZE(8..8)) */,
+ 	0, 0	/* No PER value map */
+ };
+ #endif  /* !defined(ASN_DISABLE_UPER_SUPPORT) || !defined(ASN_DISABLE_APER_SUPPORT) */
+diff --git a/src/sm/kpm_sm/kpm_sm_v02.03/ie/kpm_data_ie/kpm_ric_info/kpm_ric_ind_hdr_frm_1.h b/src/sm/kpm_sm/kpm_sm_v02.03/ie/kpm_data_ie/kpm_ric_info/kpm_ric_ind_hdr_frm_1.h
+index ed339381..a28bb02d 100644
+--- a/src/sm/kpm_sm/kpm_sm_v02.03/ie/kpm_data_ie/kpm_ric_info/kpm_ric_ind_hdr_frm_1.h
++++ b/src/sm/kpm_sm/kpm_sm_v02.03/ie/kpm_data_ie/kpm_ric_info/kpm_ric_ind_hdr_frm_1.h
+@@ -15,7 +15,7 @@ extern "C" {
+ // 8.2.1.3.1  E2SM-KPM Indication Header Format 1
+ 
+ typedef struct {
+-    uint32_t collectStartTime;  // 8.3.12
++    uint64_t collectStartTime;  // 8.3.12
+     byte_array_t *fileformat_version;  /* OPTIONAL */
+     byte_array_t *sender_name;         /* OPTIONAL */
+     byte_array_t *sender_type;         /* OPTIONAL */

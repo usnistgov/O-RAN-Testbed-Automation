@@ -134,10 +134,10 @@ echo "MNC value: $MNC"
 echo "MNC_LENGTH value: $MNC_LENGTH"
 
 # Configure the DNN, SST, and SD values
-DNN=$(sed -n 's/^dnn: //p' "$YAML_PATH")
+CURRENT_DNN=$(yq eval '.slices[0].dnn' "$YAML_PATH")
 SST=$(yq eval '.slices[0].sst' "$YAML_PATH")
 SD=$(yq eval '.slices[0].sd' "$YAML_PATH")
-if [[ -z "$DNN" || "$DNN" == "null" ]]; then
+if [[ -z "$CURRENT_DNN" || "$CURRENT_DNN" == "null" ]]; then
     echo "DNN is not set in "$YAML_PATH", please ensure that \"dnn\" is set."
     exit 1
 fi
@@ -243,14 +243,6 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
     update_conf "configs/ue${UE_NUMBER}.conf" "log" "filename" "$SCRIPT_DIR/logs/ue${UE_NUMBER}.log"
     update_conf "configs/ue${UE_NUMBER}.conf" "log" "file_max_size" "-1"
 
-    # Update configuration values for Slicing
-    SD_DEC=$((16#$SD_HEX))
-    if [ "$SD_DEC" -eq 16777215 ]; then # 0xFFFFFF
-        SD_DEC=0                        # SRS UE expects 0 to indicate "no SD" instead of 16777215 (3GPP TS 23.003 clause 28.4.2)
-    fi
-    update_conf "configs/ue${UE_NUMBER}.conf" "slicing" "nssai-sd" "$SD_DEC"
-    update_conf "configs/ue${UE_NUMBER}.conf" "slicing" "nssai-sst" "$SST_DEC"
-
     # Update configuration values for Metrics
     update_conf "configs/ue${UE_NUMBER}.conf" "general" "metrics_period_secs" "1"
     update_conf "configs/ue${UE_NUMBER}.conf" "general" "metrics_csv_enable" "false"
@@ -274,7 +266,7 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
     update_conf "configs/ue${UE_NUMBER}.conf" "rrc" "ue_category" "4"
 
     # Update configuration values for NAS
-    update_conf "configs/ue${UE_NUMBER}.conf" "nas" "apn" "$DNN"
+    update_conf "configs/ue${UE_NUMBER}.conf" "nas" "apn" "$CURRENT_DNN"
     update_conf "configs/ue${UE_NUMBER}.conf" "nas" "apn_protocol" "ipv4"
 
     # Update configuration values for Slicing
@@ -306,7 +298,7 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
             else
                 IPV4_LINE=""
             fi
-            "$REGISTRATION_DIR/./register_subscriber.sh" --imsi "$UE_IMSI" --key "$UE_KEY" --opc "$UE_OPC" --apn "$DNN" --sst "$SST_DEC" --sd "$SD_HEX" $IPV4_LINE || true
+            "$REGISTRATION_DIR/./register_subscriber.sh" --imsi "$UE_IMSI" --key "$UE_KEY" --opc "$UE_OPC" --apn "$CURRENT_DNN" --sst "$SST_DEC" --sd "$SD_HEX" $IPV4_LINE || true
         fi
     fi
 
@@ -317,7 +309,7 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
     echo "    IMSI: $UE_IMSI"
     echo "    KEY:  $UE_KEY"
     echo "    PLMN: $PLMN"
-    echo "    DNN:  $DNN"
+    echo "    DNN:  $CURRENT_DNN"
     echo "    SST:  $SST_HEX (hex)"
     echo "    SD:   $SD_HEX (hex)"
     if [ -n "$UE_IPV4" ]; then

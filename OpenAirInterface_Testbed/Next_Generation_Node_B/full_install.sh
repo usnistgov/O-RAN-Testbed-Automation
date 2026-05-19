@@ -32,12 +32,14 @@
 set -e
 
 APPLY_PATCHES=true
+CLEAN_INSTALL=false # If SHARE_OAI_DIR_FROM_UE is true, set to false since the UE hosts openairinterface5g
+RADIO_TYPE="SIMU"   # Set to "SIMU", "ZMQ", or "USRP"
 DEBUG_SYMBOLS=false
-TELNET_SERVER=true
 NRSCOPE_GUI=false
-SHARE_FLEXRIC_DIR_FROM_TESTBED=false
+TELNET_SERVER=true
 E2_TERM_PORT=36421            # Default is 36421, which will result in no modification
 E2_TERM_PORT_SUBSTITUTE=36423 # If E2_TERM_PORT is used already, substitute it before replacing with E2_TERM_PORT
+SHARE_FLEXRIC_DIR_FROM_TESTBED=false
 SHARE_OAI_DIR_FROM_UE=true
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
@@ -55,9 +57,6 @@ if [ "$SHARE_OAI_DIR_FROM_UE" = true ] && [ ! -f "openairinterface5g/cmake_targe
     echo "Creating symbolic link to openairinterface5g..."
     ln -s "../User_Equipment/openairinterface5g" openairinterface5g
 fi
-
-# Since the UE and gNB share the same openairinterface5g directory, and the UE is installed first, the gNB's CLEAN_INSTALL must be false to prevent cleaning the UE installation
-CLEAN_INSTALL=false
 
 # Check for binary to determine if OpenAirInterface is already installed
 if [ "$CLEAN_INSTALL" = false ] && [ -f "openairinterface5g/cmake_targets/ran_build/build/nr-softmodem" ]; then
@@ -118,23 +117,36 @@ if [ ! -d "$FLEXRIC_DIR/src/agent/e2_agent_api.c" ]; then
     ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/mosaic5g/flexric.git "$FLEXRIC_DIR" --https
 fi
 
-CURRENT_E2_PORT=$(sed -nE 's/.*e2ap_server_port *= *([0-9]+);/\1/p' openairinterface5g/openair2/E2AP/flexric/src/agent/e2_agent_api.c)
+FLEXRIC_PATCH_DIR="../RAN_Intelligent_Controllers/Flexible-RIC"
+if [ -f "$FLEXRIC_PATCH_DIR/install_scripts/apply_patches.sh" ] && [ ! -f "$FLEXRIC_DIR/README.previous.md" ]; then
+    echo "Applying FlexRIC patches to openairinterface5g/openair2/E2AP/flexric..."
+    "$FLEXRIC_PATCH_DIR/install_scripts/apply_patches.sh" "$FLEXRIC_DIR"
+    if [ ! -f "$FLEXRIC_DIR/README.previous.md" ]; then
+        echo "WARNING: Could not verify that FlexRIC patches were applied successfully."
+        sleep 10
+    fi
+fi
+
+CURRENT_E2_PORT=$(sed -nE 's/.*e2ap_server_port *= *([0-9]+);/\1/p' $FLEXRIC_DIR/src/agent/e2_agent_api.c)
 if [ -z "$CURRENT_E2_PORT" ]; then
-    echo "ERROR: e2ap_server_port not found in openairinterface5g/openair2/E2AP/flexric/src/agent/e2_agent_api.c" >&2
+    echo "ERROR: e2ap_server_port not found in $FLEXRIC_DIR/src/agent/e2_agent_api.c" >&2
     exit 1
 fi
 # Check if the substitute port is already in use
-if sudo find openairinterface5g/openair2/E2AP/flexric/ -type f -exec grep -l -w "$E2_TERM_PORT_SUBSTITUTE" {} + | grep -q .; then
+if sudo find $FLEXRIC_DIR/ -type f -exec grep -l -w "$E2_TERM_PORT_SUBSTITUTE" {} + | grep -q .; then
     echo "ERROR: The E2 Termination Port Substitute ($E2_TERM_PORT_SUBSTITUTE) is already in use in the following files. Please choose a different substitute port."
-    sudo find openairinterface5g/openair2/E2AP/flexric/ -type f -exec grep -l -w "$E2_TERM_PORT_SUBSTITUTE" {} +
+    sudo find $FLEXRIC_DIR/ -type f -exec grep -l -w "$E2_TERM_PORT_SUBSTITUTE" {} +
     exit 1
 fi
 # Configure the E2 termination port
 if [ "$E2_TERM_PORT" != "$CURRENT_E2_PORT" ]; then
-    sudo find openairinterface5g/openair2/E2AP/flexric/ -type f -exec sed -i "s/$CURRENT_E2_PORT/$E2_TERM_PORT_SUBSTITUTE/g" {} + # Change current port to substitute
-    sudo find openairinterface5g/openair2/E2AP/flexric/ -type f -exec sed -i "s/$E2_TERM_PORT_SUBSTITUTE/$E2_TERM_PORT/g" {} +    # Change substitute to specified port
+    sudo find $FLEXRIC_DIR/ -type f -exec sed -i "s/$CURRENT_E2_PORT/$E2_TERM_PORT_SUBSTITUTE/g" {} + # Change current port to substitute
+    sudo find $FLEXRIC_DIR/ -type f -exec sed -i "s/$E2_TERM_PORT_SUBSTITUTE/$E2_TERM_PORT/g" {} +    # Change substitute to specified port
     echo "Configured E2 termination from port $CURRENT_E2_PORT to port $E2_TERM_PORT"
 fi
+
+# Increase FR_CONF_FILE_LEN from 128 to 1024 to prevent buffer overflows with long paths
+sed -i 's/#define FR_CONF_FILE_LEN 128/#define FR_CONF_FILE_LEN 1024/g' "$FLEXRIC_DIR/src/util/conf_file.h"
 
 echo
 echo
@@ -152,9 +164,18 @@ fi
 echo "Ensuring that SCTP is enabled..."
 sudo ./install_scripts/enable_sctp.sh
 
-# Check if GCC 13 is installed, if not, install it and set it as the default
-GCC_VERSION=$(gcc -v 2>&1 | grep "gcc version" | awk '{print $3}')
-if [[ -z "$GCC_VERSION" || ! "$GCC_VERSION" == 13.* ]]; then
+# Check if GCC 13 or newer is installed, if not, install it and set it as the default
+MIN_GCC_VERSION="13.0.0"
+INSTALL_GCC=false
+if ! command -v gcc >/dev/null 2>&1; then
+    INSTALL_GCC=true
+else
+    GCC_VERSION=$(gcc -dumpfullversion -dumpversion)
+    if dpkg --compare-versions "$GCC_VERSION" lt "$MIN_GCC_VERSION"; then
+        INSTALL_GCC=true
+    fi
+fi
+if [[ "$INSTALL_GCC" == "true" ]]; then
     echo "Installing GCC 13..."
     sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
     sudo apt-get update
@@ -184,6 +205,12 @@ if ! command -v ccache &>/dev/null; then
     sudo env $APTVARS apt-get install -y ccache
 fi
 
+if ! dpkg -s libtool &>/dev/null; then
+    echo "Installing libtool..."
+    sudo apt-get update
+    sudo env $APTVARS apt-get install -y libtool
+fi
+
 ADDITIONAL_FLAGS=""
 if [ "$CLEAN_INSTALL" = true ]; then
     ADDITIONAL_FLAGS="-C"
@@ -209,6 +236,68 @@ cd "$SCRIPT_DIR"
 
 echo
 echo
+
+if [ "$RADIO_TYPE" = "ZMQ" ]; then
+    echo "Building ZeroMQ libzmq..."
+    if [ -d ../User_Equipment/libzmq ]; then
+        if [ ! -L libzmq ]; then
+            echo "Found UE library. Creating libzmq link instead."
+            ln -s ../User_Equipment/libzmq libzmq
+        else
+            echo "Link to libzmq already created."
+        fi
+    else
+        if [ ! -d libzmq ]; then
+            ./install_scripts/git_clone.sh https://github.com/zeromq/libzmq.git
+        fi
+    fi
+
+    if ! pkg-config --exists libzmq; then
+        cd libzmq
+        ./autogen.sh
+        ./configure
+        make -j$(nproc)
+        sudo make install
+        sudo ldconfig
+        cd "$SCRIPT_DIR"
+    fi
+
+    echo
+    echo "Building ZeroMQ czmq..."
+    if [ -d ../User_Equipment/czmq ]; then
+        if [ ! -L czmq ]; then
+            echo "Found UE library. Creating czmq link instead."
+            ln -s ../User_Equipment/czmq czmq
+        else
+            echo "Link to czmq already created."
+        fi
+    else
+        if [ ! -d czmq ]; then
+            ./install_scripts/git_clone.sh https://github.com/zeromq/czmq.git
+        fi
+    fi
+
+    if ! pkg-config --exists libczmq; then
+        cd czmq
+        ./autogen.sh
+        ./configure
+        make -j$(nproc)
+        sudo make install
+        sudo ldconfig
+        cd "$SCRIPT_DIR"
+    fi
+
+    # Verify ZeroMQ installation
+    if ! pkg-config --exists libzmq || ! pkg-config --exists libczmq; then
+        echo "ZeroMQ was not installed correctly. Exiting."
+        exit 1
+    else
+        echo "ZeroMQ installed successfully."
+    fi
+
+    cd "$SCRIPT_DIR"
+fi
+
 echo "Compiling and Installing OpenAirInterface gNB..."
 
 cd "$SCRIPT_DIR/openairinterface5g"
@@ -220,7 +309,12 @@ cd "$SCRIPT_DIR/openairinterface5g/cmake_targets"
 
 # Build OAI 5G gNB
 cd "$SCRIPT_DIR/openairinterface5g/cmake_targets"
-./build_oai --ninja --gNB --build-e2 -w SIMU $ADDITIONAL_FLAGS # -w USRP
+if [ "$RADIO_TYPE" = "SIMU" ] || [ "$RADIO_TYPE" = "ZMQ" ]; then
+    ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS -w $RADIO_TYPE"
+else
+    ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS -w USRP"
+fi
+./build_oai --ninja --gNB --build-e2 $ADDITIONAL_FLAGS
 
 cd "$SCRIPT_DIR"
 

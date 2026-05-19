@@ -68,8 +68,8 @@ DU_HOST_IP=$(python3 fetch_nth_ip.py "$BASE_SUBNET" $HOST_IP_OFFSET)
 DU_NS_IP=$(python3 fetch_nth_ip.py "$BASE_SUBNET" $DU_IP_OFFSET)
 
 # Clean up existing artifacts for this DU
-sudo ip netns delete $DU_NAMESPACE || true
-sudo ip link delete v-eth-du$DU_NUMBER || true
+sudo ip netns delete $DU_NAMESPACE 2>/dev/null || true
+sudo ip link delete v-eth-du$DU_NUMBER 2>/dev/null || true
 
 # Create namespace and veth pair
 sudo ip netns add $DU_NAMESPACE

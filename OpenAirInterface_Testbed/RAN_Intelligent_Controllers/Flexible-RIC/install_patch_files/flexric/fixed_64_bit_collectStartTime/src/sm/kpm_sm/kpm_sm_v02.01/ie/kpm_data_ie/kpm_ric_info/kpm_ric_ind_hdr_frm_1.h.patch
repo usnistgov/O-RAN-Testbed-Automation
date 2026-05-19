@@ -1,0 +1,13 @@
+diff --git a/src/sm/kpm_sm/kpm_sm_v02.01/ie/kpm_data_ie/kpm_ric_info/kpm_ric_ind_hdr_frm_1.h b/src/sm/kpm_sm/kpm_sm_v02.01/ie/kpm_data_ie/kpm_ric_info/kpm_ric_ind_hdr_frm_1.h
+index 1462cf87..704ea502 100644
+--- a/src/sm/kpm_sm/kpm_sm_v02.01/ie/kpm_data_ie/kpm_ric_info/kpm_ric_ind_hdr_frm_1.h
++++ b/src/sm/kpm_sm/kpm_sm_v02.01/ie/kpm_data_ie/kpm_ric_info/kpm_ric_ind_hdr_frm_1.h
+@@ -15,7 +15,7 @@ extern "C" {
+ // 8.2.1.3.1  E2SM-KPM Indication Header Format 1
+ 
+ typedef struct {
+-    uint32_t collectStartTime;  // 8.3.12
++    uint64_t collectStartTime;  // 8.3.12
+     byte_array_t *fileformat_version;  /* OPTIONAL */
+     byte_array_t *sender_name;         /* OPTIONAL */
+     byte_array_t *sender_type;         /* OPTIONAL */

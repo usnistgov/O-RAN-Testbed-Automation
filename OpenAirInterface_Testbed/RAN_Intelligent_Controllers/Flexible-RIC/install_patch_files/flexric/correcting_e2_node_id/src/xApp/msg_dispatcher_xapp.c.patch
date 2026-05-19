@@ -1,0 +1,13 @@
+diff --git a/src/xApp/msg_dispatcher_xapp.c b/src/xApp/msg_dispatcher_xapp.c
+index cda9dd8d..e85ca875 100644
+--- a/src/xApp/msg_dispatcher_xapp.c
++++ b/src/xApp/msg_dispatcher_xapp.c
+@@ -40,7 +40,7 @@ void* worker_thread(void* arg)
+     if(msg == NULL)
+       break;
+ 
+-    msg->sm_cb(&msg->rd);
++    msg->sm_cb(&msg->rd, &msg->e2_node);
+     free_sm_ag_if_rd(&msg->rd);
+   }
+   q->stopped = true;

@@ -28,13 +28,17 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
+# Exit immediately if a command fails
+set -e
+
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
     sudo env $APTVARS apt-get install -y coreutils
 fi
 
-SCRIPT_DIR=$(dirname "$(realpath "$0")")
+# The script directory respects symbolic links so that the gNB and UE can patch their own openairinterface5g
+SCRIPT_DIR="$(cd "$(dirname "$0")" >/dev/null 2>&1 && pwd)"
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$PARENT_DIR"
 
@@ -49,10 +53,10 @@ fi
 
 cd openairinterface5g
 
-# Update the patch files
+# Update the patch file(s)
 git diff openair3/UICC/pdu_session.c >../install_patch_files/openairinterface/openair3/UICC/pdu_session.c.patch
-git diff cmake_targets/tools/build_helper >../install_patch_files/openairinterface/cmake_targets/tools/build_helper.patch
 
+# Update the previous versions of the file(s)
 git restore openair3/UICC/pdu_session.c
 cp openair3/UICC/pdu_session.c ../install_patch_files/openairinterface/openair3/UICC/pdu_session.c.previous
 cp openair3/UICC/pdu_session.c openair3/UICC/pdu_session.c.previous

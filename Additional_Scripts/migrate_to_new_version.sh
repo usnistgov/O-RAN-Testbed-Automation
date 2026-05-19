@@ -146,6 +146,32 @@ if [ -d Next_Generation_Node_B/srsRAN_Project ]; then
     echo
 fi
 
+if [ -f "5G_Core_Network/options.yaml" ] && grep -q "^dnn:" "5G_Core_Network/options.yaml"; then
+    echo
+    echo
+    echo "################################################################################"
+    echo "# Migrating from commit a98a3698f20847d4d11f0a3a215918106619529d               #"
+    echo "################################################################################"
+    echo
+    echo
+
+    echo "Migrating 5G_Core_Network/options.yaml to use per-slice DNN configuration..."
+    export ROOT_DNN=$(yq eval '.dnn' "5G_Core_Network/options.yaml")
+
+    sed -i 's/^$/#___EMPTY_LINE___/g' "5G_Core_Network/options.yaml" # Preserve empty lines
+
+    if [ -n "$ROOT_DNN" ] && [ "$ROOT_DNN" != "null" ]; then
+        yq eval -i 'with(.slices[]; select(has("dnn") | not) | .dnn = strenv(ROOT_DNN)) | del(.dnn)' "5G_Core_Network/options.yaml"
+    else
+        yq eval -i 'del(.dnn)' "5G_Core_Network/options.yaml"
+    fi
+
+    sed -i 's/^[[:space:]]*#___EMPTY_LINE___[[:space:]]*$//g' "5G_Core_Network/options.yaml" # Restore empty lines
+
+    echo "Successfully migrated from commit a98a3698f20847d4d11f0a3a215918106619529d to the new version."
+    echo
+fi
+
 echo "Updating package lists..."
 cd "$SCRIPT_DIR"
 if ! sudo apt-get update; then

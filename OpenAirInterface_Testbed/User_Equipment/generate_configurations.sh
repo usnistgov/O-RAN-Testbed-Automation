@@ -31,7 +31,7 @@
 # Exit immediately if a command fails
 set -e
 
-USE_RFSIM_CHANNELMOD=true
+RADIO_TYPE="SIMU" # Set to "SIMU", "ZMQ", or "USRP"
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
@@ -128,10 +128,10 @@ echo "MNC value: $MNC"
 echo "MNC_LENGTH value: $MNC_LENGTH"
 
 # Configure the DNN, SST, and SD values
-DNN=$(sed -n 's/^dnn: //p' "$YAML_PATH")
+CURRENT_DNN=$(yq eval '.slices[0].dnn' "$YAML_PATH")
 SST=$(yq eval '.slices[0].sst' "$YAML_PATH")
 SD=$(yq eval '.slices[0].sd' "$YAML_PATH")
-if [[ -z "$DNN" || "$DNN" == "null" ]]; then
+if [[ -z "$CURRENT_DNN" || "$CURRENT_DNN" == "null" ]]; then
     echo "DNN is not set in "$YAML_PATH", please ensure that \"dnn\" is set."
     exit 1
 fi
@@ -183,15 +183,16 @@ if [ "$CLEAR_CONFIGS" = true ]; then
 fi
 mkdir -p configs
 mkdir -p logs
+echo "$RADIO_TYPE" >configs/radio_type.txt
 
-if [ "$USE_RFSIM_CHANNELMOD" = true ]; then
-    echo "Using the channelmod_rfsimu.conf file for the RFSIM channel model."
+if [ "$RADIO_TYPE" = "SIMU" ] || [ "$RADIO_TYPE" = "ZMQ" ]; then
+    echo "Using the channelmod_rfsimu.conf file for the SIMU/ZMQ channel model."
     #cp install_patch_files/channelmod_rfsimu.conf "$SCRIPT_DIR/configs/channelmod_rfsimu.conf"
     cd configs
     ln -sf ../install_patch_files/channelmod_rfsimu.conf channelmod_rfsimu.conf
     cd ..
 else
-    echo "Using the channelmod_rfsimu_LEO_satellite.conf file for the RFSIM channel model."
+    echo "Using the channelmod_rfsimu_LEO_satellite.conf channel model."
     # Use the default channelmod_rfsimu_LEO_satellite.conf file
     #cp openairinterface5g/targets/PROJECTS/GENERIC-NR-5GC/CONF/channelmod_rfsimu_LEO_satellite.conf configs/channelmod_rfsimu.conf
     cd configs
@@ -221,7 +222,7 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
     update_conf "configs/ue$UE_NUMBER.conf" "opc" "\"$UE_OPC\""
 
     # Configure the PDU sessions (DNN, SST, SD)
-    update_conf "configs/ue$UE_NUMBER.conf" "pdu_sessions" "({ dnn = \"$DNN\"; nssai_sst = $SST_DEC; nssai_sd = 0x$SD_HEX; })"
+    update_conf "configs/ue$UE_NUMBER.conf" "pdu_sessions" "({ dnn = \"$CURRENT_DNN\"; nssai_sst = $SST_DEC; nssai_sd = 0x$SD_HEX; })"
 
     # Finally, ensure that it is referencing the channelmod_rfsimu.conf file
     sed -i "s|channelmod_rfsimu_LEO_satellite.conf|channelmod_rfsimu.conf|" "configs/ue$UE_NUMBER.conf"
@@ -242,7 +243,7 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
             else
                 IPV4_LINE=""
             fi
-            "$REGISTRATION_DIR/./register_subscriber.sh" --imsi "$UE_IMSI" --key "$UE_KEY" --opc "$UE_OPC" --apn "$DNN" --sst "$SST_DEC" --sd "$SD_HEX" $IPV4_LINE || true
+            "$REGISTRATION_DIR/./register_subscriber.sh" --imsi "$UE_IMSI" --key "$UE_KEY" --opc "$UE_OPC" --apn "$CURRENT_DNN" --sst "$SST_DEC" --sd "$SD_HEX" $IPV4_LINE || true
         fi
     fi
 
@@ -253,7 +254,7 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
     echo "    IMSI: $UE_IMSI"
     echo "    KEY:  $UE_KEY"
     echo "    PLMN: $PLMN"
-    echo "    DNN:  $DNN"
+    echo "    DNN:  $CURRENT_DNN"
     echo "    SST:  $SST_HEX (hex)"
     echo "    SD:   $SD_HEX (hex)"
     if [ -n "$UE_IPV4" ]; then

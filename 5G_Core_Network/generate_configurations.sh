@@ -93,14 +93,12 @@ if [ ! -f "options.yaml" ]; then
     echo "plmn: 00101" >>"options.yaml"
     echo "tac: 7" >>"options.yaml"
     echo "" >>"options.yaml"
-    echo "# Configure the DNN/APN" >>"options.yaml"
-    echo "dnn: nist-dnn" >>"options.yaml"
-    echo "" >>"options.yaml"
     echo "# Configure the Single Network Slice Selection Assistance Information (S-NSSAI)" >>"options.yaml"
     echo "# NOTE: \"sst\" and \"sd\" are interpreted as hexadecimal values (no 0x prefix)." >>"options.yaml"
     echo "slices:" >>"options.yaml"
     echo "  - sst: 1" >>"options.yaml"
     echo "    sd: FFFFFF" >>"options.yaml"
+    echo "    dnn: nist-dnn" >>"options.yaml"
     echo "" >>"options.yaml"
     echo "# If false, AMF will use a local IP, otherwise it will use the hostname IP" >>"options.yaml"
     echo "expose_amf_over_hostname: false" >>"options.yaml"
@@ -152,10 +150,10 @@ echo "MNC (Mobile Network Code): $MNC"
 echo "TAC value: $TAC"
 
 # Configure the DNN, SST, and SD values
-DNN=$(sed -n 's/^dnn: //p' options.yaml)
+DNN=($(yq eval '.slices[].dnn' options.yaml))
 SST=($(yq eval '.slices[].sst' options.yaml))
 SD=($(yq eval '.slices[].sd' options.yaml))
-if [[ -z "$DNN" || "$DNN" == "null" ]]; then
+if [[ -z "${DNN[0]}" || "${DNN[0]}" == "null" ]]; then
     echo "DNN is not set in options.yaml, please ensure that \"dnn\" is set."
     exit 1
 fi
@@ -166,6 +164,7 @@ fi
 
 # SST/SD are configured in options.yaml as hex without 0x prefix.
 for i in "${!SST[@]}"; do
+    CURRENT_DNN="${DNN[$i]}"
     CURRENT_SST="${SST[$i]}"
     CURRENT_SD="${SD[$i]}"
 
@@ -379,6 +378,7 @@ set_snssai() {
     local NSI_URI=$(yq eval '.nssf.sbi.client.nsi[0].uri' "$NSSF_FILE_PATH")
 
     for i in "${!SST[@]}"; do
+        local CURRENT_DNN="${DNN[$i]}"
         local CURRENT_SST="${SST[$i]}"
         local CURRENT_SD="${SD[$i]}"
 
@@ -398,7 +398,7 @@ set_snssai() {
         fi
         yq -i ".smf.info[0].s_nssai[$i].sst = $CURRENT_SST" "$SMF_FILE_PATH"
         yq -i ".smf.info[0].s_nssai[$i].sd = \"$CURRENT_SD\"" "$SMF_FILE_PATH"
-        yq -i ".smf.info[0].s_nssai[$i].dnn = [\"$DNN\"]" "$SMF_FILE_PATH"
+        yq -i ".smf.info[0].s_nssai[$i].dnn = [\"$CURRENT_DNN\"]" "$SMF_FILE_PATH"
     done
 }
 
@@ -496,31 +496,18 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
     # Fetch the UE's OPc, IMEI, IMSI, KEY, and NAMESPACE
     read -r UE_OPC UE_IMEI UE_IMSI UE_KEY UE_NAMESPACE < <("$UE_CREDENTIAL_GENERATOR_SCRIPT" "$UE_NUMBER" "$PLMN")
 
-    # Register with the first slice
-    ./install_scripts/register_subscriber.sh --imsi "$UE_IMSI" --key "$UE_KEY" --opc "$UE_OPC" --apn "$DNN" --sst "${SST[0]}" --sd "${SD[0]}" $IPV4_LINE
-
-    # Iterate from the second slice
-    for ((i = 1; i < ${#SST[@]}; i++)); do
-        CURRENT_SST="${SST[$i]}"
-        CURRENT_SD="${SD[$i]}"
-
-        echo "Adding slice $i (SST: $CURRENT_SST, SD: $CURRENT_SD) to UE $UE_NUMBER..."
-        ./open5gs/misc/db/open5gs-dbctl update_slice "$UE_IMSI" "$DNN" "$CURRENT_SST" "$CURRENT_SD"
-
-        # Apply Static IP for the secondary slices
+    # Build the array of slices for subscriber
+    SLICES_ARGS=()
+    for ((i = 0; i < ${#SST[@]}; i++)); do
+        SLICES_ARGS+=(--apn "$CURRENT_DNN" --sst "${SST[$i]}" --sd "${SD[$i]}")
+        # Apply static IP if UE_IPV4 was found earlier
         if [ -n "$UE_IPV4" ]; then
-            mongosh open5gs --eval "
-db.subscribers.updateOne(
-  { \"imsi\": \"$UE_IMSI\", \"slice.sd\": \"$CURRENT_SD\" },
-  {
-    \$set: {
-      \"slice.$i.session.0.ue\": { \"ipv4\": \"$UE_IPV4\" },
-      \"slice.$i.session.0.type\": 1
-    }
-  }
-)"
+            SLICES_ARGS+=(--ipv4 "$UE_IPV4")
         fi
     done
+
+    # Register the subscriber
+    ./install_scripts/register_subscriber.sh --imsi "$UE_IMSI" --key "$UE_KEY" --opc "$UE_OPC" "${SLICES_ARGS[@]}"
 done
 
 # Restart Open5GS services to apply changes

@@ -35,9 +35,6 @@ import mmap
 import time
 import random
 
-# Number of UEs. Send the last N samples without a step size (this is used for multi-UE scenarios to ensure that the round-robin sampling is not affected by the step size).
-send_last_n_samples_no_step = 6
-
 script_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(script_dir)
 base_dir = os.path.dirname(os.path.dirname(os.path.dirname(parent_dir)))
@@ -109,7 +106,7 @@ class SingleFileHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
     def do_GET(self):
         start_time = time.perf_counter()
-        
+
         # Parse the URL path and query string
         parsed = urllib.parse.urlparse(self.path)
         path = urllib.parse.unquote(parsed.path).lstrip('/')
@@ -151,7 +148,16 @@ class SingleFileHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             # Open and mmap the file for efficient access
             with open(csv_path, 'rb') as f:
                 mmap_file = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
-                header_end = mmap_file.find(b'\n') + 1
+                header_end = mmap_file.find(b'\n', 0) + 1
+
+                last_timestamp_in_file = None
+                try:
+                    last_newline_idx = mmap_file.rfind(b'\n', 0, mmap_file.size() - 1)
+                    if last_newline_idx != -1:
+                        mmap_file.seek(last_newline_idx + 1)
+                        last_timestamp_in_file = int(mmap_file.readline().split(b',', 1)[0])
+                except Exception:
+                    pass
                 start = header_end if from_timestamp is None else self.find_offset(mmap_file, header_end, from_timestamp)
                 print(f"Start position for mmap: {start}")
 
@@ -197,10 +203,9 @@ class SingleFileHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                             if (period * int(approx_num_samples_param)) > 0:
                                 timestamp_period_estimation = period
                                 step_size_float = max(1, (to_timestamp - prev_timestamp) / (timestamp_period_estimation * int(approx_num_samples_param)))
-                        if send_last_n_samples_no_step is not None:
-                            # Send the last N samples at the end of the file regardless of the step size (multi-ue)
-                            if timestamp_period_estimation is not None and to_timestamp is not None and timestamp is not None and abs(to_timestamp - timestamp) / timestamp_period_estimation < send_last_n_samples_no_step:
-                                step_size_float = 1
+                        if last_timestamp_in_file is not None and timestamp == last_timestamp_in_file:
+                            # Send all samples for the last timestamp in the file regardless of the step size (multi-ue)
+                            step_size_float = 1
 
                         if step_size_float == 1:
                             cells = line.rstrip(b'\r\n').split(b',')
@@ -239,10 +244,9 @@ class SingleFileHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                             if (period * int(approx_num_samples_param)) > 0:
                                 timestamp_period_estimation = period
                                 step_size_float = max(1, (to_timestamp - prev_timestamp) / (timestamp_period_estimation * int(approx_num_samples_param)))
-                        if send_last_n_samples_no_step is not None:
-                            # Send the last N samples at the end of the file regardless of the step size (multi-ue)
-                            if timestamp_period_estimation is not None and to_timestamp is not None and timestamp is not None and abs(to_timestamp - timestamp) / timestamp_period_estimation < send_last_n_samples_no_step:
-                                step_size_float = 1
+                        if last_timestamp_in_file is not None and timestamp == last_timestamp_in_file:
+                            # Send all samples for the last timestamp in the file regardless of the step size (multi-ue)
+                            step_size_float = 1
 
                         if step_size_float == 1:
                             buffer.extend(line)
@@ -259,7 +263,7 @@ class SingleFileHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
                         if to_timestamp is not None and timestamp is not None and timestamp > to_timestamp:
                             break
-                
+
                 mmap_file.close()
 
             data = bytes(buffer)
@@ -269,7 +273,7 @@ class SingleFileHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.send_header('Content-Length', str(len(data)))
             self.end_headers()
             self._safe_write(data)
-            
+
             elapsed = (time.perf_counter() - start_time) * 1000
             #print(f"{elapsed:.2f} ms")
             return
@@ -304,11 +308,15 @@ class SingleFileHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             #print(f"{elapsed:.2f} ms")
             return
 
-        # NIST.svg handling stays the same
+        # NIST logo handling stays the same
         elif path == 'NIST.svg':
             self.path = os.path.join(base_dir, 'Images', 'NIST_Dark.svg')
         elif path == 'NIST_Light.svg':
             self.path = os.path.join(base_dir, 'Images', 'NIST_Light.svg')
+        elif path == '125_NIST.png':
+            self.path = os.path.join(base_dir, 'Images', '125_NIST_Dark.png')
+        elif path == '125_NIST_Light.png':
+            self.path = os.path.join(base_dir, 'Images', '125_NIST_Light.png')
         else:
             self.send_error(404, f'File not found: {self.path}')
             return
@@ -326,7 +334,7 @@ class SingleFileHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     # Override to serve files from the correct directory
     def translate_path(self, path):
         return os.path.abspath(self.path)
-    
+
     # Override to add headers to prevent caching of the files
     def end_headers(self):
         # self.send_header('Cache-Control', 'no-store, must-revalidate')

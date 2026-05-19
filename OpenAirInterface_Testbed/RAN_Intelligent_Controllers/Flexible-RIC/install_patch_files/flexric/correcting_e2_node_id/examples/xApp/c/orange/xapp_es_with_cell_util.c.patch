@@ -1,0 +1,13 @@
+diff --git a/examples/xApp/c/orange/xapp_es_with_cell_util.c b/examples/xApp/c/orange/xapp_es_with_cell_util.c
+index 693561b5..c64c0383 100644
+--- a/examples/xApp/c/orange/xapp_es_with_cell_util.c
++++ b/examples/xApp/c/orange/xapp_es_with_cell_util.c
+@@ -409,7 +409,7 @@ void log_kpm_measurements(kpm_ind_msg_format_1_t const* msg_frm_1)
+ }
+ 
+ static
+-void sm_cb_kpm(sm_ag_if_rd_t const* rd)
++void sm_cb_kpm(sm_ag_if_rd_t const* rd, global_e2_node_id_t const* node_id)
+ {
+   assert(rd != NULL);
+   assert(rd->type == INDICATION_MSG_AGENT_IF_ANS_V0);

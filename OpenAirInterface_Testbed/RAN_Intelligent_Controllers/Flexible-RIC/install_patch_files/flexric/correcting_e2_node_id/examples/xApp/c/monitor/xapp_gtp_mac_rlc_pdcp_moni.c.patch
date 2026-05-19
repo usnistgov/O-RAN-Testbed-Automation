@@ -1,0 +1,40 @@
+diff --git a/examples/xApp/c/monitor/xapp_gtp_mac_rlc_pdcp_moni.c b/examples/xApp/c/monitor/xapp_gtp_mac_rlc_pdcp_moni.c
+index 68475c54..1a01f891 100644
+--- a/examples/xApp/c/monitor/xapp_gtp_mac_rlc_pdcp_moni.c
++++ b/examples/xApp/c/monitor/xapp_gtp_mac_rlc_pdcp_moni.c
+@@ -17,7 +17,7 @@ static
+ uint64_t cnt_mac;
+ 
+ static
+-void sm_cb_mac(sm_ag_if_rd_t const* rd)
++void sm_cb_mac(sm_ag_if_rd_t const* rd, global_e2_node_id_t const* node_id)
+ {
+   assert(rd != NULL);
+   assert(rd->type ==INDICATION_MSG_AGENT_IF_ANS_V0);
+@@ -33,7 +33,7 @@ static
+ uint64_t cnt_rlc;
+ 
+ static
+-void sm_cb_rlc(sm_ag_if_rd_t const* rd)
++void sm_cb_rlc(sm_ag_if_rd_t const* rd, global_e2_node_id_t const* node_id)
+ {
+   assert(rd != NULL);
+   assert(rd->type ==INDICATION_MSG_AGENT_IF_ANS_V0);
+@@ -51,7 +51,7 @@ static
+ uint64_t cnt_pdcp;
+ 
+ static
+-void sm_cb_pdcp(sm_ag_if_rd_t const* rd)
++void sm_cb_pdcp(sm_ag_if_rd_t const* rd, global_e2_node_id_t const* node_id)
+ {
+   assert(rd != NULL);
+   assert(rd->type == INDICATION_MSG_AGENT_IF_ANS_V0);
+@@ -70,7 +70,7 @@ static
+ uint64_t cnt_gtp;
+ 
+ static
+-void sm_cb_gtp(sm_ag_if_rd_t const* rd)
++void sm_cb_gtp(sm_ag_if_rd_t const* rd, global_e2_node_id_t const* node_id)
+ {
+   assert(rd != NULL);
+   assert(rd->type ==INDICATION_MSG_AGENT_IF_ANS_V0);

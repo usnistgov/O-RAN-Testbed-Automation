@@ -31,11 +31,14 @@
 # Exit immediately if a command fails
 set -e
 
+# FLEXRIC_LIBRARY_DIR="/usr/local/lib/flexric/" # Default
+FLEXRIC_LIBRARY_DIR="flexric/build/flexric_libraries/lib/flexric/"
+
 APPLY_PATCHES=true
 CLEAN_INSTALL=false
 DEBUG_SYMBOLS=false
-E2AP_VERSION="E2AP_V2"        # E2AP_V1, E2AP_V2, E2AP_V3
-KPM_VERSION="KPM_V2_03"       # KPM_V2_03, KPM_V3_00
+E2AP_VERSION="E2AP_V3"        # E2AP_V1, E2AP_V2, E2AP_V3
+KPM_VERSION="KPM_V3_00"       # KPM_V2_03, KPM_V3_00
 E2_TERM_PORT=36421            # Ensure this matches the gNodeB's full_install.sh E2_TERM_PORT. Default is 36421, which will result in no modification
 E2_TERM_PORT_SUBSTITUTE=36423 # If E2_TERM_PORT is used already, substitute it before replacing with E2_TERM_PORT
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
@@ -65,12 +68,30 @@ fi
 INSTALL_START_TIME=$(date +%s)
 
 echo "Installing dependencies..."
-if ! command -v gcc-10 &>/dev/null || ! command -v g++-10 &>/dev/null || ! command -v swig &>/dev/null; then
-    sudo apt-get update || true
-    sudo env $APTVARS apt-get install -y build-essential automake
-    sudo env $APTVARS apt-get install -y gcc-10 g++-10
-    sudo env $APTVARS apt-get install -y libsctp-dev python3 cmake-curses-gui libpcre2-dev python3-dev
+sudo env $APTVARS apt-get install -y build-essential automake bison flex
+sudo env $APTVARS apt-get install -y libsctp-dev python3 cmake-curses-gui libpcre2-dev python3-dev
+
+# Check if GCC 13 or newer is installed, if not, install it and set it as the default
+MIN_GCC_VERSION="13.0.0"
+INSTALL_GCC=false
+if ! command -v gcc >/dev/null 2>&1; then
+    INSTALL_GCC=true
+else
+    GCC_VERSION=$(gcc -dumpfullversion -dumpversion)
+    if dpkg --compare-versions "$GCC_VERSION" lt "$MIN_GCC_VERSION"; then
+        INSTALL_GCC=true
+    fi
 fi
+if [[ "$INSTALL_GCC" == "true" ]]; then
+    echo "Installing GCC 13..."
+    sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+    sudo apt-get update
+    sudo env $APTVARS apt-get install -y gcc-13 g++-13
+    sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 100
+    sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-13 100
+fi
+export CFLAGS="-Wno-error=incompatible-pointer-types"
+export CXXFLAGS="-Wno-error=incompatible-pointer-types"
 
 if [ ! -d "swig" ]; then
     echo "Cloning SWIG..."
@@ -121,7 +142,7 @@ if [ "$APPLY_PATCHES" = true ]; then
     ./install_scripts/apply_patches.sh
 fi
 
-ADDITIONAL_FLAGS=""
+ADDITIONAL_FLAGS="-DCMAKE_BUILD_TYPE=Release"
 if [ "$DEBUG_SYMBOLS" = true ]; then
     ADDITIONAL_FLAGS="-DCMAKE_BUILD_TYPE=Debug"
 fi
@@ -131,11 +152,16 @@ cd flexric
 sudo rm -rf build
 mkdir build
 cd build
-CC=gcc-10 CXX=g++-10 cmake .. -DE2AP_VERSION=$E2AP_VERSION -DKPM_VERSION=$KPM_VERSION $ADDITIONAL_FLAGS
+# Strip /lib/flexric* to derive install prefix
+PREFIX_DIR="${FLEXRIC_LIBRARY_DIR%/lib/flexric*}"
+if [[ "$PREFIX_DIR" != /* ]]; then
+    PREFIX_DIR="$SCRIPT_DIR/$PREFIX_DIR"
+fi
+CC=gcc CXX=g++ cmake .. -DCMAKE_INSTALL_PREFIX="$PREFIX_DIR" -DXAPP_DB=NONE_XAPP -DE2AP_VERSION=$E2AP_VERSION -DKPM_VERSION=$KPM_VERSION $ADDITIONAL_FLAGS
 make -j$(nproc)
 
 echo "Installing FlexRIC..."
-sudo make install
+make install
 
 #ctest -j8 --output-on-failure
 

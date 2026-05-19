@@ -42,6 +42,16 @@ echo "# Script: $(realpath "$0")..."
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
 
+FLEXRIC_LIBRARY_DIR="flexric/build/flexric_libraries/lib/flexric/"
+if [[ "$FLEXRIC_LIBRARY_DIR" != /* ]]; then
+    FULL_SM_DIR="$PARENT_DIR/$FLEXRIC_LIBRARY_DIR"
+else
+    FULL_SM_DIR="$FLEXRIC_LIBRARY_DIR"
+fi
+if [[ "$FULL_SM_DIR" != */ ]]; then
+    FULL_SM_DIR="${FULL_SM_DIR}/"
+fi
+
 cd "$PARENT_DIR/flexric/"
 
 CONFIG_PATH=""
@@ -52,4 +62,4 @@ fi
 # Clean up database files to prevent sqlite failures
 rm -f /tmp/xapp_db1 /tmp/xapp_db1-shm /tmp/xapp_db1-wal
 
-XAPP_DURATION=-1 ./build/examples/xApp/c/monitor/xapp_gtp_mac_rlc_pdcp_moni $CONFIG_PATH
+XAPP_DURATION=-1 ./build/examples/xApp/c/monitor/xapp_gtp_mac_rlc_pdcp_moni $CONFIG_PATH -p "$FULL_SM_DIR"

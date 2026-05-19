@@ -8,7 +8,7 @@ The 5G Core Network operates as a standalone network based on the 3GPP specifica
 - **Generate Configurations**: Use `./generate_configurations.sh` to create configuration files.
   - Configuration files can be accessed and modified in the `configs` directory.
 - **Start the 5G Core Network**: Use `./run.sh` to start the 5G Core components.
-  - To start each component in its own gnome-terminal instance, use `./run.sh show`.
+  - To start each component in its own terminal instance, use `./run.sh show`.
 - **Stop the Network**: Terminate the network operation with `./stop.sh`.
 - **Status**: Check if the 5G Core is running with `./is_running.sh`. The output will display which components are running.
 - **Logs**: Access logs by navigating to the `logs` directory.

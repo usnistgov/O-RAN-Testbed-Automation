@@ -50,7 +50,7 @@ This installation of the Near-RT RIC supports six xApps.
 
 ## KPM Monitor Visualization in Grafana
 
-After the KPM Monitor xApp subscribes to the E2 node, metrics of the gNodeB and UE are sent through the E2 interface and received by the xApp. An xApp has been made at `flexric/build/examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv` which writes the metrics to logs/KPI_Metrics.csv instead of printing them to the console. The Python server at `additional_scripts/python_server_for_grafana.py` will make this CSV file accessible at `http://localhost:3030/KPI_Metrics.csv`, and a Grafana [\[6\]][grafanalabs-grafana] dashboard has been created to consume this data and visualize it.
+After the KPM Monitor xApp subscribes to the E2 node, metrics of the gNodeB and UE are sent through the E2 interface and received by the xApp. An xApp has been made at `flexric/build/examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv` which writes the metrics to logs/KPI_Metrics.csv instead of printing them to the console. The Python server at `additional_scripts/python_server_for_grafana.py` will make this CSV file accessible at `http://localhost:3030/KPI_Metrics.csv`, and a Grafana [[6]][grafanalabs-grafana] dashboard has been created to consume this data and visualize it.
 
 - **Real-Time Metrics**: To start the xApp that generates `logs/KPI_Metrics.csv`, the Python server that hosts the file, and the Grafana server, run the following.
   ```console
@@ -63,7 +63,7 @@ After the KPM Monitor xApp subscribes to the E2 node, metrics of the gNodeB and 
   ```
   A sample KPI_Metrics.csv file has been provided, and can be applied with `cp additional_scripts/sample_KPI_Metrics.csv logs/KPI_Metrics.csv`.
 
-- **Initial Configuration**: The dashboard uses the Infinity plugin (yesoreyeram-infinity-datasource [\[7\]][grafana-infinity]), which will require creating a data source under Connections → Data sources → Add data source → Infinity. Configure it under URL, Headers & Params → Base URL → Type "`http://localhost:3030/`" → Save & test.
+- **Initial Configuration**: The dashboard uses the Infinity plugin (yesoreyeram-infinity-datasource [[7]][grafana-infinity]), which will require creating a data source under Connections → Data sources → Add data source → Infinity. Configure it under URL, Headers & Params → Base URL → Type "`http://localhost:3030/`" → Save & test.
 
 - **Stop Grafana**: To stop the Grafana server, Python server, and xApp, use `./additional_scripts/stop_grafana_and_python_server.sh`.
 
@@ -72,6 +72,10 @@ The Grafana dashboard is accessible at `http://localhost:3000` with default cred
 <p align="center">
   <img src="../../../Images/xApp_Dashboard.png" alt="Grafana dashboard of xApp KPM metrics" width="75%">
 </p>
+
+### Customizing the Service Model Path
+
+This testbed configures the FlexRIC Service Model (SM) shared libraries (`.so` files) to install into `flexric/build/flexric_libraries/lib/flexric/` rather than the default `/usr/local/lib/flexric/`. This can be configured by modifying the `FLEXRIC_LIBRARY_DIR` variable across the scripts prior to installing the OpenAirInterface gNodeB and FlexRIC.
 
 ## References
 

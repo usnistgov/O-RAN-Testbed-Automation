@@ -39,6 +39,16 @@ fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 
+FLEXRIC_LIBRARY_DIR="flexric/build/flexric_libraries/lib/flexric/"
+if [[ "$FLEXRIC_LIBRARY_DIR" != /* ]]; then
+    FULL_SM_DIR="$SCRIPT_DIR/$FLEXRIC_LIBRARY_DIR"
+else
+    FULL_SM_DIR="$FLEXRIC_LIBRARY_DIR"
+fi
+if [[ "$FULL_SM_DIR" != */ ]]; then
+    FULL_SM_DIR="${FULL_SM_DIR}/"
+fi
+
 cd "$SCRIPT_DIR/flexric/"
 
 CONFIG_PATH=""
@@ -76,4 +86,4 @@ fi
 
 echo "Starting xApp KPM monitor..."
 set -x
-XAPP_DURATION=-1 SST=$SST SD=$SD ./build/examples/xApp/c/monitor/xapp_kpm_moni $CONFIG_PATH
+XAPP_DURATION=-1 SST=$SST SD=$SD ./build/examples/xApp/c/monitor/xapp_kpm_moni $CONFIG_PATH -p "$FULL_SM_DIR"

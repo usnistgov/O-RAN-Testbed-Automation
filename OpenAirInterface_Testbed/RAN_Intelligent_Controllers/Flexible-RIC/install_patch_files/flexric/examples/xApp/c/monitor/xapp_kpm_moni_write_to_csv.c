@@ -44,6 +44,7 @@
 #include <pthread.h>
 #include <inttypes.h>
 #include <math.h>
+#include "../metrics_factory.h"
 
 // Set to the interval in milliseconds at which the xApp should write to the CSV file
 static uint64_t period_ms = 1000;
@@ -61,30 +62,6 @@ const bool filter_invalid_rsrp_samples = false;
 static pthread_mutex_t mtx;
 
 static assoc_ht_open_t ht = {0};
-
-// Overwritten if environment variables SST and SD are set
-static uint8_t cfg_slicing_sst = 1;
-static uint32_t cfg_slicing_sd = 0xFFFFFF; // 0xFFFFFF for any SD
-
-// Variables that change during runtime
-bool csv_wrote_header = false;
-const char *csv_file_path = NULL;
-char csv_header_buffer[2048];
-char csv_line_buffer[9000];
-
-bool csv_wrote_cell_header = false;
-char csv_cell_file_path[1024];
-char csv_cell_header_buffer[2048];
-char csv_cell_line_buffer[9000];
-bool is_cell_metric = false;
-
-unsigned int csv_num_rows = 0;
-uint64_t current_ue_id = 0;
-bool filter_current_sample = false;
-int64_t prev_now = 0;
-
-// Buffer to store the current E2 Node ID
-static char current_e2_id_str[256];
 
 static uint32_t hash_func(const void *key_v)
 {
@@ -136,14 +113,45 @@ static void init_kpm_meas_unit_hash_table(void)
 
 static char *get_meas_unit(const char *name)
 {
-  return assoc_ht_open_value(&ht, &name);
+  char *val = assoc_ht_open_value(&ht, &name);
+  if (!val || strcmp(val, "[]") == 0)
+    return "";
+  return val;
 }
+
+// Overwritten if environment variables SST and SD are set
+static uint8_t cfg_slicing_sst = 1;
+static uint32_t cfg_slicing_sd = 0xFFFFFF; // 0xFFFFFF for any SD
+
+// Variables that change during runtime
+bool csv_wrote_header = false;
+const char *csv_file_path = NULL;
+char csv_header_buffer[2048];
+char csv_line_buffer[9000];
+
+bool csv_wrote_cell_header = false;
+char csv_cell_file_path[1024];
+char csv_cell_header_buffer[2048];
+char csv_cell_line_buffer[9000];
+bool is_cell_metric = false;
+
+unsigned int csv_num_rows = 0;
+uint64_t current_ue_id = 0;
+bool filter_current_sample = false;
+int64_t prev_now = 0;
+
+// Buffer to store the current E2 Node ID
+static char current_e2_id_str[256];
 
 static void csv_append_name_to_csv_header(const char *name, const char *unit)
 {
   char *target_buffer = is_cell_metric ? csv_cell_header_buffer : csv_header_buffer;
   size_t buffer_size = is_cell_metric ? sizeof(csv_cell_header_buffer) : sizeof(csv_header_buffer);
 
+  if (!name)
+    name = "";
+  if (!unit)
+    unit = "";
   size_t current_len = strlen(target_buffer);
   size_t name_len = strlen(name);
   size_t unit_len = strlen(unit);
@@ -207,6 +215,8 @@ static void csv_append_real_to_csv_line(meas_record_lst_t meas_record)
 
 static void csv_append_string_to_csv_line(const char *str)
 {
+  if (!str)
+    str = "";
   char *target_buffer = is_cell_metric ? csv_cell_line_buffer : csv_line_buffer;
   size_t buffer_size = is_cell_metric ? sizeof(csv_cell_line_buffer) : sizeof(csv_line_buffer);
   size_t current_len = strlen(target_buffer);
@@ -425,43 +435,7 @@ static void write_csv_line_to_file()
   }
 }
 
-static int get_mapped_node_id(const char *node_type, uint32_t orig_id)
-{
-  static struct
-  {
-    char type[32];
-    uint32_t orig_id;
-    int mapped_id;
-  } id_map[256];
-  static int id_map_count = 0;
 
-  for (int i = 0; i < id_map_count; i++)
-  {
-    if (strcmp(id_map[i].type, node_type) == 0 && id_map[i].orig_id == orig_id)
-    {
-      return id_map[i].mapped_id;
-    }
-  }
-
-  int new_id = 1;
-  for (int i = 0; i < id_map_count; i++)
-  {
-    if (strcmp(id_map[i].type, node_type) == 0)
-    {
-      new_id++;
-    }
-  }
-
-  if (id_map_count < 256)
-  {
-    strncpy(id_map[id_map_count].type, node_type, sizeof(id_map[0].type) - 1);
-    id_map[id_map_count].orig_id = orig_id;
-    id_map[id_map_count].mapped_id = new_id;
-    id_map_count++;
-  }
-
-  return new_id;
-}
 
 static void log_gnb_ue_id(ue_id_e2sm_t ue_id)
 {
@@ -482,62 +456,6 @@ static void log_gnb_ue_id(ue_id_e2sm_t ue_id)
   }
   current_ue_id = ue_id.gnb.amf_ue_ngap_id; // Update the global UE ID
 
-  // Store the current E2 Node ID (prefer Global NG-RAN Node ID, then Global gNB ID, then CU F1AP ID)
-  if (ue_id.gnb.global_ng_ran_node_id)
-  {
-    const global_ng_ran_node_id_t *n = ue_id.gnb.global_ng_ran_node_id;
-    switch (n->type)
-    {
-    case GNB_GLOBAL_TYPE_ID:
-    {
-      const global_gnb_id_t *g = &n->global_gnb_id;
-      if (g->type == GNB_TYPE_ID)
-      {
-        snprintf(current_e2_id_str, sizeof(current_e2_id_str), "gNB:%d", get_mapped_node_id("gNB", (unsigned)g->gnb_id.nb_id));
-      }
-      else
-      {
-        snprintf(current_e2_id_str, sizeof(current_e2_id_str), "gNB");
-      }
-      break;
-    }
-    case NG_ENB_GLOBAL_TYPE_ID:
-    {
-      const global_ng_enb_id_t *e = &n->global_ng_enb_id;
-      switch (e->type)
-      {
-      case MACRO_NG_ENB_TYPE_ID:
-        snprintf(current_e2_id_str, sizeof(current_e2_id_str), "ng-eNB-macro:%d", get_mapped_node_id("ng-eNB-macro", (unsigned)e->macro_ng_enb_id));
-        break;
-      case SHORT_MACRO_NG_ENB_TYPE_ID:
-        snprintf(current_e2_id_str, sizeof(current_e2_id_str), "ng-eNB-short:%d", get_mapped_node_id("ng-eNB-short", (unsigned)e->short_macro_ng_enb_id));
-        break;
-      case LONG_MACRO_NG_ENB_TYPE_ID:
-        snprintf(current_e2_id_str, sizeof(current_e2_id_str), "ng-eNB-long:%d", get_mapped_node_id("ng-eNB-long", (unsigned)e->long_macro_ng_enb_id));
-        break;
-      default:
-        snprintf(current_e2_id_str, sizeof(current_e2_id_str), "ng-eNB");
-        break;
-      }
-      break;
-    }
-    default:
-      snprintf(current_e2_id_str, sizeof(current_e2_id_str), "gNB");
-      break;
-    }
-  }
-  else if (ue_id.gnb.global_gnb_id)
-  {
-    snprintf(current_e2_id_str, sizeof(current_e2_id_str), "gNB:%d", get_mapped_node_id("gNB", (unsigned)ue_id.gnb.global_gnb_id->gnb_id.nb_id));
-  }
-  else if (ue_id.gnb.gnb_cu_ue_f1ap_lst && ue_id.gnb.gnb_cu_ue_f1ap_lst_len > 0)
-  {
-    snprintf(current_e2_id_str, sizeof(current_e2_id_str), "CU:%d", get_mapped_node_id("CU", (unsigned)ue_id.gnb.gnb_cu_ue_f1ap_lst[0]));
-  }
-  else
-  {
-    snprintf(current_e2_id_str, sizeof(current_e2_id_str), "gNB");
-  }
 }
 
 static void log_du_ue_id(ue_id_e2sm_t ue_id)
@@ -548,9 +466,6 @@ static void log_du_ue_id(ue_id_e2sm_t ue_id)
     printf("ran_ue_id = %lx\n", *ue_id.gnb_du.ran_ue_id); // RAN UE NGAP ID
   }
   current_ue_id = ue_id.gnb_du.gnb_cu_ue_f1ap; // Update the global UE ID
-
-  // Store the current E2 Node ID
-  snprintf(current_e2_id_str, sizeof(current_e2_id_str), "DU:%d", get_mapped_node_id("DU", ue_id.gnb_du.gnb_cu_ue_f1ap));
 }
 
 static void log_cuup_ue_id(ue_id_e2sm_t ue_id)
@@ -561,9 +476,6 @@ static void log_cuup_ue_id(ue_id_e2sm_t ue_id)
     printf("ran_ue_id = %lx\n", *ue_id.gnb_cu_up.ran_ue_id); // RAN UE NGAP ID
   }
   current_ue_id = ue_id.gnb_cu_up.gnb_cu_cp_ue_e1ap; // Update the global UE ID
-
-  // Store the current E2 Node ID
-  snprintf(current_e2_id_str, sizeof(current_e2_id_str), "CU-UP:%d", get_mapped_node_id("CU-UP", ue_id.gnb_cu_up.gnb_cu_cp_ue_e1ap));
 }
 
 typedef void (*log_ue_id)(ue_id_e2sm_t ue_id);
@@ -679,12 +591,13 @@ static check_meas_type match_meas_type[END_MEAS_TYPE] = {
     match_id_meas_type,
 };
 
+#define MAX_E2_NODES 16
+
 static void log_kpm_measurements(kpm_ind_msg_format_1_t const *msg_frm_1, bool is_cell_metric_local)
 {
   is_cell_metric = is_cell_metric_local;
 
   assert(msg_frm_1->meas_info_lst_len > 0 && "Cannot correctly print measurements");
-
 
   // UE Measurements per granularity period
   for (size_t j = 0; j < msg_frm_1->meas_data_lst_len; j++)
@@ -698,12 +611,55 @@ static void log_kpm_measurements(kpm_ind_msg_format_1_t const *msg_frm_1, bool i
 
       if (info_item.label_info_lst_len > 1 && info_item.meas_type.type == NAME_MEAS_TYPE && info_item.label_info_lst[0].distBinX != NULL)
       {
+        if (!is_cell_metric)
+        {
+          rec_idx += info_item.label_info_lst_len;
+          continue;
+        }
+
         char *name_str = cp_ba_to_str(info_item.meas_type.name);
         char *name_unit = get_meas_unit(name_str);
         if (name_unit && strcmp(name_unit, "[]") == 0)
           name_unit = "";
         if (name_unit == NULL)
           name_unit = "";
+
+        factory_metrics_array_t generated_metrics = process_metric_factory(
+            current_e2_id_str, name_str,
+            info_item.label_info_lst, info_item.label_info_lst_len,
+            data_item.meas_record_lst, rec_idx);
+
+        for (size_t k = 0; k < generated_metrics.count; k++)
+        {
+          factory_metric_t m = generated_metrics.metrics[k];
+
+          char rsrp_line[512];
+          if (m.value_type == 0)
+          {
+            snprintf(rsrp_line, sizeof(rsrp_line), "%d,", m.int_val);
+          }
+          else
+          {
+            if (isnan(m.real_val))
+            {
+              snprintf(rsrp_line, sizeof(rsrp_line), ",");
+            }
+            else
+            {
+              snprintf(rsrp_line, sizeof(rsrp_line), "%.2f,", m.real_val);
+            }
+          }
+
+          char *target_buffer = is_cell_metric ? csv_cell_line_buffer : csv_line_buffer;
+          size_t buffer_size = is_cell_metric ? sizeof(csv_cell_line_buffer) : sizeof(csv_line_buffer);
+          strncat(target_buffer, rsrp_line, buffer_size - strlen(target_buffer) - 1);
+
+          if (!(is_cell_metric ? csv_wrote_cell_header : csv_wrote_header))
+          {
+            csv_append_name_to_csv_header(m.name, strstr(m.name, ".Count") ? "" : "dBm");
+          }
+        }
+        free_factory_metrics(&generated_metrics);
 
         if (!(is_cell_metric ? csv_wrote_cell_header : csv_wrote_header))
         {
@@ -722,54 +678,8 @@ static void log_kpm_measurements(kpm_ind_msg_format_1_t const *msg_frm_1, bool i
 
         // Build the JSON array string
         char arr_str[8192];
-        size_t arr_len = 0;
-        arr_str[0] = '\0';
-        uint32_t last_x = 0, last_y = 0;
-
-        for (size_t z = 0; z < info_item.label_info_lst_len; z++)
-        {
-
-          const label_info_lst_t label_info = info_item.label_info_lst[z];
-          const meas_record_lst_t record_item = data_item.meas_record_lst[rec_idx++];
-
-          uint32_t cur_x = *label_info.distBinX;
-          uint32_t cur_y = *label_info.distBinY;
-
-          if (z == 0)
-          {
-            arr_len += snprintf(arr_str + arr_len, sizeof(arr_str) - arr_len, "[[[");
-          }
-          else
-          {
-            if (cur_x != last_x)
-            {
-              arr_len += snprintf(arr_str + arr_len, sizeof(arr_str) - arr_len, "]], [[");
-            }
-            else if (cur_y != last_y)
-            {
-              arr_len += snprintf(arr_str + arr_len, sizeof(arr_str) - arr_len, "], [");
-            }
-            else
-            {
-              arr_len += snprintf(arr_str + arr_len, sizeof(arr_str) - arr_len, ", ");
-            }
-          }
-          if (record_item.value == 0)
-          {
-            arr_len += snprintf(arr_str + arr_len, sizeof(arr_str) - arr_len, "%d", record_item.int_val);
-          }
-          else if (record_item.value == 1)
-          {
-            arr_len += snprintf(arr_str + arr_len, sizeof(arr_str) - arr_len, "%.2f", record_item.real_val);
-          }
-          else
-          {
-            arr_len += snprintf(arr_str + arr_len, sizeof(arr_str) - arr_len, "null");
-          }
-          last_x = cur_x;
-          last_y = cur_y;
-        }
-        arr_len += snprintf(arr_str + arr_len, sizeof(arr_str) - arr_len, "]]]");
+        format_meas_record_array(arr_str, sizeof(arr_str), info_item.label_info_lst, info_item.label_info_lst_len, data_item.meas_record_lst, rec_idx);
+        rec_idx += info_item.label_info_lst_len;
 
         csv_append_string_to_csv_line(arr_str);
 
@@ -875,7 +785,7 @@ static void load_slice_from_env(void)
   printf("[xApp] Using S-NSSAI SST=%u SD=%06x (env SST/SD can override)\n", (unsigned)cfg_slicing_sst, (unsigned)(cfg_slicing_sd & 0xFFFFFFu));
 }
 
-static void sm_cb_kpm(sm_ag_if_rd_t const *rd)
+static void sm_cb_kpm(sm_ag_if_rd_t const* rd, global_e2_node_id_t const* node_id)
 {
   assert(rd != NULL);
   assert(rd->type == INDICATION_MSG_AGENT_IF_ANS_V0);
@@ -885,6 +795,22 @@ static void sm_cb_kpm(sm_ag_if_rd_t const *rd)
   kpm_ind_data_t const *ind = &rd->ind.kpm.ind;
   kpm_ric_ind_hdr_format_1_t const *hdr_frm_1 = &ind->hdr.kpm_ric_ind_hdr_format_1;
 
+  // Set current E2 node ID globally
+  if (node_id) {
+    if (node_id->type == ngran_gNB_DU) {
+        snprintf(current_e2_id_str, sizeof(current_e2_id_str), "DU:%" PRIu64, *node_id->cu_du_id);
+    } else if (node_id->type == ngran_gNB_CU) {
+        snprintf(current_e2_id_str, sizeof(current_e2_id_str), "CU:%" PRIu64, *node_id->cu_du_id);
+    } else if (node_id->type == ngran_gNB_CUUP) {
+        snprintf(current_e2_id_str, sizeof(current_e2_id_str), "CUUP:%" PRIu64, *node_id->cu_du_id);
+    } else if (node_id->type == ngran_gNB_CUCP) {
+        snprintf(current_e2_id_str, sizeof(current_e2_id_str), "CUCP:%" PRIu64, *node_id->cu_du_id);
+    } else {
+        snprintf(current_e2_id_str, sizeof(current_e2_id_str), "gNB:%u", node_id->nb_id.nb_id);
+    }
+  } else {
+    snprintf(current_e2_id_str, sizeof(current_e2_id_str), "Unknown");
+  }
   int64_t const now = time_now_us();
   static int counter = 1;
   {
@@ -894,12 +820,6 @@ static void sm_cb_kpm(sm_ag_if_rd_t const *rd)
 
     if (ind->msg.type == FORMAT_1_INDICATION_MESSAGE)
     {
-      // If Cell Metric, there is no UE ID attached to derive the node ID so use the sender_name from the Indication Header so it doesn't use the previous UE's node ID
-      if (hdr_frm_1->sender_name != NULL && hdr_frm_1->sender_name->len > 0) {
-        snprintf(current_e2_id_str, sizeof(current_e2_id_str), "%.*s", (int)hdr_frm_1->sender_name->len, hdr_frm_1->sender_name->buf);
-      } else {
-        snprintf(current_e2_id_str, sizeof(current_e2_id_str), "Unknown-Cell-Node");
-      }
 
       log_kpm_measurements(&ind->msg.frm_1, true);
     }
@@ -951,35 +871,6 @@ static test_info_lst_t filter_predicate(test_cond_type_e type, test_cond_e cond,
   return dst;
 }
 
-static label_info_lst_t fill_kpm_label(void)
-{
-  label_info_lst_t label_item = {0};
-
-  label_item.noLabel = ecalloc(1, sizeof(enum_value_e));
-  *label_item.noLabel = TRUE_ENUM_VALUE;
-
-  return label_item;
-}
-
-static label_info_lst_t fill_distribution_bin_label(const uint32_t x, const uint32_t y, const uint32_t z)
-{
-  label_info_lst_t label_item = {0};
-
-  label_item.distBinX = calloc(1, sizeof(uint32_t));
-  assert(label_item.distBinX != NULL);
-  *label_item.distBinX = x;
-
-  label_item.distBinY = calloc(1, sizeof(uint32_t));
-  assert(label_item.distBinY != NULL);
-  *label_item.distBinY = y;
-
-  label_item.distBinZ = calloc(1, sizeof(uint32_t));
-  assert(label_item.distBinZ != NULL);
-  *label_item.distBinZ = z;
-
-  return label_item;
-}
-
 static kpm_act_def_format_1_t fill_act_def_frm_1(ric_report_style_item_t const *report_item)
 {
   assert(report_item != NULL);
@@ -999,33 +890,13 @@ static kpm_act_def_format_1_t fill_act_def_frm_1(ric_report_style_item_t const *
     // 8.3.9
     // Measurement Name
     meas_item->meas_type.type = NAME_MEAS_TYPE;
-    meas_item->meas_type.name = copy_byte_array(report_item->meas_info_for_action_lst[i].name);
+    meas_item->meas_type.name.buf = (uint8_t *)calloc(report_item->meas_info_for_action_lst[i].name.len + 1, sizeof(uint8_t));
+    memcpy(meas_item->meas_type.name.buf, report_item->meas_info_for_action_lst[i].name.buf, report_item->meas_info_for_action_lst[i].name.len);
+    meas_item->meas_type.name.len = report_item->meas_info_for_action_lst[i].name.len;
 
     // [1, 2147483647]
     // 8.3.11
-    if (cmp_str_ba("CARR.PDSCHMCSDist", meas_item->meas_type.name) == 0)
-    {
-      /// 1-8 RI, 1-3 MCS table, 0-31 MCS value
-      meas_item->label_info_lst_len = 8 * 3 * 32;
-      meas_item->label_info_lst = ecalloc(meas_item->label_info_lst_len, sizeof(label_info_lst_t));
-      size_t idx = 0;
-      for (uint32_t x = 1; x <= 8; x++)
-      {
-        for (uint32_t y = 1; y <= 3; y++)
-        {
-          for (uint32_t z = 0; z <= 31; z++)
-          {
-            meas_item->label_info_lst[idx++] = fill_distribution_bin_label(x, y, z);
-          }
-        }
-      }
-    }
-    else
-    {
-      meas_item->label_info_lst_len = 1;
-      meas_item->label_info_lst = ecalloc(meas_item->label_info_lst_len, sizeof(label_info_lst_t));
-      meas_item->label_info_lst[0] = fill_kpm_label();
-    }
+    populate_label_info(meas_item);
   }
 
   // 8.3.8 [0, 4294967295]
@@ -1076,41 +947,22 @@ static kpm_act_def_t fill_report_style_1(ric_report_style_item_t const *report_i
   kpm_act_def_t act_def = {.type = FORMAT_1_ACTION_DEFINITION};
 
   // [1, 65535]
-  act_def.frm_1.meas_info_lst_len = report_item->meas_info_for_action_lst_len;
+  size_t const sz = report_item->meas_info_for_action_lst_len;
+  act_def.frm_1.meas_info_lst_len = sz;
   act_def.frm_1.meas_info_lst = ecalloc(act_def.frm_1.meas_info_lst_len, sizeof(meas_info_format_1_lst_t));
-  for (size_t i = 0; i < act_def.frm_1.meas_info_lst_len; i++)
+  for (size_t i = 0; i < sz; i++)
   {
     meas_info_format_1_lst_t *meas_item = &act_def.frm_1.meas_info_lst[i];
     // 8.3.9
     // Measurement Name
     meas_item->meas_type.type = NAME_MEAS_TYPE;
-    meas_item->meas_type.name = copy_byte_array(report_item->meas_info_for_action_lst[i].name);
+    meas_item->meas_type.name.buf = (uint8_t *)calloc(report_item->meas_info_for_action_lst[i].name.len + 1, sizeof(uint8_t));
+    memcpy(meas_item->meas_type.name.buf, report_item->meas_info_for_action_lst[i].name.buf, report_item->meas_info_for_action_lst[i].name.len);
+    meas_item->meas_type.name.len = report_item->meas_info_for_action_lst[i].name.len;
 
     // [1, 2147483647]
     // 8.3.11
-    if (cmp_str_ba("CARR.PDSCHMCSDist", meas_item->meas_type.name) == 0)
-    {
-      /// 1-8 RI, 1-3 MCS table, 0-31 MCS value
-      meas_item->label_info_lst_len = 8 * 3 * 32;
-      meas_item->label_info_lst = ecalloc(meas_item->label_info_lst_len, sizeof(label_info_lst_t));
-      size_t idx = 0;
-      for (uint32_t x = 1; x <= 8; x++)
-      {
-        for (uint32_t y = 1; y <= 3; y++)
-        {
-          for (uint32_t z = 0; z <= 31; z++)
-          {
-            meas_item->label_info_lst[idx++] = fill_distribution_bin_label(x, y, z);
-          }
-        }
-      }
-    }
-    else
-    {
-      meas_item->label_info_lst_len = 1;
-      meas_item->label_info_lst = ecalloc(meas_item->label_info_lst_len, sizeof(label_info_lst_t));
-      meas_item->label_info_lst[0] = fill_kpm_label();
-    }
+    populate_label_info(meas_item);
   }
 
   // 8.3.8 [0, 4294967295]
@@ -1204,7 +1056,7 @@ int main(int argc, char *argv[])
 
   if (path_len + 6 < sizeof(csv_cell_file_path))
   {
-    strncpy(csv_cell_file_path, csv_file_path, path_len - 4);
+    snprintf(csv_cell_file_path, sizeof(csv_cell_file_path), "%.*s", (int)(path_len - 4), csv_file_path);
     csv_cell_file_path[path_len - 4] = '\0';
     strcat(csv_cell_file_path, "_Cells.csv");
     printf("CSV cell file path constructed: %s\n", csv_cell_file_path);
@@ -1243,7 +1095,6 @@ int main(int argc, char *argv[])
   // Init the xApp
   init_xapp_api(&args);
   sleep(1);
-
   init_kpm_meas_unit_hash_table();
 
   e2_node_arr_xapp_t nodes = e2_nodes_xapp_api();

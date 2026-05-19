@@ -1,0 +1,12 @@
+diff --git a/src/xApp/msg_handler_xapp.c b/src/xApp/msg_handler_xapp.c
+index 4bb56979..cb666c25 100644
+--- a/src/xApp/msg_handler_xapp.c
++++ b/src/xApp/msg_handler_xapp.c
+@@ -252,6 +252,7 @@ sm_ind_data_t ind_sm_payload(ric_indication_t const* src)
+ 
+     // Write to the callback. Should I send the E2 Node info to the cb??
+     msg_disp.sm_cb = ans.val.sm_cb;
++    msg_disp.e2_node = ans.val.e2_node;
+     send_msg_dispatcher(&xapp->msg_disp, &msg_disp );
+  }
+ 

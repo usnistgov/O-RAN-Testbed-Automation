@@ -21,7 +21,7 @@
       "type": "grafana",
       "id": "grafana",
       "name": "Grafana",
-      "version": "12.4.2"
+      "version": "13.0.1+security-01"
     },
     {
       "type": "panel",
@@ -54,6 +54,12 @@
       "version": ""
     },
     {
+      "type": "panel",
+      "id": "xychart",
+      "name": "XY Chart",
+      "version": ""
+    },
+    {
       "type": "datasource",
       "id": "yesoreyeram-infinity-datasource",
       "name": "Infinity",
@@ -80,11 +86,12 @@
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
   "links": [],
+  "liveNow": false,
   "panels": [
     {
       "gridPos": {
-        "h": 4,
-        "w": 10,
+        "h": 6,
+        "w": 7,
         "x": 0,
         "y": 0
       },
@@ -98,140 +105,9 @@
         "content": "<img src=\"http://localhost:3030/NIST.svg\" style=\"max-width: 100%; max-height: 100%; height: auto;\" />",
         "mode": "html"
       },
-      "pluginVersion": "12.4.2",
+      "pluginVersion": "13.0.1+security-01",
       "transparent": true,
       "type": "text"
-    },
-    {
-      "datasource": {
-        "type": "datasource",
-        "uid": "-- Dashboard --"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "custom": {
-            "align": "center",
-            "cellOptions": {
-              "type": "color-text"
-            },
-            "filterable": false,
-            "footer": {
-              "reducers": []
-            },
-            "inspect": false,
-            "minWidth": 50,
-            "wrapText": false
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "super-light-yellow",
-                "value": 0
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 2,
-        "x": 10,
-        "y": 0
-      },
-      "id": 21,
-      "options": {
-        "cellHeight": "sm",
-        "enablePagination": false,
-        "showHeader": false
-      },
-      "pluginVersion": "12.4.2",
-      "targets": [
-        {
-          "datasource": {
-            "type": "datasource",
-            "uid": "-- Dashboard --"
-          },
-          "panelId": 20,
-          "refId": "A"
-        }
-      ],
-      "title": "UE IDs",
-      "transformations": [
-        {
-          "id": "filterFieldsByName",
-          "options": {
-            "include": {
-              "names": [
-                "Time (UNIX ms)",
-                "UE ID"
-              ]
-            }
-          }
-        },
-        {
-          "id": "groupToNestedTable",
-          "options": {
-            "fields": {
-              "Time (UNIX ms)": {
-                "aggregations": [],
-                "operation": "groupby"
-              },
-              "UE ID": {
-                "aggregations": [
-                  "allValues"
-                ],
-                "operation": "aggregate"
-              },
-              "UE_ID": {
-                "aggregations": [
-                  "allValues"
-                ],
-                "operation": "aggregate"
-              },
-              "UNIX Epoch (ms)": {
-                "aggregations": [],
-                "operation": "groupby"
-              },
-              "Value": {
-                "aggregations": []
-              }
-            },
-            "showSubframeHeaders": false
-          }
-        },
-        {
-          "id": "reduce",
-          "options": {
-            "includeTimeField": false,
-            "mode": "reduceFields",
-            "reducers": [
-              "last"
-            ]
-          }
-        },
-        {
-          "id": "extractFields",
-          "options": {
-            "delimiter": ",",
-            "format": "delimiter",
-            "keepTime": false,
-            "replace": true,
-            "source": "UE ID (allValues)"
-          }
-        }
-      ],
-      "transparent": true,
-      "type": "table"
     },
     {
       "datasource": {
@@ -244,8 +120,44 @@
             "fixedColor": "super-light-yellow",
             "mode": "fixed"
           },
-          "fieldMinMax": false,
-          "mappings": [],
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "bars",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "stepBefore",
+            "lineStyle": {
+              "fill": "solid"
+            },
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "min": 0,
           "noValue": "0",
           "thresholds": {
             "mode": "absolute",
@@ -259,35 +171,36 @@
                 "value": 80
               }
             ]
-          }
+          },
+          "unit": "UEs"
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 4,
-        "w": 2,
-        "x": 12,
+        "h": 6,
+        "w": 4,
+        "x": 8,
         "y": 0
       },
       "id": 20,
       "options": {
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "percentChangeColorMode": "standard",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
+        "annotations": {
+          "clustering": -1,
+          "multiLane": false
         },
-        "showPercentChange": false,
-        "textMode": "auto",
-        "wideLayout": true
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
       },
-      "pluginVersion": "12.4.2",
+      "pluginVersion": "13.0.1+security-01",
       "targets": [
         {
           "columns": [
@@ -300,6 +213,11 @@
               "selector": "Reporting Time Offset (ms)",
               "text": "",
               "type": "number"
+            },
+            {
+              "selector": "E2 Node ID",
+              "text": "",
+              "type": "string"
             },
             {
               "selector": "UE ID",
@@ -357,7 +275,7 @@
           "root_selector": "",
           "source": "url",
           "type": "csv",
-          "url": "$Metrics_File",
+          "url": "$UE_Metrics",
           "url_options": {
             "data": "",
             "method": "GET",
@@ -372,138 +290,10 @@
               },
               {
                 "key": "approx_num_samples",
-                "value": "${Sampling_Resolution}"
+                "value": "${Resolution}"
               }
             ]
           }
-        }
-      ],
-      "title": "Num. UEs",
-      "transformations": [
-        {
-          "id": "groupBy",
-          "options": {
-            "fields": {
-              "Time (UNIX ms)": {
-                "aggregations": [],
-                "operation": "groupby"
-              },
-              "UE": {
-                "aggregations": [
-                  "count"
-                ],
-                "operation": "aggregate"
-              },
-              "UE ID": {
-                "aggregations": [
-                  "count"
-                ],
-                "operation": "aggregate"
-              },
-              "UNIX Epoch (ms)": {
-                "aggregations": [],
-                "operation": "groupby"
-              }
-            }
-          }
-        }
-      ],
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "datasource",
-        "uid": "-- Dashboard --"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "fixedColor": "super-light-yellow",
-            "mode": "fixed"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "smooth",
-            "lineWidth": 2,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "showValues": false,
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "decimals": 0,
-          "fieldMinMax": false,
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "super-light-yellow",
-                "value": 0
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "UEs"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 3,
-        "x": 14,
-        "y": 0
-      },
-      "id": 22,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": false
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "12.4.2",
-      "targets": [
-        {
-          "datasource": {
-            "type": "datasource",
-            "uid": "-- Dashboard --"
-          },
-          "panelId": 20,
-          "refId": "A"
         }
       ],
       "title": "UEs Over Time",
@@ -524,7 +314,7 @@
               },
               "UE ID": {
                 "aggregations": [
-                  "count"
+                  "distinctCount"
                 ],
                 "operation": "aggregate"
               },
@@ -543,14 +333,511 @@
         "type": "datasource",
         "uid": "-- Dashboard --"
       },
+      "description": "Mapping to show what UE is connected to what E2 node.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "center",
+            "cellOptions": {
+              "type": "color-text"
+            },
+            "filterable": false,
+            "footer": {
+              "reducers": []
+            },
+            "inspect": false,
+            "minWidth": 50,
+            "wrapText": false
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "super-light-yellow",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 4,
+        "x": 12,
+        "y": 0
+      },
+      "id": 21,
+      "options": {
+        "cellHeight": "sm",
+        "enablePagination": false,
+        "showHeader": true
+      },
+      "pluginVersion": "13.0.1+security-01",
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "-- Dashboard --"
+          },
+          "panelId": 20,
+          "refId": "A"
+        }
+      ],
+      "title": "UE Mapping",
+      "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "Time (UNIX ms)",
+                "UE ID",
+                "E2 Node ID"
+              ]
+            }
+          }
+        },
+        {
+          "id": "groupToNestedTable",
+          "options": {
+            "fields": {
+              "E2 Node ID": {
+                "aggregations": [
+                  "allValues"
+                ],
+                "operation": "aggregate"
+              },
+              "Time (UNIX ms)": {
+                "aggregations": [],
+                "operation": "groupby"
+              },
+              "UE ID": {
+                "aggregations": [
+                  "allValues"
+                ],
+                "operation": "aggregate"
+              },
+              "UE_ID": {
+                "aggregations": [
+                  "allValues"
+                ],
+                "operation": "aggregate"
+              },
+              "UNIX Epoch (ms)": {
+                "aggregations": [],
+                "operation": "groupby"
+              },
+              "Value": {
+                "aggregations": []
+              }
+            },
+            "showSubframeHeaders": false
+          }
+        },
+        {
+          "id": "reduce",
+          "options": {
+            "includeTimeField": false,
+            "mode": "reduceFields",
+            "reducers": [
+              "lastNotNull"
+            ]
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "E2 Node ID (allValues)": false,
+              "UE ID (allValues)": false,
+              "__nestedFrames": true
+            },
+            "includeByName": {},
+            "indexByName": {
+              "E2 Node ID (allValues)": 1,
+              "UE ID (allValues)": 0,
+              "__nestedFrames": 2
+            },
+            "renameByName": {
+              "0": "UE ID",
+              "0 1": "E2 ID",
+              "E2 Node ID (allValues)": "E2 ID",
+              "UE ID (allValues)": "UE ID"
+            }
+          }
+        },
+        {
+          "id": "transpose",
+          "options": {}
+        },
+        {
+          "id": "extractFields",
+          "options": {
+            "delimiter": ",",
+            "format": "delimiter",
+            "keepTime": false,
+            "replace": false,
+            "source": "1"
+          }
+        },
+        {
+          "id": "transpose",
+          "options": {
+            "firstFieldName": ""
+          }
+        },
+        {
+          "id": "filterByValue",
+          "options": {
+            "filters": [
+              {
+                "config": {
+                  "id": "substring",
+                  "options": {
+                    "value": "["
+                  }
+                },
+                "fieldName": "UE ID"
+              }
+            ],
+            "match": "any",
+            "type": "exclude"
+          }
+        },
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "UE ID",
+                "E2 ID"
+              ]
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Dashboard --"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "decmbytes"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "DRB.PdcpSduVolumeUL (Mb) (sum) / 8"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "super-light-orange",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "displayName",
+                "value": "UE UL Volume (Sum)"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "DRB.PdcpSduVolumeDL (Mb) (sum) / 8"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "light-blue",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "displayName",
+                "value": "UE DL Volume (Sum)"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 6,
+        "x": 16,
+        "y": 0
+      },
+      "id": 29,
+      "options": {
+        "displayMode": "basic",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
+      },
+      "pluginVersion": "13.0.1+security-01",
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "-- Dashboard --"
+          },
+          "panelId": 20,
+          "refId": "A"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "DRB.PdcpSduVolumeDL (Mb)",
+                "DRB.PdcpSduVolumeUL (Mb)",
+                "Time (UNIX ms)",
+                "UE ID"
+              ]
+            }
+          }
+        },
+        {
+          "disabled": true,
+          "id": "filterByValue",
+          "options": {
+            "filters": [
+              {
+                "config": {
+                  "id": "equal",
+                  "options": {
+                    "value": "${UE_ID}"
+                  }
+                },
+                "fieldName": "UE_ID"
+              }
+            ],
+            "match": "any",
+            "type": "include"
+          }
+        },
+        {
+          "id": "groupBy",
+          "options": {
+            "fields": {
+              "DRB.PdcpSduVolumeDL (Mb)": {
+                "aggregations": [
+                  "sum"
+                ],
+                "operation": "aggregate"
+              },
+              "DRB.PdcpSduVolumeUL (Mb)": {
+                "aggregations": [
+                  "sum"
+                ],
+                "operation": "aggregate"
+              },
+              "Time (UNIX ms)": {
+                "aggregations": [],
+                "operation": "groupby"
+              },
+              "Timestamp": {
+                "aggregations": [],
+                "operation": "groupby"
+              }
+            }
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "binary": {
+              "left": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "DRB.PdcpSduVolumeDL (Mb) (sum)"
+                }
+              },
+              "operator": "/",
+              "right": {
+                "fixed": "8"
+              }
+            },
+            "mode": "binary",
+            "reduce": {
+              "reducer": "sum"
+            }
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "binary": {
+              "left": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "DRB.PdcpSduVolumeUL (Mb) (sum)"
+                }
+              },
+              "operator": "/",
+              "right": {
+                "fixed": "8"
+              }
+            },
+            "mode": "binary",
+            "reduce": {
+              "include": [],
+              "reducer": "sum"
+            }
+          }
+        },
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "Timestamp",
+                "DRB.PdcpSduVolumeDL (Mb) (sum) / 8",
+                "DRB.PdcpSduVolumeUL (Mb) (sum) / 8"
+              ]
+            }
+          }
+        }
+      ],
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Dashboard --"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "shades"
+          },
+          "noValue": "0",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 2,
+        "x": 22,
+        "y": 0
+      },
+      "id": 46,
+      "options": {
+        "colorMode": "none",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "13.0.1+security-01",
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "-- Dashboard --"
+          },
+          "panelId": 20,
+          "refId": "A"
+        }
+      ],
+      "title": "Time Offset (ms)",
+      "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "Time (UNIX ms)",
+                "Reporting Time Offset (ms)"
+              ]
+            }
+          }
+        }
+      ],
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Dashboard --"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "fixed"
           },
           "decimals": 4,
-          "fieldMinMax": false,
-          "mappings": [],
           "thresholds": {
             "mode": "percentage",
             "steps": [
@@ -582,7 +869,7 @@
               },
               {
                 "id": "displayName",
-                "value": "Aggregated UE DL Throughput"
+                "value": "UE DL Throughput (Sum)"
               }
             ]
           },
@@ -601,17 +888,17 @@
               },
               {
                 "id": "displayName",
-                "value": "Aggregated UE UL Throughput"
+                "value": "UE UL Throughput (Sum)"
               }
             ]
           }
         ]
       },
       "gridPos": {
-        "h": 4,
-        "w": 5,
-        "x": 17,
-        "y": 0
+        "h": 3,
+        "w": 6,
+        "x": 16,
+        "y": 3
       },
       "id": 19,
       "options": {
@@ -638,7 +925,7 @@
         "sizing": "auto",
         "valueMode": "color"
       },
-      "pluginVersion": "12.4.2",
+      "pluginVersion": "13.0.1+security-01",
       "targets": [
         {
           "datasource": {
@@ -793,21 +1080,45 @@
     },
     {
       "datasource": {
-        "type": "datasource",
-        "uid": "-- Dashboard --"
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
       },
+      "description": "DL Modulation Coding Scheme",
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "continuous-BlYlRd"
+            "mode": "palette-classic"
           },
-          "mappings": [],
-          "noValue": "0",
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 50,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineStyle": {
+              "fill": "solid"
+            },
+            "pointShape": "circle",
+            "pointSize": {
+              "fixed": 5
+            },
+            "pointStrokeWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "show": "lines"
+          },
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "text",
+                "color": "green",
                 "value": 0
               },
               {
@@ -815,61 +1126,1256 @@
                 "value": 80
               }
             ]
-          },
-          "unit": "ms"
+          }
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 4,
-        "w": 2,
-        "x": 22,
-        "y": 0
+        "h": 5,
+        "w": 6,
+        "x": 0,
+        "y": 6
       },
-      "id": 46,
+      "id": 48,
       "options": {
-        "colorMode": "none",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "percentChangeColorMode": "standard",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
         },
-        "showPercentChange": false,
-        "textMode": "auto",
-        "wideLayout": true
+        "mapping": "auto",
+        "series": [
+          {
+            "color": {
+              "matcher": {
+                "id": "byName",
+                "options": "Rank"
+              }
+            },
+            "frame": {
+              "matcher": {
+                "id": "byIndex",
+                "options": 0
+              }
+            },
+            "x": {
+              "matcher": {
+                "id": "byName",
+                "options": "MCS Index"
+              }
+            },
+            "y": {
+              "matcher": {
+                "id": "byName",
+                "options": "Count"
+              }
+            }
+          }
+        ],
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
       },
-      "pluginVersion": "12.4.2",
+      "pluginVersion": "13.0.1+security-01",
       "targets": [
         {
-          "datasource": {
-            "type": "datasource",
-            "uid": "-- Dashboard --"
+          "columns": [
+            {
+              "selector": "Time (UNIX ms)",
+              "text": "",
+              "type": "timestamp_epoch"
+            },
+            {
+              "selector": "Reporting Time Offset (ms)",
+              "text": "",
+              "type": "number"
+            },
+            {
+              "selector": "E2 Node ID",
+              "text": "",
+              "type": "string"
+            },
+            {
+              "selector": "CARR.PDSCHMCSDist (PDSCH_RBs)",
+              "text": "",
+              "type": "string"
+            }
+          ],
+          "csv_options": {
+            "skip_lines_with_error": true
           },
-          "panelId": 20,
-          "refId": "A"
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+          },
+          "filters": [],
+          "format": "timeseries",
+          "global_query_id": "",
+          "parser": "backend",
+          "refId": "A",
+          "root_selector": "",
+          "source": "url",
+          "type": "csv",
+          "url": "$Cell_Metrics",
+          "url_options": {
+            "data": "",
+            "method": "GET",
+            "params": [
+              {
+                "key": "from",
+                "value": "$__from"
+              },
+              {
+                "key": "to",
+                "value": "$__to"
+              },
+              {
+                "key": "approx_num_samples",
+                "value": "${Resolution}"
+              }
+            ]
+          }
         }
       ],
-      "title": "Time Offset (ms)",
+      "title": "CARR.PDSCHMCSDist.BinX.BinY.BinZ (64QAM)",
       "transformations": [
         {
-          "id": "filterFieldsByName",
+          "id": "filterByValue",
           "options": {
-            "include": {
-              "names": [
-                "Time (UNIX ms)",
-                "Reporting Time Offset (ms)"
-              ]
+            "filters": [
+              {
+                "config": {
+                  "id": "equal",
+                  "options": {
+                    "value": "${E2_ID}"
+                  }
+                },
+                "fieldName": "E2 Node ID"
+              }
+            ],
+            "match": "any",
+            "type": "include"
+          }
+        },
+        {
+          "id": "reduce",
+          "options": {
+            "includeTimeField": false,
+            "mode": "reduceFields",
+            "reducers": [
+              "lastNotNull"
+            ]
+          }
+        },
+        {
+          "id": "extractFields",
+          "options": {
+            "delimiter": ",",
+            "format": "json",
+            "jsonPaths": [
+              {
+                "alias": "[0,1]",
+                "path": "[0][0][0]"
+              },
+              {
+                "alias": "[0,2]",
+                "path": "[0][0][1]"
+              },
+              {
+                "alias": "[0,3]",
+                "path": "[0][0][2]"
+              },
+              {
+                "alias": "[0,4]",
+                "path": "[0][0][3]"
+              },
+              {
+                "alias": "[0,5]",
+                "path": "[0][0][4]"
+              },
+              {
+                "alias": "[0,6]",
+                "path": "[0][0][5]"
+              },
+              {
+                "alias": "[0,7]",
+                "path": "[0][0][6]"
+              },
+              {
+                "alias": "[0,8]",
+                "path": "[0][0][7]"
+              },
+              {
+                "alias": "[0,9]",
+                "path": "[0][0][8]"
+              },
+              {
+                "alias": "[0,10]",
+                "path": "[0][0][9]"
+              },
+              {
+                "alias": "[0,11]",
+                "path": "[0][0][10]"
+              },
+              {
+                "alias": "[0,12]",
+                "path": "[0][0][11]"
+              },
+              {
+                "alias": "[0,13]",
+                "path": "[0][0][12]"
+              },
+              {
+                "alias": "[0,14]",
+                "path": "[0][0][13]"
+              },
+              {
+                "alias": "[0,15]",
+                "path": "[0][0][14]"
+              },
+              {
+                "alias": "[0,16]",
+                "path": "[0][0][15]"
+              },
+              {
+                "alias": "[0,17]",
+                "path": "[0][0][16]"
+              },
+              {
+                "alias": "[0,18]",
+                "path": "[0][0][17]"
+              },
+              {
+                "alias": "[0,19]",
+                "path": "[0][0][18]"
+              },
+              {
+                "alias": "[0,20]",
+                "path": "[0][0][19]"
+              },
+              {
+                "alias": "[0,21]",
+                "path": "[0][0][20]"
+              },
+              {
+                "alias": "[0,22]",
+                "path": "[0][0][21]"
+              },
+              {
+                "alias": "[0,23]",
+                "path": "[0][0][22]"
+              },
+              {
+                "alias": "[0,24]",
+                "path": "[0][0][23]"
+              },
+              {
+                "alias": "[0,25]",
+                "path": "[0][0][24]"
+              },
+              {
+                "alias": "[0,26]",
+                "path": "[0][0][25]"
+              },
+              {
+                "alias": "[0,27]",
+                "path": "[0][0][26]"
+              },
+              {
+                "alias": "[0,28]",
+                "path": "[0][0][27]"
+              },
+              {
+                "alias": "[0,29]",
+                "path": "[0][0][28]"
+              },
+              {
+                "alias": "[0,30]",
+                "path": "[0][0][29]"
+              },
+              {
+                "alias": "[0,31]",
+                "path": "[0][0][30]"
+              },
+              {
+                "alias": "[0,32]",
+                "path": "[0][0][31]"
+              },
+              {
+                "alias": "[1,1]",
+                "path": "[1][0][0]"
+              },
+              {
+                "alias": "[1,2]",
+                "path": "[1][0][1]"
+              },
+              {
+                "alias": "[1,3]",
+                "path": "[1][0][2]"
+              },
+              {
+                "alias": "[1,4]",
+                "path": "[1][0][3]"
+              },
+              {
+                "alias": "[1,5]",
+                "path": "[1][0][4]"
+              },
+              {
+                "alias": "[1,6]",
+                "path": "[1][0][5]"
+              },
+              {
+                "alias": "[1,7]",
+                "path": "[1][0][6]"
+              },
+              {
+                "alias": "[1,8]",
+                "path": "[1][0][7]"
+              },
+              {
+                "alias": "[1,9]",
+                "path": "[1][0][8]"
+              },
+              {
+                "alias": "[1,10]",
+                "path": "[1][0][9]"
+              },
+              {
+                "alias": "[1,11]",
+                "path": "[1][0][10]"
+              },
+              {
+                "alias": "[1,12]",
+                "path": "[1][0][11]"
+              },
+              {
+                "alias": "[1,13]",
+                "path": "[1][0][12]"
+              },
+              {
+                "alias": "[1,14]",
+                "path": "[1][0][13]"
+              },
+              {
+                "alias": "[1,15]",
+                "path": "[1][0][14]"
+              },
+              {
+                "alias": "[1,16]",
+                "path": "[1][0][15]"
+              },
+              {
+                "alias": "[1,17]",
+                "path": "[1][0][16]"
+              },
+              {
+                "alias": "[1,18]",
+                "path": "[1][0][17]"
+              },
+              {
+                "alias": "[1,19]",
+                "path": "[1][0][18]"
+              },
+              {
+                "alias": "[1,20]",
+                "path": "[1][0][19]"
+              },
+              {
+                "alias": "[1,21]",
+                "path": "[1][0][20]"
+              },
+              {
+                "alias": "[1,22]",
+                "path": "[1][0][21]"
+              },
+              {
+                "alias": "[1,23]",
+                "path": "[1][0][22]"
+              },
+              {
+                "alias": "[1,24]",
+                "path": "[1][0][23]"
+              },
+              {
+                "alias": "[1,25]",
+                "path": "[1][0][24]"
+              },
+              {
+                "alias": "[1,26]",
+                "path": "[1][0][25]"
+              },
+              {
+                "alias": "[1,27]",
+                "path": "[1][0][26]"
+              },
+              {
+                "alias": "[1,28]",
+                "path": "[1][0][27]"
+              },
+              {
+                "alias": "[1,29]",
+                "path": "[1][0][28]"
+              },
+              {
+                "alias": "[1,30]",
+                "path": "[1][0][29]"
+              },
+              {
+                "alias": "[1,31]",
+                "path": "[1][0][30]"
+              },
+              {
+                "alias": "[1,32]",
+                "path": "[1][0][31]"
+              },
+              {
+                "alias": "[2,1]",
+                "path": "[2][0][0]"
+              },
+              {
+                "alias": "[2,2]",
+                "path": "[2][0][1]"
+              },
+              {
+                "alias": "[2,3]",
+                "path": "[2][0][2]"
+              },
+              {
+                "alias": "[2,4]",
+                "path": "[2][0][3]"
+              },
+              {
+                "alias": "[2,5]",
+                "path": "[2][0][4]"
+              },
+              {
+                "alias": "[2,6]",
+                "path": "[2][0][5]"
+              },
+              {
+                "alias": "[2,7]",
+                "path": "[2][0][6]"
+              },
+              {
+                "alias": "[2,8]",
+                "path": "[2][0][7]"
+              },
+              {
+                "alias": "[2,9]",
+                "path": "[2][0][8]"
+              },
+              {
+                "alias": "[2,10]",
+                "path": "[2][0][9]"
+              },
+              {
+                "alias": "[2,11]",
+                "path": "[2][0][10]"
+              },
+              {
+                "alias": "[2,12]",
+                "path": "[2][0][11]"
+              },
+              {
+                "alias": "[2,13]",
+                "path": "[2][0][12]"
+              },
+              {
+                "alias": "[2,14]",
+                "path": "[2][0][13]"
+              },
+              {
+                "alias": "[2,15]",
+                "path": "[2][0][14]"
+              },
+              {
+                "alias": "[2,16]",
+                "path": "[2][0][15]"
+              },
+              {
+                "alias": "[2,17]",
+                "path": "[2][0][16]"
+              },
+              {
+                "alias": "[2,18]",
+                "path": "[2][0][17]"
+              },
+              {
+                "alias": "[2,19]",
+                "path": "[2][0][18]"
+              },
+              {
+                "alias": "[2,20]",
+                "path": "[2][0][19]"
+              },
+              {
+                "alias": "[2,21]",
+                "path": "[2][0][20]"
+              },
+              {
+                "alias": "[2,22]",
+                "path": "[2][0][21]"
+              },
+              {
+                "alias": "[2,23]",
+                "path": "[2][0][22]"
+              },
+              {
+                "alias": "[2,24]",
+                "path": "[2][0][23]"
+              },
+              {
+                "alias": "[2,25]",
+                "path": "[2][0][24]"
+              },
+              {
+                "alias": "[2,26]",
+                "path": "[2][0][25]"
+              },
+              {
+                "alias": "[2,27]",
+                "path": "[2][0][26]"
+              },
+              {
+                "alias": "[2,28]",
+                "path": "[2][0][27]"
+              },
+              {
+                "alias": "[2,29]",
+                "path": "[2][0][28]"
+              },
+              {
+                "alias": "[2,30]",
+                "path": "[2][0][29]"
+              },
+              {
+                "alias": "[2,31]",
+                "path": "[2][0][30]"
+              },
+              {
+                "alias": "[2,32]",
+                "path": "[2][0][31]"
+              },
+              {
+                "alias": "[3,1]",
+                "path": "[3][0][0]"
+              },
+              {
+                "alias": "[3,2]",
+                "path": "[3][0][1]"
+              },
+              {
+                "alias": "[3,3]",
+                "path": "[3][0][2]"
+              },
+              {
+                "alias": "[3,4]",
+                "path": "[3][0][3]"
+              },
+              {
+                "alias": "[3,5]",
+                "path": "[3][0][4]"
+              },
+              {
+                "alias": "[3,6]",
+                "path": "[3][0][5]"
+              },
+              {
+                "alias": "[3,7]",
+                "path": "[3][0][6]"
+              },
+              {
+                "alias": "[3,8]",
+                "path": "[3][0][7]"
+              },
+              {
+                "alias": "[3,9]",
+                "path": "[3][0][8]"
+              },
+              {
+                "alias": "[3,10]",
+                "path": "[3][0][9]"
+              },
+              {
+                "alias": "[3,11]",
+                "path": "[3][0][10]"
+              },
+              {
+                "alias": "[3,12]",
+                "path": "[3][0][11]"
+              },
+              {
+                "alias": "[3,13]",
+                "path": "[3][0][12]"
+              },
+              {
+                "alias": "[3,14]",
+                "path": "[3][0][13]"
+              },
+              {
+                "alias": "[3,15]",
+                "path": "[3][0][14]"
+              },
+              {
+                "alias": "[3,16]",
+                "path": "[3][0][15]"
+              },
+              {
+                "alias": "[3,17]",
+                "path": "[3][0][16]"
+              },
+              {
+                "alias": "[3,18]",
+                "path": "[3][0][17]"
+              },
+              {
+                "alias": "[3,19]",
+                "path": "[3][0][18]"
+              },
+              {
+                "alias": "[3,20]",
+                "path": "[3][0][19]"
+              },
+              {
+                "alias": "[3,21]",
+                "path": "[3][0][20]"
+              },
+              {
+                "alias": "[3,22]",
+                "path": "[3][0][21]"
+              },
+              {
+                "alias": "[3,23]",
+                "path": "[3][0][22]"
+              },
+              {
+                "alias": "[3,24]",
+                "path": "[3][0][23]"
+              },
+              {
+                "alias": "[3,25]",
+                "path": "[3][0][24]"
+              },
+              {
+                "alias": "[3,26]",
+                "path": "[3][0][25]"
+              },
+              {
+                "alias": "[3,27]",
+                "path": "[3][0][26]"
+              },
+              {
+                "alias": "[3,28]",
+                "path": "[3][0][27]"
+              },
+              {
+                "alias": "[3,29]",
+                "path": "[3][0][28]"
+              },
+              {
+                "alias": "[3,30]",
+                "path": "[3][0][29]"
+              },
+              {
+                "alias": "[3,31]",
+                "path": "[3][0][30]"
+              },
+              {
+                "alias": "[3,32]",
+                "path": "[3][0][31]"
+              },
+              {
+                "alias": "[4,1]",
+                "path": "[4][0][0]"
+              },
+              {
+                "alias": "[4,2]",
+                "path": "[4][0][1]"
+              },
+              {
+                "alias": "[4,3]",
+                "path": "[4][0][2]"
+              },
+              {
+                "alias": "[4,4]",
+                "path": "[4][0][3]"
+              },
+              {
+                "alias": "[4,5]",
+                "path": "[4][0][4]"
+              },
+              {
+                "alias": "[4,6]",
+                "path": "[4][0][5]"
+              },
+              {
+                "alias": "[4,7]",
+                "path": "[4][0][6]"
+              },
+              {
+                "alias": "[4,8]",
+                "path": "[4][0][7]"
+              },
+              {
+                "alias": "[4,9]",
+                "path": "[4][0][8]"
+              },
+              {
+                "alias": "[4,10]",
+                "path": "[4][0][9]"
+              },
+              {
+                "alias": "[4,11]",
+                "path": "[4][0][10]"
+              },
+              {
+                "alias": "[4,12]",
+                "path": "[4][0][11]"
+              },
+              {
+                "alias": "[4,13]",
+                "path": "[4][0][12]"
+              },
+              {
+                "alias": "[4,14]",
+                "path": "[4][0][13]"
+              },
+              {
+                "alias": "[4,15]",
+                "path": "[4][0][14]"
+              },
+              {
+                "alias": "[4,16]",
+                "path": "[4][0][15]"
+              },
+              {
+                "alias": "[4,17]",
+                "path": "[4][0][16]"
+              },
+              {
+                "alias": "[4,18]",
+                "path": "[4][0][17]"
+              },
+              {
+                "alias": "[4,19]",
+                "path": "[4][0][18]"
+              },
+              {
+                "alias": "[4,20]",
+                "path": "[4][0][19]"
+              },
+              {
+                "alias": "[4,21]",
+                "path": "[4][0][20]"
+              },
+              {
+                "alias": "[4,22]",
+                "path": "[4][0][21]"
+              },
+              {
+                "alias": "[4,23]",
+                "path": "[4][0][22]"
+              },
+              {
+                "alias": "[4,24]",
+                "path": "[4][0][23]"
+              },
+              {
+                "alias": "[4,25]",
+                "path": "[4][0][24]"
+              },
+              {
+                "alias": "[4,26]",
+                "path": "[4][0][25]"
+              },
+              {
+                "alias": "[4,27]",
+                "path": "[4][0][26]"
+              },
+              {
+                "alias": "[4,28]",
+                "path": "[4][0][27]"
+              },
+              {
+                "alias": "[4,29]",
+                "path": "[4][0][28]"
+              },
+              {
+                "alias": "[4,30]",
+                "path": "[4][0][29]"
+              },
+              {
+                "alias": "[4,31]",
+                "path": "[4][0][30]"
+              },
+              {
+                "alias": "[4,32]",
+                "path": "[4][0][31]"
+              },
+              {
+                "alias": "[5,1]",
+                "path": "[5][0][0]"
+              },
+              {
+                "alias": "[5,2]",
+                "path": "[5][0][1]"
+              },
+              {
+                "alias": "[5,3]",
+                "path": "[5][0][2]"
+              },
+              {
+                "alias": "[5,4]",
+                "path": "[5][0][3]"
+              },
+              {
+                "alias": "[5,5]",
+                "path": "[5][0][4]"
+              },
+              {
+                "alias": "[5,6]",
+                "path": "[5][0][5]"
+              },
+              {
+                "alias": "[5,7]",
+                "path": "[5][0][6]"
+              },
+              {
+                "alias": "[5,8]",
+                "path": "[5][0][7]"
+              },
+              {
+                "alias": "[5,9]",
+                "path": "[5][0][8]"
+              },
+              {
+                "alias": "[5,10]",
+                "path": "[5][0][9]"
+              },
+              {
+                "alias": "[5,11]",
+                "path": "[5][0][10]"
+              },
+              {
+                "alias": "[5,12]",
+                "path": "[5][0][11]"
+              },
+              {
+                "alias": "[5,13]",
+                "path": "[5][0][12]"
+              },
+              {
+                "alias": "[5,14]",
+                "path": "[5][0][13]"
+              },
+              {
+                "alias": "[5,15]",
+                "path": "[5][0][14]"
+              },
+              {
+                "alias": "[5,16]",
+                "path": "[5][0][15]"
+              },
+              {
+                "alias": "[5,17]",
+                "path": "[5][0][16]"
+              },
+              {
+                "alias": "[5,18]",
+                "path": "[5][0][17]"
+              },
+              {
+                "alias": "[5,19]",
+                "path": "[5][0][18]"
+              },
+              {
+                "alias": "[5,20]",
+                "path": "[5][0][19]"
+              },
+              {
+                "alias": "[5,21]",
+                "path": "[5][0][20]"
+              },
+              {
+                "alias": "[5,22]",
+                "path": "[5][0][21]"
+              },
+              {
+                "alias": "[5,23]",
+                "path": "[5][0][22]"
+              },
+              {
+                "alias": "[5,24]",
+                "path": "[5][0][23]"
+              },
+              {
+                "alias": "[5,25]",
+                "path": "[5][0][24]"
+              },
+              {
+                "alias": "[5,26]",
+                "path": "[5][0][25]"
+              },
+              {
+                "alias": "[5,27]",
+                "path": "[5][0][26]"
+              },
+              {
+                "alias": "[5,28]",
+                "path": "[5][0][27]"
+              },
+              {
+                "alias": "[5,29]",
+                "path": "[5][0][28]"
+              },
+              {
+                "alias": "[5,30]",
+                "path": "[5][0][29]"
+              },
+              {
+                "alias": "[5,31]",
+                "path": "[5][0][30]"
+              },
+              {
+                "alias": "[5,32]",
+                "path": "[5][0][31]"
+              },
+              {
+                "alias": "[6,1]",
+                "path": "[6][0][0]"
+              },
+              {
+                "alias": "[6,2]",
+                "path": "[6][0][1]"
+              },
+              {
+                "alias": "[6,3]",
+                "path": "[6][0][2]"
+              },
+              {
+                "alias": "[6,4]",
+                "path": "[6][0][3]"
+              },
+              {
+                "alias": "[6,5]",
+                "path": "[6][0][4]"
+              },
+              {
+                "alias": "[6,6]",
+                "path": "[6][0][5]"
+              },
+              {
+                "alias": "[6,7]",
+                "path": "[6][0][6]"
+              },
+              {
+                "alias": "[6,8]",
+                "path": "[6][0][7]"
+              },
+              {
+                "alias": "[6,9]",
+                "path": "[6][0][8]"
+              },
+              {
+                "alias": "[6,10]",
+                "path": "[6][0][9]"
+              },
+              {
+                "alias": "[6,11]",
+                "path": "[6][0][10]"
+              },
+              {
+                "alias": "[6,12]",
+                "path": "[6][0][11]"
+              },
+              {
+                "alias": "[6,13]",
+                "path": "[6][0][12]"
+              },
+              {
+                "alias": "[6,14]",
+                "path": "[6][0][13]"
+              },
+              {
+                "alias": "[6,15]",
+                "path": "[6][0][14]"
+              },
+              {
+                "alias": "[6,16]",
+                "path": "[6][0][15]"
+              },
+              {
+                "alias": "[6,17]",
+                "path": "[6][0][16]"
+              },
+              {
+                "alias": "[6,18]",
+                "path": "[6][0][17]"
+              },
+              {
+                "alias": "[6,19]",
+                "path": "[6][0][18]"
+              },
+              {
+                "alias": "[6,20]",
+                "path": "[6][0][19]"
+              },
+              {
+                "alias": "[6,21]",
+                "path": "[6][0][20]"
+              },
+              {
+                "alias": "[6,22]",
+                "path": "[6][0][21]"
+              },
+              {
+                "alias": "[6,23]",
+                "path": "[6][0][22]"
+              },
+              {
+                "alias": "[6,24]",
+                "path": "[6][0][23]"
+              },
+              {
+                "alias": "[6,25]",
+                "path": "[6][0][24]"
+              },
+              {
+                "alias": "[6,26]",
+                "path": "[6][0][25]"
+              },
+              {
+                "alias": "[6,27]",
+                "path": "[6][0][26]"
+              },
+              {
+                "alias": "[6,28]",
+                "path": "[6][0][27]"
+              },
+              {
+                "alias": "[6,29]",
+                "path": "[6][0][28]"
+              },
+              {
+                "alias": "[6,30]",
+                "path": "[6][0][29]"
+              },
+              {
+                "alias": "[6,31]",
+                "path": "[6][0][30]"
+              },
+              {
+                "alias": "[6,32]",
+                "path": "[6][0][31]"
+              },
+              {
+                "alias": "[7,1]",
+                "path": "[7][0][0]"
+              },
+              {
+                "alias": "[7,2]",
+                "path": "[7][0][1]"
+              },
+              {
+                "alias": "[7,3]",
+                "path": "[7][0][2]"
+              },
+              {
+                "alias": "[7,4]",
+                "path": "[7][0][3]"
+              },
+              {
+                "alias": "[7,5]",
+                "path": "[7][0][4]"
+              },
+              {
+                "alias": "[7,6]",
+                "path": "[7][0][5]"
+              },
+              {
+                "alias": "[7,7]",
+                "path": "[7][0][6]"
+              },
+              {
+                "alias": "[7,8]",
+                "path": "[7][0][7]"
+              },
+              {
+                "alias": "[7,9]",
+                "path": "[7][0][8]"
+              },
+              {
+                "alias": "[7,10]",
+                "path": "[7][0][9]"
+              },
+              {
+                "alias": "[7,11]",
+                "path": "[7][0][10]"
+              },
+              {
+                "alias": "[7,12]",
+                "path": "[7][0][11]"
+              },
+              {
+                "alias": "[7,13]",
+                "path": "[7][0][12]"
+              },
+              {
+                "alias": "[7,14]",
+                "path": "[7][0][13]"
+              },
+              {
+                "alias": "[7,15]",
+                "path": "[7][0][14]"
+              },
+              {
+                "alias": "[7,16]",
+                "path": "[7][0][15]"
+              },
+              {
+                "alias": "[7,17]",
+                "path": "[7][0][16]"
+              },
+              {
+                "alias": "[7,18]",
+                "path": "[7][0][17]"
+              },
+              {
+                "alias": "[7,19]",
+                "path": "[7][0][18]"
+              },
+              {
+                "alias": "[7,20]",
+                "path": "[7][0][19]"
+              },
+              {
+                "alias": "[7,21]",
+                "path": "[7][0][20]"
+              },
+              {
+                "alias": "[7,22]",
+                "path": "[7][0][21]"
+              },
+              {
+                "alias": "[7,23]",
+                "path": "[7][0][22]"
+              },
+              {
+                "alias": "[7,24]",
+                "path": "[7][0][23]"
+              },
+              {
+                "alias": "[7,25]",
+                "path": "[7][0][24]"
+              },
+              {
+                "alias": "[7,26]",
+                "path": "[7][0][25]"
+              },
+              {
+                "alias": "[7,27]",
+                "path": "[7][0][26]"
+              },
+              {
+                "alias": "[7,28]",
+                "path": "[7][0][27]"
+              },
+              {
+                "alias": "[7,29]",
+                "path": "[7][0][28]"
+              },
+              {
+                "alias": "[7,30]",
+                "path": "[7][0][29]"
+              },
+              {
+                "alias": "[7,31]",
+                "path": "[7][0][30]"
+              },
+              {
+                "alias": "[7,32]",
+                "path": "[7][0][31]"
+              }
+            ],
+            "keepTime": false,
+            "replace": false,
+            "source": "CARR.PDSCHMCSDist (PDSCH_RBs)"
+          }
+        },
+        {
+          "id": "transpose",
+          "options": {
+            "firstFieldName": "Rank,MCS Index",
+            "restFieldsName": "Count"
+          }
+        },
+        {
+          "id": "filterByValue",
+          "options": {
+            "filters": [
+              {
+                "config": {
+                  "id": "substring",
+                  "options": {
+                    "value": ","
+                  }
+                },
+                "fieldName": "Rank,MCS Index"
+              }
+            ],
+            "match": "any",
+            "type": "include"
+          }
+        },
+        {
+          "id": "extractFields",
+          "options": {
+            "delimiter": ",",
+            "format": "json",
+            "jsonPaths": [
+              {
+                "alias": "Rank",
+                "path": "[0]"
+              },
+              {
+                "alias": "MCS Index",
+                "path": "[1]"
+              }
+            ],
+            "keepTime": false,
+            "replace": false,
+            "source": "Rank,MCS Index"
+          }
+        },
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "destinationType": "number",
+                "targetField": "Count 1"
+              }
+            ],
+            "fields": {}
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {},
+            "includeByName": {},
+            "indexByName": {},
+            "renameByName": {
+              "Count 1": "Count"
             }
           }
         }
       ],
-      "type": "stat"
+      "type": "xychart"
     },
     {
       "datasource": {
@@ -915,7 +2421,6 @@
               "mode": "off"
             }
           },
-          "mappings": [],
           "min": 0,
           "thresholds": {
             "mode": "absolute",
@@ -966,13 +2471,17 @@
         ]
       },
       "gridPos": {
-        "h": 8,
+        "h": 7,
         "w": 11,
-        "x": 0,
-        "y": 4
+        "x": 6,
+        "y": 6
       },
       "id": 5,
       "options": {
+        "annotations": {
+          "clustering": -1,
+          "multiLane": false
+        },
         "legend": {
           "calcs": [],
           "displayMode": "list",
@@ -985,7 +2494,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.4.2",
+      "pluginVersion": "13.0.1+security-01",
       "targets": [
         {
           "datasource": {
@@ -1019,7 +2528,7 @@
                 "config": {
                   "id": "equal",
                   "options": {
-                    "value": "${Selected_UE_ID}"
+                    "value": "${UE_ID}"
                   }
                 },
                 "fieldName": "UE ID"
@@ -1031,361 +2540,6 @@
         }
       ],
       "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "datasource",
-        "uid": "-- Dashboard --"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "fieldMinMax": false,
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "DRB.PdcpSduVolumeUL (Mb) (sum) / 8"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "super-light-orange",
-                  "mode": "fixed"
-                }
-              },
-              {
-                "id": "displayName",
-                "value": "Aggregated UE UL Volume"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "DRB.PdcpSduVolumeDL (Mb) (sum) / 8"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "light-blue",
-                  "mode": "fixed"
-                }
-              },
-              {
-                "id": "displayName",
-                "value": "Aggregated UE DL Volume"
-              }
-            ]
-          }
-        ]
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 6,
-        "x": 11,
-        "y": 4
-      },
-      "id": 29,
-      "maxPerRow": 12,
-      "options": {
-        "displayMode": "basic",
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": false
-        },
-        "maxVizHeight": 300,
-        "minVizHeight": 16,
-        "minVizWidth": 8,
-        "namePlacement": "auto",
-        "orientation": "horizontal",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showUnfilled": true,
-        "sizing": "auto",
-        "valueMode": "color"
-      },
-      "pluginVersion": "12.4.2",
-      "targets": [
-        {
-          "datasource": {
-            "type": "datasource",
-            "uid": "-- Dashboard --"
-          },
-          "panelId": 20,
-          "refId": "A"
-        }
-      ],
-      "transformations": [
-        {
-          "id": "filterFieldsByName",
-          "options": {
-            "include": {
-              "names": [
-                "DRB.PdcpSduVolumeDL (Mb)",
-                "DRB.PdcpSduVolumeUL (Mb)",
-                "Time (UNIX ms)",
-                "UE ID"
-              ]
-            }
-          }
-        },
-        {
-          "disabled": true,
-          "id": "filterByValue",
-          "options": {
-            "filters": [
-              {
-                "config": {
-                  "id": "equal",
-                  "options": {
-                    "value": "${Selected_UE_ID}"
-                  }
-                },
-                "fieldName": "UE_ID"
-              }
-            ],
-            "match": "any",
-            "type": "include"
-          }
-        },
-        {
-          "id": "groupBy",
-          "options": {
-            "fields": {
-              "DRB.PdcpSduVolumeDL (Mb)": {
-                "aggregations": [
-                  "sum"
-                ],
-                "operation": "aggregate"
-              },
-              "DRB.PdcpSduVolumeUL (Mb)": {
-                "aggregations": [
-                  "sum"
-                ],
-                "operation": "aggregate"
-              },
-              "Time (UNIX ms)": {
-                "aggregations": [],
-                "operation": "groupby"
-              },
-              "Timestamp": {
-                "aggregations": [],
-                "operation": "groupby"
-              }
-            }
-          }
-        },
-        {
-          "id": "calculateField",
-          "options": {
-            "binary": {
-              "left": {
-                "matcher": {
-                  "id": "byName",
-                  "options": "DRB.PdcpSduVolumeDL (Mb) (sum)"
-                }
-              },
-              "operator": "/",
-              "right": {
-                "fixed": "8"
-              }
-            },
-            "mode": "binary",
-            "reduce": {
-              "reducer": "sum"
-            }
-          }
-        },
-        {
-          "id": "calculateField",
-          "options": {
-            "binary": {
-              "left": {
-                "matcher": {
-                  "id": "byName",
-                  "options": "DRB.PdcpSduVolumeUL (Mb) (sum)"
-                }
-              },
-              "operator": "/",
-              "right": {
-                "fixed": "8"
-              }
-            },
-            "mode": "binary",
-            "reduce": {
-              "include": [],
-              "reducer": "sum"
-            }
-          }
-        },
-        {
-          "id": "filterFieldsByName",
-          "options": {
-            "include": {
-              "names": [
-                "Timestamp",
-                "DRB.PdcpSduVolumeDL (Mb) (sum) / 8",
-                "DRB.PdcpSduVolumeUL (Mb) (sum) / 8"
-              ]
-            }
-          }
-        }
-      ],
-      "type": "bargauge"
-    },
-    {
-      "datasource": {
-        "type": "datasource",
-        "uid": "-- Dashboard --"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "fixedColor": "super-light-blue",
-            "mode": "fixed"
-          },
-          "custom": {
-            "fillOpacity": 80,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineWidth": 1,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            }
-          },
-          "decimals": 0,
-          "fieldMinMax": false,
-          "mappings": [],
-          "thresholds": {
-            "mode": "percentage",
-            "steps": [
-              {
-                "color": "super-light-blue",
-                "value": 0
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "PRBs"
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "RRU.PrbTotDl (%)"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "light-blue",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 7,
-        "x": 17,
-        "y": 4
-      },
-      "id": 6,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "12.4.2",
-      "targets": [
-        {
-          "datasource": {
-            "type": "datasource",
-            "uid": "-- Dashboard --"
-          },
-          "panelId": 20,
-          "refId": "A"
-        }
-      ],
-      "title": "Histogram of PRBs Downlink",
-      "transformations": [
-        {
-          "id": "filterFieldsByName",
-          "options": {
-            "include": {
-              "names": [
-                "RRU.PrbTotDl (%)",
-                "Time (UNIX ms)",
-                "UE ID"
-              ]
-            }
-          }
-        },
-        {
-          "id": "filterByValue",
-          "options": {
-            "filters": [
-              {
-                "config": {
-                  "id": "equal",
-                  "options": {
-                    "value": "${Selected_UE_ID}"
-                  }
-                },
-                "fieldName": "UE ID"
-              }
-            ],
-            "match": "any",
-            "type": "include"
-          }
-        }
-      ],
-      "type": "histogram"
     },
     {
       "datasource": {
@@ -1431,7 +2585,6 @@
               "mode": "off"
             }
           },
-          "mappings": [],
           "min": 0,
           "thresholds": {
             "mode": "absolute",
@@ -1467,13 +2620,17 @@
         ]
       },
       "gridPos": {
-        "h": 12,
-        "w": 6,
-        "x": 11,
-        "y": 8
+        "h": 5,
+        "w": 7,
+        "x": 17,
+        "y": 6
       },
       "id": 4,
       "options": {
+        "annotations": {
+          "clustering": -1,
+          "multiLane": false
+        },
         "legend": {
           "calcs": [],
           "displayMode": "list",
@@ -1486,7 +2643,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.4.2",
+      "pluginVersion": "13.0.1+security-01",
       "targets": [
         {
           "datasource": {
@@ -1519,7 +2676,7 @@
                 "config": {
                   "id": "equal",
                   "options": {
-                    "value": "${Selected_UE_ID}"
+                    "value": "${UE_ID}"
                   }
                 },
                 "fieldName": "UE ID"
@@ -1531,6 +2688,1430 @@
         }
       ],
       "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+      },
+      "description": "DL Modulation Coding Scheme",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 50,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineStyle": {
+              "fill": "solid"
+            },
+            "pointShape": "circle",
+            "pointSize": {
+              "fixed": 5
+            },
+            "pointStrokeWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "show": "lines"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 0,
+        "y": 11
+      },
+      "id": 49,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "mapping": "auto",
+        "series": [
+          {
+            "color": {
+              "matcher": {
+                "id": "byName",
+                "options": "Rank"
+              }
+            },
+            "frame": {
+              "matcher": {
+                "id": "byIndex",
+                "options": 0
+              }
+            },
+            "x": {
+              "matcher": {
+                "id": "byName",
+                "options": "MCS Index"
+              }
+            },
+            "y": {
+              "matcher": {
+                "id": "byName",
+                "options": "Count"
+              }
+            }
+          }
+        ],
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "13.0.1+security-01",
+      "targets": [
+        {
+          "columns": [
+            {
+              "selector": "Time (UNIX ms)",
+              "text": "",
+              "type": "timestamp_epoch"
+            },
+            {
+              "selector": "Reporting Time Offset (ms)",
+              "text": "",
+              "type": "number"
+            },
+            {
+              "selector": "E2 Node ID",
+              "text": "",
+              "type": "string"
+            },
+            {
+              "selector": "CARR.PDSCHMCSDist (PDSCH_RBs)",
+              "text": "",
+              "type": "string"
+            }
+          ],
+          "csv_options": {
+            "skip_lines_with_error": true
+          },
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+          },
+          "filters": [],
+          "format": "timeseries",
+          "global_query_id": "",
+          "parser": "backend",
+          "refId": "A",
+          "root_selector": "",
+          "source": "url",
+          "type": "csv",
+          "url": "$Cell_Metrics",
+          "url_options": {
+            "data": "",
+            "method": "GET",
+            "params": [
+              {
+                "key": "from",
+                "value": "$__from"
+              },
+              {
+                "key": "to",
+                "value": "$__to"
+              },
+              {
+                "key": "approx_num_samples",
+                "value": "${Resolution}"
+              }
+            ]
+          }
+        }
+      ],
+      "title": "CARR.PDSCHMCSDist.BinX.BinY.BinZ (256QAM)",
+      "transformations": [
+        {
+          "id": "filterByValue",
+          "options": {
+            "filters": [
+              {
+                "config": {
+                  "id": "equal",
+                  "options": {
+                    "value": "${E2_ID}"
+                  }
+                },
+                "fieldName": "E2 Node ID"
+              }
+            ],
+            "match": "any",
+            "type": "include"
+          }
+        },
+        {
+          "id": "reduce",
+          "options": {
+            "includeTimeField": false,
+            "mode": "reduceFields",
+            "reducers": [
+              "lastNotNull"
+            ]
+          }
+        },
+        {
+          "id": "extractFields",
+          "options": {
+            "delimiter": ",",
+            "format": "json",
+            "jsonPaths": [
+              {
+                "alias": "[0,1]",
+                "path": "[0][0][1]"
+              },
+              {
+                "alias": "[0,2]",
+                "path": "[0][1][1]"
+              },
+              {
+                "alias": "[0,3]",
+                "path": "[0][1][2]"
+              },
+              {
+                "alias": "[0,4]",
+                "path": "[0][1][3]"
+              },
+              {
+                "alias": "[0,5]",
+                "path": "[0][1][4]"
+              },
+              {
+                "alias": "[0,6]",
+                "path": "[0][1][5]"
+              },
+              {
+                "alias": "[0,7]",
+                "path": "[0][1][6]"
+              },
+              {
+                "alias": "[0,8]",
+                "path": "[0][1][7]"
+              },
+              {
+                "alias": "[0,9]",
+                "path": "[0][1][8]"
+              },
+              {
+                "alias": "[0,10]",
+                "path": "[0][1][9]"
+              },
+              {
+                "alias": "[0,11]",
+                "path": "[0][1][10]"
+              },
+              {
+                "alias": "[0,12]",
+                "path": "[0][1][11]"
+              },
+              {
+                "alias": "[0,13]",
+                "path": "[0][1][12]"
+              },
+              {
+                "alias": "[0,14]",
+                "path": "[0][1][13]"
+              },
+              {
+                "alias": "[0,15]",
+                "path": "[0][1][14]"
+              },
+              {
+                "alias": "[0,16]",
+                "path": "[0][1][15]"
+              },
+              {
+                "alias": "[0,17]",
+                "path": "[0][1][16]"
+              },
+              {
+                "alias": "[0,18]",
+                "path": "[0][1][17]"
+              },
+              {
+                "alias": "[0,19]",
+                "path": "[0][1][18]"
+              },
+              {
+                "alias": "[0,20]",
+                "path": "[0][1][19]"
+              },
+              {
+                "alias": "[0,21]",
+                "path": "[0][1][20]"
+              },
+              {
+                "alias": "[0,22]",
+                "path": "[0][1][21]"
+              },
+              {
+                "alias": "[0,23]",
+                "path": "[0][1][22]"
+              },
+              {
+                "alias": "[0,24]",
+                "path": "[0][1][23]"
+              },
+              {
+                "alias": "[0,25]",
+                "path": "[0][1][24]"
+              },
+              {
+                "alias": "[0,26]",
+                "path": "[0][1][25]"
+              },
+              {
+                "alias": "[0,27]",
+                "path": "[0][1][26]"
+              },
+              {
+                "alias": "[0,28]",
+                "path": "[0][1][27]"
+              },
+              {
+                "alias": "[0,29]",
+                "path": "[0][1][28]"
+              },
+              {
+                "alias": "[0,30]",
+                "path": "[0][1][29]"
+              },
+              {
+                "alias": "[0,31]",
+                "path": "[0][1][30]"
+              },
+              {
+                "alias": "[0,32]",
+                "path": "[0][1][31]"
+              },
+              {
+                "alias": "[1,1]",
+                "path": "[1][0][1]"
+              },
+              {
+                "alias": "[1,2]",
+                "path": "[1][1][1]"
+              },
+              {
+                "alias": "[1,3]",
+                "path": "[1][1][2]"
+              },
+              {
+                "alias": "[1,4]",
+                "path": "[1][1][3]"
+              },
+              {
+                "alias": "[1,5]",
+                "path": "[1][1][4]"
+              },
+              {
+                "alias": "[1,6]",
+                "path": "[1][1][5]"
+              },
+              {
+                "alias": "[1,7]",
+                "path": "[1][1][6]"
+              },
+              {
+                "alias": "[1,8]",
+                "path": "[1][1][7]"
+              },
+              {
+                "alias": "[1,9]",
+                "path": "[1][1][8]"
+              },
+              {
+                "alias": "[1,10]",
+                "path": "[1][1][9]"
+              },
+              {
+                "alias": "[1,11]",
+                "path": "[1][1][10]"
+              },
+              {
+                "alias": "[1,12]",
+                "path": "[1][1][11]"
+              },
+              {
+                "alias": "[1,13]",
+                "path": "[1][1][12]"
+              },
+              {
+                "alias": "[1,14]",
+                "path": "[1][1][13]"
+              },
+              {
+                "alias": "[1,15]",
+                "path": "[1][1][14]"
+              },
+              {
+                "alias": "[1,16]",
+                "path": "[1][1][15]"
+              },
+              {
+                "alias": "[1,17]",
+                "path": "[1][1][16]"
+              },
+              {
+                "alias": "[1,18]",
+                "path": "[1][1][17]"
+              },
+              {
+                "alias": "[1,19]",
+                "path": "[1][1][18]"
+              },
+              {
+                "alias": "[1,20]",
+                "path": "[1][1][19]"
+              },
+              {
+                "alias": "[1,21]",
+                "path": "[1][1][20]"
+              },
+              {
+                "alias": "[1,22]",
+                "path": "[1][1][21]"
+              },
+              {
+                "alias": "[1,23]",
+                "path": "[1][1][22]"
+              },
+              {
+                "alias": "[1,24]",
+                "path": "[1][1][23]"
+              },
+              {
+                "alias": "[1,25]",
+                "path": "[1][1][24]"
+              },
+              {
+                "alias": "[1,26]",
+                "path": "[1][1][25]"
+              },
+              {
+                "alias": "[1,27]",
+                "path": "[1][1][26]"
+              },
+              {
+                "alias": "[1,28]",
+                "path": "[1][1][27]"
+              },
+              {
+                "alias": "[1,29]",
+                "path": "[1][1][28]"
+              },
+              {
+                "alias": "[1,30]",
+                "path": "[1][1][29]"
+              },
+              {
+                "alias": "[1,31]",
+                "path": "[1][1][30]"
+              },
+              {
+                "alias": "[1,32]",
+                "path": "[1][1][31]"
+              },
+              {
+                "alias": "[2,1]",
+                "path": "[2][0][1]"
+              },
+              {
+                "alias": "[2,2]",
+                "path": "[2][1][1]"
+              },
+              {
+                "alias": "[2,3]",
+                "path": "[2][1][2]"
+              },
+              {
+                "alias": "[2,4]",
+                "path": "[2][1][3]"
+              },
+              {
+                "alias": "[2,5]",
+                "path": "[2][1][4]"
+              },
+              {
+                "alias": "[2,6]",
+                "path": "[2][1][5]"
+              },
+              {
+                "alias": "[2,7]",
+                "path": "[2][1][6]"
+              },
+              {
+                "alias": "[2,8]",
+                "path": "[2][1][7]"
+              },
+              {
+                "alias": "[2,9]",
+                "path": "[2][1][8]"
+              },
+              {
+                "alias": "[2,10]",
+                "path": "[2][1][9]"
+              },
+              {
+                "alias": "[2,11]",
+                "path": "[2][1][10]"
+              },
+              {
+                "alias": "[2,12]",
+                "path": "[2][1][11]"
+              },
+              {
+                "alias": "[2,13]",
+                "path": "[2][1][12]"
+              },
+              {
+                "alias": "[2,14]",
+                "path": "[2][1][13]"
+              },
+              {
+                "alias": "[2,15]",
+                "path": "[2][1][14]"
+              },
+              {
+                "alias": "[2,16]",
+                "path": "[2][1][15]"
+              },
+              {
+                "alias": "[2,17]",
+                "path": "[2][1][16]"
+              },
+              {
+                "alias": "[2,18]",
+                "path": "[2][1][17]"
+              },
+              {
+                "alias": "[2,19]",
+                "path": "[2][1][18]"
+              },
+              {
+                "alias": "[2,20]",
+                "path": "[2][1][19]"
+              },
+              {
+                "alias": "[2,21]",
+                "path": "[2][1][20]"
+              },
+              {
+                "alias": "[2,22]",
+                "path": "[2][1][21]"
+              },
+              {
+                "alias": "[2,23]",
+                "path": "[2][1][22]"
+              },
+              {
+                "alias": "[2,24]",
+                "path": "[2][1][23]"
+              },
+              {
+                "alias": "[2,25]",
+                "path": "[2][1][24]"
+              },
+              {
+                "alias": "[2,26]",
+                "path": "[2][1][25]"
+              },
+              {
+                "alias": "[2,27]",
+                "path": "[2][1][26]"
+              },
+              {
+                "alias": "[2,28]",
+                "path": "[2][1][27]"
+              },
+              {
+                "alias": "[2,29]",
+                "path": "[2][1][28]"
+              },
+              {
+                "alias": "[2,30]",
+                "path": "[2][1][29]"
+              },
+              {
+                "alias": "[2,31]",
+                "path": "[2][1][30]"
+              },
+              {
+                "alias": "[2,32]",
+                "path": "[2][1][31]"
+              },
+              {
+                "alias": "[3,1]",
+                "path": "[3][0][1]"
+              },
+              {
+                "alias": "[3,2]",
+                "path": "[3][1][1]"
+              },
+              {
+                "alias": "[3,3]",
+                "path": "[3][1][2]"
+              },
+              {
+                "alias": "[3,4]",
+                "path": "[3][1][3]"
+              },
+              {
+                "alias": "[3,5]",
+                "path": "[3][1][4]"
+              },
+              {
+                "alias": "[3,6]",
+                "path": "[3][1][5]"
+              },
+              {
+                "alias": "[3,7]",
+                "path": "[3][1][6]"
+              },
+              {
+                "alias": "[3,8]",
+                "path": "[3][1][7]"
+              },
+              {
+                "alias": "[3,9]",
+                "path": "[3][1][8]"
+              },
+              {
+                "alias": "[3,10]",
+                "path": "[3][1][9]"
+              },
+              {
+                "alias": "[3,11]",
+                "path": "[3][1][10]"
+              },
+              {
+                "alias": "[3,12]",
+                "path": "[3][1][11]"
+              },
+              {
+                "alias": "[3,13]",
+                "path": "[3][1][12]"
+              },
+              {
+                "alias": "[3,14]",
+                "path": "[3][1][13]"
+              },
+              {
+                "alias": "[3,15]",
+                "path": "[3][1][14]"
+              },
+              {
+                "alias": "[3,16]",
+                "path": "[3][1][15]"
+              },
+              {
+                "alias": "[3,17]",
+                "path": "[3][1][16]"
+              },
+              {
+                "alias": "[3,18]",
+                "path": "[3][1][17]"
+              },
+              {
+                "alias": "[3,19]",
+                "path": "[3][1][18]"
+              },
+              {
+                "alias": "[3,20]",
+                "path": "[3][1][19]"
+              },
+              {
+                "alias": "[3,21]",
+                "path": "[3][1][20]"
+              },
+              {
+                "alias": "[3,22]",
+                "path": "[3][1][21]"
+              },
+              {
+                "alias": "[3,23]",
+                "path": "[3][1][22]"
+              },
+              {
+                "alias": "[3,24]",
+                "path": "[3][1][23]"
+              },
+              {
+                "alias": "[3,25]",
+                "path": "[3][1][24]"
+              },
+              {
+                "alias": "[3,26]",
+                "path": "[3][1][25]"
+              },
+              {
+                "alias": "[3,27]",
+                "path": "[3][1][26]"
+              },
+              {
+                "alias": "[3,28]",
+                "path": "[3][1][27]"
+              },
+              {
+                "alias": "[3,29]",
+                "path": "[3][1][28]"
+              },
+              {
+                "alias": "[3,30]",
+                "path": "[3][1][29]"
+              },
+              {
+                "alias": "[3,31]",
+                "path": "[3][1][30]"
+              },
+              {
+                "alias": "[3,32]",
+                "path": "[3][1][31]"
+              },
+              {
+                "alias": "[4,1]",
+                "path": "[4][0][1]"
+              },
+              {
+                "alias": "[4,2]",
+                "path": "[4][1][1]"
+              },
+              {
+                "alias": "[4,3]",
+                "path": "[4][1][2]"
+              },
+              {
+                "alias": "[4,4]",
+                "path": "[4][1][3]"
+              },
+              {
+                "alias": "[4,5]",
+                "path": "[4][1][4]"
+              },
+              {
+                "alias": "[4,6]",
+                "path": "[4][1][5]"
+              },
+              {
+                "alias": "[4,7]",
+                "path": "[4][1][6]"
+              },
+              {
+                "alias": "[4,8]",
+                "path": "[4][1][7]"
+              },
+              {
+                "alias": "[4,9]",
+                "path": "[4][1][8]"
+              },
+              {
+                "alias": "[4,10]",
+                "path": "[4][1][9]"
+              },
+              {
+                "alias": "[4,11]",
+                "path": "[4][1][10]"
+              },
+              {
+                "alias": "[4,12]",
+                "path": "[4][1][11]"
+              },
+              {
+                "alias": "[4,13]",
+                "path": "[4][1][12]"
+              },
+              {
+                "alias": "[4,14]",
+                "path": "[4][1][13]"
+              },
+              {
+                "alias": "[4,15]",
+                "path": "[4][1][14]"
+              },
+              {
+                "alias": "[4,16]",
+                "path": "[4][1][15]"
+              },
+              {
+                "alias": "[4,17]",
+                "path": "[4][1][16]"
+              },
+              {
+                "alias": "[4,18]",
+                "path": "[4][1][17]"
+              },
+              {
+                "alias": "[4,19]",
+                "path": "[4][1][18]"
+              },
+              {
+                "alias": "[4,20]",
+                "path": "[4][1][19]"
+              },
+              {
+                "alias": "[4,21]",
+                "path": "[4][1][20]"
+              },
+              {
+                "alias": "[4,22]",
+                "path": "[4][1][21]"
+              },
+              {
+                "alias": "[4,23]",
+                "path": "[4][1][22]"
+              },
+              {
+                "alias": "[4,24]",
+                "path": "[4][1][23]"
+              },
+              {
+                "alias": "[4,25]",
+                "path": "[4][1][24]"
+              },
+              {
+                "alias": "[4,26]",
+                "path": "[4][1][25]"
+              },
+              {
+                "alias": "[4,27]",
+                "path": "[4][1][26]"
+              },
+              {
+                "alias": "[4,28]",
+                "path": "[4][1][27]"
+              },
+              {
+                "alias": "[4,29]",
+                "path": "[4][1][28]"
+              },
+              {
+                "alias": "[4,30]",
+                "path": "[4][1][29]"
+              },
+              {
+                "alias": "[4,31]",
+                "path": "[4][1][30]"
+              },
+              {
+                "alias": "[4,32]",
+                "path": "[4][1][31]"
+              },
+              {
+                "alias": "[5,1]",
+                "path": "[5][0][1]"
+              },
+              {
+                "alias": "[5,2]",
+                "path": "[5][1][1]"
+              },
+              {
+                "alias": "[5,3]",
+                "path": "[5][1][2]"
+              },
+              {
+                "alias": "[5,4]",
+                "path": "[5][1][3]"
+              },
+              {
+                "alias": "[5,5]",
+                "path": "[5][1][4]"
+              },
+              {
+                "alias": "[5,6]",
+                "path": "[5][1][5]"
+              },
+              {
+                "alias": "[5,7]",
+                "path": "[5][1][6]"
+              },
+              {
+                "alias": "[5,8]",
+                "path": "[5][1][7]"
+              },
+              {
+                "alias": "[5,9]",
+                "path": "[5][1][8]"
+              },
+              {
+                "alias": "[5,10]",
+                "path": "[5][1][9]"
+              },
+              {
+                "alias": "[5,11]",
+                "path": "[5][1][10]"
+              },
+              {
+                "alias": "[5,12]",
+                "path": "[5][1][11]"
+              },
+              {
+                "alias": "[5,13]",
+                "path": "[5][1][12]"
+              },
+              {
+                "alias": "[5,14]",
+                "path": "[5][1][13]"
+              },
+              {
+                "alias": "[5,15]",
+                "path": "[5][1][14]"
+              },
+              {
+                "alias": "[5,16]",
+                "path": "[5][1][15]"
+              },
+              {
+                "alias": "[5,17]",
+                "path": "[5][1][16]"
+              },
+              {
+                "alias": "[5,18]",
+                "path": "[5][1][17]"
+              },
+              {
+                "alias": "[5,19]",
+                "path": "[5][1][18]"
+              },
+              {
+                "alias": "[5,20]",
+                "path": "[5][1][19]"
+              },
+              {
+                "alias": "[5,21]",
+                "path": "[5][1][20]"
+              },
+              {
+                "alias": "[5,22]",
+                "path": "[5][1][21]"
+              },
+              {
+                "alias": "[5,23]",
+                "path": "[5][1][22]"
+              },
+              {
+                "alias": "[5,24]",
+                "path": "[5][1][23]"
+              },
+              {
+                "alias": "[5,25]",
+                "path": "[5][1][24]"
+              },
+              {
+                "alias": "[5,26]",
+                "path": "[5][1][25]"
+              },
+              {
+                "alias": "[5,27]",
+                "path": "[5][1][26]"
+              },
+              {
+                "alias": "[5,28]",
+                "path": "[5][1][27]"
+              },
+              {
+                "alias": "[5,29]",
+                "path": "[5][1][28]"
+              },
+              {
+                "alias": "[5,30]",
+                "path": "[5][1][29]"
+              },
+              {
+                "alias": "[5,31]",
+                "path": "[5][1][30]"
+              },
+              {
+                "alias": "[5,32]",
+                "path": "[5][1][31]"
+              },
+              {
+                "alias": "[6,1]",
+                "path": "[6][0][1]"
+              },
+              {
+                "alias": "[6,2]",
+                "path": "[6][1][1]"
+              },
+              {
+                "alias": "[6,3]",
+                "path": "[6][1][2]"
+              },
+              {
+                "alias": "[6,4]",
+                "path": "[6][1][3]"
+              },
+              {
+                "alias": "[6,5]",
+                "path": "[6][1][4]"
+              },
+              {
+                "alias": "[6,6]",
+                "path": "[6][1][5]"
+              },
+              {
+                "alias": "[6,7]",
+                "path": "[6][1][6]"
+              },
+              {
+                "alias": "[6,8]",
+                "path": "[6][1][7]"
+              },
+              {
+                "alias": "[6,9]",
+                "path": "[6][1][8]"
+              },
+              {
+                "alias": "[6,10]",
+                "path": "[6][1][9]"
+              },
+              {
+                "alias": "[6,11]",
+                "path": "[6][1][10]"
+              },
+              {
+                "alias": "[6,12]",
+                "path": "[6][1][11]"
+              },
+              {
+                "alias": "[6,13]",
+                "path": "[6][1][12]"
+              },
+              {
+                "alias": "[6,14]",
+                "path": "[6][1][13]"
+              },
+              {
+                "alias": "[6,15]",
+                "path": "[6][1][14]"
+              },
+              {
+                "alias": "[6,16]",
+                "path": "[6][1][15]"
+              },
+              {
+                "alias": "[6,17]",
+                "path": "[6][1][16]"
+              },
+              {
+                "alias": "[6,18]",
+                "path": "[6][1][17]"
+              },
+              {
+                "alias": "[6,19]",
+                "path": "[6][1][18]"
+              },
+              {
+                "alias": "[6,20]",
+                "path": "[6][1][19]"
+              },
+              {
+                "alias": "[6,21]",
+                "path": "[6][1][20]"
+              },
+              {
+                "alias": "[6,22]",
+                "path": "[6][1][21]"
+              },
+              {
+                "alias": "[6,23]",
+                "path": "[6][1][22]"
+              },
+              {
+                "alias": "[6,24]",
+                "path": "[6][1][23]"
+              },
+              {
+                "alias": "[6,25]",
+                "path": "[6][1][24]"
+              },
+              {
+                "alias": "[6,26]",
+                "path": "[6][1][25]"
+              },
+              {
+                "alias": "[6,27]",
+                "path": "[6][1][26]"
+              },
+              {
+                "alias": "[6,28]",
+                "path": "[6][1][27]"
+              },
+              {
+                "alias": "[6,29]",
+                "path": "[6][1][28]"
+              },
+              {
+                "alias": "[6,30]",
+                "path": "[6][1][29]"
+              },
+              {
+                "alias": "[6,31]",
+                "path": "[6][1][30]"
+              },
+              {
+                "alias": "[6,32]",
+                "path": "[6][1][31]"
+              },
+              {
+                "alias": "[7,1]",
+                "path": "[7][0][1]"
+              },
+              {
+                "alias": "[7,2]",
+                "path": "[7][1][1]"
+              },
+              {
+                "alias": "[7,3]",
+                "path": "[7][1][2]"
+              },
+              {
+                "alias": "[7,4]",
+                "path": "[7][1][3]"
+              },
+              {
+                "alias": "[7,5]",
+                "path": "[7][1][4]"
+              },
+              {
+                "alias": "[7,6]",
+                "path": "[7][1][5]"
+              },
+              {
+                "alias": "[7,7]",
+                "path": "[7][1][6]"
+              },
+              {
+                "alias": "[7,8]",
+                "path": "[7][1][7]"
+              },
+              {
+                "alias": "[7,9]",
+                "path": "[7][1][8]"
+              },
+              {
+                "alias": "[7,10]",
+                "path": "[7][1][9]"
+              },
+              {
+                "alias": "[7,11]",
+                "path": "[7][1][10]"
+              },
+              {
+                "alias": "[7,12]",
+                "path": "[7][1][11]"
+              },
+              {
+                "alias": "[7,13]",
+                "path": "[7][1][12]"
+              },
+              {
+                "alias": "[7,14]",
+                "path": "[7][1][13]"
+              },
+              {
+                "alias": "[7,15]",
+                "path": "[7][1][14]"
+              },
+              {
+                "alias": "[7,16]",
+                "path": "[7][1][15]"
+              },
+              {
+                "alias": "[7,17]",
+                "path": "[7][1][16]"
+              },
+              {
+                "alias": "[7,18]",
+                "path": "[7][1][17]"
+              },
+              {
+                "alias": "[7,19]",
+                "path": "[7][1][18]"
+              },
+              {
+                "alias": "[7,20]",
+                "path": "[7][1][19]"
+              },
+              {
+                "alias": "[7,21]",
+                "path": "[7][1][20]"
+              },
+              {
+                "alias": "[7,22]",
+                "path": "[7][1][21]"
+              },
+              {
+                "alias": "[7,23]",
+                "path": "[7][1][22]"
+              },
+              {
+                "alias": "[7,24]",
+                "path": "[7][1][23]"
+              },
+              {
+                "alias": "[7,25]",
+                "path": "[7][1][24]"
+              },
+              {
+                "alias": "[7,26]",
+                "path": "[7][1][25]"
+              },
+              {
+                "alias": "[7,27]",
+                "path": "[7][1][26]"
+              },
+              {
+                "alias": "[7,28]",
+                "path": "[7][1][27]"
+              },
+              {
+                "alias": "[7,29]",
+                "path": "[7][1][28]"
+              },
+              {
+                "alias": "[7,30]",
+                "path": "[7][1][29]"
+              },
+              {
+                "alias": "[7,31]",
+                "path": "[7][1][30]"
+              },
+              {
+                "alias": "[7,32]",
+                "path": "[7][1][31]"
+              }
+            ],
+            "keepTime": false,
+            "replace": false,
+            "source": "CARR.PDSCHMCSDist (PDSCH_RBs)"
+          }
+        },
+        {
+          "id": "transpose",
+          "options": {
+            "firstFieldName": "Rank,MCS Index",
+            "restFieldsName": "Count"
+          }
+        },
+        {
+          "id": "filterByValue",
+          "options": {
+            "filters": [
+              {
+                "config": {
+                  "id": "substring",
+                  "options": {
+                    "value": ","
+                  }
+                },
+                "fieldName": "Rank,MCS Index"
+              }
+            ],
+            "match": "any",
+            "type": "include"
+          }
+        },
+        {
+          "id": "extractFields",
+          "options": {
+            "delimiter": ",",
+            "format": "json",
+            "jsonPaths": [
+              {
+                "alias": "Rank",
+                "path": "[0]"
+              },
+              {
+                "alias": "MCS Index",
+                "path": "[1]"
+              }
+            ],
+            "keepTime": false,
+            "replace": false,
+            "source": "Rank,MCS Index"
+          }
+        },
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "destinationType": "number",
+                "targetField": "Count 1"
+              }
+            ],
+            "fields": {}
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {},
+            "includeByName": {},
+            "indexByName": {},
+            "renameByName": {
+              "Count 1": "Count"
+            }
+          }
+        }
+      ],
+      "type": "xychart"
+    },
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Dashboard --"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "super-light-blue",
+            "mode": "fixed"
+          },
+          "custom": {
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          },
+          "decimals": 0,
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {
+                "color": "super-light-blue",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "PRBs"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "RRU.PrbTotDl (%)"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "light-blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 7,
+        "x": 17,
+        "y": 11
+      },
+      "id": 6,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "13.0.1+security-01",
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "-- Dashboard --"
+          },
+          "panelId": 20,
+          "refId": "A"
+        }
+      ],
+      "title": "Histogram of PRBs Downlink",
+      "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "RRU.PrbTotDl (%)",
+                "Time (UNIX ms)",
+                "UE ID"
+              ]
+            }
+          }
+        },
+        {
+          "id": "filterByValue",
+          "options": {
+            "filters": [
+              {
+                "config": {
+                  "id": "equal",
+                  "options": {
+                    "value": "${UE_ID}"
+                  }
+                },
+                "fieldName": "UE ID"
+              }
+            ],
+            "match": "any",
+            "type": "include"
+          }
+        }
+      ],
+      "type": "histogram"
     },
     {
       "datasource": {
@@ -1576,7 +4157,6 @@
               "mode": "off"
             }
           },
-          "mappings": [],
           "min": 0,
           "thresholds": {
             "mode": "absolute",
@@ -1629,11 +4209,15 @@
       "gridPos": {
         "h": 8,
         "w": 11,
-        "x": 0,
-        "y": 12
+        "x": 6,
+        "y": 13
       },
       "id": 15,
       "options": {
+        "annotations": {
+          "clustering": -1,
+          "multiLane": false
+        },
         "legend": {
           "calcs": [],
           "displayMode": "list",
@@ -1646,7 +4230,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.4.2",
+      "pluginVersion": "13.0.1+security-01",
       "targets": [
         {
           "datasource": {
@@ -1680,7 +4264,7 @@
                 "config": {
                   "id": "equal",
                   "options": {
-                    "value": "${Selected_UE_ID}"
+                    "value": "${UE_ID}"
                   }
                 },
                 "fieldName": "UE ID"
@@ -1692,6 +4276,1305 @@
         }
       ],
       "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+      },
+      "description": "DL Modulation Coding Scheme",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 50,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineStyle": {
+              "fill": "solid"
+            },
+            "pointShape": "circle",
+            "pointSize": {
+              "fixed": 5
+            },
+            "pointStrokeWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "show": "lines"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 0,
+        "y": 16
+      },
+      "id": 50,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "mapping": "auto",
+        "series": [
+          {
+            "color": {
+              "matcher": {
+                "id": "byName",
+                "options": "Rank"
+              }
+            },
+            "frame": {
+              "matcher": {
+                "id": "byIndex",
+                "options": 0
+              }
+            },
+            "x": {
+              "matcher": {
+                "id": "byName",
+                "options": "MCS Index"
+              }
+            },
+            "y": {
+              "matcher": {
+                "id": "byName",
+                "options": "Count"
+              }
+            }
+          }
+        ],
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "13.0.1+security-01",
+      "targets": [
+        {
+          "columns": [
+            {
+              "selector": "Time (UNIX ms)",
+              "text": "",
+              "type": "timestamp_epoch"
+            },
+            {
+              "selector": "Reporting Time Offset (ms)",
+              "text": "",
+              "type": "number"
+            },
+            {
+              "selector": "E2 Node ID",
+              "text": "",
+              "type": "string"
+            },
+            {
+              "selector": "CARR.PDSCHMCSDist (PDSCH_RBs)",
+              "text": "",
+              "type": "string"
+            }
+          ],
+          "csv_options": {
+            "skip_lines_with_error": true
+          },
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+          },
+          "filters": [],
+          "format": "timeseries",
+          "global_query_id": "",
+          "parser": "backend",
+          "refId": "A",
+          "root_selector": "",
+          "source": "url",
+          "type": "csv",
+          "url": "$Cell_Metrics",
+          "url_options": {
+            "data": "",
+            "method": "GET",
+            "params": [
+              {
+                "key": "from",
+                "value": "$__from"
+              },
+              {
+                "key": "to",
+                "value": "$__to"
+              },
+              {
+                "key": "approx_num_samples",
+                "value": "${Resolution}"
+              }
+            ]
+          }
+        }
+      ],
+      "title": "CARR.PDSCHMCSDist.BinX.BinY.BinZ (Low Spectral Efficiency)",
+      "transformations": [
+        {
+          "id": "filterByValue",
+          "options": {
+            "filters": [
+              {
+                "config": {
+                  "id": "equal",
+                  "options": {
+                    "value": "${E2_ID}"
+                  }
+                },
+                "fieldName": "E2 Node ID"
+              }
+            ],
+            "match": "any",
+            "type": "include"
+          }
+        },
+        {
+          "id": "reduce",
+          "options": {
+            "includeTimeField": false,
+            "mode": "reduceFields",
+            "reducers": [
+              "lastNotNull"
+            ]
+          }
+        },
+        {
+          "id": "extractFields",
+          "options": {
+            "delimiter": ",",
+            "format": "json",
+            "jsonPaths": [
+              {
+                "alias": "[0,1]",
+                "path": "[0][0][2]"
+              },
+              {
+                "alias": "[0,2]",
+                "path": "[0][2][1]"
+              },
+              {
+                "alias": "[0,3]",
+                "path": "[0][2][2]"
+              },
+              {
+                "alias": "[0,4]",
+                "path": "[0][2][3]"
+              },
+              {
+                "alias": "[0,5]",
+                "path": "[0][2][4]"
+              },
+              {
+                "alias": "[0,6]",
+                "path": "[0][2][5]"
+              },
+              {
+                "alias": "[0,7]",
+                "path": "[0][2][6]"
+              },
+              {
+                "alias": "[0,8]",
+                "path": "[0][2][7]"
+              },
+              {
+                "alias": "[0,9]",
+                "path": "[0][2][8]"
+              },
+              {
+                "alias": "[0,10]",
+                "path": "[0][2][9]"
+              },
+              {
+                "alias": "[0,11]",
+                "path": "[0][2][10]"
+              },
+              {
+                "alias": "[0,12]",
+                "path": "[0][2][11]"
+              },
+              {
+                "alias": "[0,13]",
+                "path": "[0][2][12]"
+              },
+              {
+                "alias": "[0,14]",
+                "path": "[0][2][13]"
+              },
+              {
+                "alias": "[0,15]",
+                "path": "[0][2][14]"
+              },
+              {
+                "alias": "[0,16]",
+                "path": "[0][2][15]"
+              },
+              {
+                "alias": "[0,17]",
+                "path": "[0][2][16]"
+              },
+              {
+                "alias": "[0,18]",
+                "path": "[0][2][17]"
+              },
+              {
+                "alias": "[0,19]",
+                "path": "[0][2][18]"
+              },
+              {
+                "alias": "[0,20]",
+                "path": "[0][2][19]"
+              },
+              {
+                "alias": "[0,21]",
+                "path": "[0][2][20]"
+              },
+              {
+                "alias": "[0,22]",
+                "path": "[0][2][21]"
+              },
+              {
+                "alias": "[0,23]",
+                "path": "[0][2][22]"
+              },
+              {
+                "alias": "[0,24]",
+                "path": "[0][2][23]"
+              },
+              {
+                "alias": "[0,25]",
+                "path": "[0][2][24]"
+              },
+              {
+                "alias": "[0,26]",
+                "path": "[0][2][25]"
+              },
+              {
+                "alias": "[0,27]",
+                "path": "[0][2][26]"
+              },
+              {
+                "alias": "[0,28]",
+                "path": "[0][2][27]"
+              },
+              {
+                "alias": "[0,29]",
+                "path": "[0][2][28]"
+              },
+              {
+                "alias": "[0,30]",
+                "path": "[0][2][29]"
+              },
+              {
+                "alias": "[0,31]",
+                "path": "[0][2][30]"
+              },
+              {
+                "alias": "[0,32]",
+                "path": "[0][2][31]"
+              },
+              {
+                "alias": "[1,1]",
+                "path": "[1][0][2]"
+              },
+              {
+                "alias": "[1,2]",
+                "path": "[1][2][1]"
+              },
+              {
+                "alias": "[1,3]",
+                "path": "[1][2][2]"
+              },
+              {
+                "alias": "[1,4]",
+                "path": "[1][2][3]"
+              },
+              {
+                "alias": "[1,5]",
+                "path": "[1][2][4]"
+              },
+              {
+                "alias": "[1,6]",
+                "path": "[1][2][5]"
+              },
+              {
+                "alias": "[1,7]",
+                "path": "[1][2][6]"
+              },
+              {
+                "alias": "[1,8]",
+                "path": "[1][2][7]"
+              },
+              {
+                "alias": "[1,9]",
+                "path": "[1][2][8]"
+              },
+              {
+                "alias": "[1,10]",
+                "path": "[1][2][9]"
+              },
+              {
+                "alias": "[1,11]",
+                "path": "[1][2][10]"
+              },
+              {
+                "alias": "[1,12]",
+                "path": "[1][2][11]"
+              },
+              {
+                "alias": "[1,13]",
+                "path": "[1][2][12]"
+              },
+              {
+                "alias": "[1,14]",
+                "path": "[1][2][13]"
+              },
+              {
+                "alias": "[1,15]",
+                "path": "[1][2][14]"
+              },
+              {
+                "alias": "[1,16]",
+                "path": "[1][2][15]"
+              },
+              {
+                "alias": "[1,17]",
+                "path": "[1][2][16]"
+              },
+              {
+                "alias": "[1,18]",
+                "path": "[1][2][17]"
+              },
+              {
+                "alias": "[1,19]",
+                "path": "[1][2][18]"
+              },
+              {
+                "alias": "[1,20]",
+                "path": "[1][2][19]"
+              },
+              {
+                "alias": "[1,21]",
+                "path": "[1][2][20]"
+              },
+              {
+                "alias": "[1,22]",
+                "path": "[1][2][21]"
+              },
+              {
+                "alias": "[1,23]",
+                "path": "[1][2][22]"
+              },
+              {
+                "alias": "[1,24]",
+                "path": "[1][2][23]"
+              },
+              {
+                "alias": "[1,25]",
+                "path": "[1][2][24]"
+              },
+              {
+                "alias": "[1,26]",
+                "path": "[1][2][25]"
+              },
+              {
+                "alias": "[1,27]",
+                "path": "[1][2][26]"
+              },
+              {
+                "alias": "[1,28]",
+                "path": "[1][2][27]"
+              },
+              {
+                "alias": "[1,29]",
+                "path": "[1][2][28]"
+              },
+              {
+                "alias": "[1,30]",
+                "path": "[1][2][29]"
+              },
+              {
+                "alias": "[1,31]",
+                "path": "[1][2][30]"
+              },
+              {
+                "alias": "[1,32]",
+                "path": "[1][2][31]"
+              },
+              {
+                "alias": "[2,1]",
+                "path": "[2][0][2]"
+              },
+              {
+                "alias": "[2,2]",
+                "path": "[2][2][1]"
+              },
+              {
+                "alias": "[2,3]",
+                "path": "[2][2][2]"
+              },
+              {
+                "alias": "[2,4]",
+                "path": "[2][2][3]"
+              },
+              {
+                "alias": "[2,5]",
+                "path": "[2][2][4]"
+              },
+              {
+                "alias": "[2,6]",
+                "path": "[2][2][5]"
+              },
+              {
+                "alias": "[2,7]",
+                "path": "[2][2][6]"
+              },
+              {
+                "alias": "[2,8]",
+                "path": "[2][2][7]"
+              },
+              {
+                "alias": "[2,9]",
+                "path": "[2][2][8]"
+              },
+              {
+                "alias": "[2,10]",
+                "path": "[2][2][9]"
+              },
+              {
+                "alias": "[2,11]",
+                "path": "[2][2][10]"
+              },
+              {
+                "alias": "[2,12]",
+                "path": "[2][2][11]"
+              },
+              {
+                "alias": "[2,13]",
+                "path": "[2][2][12]"
+              },
+              {
+                "alias": "[2,14]",
+                "path": "[2][2][13]"
+              },
+              {
+                "alias": "[2,15]",
+                "path": "[2][2][14]"
+              },
+              {
+                "alias": "[2,16]",
+                "path": "[2][2][15]"
+              },
+              {
+                "alias": "[2,17]",
+                "path": "[2][2][16]"
+              },
+              {
+                "alias": "[2,18]",
+                "path": "[2][2][17]"
+              },
+              {
+                "alias": "[2,19]",
+                "path": "[2][2][18]"
+              },
+              {
+                "alias": "[2,20]",
+                "path": "[2][2][19]"
+              },
+              {
+                "alias": "[2,21]",
+                "path": "[2][2][20]"
+              },
+              {
+                "alias": "[2,22]",
+                "path": "[2][2][21]"
+              },
+              {
+                "alias": "[2,23]",
+                "path": "[2][2][22]"
+              },
+              {
+                "alias": "[2,24]",
+                "path": "[2][2][23]"
+              },
+              {
+                "alias": "[2,25]",
+                "path": "[2][2][24]"
+              },
+              {
+                "alias": "[2,26]",
+                "path": "[2][2][25]"
+              },
+              {
+                "alias": "[2,27]",
+                "path": "[2][2][26]"
+              },
+              {
+                "alias": "[2,28]",
+                "path": "[2][2][27]"
+              },
+              {
+                "alias": "[2,29]",
+                "path": "[2][2][28]"
+              },
+              {
+                "alias": "[2,30]",
+                "path": "[2][2][29]"
+              },
+              {
+                "alias": "[2,31]",
+                "path": "[2][2][30]"
+              },
+              {
+                "alias": "[2,32]",
+                "path": "[2][2][31]"
+              },
+              {
+                "alias": "[3,1]",
+                "path": "[3][0][2]"
+              },
+              {
+                "alias": "[3,2]",
+                "path": "[3][2][1]"
+              },
+              {
+                "alias": "[3,3]",
+                "path": "[3][2][2]"
+              },
+              {
+                "alias": "[3,4]",
+                "path": "[3][2][3]"
+              },
+              {
+                "alias": "[3,5]",
+                "path": "[3][2][4]"
+              },
+              {
+                "alias": "[3,6]",
+                "path": "[3][2][5]"
+              },
+              {
+                "alias": "[3,7]",
+                "path": "[3][2][6]"
+              },
+              {
+                "alias": "[3,8]",
+                "path": "[3][2][7]"
+              },
+              {
+                "alias": "[3,9]",
+                "path": "[3][2][8]"
+              },
+              {
+                "alias": "[3,10]",
+                "path": "[3][2][9]"
+              },
+              {
+                "alias": "[3,11]",
+                "path": "[3][2][10]"
+              },
+              {
+                "alias": "[3,12]",
+                "path": "[3][2][11]"
+              },
+              {
+                "alias": "[3,13]",
+                "path": "[3][2][12]"
+              },
+              {
+                "alias": "[3,14]",
+                "path": "[3][2][13]"
+              },
+              {
+                "alias": "[3,15]",
+                "path": "[3][2][14]"
+              },
+              {
+                "alias": "[3,16]",
+                "path": "[3][2][15]"
+              },
+              {
+                "alias": "[3,17]",
+                "path": "[3][2][16]"
+              },
+              {
+                "alias": "[3,18]",
+                "path": "[3][2][17]"
+              },
+              {
+                "alias": "[3,19]",
+                "path": "[3][2][18]"
+              },
+              {
+                "alias": "[3,20]",
+                "path": "[3][2][19]"
+              },
+              {
+                "alias": "[3,21]",
+                "path": "[3][2][20]"
+              },
+              {
+                "alias": "[3,22]",
+                "path": "[3][2][21]"
+              },
+              {
+                "alias": "[3,23]",
+                "path": "[3][2][22]"
+              },
+              {
+                "alias": "[3,24]",
+                "path": "[3][2][23]"
+              },
+              {
+                "alias": "[3,25]",
+                "path": "[3][2][24]"
+              },
+              {
+                "alias": "[3,26]",
+                "path": "[3][2][25]"
+              },
+              {
+                "alias": "[3,27]",
+                "path": "[3][2][26]"
+              },
+              {
+                "alias": "[3,28]",
+                "path": "[3][2][27]"
+              },
+              {
+                "alias": "[3,29]",
+                "path": "[3][2][28]"
+              },
+              {
+                "alias": "[3,30]",
+                "path": "[3][2][29]"
+              },
+              {
+                "alias": "[3,31]",
+                "path": "[3][2][30]"
+              },
+              {
+                "alias": "[3,32]",
+                "path": "[3][2][31]"
+              },
+              {
+                "alias": "[4,1]",
+                "path": "[4][0][2]"
+              },
+              {
+                "alias": "[4,2]",
+                "path": "[4][2][1]"
+              },
+              {
+                "alias": "[4,3]",
+                "path": "[4][2][2]"
+              },
+              {
+                "alias": "[4,4]",
+                "path": "[4][2][3]"
+              },
+              {
+                "alias": "[4,5]",
+                "path": "[4][2][4]"
+              },
+              {
+                "alias": "[4,6]",
+                "path": "[4][2][5]"
+              },
+              {
+                "alias": "[4,7]",
+                "path": "[4][2][6]"
+              },
+              {
+                "alias": "[4,8]",
+                "path": "[4][2][7]"
+              },
+              {
+                "alias": "[4,9]",
+                "path": "[4][2][8]"
+              },
+              {
+                "alias": "[4,10]",
+                "path": "[4][2][9]"
+              },
+              {
+                "alias": "[4,11]",
+                "path": "[4][2][10]"
+              },
+              {
+                "alias": "[4,12]",
+                "path": "[4][2][11]"
+              },
+              {
+                "alias": "[4,13]",
+                "path": "[4][2][12]"
+              },
+              {
+                "alias": "[4,14]",
+                "path": "[4][2][13]"
+              },
+              {
+                "alias": "[4,15]",
+                "path": "[4][2][14]"
+              },
+              {
+                "alias": "[4,16]",
+                "path": "[4][2][15]"
+              },
+              {
+                "alias": "[4,17]",
+                "path": "[4][2][16]"
+              },
+              {
+                "alias": "[4,18]",
+                "path": "[4][2][17]"
+              },
+              {
+                "alias": "[4,19]",
+                "path": "[4][2][18]"
+              },
+              {
+                "alias": "[4,20]",
+                "path": "[4][2][19]"
+              },
+              {
+                "alias": "[4,21]",
+                "path": "[4][2][20]"
+              },
+              {
+                "alias": "[4,22]",
+                "path": "[4][2][21]"
+              },
+              {
+                "alias": "[4,23]",
+                "path": "[4][2][22]"
+              },
+              {
+                "alias": "[4,24]",
+                "path": "[4][2][23]"
+              },
+              {
+                "alias": "[4,25]",
+                "path": "[4][2][24]"
+              },
+              {
+                "alias": "[4,26]",
+                "path": "[4][2][25]"
+              },
+              {
+                "alias": "[4,27]",
+                "path": "[4][2][26]"
+              },
+              {
+                "alias": "[4,28]",
+                "path": "[4][2][27]"
+              },
+              {
+                "alias": "[4,29]",
+                "path": "[4][2][28]"
+              },
+              {
+                "alias": "[4,30]",
+                "path": "[4][2][29]"
+              },
+              {
+                "alias": "[4,31]",
+                "path": "[4][2][30]"
+              },
+              {
+                "alias": "[4,32]",
+                "path": "[4][2][31]"
+              },
+              {
+                "alias": "[5,1]",
+                "path": "[5][0][2]"
+              },
+              {
+                "alias": "[5,2]",
+                "path": "[5][2][1]"
+              },
+              {
+                "alias": "[5,3]",
+                "path": "[5][2][2]"
+              },
+              {
+                "alias": "[5,4]",
+                "path": "[5][2][3]"
+              },
+              {
+                "alias": "[5,5]",
+                "path": "[5][2][4]"
+              },
+              {
+                "alias": "[5,6]",
+                "path": "[5][2][5]"
+              },
+              {
+                "alias": "[5,7]",
+                "path": "[5][2][6]"
+              },
+              {
+                "alias": "[5,8]",
+                "path": "[5][2][7]"
+              },
+              {
+                "alias": "[5,9]",
+                "path": "[5][2][8]"
+              },
+              {
+                "alias": "[5,10]",
+                "path": "[5][2][9]"
+              },
+              {
+                "alias": "[5,11]",
+                "path": "[5][2][10]"
+              },
+              {
+                "alias": "[5,12]",
+                "path": "[5][2][11]"
+              },
+              {
+                "alias": "[5,13]",
+                "path": "[5][2][12]"
+              },
+              {
+                "alias": "[5,14]",
+                "path": "[5][2][13]"
+              },
+              {
+                "alias": "[5,15]",
+                "path": "[5][2][14]"
+              },
+              {
+                "alias": "[5,16]",
+                "path": "[5][2][15]"
+              },
+              {
+                "alias": "[5,17]",
+                "path": "[5][2][16]"
+              },
+              {
+                "alias": "[5,18]",
+                "path": "[5][2][17]"
+              },
+              {
+                "alias": "[5,19]",
+                "path": "[5][2][18]"
+              },
+              {
+                "alias": "[5,20]",
+                "path": "[5][2][19]"
+              },
+              {
+                "alias": "[5,21]",
+                "path": "[5][2][20]"
+              },
+              {
+                "alias": "[5,22]",
+                "path": "[5][2][21]"
+              },
+              {
+                "alias": "[5,23]",
+                "path": "[5][2][22]"
+              },
+              {
+                "alias": "[5,24]",
+                "path": "[5][2][23]"
+              },
+              {
+                "alias": "[5,25]",
+                "path": "[5][2][24]"
+              },
+              {
+                "alias": "[5,26]",
+                "path": "[5][2][25]"
+              },
+              {
+                "alias": "[5,27]",
+                "path": "[5][2][26]"
+              },
+              {
+                "alias": "[5,28]",
+                "path": "[5][2][27]"
+              },
+              {
+                "alias": "[5,29]",
+                "path": "[5][2][28]"
+              },
+              {
+                "alias": "[5,30]",
+                "path": "[5][2][29]"
+              },
+              {
+                "alias": "[5,31]",
+                "path": "[5][2][30]"
+              },
+              {
+                "alias": "[5,32]",
+                "path": "[5][2][31]"
+              },
+              {
+                "alias": "[6,1]",
+                "path": "[6][0][2]"
+              },
+              {
+                "alias": "[6,2]",
+                "path": "[6][2][1]"
+              },
+              {
+                "alias": "[6,3]",
+                "path": "[6][2][2]"
+              },
+              {
+                "alias": "[6,4]",
+                "path": "[6][2][3]"
+              },
+              {
+                "alias": "[6,5]",
+                "path": "[6][2][4]"
+              },
+              {
+                "alias": "[6,6]",
+                "path": "[6][2][5]"
+              },
+              {
+                "alias": "[6,7]",
+                "path": "[6][2][6]"
+              },
+              {
+                "alias": "[6,8]",
+                "path": "[6][2][7]"
+              },
+              {
+                "alias": "[6,9]",
+                "path": "[6][2][8]"
+              },
+              {
+                "alias": "[6,10]",
+                "path": "[6][2][9]"
+              },
+              {
+                "alias": "[6,11]",
+                "path": "[6][2][10]"
+              },
+              {
+                "alias": "[6,12]",
+                "path": "[6][2][11]"
+              },
+              {
+                "alias": "[6,13]",
+                "path": "[6][2][12]"
+              },
+              {
+                "alias": "[6,14]",
+                "path": "[6][2][13]"
+              },
+              {
+                "alias": "[6,15]",
+                "path": "[6][2][14]"
+              },
+              {
+                "alias": "[6,16]",
+                "path": "[6][2][15]"
+              },
+              {
+                "alias": "[6,17]",
+                "path": "[6][2][16]"
+              },
+              {
+                "alias": "[6,18]",
+                "path": "[6][2][17]"
+              },
+              {
+                "alias": "[6,19]",
+                "path": "[6][2][18]"
+              },
+              {
+                "alias": "[6,20]",
+                "path": "[6][2][19]"
+              },
+              {
+                "alias": "[6,21]",
+                "path": "[6][2][20]"
+              },
+              {
+                "alias": "[6,22]",
+                "path": "[6][2][21]"
+              },
+              {
+                "alias": "[6,23]",
+                "path": "[6][2][22]"
+              },
+              {
+                "alias": "[6,24]",
+                "path": "[6][2][23]"
+              },
+              {
+                "alias": "[6,25]",
+                "path": "[6][2][24]"
+              },
+              {
+                "alias": "[6,26]",
+                "path": "[6][2][25]"
+              },
+              {
+                "alias": "[6,27]",
+                "path": "[6][2][26]"
+              },
+              {
+                "alias": "[6,28]",
+                "path": "[6][2][27]"
+              },
+              {
+                "alias": "[6,29]",
+                "path": "[6][2][28]"
+              },
+              {
+                "alias": "[6,30]",
+                "path": "[6][2][29]"
+              },
+              {
+                "alias": "[6,31]",
+                "path": "[6][2][30]"
+              },
+              {
+                "alias": "[6,32]",
+                "path": "[6][2][31]"
+              },
+              {
+                "alias": "[7,1]",
+                "path": "[7][0][2]"
+              },
+              {
+                "alias": "[7,2]",
+                "path": "[7][2][1]"
+              },
+              {
+                "alias": "[7,3]",
+                "path": "[7][2][2]"
+              },
+              {
+                "alias": "[7,4]",
+                "path": "[7][2][3]"
+              },
+              {
+                "alias": "[7,5]",
+                "path": "[7][2][4]"
+              },
+              {
+                "alias": "[7,6]",
+                "path": "[7][2][5]"
+              },
+              {
+                "alias": "[7,7]",
+                "path": "[7][2][6]"
+              },
+              {
+                "alias": "[7,8]",
+                "path": "[7][2][7]"
+              },
+              {
+                "alias": "[7,9]",
+                "path": "[7][2][8]"
+              },
+              {
+                "alias": "[7,10]",
+                "path": "[7][2][9]"
+              },
+              {
+                "alias": "[7,11]",
+                "path": "[7][2][10]"
+              },
+              {
+                "alias": "[7,12]",
+                "path": "[7][2][11]"
+              },
+              {
+                "alias": "[7,13]",
+                "path": "[7][2][12]"
+              },
+              {
+                "alias": "[7,14]",
+                "path": "[7][2][13]"
+              },
+              {
+                "alias": "[7,15]",
+                "path": "[7][2][14]"
+              },
+              {
+                "alias": "[7,16]",
+                "path": "[7][2][15]"
+              },
+              {
+                "alias": "[7,17]",
+                "path": "[7][2][16]"
+              },
+              {
+                "alias": "[7,18]",
+                "path": "[7][2][17]"
+              },
+              {
+                "alias": "[7,19]",
+                "path": "[7][2][18]"
+              },
+              {
+                "alias": "[7,20]",
+                "path": "[7][2][19]"
+              },
+              {
+                "alias": "[7,21]",
+                "path": "[7][2][20]"
+              },
+              {
+                "alias": "[7,22]",
+                "path": "[7][2][21]"
+              },
+              {
+                "alias": "[7,23]",
+                "path": "[7][2][22]"
+              },
+              {
+                "alias": "[7,24]",
+                "path": "[7][2][23]"
+              },
+              {
+                "alias": "[7,25]",
+                "path": "[7][2][24]"
+              },
+              {
+                "alias": "[7,26]",
+                "path": "[7][2][25]"
+              },
+              {
+                "alias": "[7,27]",
+                "path": "[7][2][26]"
+              },
+              {
+                "alias": "[7,28]",
+                "path": "[7][2][27]"
+              },
+              {
+                "alias": "[7,29]",
+                "path": "[7][2][28]"
+              },
+              {
+                "alias": "[7,30]",
+                "path": "[7][2][29]"
+              },
+              {
+                "alias": "[7,31]",
+                "path": "[7][2][30]"
+              },
+              {
+                "alias": "[7,32]",
+                "path": "[7][2][31]"
+              }
+            ],
+            "keepTime": false,
+            "replace": false,
+            "source": "CARR.PDSCHMCSDist (PDSCH_RBs)"
+          }
+        },
+        {
+          "id": "transpose",
+          "options": {
+            "firstFieldName": "Rank,MCS Index",
+            "restFieldsName": "Count"
+          }
+        },
+        {
+          "id": "filterByValue",
+          "options": {
+            "filters": [
+              {
+                "config": {
+                  "id": "substring",
+                  "options": {
+                    "value": ","
+                  }
+                },
+                "fieldName": "Rank,MCS Index"
+              }
+            ],
+            "match": "any",
+            "type": "include"
+          }
+        },
+        {
+          "id": "extractFields",
+          "options": {
+            "delimiter": ",",
+            "format": "json",
+            "jsonPaths": [
+              {
+                "alias": "Rank",
+                "path": "[0]"
+              },
+              {
+                "alias": "MCS Index",
+                "path": "[1]"
+              }
+            ],
+            "keepTime": false,
+            "replace": false,
+            "source": "Rank,MCS Index"
+          }
+        },
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "destinationType": "number",
+                "targetField": "Count 1"
+              }
+            ],
+            "fields": {}
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {},
+            "includeByName": {},
+            "indexByName": {},
+            "renameByName": {
+              "Count 1": "Count"
+            }
+          }
+        }
+      ],
+      "type": "xychart"
     },
     {
       "datasource": {
@@ -1719,8 +5602,6 @@
             }
           },
           "decimals": 0,
-          "fieldMinMax": false,
-          "mappings": [],
           "thresholds": {
             "mode": "percentage",
             "steps": [
@@ -1755,10 +5636,10 @@
         ]
       },
       "gridPos": {
-        "h": 8,
+        "h": 5,
         "w": 7,
         "x": 17,
-        "y": 12
+        "y": 16
       },
       "id": 43,
       "options": {
@@ -1774,7 +5655,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.4.2",
+      "pluginVersion": "13.0.1+security-01",
       "targets": [
         {
           "datasource": {
@@ -1807,7 +5688,7 @@
                 "config": {
                   "id": "equal",
                   "options": {
-                    "value": "${Selected_UE_ID}"
+                    "value": "${UE_ID}"
                   }
                 },
                 "fieldName": "UE ID"
@@ -1828,15 +5709,15 @@
   "templating": {
     "list": [
       {
+        "allowCustomValue": true,
         "current": {},
         "datasource": {
           "type": "yesoreyeram-infinity-datasource",
           "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
         },
         "definition": "",
-        "description": "",
         "includeAll": false,
-        "name": "Selected_UE_ID",
+        "name": "UE_ID",
         "options": [],
         "query": {
           "infinityQuery": {
@@ -1854,7 +5735,7 @@
             "root_selector": "",
             "source": "url",
             "type": "csv",
-            "url": "$Metrics_File",
+            "url": "$UE_Metrics",
             "url_options": {
               "data": "",
               "method": "GET",
@@ -1873,7 +5754,7 @@
                 },
                 {
                   "key": "approx_num_samples",
-                  "value": "${Sampling_Resolution}"
+                  "value": "${Resolution}"
                 }
               ]
             }
@@ -1887,13 +5768,75 @@
         "type": "query"
       },
       {
-        "allValue": "-1",
-        "current": {
-          "text": "500",
-          "value": "500"
+        "allowCustomValue": true,
+        "current": {},
+        "datasource": {
+          "type": "yesoreyeram-infinity-datasource",
+          "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
         },
+        "definition": "",
+        "includeAll": false,
+        "name": "E2_ID",
+        "options": [],
+        "query": {
+          "infinityQuery": {
+            "columns": [
+              {
+                "selector": "E2 Node ID",
+                "text": "E2_ID",
+                "type": "string"
+              }
+            ],
+            "filters": [],
+            "format": "table",
+            "parser": "backend",
+            "refId": "variable",
+            "root_selector": "",
+            "source": "url",
+            "type": "csv",
+            "url": "$UE_Metrics",
+            "url_options": {
+              "data": "",
+              "method": "GET",
+              "params": [
+                {
+                  "key": "from",
+                  "value": "$__from"
+                },
+                {
+                  "key": "to",
+                  "value": "$__to"
+                },
+                {
+                  "key": "filter",
+                  "value": "E2 Node ID"
+                },
+                {
+                  "key": "approx_num_samples",
+                  "value": "${Resolution}"
+                }
+              ]
+            }
+          },
+          "query": "",
+          "queryType": "infinity",
+          "refId": "variable"
+        },
+        "refresh": 2,
+        "regex": "",
+        "regexApplyTo": "value",
+        "type": "query"
+      },
+      {
+        "allValue": "-1",
+        "allowCustomValue": true,
+        "current": {
+          "text": "1000",
+          "value": "1000"
+        },
+        "description": "The number of samples to show, interpolating from the start and end of the time window",
         "includeAll": true,
-        "name": "Sampling_Resolution",
+        "name": "Resolution",
         "options": [
           {
             "selected": false,
@@ -1921,12 +5864,12 @@
             "value": "200"
           },
           {
-            "selected": true,
+            "selected": false,
             "text": "500",
             "value": "500"
           },
           {
-            "selected": false,
+            "selected": true,
             "text": "1000",
             "value": "1000"
           }
@@ -1940,8 +5883,8 @@
           "text": "KPI_Metrics.csv",
           "value": "KPI_Metrics.csv"
         },
-        "description": "The source KPI metrics file to use for the dashboard",
-        "name": "Metrics_File",
+        "description": "The source UE-level KPI metrics file to use for the dashboard (default: KPI_Metrics.csv)",
+        "name": "UE_Metrics",
         "options": [
           {
             "selected": true,
@@ -1951,6 +5894,23 @@
         ],
         "query": "KPI_Metrics.csv",
         "type": "textbox"
+      },
+      {
+        "current": {
+          "text": "KPI_Metrics_Cells.csv",
+          "value": "KPI_Metrics_Cells.csv"
+        },
+        "description": "The source cell-level KPI metrics file to use for the dashboard (default: KPI_Metrics_Cells.csv)",
+        "name": "Cell_Metrics",
+        "options": [
+          {
+            "selected": true,
+            "text": "KPI_Metrics_Cells.csv",
+            "value": "KPI_Metrics_Cells.csv"
+          }
+        ],
+        "query": "KPI_Metrics_Cells.csv",
+        "type": "textbox"
       }
     ]
   },
@@ -1958,11 +5918,23 @@
     "from": "now-5m",
     "to": "now"
   },
-  "timepicker": {},
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ]
+  },
   "timezone": "browser",
   "title": "FlexRIC KPI Monitor",
   "uid": "ric_dashboard",
   "version": 1,
-  "weekStart": "",
-  "id": null
+  "weekStart": ""
 }

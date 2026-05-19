@@ -68,8 +68,8 @@ UE_HOST_IP=$(python3 fetch_nth_ip.py "$BASE_SUBNET" $HOST_IP_OFFSET)
 UE_NS_IP=$(python3 fetch_nth_ip.py "$BASE_SUBNET" $UE_IP_OFFSET)
 
 # Clean up existing artifacts for this UE
-sudo ip netns delete $UE_NAMESPACE || true
-sudo ip link delete v-eth$UE_NUMBER || true
+sudo ip netns delete $UE_NAMESPACE 2>/dev/null || true
+sudo ip link delete v-eth$UE_NUMBER 2>/dev/null || true
 
 # Create namespace and veth pair
 sudo ip netns add $UE_NAMESPACE

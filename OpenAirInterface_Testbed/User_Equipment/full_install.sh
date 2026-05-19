@@ -33,6 +33,7 @@ set -e
 
 APPLY_PATCHES=true
 CLEAN_INSTALL=false # Note: If set to true, then full_install.sh needs to be ran in the Next_Generation_Node_B directory too.
+RADIO_TYPE="SIMU"   # Set to "SIMU", "ZMQ", or "USRP"
 DEBUG_SYMBOLS=false
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
@@ -74,21 +75,6 @@ if [ "$APPLY_PATCHES" = true ]; then
     ./install_scripts/apply_patches.sh
 fi
 
-# Ensure that the flexric repository is cloned at the right commit (symbolic link to RAN_Intelligent_Controllers/Flexible-RIC/flexric)
-cd openairinterface5g/openair2/E2AP/
-FLEXRIC_PARENT_DIR="../../../../RAN_Intelligent_Controllers/Flexible-RIC"
-FLEXRIC_DIR="$FLEXRIC_PARENT_DIR/flexric"
-if [ ! -L "flexric" ]; then
-    sudo rm -rf flexric
-    ln -s "$FLEXRIC_DIR" flexric
-fi
-if [ ! -d "$FLEXRIC_DIR/src/agent/e2_agent_api.c" ]; then
-    echo "Cloning Flexible RAN Intelligent Controller (FlexRIC)..."
-    cd "$FLEXRIC_PARENT_DIR"
-    ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/mosaic5g/flexric.git flexric --https
-fi
-cd "$SCRIPT_DIR"
-
 echo
 echo
 echo "Installing User Equipment (OpenAirInterface)..."
@@ -102,9 +88,18 @@ EOF
     echo "Configured needrestart to list-only (no service restarts)."
 fi
 
-# Check if GCC 13 is installed, if not, install it and set it as the default
-GCC_VERSION=$(gcc -v 2>&1 | grep "gcc version" | awk '{print $3}')
-if [[ -z "$GCC_VERSION" || ! "$GCC_VERSION" == 13.* ]]; then
+# Check if GCC 13 or newer is installed, if not, install it and set it as the default
+MIN_GCC_VERSION="13.0.0"
+INSTALL_GCC=false
+if ! command -v gcc >/dev/null 2>&1; then
+    INSTALL_GCC=true
+else
+    GCC_VERSION=$(gcc -dumpfullversion -dumpversion)
+    if dpkg --compare-versions "$GCC_VERSION" lt "$MIN_GCC_VERSION"; then
+        INSTALL_GCC=true
+    fi
+fi
+if [[ "$INSTALL_GCC" == "true" ]]; then
     echo "Installing GCC 13..."
     sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
     sudo apt-get update
@@ -134,6 +129,12 @@ if ! command -v ccache &>/dev/null; then
     sudo env $APTVARS apt-get install -y ccache
 fi
 
+if ! dpkg -s libtool &>/dev/null; then
+    echo "Installing libtool..."
+    sudo apt-get update
+    sudo env $APTVARS apt-get install -y libtool
+fi
+
 if ! dpkg -s libsimde-dev &>/dev/null; then
     echo "Attempting to install libsimde-dev..."
     sudo apt-get update
@@ -157,6 +158,68 @@ cd "$SCRIPT_DIR"
 
 echo
 echo
+
+if [ "$RADIO_TYPE" = "ZMQ" ]; then
+    echo "Building ZeroMQ libzmq..."
+    if [ -d ../Next_Generation_Node_B/libzmq ]; then
+        if [ ! -L libzmq ]; then
+            echo "Found gNodeB library. Creating libzmq link instead."
+            ln -s ../Next_Generation_Node_B/libzmq libzmq
+        else
+            echo "Link to libzmq already created."
+        fi
+    else
+        if [ ! -d libzmq ]; then
+            ./install_scripts/git_clone.sh https://github.com/zeromq/libzmq.git
+        fi
+    fi
+
+    if ! pkg-config --exists libzmq; then
+        cd libzmq
+        ./autogen.sh
+        ./configure
+        make -j$(nproc)
+        sudo make install
+        sudo ldconfig
+        cd "$SCRIPT_DIR"
+    fi
+
+    echo
+    echo "Building ZeroMQ czmq..."
+    if [ -d ../Next_Generation_Node_B/czmq ]; then
+        if [ ! -L czmq ]; then
+            echo "Found gNodeB library. Creating czmq link instead."
+            ln -s ../Next_Generation_Node_B/czmq czmq
+        else
+            echo "Link to czmq already created."
+        fi
+    else
+        if [ ! -d czmq ]; then
+            ./install_scripts/git_clone.sh https://github.com/zeromq/czmq.git
+        fi
+    fi
+
+    if ! pkg-config --exists libczmq; then
+        cd czmq
+        ./autogen.sh
+        ./configure
+        make -j$(nproc)
+        sudo make install
+        sudo ldconfig
+        cd "$SCRIPT_DIR"
+    fi
+
+    # Verify ZeroMQ installation
+    if ! pkg-config --exists libzmq || ! pkg-config --exists libczmq; then
+        echo "ZeroMQ was not installed correctly. Exiting."
+        exit 1
+    else
+        echo "ZeroMQ installed successfully."
+    fi
+
+    cd "$SCRIPT_DIR"
+fi
+
 echo "Compiling and Installing OpenAirInterface UE..."
 
 cd "$SCRIPT_DIR/openairinterface5g"
@@ -168,7 +231,12 @@ cd "$SCRIPT_DIR/openairinterface5g/cmake_targets"
 
 # Build OAI 5G UE
 cd "$SCRIPT_DIR/openairinterface5g/cmake_targets"
-./build_oai --ninja --nrUE -w SIMU $ADDITIONAL_FLAGS # -w USRP
+if [ "$RADIO_TYPE" = "SIMU" ] || [ "$RADIO_TYPE" = "ZMQ" ]; then
+    ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS -w $RADIO_TYPE"
+else
+    ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS -w USRP"
+fi
+./build_oai --ninja --nrUE $ADDITIONAL_FLAGS
 
 cd "$SCRIPT_DIR"
 

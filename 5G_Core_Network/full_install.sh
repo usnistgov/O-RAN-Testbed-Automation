@@ -31,6 +31,8 @@
 # Exit immediately if a command fails
 set -e
 
+CLEAN_INSTALL=false
+
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
@@ -74,14 +76,12 @@ if [ ! -f "options.yaml" ]; then
     echo "plmn: 00101" >>"options.yaml"
     echo "tac: 7" >>"options.yaml"
     echo "" >>"options.yaml"
-    echo "# Configure the DNN/APN" >>"options.yaml"
-    echo "dnn: nist-dnn" >>"options.yaml"
-    echo "" >>"options.yaml"
     echo "# Configure the Single Network Slice Selection Assistance Information (S-NSSAI)" >>"options.yaml"
     echo "# NOTE: \"sst\" and \"sd\" are interpreted as hexadecimal values (no 0x prefix)." >>"options.yaml"
     echo "slices:" >>"options.yaml"
     echo "  - sst: 1" >>"options.yaml"
     echo "    sd: FFFFFF" >>"options.yaml"
+    echo "    dnn: nist-dnn" >>"options.yaml"
     echo "" >>"options.yaml"
     echo "# If false, AMF will use a local IP, otherwise it will use the hostname IP" >>"options.yaml"
     echo "expose_amf_over_hostname: false" >>"options.yaml"
@@ -134,9 +134,19 @@ fi
 MONGO_HEALTHY=true
 if command -v mongod &>/dev/null; then
     ./install_scripts/start_mongodb.sh
-    if ! mongo --host 127.0.0.1 --port 27017 --quiet --eval 'db.adminCommand({ping:1}).ok' admin &>/dev/null; then
+    if command -v mongosh &>/dev/null; then
+        if ! mongosh --host 127.0.0.1 --port 27017 --quiet --eval 'quit(db.adminCommand({ ping: 1 }).ok ? 0 : 1)' admin &>/dev/null; then
+            MONGO_HEALTHY=false
+            echo "MongoDB is not responding to mongosh ping."
+        fi
+    elif command -v mongo &>/dev/null; then
+        if ! mongo --host 127.0.0.1 --port 27017 --quiet --eval 'quit(db.adminCommand({ ping: 1 }).ok ? 0 : 1)' admin &>/dev/null; then
+            MONGO_HEALTHY=false
+            echo "MongoDB is not responding to mongo shell ping."
+        fi
+    else
         MONGO_HEALTHY=false
-        echo "MongoDB is not responding to ping."
+        echo "Unable to ensure MongoDB is healthy"
     fi
 else
     MONGO_HEALTHY=false
@@ -144,7 +154,7 @@ else
 fi
 
 # Check for open5gs-amfd and open5gs-upfd binaries to determine if Open5GS is already installed
-if [ -f "open5gs/install/bin/open5gs-amfd" ] && [ -f "open5gs/install/bin/open5gs-upfd" ] && [ "$MONGO_HEALTHY" = true ]; then
+if [ "$CLEAN_INSTALL" = false ] && [ -f "open5gs/install/bin/open5gs-amfd" ] && [ -f "open5gs/install/bin/open5gs-upfd" ] && [ "$MONGO_HEALTHY" = true ]; then
     echo "Open5GS is already installed, skipping."
     exit 0
 fi
@@ -176,6 +186,11 @@ fi
 if [ ! -d "open5gs" ]; then
     echo "Cloning Open5GS..."
     ./install_scripts/git_clone.sh https://github.com/open5gs/open5gs.git
+
+    # Patch mongoc_collection_count removal in MongoDB 2.0+ (Ubuntu 26.04)
+    sed -i 's/mongoc_collection_count(/mongoc_collection_count_documents(/g' open5gs/tests/common/context.c
+    sed -i 's/mongoc_collection_count (/mongoc_collection_count_documents (/g' open5gs/tests/common/context.c
+    sed -i 's/collection, MONGOC_QUERY_NONE, key, 0, 0, NULL, &error/collection, key, NULL, NULL, NULL, \&error/g' open5gs/tests/common/context.c
 fi
 
 cd "$SCRIPT_DIR/open5gs"
@@ -214,11 +229,32 @@ sudo usermod -a -G open5gs open5gs
 
 echo "Installing dependencies for building Open5GS..."
 
+export CFLAGS="-Wno-error=incompatible-pointer-types"
+export CXXFLAGS="-Wno-error=incompatible-pointer-types"
+
 # Code from (https://open5gs.org/open5gs/docs/guide/02-building-open5gs-from-sources#building-open5gs):
 sudo env $APTVARS apt-get install -y python3-pip python3-setuptools python3-wheel python3-venv ninja-build build-essential flex bison git cmake libsctp-dev libgnutls28-dev libgcrypt-dev libssl-dev libmongoc-dev libbson-dev libyaml-dev libmicrohttpd-dev libcurl4-gnutls-dev libnghttp2-dev libtins-dev libtalloc-dev
 python3 -m venv .venv
 source .venv/bin/activate
-pip install --upgrade meson # Ensure pip version overrides apt version to prevent segmentation faults
+python3 -m pip install --upgrade meson # Ensure pip version overrides apt version to prevent segmentation faults
+
+# Create a pkg-config compatibility shim mapping libmongoc-1.0 to mongoc2
+if ! pkg-config --exists libmongoc-1.0 && pkg-config --exists mongoc2; then
+    COMPAT_PKGCONFIG_DIR="$(pwd)/.pkgconfig"
+    mkdir -p "$COMPAT_PKGCONFIG_DIR"
+    MONGOC2_INCLUDES=$(pkg-config --cflags-only-I mongoc2 | grep -o '\-I[^ ]*mongoc[^ ]*')
+    cat >"$COMPAT_PKGCONFIG_DIR/libmongoc-1.0.pc" <<EOF
+Name: libmongoc-1.0
+Description: Compatibility shim mapping libmongoc-1.0 to mongoc2
+Version: 2
+Requires: mongoc2
+Libs:
+Cflags: ${MONGOC2_INCLUDES}/mongoc
+EOF
+    export PKG_CONFIG_PATH="$COMPAT_PKGCONFIG_DIR:${PKG_CONFIG_PATH}"
+    echo "Created pkg-config compatibility shim mapping libmongoc-1.0 to mongoc2"
+fi
+
 if apt-cache show libidn-dev >/dev/null 2>&1; then
     sudo env $APTVARS apt-get install -y --no-install-recommends libidn-dev
 else
@@ -230,7 +266,7 @@ rm -rf build
 # Check if Open5GS has already been built and installed
 if [ ! -d "build" ]; then
     echo "Compiling Open5GS with Meson..."
-    meson build --prefix="$(pwd)/install" -Dc_args="-fPIC" -Dcpp_args="-fPIC" -Dc_link_args="-fPIC" -Dcpp_link_args="-fPIC"
+    meson setup build --prefix="$(pwd)/install" -Dc_args="-fPIC" -Dcpp_args="-fPIC" -Dc_link_args="-fPIC" -Dcpp_link_args="-fPIC"
 else
     echo "Open5GS build directory already exists."
 fi

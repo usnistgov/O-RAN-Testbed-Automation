@@ -26,6 +26,12 @@ The `run.sh`, `run_background.sh`, and `stop.sh` scripts can be given an optiona
 
 To customize the SIM subscriber information or to get more information about how they are generated, refer to the `ue_credentials_generator.sh` script. For UE 1, UE 2, and UE 3, the SIM subscriber information is pre-registered with the 5G Core Network. For `<N>` values greater than 3, the unique values are generated dynamically, registered with the 5G Core, and stored in the `configs` directory as their own `ue<N>.conf` file before starting the UE software.
 
+## Supported Radio Devices
+
+The UE software supports multiple radio configurations, including the RF Simulator (`SIMU`), ZeroMQ (`ZMQ`), and Universal Software Radio Peripheral (`USRP`). To specify the desired radio device, set the `RADIO_TYPE` variable at the beginning of both the `full_install.sh` and `generate_configurations.sh` scripts prior to compiling and installing the software.
+
+*Note: Currently, the ZeroMQ (`ZMQ`) configuration is limited to supporting a maximum of one User Equipment.*
+
 ## RF Simulator Server
 
 By default, the RF simulator server is set to the gNodeB host. To make the UE the server, add `--rfsim-server` to the `run.sh` command. This is useful in multi-DU scenarios where the UE may be handed over between different DUs.

@@ -48,10 +48,26 @@ cd ../User_Equipment
 
 if [ -d openairinterface5g ]; then
     cd "openairinterface5g/cmake_targets"
-    ./build_oai -C --clean-kernel
+    ./build_oai --clean-all # --clean-kernel
     cd ../..
 fi
 sudo rm -rf openairinterface5g
+
+echo "Uninstalling ZeroMQ libzmq..."
+if [ -d libzmq ]; then
+    cd libzmq
+    sudo make uninstall
+    cd ..
+fi
+sudo rm -rf libzmq
+
+echo "Uninstalling ZeroMQ czmq..."
+if [ -d czmq ]; then
+    cd czmq
+    sudo make uninstall
+    cd ..
+fi
+sudo rm -rf czmq
 
 sudo rm -rf logs/
 sudo rm -rf configs/
@@ -62,7 +78,7 @@ cd "$SCRIPT_DIR"
 
 if [ -d openairinterface5g ]; then
     cd "openairinterface5g/cmake_targets"
-    ./build_oai -C --clean-kernel
+    ./build_oai --clean-all # --clean-kernel
     cd ../..
 fi
 sudo rm -rf openairinterface5g

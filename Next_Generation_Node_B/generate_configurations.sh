@@ -34,6 +34,9 @@ set -e
 UE_NUMBERS=(1 2 3 4)
 EXPOSE_GNB_TO_HOSTNAME=false
 
+# FLEXRIC_LIBRARY_DIR="/usr/local/lib/flexric/" # Default
+FLEXRIC_LIBRARY_DIR="flexric/build/flexric_libraries/lib/flexric/"
+
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
@@ -87,10 +90,10 @@ echo "PLMN value: $PLMN"
 echo "TAC value: $TAC"
 
 # Configure the DNN, SST, and SD values
-DNN=$(sed -n 's/^dnn: //p' "$YAML_PATH")
+DNN=($(yq eval '.slices[].dnn' "$YAML_PATH"))
 SST=($(yq eval '.slices[].sst' "$YAML_PATH"))
 SD=($(yq eval '.slices[].sd' "$YAML_PATH"))
-if [[ -z "$DNN" || "$DNN" == "null" ]]; then
+if [[ -z "${DNN[0]}" || "${DNN[0]}" == "null" ]]; then
     echo "DNN is not set in $YAML_PATH, please ensure that \"dnn\" is set."
     exit 1
 fi
@@ -101,6 +104,7 @@ fi
 
 # SST/SD are configured in options.yaml as hex without 0x prefix.
 for i in "${!SST[@]}"; do
+    CURRENT_DNN="${DNN[$i]}"
     CURRENT_SST="${SST[$i]}"
     CURRENT_SD="${SD[$i]}"
 
@@ -357,6 +361,7 @@ declare -A OMIT_SD_ADDED
 
 # Check for omitting SD if null or FFFFFF (case insensitive)
 for i in "${!SST[@]}"; do
+    CURRENT_DNN="${DNN[$i]}"
     CURRENT_SST="${SST[$i]}"
     CURRENT_SD="${SD[$i]}"
     if [[ "$CURRENT_SD" == "null" || "${CURRENT_SD^^}" == "FFFFFF" ]]; then
@@ -365,6 +370,7 @@ for i in "${!SST[@]}"; do
 done
 
 for i in "${!SST[@]}"; do
+    CURRENT_DNN="${DNN[$i]}"
     CURRENT_SST="${SST[$i]}"
     CURRENT_SD="${SD[$i]}"
 
@@ -408,6 +414,15 @@ update_yaml "configs/gnb.yaml" "" "gnb_id_bit_length" "22" # Supported: 22-32
 update_yaml "configs/gnb.yaml" "" "ran_node_name" "$RAN_NODE_NAME"
 update_yaml "configs/gnb.yaml" "" "gnb_du_id" "$GNB_DU_ID"
 
+if [[ "$FLEXRIC_LIBRARY_DIR" != /* ]]; then
+    FULL_SM_DIR="$(realpath "$SCRIPT_DIR/../RAN_Intelligent_Controllers/Flexible-RIC/$FLEXRIC_LIBRARY_DIR" 2>/dev/null || echo "$SCRIPT_DIR/../RAN_Intelligent_Controllers/Flexible-RIC/$FLEXRIC_LIBRARY_DIR")"
+else
+    FULL_SM_DIR="$FLEXRIC_LIBRARY_DIR"
+fi
+if [[ "$FULL_SM_DIR" != */ ]]; then
+    FULL_SM_DIR="${FULL_SM_DIR}/"
+fi
+
 # Update configuration values to connect RIC by e2 interface
 if [ "$ENABLE_E2_TERM" = "true" ]; then
     update_yaml "configs/gnb.yaml" "e2" "enable_du_e2" "true"
@@ -418,6 +433,7 @@ if [ "$ENABLE_E2_TERM" = "true" ]; then
     update_yaml "configs/gnb.yaml" "e2" "addr" "$IP_E2TERM"
     update_yaml "configs/gnb.yaml" "e2" "bind_addr" "$IP_E2TERM_BIND"
     update_yaml "configs/gnb.yaml" "e2" "port" "$PORT_E2TERM"
+    update_yaml "configs/gnb.yaml" "e2" "sm_dir" "$FULL_SM_DIR"
 else
     update_yaml "configs/gnb.yaml" "e2" "enable_cu_cp_e2" "false"
     update_yaml "configs/gnb.yaml" "e2" "enable_cu_up_e2" "false"
@@ -504,7 +520,17 @@ if [ ! -f "zmq_broker/multi_ue_scenario.py" ]; then
     echo "Compiling ZeroMQ Broker GNU Radio Companion flowgraph..."
     mkdir -p zmq_broker
     if [ ! -f "zmq_broker/multi_ue_scenario.grc" ]; then
-        wget -qO zmq_broker/multi_ue_scenario.grc https://gitlab.com/ocudu/ocudu_docs/-/raw/main/docs/user_manual/tutorials/srsue/assets/multi_ue_scenario.grc
+        if ! command -v jq &>/dev/null; then
+            echo "Installing jq..."
+            sudo env $APTVARS apt-get install -y jq
+        fi
+        DOCS_HASH=$(jq -r '."https://gitlab.com/ocudu/ocudu_docs.git"[1]' ../commit_hashes.json 2>/dev/null)
+        if [ -z "$DOCS_HASH" ] || [ "$DOCS_HASH" = "null" ]; then
+            DOCS_HASH="main"
+        fi
+        echo "Downloading ZeroMQ Broker GNU Radio Companion flowgraph (${DOCS_HASH})..."
+        wget -qO zmq_broker/multi_ue_scenario.grc "https://gitlab.com/ocudu/ocudu_docs/-/raw/${DOCS_HASH}/docs/tutorials/srsue/assets/multi_ue_scenario.grc"
+        wget -qO zmq_broker/multi_ue_scenario.grc.license "https://gitlab.com/ocudu/ocudu_docs/-/raw/${DOCS_HASH}/docs/tutorials/srsue/assets/multi_ue_scenario.grc.license"
     fi
 
     # GNU Radio 3.8 issue with vmcircbuf_default_factory
@@ -515,6 +541,14 @@ if [ ! -f "zmq_broker/multi_ue_scenario.py" ]; then
     sudo mkdir -p /root/.gnuradio/prefs
     if ! sudo test -f /root/.gnuradio/prefs/vmcircbuf_default_factory; then
         sudo bash -c 'echo "gr::vmcircbuf_sysv_shm_factory" > /root/.gnuradio/prefs/vmcircbuf_default_factory'
+    fi
+
+    # Numpy version must be less than 2 to avoid grcc compatibility issue
+    NUMPY_VERSION=$(python3 -c "import numpy; print(numpy.__version__)" 2>/dev/null || echo "0")
+    NUMPY_MAJOR=$(echo "$NUMPY_VERSION" | cut -d. -f1)
+    if [ "$NUMPY_MAJOR" -ge 2 ]; then
+        echo "Downgrading NumPy to version < 2 for GNU Radio compatibility..."
+        pip3 install "numpy<2" --break-system-packages
     fi
 
     grcc -o zmq_broker zmq_broker/multi_ue_scenario.grc

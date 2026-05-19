@@ -43,8 +43,6 @@ KPI (Key Performance Indicator) monitoring provides visibility into the health, 
 | Uplink Throughput      | UL traffic speed                   |        |
 | UE Count              | Number of connected users          |              |                  |
 | CPU Usage             | Platform resource utilization       |
-|          |
-
 ## UE Registration Validation
 UE (User Equipment) registration validation confirms that devices can successfully connect to the deployed 5G network through the Open5GS core and OCUDU radio access network. This is one of the most important validation steps in the tutorial because it verifies end-to-end connectivity across the entire O-RAN stack.
 

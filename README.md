@@ -4,7 +4,7 @@ Based on the blueprints described in NIST TN 2311 [\[1\]][nist-tn-2311], this au
 
 ## Setting Up a Testbed
 
-The automation tool can be used in virtual machines and physical machines with the list of open-source components and minimum system requirements specified below. For additional details on the configuration of physical hardware and individual software components, refer to [\[1\]][nist-tn-2311].
+The  tool can be used in virtual machines and physical machines with the list of open-source components and minimum system requirements specified below. For additional details on the configuration of physical hardware and individual software components, refer to [\[1\]][nist-tn-2311].
 
 ### Supported Testbed Open-Source Components
 

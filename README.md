@@ -14,6 +14,67 @@ By completing this tutorial, users will be able to:
 
 The tutorial aims to provide an accessible and reproducible platform for O-RAN experimentation, telecom automation, and advanced wireless research in public lab and academic environments.
 
+# Key Features
+
+## E2 Telemetry
+E2 telemetry enables communication between the OCUDU platform and the Near-RT RIC through the E2 interface defined by O-RAN standards. This interface allows the RIC to collect real-time radio and network performance data from the O-CU and O-DU components.
+
+### Purpose
+- Provide visibility into RAN behavior
+- Support intelligent RAN optimization
+- Enable AI/ML-driven control applications
+- Allow xApps to monitor and influence network operations
+
+## KPI Monitoring
+KPI (Key Performance Indicator) monitoring provides visibility into the health, performance, and efficiency of the deployed 5G network. KPIs are collected from OCUDU and visualized using monitoring platforms such as Grafana and Prometheus.
+
+### Purpose
+- Measure network performance
+- Detect congestion or failures
+- Validate deployment success
+- Analyze user traffic behavior
+- Support performance optimization research
+
+### Common KPIs Monitored
+
+| KPI                   | Description                        |
+|-----------------------|------------------------------------|
+| Downlink Throughput    | DL traffic speed                   |
+| Uplink Throughput      | UL traffic speed                   |
+| PRB Usage             | Radio resource consumption          |
+| UE Count              | Number of connected users          |
+| Packet Loss           | Reliability indicator              |
+| Latency               | End-to-end delay                   |
+| CPU Usage             | Platform resource utilization       |
+| E2 Message Rate       | RIC communication activity          |
+
+## UE Registration Validation
+UE (User Equipment) registration validation confirms that devices can successfully connect to the deployed 5G network through the Open5GS core and OCUDU radio access network. This is one of the most important validation steps in the tutorial because it verifies end-to-end connectivity across the entire O-RAN stack.
+
+### Validation Objectives
+The tutorial validates:
+- UE authentication
+- SIM/subscriber configuration
+- AMF communication
+- PDU session establishment
+- IP address allocation
+- Data connectivity
+
+### Expected Outcomes
+- UE successfully attaches to the network
+- KPIs visible in the RIC dashboard
+
+## Learning Goal
+Users should be able to:
+- Understand O-RAN architecture
+- Deploy Open5GS Core
+- Build and configure OCUDU
+- Integrate Near-RT RIC
+- Enable E2 telemetry
+- Deploy KPI monitoring xApps
+- Validate UE registration
+- Run traffic and KPI tests
+
 
 ## Setting Up a Testbed
 

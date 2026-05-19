@@ -36,6 +36,15 @@ cd "$PARENT_DIR"
 
 CONFIG_FILE="/etc/mongod/mongod.conf"
 
+# Ensure the mongodb group and user exist and have the correct ownership
+if ! getent group mongodb >/dev/null 2>&1; then
+    sudo groupadd mongodb
+fi
+if ! getent passwd mongodb >/dev/null 2>&1; then
+    sudo useradd -r -M -d /var/lib/mongodb -s /bin/false -g mongodb mongodb
+fi
+sudo chown -R mongodb:mongodb /var/lib/mongodb /var/log/mongodb 2>/dev/null || true
+
 # Detect if systemctl is available
 USE_SYSTEMCTL=false
 if command -v systemctl >/dev/null 2>&1; then

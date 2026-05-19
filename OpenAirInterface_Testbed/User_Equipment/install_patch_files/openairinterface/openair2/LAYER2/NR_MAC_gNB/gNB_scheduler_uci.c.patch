@@ -1,0 +1,48 @@
+diff --git a/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c b/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c
+index d0ab235276..252081595d 100644
+--- a/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c
++++ b/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c
+@@ -492,9 +492,19 @@ static void evaluate_sinr_report(NR_UE_info_t *UE,
+   }
+ 
+   NR_mac_stats_t *stats = &UE->mac_stats;
++  NR_du_stats_t *du_stats = &RC.nrmac[0]->du_stats;
++
+   // including ssb SINR in mac stats
+-  stats->cumul_sinrx10 += sinr_report->r[0].SINRx10;
+-  stats->num_sinr_meas++;
++  for (RSRP_report_t *i = sinr_report->r; i < sinr_report->r + sinr_report->nb; i++) {
++    stats->cumul_sinrx10 += i->SINRx10;
++    stats->num_sinr_meas++;
++
++    // cell-wide SS-SINR distribution from 28.552 5.1.1.32.1
++    int diff_sinr_index = (i->SINRx10 + 235) / 5;
++    if (diff_sinr_index >= 0 && diff_sinr_index <= 127) {
++      du_stats->ss_sinr_dist[diff_sinr_index] += 1;
++    }
++  }
+ 
+   const int mcs_table = UE->current_DL_BWP.mcsTableIdx;
+   const int nrOfLayers = get_dl_nrOfLayers(sched_ctrl, UE->current_DL_BWP.dci_format);
+@@ -571,9 +581,19 @@ static void evaluate_rsrp_report(NR_UE_info_t *UE,
+   }
+ 
+   NR_mac_stats_t *stats = &UE->mac_stats;
++  NR_du_stats_t *du_stats = &RC.nrmac[0]->du_stats;
++
+   // including ssb rsrp in mac stats
+-  stats->cumul_rsrp += rsrp_report->r[0].RSRP;
+-  stats->num_rsrp_meas++;
++  for (RSRP_report_t *i = rsrp_report->r; i < rsrp_report->r + rsrp_report->nb; i++) {
++    stats->cumul_rsrp += i->RSRP;
++    stats->num_rsrp_meas++;
++
++    // cell-wide SS-RSRP distribution, see 28.552 5.1.1.22.1
++    uint8_t rsrp_index = get_rsrp_index(i->RSRP);
++    if (rsrp_index <= 127) {
++      du_stats->ss_rsrp_dist[rsrp_index] += 1;
++    }
++  }
+ }
+ 
+ static void evaluate_cri_report(uint8_t *payload, uint8_t cri_bitlen, int cumul_bits, NR_UE_sched_ctrl_t *sched_ctrl)

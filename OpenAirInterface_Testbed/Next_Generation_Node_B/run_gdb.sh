@@ -65,6 +65,19 @@ fi
 
 cd "$SCRIPT_DIR"
 
+RADIO_TYPE=$(cat "$SCRIPT_DIR/configs/radio_type.txt" 2>/dev/null || echo "RFSIM")
+if [ "$RADIO_TYPE" = "ZMQ" ]; then
+    ZMQ_TX_PORT=4556
+    ZMQ_RX_PORT=4557
+    UE_NUMBER=1
+    UE_NS_IP=$(python3 "$SCRIPT_DIR/install_scripts/fetch_nth_ip.py" "10.201.0.0/16" $((UE_NUMBER * 4 + 1)))
+    RADIO_ARGS="--device.name oai_zmqdevif --zmq.[0].tx_channels tcp://0.0.0.0:$ZMQ_TX_PORT --zmq.[0].rx_channels tcp://$UE_NS_IP:$ZMQ_RX_PORT"
+elif [ "$RADIO_TYPE" = "USRP" ]; then
+    RADIO_ARGS=""
+else
+    RADIO_ARGS="$RADIO_ARGS"
+fi
+
 # Write the hostname IP to the get_rfsim_server_address.txt file
 HOSTNAME_IP=$(hostname -I | awk '{print $1}')
 mkdir -p configs
@@ -78,9 +91,9 @@ fi
 
 cd "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build"
 
-# sudo gdb --args ./nr-softmodem -O "$SCRIPT_DIR/configs/gnb.conf" --rfsim --rfsimulator.[0].serveraddr server --rfsimulator.[0].options chanmod --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS
+# sudo gdb --args ./nr-softmodem -O "$SCRIPT_DIR/configs/gnb.conf" $RADIO_ARGS --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS
 if [ "$IMSCOPE" = true ]; then # ImScope GUI cannot be run with sudo
-    script -q -f -c "gdb --args ./nr-softmodem -O \"$SCRIPT_DIR/configs/gnb.conf\" --rfsim --rfsimulator.[0].serveraddr server --rfsimulator.[0].options chanmod --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS" "$SCRIPT_DIR/logs/gnb_stdout.txt"
+    script -q -f -c "gdb --args ./nr-softmodem -O \"$SCRIPT_DIR/configs/gnb.conf\" $RADIO_ARGS --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS" "$SCRIPT_DIR/logs/gnb_stdout.txt"
 else
-    sudo script -q -f -c "gdb --args ./nr-softmodem -O \"$SCRIPT_DIR/configs/gnb.conf\" --rfsim --rfsimulator.[0].serveraddr server --rfsimulator.[0].options chanmod --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS" "$SCRIPT_DIR/logs/gnb_stdout.txt"
+    sudo script -q -f -c "gdb --args ./nr-softmodem -O \"$SCRIPT_DIR/configs/gnb.conf\" $RADIO_ARGS --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS" "$SCRIPT_DIR/logs/gnb_stdout.txt"
 fi

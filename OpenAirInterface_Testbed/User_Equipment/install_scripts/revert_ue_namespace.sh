@@ -82,6 +82,6 @@ sudo ip link set v-eth$UE_NUMBER down
 sudo ip link del v-eth$UE_NUMBER
 
 echo "Deleting the network namespace..."
-sudo ip netns del $UE_NAMESPACE
+sudo ip netns delete $UE_NAMESPACE
 
 echo "Successfully reverted the UE $UE_NUMBER namespace."

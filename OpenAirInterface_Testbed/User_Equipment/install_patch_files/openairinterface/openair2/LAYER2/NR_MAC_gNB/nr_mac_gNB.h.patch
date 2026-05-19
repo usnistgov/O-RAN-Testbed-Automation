@@ -1,0 +1,44 @@
+diff --git a/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h b/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h
+index 391bfeabe8..1a885c1e8b 100644
+--- a/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h
++++ b/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h
+@@ -514,6 +514,8 @@ typedef struct NR_UE_harq {
+   bool start_tci_timer;
+   /// sched_pdsch keeps information on MCS etc used for the initial transmission
+   NR_sched_pdsch_t sched_pdsch;
++  // number of SDUs associated with this HARQ process
++  int num_sdus;
+ } NR_UE_harq_t;
+ 
+ //! fixme : need to enhace for the multiple TB CQI report
+@@ -714,6 +716,7 @@ typedef struct NR_mac_dir_stats {
+   uint32_t total_rbs_retx;
+   uint32_t num_mac_sdu;
+   uint32_t current_rbs;
++  uint32_t sdu_errors;
+ } NR_mac_dir_stats_t;
+ 
+ typedef struct NR_mac_stats {
+@@ -726,6 +729,7 @@ typedef struct NR_mac_stats {
+   uint8_t num_rsrp_meas;
+   int cumul_sinrx10;
+   uint8_t num_sinr_meas;
++
+   char srs_stats[50]; // Statistics may differ depending on SRS usage
+   int deltaMCS;
+   int NPRB;
+@@ -891,6 +895,14 @@ typedef struct NR_du_stats {
+   /// cell-wide MCS distribution in PUSCH, see 28.552 5.1.1.12.1
+   /// 1-8 RI, 1-2 MCS table, 0-31 MCS value
+   uint32_t pusch_mcs_dist[8][2][32];
++
++  /// cell-wide SS-RSRP distribution, see 28.552 5.1.1.22.1
++  /// 0-127 RSRP range
++  uint32_t ss_rsrp_dist[128];
++
++  /// cell-wide SS-SINR distribution, see 28.552 5.1.1.32.1
++  /// 0-127 SINR range
++  uint32_t ss_sinr_dist[128];
+ } NR_du_stats_t;
+ 
+ /*! \brief top level eNB MAC structure */

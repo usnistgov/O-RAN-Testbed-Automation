@@ -1,0 +1,21 @@
+diff --git a/examples/xApp/c/kpm_rc/CMakeLists.txt b/examples/xApp/c/kpm_rc/CMakeLists.txt
+index d9630ac6..bcbfc133 100644
+--- a/examples/xApp/c/kpm_rc/CMakeLists.txt
++++ b/examples/xApp/c/kpm_rc/CMakeLists.txt
+@@ -1,7 +1,8 @@
+ # SPDX-License-Identifier: LicenseRef-CSSL-1.0
+ 
+-add_executable(xapp_kpm_rc 
++add_executable(xapp_kpm_rc
+   xapp_kpm_rc.c
++  ../metrics_factory.c
+   ../../../../src/util/alg_ds/alg/defer.c
+   ../../../../src/util/alg_ds/alg/murmur_hash_32.c
+   ../../../../src/util/alg_ds/ds/assoc_container/assoc_ht_open_address.c
+@@ -13,5 +14,6 @@ target_link_libraries(xapp_kpm_rc
+                       -pthread
+                       -lsctp
+                       -ldl
++                      -lm
+                       )
+ target_compile_definitions(xapp_kpm_rc PRIVATE KPM_MEAS_LIST="${KPM_MEAS_LIST}")

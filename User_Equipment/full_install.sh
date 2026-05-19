@@ -118,9 +118,18 @@ sudo env $APTVARS apt-get install -y libtool
 # Enable SCTP kernel module
 sudo ./install_scripts/enable_sctp.sh
 
-# Check if GCC 13 is installed, if not, install it and set it as the default
-GCC_VERSION=$(gcc -v 2>&1 | grep "gcc version" | awk '{print $3}')
-if [[ -z "$GCC_VERSION" || ! "$GCC_VERSION" == 13.* ]]; then
+# Check if GCC 13 or newer is installed, if not, install it and set it as the default
+MIN_GCC_VERSION="13.0.0"
+INSTALL_GCC=false
+if ! command -v gcc >/dev/null 2>&1; then
+    INSTALL_GCC=true
+else
+    GCC_VERSION=$(gcc -dumpfullversion -dumpversion)
+    if dpkg --compare-versions "$GCC_VERSION" lt "$MIN_GCC_VERSION"; then
+        INSTALL_GCC=true
+    fi
+fi
+if [[ "$INSTALL_GCC" == "true" ]]; then
     echo "Installing GCC 13..."
     sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
     sudo apt-get update
@@ -128,6 +137,8 @@ if [[ -z "$GCC_VERSION" || ! "$GCC_VERSION" == 13.* ]]; then
     sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 100
     sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-13 100
 fi
+export CFLAGS="-Wno-error=incompatible-pointer-types"
+export CXXFLAGS="-Wno-error=incompatible-pointer-types"
 
 cd "$SCRIPT_DIR"
 
@@ -194,6 +205,13 @@ cd srsRAN_4G
 echo
 echo
 echo "Building srsRAN_4G..."
+
+BOOST_VERSION=$(dpkg -s libboost-dev | grep '^Version:' | awk '{print $2}' | cut -d. -f1,2)
+if [[ $(echo -e "$BOOST_VERSION\n1.89" | sort -V | head -n1) == "1.89" ]]; then # If version 1.89 or higher
+    # Remove system from list of components since no longer available (https://www.boost.org/doc/libs/latest/libs/system/doc/html/system.html#changes_in_boost_1_89)
+    sed -i 's/list(APPEND BOOST_REQUIRED_COMPONENTS "system")/#list(APPEND BOOST_REQUIRED_COMPONENTS "system")/g' CMakeLists.txt
+fi
+
 # rm -rf build
 mkdir -p build
 cd build

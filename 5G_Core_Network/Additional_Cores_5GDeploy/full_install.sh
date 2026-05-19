@@ -203,8 +203,8 @@ echo "Starting installation of 5G Core Deployment Helper (5gdeploy)..."
     --gtp5g-version v0.9.16 \
     --oai-fed-version v2.2.0 \
     --oai-nwdaf-version 6a1408c9be6f5cf0ddb6c1f1b527a04e36205471 \
-    --open5gs-dbctl-version v2.7.6 \
-    --open5gs-version 2.7.6 \
+    --open5gs-dbctl-version v2.7.7 \
+    --open5gs-version 2.7.7 \
     --packetrusher-version 80a7f4bc63d9563a8ec58ba126440d94018a35a2 \
     --pipework-version 9ba97f1735022fb5f811d9c2a304dda33fae1ad1 \
     --sockperf-version 19accb5229503dac7833f03713b978cb7fc48762 \

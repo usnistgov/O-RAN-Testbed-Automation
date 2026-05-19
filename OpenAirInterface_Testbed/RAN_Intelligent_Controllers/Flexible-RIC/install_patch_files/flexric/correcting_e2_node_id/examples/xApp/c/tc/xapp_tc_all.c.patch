@@ -1,0 +1,31 @@
+diff --git a/examples/xApp/c/tc/xapp_tc_all.c b/examples/xApp/c/tc/xapp_tc_all.c
+index faf379ed..bd9c7817 100644
+--- a/examples/xApp/c/tc/xapp_tc_all.c
++++ b/examples/xApp/c/tc/xapp_tc_all.c
+@@ -17,7 +17,7 @@
+ 
+ /*
+ static
+-void sm_cb_mac(sm_ag_if_rd_t const* rd)
++void sm_cb_mac(sm_ag_if_rd_t const* rd, global_e2_node_id_t const* node_id)
+ {
+   assert(rd != NULL);
+   assert(rd->type == MAC_STATS_V0); 
+@@ -31,7 +31,7 @@ static
+ int new_queues = 0;
+ 
+ static
+-void sm_cb_rlc(sm_ag_if_rd_t const* rd)
++void sm_cb_rlc(sm_ag_if_rd_t const* rd, global_e2_node_id_t const* node_id)
+ {
+   assert(rd != NULL);
+   assert(rd->type == INDICATION_MSG_AGENT_IF_ANS_V0);
+@@ -55,7 +55,7 @@ void sm_cb_rlc(sm_ag_if_rd_t const* rd)
+ 
+ /*
+ static
+-void sm_cb_tc(sm_ag_if_rd_t const* rd)
++void sm_cb_tc(sm_ag_if_rd_t const* rd, global_e2_node_id_t const* node_id)
+ {
+   assert(rd != NULL);
+   assert(rd->type == TC_STATS_V0); 

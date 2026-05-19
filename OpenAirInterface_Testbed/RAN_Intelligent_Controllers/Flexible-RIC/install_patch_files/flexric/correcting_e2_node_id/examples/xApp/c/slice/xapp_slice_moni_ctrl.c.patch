@@ -1,0 +1,13 @@
+diff --git a/examples/xApp/c/slice/xapp_slice_moni_ctrl.c b/examples/xApp/c/slice/xapp_slice_moni_ctrl.c
+index c685b40e..bfacfcfb 100644
+--- a/examples/xApp/c/slice/xapp_slice_moni_ctrl.c
++++ b/examples/xApp/c/slice/xapp_slice_moni_ctrl.c
+@@ -18,7 +18,7 @@ _Atomic
+ uint16_t assoc_rnti = 0;
+ 
+ static
+-void sm_cb_slice(sm_ag_if_rd_t const* rd)
++void sm_cb_slice(sm_ag_if_rd_t const* rd, global_e2_node_id_t const* node_id)
+ {
+   assert(rd != NULL);
+   assert(rd->type == INDICATION_MSG_AGENT_IF_ANS_V0);

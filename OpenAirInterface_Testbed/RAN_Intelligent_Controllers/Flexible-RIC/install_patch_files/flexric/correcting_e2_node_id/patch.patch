@@ -1,0 +1,196 @@
+diff --git a/examples/xApp/c/monitor/xapp_gtp_mac_rlc_pdcp_moni.c b/examples/xApp/c/monitor/xapp_gtp_mac_rlc_pdcp_moni.c
+index 68475c54..1a01f891 100644
+--- a/examples/xApp/c/monitor/xapp_gtp_mac_rlc_pdcp_moni.c
++++ b/examples/xApp/c/monitor/xapp_gtp_mac_rlc_pdcp_moni.c
+@@ -17,7 +17,7 @@ static
+ uint64_t cnt_mac;
+ 
+ static
+-void sm_cb_mac(sm_ag_if_rd_t const* rd)
++void sm_cb_mac(sm_ag_if_rd_t const* rd, global_e2_node_id_t const* node_id)
+ {
+   assert(rd != NULL);
+   assert(rd->type ==INDICATION_MSG_AGENT_IF_ANS_V0);
+@@ -33,7 +33,7 @@ static
+ uint64_t cnt_rlc;
+ 
+ static
+-void sm_cb_rlc(sm_ag_if_rd_t const* rd)
++void sm_cb_rlc(sm_ag_if_rd_t const* rd, global_e2_node_id_t const* node_id)
+ {
+   assert(rd != NULL);
+   assert(rd->type ==INDICATION_MSG_AGENT_IF_ANS_V0);
+@@ -51,7 +51,7 @@ static
+ uint64_t cnt_pdcp;
+ 
+ static
+-void sm_cb_pdcp(sm_ag_if_rd_t const* rd)
++void sm_cb_pdcp(sm_ag_if_rd_t const* rd, global_e2_node_id_t const* node_id)
+ {
+   assert(rd != NULL);
+   assert(rd->type == INDICATION_MSG_AGENT_IF_ANS_V0);
+@@ -70,7 +70,7 @@ static
+ uint64_t cnt_gtp;
+ 
+ static
+-void sm_cb_gtp(sm_ag_if_rd_t const* rd)
++void sm_cb_gtp(sm_ag_if_rd_t const* rd, global_e2_node_id_t const* node_id)
+ {
+   assert(rd != NULL);
+   assert(rd->type ==INDICATION_MSG_AGENT_IF_ANS_V0);
+diff --git a/examples/xApp/c/monitor/xapp_rc_moni.c b/examples/xApp/c/monitor/xapp_rc_moni.c
+index 345892a8..06708c4d 100644
+--- a/examples/xApp/c/monitor/xapp_rc_moni.c
++++ b/examples/xApp/c/monitor/xapp_rc_moni.c
+@@ -318,7 +318,7 @@ void log_ind_1_2(const e2sm_rc_ind_hdr_frmt_1_t *hdr, const e2sm_rc_ind_msg_frmt
+ }
+ 
+ static
+-void sm_cb_rc(sm_ag_if_rd_t const* rd)
++void sm_cb_rc(sm_ag_if_rd_t const* rd, global_e2_node_id_t const* node_id)
+ {
+   assert(rd != NULL);
+   assert(rd->type == INDICATION_MSG_AGENT_IF_ANS_V0);
+diff --git a/examples/xApp/c/orange/xapp_es_with_cell_util.c b/examples/xApp/c/orange/xapp_es_with_cell_util.c
+index 693561b5..c64c0383 100644
+--- a/examples/xApp/c/orange/xapp_es_with_cell_util.c
++++ b/examples/xApp/c/orange/xapp_es_with_cell_util.c
+@@ -409,7 +409,7 @@ void log_kpm_measurements(kpm_ind_msg_format_1_t const* msg_frm_1)
+ }
+ 
+ static
+-void sm_cb_kpm(sm_ag_if_rd_t const* rd)
++void sm_cb_kpm(sm_ag_if_rd_t const* rd, global_e2_node_id_t const* node_id)
+ {
+   assert(rd != NULL);
+   assert(rd->type == INDICATION_MSG_AGENT_IF_ANS_V0);
+diff --git a/examples/xApp/c/slice/xapp_slice_moni_ctrl.c b/examples/xApp/c/slice/xapp_slice_moni_ctrl.c
+index c685b40e..bfacfcfb 100644
+--- a/examples/xApp/c/slice/xapp_slice_moni_ctrl.c
++++ b/examples/xApp/c/slice/xapp_slice_moni_ctrl.c
+@@ -18,7 +18,7 @@ _Atomic
+ uint16_t assoc_rnti = 0;
+ 
+ static
+-void sm_cb_slice(sm_ag_if_rd_t const* rd)
++void sm_cb_slice(sm_ag_if_rd_t const* rd, global_e2_node_id_t const* node_id)
+ {
+   assert(rd != NULL);
+   assert(rd->type == INDICATION_MSG_AGENT_IF_ANS_V0);
+diff --git a/examples/xApp/c/tc/xapp_tc_all.c b/examples/xApp/c/tc/xapp_tc_all.c
+index faf379ed..bd9c7817 100644
+--- a/examples/xApp/c/tc/xapp_tc_all.c
++++ b/examples/xApp/c/tc/xapp_tc_all.c
+@@ -17,7 +17,7 @@
+ 
+ /*
+ static
+-void sm_cb_mac(sm_ag_if_rd_t const* rd)
++void sm_cb_mac(sm_ag_if_rd_t const* rd, global_e2_node_id_t const* node_id)
+ {
+   assert(rd != NULL);
+   assert(rd->type == MAC_STATS_V0); 
+@@ -31,7 +31,7 @@ static
+ int new_queues = 0;
+ 
+ static
+-void sm_cb_rlc(sm_ag_if_rd_t const* rd)
++void sm_cb_rlc(sm_ag_if_rd_t const* rd, global_e2_node_id_t const* node_id)
+ {
+   assert(rd != NULL);
+   assert(rd->type == INDICATION_MSG_AGENT_IF_ANS_V0);
+@@ -55,7 +55,7 @@ void sm_cb_rlc(sm_ag_if_rd_t const* rd)
+ 
+ /*
+ static
+-void sm_cb_tc(sm_ag_if_rd_t const* rd)
++void sm_cb_tc(sm_ag_if_rd_t const* rd, global_e2_node_id_t const* node_id)
+ {
+   assert(rd != NULL);
+   assert(rd->type == TC_STATS_V0); 
+diff --git a/src/xApp/act_proc.c b/src/xApp/act_proc.c
+index f1e1c6ae..3c529424 100644
+--- a/src/xApp/act_proc.c
++++ b/src/xApp/act_proc.c
+@@ -54,7 +54,7 @@ bool valid_proc_type(act_proc_val_e type)
+   return false;
+ }
+ 
+-uint32_t add_act_proc(act_proc_t* p, act_proc_val_e type, ric_gen_id_t id, global_e2_node_id_t const* e2_node, void(*sm_cb)(sm_ag_if_rd_t const *))
++uint32_t add_act_proc(act_proc_t* p, act_proc_val_e type, ric_gen_id_t id, global_e2_node_id_t const* e2_node, void(*sm_cb)(sm_ag_if_rd_t const*, global_e2_node_id_t const*))
+ {
+   assert(p != NULL);
+   assert(valid_proc_type(type) == true );
+diff --git a/src/xApp/act_proc.h b/src/xApp/act_proc.h
+index 06ddf92e..b669513f 100644
+--- a/src/xApp/act_proc.h
++++ b/src/xApp/act_proc.h
+@@ -49,7 +49,7 @@ void free_act_proc(act_proc_t* proc);
+ 
+ void free_act_proc_val(void* val);
+ 
+-uint32_t add_act_proc(act_proc_t* proc, act_proc_val_e type, ric_gen_id_t id, global_e2_node_id_t const* e2_node, void(*sm_cb)(sm_ag_if_rd_t const *));
++uint32_t add_act_proc(act_proc_t* proc, act_proc_val_e type, ric_gen_id_t id, global_e2_node_id_t const* e2_node, void(*sm_cb)(sm_ag_if_rd_t const*, global_e2_node_id_t const*));
+ 
+ void rm_act_proc(act_proc_t* act, uint16_t ric_req_id );
+ 
+diff --git a/src/xApp/e42_xapp_api.h b/src/xApp/e42_xapp_api.h
+index 2e1bbb24..d6696f1a 100644
+--- a/src/xApp/e42_xapp_api.h
++++ b/src/xApp/e42_xapp_api.h
+@@ -25,7 +25,7 @@ bool try_stop_xapp_api(void);
+ 
+ e2_node_arr_xapp_t e2_nodes_xapp_api(void);
+ 
+-typedef void (*sm_cb)(sm_ag_if_rd_t const*);
++typedef void (*sm_cb)(sm_ag_if_rd_t const*, global_e2_node_id_t const*);
+ 
+ typedef union{
+   char* reason;
+diff --git a/src/xApp/msg_dispatcher_xapp.c b/src/xApp/msg_dispatcher_xapp.c
+index cda9dd8d..e85ca875 100644
+--- a/src/xApp/msg_dispatcher_xapp.c
++++ b/src/xApp/msg_dispatcher_xapp.c
+@@ -40,7 +40,7 @@ void* worker_thread(void* arg)
+     if(msg == NULL)
+       break;
+ 
+-    msg->sm_cb(&msg->rd);
++    msg->sm_cb(&msg->rd, &msg->e2_node);
+     free_sm_ag_if_rd(&msg->rd);
+   }
+   q->stopped = true;
+diff --git a/src/xApp/msg_dispatcher_xapp.h b/src/xApp/msg_dispatcher_xapp.h
+index 6a1fb1a7..b083d5a5 100644
+--- a/src/xApp/msg_dispatcher_xapp.h
++++ b/src/xApp/msg_dispatcher_xapp.h
+@@ -12,6 +12,7 @@
+ #include "../sm/agent_if/read/sm_ag_if_rd.h"
+ 
+ #include <pthread.h>
++#include "../lib/e2ap/e2ap_global_node_id_wrapper.h"
+ 
+ 
+ typedef struct{
+@@ -21,7 +22,8 @@ typedef struct{
+ 
+ typedef struct{
+   sm_ag_if_rd_t rd; 
+-  void (*sm_cb)(sm_ag_if_rd_t const*);
++  global_e2_node_id_t e2_node;
++  void (*sm_cb)(sm_ag_if_rd_t const*, global_e2_node_id_t const*);
+ } msg_dispatch_t ;
+ 
+ void init_msg_dispatcher( msg_dispatcher_xapp_t* d);
+diff --git a/src/xApp/msg_handler_xapp.c b/src/xApp/msg_handler_xapp.c
+index 4bb56979..cb666c25 100644
+--- a/src/xApp/msg_handler_xapp.c
++++ b/src/xApp/msg_handler_xapp.c
+@@ -252,6 +252,7 @@ sm_ind_data_t ind_sm_payload(ric_indication_t const* src)
+ 
+     // Write to the callback. Should I send the E2 Node info to the cb??
+     msg_disp.sm_cb = ans.val.sm_cb;
++    msg_disp.e2_node = ans.val.e2_node;
+     send_msg_dispatcher(&xapp->msg_disp, &msg_disp );
+  }
+ 

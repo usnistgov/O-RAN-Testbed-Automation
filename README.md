@@ -1,6 +1,19 @@
 # Automation Tool for Deploying 5G O-RAN Testbeds
 
-Based on the blueprints described in NIST TN 2311 [\[1\]][nist-tn-2311], this automation tool facilitates the deployment and configuration of 5G Open Radio Access Network (O-RAN) testbeds. Designed to operate in both bare metal and virtualized environments, it simplifies setting up the components required for a 5G O-RAN testbed, including the 5G Core; Next Generation Node B (gNodeB) composed of Radio Unit (RU), Distributed Unit (DU), and Centralized Unit (CU); User Equipment (UE); RAN Intelligent Controller (RIC); and a series of xApps that can be installed in the RIC. This reduces the complexity and time required to operationalize the testbeds described in the report above, and enables more efficient testing and validation to facilitate research and development in 5G technologies.
+The objective of this tutorial is to provide a hands-on, end-to-end guide for deploying and validating an O-RAN compliant 5G testbed using OCUDU, Open5GS, and a Near-RT RIC environment. The tutorial is designed to learn the fundamentals of O-RAN architecture, OCUDU,  E2 integration, and KPI monitoring through a practical deployment workflow.
+By completing this tutorial, users will be able to:
+- Understand the architecture and components of O-RAN networks.
+- Deploy and configure the Open5GS 5G Core.
+- Build and deploy OCUDU-based O-CU and O-DU components.
+- Integrate a Near-RT RIC with OCUDU.
+- Deploy and validate xApps for KPI monitoring.
+- Perform UE registration and traffic validation.
+- Monitor network KPIs using observability tools.
+- Troubleshoot common deployment and connectivity issues.
+- Automate deployment workflows for repeatable experimentation and research.
+
+The tutorial aims to provide an accessible and reproducible platform for O-RAN experimentation, telecom automation, and advanced wireless research in public lab and academic environments.
+
 
 ## Setting Up a Testbed
 

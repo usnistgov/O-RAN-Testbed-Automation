@@ -84,7 +84,7 @@ UE_ID=1
 cd User_Equipment
 ./run_background.sh "$UE_ID"
 if [ "$SHOW_TERMINALS" = true ]; then
-    gnome-terminal --title="UE $UE_ID Log" -- bash -c "tail -f logs/ue${UE_ID}_stdout.txt; exec bash"
+    nohup x-terminal-emulator -T "UE $UE_ID Log" -e bash -c "tail -f logs/ue${UE_ID}_stdout.txt; exec bash" >/dev/null 2>&1 &
 fi
 
 echo -en "\nWaiting for UE $UE_ID to be ready"

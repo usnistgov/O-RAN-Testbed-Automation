@@ -137,6 +137,8 @@ if [[ "$INSTALL_GCC" == "true" ]]; then
     sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 100
     sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-13 100
 fi
+export CFLAGS="-Wno-error=incompatible-pointer-types"
+export CXXFLAGS="-Wno-error=incompatible-pointer-types"
 
 cd "$SCRIPT_DIR"
 

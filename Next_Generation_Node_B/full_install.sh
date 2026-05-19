@@ -111,6 +111,7 @@ fi
 echo
 echo
 echo "Installing Next Generation Node B (OCUDU)..."
+
 # Modifies the needrestart configuration to suppress interactive prompts
 if [ -d /etc/needrestart ]; then
     sudo install -d -m 0755 /etc/needrestart/conf.d
@@ -130,6 +131,8 @@ if command -v gcc >/dev/null 2>&1; then
         sudo env $APTVARS apt-get remove -y gcc g++
     fi
 fi
+export CFLAGS="-Wno-error=incompatible-pointer-types"
+export CXXFLAGS="-Wno-error=incompatible-pointer-types"
 
 sudo env $APTVARS apt-get install -y cmake make gcc g++ pkg-config libmbedtls-dev libsctp-dev libyaml-cpp-dev libtool
 if [[ "$RUN_TESTS" == "true" ]]; then

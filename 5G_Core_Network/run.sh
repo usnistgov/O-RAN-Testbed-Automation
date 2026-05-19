@@ -138,8 +138,8 @@ run_in_terminal() {
                 # Remove the log file if it exists before starting the application
                 LOG_PATH=$(yq eval '.logger.file.path' "$CONFIG_FILE")
                 rm -f "$LOG_PATH"
-                echo "Starting $APP_NAME 1 in GNOME Terminal..."
-                gnome-terminal -t "$APP_NAME 1 Node" -- /bin/sh -c "./open5gs/install/bin/$APP_NAME -c $CONFIG_FILE_1"
+                echo "Starting $APP_NAME 1 in a new terminal..."
+                nohup x-terminal-emulator -T "$APP_NAME 1" -e /bin/sh -c "./open5gs/install/bin/$APP_NAME -c $CONFIG_FILE_1" >/dev/null 2>&1 &
             else
                 echo "Already running $APP_NAME 1."
             fi
@@ -152,8 +152,8 @@ run_in_terminal() {
                 # Remove the log file if it exists before starting the application
                 LOG_PATH=$(yq eval '.logger.file.path' "$CONFIG_FILE")
                 rm -f "$LOG_PATH"
-                echo "Starting $APP_NAME 2 in GNOME Terminal..."
-                gnome-terminal -t "$APP_NAME 2 Node" -- /bin/sh -c "./open5gs/install/bin/$APP_NAME -c $CONFIG_FILE_2"
+                echo "Starting $APP_NAME 2 in a new terminal..."
+                nohup x-terminal-emulator -T "$APP_NAME 2" -e /bin/sh -c "./open5gs/install/bin/$APP_NAME -c $CONFIG_FILE_2" >/dev/null 2>&1 &
             else
                 echo "Already running $APP_NAME 2."
             fi
@@ -174,8 +174,8 @@ run_in_terminal() {
     LOG_PATH=$(yq eval '.logger.file.path' "$CONFIG_FILE")
     rm -f "$LOG_PATH"
 
-    echo "Starting $APP_NAME in GNOME Terminal..."
-    gnome-terminal -t "$APP_NAME Node" -- /bin/sh -c "./open5gs/install/bin/$APP_NAME -c $CONFIG_FILE"
+    echo "Starting $APP_NAME in a new terminal..."
+    nohup x-terminal-emulator -T "$APP_NAME" -e /bin/sh -c "./open5gs/install/bin/$APP_NAME -c $CONFIG_FILE" >/dev/null 2>&1 &
 }
 
 # Latest components (see https://open5gs.org/open5gs/docs/guide/01-quickstart/#:~:text=Starting%20and%20Stopping%20Open5GS)

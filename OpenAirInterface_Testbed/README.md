@@ -33,7 +33,7 @@ It may be required for the AVX2 instruction set to be available on the host mach
 
 The script `run_handover_scenario.sh`, based on the handover tutorial [\[4\]][oai-handover], automates the process of setting up a handover scenario with two DUs and one CU. It starts the 5G Core, FlexRIC, CU, DU 1, and UE 1. After UE connectivity, it starts DU 2 and opens a telnet session to the CU for monitoring and controlling the handover process.
   - The variable `TELNET_SERVER` in `Next_Generation_Node_B/full_install.sh` must be set to `true` prior to gNodeB installation.
-  - To start each component in its own gnome-terminal instance, use `./run_handover_scenario.sh show`.
+  - To start each component in its own terminal instance, use `./run_handover_scenario.sh show`.
   - The command `ci trigger_f1_ho 1` will trigger a handover for UE 1 from its current DU to the next DU in a round robin manner.
 
 

@@ -125,7 +125,7 @@ echo "Running CU..."
 cd Next_Generation_Node_B
 ./run_background_split_cu.sh
 if [ "$SHOW_TERMINALS" = true ]; then
-    gnome-terminal --title="CU Log" -- bash -c "tail -f logs/split_cu_stdout.txt; exec bash"
+    nohup x-terminal-emulator -T "CU Log" -e bash -c "tail -f logs/split_cu_stdout.txt; exec bash" >/dev/null 2>&1 &
 fi
 cd ..
 
@@ -141,7 +141,7 @@ start_ue() {
         ./run_background.sh "$UE_ID"
     fi
     if [ "$SHOW_TERMINALS" = true ]; then
-        gnome-terminal --title="UE $UE_ID Log" -- bash -c "tail -f logs/ue${UE_ID}_stdout.txt; exec bash"
+        nohup x-terminal-emulator -T "UE $UE_ID Log" -e bash -c "tail -f logs/ue${UE_ID}_stdout.txt; exec bash" >/dev/null 2>&1 &
     fi
 
     echo -en "\nWaiting for UE $UE_ID to be ready"
@@ -197,7 +197,7 @@ echo "Running DU 1..."
 cd Next_Generation_Node_B
 ./run_background_split_du.sh 1 --no-rfsim-server
 if [ "$SHOW_TERMINALS" = true ]; then
-    gnome-terminal --title="DU 1 Log" -- bash -c "tail -f logs/split_du1_stdout.txt; exec bash"
+    nohup x-terminal-emulator -T "DU 1 Log" -e bash -c "tail -f logs/split_du1_stdout.txt; exec bash" >/dev/null 2>&1 &
 fi
 cd ..
 
@@ -240,7 +240,7 @@ while [ $DU_ID -le "$NUM_DUS" ]; do
     cd Next_Generation_Node_B
     ./run_background_split_du.sh "$DU_ID" --no-rfsim-server
     if [ "$SHOW_TERMINALS" = true ]; then
-        gnome-terminal --title="DU $DU_ID Log" -- bash -c "tail -f logs/split_du${DU_ID}_stdout.txt; exec bash"
+        nohup x-terminal-emulator -T "DU $DU_ID Log" -e bash -c "tail -f logs/split_du${DU_ID}_stdout.txt; exec bash" >/dev/null 2>&1 &
     fi
 
     echo -en "\nWaiting for DU $DU_ID to be ready"
@@ -277,7 +277,7 @@ if [ "$RUN_XAPP_KPM_MONITOR" = true ]; then
         nohup ./run_xapp_kpm_moni.sh >../logs/xapp_kpm_moni_stdout.txt 2>&1 &
     fi
     if [ "$SHOW_TERMINALS" = true ]; then
-        gnome-terminal --title="xApp KPM Monitor Log" -- bash -c "tail -f ../logs/xapp_kpm_moni_stdout.txt; exec bash"
+        nohup x-terminal-emulator -T "xApp KPM Monitor Log" -e bash -c "tail -f ../logs/xapp_kpm_moni_stdout.txt; exec bash" >/dev/null 2>&1 &
     fi
     cd ../../..
 fi

@@ -184,7 +184,7 @@ RRC NR reconfiguration successful.
 >
 
 
-<b>OCUDU Grafana WebUI and ZMQ Broker Visualization</b><div align="center">
+<!b>OCUDU Grafana WebUI and ZMQ Broker Visualization</b><div align="center">
   <img src="Images/OCUDU_Grafana_WebUI.png" alt="OCUDU Grafana WebUI and ZMQ Broker" width="75%">
 </div>
 

@@ -136,7 +136,7 @@ mklink /D czmq ..\User_Equipment\czmq
 if not exist zmq_broker mkdir zmq_broker
 cd zmq_broker
 if not exist "multi_ue_scenario.grc" (
-    curl -L --fail --silent --show-error -o multi_ue_scenario.grc https://gitlab.com/ocudu/ocudu_docs/-/raw/main/docs/user_manual/tutorials/srsue/assets/multi_ue_scenario.grc
+    curl -L --fail --silent --show-error -o multi_ue_scenario.grc https://gitlab.com/ocudu/ocudu_docs/-/raw/3e6daa6548e0ee98b58a4dae10032f35569c7ee5/docs/tutorials/srsue/assets/multi_ue_scenario.grc
     if errorlevel 1 (
         echo ERROR: Failed to download multi_ue_scenario.grc
         exit /b 1

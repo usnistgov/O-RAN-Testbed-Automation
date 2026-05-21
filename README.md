@@ -182,6 +182,8 @@ PDU Session Establishment successful. IP: 10.45.0.101
 RRC NR reconfiguration successful.
 ```
 >
+
+<!
 <b>OCUDU Grafana WebUI and ZMQ Broker Visualization</b><div align="center">
   <img src="Images/OCUDU_Grafana_WebUI.png" alt="OCUDU Grafana WebUI and ZMQ Broker" width="75%">
 </div>
@@ -196,8 +198,8 @@ See <a href="RAN_Intelligent_Controllers/Near-Real-Time-RIC#migration-to-cilium"
 </details>
 
 ---
-
-
+>
+<!
 <b>Supplementary Dashboard for KPM Visualization</b><div align="center">
   <img src="Images/xApp_Dashboard.png" alt="Grafana dashboard of xApp KPM metrics" width="75%">
 </div>
@@ -206,7 +208,7 @@ See <a href="OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC#k
 </details>
 
 ---
-
+>
 ## Software Versioning
 
 For stability of software dependencies, all `git clone` calls are routed through `commit_hashes.json` which specifies a branch and/or commit hash for each repository. This file can be updated manually, or with `./Additional_Scripts/update_commit_hashes.sh` to fetch the latest commit hashes. For information about the automation tool versions, please see the releases page [\[2\]][gh-ota].

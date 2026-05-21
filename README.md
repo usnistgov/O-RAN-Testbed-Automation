@@ -76,12 +76,12 @@ Users should be able to:
 The  tool can be used in virtual machines and physical machines with the list of open-source components and minimum system requirements specified below. For additional details on the configuration of physical hardware and individual software components, refer to [\[1\]][nist-tn-2311].
 
 ### Supported Testbed Open-Source Components
-
-<!div align="center">
+<!-->
+<div align="center">
   
   <img src="Images/fig.jpg" alt="Diagram of Testbed Open-Source Components" width="70%">
 </div>
-
+-->
 This tool supports the deployment of 5G O-RAN testbeds using open-source components, OCUDU with O-RAN SC's Near-RT RIC. Below is the list of the supported testbed open-source components.
 
 ```text

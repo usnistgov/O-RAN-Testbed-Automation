@@ -86,16 +86,16 @@ This tool supports the deployment of 5G O-RAN testbeds using open-source compone
 
 ```text
 CU/DU
-├── OCUDU: 26.04
+└──  OCUDU: 26.04
 RICs
 ├── O-RAN SC Near-RT RIC: M-Release
 │   └── xApps
-│       ├── KPM Monitor xApp
+│       └──  KPM Monitor xApp
 5G Core
-├── Open5GS: v2.7.7
+└──  Open5GS: v2.7.7
 
 UEs
-├── srsRAN_4G: release_25_10
+└──  srsRAN_4G: release_25_10
 ```
 
 

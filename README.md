@@ -79,7 +79,7 @@ The  tool can be used in virtual machines and physical machines with the list of
 
 <div align="center">
   
-  <img src="Images/fig.svg" alt="Diagram of Testbed Open-Source Components" width="70%">
+  <img src="Images/fig.jpg" alt="Diagram of Testbed Open-Source Components" width="70%">
 </div>
 
 This tool supports the deployment of 5G O-RAN testbeds using open-source components, OCUDU with O-RAN SC's Near-RT RIC. Below is the list of the supported testbed open-source components.

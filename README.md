@@ -172,7 +172,7 @@ Run the testbed with `./run.sh` to start the 5G Core, gNodeB, and UEs 2 and 3 as
   
   <img src="Images/output.png" alt="Output" width="70%">
 </div>
-
+<!
 ```console
 Attaching UE...
 Random Access Transmission: prach_occasion=0, preamble_index=0, ra-rnti=0x39, tti=174
@@ -181,7 +181,7 @@ RRC Connected
 PDU Session Establishment successful. IP: 10.45.0.101
 RRC NR reconfiguration successful.
 ```
-
+>
 <b>OCUDU Grafana WebUI and ZMQ Broker Visualization</b><div align="center">
   <img src="Images/OCUDU_Grafana_WebUI.png" alt="OCUDU Grafana WebUI and ZMQ Broker" width="75%">
 </div>

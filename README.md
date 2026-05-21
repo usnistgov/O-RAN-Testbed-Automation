@@ -102,16 +102,6 @@ UEs
 ├── srsRAN_4G: release_25_10
 ```
 
-The components that have been verified to support or not support connectivity are included below.
-
-<div align="center">
-  <!-- <picture>
-    <source media="(prefers-color-scheme: light)" srcset="./Images/Support_Light.svg">
-    <source media="(prefers-color-scheme: dark)" srcset="./Images/Support_Dark.svg">
-    <img alt="Diagram of Supported Connections" width="97%">
-  </picture> -->
-  <img src="Images/Support_Light.svg" alt="Diagram of Supported Connections" width="97%">
-</div>
 
 ### Minimum System Requirements
 
@@ -125,23 +115,7 @@ Before beginning the installation and setup of the testbed, verify that the syst
   - _Recommendation: `≥ 6` processors._
 - **Internet Connectivity**: A stable internet connection must be maintained during the installation otherwise the process may fail and require restarting.
 
-### Virtual Machine Preferences
 
-For users using a virtual machine, e.g., VirtualBox, the following configuration parameters may be considered.
-
-- **System**
-  - **Extended Features**: Check `Enable I/O APIC` to improve interrupt handling.
-  - **Extended Features**: Check `Enable PAE/NX` and if possible, also check `Enable Nested VT-x/AMD-V`.
-  - **Paravirtualization Interface**: Select `Default`.
-  - **Hardware Virtualization**: Check `Enabled Nested Paging`.
-- **Display**
-  - **Video Memory**: Set the slider to the maximum if using a Desktop environment.
-- **Storage**
-  - Check the SATA controller's `Solid-state Drive` option if using an SSD hard drive.
-- **Network**
-  - **Attached to**: Select `NAT` to allow the components to communicate locally.
-
----
 
 ## Installation Guide
 

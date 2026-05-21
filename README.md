@@ -78,11 +78,7 @@ The  tool can be used in virtual machines and physical machines with the list of
 ### Supported Testbed Open-Source Components
 
 <div align="center">
-  <!-- <picture>
-    <source media="(prefers-color-scheme: light)" srcset="./Images/Architecture_Light.svg">
-    <source media="(prefers-color-scheme: dark)" srcset="./Images/Architecture_Dark.svg">
-    <img alt="Diagram of Testbed Open-Source Components" width="70%">
-  </picture> -->
+  
   <img src="Images/fig.svg" alt="Diagram of Testbed Open-Source Components" width="70%">
 </div>
 
@@ -171,6 +167,11 @@ Begin the installation process, recommended to be run as the current user rather
   <hr>
 
 Run the testbed with `./run.sh` to start the 5G Core, gNodeB, and UEs 2 and 3 as background processes, and UE 1 in the foreground. Use `./is_running.sh` to check if the components are running, and `./stop.sh` to stop the components. The optional RIC starts automatically on boot and can be accessed with `k9s -A`.
+
+<div align="center">
+  
+  <img src="Images/output.png" alt="Output" width="70%">
+</div>
 
 ```console
 Attaching UE...

@@ -83,42 +83,23 @@ The  tool can be used in virtual machines and physical machines with the list of
     <source media="(prefers-color-scheme: dark)" srcset="./Images/Architecture_Dark.svg">
     <img alt="Diagram of Testbed Open-Source Components" width="70%">
   </picture> -->
-  <img src="Images/Architecture_Light.svg" alt="Diagram of Testbed Open-Source Components" width="70%">
+  <img src=""C:\Users\ans93\Downloads\fig (1).jpg"" alt="Diagram of Testbed Open-Source Components" width="70%">
 </div>
 
-This tool supports the deployment of 5G O-RAN testbeds using open-source components in two main scenarios: OCUDU with O-RAN SC's Near-RT RIC, and OpenAirInterface with Mosaic5G's FlexRIC. Below is the list of the supported testbed open-source components.
+This tool supports the deployment of 5G O-RAN testbeds using open-source components, OCUDU with O-RAN SC's Near-RT RIC. Below is the list of the supported testbed open-source components.
 
 ```text
 CU/DU
 ├── OCUDU: 26.04
-├── OpenAirInterface gNB: 2026.w18
-└── O-RAN SC E2 Simulator: M-Release
 RICs
 ├── O-RAN SC Near-RT RIC: M-Release
 │   └── xApps
-│       ├── Hello World xApps (Go, Python, and Rust)
 │       ├── KPM Monitor xApp
-│       ├── 5G Cell Anomaly Detection xApp
-│       ├── Anomaly Detection xApp
-│       ├── Quality of Experience Predictor xApp
-│       ├── RIC Control xApp
-│       └── Traffic Steering xApp
-├── FlexRIC: v2.0.0
-│   └── xApps
-│       ├── KPM Monitor xApp (to console, CSV, or InfluxDB)
-│       ├── MAC + RLC + PDCP + GTP Monitor xApp
-│       ├── RIC Control xApp
-│       └── RIC Control Monitor xApp
-└── O-RAN SC Non-RT RIC: M-Release
-    └── Minimal prototype with no rApp support.
 5G Core
 ├── Open5GS: v2.7.7
-├── OPENAIR-CN-5G: v2.2.0
-└── free5GC: v4.2.1
 
 UEs
 ├── srsRAN_4G: release_25_10
-└── OpenAirInterface 5G UE: 2026.w18
 ```
 
 The components that have been verified to support or not support connectivity are included below.

@@ -77,7 +77,7 @@ The  tool can be used in virtual machines and physical machines with the list of
 
 ### Supported Testbed Open-Source Components
 
-<div align="center">
+<!div align="center">
   
   <img src="Images/fig.jpg" alt="Diagram of Testbed Open-Source Components" width="70%">
 </div>

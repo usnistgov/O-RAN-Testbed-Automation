@@ -209,6 +209,7 @@ See <a href="OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC#k
 
 ---
 -->
+</details>
 ## Software Versioning
 
 For stability of software dependencies, all `git clone` calls are routed through `commit_hashes.json` which specifies a branch and/or commit hash for each repository. This file can be updated manually, or with `./Additional_Scripts/update_commit_hashes.sh` to fetch the latest commit hashes. For information about the automation tool versions, please see the releases page [\[2\]][gh-ota].

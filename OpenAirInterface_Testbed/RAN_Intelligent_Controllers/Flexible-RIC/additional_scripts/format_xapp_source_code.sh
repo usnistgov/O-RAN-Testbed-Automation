@@ -33,8 +33,8 @@ set -e
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
-	echo "Package \"coreutils\" not found, installing..."
-	sudo env $APTVARS apt-get install -y coreutils
+    echo "Package \"coreutils\" not found, installing..."
+    sudo env $APTVARS apt-get install -y coreutils
 fi
 
 echo "# Script: $(realpath "$0")..."
@@ -44,15 +44,15 @@ PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$PARENT_DIR"
 
 if ! command -v clang-format-20 >/dev/null 2>&1; then
-	echo "Installing clang-format-20..."
+    echo "Installing clang-format-20..."
 
-	wget -q https://apt.llvm.org/llvm.sh
-	chmod +x llvm.sh
-	sudo ./llvm.sh 20
-	rm -f llvm.sh
+    wget -q https://apt.llvm.org/llvm.sh
+    chmod +x llvm.sh
+    sudo ./llvm.sh 20
+    rm -f llvm.sh
 
-	sudo apt-get update -y
-	sudo apt-get install -y clang-format-20
+    sudo apt-get update -y
+    sudo apt-get install -y clang-format-20
 fi
 
 cat <<EOF >.clang-format
@@ -74,18 +74,18 @@ UseTab: Never
 EOF
 
 FILES=(
-	"flexric/examples/xApp/c/monitor/xapp_kpm_moni.c"
-	"flexric/examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv.c"
-	"flexric/examples/xApp/c/monitor/xapp_kpm_moni_write_to_influxdb.c"
+    "flexric/examples/xApp/c/monitor/xapp_kpm_moni.c"
+    "flexric/examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv.c"
+    "flexric/examples/xApp/c/monitor/xapp_kpm_moni_write_to_influxdb.c"
 )
 
 for FILE in "${FILES[@]}"; do
-	if [ -f "$FILE" ]; then
-		echo "Formatting $FILE..."
-		clang-format-20 -style=file -i "$FILE"
-	else
-		echo "WARNING: File not found: $FILE"
-	fi
+    if [ -f "$FILE" ]; then
+        echo "Formatting $FILE..."
+        clang-format-20 -style=file -i "$FILE"
+    else
+        echo "WARNING: File not found: $FILE"
+    fi
 done
 
 echo "Successfully formatted code files. To also update the patch files of O-RAN-Testbed-Automation, run ./additional_scripts/apply_changes_to_patch_files.sh"

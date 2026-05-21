@@ -274,7 +274,7 @@ if [ "$RUN_XAPP_KPM_MONITOR" = true ]; then
     if [ "$RUN_GRAFANA_DASHBOARD" = true ]; then
         nohup ./start_grafana_with_csv_xapp_kpm_moni.sh >../logs/xapp_kpm_moni_stdout.txt 2>&1 &
     else
-        nohup ./run_xapp_kpm_moni.sh >../logs/xapp_kpm_moni_stdout.txt 2>&1 &
+        nohup ./run_xapp_kpm_moni_write_to_csv.sh >../logs/xapp_kpm_moni_stdout.txt 2>&1 &
     fi
     if [ "$SHOW_TERMINALS" = true ]; then
         nohup x-terminal-emulator -T "xApp KPM Monitor Log" -e bash -c "tail -f ../logs/xapp_kpm_moni_stdout.txt; exec bash" >/dev/null 2>&1 &

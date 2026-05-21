@@ -1,25 +1,39 @@
 diff --git a/examples/xApp/c/monitor/xapp_kpm_moni.c b/examples/xApp/c/monitor/xapp_kpm_moni.c
-index 22f70850..86236647 100644
+index 22f70850..3ba09017 100644
 --- a/examples/xApp/c/monitor/xapp_kpm_moni.c
 +++ b/examples/xApp/c/monitor/xapp_kpm_moni.c
-@@ -1,3 +1,4 @@
+@@ -1,65 +1,67 @@
 +#include <math.h>
  /*
   * SPDX-License-Identifier: LicenseRef-CSSL-1.0
   */
-@@ -11,11 +12,22 @@
- #include "../../../../src/util/e.h"
  
- #include <stdlib.h>
+-#include "../../../../src/xApp/e42_xapp_api.h"
+ #include "../../../../src/util/alg_ds/alg/defer.h"
+-#include "../../../../src/util/time_now_us.h"
+ #include "../../../../src/util/alg_ds/alg/murmur_hash_32.h"
+-#include "../../../../src/util/alg_ds/ds/lock_guard/lock_guard.h"
+ #include "../../../../src/util/alg_ds/ds/assoc_container/assoc_generic.h"
++#include "../../../../src/util/alg_ds/ds/lock_guard/lock_guard.h"
+ #include "../../../../src/util/e.h"
+-
+-#include <stdlib.h>
++#include "../../../../src/util/time_now_us.h"
++#include "../../../../src/xApp/e42_xapp_api.h"
++#include "../metrics_factory.h"
++#include <errno.h>
++#include <pthread.h>
++#include <signal.h>
 +#include <stdint.h>
  #include <stdio.h>
++#include <stdlib.h>
  #include <time.h>
  #include <unistd.h>
- #include <signal.h>
- #include <pthread.h>
-+#include <errno.h>
-+#include "../metrics_factory.h"
-+
+-#include <signal.h>
+-#include <pthread.h>
+ 
+-static
+-uint64_t const period_ms = 1000;
 +#define COLOR_RED "\x1b[31m"
 +#define COLOR_GREEN "\x1b[32m"
 +#define COLOR_YELLOW "\x1b[33m"
@@ -27,39 +41,100 @@ index 22f70850..86236647 100644
 +#define COLOR_MAGENTA "\x1b[35m"
 +#define COLOR_CYAN "\x1b[36m"
 +#define COLOR_RESET "\x1b[0m"
++
++static uint64_t const period_ms = 1000;
  
- static
- uint64_t const period_ms = 1000;
-@@ -23,6 +35,10 @@ uint64_t const period_ms = 1000;
- static
- pthread_mutex_t mtx;
+-static
+-pthread_mutex_t mtx;
++static pthread_mutex_t mtx;
  
+-static
+-assoc_ht_open_t ht = {0};
 +static char current_e2_id_str[64] = {0};
 +static uint8_t cfg_slicing_sst = 1;
 +static uint32_t cfg_slicing_sd = 0xFFFFFF;
-+
- static
- assoc_ht_open_t ht = {0};
  
-@@ -77,10 +93,45 @@ void init_kpm_meas_unit_hash_table(void)
+-static
+-uint32_t hash_func(const void* key_v)
+-{
+-  char* key = *(char**)(key_v);
++static assoc_ht_open_t ht = {0};
++
++static uint32_t hash_func(const void *key_v) {
++  char *key = *(char **)(key_v);
+   static const uint32_t seed = 42;
+-  return murmur3_32((uint8_t*)key, strlen(key), seed);
++  return murmur3_32((uint8_t *)key, strlen(key), seed);
+ }
+ 
+-static
+-bool cmp_str(const void* a, const void* b)
+-{
+-  char* a_str = *(char**)(a);
+-  char* b_str = *(char**)(b);
++static bool cmp_str(const void *a, const void *b) {
++  char *a_str = *(char **)(a);
++  char *b_str = *(char **)(b);
+ 
+   int const ret = strcmp(a_str, b_str);
+   return ret == 0;
+ }
+ 
+-static
+-void free_str(void* key, void* value)
+-{
+-  free(*(char**)key);
++static void free_str(void *key, void *value) {
++  free(*(char **)key);
+   free(value);
+ }
+ 
+-static
+-void free_kpm_meas_unit_hash_table(void)
+-{
++static void free_kpm_meas_unit_hash_table(void) {
+   assoc_ht_open_free(&ht);
+ }
+ 
+-static
+-void init_kpm_meas_unit_hash_table(void)
+-{
++static void init_kpm_meas_unit_hash_table(void) {
+   FILE *fp = fopen(KPM_MEAS_LIST, "r");
+   if (!fp) {
+     printf("Cannot open the file \"%s\".\n", KPM_MEAS_LIST);
+@@ -67,25 +69,55 @@ void init_kpm_meas_unit_hash_table(void)
+     return;
+   }
+ 
+-  assoc_ht_open_init(&ht, sizeof(char*), cmp_str, free_str, hash_func);
++  assoc_ht_open_init(&ht, sizeof(char *), cmp_str, free_str, hash_func);
+   char line[128];
+   while (fgets(line, sizeof(line), fp)) {
+     char *col1, *col2;
+     sscanf(line, "%ms %ms", &col1, &col2);
+-    assoc_ht_open_insert(&ht, &col1, sizeof(char*), col2);
++    assoc_ht_open_insert(&ht, &col1, sizeof(char *), col2);
+   }
    fclose(fp);
  }
  
 -static
 -char *get_meas_unit(const char *name)
-+static char *get_meas_unit(const char *name)
-+{
-+  char *val = assoc_ht_open_value(&ht, &name);
-+  if (!val || strcmp(val, "[]") == 0) return "";
-+  return val;
-+}
-+
-+static __attribute__((unused))
-+int get_mapped_node_id(const char *node_type, uint32_t orig_id)
- {
+-{
 -  return assoc_ht_open_value(&ht, &name);
-+  static struct
-+  {
++static char *get_meas_unit(const char *name) {
++  char *val = assoc_ht_open_value(&ht, &name);
++  if (!val || strcmp(val, "[]") == 0)
++    return "";
++  return val;
+ }
+ 
+-static
+-void log_gnb_ue_id(ue_id_e2sm_t ue_id)
+-{
++static __attribute__((unused)) int get_mapped_node_id(const char *node_type, uint32_t orig_id) {
++  static struct {
 +    char type[32];
 +    uint32_t orig_id;
 +    int mapped_id;
@@ -87,32 +162,134 @@ index 22f70850..86236647 100644
 +  }
 +
 +  return new_id;
- }
- 
- static
-@@ -134,9 +185,9 @@ void log_int_value(const char *name_str, const label_info_lst_t label_info, cons
- {
-   char *name_unit = get_meas_unit(name_str);
-   if (label_info.noLabel != NULL) {
--    printf("%s = %d %s\n", name_str, meas_record.int_val, name_unit);
-+    printf(COLOR_CYAN "%s" COLOR_RESET " = %d " COLOR_MAGENTA "%s" COLOR_RESET "\n", name_str, meas_record.int_val, name_unit);
-   } else if (label_info.distBinX != NULL && meas_record.int_val > 0) {
--    printf("%s[BinX=%d][BinY=%d][BinZ=%d] = %d %s\n", name_str, *label_info.distBinX, *label_info.distBinY, *label_info.distBinZ, meas_record.int_val, name_unit);
-+    printf(COLOR_CYAN "%s[BinX=%d][BinY=%d][BinZ=%d]" COLOR_RESET " = %d " COLOR_MAGENTA "%s" COLOR_RESET "\n", name_str, *label_info.distBinX, *label_info.distBinY, *label_info.distBinZ, meas_record.int_val, name_unit);
++}
++
++static void log_gnb_ue_id(ue_id_e2sm_t ue_id) {
+   if (ue_id.gnb.gnb_cu_ue_f1ap_lst != NULL) {
+     for (size_t i = 0; i < ue_id.gnb.gnb_cu_ue_f1ap_lst_len; i++) {
+       printf("UE ID type = gNB-CU, gnb_cu_ue_f1ap = %u\n", ue_id.gnb.gnb_cu_ue_f1ap_lst[i]);
+@@ -98,18 +130,14 @@ void log_gnb_ue_id(ue_id_e2sm_t ue_id)
    }
  }
  
-@@ -145,7 +196,8 @@ void log_real_value(const char *name_str, const label_info_lst_t label_info, con
- {
+-static
+-void log_du_ue_id(ue_id_e2sm_t ue_id)
+-{
++static void log_du_ue_id(ue_id_e2sm_t ue_id) {
+   printf("UE ID type = gNB-DU, gnb_cu_ue_f1ap = %u\n", ue_id.gnb_du.gnb_cu_ue_f1ap);
+   if (ue_id.gnb_du.ran_ue_id != NULL) {
+     printf("ran_ue_id = %lx\n", *ue_id.gnb_du.ran_ue_id); // RAN UE NGAP ID
+   }
+ }
+ 
+-static
+-void log_cuup_ue_id(ue_id_e2sm_t ue_id)
+-{
++static void log_cuup_ue_id(ue_id_e2sm_t ue_id) {
+   printf("UE ID type = gNB-CU-UP, gnb_cu_cp_ue_e1ap = %u\n", ue_id.gnb_cu_up.gnb_cu_cp_ue_e1ap);
+   if (ue_id.gnb_cu_up.ran_ue_id != NULL) {
+     printf("ran_ue_id = %lx\n", *ue_id.gnb_cu_up.ran_ue_id); // RAN UE NGAP ID
+@@ -118,98 +146,131 @@ void log_cuup_ue_id(ue_id_e2sm_t ue_id)
+ 
+ typedef void (*log_ue_id)(ue_id_e2sm_t ue_id);
+ 
+-static
+-log_ue_id log_ue_id_e2sm[END_UE_ID_E2SM] = {
++static log_ue_id log_ue_id_e2sm[END_UE_ID_E2SM] = {
+     log_gnb_ue_id, // common for gNB-mono, CU and CU-CP
+-    log_du_ue_id,
+-    log_cuup_ue_id,
+-    NULL,
+-    NULL,
+-    NULL,
+-    NULL,
++    log_du_ue_id,  log_cuup_ue_id, NULL, NULL, NULL, NULL,
+ };
+ 
+-static
+-void log_int_value(const char *name_str, const label_info_lst_t label_info, const meas_record_lst_t meas_record)
+-{
++static void log_int_value(const char *name_str, const label_info_lst_t label_info,
++                          const meas_record_lst_t meas_record) {
+   char *name_unit = get_meas_unit(name_str);
+   if (label_info.noLabel != NULL) {
+-    printf("%s = %d %s\n", name_str, meas_record.int_val, name_unit);
++    printf(COLOR_CYAN "%s" COLOR_RESET " = %d " COLOR_MAGENTA "%s" COLOR_RESET "\n", name_str, meas_record.int_val,
++           name_unit);
+   } else if (label_info.distBinX != NULL && meas_record.int_val > 0) {
+-    printf("%s[BinX=%d][BinY=%d][BinZ=%d] = %d %s\n", name_str, *label_info.distBinX, *label_info.distBinY, *label_info.distBinZ, meas_record.int_val, name_unit);
++    printf(COLOR_CYAN "%s[BinX=%d][BinY=%d][BinZ=%d]" COLOR_RESET " = %d " COLOR_MAGENTA "%s" COLOR_RESET "\n",
++           name_str, *label_info.distBinX, *label_info.distBinY, *label_info.distBinZ, meas_record.int_val, name_unit);
+   }
+ }
+ 
+-static
+-void log_real_value(const char *name_str, const label_info_lst_t label_info, const meas_record_lst_t meas_record)
+-{
++static void log_real_value(const char *name_str, const label_info_lst_t label_info,
++                           const meas_record_lst_t meas_record) {
    (void)label_info;
    char *name_unit = get_meas_unit(name_str);
 -  printf("%s = %.2f %s\n", name_str, meas_record.real_val, name_unit);
-+  if (isnan(meas_record.real_val)) printf(COLOR_CYAN "%s" COLOR_RESET " =  " COLOR_MAGENTA "%s" COLOR_RESET "\n", name_str, name_unit);
-+  else printf(COLOR_CYAN "%s" COLOR_RESET " = %.2f " COLOR_MAGENTA "%s" COLOR_RESET "\n", name_str, meas_record.real_val, name_unit);
++  if (isnan(meas_record.real_val))
++    printf(COLOR_CYAN "%s" COLOR_RESET " =  " COLOR_MAGENTA "%s" COLOR_RESET "\n", name_str, name_unit);
++  else
++    printf(COLOR_CYAN "%s" COLOR_RESET " = %.2f " COLOR_MAGENTA "%s" COLOR_RESET "\n", name_str, meas_record.real_val,
++           name_unit);
  }
  
- typedef void (*log_meas_value)(const char *name_str, const label_info_lst_t label_info, const meas_record_lst_t meas_record);
-@@ -192,16 +244,48 @@ void log_kpm_measurements(kpm_ind_msg_format_1_t const* msg_frm_1)
+-typedef void (*log_meas_value)(const char *name_str, const label_info_lst_t label_info, const meas_record_lst_t meas_record);
++typedef void (*log_meas_value)(const char *name_str, const label_info_lst_t label_info,
++                               const meas_record_lst_t meas_record);
+ 
+-static
+-log_meas_value get_meas_value[END_MEAS_VALUE] = {
++static log_meas_value get_meas_value[END_MEAS_VALUE] = {
+     log_int_value,
+     log_real_value,
+     NULL,
+ };
+ 
+-static
+-void match_meas_name_type(const meas_type_t meas_type, const label_info_lst_t label_info, const meas_record_lst_t record_item)
+-{
++static void match_meas_name_type(const meas_type_t meas_type, const label_info_lst_t label_info,
++                                 const meas_record_lst_t record_item) {
+   // Get the value of the Measurement
+   char *name_str = cp_ba_to_str(meas_type.name);
+   get_meas_value[record_item.value](name_str, label_info, record_item);
+   free(name_str);
+ }
+ 
+-static
+-void match_id_meas_type(const meas_type_t meas_type, const label_info_lst_t label_info, const meas_record_lst_t record_item)
+-{
++static void match_id_meas_type(const meas_type_t meas_type, const label_info_lst_t label_info,
++                               const meas_record_lst_t record_item) {
+   (void)meas_type;
+   (void)label_info;
+   (void)record_item;
+   assert(false && "ID Measurement Type not yet supported");
+ }
+ 
+-typedef void (*check_meas_type)(const meas_type_t meas_type, const label_info_lst_t label_info, const meas_record_lst_t meas_record);
++typedef void (*check_meas_type)(const meas_type_t meas_type, const label_info_lst_t label_info,
++                                const meas_record_lst_t meas_record);
+ 
+-static
+-check_meas_type match_meas_type[END_MEAS_TYPE] = {
++static check_meas_type match_meas_type[END_MEAS_TYPE] = {
+     match_meas_name_type,
+     match_id_meas_type,
+ };
+ 
+-static
+-void log_kpm_measurements(kpm_ind_msg_format_1_t const* msg_frm_1)
+-{
++static void log_kpm_measurements(kpm_ind_msg_format_1_t const *msg_frm_1) {
+   assert(msg_frm_1->meas_info_lst_len > 0 && "Cannot correctly print measurements");
+ 
+   // UE Measurements per granularity period
    for (size_t j = 0; j < msg_frm_1->meas_data_lst_len; j++) {
      meas_data_lst_t const data_item = msg_frm_1->meas_data_lst[j];
  
@@ -128,27 +305,36 @@ index 22f70850..86236647 100644
 +        char *name_str = cp_ba_to_str(info_item.meas_type.name);
 +        char *name_unit = get_meas_unit(name_str);
 +        char arr_str[8192];
-+        format_meas_record_array(arr_str, sizeof(arr_str), info_item.label_info_lst, info_item.label_info_lst_len, data_item.meas_record_lst, rec_idx);
++        format_meas_record_array(arr_str, sizeof(arr_str), info_item.label_info_lst, info_item.label_info_lst_len,
++                                 data_item.meas_record_lst, rec_idx);
 +        printf(COLOR_CYAN "%s" COLOR_RESET " = %s " COLOR_MAGENTA "%s" COLOR_RESET "\n", name_str, arr_str, name_unit);
 +
-+        factory_metrics_array_t f_metrics = process_metric_factory(current_e2_id_str[0] != '\0' ? current_e2_id_str : "gNB", name_str, info_item.label_info_lst, info_item.label_info_lst_len, data_item.meas_record_lst, rec_idx);
++        factory_metrics_array_t f_metrics = process_metric_factory(
++            current_e2_id_str[0] != '\0' ? current_e2_id_str : "gNB", name_str, info_item.label_info_lst,
++            info_item.label_info_lst_len, data_item.meas_record_lst, rec_idx);
 +        for (size_t m = 0; m < f_metrics.count; m++) {
 +          char *f_name_unit = get_meas_unit(f_metrics.metrics[m].name);
 +          if (!f_name_unit || f_name_unit[0] == '\0') {
-+            if (strncmp(f_metrics.metrics[m].name, "RSRP", 4) == 0) f_name_unit = "[dBm]";
-+            else if (strncmp(f_metrics.metrics[m].name, "SINR", 4) == 0) f_name_unit = "[dB]";
-+            else f_name_unit = "";
++            if (strncmp(f_metrics.metrics[m].name, "RSRP", 4) == 0)
++              f_name_unit = "[dBm]";
++            else if (strncmp(f_metrics.metrics[m].name, "SINR", 4) == 0)
++              f_name_unit = "[dB]";
++            else
++              f_name_unit = "";
 +          }
  
 -        if (data_item.incomplete_flag && *data_item.incomplete_flag == TRUE_ENUM_VALUE)
 -          printf("Measurement Record not reliable");
 +          if (f_metrics.metrics[m].value_type == 0) {
-+            printf(COLOR_CYAN "%s" COLOR_RESET " = %d " COLOR_MAGENTA "%s" COLOR_RESET "\n", f_metrics.metrics[m].name, f_metrics.metrics[m].int_val, f_name_unit);
++            printf(COLOR_CYAN "%s" COLOR_RESET " = %d " COLOR_MAGENTA "%s" COLOR_RESET "\n", f_metrics.metrics[m].name,
++                   f_metrics.metrics[m].int_val, f_name_unit);
 +          } else {
 +            if (isnan(f_metrics.metrics[m].real_val)) {
-+              printf(COLOR_CYAN "%s" COLOR_RESET " =  " COLOR_MAGENTA "%s" COLOR_RESET "\n", f_metrics.metrics[m].name, f_name_unit);
++              printf(COLOR_CYAN "%s" COLOR_RESET " =  " COLOR_MAGENTA "%s" COLOR_RESET "\n", f_metrics.metrics[m].name,
++                     f_name_unit);
 +            } else {
-+              printf(COLOR_CYAN "%s" COLOR_RESET " = %.2f " COLOR_MAGENTA "%s" COLOR_RESET "\n", f_metrics.metrics[m].name, f_metrics.metrics[m].real_val, f_name_unit);
++              printf(COLOR_CYAN "%s" COLOR_RESET " = %.2f " COLOR_MAGENTA "%s" COLOR_RESET "\n",
++                     f_metrics.metrics[m].name, f_metrics.metrics[m].real_val, f_name_unit);
 +            }
 +          }
 +        }
@@ -168,13 +354,23 @@ index 22f70850..86236647 100644
        }
      }
    }
-@@ -222,8 +306,34 @@ void log_kpm_ind_msg_frm_3(kpm_ind_msg_format_3_t const* msg)
+ }
+ 
+-static
+-void log_kpm_ind_msg_frm_3(kpm_ind_msg_format_3_t const* msg)
+-{
++static void log_kpm_ind_msg_frm_3(kpm_ind_msg_format_3_t const *msg) {
+   // Reported list of measurements per UE
+   for (size_t i = 0; i < msg->ue_meas_report_lst_len; i++) {
+     // log UE ID
+@@ -222,16 +283,39 @@ void log_kpm_ind_msg_frm_3(kpm_ind_msg_format_3_t const* msg)
    }
  }
  
-+static __attribute__((unused))
-+void load_slice_from_env(void)
-+{
+-static
+-void sm_cb_kpm(sm_ag_if_rd_t const* rd)
+-{
++static __attribute__((unused)) void load_slice_from_env(void) {
 +  const char *s;
 +  char *end = NULL;
 +  errno = 0;
@@ -195,25 +391,35 @@ index 22f70850..86236647 100644
 +      cfg_slicing_sd = ((uint32_t)v) & 0xFFFFFFu;
 +  }
 +
-+  printf("[xApp] Using S-NSSAI SST=%u SD=%06x (env SST/SD can override)\n", (unsigned)cfg_slicing_sst, (unsigned)(cfg_slicing_sd & 0xFFFFFFu));
++  printf("[xApp] Using S-NSSAI SST=%u SD=%06x (env SST/SD can override)\n", (unsigned)cfg_slicing_sst,
++         (unsigned)(cfg_slicing_sd & 0xFFFFFFu));
 +}
 +
- static
--void sm_cb_kpm(sm_ag_if_rd_t const* rd)
-+void sm_cb_kpm(sm_ag_if_rd_t const* rd, global_e2_node_id_t const* node_id)
- {
++static void sm_cb_kpm(sm_ag_if_rd_t const *rd, global_e2_node_id_t const *node_id) {
    assert(rd != NULL);
    assert(rd->type == INDICATION_MSG_AGENT_IF_ANS_V0);
-@@ -252,7 +362,7 @@ void sm_cb_kpm(sm_ag_if_rd_t const* rd)
+   assert(rd->ind.type == KPM_STATS_V3_0);
+ 
+   // Reading Indication Message Format 3
+-  kpm_ind_data_t const* ind = &rd->ind.kpm.ind;
+-  kpm_ric_ind_hdr_format_1_t const* hdr_frm_1 = &ind->hdr.kpm_ric_ind_hdr_format_1;
++  kpm_ind_data_t const *ind = &rd->ind.kpm.ind;
++  kpm_ric_ind_hdr_format_1_t const *hdr_frm_1 = &ind->hdr.kpm_ric_ind_hdr_format_1;
+ 
+   int64_t const now = time_now_us();
+   static int counter = 1;
+@@ -251,9 +335,7 @@ void sm_cb_kpm(sm_ag_if_rd_t const* rd)
+   }
  }
  
- static
+-static
 -test_info_lst_t filter_predicate(test_cond_type_e type, test_cond_e cond, int value)
-+test_info_lst_t filter_predicate(test_cond_type_e type, test_cond_e cond, uint8_t sst, uint32_t sd)
- {
+-{
++static test_info_lst_t filter_predicate(test_cond_type_e type, test_cond_e cond, uint8_t sst, uint32_t sd) {
    test_info_lst_t dst = {0};
  
-@@ -271,26 +381,21 @@ test_info_lst_t filter_predicate(test_cond_type_e type, test_cond_e cond, int va
+   dst.test_cond_type = type;
+@@ -271,29 +353,22 @@ test_info_lst_t filter_predicate(test_cond_type_e type, test_cond_e cond, int va
  
    dst.test_cond_value->octet_string_value = calloc(1, sizeof(byte_array_t));
    assert(dst.test_cond_value->octet_string_value != NULL && "Memory exhausted");
@@ -225,10 +431,10 @@ index 22f70850..86236647 100644
 -  dst.test_cond_value->octet_string_value->buf[0] = value;
 +  dst.test_cond_value->octet_string_value->buf[0] = (uint8_t)sst;
 +  if (len_nssai == 4) {
-+  sd &= 0xFFFFFF;
-+  dst.test_cond_value->octet_string_value->buf[1] = (uint8_t)((sd >> 16) & 0xFF);
-+  dst.test_cond_value->octet_string_value->buf[2] = (uint8_t)((sd >> 8) & 0xFF);
-+  dst.test_cond_value->octet_string_value->buf[3] = (uint8_t)(sd & 0xFF);
++    sd &= 0xFFFFFF;
++    dst.test_cond_value->octet_string_value->buf[1] = (uint8_t)((sd >> 16) & 0xFF);
++    dst.test_cond_value->octet_string_value->buf[2] = (uint8_t)((sd >> 8) & 0xFF);
++    dst.test_cond_value->octet_string_value->buf[3] = (uint8_t)(sd & 0xFF);
 +  }
  
    return dst;
@@ -245,10 +451,23 @@ index 22f70850..86236647 100644
 -  return label_item;
 -}
 -
- static
- kpm_act_def_format_1_t fill_act_def_frm_1(ric_report_style_item_t const* report_item)
- {
-@@ -314,9 +419,7 @@ kpm_act_def_format_1_t fill_act_def_frm_1(ric_report_style_item_t const* report_
+-static
+-kpm_act_def_format_1_t fill_act_def_frm_1(ric_report_style_item_t const* report_item)
+-{
++static kpm_act_def_format_1_t fill_act_def_frm_1(ric_report_style_item_t const *report_item) {
+   assert(report_item != NULL);
+ 
+   kpm_act_def_format_1_t ad_frm_1 = {0};
+@@ -306,7 +381,7 @@ kpm_act_def_format_1_t fill_act_def_frm_1(ric_report_style_item_t const* report_
+   assert(ad_frm_1.meas_info_lst != NULL && "Memory exhausted");
+ 
+   for (size_t i = 0; i < sz; i++) {
+-    meas_info_format_1_lst_t* meas_item = &ad_frm_1.meas_info_lst[i];
++    meas_info_format_1_lst_t *meas_item = &ad_frm_1.meas_info_lst[i];
+     // 8.3.9
+     // Measurement Name
+     meas_item->meas_type.type = NAME_MEAS_TYPE;
+@@ -314,9 +389,7 @@ kpm_act_def_format_1_t fill_act_def_frm_1(ric_report_style_item_t const* report_
  
      // [1, 2147483647]
      // 8.3.11
@@ -259,17 +478,36 @@ index 22f70850..86236647 100644
    }
  
    // 8.3.8 [0, 4294967295]
-@@ -350,8 +453,7 @@ kpm_act_def_t fill_report_style_4(ric_report_style_item_t const* report_item)
+@@ -334,9 +407,7 @@ kpm_act_def_format_1_t fill_act_def_frm_1(ric_report_style_item_t const* report_
+   return ad_frm_1;
+ }
+ 
+-static
+-kpm_act_def_t fill_report_style_4(ric_report_style_item_t const* report_item)
+-{
++static kpm_act_def_t fill_report_style_4(ric_report_style_item_t const *report_item) {
+   assert(report_item != NULL);
+   assert(report_item->act_def_format_type == FORMAT_4_ACTION_DEFINITION);
+ 
+@@ -345,13 +416,13 @@ kpm_act_def_t fill_report_style_4(ric_report_style_item_t const* report_item)
+   // Fill matching condition
+   // [1, 32768]
+   act_def.frm_4.matching_cond_lst_len = 1;
+-  act_def.frm_4.matching_cond_lst = calloc(act_def.frm_4.matching_cond_lst_len, sizeof(matching_condition_format_4_lst_t));
++  act_def.frm_4.matching_cond_lst =
++      calloc(act_def.frm_4.matching_cond_lst_len, sizeof(matching_condition_format_4_lst_t));
+   assert(act_def.frm_4.matching_cond_lst != NULL && "Memory exhausted");
    // Filter connected UEs by S-NSSAI criteria
    test_cond_type_e const type = S_NSSAI_TEST_COND_TYPE; // CQI_TEST_COND_TYPE
-   test_cond_e const condition = EQUAL_TEST_COND; // GREATERTHAN_TEST_COND
+-  test_cond_e const condition = EQUAL_TEST_COND; // GREATERTHAN_TEST_COND
 -  int const value = 1;
 -  act_def.frm_4.matching_cond_lst[0].test_info_lst = filter_predicate(type, condition, value);
++  test_cond_e const condition = EQUAL_TEST_COND;        // GREATERTHAN_TEST_COND
 +  act_def.frm_4.matching_cond_lst[0].test_info_lst = filter_predicate(type, condition, cfg_slicing_sst, cfg_slicing_sd);
  
    // Fill Action Definition Format 1
    // 8.2.1.2.1
-@@ -360,26 +462,6 @@ kpm_act_def_t fill_report_style_4(ric_report_style_item_t const* report_item)
+@@ -360,29 +431,7 @@ kpm_act_def_t fill_report_style_4(ric_report_style_item_t const* report_item)
    return act_def;
  }
  
@@ -293,10 +531,23 @@ index 22f70850..86236647 100644
 -  return label_item;
 -}
 -
- static
- kpm_act_def_t fill_report_style_1(ric_report_style_item_t const* report_item)
- {
-@@ -400,23 +482,7 @@ kpm_act_def_t fill_report_style_1(ric_report_style_item_t const* report_item)
+-static
+-kpm_act_def_t fill_report_style_1(ric_report_style_item_t const* report_item)
+-{
++static kpm_act_def_t fill_report_style_1(ric_report_style_item_t const *report_item) {
+   assert(report_item != NULL);
+   assert(report_item->act_def_format_type == FORMAT_1_ACTION_DEFINITION);
+ 
+@@ -392,7 +441,7 @@ kpm_act_def_t fill_report_style_1(ric_report_style_item_t const* report_item)
+   act_def.frm_1.meas_info_lst_len = report_item->meas_info_for_action_lst_len;
+   act_def.frm_1.meas_info_lst = ecalloc(act_def.frm_1.meas_info_lst_len, sizeof(meas_info_format_1_lst_t));
+   for (size_t i = 0; i < act_def.frm_1.meas_info_lst_len; i++) {
+-    meas_info_format_1_lst_t* meas_item = &act_def.frm_1.meas_info_lst[i];
++    meas_info_format_1_lst_t *meas_item = &act_def.frm_1.meas_info_lst[i];
+     // 8.3.9
+     // Measurement Name
+     meas_item->meas_type.type = NAME_MEAS_TYPE;
+@@ -400,23 +449,7 @@ kpm_act_def_t fill_report_style_1(ric_report_style_item_t const* report_item)
  
      // [1, 2147483647]
      // 8.3.11
@@ -321,7 +572,62 @@ index 22f70850..86236647 100644
    }
  
    // 8.3.8 [0, 4294967295]
-@@ -499,7 +565,6 @@ int main(int argc, char* argv[])
+@@ -434,20 +467,13 @@ kpm_act_def_t fill_report_style_1(ric_report_style_item_t const* report_item)
+   return act_def;
+ }
+ 
+-typedef kpm_act_def_t (*fill_kpm_act_def)(ric_report_style_item_t const* report_item);
++typedef kpm_act_def_t (*fill_kpm_act_def)(ric_report_style_item_t const *report_item);
+ 
+-static
+-fill_kpm_act_def get_kpm_act_def[END_RIC_SERVICE_REPORT] = {
+-    fill_report_style_1,
+-    NULL,
+-    NULL,
+-    fill_report_style_4,
+-    NULL,
++static fill_kpm_act_def get_kpm_act_def[END_RIC_SERVICE_REPORT] = {
++    fill_report_style_1, NULL, NULL, fill_report_style_4, NULL,
+ };
+ 
+-static
+-kpm_sub_data_t gen_kpm_subs(kpm_ran_function_def_t const* ran_func, ric_report_style_item_t const* report_item)
+-{
++static kpm_sub_data_t gen_kpm_subs(kpm_ran_function_def_t const *ran_func, ric_report_style_item_t const *report_item) {
+   assert(ran_func != NULL);
+   assert(ran_func->ric_event_trigger_style_list != NULL);
+ 
+@@ -471,18 +497,15 @@ kpm_sub_data_t gen_kpm_subs(kpm_ran_function_def_t const* ran_func, ric_report_s
+   return kpm_sub;
+ }
+ 
+-static
+-bool eq_sm(sm_ran_function_t const* elem, int const id)
+-{
++static bool eq_sm(sm_ran_function_t const *elem, int const id) {
+   if (elem->id == id)
+     return true;
+ 
+   return false;
+ }
+ 
+-static
+-size_t find_sm_idx(sm_ran_function_t* rf, size_t sz, bool (*f)(sm_ran_function_t const*, int const), int const id)
+-{
++static size_t find_sm_idx(sm_ran_function_t *rf, size_t sz, bool (*f)(sm_ran_function_t const *, int const),
++                          int const id) {
+   for (size_t i = 0; i < sz; i++) {
+     if (f(&rf[i], id))
+       return i;
+@@ -492,14 +515,12 @@ size_t find_sm_idx(sm_ran_function_t* rf, size_t sz, bool (*f)(sm_ran_function_t
+   return 0;
+ }
+ 
+-int main(int argc, char* argv[])
+-{
++int main(int argc, char *argv[]) {
+   fr_args_t args = init_fr_args(argc, argv);
+ 
    // Init the xApp
    init_xapp_api(&args);
    sleep(1);
@@ -329,3 +635,30 @@ index 22f70850..86236647 100644
    init_kpm_meas_unit_hash_table();
  
    e2_node_arr_xapp_t nodes = e2_nodes_xapp_api();
+@@ -513,7 +534,7 @@ int main(int argc, char* argv[])
+   int rc = pthread_mutex_init(&mtx, &attr);
+   assert(rc == 0);
+ 
+-  sm_ans_xapp_t** hndl = (sm_ans_xapp_t**)calloc(nodes.len, sizeof(sm_ans_xapp_t*));
++  sm_ans_xapp_t **hndl = (sm_ans_xapp_t **)calloc(nodes.len, sizeof(sm_ans_xapp_t *));
+   assert(hndl != NULL);
+ 
+   ////////////
+@@ -522,7 +543,7 @@ int main(int argc, char* argv[])
+   int const KPM_ran_function = 2;
+ 
+   for (size_t i = 0; i < nodes.len; ++i) {
+-    e2_node_connected_xapp_t* n = &nodes.n[i];
++    e2_node_connected_xapp_t *n = &nodes.n[i];
+ 
+     size_t const idx = find_sm_idx(n->rf, n->len_rf, eq_sm, KPM_ran_function);
+     assert(n->rf[idx].defn.type == KPM_RAN_FUNC_DEF_E && "KPM is not the received RAN Function");
+@@ -549,7 +570,7 @@ int main(int argc, char* argv[])
+   xapp_wait_end_api();
+ 
+   for (int i = 0; i < nodes.len; ++i) {
+-    e2_node_connected_xapp_t* n = &nodes.n[i];
++    e2_node_connected_xapp_t *n = &nodes.n[i];
+     size_t const idx = find_sm_idx(n->rf, n->len_rf, eq_sm, KPM_ran_function);
+     for (size_t j = 0; j < n->rf[idx].defn.kpm.sz_ric_report_style_list; j++) {
+       // Remove the handle previously returned

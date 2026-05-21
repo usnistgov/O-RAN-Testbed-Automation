@@ -183,7 +183,7 @@ RRC NR reconfiguration successful.
 ```
 >
 
-<
+<!
 <b>OCUDU Grafana WebUI and ZMQ Broker Visualization</b><div align="center">
   <img src="Images/OCUDU_Grafana_WebUI.png" alt="OCUDU Grafana WebUI and ZMQ Broker" width="75%">
 </div>
@@ -198,8 +198,8 @@ See <a href="RAN_Intelligent_Controllers/Near-Real-Time-RIC#migration-to-cilium"
 </details>
 
 ---
->
-<
+
+
 <b>Supplementary Dashboard for KPM Visualization</b><div align="center">
   <img src="Images/xApp_Dashboard.png" alt="Grafana dashboard of xApp KPM metrics" width="75%">
 </div>

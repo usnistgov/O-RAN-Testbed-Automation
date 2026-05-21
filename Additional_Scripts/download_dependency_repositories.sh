@@ -61,7 +61,15 @@ cd Next_Generation_Node_B
 ln -s "../User_Equipment/libzmq" libzmq # Use User_Equipment's ZMQ
 ln -s "../User_Equipment/czmq" czmq
 mkdir -p zmq_broker
-wget -qO zmq_broker/multi_ue_scenario.grc https://gitlab.com/ocudu/ocudu_docs/-/raw/main/docs/user_manual/tutorials/srsue/assets/multi_ue_scenario.grc
+
+DOCS_HASH=$(jq -r '."https://gitlab.com/ocudu/ocudu_docs.git"[1]' ../commit_hashes.json 2>/dev/null)
+if [ -z "$DOCS_HASH" ] || [ "$DOCS_HASH" == "null" ]; then
+    echo "ERROR: Unable to retrieve commit hash for ocudu_docs repository."
+    exit 1
+fi
+wget -qO zmq_broker/multi_ue_scenario.grc "https://gitlab.com/ocudu/ocudu_docs/-/raw/${DOCS_HASH}/docs/tutorials/srsue/assets/multi_ue_scenario.grc"
+wget -qO zmq_broker/multi_ue_scenario.grc.license "https://gitlab.com/ocudu/ocudu_docs/-/raw/${DOCS_HASH}/docs/tutorials/srsue/assets/multi_ue_scenario.grc.license"
+
 cd ..
 
 cd RAN_Intelligent_Controllers/Near-Real-Time-RIC

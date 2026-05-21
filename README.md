@@ -140,16 +140,16 @@ Next, install Git and clone the O-RAN-Testbed-Automation repository over HTTPS.
 
 ```console
 sudo apt-get install -y git
-git clone https://github.com/USNISTGOV/O-RAN-Testbed-Automation.git
+git clone https://gitlab.nist.gov/gitlab/wnd-oran/o-ran-testbed-init.git
 cd O-RAN-Testbed-Automation
 ```
 
-Alternatively, the repository may be cloned over SSH: `git clone git@github.com:USNISTGOV/O-RAN-Testbed-Automation.git`. To use SSH instead of HTTPS for all subsequent `git clone` operations during the installation, set `export USE_GIT_SSH=true` in your terminal before proceeding.
+Alternatively, the repository may be cloned over SSH: `git@gitlab.nist.gov:wnd-oran/o-ran-testbed-init.git`. To use SSH instead of HTTPS for all subsequent `git clone` operations during the installation, set `export USE_GIT_SSH=true` in your terminal before proceeding.
 
 ---
 
 > [!IMPORTANT]
-> The deployment scenario based on OpenAirInterface with FlexRIC can be installed from the `OpenAirInterface_Testbed` directory, while the deployment scenario based on srsRAN and O-RAN SC's Near-RT RIC can be installed from the base directory.
+> The deployment scenario based on Open 5GS Cpre, srsRAN and O-RAN SC's Near-RT RIC can be installed from the base directory.
 
 Begin the installation process, recommended to be run as the current user rather than as root:
 
@@ -196,26 +196,6 @@ See <a href="RAN_Intelligent_Controllers/Near-Real-Time-RIC#migration-to-cilium"
 
 ---
 
-<details>
-  <summary><b>OpenAirInterface and FlexRIC Output</b></summary>
-  <hr>
-
-Run the testbed with `./run.sh` to start the 5G Core, FlexRIC, gNodeB, and UE as background processes, and the KPM monitoring xApp in the foreground. Use `./is_running.sh` to check if the components are running, and `./stop.sh` to stop the components.
-
-```console
-8 KPM ind_msg latency = 600 [μs]
-UE ID type = gNB, amf_ue_ngap_id = 1
-ran_ue_id = 1
-DRB.PdcpSduVolumeDL = 0 [kb]
-DRB.PdcpSduVolumeUL = 0 [kb]
-DRB.RlcSduDelayDl = 0.00 [μs]
-DRB.UEThpDl = 0.00 [kbps]
-DRB.UEThpUl = 0.00 [kbps]
-RRU.PrbTotDl = 15 [PRBs]
-RRU.PrbTotUl = 140 [PRBs]
-RSRP = -44.00 [dBm]
-...
-```
 
 <b>Supplementary Dashboard for KPM Visualization</b><div align="center">
   <img src="Images/xApp_Dashboard.png" alt="Grafana dashboard of xApp KPM metrics" width="75%">

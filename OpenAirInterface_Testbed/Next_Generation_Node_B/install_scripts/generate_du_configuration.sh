@@ -83,14 +83,14 @@ HEX=$(printf '%x' $((0xe00 + DU_NUMBER - 1)))
 
 # Set unique gNB_DU_ID, gNB_name, nr_cellid, physCellId, local_n_address, and remote_n_address
 # sed -i "s|^\([[:space:]]*\)gNB_ID\s*=.*|\1gNB_ID = 0x$HEX;|" "$DU_CONF" # Does not need to be unique
-sed -i "s|^\([[:space:]]*\)gNB_DU_ID\s*=.*|\1gNB_DU_ID = 0x$HEX;|" "$DU_CONF"
+sed -i "s|^\([[:space:]]*\)gNB_DU_ID[[:space:]]*=.*|\1gNB_DU_ID = 0x${HEX}L;|" "$DU_CONF"
 awk -v hex="$HEX" '
-FNR==NR { if ($0 ~ /^\s*gNB_DU_ID\s*=/) found=1; next }
+FNR==NR { if ($0 ~ /^[[:space:]]*gNB_DU_ID[[:space:]]*=/) found=1; next }
 {
     print
-    if (!found && $0 ~ /^\s*gNB_ID\s*=/) {
+    if (!found && $0 ~ /^[[:space:]]*gNB_ID[[:space:]]*=/) {
         sub(/[^ ].*$/, "", $0)
-        print $0 "gNB_DU_ID = 0x" hex ";"
+        print $0 "gNB_DU_ID = 0x" hex "L;"
         found=1
     }
 }
@@ -114,7 +114,7 @@ REMOTE_N_ADDRESS="127.0.0.3"
 
 # Set local_n_address and remote_n_address inside the MACRLCs section
 awk -v local_addr="$LOCAL_N_ADDRESS" -v remote_addr="$REMOTE_N_ADDRESS" '
-    /^[[:space:]]*MACRLCs[[:space:]]*=\s*\(/ { in_m=1; ins=0; tnp_ins=0 }
+    /^[[:space:]]*MACRLCs[[:space:]]*=[[:space:]]*\(/ { in_m=1; ins=0; tnp_ins=0 }
     in_m && /^[[:space:]]*\)\s*;/ { print; in_m=0; next }
     in_m && /^[[:space:]]*(local_n_address|remote_n_address)[[:space:]]*=/ { next }
     in_m && /^[[:space:]]*tr_n_preference[[:space:]]*=/ {

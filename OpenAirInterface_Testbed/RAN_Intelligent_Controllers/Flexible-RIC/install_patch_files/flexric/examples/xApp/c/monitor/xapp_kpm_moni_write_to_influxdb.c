@@ -508,7 +508,8 @@ static void log_kpm_ind_msg_frm_3(kpm_ind_msg_format_3_t const *msg, int64_t col
     log_ue_id_e2sm[type](ue_id_e2sm);
 
     // log measurements
-    log_kpm_measurements(&msg->meas_report_per_ue[i].ind_msg_format_1, collect_start_time, latency, batch_id, false);
+    bool is_cell = (strncmp(current_e2_id_str, "CU", 2) == 0) ? true : false;
+    log_kpm_measurements(&msg->meas_report_per_ue[i].ind_msg_format_1, collect_start_time, latency, batch_id, is_cell);
   }
 }
 

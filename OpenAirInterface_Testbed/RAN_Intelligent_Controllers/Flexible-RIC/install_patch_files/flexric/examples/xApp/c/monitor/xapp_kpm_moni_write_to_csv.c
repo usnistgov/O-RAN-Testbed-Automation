@@ -272,7 +272,8 @@ static void csv_prepend_timestamp(int64_t arrival_ms, int64_t latency, int64_t b
 
   char prefix_buffer[128];
   if (prev_now <= 0) {
-    snprintf(prefix_buffer, sizeof(prefix_buffer), "%" PRId64 ",%" PRId64 ",,%" PRId64 ",", arrival_ms, batch_id, latency);
+    snprintf(prefix_buffer, sizeof(prefix_buffer), "%" PRId64 ",%" PRId64 ",,%" PRId64 ",", arrival_ms, batch_id,
+             latency);
   } else {
     snprintf(prefix_buffer, sizeof(prefix_buffer), "%" PRId64 ",%" PRId64 ",%" PRId64 ",%" PRId64 ",", arrival_ms,
              batch_id, reporting_timestamp_offset, latency);
@@ -630,7 +631,8 @@ static void log_kpm_ind_msg_frm_3(kpm_ind_msg_format_3_t const *msg, int64_t col
     log_ue_id_e2sm[type](ue_id_e2sm);
 
     // log measurements
-    log_kpm_measurements(&msg->meas_report_per_ue[i].ind_msg_format_1, collect_start_time, latency, batch_id, false);
+    bool is_cell = (strncmp(current_e2_id_str, "CU", 2) == 0) ? true : false;
+    log_kpm_measurements(&msg->meas_report_per_ue[i].ind_msg_format_1, collect_start_time, latency, batch_id, is_cell);
   }
 }
 

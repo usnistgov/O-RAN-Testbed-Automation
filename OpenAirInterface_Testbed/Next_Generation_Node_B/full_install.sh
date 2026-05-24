@@ -35,6 +35,8 @@ APPLY_PATCHES=true
 CLEAN_INSTALL=false # If SHARE_OAI_DIR_FROM_UE is true, set to false since the UE hosts openairinterface5g
 RADIO_TYPE="SIMU"   # Set to "SIMU", "ZMQ", or "USRP"
 DEBUG_SYMBOLS=false
+E2AP_VERSION="E2AP_V3"  # E2AP_V1, E2AP_V2, E2AP_V3
+KPM_VERSION="KPM_V3_00" # KPM_V2_03, KPM_V3_00
 NRSCOPE_GUI=false
 TELNET_SERVER=true
 E2_TERM_PORT=36421            # Default is 36421, which will result in no modification
@@ -212,8 +214,14 @@ if ! dpkg -s libtool &>/dev/null; then
 fi
 
 ADDITIONAL_FLAGS=""
+if [ -n "$E2AP_VERSION" ]; then
+    ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --cmake-opt -DE2AP_VERSION=$E2AP_VERSION"
+fi
+if [ -n "$KPM_VERSION" ]; then
+    ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --cmake-opt -DKPM_VERSION=$KPM_VERSION"
+fi
 if [ "$CLEAN_INSTALL" = true ]; then
-    ADDITIONAL_FLAGS="-C"
+    ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS -C"
 fi
 if [ "$DEBUG_SYMBOLS" = true ]; then
     ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS -g"

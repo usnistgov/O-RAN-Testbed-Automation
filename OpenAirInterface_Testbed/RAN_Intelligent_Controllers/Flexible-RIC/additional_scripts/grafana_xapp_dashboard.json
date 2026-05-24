@@ -63,7 +63,7 @@
       "type": "datasource",
       "id": "yesoreyeram-infinity-datasource",
       "name": "Infinity",
-      "version": "3.7.4"
+      "version": "3.8.0"
     }
   ],
   "annotations": {
@@ -1189,7 +1189,17 @@
               "type": "timestamp_epoch"
             },
             {
+              "selector": "Batch ID (Mapping Cell with UE)",
+              "text": "",
+              "type": "string"
+            },
+            {
               "selector": "Reporting Time Offset (ms)",
+              "text": "",
+              "type": "number"
+            },
+            {
+              "selector": "Indication Latency (ms)",
               "text": "",
               "type": "number"
             },
@@ -1205,6 +1215,7 @@
             }
           ],
           "csv_options": {
+            "relax_column_count": true,
             "skip_lines_with_error": true
           },
           "datasource": {
@@ -2357,7 +2368,7 @@
             "conversions": [
               {
                 "destinationType": "number",
-                "targetField": "Count 1"
+                "targetField": "Count"
               }
             ],
             "fields": {}
@@ -2691,8 +2702,8 @@
     },
     {
       "datasource": {
-        "type": "yesoreyeram-infinity-datasource",
-        "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+        "type": "datasource",
+        "uid": "-- Dashboard --"
       },
       "description": "DL Modulation Coding Scheme",
       "fieldConfig": {
@@ -2793,62 +2804,12 @@
       "pluginVersion": "13.0.1+security-01",
       "targets": [
         {
-          "columns": [
-            {
-              "selector": "Time (UNIX ms)",
-              "text": "",
-              "type": "timestamp_epoch"
-            },
-            {
-              "selector": "Reporting Time Offset (ms)",
-              "text": "",
-              "type": "number"
-            },
-            {
-              "selector": "E2 Node ID",
-              "text": "",
-              "type": "string"
-            },
-            {
-              "selector": "CARR.PDSCHMCSDist (PDSCH_RBs)",
-              "text": "",
-              "type": "string"
-            }
-          ],
-          "csv_options": {
-            "skip_lines_with_error": true
-          },
           "datasource": {
-            "type": "yesoreyeram-infinity-datasource",
-            "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+            "type": "datasource",
+            "uid": "-- Dashboard --"
           },
-          "filters": [],
-          "format": "timeseries",
-          "global_query_id": "",
-          "parser": "backend",
-          "refId": "A",
-          "root_selector": "",
-          "source": "url",
-          "type": "csv",
-          "url": "$Cell_Metrics",
-          "url_options": {
-            "data": "",
-            "method": "GET",
-            "params": [
-              {
-                "key": "from",
-                "value": "$__from"
-              },
-              {
-                "key": "to",
-                "value": "$__to"
-              },
-              {
-                "key": "approx_num_samples",
-                "value": "${Resolution}"
-              }
-            ]
-          }
+          "panelId": 48,
+          "refId": "A"
         }
       ],
       "title": "CARR.PDSCHMCSDist.BinX.BinY.BinZ (256QAM)",
@@ -3968,7 +3929,7 @@
             "conversions": [
               {
                 "destinationType": "number",
-                "targetField": "Count 1"
+                "targetField": "Count"
               }
             ],
             "fields": {}
@@ -4279,8 +4240,8 @@
     },
     {
       "datasource": {
-        "type": "yesoreyeram-infinity-datasource",
-        "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+        "type": "datasource",
+        "uid": "-- Dashboard --"
       },
       "description": "DL Modulation Coding Scheme",
       "fieldConfig": {
@@ -4381,62 +4342,12 @@
       "pluginVersion": "13.0.1+security-01",
       "targets": [
         {
-          "columns": [
-            {
-              "selector": "Time (UNIX ms)",
-              "text": "",
-              "type": "timestamp_epoch"
-            },
-            {
-              "selector": "Reporting Time Offset (ms)",
-              "text": "",
-              "type": "number"
-            },
-            {
-              "selector": "E2 Node ID",
-              "text": "",
-              "type": "string"
-            },
-            {
-              "selector": "CARR.PDSCHMCSDist (PDSCH_RBs)",
-              "text": "",
-              "type": "string"
-            }
-          ],
-          "csv_options": {
-            "skip_lines_with_error": true
-          },
           "datasource": {
-            "type": "yesoreyeram-infinity-datasource",
-            "uid": "${DS_YESOREYERAM-INFINITY-DATASOURCE}"
+            "type": "datasource",
+            "uid": "-- Dashboard --"
           },
-          "filters": [],
-          "format": "timeseries",
-          "global_query_id": "",
-          "parser": "backend",
-          "refId": "A",
-          "root_selector": "",
-          "source": "url",
-          "type": "csv",
-          "url": "$Cell_Metrics",
-          "url_options": {
-            "data": "",
-            "method": "GET",
-            "params": [
-              {
-                "key": "from",
-                "value": "$__from"
-              },
-              {
-                "key": "to",
-                "value": "$__to"
-              },
-              {
-                "key": "approx_num_samples",
-                "value": "${Resolution}"
-              }
-            ]
-          }
+          "panelId": 48,
+          "refId": "A"
         }
       ],
       "title": "CARR.PDSCHMCSDist.BinX.BinY.BinZ (Low Spectral Efficiency)",
@@ -5556,7 +5467,7 @@
             "conversions": [
               {
                 "destinationType": "number",
-                "targetField": "Count 1"
+                "targetField": "Count"
               }
             ],
             "fields": {}
@@ -5831,8 +5742,8 @@
         "allValue": "-1",
         "allowCustomValue": true,
         "current": {
-          "text": "1000",
-          "value": "1000"
+          "text": "500",
+          "value": "500"
         },
         "description": "The number of samples to show, interpolating from the start and end of the time window",
         "includeAll": true,
@@ -5864,12 +5775,12 @@
             "value": "200"
           },
           {
-            "selected": false,
+            "selected": true,
             "text": "500",
             "value": "500"
           },
           {
-            "selected": true,
+            "selected": false,
             "text": "1000",
             "value": "1000"
           }

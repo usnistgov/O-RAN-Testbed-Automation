@@ -31,6 +31,9 @@
 # Exit immediately if a command fails
 set -e
 
+E2AP_VERSION="E2AP_V2"  # E2AP_V1, E2AP_V2, E2AP_V3
+KPM_VERSION="KPM_V2_03" # KPM_V2_03, KPM_V3_00
+
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."

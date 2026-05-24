@@ -37,31 +37,55 @@ if ! command -v realpath &>/dev/null; then
     sudo env $APTVARS apt-get install -y coreutils
 fi
 
-# The script directory respects symbolic links so that the gNB and UE can patch their own openairinterface5g
-SCRIPT_DIR="$(cd "$(dirname "$0")" >/dev/null 2>&1 && pwd)"
+echo "# Script: $(realpath "$0")..."
+
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$PARENT_DIR"
 
-if [ ! -d openairinterface5g ]; then
-    echo "OpenAirInterface directory not found. Please ensure you are in the correct parent directory, and that the oai/openairinterface5g repository has been cloned."
-    exit 1
+if ! command -v clang-format-20 >/dev/null 2>&1; then
+    echo "Installing clang-format-20..."
+
+    wget -q https://apt.llvm.org/llvm.sh
+    chmod +x llvm.sh
+    sudo ./llvm.sh 20
+    rm -f llvm.sh
+
+    sudo apt-get update -y
+    sudo apt-get install -y clang-format-20
 fi
 
-if [ ! -d install_patch_files ]; then
-    mkdir install_patch_files
-fi
+cat <<EOF >.clang-format
+Language: C
+AccessModifierOffset: -2
+AlwaysBreakTemplateDeclarations: Yes
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortFunctionsOnASingleLine: None
+BreakBeforeBraces: Attach
+BreakAfterAttributes: Leave
+ColumnLimit: 120
+IncludeBlocks: Merge
+IndentWidth: 2
+MaxEmptyLinesToKeep: 1
+SortIncludes: true
+SortUsingDeclarations: true
+UseCRLF: false
+UseTab: Never
+EOF
 
-cd openairinterface5g
+FILES=(
+    "flexric/examples/xApp/c/monitor/xapp_kpm_moni.c"
+    "flexric/examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv.c"
+    "flexric/examples/xApp/c/monitor/xapp_kpm_moni_write_to_influxdb.c"
+)
 
-# Update the patch file(s)
-git diff openair3/UICC/pdu_session.c >../install_patch_files/openairinterface5g/openair3/UICC/pdu_session.c.patch
+for FILE in "${FILES[@]}"; do
+    if [ -f "$FILE" ]; then
+        echo "Formatting $FILE..."
+        clang-format-20 -style=file -i "$FILE"
+    else
+        echo "WARNING: File not found: $FILE"
+    fi
+done
 
-# Update the previous versions of the file(s)
-git restore openair3/UICC/pdu_session.c
-cp openair3/UICC/pdu_session.c ../install_patch_files/openairinterface5g/openair3/UICC/pdu_session.c.previous
-cp openair3/UICC/pdu_session.c openair3/UICC/pdu_session.c.previous
-git apply --verbose --ignore-whitespace ../install_patch_files/openairinterface5g/openair3/UICC/pdu_session.c.patch
-
-cd ..
-
-echo "Successfully updated patch files in the install_patch_files directory."
+echo "Successfully formatted code files. To also update the patch files of O-RAN-Testbed-Automation, run ./additional_scripts/apply_changes_to_patch_files.sh"

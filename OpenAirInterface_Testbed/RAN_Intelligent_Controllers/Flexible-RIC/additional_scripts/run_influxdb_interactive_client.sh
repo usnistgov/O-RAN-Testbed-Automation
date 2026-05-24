@@ -50,9 +50,10 @@ while true; do
     echo -e "  1) List all buckets"
     echo -e "  2) List measurements in '$INFLUXDB_BUCKET' (last 1h)"
     echo -e "  3) List field keys in '$INFLUXDB_BUCKET' (last 1h)"
-    echo -e "  4) Query data from '$INFLUXDB_BUCKET' (last 1h, limit 10)"
-    echo -e "  5) Enter custom influx command (auto-appending --org and --token)"
-    echo -e "  6) Exit"
+    echo -e "  4) View latest KPI & UE-level metrics"
+    echo -e "  5) Query data from '$INFLUXDB_BUCKET' (last 1h, limit 10)"
+    echo -e "  6) Enter custom influx command (auto-appending --org and --token)"
+    echo -e "  7) Exit"
     echo -e "----------------------------------------------------------------"
     read -e -p "Select a number: " OPTION
 
@@ -72,11 +73,32 @@ while true; do
         influx query "$QUERY" --org "$INFLUXDB_ORG" --token "$INFLUXDB_TOKEN"
         ;;
     4)
+        echo -e "\nFetching latest KPI metrics from kpm_cell_measurements..."
+        QUERY="from(bucket: \"$INFLUXDB_BUCKET\") |> range(start: -24h) |> filter(fn: (r) => r._measurement == \"kpm_cell_measurements\") |> last()"
+        influx query "$QUERY" --org "$INFLUXDB_ORG" --token "$INFLUXDB_TOKEN" --raw | python3 -c 'import csv, sys
+reader = csv.DictReader([line for line in sys.stdin if not line.startswith("#")])
+for r in reader:
+    f, v = r.get("_field"), r.get("_value")
+    if f and v and f != "_field" and "[" not in v:
+        print("  \033[36m" + f + "\033[0m = " + v)
+'
+
+        echo -e "\nFetching latest UE-level metrics from kpm_measurements..."
+        QUERY="from(bucket: \"$INFLUXDB_BUCKET\") |> range(start: -24h) |> filter(fn: (r) => r._measurement == \"kpm_measurements\") |> last()"
+        influx query "$QUERY" --org "$INFLUXDB_ORG" --token "$INFLUXDB_TOKEN" --raw | python3 -c 'import csv, sys
+reader = csv.DictReader([line for line in sys.stdin if not line.startswith("#")])
+for r in reader:
+    f, v = r.get("_field"), r.get("_value")
+    if f and v and f != "_field" and "[" not in v:
+        print("  \033[36m" + f + "\033[0m = " + v)
+'
+        ;;
+    5)
         QUERY="from(bucket: \"$INFLUXDB_BUCKET\") |> range(start: -1h) |> limit(n:10)"
         echo -e "\nRunning query for recent data (first 10 records)..."
         influx query "$QUERY" --org "$INFLUXDB_ORG" --token "$INFLUXDB_TOKEN"
         ;;
-    5)
+    6)
         echo -e "\n----- Command Examples ------"
         echo -e "  bucket list"
         echo -e "  query 'from(bucket: \"$INFLUXDB_BUCKET\") |> range(start: -24h)'"
@@ -90,7 +112,7 @@ while true; do
             influx "${CUSTOM_ARGS[@]}" --org "$INFLUXDB_ORG" --token "$INFLUXDB_TOKEN"
         fi
         ;;
-    6)
+    7)
         echo "Exiting..."
         break
         ;;

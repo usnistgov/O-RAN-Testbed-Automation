@@ -40,7 +40,7 @@ cd "5G_Core_Network" >nul 2>&1
 if not errorlevel 1 (
     git clone https://github.com/open5gs/open5gs.git
     cd "open5gs"
-    git checkout f77810fa59829b3348b38afbf2b0b43ed350df62
+    git checkout 2a968a1e494afb56ce95038110be55ecf3153fd5
     cd ..\..
 ) else (
     echo ERROR: Failed to cd to 5G_Core_Network. Skipping clone.
@@ -51,9 +51,7 @@ if exist "5G_Core_Network/Additional_Cores_5GDeploy\5gdeploy" rmdir /s /q "5G_Co
 cd "5G_Core_Network/Additional_Cores_5GDeploy" >nul 2>&1
 if not errorlevel 1 (
     git clone https://github.com/usnistgov/5gdeploy.git
-    cd "5gdeploy"
-    git checkout 83c359ab57c7ae482f2834ff731b545caf6b3a3f
-    cd ..\..
+    cd ..
 ) else (
     echo ERROR: Failed to cd to 5G_Core_Network/Additional_Cores_5GDeploy. Skipping clone.
 )
@@ -136,7 +134,7 @@ mklink /D czmq ..\User_Equipment\czmq
 if not exist zmq_broker mkdir zmq_broker
 cd zmq_broker
 if not exist "multi_ue_scenario.grc" (
-    curl -L --fail --silent --show-error -o multi_ue_scenario.grc https://gitlab.com/ocudu/ocudu_docs/-/raw/main/docs/user_manual/tutorials/srsue/assets/multi_ue_scenario.grc
+    curl -L --fail --silent --show-error -o multi_ue_scenario.grc https://gitlab.com/ocudu/ocudu_docs/-/raw/3e6daa6548e0ee98b58a4dae10032f35569c7ee5/docs/tutorials/srsue/assets/multi_ue_scenario.grc
     if errorlevel 1 (
         echo ERROR: Failed to download multi_ue_scenario.grc
         exit /b 1
@@ -384,7 +382,7 @@ if not exist "OpenAirInterface_Testbed\5G_Core_Network\open5gs" (
     if not errorlevel 1 (
         git clone https://github.com/open5gs/open5gs.git
         cd "open5gs"
-        git checkout f77810fa59829b3348b38afbf2b0b43ed350df62
+        git checkout 2a968a1e494afb56ce95038110be55ecf3153fd5
         cd ..\..\..
     ) else (
         echo ERROR: Failed to cd to OpenAirInterface_Testbed\5G_Core_Network. Skipping clone.
@@ -396,9 +394,7 @@ if exist "OpenAirInterface_Testbed\5G_Core_Network\Additional_Cores_5GDeploy\5gd
 cd "OpenAirInterface_Testbed\5G_Core_Network\Additional_Cores_5GDeploy" >nul 2>&1
 if not errorlevel 1 (
     git clone https://github.com/usnistgov/5gdeploy.git
-    cd "5gdeploy"
-    git checkout 83c359ab57c7ae482f2834ff731b545caf6b3a3f
-    cd ..\..\..\..
+    cd ..\..\..
 ) else (
     echo ERROR: Failed to cd to OpenAirInterface_Testbed\5G_Core_Network\Additional_Cores_5GDeploy. Skipping clone.
 )
@@ -437,7 +433,7 @@ cd "OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC" >nul 2>&1
 if not errorlevel 1 (
     git clone https://github.com/swig/swig.git
     cd "swig"
-    git checkout c02d4fe134e072e4f0c28413f883a6f5c4e8d32f
+    git checkout f3f7fd641407d422330709391738e7b912398190
     cd ..\..\..\..
 ) else (
     echo ERROR: Failed to cd to OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC. Skipping clone.

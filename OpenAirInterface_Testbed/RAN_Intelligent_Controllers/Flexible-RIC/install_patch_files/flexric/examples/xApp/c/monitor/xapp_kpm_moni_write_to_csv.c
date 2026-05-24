@@ -964,6 +964,7 @@ int main(int argc, char *argv[]) {
   csv_append_name_to_csv_header("Batch ID (Mapping Cell with UE)", "");
   csv_append_name_to_csv_header("Reporting Time Offset", "ms");
   csv_append_name_to_csv_header("Indication Latency", "ms");
+  csv_append_name_to_csv_header("E2 Node ID", "");
 
   fr_args_t args = init_fr_args(argc, argv);
 

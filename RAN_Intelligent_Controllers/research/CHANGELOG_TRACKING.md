@@ -6,11 +6,12 @@ git commit --amend
 Update automation tool
 
 - OpenAirInterface: Add configuration option to switch from SSB RSRP to CRI RSRP or SSB SINR.
-- OpenAirInterface: Make gNB_DU_ID 64-bit to work on later compilers (Ubuntu 26.04 support).
+- OpenAirInterface: Make gNB_DU_ID 64-bit to work on newer compilers (Ubuntu 26.04 support).
 - OpenAirInterface: Make handover scenario start CSV xApp when toggled.
 - OpenAirInterface: Ensure gNodeB uses correct E2AP and KPM versions.
 - OCUDU: Fix ZMQ broker download URL in download_dependency_repositories scripts.
 - FlexRIC: Improve timing robustness by switching from indication arrival time to creation time (collectStartTime) batching in nearest period window.
+- FlexRIC: Updated Grafana dashboard and sample KPI_Metrics.csv files based on the changes above.
 - FlexRIC: Add InfluxDB interactive client option to pretty-print latest metrics.
 - FlexRIC: Add xApp source code formatter using .clang-format.
 - General: Clean up and zip unused patches to not exceed Windows ZIP path limit.

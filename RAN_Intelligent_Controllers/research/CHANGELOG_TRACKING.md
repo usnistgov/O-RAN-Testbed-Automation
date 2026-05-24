@@ -1,3 +1,31 @@
+
+git commit -S -m "Update automation tool"
+
+git commit --amend
+"""
+Update automation tool
+
+- OpenAirInterface: Add configuration option to switch from SSB RSRP to CRI RSRP or SSB SINR.
+- OpenAirInterface: Make gNB_DU_ID 64-bit to work on later compilers (Ubuntu 26.04 support).
+- OpenAirInterface: Make handover scenario start CSV xApp when toggled.
+- OpenAirInterface: Ensure gNodeB uses correct E2AP and KPM versions.
+- OCUDU: Fix ZMQ broker download URL in download_dependency_repositories scripts.
+- FlexRIC: Improve timing robustness by switching from indication arrival time to creation time (collectStartTime) batching in nearest period window.
+- FlexRIC: Add InfluxDB interactive client option to pretty-print latest metrics.
+- FlexRIC: Add xApp source code formatter using .clang-format.
+- General: Clean up and zip unused patches to not exceed Windows ZIP path limit.
+
+---------
+
+Co-authored-by: fjcintron <fernando.cintron@nist.gov>
+"""
+
+
+
+
+
+
+
 git commit -S -m "Tag v1.7.1" -m "Co-authored-by: fjcintron <fernando.cintron@nist.gov>"
 git commit -S -m "Tag v1.7.1" -m "Co-authored-by: Simewu <simeon.wuthier@nist.gov>"
 

@@ -26,33 +26,30 @@
 // damage to property. The software developed by NIST employees is not subject to
 // copyright protection within the United States.
 
-#include "../../../../src/xApp/e42_xapp_api.h"
 #include "../../../../src/util/alg_ds/alg/defer.h"
-#include "../../../../src/util/time_now_us.h"
 #include "../../../../src/util/alg_ds/alg/murmur_hash_32.h"
-#include "../../../../src/util/alg_ds/ds/lock_guard/lock_guard.h"
 #include "../../../../src/util/alg_ds/ds/assoc_container/assoc_generic.h"
+#include "../../../../src/util/alg_ds/ds/lock_guard/lock_guard.h"
 #include "../../../../src/util/e.h"
-
-#include <stdlib.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <time.h>
+#include "../../../../src/util/time_now_us.h"
+#include "../../../../src/xApp/e42_xapp_api.h"
+#include "../metrics_factory.h"
 #include <errno.h>
-#include <unistd.h>
-#include <signal.h>
-#include <pthread.h>
 #include <inttypes.h>
 #include <math.h>
-#include "../metrics_factory.h"
+#include <pthread.h>
+#include <signal.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <unistd.h>
 
 // Set to the interval in milliseconds at which the xApp should write to the CSV file
 static uint64_t period_ms = 1000;
 
-// Lowering the timestamp precision groups measurements from multiple UEs under the same timestamp, making it easier to identify simultaneous connections.
-uint64_t timestamp_precision = 10;
-
-// For metrics based on the difference between indication messages, the first sample may give a wrong value, so it is skipped.
+// For metrics based on the difference between indication messages, the first sample may give a wrong value, so it is
+// skipped.
 bool skip_first_sample = true;
 
 // Set to true if samples containing RSRP.Count == 0 are to be filtered,
@@ -63,15 +60,13 @@ static pthread_mutex_t mtx;
 
 static assoc_ht_open_t ht = {0};
 
-static uint32_t hash_func(const void *key_v)
-{
+static uint32_t hash_func(const void *key_v) {
   char *key = *(char **)(key_v);
   static const uint32_t seed = 42;
   return murmur3_32((uint8_t *)key, strlen(key), seed);
 }
 
-static bool cmp_str(const void *a, const void *b)
-{
+static bool cmp_str(const void *a, const void *b) {
   char *a_str = *(char **)(a);
   char *b_str = *(char **)(b);
 
@@ -79,22 +74,18 @@ static bool cmp_str(const void *a, const void *b)
   return ret == 0;
 }
 
-static void free_str(void *key, void *value)
-{
+static void free_str(void *key, void *value) {
   free(*(char **)key);
   free(value);
 }
 
-static void free_kpm_meas_unit_hash_table(void)
-{
+static void free_kpm_meas_unit_hash_table(void) {
   assoc_ht_open_free(&ht);
 }
 
-static void init_kpm_meas_unit_hash_table(void)
-{
+static void init_kpm_meas_unit_hash_table(void) {
   FILE *fp = fopen(KPM_MEAS_LIST, "r");
-  if (!fp)
-  {
+  if (!fp) {
     printf("Cannot open the file \"%s\".\n", KPM_MEAS_LIST);
     perror("Error");
     return;
@@ -102,8 +93,7 @@ static void init_kpm_meas_unit_hash_table(void)
 
   assoc_ht_open_init(&ht, sizeof(char *), cmp_str, free_str, hash_func);
   char line[128];
-  while (fgets(line, sizeof(line), fp))
-  {
+  while (fgets(line, sizeof(line), fp)) {
     char *col1, *col2;
     sscanf(line, "%ms %ms", &col1, &col2);
     assoc_ht_open_insert(&ht, &col1, sizeof(char *), col2);
@@ -111,8 +101,7 @@ static void init_kpm_meas_unit_hash_table(void)
   fclose(fp);
 }
 
-static char *get_meas_unit(const char *name)
-{
+static char *get_meas_unit(const char *name) {
   char *val = assoc_ht_open_value(&ht, &name);
   if (!val || strcmp(val, "[]") == 0)
     return "";
@@ -143,8 +132,7 @@ int64_t prev_now = 0;
 // Buffer to store the current E2 Node ID
 static char current_e2_id_str[256];
 
-static void csv_append_name_to_csv_header(const char *name, const char *unit)
-{
+static void csv_append_name_to_csv_header(const char *name, const char *unit) {
   char *target_buffer = is_cell_metric ? csv_cell_header_buffer : csv_header_buffer;
   size_t buffer_size = is_cell_metric ? sizeof(csv_cell_header_buffer) : sizeof(csv_header_buffer);
 
@@ -157,89 +145,64 @@ static void csv_append_name_to_csv_header(const char *name, const char *unit)
   size_t unit_len = strlen(unit);
 
   // Don't overflow the buffer
-  if (current_len + name_len + unit_len + 4 < buffer_size)
-  { // +4 for " ()", comma, and null terminator
-    if (unit != NULL && unit_len > 0)
-    {
+  if (current_len + name_len + unit_len + 4 < buffer_size) { // +4 for " ()", comma, and null terminator
+    if (unit != NULL && unit_len > 0) {
       snprintf(target_buffer + current_len, buffer_size - current_len, "%s (%s),", name, unit);
-    }
-    else
-    {
+    } else {
       snprintf(target_buffer + current_len, buffer_size - current_len, "%s,", name);
     }
-  }
-  else
-  {
+  } else {
     fprintf(stderr, "CSV header buffer is full, cannot append more names.\n");
   }
 }
 
-static void csv_append_int_to_csv_line(meas_record_lst_t meas_record)
-{
+static void csv_append_int_to_csv_line(meas_record_lst_t meas_record) {
   char *target_buffer = is_cell_metric ? csv_cell_line_buffer : csv_line_buffer;
   size_t buffer_size = is_cell_metric ? sizeof(csv_cell_line_buffer) : sizeof(csv_line_buffer);
   size_t current_len = strlen(target_buffer);
 
-  if (current_len + 32 < buffer_size)
-  { // Reserve space for int/float and comma
+  if (current_len + 32 < buffer_size) { // Reserve space for int/float and comma
     snprintf(target_buffer + current_len, buffer_size - current_len, "%ld,", (long)meas_record.int_val);
-  }
-  else
-  {
+  } else {
     fprintf(stderr, "CSV line buffer is full, cannot append more values.\n");
   }
 }
 
-static void csv_append_real_to_csv_line(meas_record_lst_t meas_record)
-{
+static void csv_append_real_to_csv_line(meas_record_lst_t meas_record) {
   char *target_buffer = is_cell_metric ? csv_cell_line_buffer : csv_line_buffer;
   size_t buffer_size = is_cell_metric ? sizeof(csv_cell_line_buffer) : sizeof(csv_line_buffer);
   size_t current_len = strlen(target_buffer);
 
-  if (current_len + 32 < buffer_size)
-  { // Reserve space for float and comma
-    if (isnan(meas_record.real_val))
-    {
+  if (current_len + 32 < buffer_size) { // Reserve space for float and comma
+    if (isnan(meas_record.real_val)) {
       snprintf(target_buffer + current_len, buffer_size - current_len, ",");
-    }
-    else
-    {
+    } else {
       snprintf(target_buffer + current_len, buffer_size - current_len, "%.2f,", meas_record.real_val);
     }
-  }
-  else
-  {
+  } else {
     fprintf(stderr, "CSV line buffer is full, cannot append more values.\n");
   }
 }
 
-static void csv_append_string_to_csv_line(const char *str)
-{
+static void csv_append_string_to_csv_line(const char *str) {
   if (!str)
     str = "";
   char *target_buffer = is_cell_metric ? csv_cell_line_buffer : csv_line_buffer;
   size_t buffer_size = is_cell_metric ? sizeof(csv_cell_line_buffer) : sizeof(csv_line_buffer);
   size_t current_len = strlen(target_buffer);
 
-  if (current_len + strlen(str) + 32 < buffer_size)
-  {
+  if (current_len + strlen(str) + 32 < buffer_size) {
     snprintf(target_buffer + current_len, buffer_size - current_len, "\"%s\",", str);
-  }
-  else
-  {
+  } else {
     fprintf(stderr, "CSV line buffer is full, cannot append more values.\n");
   }
 }
 
-static void csv_prepend_e2_node_id()
-{
+static void csv_prepend_e2_node_id() {
   char e2_node_id_buffer[264];
-  if (current_e2_id_str[0] == '\0')
-  {
+  if (current_e2_id_str[0] == '\0') {
     snprintf(e2_node_id_buffer, sizeof(e2_node_id_buffer), ",");
-  }
-  else
-  {
+  } else {
     snprintf(e2_node_id_buffer, sizeof(e2_node_id_buffer), "%s,", current_e2_id_str);
   }
 
@@ -248,31 +211,25 @@ static void csv_prepend_e2_node_id()
   size_t buffer_size = is_cell_metric ? sizeof(csv_cell_line_buffer) : sizeof(csv_line_buffer);
   size_t current_len = strlen(target_buffer);
 
-  if (e2_node_id_len + current_len < buffer_size)
-  {
+  if (e2_node_id_len + current_len < buffer_size) {
     // Temporary buffer to construct the new line
     char temp_buffer[9000];
     size_t total_len = 0;
     temp_buffer[0] = '\0';
     strncat(temp_buffer, e2_node_id_buffer, sizeof(temp_buffer) - 1);
     total_len = strlen(temp_buffer);
-    if (total_len < sizeof(temp_buffer) - 1)
-    {
+    if (total_len < sizeof(temp_buffer) - 1) {
       strncat(temp_buffer, target_buffer, sizeof(temp_buffer) - 1 - total_len);
     }
     strncpy(target_buffer, temp_buffer, buffer_size - 1);
     target_buffer[buffer_size - 1] = '\0';
-  }
-  else
-  {
+  } else {
     fprintf(stderr, "CSV line buffer is full, cannot prepend E2 Node ID.\n");
   }
 }
-static void csv_prepend_ue_id()
-{
+static void csv_prepend_ue_id() {
   // Ensure the current UE ID is valid
-  if (current_ue_id == 0)
-  {
+  if (current_ue_id == 0) {
     if (filter_invalid_rsrp_samples)
       fprintf(stderr, "ERROR: No valid UE ID found.\n");
   }
@@ -283,89 +240,68 @@ static void csv_prepend_ue_id()
   size_t ue_id_len = strlen(ue_id_buffer);
   size_t current_len = strlen(csv_line_buffer);
 
-  if (ue_id_len + current_len < sizeof(csv_line_buffer))
-  {
+  if (ue_id_len + current_len < sizeof(csv_line_buffer)) {
     // Use a temporary buffer to construct the new line
     char temp_buffer[sizeof(csv_line_buffer)];
     size_t total_len = 0;
     temp_buffer[0] = '\0';
     strncat(temp_buffer, ue_id_buffer, sizeof(temp_buffer) - 1);
     total_len = strlen(temp_buffer);
-    if (total_len < sizeof(temp_buffer) - 1)
-    {
+    if (total_len < sizeof(temp_buffer) - 1) {
       strncat(temp_buffer, csv_line_buffer, sizeof(temp_buffer) - 1 - total_len);
     }
     strncpy(csv_line_buffer, temp_buffer, sizeof(csv_line_buffer) - 1);
     csv_line_buffer[sizeof(csv_line_buffer) - 1] = '\0';
-  }
-  else
-  {
+  } else {
     fprintf(stderr, "CSV line buffer is full, cannot prepend UE ID.\n");
   }
 }
 
-static void csv_prepend_timestamp()
-{
-  int64_t now = time_now_us();
-  // Convert to milliseconds
-  now /= 1000;
+static void csv_prepend_timestamp(int64_t arrival_ms, int64_t latency, int64_t batch_id) {
 
   // Ensure the timestamp is non-negative
-  if (now < 0)
-  {
+  if (arrival_ms < 0) {
     fprintf(stderr, "ERROR: Negative timestamp value encountered.\n");
     return;
   }
 
-  int64_t now_adjusted_precision = now - (now % timestamp_precision);
-  char timestamp_buffer[32];
-  snprintf(timestamp_buffer, sizeof(timestamp_buffer), "%" PRId64 ",", now_adjusted_precision);
-
-  int64_t reporting_timestamp_offset;
-  char offset_buffer[32];
-  if (prev_now <= 0)
-  {
-    reporting_timestamp_offset = 0;
-    snprintf(offset_buffer, sizeof(offset_buffer), ",");
+  int64_t reporting_timestamp_offset = 0;
+  if (prev_now > 0) {
+    reporting_timestamp_offset = arrival_ms - prev_now - period_ms;
   }
-  else
-  {
-    reporting_timestamp_offset = (now - prev_now) - period_ms;
-    snprintf(offset_buffer, sizeof(offset_buffer), "%" PRId64 ",", reporting_timestamp_offset);
+
+  char prefix_buffer[128];
+  if (prev_now <= 0) {
+    snprintf(prefix_buffer, sizeof(prefix_buffer), "%" PRId64 ",%" PRId64 ",,%" PRId64 ",", arrival_ms, batch_id,
+             latency);
+  } else {
+    snprintf(prefix_buffer, sizeof(prefix_buffer), "%" PRId64 ",%" PRId64 ",%" PRId64 ",%" PRId64 ",", arrival_ms,
+             batch_id, reporting_timestamp_offset, latency);
   }
 
   // Ensure the buffer won't overflow
-  size_t timestamp_len = strlen(timestamp_buffer);
-  size_t offset_len = strlen(offset_buffer);
+  size_t prefix_len = strlen(prefix_buffer);
   char *target_buffer = is_cell_metric ? csv_cell_line_buffer : csv_line_buffer;
   size_t buffer_size = is_cell_metric ? sizeof(csv_cell_line_buffer) : sizeof(csv_line_buffer);
   size_t current_len = strlen(target_buffer);
 
-  if (timestamp_len + offset_len + current_len < buffer_size)
-  {
+  if (prefix_len + current_len < buffer_size) {
     // Temporary buffer to construct the new line
     char temp_buffer[9000];
     temp_buffer[0] = '\0';
-    strncat(temp_buffer, timestamp_buffer, sizeof(temp_buffer) - 1);
-    strncat(temp_buffer, offset_buffer, sizeof(temp_buffer) - strlen(temp_buffer) - 1);
+    strncat(temp_buffer, prefix_buffer, sizeof(temp_buffer) - 1);
     strncat(temp_buffer, target_buffer, sizeof(temp_buffer) - strlen(temp_buffer) - 1);
     strncpy(target_buffer, temp_buffer, buffer_size - 1);
     target_buffer[buffer_size - 1] = '\0';
-  }
-  else
-  {
+  } else {
     fprintf(stderr, "CSV line buffer is full, cannot prepend timestamp and offset.\n");
   }
 }
-static void write_csv_header_to_file()
-{
-  if (is_cell_metric)
-  {
-    if (!csv_wrote_cell_header && csv_cell_file_path[0] != '\0')
-    {
+static void write_csv_header_to_file() {
+  if (is_cell_metric) {
+    if (!csv_wrote_cell_header && csv_cell_file_path[0] != '\0') {
       FILE *file = fopen(csv_cell_file_path, "w");
-      if (file == NULL)
-      {
+      if (file == NULL) {
         fprintf(stderr, "Failed to open CSV file: %s\n", csv_cell_file_path);
         return;
       }
@@ -375,14 +311,10 @@ static void write_csv_header_to_file()
       csv_wrote_cell_header = true;
       printf("CSV cell header written to file: %s\n", csv_cell_file_path);
     }
-  }
-  else
-  {
-    if (!csv_wrote_header && csv_file_path != NULL)
-    {
+  } else {
+    if (!csv_wrote_header && csv_file_path != NULL) {
       FILE *file = fopen(csv_file_path, "w");
-      if (file == NULL)
-      {
+      if (file == NULL) {
         fprintf(stderr, "Failed to open CSV file: %s\n", csv_file_path);
         return;
       }
@@ -395,15 +327,11 @@ static void write_csv_header_to_file()
   }
 }
 
-static void write_csv_line_to_file()
-{
-  if (is_cell_metric)
-  {
-    if (csv_wrote_cell_header && csv_cell_file_path[0] != '\0')
-    {
+static void write_csv_line_to_file() {
+  if (is_cell_metric) {
+    if (csv_wrote_cell_header && csv_cell_file_path[0] != '\0') {
       FILE *file = fopen(csv_cell_file_path, "a");
-      if (file == NULL)
-      {
+      if (file == NULL) {
         fprintf(stderr, "Failed to open CSV cell file for appending: %s\n", csv_cell_file_path);
         return;
       }
@@ -414,14 +342,10 @@ static void write_csv_line_to_file()
     }
     // Reset the line buffer for the next entry
     memset(csv_cell_line_buffer, 0, sizeof(csv_cell_line_buffer));
-  }
-  else
-  {
-    if (csv_wrote_header && csv_file_path != NULL)
-    {
+  } else {
+    if (csv_wrote_header && csv_file_path != NULL) {
       FILE *file = fopen(csv_file_path, "a");
-      if (file == NULL)
-      {
+      if (file == NULL) {
         fprintf(stderr, "Failed to open CSV file for appending: %s\n", csv_file_path);
         return;
       }
@@ -435,44 +359,31 @@ static void write_csv_line_to_file()
   }
 }
 
-
-
-static void log_gnb_ue_id(ue_id_e2sm_t ue_id)
-{
-  if (ue_id.gnb.gnb_cu_ue_f1ap_lst != NULL)
-  {
-    for (size_t i = 0; i < ue_id.gnb.gnb_cu_ue_f1ap_lst_len; i++)
-    {
+static void log_gnb_ue_id(ue_id_e2sm_t ue_id) {
+  if (ue_id.gnb.gnb_cu_ue_f1ap_lst != NULL) {
+    for (size_t i = 0; i < ue_id.gnb.gnb_cu_ue_f1ap_lst_len; i++) {
       printf("UE ID type = gNB-CU, gnb_cu_ue_f1ap = %u\n", ue_id.gnb.gnb_cu_ue_f1ap_lst[i]);
     }
-  }
-  else
-  {
+  } else {
     printf("UE ID type = gNB, amf_ue_ngap_id = %lu\n", ue_id.gnb.amf_ue_ngap_id);
   }
-  if (ue_id.gnb.ran_ue_id != NULL)
-  {
+  if (ue_id.gnb.ran_ue_id != NULL) {
     printf("ran_ue_id = %lx\n", *ue_id.gnb.ran_ue_id); // RAN UE NGAP ID
   }
   current_ue_id = ue_id.gnb.amf_ue_ngap_id; // Update the global UE ID
-
 }
 
-static void log_du_ue_id(ue_id_e2sm_t ue_id)
-{
+static void log_du_ue_id(ue_id_e2sm_t ue_id) {
   printf("UE ID type = gNB-DU, gnb_cu_ue_f1ap = %u\n", ue_id.gnb_du.gnb_cu_ue_f1ap);
-  if (ue_id.gnb_du.ran_ue_id != NULL)
-  {
+  if (ue_id.gnb_du.ran_ue_id != NULL) {
     printf("ran_ue_id = %lx\n", *ue_id.gnb_du.ran_ue_id); // RAN UE NGAP ID
   }
   current_ue_id = ue_id.gnb_du.gnb_cu_ue_f1ap; // Update the global UE ID
 }
 
-static void log_cuup_ue_id(ue_id_e2sm_t ue_id)
-{
+static void log_cuup_ue_id(ue_id_e2sm_t ue_id) {
   printf("UE ID type = gNB-CU-UP, gnb_cu_cp_ue_e1ap = %u\n", ue_id.gnb_cu_up.gnb_cu_cp_ue_e1ap);
-  if (ue_id.gnb_cu_up.ran_ue_id != NULL)
-  {
+  if (ue_id.gnb_cu_up.ran_ue_id != NULL) {
     printf("ran_ue_id = %lx\n", *ue_id.gnb_cu_up.ran_ue_id); // RAN UE NGAP ID
   }
   current_ue_id = ue_id.gnb_cu_up.gnb_cu_cp_ue_e1ap; // Update the global UE ID
@@ -482,16 +393,11 @@ typedef void (*log_ue_id)(ue_id_e2sm_t ue_id);
 
 static log_ue_id log_ue_id_e2sm[END_UE_ID_E2SM] = {
     log_gnb_ue_id, // common for gNB-mono, CU and CU-CP
-    log_du_ue_id,
-    log_cuup_ue_id,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
+    log_du_ue_id,  log_cuup_ue_id, NULL, NULL, NULL, NULL,
 };
 
-static void log_int_value(const char *name_str, const label_info_lst_t label_info, const meas_record_lst_t meas_record)
-{
+static void log_int_value(const char *name_str, const label_info_lst_t label_info,
+                          const meas_record_lst_t meas_record) {
   (void)label_info;
   char *name_unit = get_meas_unit(name_str);
   if (name_unit && strcmp(name_unit, "[]") == 0)
@@ -499,16 +405,12 @@ static void log_int_value(const char *name_str, const label_info_lst_t label_inf
   if (name_unit == NULL)
     name_unit = "";
 
-  if (!(is_cell_metric ? csv_wrote_cell_header : csv_wrote_header))
-  {
+  if (!(is_cell_metric ? csv_wrote_cell_header : csv_wrote_header)) {
     char clean_unit[64];
     size_t len = strlen(name_unit);
-    if (len > 2 && name_unit[0] == '[' && name_unit[len - 1] == ']')
-    {
+    if (len > 2 && name_unit[0] == '[' && name_unit[len - 1] == ']') {
       snprintf(clean_unit, sizeof(clean_unit), "%.*s", (int)(len - 2), name_unit + 1);
-    }
-    else
-    {
+    } else {
       snprintf(clean_unit, sizeof(clean_unit), "%s", name_unit);
     }
     csv_append_name_to_csv_header(name_str, clean_unit);
@@ -518,22 +420,21 @@ static void log_int_value(const char *name_str, const label_info_lst_t label_inf
   // if (label_info.noLabel != NULL) {
   //   printf("%s = %d%s%s\n", name_str, meas_record.int_val, *name_unit ? " " : "", name_unit);
   // } else if (label_info.distBinX != NULL && meas_record.int_val > 0) {
-  //   printf("%s[BinX=%d][BinY=%d][BinZ=%d] = %d%s%s\n", name_str, *label_info.distBinX, *label_info.distBinY, *label_info.distBinZ, meas_record.int_val, *name_unit ? " " : "", name_unit);
+  //   printf("%s[BinX=%d][BinY=%d][BinZ=%d] = %d%s%s\n", name_str, *label_info.distBinX, *label_info.distBinY,
+  //   *label_info.distBinZ, meas_record.int_val, *name_unit ? " " : "", name_unit);
   // }
 
   // If the measurement is RSRP.Count and the value is 0, the data is invalid
-  if (filter_invalid_rsrp_samples && strcmp("RSRP.Count", name_str) == 0)
-  {
-    if (meas_record.int_val == 0)
-    {
+  if (filter_invalid_rsrp_samples && strcmp("RSRP.Count", name_str) == 0) {
+    if (meas_record.int_val == 0) {
       filter_current_sample = true;
       printf("\n\tNumber of RSRP measurements was zero, skipping sample to avoid divide by zero.\n\n");
     }
   }
 }
 
-static void log_real_value(const char *name_str, const label_info_lst_t label_info, const meas_record_lst_t meas_record)
-{
+static void log_real_value(const char *name_str, const label_info_lst_t label_info,
+                           const meas_record_lst_t meas_record) {
   (void)label_info;
   char *name_unit = get_meas_unit(name_str);
   if (name_unit && strcmp(name_unit, "[]") == 0)
@@ -541,16 +442,12 @@ static void log_real_value(const char *name_str, const label_info_lst_t label_in
   if (name_unit == NULL)
     name_unit = "";
 
-  if (!(is_cell_metric ? csv_wrote_cell_header : csv_wrote_header))
-  {
+  if (!(is_cell_metric ? csv_wrote_cell_header : csv_wrote_header)) {
     char clean_unit[64];
     size_t len = strlen(name_unit);
-    if (len > 2 && name_unit[0] == '[' && name_unit[len - 1] == ']')
-    {
+    if (len > 2 && name_unit[0] == '[' && name_unit[len - 1] == ']') {
       snprintf(clean_unit, sizeof(clean_unit), "%.*s", (int)(len - 2), name_unit + 1);
-    }
-    else
-    {
+    } else {
       snprintf(clean_unit, sizeof(clean_unit), "%s", name_unit);
     }
     csv_append_name_to_csv_header(name_str, clean_unit);
@@ -560,7 +457,8 @@ static void log_real_value(const char *name_str, const label_info_lst_t label_in
   // printf("%s = %.2f%s%s\n", name_str, meas_record.real_val, *name_unit ? " " : "", name_unit);
 }
 
-typedef void (*log_meas_value)(const char *name_str, const label_info_lst_t label_info, const meas_record_lst_t meas_record);
+typedef void (*log_meas_value)(const char *name_str, const label_info_lst_t label_info,
+                               const meas_record_lst_t meas_record);
 
 static log_meas_value get_meas_value[END_MEAS_VALUE] = {
     log_int_value,
@@ -568,23 +466,24 @@ static log_meas_value get_meas_value[END_MEAS_VALUE] = {
     NULL,
 };
 
-static void match_meas_name_type(const meas_type_t meas_type, const label_info_lst_t label_info, const meas_record_lst_t record_item)
-{
+static void match_meas_name_type(const meas_type_t meas_type, const label_info_lst_t label_info,
+                                 const meas_record_lst_t record_item) {
   // Get the value of the Measurement
   char *name_str = cp_ba_to_str(meas_type.name);
   get_meas_value[record_item.value](name_str, label_info, record_item);
   free(name_str);
 }
 
-static void match_id_meas_type(const meas_type_t meas_type, const label_info_lst_t label_info, const meas_record_lst_t record_item)
-{
+static void match_id_meas_type(const meas_type_t meas_type, const label_info_lst_t label_info,
+                               const meas_record_lst_t record_item) {
   (void)meas_type;
   (void)label_info;
   (void)record_item;
   assert(false && "ID Measurement Type not yet supported");
 }
 
-typedef void (*check_meas_type)(const meas_type_t meas_type, const label_info_lst_t label_info, const meas_record_lst_t meas_record);
+typedef void (*check_meas_type)(const meas_type_t meas_type, const label_info_lst_t label_info,
+                                const meas_record_lst_t meas_record);
 
 static check_meas_type match_meas_type[END_MEAS_TYPE] = {
     match_meas_name_type,
@@ -593,26 +492,23 @@ static check_meas_type match_meas_type[END_MEAS_TYPE] = {
 
 #define MAX_E2_NODES 16
 
-static void log_kpm_measurements(kpm_ind_msg_format_1_t const *msg_frm_1, bool is_cell_metric_local)
-{
+static void log_kpm_measurements(kpm_ind_msg_format_1_t const *msg_frm_1, int64_t collect_start_time, int64_t latency,
+                                 int64_t batch_id, bool is_cell_metric_local) {
   is_cell_metric = is_cell_metric_local;
 
   assert(msg_frm_1->meas_info_lst_len > 0 && "Cannot correctly print measurements");
 
   // UE Measurements per granularity period
-  for (size_t j = 0; j < msg_frm_1->meas_data_lst_len; j++)
-  {
+  for (size_t j = 0; j < msg_frm_1->meas_data_lst_len; j++) {
     meas_data_lst_t const data_item = msg_frm_1->meas_data_lst[j];
 
     size_t rec_idx = 0;
-    for (size_t i = 0; i < msg_frm_1->meas_info_lst_len; i++)
-    {
+    for (size_t i = 0; i < msg_frm_1->meas_info_lst_len; i++) {
       const meas_info_format_1_lst_t info_item = msg_frm_1->meas_info_lst[i];
 
-      if (info_item.label_info_lst_len > 1 && info_item.meas_type.type == NAME_MEAS_TYPE && info_item.label_info_lst[0].distBinX != NULL)
-      {
-        if (!is_cell_metric)
-        {
+      if (info_item.label_info_lst_len > 1 && info_item.meas_type.type == NAME_MEAS_TYPE &&
+          info_item.label_info_lst[0].distBinX != NULL) {
+        if (!is_cell_metric) {
           rec_idx += info_item.label_info_lst_len;
           continue;
         }
@@ -624,28 +520,20 @@ static void log_kpm_measurements(kpm_ind_msg_format_1_t const *msg_frm_1, bool i
         if (name_unit == NULL)
           name_unit = "";
 
-        factory_metrics_array_t generated_metrics = process_metric_factory(
-            current_e2_id_str, name_str,
-            info_item.label_info_lst, info_item.label_info_lst_len,
-            data_item.meas_record_lst, rec_idx);
+        factory_metrics_array_t generated_metrics =
+            process_metric_factory(current_e2_id_str, name_str, info_item.label_info_lst, info_item.label_info_lst_len,
+                                   data_item.meas_record_lst, rec_idx);
 
-        for (size_t k = 0; k < generated_metrics.count; k++)
-        {
+        for (size_t k = 0; k < generated_metrics.count; k++) {
           factory_metric_t m = generated_metrics.metrics[k];
 
           char rsrp_line[512];
-          if (m.value_type == 0)
-          {
+          if (m.value_type == 0) {
             snprintf(rsrp_line, sizeof(rsrp_line), "%d,", m.int_val);
-          }
-          else
-          {
-            if (isnan(m.real_val))
-            {
+          } else {
+            if (isnan(m.real_val)) {
               snprintf(rsrp_line, sizeof(rsrp_line), ",");
-            }
-            else
-            {
+            } else {
               snprintf(rsrp_line, sizeof(rsrp_line), "%.2f,", m.real_val);
             }
           }
@@ -654,23 +542,18 @@ static void log_kpm_measurements(kpm_ind_msg_format_1_t const *msg_frm_1, bool i
           size_t buffer_size = is_cell_metric ? sizeof(csv_cell_line_buffer) : sizeof(csv_line_buffer);
           strncat(target_buffer, rsrp_line, buffer_size - strlen(target_buffer) - 1);
 
-          if (!(is_cell_metric ? csv_wrote_cell_header : csv_wrote_header))
-          {
+          if (!(is_cell_metric ? csv_wrote_cell_header : csv_wrote_header)) {
             csv_append_name_to_csv_header(m.name, strstr(m.name, ".Count") ? "" : "dBm");
           }
         }
         free_factory_metrics(&generated_metrics);
 
-        if (!(is_cell_metric ? csv_wrote_cell_header : csv_wrote_header))
-        {
+        if (!(is_cell_metric ? csv_wrote_cell_header : csv_wrote_header)) {
           char clean_unit[64];
           size_t len = strlen(name_unit);
-          if (len > 2 && name_unit[0] == '[' && name_unit[len - 1] == ']')
-          {
+          if (len > 2 && name_unit[0] == '[' && name_unit[len - 1] == ']') {
             snprintf(clean_unit, sizeof(clean_unit), "%.*s", (int)(len - 2), name_unit + 1);
-          }
-          else
-          {
+          } else {
             snprintf(clean_unit, sizeof(clean_unit), "%s", name_unit);
           }
           csv_append_name_to_csv_header(name_str, clean_unit);
@@ -678,17 +561,15 @@ static void log_kpm_measurements(kpm_ind_msg_format_1_t const *msg_frm_1, bool i
 
         // Build the JSON array string
         char arr_str[8192];
-        format_meas_record_array(arr_str, sizeof(arr_str), info_item.label_info_lst, info_item.label_info_lst_len, data_item.meas_record_lst, rec_idx);
+        format_meas_record_array(arr_str, sizeof(arr_str), info_item.label_info_lst, info_item.label_info_lst_len,
+                                 data_item.meas_record_lst, rec_idx);
         rec_idx += info_item.label_info_lst_len;
 
         csv_append_string_to_csv_line(arr_str);
 
         free(name_str);
-      }
-      else
-      {
-        for (size_t z = 0; z < info_item.label_info_lst_len; z++)
-        {
+      } else {
+        for (size_t z = 0; z < info_item.label_info_lst_len; z++) {
           const label_info_lst_t label_info = info_item.label_info_lst[z];
           const meas_record_lst_t record_item = data_item.meas_record_lst[rec_idx++];
 
@@ -703,8 +584,7 @@ static void log_kpm_measurements(kpm_ind_msg_format_1_t const *msg_frm_1, bool i
 
   write_csv_header_to_file();
 
-  if (skip_first_sample)
-  {
+  if (skip_first_sample) {
     printf("Skipping first sample to avoid incorrect initial values.\n");
     memset(csv_line_buffer, 0, sizeof(csv_line_buffer));           // Clean the line buffer
     memset(csv_cell_line_buffer, 0, sizeof(csv_cell_line_buffer)); // Clean cell buffer
@@ -712,18 +592,15 @@ static void log_kpm_measurements(kpm_ind_msg_format_1_t const *msg_frm_1, bool i
     return;
   }
 
-  if (filter_invalid_rsrp_samples || !filter_current_sample)
-  {
-    if (!is_cell_metric)
-    {
+  if (filter_invalid_rsrp_samples || !filter_current_sample) {
+    if (!is_cell_metric) {
       csv_prepend_ue_id();
     }
     csv_prepend_e2_node_id();
-    csv_prepend_timestamp();
+    int64_t arrival_ms = (collect_start_time / 1000) + latency;
+    csv_prepend_timestamp(arrival_ms, latency, batch_id);
     write_csv_line_to_file();
-  }
-  else
-  {
+  } else {
     // Log an empty measurement row after the 0
     printf("Logging empty measurement row\n");
     char *target_buffer = is_cell_metric ? csv_cell_line_buffer : csv_line_buffer;
@@ -731,7 +608,8 @@ static void log_kpm_measurements(kpm_ind_msg_format_1_t const *msg_frm_1, bool i
     memset(target_buffer, 0, target_size);
     snprintf(target_buffer, target_size, ",,,,,,,,,,,,,,,,,,,,,,,,,,");
     csv_prepend_e2_node_id();
-    csv_prepend_timestamp();
+    int64_t arrival_ms = (collect_start_time / 1000) + latency;
+    csv_prepend_timestamp(arrival_ms, latency, batch_id);
     write_csv_line_to_file();
 
     // Clear the line buffer for the next entry
@@ -743,30 +621,28 @@ static void log_kpm_measurements(kpm_ind_msg_format_1_t const *msg_frm_1, bool i
   printf("Samples collected = %u\n", csv_num_rows);
 }
 
-static void log_kpm_ind_msg_frm_3(kpm_ind_msg_format_3_t const *msg)
-{
+static void log_kpm_ind_msg_frm_3(kpm_ind_msg_format_3_t const *msg, int64_t collect_start_time, int64_t latency,
+                                  int64_t batch_id) {
   // Reported list of measurements per UE
-  for (size_t i = 0; i < msg->ue_meas_report_lst_len; i++)
-  {
+  for (size_t i = 0; i < msg->ue_meas_report_lst_len; i++) {
     // log UE ID
     ue_id_e2sm_t const ue_id_e2sm = msg->meas_report_per_ue[i].ue_meas_report_lst;
     ue_id_e2sm_e const type = ue_id_e2sm.type;
     log_ue_id_e2sm[type](ue_id_e2sm);
 
     // log measurements
-    log_kpm_measurements(&msg->meas_report_per_ue[i].ind_msg_format_1, false);
+    bool is_cell = (strncmp(current_e2_id_str, "CU", 2) == 0) ? true : false;
+    log_kpm_measurements(&msg->meas_report_per_ue[i].ind_msg_format_1, collect_start_time, latency, batch_id, is_cell);
   }
 }
 
-static void load_slice_from_env(void)
-{
+static void load_slice_from_env(void) {
   const char *s;
   char *end = NULL;
   errno = 0;
 
   s = getenv("SST");
-  if (s && *s)
-  {
+  if (s && *s) {
     unsigned long v = strtoul(s, &end, 0);
     if (end != s && errno == 0 && v <= 0xFFul)
       cfg_slicing_sst = (uint8_t)v;
@@ -775,18 +651,17 @@ static void load_slice_from_env(void)
   errno = 0;
   end = NULL;
   s = getenv("SD");
-  if (s && *s)
-  {
+  if (s && *s) {
     unsigned long v = strtoul(s, &end, 0);
     if (end != s && errno == 0)
       cfg_slicing_sd = ((uint32_t)v) & 0xFFFFFFu;
   }
 
-  printf("[xApp] Using S-NSSAI SST=%u SD=%06x (env SST/SD can override)\n", (unsigned)cfg_slicing_sst, (unsigned)(cfg_slicing_sd & 0xFFFFFFu));
+  printf("[xApp] Using S-NSSAI SST=%u SD=%06x (env SST/SD can override)\n", (unsigned)cfg_slicing_sst,
+         (unsigned)(cfg_slicing_sd & 0xFFFFFFu));
 }
 
-static void sm_cb_kpm(sm_ag_if_rd_t const* rd, global_e2_node_id_t const* node_id)
-{
+static void sm_cb_kpm(sm_ag_if_rd_t const *rd, global_e2_node_id_t const *node_id) {
   assert(rd != NULL);
   assert(rd->type == INDICATION_MSG_AGENT_IF_ANS_V0);
   assert(rd->ind.type == KPM_STATS_V3_0);
@@ -798,46 +673,60 @@ static void sm_cb_kpm(sm_ag_if_rd_t const* rd, global_e2_node_id_t const* node_i
   // Set current E2 node ID globally
   if (node_id) {
     if (node_id->type == ngran_gNB_DU) {
-        snprintf(current_e2_id_str, sizeof(current_e2_id_str), "DU:%" PRIu64, *node_id->cu_du_id);
+      snprintf(current_e2_id_str, sizeof(current_e2_id_str), "DU:%" PRIu64, *node_id->cu_du_id);
     } else if (node_id->type == ngran_gNB_CU) {
-        snprintf(current_e2_id_str, sizeof(current_e2_id_str), "CU:%" PRIu64, *node_id->cu_du_id);
+      snprintf(current_e2_id_str, sizeof(current_e2_id_str), "CU:%" PRIu64, *node_id->cu_du_id);
     } else if (node_id->type == ngran_gNB_CUUP) {
-        snprintf(current_e2_id_str, sizeof(current_e2_id_str), "CUUP:%" PRIu64, *node_id->cu_du_id);
+      snprintf(current_e2_id_str, sizeof(current_e2_id_str), "CUUP:%" PRIu64, *node_id->cu_du_id);
     } else if (node_id->type == ngran_gNB_CUCP) {
-        snprintf(current_e2_id_str, sizeof(current_e2_id_str), "CUCP:%" PRIu64, *node_id->cu_du_id);
+      snprintf(current_e2_id_str, sizeof(current_e2_id_str), "CUCP:%" PRIu64, *node_id->cu_du_id);
     } else {
-        snprintf(current_e2_id_str, sizeof(current_e2_id_str), "gNB:%u", node_id->nb_id.nb_id);
+      snprintf(current_e2_id_str, sizeof(current_e2_id_str), "gNB:%u", node_id->nb_id.nb_id);
     }
   } else {
     snprintf(current_e2_id_str, sizeof(current_e2_id_str), "Unknown");
   }
   int64_t const now = time_now_us();
+  int64_t latency = (now - hdr_frm_1->collectStartTime) / 1000;
+
+  int64_t collect_start_time_ms = hdr_frm_1->collectStartTime / 1000;
+  static int64_t last_collect_start_time = 0;
+  static int64_t current_batch_id = 0;
+  static int64_t current_batch_arrival_ms = 0;
+
+  if (current_batch_id == 0) {
+    current_batch_id = 1;
+    last_collect_start_time = collect_start_time_ms;
+    current_batch_arrival_ms = collect_start_time_ms + latency;
+  } else {
+    // Find the nearest batch ID based on collect start time and period
+    if (labs(collect_start_time_ms - last_collect_start_time) > period_ms / 2) {
+      current_batch_id++;
+      last_collect_start_time = collect_start_time_ms;
+      prev_now = current_batch_arrival_ms;
+      current_batch_arrival_ms = collect_start_time_ms + latency;
+    }
+  }
+
   static int counter = 1;
   {
     lock_guard(&mtx);
 
-    printf("\n%7d KPM ind_msg latency = %ld [μs]\n", counter, now - hdr_frm_1->collectStartTime); // xApp <-> E2 Node
+    printf("\n%7d KPM ind_msg latency = %" PRId64 " [ms]\n", counter, latency); // xApp <-> E2 Node
 
-    if (ind->msg.type == FORMAT_1_INDICATION_MESSAGE)
-    {
+    if (ind->msg.type == FORMAT_1_INDICATION_MESSAGE) {
 
-      log_kpm_measurements(&ind->msg.frm_1, true);
-    }
-    else if (ind->msg.type == FORMAT_3_INDICATION_MESSAGE)
-    {
-      log_kpm_ind_msg_frm_3(&ind->msg.frm_3);
-    }
-    else
-    {
+      log_kpm_measurements(&ind->msg.frm_1, hdr_frm_1->collectStartTime, latency, current_batch_id, true);
+    } else if (ind->msg.type == FORMAT_3_INDICATION_MESSAGE) {
+      log_kpm_ind_msg_frm_3(&ind->msg.frm_3, hdr_frm_1->collectStartTime, latency, current_batch_id);
+    } else {
       printf("KPM Indication Message %d logging not yet implemented.\n", ind->msg.type);
     }
     counter++;
   }
-  prev_now = now / 1000;
 }
 
-static test_info_lst_t filter_predicate(test_cond_type_e type, test_cond_e cond, uint8_t sst, uint32_t sd)
-{
+static test_info_lst_t filter_predicate(test_cond_type_e type, test_cond_e cond, uint8_t sst, uint32_t sd) {
   test_info_lst_t dst = {0};
 
   dst.test_cond_type = type;
@@ -860,8 +749,7 @@ static test_info_lst_t filter_predicate(test_cond_type_e type, test_cond_e cond,
   dst.test_cond_value->octet_string_value->buf = calloc(len_nssai, sizeof(uint8_t));
   assert(dst.test_cond_value->octet_string_value->buf != NULL && "Memory exhausted");
   dst.test_cond_value->octet_string_value->buf[0] = (uint8_t)sst;
-  if (len_nssai == 4)
-  {
+  if (len_nssai == 4) {
     sd &= 0xFFFFFF;
     dst.test_cond_value->octet_string_value->buf[1] = (uint8_t)((sd >> 16) & 0xFF);
     dst.test_cond_value->octet_string_value->buf[2] = (uint8_t)((sd >> 8) & 0xFF);
@@ -871,8 +759,7 @@ static test_info_lst_t filter_predicate(test_cond_type_e type, test_cond_e cond,
   return dst;
 }
 
-static kpm_act_def_format_1_t fill_act_def_frm_1(ric_report_style_item_t const *report_item)
-{
+static kpm_act_def_format_1_t fill_act_def_frm_1(ric_report_style_item_t const *report_item) {
   assert(report_item != NULL);
 
   kpm_act_def_format_1_t ad_frm_1 = {0};
@@ -884,14 +771,15 @@ static kpm_act_def_format_1_t fill_act_def_frm_1(ric_report_style_item_t const *
   ad_frm_1.meas_info_lst = calloc(sz, sizeof(meas_info_format_1_lst_t));
   assert(ad_frm_1.meas_info_lst != NULL && "Memory exhausted");
 
-  for (size_t i = 0; i < sz; i++)
-  {
+  for (size_t i = 0; i < sz; i++) {
     meas_info_format_1_lst_t *meas_item = &ad_frm_1.meas_info_lst[i];
     // 8.3.9
     // Measurement Name
     meas_item->meas_type.type = NAME_MEAS_TYPE;
-    meas_item->meas_type.name.buf = (uint8_t *)calloc(report_item->meas_info_for_action_lst[i].name.len + 1, sizeof(uint8_t));
-    memcpy(meas_item->meas_type.name.buf, report_item->meas_info_for_action_lst[i].name.buf, report_item->meas_info_for_action_lst[i].name.len);
+    meas_item->meas_type.name.buf =
+        (uint8_t *)calloc(report_item->meas_info_for_action_lst[i].name.len + 1, sizeof(uint8_t));
+    memcpy(meas_item->meas_type.name.buf, report_item->meas_info_for_action_lst[i].name.buf,
+           report_item->meas_info_for_action_lst[i].name.len);
     meas_item->meas_type.name.len = report_item->meas_info_for_action_lst[i].name.len;
 
     // [1, 2147483647]
@@ -914,8 +802,7 @@ static kpm_act_def_format_1_t fill_act_def_frm_1(ric_report_style_item_t const *
   return ad_frm_1;
 }
 
-static kpm_act_def_t fill_report_style_4(ric_report_style_item_t const *report_item)
-{
+static kpm_act_def_t fill_report_style_4(ric_report_style_item_t const *report_item) {
   assert(report_item != NULL);
   assert(report_item->act_def_format_type == FORMAT_4_ACTION_DEFINITION);
 
@@ -939,8 +826,7 @@ static kpm_act_def_t fill_report_style_4(ric_report_style_item_t const *report_i
   return act_def;
 }
 
-static kpm_act_def_t fill_report_style_1(ric_report_style_item_t const *report_item)
-{
+static kpm_act_def_t fill_report_style_1(ric_report_style_item_t const *report_item) {
   assert(report_item != NULL);
   assert(report_item->act_def_format_type == FORMAT_1_ACTION_DEFINITION);
 
@@ -950,14 +836,15 @@ static kpm_act_def_t fill_report_style_1(ric_report_style_item_t const *report_i
   size_t const sz = report_item->meas_info_for_action_lst_len;
   act_def.frm_1.meas_info_lst_len = sz;
   act_def.frm_1.meas_info_lst = ecalloc(act_def.frm_1.meas_info_lst_len, sizeof(meas_info_format_1_lst_t));
-  for (size_t i = 0; i < sz; i++)
-  {
+  for (size_t i = 0; i < sz; i++) {
     meas_info_format_1_lst_t *meas_item = &act_def.frm_1.meas_info_lst[i];
     // 8.3.9
     // Measurement Name
     meas_item->meas_type.type = NAME_MEAS_TYPE;
-    meas_item->meas_type.name.buf = (uint8_t *)calloc(report_item->meas_info_for_action_lst[i].name.len + 1, sizeof(uint8_t));
-    memcpy(meas_item->meas_type.name.buf, report_item->meas_info_for_action_lst[i].name.buf, report_item->meas_info_for_action_lst[i].name.len);
+    meas_item->meas_type.name.buf =
+        (uint8_t *)calloc(report_item->meas_info_for_action_lst[i].name.len + 1, sizeof(uint8_t));
+    memcpy(meas_item->meas_type.name.buf, report_item->meas_info_for_action_lst[i].name.buf,
+           report_item->meas_info_for_action_lst[i].name.len);
     meas_item->meas_type.name.len = report_item->meas_info_for_action_lst[i].name.len;
 
     // [1, 2147483647]
@@ -983,15 +870,10 @@ static kpm_act_def_t fill_report_style_1(ric_report_style_item_t const *report_i
 typedef kpm_act_def_t (*fill_kpm_act_def)(ric_report_style_item_t const *report_item);
 
 static fill_kpm_act_def get_kpm_act_def[END_RIC_SERVICE_REPORT] = {
-    fill_report_style_1,
-    NULL,
-    NULL,
-    fill_report_style_4,
-    NULL,
+    fill_report_style_1, NULL, NULL, fill_report_style_4, NULL,
 };
 
-static kpm_sub_data_t gen_kpm_subs(kpm_ran_function_def_t const *ran_func, ric_report_style_item_t const *report_item)
-{
+static kpm_sub_data_t gen_kpm_subs(kpm_ran_function_def_t const *ran_func, ric_report_style_item_t const *report_item) {
   assert(ran_func != NULL);
   assert(ran_func->ric_event_trigger_style_list != NULL);
 
@@ -1015,18 +897,16 @@ static kpm_sub_data_t gen_kpm_subs(kpm_ran_function_def_t const *ran_func, ric_r
   return kpm_sub;
 }
 
-static bool eq_sm(sm_ran_function_t const *elem, int const id)
-{
+static bool eq_sm(sm_ran_function_t const *elem, int const id) {
   if (elem->id == id)
     return true;
 
   return false;
 }
 
-static size_t find_sm_idx(sm_ran_function_t *rf, size_t sz, bool (*f)(sm_ran_function_t const *, int const), int const id)
-{
-  for (size_t i = 0; i < sz; i++)
-  {
+static size_t find_sm_idx(sm_ran_function_t *rf, size_t sz, bool (*f)(sm_ran_function_t const *, int const),
+                          int const id) {
+  for (size_t i = 0; i < sz; i++) {
     if (f(&rf[i], id))
       return i;
   }
@@ -1035,10 +915,8 @@ static size_t find_sm_idx(sm_ran_function_t *rf, size_t sz, bool (*f)(sm_ran_fun
   return 0;
 }
 
-int main(int argc, char *argv[])
-{
-  if (argc < 3)
-  {
+int main(int argc, char *argv[]) {
+  if (argc < 3) {
     fprintf(stderr, "Usage: %s <csv_file_path> <period_ms> [other arguments]\n", argv[0]);
     return EXIT_FAILURE;
   }
@@ -1048,29 +926,24 @@ int main(int argc, char *argv[])
 
   // Verify the CSV file path ends with ".csv"
   size_t path_len = strlen(csv_file_path);
-  if (path_len < 4 || strcmp(csv_file_path + path_len - 4, ".csv") != 0)
-  {
+  if (path_len < 4 || strcmp(csv_file_path + path_len - 4, ".csv") != 0) {
     fprintf(stderr, "ERROR: The file path must end with '.csv'.\n");
     return EXIT_FAILURE;
   }
 
-  if (path_len + 6 < sizeof(csv_cell_file_path))
-  {
+  if (path_len + 6 < sizeof(csv_cell_file_path)) {
     snprintf(csv_cell_file_path, sizeof(csv_cell_file_path), "%.*s", (int)(path_len - 4), csv_file_path);
     csv_cell_file_path[path_len - 4] = '\0';
     strcat(csv_cell_file_path, "_Cells.csv");
     printf("CSV cell file path constructed: %s\n", csv_cell_file_path);
-  }
-  else
-  {
+  } else {
     csv_cell_file_path[0] = '\0';
     fprintf(stderr, "WARNING: The file path is too long to construct cell file path.\n");
   }
 
   char *endptr = NULL;
   long val = strtol(argv[2], &endptr, 10);
-  if (*endptr != '\0' || val <= 0)
-  {
+  if (*endptr != '\0' || val <= 0) {
     fprintf(stderr, "Invalid period_ms value: '%s'. Must be a positive integer.\n", argv[2]);
     return EXIT_FAILURE;
   }
@@ -1079,16 +952,19 @@ int main(int argc, char *argv[])
   is_cell_metric = false;
   csv_wrote_header = false;
   csv_append_name_to_csv_header("Time", "UNIX ms");
+  csv_append_name_to_csv_header("Batch ID (Mapping Cell with UE)", "");
   csv_append_name_to_csv_header("Reporting Time Offset", "ms");
+  csv_append_name_to_csv_header("Indication Latency", "ms");
   csv_append_name_to_csv_header("E2 Node ID", "");
   csv_append_name_to_csv_header("UE ID", "");
 
   is_cell_metric = true;
   csv_wrote_cell_header = false;
   csv_append_name_to_csv_header("Time", "UNIX ms");
+  csv_append_name_to_csv_header("Batch ID (Mapping Cell with UE)", "");
   csv_append_name_to_csv_header("Reporting Time Offset", "ms");
+  csv_append_name_to_csv_header("Indication Latency", "ms");
   csv_append_name_to_csv_header("E2 Node ID", "");
-  is_cell_metric = false;
 
   fr_args_t args = init_fr_args(argc, argv);
 
@@ -1118,8 +994,7 @@ int main(int argc, char *argv[])
   ////////////
   int const KPM_ran_function = 2;
 
-  for (size_t i = 0; i < nodes.len; ++i)
-  {
+  for (size_t i = 0; i < nodes.len; ++i) {
     e2_node_connected_xapp_t *n = &nodes.n[i];
 
     size_t const idx = find_sm_idx(n->rf, n->len_rf, eq_sm, KPM_ran_function);
@@ -1129,8 +1004,7 @@ int main(int argc, char *argv[])
     const size_t sz_report_styles = n->rf[idx].defn.kpm.sz_ric_report_style_list;
     hndl[i] = calloc(sz_report_styles, sizeof(sm_ans_xapp_t));
     assert(hndl[i] != NULL);
-    for (size_t j = 0; j < sz_report_styles; j++)
-    {
+    for (size_t j = 0; j < sz_report_styles; j++) {
       ric_report_style_item_t *report_item = &n->rf[idx].defn.kpm.ric_report_style_list[j];
       // Generate KPM SUBSCRIPTION message
       kpm_sub_data_t kpm_sub = gen_kpm_subs(&n->rf[idx].defn.kpm, report_item);
@@ -1147,12 +1021,10 @@ int main(int argc, char *argv[])
 
   xapp_wait_end_api();
 
-  for (int i = 0; i < nodes.len; ++i)
-  {
+  for (int i = 0; i < nodes.len; ++i) {
     e2_node_connected_xapp_t *n = &nodes.n[i];
     size_t const idx = find_sm_idx(n->rf, n->len_rf, eq_sm, KPM_ran_function);
-    for (size_t j = 0; j < n->rf[idx].defn.kpm.sz_ric_report_style_list; j++)
-    {
+    for (size_t j = 0; j < n->rf[idx].defn.kpm.sz_ric_report_style_list; j++) {
       // Remove the handle previously returned
       if (hndl[i][j].success == true)
         rm_report_sm_xapp_api(hndl[i][j].u.handle);

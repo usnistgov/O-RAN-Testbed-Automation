@@ -181,7 +181,13 @@ echo "mklink /D czmq ..\\User_Equipment\\czmq" >>download_dependency_repositorie
 echo "if not exist zmq_broker mkdir zmq_broker" >>download_dependency_repositories.bat
 echo "cd zmq_broker" >>download_dependency_repositories.bat
 echo "if not exist \"multi_ue_scenario.grc\" (" >>download_dependency_repositories.bat
-echo "    curl -L --fail --silent --show-error -o multi_ue_scenario.grc https://gitlab.com/ocudu/ocudu_docs/-/raw/main/docs/user_manual/tutorials/srsue/assets/multi_ue_scenario.grc" >>download_dependency_repositories.bat
+
+DOCS_HASH=$(jq -r '."https://gitlab.com/ocudu/ocudu_docs.git"[1]' ../commit_hashes.json 2>/dev/null)
+if [ -z "$DOCS_HASH" ] || [ "$DOCS_HASH" == "null" ]; then
+    echo "ERROR: Unable to retrieve commit hash for ocudu_docs repository."
+    exit 1
+fi
+echo "    curl -L --fail --silent --show-error -o multi_ue_scenario.grc https://gitlab.com/ocudu/ocudu_docs/-/raw/${DOCS_HASH}/docs/tutorials/srsue/assets/multi_ue_scenario.grc" >>download_dependency_repositories.bat
 echo "    if errorlevel 1 (" >>download_dependency_repositories.bat
 echo "        echo ERROR: Failed to download multi_ue_scenario.grc" >>download_dependency_repositories.bat
 echo "        exit /b 1" >>download_dependency_repositories.bat

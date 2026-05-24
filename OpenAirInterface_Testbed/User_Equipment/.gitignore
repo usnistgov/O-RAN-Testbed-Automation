@@ -1,11 +1,9 @@
 # Ignore testbed subdirectories
 /configs/
 /czmq
-/czmq/
 /libzmq
-/libzmq/
 /logs/
-/openairinterface5g/
 install_time.txt
 openairinterface5g
-!install_patch_files/
+# Explicitly track patch files
+!install_patch_files/openairinterface5g

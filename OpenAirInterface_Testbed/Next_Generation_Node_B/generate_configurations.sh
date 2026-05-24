@@ -59,9 +59,10 @@ if [[ "$FULL_SM_DIR" != */ ]]; then
     FULL_SM_DIR="${FULL_SM_DIR}/"
 fi
 
-# There are two types of RSRP measurements: SSB and CSI
-# If using MIMO, then USE_SSB_RSRP must be set to false (https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/develop/doc/RUNMODEM.md#5g-gnb-mimo-configuration)
-USE_SSB_RSRP="true"
+# There are two types of RSRP/SINR measurements: SSB and CSI
+# Valid values for CSI_REPORT_TYPE: "ssb_rsrp", "ssb_sinr", "cri_rsrp", or "null" (to omit CSI_report_type and set do_CSIRS=1)
+# If using MIMO, then CSI_REPORT_TYPE must not be an SSB-based measurement (https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/develop/doc/RUNMODEM.md#5g-gnb-mimo-configuration)
+CSI_REPORT_TYPE="ssb_rsrp"
 
 # Function to update or add configuration properties in .conf files, considering sections and uncommenting if needed
 update_conf() {
@@ -279,10 +280,22 @@ for CONF_FILE in gnb.conf split_cu.conf "${SPLIT_DUS[@]}"; do
     # Configure the Single Network Slice Selection Assistance Information (S-NSSAI)
     update_conf "configs/$CONF_FILE" "plmn_list" "({ mcc = $MCC; mnc = $MNC; mnc_length = $MNC_LENGTH; snssaiList = $SNSSAI_LIST })"
 
-    if [ "$USE_SSB_RSRP" = "true" ]; then
-        update_conf "configs/$CONF_FILE" "do_CSIRS" "0"
+    if [ "$CSI_REPORT_TYPE" = "ssb_rsrp" ] || [ "$CSI_REPORT_TYPE" = "ssb_sinr" ] || [ "$CSI_REPORT_TYPE" = "cri_rsrp" ]; then
+        if [ "$CSI_REPORT_TYPE" = "cri_rsrp" ]; then
+            update_conf "configs/$CONF_FILE" "do_CSIRS" "1"
+        else
+            update_conf "configs/$CONF_FILE" "do_CSIRS" "0"
+        fi
+
+        # 38.331's reportQuantity and reportQuantity-r16 CHOICE enforces only either ssb-Index-RSRP or ssb-Index-SINR-r16, not both
+        if grep -q "^\s*CSI_report_type\s*=" "configs/$CONF_FILE"; then
+            sed -i "s|^\(\s*CSI_report_type\s*=\).*|\1 \"$CSI_REPORT_TYPE\"; # ssb_rsrp, ssb_sinr, or cri_rsrp|" "configs/$CONF_FILE"
+        else
+            sed -i "/do_CSIRS\s*=/a \    CSI_report_type                                           = \"$CSI_REPORT_TYPE\"; # ssb_rsrp, ssb_sinr, or cri_rsrp" "configs/$CONF_FILE"
+        fi
     else
         update_conf "configs/$CONF_FILE" "do_CSIRS" "1"
+        sed -i '/^\s*CSI_report_type\s*=/d' "configs/$CONF_FILE"
     fi
 
     if [ "$RADIO_TYPE" = "SIMU" ] || [ "$RADIO_TYPE" = "ZMQ" ]; then

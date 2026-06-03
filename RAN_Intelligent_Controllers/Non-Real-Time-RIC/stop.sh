@@ -34,41 +34,47 @@ set -e
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-sudo systemctl restart kubelet
+echo "# Script: $(realpath "$0")..."
+
+echo "Stopping the cluster..."
+sudo systemctl start kubelet
 
 NAMESPACES=("istio-system" "strimzi-system" "mariadb-operator" "onap" "nonrtric" "smo" "openebs")
 
 for NAMESPACE in "${NAMESPACES[@]}"; do
     if kubectl get namespace "$NAMESPACE" &>/dev/null; then
-        kubectl scale deployment --all --replicas=1 -n "$NAMESPACE" || true
-        kubectl scale statefulset --all --replicas=1 -n "$NAMESPACE" || true
+        kubectl scale deployment --all --replicas=0 -n "$NAMESPACE" || true
+        kubectl scale statefulset --all --replicas=0 -n "$NAMESPACE" || true
 
-        # Resume suspended jobs
+        # Suspend jobs
         if kubectl get job -n "$NAMESPACE" &>/dev/null; then
             kubectl get jobs -n "$NAMESPACE" --no-headers 2>/dev/null | awk '{print $1}' | while read JOB_NAME; do
-                kubectl patch job "$JOB_NAME" -n "$NAMESPACE" --type=merge -p '{"spec":{"suspend":false}}' 2>/dev/null || true
+                kubectl patch job "$JOB_NAME" -n "$NAMESPACE" --type=merge -p '{"spec":{"suspend":true}}' 2>/dev/null || true
             done
         fi
+
+        # Remove completed pods as they are no longer needed
+        kubectl get pods -n "$NAMESPACE" --no-headers 2>/dev/null | grep 'Completed' | awk '{print $1}' | while read POD_NAME; do
+            echo "Cleaning up completed pod $POD_NAME in namespace $NAMESPACE..."
+            kubectl delete pod "$POD_NAME" -n "$NAMESPACE" 2>/dev/null || true
+        done
+
+        # Remove remaining pods that cannot scale to 0
+        kubectl delete pods --all -n "$NAMESPACE" 2>/dev/null || true
     fi
 done
 
-# Code from (https://github.com/o-ran-sc/nonrtric-plt-rappmanager/blob/master/scripts/install/install-base.sh):
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null && pwd)"
-CM_VERSION="v0.16.1"
-CM_PORT="8879"
-HELM_LOCAL_REPO="$ROOT_DIR/chartstorage"
+kubectl get pods -A
 
-echo
-echo "Starting ChartMuseum on port $CM_PORT..."
-nohup chartmuseum --port=$CM_PORT --storage="local" --context-path=/charts --storage-local-rootdir=$HELM_LOCAL_REPO >/dev/null 2>&1 &
+for NAMESPACE in "${NAMESPACES[@]}"; do
+    if kubectl get namespace "$NAMESPACE" &>/dev/null; then
+        echo "Waiting for $NAMESPACE pods to terminate..."
+        kubectl wait --for=delete pod --all -n "$NAMESPACE" --timeout=120s 2>/dev/null || true
+    fi
+done
 
-echo "Waiting for Kubernetes API server..."
-sudo ./install_scripts/wait_for_kubectl.sh
+echo "Stopping RIC platform services..."
+sudo systemctl stop kubelet
+kubectl get pods -A
 
-echo
-echo "Waiting for RIC pods..."
-sudo ./install_scripts/wait_for_nonrtric_pods.sh
-
-echo
-echo "Running the Control Panel for A1-Policy and A1-EI management..."
-sudo ./run_control_panel.sh
+echo "Successfully stopped cluster."

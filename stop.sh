@@ -37,6 +37,17 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
+USE_FLEXRIC=false
+
+if [ "$USE_FLEXRIC" = "true" ]; then
+    echo
+    echo "Stopping FlexRIC components..."
+    cd OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC
+    sudo ./stop.sh
+    sudo ./additional_scripts/stop_grafana_and_python_server.sh &>/dev/null
+    cd ../../..
+fi
+
 echo "Stopping User Equipment..."
 cd User_Equipment
 sudo ./stop.sh

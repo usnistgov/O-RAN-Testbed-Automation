@@ -37,6 +37,8 @@ if ! command -v realpath &>/dev/null; then
     sudo env $APTVARS apt-get install -y coreutils
 fi
 
+USE_FLEXRIC=false
+
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
@@ -49,6 +51,19 @@ echo "Running 5G Core components..."
 cd 5G_Core_Network
 ./run.sh
 cd ..
+
+if [ "$USE_FLEXRIC" = "true" ]; then
+    echo
+    echo "Running FlexRIC..."
+    cd OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC
+    ./run_background.sh
+
+    if $(./is_running.sh | grep -q "NOT_RUNNING"); then
+        echo "Error starting FlexRIC."
+        exit 1
+    fi
+    cd ../../..
+fi
 
 echo
 echo -n "Waiting for AMF to be ready"

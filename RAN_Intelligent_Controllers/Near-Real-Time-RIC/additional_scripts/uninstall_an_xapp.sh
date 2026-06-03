@@ -33,7 +33,12 @@ echo "# Script: $(realpath "$0")..."
 # Exit immediately if a command fails
 set -e
 
-CHARTS_OUTPUT=$(dms_cli get_charts_list)
+# Load CHART_REPO_URL environment variable
+if [ -f /etc/environment ]; then
+    source /etc/environment
+fi
+export CHART_REPO_URL=${CHART_REPO_URL:-http://0.0.0.0:8090} # Default
+CHARTS_OUTPUT=$(dms_cli get_charts_list 2>/dev/null)
 
 echo
 kubectl get pods -n ricxapp || true

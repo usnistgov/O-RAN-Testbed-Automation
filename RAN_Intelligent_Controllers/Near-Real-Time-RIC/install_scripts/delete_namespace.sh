@@ -71,7 +71,12 @@ for NAMESPACE in "$@"; do
     for RESOURCE in $(kubectl api-resources --verbs=delete --namespaced -o name); do
         kubectl delete "$RESOURCE" --all -n "$NAMESPACE" --grace-period=0 --force 2>/dev/null
     done
-
+    kubectl get pv -o json 2>/dev/null | jq -r ".items[] | select(.spec.claimRef.namespace == \"$NAMESPACE\" and .status.phase == \"Released\") | .metadata.name" | while read -r PV_NAME; do
+        if [ -n "$PV_NAME" ]; then
+            echo "Removing the PVC reference to make PV $PV_NAME available again..."
+            kubectl patch pv "$PV_NAME" --type=merge -p '{"spec":{"claimRef":null}}' 2>/dev/null || true
+        fi
+    done
     # Deleting the namespace
     echo "Deleting the namespace $NAMESPACE..."
     kubectl delete namespace "$NAMESPACE" --wait=false 2>/dev/null

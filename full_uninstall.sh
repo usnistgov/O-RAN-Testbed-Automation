@@ -34,6 +34,8 @@ set +e
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
+USE_FLEXRIC=false
+
 if [[ "$1" != "bypass_confirmation" && "$1" != "--yes" && "$1" != "-y" ]]; then
     clear
     echo "This script will remove Open5GS, OCUDU, srsRAN_4G, and the Near-RT RIC by removing Docker and Kubernetes."
@@ -97,16 +99,36 @@ cd Next_Generation_Node_B
 
 cd ..
 
-echo
-echo
-echo "################################################################################"
-echo "# Uninstalling Near-Real-Time RAN Intelligent Controller (O-RAN SC)...         #"
-echo "################################################################################"
-echo
-echo
+if [ "$USE_FLEXRIC" = "true" ]; then
+    echo
+    echo
+    echo "################################################################################"
+    echo "# Uninstalling Near-Real-Time RAN Intelligent Controller (FlexRIC)...          #"
+    echo "################################################################################"
+    echo
+    echo
 
-cd RAN_Intelligent_Controllers/Near-Real-Time-RIC
-./full_uninstall.sh bypass_confirmation
+    cd OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC/
+    ./full_uninstall.sh
+    cd ../../..
+
+    if command -v kubectl &>/dev/null; then
+        echo
+        echo "The O-RAN SC components may not be fully uninstalled. To remove them, run ./RAN_Intelligent_Controllers/Near-Real-Time-RIC/full_uninstall.sh"
+    fi
+else
+    echo
+    echo
+    echo "################################################################################"
+    echo "# Uninstalling Near-Real-Time RAN Intelligent Controller (O-RAN SC)...         #"
+    echo "################################################################################"
+    echo
+    echo
+
+    cd RAN_Intelligent_Controllers/Near-Real-Time-RIC
+    ./full_uninstall.sh bypass_confirmation
+    cd ../..
+fi
 
 echo
 echo "To ensure components within the OpenAirInterface testbed are also uninstalled, run \"./OpenAirInterface_Testbed/full_uninstall.sh\"."

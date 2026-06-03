@@ -166,6 +166,7 @@ else
         echo "An error occured when running $(pwd)/install_k8s_and_helm.sh."
         exit 1
     fi
+    sudo systemctl start kubelet
 
     echo
     echo

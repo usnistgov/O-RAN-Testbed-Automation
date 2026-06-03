@@ -210,6 +210,7 @@ else
         echo "An error occured when running $(pwd)/install_k8s_and_helm.sh."
         exit 1
     fi
+    sudo systemctl start kubelet
 
     echo
     echo
@@ -221,6 +222,7 @@ else
     fi
     sudo ./install_common_templates_to_helm.sh
 fi
+sudo systemctl start kubelet
 
 cd "$SCRIPT_DIR"
 

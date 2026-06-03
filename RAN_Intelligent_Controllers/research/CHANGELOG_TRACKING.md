@@ -1,3 +1,22 @@
+git commit -m "Update automation tool (#13)"
+
+git commit --amend
+"""
+Update automation tool (#13)
+
+- General: Add additional_scripts/check_e2ap_version.sh to all gNodeBs and RICs.
+- O-RAN SC: Fix memory errors in kpimon-go xApp (double-free) to instead handle mismatched E2AP/KPM versions gracefully.
+- O-RAN SC: Improve run.sh and stop.sh for Non-RT and Near-RT RICs to quickly restart Kubernetes pods without a full reinstall.
+- O-RAN SC: Add additional_scripts/fetch_connected_e2_nodes.sh to retrieve the list of connected E2 nodes.
+- General: Add option to install FlexRIC instead of O-RAN SC Near-RT RIC.
+- FlexRIC: Add graceful handling of unsupported report style types and measurement value types in KPM xApps.
+"""
+
+
+
+
+
+
 
 git commit -S -m "Update automation tool"
 

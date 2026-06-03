@@ -268,6 +268,14 @@ update_yaml() {
     local SECTION=$2
     local PROPERTY=$3
     local VALUE=$4
+
+    # Three arguments: file, property_path, value
+    if [ "$#" -eq 3 ]; then
+        SECTION=""
+        PROPERTY=$2
+        VALUE=$3
+    fi
+
     if [[ ! -z "$SECTION" ]]; then
         SECTION=".$SECTION"
     fi
@@ -281,22 +289,15 @@ update_yaml() {
         echo "Skipping empty value for $SECTION.$PROPERTY"
         return
     fi
-    # If the PROPERTY is nested (contains dots), handle it properly
-    if [[ "$PROPERTY" == *.* ]]; then
-        local PARENT_PROPERTY=$(echo "$PROPERTY" | cut -d '.' -f 1)
-        local NESTED_PROPERTY=$(echo "$PROPERTY" | cut -d '.' -f 2-)
 
-        yq eval -i "${SECTION}.${PARENT_PROPERTY}.${NESTED_PROPERTY} = \"$VALUE\"" "$FILE_PATH"
+    # If the value is numeric or boolean, don't quote it
+    # PLMN should be treated as string
+    if [[ "$PROPERTY" == "plmn" || "$PROPERTY" == "plmn_list" || "$PROPERTY" == *".plmn" || "$PROPERTY" == *".plmn_list" ]]; then
+        yq eval -i "${SECTION}.${PROPERTY} = \"$VALUE\"" "$FILE_PATH"
+    elif [[ "$VALUE" =~ ^[0-9]+$ || "$VALUE" =~ ^[0-9]+\.[0-9]+$ || "$VALUE" =~ ^(true|false)$ ]]; then
+        yq eval -i "${SECTION}.${PROPERTY} = ${VALUE}" "$FILE_PATH"
     else
-        # If the value is numeric or boolean, don't quote it
-        # PLMN should always be treated as a string
-        if [[ "$PROPERTY" == "plmn" || "$PROPERTY" == "plmn_list" ]]; then
-            yq eval -i "${SECTION}.${PROPERTY} = \"$VALUE\"" "$FILE_PATH"
-        elif [[ "$VALUE" =~ ^[0-9]+$ || "$VALUE" =~ ^[0-9]+\.[0-9]+$ || "$VALUE" =~ ^(true|false)$ ]]; then
-            yq eval -i "${SECTION}.${PROPERTY} = ${VALUE}" "$FILE_PATH"
-        else
-            yq eval -i "${SECTION}.${PROPERTY} = \"$VALUE\"" "$FILE_PATH"
-        fi
+        yq eval -i "${SECTION}.${PROPERTY} = \"$VALUE\"" "$FILE_PATH"
     fi
 }
 

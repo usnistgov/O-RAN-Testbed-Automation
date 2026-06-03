@@ -185,7 +185,8 @@ static meas_record_lst_t fill_RRU_PrbTotDl(__attribute__((unused)) const label_i
   meas_record.value = INTEGER_MEAS_VALUE;
 
   // Get the number of DL PRBs
-  meas_record.int_val = (ue_info.ue->mac_stats.dl.total_rbs - last_total_prbs[ue_idx].dl) * 100 / (node_stats[1].mac_stats.dl.total_prb_aggregate - node_stats[0].mac_stats.dl.total_prb_aggregate);   // [%]
+  const uint64_t tot_prb_dl_aggr = node_stats[1].mac_stats.dl.total_prb_aggregate - node_stats[0].mac_stats.dl.total_prb_aggregate;
+  meas_record.int_val = (tot_prb_dl_aggr == 0) ? 0 : (ue_info.ue->mac_stats.dl.total_rbs - last_total_prbs[ue_idx].dl) * 100 / tot_prb_dl_aggr;   // [%]
   last_total_prbs[ue_idx].dl = ue_info.ue->mac_stats.dl.total_rbs;
 
   return meas_record;
@@ -204,7 +205,8 @@ static meas_record_lst_t fill_RRU_PrbTotUl(__attribute__((unused)) const label_i
   meas_record.value = INTEGER_MEAS_VALUE;
 
   // Get the number of UL PRBs
-  meas_record.int_val = (ue_info.ue->mac_stats.ul.total_rbs - last_total_prbs[ue_idx].ul) * 100 / (node_stats[1].mac_stats.ul.total_prb_aggregate - node_stats[0].mac_stats.ul.total_prb_aggregate);   // [%]
+  const uint64_t tot_prb_ul_aggr = node_stats[1].mac_stats.ul.total_prb_aggregate - node_stats[0].mac_stats.ul.total_prb_aggregate;
+  meas_record.int_val = (tot_prb_ul_aggr == 0) ? 0 : (ue_info.ue->mac_stats.ul.total_rbs - last_total_prbs[ue_idx].ul) * 100 / tot_prb_ul_aggr;   // [%]
   last_total_prbs[ue_idx].ul = ue_info.ue->mac_stats.ul.total_rbs;
 
   return meas_record;

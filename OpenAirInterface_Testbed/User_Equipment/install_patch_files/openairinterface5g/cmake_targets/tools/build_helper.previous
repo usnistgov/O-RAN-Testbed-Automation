@@ -83,11 +83,13 @@ get_distribution_release() {
 check_supported_distribution() {
     local distribution=$(get_distribution_release)
     case "$distribution" in
+        "ubuntu26.04") return 0 ;;
         "ubuntu24.04") return 0 ;;
         "ubuntu22.04") return 0 ;;
         "debian11")    return 0 ;;
         "debian12")    return 0 ;;
         "fedora43")    return 0 ;;
+        "fedora44")    return 0 ;;
         "rhel9.0")     return 0 ;;
         "rhel9.1")     return 0 ;;
         "rhel9.2")     return 0 ;;
@@ -96,6 +98,7 @@ check_supported_distribution() {
         "rhel9.5")     return 0 ;;
         "rhel9.6")     return 0 ;;
         "rhel9.7")     return 0 ;;
+        "rhel9.8")     return 0 ;;
         "centos9")     return 0 ;; # CentOS stream
         "rocky9.1")    return 0 ;;
         "rocky9.2")    return 0 ;;
@@ -104,6 +107,7 @@ check_supported_distribution() {
         "rocky9.5")    return 0 ;;
         "rocky9.6")    return 0 ;;
         "rocky9.7")    return 0 ;;
+        "rocky9.8")    return 0 ;;
     esac
     return 1
 }
@@ -141,12 +145,8 @@ install_usrp_uhd_driver_from_source(){
             # - 3.15.0.0
             git apply $OPENAIR_DIR/cmake_targets/tools/uhd-3.15-tdd-patch.diff
             ret=$?;[[ $ret -ne 0 ]] && echo_fatal "Could not apply the TDD patch"
-        elif [[ "$UHD_VERSION" == "4.8.0.0" || "$UHD_VERSION" == "4.7.0.0" || "$UHD_VERSION" == "4.6.0.0" || "$UHD_VERSION" == "4.5.0.0" ]]; then
-            # Tested that patch for the following versions:
-            # - 4.7.0.0
-            cp $OPENAIR_DIR/cmake_targets/tools/uhd-4.x-tdd-patch.diff $OPENAIR_DIR/cmake_targets/tools/uhd-4.5plus-tdd-patch.diff
-            sed -i '9,13 s/STATE_OFF/STATE_RX1_OFF/' $OPENAIR_DIR/cmake_targets/tools/uhd-4.5plus-tdd-patch.diff
-            sed -i '24,28 s/STATE_OFF/STATE_RX2_OFF/' $OPENAIR_DIR/cmake_targets/tools/uhd-4.5plus-tdd-patch.diff
+        elif [[ "$UHD_VERSION" == "4.10.0.0" || "$UHD_VERSION" == "4.9.0.0" || "$UHD_VERSION" == "4.8.0.0" || "$UHD_VERSION" == "4.7.0.0" || "$UHD_VERSION" == "4.6.0.0" || "$UHD_VERSION" == "4.5.0.0" ]]; then
+            # Tested patch for versions listed in elif clause
             git apply $OPENAIR_DIR/cmake_targets/tools/uhd-4.5plus-tdd-patch.diff
             ret=$?;[[ $ret -ne 0 ]] && echo_fatal "Could not apply the TDD patch"
         else
@@ -162,8 +162,8 @@ install_usrp_uhd_driver_from_source(){
             ret=$?;[[ $ret -ne 0 ]] && echo_fatal "Could not apply the TDD patch"
         fi
     else
-        git checkout tags/v4.0.0.0
-        git apply $OPENAIR_DIR/cmake_targets/tools/uhd-4.x-tdd-patch.diff
+        git checkout tags/v4.8.0.0
+        git apply $OPENAIR_DIR/cmake_targets/tools/uhd-4.5plus-tdd-patch.diff
         ret=$?;[[ $ret -ne 0 ]] && echo_fatal "Could not apply the TDD patch"
     fi
     # Printing out the results of the patch to make sure it was properly applied
@@ -199,29 +199,14 @@ check_install_usrp_uhd_driver(){
             install_usrp_uhd_driver_from_source
             return
         fi
-        # The new USRP repository
-        # Raphael Defosseux: Adding a loop on adding PPA because in CI the gpg key retrieve may
-        # timeout due to proxy / network latencies in Eurecom on VM
         echo_info "\nAdding PPA repository ettusresearch/uhd\n"
-        x=0
-        while [ $x -le 5 ]
-        do
-            if $SUDO add-apt-repository ppa:ettusresearch/uhd -y
-            then
-                echo_info "add-apt-repository successful\n"
-                break
-            else
-                echo_info "add-apt-repository failed, retrying...\n"
-                sleep 30
-            fi
-            x=$((x + 1))
-        done
+        $SUDO add-apt-repository ppa:ettusresearch/uhd -y
         $SUDO apt-get update
         $SUDO apt-get -y install python3-tk  $boost_libs_ubuntu libusb-1.0-0-dev
         case "$(get_distribution_release)" in
-          "ubuntu22.04")
-            $SUDO apt-get -y install libuhd-dev libuhd4.5.0 uhd-host
-            ;;
+          "ubuntu22.04") $SUDO apt-get -y install libuhd-dev libuhd4.5.0 uhd-host ;;
+          "ubuntu24.04") $SUDO apt-get -y install libuhd-dev libuhd4.8.0 uhd-host ;;
+          "ubuntu26.04") $SUDO apt-get -y install libuhd-dev libuhd4.9.0 uhd-host ;;
         esac
     elif [[ "$OS_BASEDISTRO" == "fedora" ]]; then
         boost_libs_fedora="boost-chrono boost-date-time boost-filesystem boost-program-options boost-thread boost-test boost-regex boost-devel"

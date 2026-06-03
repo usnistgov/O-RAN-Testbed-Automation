@@ -22,7 +22,7 @@ This tool supports the deployment of 5G O-RAN testbeds using open-source compone
 ```text
 CU/DU
 ├── OCUDU: 26.04
-├── OpenAirInterface gNB: 2026.w18
+├── OpenAirInterface gNB: 2026.w22
 └── O-RAN SC E2 Simulator: M-Release
 RICs
 ├── O-RAN SC Near-RT RIC: M-Release
@@ -49,7 +49,7 @@ RICs
 
 UEs
 ├── srsRAN_4G: release_25_10
-└── OpenAirInterface 5G UE: 2026.w18
+└── OpenAirInterface 5G UE: 2026.w22
 ```
 
 The components that have been verified to support or not support connectivity are included below.

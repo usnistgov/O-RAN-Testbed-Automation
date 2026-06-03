@@ -1,5 +1,5 @@
 diff --git a/examples/xApp/c/kpm_rc/xapp_kpm_rc.c b/examples/xApp/c/kpm_rc/xapp_kpm_rc.c
-index ba0ccd3a..c09631a3 100644
+index ba0ccd3a..d5d51639 100644
 --- a/examples/xApp/c/kpm_rc/xapp_kpm_rc.c
 +++ b/examples/xApp/c/kpm_rc/xapp_kpm_rc.c
 @@ -1,3 +1,4 @@
@@ -284,13 +284,15 @@ index ba0ccd3a..c09631a3 100644
    init_kpm_meas_unit_hash_table();
  
    e2_node_arr_xapp_t nodes = e2_nodes_xapp_api();
-@@ -686,7 +698,8 @@ int main(int argc, char* argv[])
+@@ -686,6 +698,11 @@ int main(int argc, char* argv[])
      assert(hndl[i] != NULL);
      for (size_t j = 0; j < sz_report_styles; j++) {
        ric_report_style_item_t *report_item = &n->rf[idx].defn.kpm.ric_report_style_list[j];
--      // Generate KPM SUBSCRIPTION message
-+      if (get_kpm_act_def[report_item->report_style_type] == NULL) { printf("[xApp] WARNING: Unsupported report style type %d, skipping subscription.\n", report_item->report_style_type); continue; }
-+        // Generate KPM SUBSCRIPTION message
++      if (get_kpm_act_def[report_item->report_style_type] == NULL) {
++        printf("[xApp] WARNING: Unsupported report style type %d, skipping subscription.\n",
++               report_item->report_style_type);
++        continue;
++      }
+       // Generate KPM SUBSCRIPTION message
        kpm_sub_data_t kpm_sub = gen_kpm_subs(&n->rf[idx].defn.kpm, report_item);
  
-       hndl[i][j] = report_sm_xapp_api(&n->id, KPM_ran_function, &kpm_sub, sm_cb_kpm);

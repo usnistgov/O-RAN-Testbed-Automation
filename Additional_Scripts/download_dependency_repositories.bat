@@ -51,9 +51,7 @@ if exist "5G_Core_Network/Additional_Cores_5GDeploy\5gdeploy" rmdir /s /q "5G_Co
 cd "5G_Core_Network/Additional_Cores_5GDeploy" >nul 2>&1
 if not errorlevel 1 (
     git clone https://github.com/usnistgov/5gdeploy.git
-    cd "5gdeploy"
-    git checkout 83c359ab57c7ae482f2834ff731b545caf6b3a3f
-    cd ..\..
+    cd ..
 ) else (
     echo ERROR: Failed to cd to 5G_Core_Network/Additional_Cores_5GDeploy. Skipping clone.
 )
@@ -396,9 +394,7 @@ if exist "OpenAirInterface_Testbed\5G_Core_Network\Additional_Cores_5GDeploy\5gd
 cd "OpenAirInterface_Testbed\5G_Core_Network\Additional_Cores_5GDeploy" >nul 2>&1
 if not errorlevel 1 (
     git clone https://github.com/usnistgov/5gdeploy.git
-    cd "5gdeploy"
-    git checkout 83c359ab57c7ae482f2834ff731b545caf6b3a3f
-    cd ..\..\..\..
+    cd ..\..\..
 ) else (
     echo ERROR: Failed to cd to OpenAirInterface_Testbed\5G_Core_Network\Additional_Cores_5GDeploy. Skipping clone.
 )

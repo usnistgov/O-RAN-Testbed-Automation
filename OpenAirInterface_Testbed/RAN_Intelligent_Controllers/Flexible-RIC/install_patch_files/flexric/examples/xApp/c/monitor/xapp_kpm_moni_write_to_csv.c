@@ -473,6 +473,9 @@ static void match_meas_name_type(const meas_type_t meas_type, const label_info_l
     printf("[xApp] WARNING: Unsupported measurement value type %d\n", record_item.value);
     return;
   }
+  char *name_str = cp_ba_to_str(meas_type.name);
+  get_meas_value[record_item.value](name_str, label_info, record_item);
+  free(name_str);
 }
 
 static void match_id_meas_type(const meas_type_t meas_type, const label_info_lst_t label_info,

@@ -30,7 +30,6 @@
 
 # Exit immediately if a command fails
 set -e
-set -x
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"

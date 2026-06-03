@@ -469,9 +469,10 @@ static log_meas_value get_meas_value[END_MEAS_VALUE] = {
 static void match_meas_name_type(const meas_type_t meas_type, const label_info_lst_t label_info,
                                  const meas_record_lst_t record_item) {
   // Get the value of the Measurement
-  char *name_str = cp_ba_to_str(meas_type.name);
-  get_meas_value[record_item.value](name_str, label_info, record_item);
-  free(name_str);
+  if (record_item.value >= END_MEAS_VALUE || get_meas_value[record_item.value] == NULL) {
+    printf("[xApp] WARNING: Unsupported measurement value type %d\n", record_item.value);
+    return;
+  }
 }
 
 static void match_id_meas_type(const meas_type_t meas_type, const label_info_lst_t label_info,
@@ -1006,6 +1007,11 @@ int main(int argc, char *argv[]) {
     assert(hndl[i] != NULL);
     for (size_t j = 0; j < sz_report_styles; j++) {
       ric_report_style_item_t *report_item = &n->rf[idx].defn.kpm.ric_report_style_list[j];
+      if (get_kpm_act_def[report_item->report_style_type] == NULL) {
+        printf("[xApp] WARNING: Unsupported report style type %d, skipping subscription.\n",
+               report_item->report_style_type);
+        continue;
+      }
       // Generate KPM SUBSCRIPTION message
       kpm_sub_data_t kpm_sub = gen_kpm_subs(&n->rf[idx].defn.kpm, report_item);
 

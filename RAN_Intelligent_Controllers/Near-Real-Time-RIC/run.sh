@@ -30,6 +30,10 @@
 
 # Exit immediately if a command fails
 set -e
+set -x
+
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+cd "$SCRIPT_DIR"
 
 echo "Ensuring etc/hosts has local IP address..."
 sudo ./install_scripts/update_host_address.sh
@@ -37,8 +41,25 @@ sudo ./install_scripts/update_host_address.sh
 # Kubelet does not support swap
 sudo ./install_scripts/disable_swap.sh
 
+echo "Starting the cluster..."
 sudo systemctl restart docker
 sudo systemctl restart kubelet
+
+NAMESPACES=("ricplt" "ricxapp" "ricinfra")
+
+for NAMESPACE in "${NAMESPACES[@]}"; do
+    if kubectl get namespace "$NAMESPACE" &>/dev/null; then
+        kubectl scale deployment --all --replicas=1 -n "$NAMESPACE" || true
+        kubectl scale statefulset --all --replicas=1 -n "$NAMESPACE" || true
+
+        # Resume suspended jobs
+        if kubectl get job -n "$NAMESPACE" &>/dev/null; then
+            kubectl get jobs -n "$NAMESPACE" --no-headers 2>/dev/null | awk '{print $1}' | while read JOB_NAME; do
+                kubectl patch job "$JOB_NAME" -n "$NAMESPACE" --type=merge -p '{"spec":{"suspend":false}}' 2>/dev/null || true
+            done
+        fi
+    fi
+done
 
 echo "Waiting for Kubernetes API server..."
 sudo ./install_scripts/wait_for_kubectl.sh

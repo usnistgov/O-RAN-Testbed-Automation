@@ -147,6 +147,21 @@ else
     echo "No modification needed in control/control.go."
 fi
 
+if [ -f "Dockerfile" ]; then
+    if ! grep -q "ENV GIT_SSL_NO_VERIFY=1" Dockerfile; then
+        echo "Patching Dockerfile to add 'ENV GIT_SSL_NO_VERIFY=1'..."
+        if [ ! -f "Dockerfile.previous" ]; then
+            cp Dockerfile Dockerfile.previous
+        fi
+        sed -i '/RUN go build .\/kpimon.go/i ENV GIT_SSL_NO_VERIFY=1' Dockerfile
+    else
+        echo "No modification needed in Dockerfile."
+    fi
+else
+    echo "ERROR: Dockerfile not found. Exiting."
+    exit 1
+fi
+
 echo "Patch completed for KPI Monitor xApp (kpimon-go)."
 
 echo "Creating and modifying the configuration file deploy/config_updated.json"
@@ -191,7 +206,7 @@ if [ -z "$FIXED_DOCKER_PERMS" ]; then
 fi
 
 if [ ! -f kpimon-go.tar ]; then
-    docker build -t 127.0.0.1:80/kpimon-go:latest .
+    docker build --network host -t 127.0.0.1:80/kpimon-go:latest .
     docker save -o kpimon-go.tar 127.0.0.1:80/kpimon-go:latest
     sudo chmod 755 kpimon-go.tar
     sudo chown "${SUDO_USER:-$USER}" kpimon-go.tar

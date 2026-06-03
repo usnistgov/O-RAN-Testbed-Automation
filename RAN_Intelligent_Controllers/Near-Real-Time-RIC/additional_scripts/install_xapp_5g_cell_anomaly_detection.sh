@@ -158,7 +158,7 @@ if [ -z "$FIXED_DOCKER_PERMS" ]; then
 fi
 
 if [ ! -f ad-cell.tar ]; then
-    docker build -t 127.0.0.1:80/ad-cell:latest .
+    docker build --network host -t 127.0.0.1:80/ad-cell:latest .
     docker save -o ad-cell.tar 127.0.0.1:80/ad-cell:latest
     sudo chmod 755 ad-cell.tar
     sudo chown "${SUDO_USER:-$USER}" ad-cell.tar

@@ -28,47 +28,39 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-# Exit immediately if a command fails
-set -e
+echo "# Script: $(realpath "$0")..."
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
-cd "$SCRIPT_DIR"
+PARENT_DIR=$(dirname "$SCRIPT_DIR")
+cd "$PARENT_DIR"
 
-sudo systemctl restart kubelet
+E2AP_FILE="./ocudu/include/ocudu/asn1/e2ap/e2ap.h"
+KPM_FILE="./ocudu/include/ocudu/asn1/e2sm/e2sm_kpm_ies.h"
 
-NAMESPACES=("istio-system" "strimzi-system" "mariadb-operator" "onap" "nonrtric" "smo" "openebs")
+echo "OCUDU E2AP File: $E2AP_FILE"
+echo "OCUDU E2SM KPM File: $KPM_FILE"
+echo
 
-for NAMESPACE in "${NAMESPACES[@]}"; do
-    if kubectl get namespace "$NAMESPACE" &>/dev/null; then
-        kubectl scale deployment --all --replicas=1 -n "$NAMESPACE" || true
-        kubectl scale statefulset --all --replicas=1 -n "$NAMESPACE" || true
-
-        # Resume suspended jobs
-        if kubectl get job -n "$NAMESPACE" &>/dev/null; then
-            kubectl get jobs -n "$NAMESPACE" --no-headers 2>/dev/null | awk '{print $1}' | while read JOB_NAME; do
-                kubectl patch job "$JOB_NAME" -n "$NAMESPACE" --type=merge -p '{"spec":{"suspend":false}}' 2>/dev/null || true
-            done
-        fi
+if [ ! -f "$E2AP_FILE" ]; then
+    echo "OCUDU gNB: ERROR: E2AP header file not found"
+else
+    # Parse 3GPP TS ASN1 E2AP vXX.XX
+    VERSION=$(grep -oP "E2AP v\K[0-9.]+" "$E2AP_FILE" | head -n1)
+    if [ -z "$VERSION" ]; then
+        echo "OCUDU gNB: ERROR: Could not parse E2AP version"
+    else
+        echo "OCUDU gNB: E2AP v${VERSION}"
     fi
-done
+fi
 
-# Code from (https://github.com/o-ran-sc/nonrtric-plt-rappmanager/blob/master/scripts/install/install-base.sh):
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null && pwd)"
-CM_VERSION="v0.16.1"
-CM_PORT="8879"
-HELM_LOCAL_REPO="$ROOT_DIR/chartstorage"
-
-echo
-echo "Starting ChartMuseum on port $CM_PORT..."
-nohup chartmuseum --port=$CM_PORT --storage="local" --context-path=/charts --storage-local-rootdir=$HELM_LOCAL_REPO >/dev/null 2>&1 &
-
-echo "Waiting for Kubernetes API server..."
-sudo ./install_scripts/wait_for_kubectl.sh
-
-echo
-echo "Waiting for RIC pods..."
-sudo ./install_scripts/wait_for_nonrtric_pods.sh
-
-echo
-echo "Running the Control Panel for A1-Policy and A1-EI management..."
-sudo ./run_control_panel.sh
+if [ ! -f "$KPM_FILE" ]; then
+    echo "OCUDU gNB: ERROR: E2SM KPM header file not found"
+else
+    # Parse 3GPP TS ASN1 E2SM vXX.XX
+    KPM_VERSION=$(grep -oP "E2SM v\K[0-9.]+" "$KPM_FILE" | head -n1)
+    if [ -z "$KPM_VERSION" ]; then
+        echo "OCUDU gNB: ERROR: Could not parse E2SM KPM version"
+    else
+        echo "OCUDU gNB: E2SM KPM v${KPM_VERSION}"
+    fi
+fi

@@ -32,6 +32,7 @@
 set -e
 
 APPLY_PATCHES=true
+CLEAN_INSTALL=false
 DEBUG_SYMBOLS=false
 RUN_TESTS=false
 TUNE_PERFORMANCE=false
@@ -46,7 +47,7 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
 # Check for binary to determine if OCUDU is already installed
-if [ -f "ocudu/build/apps/gnb/gnb" ]; then
+if [ "$CLEAN_INSTALL" != true ] && [ -f "ocudu/build/apps/gnb/gnb" ]; then
     echo "OCUDU is already installed, skipping."
     exit 0
 fi

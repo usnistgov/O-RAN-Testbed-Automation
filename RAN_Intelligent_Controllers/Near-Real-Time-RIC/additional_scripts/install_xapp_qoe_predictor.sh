@@ -166,7 +166,7 @@ if [ -z "$FIXED_DOCKER_PERMS" ]; then
 fi
 
 if [ ! -f qp.tar ]; then
-    docker build -t 127.0.0.1:80/qp:latest .
+    docker build --network host -t 127.0.0.1:80/qp:latest .
     docker save -o qp.tar 127.0.0.1:80/qp:latest
     sudo chmod 755 qp.tar
     sudo chown "${SUDO_USER:-$USER}" qp.tar

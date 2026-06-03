@@ -28,6 +28,57 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
+# Exit immediately if a command fails
+set -e
+
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+cd "$SCRIPT_DIR"
+
+echo "# Script: $(realpath "$0")..."
+
+echo "Stopping the cluster..."
+sudo systemctl start kubelet
+if kubectl get pdb r4-influxdb-influxdb2 -n ricplt &>/dev/null; then
+    kubectl delete pdb r4-influxdb-influxdb2 -n ricplt
+fi
+
+NAMESPACES=("ricplt" "ricxapp" "ricinfra")
+
+for NAMESPACE in "${NAMESPACES[@]}"; do
+    if kubectl get namespace "$NAMESPACE" &>/dev/null; then
+        kubectl scale deployment --all --replicas=0 -n "$NAMESPACE" || true
+        kubectl scale statefulset --all --replicas=0 -n "$NAMESPACE" || true
+
+        # Suspend jobs
+        if kubectl get job -n "$NAMESPACE" &>/dev/null; then
+            kubectl get jobs -n "$NAMESPACE" --no-headers 2>/dev/null | awk '{print $1}' | while read JOB_NAME; do
+                kubectl patch job "$JOB_NAME" -n "$NAMESPACE" --type=merge -p '{"spec":{"suspend":true}}' 2>/dev/null || true
+            done
+        fi
+
+        # Remove completed pods as they are no longer needed
+        kubectl get pods -n "$NAMESPACE" --no-headers 2>/dev/null | grep 'Completed' | awk '{print $1}' | while read POD_NAME; do
+            echo "Cleaning up completed pod $POD_NAME in namespace $NAMESPACE..."
+            kubectl delete pod "$POD_NAME" -n "$NAMESPACE" 2>/dev/null || true
+        done
+
+        # Remove remaining pods that cannot scale to 0
+        kubectl delete pods --all -n "$NAMESPACE" 2>/dev/null || true
+    fi
+done
+
+kubectl get pods -A
+
+for NAMESPACE in "${NAMESPACES[@]}"; do
+    if kubectl get namespace "$NAMESPACE" &>/dev/null; then
+        echo "Waiting for $NAMESPACE pods to terminate..."
+        kubectl wait --for=delete pod --all -n "$NAMESPACE" --timeout=120s 2>/dev/null || true
+    fi
+done
+
 echo "Stopping RIC platform services..."
 sudo systemctl stop kubelet
 sudo systemctl stop docker
+kubectl get pods -A
+
+echo "Successfully stopped cluster."

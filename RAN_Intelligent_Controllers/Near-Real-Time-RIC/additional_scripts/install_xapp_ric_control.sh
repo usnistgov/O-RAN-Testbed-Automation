@@ -108,7 +108,7 @@ if [ -z "$FIXED_DOCKER_PERMS" ]; then
 fi
 
 if [ ! -f rc.tar ]; then
-    docker build -t 127.0.0.1:80/rc:latest .
+    docker build --network host -t 127.0.0.1:80/rc:latest .
     docker save -o rc.tar 127.0.0.1:80/rc:latest
     sudo chmod 755 rc.tar
     sudo chown "${SUDO_USER:-$USER}" rc.tar

@@ -28,47 +28,32 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-# Exit immediately if a command fails
-set -e
+echo "# Script: $(realpath "$0")..."
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
-cd "$SCRIPT_DIR"
+PARENT_DIR=$(dirname "$SCRIPT_DIR")
+cd "$PARENT_DIR"
 
-sudo systemctl restart kubelet
+CMAKE_FILE="./flexric/CMakeLists.txt"
 
-NAMESPACES=("istio-system" "strimzi-system" "mariadb-operator" "onap" "nonrtric" "smo" "openebs")
+echo "FlexRIC CMakeLists File: $CMAKE_FILE"
+echo
 
-for NAMESPACE in "${NAMESPACES[@]}"; do
-    if kubectl get namespace "$NAMESPACE" &>/dev/null; then
-        kubectl scale deployment --all --replicas=1 -n "$NAMESPACE" || true
-        kubectl scale statefulset --all --replicas=1 -n "$NAMESPACE" || true
+if [ ! -f "$CMAKE_FILE" ]; then
+    echo "FlexRIC: ERROR: CMakeLists.txt not found"
+else
+    E2AP_VERSION=$(grep -oP 'set\(E2AP_VERSION "\K[^"]+' "$CMAKE_FILE" | head -n1)
+    KPM_VERSION=$(grep -oP 'set\(KPM_VERSION "\K[^"]+' "$CMAKE_FILE" | head -n1)
 
-        # Resume suspended jobs
-        if kubectl get job -n "$NAMESPACE" &>/dev/null; then
-            kubectl get jobs -n "$NAMESPACE" --no-headers 2>/dev/null | awk '{print $1}' | while read JOB_NAME; do
-                kubectl patch job "$JOB_NAME" -n "$NAMESPACE" --type=merge -p '{"spec":{"suspend":false}}' 2>/dev/null || true
-            done
-        fi
+    if [ -z "$E2AP_VERSION" ]; then
+        echo "FlexRIC: ERROR: Could not parse E2AP version"
+    else
+        echo "FlexRIC: ${E2AP_VERSION}"
     fi
-done
 
-# Code from (https://github.com/o-ran-sc/nonrtric-plt-rappmanager/blob/master/scripts/install/install-base.sh):
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null && pwd)"
-CM_VERSION="v0.16.1"
-CM_PORT="8879"
-HELM_LOCAL_REPO="$ROOT_DIR/chartstorage"
-
-echo
-echo "Starting ChartMuseum on port $CM_PORT..."
-nohup chartmuseum --port=$CM_PORT --storage="local" --context-path=/charts --storage-local-rootdir=$HELM_LOCAL_REPO >/dev/null 2>&1 &
-
-echo "Waiting for Kubernetes API server..."
-sudo ./install_scripts/wait_for_kubectl.sh
-
-echo
-echo "Waiting for RIC pods..."
-sudo ./install_scripts/wait_for_nonrtric_pods.sh
-
-echo
-echo "Running the Control Panel for A1-Policy and A1-EI management..."
-sudo ./run_control_panel.sh
+    if [ -z "$KPM_VERSION" ]; then
+        echo "FlexRIC: ERROR: Could not parse E2SM KPM version"
+    else
+        echo "FlexRIC: ${KPM_VERSION}"
+    fi
+fi

@@ -177,6 +177,7 @@ else
         echo "An error occured when running $SCRIPT_DIR/install_k8s_and_helm.sh."
         exit 1
     fi
+    sudo systemctl start kubelet
 
     # Ensure the correct YAML editor is installed
     "$SCRIPT_DIR/install_scripts/./ensure_consistent_yq.sh"
@@ -208,6 +209,7 @@ else
     fi
     sudo ./install_common_templates_to_helm.sh
 fi
+sudo systemctl start kubelet
 
 cd "$SCRIPT_DIR"
 

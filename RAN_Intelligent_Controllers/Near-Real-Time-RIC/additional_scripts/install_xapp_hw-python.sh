@@ -103,7 +103,7 @@ if [ -z "$FIXED_DOCKER_PERMS" ]; then
 fi
 
 if [ ! -f hw-python.tar ]; then
-    docker build -t 127.0.0.1:80/hw-python:latest .
+    docker build --network host -t 127.0.0.1:80/hw-python:latest .
     docker save -o hw-python.tar 127.0.0.1:80/hw-python:latest
     sudo chmod 755 hw-python.tar
     sudo chown "${SUDO_USER:-$USER}" hw-python.tar

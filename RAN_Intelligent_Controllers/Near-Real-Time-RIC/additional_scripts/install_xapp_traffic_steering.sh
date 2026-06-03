@@ -108,7 +108,7 @@ if [ -z "$FIXED_DOCKER_PERMS" ]; then
 fi
 
 if [ ! -f trafficxapp.tar ]; then
-    docker build -t 127.0.0.1:80/trafficxapp:latest .
+    docker build --network host -t 127.0.0.1:80/trafficxapp:latest .
     docker save -o trafficxapp.tar 127.0.0.1:80/trafficxapp:latest
     sudo chmod 755 trafficxapp.tar
     sudo chown "${SUDO_USER:-$USER}" trafficxapp.tar

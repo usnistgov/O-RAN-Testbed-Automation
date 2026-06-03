@@ -40,10 +40,20 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
+USE_FLEXRIC=false
+
 echo "Generating Configurations for 5G Core components..."
 cd 5G_Core_Network
 ./generate_configurations.sh
 cd ..
+
+if [ "$USE_FLEXRIC" = "true" ]; then
+    echo
+    echo "Generating Configuration for FlexRIC..."
+    cd OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC
+    ./generate_configurations.sh
+    cd "$SCRIPT_DIR"
+fi
 
 echo
 echo "Generating Configuration for Next Generation Node B..."

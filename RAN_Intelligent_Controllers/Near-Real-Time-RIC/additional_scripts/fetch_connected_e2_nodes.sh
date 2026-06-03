@@ -28,47 +28,15 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-# Exit immediately if a command fails
-set -e
+APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
+if ! command -v jq >/dev/null 2>&1; then
+    echo "Installing jq to process JSON files..."
+    sudo env $APTVARS apt-get install -y jq
+fi
 
-SCRIPT_DIR=$(dirname "$(realpath "$0")")
-cd "$SCRIPT_DIR"
+SUBMGR_IP=$(kubectl get pods -A -o jsonpath='{.items[?(@.metadata.labels.app=="ricplt-submgr")].status.podIP}')
 
-sudo systemctl restart kubelet
-
-NAMESPACES=("istio-system" "strimzi-system" "mariadb-operator" "onap" "nonrtric" "smo" "openebs")
-
-for NAMESPACE in "${NAMESPACES[@]}"; do
-    if kubectl get namespace "$NAMESPACE" &>/dev/null; then
-        kubectl scale deployment --all --replicas=1 -n "$NAMESPACE" || true
-        kubectl scale statefulset --all --replicas=1 -n "$NAMESPACE" || true
-
-        # Resume suspended jobs
-        if kubectl get job -n "$NAMESPACE" &>/dev/null; then
-            kubectl get jobs -n "$NAMESPACE" --no-headers 2>/dev/null | awk '{print $1}' | while read JOB_NAME; do
-                kubectl patch job "$JOB_NAME" -n "$NAMESPACE" --type=merge -p '{"spec":{"suspend":false}}' 2>/dev/null || true
-            done
-        fi
-    fi
-done
-
-# Code from (https://github.com/o-ran-sc/nonrtric-plt-rappmanager/blob/master/scripts/install/install-base.sh):
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null && pwd)"
-CM_VERSION="v0.16.1"
-CM_PORT="8879"
-HELM_LOCAL_REPO="$ROOT_DIR/chartstorage"
-
+echo "curl -s \"http://$SUBMGR_IP:8080/ric/v1/get_all_e2nodes\""
 echo
-echo "Starting ChartMuseum on port $CM_PORT..."
-nohup chartmuseum --port=$CM_PORT --storage="local" --context-path=/charts --storage-local-rootdir=$HELM_LOCAL_REPO >/dev/null 2>&1 &
-
-echo "Waiting for Kubernetes API server..."
-sudo ./install_scripts/wait_for_kubectl.sh
-
-echo
-echo "Waiting for RIC pods..."
-sudo ./install_scripts/wait_for_nonrtric_pods.sh
-
-echo
-echo "Running the Control Panel for A1-Policy and A1-EI management..."
-sudo ./run_control_panel.sh
+echo "Connected E2 nodes:"
+curl -s "http://$SUBMGR_IP:8080/ric/v1/get_all_e2nodes" | jq -C .

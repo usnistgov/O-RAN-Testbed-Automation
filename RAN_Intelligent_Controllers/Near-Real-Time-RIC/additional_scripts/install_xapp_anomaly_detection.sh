@@ -163,7 +163,7 @@ if [ -z "$FIXED_DOCKER_PERMS" ]; then
 fi
 
 if [ ! -f ad.tar ]; then
-    docker build -t 127.0.0.1:80/ad:latest .
+    docker build --network host -t 127.0.0.1:80/ad:latest .
     docker save -o ad.tar 127.0.0.1:80/ad:latest
     sudo chmod 755 ad.tar
     sudo chown "${SUDO_USER:-$USER}" ad.tar

@@ -40,6 +40,8 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
+USE_FLEXRIC=false
+
 # Loop over all arguments to set KEEP_EXISTING_INSTALLS based on -y or -n
 KEEP_EXISTING_INSTALLS=""
 for arg in "$@"; do
@@ -88,7 +90,9 @@ if [ "$KEEP_EXISTING_INSTALLS" != "y" ]; then
     echo " - 5G Core Network ($CORE_DISPLAY)"
     echo " - User Equipment (srsRAN_4G)"
     echo " - Next Generation Node B (OCUDU)"
-    if [ -d "RAN_Intelligent_Controllers/Near-Real-Time-RIC" ]; then
+    if [ "$USE_FLEXRIC" = "true" ]; then
+        echo " - Near-Real-Time RAN Intelligent Controller (FlexRIC)"
+    elif [ -d "RAN_Intelligent_Controllers/Near-Real-Time-RIC" ]; then
         echo " - Near-Real-Time RAN Intelligent Controller (O-RAN SC)"
     fi
     echo
@@ -236,7 +240,21 @@ cd Next_Generation_Node_B
 cd ..
 
 INSTALL_NEAR_RT_RIC=false
-if [ -d "RAN_Intelligent_Controllers/Near-Real-Time-RIC" ]; then
+if [ "$USE_FLEXRIC" = "true" ]; then
+    INSTALL_NEAR_RT_RIC=true
+    echo
+    echo
+    echo "################################################################################"
+    echo "# Installing Near-Real-Time RAN Intelligent Controller (FlexRIC)...            #"
+    echo "################################################################################"
+    echo
+    echo
+
+    cd OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC
+    ./full_install.sh
+
+    cd ../../..
+elif [ -d "RAN_Intelligent_Controllers/Near-Real-Time-RIC" ]; then
     INSTALL_NEAR_RT_RIC=true
     echo
     echo

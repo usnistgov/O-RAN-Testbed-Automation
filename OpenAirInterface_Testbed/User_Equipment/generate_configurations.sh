@@ -187,17 +187,15 @@ echo "$RADIO_TYPE" >configs/radio_type.txt
 
 if [ "$RADIO_TYPE" = "SIMU" ] || [ "$RADIO_TYPE" = "ZMQ" ]; then
     echo "Using the channelmod_rfsimu.conf file for the SIMU/ZMQ channel model."
-    #cp install_patch_files/channelmod_rfsimu.conf "$SCRIPT_DIR/configs/channelmod_rfsimu.conf"
-    cd configs
-    ln -sf ../install_patch_files/channelmod_rfsimu.conf channelmod_rfsimu.conf
-    cd ..
+    if [ ! -e "$SCRIPT_DIR/configs/channelmod_rfsimu.conf" ]; then
+        cp "$SCRIPT_DIR/openairinterface5g/targets/PROJECTS/GENERIC-NR-5GC/CONF/channelmod_rfsimu.conf" "$SCRIPT_DIR/configs/channelmod_rfsimu.conf"
+    fi
 else
     echo "Using the channelmod_rfsimu_LEO_satellite.conf channel model."
     # Use the default channelmod_rfsimu_LEO_satellite.conf file
-    #cp openairinterface5g/targets/PROJECTS/GENERIC-NR-5GC/CONF/channelmod_rfsimu_LEO_satellite.conf configs/channelmod_rfsimu.conf
-    cd configs
-    ln -sf ../openairinterface5g/targets/PROJECTS/GENERIC-NR-5GC/CONF/channelmod_rfsimu_LEO_satellite.conf channelmod_rfsimu.conf
-    cd ..
+    if [ ! -e "$SCRIPT_DIR/configs/channelmod_rfsimu.conf" ]; then
+        cp "$SCRIPT_DIR/openairinterface5g/targets/PROJECTS/GENERIC-NR-5GC/CONF/channelmod_rfsimu_LEO_satellite.conf" "$SCRIPT_DIR/configs/channelmod_rfsimu.conf"
+    fi
 fi
 
 UE_CREDENTIAL_GENERATOR_SCRIPT="$SCRIPT_DIR/ue_credentials_generator.sh"
@@ -223,6 +221,8 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
 
     # Configure the PDU sessions (DNN, SST, SD)
     update_conf "configs/ue$UE_NUMBER.conf" "pdu_sessions" "({ dnn = \"$CURRENT_DNN\"; nssai_sst = $SST_DEC; nssai_sd = 0x$SD_HEX; })"
+
+    ./install_scripts/add_channel_model.sh "rfsimu_channel_ue$UE_NUMBER"
 
     # Finally, ensure that it is referencing the channelmod_rfsimu.conf file
     sed -i "s|channelmod_rfsimu_LEO_satellite.conf|channelmod_rfsimu.conf|" "configs/ue$UE_NUMBER.conf"

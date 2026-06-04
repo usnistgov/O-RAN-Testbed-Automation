@@ -457,13 +457,44 @@ static void log_real_value(const char *name_str, const label_info_lst_t label_in
   // printf("%s = %.2f%s%s\n", name_str, meas_record.real_val, *name_unit ? " " : "", name_unit);
 }
 
+static void log_no_value(const char *name_str, const label_info_lst_t label_info, const meas_record_lst_t meas_record) {
+  (void)label_info;
+  (void)meas_record;
+  char *name_unit = get_meas_unit(name_str);
+  if (name_unit && strcmp(name_unit, "[]") == 0)
+    name_unit = "";
+  if (name_unit == NULL)
+    name_unit = "";
+
+  if (!(is_cell_metric ? csv_wrote_cell_header : csv_wrote_header)) {
+    char clean_unit[64];
+    size_t len = strlen(name_unit);
+    if (len > 2 && name_unit[0] == '[' && name_unit[len - 1] == ']') {
+      snprintf(clean_unit, sizeof(clean_unit), "%.*s", (int)(len - 2), name_unit + 1);
+    } else {
+      snprintf(clean_unit, sizeof(clean_unit), "%s", name_unit);
+    }
+    csv_append_name_to_csv_header(name_str, clean_unit);
+  }
+
+  char *target_buffer = is_cell_metric ? csv_cell_line_buffer : csv_line_buffer;
+  size_t buffer_size = is_cell_metric ? sizeof(csv_cell_line_buffer) : sizeof(csv_line_buffer);
+  size_t current_len = strlen(target_buffer);
+
+  if (current_len + 32 < buffer_size) { // Reserve space for comma
+    snprintf(target_buffer + current_len, buffer_size - current_len, ",");
+  } else {
+    fprintf(stderr, "CSV line buffer is full, cannot append more values.\\n");
+  }
+}
+
 typedef void (*log_meas_value)(const char *name_str, const label_info_lst_t label_info,
                                const meas_record_lst_t meas_record);
 
 static log_meas_value get_meas_value[END_MEAS_VALUE] = {
     log_int_value,
     log_real_value,
-    NULL,
+    log_no_value,
 };
 
 static void match_meas_name_type(const meas_type_t meas_type, const label_info_lst_t label_info,

@@ -336,13 +336,19 @@ static void log_real_value(const char *name_str, const label_info_lst_t label_in
   }
 }
 
+static void log_no_value(const char *name_str, const label_info_lst_t label_info, const meas_record_lst_t meas_record) {
+  (void)name_str;
+  (void)label_info;
+  (void)meas_record;
+}
+
 typedef void (*log_meas_value)(const char *name_str, const label_info_lst_t label_info,
                                const meas_record_lst_t meas_record);
 
 static log_meas_value get_meas_value[END_MEAS_VALUE] = {
     log_int_value,
     log_real_value,
-    NULL,
+    log_no_value,
 };
 
 static void match_meas_name_type(const meas_type_t meas_type, const label_info_lst_t label_info,

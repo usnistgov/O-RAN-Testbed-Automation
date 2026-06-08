@@ -291,10 +291,19 @@ fi
 # Remove containerd containers and images if crictl is installed
 if command -v crictl &>/dev/null; then
     echo "Removing all containerd containers and images..."
-    sudo crictl stop $(sudo crictl pods -q 2>/dev/null || true) || true
-    sudo crictl rmp $(sudo crictl pods -q 2>/dev/null || true) || true
-    sudo crictl rm $(sudo crictl ps -a -q 2>/dev/null || true) || true
-    sudo crictl rmi $(sudo crictl images -q 2>/dev/null || true) || true
+    PODS=$(sudo crictl pods -q 2>/dev/null || true)
+    CONTAINERS=$(sudo crictl ps -a -q 2>/dev/null || true)
+    IMAGES=$(sudo crictl images -q 2>/dev/null || true)
+    if [[ -n "$PODS" ]]; then
+        sudo crictl stop $PODS >/dev/null 2>&1 || true
+        sudo crictl rmp $PODS >/dev/null 2>&1 || true
+    fi
+    if [[ -n "$CONTAINERS" ]]; then
+        sudo crictl rm $CONTAINERS >/dev/null 2>&1 || true
+    fi
+    if [[ -n "$IMAGES" ]]; then
+        sudo crictl rmi $IMAGES >/dev/null 2>&1 || true
+    fi
 else
     echo "crictl not found; skipping containerd cleanup."
 fi

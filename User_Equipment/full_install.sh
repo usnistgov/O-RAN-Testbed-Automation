@@ -31,6 +31,8 @@
 # Exit immediately if a command fails
 set -e
 
+BUILD_TESTS=false
+
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
@@ -216,7 +218,13 @@ fi
 mkdir -p build
 cd build
 SUPPRESS_WARNINGS="-Wno-error=array-bounds -Wno-error=unused-but-set-variable -Wno-error=unused-function -Wno-error=unused-parameter -Wno-error=unused-result -Wno-error=unused-variable -Wno-error=all -Wno-return-type"
-cmake .. -DCMAKE_CXX_FLAGS="$SUPPRESS_WARNINGS"
+ADDITIONAL_FLAGS="-DENABLE_WERROR=OFF"
+if [[ "$BUILD_TESTS" == "true" ]]; then
+    ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS -DBUILD_TESTING=ON"
+else
+    ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS -DBUILD_TESTING=OFF"
+fi
+cmake .. -DCMAKE_CXX_FLAGS="$SUPPRESS_WARNINGS" $ADDITIONAL_FLAGS
 make clean
 make -j$(nproc)
 sudo make -j$(nproc) install

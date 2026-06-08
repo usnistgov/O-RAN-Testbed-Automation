@@ -62,7 +62,10 @@ sudo rm -rf czmq
 echo "Uninstalling srsRAN_4G..."
 if [ -d srsRAN_4G/build ]; then
     cd srsRAN_4G/build
-    sudo make uninstall
+    if [ -f cmake_uninstall.cmake ]; then # Compatibility with CMake 4 (see https://cmake.org/cmake/help/latest/policy/CMP0007.html)
+        sudo sed -i '/if(POLICY CMP0007)/,/endif(POLICY CMP0007)/d' cmake_uninstall.cmake
+        sudo make uninstall
+    fi
     cd ../..
 fi
 sudo rm -rf srsRAN_4G

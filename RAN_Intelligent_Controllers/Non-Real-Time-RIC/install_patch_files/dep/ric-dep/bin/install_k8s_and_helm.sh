@@ -147,7 +147,7 @@ sudo env $APTVARS apt-get install -y jq netcat-openbsd make ipset moreutils
 # The version will be dynamically completed rather than hardcoding in the version
 KUBEV="1.33"
 KUBECNIV="1.6"
-HELMV="3.18"
+HELMV="4.2"
 
 # Fetch the Ubuntu release version regardless of the derivative distro
 if [ -f /etc/upstream-release/lsb-release ]; then
@@ -161,14 +161,21 @@ if [ "$USE_SYSTEMCTL" = "false" ]; then
     USE_DOCKER_CE=0
 fi
 if [ "$USE_DOCKER_CE" -eq 0 ]; then # Use docker.io
-    DOCKERV="20.10"
-    # Select a compatible Docker version for Ubuntu 24.*
-    if [[ ${UBUNTU_RELEASE} == 24.* ]]; then
-        DOCKERV="27.5"
+    DOCKERV="29.1"
+
+    # Select a compatible Docker version for Ubuntu 20.*
+    if [[ ${UBUNTU_RELEASE} == 20.* ]]; then
+        DOCKERV="26.1"
     fi
 
 else # Use docker-ce
-    DOCKERV="28.1"
+    DOCKERV="29.5"
+
+    # Select a compatible Docker version for Ubuntu 20.*
+    if [[ ${UBUNTU_RELEASE} == 20.* ]]; then
+        DOCKERV="28.1"
+    fi
+
     UBUNTU_CODENAME=$(grep -oP '^UBUNTU_CODENAME=\K.*' /etc/os-release 2>/dev/null)
     # If not found, try to extract VERSION_CODENAME as a fallback
     if [[ -z "$UBUNTU_CODENAME" ]]; then
@@ -902,10 +909,19 @@ fi
 # Remove containerd containers and images if crictl is installed
 if command -v crictl &>/dev/null; then
     echo "Removing all containerd containers and images..."
-    sudo crictl stop $(sudo crictl pods -q 2>/dev/null || true) || true
-    sudo crictl rmp $(sudo crictl pods -q 2>/dev/null || true) || true
-    sudo crictl rm $(sudo crictl ps -a -q 2>/dev/null || true) || true
-    sudo crictl rmi $(sudo crictl images -q 2>/dev/null || true) || true
+    PODS=$(sudo crictl pods -q 2>/dev/null || true)
+    CONTAINERS=$(sudo crictl ps -a -q 2>/dev/null || true)
+    IMAGES=$(sudo crictl images -q 2>/dev/null || true)
+    if [[ -n "$PODS" ]]; then
+        sudo crictl stop $PODS >/dev/null 2>&1 || true
+        sudo crictl rmp $PODS >/dev/null 2>&1 || true
+    fi
+    if [[ -n "$CONTAINERS" ]]; then
+        sudo crictl rm $CONTAINERS >/dev/null 2>&1 || true
+    fi
+    if [[ -n "$IMAGES" ]]; then
+        sudo crictl rmi $IMAGES >/dev/null 2>&1 || true
+    fi
 else
     echo "crictl not found; skipping containerd cleanup."
 fi

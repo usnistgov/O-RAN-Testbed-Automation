@@ -81,13 +81,21 @@ fi
 
 USE_DOCKER_CE=1
 if [ "$USE_DOCKER_CE" -eq 0 ]; then # Use docker.io
-    DOCKERV="20.10"
-    # Select a compatible Docker version for Ubuntu 24.*
-    if [[ ${UBUNTU_RELEASE} == 24.* ]]; then
-        DOCKERV="27.5"
+    DOCKERV="29.1"
+
+    # Select a compatible Docker version for Ubuntu 20.*
+    if [[ ${UBUNTU_RELEASE} == 20.* ]]; then
+        DOCKERV="26.1"
     fi
 
-else # Use docker.ce
+else # Use docker-ce
+    DOCKERV="29.5"
+
+    # Select a compatible Docker version for Ubuntu 20.*
+    if [[ ${UBUNTU_RELEASE} == 20.* ]]; then
+        DOCKERV="28.1"
+    fi
+
     DOCKERV="28.1"
     UBUNTU_CODENAME=$(grep -oP '^UBUNTU_CODENAME=\K.*' /etc/os-release 2>/dev/null)
     # If not found, try to extract VERSION_CODENAME as a fallback

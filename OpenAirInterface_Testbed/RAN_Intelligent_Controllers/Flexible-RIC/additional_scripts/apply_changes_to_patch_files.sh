@@ -113,6 +113,27 @@ git apply --verbose --ignore-whitespace ../install_patch_files/flexric/examples/
 # done
 # git apply --verbose --ignore-whitespace "$STALE_SUBSCRIPTION_PATCH_DIR/patch.patch"
 
+ADDITIONAL_PATCH_FILES=(
+    "examples/xApp/c/monitor/xapp_gtp_mac_rlc_pdcp_moni.c"
+    "examples/xApp/c/monitor/xapp_rc_moni.c"
+    "examples/xApp/c/orange/xapp_es_with_cell_util.c"
+    "examples/xApp/c/slice/xapp_slice_moni_ctrl.c"
+    "examples/xApp/c/tc/xapp_tc_all.c"
+    "src/xApp/act_proc.c"
+    "src/xApp/act_proc.h"
+    "src/xApp/e42_xapp_api.h"
+    "src/xApp/msg_dispatcher_xapp.c"
+    "src/xApp/msg_dispatcher_xapp.h"
+    "src/xApp/msg_handler_xapp.c"
+)
+for FILE in "${ADDITIONAL_PATCH_FILES[@]}"; do
+    git restore "$FILE"
+    mkdir -p "$(dirname "../install_patch_files/flexric/$FILE")"
+    EXTENSION="${FILE##*.}"
+    FILE_NO_EXT="${FILE%.*}"
+    cp "$FILE" "../install_patch_files/flexric/$FILE_NO_EXT.previous.$EXTENSION"
+    cp "$FILE" "$FILE_NO_EXT.previous.$EXTENSION"
+done
 cd ..
 
 echo "Successfully updated patch files in the install_patch_files directory."

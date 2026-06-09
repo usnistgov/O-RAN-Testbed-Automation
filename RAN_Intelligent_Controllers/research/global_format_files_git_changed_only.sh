@@ -28,9 +28,6 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-# Do not exit immediately if a command fails
-set +e
-
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
@@ -38,44 +35,47 @@ if ! command -v realpath &>/dev/null; then
 fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
-cd "$SCRIPT_DIR"
+cd "$SCRIPT_DIR/../.."
 
-echo "Stopping User Equipment..."
-./stop.sh
-
-echo "Uninstalling ZeroMQ libzmq..."
-if [ -d libzmq ]; then
-    cd libzmq
-    sudo make uninstall
-    cd ..
+if [ ! -f "NIST Software Disclaimer.md" ]; then
+    echo "Wrong directory"
+    pwd
+    ls
+    exit
 fi
-sudo rm -rf libzmq
 
-echo "Uninstalling ZeroMQ czmq..."
-if [ -d czmq ]; then
-    cd czmq
-    sudo make uninstall
-    cd ..
+# Apply global format
+
+if ! command -v shfmt &>/dev/null; then
+    echo "Package \"shfmt\" not found, installing..."
+    sudo env $APTVARS apt-get install -y shfmt
 fi
-sudo rm -rf czmq
 
-echo "Uninstalling srsRAN_4G..."
-if [ -d srsRAN_4G/build ]; then
-    cd srsRAN_4G/build
-    if [ -f cmake_uninstall.cmake ]; then # Compatibility with CMake 4 (see https://cmake.org/cmake/help/latest/policy/CMP0007.html)
-        sudo sed -i '/if(POLICY CMP0007)/,/endif(POLICY CMP0007)/d' cmake_uninstall.cmake
-        sudo make uninstall
+sudo env $APTVARS apt-get install -y dos2unix
+
+# Get modified, added, and untracked files
+mapfile -t FILES < <({
+    git ls-files --modified --others --exclude-standard
+    git diff --cached --name-only
+} | sort -u)
+
+for FILE in "${FILES[@]}"; do
+    if [ ! -f "$FILE" ]; then
+        continue
     fi
-    cd ../..
-fi
-sudo rm -rf srsRAN_4G
 
-sudo rm -rf logs/
-sudo rm -rf configs/
-sudo rm -rf install_time.txt
+    dos2unix "$FILE"
+    chmod 664 "$FILE"
 
-echo
-echo
-echo "################################################################################"
-echo "# Successfully uninstalled User Equipment                                      #"
-echo "################################################################################"
+    if [[ "$FILE" == *.sh ]]; then
+        shfmt -i 4 -w "$FILE"
+        chmod +x "$FILE"
+    else
+        chmod -x "$FILE"
+    fi
+done
+
+chmod 644 "LICENSE"
+chmod 644 "NIST Software Disclaimer.md"
+
+echo "OK."

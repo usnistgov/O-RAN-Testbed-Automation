@@ -39,6 +39,7 @@ fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
+cd "$PARENT_DIR"
 
 DU_NUMBER="$1"
 
@@ -55,8 +56,6 @@ if [ $DU_NUMBER -lt 1 ]; then
     echo "ERROR: DU number must be greater than or equal to 1."
     exit 1
 fi
-
-cd "$PARENT_DIR"
 
 # Function to comment out a line in a file
 comment_out() {
@@ -99,6 +98,7 @@ sed -i "s|^\([[:space:]]*\)gNB_name\s*=.*|\1gNB_name = \"du${DU_NUMBER}-rfsim\";
 sed -i "s|^\([[:space:]]*\)nr_cellid\s*=.*|\1nr_cellid = $((11111111 + DU_NUMBER - 1))L;|" "$DU_CONF"
 sed -i "s|^\([[:space:]]*\)physCellId\s*=.*|\1physCellId = $((DU_NUMBER - 1));|" "$DU_CONF"
 
+sed -i "s|^\([[:space:]]*\)prach_RootSequenceIndex\s*=.*|\1prach_RootSequenceIndex                                     = $DU_NUMBER;|" "$DU_CONF"
 SSB_BITMAP=$((1 << (DU_NUMBER - 1)))
 sed -i "s|^\([[:space:]]*\)ssb_PositionsInBurst_Bitmap\s*=.*|\1ssb_PositionsInBurst_Bitmap = $SSB_BITMAP;|" "$DU_CONF"
 
@@ -148,6 +148,11 @@ awk '
     in_sec { print "#"$0; next }
     { print }
 ' "$DU_CONF" >"$DU_CONF.tmp" && mv "$DU_CONF.tmp" "$DU_CONF"
+
+sed -i 's|options = ();|options = ("chanmod");|' "$DU_CONF"
+sed -i "s|modelname *=.*|modelname = \"rfsimu_channel_du${DU_NUMBER}\";|" "$DU_CONF"
+
+./install_scripts/add_channel_model.sh "rfsimu_channel_du${DU_NUMBER}"
 
 comment_out "$DU_CONF" "serveraddr"
 

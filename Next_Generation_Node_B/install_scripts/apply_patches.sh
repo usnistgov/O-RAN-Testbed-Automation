@@ -66,5 +66,16 @@ echo "Patching FindYAMLCPP.cmake..."
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/ocudu/cmake/modules/FindYAMLCPP.cmake.patch"
 cd ..
 
+# Apply patch to stop using compiler-specific M_PI_2f and instead use static_cast<float>(M_PI_2)
+cd ocudu
+git restore lib/ran/precoding/precoding_codebooks.cpp
+if [ ! -f "lib/ran/precoding/precoding_codebooks.cpp.previous" ]; then
+    cp lib/ran/precoding/precoding_codebooks.cpp lib/ran/precoding/precoding_codebooks.cpp.previous
+    cp lib/ran/precoding/precoding_codebooks.cpp.previous "$PARENT_DIR/install_patch_files/ocudu/lib/ran/precoding/precoding_codebooks.cpp.previous"
+fi
+echo "Patching precoding_codebooks.cpp..."
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/ocudu/lib/ran/precoding/precoding_codebooks.cpp.patch"
+cd ..
+
 echo
 echo "Successfully patched OCUDU."

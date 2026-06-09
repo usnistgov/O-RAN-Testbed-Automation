@@ -184,49 +184,59 @@ git restore src/xApp/msg_dispatcher_xapp.h
 git restore src/xApp/msg_handler_xapp.c
 if [ ! -f "examples/xApp/c/monitor/xapp_gtp_mac_rlc_pdcp_moni.c.previous" ]; then
     cp examples/xApp/c/monitor/xapp_gtp_mac_rlc_pdcp_moni.c examples/xApp/c/monitor/xapp_gtp_mac_rlc_pdcp_moni.c.previous
-    cp examples/xApp/c/monitor/xapp_gtp_mac_rlc_pdcp_moni.c.previous "$PARENT_DIR/install_patch_files/flexric/correcting_e2_node_id/examples/xApp/c/monitor/xapp_gtp_mac_rlc_pdcp_moni.previous.c"
+    cp examples/xApp/c/monitor/xapp_gtp_mac_rlc_pdcp_moni.c.previous "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/xapp_gtp_mac_rlc_pdcp_moni.previous.c"
 fi
 if [ ! -f "examples/xApp/c/monitor/xapp_rc_moni.c.previous" ]; then
     cp examples/xApp/c/monitor/xapp_rc_moni.c examples/xApp/c/monitor/xapp_rc_moni.c.previous
-    cp examples/xApp/c/monitor/xapp_rc_moni.c.previous "$PARENT_DIR/install_patch_files/flexric/correcting_e2_node_id/examples/xApp/c/monitor/xapp_rc_moni.previous.c"
+    cp examples/xApp/c/monitor/xapp_rc_moni.c.previous "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/xapp_rc_moni.previous.c"
 fi
 if [ ! -f "examples/xApp/c/orange/xapp_es_with_cell_util.c.previous" ]; then
     cp examples/xApp/c/orange/xapp_es_with_cell_util.c examples/xApp/c/orange/xapp_es_with_cell_util.c.previous
-    cp examples/xApp/c/orange/xapp_es_with_cell_util.c.previous "$PARENT_DIR/install_patch_files/flexric/correcting_e2_node_id/examples/xApp/c/orange/xapp_es_with_cell_util.previous.c"
+    cp examples/xApp/c/orange/xapp_es_with_cell_util.c.previous "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/orange/xapp_es_with_cell_util.previous.c"
 fi
 if [ ! -f "examples/xApp/c/slice/xapp_slice_moni_ctrl.c.previous" ]; then
     cp examples/xApp/c/slice/xapp_slice_moni_ctrl.c examples/xApp/c/slice/xapp_slice_moni_ctrl.c.previous
-    cp examples/xApp/c/slice/xapp_slice_moni_ctrl.c.previous "$PARENT_DIR/install_patch_files/flexric/correcting_e2_node_id/examples/xApp/c/slice/xapp_slice_moni_ctrl.previous.c"
+    cp examples/xApp/c/slice/xapp_slice_moni_ctrl.c.previous "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/slice/xapp_slice_moni_ctrl.previous.c"
 fi
 if [ ! -f "examples/xApp/c/tc/xapp_tc_all.c.previous" ]; then
     cp examples/xApp/c/tc/xapp_tc_all.c examples/xApp/c/tc/xapp_tc_all.c.previous
-    cp examples/xApp/c/tc/xapp_tc_all.c.previous "$PARENT_DIR/install_patch_files/flexric/correcting_e2_node_id/examples/xApp/c/tc/xapp_tc_all.previous.c"
+    cp examples/xApp/c/tc/xapp_tc_all.c.previous "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/tc/xapp_tc_all.previous.c"
 fi
 if [ ! -f "src/xApp/act_proc.c.previous" ]; then
     cp src/xApp/act_proc.c src/xApp/act_proc.c.previous
-    cp src/xApp/act_proc.c.previous "$PARENT_DIR/install_patch_files/flexric/correcting_e2_node_id/src/xApp/act_proc.previous.c"
+    cp src/xApp/act_proc.c.previous "$PARENT_DIR/install_patch_files/flexric/src/xApp/act_proc.previous.c"
 fi
 if [ ! -f "src/xApp/act_proc.h.previous" ]; then
     cp src/xApp/act_proc.h src/xApp/act_proc.h.previous
-    cp src/xApp/act_proc.h.previous "$PARENT_DIR/install_patch_files/flexric/correcting_e2_node_id/src/xApp/act_proc.previous.h"
+    cp src/xApp/act_proc.h.previous "$PARENT_DIR/install_patch_files/flexric/src/xApp/act_proc.previous.h"
 fi
 if [ ! -f "src/xApp/e42_xapp_api.h.previous" ]; then
     cp src/xApp/e42_xapp_api.h src/xApp/e42_xapp_api.h.previous
-    cp src/xApp/e42_xapp_api.h.previous "$PARENT_DIR/install_patch_files/flexric/correcting_e2_node_id/src/xApp/e42_xapp_api.previous.h"
+    cp src/xApp/e42_xapp_api.h.previous "$PARENT_DIR/install_patch_files/flexric/src/xApp/e42_xapp_api.previous.h"
 fi
 if [ ! -f "src/xApp/msg_dispatcher_xapp.c.previous" ]; then
     cp src/xApp/msg_dispatcher_xapp.c src/xApp/msg_dispatcher_xapp.c.previous
-    cp src/xApp/msg_dispatcher_xapp.c.previous "$PARENT_DIR/install_patch_files/flexric/correcting_e2_node_id/src/xApp/msg_dispatcher_xapp.previous.c"
+    cp src/xApp/msg_dispatcher_xapp.c.previous "$PARENT_DIR/install_patch_files/flexric/src/xApp/msg_dispatcher_xapp.previous.c"
 fi
 if [ ! -f "src/xApp/msg_dispatcher_xapp.h.previous" ]; then
     cp src/xApp/msg_dispatcher_xapp.h src/xApp/msg_dispatcher_xapp.h.previous
-    cp src/xApp/msg_dispatcher_xapp.h.previous "$PARENT_DIR/install_patch_files/flexric/correcting_e2_node_id/src/xApp/msg_dispatcher_xapp.previous.h"
+    cp src/xApp/msg_dispatcher_xapp.h.previous "$PARENT_DIR/install_patch_files/flexric/src/xApp/msg_dispatcher_xapp.previous.h"
 fi
 if [ ! -f "src/xApp/msg_handler_xapp.c.previous" ]; then
     cp src/xApp/msg_handler_xapp.c src/xApp/msg_handler_xapp.c.previous
-    cp src/xApp/msg_handler_xapp.c.previous "$PARENT_DIR/install_patch_files/flexric/correcting_e2_node_id/src/xApp/msg_handler_xapp.previous.c"
+    cp src/xApp/msg_handler_xapp.c.previous "$PARENT_DIR/install_patch_files/flexric/src/xApp/msg_handler_xapp.previous.c"
 fi
-git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/correcting_e2_node_id/patch.patch"
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/xapp_gtp_mac_rlc_pdcp_moni.c.patch"
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/xapp_rc_moni.c.patch"
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/orange/xapp_es_with_cell_util.c.patch"
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/slice/xapp_slice_moni_ctrl.c.patch"
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/tc/xapp_tc_all.c.patch"
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/src/xApp/act_proc.c.patch"
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/src/xApp/act_proc.h.patch"
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/src/xApp/e42_xapp_api.h.patch"
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/src/xApp/msg_dispatcher_xapp.c.patch"
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/src/xApp/msg_dispatcher_xapp.h.patch"
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/src/xApp/msg_handler_xapp.c.patch"
 cd "$PARENT_DIR"
 
 # # Apply patch to FlexRIC to make collectStartTime 64 bits for v02.01 and v02.03 (already fixed in v03.00) as per E2SM-KPM clause 8.3.12 and IETF RFC 5905 clause 6

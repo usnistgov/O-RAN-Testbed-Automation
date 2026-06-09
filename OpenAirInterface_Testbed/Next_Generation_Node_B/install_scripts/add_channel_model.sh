@@ -28,8 +28,8 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-# Do not exit immediately if a command fails
-set +e
+# Exit immediately if a command fails
+set -e
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
@@ -37,45 +37,56 @@ if ! command -v realpath &>/dev/null; then
     sudo env $APTVARS apt-get install -y coreutils
 fi
 
-SCRIPT_DIR=$(dirname "$(realpath "$0")")
-cd "$SCRIPT_DIR"
+# The script directory respects symbolic links so that the gNB and UE can patch their own openairinterface5g
+SCRIPT_DIR="$(cd "$(dirname "$0")" >/dev/null 2>&1 && pwd)"
+PARENT_DIR="$(dirname "$SCRIPT_DIR")"
+cd "$PARENT_DIR"
 
-echo "Stopping User Equipment..."
-./stop.sh
+CONFIGURATION_PATH="configs/channelmod_rfsimu.conf"
+MODEL_NAME="$1"
 
-echo "Uninstalling ZeroMQ libzmq..."
-if [ -d libzmq ]; then
-    cd libzmq
-    sudo make uninstall
-    cd ..
+if [ -z "$MODEL_NAME" ]; then
+    echo "Usage: $0 <model_name>"
+    exit 1
 fi
-sudo rm -rf libzmq
 
-echo "Uninstalling ZeroMQ czmq..."
-if [ -d czmq ]; then
-    cd czmq
-    sudo make uninstall
-    cd ..
+if grep -q "model_name[[:space:]]*=[[:space:]]*\"$MODEL_NAME\"" "$CONFIGURATION_PATH" 2>/dev/null; then
+    exit 0
 fi
-sudo rm -rf czmq
 
-echo "Uninstalling srsRAN_4G..."
-if [ -d srsRAN_4G/build ]; then
-    cd srsRAN_4G/build
-    if [ -f cmake_uninstall.cmake ]; then # Compatibility with CMake 4 (see https://cmake.org/cmake/help/latest/policy/CMP0007.html)
-        sudo sed -i '/if(POLICY CMP0007)/,/endif(POLICY CMP0007)/d' cmake_uninstall.cmake
-        sudo make uninstall
-    fi
-    cd ../..
+REF_MODEL="rfsimu_channel_enB0"
+if [[ "$MODEL_NAME" == *"ue"* ]]; then
+    REF_MODEL="rfsimu_channel_ue0"
 fi
-sudo rm -rf srsRAN_4G
 
-sudo rm -rf logs/
-sudo rm -rf configs/
-sudo rm -rf install_time.txt
+# Find line starting with { right above the model name
+START_LINE=$(grep -B 1 -n "$REF_MODEL" "$CONFIGURATION_PATH" | head -n 1 | cut -d- -f1)
 
-echo
-echo
-echo "################################################################################"
-echo "# Successfully uninstalled User Equipment                                      #"
-echo "################################################################################"
+# Find line closing with } after the starting line
+END_LINE=$(tail -n +$START_LINE "$CONFIGURATION_PATH" | grep -n -m 1 "}" | cut -d: -f1)
+END_LINE=$((START_LINE + END_LINE - 1))
+
+# Extract reference block and replace model_name to $MODEL_NAME
+NEW_BLOCK=$(sed -n "${START_LINE},${END_LINE}p" "$CONFIGURATION_PATH" | sed "s/},*/}/" | sed "s/model_name.*=.*/model_name     = \"$MODEL_NAME\";/")
+
+# Insert new block before array's closing bracket ');'
+awk -v new_block="$NEW_BLOCK" '
+/^[[:space:]]*\)[[:space:]]*;/ && !inserted {
+    print "    ,"
+    print new_block
+    inserted = 1
+}
+{ print }
+' "$CONFIGURATION_PATH" >"${CONFIGURATION_PATH}.tmp"
+
+mv "${CONFIGURATION_PATH}.tmp" "$CONFIGURATION_PATH"
+
+NUM_CHANNELS=$(grep -c "model_name" "$CONFIGURATION_PATH")
+MAX_CHANNELS=$(grep -oP 'max_chan\s*=\s*\K[0-9]+' "$CONFIGURATION_PATH")
+
+if [ -n "$MAX_CHANNELS" ] && [ "$NUM_CHANNELS" -gt "$MAX_CHANNELS" ]; then
+    sed -i "s/max_chan[[:space:]]*=[[:space:]]*[0-9]*[[:space:]]*;/max_chan = $NUM_CHANNELS;/" "$CONFIGURATION_PATH"
+    echo "Increased max_chan to $NUM_CHANNELS"
+fi
+
+echo "Added $MODEL_NAME block to $CONFIGURATION_PATH"

@@ -1,0 +1,1 @@
+../../Next_Generation_Node_B/install_scripts/add_channel_model.sh

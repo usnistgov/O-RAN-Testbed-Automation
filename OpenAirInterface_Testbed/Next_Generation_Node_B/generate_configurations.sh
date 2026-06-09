@@ -217,9 +217,9 @@ fi
 
 cp openairinterface5g/targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band78.fr1.106PRB.usrpb210.conf "$SCRIPT_DIR/configs/gnb.conf"
 cp openairinterface5g/targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb-cu.sa.f1.conf "$SCRIPT_DIR/configs/split_cu.conf"
-cp "$SCRIPT_DIR/configs/gnb.conf" "$SCRIPT_DIR/configs/split_du1.conf"
-cp "$SCRIPT_DIR/configs/gnb.conf" "$SCRIPT_DIR/configs/split_du2.conf"
-cp "$SCRIPT_DIR/configs/gnb.conf" "$SCRIPT_DIR/configs/split_du3.conf"
+for i in $SPLIT_DU_IDS; do
+    cp "$SCRIPT_DIR/configs/gnb.conf" "$SCRIPT_DIR/configs/split_du${i}.conf"
+done
 
 echo "Fetching AMF addresses..."
 AMF_ADDRESSES=$("../5G_Core_Network/install_scripts/get_amf_address.sh")
@@ -304,10 +304,7 @@ for CONF_FILE in gnb.conf split_cu.conf "${SPLIT_DUS[@]}"; do
             echo "@include \"channelmod_rfsimu.conf\"" >>"configs/$CONF_FILE"
         fi
         if [ ! -e "configs/channelmod_rfsimu.conf" ]; then
-            cd configs
-            #ln -s ../../User_Equipment/configs/channelmod_rfsimu.conf channelmod_rfsimu.conf
-            ln -sf ../install_patch_files/channelmod_rfsimu.conf channelmod_rfsimu.conf
-            cd ..
+            cp openairinterface5g/targets/PROJECTS/GENERIC-NR-5GC/CONF/channelmod_rfsimu.conf configs/channelmod_rfsimu.conf
         fi
     fi
 

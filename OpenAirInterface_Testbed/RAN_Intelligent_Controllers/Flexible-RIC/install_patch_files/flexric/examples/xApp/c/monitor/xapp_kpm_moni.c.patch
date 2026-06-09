@@ -1,5 +1,5 @@
 diff --git a/examples/xApp/c/monitor/xapp_kpm_moni.c b/examples/xApp/c/monitor/xapp_kpm_moni.c
-index 22f70850..69b2a53e 100644
+index 22f70850..049b0995 100644
 --- a/examples/xApp/c/monitor/xapp_kpm_moni.c
 +++ b/examples/xApp/c/monitor/xapp_kpm_moni.c
 @@ -1,65 +1,67 @@
@@ -41,23 +41,23 @@ index 22f70850..69b2a53e 100644
 +#define COLOR_MAGENTA "\x1b[35m"
 +#define COLOR_CYAN "\x1b[36m"
 +#define COLOR_RESET "\x1b[0m"
-+
-+static uint64_t const period_ms = 1000;
  
 -static
 -pthread_mutex_t mtx;
-+static pthread_mutex_t mtx;
++static uint64_t const period_ms = 1000;
  
 -static
 -assoc_ht_open_t ht = {0};
-+static char current_e2_id_str[64] = {0};
-+static uint8_t cfg_slicing_sst = 1;
-+static uint32_t cfg_slicing_sd = 0xFFFFFF;
++static pthread_mutex_t mtx;
  
 -static
 -uint32_t hash_func(const void* key_v)
 -{
 -  char* key = *(char**)(key_v);
++static char current_e2_id_str[64] = {0};
++static uint8_t cfg_slicing_sst = 1;
++static uint32_t cfg_slicing_sd = 0xFFFFFF;
++
 +static assoc_ht_open_t ht = {0};
 +
 +static uint32_t hash_func(const void *key_v) {
@@ -128,8 +128,11 @@ index 22f70850..69b2a53e 100644
 +  if (!val || strcmp(val, "[]") == 0)
 +    return "";
 +  return val;
-+}
-+
+ }
+ 
+-static
+-void log_gnb_ue_id(ue_id_e2sm_t ue_id)
+-{
 +static __attribute__((unused)) int get_mapped_node_id(const char *node_type, uint32_t orig_id) {
 +  static struct {
 +    char type[32];
@@ -159,11 +162,8 @@ index 22f70850..69b2a53e 100644
 +  }
 +
 +  return new_id;
- }
- 
--static
--void log_gnb_ue_id(ue_id_e2sm_t ue_id)
--{
++}
++
 +static void log_gnb_ue_id(ue_id_e2sm_t ue_id) {
    if (ue_id.gnb.gnb_cu_ue_f1ap_lst != NULL) {
      for (size_t i = 0; i < ue_id.gnb.gnb_cu_ue_f1ap_lst_len; i++) {
@@ -189,7 +189,7 @@ index 22f70850..69b2a53e 100644
    printf("UE ID type = gNB-CU-UP, gnb_cu_cp_ue_e1ap = %u\n", ue_id.gnb_cu_up.gnb_cu_cp_ue_e1ap);
    if (ue_id.gnb_cu_up.ran_ue_id != NULL) {
      printf("ran_ue_id = %lx\n", *ue_id.gnb_cu_up.ran_ue_id); // RAN UE NGAP ID
-@@ -118,98 +146,135 @@ void log_cuup_ue_id(ue_id_e2sm_t ue_id)
+@@ -118,98 +146,165 @@ void log_cuup_ue_id(ue_id_e2sm_t ue_id)
  
  typedef void (*log_ue_id)(ue_id_e2sm_t ue_id);
  
@@ -218,24 +218,55 @@ index 22f70850..69b2a53e 100644
 +           name_unit);
    } else if (label_info.distBinX != NULL && meas_record.int_val > 0) {
 -    printf("%s[BinX=%d][BinY=%d][BinZ=%d] = %d %s\n", name_str, *label_info.distBinX, *label_info.distBinY, *label_info.distBinZ, meas_record.int_val, name_unit);
-+    printf(COLOR_CYAN "%s[BinX=%d][BinY=%d][BinZ=%d]" COLOR_RESET " = %d " COLOR_MAGENTA "%s" COLOR_RESET "\n",
-+           name_str, *label_info.distBinX, *label_info.distBinY, *label_info.distBinZ, meas_record.int_val, name_unit);
++    printf(COLOR_CYAN "%s[BinX=%d", name_str, *label_info.distBinX);
++    if (label_info.distBinY != NULL)
++      printf("][BinY=%d", *label_info.distBinY);
++    if (label_info.distBinZ != NULL)
++      printf("][BinZ=%d", *label_info.distBinZ);
++    printf("]" COLOR_RESET " = %d " COLOR_MAGENTA "%s" COLOR_RESET "\n", meas_record.int_val, name_unit);
    }
  }
  
 -static
 -void log_real_value(const char *name_str, const label_info_lst_t label_info, const meas_record_lst_t meas_record)
 -{
+-  (void)label_info;
 +static void log_real_value(const char *name_str, const label_info_lst_t label_info,
 +                           const meas_record_lst_t meas_record) {
-   (void)label_info;
++  char *name_unit = get_meas_unit(name_str);
++  if (label_info.noLabel != NULL) {
++    if (isnan(meas_record.real_val))
++      printf(COLOR_CYAN "%s" COLOR_RESET " =  " COLOR_MAGENTA "%s" COLOR_RESET "\n", name_str, name_unit);
++    else
++      printf(COLOR_CYAN "%s" COLOR_RESET " = %.2f " COLOR_MAGENTA "%s" COLOR_RESET "\n", name_str, meas_record.real_val,
++             name_unit);
++  } else if (label_info.distBinX != NULL) {
++    printf(COLOR_CYAN "%s[BinX=%d", name_str, *label_info.distBinX);
++    if (label_info.distBinY != NULL)
++      printf("][BinY=%d", *label_info.distBinY);
++    if (label_info.distBinZ != NULL)
++      printf("][BinZ=%d", *label_info.distBinZ);
++    if (isnan(meas_record.real_val))
++      printf("]" COLOR_RESET " =  " COLOR_MAGENTA "%s" COLOR_RESET "\n", name_unit);
++    else
++      printf("]" COLOR_RESET " = %.2f " COLOR_MAGENTA "%s" COLOR_RESET "\n", meas_record.real_val, name_unit);
++  }
++}
++
++static void log_no_value(const char *name_str, const label_info_lst_t label_info, const meas_record_lst_t meas_record) {
++  (void)meas_record;
    char *name_unit = get_meas_unit(name_str);
 -  printf("%s = %.2f %s\n", name_str, meas_record.real_val, name_unit);
-+  if (isnan(meas_record.real_val))
-+    printf(COLOR_CYAN "%s" COLOR_RESET " =  " COLOR_MAGENTA "%s" COLOR_RESET "\n", name_str, name_unit);
-+  else
-+    printf(COLOR_CYAN "%s" COLOR_RESET " = %.2f " COLOR_MAGENTA "%s" COLOR_RESET "\n", name_str, meas_record.real_val,
-+           name_unit);
++  if (label_info.noLabel != NULL) {
++    printf(COLOR_CYAN "%s" COLOR_RESET " = NULL " COLOR_MAGENTA "%s" COLOR_RESET "\n", name_str, name_unit);
++  } else if (label_info.distBinX != NULL) {
++    printf(COLOR_CYAN "%s[BinX=%d", name_str, *label_info.distBinX);
++    if (label_info.distBinY != NULL)
++      printf("][BinY=%d", *label_info.distBinY);
++    if (label_info.distBinZ != NULL)
++      printf("][BinZ=%d", *label_info.distBinZ);
++    printf("]" COLOR_RESET " = NULL " COLOR_MAGENTA "%s" COLOR_RESET "\n", name_unit);
++  }
  }
  
 -typedef void (*log_meas_value)(const char *name_str, const label_info_lst_t label_info, const meas_record_lst_t meas_record);
@@ -247,7 +278,8 @@ index 22f70850..69b2a53e 100644
 +static log_meas_value get_meas_value[END_MEAS_VALUE] = {
      log_int_value,
      log_real_value,
-     NULL,
+-    NULL,
++    log_no_value,
  };
  
 -static
@@ -367,7 +399,7 @@ index 22f70850..69b2a53e 100644
    // Reported list of measurements per UE
    for (size_t i = 0; i < msg->ue_meas_report_lst_len; i++) {
      // log UE ID
-@@ -222,16 +287,39 @@ void log_kpm_ind_msg_frm_3(kpm_ind_msg_format_3_t const* msg)
+@@ -222,16 +317,39 @@ void log_kpm_ind_msg_frm_3(kpm_ind_msg_format_3_t const* msg)
    }
  }
  
@@ -412,7 +444,7 @@ index 22f70850..69b2a53e 100644
  
    int64_t const now = time_now_us();
    static int counter = 1;
-@@ -251,9 +339,7 @@ void sm_cb_kpm(sm_ag_if_rd_t const* rd)
+@@ -251,9 +369,7 @@ void sm_cb_kpm(sm_ag_if_rd_t const* rd)
    }
  }
  
@@ -423,7 +455,7 @@ index 22f70850..69b2a53e 100644
    test_info_lst_t dst = {0};
  
    dst.test_cond_type = type;
-@@ -271,29 +357,22 @@ test_info_lst_t filter_predicate(test_cond_type_e type, test_cond_e cond, int va
+@@ -271,29 +387,22 @@ test_info_lst_t filter_predicate(test_cond_type_e type, test_cond_e cond, int va
  
    dst.test_cond_value->octet_string_value = calloc(1, sizeof(byte_array_t));
    assert(dst.test_cond_value->octet_string_value != NULL && "Memory exhausted");
@@ -462,7 +494,7 @@ index 22f70850..69b2a53e 100644
    assert(report_item != NULL);
  
    kpm_act_def_format_1_t ad_frm_1 = {0};
-@@ -306,7 +385,7 @@ kpm_act_def_format_1_t fill_act_def_frm_1(ric_report_style_item_t const* report_
+@@ -306,7 +415,7 @@ kpm_act_def_format_1_t fill_act_def_frm_1(ric_report_style_item_t const* report_
    assert(ad_frm_1.meas_info_lst != NULL && "Memory exhausted");
  
    for (size_t i = 0; i < sz; i++) {
@@ -471,7 +503,7 @@ index 22f70850..69b2a53e 100644
      // 8.3.9
      // Measurement Name
      meas_item->meas_type.type = NAME_MEAS_TYPE;
-@@ -314,9 +393,7 @@ kpm_act_def_format_1_t fill_act_def_frm_1(ric_report_style_item_t const* report_
+@@ -314,9 +423,7 @@ kpm_act_def_format_1_t fill_act_def_frm_1(ric_report_style_item_t const* report_
  
      // [1, 2147483647]
      // 8.3.11
@@ -482,7 +514,7 @@ index 22f70850..69b2a53e 100644
    }
  
    // 8.3.8 [0, 4294967295]
-@@ -334,9 +411,7 @@ kpm_act_def_format_1_t fill_act_def_frm_1(ric_report_style_item_t const* report_
+@@ -334,9 +441,7 @@ kpm_act_def_format_1_t fill_act_def_frm_1(ric_report_style_item_t const* report_
    return ad_frm_1;
  }
  
@@ -493,7 +525,7 @@ index 22f70850..69b2a53e 100644
    assert(report_item != NULL);
    assert(report_item->act_def_format_type == FORMAT_4_ACTION_DEFINITION);
  
-@@ -345,13 +420,13 @@ kpm_act_def_t fill_report_style_4(ric_report_style_item_t const* report_item)
+@@ -345,13 +450,13 @@ kpm_act_def_t fill_report_style_4(ric_report_style_item_t const* report_item)
    // Fill matching condition
    // [1, 32768]
    act_def.frm_4.matching_cond_lst_len = 1;
@@ -511,7 +543,7 @@ index 22f70850..69b2a53e 100644
  
    // Fill Action Definition Format 1
    // 8.2.1.2.1
-@@ -360,29 +435,7 @@ kpm_act_def_t fill_report_style_4(ric_report_style_item_t const* report_item)
+@@ -360,29 +465,7 @@ kpm_act_def_t fill_report_style_4(ric_report_style_item_t const* report_item)
    return act_def;
  }
  
@@ -542,7 +574,7 @@ index 22f70850..69b2a53e 100644
    assert(report_item != NULL);
    assert(report_item->act_def_format_type == FORMAT_1_ACTION_DEFINITION);
  
-@@ -392,7 +445,7 @@ kpm_act_def_t fill_report_style_1(ric_report_style_item_t const* report_item)
+@@ -392,7 +475,7 @@ kpm_act_def_t fill_report_style_1(ric_report_style_item_t const* report_item)
    act_def.frm_1.meas_info_lst_len = report_item->meas_info_for_action_lst_len;
    act_def.frm_1.meas_info_lst = ecalloc(act_def.frm_1.meas_info_lst_len, sizeof(meas_info_format_1_lst_t));
    for (size_t i = 0; i < act_def.frm_1.meas_info_lst_len; i++) {
@@ -551,7 +583,7 @@ index 22f70850..69b2a53e 100644
      // 8.3.9
      // Measurement Name
      meas_item->meas_type.type = NAME_MEAS_TYPE;
-@@ -400,23 +453,7 @@ kpm_act_def_t fill_report_style_1(ric_report_style_item_t const* report_item)
+@@ -400,23 +483,7 @@ kpm_act_def_t fill_report_style_1(ric_report_style_item_t const* report_item)
  
      // [1, 2147483647]
      // 8.3.11
@@ -576,7 +608,7 @@ index 22f70850..69b2a53e 100644
    }
  
    // 8.3.8 [0, 4294967295]
-@@ -434,20 +471,13 @@ kpm_act_def_t fill_report_style_1(ric_report_style_item_t const* report_item)
+@@ -434,20 +501,13 @@ kpm_act_def_t fill_report_style_1(ric_report_style_item_t const* report_item)
    return act_def;
  }
  
@@ -601,7 +633,7 @@ index 22f70850..69b2a53e 100644
    assert(ran_func != NULL);
    assert(ran_func->ric_event_trigger_style_list != NULL);
  
-@@ -471,18 +501,15 @@ kpm_sub_data_t gen_kpm_subs(kpm_ran_function_def_t const* ran_func, ric_report_s
+@@ -471,18 +531,15 @@ kpm_sub_data_t gen_kpm_subs(kpm_ran_function_def_t const* ran_func, ric_report_s
    return kpm_sub;
  }
  
@@ -623,7 +655,7 @@ index 22f70850..69b2a53e 100644
    for (size_t i = 0; i < sz; i++) {
      if (f(&rf[i], id))
        return i;
-@@ -492,14 +519,12 @@ size_t find_sm_idx(sm_ran_function_t* rf, size_t sz, bool (*f)(sm_ran_function_t
+@@ -492,14 +549,12 @@ size_t find_sm_idx(sm_ran_function_t* rf, size_t sz, bool (*f)(sm_ran_function_t
    return 0;
  }
  
@@ -639,7 +671,7 @@ index 22f70850..69b2a53e 100644
    init_kpm_meas_unit_hash_table();
  
    e2_node_arr_xapp_t nodes = e2_nodes_xapp_api();
-@@ -513,7 +538,7 @@ int main(int argc, char* argv[])
+@@ -513,7 +568,7 @@ int main(int argc, char* argv[])
    int rc = pthread_mutex_init(&mtx, &attr);
    assert(rc == 0);
  
@@ -648,7 +680,7 @@ index 22f70850..69b2a53e 100644
    assert(hndl != NULL);
  
    ////////////
-@@ -522,7 +547,7 @@ int main(int argc, char* argv[])
+@@ -522,7 +577,7 @@ int main(int argc, char* argv[])
    int const KPM_ran_function = 2;
  
    for (size_t i = 0; i < nodes.len; ++i) {
@@ -657,7 +689,7 @@ index 22f70850..69b2a53e 100644
  
      size_t const idx = find_sm_idx(n->rf, n->len_rf, eq_sm, KPM_ran_function);
      assert(n->rf[idx].defn.type == KPM_RAN_FUNC_DEF_E && "KPM is not the received RAN Function");
-@@ -533,6 +558,11 @@ int main(int argc, char* argv[])
+@@ -533,6 +588,11 @@ int main(int argc, char* argv[])
      assert(hndl[i] != NULL);
      for (size_t j = 0; j < sz_report_styles; j++) {
        ric_report_style_item_t *report_item = &n->rf[idx].defn.kpm.ric_report_style_list[j];
@@ -669,7 +701,7 @@ index 22f70850..69b2a53e 100644
        // Generate KPM SUBSCRIPTION message
        kpm_sub_data_t kpm_sub = gen_kpm_subs(&n->rf[idx].defn.kpm, report_item);
  
-@@ -549,7 +579,7 @@ int main(int argc, char* argv[])
+@@ -549,7 +609,7 @@ int main(int argc, char* argv[])
    xapp_wait_end_api();
  
    for (int i = 0; i < nodes.len; ++i) {

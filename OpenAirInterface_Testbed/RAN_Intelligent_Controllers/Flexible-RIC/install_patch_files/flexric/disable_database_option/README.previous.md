@@ -320,7 +320,7 @@ The Grafana application is implemented in the docker container. In order to visu
 ## 5. Integration with RAN and example of deployment
 
 ### 5.1 Integration with OpenAirInterface 5G RAN
-Follow the instructions [here](https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/develop/openair2/E2AP/README.md).
+Follow the instructions [here](https://github.com/duranta-project/openairinterface5g/blob/develop/openair2/E2AP/README.md).
 
 ### 5.2 Integration with srsRAN 5G RAN
 Follow the instructions [here](https://docs.srsran.com/projects/project/en/latest/tutorials/source/near-rt-ric/source/index.html).
@@ -372,7 +372,7 @@ sudo phc2sys -m -s InterfaceName -w
 ## 6. Integration with other nearRT-RICs
 
 ### 6.1 O-RAN SC nearRT-RIC
-We showcased the successful integration between OAI E2 agent and O-RAN SC nearRT-RIC in [the OAI E2AP tutorial](https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/develop/openair2/E2AP/README.md?ref_type=heads#5-o-ran-sc-nearrt-ric-interoperability).
+We showcased the successful integration between OAI E2 agent and O-RAN SC nearRT-RIC in [the OAI E2AP tutorial](https://github.com/duranta-project/openairinterface5g/blob/develop/openair2/E2AP/README.md?ref_type=heads#5-o-ran-sc-nearrt-ric-interoperability).
 
 > **Note** that the OSC nearRT-RIC can also be tested with FlexRIC E2 agent emulators (`build/examples/emulator/agent/`).
 Before proceeding with integration, please set the `e2ap_server_port` to 36422 (the default is 36421), as the E2AP port for OSC nearRT-RIC is 36422.

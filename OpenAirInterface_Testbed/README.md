@@ -1,6 +1,6 @@
 ## OpenAirInterface Testbed
 
-This testbed deployment consists of a 5G Core Network by Open5GS [\[1\]][open5gs-core], gNodeB and 5G UE by OpenAirInterface at Eurecom [\[2\]][oai-ue-gnb], and FlexRIC by Mosaic5G at Eurecom [\[3\]][mosaic-flexric]. The scripts in these directories build, install, and configure the testbed components similar to the parent directory. Each directory contains a `README.md` file providing more details on the respective testbed component.
+This testbed deployment consists of a 5G Core Network by Open5GS [\[1\]][open5gs-core], gNodeB and 5G UE by Duranta [\[2\]][duranta-ue-gnb], and FlexRIC by Mosaic5G at Eurecom [\[3\]][mosaic-flexric]. The scripts in these directories build, install, and configure the testbed components similar to the parent directory. Each directory contains a `README.md` file providing more details on the respective testbed component.
 
 ## Usage
 
@@ -31,7 +31,7 @@ It may be required for the AVX2 instruction set to be available on the host mach
 
 ## Handover Scenario
 
-The script `run_handover_scenario.sh`, based on the handover tutorial [\[4\]][oai-handover], automates the process of setting up a handover scenario with two DUs and one CU. It starts the 5G Core, FlexRIC, CU, DU 1, and UE 1. After UE connectivity, it starts DU 2 and opens a telnet session to the CU for monitoring and controlling the handover process.
+The script `run_handover_scenario.sh`, based on the handover tutorial [\[4\]][duranta-handover], automates the process of setting up a handover scenario with two DUs and one CU. It starts the 5G Core, FlexRIC, CU, DU 1, and UE 1. After UE connectivity, it starts DU 2 and opens a telnet session to the CU for monitoring and controlling the handover process.
   - The variable `TELNET_SERVER` in `Next_Generation_Node_B/full_install.sh` must be set to `true` prior to gNodeB installation.
   - To start each component in its own terminal instance, use `./run_handover_scenario.sh show`.
   - The command `ci trigger_f1_ho 1` will trigger a handover for UE 1 from its current DU to the next DU in a round robin manner.
@@ -52,13 +52,13 @@ The script `run_handover_scenario.sh`, based on the handover tutorial [\[4\]][oa
 ## References
 
 1. Open Source implementation for 5G Core and EPC. Open5GS. [https://github.com/open5gs/open5gs][open5gs-core]
-2. Openairinterface 5G Wireless Implementation. OpenAirInterface. [https://gitlab.eurecom.fr/oai/openairinterface5g][oai-ue-gnb]
+2. Duranta - An open, research-grade RAN + UE reference stack. LF Networking. [https://lfnetworking.org/projects/duranta/][duranta-ue-gnb]
 3. Flexible RAN Intelligent Controller (FlexRIC) and E2 Agent. Mosaic5G. [https://gitlab.eurecom.fr/mosaic5g/flexric][mosaic-flexric]
-4. OpenAirInterface Handover Tutorial. OpenAirInterface. [https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/develop/doc/handover-tutorial.md][oai-handover]
+4. OpenAirInterface Handover Tutorial. OpenAirInterface. [https://github.com/duranta-project/openairinterface5g/blob/develop/doc/handover-tutorial.md][duranta-handover]
 
 <!-- References -->
 
 [open5gs-core]: https://github.com/open5gs/open5gs
-[oai-ue-gnb]: https://gitlab.eurecom.fr/oai/openairinterface5g
+[duranta-ue-gnb]: https://lfnetworking.org/projects/duranta/
 [mosaic-flexric]: https://gitlab.eurecom.fr/mosaic5g/flexric
-[oai-handover]: https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/develop/doc/handover-tutorial.md
+[duranta-handover]: https://github.com/duranta-project/openairinterface5g/blob/develop/doc/handover-tutorial.md

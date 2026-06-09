@@ -57,7 +57,7 @@ if [ -f "CMakeLists.txt" ]; then
 fi
 cd ..
 
-# Apply patches to OpenAirInterface to add support for additional metrics in the KPI report
+# Apply patches to Duranta to add support for additional metrics in the KPI report
 cd openairinterface5g
 git restore openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c
 if [ ! -f "openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c.previous" ]; then

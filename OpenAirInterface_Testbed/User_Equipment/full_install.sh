@@ -53,9 +53,9 @@ if ! grep -q avx2 /proc/cpuinfo; then
     read -r -n 1 -s
 fi
 
-# Check for binary to determine if OpenAirInterface is already installed
+# Check for binary to determine if Duranta UE is already installed
 if [ "$CLEAN_INSTALL" = false ] && [ -f "openairinterface5g/cmake_targets/ran_build/build/nr-uesoftmodem" ]; then
-    echo "OpenAirInterface UE is already installed, skipping."
+    echo "Duranta UE is already installed, skipping."
     exit 0
 fi
 
@@ -67,17 +67,17 @@ INSTALL_START_TIME=$(date +%s)
 
 if [ ! -d "openairinterface5g" ]; then
     echo "Cloning openairinterface5g..."
-    ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/oai/openairinterface5g.git openairinterface5g --https
+    ./install_scripts/git_clone.sh https://github.com/duranta-project/openairinterface5g.gitg.git openairinterface5g --https
 fi
 
 if [ "$APPLY_PATCHES" = true ]; then
-    echo "Patching OpenAirInterface..."
+    echo "Patching Duranta UE..."
     ./install_scripts/apply_patches.sh
 fi
 
 echo
 echo
-echo "Installing User Equipment (OpenAirInterface)..."
+echo "Installing User Equipment (Duranta)..."
 # Modifies the needrestart configuration to suppress interactive prompts
 if [ -d /etc/needrestart ]; then
     sudo install -d -m 0755 /etc/needrestart/conf.d
@@ -115,7 +115,7 @@ if ! command -v cmake &>/dev/null; then
 fi
 CMAKE_VERSION=$(cmake --version | head -n1 | awk '{print $3}')
 if [[ "$CMAKE_VERSION" == 3.16.* ]]; then
-    echo "Detected CMake 3.16. Updating CMake for compatibility with OpenAirInterface..."
+    echo "Detected CMake 3.16. Updating CMake for compatibility with Duranta..."
     # Add Kitware's apt repository
     wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc | sudo apt-key add -
     sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ focal main'
@@ -220,7 +220,7 @@ if [ "$RADIO_TYPE" = "ZMQ" ]; then
     cd "$SCRIPT_DIR"
 fi
 
-echo "Compiling and Installing OpenAirInterface UE..."
+echo "Compiling and Installing Duranta UE..."
 
 cd "$SCRIPT_DIR/openairinterface5g"
 source oaienv

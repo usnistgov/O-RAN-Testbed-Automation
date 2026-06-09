@@ -403,7 +403,7 @@ cd %~dp0..
 if exist "OpenAirInterface_Testbed\User_Equipment\openairinterface5g" rmdir /s /q "OpenAirInterface_Testbed\User_Equipment\openairinterface5g"
 cd "OpenAirInterface_Testbed\User_Equipment" >nul 2>&1
 if not errorlevel 1 (
-    git clone https://gitlab.eurecom.fr/oai/openairinterface5g.git
+    git clone https://github.com/duranta-project/openairinterface5g.git
     cd "openairinterface5g"
     git checkout d420f8c1231e9651e299b714fde53e392c6880ec
     cd ..\..\..

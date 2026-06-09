@@ -115,7 +115,7 @@ cd OpenAirInterface_Testbed/5G_Core_Network/Additional_Cores_5GDeploy
 cd ../../..
 
 cd OpenAirInterface_Testbed/User_Equipment
-./install_scripts/git_clone.sh https://gitlab.eurecom.fr/oai/openairinterface5g.git --https
+./install_scripts/git_clone.sh https://github.com/duranta-project/openairinterface5g.git --https
 cd ../..
 
 cd OpenAirInterface_Testbed/Next_Generation_Node_B

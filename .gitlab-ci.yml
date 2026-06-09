@@ -227,14 +227,14 @@ openairinterface_flexric_setup:
     - cd ..
     - echo -e "\e[0Ksection_end:$(date +%s):quick_uninstall\r\e[0K"
 
-    - echo -e "\e[0Ksection_start:$(date +%s):oai_ue_install[collapsed=true]\r\e[0KInstall OpenAirInterface UE"
+    - echo -e "\e[0Ksection_start:$(date +%s):oai_ue_install[collapsed=true]\r\e[0KInstall Duranta UE"
     - echo "***************************** CI Install OAI UE ********************************"
     - cd OpenAirInterface_Testbed/User_Equipment
     - ./full_install.sh
     - cd ../..
     - echo -e "\e[0Ksection_end:$(date +%s):oai_ue_install\r\e[0K"
 
-    - echo -e "\e[0Ksection_start:$(date +%s):oai_gnb_install[collapsed=true]\r\e[0KInstall OpenAirInterface gNB"
+    - echo -e "\e[0Ksection_start:$(date +%s):oai_gnb_install[collapsed=true]\r\e[0KInstall Duranta gNB"
     - echo "***************************** CI Install OAI gNB *******************************"
     - cd OpenAirInterface_Testbed/Next_Generation_Node_B
     - ./full_install.sh
@@ -274,14 +274,14 @@ openairinterface_flexric_setup:
     - cd ..
     - echo -e "\e[0Ksection_end:$(date +%s):open5gs_uninstall\r\e[0K"
 
-    - echo -e "\e[0Ksection_start:$(date +%s):oai_ue_uninstall[collapsed=true]\r\e[0KUninstall OpenAirInterface UE"
+    - echo -e "\e[0Ksection_start:$(date +%s):oai_ue_uninstall[collapsed=true]\r\e[0KUninstall Duranta UE"
     - echo "***************************** CI Uninstall OAI UE ******************************"
     - cd OpenAirInterface_Testbed/User_Equipment
     - ./full_uninstall.sh bypass_confirmation
     - cd ../..
     - echo -e "\e[0Ksection_end:$(date +%s):oai_ue_uninstall\r\e[0K"
 
-    - echo -e "\e[0Ksection_start:$(date +%s):oai_gnb_uninstall[collapsed=true]\r\e[0KUninstall OpenAirInterface gNB"
+    - echo -e "\e[0Ksection_start:$(date +%s):oai_gnb_uninstall[collapsed=true]\r\e[0KUninstall Duranta gNB"
     - echo "***************************** CI Uninstall OAI gNB *****************************"
     - cd OpenAirInterface_Testbed/Next_Generation_Node_B
     - ./full_uninstall.sh bypass_confirmation

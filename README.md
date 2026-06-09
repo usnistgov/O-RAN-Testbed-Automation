@@ -17,12 +17,12 @@ The automation tool can be used in virtual machines and physical machines with t
   <img src="Images/Architecture_Light.svg" alt="Diagram of Testbed Open-Source Components" width="70%">
 </div>
 
-This tool supports the deployment of 5G O-RAN testbeds using open-source components in two main scenarios: OCUDU with O-RAN SC's Near-RT RIC, and Duranta with Mosaic5G's FlexRIC. Below is the list of the supported testbed open-source components.
+This tool supports the deployment of 5G O-RAN testbeds using open-source components in two main scenarios: OCUDU with O-RAN SC's Near-RT RIC, and Duranta (OpenAirInterface) with Mosaic5G's FlexRIC. Below is the list of the supported testbed open-source components.
 
 ```text
 CU/DU
 ├── OCUDU: 26.04
-├── Duranta gNB: 2026.w22
+├── Duranta (OAI) gNB: 2026.w22
 └── O-RAN SC E2 Simulator: M-Release
 RICs
 ├── O-RAN SC Near-RT RIC: M-Release
@@ -49,7 +49,7 @@ RICs
 
 UEs
 ├── srsRAN_4G: release_25_10
-└── Duranta 5G UE: 2026.w22
+└── Duranta (OAI) 5G UE: 2026.w22
 ```
 
 The components that have been verified to support or not support connectivity are included below.

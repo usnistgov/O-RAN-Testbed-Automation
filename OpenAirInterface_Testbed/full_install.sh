@@ -86,8 +86,8 @@ if [ "$KEEP_EXISTING_INSTALLS" != "y" ]; then
         fi
     fi
     echo " - 5G Core Network ($CORE_DISPLAY)"
-    echo " - User Equipment (Duranta)"
-    echo " - Next Generation Node B (Duranta)"
+    echo " - User Equipment (Duranta/OpenAirInterface)"
+    echo " - Next Generation Node B (Duranta/OpenAirInterface)"
     echo " - Near-Real-Time RAN Intelligent Controller (FlexRIC)"
     echo
     echo "Do you want to proceed? (Y/n)"

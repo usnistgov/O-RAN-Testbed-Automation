@@ -80,13 +80,13 @@ if [ "$SHARE_OAI_DIR_FROM_UE" = true ]; then
     if [ ! -f "../User_Equipment/openairinterface5g/cmake_targets/build_oai" ]; then
         echo "Cloning shared openairinterface5g to User Equipment..."
         sudo rm -rf ../User_Equipment/openairinterface5g
-        ./install_scripts/git_clone.sh https://github.com/duranta-project/openairinterface5g.git ../User_Equipment/openairinterface5g --https
+        ./install_scripts/git_clone.sh https://github.com/duranta-project/openairinterface5g.git ../User_Equipment/openairinterface5g
     fi
 else
     if [ ! -d "openairinterface5g" ]; then
         echo "Cloning openairinterface5g..."
         sudo rm -rf openairinterface5g
-        ./install_scripts/git_clone.sh https://github.com/duranta-project/openairinterface5g.git openairinterface5g --https
+        ./install_scripts/git_clone.sh https://github.com/duranta-project/openairinterface5g.git openairinterface5g
     fi
 fi
 

@@ -67,7 +67,7 @@ INSTALL_START_TIME=$(date +%s)
 
 if [ ! -d "openairinterface5g" ]; then
     echo "Cloning openairinterface5g..."
-    ./install_scripts/git_clone.sh https://github.com/duranta-project/openairinterface5g.gitg.git openairinterface5g --https
+    ./install_scripts/git_clone.sh https://github.com/duranta-project/openairinterface5g.git openairinterface5g
 fi
 
 if [ "$APPLY_PATCHES" = true ]; then

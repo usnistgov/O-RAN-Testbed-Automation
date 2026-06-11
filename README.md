@@ -1,5 +1,6 @@
 # Automation Tool for Deploying 5G O-RAN Testbeds
 
+<<<<<<< HEAD
 The objective of this tutorial is to provide a hands-on, end-to-end guide for deploying and validating an O-RAN compliant 5G testbed using OCUDU, Open5GS, and a Near-RT RIC environment. The tutorial is designed to learn the fundamentals of O-RAN architecture, OCUDU,  E2 integration, and KPI monitoring through a practical deployment workflow.
 By completing this tutorial, users will be able to:
 - Understand the architecture and components of O-RAN networks.
@@ -70,6 +71,9 @@ Users should be able to:
 - Validate UE registration
 - Run traffic and KPI tests
 
+=======
+Based on the blueprints described in NIST TN 2311 [\[1\]][nist-tn-2311], this automation tool facilitates the deployment and configuration of 5G Open Radio Access Network (O-RAN) testbeds. Designed to operate in both bare metal and virtualized environments, it simplifies setting up the components required for a 5G O-RAN testbed, including the 5G Core; Next Generation Node B (gNodeB) composed of Radio Unit (RU), Distributed Unit (DU), and Centralized Unit (CU); User Equipment (UE); RAN Intelligent Controller (RIC); and a series of xApps that can be installed in the RIC. This reduces the complexity and time required to operationalize the testbeds described in the report above, and enables more efficient testing and validation to facilitate research and development in 5G/6G technologies.
+>>>>>>> b178ddf (Adjust README.md)
 
 ## Setting Up a Testbed
 
@@ -82,21 +86,40 @@ The  tool can be used in virtual machines and physical machines with the list of
   <img src="Images/fig.jpg" alt="Diagram of Testbed Open-Source Components" width="70%">
 </div>
 
+<<<<<<< HEAD
 
 This tool supports the deployment of 5G O-RAN testbeds using open-source components, OCUDU with O-RAN SC's Near-RT RIC. Below is the list of the supported testbed open-source components.
 
 ```text
 CU/DU
 └──  OCUDU: 26.04
+=======
+This tool supports the deployment of 5G O-RAN testbeds using open-source components in two main scenarios: OCUDU with O-RAN SC's Near-RT RIC, and Duranta (OpenAirInterface) with Mosaic5G's FlexRIC. Below is the list of the supported testbed open-source components.
+
+```text
+CU/DU
+├── OCUDU: 26.04
+├── Duranta (OAI) gNB: 2026.w22
+└── O-RAN SC E2 Simulator: M-Release
+>>>>>>> b178ddf (Adjust README.md)
 RICs
 ├── O-RAN SC Near-RT RIC: M-Release
 │   └── xApps
 │       └──  KPM Monitor xApp
 5G Core
+<<<<<<< HEAD
 └──  Open5GS: v2.7.7
 
 UEs
 └──  srsRAN_4G: release_25_10
+=======
+├── Open5GS: v2.7.7
+├── OPENAIR-CN-5G: v2.2.0
+└── free5GC: v4.2.1
+UEs
+├── srsRAN_4G: release_25_10
+└── Duranta (OAI) 5G UE: 2026.w22
+>>>>>>> b178ddf (Adjust README.md)
 ```
 
 
@@ -146,7 +169,11 @@ Alternatively, the repository may be cloned over SSH: `git@gitlab.nist.gov:wnd-o
 ---
 
 > [!IMPORTANT]
+<<<<<<< HEAD
 > The deployment scenario based on Open 5GS Cpre, srsRAN and O-RAN SC's Near-RT RIC can be installed from the base directory.
+=======
+> The deployment scenario based on Duranta with FlexRIC can be installed from the `OpenAirInterface_Testbed` directory, while the deployment scenario based on srsRAN and O-RAN SC's Near-RT RIC can be installed from the base directory.
+>>>>>>> b178ddf (Adjust README.md)
 
 Begin the installation process, recommended to be run as the current user rather than as root:
 
@@ -243,10 +270,23 @@ For more information about a specific component, refer to the README.md files in
 6. Documentation of Next Generation Node B (OCUDU). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/Next_Generation_Node_B/README.md][gh-gnodeb].
 7. Documentation of User Equipment (srsRAN_4G). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/User_Equipment/README.md][gh-ue].
 8. Documentation of Near-Real Time RAN Intelligent Controller (O-RAN SC). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/RAN_Intelligent_Controllers/Near-Real-Time-RIC/README.md][gh-nearrtric].
+<<<<<<< HEAD
 <!--9. Documentation of Next Generation Node B (OpenAirInterface). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/OpenAirInterface_Testbed/Next_Generation_Node_B/README.md][gh-oaignb].
 10. Documentation of User Equipment (OpenAirInterface). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/OpenAirInterface_Testbed/User_Equipment/README.md][gh-oaiue].
 11. Documentation of Near-Real Time RAN Intelligent Controller (FlexRIC). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC/README.md][gh-flexric].
 -->
+=======
+9. Documentation of Non-Real Time RAN Intelligent Controller (O-RAN SC). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/RAN_Intelligent_Controllers/Non-Real-Time-RIC/README.md][gh-nonrtric].
+10. Documentation of OpenAirInterface Testbed. [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/OpenAirInterface_Testbed/README.md][gh-oai].
+11. Documentation of Next Generation Node B (Duranta). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/OpenAirInterface_Testbed/Next_Generation_Node_B/README.md][gh-oaignb].
+12. Documentation of User Equipment (Duranta). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/OpenAirInterface_Testbed/User_Equipment/README.md][gh-oaiue].
+13. Documentation of Near-Real Time RAN Intelligent Controller (FlexRIC). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC/README.md][gh-flexric].
+14. Wireless Networks Division. National Institute of Standards and Technology. [https://www.nist.gov/ctl/Wireless-Networks-Division][nist-wnd].
+15. Open RAN Research at NIST. National Institute of Standards and Technology. [https://www.nist.gov/programs-projects/Open-RAN-Research-NIST][nist-oran].
+16. NIST Software Disclaimer. [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/NIST Software Disclaimer.md][gh-nsd].
+17. Fair Use and Licensing Statements of NIST Data/Works: [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/LICENSE][gh-license].
+
+>>>>>>> b178ddf (Adjust README.md)
 ## <!-- HR 2 -->
 
 <div align="center">

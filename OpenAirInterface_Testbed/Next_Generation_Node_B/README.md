@@ -51,9 +51,9 @@ ImScope can be enabled for the gNodeB by setting `NRSCOPE_GUI=true` at the begin
 2. 3GPP TS 38.300: NR; NR and NG-RAN Overall description; Stage-2. [https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=3191][ts3191-3gpp]
 3. 3GPP TS 38.401: NG-RAN; Architecture description. [https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=3219][ts3219-3gpp]
 4. 3GPP TS 38.413: NG-RAN; NG Application Protocol (NGAP). [https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=3223][ts3223-3gpp]
-5. Starting the softmodem with the telnet server. OpenAirInterface. [https://github.com/duranta-project/openairinterface5g/blob/develop/common/utils/telnetsrv/DOC/telnetusage.md][duranta-telnet]
+5. Starting the softmodem with the telnet server. Duranta. [https://github.com/duranta-project/openairinterface5g/blob/develop/common/utils/telnetsrv/DOC/telnetusage.md][duranta-telnet]
 6. OAI O1 Adapter. OpenAirInterface. [https://gitlab.eurecom.fr/oai/o1-adapter][oai-o1-adapter]
-7. ImScope. OpenAirInterface. [https://github.com/duranta-project/openairinterface5g/blob/develop/openair1/PHY/TOOLS/readme.md?ref_type=heads#imscope][duranta-imscope]
+7. ImScope. Duranta. [https://github.com/duranta-project/openairinterface5g/blob/develop/openair1/PHY/TOOLS/readme.md?ref_type=heads#imscope][duranta-imscope]
 
 <!-- References -->
 

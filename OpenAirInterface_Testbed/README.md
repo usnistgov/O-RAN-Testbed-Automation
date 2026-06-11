@@ -54,7 +54,7 @@ The script `run_handover_scenario.sh`, based on the handover tutorial [\[4\]][du
 1. Open Source implementation for 5G Core and EPC. Open5GS. [https://github.com/open5gs/open5gs][open5gs-core]
 2. Duranta - An open, research-grade RAN + UE reference stack. LF Networking. [https://lfnetworking.org/projects/duranta/][duranta-ue-gnb]
 3. Flexible RAN Intelligent Controller (FlexRIC) and E2 Agent. Mosaic5G. [https://gitlab.eurecom.fr/mosaic5g/flexric][mosaic-flexric]
-4. OpenAirInterface Handover Tutorial. OpenAirInterface. [https://github.com/duranta-project/openairinterface5g/blob/develop/doc/handover-tutorial.md][duranta-handover]
+4. Handover Tutorial for OAI. Duranta. [https://github.com/duranta-project/openairinterface5g/blob/develop/doc/handover-tutorial.md][duranta-handover]
 
 <!-- References -->
 

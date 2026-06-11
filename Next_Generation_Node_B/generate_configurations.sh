@@ -328,6 +328,8 @@ update_yaml "configs/gnb.yaml" "cu_cp.request_pdu_session_timeout" "3"
 update_yaml "configs/gnb.yaml" "ru_sdr" "device_driver" "zmq"
 update_yaml "configs/gnb.yaml" "ru_sdr" "device_args" "$DEVICE_ARGS"
 update_yaml "configs/gnb.yaml" "ru_sdr" "srate" "23.04"
+update_yaml "configs/gnb.yaml" "ru_sdr" "tx_gain" "0"
+update_yaml "configs/gnb.yaml" "ru_sdr" "rx_gain" "0"
 update_yaml "configs/gnb.yaml" "ru_sdr" "clock" "default"
 update_yaml "configs/gnb.yaml" "ru_sdr" "sync" "default"
 

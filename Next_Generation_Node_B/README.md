@@ -17,24 +17,78 @@ The Next Generation Node B (gNodeB) is a 5G base station configured with OCUDU [
 > [!NOTE]
 > If the directory `RAN_Intelligent_Controllers/Near-Real-Time-RIC` is not found, then the `generate_configurations.sh` script will disable the E2 interface. Alternatively, if prompted to enter an E2 address, enter nothing ("") to disable the E2 interface in the gNodeB configuration.
 
-## ZeroMQ Broker
+## Simulating Multiple UEs with ZeroMQ Broker
 
-To facilitate multi-UE emulation, the testbed utilizes a ZeroMQ (ZMQ) Broker based on the OCUDU Multi-UE Emulation tutorial [\[5\]][ocudu-multi-ue]. The broker is defined using a GNU Radio Companion flowgraph (`zmq_broker/multi_ue_scenario.grc`) retrieved from the tutorial [\[6\]][ocudu-multi-ue-grc] and compiled into a Python executable using the GNU Radio Companion Compiler (`grcc`). The ZMQ Broker operates the simulated ZeroMQ channel. Its graphical user interface is disabled by default, but can be enabled by setting `SHOW_ZMQ_BROKER_UI=true` in `run.sh`.
+By default, the gNodeB connects directly to a single SRS UE. To facilitate multi-UE emulation, the testbed can utilize a ZeroMQ (ZMQ) Broker based on the OCUDU Multi-UE Emulation tutorial [\[5\]][ocudu-multi-ue]. The broker is defined using a GNU Radio Companion flowgraph (`zmq_broker/multi_ue_scenario.grc`) retrieved from the tutorial [\[6\]][ocudu-multi-ue-grc] and compiled into a Python executable using the GNU Radio Companion Compiler (`grcc`). The ZMQ Broker operates the simulated ZeroMQ channel. Its graphical user interface is disabled by default, but can be enabled by setting `SHOW_ZMQ_BROKER_UI=true` in `run.sh`.
+
+To enable the broker, set all occurrences of `USE_ZMQ_BROKER` to `true`, then run `../generate_configurations.sh`.
+
+<details>
+<summary>Enable ZMQ broker</summary>
+
+```bash
+sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' ../run.sh
+sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' run.sh
+sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' full_install.sh
+sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' generate_configurations.sh
+sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' is_running.sh
+sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' run_background.sh
+sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' stop.sh
+````
+
+</details>
+
+<details>
+<summary>Disable ZMQ broker (default)</summary>
+
+```bash
+sed -i 's/^USE_ZMQ_BROKER=true$/USE_ZMQ_BROKER=false/' ../run.sh
+sed -i 's/^USE_ZMQ_BROKER=true$/USE_ZMQ_BROKER=false/' run.sh
+sed -i 's/^USE_ZMQ_BROKER=true$/USE_ZMQ_BROKER=false/' full_install.sh
+sed -i 's/^USE_ZMQ_BROKER=true$/USE_ZMQ_BROKER=false/' generate_configurations.sh
+sed -i 's/^USE_ZMQ_BROKER=true$/USE_ZMQ_BROKER=false/' is_running.sh
+sed -i 's/^USE_ZMQ_BROKER=true$/USE_ZMQ_BROKER=false/' run_background.sh
+sed -i 's/^USE_ZMQ_BROKER=true$/USE_ZMQ_BROKER=false/' stop.sh
+```
+
+</details>
+
+- When the ZMQ broker is enabled, `run.sh` on the base directory starts the gNodeB and UEs 2 and 3 as background processes, while UE 1 runs in the foreground.
 
 > [!NOTE]
 > The default `multi_ue_scenario.grc` flowgraph supports three UEs. To change emulated UE scenario, modify the `.grc` file using GNU Radio Companion to add or remove ZeroMQ blocks, delete the existing `zmq_broker/multi_ue_scenario.py`, and run `./generate_configurations.sh` to compile the `.grc` file into a new Python script and automatically patch the required IP addresses.
 
 ## E2 Interface
 
-By default, the gNodeB's Distributed Unit (DU) connects to the O-RAN Software Community's Near-Real-Time RAN Intelligent Controller (O-RAN SC Near-RT RIC) E2 Terminator. To use FlexRIC instead of O-RAN SC's Near-RT RIC, set all occurrences of `USE_FLEXRIC=false` to `USE_FLEXRIC=true` with the following commands:
-```console
-sed -i 's/^USE_FLEXRIC=false$/USE_FLEXRIC=true/' generate_configurations.sh
+By default, the gNodeB's Distributed Unit (DU) connects to the O-RAN Software Community's Near-Real-Time RAN Intelligent Controller (O-RAN SC Near-RT RIC) E2 Terminator. To use FlexRIC instead of O-RAN SC's Near-RT RIC, set all occurrences of `USE_FLEXRIC` to `true`, then run `../generate_configurations.sh`.
+
+<details>
+<summary>Enable FlexRIC</summary>
+
+```bash
 sed -i 's/^USE_FLEXRIC=false$/USE_FLEXRIC=true/' ../full_install.sh
 sed -i 's/^USE_FLEXRIC=false$/USE_FLEXRIC=true/' ../full_uninstall.sh
 sed -i 's/^USE_FLEXRIC=false$/USE_FLEXRIC=true/' ../generate_configurations.sh
 sed -i 's/^USE_FLEXRIC=false$/USE_FLEXRIC=true/' ../run.sh
 sed -i 's/^USE_FLEXRIC=false$/USE_FLEXRIC=true/' ../stop.sh
+sed -i 's/^USE_FLEXRIC=false$/USE_FLEXRIC=true/' generate_configurations.sh
 ```
+
+</details>
+
+<details>
+<summary>Disable FlexRIC (default)</summary>
+
+```bash
+sed -i 's/^USE_FLEXRIC=true$/USE_FLEXRIC=false/' ../full_install.sh
+sed -i 's/^USE_FLEXRIC=true$/USE_FLEXRIC=false/' ../full_uninstall.sh
+sed -i 's/^USE_FLEXRIC=true$/USE_FLEXRIC=false/' ../generate_configurations.sh
+sed -i 's/^USE_FLEXRIC=true$/USE_FLEXRIC=false/' ../run.sh
+sed -i 's/^USE_FLEXRIC=true$/USE_FLEXRIC=false/' ../stop.sh
+sed -i 's/^USE_FLEXRIC=true$/USE_FLEXRIC=false/' generate_configurations.sh
+```
+
+</details>
 
 ## O1 Interface
 

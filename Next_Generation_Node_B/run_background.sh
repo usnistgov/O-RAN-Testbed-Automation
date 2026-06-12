@@ -31,6 +31,8 @@
 # Exit immediately if a command fails
 set -e
 
+USE_ZMQ_BROKER=false
+
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
@@ -50,7 +52,7 @@ else
 
     # Allow ZMQ Broker UI to access the display if xhost is available
     ZMQ_BROKER_UI_ENV=""
-    if [ -n "$DISPLAY" ]; then
+    if [ "$USE_ZMQ_BROKER" = "true" ] && [ -n "$DISPLAY" ]; then
         ZMQ_BROKER_UI_ENV="DISPLAY=$DISPLAY XAUTHORITY=${XAUTHORITY:-$HOME/.Xauthority}"
         if command -v xhost &>/dev/null; then
             xhost +SI:localuser:root >/dev/null 2>&1 || true

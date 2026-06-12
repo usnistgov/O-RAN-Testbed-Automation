@@ -36,6 +36,7 @@ CLEAN_INSTALL=false
 DEBUG_SYMBOLS=false
 RUN_TESTS=false
 TUNE_PERFORMANCE=false
+USE_ZMQ_BROKER=false
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
@@ -208,7 +209,7 @@ fi
 
 cd "$SCRIPT_DIR"
 
-if [ ! -f "zmq_broker/multi_ue_scenario.py" ]; then
+if [ "$USE_ZMQ_BROKER" = "true" ] && [ ! -f "zmq_broker/multi_ue_scenario.py" ]; then
     if ! command -v grcc >/dev/null 2>&1; then
         echo "Installing GNU Radio Companion Compiler (grcc) for the ZeroMQ Broker..."
         sudo env $APTVARS apt-get install -y gnuradio
@@ -217,8 +218,10 @@ fi
 
 echo
 echo
-mkdir -p zmq_broker
-if [ ! -f "zmq_broker/multi_ue_scenario.grc" ]; then
+if [ "$USE_ZMQ_BROKER" = "true" ]; then
+    mkdir -p zmq_broker
+fi
+if [ "$USE_ZMQ_BROKER" = "true" ] && [ ! -f "zmq_broker/multi_ue_scenario.grc" ]; then
     if ! command -v jq &>/dev/null; then
         echo "Installing jq..."
         sudo env $APTVARS apt-get install -y jq

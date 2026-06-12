@@ -69,7 +69,7 @@ Before beginning the installation and setup of the testbed, verify that the syst
 - **Operating System**: Linux distributions based on Ubuntu 20.04 LTS, Ubuntu 22.04 LTS, Ubuntu 24.04 LTS, and Ubuntu 26.04 LTS are supported.
   - _Recommendation: Ubuntu 22.04._
 - **Hard Drive Storage**: Must be `≥ 57` GB.
-- **Base Memory/RAM**: Must be `≥ 6000` MB.
+- **Base Memory/RAM**: Must be `≥ 8000` MB.
 - **Number of Processors**: Must be `≥ 2` processors.
   - _Recommendation: `≥ 6` processors._
 - **Internet Connectivity**: A stable internet connection must be maintained during the installation otherwise the process may fail and require restarting.
@@ -146,7 +146,7 @@ Begin the installation process, recommended to be run as the current user rather
   <summary><b>OCUDU and O-RAN SC Near-RT RIC Output</b></summary>
   <hr>
 
-Run the testbed with `./run.sh` to start the 5G Core, gNodeB, and UEs 2 and 3 as background processes, and UE 1 in the foreground. Use `./is_running.sh` to check if the components are running, and `./stop.sh` to stop the components. The optional RIC starts automatically on boot and can be accessed with `k9s -A`.
+Run the testbed with `./run.sh` to start the 5G Core, gNodeB, and UE. Use `./is_running.sh` to check if the components are running, and `./stop.sh` to stop the components. The optional RIC starts automatically on boot and can be accessed with `k9s -A`.
 
 ```console
 Attaching UE...

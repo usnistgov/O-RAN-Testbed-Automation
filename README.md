@@ -125,6 +125,7 @@ Alternatively, the repository may be cloned over SSH: `git clone git@github.com:
 
 > [!IMPORTANT]
 > The deployment scenario based on Duranta with FlexRIC can be installed from the `OpenAirInterface_Testbed` directory, while the deployment scenario based on srsRAN and O-RAN SC's Near-RT RIC can be installed from the base directory.
+> - To use OCUDU with FlexRIC instead of O-RAN SC's Near-RT RIC, refer to [\[2\]][gh-ocudu-e2].
 
 Begin the installation process, recommended to be run as the current user rather than as root:
 
@@ -213,26 +214,26 @@ See <a href="OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC#k
 
 ## Software Versioning
 
-For stability of software dependencies, all `git clone` calls are routed through `commit_hashes.json` which specifies a branch and/or commit hash for each repository. This file can be updated manually, or with `./Additional_Scripts/update_commit_hashes.sh` to fetch the latest commit hashes. For information about the automation tool versions, please see the releases page [\[2\]][gh-ota].
+For stability of software dependencies, all `git clone` calls are routed through `commit_hashes.json` which specifies a branch and/or commit hash for each repository. This file can be updated manually, or with `./Additional_Scripts/update_commit_hashes.sh` to fetch the latest commit hashes. For information about the automation tool versions, please see the releases page [\[3\]][gh-ota].
 
 ## Documentation
 
 For more information about a specific component, refer to the README.md files in the respective subdirectories:
-- README.md [\[3\]][gh-readme]
-- 5G_Core_Network/README.md [\[4\]][gh-5gcore]
-- 5G_Core_Network/Additional_Cores_5GDeploy/README.md [\[5\]][gh-5gdeploy]
-- Next_Generation_Node_B/README.md [\[6\]][gh-gnodeb]
-- User_Equipment/README.md [\[7\]][gh-ue]
-- RAN_Intelligent_Controllers/Near-Real-Time-RIC/README.md [\[8\]][gh-nearrtric]
-- RAN_Intelligent_Controllers/Non-Real-Time-RIC/README.md [\[9\]][gh-nonrtric]
-- OpenAirInterface_Testbed/README.md [\[10\]][gh-oai]
-- OpenAirInterface_Testbed/Next_Generation_Node_B/README.md [\[11\]][gh-oaignb]
-- OpenAirInterface_Testbed/User_Equipment/README.md [\[12\]][gh-oaiue]
-- OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC/README.md [\[13\]][gh-flexric]
+- README.md [\[4\]][gh-readme]
+- 5G_Core_Network/README.md [\[5\]][gh-5gcore]
+- 5G_Core_Network/Additional_Cores_5GDeploy/README.md [\[6\]][gh-5gdeploy]
+- Next_Generation_Node_B/README.md [\[7\]][gh-gnodeb]
+- User_Equipment/README.md [\[8\]][gh-ue]
+- RAN_Intelligent_Controllers/Near-Real-Time-RIC/README.md [\[9\]][gh-nearrtric]
+- RAN_Intelligent_Controllers/Non-Real-Time-RIC/README.md [\[10\]][gh-nonrtric]
+- OpenAirInterface_Testbed/README.md [\[11\]][gh-oai]
+- OpenAirInterface_Testbed/Next_Generation_Node_B/README.md [\[12\]][gh-oaignb]
+- OpenAirInterface_Testbed/User_Equipment/README.md [\[13\]][gh-oaiue]
+- OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC/README.md [\[14\]][gh-flexric]
 
 ## Contact Information
 
-USNISTGOV/O-RAN-Testbed-Automation is developed and maintained by the NIST Wireless Networks Division [\[14\]][nist-wnd], as part of their Open RAN Research Program [\[15\]][nist-oran].  Contacts for this software:
+USNISTGOV/O-RAN-Testbed-Automation is developed and maintained by the NIST Wireless Networks Division [\[15\]][nist-wnd], as part of their Open RAN Research Program [\[16\]][nist-oran].  Contacts for this software:
 
 - Simeon J. Wuthier, @Simewu
 - Fernando J. Cintrón, @fjcintron
@@ -246,22 +247,23 @@ USNISTGOV/O-RAN-Testbed-Automation is developed and maintained by the NIST Wirel
 ## References
 
 1. Liu, Peng, Lee, Kyehwan, Cintrón, Fernando J., Wuthier, Simeon, Savaliya, Bhadresh, Montgomery, Douglas, Rouil, Richard (2024). Blueprint for Deploying 5G O-RAN Testbeds: A Guide to Using Diverse O-RAN Software Stacks. National Institute of Standards and Technology. [https://doi.org/10.6028/NIST.TN.2311][nist-tn-2311].
-2. Releases, Automation Tool for Deploying 5G O-RAN Testbeds. GitHub. [https://github.com/USNISTGOV/O-RAN-Testbed-Automation/releases][gh-ota].
-3. Documentation of Base Directory. [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/README.md][gh-readme]
-4. Documentation of 5G Core Network (Open5GS). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/5G_Core_Network/README.md][gh-5gcore].
-5. Documentation of Additional Cores for 5G Deployment. [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/5G_Core_Network/Additional_Cores_5GDeploy/README.md][gh-5gdeploy].
-6. Documentation of Next Generation Node B (OCUDU). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/Next_Generation_Node_B/README.md][gh-gnodeb].
-7. Documentation of User Equipment (srsRAN_4G). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/User_Equipment/README.md][gh-ue].
-8. Documentation of Near-Real Time RAN Intelligent Controller (O-RAN SC). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/RAN_Intelligent_Controllers/Near-Real-Time-RIC/README.md][gh-nearrtric].
-9. Documentation of Non-Real Time RAN Intelligent Controller (O-RAN SC). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/RAN_Intelligent_Controllers/Non-Real-Time-RIC/README.md][gh-nonrtric].
-10. Documentation of OpenAirInterface Testbed. [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/OpenAirInterface_Testbed/README.md][gh-oai].
-11. Documentation of Next Generation Node B (Duranta). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/OpenAirInterface_Testbed/Next_Generation_Node_B/README.md][gh-oaignb].
-12. Documentation of User Equipment (Duranta). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/OpenAirInterface_Testbed/User_Equipment/README.md][gh-oaiue].
-13. Documentation of Near-Real Time RAN Intelligent Controller (FlexRIC). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC/README.md][gh-flexric].
-14. Wireless Networks Division. National Institute of Standards and Technology. [https://www.nist.gov/ctl/Wireless-Networks-Division][nist-wnd].
-15. Open RAN Research at NIST. National Institute of Standards and Technology. [https://www.nist.gov/programs-projects/Open-RAN-Research-NIST][nist-oran].
-16. NIST Software Disclaimer. [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/NIST Software Disclaimer.md][gh-nsd].
-17. Fair Use and Licensing Statements of NIST Data/Works: [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/LICENSE][gh-license].
+2. OCUDU with FlexRIC. GitHub. [https://github.com/usnistgov/O-RAN-Testbed-Automation/tree/main/Next_Generation_Node_B/README.md#e2-interface][gh-ocudu-e2].
+3. Releases, Automation Tool for Deploying 5G O-RAN Testbeds. GitHub. [https://github.com/USNISTGOV/O-RAN-Testbed-Automation/releases][gh-ota].
+4. Documentation of Base Directory. [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/README.md][gh-readme]
+5. Documentation of 5G Core Network (Open5GS). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/5G_Core_Network/README.md][gh-5gcore].
+6. Documentation of Additional Cores for 5G Deployment. [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/5G_Core_Network/Additional_Cores_5GDeploy/README.md][gh-5gdeploy].
+7. Documentation of Next Generation Node B (OCUDU). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/Next_Generation_Node_B/README.md][gh-gnodeb].
+8. Documentation of User Equipment (srsRAN_4G). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/User_Equipment/README.md][gh-ue].
+9. Documentation of Near-Real Time RAN Intelligent Controller (O-RAN SC). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/RAN_Intelligent_Controllers/Near-Real-Time-RIC/README.md][gh-nearrtric].
+10. Documentation of Non-Real Time RAN Intelligent Controller (O-RAN SC). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/RAN_Intelligent_Controllers/Non-Real-Time-RIC/README.md][gh-nonrtric].
+11. Documentation of OpenAirInterface Testbed. [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/OpenAirInterface_Testbed/README.md][gh-oai].
+12. Documentation of Next Generation Node B (Duranta). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/OpenAirInterface_Testbed/Next_Generation_Node_B/README.md][gh-oaignb].
+13. Documentation of User Equipment (Duranta). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/OpenAirInterface_Testbed/User_Equipment/README.md][gh-oaiue].
+14. Documentation of Near-Real Time RAN Intelligent Controller (FlexRIC). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC/README.md][gh-flexric].
+15. Wireless Networks Division. National Institute of Standards and Technology. [https://www.nist.gov/ctl/Wireless-Networks-Division][nist-wnd].
+16. Open RAN Research at NIST. National Institute of Standards and Technology. [https://www.nist.gov/programs-projects/Open-RAN-Research-NIST][nist-oran].
+17. NIST Software Disclaimer. [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/NIST Software Disclaimer.md][gh-nsd].
+18. Fair Use and Licensing Statements of NIST Data/Works: [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/LICENSE][gh-license].
 
 ## <!-- HR 2 -->
 
@@ -279,6 +281,7 @@ USNISTGOV/O-RAN-Testbed-Automation is developed and maintained by the NIST Wirel
 <!-- References -->
 
 [nist-tn-2311]: https://doi.org/10.6028/NIST.TN.2311
+[gh-ocudu-e2]: Next_Generation_Node_B/README.md#e2-interface
 [gh-ota]: https://github.com/USNISTGOV/O-RAN-Testbed-Automation/releases
 [gh-readme]: README.md
 [gh-5gcore]: 5G_Core_Network/README.md

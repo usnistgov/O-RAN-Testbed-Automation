@@ -24,6 +24,18 @@ To facilitate multi-UE emulation, the testbed utilizes a ZeroMQ (ZMQ) Broker bas
 > [!NOTE]
 > The default `multi_ue_scenario.grc` flowgraph supports three UEs. To change emulated UE scenario, modify the `.grc` file using GNU Radio Companion to add or remove ZeroMQ blocks, delete the existing `zmq_broker/multi_ue_scenario.py`, and run `./generate_configurations.sh` to compile the `.grc` file into a new Python script and automatically patch the required IP addresses.
 
+## E2 Interface
+
+By default, the gNodeB's Distributed Unit (DU) connects to the O-RAN Software Community's Near-Real-Time RAN Intelligent Controller (O-RAN SC Near-RT RIC) E2 Terminator. To use FlexRIC instead of O-RAN SC's Near-RT RIC, set all occurrences of `USE_FLEXRIC=false` to `USE_FLEXRIC=true` with the following commands:
+```console
+sed -i 's/^USE_FLEXRIC=false$/USE_FLEXRIC=true/' generate_configurations.sh
+sed -i 's/^USE_FLEXRIC=false$/USE_FLEXRIC=true/' ../full_install.sh
+sed -i 's/^USE_FLEXRIC=false$/USE_FLEXRIC=true/' ../full_uninstall.sh
+sed -i 's/^USE_FLEXRIC=false$/USE_FLEXRIC=true/' ../generate_configurations.sh
+sed -i 's/^USE_FLEXRIC=false$/USE_FLEXRIC=true/' ../run.sh
+sed -i 's/^USE_FLEXRIC=false$/USE_FLEXRIC=true/' ../stop.sh
+```
+
 ## O1 Interface
 
 The gNodeB can also be monitored and controlled through the OCUDU O1 Adapter [\[7\]][ocudu-o1-adapter]. Management scripts for the O1 interface are located in the `additional_scripts/` directory. Use `./additional_scripts/install_o1_adapter.sh` to install and build the required components, `./additional_scripts/run_o1_adapter.sh` to start the O1 services, `./additional_scripts/stop_o1_adapter.sh` to stop them, and `./additional_scripts/uninstall_o1_adapter.sh` to remove them.

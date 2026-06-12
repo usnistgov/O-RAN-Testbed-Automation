@@ -63,6 +63,82 @@ Co-authored-by: fjcintron <fernando.cintron@nist.gov>
 """
 
 
+
+
+## Changelog for v1.7.2: Duranta Integration
+
+### Duranta / OpenAirInterface Testbed
+
+* Switched the OpenAirInterface-based gNodeB and UE implementation to Duranta (OpenAirInterface) 2026.w24 [[1]][lf-duranta].
+- Duranta gNodeB: Added configuration support to select `ssb_rsrp`, `cri_rsrp`, `ssb_sinr`, or CSIRS-based reporting.
+- Duranta gNodeB: Updated gNB-DU_ID handling for newer compiler compatibility (Ubuntu 26.04 support).
+- Duranta gNodeB: Ensured generated configurations use the expected E2AP and KPM versions for interoperability.
+- Duranta RF simulator: Allocated each gNodeB and UE its own channel model configuration for multi-node scenarios.
+  - Duranta handover scenario: Configured DUs to support F1 handovers when the DU count exceeds two.
+
+### Next Generation Node B
+
+* OCUDU: Fixed generation of `cu_cp.inactivity_timer` in gnb.yaml and added simple way to connect with FlexRIC [[2]][gh-ocudu-e2].
+- OCUDU: Set ZeroMQ `tx_gain` and `rx_gain` to align with latest OCUDU ZMQ-device requirements.
+- OCUDU: Fixed the ZeroMQ broker download URL by updating the pinned OCUDU documentation commit.
+- OCUDU: Removed dependence on GNU-specific `M_PI_2f` by using `static_cast<float>(M_PI_2)` instead (compatibility with older compilers).
+- OCUDU: Updated OCUDU, OCUDU O1 adapter, and OCUDU Netconf commit hashes to their latest versions.
+
+### User Equipment
+
+* SRS UE: Fixed uninstallation with CMake 4 by removing the deprecated CMP0007 policy block from `cmake_uninstall.cmake` before running make uninstall [[3]][cmake-cmp0007].
+- SRS UE: Added a build-testing toggle to full_install.sh; tests are disabled by default.
+
+### RAN Intelligent Controllers
+
+- Added an option to install FlexRIC instead of the O-RAN SC Near-RT RIC for supported scenarios.
+- FlexRIC: Improved timing robustness by batching measurements using `collectStartTime` rather than local indication arrival time.
+- FlexRIC: Updated Grafana dashboard and sample KPI_Metrics.csv files to reflect updated metric handling.
+- FlexRIC: Added an interactive InfluxDB client option to pretty-print the latest metrics.
+- FlexRIC: Added xApp source formatting support using `.clang-format`.
+- FlexRIC: Added graceful handling for unsupported KPM report style types and measurement value types in KPM xApps.
+  - FlexRIC: Added KPM xApp support for MeasurementRecordItem `noValue`.
+- FlexRIC: Reorganized E2 node ID patching into component-scoped patch files for maintainability.
+* O-RAN SC: Fixed memory handling in the `kpimon-go` xApp so mismatched E2AP/KPM versions are handled gracefully rather than double-free crash [[4]][gh-issue-13].
+- O-RAN SC: Improved run.sh and stop.sh for Near-RT and Non-RT RICs so Kubernetes pods can be restarted quickly without full reinstall.
+- O-RAN SC: Added `additional_scripts/fetch_connected_e2_nodes.sh` to retrieve list of connected E2 nodes.
+- O-RAN SC: Improved containerd cleanup by guarding `crictl` pod, container, and image removal operations.
+
+## General
+
+- Added `additional_scripts/check_e2ap_version.sh` to all gNodeB and RIC components.
+- Updated Docker and Helm version handling across install scripts for current Ubuntu releases.
+- Updated Open5GS, Duranta, OCUDU, OCUDU documentation, O1 adapter, Netconf, and SWIG commit hashes to stable tested revisions.
+- Reorganized patch files to reduce path length issues on Windows ZIP archives.
+- Revised documentation, diagrams, dependency-download scripts, and source code to reflect the Duranta integration.
+- Additional minor improvements.
+
+### Issues Resolved
+- Fixed issue #13: Issues with memory management in O-RAN SC `kpimon-go` xApp, identifying ASN.1 version mismatches.
+  - Fixed OCUDU's connectivity with O-RAN SC Near-RT RIC and FlexRIC for E2SM-KPM monitoring.
+  - Thanks to @Deshan-Lokuge01 for finding this issue.
+- Resolved issue #14: Issues connecting SRS UE 3 to OCUDU.
+  - Thanks to @ciccio25 for finding this.
+
+### References
+
+1. Duranta. LF Networking. [https://lfnetworking.org/projects/duranta/][lf-duranta]
+2. OCUDU with FlexRIC. GitHub. [https://github.com/usnistgov/O-RAN-Testbed-Automation/tree/main/Next_Generation_Node_B/README.md#e2-interface][gh-ocudu-e2]
+3. CMP0007. CMake. [https://cmake.org/cmake/help/latest/policy/CMP0007.html][cmake-cmp0007]
+4. ASN.1 Decoding Error (SIGABRT) in kpimon-go with srsRAN E2SM-KPM Payload. GitHub. [https://github.com/usnistgov/O-RAN-Testbed-Automation/issues/13][gh-issue-13]
+
+<!-- References -->
+
+[lf-duranta]: https://lfnetworking.org/projects/duranta/
+[gh-ocudu-e2]: Next_Generation_Node_B/README.md#e2-interface
+[cmake-cmp0007]: https://cmake.org/cmake/help/latest/policy/CMP0007.html
+[gh-issue-13]: https://github.com/usnistgov/O-RAN-Testbed-Automation/issues/13
+
+
+
+
+
+
 ## Changelog for v1.7.1
 
 - Extended testbed support to Ubuntu 26.04 LTS.

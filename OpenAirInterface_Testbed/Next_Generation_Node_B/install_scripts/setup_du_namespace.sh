@@ -36,14 +36,14 @@ set -e
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-DU_NUMBER=$1
+DU_NUMBER="$1"
 
 if [[ -z "$DU_NUMBER" ]]; then
     echo "ERROR: No DU number provided."
     echo "Usage: $0 <DU_NUMBER>"
     exit 1
 fi
-if ! [[ $DU_NUMBER =~ ^[0-9]+$ ]]; then
+if ! [[ "$DU_NUMBER" =~ ^[0-9]+$ ]]; then
     echo "ERROR: DU number must be a number."
     exit 1
 fi
@@ -64,37 +64,44 @@ DU_IP_OFFSET=$((SUBNET_OFFSET + 1)) # .6
 
 # Fetch IPs from subnet using python script
 DU_SUBNET_ID=$(python3 fetch_nth_ip.py "$BASE_SUBNET" $((SUBNET_OFFSET - 1)))
-DU_HOST_IP=$(python3 fetch_nth_ip.py "$BASE_SUBNET" $HOST_IP_OFFSET)
-DU_NS_IP=$(python3 fetch_nth_ip.py "$BASE_SUBNET" $DU_IP_OFFSET)
+DU_HOST_IP=$(python3 fetch_nth_ip.py "$BASE_SUBNET" "$HOST_IP_OFFSET")
+DU_NS_IP=$(python3 fetch_nth_ip.py "$BASE_SUBNET" "$DU_IP_OFFSET")
 
-# Clean up existing artifacts for this DU
-sudo ip netns delete $DU_NAMESPACE 2>/dev/null || true
-sudo ip link delete v-eth-du$DU_NUMBER 2>/dev/null || true
+if sudo ip netns list | grep -qE "^${DU_NAMESPACE}( |$)" &&
+    ip link show "v-eth-du$DU_NUMBER" >/dev/null 2>&1 &&
+    sudo ip netns exec "$DU_NAMESPACE" ip link show "v-$DU_NAMESPACE" >/dev/null 2>&1; then
+    echo "Reusing existing namespace $DU_NAMESPACE and v-eth-du$DU_NUMBER."
+else
+    # Clean up existing artifacts for this DU
+    sudo ip netns delete "$DU_NAMESPACE" 2>/dev/null || true
+    sudo ip link delete "v-eth-du$DU_NUMBER" 2>/dev/null || true
 
-# Create namespace and veth pair
-sudo ip netns add $DU_NAMESPACE
-sudo ip link add v-eth-du$DU_NUMBER type veth peer name v-$DU_NAMESPACE
-sudo ip link set v-$DU_NAMESPACE netns $DU_NAMESPACE
+    # Create namespace and veth pair
+    sudo ip netns add "$DU_NAMESPACE"
+    sudo ip link add "v-eth-du$DU_NUMBER" type veth peer name "v-$DU_NAMESPACE"
+    sudo ip link set "v-$DU_NAMESPACE" netns "$DU_NAMESPACE"
+fi
 
 # Configure host side interface
-sudo ip addr add $DU_HOST_IP/30 dev v-eth-du$DU_NUMBER
-sudo ip link set v-eth-du$DU_NUMBER up
+sudo ip addr replace "$DU_HOST_IP/30" dev "v-eth-du$DU_NUMBER"
+sudo ip link set "v-eth-du$DU_NUMBER" up
+sudo ip route replace "$DU_SUBNET_ID/30" dev "v-eth-du$DU_NUMBER" src "$DU_HOST_IP"
 
 # Configure NAT to masquerade traffic and allow forwarding
 if ! sudo iptables -t nat -C POSTROUTING -s "$DU_SUBNET_ID/30" -o "$NETWORK_INTERFACE" -j MASQUERADE 2>/dev/null; then
     sudo iptables -t nat -A POSTROUTING -s "$DU_SUBNET_ID/30" -o "$NETWORK_INTERFACE" -j MASQUERADE
 fi
-if ! sudo iptables -C FORWARD -i "$NETWORK_INTERFACE" -o v-eth-du$DU_NUMBER -j ACCEPT 2>/dev/null; then
-    sudo iptables -A FORWARD -i "$NETWORK_INTERFACE" -o v-eth-du$DU_NUMBER -j ACCEPT
+if ! sudo iptables -C FORWARD -i "$NETWORK_INTERFACE" -o "v-eth-du$DU_NUMBER" -j ACCEPT 2>/dev/null; then
+    sudo iptables -A FORWARD -i "$NETWORK_INTERFACE" -o "v-eth-du$DU_NUMBER" -j ACCEPT
 fi
-if ! sudo iptables -C FORWARD -o "$NETWORK_INTERFACE" -i v-eth-du$DU_NUMBER -j ACCEPT 2>/dev/null; then
-    sudo iptables -A FORWARD -o "$NETWORK_INTERFACE" -i v-eth-du$DU_NUMBER -j ACCEPT
+if ! sudo iptables -C FORWARD -o "$NETWORK_INTERFACE" -i "v-eth-du$DU_NUMBER" -j ACCEPT 2>/dev/null; then
+    sudo iptables -A FORWARD -o "$NETWORK_INTERFACE" -i "v-eth-du$DU_NUMBER" -j ACCEPT
 fi
 
 # Configure namespace side interface
-sudo ip netns exec $DU_NAMESPACE ip link set dev lo up
-sudo ip netns exec $DU_NAMESPACE ip addr add $DU_NS_IP/30 dev v-$DU_NAMESPACE
-sudo ip netns exec $DU_NAMESPACE ip link set v-$DU_NAMESPACE up
+sudo ip netns exec "$DU_NAMESPACE" ip link set dev lo up
+sudo ip netns exec "$DU_NAMESPACE" ip addr replace "$DU_NS_IP/30" dev "v-$DU_NAMESPACE"
+sudo ip netns exec "$DU_NAMESPACE" ip link set "v-$DU_NAMESPACE" up
 
 # Set default route in namespace to point to host gateway
-sudo ip netns exec $DU_NAMESPACE ip route add default via $DU_HOST_IP
+sudo ip netns exec "$DU_NAMESPACE" ip route replace default via "$DU_HOST_IP" dev "v-$DU_NAMESPACE"

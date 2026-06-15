@@ -5,6 +5,7 @@ The Next Generation Node B (gNodeB) is a 5G base station configured with OCUDU [
 ## Usage
 
 - **Compile**: Use `./full_install.sh` to build and install the gNodeB software.
+- **Rebuild**: Use `./rebuild_code.sh` to rebuild and reinstall the gNodeB software after source changes. The script reuses the existing build directory, so unchanged files are not rebuilt.
 - **Generate Configurations**: Use `./generate_configurations.sh` to create configuration files.
   - The script automatically retrieves the 5G Core Network's AMF address and the SCTP address from the Near-Real-Time RAN Intelligent Controller's E2 Terminator. If either are not found locally, the script will prompt the user to enter the address manually.
   - Configuration files can be accessed and modified in the `configs` directory.

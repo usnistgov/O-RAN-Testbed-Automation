@@ -452,7 +452,7 @@ update_yaml "configs/gnb.yaml" "cu_cp" "request_pdu_session_timeout" "3"
 
 # Update configuration values for gNodeB logging
 update_yaml "configs/gnb.yaml" "log" "filename" "$SCRIPT_DIR/logs/gnb.log"
-update_yaml "configs/gnb.yaml" "log" "all_level" "info"
+update_yaml "configs/gnb.yaml" "log" "all_level" "warning"
 update_yaml "configs/gnb.yaml" "log" "hex_max_size" "0"
 
 # Packet capture for NGAP

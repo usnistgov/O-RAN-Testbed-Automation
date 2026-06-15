@@ -1,0 +1,59 @@
+#!/bin/bash
+#
+# NIST-developed software is provided by NIST as a public service. You may use,
+# copy, and distribute copies of the software in any medium, provided that you
+# keep intact this entire notice. You may improve, modify, and create derivative
+# works of the software or any portion of the software, and you may copy and
+# distribute such modifications or works. Modified works should carry a notice
+# stating that you changed the software and should note the date and nature of
+# any such change. Please explicitly acknowledge the National Institute of
+# Standards and Technology as the source of the software.
+#
+# NIST-developed software is expressly provided "AS IS." NIST MAKES NO WARRANTY
+# OF ANY KIND, EXPRESS, IMPLIED, IN FACT, OR ARISING BY OPERATION OF LAW,
+# INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTY OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT, AND DATA ACCURACY. NIST
+# NEITHER REPRESENTS NOR WARRANTS THAT THE OPERATION OF THE SOFTWARE WILL BE
+# UNINTERRUPTED OR ERROR-FREE, OR THAT ANY DEFECTS WILL BE CORRECTED. NIST DOES
+# NOT WARRANT OR MAKE ANY REPRESENTATIONS REGARDING THE USE OF THE SOFTWARE OR
+# THE RESULTS THEREOF, INCLUDING BUT NOT LIMITED TO THE CORRECTNESS, ACCURACY,
+# RELIABILITY, OR USEFULNESS OF THE SOFTWARE.
+#
+# You are solely responsible for determining the appropriateness of using and
+# distributing the software and you assume all risks associated with its use,
+# including but not limited to the risks and costs of program errors, compliance
+# with applicable laws, damage to or loss of data, programs or equipment, and
+# the unavailability or interruption of operation. This software is not intended
+# to be used in any situation where a failure could cause risk of injury or
+# damage to property. The software developed by NIST employees is not subject to
+# copyright protection within the United States.
+
+# Exit immediately if a command fails
+set -e
+
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+PARENT_DIR=$(dirname "$SCRIPT_DIR")
+cd "$PARENT_DIR"
+
+cd srsRAN_4G
+git restore lib/src/phy/rf/rf_zmq_imp.c
+if [ ! -f "lib/src/phy/rf/rf_zmq_imp.c.previous" ]; then
+    cp lib/src/phy/rf/rf_zmq_imp.c lib/src/phy/rf/rf_zmq_imp.c.previous
+    cp lib/src/phy/rf/rf_zmq_imp.c.previous "$PARENT_DIR/install_patch_files/srsRAN_4G/lib/src/phy/rf/rf_zmq_imp.previous.c"
+fi
+echo "Patching rf_zmq_imp.c to fix log_trx_timeout usage..."
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/srsRAN_4G/lib/src/phy/rf/rf_zmq_imp.c.patch"
+
+# Verify that the patch was applied correctly
+if grep -q 'parse_string(args, "log_trx_timeout", i, tmp);' lib/src/phy/rf/rf_zmq_imp.c; then
+    echo "ERROR: Failed to patch srsRAN_4G ZMQ log_trx_timeout parsing bug."
+    exit 1
+fi
+if ! grep -q 'parse_string(args, "log_trx_timeout", i, tmp2);' lib/src/phy/rf/rf_zmq_imp.c; then
+    echo "ERROR: Could not verify srsRAN_4G ZMQ log_trx_timeout parsing fix."
+    exit 1
+fi
+cd ..
+
+echo
+echo "Successfully patched srsRAN_4G."

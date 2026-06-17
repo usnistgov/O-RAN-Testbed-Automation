@@ -32,6 +32,7 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
 GNB_STDOUT="logs/gnb_stdout.txt"
+# https://gitlab.com/ocudu/ocudu/-/blob/dev/apps/services/application_message_banners.h
 READY_RE='====[[:space:]]+gNB started[[:space:]]+==='
 ERROR_RE='OCUDU ERROR:|^ERROR:|^Error:|FATAL|Fatal|fatal|Failed to|failed to|Invalid .*configuration|Assertion|assertion'
 

@@ -28,45 +28,61 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
+# Exit immediately if a command fails
+set -e
+
+USE_ZMQ_BROKER=false
+SHOW_ZMQ_BROKER_UI=false
+
+APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
+if ! command -v realpath &>/dev/null; then
+    echo "Package \"coreutils\" not found, installing..."
+    sudo env $APTVARS apt-get install -y coreutils
+fi
+
+if ! command -v gdb &>/dev/null; then
+    echo "Installing GNU Debugger..."
+    sudo apt-get update
+    sudo env $APTVARS apt-get install -y gdb
+fi
+
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-WEBUI_DIR="$SCRIPT_DIR/open5gs/webui"
-WEBUI_SERVER="$WEBUI_DIR/server/index.js"
+# Function to handle graceful shutdown
+graceful_shutdown() {
+    trap - SIGINT SIGTERM SIGQUIT
+    echo "Shutting down gNodeB gracefully..."
+    ./stop.sh
+    exit
+}
+trap graceful_shutdown SIGINT SIGTERM SIGQUIT
 
-NO_BROWSER=false
-for ARG in "$@"; do
-    if [[ "$ARG" == "no-browser" ]]; then
-        NO_BROWSER=true
-        break
+if pgrep -x "gnb" >/dev/null; then
+    echo "Already running gnb."
+else
+    echo "Starting gnb..."
+    mkdir -p logs
+    >logs/gnb.log
+    >logs/gnb_stdout_gdb.txt
+
+    if [ "$USE_ZMQ_BROKER" = "true" ]; then
+        if pgrep -f "[p]ython3 zmq_broker/multi_ue_scenario\.py" >/dev/null; then
+            echo "Already running ZMQ Broker."
+        else
+            >logs/zmq_broker.log
+            echo "Starting ZMQ Broker..."
+            if [ "$SHOW_ZMQ_BROKER_UI" = true ]; then
+                nohup python3 zmq_broker/multi_ue_scenario.py >logs/zmq_broker.log 2>&1 &
+            else
+                QT_QPA_PLATFORM=offscreen nohup python3 zmq_broker/multi_ue_scenario.py >logs/zmq_broker.log 2>&1 &
+            fi
+            sleep 2
+        fi
     fi
-done
 
-# Ensure that MongoDB is running
-sudo ./install_scripts/start_mongodb.sh || exit 1
+    sudo chown --recursive "${SUDO_USER:-$USER}" logs
 
-# Check if the WebUI server is already running before starting a new instance
-if ! pgrep -af "node" | grep -F -- "$WEBUI_SERVER" >/dev/null; then
-    echo "Starting webui process..."
-    cd "$WEBUI_DIR"
-    npm install --no-audit --no-fund --loglevel=error
-    # nohup node "$WEBUI_SERVER" >"$SCRIPT_DIR/logs/webui_stdout.txt" 2>&1 &
-    nohup node "$WEBUI_SERVER" >/dev/null 2>&1 &
-    cd "$SCRIPT_DIR"
-fi
-
-WEBUI_PORT=9999
-
-if [[ "$NO_BROWSER" == false ]]; then
-    if command -v xdg-open &>/dev/null; then
-        echo "Opening the WebUI in the default web browser at URL http://localhost:$WEBUI_PORT"
-        xdg-open "http://localhost:$WEBUI_PORT" >/dev/null 2>&1 &
-        sleep 3
-    else
-        echo "No default browser detected. Visit http://localhost:$WEBUI_PORT to access the WebUI."
-    fi
-    echo
-    echo "The login credentials are set to the following."
-    echo "    - U: \"admin\""
-    echo "    - P: \"1423\""
+    # gdb -ex run --args ocudu/build/apps/gnb/gnb -c configs/gnb.yaml # cell_cfg prach --ports 0 1 2
+    sudo script -q -f -c "gdb -ex run --args ./ocudu/build/apps/gnb/gnb -c configs/gnb.yaml" logs/gnb_stdout_gdb.txt # cell_cfg prach --ports 0 1 2
 fi

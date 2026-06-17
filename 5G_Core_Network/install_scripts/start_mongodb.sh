@@ -34,7 +34,35 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$PARENT_DIR"
 
-CONFIG_FILE="/etc/mongod/mongod.conf"
+if [ -f /etc/mongod.conf ]; then
+    CONFIG_FILE="/etc/mongod.conf"
+elif [ -f /etc/mongod/mongod.conf ]; then
+    CONFIG_FILE="/etc/mongod/mongod.conf"
+else
+    echo "MongoDB configuration file not found. Expected /etc/mongod.conf or /etc/mongod/mongod.conf."
+    exit 1
+fi
+
+wait_for_mongodb() {
+    local ATTEMPT
+    for ATTEMPT in {1..30}; do
+        if command -v mongosh >/dev/null 2>&1; then
+            if mongosh --host 127.0.0.1 --port 27017 --quiet --eval 'quit(db.adminCommand({ ping: 1 }).ok ? 0 : 1)' admin >/dev/null 2>&1; then
+                return 0
+            fi
+        elif command -v mongo >/dev/null 2>&1; then
+            if mongo --host 127.0.0.1 --port 27017 --quiet --eval 'quit(db.adminCommand({ ping: 1 }).ok ? 0 : 1)' admin >/dev/null 2>&1; then
+                return 0
+            fi
+        elif sudo pgrep -x "mongod" >/dev/null 2>&1; then
+            return 0
+        fi
+        sleep 1
+    done
+
+    echo "MongoDB did not become ready on 127.0.0.1:27017."
+    return 1
+}
 
 # Ensure the mongodb group and user exist and have the correct ownership
 if ! getent group mongodb >/dev/null 2>&1; then
@@ -43,7 +71,8 @@ fi
 if ! getent passwd mongodb >/dev/null 2>&1; then
     sudo useradd -r -M -d /var/lib/mongodb -s /bin/false -g mongodb mongodb
 fi
-sudo chown -R mongodb:mongodb /var/lib/mongodb /var/log/mongodb 2>/dev/null || true
+sudo mkdir -p /var/lib/mongodb /var/log/mongodb
+sudo chown -R mongodb:mongodb /var/lib/mongodb /var/log/mongodb
 
 # Detect if systemctl is available
 USE_SYSTEMCTL=false
@@ -71,8 +100,10 @@ if [[ "$USE_SYSTEMCTL" == "true" ]]; then
         #     sleep 3
         # fi
         echo "Starting MongoDB service..."
-        sudo systemctl start mongod
-        sleep 3
+        if ! sudo systemctl start mongod; then
+            echo "ERROR: Failed to start MongoDB service."
+            exit 1
+        fi
     fi
 
     if ! sudo systemctl is-enabled --quiet mongod; then
@@ -89,7 +120,11 @@ else
         fi
 
         echo "Starting MongoDB service..."
-        sudo mongod --config "$CONFIG_FILE" --fork
-        sleep 3
+        if ! sudo mongod --config "$CONFIG_FILE" --fork; then
+            echo "ERROR: Failed to start MongoDB service."
+            exit 1
+        fi
     fi
 fi
+
+wait_for_mongodb

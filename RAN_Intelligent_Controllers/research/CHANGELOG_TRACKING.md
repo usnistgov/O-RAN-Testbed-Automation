@@ -136,6 +136,9 @@ Co-authored-by: fjcintron <fernando.cintron@nist.gov>
 [cmake-cmp0007]: https://cmake.org/cmake/help/latest/policy/CMP0007.html
 [gh-issue-13]: https://github.com/usnistgov/O-RAN-Testbed-Automation/issues/13
 
+Add option to switch to direct ZeroMQ connection rather than ZeroMQ broker (see)
+Add `rebuild_code.sh` to OCUDU to only rebuild changed files.
+
 ============= PREVIOUS CHANGELOGS BELOW =============
 
 ## Changelog for v1.7.1

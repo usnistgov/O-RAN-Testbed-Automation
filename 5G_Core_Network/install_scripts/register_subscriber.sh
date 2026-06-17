@@ -55,7 +55,7 @@ DEFAULT_IPV6=""
 APNS=()
 IPV4S=()
 
-./start_webui.sh no-browser
+./start_webui.sh no-browser || exit 1
 
 # Function to display usage
 usage() {

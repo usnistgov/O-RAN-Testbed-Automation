@@ -55,7 +55,7 @@ echo "Patching sctp_network_gateway_common_impl.cpp..."
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/ocudu/lib/gateways/sctp_network_gateway_common_impl.cpp.patch"
 cd ..
 
-# Apply patch to OCUDU to ensure yaml-cpp imported targets are globally visible before aliasing.
+# Apply patch to OCUDU to ensure yaml-cpp imported targets are globally visible before aliasing
 cd ocudu
 git restore cmake/modules/FindYAMLCPP.cmake
 if [ ! -f "cmake/modules/FindYAMLCPP.cmake.previous" ]; then
@@ -75,6 +75,28 @@ if [ ! -f "lib/ran/precoding/precoding_codebooks.cpp.previous" ]; then
 fi
 echo "Patching precoding_codebooks.cpp..."
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/ocudu/lib/ran/precoding/precoding_codebooks.cpp.patch"
+cd ..
+
+# Apply patch to avoid a DU startup deadlock when MAC cell activation is invoked from the DU setup coroutine
+cd ocudu
+git restore lib/mac/mac_dl/mac_cell_processor.cpp
+if [ ! -f "lib/mac/mac_dl/mac_cell_processor.cpp.previous" ]; then
+    cp lib/mac/mac_dl/mac_cell_processor.cpp lib/mac/mac_dl/mac_cell_processor.cpp.previous
+    cp lib/mac/mac_dl/mac_cell_processor.cpp.previous "$PARENT_DIR/install_patch_files/ocudu/lib/mac/mac_dl/mac_cell_processor.cpp.previous"
+fi
+echo "Patching mac_cell_processor.cpp..."
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/ocudu/lib/mac/mac_dl/mac_cell_processor.cpp.patch"
+cd ..
+
+# Apply patch to discard late CU-UP messages after the E1 connection is closed
+cd ocudu
+git restore lib/cu_cp/cu_cp_controller/cu_up_connection_manager.cpp
+if [ ! -f "lib/cu_cp/cu_cp_controller/cu_up_connection_manager.cpp.previous" ]; then
+    cp lib/cu_cp/cu_cp_controller/cu_up_connection_manager.cpp lib/cu_cp/cu_cp_controller/cu_up_connection_manager.cpp.previous
+    cp lib/cu_cp/cu_cp_controller/cu_up_connection_manager.cpp.previous "$PARENT_DIR/install_patch_files/ocudu/lib/cu_cp/cu_cp_controller/cu_up_connection_manager.cpp.previous"
+fi
+echo "Patching cu_up_connection_manager.cpp..."
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/ocudu/lib/cu_cp/cu_cp_controller/cu_up_connection_manager.cpp.patch"
 cd ..
 
 echo

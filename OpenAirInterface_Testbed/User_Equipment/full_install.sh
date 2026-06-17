@@ -61,6 +61,7 @@ fi
 
 # Run a sudo command every minute to ensure script execution without user interaction
 ./install_scripts/start_sudo_refresh.sh
+trap './install_scripts/stop_sudo_refresh.sh 2>/dev/null || true' EXIT
 
 # Get the start timestamp in seconds
 INSTALL_START_TIME=$(date +%s)
@@ -115,10 +116,11 @@ if ! command -v cmake &>/dev/null; then
 fi
 CMAKE_VERSION=$(cmake --version | head -n1 | awk '{print $3}')
 if [[ "$CMAKE_VERSION" == 3.16.* ]]; then
-    echo "Detected CMake 3.16. Updating CMake for compatibility with Duranta..."
+    UBUNTU_CODENAME=$(./install_scripts/get_ubuntu_codename.sh)
+    echo "Detected CMake $CMAKE_VERSION. Updating CMake for Duranta compatibility..."
     # Add Kitware's apt repository
     wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc | sudo apt-key add -
-    sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ focal main'
+    sudo apt-add-repository -y "deb https://apt.kitware.com/ubuntu/ $UBUNTU_CODENAME main"
     sudo apt-get update
     sudo env $APTVARS apt-get install -y cmake
 fi

@@ -66,16 +66,16 @@ echo "Patching FindYAMLCPP.cmake..."
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/ocudu/cmake/modules/FindYAMLCPP.cmake.patch"
 cd ..
 
-# # Apply patch to avoid DU startup deadlocks when MAC cell activation runs during setup
-# cd ocudu
-# git restore lib/mac/mac_dl/mac_cell_processor.cpp
-# if [ ! -f "lib/mac/mac_dl/mac_cell_processor.cpp.previous" ]; then
-#     cp lib/mac/mac_dl/mac_cell_processor.cpp lib/mac/mac_dl/mac_cell_processor.cpp.previous
-#     cp lib/mac/mac_dl/mac_cell_processor.cpp.previous "$PARENT_DIR/install_patch_files/ocudu/lib/mac/mac_dl/mac_cell_processor.cpp.previous"
-# fi
-# echo "Patching mac_cell_processor.cpp..."
-# git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/ocudu/lib/mac/mac_dl/mac_cell_processor.cpp.patch"
-# cd ..
+# Apply patch to avoid DU startup deadlocks when MAC cell activation runs during setup
+cd ocudu
+git restore lib/mac/mac_dl/mac_cell_processor.cpp
+if [ ! -f "lib/mac/mac_dl/mac_cell_processor.cpp.previous" ]; then
+    cp lib/mac/mac_dl/mac_cell_processor.cpp lib/mac/mac_dl/mac_cell_processor.cpp.previous
+    cp lib/mac/mac_dl/mac_cell_processor.cpp.previous "$PARENT_DIR/install_patch_files/ocudu/lib/mac/mac_dl/mac_cell_processor.cpp.previous"
+fi
+echo "Patching mac_cell_processor.cpp..."
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/ocudu/lib/mac/mac_dl/mac_cell_processor.cpp.patch"
+cd ..
 
 # # Apply patch to avoid MAC UL UE creation executor self-waits
 # cd ocudu

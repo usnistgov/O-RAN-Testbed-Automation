@@ -8,6 +8,7 @@ The Next Generation Node B (gNodeB) is a 5G base station configured with OCUDU [
 - **Rebuild**: Use `./rebuild_code.sh` to rebuild and reinstall the gNodeB software after source changes. The script reuses the existing build directory, so unchanged files are not rebuilt.
 - **Generate Configurations**: Use `./generate_configurations.sh` to create configuration files.
   - The script automatically retrieves the 5G Core Network's AMF address and the SCTP address from the Near-Real-Time RAN Intelligent Controller's E2 Terminator. If either are not found locally, the script will prompt the user to enter the address manually.
+  - An optional list of UE numbers can be provided to generate the ZeroMQ broker configuration for multi-UE emulation (see [here](/Next_Generation_Node_B/README.md#simulating-multiple-ues-with-zmq-broker) for more information).
   - Configuration files can be accessed and modified in the `configs` directory.
 - **Start the gNodeB**: Use `./run.sh` to start the gNodeB, or `./run_background.sh` to run it as a background process where the output is redirected to `logs/gnb_stdout.txt`.
 - **Stop the gNodeB**: Terminate the gNodeB with `./stop.sh`.
@@ -57,15 +58,9 @@ sed -i 's/^USE_ZMQ_BROKER=true$/USE_ZMQ_BROKER=false/' stop.sh
 - When the ZMQ broker is enabled, `run.sh` on the base directory starts all but the lowest-numbered UE as background processes, then starts the lowest-numbered UE in the foreground.
 
 > [!NOTE]
-> To configure a specific emulated UE set, pass the UE numbers to the top-level generator, for example `../generate_configurations.sh 1 2 3 4`. The generated broker creates one downlink and one uplink branch for each requested UE, and the top-level `run.sh` launches the generated UE set unless explicit UE numbers are passed to `run.sh`. UE numbers above the preloaded subscriber set still require subscriber registration in the 5G Core.
+> To configure a specific emulated UE set, pass the UE numbers to the base directory generator, e.g., `../generate_configurations.sh 1 2 3`. The generated broker creates one downlink and one uplink route for each requested UE, and the base directory `run.sh` launches the generated UE set.
 
-The top-level generator verifies that the generated broker, gNodeB, and UE configs agree before finishing. The same check can be run manually from this directory with:
-
-```bash
-./install_scripts/validate_zmq_broker_config.sh
-```
-
-After a live multi-UE run, list the PDU sessions for each UE from the repository root:
+After multiple UEs are running, list the PDU sessions for each UE with the following.
 
 ```bash
 User_Equipment/install_scripts/get_pdu_sessions.sh 1

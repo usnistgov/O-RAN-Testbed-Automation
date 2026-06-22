@@ -42,10 +42,10 @@ cd "$SCRIPT_DIR"
 
 USE_FLEXRIC=true
 USE_ZMQ_BROKER=false
-UE_CONFIG_ARGS=()
+UE_CONFIG_ARGS=""
 for ARG in "$@"; do
     if [[ "$ARG" =~ ^[0-9]+$ ]]; then
-        UE_CONFIG_ARGS+=("$ARG")
+        UE_CONFIG_ARGS="$UE_CONFIG_ARGS $ARG"
     fi
 done
 
@@ -71,21 +71,19 @@ cd ..
 echo
 echo "Generating Configuration for User Equipment..."
 cd User_Equipment
-./generate_configurations.sh "${UE_CONFIG_ARGS[@]}"
+./generate_configurations.sh $UE_CONFIG_ARGS
 cd "$SCRIPT_DIR"
 
 if [ "$USE_ZMQ_BROKER" = "true" ]; then
     echo
     echo "Verifying ZeroMQ Broker configuration..."
-    VERIFY_ARGS=(
-        "--gnb-config" "Next_Generation_Node_B/configs/gnb.yaml"
-        "--broker" "Next_Generation_Node_B/zmq_broker/multi_ue_scenario.py"
-        "--ue-config-dir" "User_Equipment/configs"
-    )
-    for UE_NUMBER in "${UE_CONFIG_ARGS[@]}"; do
-        VERIFY_ARGS+=("--ue" "$UE_NUMBER")
+    VERIFY_ARGS="--gnb-config Next_Generation_Node_B/configs/gnb.yaml"
+    VERIFY_ARGS="$VERIFY_ARGS --broker Next_Generation_Node_B/zmq_broker/multi_ue_scenario.py"
+    VERIFY_ARGS="$VERIFY_ARGS --ue-config-dir User_Equipment/configs"
+    for UE_NUMBER in $UE_CONFIG_ARGS; do
+        VERIFY_ARGS="$VERIFY_ARGS --ue $UE_NUMBER"
     done
-    Next_Generation_Node_B/install_scripts/validate_zmq_broker_config.sh "${VERIFY_ARGS[@]}"
+    Next_Generation_Node_B/install_scripts/validate_zmq_broker_config.sh ${VERIFY_ARGS}
 fi
 
 echo

@@ -39,100 +39,36 @@ fi
 
 USE_FLEXRIC=true
 USE_ZMQ_BROKER=false
-#ZMQ_BROKER_UE_START_TIMEOUT=90
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
 UE_NUMBERS=()
-for ARG in "$@"; do
-    if [[ "$ARG" =~ ^[0-9]+$ ]]; then
-        UE_NUMBERS+=("$ARG")
-    fi
-done
-
-if [ ${#UE_NUMBERS[@]} -eq 0 ]; then
-    if [ "$USE_ZMQ_BROKER" = "true" ]; then
-        for UE_CONFIG in "$SCRIPT_DIR"/User_Equipment/configs/ue*.conf; do
-            [ -e "$UE_CONFIG" ] || continue
-            UE_CONFIG_NAME=$(basename "$UE_CONFIG")
-            UE_NUMBER="${UE_CONFIG_NAME#ue}"
-            UE_NUMBER="${UE_NUMBER%.conf}"
-            if [[ "$UE_NUMBER" =~ ^[0-9]+$ ]]; then
-                UE_NUMBERS+=("$UE_NUMBER")
-            fi
-        done
-    fi
-
-    if [ ${#UE_NUMBERS[@]} -eq 0 ]; then
-        UE_NUMBERS=(1)
-    fi
-fi
-
-IFS=$'\n' UE_NUMBERS=($(printf "%s\n" "${UE_NUMBERS[@]}" | sort -nr))
-unset IFS
-
 if [ "$USE_ZMQ_BROKER" = "true" ]; then
-    ZMQ_BROKER_PYTHON="$SCRIPT_DIR/Next_Generation_Node_B/zmq_broker/multi_ue_scenario.py"
-    ZMQ_BROKER_VERIFIER="$SCRIPT_DIR/Next_Generation_Node_B/install_scripts/validate_zmq_broker_config.sh"
-    if [ ! -f "$ZMQ_BROKER_PYTHON" ]; then
+    if [ ! -f "Next_Generation_Node_B/zmq_broker/multi_ue_scenario.py" ]; then
         echo "ZMQ Broker configuration was not found. Please run ./generate_configurations.sh first."
         exit 1
     fi
-    if [ ! -f "$ZMQ_BROKER_VERIFIER" ]; then
+    if [ ! -f "Next_Generation_Node_B/install_scripts/validate_zmq_broker_config.sh" ]; then
         echo "ZMQ Broker verifier was not found. Please run ./generate_configurations.sh first."
         exit 1
     fi
-    VERIFY_ARGS=(
-        "--gnb-config" "$SCRIPT_DIR/Next_Generation_Node_B/configs/gnb.yaml"
-        "--broker" "$ZMQ_BROKER_PYTHON"
-        "--ue-config-dir" "$SCRIPT_DIR/User_Equipment/configs"
-    )
+	# Parse the ZeroMQ broker for the list of UEs
+	UE_NUMBERS=($(grep -oP 'UE_CONFIG:\s+\K\d+' Next_Generation_Node_B/zmq_broker/multi_ue_scenario.py))
+	VERIFY_ARGS="--gnb-config Next_Generation_Node_B/configs/gnb.yaml"
+    VERIFY_ARGS="$VERIFY_ARGS --broker Next_Generation_Node_B/zmq_broker/multi_ue_scenario.py"
+    VERIFY_ARGS="$VERIFY_ARGS --ue-config-dir User_Equipment/configs"
     for UE_NUMBER in "${UE_NUMBERS[@]}"; do
-        VERIFY_ARGS+=("--ue" "$UE_NUMBER")
+        VERIFY_ARGS="$VERIFY_ARGS --ue $UE_NUMBER"
     done
-    if ! "$ZMQ_BROKER_VERIFIER" "${VERIFY_ARGS[@]}"; then
+    if ! "Next_Generation_Node_B/install_scripts/validate_zmq_broker_config.sh" ${VERIFY_ARGS}; then
         echo "Run ./generate_configurations.sh with the same UE numbers before ./run.sh."
         exit 1
     fi
-    echo "Broker-mode UE launch order: ${UE_NUMBERS[*]}"
-    if [ ${#UE_NUMBERS[@]} -gt 1 ]; then
-        echo "Broker-mode UEs will start together so all broker uplink inputs are active before PDU-session checks."
-    fi
+    echo "ZeroMQ Broker UE startup order: ${UE_NUMBERS[*]}"
+else
+	UE_NUMBERS=(1)
 fi
-
-# monitor_ue_pdu_session() {
-#     UE_NUMBER=$1
-#     PARENT_PID=$2
-#     (
-#         ATTEMPT=0
-#         while ! ./install_scripts/get_pdu_sessions.sh "$UE_NUMBER" >/dev/null 2>&1; do
-#             if [ $ATTEMPT -gt 20 ] && ! ./is_running.sh | grep -q "ue$UE_NUMBER"; then
-#                 echo
-#                 echo "UE $UE_NUMBER stopped before receiving a PDU session."
-#                 kill -TERM "$PARENT_PID" >/dev/null 2>&1 || true
-#                 exit 1
-#             fi
-#             sleep 1
-#             ATTEMPT=$((ATTEMPT + 1))
-#             if [ $ATTEMPT -ge $ZMQ_BROKER_UE_START_TIMEOUT ]; then
-#                 echo
-#                 echo "UE $UE_NUMBER did not receive a PDU session after $ZMQ_BROKER_UE_START_TIMEOUT seconds."
-#                 echo "Recent UE $UE_NUMBER stdout:"
-#                 tail -n 80 "logs/ue${UE_NUMBER}_stdout.txt" || true
-#                 echo "Recent gNodeB stdout:"
-#                 tail -n 80 "../Next_Generation_Node_B/logs/gnb_stdout.txt" || true
-#                 echo "Recent ZMQ Broker log:"
-#                 tail -n 80 "../Next_Generation_Node_B/logs/zmq_broker.log" || true
-#                 kill -TERM "$PARENT_PID" >/dev/null 2>&1 || true
-#                 exit 1
-#             fi
-#         done
-#         echo
-#         echo "UE $UE_NUMBER received PDU session(s):"
-#         ./install_scripts/get_pdu_sessions.sh "$UE_NUMBER"
-#     ) &
-# }
 
 sudo -v # Ensure sudo session is active
 
@@ -181,15 +117,11 @@ echo
 echo "Running User Equipment..."
 cd User_Equipment
 if [ "$USE_ZMQ_BROKER" = "true" ] && [ ${#UE_NUMBERS[@]} -gt 1 ]; then
-    for ((i = 0; i < ${#UE_NUMBERS[@]} - 1; i++)); do
+    for ((i = 1; i < ${#UE_NUMBERS[@]}; i++)); do
+		echo "Running UE ${UE_NUMBERS[$i]} in background..."
         ./run_background.sh "${UE_NUMBERS[$i]}"
     done
 fi
-# if [ "$USE_ZMQ_BROKER" = "true" ]; then
-#     for ((i = 0; i < ${#UE_NUMBERS[@]} - 1; i++)); do
-#         monitor_ue_pdu_session "${UE_NUMBERS[$i]}" "$$"
-#     done
-#     monitor_ue_pdu_session "${UE_NUMBERS[-1]}" "$$"
-# fi
-./run.sh "${UE_NUMBERS[-1]}"
+echo "Running UE ${UE_NUMBERS[0]}..."
+./run.sh "${UE_NUMBERS[0]}"
 cd ..

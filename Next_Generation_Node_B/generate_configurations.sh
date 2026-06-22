@@ -571,7 +571,7 @@ if [ "$USE_ZMQ_BROKER" = "true" ]; then
         SUBNET_OFFSET=$((UE_NUMBER * SUBNET_SIZE))
         UE_IP_OFFSET=$((SUBNET_OFFSET + 1)) # .6
         UE_IP=$(python3 install_scripts/fetch_nth_ip.py "$BASE_SUBNET" "$UE_IP_OFFSET")
-        UE_ARGS+=" --ue $UE_NUMBER:$UE_IP"
+        UE_ARGS="$UE_ARGS --ue $UE_NUMBER:$UE_IP"
     done
 
     mkdir -p zmq_broker

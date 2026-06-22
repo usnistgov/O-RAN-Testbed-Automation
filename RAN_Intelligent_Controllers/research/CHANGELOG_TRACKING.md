@@ -138,6 +138,7 @@ Co-authored-by: fjcintron <fernando.cintron@nist.gov>
 
 Add option to switch to direct ZeroMQ connection rather than ZeroMQ broker (see)
 Add `rebuild_code.sh` to OCUDU to only rebuild changed files.
+Fix FlexRIC installation compatiblity with CMake, and add ASN.1 compiler installation check to ensure successful build.
 
 ============= PREVIOUS CHANGELOGS BELOW =============
 

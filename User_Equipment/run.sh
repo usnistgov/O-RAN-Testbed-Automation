@@ -53,111 +53,6 @@ if [ $UE_NUMBER -lt 1 ]; then
     exit 1
 fi
 
-validate_srsue_binary() {
-    SRSUE_BIN="srsRAN_4G/build/srsue/src/srsue"
-    if [ ! -f "$SRSUE_BIN" ]; then
-        echo "ERROR: srsue binary was not found. Please run ./full_install.sh."
-        exit 1
-    fi
-
-    if ! grep -q 'rach_cfg_nr->nof_preambles[[:space:]]*=[[:space:]]*64;' "srsRAN_4G/lib/src/asn1/rrc_nr_utils.cc"; then
-        echo "ERROR: srsRAN_4G source is missing the NR RA preamble default patch. Please run ./full_install.sh."
-        exit 1
-    fi
-
-    if ! grep -q 'get_nof_cb_preambles_per_ssb' "srsRAN_4G/lib/src/asn1/rrc_nr_utils.cc"; then
-        echo "ERROR: srsRAN_4G source is missing the NR RA CB-preambles-per-SSB patch. Please run ./full_install.sh."
-        exit 1
-    fi
-
-    if ! grep -q 'srsran_random_uniform_int_dist(random_gen, 0, rach_cfg.nof_preambles - 1)' "srsRAN_4G/srsue/src/stack/mac_nr/proc_ra_nr.cc"; then
-        echo "ERROR: srsRAN_4G source is missing the valid NR RA preamble range patch. Please run ./full_install.sh."
-        exit 1
-    fi
-
-    if ! grep -q 'rach_cfg.nof_preambles[[:space:]]*=[[:space:]]*64;' "srsRAN_4G/srsue/src/stack/mac_nr/proc_ra_nr.cc"; then
-        echo "ERROR: srsRAN_4G source is missing the NR RA preamble fallback patch. Please run ./full_install.sh."
-        exit 1
-    fi
-
-    if ! grep -q 'static_cast<uint32_t>(getpid())' "srsRAN_4G/srsue/src/stack/mac_nr/proc_ra_nr.cc"; then
-        echo "ERROR: srsRAN_4G source is missing the NR RA random seed patch. Please run ./full_install.sh."
-        exit 1
-    fi
-
-    if ! grep -q 'old_lcg_it' "srsRAN_4G/srsue/src/stack/mac_nr/proc_bsr_nr.cc"; then
-        echo "ERROR: srsRAN_4G source is missing the NR BSR first-data patch. Please run ./full_install.sh."
-        exit 1
-    fi
-
-    if ! grep -Fq 'lcg_priorities[priority] = new_lcg;' "srsRAN_4G/srsue/src/stack/mac_nr/proc_bsr_nr.cc"; then
-        echo "ERROR: srsRAN_4G source is missing the NR BSR LCID priority patch. Please run ./full_install.sh."
-        exit 1
-    fi
-
-    if ! grep -q 'sr_prohibit_counter' "srsRAN_4G/srsue/hdr/stack/mac_nr/proc_sr_nr.h"; then
-        echo "ERROR: srsRAN_4G source is missing the NR SR prohibit timer state patch. Please run ./full_install.sh."
-        exit 1
-    fi
-
-    if grep -q "sr-ProhibitTimer isn't supported" "srsRAN_4G/srsue/src/stack/mac_nr/proc_sr_nr.cc"; then
-        echo "ERROR: srsRAN_4G source still rejects NR SR prohibit timer. Please run ./full_install.sh."
-        exit 1
-    fi
-
-    if command -v strings >/dev/null 2>&1; then
-        if ! strings "$SRSUE_BIN" | grep -q 'RAR timeout: preamble_index='; then
-            echo "ERROR: srsue binary is missing the NR RA timeout diagnostic patch. Please rebuild with ./full_install.sh."
-            exit 1
-        fi
-        if ! strings "$SRSUE_BIN" | grep -q 'Invalid NR RA preamble count'; then
-            echo "ERROR: srsue binary is missing the NR RA preamble fallback diagnostic patch. Please rebuild with ./full_install.sh."
-            exit 1
-        fi
-        if ! strings "$SRSUE_BIN" | grep -q 'Random Access Transmission: prach_occasion=%d, preamble_index=%d, nof_preambles=%d'; then
-            echo "ERROR: srsue binary is missing the NR RA preamble count console patch. Please rebuild with ./full_install.sh."
-            exit 1
-        fi
-        if ! strings "$SRSUE_BIN" | grep -q 'BSR:   New data available for LCG=%d old=%d new=%d'; then
-            echo "ERROR: srsue binary is missing the NR BSR first-data diagnostic patch. Please rebuild with ./full_install.sh."
-            exit 1
-        fi
-        if ! strings "$SRSUE_BIN" | grep -q 'RRC NR PUCCH SR resource:'; then
-            echo "ERROR: srsue binary is missing the NR PUCCH SR diagnostic patch. Please rebuild with ./full_install.sh."
-            exit 1
-        fi
-        if ! strings "$SRSUE_BIN" | grep -q 'SR: signalling tti='; then
-            echo "ERROR: srsue binary is missing the NR SR signalling diagnostic patch. Please rebuild with ./full_install.sh."
-            exit 1
-        fi
-        if ! strings "$SRSUE_BIN" | grep -q 'NR UL PUCCH UCI:'; then
-            echo "ERROR: srsue binary is missing the NR PUCCH UCI diagnostic patch. Please rebuild with ./full_install.sh."
-            exit 1
-        fi
-        if ! strings "$SRSUE_BIN" | grep -q 'NR UL PUSCH grant:'; then
-            echo "ERROR: srsue binary is missing the NR PUSCH grant diagnostic patch. Please rebuild with ./full_install.sh."
-            exit 1
-        fi
-    fi
-
-    if [ -d "install_patch_files/srsRAN_4G" ] &&
-        find install_patch_files/srsRAN_4G -type f -newer "$SRSUE_BIN" | grep -q .; then
-        echo "ERROR: srsue binary is older than the local srsRAN_4G patch files. Please run ./full_install.sh."
-        exit 1
-    fi
-}
-
-write_srsue_launch_stamp() {
-    SRSUE_BIN="srsRAN_4G/build/srsue/src/srsue"
-    {
-        echo "Using srsue binary: $SCRIPT_DIR/$SRSUE_BIN"
-        echo "srsue binary timestamp: $(date -r "$SRSUE_BIN" '+%Y-%m-%d %H:%M:%S %z')"
-        if command -v sha256sum >/dev/null 2>&1; then
-            sha256sum "$SRSUE_BIN"
-        fi
-    } >>"logs/ue${UE_NUMBER}_stdout.txt"
-}
-
 # Function to handle graceful shutdown
 graceful_shutdown() {
     trap - SIGINT SIGTERM SIGQUIT
@@ -174,12 +69,10 @@ if [ ! -f "$UE_CONF_PATH" ]; then
     echo "Configuration file for UE $UE_NUMBER not found, creating..."
     ./generate_configurations.sh "$UE_NUMBER"
     if [ ! -f "$UE_CONF_PATH" ]; then
-        echo "Configuration file for UE $UE_NUMBER still not found after generation."
+        echo "ERROR: Configuration file for UE $UE_NUMBER not found."
         exit 1
     fi
 fi
-
-validate_srsue_binary
 
 echo "Using srsue binary: $SCRIPT_DIR/srsRAN_4G/build/srsue/src/srsue"
 
@@ -196,7 +89,6 @@ else
     mkdir -p logs
     >logs/ue${UE_NUMBER}_stdout.txt
     sudo chown --recursive "${SUDO_USER:-$USER}" logs
-    write_srsue_launch_stamp
     echo "Starting srsue (ue$UE_NUMBER) in namespace ue$UE_NUMBER..."
     # sudo ./srsRAN_4G/build/srsue/src/srsue --config_file "$UE_CONF_PATH"
     sudo ip netns exec "ue$UE_NUMBER" script -q -f -c "./srsRAN_4G/build/srsue/src/srsue --config_file \"$UE_CONF_PATH\"" logs/ue${UE_NUMBER}_stdout.txt

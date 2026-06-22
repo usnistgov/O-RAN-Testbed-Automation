@@ -36,7 +36,6 @@ CLEAN_INSTALL=false
 DEBUG_SYMBOLS=false
 RUN_TESTS=false
 TUNE_PERFORMANCE=false
-USE_ZMQ_BROKER=false
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
@@ -209,19 +208,6 @@ else
 fi
 
 cd "$SCRIPT_DIR"
-
-if [ "$USE_ZMQ_BROKER" = "true" ]; then
-    if ! python3 -c "import gnuradio, PyQt5" >/dev/null 2>&1; then
-        echo "Installing GNU Radio runtime for the ZeroMQ Broker..."
-        sudo env $APTVARS apt-get install -y gnuradio python3-pyqt5
-    fi
-fi
-
-echo
-echo
-if [ "$USE_ZMQ_BROKER" = "true" ]; then
-    mkdir -p zmq_broker
-fi
 
 echo
 echo

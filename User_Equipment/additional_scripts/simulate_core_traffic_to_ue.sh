@@ -82,38 +82,6 @@ if [ ! -f "configs/ue${UE_NUMBER}.conf" ]; then
     exit 1
 fi
 
-select_pdu_session() {
-    if [ -n "$PDU_SESSION_IP" ]; then
-        return
-    fi
-
-    if ! PDU_SESSION_OUTPUT=$(./additional_scripts/get_pdu_sessions.sh "$UE_NUMBER" 2>&1); then
-        echo "$PDU_SESSION_OUTPUT"
-        exit 1
-    fi
-
-    PDU_SESSIONS=()
-    while IFS= read -r SESSION; do
-        [ -n "$SESSION" ] && PDU_SESSIONS+=("$SESSION")
-    done <<<"$PDU_SESSION_OUTPUT"
-
-    if [ ${#PDU_SESSIONS[@]} -eq 1 ]; then
-        PDU_SESSION_IP="${PDU_SESSIONS[0]}"
-        return
-    fi
-
-    echo "Available PDU sessions for UE $UE_NUMBER:"
-    for INDEX in "${!PDU_SESSIONS[@]}"; do
-        echo "$((INDEX + 1)). ${PDU_SESSIONS[$INDEX]}"
-    done
-    read -p "Select PDU session: " SELECTION
-    if ! [[ "$SELECTION" =~ ^[0-9]+$ ]] || [ "$SELECTION" -lt 1 ] || [ "$SELECTION" -gt ${#PDU_SESSIONS[@]} ]; then
-        echo "ERROR: Invalid PDU session selection."
-        exit 1
-    fi
-    PDU_SESSION_IP="${PDU_SESSIONS[$((SELECTION - 1))]}"
-}
-
 # Check if docker is accessible from the current user, and if not, repair its permissions
 if [ -z "$FIXED_DOCKER_PERMS" ]; then
     if ! OUTPUT=$(docker info 2>&1); then
@@ -138,7 +106,38 @@ if [ -z "$FIXED_DOCKER_PERMS" ]; then
     fi
 fi
 
-select_pdu_session
+if [ -z "$PDU_SESSION_IP" ]; then # Select a PDU session
+    if ! PDU_SESSION_OUTPUT=$(./additional_scripts/get_pdu_sessions.sh "$UE_NUMBER" 2>&1); then
+        echo "$PDU_SESSION_OUTPUT"
+        exit 1
+    fi
+
+    PDU_SESSIONS=()
+    while IFS= read -r SESSION; do
+        [ -n "$SESSION" ] && PDU_SESSIONS+=("$SESSION")
+    done <<<"$PDU_SESSION_OUTPUT"
+
+    if [ ${#PDU_SESSIONS[@]} -eq 0 ]; then
+        echo "ERROR: No PDU sessions found for UE $UE_NUMBER."
+        exit 1
+    fi
+
+    if [ ${#PDU_SESSIONS[@]} -eq 1 ]; then
+        PDU_SESSION_IP="${PDU_SESSIONS[0]}"
+    else
+        echo "Available PDU sessions for UE $UE_NUMBER:"
+        for INDEX in "${!PDU_SESSIONS[@]}"; do
+            echo "$((INDEX + 1)). ${PDU_SESSIONS[$INDEX]}"
+        done
+        read -p "Select PDU session: " SELECTION
+        if ! [[ "$SELECTION" =~ ^[0-9]+$ ]] || [ "$SELECTION" -lt 1 ] || [ "$SELECTION" -gt ${#PDU_SESSIONS[@]} ]; then
+            echo "ERROR: Invalid PDU session selection."
+            exit 1
+        fi
+        PDU_SESSION_IP="${PDU_SESSIONS[$((SELECTION - 1))]}"
+    fi
+fi
+
 echo "Using PDU Session IP: $PDU_SESSION_IP"
 
 if command -v docker >/dev/null 2>&1 && docker ps --format '{{.Names}}' | grep -qw dn_internet; then

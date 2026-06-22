@@ -85,14 +85,18 @@ fi
 # For example, 10.45.0.1/16 --> 10.45.0.1
 remove_cidr_suffix() {
     local IP=$1
-    echo ${IP%/*}
+    echo "${IP%/*}"
 }
 
-select_pdu_session() {
-    if [ -n "$PDU_SESSION_IP" ]; then
-        return
-    fi
+UE_NAMESPACE="ue$UE_NUMBER"
 
+# If the namespace doesn't exist
+if ! ip netns list | grep -qw "$UE_NAMESPACE"; then
+    echo "ERROR: Namespace $UE_NAMESPACE does not exist. Please start the UE first with: ./run_background.sh $UE_NUMBER"
+    exit 1
+fi
+
+if [ -z "$PDU_SESSION_IP" ]; then # Select a PDU session
     if ! PDU_SESSION_OUTPUT=$(./additional_scripts/get_pdu_sessions.sh "$UE_NUMBER" 2>&1); then
         echo "$PDU_SESSION_OUTPUT"
         exit 1
@@ -103,32 +107,27 @@ select_pdu_session() {
         [ -n "$SESSION" ] && PDU_SESSIONS+=("$SESSION")
     done <<<"$PDU_SESSION_OUTPUT"
 
-    if [ ${#PDU_SESSIONS[@]} -eq 1 ]; then
-        PDU_SESSION_IP="${PDU_SESSIONS[0]}"
-        return
-    fi
-
-    echo "Available PDU sessions for UE $UE_NUMBER:"
-    for INDEX in "${!PDU_SESSIONS[@]}"; do
-        echo "$((INDEX + 1)). ${PDU_SESSIONS[$INDEX]}"
-    done
-    read -p "Select PDU session: " SELECTION
-    if ! [[ "$SELECTION" =~ ^[0-9]+$ ]] || [ "$SELECTION" -lt 1 ] || [ "$SELECTION" -gt ${#PDU_SESSIONS[@]} ]; then
-        echo "ERROR: Invalid PDU session selection."
+    if [ ${#PDU_SESSIONS[@]} -eq 0 ]; then
+        echo "ERROR: No PDU sessions found for UE $UE_NUMBER."
         exit 1
     fi
-    PDU_SESSION_IP="${PDU_SESSIONS[$((SELECTION - 1))]}"
-}
 
-UE_NAMESPACE="ue$UE_NUMBER"
-
-# If the namespace doesn't exist
-if ! ip netns list | grep -q "$UE_NAMESPACE"; then
-    echo "ERROR: Namespace $UE_NAMESPACE does not exist. Please start the UE first with: ./run_background.sh $UE_NUMBER"
-    exit 1
+    if [ ${#PDU_SESSIONS[@]} -eq 1 ]; then
+        PDU_SESSION_IP="${PDU_SESSIONS[0]}"
+    else
+        echo "Available PDU sessions for UE $UE_NUMBER:"
+        for INDEX in "${!PDU_SESSIONS[@]}"; do
+            echo "$((INDEX + 1)). ${PDU_SESSIONS[$INDEX]}"
+        done
+        read -p "Select PDU session: " SELECTION
+        if ! [[ "$SELECTION" =~ ^[0-9]+$ ]] || [ "$SELECTION" -lt 1 ] || [ "$SELECTION" -gt ${#PDU_SESSIONS[@]} ]; then
+            echo "ERROR: Invalid PDU session selection."
+            exit 1
+        fi
+        PDU_SESSION_IP="${PDU_SESSIONS[$((SELECTION - 1))]}"
+    fi
 fi
 
-select_pdu_session
 CORE_IP=$(ip route | grep ogstun | cut -d ' ' -f 9 | xargs)
 if [ -z "$CORE_IP" ]; then # 5GDeploy:
     if sudo ip netns exec "$UE_NAMESPACE" ip route | grep -q "tun_srsue"; then
@@ -141,6 +140,7 @@ if [ -z "$CORE_IP" ]; then # 5GDeploy:
 fi
 
 echo "Using PDU Session IP: $PDU_SESSION_IP"
+echo "Using 5G Core IP: $CORE_IP"
 
 if [ -z "$CORE_IP" ]; then
     echo "WARNING: Unable to find 5G core IP from the routing table."
@@ -156,4 +156,4 @@ if ! command -v iperf &>/dev/null; then
     sudo env $APTVARS apt-get install -y iperf
 fi
 
-sudo ip netns exec ue$UE_NUMBER iperf -c $CORE_IP -u -i 1 -b $BANDWIDTH -t $DURATION
+sudo ip netns exec "$UE_NAMESPACE" iperf -c "$CORE_IP" -u -i 1 -b "$BANDWIDTH" -t "$DURATION"

@@ -40,7 +40,7 @@ cd "5G_Core_Network" >nul 2>&1
 if not errorlevel 1 (
     git clone https://github.com/open5gs/open5gs.git
     cd "open5gs"
-    git checkout 26cbc33a418a292e3b3949be69155898d751bd6e
+    git checkout a420fefa13d3798c06d1fd4d9253f30cf524ac40
     cd ..\..
 ) else (
     echo ERROR: Failed to cd to 5G_Core_Network. Skipping clone.
@@ -98,7 +98,7 @@ cd "Next_Generation_Node_B" >nul 2>&1
 if not errorlevel 1 (
     git clone https://gitlab.com/ocudu/ocudu.git
     cd "ocudu"
-    git checkout 3f609dea0edcef6efea817a14e4947fead9edc15
+    git checkout 1f3ce19517291bcd54f50b062800897594f4fd01
     cd ..\..
 ) else (
     echo ERROR: Failed to cd to Next_Generation_Node_B. Skipping clone.
@@ -110,7 +110,7 @@ cd "Next_Generation_Node_B" >nul 2>&1
 if not errorlevel 1 (
     git clone https://gitlab.com/ocudu/ocudu_elements/ocudu_oran_apps/ocudu_o1_adapter.git
     cd "ocudu_o1_adapter"
-    git checkout cc3d7f4c51caaa10fb389459e87a7d6da1191730
+    git checkout 114527d2bc1b2f2ab22f0cbd71e00c1e6de78846
     cd ..\..
 ) else (
     echo ERROR: Failed to cd to Next_Generation_Node_B. Skipping clone.
@@ -122,7 +122,7 @@ cd "Next_Generation_Node_B" >nul 2>&1
 if not errorlevel 1 (
     git clone https://gitlab.com/ocudu/ocudu_elements/ocudu_oran_apps/ocudu_netconf.git
     cd "ocudu_netconf"
-    git checkout 161f4c714918e95e6cc5e4ccc0669d3ce125e798
+    git checkout 93a1f4a213c8e0ebc0eef6593262b4b856db5869
     cd ..\..
 ) else (
     echo ERROR: Failed to cd to Next_Generation_Node_B. Skipping clone.
@@ -134,7 +134,7 @@ mklink /D czmq ..\User_Equipment\czmq
 if not exist zmq_broker mkdir zmq_broker
 cd zmq_broker
 if not exist "multi_ue_scenario.grc" (
-    curl -L --fail --silent --show-error -o multi_ue_scenario.grc https://gitlab.com/ocudu/ocudu_docs/-/raw/8dd2d9e35ec5821cbd4e4154f0925344af809405/docs/tutorials/srsue/assets/multi_ue_scenario.grc
+    curl -L --fail --silent --show-error -o multi_ue_scenario.grc https://gitlab.com/ocudu/ocudu_docs/-/raw/b501a73a2a578844a3fc1767dfeff8d3f8dd8a5e/docs/tutorials/srsue/assets/multi_ue_scenario.grc
     if errorlevel 1 (
         echo ERROR: Failed to download multi_ue_scenario.grc
         exit /b 1
@@ -382,7 +382,7 @@ if not exist "OpenAirInterface_Testbed\5G_Core_Network\open5gs" (
     if not errorlevel 1 (
         git clone https://github.com/open5gs/open5gs.git
         cd "open5gs"
-        git checkout 26cbc33a418a292e3b3949be69155898d751bd6e
+        git checkout a420fefa13d3798c06d1fd4d9253f30cf524ac40
         cd ..\..\..
     ) else (
         echo ERROR: Failed to cd to OpenAirInterface_Testbed\5G_Core_Network. Skipping clone.

@@ -1,0 +1,324 @@
+diff --git a/5G_Core_Network/Additional_Cores_5GDeploy/full_install.sh b/5G_Core_Network/Additional_Cores_5GDeploy/full_install.sh
+index 9390da6..b0d5cae 100755
+--- a/5G_Core_Network/Additional_Cores_5GDeploy/full_install.sh
++++ b/5G_Core_Network/Additional_Cores_5GDeploy/full_install.sh
+@@ -69,6 +69,7 @@ fi
+ 
+ # Run a sudo command every minute to ensure script execution without user interaction
+ ./install_scripts/start_sudo_refresh.sh
++trap './install_scripts/stop_sudo_refresh.sh 2>/dev/null || true' EXIT
+ 
+ # Get the start timestamp in seconds
+ INSTALL_START_TIME=$(date +%s)
+diff --git a/5G_Core_Network/full_install.sh b/5G_Core_Network/full_install.sh
+index cf86476..b7a376b 100755
+--- a/5G_Core_Network/full_install.sh
++++ b/5G_Core_Network/full_install.sh
+@@ -161,6 +161,7 @@ fi
+ 
+ # Run a sudo command every minute to ensure script execution without user interaction
+ ./install_scripts/start_sudo_refresh.sh
++trap './install_scripts/stop_sudo_refresh.sh 2>/dev/null || true' EXIT
+ 
+ # Get the start timestamp in seconds
+ INSTALL_START_TIME=$(date +%s)
+diff --git a/Next_Generation_Node_B/full_install.sh b/Next_Generation_Node_B/full_install.sh
+index 0165436..19e1a40 100755
+--- a/Next_Generation_Node_B/full_install.sh
++++ b/Next_Generation_Node_B/full_install.sh
+@@ -55,6 +55,7 @@ fi
+ 
+ # Run a sudo command every minute to ensure script execution without user interaction
+ ./install_scripts/start_sudo_refresh.sh
++trap './install_scripts/stop_sudo_refresh.sh 2>/dev/null || true' EXIT
+ 
+ # Get the start timestamp in seconds
+ INSTALL_START_TIME=$(date +%s)
+diff --git a/OpenAirInterface_Testbed/Next_Generation_Node_B/full_install.sh b/OpenAirInterface_Testbed/Next_Generation_Node_B/full_install.sh
+index 2b66348..8e70f72 100755
+--- a/OpenAirInterface_Testbed/Next_Generation_Node_B/full_install.sh
++++ b/OpenAirInterface_Testbed/Next_Generation_Node_B/full_install.sh
+@@ -70,6 +70,7 @@ fi
+ 
+ # Run a sudo command every minute to ensure script execution without user interaction
+ ./install_scripts/start_sudo_refresh.sh
++trap './install_scripts/stop_sudo_refresh.sh 2>/dev/null || true' EXIT
+ 
+ # Get the start timestamp in seconds
+ INSTALL_START_TIME=$(date +%s)
+diff --git a/OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC/full_install.sh b/OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC/full_install.sh
+index 5dd05a0..9bd69f5 100755
+--- a/OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC/full_install.sh
++++ b/OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC/full_install.sh
+@@ -52,7 +52,7 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
+ cd "$SCRIPT_DIR"
+ 
+ # Check for binary to determine if FlexRIC is already installed
+-if [ "$CLEAN_INSTALL" != "true" ] && [ -f "flexric/build/examples/ric/nearRT-RIC" ]; then
++if [ "$CLEAN_INSTALL" != "true" ] && [ -f "flexric/build/examples/ric/nearRT-RIC" ] && [ -d "$FLEXRIC_LIBRARY_DIR" ]; then
+     echo "FlexRIC is already installed, skipping."
+     exit 0
+ fi
+@@ -63,12 +63,13 @@ fi
+ 
+ # Run a sudo command every minute to ensure script execution without user interaction
+ ./install_scripts/start_sudo_refresh.sh
++trap './install_scripts/stop_sudo_refresh.sh 2>/dev/null || true' EXIT
+ 
+ # Get the start timestamp in seconds
+ INSTALL_START_TIME=$(date +%s)
+ 
+ echo "Installing dependencies..."
+-sudo env $APTVARS apt-get install -y build-essential automake bison flex
++sudo env $APTVARS apt-get install -y build-essential automake autoconf libtool bison flex
+ sudo env $APTVARS apt-get install -y libsctp-dev python3 cmake-curses-gui libpcre2-dev python3-dev
+ 
+ # Check if GCC 13 or newer is installed, if not, install it and set it as the default
+@@ -121,7 +122,7 @@ fi
+ 
+ CURRENT_E2_PORT=$(sed -nE 's/.*e2ap_server_port *= *([0-9]+);/\1/p' flexric/src/agent/e2_agent_api.c)
+ if [ -z "$CURRENT_E2_PORT" ]; then
+-    echo "ERROR: e2ap_server_port not found in flexric/src/agent/e2_agent_api.c" >&2
++    echo "ERROR: e2ap_server_port not found in flexric/src/agent/e2_agent_api.c"
+     exit 1
+ fi
+ # Check if the substitute port is already in use
+@@ -142,6 +143,37 @@ if [ "$APPLY_PATCHES" = true ]; then
+     ./install_scripts/apply_patches.sh
+ fi
+ 
++# Use Duranta OpenAirInterface build_helper if asn1c is not found
++ASN1C_EXEC_PATH="/opt/asn1c/bin/asn1c"
++if [ ! -x "$ASN1C_EXEC_PATH" ]; then
++    PARENT_DIR=$(dirname "$SCRIPT_DIR")
++    BASE_DIR=$(dirname "$PARENT_DIR")
++    cd "$BASE_DIR/User_Equipment"
++    if [ ! -d "openairinterface5g" ]; then
++        echo "Cloning Duranta OpenAirInterface repository for asn1c installer ($BASE_DIR/User_Equipment/openairinterface5g)..."
++        ./install_scripts/git_clone.sh https://github.com/duranta-project/openairinterface5g.git openairinterface5g
++        APPLY_DURANTA_PATCHES=true
++        if [ "$APPLY_DURANTA_PATCHES" = true ]; then
++            echo "Patching Duranta UE..."
++            ./install_scripts/apply_patches.sh
++        fi
++    fi
++    # Install OAI dependencies
++    cd openairinterface5g/cmake_targets
++    ./build_oai -I
++    if [ ! -x "$ASN1C_EXEC_PATH" ]; then
++        echo "ERROR: Duranta did not install asn1c at $ASN1C_EXEC_PATH."
++        exit 1
++    fi
++    cd "$SCRIPT_DIR"
++    echo "Successfully installed dependencies required to build FlexRIC."
++    echo
++fi
++if ! "$ASN1C_EXEC_PATH" -h 2>&1 | grep -q -- "-gen-UPER"; then
++    echo "ERROR: $ASN1C_EXEC_PATH does not support -gen-UPER."
++    exit 1
++fi
++
+ ADDITIONAL_FLAGS="-DCMAKE_BUILD_TYPE=Release"
+ if [ "$DEBUG_SYMBOLS" = true ]; then
+     ADDITIONAL_FLAGS="-DCMAKE_BUILD_TYPE=Debug"
+@@ -157,7 +189,7 @@ PREFIX_DIR="${FLEXRIC_LIBRARY_DIR%/lib/flexric*}"
+ if [[ "$PREFIX_DIR" != /* ]]; then
+     PREFIX_DIR="$SCRIPT_DIR/$PREFIX_DIR"
+ fi
+-CC=gcc CXX=g++ cmake .. -DCMAKE_INSTALL_PREFIX="$PREFIX_DIR" -DXAPP_DB=NONE_XAPP -DE2AP_VERSION=$E2AP_VERSION -DKPM_VERSION=$KPM_VERSION $ADDITIONAL_FLAGS
++CC=gcc CXX=g++ cmake .. -DCMAKE_INSTALL_PREFIX="$PREFIX_DIR" -DASN1C_EXEC="$ASN1C_EXEC_PATH" -DASN1C_EXEC_PATH="$ASN1C_EXEC_PATH" -DXAPP_DB=NONE_XAPP -DE2AP_VERSION="$E2AP_VERSION" -DKPM_VERSION="$KPM_VERSION" $ADDITIONAL_FLAGS
+ make -j$(nproc)
+ 
+ echo "Installing FlexRIC..."
+diff --git a/OpenAirInterface_Testbed/User_Equipment/full_install.sh b/OpenAirInterface_Testbed/User_Equipment/full_install.sh
+index d3d8dda..862f444 100755
+--- a/OpenAirInterface_Testbed/User_Equipment/full_install.sh
++++ b/OpenAirInterface_Testbed/User_Equipment/full_install.sh
+@@ -61,6 +61,7 @@ fi
+ 
+ # Run a sudo command every minute to ensure script execution without user interaction
+ ./install_scripts/start_sudo_refresh.sh
++trap './install_scripts/stop_sudo_refresh.sh 2>/dev/null || true' EXIT
+ 
+ # Get the start timestamp in seconds
+ INSTALL_START_TIME=$(date +%s)
+diff --git a/RAN_Intelligent_Controllers/Near-Real-Time-RIC/additional_scripts/install_xapp_5g_cell_anomaly_detection.sh b/RAN_Intelligent_Controllers/Near-Real-Time-RIC/additional_scripts/install_xapp_5g_cell_anomaly_detection.sh
+index b10720e..960d0be 100755
+--- a/RAN_Intelligent_Controllers/Near-Real-Time-RIC/additional_scripts/install_xapp_5g_cell_anomaly_detection.sh
++++ b/RAN_Intelligent_Controllers/Near-Real-Time-RIC/additional_scripts/install_xapp_5g_cell_anomaly_detection.sh
+@@ -43,6 +43,7 @@ cd "$PARENT_DIR"
+ 
+ # Run a sudo command every minute to ensure script execution without user interaction
+ ./install_scripts/start_sudo_refresh.sh
++trap './install_scripts/stop_sudo_refresh.sh 2>/dev/null || true' EXIT
+ 
+ if ! kubectl get pods -n ricplt | grep r4-influxdb-influxdb2 &>/dev/null; then
+     echo "The InfluxDB pod is not running, installing it..."
+diff --git a/RAN_Intelligent_Controllers/Near-Real-Time-RIC/additional_scripts/install_xapp_anomaly_detection.sh b/RAN_Intelligent_Controllers/Near-Real-Time-RIC/additional_scripts/install_xapp_anomaly_detection.sh
+index c6114fd..650f792 100755
+--- a/RAN_Intelligent_Controllers/Near-Real-Time-RIC/additional_scripts/install_xapp_anomaly_detection.sh
++++ b/RAN_Intelligent_Controllers/Near-Real-Time-RIC/additional_scripts/install_xapp_anomaly_detection.sh
+@@ -43,6 +43,7 @@ cd "$PARENT_DIR"
+ 
+ # Run a sudo command every minute to ensure script execution without user interaction
+ ./install_scripts/start_sudo_refresh.sh
++trap './install_scripts/stop_sudo_refresh.sh 2>/dev/null || true' EXIT
+ 
+ if ! kubectl get pods -n ricplt | grep r4-influxdb-influxdb2 &>/dev/null; then
+     echo "The InfluxDB pod is not running, installing it..."
+diff --git a/RAN_Intelligent_Controllers/Near-Real-Time-RIC/additional_scripts/install_xapp_hw-python.sh b/RAN_Intelligent_Controllers/Near-Real-Time-RIC/additional_scripts/install_xapp_hw-python.sh
+index 23def12..098e0f7 100755
+--- a/RAN_Intelligent_Controllers/Near-Real-Time-RIC/additional_scripts/install_xapp_hw-python.sh
++++ b/RAN_Intelligent_Controllers/Near-Real-Time-RIC/additional_scripts/install_xapp_hw-python.sh
+@@ -43,6 +43,7 @@ cd "$PARENT_DIR"
+ 
+ # Run a sudo command every minute to ensure script execution without user interaction
+ ./install_scripts/start_sudo_refresh.sh
++trap './install_scripts/stop_sudo_refresh.sh 2>/dev/null || true' EXIT
+ 
+ if [ "$CHART_REPO_URL" != "http://0.0.0.0:8090" ]; then
+     echo "Registering the Chart Museum URL..."
+diff --git a/RAN_Intelligent_Controllers/Near-Real-Time-RIC/additional_scripts/install_xapp_hw-rust.sh b/RAN_Intelligent_Controllers/Near-Real-Time-RIC/additional_scripts/install_xapp_hw-rust.sh
+index ddc4f31..1b7cebb 100755
+--- a/RAN_Intelligent_Controllers/Near-Real-Time-RIC/additional_scripts/install_xapp_hw-rust.sh
++++ b/RAN_Intelligent_Controllers/Near-Real-Time-RIC/additional_scripts/install_xapp_hw-rust.sh
+@@ -43,6 +43,7 @@ cd "$PARENT_DIR"
+ 
+ # Run a sudo command every minute to ensure script execution without user interaction
+ ./install_scripts/start_sudo_refresh.sh
++trap './install_scripts/stop_sudo_refresh.sh 2>/dev/null || true' EXIT
+ 
+ if [ "$CHART_REPO_URL" != "http://0.0.0.0:8090" ]; then
+     echo "Registering the Chart Museum URL..."
+diff --git a/RAN_Intelligent_Controllers/Near-Real-Time-RIC/additional_scripts/install_xapp_kpi_monitor.sh b/RAN_Intelligent_Controllers/Near-Real-Time-RIC/additional_scripts/install_xapp_kpi_monitor.sh
+index b81d484..9f5ca41 100755
+--- a/RAN_Intelligent_Controllers/Near-Real-Time-RIC/additional_scripts/install_xapp_kpi_monitor.sh
++++ b/RAN_Intelligent_Controllers/Near-Real-Time-RIC/additional_scripts/install_xapp_kpi_monitor.sh
+@@ -43,6 +43,7 @@ cd "$PARENT_DIR"
+ 
+ # Run a sudo command every minute to ensure script execution without user interaction
+ ./install_scripts/start_sudo_refresh.sh
++trap './install_scripts/stop_sudo_refresh.sh 2>/dev/null || true' EXIT
+ 
+ if ! kubectl get pods -n ricplt | grep r4-influxdb-influxdb2 &>/dev/null; then
+     echo "The InfluxDB pod is not running, installing it..."
+diff --git a/RAN_Intelligent_Controllers/Near-Real-Time-RIC/additional_scripts/install_xapp_qoe_predictor.sh b/RAN_Intelligent_Controllers/Near-Real-Time-RIC/additional_scripts/install_xapp_qoe_predictor.sh
+index 81fe3ac..0f65baf 100755
+--- a/RAN_Intelligent_Controllers/Near-Real-Time-RIC/additional_scripts/install_xapp_qoe_predictor.sh
++++ b/RAN_Intelligent_Controllers/Near-Real-Time-RIC/additional_scripts/install_xapp_qoe_predictor.sh
+@@ -43,6 +43,7 @@ cd "$PARENT_DIR"
+ 
+ # Run a sudo command every minute to ensure script execution without user interaction
+ ./install_scripts/start_sudo_refresh.sh
++trap './install_scripts/stop_sudo_refresh.sh 2>/dev/null || true' EXIT
+ 
+ if ! kubectl get pods -n ricplt | grep r4-influxdb-influxdb2 &>/dev/null; then
+     echo "The InfluxDB pod is not running, installing it..."
+diff --git a/RAN_Intelligent_Controllers/Near-Real-Time-RIC/additional_scripts/install_xapp_ric_control.sh b/RAN_Intelligent_Controllers/Near-Real-Time-RIC/additional_scripts/install_xapp_ric_control.sh
+index 4819475..3e2f014 100755
+--- a/RAN_Intelligent_Controllers/Near-Real-Time-RIC/additional_scripts/install_xapp_ric_control.sh
++++ b/RAN_Intelligent_Controllers/Near-Real-Time-RIC/additional_scripts/install_xapp_ric_control.sh
+@@ -43,6 +43,7 @@ cd "$PARENT_DIR"
+ 
+ # Run a sudo command every minute to ensure script execution without user interaction
+ ./install_scripts/start_sudo_refresh.sh
++trap './install_scripts/stop_sudo_refresh.sh 2>/dev/null || true' EXIT
+ 
+ if ! kubectl get pods -n ricplt | grep r4-influxdb-influxdb2 &>/dev/null; then
+     echo "The InfluxDB pod is not running, installing it..."
+diff --git a/RAN_Intelligent_Controllers/Near-Real-Time-RIC/additional_scripts/install_xapp_traffic_steering.sh b/RAN_Intelligent_Controllers/Near-Real-Time-RIC/additional_scripts/install_xapp_traffic_steering.sh
+index e8ff281..92f122e 100755
+--- a/RAN_Intelligent_Controllers/Near-Real-Time-RIC/additional_scripts/install_xapp_traffic_steering.sh
++++ b/RAN_Intelligent_Controllers/Near-Real-Time-RIC/additional_scripts/install_xapp_traffic_steering.sh
+@@ -43,6 +43,7 @@ cd "$PARENT_DIR"
+ 
+ # Run a sudo command every minute to ensure script execution without user interaction
+ ./install_scripts/start_sudo_refresh.sh
++trap './install_scripts/stop_sudo_refresh.sh 2>/dev/null || true' EXIT
+ 
+ if ! kubectl get pods -n ricplt | grep r4-influxdb-influxdb2 &>/dev/null; then
+     echo "The InfluxDB pod is not running, installing it..."
+diff --git a/RAN_Intelligent_Controllers/Near-Real-Time-RIC/full_install.sh b/RAN_Intelligent_Controllers/Near-Real-Time-RIC/full_install.sh
+index fe0fe33..1c37e75 100755
+--- a/RAN_Intelligent_Controllers/Near-Real-Time-RIC/full_install.sh
++++ b/RAN_Intelligent_Controllers/Near-Real-Time-RIC/full_install.sh
+@@ -57,6 +57,7 @@ fi
+ 
+ # Run a sudo command every minute to ensure script execution without user interaction
+ ./install_scripts/start_sudo_refresh.sh
++trap './install_scripts/stop_sudo_refresh.sh 2>/dev/null || true' EXIT
+ 
+ # Get the start timestamp in seconds
+ INSTALL_START_TIME=$(date +%s)
+diff --git a/RAN_Intelligent_Controllers/Near-Real-Time-RIC/full_uninstall.sh b/RAN_Intelligent_Controllers/Near-Real-Time-RIC/full_uninstall.sh
+index cbe81b4..e709c6f 100755
+--- a/RAN_Intelligent_Controllers/Near-Real-Time-RIC/full_uninstall.sh
++++ b/RAN_Intelligent_Controllers/Near-Real-Time-RIC/full_uninstall.sh
+@@ -83,6 +83,7 @@ fi
+ 
+ # Run a sudo command every minute to ensure script execution without user interaction
+ ./install_scripts/start_sudo_refresh.sh
++trap './install_scripts/stop_sudo_refresh.sh 2>/dev/null || true' EXIT
+ 
+ if [ "$USE_SYSTEMCTL" = true ]; then
+     # Prevent the unattended-upgrades service from creating dpkg locks that would error the script
+diff --git a/RAN_Intelligent_Controllers/Non-Real-Time-RIC/additional_scripts/install_only_nearrtric_simulators.sh b/RAN_Intelligent_Controllers/Non-Real-Time-RIC/additional_scripts/install_only_nearrtric_simulators.sh
+index c3a6aa3..4a8e683 100755
+--- a/RAN_Intelligent_Controllers/Non-Real-Time-RIC/additional_scripts/install_only_nearrtric_simulators.sh
++++ b/RAN_Intelligent_Controllers/Non-Real-Time-RIC/additional_scripts/install_only_nearrtric_simulators.sh
+@@ -57,6 +57,7 @@ fi
+ 
+ # Run a sudo command every minute to ensure script execution without user interaction
+ ./install_scripts/start_sudo_refresh.sh
++trap './install_scripts/stop_sudo_refresh.sh 2>/dev/null || true' EXIT
+ 
+ # Detect if systemctl is available
+ USE_SYSTEMCTL=false
+diff --git a/RAN_Intelligent_Controllers/Non-Real-Time-RIC/full_install.sh b/RAN_Intelligent_Controllers/Non-Real-Time-RIC/full_install.sh
+index fa20899..134b942 100755
+--- a/RAN_Intelligent_Controllers/Non-Real-Time-RIC/full_install.sh
++++ b/RAN_Intelligent_Controllers/Non-Real-Time-RIC/full_install.sh
+@@ -54,6 +54,7 @@ fi
+ 
+ # Run a sudo command every minute to ensure script execution without user interaction
+ ./install_scripts/start_sudo_refresh.sh
++trap './install_scripts/stop_sudo_refresh.sh 2>/dev/null || true' EXIT
+ 
+ # Get the start timestamp in seconds
+ INSTALL_START_TIME=$(date +%s)
+diff --git a/RAN_Intelligent_Controllers/Non-Real-Time-RIC/full_uninstall.sh b/RAN_Intelligent_Controllers/Non-Real-Time-RIC/full_uninstall.sh
+index 025f69d..300e294 100755
+--- a/RAN_Intelligent_Controllers/Non-Real-Time-RIC/full_uninstall.sh
++++ b/RAN_Intelligent_Controllers/Non-Real-Time-RIC/full_uninstall.sh
+@@ -68,6 +68,7 @@ fi
+ 
+ # Run a sudo command every minute to ensure script execution without user interaction
+ ./install_scripts/start_sudo_refresh.sh
++trap './install_scripts/stop_sudo_refresh.sh 2>/dev/null || true' EXIT
+ 
+ # Detect if systemctl is available
+ USE_SYSTEMCTL=false
+diff --git a/RAN_Intelligent_Controllers/Non-Real-Time-RIC/run_tests.sh b/RAN_Intelligent_Controllers/Non-Real-Time-RIC/run_tests.sh
+index ff5d2cf..031c5ad 100755
+--- a/RAN_Intelligent_Controllers/Non-Real-Time-RIC/run_tests.sh
++++ b/RAN_Intelligent_Controllers/Non-Real-Time-RIC/run_tests.sh
+@@ -43,6 +43,7 @@ cd "$SCRIPT_DIR"
+ 
+ # Run a sudo command every minute to ensure script execution without user interaction
+ ./install_scripts/start_sudo_refresh.sh
++trap './install_scripts/stop_sudo_refresh.sh 2>/dev/null || true' EXIT
+ 
+ # Install dependencies if not already installed
+ if ! command -v python3 &>/dev/null; then
+diff --git a/User_Equipment/full_install.sh b/User_Equipment/full_install.sh
+index b45873f..d4f9031 100755
+--- a/User_Equipment/full_install.sh
++++ b/User_Equipment/full_install.sh
+@@ -50,6 +50,7 @@ fi
+ 
+ # Run a sudo command every minute to ensure script execution without user interaction
+ ./install_scripts/start_sudo_refresh.sh
++trap './install_scripts/stop_sudo_refresh.sh 2>/dev/null || true' EXIT
+ 
+ # Get the start timestamp in seconds
+ INSTALL_START_TIME=$(date +%s)

@@ -43,7 +43,7 @@ RICs
 └── O-RAN SC Non-RT RIC: M-Release
     └── Minimal prototype with no rApp support.
 5G Core
-├── Open5GS: v2.7.7
+├── Open5GS: v2.8.0
 ├── OPENAIR-CN-5G: v2.2.0
 └── free5GC: v4.2.1
 UEs

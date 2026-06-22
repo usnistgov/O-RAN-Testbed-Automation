@@ -8,6 +8,25 @@
 # stating that you changed the software and should note the date and nature of
 # any such change. Please explicitly acknowledge the National Institute of
 # Standards and Technology as the source of the software.
+#
+# NIST-developed software is expressly provided "AS IS." NIST MAKES NO WARRANTY
+# OF ANY KIND, EXPRESS, IMPLIED, IN FACT, OR ARISING BY OPERATION OF LAW,
+# INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTY OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT, AND DATA ACCURACY. NIST
+# NEITHER REPRESENTS NOR WARRANTS THAT THE OPERATION OF THE SOFTWARE WILL BE
+# UNINTERRUPTED OR ERROR-FREE, OR THAT ANY DEFECTS WILL BE CORRECTED. NIST DOES
+# NOT WARRANT OR MAKE ANY REPRESENTATIONS REGARDING THE USE OF THE SOFTWARE OR
+# THE RESULTS THEREOF, INCLUDING BUT NOT LIMITED TO THE CORRECTNESS, ACCURACY,
+# RELIABILITY, OR USEFULNESS OF THE SOFTWARE.
+#
+# You are solely responsible for determining the appropriateness of using and
+# distributing the software and you assume all risks associated with its use,
+# including but not limited to the risks and costs of program errors, compliance
+# with applicable laws, damage to or loss of data, programs or equipment, and
+# the unavailability or interruption of operation. This software is not intended
+# to be used in any situation where a failure could cause risk of injury or
+# damage to property. The software developed by NIST employees is not subject to
+# copyright protection within the United States.
 
 set -e
 
@@ -87,21 +106,18 @@ if [ ${#ERRORS[@]} -eq 0 ]; then
     GNB_BASE_SRATE=$(device_arg_value "$GNB_DEVICE_ARGS" "base_srate")
     PDU_TIMEOUT=$(yaml_value "$GNB_CONFIG" "request_pdu_session_timeout")
 
-    [ "$(device_arg_value "$GNB_DEVICE_ARGS" "tx_port")" = "tcp://127.0.0.1:2000" ] || add_error "gNB tx_port must be tcp://127.0.0.1:2000 for broker mode"
-    [ "$(device_arg_value "$GNB_DEVICE_ARGS" "rx_port")" = "tcp://127.0.0.1:2001" ] || add_error "gNB rx_port must be tcp://127.0.0.1:2001 for broker mode"
-    [ -n "$GNB_BASE_SRATE" ] || add_error "gNB device_args is missing base_srate"
-    [ -n "$GNB_SRATE" ] || add_error "gNB ru_sdr.srate is missing"
-    [ -n "$PDU_TIMEOUT" ] && [ "$PDU_TIMEOUT" -ge 30 ] || add_error "gNB cu_cp.request_pdu_session_timeout should be at least 30 seconds for broker mode"
-    grep -q "^SLOW_DOWN_RATIO = 1$" "$BROKER" || add_error "ZMQ broker SLOW_DOWN_RATIO must be 1 for real-time gNB/UE operation"
-    grep -q "ZMQ broker sample_rate=" "$BROKER" || add_error "ZMQ broker is missing startup endpoint logging; regenerate broker config"
-    grep -q "ZMQ broker gNB UL sink tcp://127.0.0.1:2001" "$BROKER" || add_error "ZMQ broker is missing gNB UL endpoint logging; regenerate broker config"
-
-    [ "$(yaml_value "$GNB_CONFIG" "resource_set_size")" = "7" ] || add_error "gNB cell_cfg.pucch.resource_set_size must be 7"
-    [ "$(yaml_value "$GNB_CONFIG" "nof_cell_res_set_configs")" = "1" ] || add_error "gNB cell_cfg.pucch.nof_cell_res_set_configs must be 1"
-    [ "$(yaml_value "$GNB_CONFIG" "f1_nof_cyclic_shifts")" = "1" ] || add_error "gNB cell_cfg.pucch.f1_nof_cyclic_shifts must be 1"
-    [ "$(yaml_value "$GNB_CONFIG" "f1_enable_occ")" = "true" ] || add_error "gNB cell_cfg.pucch.f1_enable_occ must be true"
-    [ "$(yaml_value "$GNB_CONFIG" "nof_cell_sr_res")" = "7" ] || add_error "gNB cell_cfg.pucch.nof_cell_sr_res must be 7"
-    [ "$(yaml_value "$GNB_CONFIG" "nof_cell_csi_res")" = "7" ] || add_error "gNB cell_cfg.pucch.nof_cell_csi_res must be 7"
+    if [ "$(device_arg_value "$GNB_DEVICE_ARGS" "tx_port")" != "tcp://127.0.0.1:2000" ]; then
+        add_error "gNB tx_port must be tcp://127.0.0.1:2000 for broker mode"
+    fi
+    if [ "$(device_arg_value "$GNB_DEVICE_ARGS" "rx_port")" != "tcp://127.0.0.1:2001" ]; then
+        add_error "gNB rx_port must be tcp://127.0.0.1:2001 for broker mode"
+    fi
+    if [ -z "$GNB_BASE_SRATE" ]; then
+        add_error "gNB device_args is missing base_srate"
+    fi
+    if [ -z "$GNB_SRATE" ]; then
+        add_error "gNB ru_sdr.srate is missing"
+    fi
 fi
 
 if [ ${#UE_NUMBERS[@]} -eq 0 ] && [ -d "$UE_CONFIG_DIR" ]; then
@@ -134,15 +150,27 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
     EXPECTED_RX_PORT=$((2000 + UE_NUMBER * 100))
     EXPECTED_TX_PORT=$((2001 + UE_NUMBER * 100))
 
-    [ "$(broker_field "$BROKER" "$UE_NUMBER" 4)" = "$EXPECTED_RX_PORT" ] || add_error "UE $UE_NUMBER: broker rx_port must be $EXPECTED_RX_PORT"
-    [ "$(broker_field "$BROKER" "$UE_NUMBER" 5)" = "$EXPECTED_TX_PORT" ] || add_error "UE $UE_NUMBER: broker tx_port must be $EXPECTED_TX_PORT"
-    [ "$(broker_field "$BROKER" "$UE_NUMBER" 6)" = "$EXPECTED_UE_IP" ] || add_error "UE $UE_NUMBER: broker ue_ip must be $EXPECTED_UE_IP"
-    grep -q "ZMQ broker UE{ue_number} DL sink" "$BROKER" ||
-        add_error "ZMQ broker is missing UE endpoint logging; regenerate broker config"
-    [ "$(device_arg_value "$UE_DEVICE_ARGS" "tx_port")" = "tcp://*:$EXPECTED_TX_PORT" ] || add_error "UE $UE_NUMBER: tx_port must be tcp://*:$EXPECTED_TX_PORT"
-    [ "$(device_arg_value "$UE_DEVICE_ARGS" "rx_port")" = "tcp://$EXPECTED_HOST_IP:$EXPECTED_RX_PORT" ] || add_error "UE $UE_NUMBER: rx_port must be tcp://$EXPECTED_HOST_IP:$EXPECTED_RX_PORT"
-    [ "$(device_arg_value "$UE_DEVICE_ARGS" "base_srate")" = "$GNB_BASE_SRATE" ] || add_error "UE $UE_NUMBER: base_srate does not match gNB base_srate"
-    [ "$UE_SRATE" = "${GNB_SRATE}e6" ] || add_error "UE $UE_NUMBER: srate $UE_SRATE does not match gNB srate ${GNB_SRATE}e6"
+    if [ "$(broker_field "$BROKER" "$UE_NUMBER" 4)" != "$EXPECTED_RX_PORT" ]; then
+        add_error "UE $UE_NUMBER: broker rx_port must be $EXPECTED_RX_PORT"
+    fi
+    if [ "$(broker_field "$BROKER" "$UE_NUMBER" 5)" != "$EXPECTED_TX_PORT" ]; then
+        add_error "UE $UE_NUMBER: broker tx_port must be $EXPECTED_TX_PORT"
+    fi
+    if [ "$(broker_field "$BROKER" "$UE_NUMBER" 6)" != "$EXPECTED_UE_IP" ]; then
+        add_error "UE $UE_NUMBER: broker ue_ip must be $EXPECTED_UE_IP"
+    fi
+    if [ "$(device_arg_value "$UE_DEVICE_ARGS" "tx_port")" != "tcp://*:$EXPECTED_TX_PORT" ]; then
+        add_error "UE $UE_NUMBER: tx_port must be tcp://*:$EXPECTED_TX_PORT"
+    fi
+    if [ "$(device_arg_value "$UE_DEVICE_ARGS" "rx_port")" != "tcp://$EXPECTED_HOST_IP:$EXPECTED_RX_PORT" ]; then
+        add_error "UE $UE_NUMBER: rx_port must be tcp://$EXPECTED_HOST_IP:$EXPECTED_RX_PORT"
+    fi
+    if [ "$(device_arg_value "$UE_DEVICE_ARGS" "base_srate")" != "$GNB_BASE_SRATE" ]; then
+        add_error "UE $UE_NUMBER: base_srate does not match gNB base_srate"
+    fi
+    if [ "$UE_SRATE" != "${GNB_SRATE}e6" ]; then
+        add_error "UE $UE_NUMBER: srate $UE_SRATE does not match gNB srate ${GNB_SRATE}e6"
+    fi
 done
 
 for BROKER_UE in $(grep -E '^# UE_CONFIG: ' "$BROKER" | awk '{ print $3 }'); do
@@ -166,4 +194,4 @@ fi
 
 IFS=$'\n' SORTED_UES=($(printf "%s\n" "${UE_NUMBERS[@]}" | sort -n))
 unset IFS
-echo "ZMQ broker configuration is aligned for UE(s): ${SORTED_UES[*]}"
+echo "Successfully validated ZeroMQ broker configuration for gNB and UE(s): ${SORTED_UES[*]}"

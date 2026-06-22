@@ -1,0 +1,755 @@
+diff --git a/Additional_Scripts/install_and_configure_wireshark.sh b/Additional_Scripts/install_and_configure_wireshark.sh
+index 38aa9a0..49b3766 100755
+--- a/Additional_Scripts/install_and_configure_wireshark.sh
++++ b/Additional_Scripts/install_and_configure_wireshark.sh
+@@ -143,7 +143,7 @@ function set_preference() {
+ 
+ echo
+ echo "Configuring Wireshark to handle MAC, RLC, NGAP, GTP-U, E1AP, F1AP, and E2AP packet captures..."
+-echo "More information about the configurations can be found at: https://docs.srsran.com/projects/project/en/latest/user_manuals/source/outputs.html#pcaps"
++echo "More information can be found at https://ocudu.gitlab.io/ocudu_docs/user_manual/outputs/#pcaps"
+ 
+ # Update DLT_USER settings
+ update_dlt_user 149 "udp"  # For MAC and RLC
+diff --git a/Next_Generation_Node_B/generate_configurations.sh b/Next_Generation_Node_B/generate_configurations.sh
+index ce4f520..b1a65e8 100755
+--- a/Next_Generation_Node_B/generate_configurations.sh
++++ b/Next_Generation_Node_B/generate_configurations.sh
+@@ -452,7 +452,7 @@ update_yaml "configs/gnb.yaml" "cu_cp" "request_pdu_session_timeout" "3"
+ 
+ # Update configuration values for gNodeB logging
+ update_yaml "configs/gnb.yaml" "log" "filename" "$SCRIPT_DIR/logs/gnb.log"
+-update_yaml "configs/gnb.yaml" "log" "all_level" "info"
++update_yaml "configs/gnb.yaml" "log" "all_level" "warning"
+ update_yaml "configs/gnb.yaml" "log" "hex_max_size" "0"
+ 
+ # Packet capture for NGAP
+diff --git a/Next_Generation_Node_B/install_scripts/apply_patches.sh b/Next_Generation_Node_B/install_scripts/apply_patches.sh
+index 7503c6f..731804e 100755
+--- a/Next_Generation_Node_B/install_scripts/apply_patches.sh
++++ b/Next_Generation_Node_B/install_scripts/apply_patches.sh
+@@ -77,5 +77,16 @@ echo "Patching precoding_codebooks.cpp..."
+ git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/ocudu/lib/ran/precoding/precoding_codebooks.cpp.patch"
+ cd ..
+ 
++# Apply patch to start the flexible RU before the DU setup path can block.
++cd ocudu
++git restore apps/units/flexible_o_du/split_helpers/flexible_o_du_impl.cpp
++if [ ! -f "apps/units/flexible_o_du/split_helpers/flexible_o_du_impl.cpp.previous" ]; then
++    cp apps/units/flexible_o_du/split_helpers/flexible_o_du_impl.cpp apps/units/flexible_o_du/split_helpers/flexible_o_du_impl.cpp.previous
++    cp apps/units/flexible_o_du/split_helpers/flexible_o_du_impl.cpp.previous "$PARENT_DIR/install_patch_files/ocudu/apps/units/flexible_o_du/split_helpers/flexible_o_du_impl.previous.cpp"
++fi
++echo "Patching flexible_o_du_impl.cpp..."
++git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/ocudu/apps/units/flexible_o_du/split_helpers/flexible_o_du_impl.cpp.patch"
++cd ..
++
+ echo
+ echo "Successfully patched OCUDU."
+diff --git a/Next_Generation_Node_B/run.sh b/Next_Generation_Node_B/run.sh
+index 7a4ddf7..25bc255 100755
+--- a/Next_Generation_Node_B/run.sh
++++ b/Next_Generation_Node_B/run.sh
+@@ -73,6 +73,11 @@ else
+             fi
+             sleep 2
+         fi
++    elif [ "${PREPARE_DIRECT_ZMQ_ROUTES:-true}" = "true" ] && [ -x "$SCRIPT_DIR/../User_Equipment/install_scripts/setup_ue_namespace.sh" ]; then
++        for UE_NUMBER in ${DIRECT_ZMQ_UE_NUMBERS//,/ }; do # Space or comma separated list of UEs
++            echo "Preparing UE $UE_NUMBER namespace route for direct ZeroMQ..."
++            sudo "$SCRIPT_DIR/../User_Equipment/install_scripts/setup_ue_namespace.sh" "$UE_NUMBER"
++        done
+     fi
+ 
+     sudo chown --recursive "${SUDO_USER:-$USER}" logs
+diff --git a/Next_Generation_Node_B/run_background.sh b/Next_Generation_Node_B/run_background.sh
+index 33b0965..7f058cb 100755
+--- a/Next_Generation_Node_B/run_background.sh
++++ b/Next_Generation_Node_B/run_background.sh
+@@ -67,20 +67,51 @@ else
+     sudo -v # Ensure sudo session is active
+     sudo env $ZMQ_BROKER_UI_ENV setsid bash -c "stdbuf -oL -eL \"$SCRIPT_DIR/run.sh\" >/dev/null 2>&1" </dev/null &
+ 
++    GNB_READY_MODE="${GNB_READY_MODE:-n2}" # Supported: n2, started
++    if [ "$GNB_READY_MODE" != "n2" ] && [ "$GNB_READY_MODE" != "started" ]; then
++        echo "ERROR: Unsupported GNB_READY_MODE '$GNB_READY_MODE'. Supported: n2, started."
++        exit 1
++    fi
++    # https://gitlab.com/ocudu/ocudu/-/blob/dev/apps/services/application_message_banners.h
++    READY_RE='====[[:space:]]+gNB started[[:space:]]+==='
++    N2_READY_RE='N2: Connection to AMF on .* completed'
++    ERROR_RE='OCUDU ERROR:|ERROR:|Error:|error:|FATAL|Fatal|fatal|Failed to|failed to|Invalid .*configuration|Assertion|assertion'
++
+     ATTEMPT=0
+-    # while [ ! -f logs/gnb_stdout.txt ] || ! grep -q "gNB started" logs/gnb_stdout.txt; do
+-    while [ ! -f logs/gnb_stdout.txt ] || ! (grep -q "gNB started" logs/gnb_stdout.txt || grep -q -E "N2: Connection to AMF on .* completed" logs/gnb_stdout.txt); do
++    while [ ! -f logs/gnb_stdout.txt ] ||
++        { [ "$GNB_READY_MODE" = "started" ] && ! grep -qE "$READY_RE" logs/gnb_stdout.txt; } ||
++        { [ "$GNB_READY_MODE" = "n2" ] && ! grep -qE "$N2_READY_RE" logs/gnb_stdout.txt; }; do
+         sleep 0.5
+         ATTEMPT=$((ATTEMPT + 1))
+-        if [ $ATTEMPT -ge 120 ]; then
+-            echo "gNodeB did not start after 60 seconds, exiting..."
++
++        if [ -f logs/gnb_stdout.txt ] && grep -qE "$ERROR_RE" logs/gnb_stdout.txt; then
++            echo "gNodeB failed to start. Recent stdout:"
++            tail -n 80 logs/gnb_stdout.txt
+             exit 1
+         fi
+-        if [ -f logs/gnb_stdout.txt ] && (grep -q "Error" logs/gnb_stdout.txt || grep -q "OCUDU ERROR:" logs/gnb_stdout.txt); then
+-            echo "Error starting gNodeB. Check logs/gnb_stdout.txt for more information."
++
++        if [ $ATTEMPT -ge 120 ]; then
++            echo "gNodeB did not report $GNB_READY_MODE readiness after 60 seconds."
++            if [ "$GNB_READY_MODE" = "started" ]; then
++                echo "The gNodeB may have connected to the AMF but not finished DU/RU startup."
++            fi
++            echo
++            echo "Recent stdout:"
++            [ -f logs/gnb_stdout.txt ] && tail -n 120 logs/gnb_stdout.txt
++            if [ -s logs/gnb.log ]; then
++                echo
++                echo "Recent gNB log:"
++                tail -n 120 logs/gnb.log
++            fi
+             exit 1
+         fi
+     done
+ 
++    if [ "$USE_ZMQ_BROKER" != "true" ]; then
++        # N2 and process startup can come up before the direct ZMQ radio path is necessarily ready.
++        # Give the DU/RU side a short, deterministic settle window before UE startup.
++        sleep "${DIRECT_ZMQ_GNB_SETTLE_SECONDS:-5}"
++    fi
++
+     ./is_running.sh
+ fi
+diff --git a/OpenAirInterface_Testbed/Next_Generation_Node_B/install_scripts/revert_du_namespace.sh b/OpenAirInterface_Testbed/Next_Generation_Node_B/install_scripts/revert_du_namespace.sh
+index 2de8573..7ec1195 100755
+--- a/OpenAirInterface_Testbed/Next_Generation_Node_B/install_scripts/revert_du_namespace.sh
++++ b/OpenAirInterface_Testbed/Next_Generation_Node_B/install_scripts/revert_du_namespace.sh
+@@ -36,14 +36,14 @@ set +e
+ SCRIPT_DIR=$(dirname "$(realpath "$0")")
+ cd "$SCRIPT_DIR"
+ 
+-DU_NUMBER=$1
++DU_NUMBER="$1"
+ 
+ if [[ -z "$DU_NUMBER" ]]; then
+     echo "ERROR: No DU number provided."
+     echo "Usage: $0 <DU_NUMBER>"
+     exit 1
+ fi
+-if ! [[ $DU_NUMBER =~ ^[0-9]+$ ]]; then
++if ! [[ "$DU_NUMBER" =~ ^[0-9]+$ ]]; then
+     echo "ERROR: DU number must be a number."
+     exit 1
+ fi
+@@ -64,24 +64,25 @@ DU_IP_OFFSET=$((SUBNET_OFFSET + 1)) # .6
+ 
+ # Fetch IPs from subnet using python script
+ DU_SUBNET_ID=$(python3 fetch_nth_ip.py "$BASE_SUBNET" $((SUBNET_OFFSET - 1)))
+-DU_HOST_IP=$(python3 fetch_nth_ip.py "$BASE_SUBNET" $HOST_IP_OFFSET)
+-DU_NS_IP=$(python3 fetch_nth_ip.py "$BASE_SUBNET" $DU_IP_OFFSET)
++DU_HOST_IP=$(python3 fetch_nth_ip.py "$BASE_SUBNET" "$HOST_IP_OFFSET")
++DU_NS_IP=$(python3 fetch_nth_ip.py "$BASE_SUBNET" "$DU_IP_OFFSET")
+ 
+ echo "Removing IP routes and addresses inside the namespace..."
+-sudo ip netns exec $DU_NAMESPACE ip route del default via $DU_HOST_IP || true
+-sudo ip netns exec $DU_NAMESPACE ip addr del $DU_NS_IP/30 dev v-$DU_NAMESPACE || true
+-sudo ip netns exec $DU_NAMESPACE ip link set v-$DU_NAMESPACE down || true
++sudo ip netns exec "$DU_NAMESPACE" ip route del default via "$DU_HOST_IP" dev "v-$DU_NAMESPACE" || true
++sudo ip netns exec "$DU_NAMESPACE" ip addr del "$DU_NS_IP/30" dev "v-$DU_NAMESPACE" || true
++sudo ip netns exec "$DU_NAMESPACE" ip link set "v-$DU_NAMESPACE" down || true
++sudo ip route del "$DU_SUBNET_ID/30" dev "v-eth-du$DU_NUMBER" 2>/dev/null || true
+ 
+ echo "Removing iptables rules..."
+-while sudo iptables -D FORWARD -o "$NETWORK_INTERFACE" -i v-eth-du$DU_NUMBER -j ACCEPT 2>/dev/null; do :; done
+-while sudo iptables -D FORWARD -i "$NETWORK_INTERFACE" -o v-eth-du$DU_NUMBER -j ACCEPT 2>/dev/null; do :; done
++while sudo iptables -D FORWARD -o "$NETWORK_INTERFACE" -i "v-eth-du$DU_NUMBER" -j ACCEPT 2>/dev/null; do :; done
++while sudo iptables -D FORWARD -i "$NETWORK_INTERFACE" -o "v-eth-du$DU_NUMBER" -j ACCEPT 2>/dev/null; do :; done
+ while sudo iptables -t nat -D POSTROUTING -s "$DU_SUBNET_ID/30" -o "$NETWORK_INTERFACE" -j MASQUERADE 2>/dev/null; do :; done
+ 
+ echo "Deleting the network devices..."
+-sudo ip link set v-eth-du$DU_NUMBER down
+-sudo ip link del v-eth-du$DU_NUMBER
++sudo ip link set "v-eth-du$DU_NUMBER" down
++sudo ip link del "v-eth-du$DU_NUMBER"
+ 
+ echo "Deleting the network namespace..."
+-sudo ip netns delete $DU_NAMESPACE
++sudo ip netns delete "$DU_NAMESPACE"
+ 
+ echo "Successfully reverted the DU $DU_NUMBER namespace."
+diff --git a/OpenAirInterface_Testbed/Next_Generation_Node_B/install_scripts/setup_du_namespace.sh b/OpenAirInterface_Testbed/Next_Generation_Node_B/install_scripts/setup_du_namespace.sh
+index e33d3f9..99bff84 100755
+--- a/OpenAirInterface_Testbed/Next_Generation_Node_B/install_scripts/setup_du_namespace.sh
++++ b/OpenAirInterface_Testbed/Next_Generation_Node_B/install_scripts/setup_du_namespace.sh
+@@ -36,14 +36,14 @@ set -e
+ SCRIPT_DIR=$(dirname "$(realpath "$0")")
+ cd "$SCRIPT_DIR"
+ 
+-DU_NUMBER=$1
++DU_NUMBER="$1"
+ 
+ if [[ -z "$DU_NUMBER" ]]; then
+     echo "ERROR: No DU number provided."
+     echo "Usage: $0 <DU_NUMBER>"
+     exit 1
+ fi
+-if ! [[ $DU_NUMBER =~ ^[0-9]+$ ]]; then
++if ! [[ "$DU_NUMBER" =~ ^[0-9]+$ ]]; then
+     echo "ERROR: DU number must be a number."
+     exit 1
+ fi
+@@ -64,37 +64,44 @@ DU_IP_OFFSET=$((SUBNET_OFFSET + 1)) # .6
+ 
+ # Fetch IPs from subnet using python script
+ DU_SUBNET_ID=$(python3 fetch_nth_ip.py "$BASE_SUBNET" $((SUBNET_OFFSET - 1)))
+-DU_HOST_IP=$(python3 fetch_nth_ip.py "$BASE_SUBNET" $HOST_IP_OFFSET)
+-DU_NS_IP=$(python3 fetch_nth_ip.py "$BASE_SUBNET" $DU_IP_OFFSET)
+-
+-# Clean up existing artifacts for this DU
+-sudo ip netns delete $DU_NAMESPACE 2>/dev/null || true
+-sudo ip link delete v-eth-du$DU_NUMBER 2>/dev/null || true
+-
+-# Create namespace and veth pair
+-sudo ip netns add $DU_NAMESPACE
+-sudo ip link add v-eth-du$DU_NUMBER type veth peer name v-$DU_NAMESPACE
+-sudo ip link set v-$DU_NAMESPACE netns $DU_NAMESPACE
++DU_HOST_IP=$(python3 fetch_nth_ip.py "$BASE_SUBNET" "$HOST_IP_OFFSET")
++DU_NS_IP=$(python3 fetch_nth_ip.py "$BASE_SUBNET" "$DU_IP_OFFSET")
++
++if sudo ip netns list | grep -qE "^${DU_NAMESPACE}( |$)" &&
++    ip link show "v-eth-du$DU_NUMBER" >/dev/null 2>&1 &&
++    sudo ip netns exec "$DU_NAMESPACE" ip link show "v-$DU_NAMESPACE" >/dev/null 2>&1; then
++    echo "Reusing existing namespace $DU_NAMESPACE and v-eth-du$DU_NUMBER."
++else
++    # Clean up existing artifacts for this DU
++    sudo ip netns delete "$DU_NAMESPACE" 2>/dev/null || true
++    sudo ip link delete "v-eth-du$DU_NUMBER" 2>/dev/null || true
++
++    # Create namespace and veth pair
++    sudo ip netns add "$DU_NAMESPACE"
++    sudo ip link add "v-eth-du$DU_NUMBER" type veth peer name "v-$DU_NAMESPACE"
++    sudo ip link set "v-$DU_NAMESPACE" netns "$DU_NAMESPACE"
++fi
+ 
+ # Configure host side interface
+-sudo ip addr add $DU_HOST_IP/30 dev v-eth-du$DU_NUMBER
+-sudo ip link set v-eth-du$DU_NUMBER up
++sudo ip addr replace "$DU_HOST_IP/30" dev "v-eth-du$DU_NUMBER"
++sudo ip link set "v-eth-du$DU_NUMBER" up
++sudo ip route replace "$DU_SUBNET_ID/30" dev "v-eth-du$DU_NUMBER" src "$DU_HOST_IP"
+ 
+ # Configure NAT to masquerade traffic and allow forwarding
+ if ! sudo iptables -t nat -C POSTROUTING -s "$DU_SUBNET_ID/30" -o "$NETWORK_INTERFACE" -j MASQUERADE 2>/dev/null; then
+     sudo iptables -t nat -A POSTROUTING -s "$DU_SUBNET_ID/30" -o "$NETWORK_INTERFACE" -j MASQUERADE
+ fi
+-if ! sudo iptables -C FORWARD -i "$NETWORK_INTERFACE" -o v-eth-du$DU_NUMBER -j ACCEPT 2>/dev/null; then
+-    sudo iptables -A FORWARD -i "$NETWORK_INTERFACE" -o v-eth-du$DU_NUMBER -j ACCEPT
++if ! sudo iptables -C FORWARD -i "$NETWORK_INTERFACE" -o "v-eth-du$DU_NUMBER" -j ACCEPT 2>/dev/null; then
++    sudo iptables -A FORWARD -i "$NETWORK_INTERFACE" -o "v-eth-du$DU_NUMBER" -j ACCEPT
+ fi
+-if ! sudo iptables -C FORWARD -o "$NETWORK_INTERFACE" -i v-eth-du$DU_NUMBER -j ACCEPT 2>/dev/null; then
+-    sudo iptables -A FORWARD -o "$NETWORK_INTERFACE" -i v-eth-du$DU_NUMBER -j ACCEPT
++if ! sudo iptables -C FORWARD -o "$NETWORK_INTERFACE" -i "v-eth-du$DU_NUMBER" -j ACCEPT 2>/dev/null; then
++    sudo iptables -A FORWARD -o "$NETWORK_INTERFACE" -i "v-eth-du$DU_NUMBER" -j ACCEPT
+ fi
+ 
+ # Configure namespace side interface
+-sudo ip netns exec $DU_NAMESPACE ip link set dev lo up
+-sudo ip netns exec $DU_NAMESPACE ip addr add $DU_NS_IP/30 dev v-$DU_NAMESPACE
+-sudo ip netns exec $DU_NAMESPACE ip link set v-$DU_NAMESPACE up
++sudo ip netns exec "$DU_NAMESPACE" ip link set dev lo up
++sudo ip netns exec "$DU_NAMESPACE" ip addr replace "$DU_NS_IP/30" dev "v-$DU_NAMESPACE"
++sudo ip netns exec "$DU_NAMESPACE" ip link set "v-$DU_NAMESPACE" up
+ 
+ # Set default route in namespace to point to host gateway
+-sudo ip netns exec $DU_NAMESPACE ip route add default via $DU_HOST_IP
++sudo ip netns exec "$DU_NAMESPACE" ip route replace default via "$DU_HOST_IP" dev "v-$DU_NAMESPACE"
+diff --git a/OpenAirInterface_Testbed/User_Equipment/install_scripts/revert_ue_namespace.sh b/OpenAirInterface_Testbed/User_Equipment/install_scripts/revert_ue_namespace.sh
+index 5bdc2aa..dbe989b 100755
+--- a/OpenAirInterface_Testbed/User_Equipment/install_scripts/revert_ue_namespace.sh
++++ b/OpenAirInterface_Testbed/User_Equipment/install_scripts/revert_ue_namespace.sh
+@@ -36,14 +36,14 @@ set +e
+ SCRIPT_DIR=$(dirname "$(realpath "$0")")
+ cd "$SCRIPT_DIR"
+ 
+-UE_NUMBER=$1
++UE_NUMBER="$1"
+ 
+ if [[ -z "$UE_NUMBER" ]]; then
+     echo "ERROR: No UE number provided."
+     echo "Usage: $0 <UE_NUMBER>"
+     exit 1
+ fi
+-if ! [[ $UE_NUMBER =~ ^[0-9]+$ ]]; then
++if ! [[ "$UE_NUMBER" =~ ^[0-9]+$ ]]; then
+     echo "ERROR: UE number must be a number."
+     exit 1
+ fi
+@@ -64,24 +64,25 @@ UE_IP_OFFSET=$((SUBNET_OFFSET + 1)) # .6
+ 
+ # Fetch IPs from subnet using python script
+ UE_SUBNET_ID=$(python3 fetch_nth_ip.py "$BASE_SUBNET" $((SUBNET_OFFSET - 1)))
+-UE_HOST_IP=$(python3 fetch_nth_ip.py "$BASE_SUBNET" $HOST_IP_OFFSET)
+-UE_NS_IP=$(python3 fetch_nth_ip.py "$BASE_SUBNET" $UE_IP_OFFSET)
++UE_HOST_IP=$(python3 fetch_nth_ip.py "$BASE_SUBNET" "$HOST_IP_OFFSET")
++UE_NS_IP=$(python3 fetch_nth_ip.py "$BASE_SUBNET" "$UE_IP_OFFSET")
+ 
+ echo "Removing IP routes and addresses inside the namespace..."
+-sudo ip netns exec $UE_NAMESPACE ip route del default via $UE_HOST_IP || true
+-sudo ip netns exec $UE_NAMESPACE ip addr del $UE_NS_IP/30 dev v-$UE_NAMESPACE || true
+-sudo ip netns exec $UE_NAMESPACE ip link set v-$UE_NAMESPACE down || true
++sudo ip netns exec "$UE_NAMESPACE" ip route del default via "$UE_HOST_IP" dev "v-$UE_NAMESPACE" || true
++sudo ip netns exec "$UE_NAMESPACE" ip addr del "$UE_NS_IP/30" dev "v-$UE_NAMESPACE" || true
++sudo ip netns exec "$UE_NAMESPACE" ip link set "v-$UE_NAMESPACE" down || true
++sudo ip route del "$UE_SUBNET_ID/30" dev "v-eth$UE_NUMBER" 2>/dev/null || true
+ 
+ echo "Removing iptables rules..."
+-while sudo iptables -D FORWARD -o "$NETWORK_INTERFACE" -i v-eth$UE_NUMBER -j ACCEPT 2>/dev/null; do :; done
+-while sudo iptables -D FORWARD -i "$NETWORK_INTERFACE" -o v-eth$UE_NUMBER -j ACCEPT 2>/dev/null; do :; done
++while sudo iptables -D FORWARD -o "$NETWORK_INTERFACE" -i "v-eth$UE_NUMBER" -j ACCEPT 2>/dev/null; do :; done
++while sudo iptables -D FORWARD -i "$NETWORK_INTERFACE" -o "v-eth$UE_NUMBER" -j ACCEPT 2>/dev/null; do :; done
+ while sudo iptables -t nat -D POSTROUTING -s "$UE_SUBNET_ID/30" -o "$NETWORK_INTERFACE" -j MASQUERADE 2>/dev/null; do :; done
+ 
+ echo "Deleting the network devices..."
+-sudo ip link set v-eth$UE_NUMBER down
+-sudo ip link del v-eth$UE_NUMBER
++sudo ip link set "v-eth$UE_NUMBER" down
++sudo ip link del "v-eth$UE_NUMBER"
+ 
+ echo "Deleting the network namespace..."
+-sudo ip netns delete $UE_NAMESPACE
++sudo ip netns delete "$UE_NAMESPACE"
+ 
+ echo "Successfully reverted the UE $UE_NUMBER namespace."
+diff --git a/OpenAirInterface_Testbed/User_Equipment/install_scripts/setup_ue_namespace.sh b/OpenAirInterface_Testbed/User_Equipment/install_scripts/setup_ue_namespace.sh
+index 711665d..f31ea09 100755
+--- a/OpenAirInterface_Testbed/User_Equipment/install_scripts/setup_ue_namespace.sh
++++ b/OpenAirInterface_Testbed/User_Equipment/install_scripts/setup_ue_namespace.sh
+@@ -36,14 +36,14 @@ set -e
+ SCRIPT_DIR=$(dirname "$(realpath "$0")")
+ cd "$SCRIPT_DIR"
+ 
+-UE_NUMBER=$1
++UE_NUMBER="$1"
+ 
+ if [[ -z "$UE_NUMBER" ]]; then
+     echo "ERROR: No UE number provided."
+     echo "Usage: $0 <UE_NUMBER>"
+     exit 1
+ fi
+-if ! [[ $UE_NUMBER =~ ^[0-9]+$ ]]; then
++if ! [[ "$UE_NUMBER" =~ ^[0-9]+$ ]]; then
+     echo "ERROR: UE number must be a number."
+     exit 1
+ fi
+@@ -64,37 +64,44 @@ UE_IP_OFFSET=$((SUBNET_OFFSET + 1)) # .6
+ 
+ # Fetch IPs from subnet using python script
+ UE_SUBNET_ID=$(python3 fetch_nth_ip.py "$BASE_SUBNET" $((SUBNET_OFFSET - 1)))
+-UE_HOST_IP=$(python3 fetch_nth_ip.py "$BASE_SUBNET" $HOST_IP_OFFSET)
+-UE_NS_IP=$(python3 fetch_nth_ip.py "$BASE_SUBNET" $UE_IP_OFFSET)
+-
+-# Clean up existing artifacts for this UE
+-sudo ip netns delete $UE_NAMESPACE 2>/dev/null || true
+-sudo ip link delete v-eth$UE_NUMBER 2>/dev/null || true
+-
+-# Create namespace and veth pair
+-sudo ip netns add $UE_NAMESPACE
+-sudo ip link add v-eth$UE_NUMBER type veth peer name v-$UE_NAMESPACE
+-sudo ip link set v-$UE_NAMESPACE netns $UE_NAMESPACE
++UE_HOST_IP=$(python3 fetch_nth_ip.py "$BASE_SUBNET" "$HOST_IP_OFFSET")
++UE_NS_IP=$(python3 fetch_nth_ip.py "$BASE_SUBNET" "$UE_IP_OFFSET")
++
++if sudo ip netns list | grep -qE "^${UE_NAMESPACE}( |$)" &&
++    ip link show "v-eth$UE_NUMBER" >/dev/null 2>&1 &&
++    sudo ip netns exec "$UE_NAMESPACE" ip link show "v-$UE_NAMESPACE" >/dev/null 2>&1; then
++    echo "Reusing existing namespace $UE_NAMESPACE and v-eth$UE_NUMBER."
++else
++    # Clean up existing artifacts for this UE
++    sudo ip netns delete "$UE_NAMESPACE" 2>/dev/null || true
++    sudo ip link delete "v-eth$UE_NUMBER" 2>/dev/null || true
++
++    # Create namespace and veth pair
++    sudo ip netns add "$UE_NAMESPACE"
++    sudo ip link add "v-eth$UE_NUMBER" type veth peer name "v-$UE_NAMESPACE"
++    sudo ip link set "v-$UE_NAMESPACE" netns "$UE_NAMESPACE"
++fi
+ 
+ # Configure host side interface
+-sudo ip addr add $UE_HOST_IP/30 dev v-eth$UE_NUMBER
+-sudo ip link set v-eth$UE_NUMBER up
++sudo ip addr replace "$UE_HOST_IP/30" dev "v-eth$UE_NUMBER"
++sudo ip link set "v-eth$UE_NUMBER" up
++sudo ip route replace "$UE_SUBNET_ID/30" dev "v-eth$UE_NUMBER" src "$UE_HOST_IP"
+ 
+ # Configure NAT to masquerade traffic and allow forwarding
+ if ! sudo iptables -t nat -C POSTROUTING -s "$UE_SUBNET_ID/30" -o "$NETWORK_INTERFACE" -j MASQUERADE 2>/dev/null; then
+     sudo iptables -t nat -A POSTROUTING -s "$UE_SUBNET_ID/30" -o "$NETWORK_INTERFACE" -j MASQUERADE
+ fi
+-if ! sudo iptables -C FORWARD -i "$NETWORK_INTERFACE" -o v-eth$UE_NUMBER -j ACCEPT 2>/dev/null; then
+-    sudo iptables -A FORWARD -i "$NETWORK_INTERFACE" -o v-eth$UE_NUMBER -j ACCEPT
++if ! sudo iptables -C FORWARD -i "$NETWORK_INTERFACE" -o "v-eth$UE_NUMBER" -j ACCEPT 2>/dev/null; then
++    sudo iptables -A FORWARD -i "$NETWORK_INTERFACE" -o "v-eth$UE_NUMBER" -j ACCEPT
+ fi
+-if ! sudo iptables -C FORWARD -o "$NETWORK_INTERFACE" -i v-eth$UE_NUMBER -j ACCEPT 2>/dev/null; then
+-    sudo iptables -A FORWARD -o "$NETWORK_INTERFACE" -i v-eth$UE_NUMBER -j ACCEPT
++if ! sudo iptables -C FORWARD -o "$NETWORK_INTERFACE" -i "v-eth$UE_NUMBER" -j ACCEPT 2>/dev/null; then
++    sudo iptables -A FORWARD -o "$NETWORK_INTERFACE" -i "v-eth$UE_NUMBER" -j ACCEPT
+ fi
+ 
+ # Configure namespace side interface
+-sudo ip netns exec $UE_NAMESPACE ip link set dev lo up
+-sudo ip netns exec $UE_NAMESPACE ip addr add $UE_NS_IP/30 dev v-$UE_NAMESPACE
+-sudo ip netns exec $UE_NAMESPACE ip link set v-$UE_NAMESPACE up
++sudo ip netns exec "$UE_NAMESPACE" ip link set dev lo up
++sudo ip netns exec "$UE_NAMESPACE" ip addr replace "$UE_NS_IP/30" dev "v-$UE_NAMESPACE"
++sudo ip netns exec "$UE_NAMESPACE" ip link set "v-$UE_NAMESPACE" up
+ 
+ # Set default route in namespace to point to host gateway
+-sudo ip netns exec $UE_NAMESPACE ip route add default via $UE_HOST_IP
++sudo ip netns exec "$UE_NAMESPACE" ip route replace default via "$UE_HOST_IP" dev "v-$UE_NAMESPACE"
+diff --git a/RAN_Intelligent_Controllers/Near-Real-Time-RIC/additional_scripts/install_and_configure_wireshark.sh b/RAN_Intelligent_Controllers/Near-Real-Time-RIC/additional_scripts/install_and_configure_wireshark.sh
+index 38aa9a0..49b3766 100755
+--- a/RAN_Intelligent_Controllers/Near-Real-Time-RIC/additional_scripts/install_and_configure_wireshark.sh
++++ b/RAN_Intelligent_Controllers/Near-Real-Time-RIC/additional_scripts/install_and_configure_wireshark.sh
+@@ -143,7 +143,7 @@ function set_preference() {
+ 
+ echo
+ echo "Configuring Wireshark to handle MAC, RLC, NGAP, GTP-U, E1AP, F1AP, and E2AP packet captures..."
+-echo "More information about the configurations can be found at: https://docs.srsran.com/projects/project/en/latest/user_manuals/source/outputs.html#pcaps"
++echo "More information can be found at https://ocudu.gitlab.io/ocudu_docs/user_manual/outputs/#pcaps"
+ 
+ # Update DLT_USER settings
+ update_dlt_user 149 "udp"  # For MAC and RLC
+diff --git a/User_Equipment/.gitignore b/User_Equipment/.gitignore
+index bc6b0ec..983791a 100644
+--- a/User_Equipment/.gitignore
++++ b/User_Equipment/.gitignore
+@@ -8,3 +8,5 @@ libzmq/
+ logs/
+ srsRAN_4G/
+ !install_patch_files/
++!install_patch_files/srsRAN_4G/
++!install_patch_files/srsRAN_4G/**
+diff --git a/User_Equipment/full_install.sh b/User_Equipment/full_install.sh
+index 8ad7ac5..9d86138 100755
+--- a/User_Equipment/full_install.sh
++++ b/User_Equipment/full_install.sh
+@@ -208,6 +208,8 @@ echo
+ echo
+ echo "Building srsRAN_4G..."
+ 
++"$SCRIPT_DIR/install_scripts/apply_patches.sh"
++
+ BOOST_VERSION=$(dpkg -s libboost-dev | grep '^Version:' | awk '{print $2}' | cut -d. -f1,2)
+ if [[ $(echo -e "$BOOST_VERSION\n1.89" | sort -V | head -n1) == "1.89" ]]; then # If version 1.89 or higher
+     # Remove system from list of components since no longer available (https://www.boost.org/doc/libs/latest/libs/system/doc/html/system.html#changes_in_boost_1_89)
+diff --git a/User_Equipment/generate_configurations.sh b/User_Equipment/generate_configurations.sh
+index 5eb9a00..718d373 100755
+--- a/User_Equipment/generate_configurations.sh
++++ b/User_Equipment/generate_configurations.sh
+@@ -42,6 +42,8 @@ cd "$SCRIPT_DIR"
+ 
+ EXAMPLE_CONFIG_PATH="$SCRIPT_DIR/srsRAN_4G/srsue/ue.conf.example"
+ CLEAR_CONFIGS=false
++UE_NR_PROFILE="srsue" # Supported: srsue, generic_fr1
++ZMQ_DEBUG_ARGS=""     # Example: fail_on_disconnect=true,log_trx_timeout=true,trx_timeout_ms=1000
+ 
+ # Support input argument for the UE number(s), for example:
+ # ./generate_configurations.sh --> configures UE 1, 2, and 3
+@@ -182,6 +184,107 @@ if [ ! -f "$EXAMPLE_CONFIG_PATH" ]; then
+     exit 1
+ fi
+ 
++# NOTE: Does not validate whether a given operating band supports the selected bandwidth/SCS combination (3GPP 38.104 clause 5.3.5: BS channel bandwidth per operating band)
++GNB_CONFIG_PATH="$SCRIPT_DIR/../Next_Generation_Node_B/configs/gnb.yaml"
++NR_BAND="3"
++NR_DL_ARFCN="368500"
++NR_SSB_ARFCN="368410"
++NR_NOF_PRB="106"
++NR_MAX_NOF_PRB="106"
++NR_SCS="15"
++GNB_NR_BW_MHZ="20"
++
++if [ -f "$GNB_CONFIG_PATH" ]; then
++    GNB_NR_BAND=$(yq eval '.cell_cfg.band // ""' "$GNB_CONFIG_PATH")
++    GNB_NR_DL_ARFCN=$(yq eval '.cell_cfg.dl_arfcn // ""' "$GNB_CONFIG_PATH")
++    GNB_NR_SSB_ARFCN=$(yq eval '.cell_cfg.dl_ssb_arfcn // ""' "$GNB_CONFIG_PATH")
++    GNB_NR_BW_MHZ=$(yq eval '.cell_cfg.channel_bandwidth_MHz // ""' "$GNB_CONFIG_PATH")
++    GNB_NR_SCS=$(yq eval '.cell_cfg.common_scs // ""' "$GNB_CONFIG_PATH")
++
++    if [[ "$GNB_NR_BAND" =~ ^[0-9]+$ ]]; then
++        NR_BAND="$GNB_NR_BAND"
++    fi
++    if [[ "$GNB_NR_DL_ARFCN" =~ ^[0-9]+$ ]]; then
++        NR_DL_ARFCN="$GNB_NR_DL_ARFCN"
++    fi
++    if [[ "$GNB_NR_SCS" =~ ^[0-9]+$ ]]; then
++        NR_SCS="$GNB_NR_SCS"
++    fi
++
++    # 3GPP 38.104, Table 5.3.2-1: Transmission bandwidth configuration NRB for FR1.
++    case "${GNB_NR_BW_MHZ}_${NR_SCS}" in
++    3_15) NR_NOF_PRB="15" ;;
++    5_15) NR_NOF_PRB="25" ;;
++    10_15) NR_NOF_PRB="52" ;;
++    15_15) NR_NOF_PRB="79" ;;
++    20_15) NR_NOF_PRB="106" ;;
++    25_15) NR_NOF_PRB="133" ;;
++    30_15) NR_NOF_PRB="160" ;;
++    35_15) NR_NOF_PRB="188" ;;
++    40_15) NR_NOF_PRB="216" ;;
++    45_15) NR_NOF_PRB="242" ;;
++    50_15) NR_NOF_PRB="270" ;;
++    5_30) NR_NOF_PRB="11" ;;
++    10_30) NR_NOF_PRB="24" ;;
++    15_30) NR_NOF_PRB="38" ;;
++    20_30) NR_NOF_PRB="51" ;;
++    25_30) NR_NOF_PRB="65" ;;
++    30_30) NR_NOF_PRB="78" ;;
++    35_30) NR_NOF_PRB="92" ;;
++    40_30) NR_NOF_PRB="106" ;;
++    45_30) NR_NOF_PRB="119" ;;
++    50_30) NR_NOF_PRB="133" ;;
++    60_30) NR_NOF_PRB="162" ;;
++    70_30) NR_NOF_PRB="189" ;;
++    80_30) NR_NOF_PRB="217" ;;
++    90_30) NR_NOF_PRB="245" ;;
++    100_30) NR_NOF_PRB="273" ;;
++    10_60) NR_NOF_PRB="11" ;;
++    15_60) NR_NOF_PRB="18" ;;
++    20_60) NR_NOF_PRB="24" ;;
++    25_60) NR_NOF_PRB="31" ;;
++    30_60) NR_NOF_PRB="38" ;;
++    35_60) NR_NOF_PRB="44" ;;
++    40_60) NR_NOF_PRB="51" ;;
++    45_60) NR_NOF_PRB="58" ;;
++    50_60) NR_NOF_PRB="65" ;;
++    60_60) NR_NOF_PRB="79" ;;
++    70_60) NR_NOF_PRB="93" ;;
++    80_60) NR_NOF_PRB="107" ;;
++    90_60) NR_NOF_PRB="121" ;;
++    100_60) NR_NOF_PRB="135" ;;
++    *)
++        echo "ERROR: Unsupported FR1 NR bandwidth/SCS: ${GNB_NR_BW_MHZ} MHz / ${NR_SCS} kHz (3GPP TS 38.104 Table 5.3.2-1)."
++        exit 1
++        ;;
++    esac
++    if [ "$UE_NR_PROFILE" = "srsue" ]; then
++        # OCUDU srsUE tutorial limitation: srsUE SA supports 15 kHz SCS with 5, 10, 15, or 20 MHz BW.
++        # https://ocudu.gitlab.io/ocudu_docs/tutorials/srsue/#limitations
++        case "${GNB_NR_BW_MHZ}_${NR_SCS}" in
++        5_15 | 10_15 | 15_15 | 20_15) ;;
++        *)
++            echo "ERROR: Unsupported srsUE NR bandwidth/SCS: ${GNB_NR_BW_MHZ} MHz / ${NR_SCS} kHz (3GPP TS 38.104 Table 5.3.2-1)."
++            echo "Set UE_NR_PROFILE=generic_fr1 only for a UE implementation that supports this numerology."
++            exit 1
++            ;;
++        esac
++    elif [ "$UE_NR_PROFILE" != "generic_fr1" ]; then
++        echo "ERROR: Unsupported UE_NR_PROFILE '$UE_NR_PROFILE'. Supported: srsue, generic_fr1."
++        exit 1
++    fi
++    NR_MAX_NOF_PRB="$NR_NOF_PRB"
++
++    if [[ "$GNB_NR_SSB_ARFCN" =~ ^[0-9]+$ ]]; then
++        NR_SSB_ARFCN="$GNB_NR_SSB_ARFCN"
++    elif [[ "$NR_BAND" = "3" && "$NR_DL_ARFCN" = "368500" && "$GNB_NR_BW_MHZ" = "20" && "$NR_SCS" = "15" ]]; then
++        NR_SSB_ARFCN="368410"
++    else
++        echo "ERROR: Could not determine SSB ARFCN for UE config. Set cell_cfg.dl_ssb_arfcn in the gNB config or add a validated derivation for this band/BW/SCS."
++        exit 1
++    fi
++fi
++
+ UE_CREDENTIAL_GENERATOR_SCRIPT="$SCRIPT_DIR/ue_credentials_generator.sh"
+ if [ ! -f "$UE_CREDENTIAL_GENERATOR_SCRIPT" ]; then
+     echo "ERROR: Cannot find $UE_CREDENTIAL_GENERATOR_SCRIPT to generate UE subscriber credentials."
+@@ -212,7 +315,11 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
+ 
+     UE_HOST_IP=$(python3 install_scripts/fetch_nth_ip.py "$BASE_SUBNET" $HOST_IP_OFFSET)
+ 
+-    update_conf "configs/ue${UE_NUMBER}.conf" "rf" "device_args" "tx_port=tcp://*:$UE_TX_PORT,rx_port=tcp://$UE_HOST_IP:$UE_RX_PORT,base_srate=23.04e6"
++    DEVICE_ARGS="tx_port=tcp://*:$UE_TX_PORT,rx_port=tcp://$UE_HOST_IP:$UE_RX_PORT,base_srate=23.04e6,id=ue$UE_NUMBER"
++    if [ -n "$ZMQ_DEBUG_ARGS" ]; then
++        DEVICE_ARGS="$DEVICE_ARGS,$ZMQ_DEBUG_ARGS"
++    fi
++    update_conf "configs/ue${UE_NUMBER}.conf" "rf" "device_args" "$DEVICE_ARGS"
+     update_conf "configs/ue${UE_NUMBER}.conf" "rf" "nof_antennas" "1"
+     update_conf "configs/ue${UE_NUMBER}.conf" "rf" "freq_offset" "0"
+     update_conf "configs/ue${UE_NUMBER}.conf" "rf" "tx_gain" "35"
+@@ -224,9 +331,13 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
+ 
+     # Update configuration values for RAT (NR)
+     update_conf "configs/ue${UE_NUMBER}.conf" "rat.nr" "nof_carriers" "1"
+-    update_conf "configs/ue${UE_NUMBER}.conf" "rat.nr" "bands" "3"
+-    update_conf "configs/ue${UE_NUMBER}.conf" "rat.nr" "max_nof_prb" "106"
+-    update_conf "configs/ue${UE_NUMBER}.conf" "rat.nr" "nof_prb" "106"
++    update_conf "configs/ue${UE_NUMBER}.conf" "rat.nr" "bands" "$NR_BAND"
++    update_conf "configs/ue${UE_NUMBER}.conf" "rat.nr" "dl_nr_arfcn" "$NR_DL_ARFCN"
++    update_conf "configs/ue${UE_NUMBER}.conf" "rat.nr" "ssb_nr_arfcn" "$NR_SSB_ARFCN"
++    update_conf "configs/ue${UE_NUMBER}.conf" "rat.nr" "max_nof_prb" "$NR_MAX_NOF_PRB"
++    update_conf "configs/ue${UE_NUMBER}.conf" "rat.nr" "nof_prb" "$NR_NOF_PRB"
++    update_conf "configs/ue${UE_NUMBER}.conf" "rat.nr" "scs" "$NR_SCS"
++    update_conf "configs/ue${UE_NUMBER}.conf" "rat.nr" "ssb_scs" "$NR_SCS"
+ 
+     # Update configuration values for PCAP
+     update_conf "configs/ue${UE_NUMBER}.conf" "pcap" "enable" "none"
+@@ -237,8 +348,8 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
+     update_conf "configs/ue${UE_NUMBER}.conf" "pcap" "nas_filename" "$SCRIPT_DIR/logs/ue${UE_NUMBER}_nas.pcap"
+ 
+     # Update configuration values for Logging
+-    update_conf "configs/ue${UE_NUMBER}.conf" "log" "all_level" "none" #warning
+-    update_conf "configs/ue${UE_NUMBER}.conf" "log" "phy_lib_level" "none"
++    update_conf "configs/ue${UE_NUMBER}.conf" "log" "all_level" "warning"
++    update_conf "configs/ue${UE_NUMBER}.conf" "log" "phy_lib_level" "warning"
+     update_conf "configs/ue${UE_NUMBER}.conf" "log" "all_hex_limit" "32"
+     update_conf "configs/ue${UE_NUMBER}.conf" "log" "filename" "$SCRIPT_DIR/logs/ue${UE_NUMBER}.log"
+     update_conf "configs/ue${UE_NUMBER}.conf" "log" "file_max_size" "-1"
+diff --git a/User_Equipment/install_scripts/revert_ue_namespace.sh b/User_Equipment/install_scripts/revert_ue_namespace.sh
+index 5bdc2aa..dbe989b 100755
+--- a/User_Equipment/install_scripts/revert_ue_namespace.sh
++++ b/User_Equipment/install_scripts/revert_ue_namespace.sh
+@@ -36,14 +36,14 @@ set +e
+ SCRIPT_DIR=$(dirname "$(realpath "$0")")
+ cd "$SCRIPT_DIR"
+ 
+-UE_NUMBER=$1
++UE_NUMBER="$1"
+ 
+ if [[ -z "$UE_NUMBER" ]]; then
+     echo "ERROR: No UE number provided."
+     echo "Usage: $0 <UE_NUMBER>"
+     exit 1
+ fi
+-if ! [[ $UE_NUMBER =~ ^[0-9]+$ ]]; then
++if ! [[ "$UE_NUMBER" =~ ^[0-9]+$ ]]; then
+     echo "ERROR: UE number must be a number."
+     exit 1
+ fi
+@@ -64,24 +64,25 @@ UE_IP_OFFSET=$((SUBNET_OFFSET + 1)) # .6
+ 
+ # Fetch IPs from subnet using python script
+ UE_SUBNET_ID=$(python3 fetch_nth_ip.py "$BASE_SUBNET" $((SUBNET_OFFSET - 1)))
+-UE_HOST_IP=$(python3 fetch_nth_ip.py "$BASE_SUBNET" $HOST_IP_OFFSET)
+-UE_NS_IP=$(python3 fetch_nth_ip.py "$BASE_SUBNET" $UE_IP_OFFSET)
++UE_HOST_IP=$(python3 fetch_nth_ip.py "$BASE_SUBNET" "$HOST_IP_OFFSET")
++UE_NS_IP=$(python3 fetch_nth_ip.py "$BASE_SUBNET" "$UE_IP_OFFSET")
+ 
+ echo "Removing IP routes and addresses inside the namespace..."
+-sudo ip netns exec $UE_NAMESPACE ip route del default via $UE_HOST_IP || true
+-sudo ip netns exec $UE_NAMESPACE ip addr del $UE_NS_IP/30 dev v-$UE_NAMESPACE || true
+-sudo ip netns exec $UE_NAMESPACE ip link set v-$UE_NAMESPACE down || true
++sudo ip netns exec "$UE_NAMESPACE" ip route del default via "$UE_HOST_IP" dev "v-$UE_NAMESPACE" || true
++sudo ip netns exec "$UE_NAMESPACE" ip addr del "$UE_NS_IP/30" dev "v-$UE_NAMESPACE" || true
++sudo ip netns exec "$UE_NAMESPACE" ip link set "v-$UE_NAMESPACE" down || true
++sudo ip route del "$UE_SUBNET_ID/30" dev "v-eth$UE_NUMBER" 2>/dev/null || true
+ 
+ echo "Removing iptables rules..."
+-while sudo iptables -D FORWARD -o "$NETWORK_INTERFACE" -i v-eth$UE_NUMBER -j ACCEPT 2>/dev/null; do :; done
+-while sudo iptables -D FORWARD -i "$NETWORK_INTERFACE" -o v-eth$UE_NUMBER -j ACCEPT 2>/dev/null; do :; done
++while sudo iptables -D FORWARD -o "$NETWORK_INTERFACE" -i "v-eth$UE_NUMBER" -j ACCEPT 2>/dev/null; do :; done
++while sudo iptables -D FORWARD -i "$NETWORK_INTERFACE" -o "v-eth$UE_NUMBER" -j ACCEPT 2>/dev/null; do :; done
+ while sudo iptables -t nat -D POSTROUTING -s "$UE_SUBNET_ID/30" -o "$NETWORK_INTERFACE" -j MASQUERADE 2>/dev/null; do :; done
+ 
+ echo "Deleting the network devices..."
+-sudo ip link set v-eth$UE_NUMBER down
+-sudo ip link del v-eth$UE_NUMBER
++sudo ip link set "v-eth$UE_NUMBER" down
++sudo ip link del "v-eth$UE_NUMBER"
+ 
+ echo "Deleting the network namespace..."
+-sudo ip netns delete $UE_NAMESPACE
++sudo ip netns delete "$UE_NAMESPACE"
+ 
+ echo "Successfully reverted the UE $UE_NUMBER namespace."
+diff --git a/User_Equipment/install_scripts/setup_ue_namespace.sh b/User_Equipment/install_scripts/setup_ue_namespace.sh
+index 711665d..f31ea09 100755
+--- a/User_Equipment/install_scripts/setup_ue_namespace.sh
++++ b/User_Equipment/install_scripts/setup_ue_namespace.sh
+@@ -36,14 +36,14 @@ set -e
+ SCRIPT_DIR=$(dirname "$(realpath "$0")")
+ cd "$SCRIPT_DIR"
+ 
+-UE_NUMBER=$1
++UE_NUMBER="$1"
+ 
+ if [[ -z "$UE_NUMBER" ]]; then
+     echo "ERROR: No UE number provided."
+     echo "Usage: $0 <UE_NUMBER>"
+     exit 1
+ fi
+-if ! [[ $UE_NUMBER =~ ^[0-9]+$ ]]; then
++if ! [[ "$UE_NUMBER" =~ ^[0-9]+$ ]]; then
+     echo "ERROR: UE number must be a number."
+     exit 1
+ fi
+@@ -64,37 +64,44 @@ UE_IP_OFFSET=$((SUBNET_OFFSET + 1)) # .6
+ 
+ # Fetch IPs from subnet using python script
+ UE_SUBNET_ID=$(python3 fetch_nth_ip.py "$BASE_SUBNET" $((SUBNET_OFFSET - 1)))
+-UE_HOST_IP=$(python3 fetch_nth_ip.py "$BASE_SUBNET" $HOST_IP_OFFSET)
+-UE_NS_IP=$(python3 fetch_nth_ip.py "$BASE_SUBNET" $UE_IP_OFFSET)
+-
+-# Clean up existing artifacts for this UE
+-sudo ip netns delete $UE_NAMESPACE 2>/dev/null || true
+-sudo ip link delete v-eth$UE_NUMBER 2>/dev/null || true
+-
+-# Create namespace and veth pair
+-sudo ip netns add $UE_NAMESPACE
+-sudo ip link add v-eth$UE_NUMBER type veth peer name v-$UE_NAMESPACE
+-sudo ip link set v-$UE_NAMESPACE netns $UE_NAMESPACE
++UE_HOST_IP=$(python3 fetch_nth_ip.py "$BASE_SUBNET" "$HOST_IP_OFFSET")
++UE_NS_IP=$(python3 fetch_nth_ip.py "$BASE_SUBNET" "$UE_IP_OFFSET")
++
++if sudo ip netns list | grep -qE "^${UE_NAMESPACE}( |$)" &&
++    ip link show "v-eth$UE_NUMBER" >/dev/null 2>&1 &&
++    sudo ip netns exec "$UE_NAMESPACE" ip link show "v-$UE_NAMESPACE" >/dev/null 2>&1; then
++    echo "Reusing existing namespace $UE_NAMESPACE and v-eth$UE_NUMBER."
++else
++    # Clean up existing artifacts for this UE
++    sudo ip netns delete "$UE_NAMESPACE" 2>/dev/null || true
++    sudo ip link delete "v-eth$UE_NUMBER" 2>/dev/null || true
++
++    # Create namespace and veth pair
++    sudo ip netns add "$UE_NAMESPACE"
++    sudo ip link add "v-eth$UE_NUMBER" type veth peer name "v-$UE_NAMESPACE"
++    sudo ip link set "v-$UE_NAMESPACE" netns "$UE_NAMESPACE"
++fi
+ 
+ # Configure host side interface
+-sudo ip addr add $UE_HOST_IP/30 dev v-eth$UE_NUMBER
+-sudo ip link set v-eth$UE_NUMBER up
++sudo ip addr replace "$UE_HOST_IP/30" dev "v-eth$UE_NUMBER"
++sudo ip link set "v-eth$UE_NUMBER" up
++sudo ip route replace "$UE_SUBNET_ID/30" dev "v-eth$UE_NUMBER" src "$UE_HOST_IP"
+ 
+ # Configure NAT to masquerade traffic and allow forwarding
+ if ! sudo iptables -t nat -C POSTROUTING -s "$UE_SUBNET_ID/30" -o "$NETWORK_INTERFACE" -j MASQUERADE 2>/dev/null; then
+     sudo iptables -t nat -A POSTROUTING -s "$UE_SUBNET_ID/30" -o "$NETWORK_INTERFACE" -j MASQUERADE
+ fi
+-if ! sudo iptables -C FORWARD -i "$NETWORK_INTERFACE" -o v-eth$UE_NUMBER -j ACCEPT 2>/dev/null; then
+-    sudo iptables -A FORWARD -i "$NETWORK_INTERFACE" -o v-eth$UE_NUMBER -j ACCEPT
++if ! sudo iptables -C FORWARD -i "$NETWORK_INTERFACE" -o "v-eth$UE_NUMBER" -j ACCEPT 2>/dev/null; then
++    sudo iptables -A FORWARD -i "$NETWORK_INTERFACE" -o "v-eth$UE_NUMBER" -j ACCEPT
+ fi
+-if ! sudo iptables -C FORWARD -o "$NETWORK_INTERFACE" -i v-eth$UE_NUMBER -j ACCEPT 2>/dev/null; then
+-    sudo iptables -A FORWARD -o "$NETWORK_INTERFACE" -i v-eth$UE_NUMBER -j ACCEPT
++if ! sudo iptables -C FORWARD -o "$NETWORK_INTERFACE" -i "v-eth$UE_NUMBER" -j ACCEPT 2>/dev/null; then
++    sudo iptables -A FORWARD -o "$NETWORK_INTERFACE" -i "v-eth$UE_NUMBER" -j ACCEPT
+ fi
+ 
+ # Configure namespace side interface
+-sudo ip netns exec $UE_NAMESPACE ip link set dev lo up
+-sudo ip netns exec $UE_NAMESPACE ip addr add $UE_NS_IP/30 dev v-$UE_NAMESPACE
+-sudo ip netns exec $UE_NAMESPACE ip link set v-$UE_NAMESPACE up
++sudo ip netns exec "$UE_NAMESPACE" ip link set dev lo up
++sudo ip netns exec "$UE_NAMESPACE" ip addr replace "$UE_NS_IP/30" dev "v-$UE_NAMESPACE"
++sudo ip netns exec "$UE_NAMESPACE" ip link set "v-$UE_NAMESPACE" up
+ 
+ # Set default route in namespace to point to host gateway
+-sudo ip netns exec $UE_NAMESPACE ip route add default via $UE_HOST_IP
++sudo ip netns exec "$UE_NAMESPACE" ip route replace default via "$UE_HOST_IP" dev "v-$UE_NAMESPACE"

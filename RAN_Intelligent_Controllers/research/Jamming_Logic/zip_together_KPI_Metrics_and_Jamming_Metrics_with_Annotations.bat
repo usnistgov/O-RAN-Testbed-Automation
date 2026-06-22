@@ -1,3 +1,0 @@
-@echo off
-python3 zip_together_KPI_Metrics_and_Jamming_Metrics_with_Annotations.py
-pause

@@ -34,11 +34,17 @@ set -e
 EXPOSE_GNB_TO_HOSTNAME=false
 USE_FLEXRIC=true
 USE_ZMQ_BROKER=false
-ZMQ_BROKER_CHANNEL_BW_MHZ=10
-ZMQ_BROKER_SRATE_MHZ=11.52
-ZMQ_BROKER_BASE_SRATE_HZ=11.52e6
-ZMQ_BROKER_PDU_SESSION_TIMEOUT=30
+ZMQ_BROKER_CHANNEL_BW_MHZ=20
+GNB_SRATE_MHZ=23.04
+GNB_BASE_SRATE_HZ=23.04e6
+PDU_SESSION_TIMEOUT=3
 ZMQ_BROKER_SLOW_DOWN_RATIO=1
+
+if [ "$USE_ZMQ_BROKER" = "true" ]; then
+    ZMQ_BROKER_CHANNEL_BW_MHZ=10
+    GNB_SRATE_MHZ=11.52
+    GNB_BASE_SRATE_HZ=11.52e6
+fi
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
@@ -322,9 +328,6 @@ mkdir -p "$SCRIPT_DIR/logs"
 
 if [ "$USE_ZMQ_BROKER" = "true" ]; then
     DEVICE_ARGS="fail_unlocked=true,tx_port=tcp://127.0.0.1:2000,rx_port=tcp://127.0.0.1:2001,"
-    GNB_SRATE_MHZ="$ZMQ_BROKER_SRATE_MHZ"
-    GNB_BASE_SRATE_HZ="$ZMQ_BROKER_BASE_SRATE_HZ"
-    PDU_SESSION_TIMEOUT="$ZMQ_BROKER_PDU_SESSION_TIMEOUT"
 else
     BASE_SUBNET="10.201.0.0/16"
     SUBNET_SIZE=4
@@ -334,9 +337,6 @@ else
     UE_IP_OFFSET=$((SUBNET_OFFSET + 1))
     UE_IP=$(python3 install_scripts/fetch_nth_ip.py "$BASE_SUBNET" "$UE_IP_OFFSET")
     DEVICE_ARGS="fail_unlocked=true,tx_port=tcp://*:2100,rx_port=tcp://$UE_IP:2101,"
-    GNB_SRATE_MHZ="23.04"
-    GNB_BASE_SRATE_HZ="23.04e6"
-    PDU_SESSION_TIMEOUT="3"
 fi
 
 DEVICE_ARGS+="base_srate=$GNB_BASE_SRATE_HZ"
@@ -554,10 +554,8 @@ update_yaml "configs/gnb.yaml" "ru_sdr" "otw_format" "default"
 # fi
 
 if [ "$USE_ZMQ_BROKER" = "true" ]; then
-    ZMQ_BROKER_PYTHON_FILE="zmq_broker/multi_ue_scenario.py"
-    ZMQ_BROKER_GENERATOR="install_scripts/generate_zmq_broker.sh"
-    if [ ! -f "$ZMQ_BROKER_GENERATOR" ]; then
-        echo "ERROR: Could not find $ZMQ_BROKER_GENERATOR."
+    if [ ! -f "install_scripts/generate_zmq_broker.sh" ]; then
+        echo "ERROR: Could not find install_scripts/generate_zmq_broker.sh."
         exit 1
     fi
 
@@ -566,17 +564,23 @@ if [ "$USE_ZMQ_BROKER" = "true" ]; then
     # Allocate a /30 (4 addresses) subnet per UE (e.g., UE 1 -> 10.201.0.4/30, Gateway .5, UE .6)
     BASE_SUBNET="10.201.0.0/16"
     SUBNET_SIZE=4
-    BROKER_SRATE_INT=$(awk "BEGIN { printf \"%d\", $ZMQ_BROKER_SRATE_MHZ * 1000000 }")
-    BROKER_ARGS=("--output" "$ZMQ_BROKER_PYTHON_FILE" "--sample-rate-hz" "$BROKER_SRATE_INT" "--slow-down-ratio" "$ZMQ_BROKER_SLOW_DOWN_RATIO")
+    BROKER_SRATE_INT=$(awk "BEGIN { printf \"%d\", $GNB_SRATE_MHZ * 1000000 }")
 
+    UE_ARGS=""
     for UE_NUMBER in "${UE_NUMBERS[@]}"; do
         SUBNET_OFFSET=$((UE_NUMBER * SUBNET_SIZE))
         UE_IP_OFFSET=$((SUBNET_OFFSET + 1)) # .6
         UE_IP=$(python3 install_scripts/fetch_nth_ip.py "$BASE_SUBNET" "$UE_IP_OFFSET")
-        BROKER_ARGS+=("--ue" "$UE_NUMBER:$UE_IP")
+        UE_ARGS+=" --ue $UE_NUMBER:$UE_IP"
     done
 
-    "$ZMQ_BROKER_GENERATOR" "${BROKER_ARGS[@]}"
+    mkdir -p zmq_broker
+    ./install_scripts/generate_zmq_broker.sh --output "zmq_broker/multi_ue_scenario.py" --sample-rate-hz "$BROKER_SRATE_INT" --slow-down-ratio "$ZMQ_BROKER_SLOW_DOWN_RATIO" $UE_ARGS
+
+    if ! python3 -c "import gnuradio, PyQt5" >/dev/null 2>&1; then
+        echo "Installing GNU Radio runtime for the ZeroMQ Broker..."
+        sudo env $APTVARS apt-get install -y gnuradio python3-pyqt5
+    fi
 
     # GNU Radio 3.8 issue with vmcircbuf_default_factory.
     mkdir -p ~/.gnuradio/prefs

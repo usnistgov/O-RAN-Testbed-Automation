@@ -39,7 +39,7 @@ fi
 
 USE_FLEXRIC=true
 USE_ZMQ_BROKER=false
-ZMQ_BROKER_UE_START_TIMEOUT=90
+#ZMQ_BROKER_UE_START_TIMEOUT=90
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
@@ -101,38 +101,38 @@ if [ "$USE_ZMQ_BROKER" = "true" ]; then
     fi
 fi
 
-monitor_ue_pdu_session() {
-    UE_NUMBER=$1
-    PARENT_PID=$2
-    (
-        ATTEMPT=0
-        while ! ./install_scripts/get_pdu_sessions.sh "$UE_NUMBER" >/dev/null 2>&1; do
-            if [ $ATTEMPT -gt 20 ] && ! ./is_running.sh | grep -q "ue$UE_NUMBER"; then
-                echo
-                echo "UE $UE_NUMBER stopped before receiving a PDU session."
-                kill -TERM "$PARENT_PID" >/dev/null 2>&1 || true
-                exit 1
-            fi
-            sleep 1
-            ATTEMPT=$((ATTEMPT + 1))
-            if [ $ATTEMPT -ge $ZMQ_BROKER_UE_START_TIMEOUT ]; then
-                echo
-                echo "UE $UE_NUMBER did not receive a PDU session after $ZMQ_BROKER_UE_START_TIMEOUT seconds."
-                echo "Recent UE $UE_NUMBER stdout:"
-                tail -n 80 "logs/ue${UE_NUMBER}_stdout.txt" || true
-                echo "Recent gNodeB stdout:"
-                tail -n 80 "../Next_Generation_Node_B/logs/gnb_stdout.txt" || true
-                echo "Recent ZMQ Broker log:"
-                tail -n 80 "../Next_Generation_Node_B/logs/zmq_broker.log" || true
-                kill -TERM "$PARENT_PID" >/dev/null 2>&1 || true
-                exit 1
-            fi
-        done
-        echo
-        echo "UE $UE_NUMBER received PDU session(s):"
-        ./install_scripts/get_pdu_sessions.sh "$UE_NUMBER"
-    ) &
-}
+# monitor_ue_pdu_session() {
+#     UE_NUMBER=$1
+#     PARENT_PID=$2
+#     (
+#         ATTEMPT=0
+#         while ! ./install_scripts/get_pdu_sessions.sh "$UE_NUMBER" >/dev/null 2>&1; do
+#             if [ $ATTEMPT -gt 20 ] && ! ./is_running.sh | grep -q "ue$UE_NUMBER"; then
+#                 echo
+#                 echo "UE $UE_NUMBER stopped before receiving a PDU session."
+#                 kill -TERM "$PARENT_PID" >/dev/null 2>&1 || true
+#                 exit 1
+#             fi
+#             sleep 1
+#             ATTEMPT=$((ATTEMPT + 1))
+#             if [ $ATTEMPT -ge $ZMQ_BROKER_UE_START_TIMEOUT ]; then
+#                 echo
+#                 echo "UE $UE_NUMBER did not receive a PDU session after $ZMQ_BROKER_UE_START_TIMEOUT seconds."
+#                 echo "Recent UE $UE_NUMBER stdout:"
+#                 tail -n 80 "logs/ue${UE_NUMBER}_stdout.txt" || true
+#                 echo "Recent gNodeB stdout:"
+#                 tail -n 80 "../Next_Generation_Node_B/logs/gnb_stdout.txt" || true
+#                 echo "Recent ZMQ Broker log:"
+#                 tail -n 80 "../Next_Generation_Node_B/logs/zmq_broker.log" || true
+#                 kill -TERM "$PARENT_PID" >/dev/null 2>&1 || true
+#                 exit 1
+#             fi
+#         done
+#         echo
+#         echo "UE $UE_NUMBER received PDU session(s):"
+#         ./install_scripts/get_pdu_sessions.sh "$UE_NUMBER"
+#     ) &
+# }
 
 sudo -v # Ensure sudo session is active
 
@@ -185,11 +185,11 @@ if [ "$USE_ZMQ_BROKER" = "true" ] && [ ${#UE_NUMBERS[@]} -gt 1 ]; then
         ./run_background.sh "${UE_NUMBERS[$i]}"
     done
 fi
-if [ "$USE_ZMQ_BROKER" = "true" ]; then
-    for ((i = 0; i < ${#UE_NUMBERS[@]} - 1; i++)); do
-        monitor_ue_pdu_session "${UE_NUMBERS[$i]}" "$$"
-    done
-    monitor_ue_pdu_session "${UE_NUMBERS[-1]}" "$$"
-fi
+# if [ "$USE_ZMQ_BROKER" = "true" ]; then
+#     for ((i = 0; i < ${#UE_NUMBERS[@]} - 1; i++)); do
+#         monitor_ue_pdu_session "${UE_NUMBERS[$i]}" "$$"
+#     done
+#     monitor_ue_pdu_session "${UE_NUMBERS[-1]}" "$$"
+# fi
 ./run.sh "${UE_NUMBERS[-1]}"
 cd ..

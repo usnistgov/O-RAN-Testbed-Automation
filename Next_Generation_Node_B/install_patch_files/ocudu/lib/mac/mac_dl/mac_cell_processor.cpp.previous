@@ -15,6 +15,7 @@
 #include "ocudu/support/async/execute_on_blocking.h"
 #include "ocudu/support/executors/execute_until_success.h"
 #include "ocudu/support/rtsan.h"
+#include <algorithm>
 
 using namespace ocudu;
 
@@ -44,7 +45,7 @@ mac_cell_processor::mac_cell_processor(const mac_cell_creation_request& cell_cfg
                                                  cell_cfg.scs_common,
                                                  band_helper::get_freq_range(cell_cfg.dl_carrier.band)),
                   cell_cfg.dl_carrier.nof_ant,
-                  ctrl_exec_),
+                  cell_cfg.max_harq_buffers),
   // The PDU pool has to be large enough to fit the maximum number of RARs and Paging PDUs per slot for all possible K0
   // values.
   pdu_pool(MAX_DL_PDU_LENGTH,
@@ -209,7 +210,7 @@ async_task<bool> mac_cell_processor::add_ue(const mac_ue_create_request& request
   // > Allocate DL HARQ resources for the new UE.
   // Note: This may call a large allocation, and therefore, should be done out of the cell thread to avoid causing
   // lates.
-  dl_harq_buffers.allocate_ue_buffers(request.ue_index, MAX_NOF_HARQS);
+  dl_harq_buffers.allocate_ue_buffers(request.ue_index, request.pdsch_harqs_per_cell);
 
   // > Create a MAC UE DL context.
   mac_dl_ue_context ue_inst(request);

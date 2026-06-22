@@ -22,8 +22,6 @@ The Next Generation Node B (gNodeB) is a 5G base station configured with OCUDU [
 
 By default, the gNodeB connects directly to a single SRS UE. To facilitate multi-UE emulation, the testbed can utilize a ZeroMQ (ZMQ) Broker based on the OCUDU Multi-UE Emulation tutorial [\[5\]][ocudu-multi-ue]. The broker Python runtime script is generated during configuration from the requested UE list using `install_scripts/generate_zmq_broker.sh`. The ZMQ Broker operates the simulated ZeroMQ channel. Its graphical user interface is disabled by default, but can be enabled by setting `SHOW_ZMQ_BROKER_UI=true` in `run.sh`.
 
-Broker mode generates a 10 MHz / 11.52 Msps RF profile with the OCUDU narrow-band PUCCH/SR resources required for 5/10 MHz cells and runs the broker at real-time sample pacing. Direct single-UE ZMQ keeps the 20 MHz / 23.04 Msps profile. OCUDU commit `3f609dea0e` does not accept `cell_cfg.dl_ssb_arfcn`; the UE-side generator derives the required SSB ARFCN from the supported Band 3 profile instead.
-
 To enable the broker, set all occurrences of `USE_ZMQ_BROKER` to `true`, then run `../generate_configurations.sh`.
 
 <details>
@@ -31,8 +29,8 @@ To enable the broker, set all occurrences of `USE_ZMQ_BROKER` to `true`, then ru
 
 ```bash
 sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' ../run.sh
+sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' ../generate_configurations.sh
 sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' run.sh
-sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' full_install.sh
 sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' generate_configurations.sh
 sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' is_running.sh
 sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' run_background.sh
@@ -46,8 +44,8 @@ sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' stop.sh
 
 ```bash
 sed -i 's/^USE_ZMQ_BROKER=true$/USE_ZMQ_BROKER=false/' ../run.sh
+sed -i 's/^USE_ZMQ_BROKER=true$/USE_ZMQ_BROKER=false/' ../generate_configurations.sh
 sed -i 's/^USE_ZMQ_BROKER=true$/USE_ZMQ_BROKER=false/' run.sh
-sed -i 's/^USE_ZMQ_BROKER=true$/USE_ZMQ_BROKER=false/' full_install.sh
 sed -i 's/^USE_ZMQ_BROKER=true$/USE_ZMQ_BROKER=false/' generate_configurations.sh
 sed -i 's/^USE_ZMQ_BROKER=true$/USE_ZMQ_BROKER=false/' is_running.sh
 sed -i 's/^USE_ZMQ_BROKER=true$/USE_ZMQ_BROKER=false/' run_background.sh
@@ -137,5 +135,5 @@ The gNodeB includes support for visualizing performance metrics via a Grafana da
 [ts3191-3gpp]: https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=3191
 [ts3219-3gpp]: https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=3219
 [ts3223-3gpp]: https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=3223
-[ocudu-multi-ue]: https://ocudu.gitlab.io/ocudu_docs/user_manual/tutorials/srsue/#multi-ue-emulation
+[ocudu-multi-ue]: https://ocudu.gitlab.io/ocudu_docs/tutorials/srsue/#multi-ue-emulation
 [ocudu-o1-adapter]: https://ocudu.gitlab.io/ocudu_docs/oran_apps/ocudu_o1_adapter/

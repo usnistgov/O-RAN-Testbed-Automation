@@ -44,8 +44,33 @@ cd "$SCRIPT_DIR"
 
 # Check for srsue binary to determine if srsRAN_4G is already installed
 if [ -f "srsRAN_4G/build/srsue/src/srsue" ]; then
-    echo "srsRAN_4G is already installed, skipping."
-    exit 0
+    NEED_REBUILD=false
+    if [ ! -d "srsRAN_4G" ]; then
+        NEED_REBUILD=true
+    elif ! grep -q 'rach_cfg_nr->nof_preambles[[:space:]]*=[[:space:]]*64;' "srsRAN_4G/lib/src/asn1/rrc_nr_utils.cc"; then
+        NEED_REBUILD=true
+    elif ! grep -q 'srsran_random_uniform_int_dist(random_gen, 0, rach_cfg.nof_preambles - 1)' "srsRAN_4G/srsue/src/stack/mac_nr/proc_ra_nr.cc"; then
+        NEED_REBUILD=true
+    elif ! grep -q 'static_cast<uint32_t>(getpid())' "srsRAN_4G/srsue/src/stack/mac_nr/proc_ra_nr.cc"; then
+        NEED_REBUILD=true
+    elif ! grep -q 'old_lcg_it' "srsRAN_4G/srsue/src/stack/mac_nr/proc_bsr_nr.cc"; then
+        NEED_REBUILD=true
+    elif ! grep -Fq 'lcg_priorities[priority] = new_lcg;' "srsRAN_4G/srsue/src/stack/mac_nr/proc_bsr_nr.cc"; then
+        NEED_REBUILD=true
+    elif ! grep -q 'sr_prohibit_counter' "srsRAN_4G/srsue/hdr/stack/mac_nr/proc_sr_nr.h"; then
+        NEED_REBUILD=true
+    elif grep -q "sr-ProhibitTimer isn't supported" "srsRAN_4G/srsue/src/stack/mac_nr/proc_sr_nr.cc"; then
+        NEED_REBUILD=true
+    elif find install_patch_files/srsRAN_4G -type f -newer "srsRAN_4G/build/srsue/src/srsue" | grep -q .; then
+        NEED_REBUILD=true
+    fi
+
+    if [ "$NEED_REBUILD" = "false" ]; then
+        echo "srsRAN_4G is already installed and up to date, skipping."
+        exit 0
+    fi
+
+    echo "srsRAN_4G is installed but local patches changed; rebuilding."
 fi
 
 # Run a sudo command every minute to ensure script execution without user interaction

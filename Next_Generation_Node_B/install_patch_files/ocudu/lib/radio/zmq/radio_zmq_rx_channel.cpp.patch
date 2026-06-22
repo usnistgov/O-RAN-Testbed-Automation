@@ -1,0 +1,81 @@
+diff --git a/lib/radio/zmq/radio_zmq_rx_channel.cpp b/lib/radio/zmq/radio_zmq_rx_channel.cpp
+index 29e970d3d7..afe7234f65 100644
+--- a/lib/radio/zmq/radio_zmq_rx_channel.cpp
++++ b/lib/radio/zmq/radio_zmq_rx_channel.cpp
+@@ -4,6 +4,7 @@
+ #include "radio_zmq_rx_channel.h"
+ #include "ocudu/ocuduvec/zero.h"
+ #include "ocudu/support/synchronization/sync_event.h"
++#include <algorithm>
+ #include <set>
+ 
+ using namespace ocudu;
+@@ -26,7 +27,8 @@ radio_zmq_rx_channel::radio_zmq_rx_channel(void*                      zmq_contex
+   circular_buffer(config.buffer_size),
+   buffer(config.buffer_size * sizeof(cf_t)),
+   notification_handler(notification_handler_),
+-  async_executor(async_executor_)
++  async_executor(async_executor_),
++  receive_timeout(config.trx_timeout_ms)
+ {
+   // Set log level.
+   logger.set_level(config.log_level);
+@@ -44,6 +46,24 @@ radio_zmq_rx_channel::radio_zmq_rx_channel(void*                      zmq_contex
+     return;
+   }
+ 
++  // Allow unanswered requests to be handled as radio silence.
++  if (config.socket_type == ZMQ_REQ) {
++#ifdef ZMQ_REQ_RELAXED
++    const int req_relaxed = 1;
++    if (::zmq_setsockopt(sock, ZMQ_REQ_RELAXED, &req_relaxed, sizeof(req_relaxed)) == -1) {
++      logger.error("Failed to set relaxed mode on rx socket. {}.", ::zmq_strerror(::zmq_errno()));
++      return;
++    }
++#endif
++#ifdef ZMQ_REQ_CORRELATE
++    const int req_correlate = 1;
++    if (::zmq_setsockopt(sock, ZMQ_REQ_CORRELATE, &req_correlate, sizeof(req_correlate)) == -1) {
++      logger.error("Failed to set request correlation on rx socket. {}.", ::zmq_strerror(::zmq_errno()));
++      return;
++    }
++#endif
++  }
++
+   // Bind socket.
+   logger.info("Connecting to address {}.", config.address);
+   if (::zmq_connect(sock, config.address.c_str()) == -1) {
+@@ -162,6 +182,10 @@ void radio_zmq_rx_channel::receive_response()
+   // Convert number of bytes to samples.
+   unsigned nsamples = n / sample_size;
+   logger.debug("Socket received {} samples.", nsamples);
++  if (!has_received_signal.load(std::memory_order_relaxed) &&
++      std::any_of(buffer.begin(), buffer.begin() + nsamples, [](const cf_t& sample) { return sample != cf_t{}; })) {
++    has_received_signal.store(true, std::memory_order_relaxed);
++  }
+ 
+   // Make sure the buffer size has not been exceeded.
+   report_fatal_error_if_not(nsamples <= buffer.size(),
+@@ -238,6 +262,7 @@ void radio_zmq_rx_channel::receive(span<cf_t> data)
+ 
+   // Create and start a timer to inform about deadlocks.
+   radio_zmq_timer timer(true);
++  const auto       receive_expire_time = std::chrono::steady_clock::now() + receive_timeout;
+ 
+   // Try to read samples from circular buffer.
+   unsigned count = 0;
+@@ -250,6 +275,14 @@ void radio_zmq_rx_channel::receive(span<cf_t> data)
+       std::this_thread::sleep_for(circ_buffer_try_pop_sleep);
+     }
+ 
++    if (has_received_signal.load(std::memory_order_relaxed) && receive_timeout.count() != 0 &&
++        std::chrono::steady_clock::now() >= receive_expire_time) {
++      logger.debug("Receive timeout. Filling {} of {} samples with zeros.", data.size() - count, data.size());
++      ocuduvec::zero(data.last(data.size() - count));
++      state_fsm.data_received();
++      break;
++    }
++
+     // Check if an excess of time passed while trying to read samples.
+     if (timer.is_expired()) {
+       logger.info("Waiting for reading samples. Completed {} of {} samples.", count, data.size());

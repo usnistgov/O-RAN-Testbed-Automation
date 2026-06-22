@@ -1,0 +1,68 @@
+diff --git a/srsue/src/stack/mac_nr/test/proc_sr_nr_test.cc b/srsue/src/stack/mac_nr/test/proc_sr_nr_test.cc
+index 7384fcd67..a09bcfcdc 100644
+--- a/srsue/src/stack/mac_nr/test/proc_sr_nr_test.cc
++++ b/srsue/src/stack/mac_nr/test/proc_sr_nr_test.cc
+@@ -53,8 +53,9 @@ public:
+     *preamble_index_                 = preamble_index;
+     *preamble_received_target_power_ = preamble_received_target_power;
+   }
+-  bool has_valid_sr_resource(uint32_t sr_id) override { return false; }
++  bool has_valid_sr_resource(uint32_t sr_id) override { return valid_sr_resource; }
+   void clear_pending_grants() override {}
++  void set_valid_sr_resource(bool valid) { valid_sr_resource = valid; }
+ 
+   void set_timeadv_rar(uint32_t tti, uint32_t ta_cmd) final{};
+   void set_timeadv(uint32_t tti, uint32_t ta_cmd) final{};
+@@ -63,6 +64,7 @@ private:
+   uint32_t prach_occasion                 = 0;
+   uint32_t preamble_index                 = 0;
+   int      preamble_received_target_power = 0;
++  bool     valid_sr_resource              = false;
+ };
+ 
+ class dummy_rrc : public rrc_interface_mac
+@@ -106,6 +108,35 @@ int proc_sr_basic_test()
+   return SRSRAN_SUCCESS;
+ }
+ 
++int proc_sr_prohibit_timer_test()
++{
++  proc_sr_nr proc_sr_nr(srslog::fetch_basic_logger("MAC"));
++  dummy_rrc  dummy_rrc;
++  dummy_phy  dummy_phy;
++  dummy_mac  dummy_mac;
++
++  srsran::sr_cfg_nr_t cfg;
++  cfg.enabled                    = true;
++  cfg.num_items                  = 1;
++  cfg.item[0].prohibit_timer     = 2;
++  cfg.item[0].sched_request_id   = 0;
++  cfg.item[0].trans_max          = 64;
++  dummy_phy.set_valid_sr_resource(true);
++
++  proc_sr_nr.init(&dummy_mac, &dummy_phy, &dummy_rrc);
++  TESTASSERT(proc_sr_nr.set_config(cfg) == SRSRAN_SUCCESS);
++  proc_sr_nr.start();
++
++  TESTASSERT(proc_sr_nr.sr_opportunity(0, 0, false, false) == true);
++  TESTASSERT(proc_sr_nr.sr_opportunity(1, 0, false, false) == false);
++  proc_sr_nr.step(1);
++  TESTASSERT(proc_sr_nr.sr_opportunity(2, 0, false, false) == false);
++  proc_sr_nr.step(2);
++  TESTASSERT(proc_sr_nr.sr_opportunity(3, 0, false, false) == true);
++
++  return SRSRAN_SUCCESS;
++}
++
+ int main()
+ {
+   srslog::init();
+@@ -114,5 +145,6 @@ int main()
+   mac_logger.set_level(srslog::basic_levels::debug);
+   mac_logger.set_hex_dump_max_size(-1);
+   TESTASSERT(proc_sr_basic_test() == SRSRAN_SUCCESS);
++  TESTASSERT(proc_sr_prohibit_timer_test() == SRSRAN_SUCCESS);
+   return SRSRAN_SUCCESS;
+-}
+\ No newline at end of file
++}

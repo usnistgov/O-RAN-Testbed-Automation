@@ -40,7 +40,7 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-USE_FLEXRIC=false
+USE_FLEXRIC=true
 
 # Loop over all arguments to set KEEP_EXISTING_INSTALLS based on -y or -n
 KEEP_EXISTING_INSTALLS=""

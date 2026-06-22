@@ -414,7 +414,7 @@ precoding_weight_matrix ocudu::make_type1_sp_mode1(const precoding_matrix_indica
   precoding_weight_matrix result(nof_layers, nof_ports);
 
   // Polarization phase shift. This defines the relative phase between the cross-polarized antenna elements.
-  cf_t phi = std::polar(1.0F, M_PI_2f * static_cast<float>(type1_sp_pmi->i_2));
+  cf_t phi = std::polar(1.0F, (TWOPI / 4.0F) * static_cast<float>(type1_sp_pmi->i_2));
 
   // Horizontal beam identifiers for each layer.
   static_vector<unsigned, precoding_constants::MAX_NOF_LAYERS> layer_beam_horizontal(nof_layers);

@@ -41,10 +41,11 @@ cd "$PARENT_DIR"
 UE_NUMBER=$1
 BANDWIDTH=${2:-1M}
 DURATION=${3:-60}
+PDU_SESSION_IP=${4:-}
 
 if [[ -z "$UE_NUMBER" ]]; then
     echo "ERROR: No UE number provided."
-    echo "Usage: $0 <UE_NUMBER> [BANDWIDTH] [DURATION]"
+    echo "Usage: $0 <UE_NUMBER> [BANDWIDTH] [DURATION] [PDU_SESSION_IP]"
     echo "       BANDWIDTH is optional and can be specified in units [k, K, m, M, g, G]. Default is 1M."
     echo "       DURATION is optional and specifies the duration in seconds. Default is 60."
     exit 1
@@ -75,8 +76,8 @@ if [ $DURATION -lt 1 ]; then
     exit 1
 fi
 
-if [ ! -f "configs/ue1.conf" ]; then
-    echo "Configuration was not found for OAI UE 1. Please run ./generate_configurations.sh first."
+if [ ! -f "configs/ue${UE_NUMBER}.conf" ]; then
+    echo "Configuration was not found for OAI UE $UE_NUMBER. Please run ./generate_configurations.sh first."
     exit 1
 fi
 
@@ -87,6 +88,38 @@ remove_cidr_suffix() {
     echo ${IP%/*}
 }
 
+select_pdu_session() {
+    if [ -n "$PDU_SESSION_IP" ]; then
+        return
+    fi
+
+    if ! PDU_SESSION_OUTPUT=$(./additional_scripts/get_pdu_sessions.sh "$UE_NUMBER" 2>&1); then
+        echo "$PDU_SESSION_OUTPUT"
+        exit 1
+    fi
+
+    PDU_SESSIONS=()
+    while IFS= read -r SESSION; do
+        [ -n "$SESSION" ] && PDU_SESSIONS+=("$SESSION")
+    done <<<"$PDU_SESSION_OUTPUT"
+
+    if [ ${#PDU_SESSIONS[@]} -eq 1 ]; then
+        PDU_SESSION_IP="${PDU_SESSIONS[0]}"
+        return
+    fi
+
+    echo "Available PDU sessions for UE $UE_NUMBER:"
+    for INDEX in "${!PDU_SESSIONS[@]}"; do
+        echo "$((INDEX + 1)). ${PDU_SESSIONS[$INDEX]}"
+    done
+    read -p "Select PDU session: " SELECTION
+    if ! [[ "$SELECTION" =~ ^[0-9]+$ ]] || [ "$SELECTION" -lt 1 ] || [ "$SELECTION" -gt ${#PDU_SESSIONS[@]} ]; then
+        echo "ERROR: Invalid PDU session selection."
+        exit 1
+    fi
+    PDU_SESSION_IP="${PDU_SESSIONS[$((SELECTION - 1))]}"
+}
+
 UE_NAMESPACE="ue$UE_NUMBER"
 
 # If the namespace doesn't exist
@@ -95,12 +128,7 @@ if ! ip netns list | grep -q "$UE_NAMESPACE"; then
     exit 1
 fi
 
-LOG_FILE="logs/ue${UE_NUMBER}_stdout.txt"
-if [ ! -f "$LOG_FILE" ]; then
-    echo "ERROR: Log file $LOG_FILE does not exist. Please start the UE first."
-    exit 1
-fi
-PDU_SESSION_IP=$(cat $LOG_FILE | grep "Received PDU Session Establishment Accept" | cut -d ':' -f2 | xargs | tr -d '\r\n')
+select_pdu_session
 CORE_IP=$(ip route | grep ogstun | cut -d ' ' -f 9 | xargs)
 if [ -z "$CORE_IP" ]; then # 5GDeploy:
     if sudo ip netns exec "$UE_NAMESPACE" ip route | grep -q "oaitun_ue$UE_NUMBER"; then
@@ -112,12 +140,7 @@ if [ -z "$CORE_IP" ]; then # 5GDeploy:
     fi
 fi
 
-if [ -z "$PDU_SESSION_IP" ]; then
-    echo "ERROR: Unable to find PDU Session IP from the log file $LOG_FILE."
-    exit 1
-fi
-
-echo "Successfully found PDU Session IP: $PDU_SESSION_IP"
+echo "Using PDU Session IP: $PDU_SESSION_IP"
 
 if [ -z "$CORE_IP" ]; then
     echo "WARNING: Unable to find 5G core IP from the routing table."

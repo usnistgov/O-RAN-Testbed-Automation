@@ -1,0 +1,47 @@
+diff --git a/srsue/src/stack/mac_nr/mac_nr.cc b/srsue/src/stack/mac_nr/mac_nr.cc
+index e697f76c7..318b4a3ff 100644
+--- a/srsue/src/stack/mac_nr/mac_nr.cc
++++ b/srsue/src/stack/mac_nr/mac_nr.cc
+@@ -174,7 +174,7 @@ mac_interface_phy_nr::sched_rnti_t mac_nr::get_ul_sched_rnti_nr(const uint32_t t
+ {
+   if (has_temp_crnti() && has_crnti() == false) {
+     logger.debug("SCHED: Searching temp C-RNTI=0x%x (proc_ra)", rntis.get_temp_rnti());
+-    return {rntis.get_temp_rnti(), srsran_rnti_type_c};
++    return {rntis.get_temp_rnti(), srsran_rnti_type_tc};
+   }
+   return {rntis.get_crnti(), srsran_rnti_type_c};
+ }
+@@ -191,22 +191,23 @@ bool mac_nr::is_paging_opportunity()
+ 
+ mac_interface_phy_nr::sched_rnti_t mac_nr::get_dl_sched_rnti_nr(const uint32_t tti)
+ {
+-  // Priority: SI-RNTI, P-RNTI, RA-RNTI, Temp-RNTI, CRNTI
+-  if (is_si_opportunity()) {
+-    return {SRSRAN_SIRNTI, srsran_rnti_type_si};
+-  }
+-
+-  if (is_paging_opportunity()) {
+-    return {SRSRAN_PRNTI, srsran_rnti_type_si};
+-  }
+-
++  // During random access, prioritize the RA procedure RNTIs so SI scheduling does
++  // not mask the RAR or contention-resolution PDCCH.
+   if (proc_ra.is_rar_opportunity(tti)) {
+     return {proc_ra.get_rar_rnti(), srsran_rnti_type_ra};
+   }
+ 
+   if (has_temp_crnti() && has_crnti() == false) {
+     logger.debug("SCHED: Searching temp C-RNTI=0x%x (proc_ra)", rntis.get_temp_rnti());
+-    return {rntis.get_temp_rnti(), srsran_rnti_type_c};
++    return {rntis.get_temp_rnti(), srsran_rnti_type_tc};
++  }
++
++  if (is_si_opportunity()) {
++    return {SRSRAN_SIRNTI, srsran_rnti_type_si};
++  }
++
++  if (is_paging_opportunity()) {
++    return {SRSRAN_PRNTI, srsran_rnti_type_si};
+   }
+ 
+   if (has_crnti()) {

@@ -34,7 +34,7 @@ set +e
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-USE_FLEXRIC=false
+USE_FLEXRIC=true
 
 if [[ "$1" != "bypass_confirmation" && "$1" != "--yes" && "$1" != "-y" ]]; then
     clear

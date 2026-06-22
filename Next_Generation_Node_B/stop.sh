@@ -38,6 +38,7 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
 USE_ZMQ_BROKER=false
+ZMQ_BROKER_PROCESS_RE="[m]ulti_ue_scenario\.py"
 
 # Check if the gNodeB is already stopped
 IS_RUNNING=$(./is_running.sh)
@@ -60,7 +61,7 @@ fi
 
 # Send a graceful shutdown signal to the gNodeB process
 sudo pkill -f "[g]nb" >/dev/null 2>&1
-sudo pkill -f "[p]ython3 zmq_broker/multi_ue_scenario\.py" >/dev/null 2>&1
+sudo pkill -f "$ZMQ_BROKER_PROCESS_RE" >/dev/null 2>&1
 
 # Wait for the process to terminate gracefully
 COUNT=0
@@ -81,4 +82,4 @@ done
 # If the process is still running after 20 seconds, send a forceful kill signal
 echo "The gNodeB did not stop in time, sending forceful kill signal..."
 sudo pkill -9 -f "[g]nb" >/dev/null 2>&1
-sudo pkill -9 -f "[p]ython3 zmq_broker/multi_ue_scenario\.py" >/dev/null 2>&1
+sudo pkill -9 -f "$ZMQ_BROKER_PROCESS_RE" >/dev/null 2>&1

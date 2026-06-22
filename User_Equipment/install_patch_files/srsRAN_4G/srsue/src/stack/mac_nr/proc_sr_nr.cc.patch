@@ -1,0 +1,116 @@
+diff --git a/srsue/src/stack/mac_nr/proc_sr_nr.cc b/srsue/src/stack/mac_nr/proc_sr_nr.cc
+index b3cb85bc7..2864c8c62 100644
+--- a/srsue/src/stack/mac_nr/proc_sr_nr.cc
++++ b/srsue/src/stack/mac_nr/proc_sr_nr.cc
+@@ -35,6 +35,7 @@ int32_t proc_sr_nr::init(mac_interface_sr_nr* mac_, phy_interface_mac_nr* phy_,
+   mac        = mac_;
+   phy        = phy_;
+   sr_counter = 0;
++  sr_prohibit_counter = 0;
+ 
+   initiated = true;
+ 
+@@ -49,7 +50,8 @@ void proc_sr_nr::reset()
+ 
+ void proc_sr_nr::reset_nolock()
+ {
+-  is_pending_sr = false;
++  is_pending_sr       = false;
++  sr_prohibit_counter = 0;
+ }
+ 
+ int32_t proc_sr_nr::set_config(const srsran::sr_cfg_nr_t& cfg_)
+@@ -70,13 +72,8 @@ int32_t proc_sr_nr::set_config(const srsran::sr_cfg_nr_t& cfg_)
+     return SRSRAN_ERROR;
+   }
+ 
+-  if (cfg_.enabled && cfg_.item[0].prohibit_timer > 0) {
+-    logger.error("sr-ProhibitTimer isn't supported. Disabling SR.");
+-    return SRSRAN_ERROR;
+-  }
+-
+   if (cfg_.enabled) {
+-    logger.info("SR:    Set sr-TransMax=%d", cfg_.item[0].trans_max);
++    logger.info("SR:    Set sr-TransMax=%d, sr-ProhibitTimer=%d", cfg_.item[0].trans_max, cfg_.item[0].prohibit_timer);
+   } else {
+     logger.info("SR:    Disabling procedure");
+   }
+@@ -97,6 +94,10 @@ void proc_sr_nr::step(uint32_t tti)
+     return;
+   }
+ 
++  if (sr_prohibit_counter > 0) {
++    sr_prohibit_counter--;
++  }
++
+   // As long as at least one SR is pending, the MAC entity shall for each pending SR:
+   if (!is_pending_sr) {
+     return;
+@@ -106,6 +107,7 @@ void proc_sr_nr::step(uint32_t tti)
+   if (not phy->has_valid_sr_resource(cfg.item[0].sched_request_id)) {
+     // 2> initiate a Random Access procedure (see clause 5.1) on the SpCell and cancel the pending SR.
+     logger.info("SR:    PUCCH not configured. Starting RA procedure");
++    srsran::console("SR: PUCCH resource not configured for sr_id=%d; starting RA\n", cfg.item[0].sched_request_id);
+     mac->start_ra();
+     reset_nolock();
+     return;
+@@ -115,7 +117,10 @@ void proc_sr_nr::step(uint32_t tti)
+   if (sr_counter >= cfg.item[0].trans_max) {
+     logger.info(
+         "SR:    Releasing PUCCH/SRS resources, sr_counter=%d, sr-TransMax=%d", sr_counter, cfg.item[0].trans_max);
+-    srsran::console("Scheduling request failed: releasing RRC connection...\n");
++    srsran::console("Scheduling request failed: sr_id=%d sr_counter=%d sr-TransMax=%d; releasing RRC connection...\n",
++                    cfg.item[0].sched_request_id,
++                    sr_counter,
++                    cfg.item[0].trans_max);
+     rrc->release_pucch_srs();
+ 
+     // 4> clear any configured downlink assignments and uplink grants;
+@@ -137,16 +142,29 @@ bool proc_sr_nr::sr_opportunity(uint32_t tti, uint32_t sr_id, bool meas_gap, boo
+     return false;
+   }
+ 
++  if (!phy->has_valid_sr_resource(sr_id)) {
++    srsran::console("SR: opportunity tti=%d sr_id=%d has no valid PUCCH resource\n", tti, sr_id);
++    return false;
++  }
++
+   // 2> if sr-ProhibitTimer is not running at the time of the SR transmission occasion; and
+-  // ... TODO
++  if (sr_prohibit_counter > 0) {
++    srsran::console("SR: opportunity tti=%d sr_id=%d skipped by sr-ProhibitTimer=%d\n",
++                    tti,
++                    sr_id,
++                    sr_prohibit_counter);
++    return false;
++  }
+ 
+   // 2> if the PUCCH resource for the SR transmission occasion does not overlap with a measurement gap; and
+   if (meas_gap) {
++    srsran::console("SR: opportunity tti=%d sr_id=%d skipped by measurement gap\n", tti, sr_id);
+     return false;
+   }
+ 
+   // 2> if the PUCCH resource for the SR transmission occasion does not overlap with a UL-SCH resource:
+   if (ul_sch_tx) {
++    srsran::console("SR: opportunity tti=%d sr_id=%d skipped by UL-SCH transmission\n", tti, sr_id);
+     return false;
+   }
+ 
+@@ -156,10 +174,15 @@ bool proc_sr_nr::sr_opportunity(uint32_t tti, uint32_t sr_id, bool meas_gap, boo
+     sr_counter += 1;
+ 
+     // 4> start the sr-ProhibitTimer.
+-    // ... TODO
++    sr_prohibit_counter = cfg.item[0].prohibit_timer;
+ 
+     // 4> instruct the physical layer to signal the SR on one valid PUCCH resource for SR;
+     logger.info("SR:    Signalling PHY sr_counter=%d", sr_counter);
++    srsran::console("SR: signalling tti=%d sr_id=%d sr_counter=%d/%d\n",
++                    tti,
++                    sr_id,
++                    sr_counter,
++                    cfg.item[0].trans_max);
+     return true;
+   }
+ 

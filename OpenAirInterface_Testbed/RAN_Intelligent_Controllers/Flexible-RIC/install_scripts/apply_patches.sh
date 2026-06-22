@@ -98,41 +98,6 @@ fi
 echo "Patching CMakeLists.txt to list the new xApps for building..."
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/CMakeLists.txt.patch"
 
-# cd "$FLEXRIC_DIR"
-# echo "Adding stale subscription cleanup support patch to FlexRIC..."
-# STALE_SUBSCRIPTION_PATCH_DIR="$PARENT_DIR/install_patch_files/flexric/stale_subscription_cleanup_support"
-# mkdir -p "$STALE_SUBSCRIPTION_PATCH_DIR"
-# STALE_SUBSCRIPTION_PATCH_FILES=(
-#     "examples/xApp/c/ctrl/mac_ctrl.c"
-#     "examples/xApp/c/helloworld/hw.c"
-#     "examples/xApp/c/keysight/xapp_keysight_kpm_rc.c"
-#     "examples/xApp/c/monitor/xapp_rc_moni.c"
-#     "examples/xApp/c/orange/xapp_es_with_cell_util.c"
-#     "examples/xApp/c/slice/xapp_slice_moni_ctrl.c"
-#     "examples/xApp/c/tc/xapp_tc_all.c"
-#     "examples/xApp/c/tc/xapp_tc_codel.c"
-#     "examples/xApp/c/tc/xapp_tc_ecn.c"
-#     "examples/xApp/c/tc/xapp_tc_partition.c"
-#     "src/ric/iApp/map_ric_id.c"
-#     "src/ric/iApp/map_ric_id.h"
-#     "src/ric/iApp/msg_handler_iapp.c"
-#     "src/xApp/e42_xapp.c"
-#     "src/xApp/e42_xapp.h"
-#     "src/xApp/e42_xapp_api.c"
-#     "src/xApp/e42_xapp_api.h"
-#     "src/xApp/msg_handler_xapp.c"
-# )
-
-# for FILE in "${STALE_SUBSCRIPTION_PATCH_FILES[@]}"; do
-#     git restore "$FILE"
-#     if [ ! -f "$FILE.previous" ]; then
-#         cp "$FILE" "$FILE.previous"
-#         mkdir -p "$(dirname "$STALE_SUBSCRIPTION_PATCH_DIR/$FILE")"
-#         cp "$FILE.previous" "$STALE_SUBSCRIPTION_PATCH_DIR/$FILE.previous"
-#     fi
-# done
-# git apply --verbose --ignore-whitespace "$STALE_SUBSCRIPTION_PATCH_DIR/patch.patch"
-
 cd "$PARENT_DIR"
 
 # Apply patch to FlexRIC to add support for disabling the SQLite database with cmake .. -DXAPP_DB=NONE_XAPP
@@ -163,8 +128,6 @@ if [ ! -f "src/xApp/e42_xapp.c.previous" ]; then
     cp src/xApp/e42_xapp.c src/xApp/e42_xapp.c.previous
     cp src/xApp/e42_xapp.c.previous "$PARENT_DIR/install_patch_files/flexric/disable_database_option/src/xApp/e42_xapp.previous.c"
 fi
-# # Omit e42_xapp.c since the stale subscription patch already modified it
-# cp $STALE_SUBSCRIPTION_PATCH_DIR/src/xApp/e42_xapp.c.previous src/xApp/e42_xapp.previous.c
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/disable_database_option/patch.patch"
 cd "$PARENT_DIR"
 
@@ -285,48 +248,27 @@ cd "$PARENT_DIR"
 # git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/fixed_64_bit_collectStartTime/patch.patch"
 # cd "$PARENT_DIR"
 
-# Append new intermediate metrics units to 28_552_kpm_meas.txt
 cd "$FLEXRIC_DIR"
-if ! grep -q "^RSRP.Count" src/sm/kpm_sm/28_552_kpm_meas.txt; then
-    cat >>src/sm/kpm_sm/28_552_kpm_meas.txt <<'EOF'
-PHY.NPrbDl []
-DRB.HarqMcsUl []
-DRB.HarqMcsDl []
-DRB.DerivedCQIDl []
-PHY.CqiWb1TbDl []
-PHY.CqiWb2TbDl []
-PHY.DerivedRssiDl [dBm]
-PHY.DerivedRsrqDl [dB]
-PUSCH.Snr [dB]
-PUCCH.Snr [dB]
-DRB.HarqBlockErrorRateUl [%]
-DRB.HarqBlockErrorRateDl [%]
-DRB.MacSduRetransmissionRateUl [%]
-DRB.MacSduRetransmissionRateDl [%]
-DRB.MacSduErrorRateUl [%]
-DRB.MacSduErrorRateDl [%]
-EOF
-fi
 
-# Append CARR.PUSCHMCSDist [PUSCH_RBs] after CARR.PUSCHMCSDist.BinX.BinY.BinZ [] if not already present
-if ! grep -q "^CARR\.PUSCHMCSDist \[PUSCH_RBs\]" src/sm/kpm_sm/28_552_kpm_meas.txt; then
-    sed -i '/^CARR\.PUSCHMCSDist\.BinX\.BinY\.BinZ \[\]$/a CARR.PUSCHMCSDist [PUSCH_RBs]' src/sm/kpm_sm/28_552_kpm_meas.txt
-fi
+# # Append CARR.PUSCHMCSDist [PUSCH_RBs] after CARR.PUSCHMCSDist.BinX.BinY.BinZ [] if not already present
+# if ! grep -q "^CARR\.PUSCHMCSDist \[PUSCH_RBs\]" src/sm/kpm_sm/28_552_kpm_meas.txt; then
+#     sed -i '/^CARR\.PUSCHMCSDist\.BinX\.BinY\.BinZ \[\]$/a CARR.PUSCHMCSDist [PUSCH_RBs]' src/sm/kpm_sm/28_552_kpm_meas.txt
+# fi
 
-# Append CARR.WBCQIDist [] after CARR.WBCQIDist.BinX.BinY.BinZ [] if not already present
-if ! grep -q "^CARR\.WBCQIDist \[\]" src/sm/kpm_sm/28_552_kpm_meas.txt; then
-    sed -i '/^CARR\.WBCQIDist\.BinX\.BinY\.BinZ \[\]$/a CARR.WBCQIDist []' src/sm/kpm_sm/28_552_kpm_meas.txt
-fi
+# # Append CARR.WBCQIDist [] after CARR.WBCQIDist.BinX.BinY.BinZ [] if not already present
+# if ! grep -q "^CARR\.WBCQIDist \[\]" src/sm/kpm_sm/28_552_kpm_meas.txt; then
+#     sed -i '/^CARR\.WBCQIDist\.BinX\.BinY\.BinZ \[\]$/a CARR.WBCQIDist []' src/sm/kpm_sm/28_552_kpm_meas.txt
+# fi
 
-# Append L1M.SS-RSRP [dBm] after L1M.SS-RSRP.Bin [] if not already present
-if ! grep -q "^L1M\.SS-RSRP \[dBm\]" src/sm/kpm_sm/28_552_kpm_meas.txt; then
-    sed -i '/^L1M\.SS-RSRP\.Bin \[\]$/a L1M.SS-RSRP [dBm]' src/sm/kpm_sm/28_552_kpm_meas.txt
-fi
+# # Append L1M.SS-RSRP [dBm] after L1M.SS-RSRP.Bin [] if not already present
+# if ! grep -q "^L1M\.SS-RSRP \[dBm\]" src/sm/kpm_sm/28_552_kpm_meas.txt; then
+#     sed -i '/^L1M\.SS-RSRP\.Bin \[\]$/a L1M.SS-RSRP [dBm]' src/sm/kpm_sm/28_552_kpm_meas.txt
+# fi
 
-# Append MR.NRScSSSINR [dB] after MR.NRScSSSINR.BinX [] if not already present
-if ! grep -q "^MR\.NRScSSSINR \[dB\]" src/sm/kpm_sm/28_552_kpm_meas.txt; then
-    sed -i '/^MR\.NRScSSSINR\.BinX \[\]$/a MR.NRScSSSINR [dB]' src/sm/kpm_sm/28_552_kpm_meas.txt
-fi
+# # Append MR.NRScSSSINR [dB] after MR.NRScSSSINR.BinX [] if not already present
+# if ! grep -q "^MR\.NRScSSSINR \[dB\]" src/sm/kpm_sm/28_552_kpm_meas.txt; then
+#     sed -i '/^MR\.NRScSSSINR\.BinX \[\]$/a MR.NRScSSSINR [dB]' src/sm/kpm_sm/28_552_kpm_meas.txt
+# fi
 
 # Increase FR_CONF_FILE_LEN from 128 to 1024 to prevent buffer overflows with long paths
 echo "Patching FlexRIC conf_file.h to prevent long path buffer overflow..."

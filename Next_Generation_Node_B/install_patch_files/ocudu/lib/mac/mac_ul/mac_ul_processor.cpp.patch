@@ -1,0 +1,31 @@
+diff --git a/lib/mac/mac_ul/mac_ul_processor.cpp b/lib/mac/mac_ul/mac_ul_processor.cpp
+index a253e49784..f6202e4488 100644
+--- a/lib/mac/mac_ul/mac_ul_processor.cpp
++++ b/lib/mac/mac_ul/mac_ul_processor.cpp
+@@ -4,6 +4,7 @@
+ 
+ #include "mac_ul_processor.h"
+ #include "ocudu/ocudulog/ocudulog.h"
++#include "ocudu/support/async/async_no_op_task.h"
+ #include "ocudu/support/async/execute_on_blocking.h"
+ 
+ using namespace ocudu;
+@@ -20,17 +21,7 @@ async_task<bool> mac_ul_processor::add_ue(const mac_ue_create_request& request)
+ {
+   // Update UE executor to match new PCell.
+   cfg.ue_exec_mapper.rebind_executors(request.ue_index, request.cell_index);
+-  task_executor& ul_exec = cfg.ue_exec_mapper.ctrl_executor(request.ue_index);
+-
+-  // Dispatch UE creation task to new UL executor.
+-  return execute_and_continue_on_blocking(
+-      ul_exec,
+-      cfg.ctrl_exec,
+-      cfg.timers,
+-      [this, request]() { return ue_manager.add_ue(request); },
+-      [this, ue_idx = request.ue_index]() {
+-        logger.warning("ue={}: Postponed UE creation. Cause: Task queue is full", fmt::underlying(ue_idx));
+-      });
++  return launch_no_op_task(ue_manager.add_ue(request));
+ }
+ 
+ async_task<bool> mac_ul_processor::addmod_bearers(du_ue_index_t                                  ue_index,

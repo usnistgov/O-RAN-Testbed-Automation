@@ -20,7 +20,9 @@ The Next Generation Node B (gNodeB) is a 5G base station configured with OCUDU [
 
 ## Simulating Multiple UEs with ZeroMQ Broker
 
-By default, the gNodeB connects directly to a single SRS UE. To facilitate multi-UE emulation, the testbed can utilize a ZeroMQ (ZMQ) Broker based on the OCUDU Multi-UE Emulation tutorial [\[5\]][ocudu-multi-ue]. The broker is defined using a GNU Radio Companion flowgraph (`zmq_broker/multi_ue_scenario.grc`) retrieved from the tutorial [\[6\]][ocudu-multi-ue-grc] and compiled into a Python executable using the GNU Radio Companion Compiler (`grcc`). The ZMQ Broker operates the simulated ZeroMQ channel. Its graphical user interface is disabled by default, but can be enabled by setting `SHOW_ZMQ_BROKER_UI=true` in `run.sh`.
+By default, the gNodeB connects directly to a single SRS UE. To facilitate multi-UE emulation, the testbed can utilize a ZeroMQ (ZMQ) Broker based on the OCUDU Multi-UE Emulation tutorial [\[5\]][ocudu-multi-ue]. The broker Python runtime script is generated during configuration from the requested UE list using `install_scripts/generate_zmq_broker.sh`. The ZMQ Broker operates the simulated ZeroMQ channel. Its graphical user interface is disabled by default, but can be enabled by setting `SHOW_ZMQ_BROKER_UI=true` in `run.sh`.
+
+Broker mode generates a 10 MHz / 11.52 Msps RF profile with the OCUDU narrow-band PUCCH/SR resources required for 5/10 MHz cells and runs the broker at real-time sample pacing. Direct single-UE ZMQ keeps the 20 MHz / 23.04 Msps profile. OCUDU commit `3f609dea0e` does not accept `cell_cfg.dl_ssb_arfcn`; the UE-side generator derives the required SSB ARFCN from the supported Band 3 profile instead.
 
 To enable the broker, set all occurrences of `USE_ZMQ_BROKER` to `true`, then run `../generate_configurations.sh`.
 
@@ -54,10 +56,24 @@ sed -i 's/^USE_ZMQ_BROKER=true$/USE_ZMQ_BROKER=false/' stop.sh
 
 </details>
 
-- When the ZMQ broker is enabled, `run.sh` on the base directory starts the gNodeB and UEs 2 and 3 as background processes, while UE 1 runs in the foreground.
+- When the ZMQ broker is enabled, `run.sh` on the base directory starts all generated UEs. It starts all but the lowest-numbered UE as background processes, then starts the lowest-numbered UE in the foreground while monitoring every selected UE for PDU-session establishment. The generated broker has one uplink input per UE, so the UE processes are started together before PDU-session checks.
 
 > [!NOTE]
-> The default `multi_ue_scenario.grc` flowgraph supports three UEs. To change emulated UE scenario, modify the `.grc` file using GNU Radio Companion to add or remove ZeroMQ blocks, delete the existing `zmq_broker/multi_ue_scenario.py`, and run `./generate_configurations.sh` to compile the `.grc` file into a new Python script and automatically patch the required IP addresses.
+> To configure a specific emulated UE set, pass the UE numbers to the top-level generator, for example `../generate_configurations.sh 1 2 3 4`. The generated broker creates one downlink and one uplink branch for each requested UE, and the top-level `run.sh` launches the generated UE set unless explicit UE numbers are passed to `run.sh`. UE numbers above the preloaded subscriber set still require subscriber registration in the 5G Core.
+
+The top-level generator verifies that the generated broker, gNodeB, and UE configs agree before finishing. The same check can be run manually from this directory with:
+
+```bash
+./install_scripts/validate_zmq_broker_config.sh
+```
+
+After a live multi-UE run, list the PDU sessions for each UE from the repository root:
+
+```bash
+User_Equipment/install_scripts/get_pdu_sessions.sh 1
+User_Equipment/install_scripts/get_pdu_sessions.sh 2
+User_Equipment/install_scripts/get_pdu_sessions.sh 3
+```
 
 ## E2 Interface
 
@@ -93,7 +109,7 @@ sed -i 's/^USE_FLEXRIC=true$/USE_FLEXRIC=false/' generate_configurations.sh
 
 ## O1 Interface
 
-The gNodeB can also be monitored and controlled through the OCUDU O1 Adapter [\[7\]][ocudu-o1-adapter]. Management scripts for the O1 interface are located in the `additional_scripts/` directory. Use `./additional_scripts/install_o1_adapter.sh` to install and build the required components, `./additional_scripts/run_o1_adapter.sh` to start the O1 services, `./additional_scripts/stop_o1_adapter.sh` to stop them, and `./additional_scripts/uninstall_o1_adapter.sh` to remove them.
+The gNodeB can also be monitored and controlled through the OCUDU O1 Adapter [\[6\]][ocudu-o1-adapter]. Management scripts for the O1 interface are located in the `additional_scripts/` directory. Use `./additional_scripts/install_o1_adapter.sh` to install and build the required components, `./additional_scripts/run_o1_adapter.sh` to start the O1 services, `./additional_scripts/stop_o1_adapter.sh` to stop them, and `./additional_scripts/uninstall_o1_adapter.sh` to remove them.
 
 When running, the O1 setup starts a NETCONF Docker container `ocudu_netconf` and the OCUDU O1 adapter system process. The NETCONF endpoint is exposed at `127.0.0.1:830`.
 
@@ -113,8 +129,7 @@ The gNodeB includes support for visualizing performance metrics via a Grafana da
 3. 3GPP TS 38.401: NG-RAN; Architecture description. [https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=3219][ts3219-3gpp]
 4. 3GPP TS 38.413: NG-RAN; NG Application Protocol (NGAP). [https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=3223][ts3223-3gpp]
 5. OCUDU Project Documentation: OCUDU with srsUE [https://ocudu.gitlab.io/ocudu_docs/user_manual/tutorials/srsue/#multi-ue-emulation][ocudu-multi-ue]
-6. OCUDU Multi-UE Emulation GRC [https://gitlab.com/ocudu/ocudu_docs/-/blob/main/docs/user_manual/tutorials/srsue/assets/multi_ue_scenario.grc][ocudu-multi-ue-grc]
-7. OCUDU O1 Adapter [https://ocudu.gitlab.io/ocudu_docs/oran_apps/ocudu_o1_adapter/][ocudu-o1-adapter]
+6. OCUDU O1 Adapter [https://ocudu.gitlab.io/ocudu_docs/oran_apps/ocudu_o1_adapter/][ocudu-o1-adapter]
 
 <!-- References -->
 
@@ -123,5 +138,4 @@ The gNodeB includes support for visualizing performance metrics via a Grafana da
 [ts3219-3gpp]: https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=3219
 [ts3223-3gpp]: https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=3223
 [ocudu-multi-ue]: https://ocudu.gitlab.io/ocudu_docs/user_manual/tutorials/srsue/#multi-ue-emulation
-[ocudu-multi-ue-grc]: https://gitlab.com/ocudu/ocudu_docs/-/blob/main/docs/user_manual/tutorials/srsue/assets/multi_ue_scenario.grc
 [ocudu-o1-adapter]: https://ocudu.gitlab.io/ocudu_docs/oran_apps/ocudu_o1_adapter/

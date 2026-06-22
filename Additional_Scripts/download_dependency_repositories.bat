@@ -405,7 +405,7 @@ cd "OpenAirInterface_Testbed\User_Equipment" >nul 2>&1
 if not errorlevel 1 (
     git clone https://github.com/duranta-project/openairinterface5g.git
     cd "openairinterface5g"
-    git checkout 05a2fdf0951592ea68f82391328424bbf99e7eef
+    git checkout f3589d97c2e9a0dec527336c88f988df587c2925
     cd ..\..\..
 ) else (
     echo ERROR: Failed to cd to OpenAirInterface_Testbed\User_Equipment. Skipping clone.

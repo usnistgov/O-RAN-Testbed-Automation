@@ -1,0 +1,81 @@
+diff --git a/srsue/src/stack/mac_nr/proc_ra_nr.cc b/srsue/src/stack/mac_nr/proc_ra_nr.cc
+index dc9396cdc..061046bf3 100644
+--- a/srsue/src/stack/mac_nr/proc_ra_nr.cc
++++ b/srsue/src/stack/mac_nr/proc_ra_nr.cc
+@@ -23,6 +23,7 @@
+ #include "srsran/common/standard_streams.h"
+ #include "srsran/mac/mac_rar_pdu_nr.h"
+ #include "srsue/hdr/stack/mac_nr/mac_nr.h"
++#include <unistd.h>
+ 
+ namespace srsue {
+ 
+@@ -53,7 +54,8 @@ void proc_ra_nr::init(phy_interface_mac_nr* phy_, srsran::ext_task_sched_handle*
+ 
+   struct timeval tv;
+   gettimeofday(&tv, NULL);
+-  random_gen = srsran_random_init(tv.tv_usec);
++  uint32_t seed = static_cast<uint32_t>(tv.tv_sec) ^ static_cast<uint32_t>(tv.tv_usec) ^ static_cast<uint32_t>(getpid());
++  random_gen   = srsran_random_init(seed);
+ }
+ 
+ /* Sets a new configuration. The configuration is applied by initialization() function */
+@@ -65,12 +67,17 @@ void proc_ra_nr::set_config(const srsran::rach_cfg_nr_t& rach_cfg_)
+                    srsran::enum_to_text(state_str_nr, (uint32_t)ra_state_t::MAX_RA_STATES, IDLE));
+     return;
+   }
+-  rach_cfg   = rach_cfg_;
++  rach_cfg = rach_cfg_;
++  if (rach_cfg.nof_preambles == 0 || rach_cfg.nof_preambles > 64) {
++    logger.warning("Invalid NR RA preamble count %d. Using default value 64.", rach_cfg.nof_preambles);
++    rach_cfg.nof_preambles = 64;
++  }
+   configured = true;
+-  logger.info("Set RACH common config (Config Index %d, preambleTransMax %d, Response Window %d)",
++  logger.info("Set RACH common config (Config Index %d, preambleTransMax %d, Response Window %d, Preambles %d)",
+               rach_cfg.prach_ConfigurationIndex,
+               rach_cfg.preambleTransMax,
+-              rach_cfg.ra_responseWindow);
++              rach_cfg.ra_responseWindow,
++              rach_cfg.nof_preambles);
+ }
+ 
+ void proc_ra_nr::start_by_rrc()
+@@ -142,6 +149,12 @@ void proc_ra_nr::timer_expired(uint32_t timer_id)
+     ra_error();
+   } else if (rar_timeout_timer.id() == timer_id) {
+     logger.warning("RAR Timer expired. RA response not received within the response window");
++    srsran::console("RAR timeout: preamble_index=%d, nof_preambles=%d, ra-rnti=0x%x, ra_window_start=%d, ra_window_length=%d\n",
++                    preamble_index,
++                    rach_cfg.nof_preambles,
++                    rar_rnti,
++                    ra_window_start,
++                    ra_window_length);
+     ra_error();
+   } else if (contention_resolution_timer.id() == timer_id) {
+     logger.warning("Contention Resolution Timer expired. Stopping PDCCH Search and going to Response Error (TODO)");
+@@ -179,11 +192,7 @@ void proc_ra_nr::ra_preamble_transmission()
+   preamble_received_target_power = rach_cfg.PreambleReceivedTargetPower + delta_preamble +
+                                    (preamble_transmission_counter - 1) * rach_cfg.powerRampingStep +
+                                    power_offset_2step_ra;
+-  if (rach_cfg.nof_preambles) {
+-    preamble_index = srsran_random_uniform_int_dist(random_gen, 0, rach_cfg.nof_preambles);
+-  } else {
+-    preamble_index = 0;
+-  }
++  preamble_index = srsran_random_uniform_int_dist(random_gen, 0, rach_cfg.nof_preambles - 1);
+   prach_occasion = 0;
+   // instruct the physical layer to transmit the Random Access Preamble using the selected PRACH occasion, corresponding
+   // RA-RNTI (if available), PREAMBLE_INDEX, and PREAMBLE_RECEIVED_TARGET_POWER.
+@@ -363,9 +372,10 @@ void proc_ra_nr::prach_sent(uint32_t tti, uint32_t s_id, uint32_t t_id, uint32_t
+         t_id,
+         f_id,
+         ul_carrier_id);
+-    srsran::console("Random Access Transmission: prach_occasion=%d, preamble_index=%d, ra-rnti=0x%x, tti=%d\n",
++    srsran::console("Random Access Transmission: prach_occasion=%d, preamble_index=%d, nof_preambles=%d, ra-rnti=0x%x, tti=%d\n",
+                     prach_occasion,
+                     preamble_index,
++                    rach_cfg.nof_preambles,
+                     rar_rnti,
+                     tti);
+     uint32_t rar_window_st = TTI_ADD(tti, 3);

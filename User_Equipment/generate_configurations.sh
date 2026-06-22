@@ -193,13 +193,14 @@ NR_NOF_PRB="106"
 NR_MAX_NOF_PRB="106"
 NR_SCS="15"
 GNB_NR_BW_MHZ="20"
+UE_RF_SRATE_HZ="23.04e6"
 
 if [ -f "$GNB_CONFIG_PATH" ]; then
     GNB_NR_BAND=$(yq eval '.cell_cfg.band // ""' "$GNB_CONFIG_PATH")
     GNB_NR_DL_ARFCN=$(yq eval '.cell_cfg.dl_arfcn // ""' "$GNB_CONFIG_PATH")
-    GNB_NR_SSB_ARFCN=$(yq eval '.cell_cfg.dl_ssb_arfcn // ""' "$GNB_CONFIG_PATH")
     GNB_NR_BW_MHZ=$(yq eval '.cell_cfg.channel_bandwidth_MHz // ""' "$GNB_CONFIG_PATH")
     GNB_NR_SCS=$(yq eval '.cell_cfg.common_scs // ""' "$GNB_CONFIG_PATH")
+    GNB_RF_SRATE_MHZ=$(yq eval '.ru_sdr.srate // ""' "$GNB_CONFIG_PATH")
 
     if [[ "$GNB_NR_BAND" =~ ^[0-9]+$ ]]; then
         NR_BAND="$GNB_NR_BAND"
@@ -209,6 +210,9 @@ if [ -f "$GNB_CONFIG_PATH" ]; then
     fi
     if [[ "$GNB_NR_SCS" =~ ^[0-9]+$ ]]; then
         NR_SCS="$GNB_NR_SCS"
+    fi
+    if [[ "$GNB_RF_SRATE_MHZ" =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
+        UE_RF_SRATE_HZ="${GNB_RF_SRATE_MHZ}e6"
     fi
 
     # 3GPP 38.104, Table 5.3.2-1: Transmission bandwidth configuration NRB for FR1.
@@ -275,12 +279,10 @@ if [ -f "$GNB_CONFIG_PATH" ]; then
     fi
     NR_MAX_NOF_PRB="$NR_NOF_PRB"
 
-    if [[ "$GNB_NR_SSB_ARFCN" =~ ^[0-9]+$ ]]; then
-        NR_SSB_ARFCN="$GNB_NR_SSB_ARFCN"
-    elif [[ "$NR_BAND" = "3" && "$NR_DL_ARFCN" = "368500" && "$GNB_NR_BW_MHZ" = "20" && "$NR_SCS" = "15" ]]; then
+    if [[ "$NR_BAND" = "3" && "$NR_DL_ARFCN" = "368500" && "$NR_SCS" = "15" ]] && [[ "$GNB_NR_BW_MHZ" = "10" || "$GNB_NR_BW_MHZ" = "20" ]]; then
         NR_SSB_ARFCN="368410"
     else
-        echo "ERROR: Could not determine SSB ARFCN for UE config. Set cell_cfg.dl_ssb_arfcn in the gNB config or add a validated derivation for this band/BW/SCS."
+        echo "ERROR: Could not determine SSB ARFCN for UE config. Add a validated derivation for this band/BW/SCS."
         exit 1
     fi
 fi
@@ -315,7 +317,7 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
 
     UE_HOST_IP=$(python3 install_scripts/fetch_nth_ip.py "$BASE_SUBNET" $HOST_IP_OFFSET)
 
-    DEVICE_ARGS="tx_port=tcp://*:$UE_TX_PORT,rx_port=tcp://$UE_HOST_IP:$UE_RX_PORT,base_srate=23.04e6,id=ue$UE_NUMBER"
+    DEVICE_ARGS="tx_port=tcp://*:$UE_TX_PORT,rx_port=tcp://$UE_HOST_IP:$UE_RX_PORT,base_srate=$UE_RF_SRATE_HZ,id=ue$UE_NUMBER"
     if [ -n "$ZMQ_DEBUG_ARGS" ]; then
         DEVICE_ARGS="$DEVICE_ARGS,$ZMQ_DEBUG_ARGS"
     fi
@@ -324,7 +326,7 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
     update_conf "configs/ue${UE_NUMBER}.conf" "rf" "freq_offset" "0"
     update_conf "configs/ue${UE_NUMBER}.conf" "rf" "tx_gain" "35"
     update_conf "configs/ue${UE_NUMBER}.conf" "rf" "rx_gain" "60"
-    update_conf "configs/ue${UE_NUMBER}.conf" "rf" "srate" "23.04e6"
+    update_conf "configs/ue${UE_NUMBER}.conf" "rf" "srate" "$UE_RF_SRATE_HZ"
 
     # Update configuration values for RAT (EUTRA)
     update_conf "configs/ue${UE_NUMBER}.conf" "rat.eutra" "nof_carriers" "0" # Disabled EUTRA (LTE) since we are using NR (5G)

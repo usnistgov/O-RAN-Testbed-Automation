@@ -9,12 +9,12 @@ The automation tool can be used in virtual machines and physical machines with t
 ### Supported Testbed Open-Source Components
 
 <div align="center">
-  <!-- <picture>
+  <picture>
     <source media="(prefers-color-scheme: light)" srcset="./Images/Architecture_Light.svg">
     <source media="(prefers-color-scheme: dark)" srcset="./Images/Architecture_Dark.svg">
     <img alt="Diagram of Testbed Open-Source Components" width="70%">
-  </picture> -->
-  <img src="Images/Architecture_Light.svg" alt="Diagram of Testbed Open-Source Components" width="70%">
+  </picture>
+  <!-- <img src="Images/Architecture_Light.svg" alt="Diagram of Testbed Open-Source Components" width="70%"> -->
 </div>
 
 This tool supports the deployment of 5G O-RAN testbeds using open-source components in two main scenarios: OCUDU with O-RAN SC's Near-RT RIC, and Duranta (OpenAirInterface) with Mosaic5G's FlexRIC. Below is the list of the supported testbed open-source components.
@@ -54,12 +54,12 @@ UEs
 The components that have been verified to support or not support connectivity are included below.
 
 <div align="center">
-  <!-- <picture>
+  <picture>
     <source media="(prefers-color-scheme: light)" srcset="./Images/Support_Light.svg">
     <source media="(prefers-color-scheme: dark)" srcset="./Images/Support_Dark.svg">
     <img alt="Diagram of Supported Connections" width="97%">
-  </picture> -->
-  <img src="Images/Support_Light.svg" alt="Diagram of Supported Connections" width="97%">
+  </picture>
+  <!-- <img src="Images/Support_Light.svg" alt="Diagram of Supported Connections" width="97%"> -->
 </div>
 
 ### Minimum System Requirements
@@ -69,7 +69,7 @@ Before beginning the installation and setup of the testbed, verify that the syst
 - **Operating System**: Linux distributions based on Ubuntu 20.04 LTS, Ubuntu 22.04 LTS, Ubuntu 24.04 LTS, and Ubuntu 26.04 LTS are supported.
   - _Recommendation: Ubuntu 22.04._
 - **Hard Drive Storage**: Must be `≥ 57` GB.
-- **Base Memory/RAM**: Must be `≥ 8000` MB.
+- **Base Memory/RAM**: Must be `≥ 6000` MB.
 - **Number of Processors**: Must be `≥ 2` processors.
   - _Recommendation: `≥ 6` processors._
 - **Internet Connectivity**: A stable internet connection must be maintained during the installation otherwise the process may fail and require restarting.
@@ -269,12 +269,12 @@ USNISTGOV/O-RAN-Testbed-Automation is developed and maintained by the NIST Wirel
 
 <div align="center">
   <a href="https://www.nist.gov" target="_blank">
-    <!-- <picture>
+    <picture>
       <source media="(prefers-color-scheme: light)" srcset="./Images/125_NIST_Light.png">
       <source media="(prefers-color-scheme: dark)" srcset="./Images/125_NIST_Dark.png">
       <img alt="National Institute of Standards and Technology" width="85%">
-    </picture> -->
-    <img src="Images/125_NIST_Light.png" alt="National Institute of Standards and Technology" width="85%">
+    </picture>
+    <!-- <img src="Images/125_NIST_Light.png" alt="National Institute of Standards and Technology" width="85%"> -->
   </a>
 </div>
 

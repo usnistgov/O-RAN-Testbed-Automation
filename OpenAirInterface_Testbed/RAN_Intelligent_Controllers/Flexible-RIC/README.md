@@ -20,7 +20,7 @@ This installation of the Near-RT RIC supports six xApps.
 - **KPM Monitor xApp (xapp_kpm_moni, revised xApp)**:
   - Run with `./run_xapp_kpm_moni.sh`.
   - Sets `XAPP_DURATION=-1` to run indefinitely and include new metrics (see below).
-    - Pre-existing metrics from OpenAirInterface:
+    - List of metrics printed to console for each UE sample:
       ```console
       DRB.PdcpSduVolumeDL (kb) - Downlink volume of the UE since the last sample
       DRB.PdcpSduVolumeUL (kb) - Uplink volume of the UE since the last sample
@@ -30,38 +30,10 @@ This installation of the Near-RT RIC supports six xApps.
       RRU.PrbTotDl (%) - Percent of resource blocks received since the last sample
       RRU.PrbTotUl (%) - Percent of resource blocks sent since the last sample
       ```
-    - Pre-existing metric distributed across cells:
-      `CARR.PDSCHMCSDist.BinX.BinY.BinZ (PDSCH_RBs)` - Unlike the other listed metrics (which are per-UE), this one is per-cell (NRCellDU). It reports the distribution of MCS scheduled for PDSCH resource blocks, aligned with 3GPP TS 28.552 [[4]][ts28552-3gpp] clause 5.1.1.12.1 (MCS Distribution in PDSCH). Each bin is incremented by the number of scheduled PDSCH RBs for the corresponding MCS. When SU-MIMO is used, both rank indicators are considered. Different PDSCH MCS index tables are considered when configured differently (TS 38.214 [[5]][ts38214-3gpp] clause 5.1.3.1). RBs used for broadcast are excluded. Each BinX/BinY/BinZ measurement is a single integer value.
+      - `CARR.PDSCHMCSDist.BinX.BinY.BinZ (PDSCH_RBs)` - Unlike the other listed metrics (which are per-UE), this one is per-cell (NRCellDU). It reports the distribution of MCS scheduled for PDSCH resource blocks, aligned with 3GPP TS 28.552 [\[4\]][ts28552-3gpp] clause 5.1.1.12.1 (MCS Distribution in PDSCH). Each bin is incremented by the number of scheduled PDSCH RBs for the corresponding MCS. When SU-MIMO is used, both rank indicators are considered. Different PDSCH MCS index tables are considered when configured differently (TS 38.214 [\[5\]][ts38214-3gpp] clause 5.1.3.1). RBs used for broadcast are excluded. Each BinX/BinY/BinZ measurement is a single integer value.
         - BinX: Rank index (1-8)
         - BinY: PDSCH MCS table index (1-3)
         - BinZ: MCS index (0-31)
-    - New metrics for the automation tool:
-      ```console
-      Reporting Time Offset (ms) - Time offset from the expected reporting time in milliseconds (e.g., -1 indicates that the report arrived a millisecond early)
-      RSRP.Mean (dBm) - Averaged SSB/CSI-RS Reference Signal Received Power in the sample
-      RSRP.Minimum (dBm) - Minimum SSB/CSI-RS Reference Signal Received Power in the sample
-      RSRP.Quartile1 (dBm) - Quartile 1 SSB/CSI-RS Reference Signal Received Power in the sample
-      RSRP.Median (dBm) - Quartile 2/Median SSB/CSI-RS Reference Signal Received Power in the sample
-      RSRP.Quartile3 (dBm) - Quartile 3 SSB/CSI-RS Reference Signal Received Power in the sample
-      RSRP.Maximum (dBm) - Maximum SSB/CSI-RS Reference Signal Received Power in the sample
-      RSRP.Count (count) - Number of RSRP measurements in the sample, used to calculate RSRP
-      PHY.NPrbDl (count) - Number of PRBs in the sample, used to calculate RSSI
-      PHY.DerivedRssiDl (dBm) - Received Signal Strength Indicator derived from RSRP.Mean and PHY.NPrbDl based on https://www.techplayon.com/rssi
-      PHY.DerivedRsrqDl (dB) - Reference Signal Received Quality, derived from RSRP.Mean, PHY.DerivedRssiDl, and PHY.NPrbDl based on https://www.techplayon.com/rsrq-received-signal-received-quality
-      PUSCH.Snr (dB) - Signal to noise ratio for Physical Uplink Shared Channel
-      PUCCH.Snr (dB) - Signal to noise ratio for Physical Uplink Control Channel
-      DRB.HarqMcsUl (MCS index) - Uplink modulation and coding scheme to use
-      DRB.HarqMcsDl (MCS index) - Downlink modulation and coding scheme to use
-      DRB.HarqBlockErrorRateUl (%) - Percentage of uplink HARQ blocks containing corrupt SDUs
-      DRB.HarqBlockErrorRateDl (%) - Percentage of downlink HARQ blocks containing corrupt SDUs
-      DRB.MacSduRetransmissionRateUl (%) - Percentage of uplink SDUs retransmitted
-      DRB.MacSduRetransmissionRateDl (%) - Percentage of downlink SDUs retransmitted
-      DRB.MacSduErrorRateUl (%) - Percentage of corrupt uplink SDUs [Experimental]
-      DRB.MacSduErrorRateDl (%) - Percentage of corrupt downlink SDUs
-      DRB.DerivedCQIDl - Channel Quality Indicator (CQI) derived from DRB.HarqMcsDl based on 3GPP 38.214 § 5.2.2.1
-      PHY.CqiWb1TbDl - Channel Quality Indicator (CQI), wideband, 1 transport-block [Experimental]
-      PHY.CqiWb2TbDl - Channel Quality Indicator (CQI), wideband, 2 transport-blocks [Experimental]
-      ```
     - Note that this xApp uses REPORT Style 4 (O-RAN E2SM-KPM clause 7.4.5) with the condition being to match the UE's Slice/Service Type (SST) and Slice Differentiator (SD). The code has been patched to subscribe to 4-octet slice IDs (SST+SD) if SD ≠ 0xFFFFFF, instead of a 1-octet SST (clause 8.3.11).
 - **KPM Monitor to CSV xApp**:
   - Run with `./additional_scripts/run_xapp_kpm_moni_write_to_csv.sh`.
@@ -103,7 +75,7 @@ The Grafana dashboard is accessible at `http://localhost:3000` with default cred
 
 ### Customizing the Service Model Path
 
-This testbed configures the FlexRIC Service Model (SM) shared libraries (`.so` files) to install into `flexric/build/flexric_libraries/lib/flexric/` rather than the default `/usr/local/lib/flexric/`. This can be configured by modifying the `FLEXRIC_LIBRARY_DIR` variable across the scripts prior to installing the Duranta gNodeB and FlexRIC.
+This testbed configures the FlexRIC Service Model (SM) shared libraries (`.so` files) to install into `flexric/build/flexric_libraries/lib/flexric/` rather than the default `/usr/local/lib/flexric/`. This can be configured by modifying the `FLEXRIC_LIBRARY_DIR` variable across the scripts prior to installing the OpenAirInterface gNodeB and FlexRIC.
 
 ## References
 

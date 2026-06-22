@@ -37,7 +37,7 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-USE_FLEXRIC=false
+USE_FLEXRIC=true
 
 if [ "$USE_FLEXRIC" = "true" ]; then
     echo

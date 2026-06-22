@@ -19,9 +19,6 @@ typedef struct
 {
   double mean;
   double min;
-  double q1;     // Removal candidate
-  double median; // Removal candidate
-  double q3;     // Removal candidate
   double max;
   uint32_t count;
 } dist_metrics_t;

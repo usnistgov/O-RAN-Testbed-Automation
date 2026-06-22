@@ -68,9 +68,6 @@ bool compute_rsrp_metrics(const char *node_id, const uint32_t *current_dist, siz
     return false;
   out_metrics->mean = NAN;
   out_metrics->min = NAN;
-  out_metrics->q1 = NAN;     // Removal candidate
-  out_metrics->median = NAN; // Removal candidate
-  out_metrics->q3 = NAN;     // Removal candidate
   out_metrics->max = NAN;
   out_metrics->count = 0;
 
@@ -131,9 +128,6 @@ bool compute_rsrp_metrics(const char *node_id, const uint32_t *current_dist, siz
 
   out_metrics->mean = 10.0 * log10(sum / total_count);
   out_metrics->min = (double)min_val;
-  out_metrics->q1 = out_metrics->mean;     // Removal candidate
-  out_metrics->median = out_metrics->mean; // Removal candidate
-  out_metrics->q3 = out_metrics->mean;     // Removal candidate
   out_metrics->max = (double)max_val;
   out_metrics->count = total_count;
 
@@ -146,9 +140,6 @@ bool compute_sinr_metrics(const char *node_id, const uint32_t *current_dist, siz
     return false;
   out_metrics->mean = NAN;
   out_metrics->min = NAN;
-  out_metrics->q1 = NAN;     // Removal candidate
-  out_metrics->median = NAN; // Removal candidate
-  out_metrics->q3 = NAN;     // Removal candidate
   out_metrics->max = NAN;
   out_metrics->count = 0;
 
@@ -207,9 +198,6 @@ bool compute_sinr_metrics(const char *node_id, const uint32_t *current_dist, siz
 
   out_metrics->mean = 10.0 * log10(sum / total_count);
   out_metrics->min = min_val;
-  out_metrics->q1 = out_metrics->mean;     // Removal candidate
-  out_metrics->median = out_metrics->mean; // Removal candidate
-  out_metrics->q3 = out_metrics->mean;     // Removal candidate
   out_metrics->max = max_val;
   out_metrics->count = total_count;
 
@@ -236,7 +224,7 @@ factory_metrics_array_t process_metric_factory(const char *node_id, const char *
     dist_metrics_t metrics;
     if (compute_rsrp_metrics(node_id, current_dist, label_info_lst_len, &metrics))
     {
-      ret.count = 7; // 4 - Removal candidate
+      ret.count = 4;
       ret.metrics = calloc(ret.count, sizeof(factory_metric_t));
 
       snprintf(ret.metrics[0].name, sizeof(ret.metrics[0].name), "RSRP.Mean");
@@ -247,25 +235,13 @@ factory_metrics_array_t process_metric_factory(const char *node_id, const char *
       ret.metrics[1].value_type = 1;
       ret.metrics[1].real_val = metrics.min;
 
-      snprintf(ret.metrics[2].name, sizeof(ret.metrics[2].name), "RSRP.Quartile1"); // Removal candidate
+      snprintf(ret.metrics[2].name, sizeof(ret.metrics[2].name), "RSRP.Maximum");
       ret.metrics[2].value_type = 1;
-      ret.metrics[2].real_val = metrics.q1;
+      ret.metrics[2].real_val = metrics.max;
 
-      snprintf(ret.metrics[3].name, sizeof(ret.metrics[3].name), "RSRP.Median"); // Removal candidate
-      ret.metrics[3].value_type = 1;
-      ret.metrics[3].real_val = metrics.median;
-
-      snprintf(ret.metrics[4].name, sizeof(ret.metrics[4].name), "RSRP.Quartile3"); // Removal candidate
-      ret.metrics[4].value_type = 1;
-      ret.metrics[4].real_val = metrics.q3;
-
-      snprintf(ret.metrics[5].name, sizeof(ret.metrics[5].name), "RSRP.Maximum");
-      ret.metrics[5].value_type = 1;
-      ret.metrics[5].real_val = metrics.max;
-
-      snprintf(ret.metrics[6].name, sizeof(ret.metrics[6].name), "RSRP.Count");
-      ret.metrics[6].value_type = 0;
-      ret.metrics[6].int_val = metrics.count;
+      snprintf(ret.metrics[3].name, sizeof(ret.metrics[3].name), "RSRP.Count");
+      ret.metrics[3].value_type = 0;
+      ret.metrics[3].int_val = metrics.count;
     }
   }
 
@@ -284,7 +260,7 @@ factory_metrics_array_t process_metric_factory(const char *node_id, const char *
     dist_metrics_t metrics;
     if (compute_sinr_metrics(node_id, current_dist, label_info_lst_len, &metrics))
     {
-      ret.count = 7; // 4 - Removal candidate
+      ret.count = 4;
       ret.metrics = calloc(ret.count, sizeof(factory_metric_t));
 
       snprintf(ret.metrics[0].name, sizeof(ret.metrics[0].name), "SINR.Mean");
@@ -295,25 +271,13 @@ factory_metrics_array_t process_metric_factory(const char *node_id, const char *
       ret.metrics[1].value_type = 1;
       ret.metrics[1].real_val = metrics.min;
 
-      snprintf(ret.metrics[2].name, sizeof(ret.metrics[2].name), "SINR.Quartile1"); // Removal candidate
+      snprintf(ret.metrics[2].name, sizeof(ret.metrics[2].name), "SINR.Maximum");
       ret.metrics[2].value_type = 1;
-      ret.metrics[2].real_val = metrics.q1;
+      ret.metrics[2].real_val = metrics.max;
 
-      snprintf(ret.metrics[3].name, sizeof(ret.metrics[3].name), "SINR.Median"); // Removal candidate
-      ret.metrics[3].value_type = 1;
-      ret.metrics[3].real_val = metrics.median;
-
-      snprintf(ret.metrics[4].name, sizeof(ret.metrics[4].name), "SINR.Quartile3"); // Removal candidate
-      ret.metrics[4].value_type = 1;
-      ret.metrics[4].real_val = metrics.q3;
-
-      snprintf(ret.metrics[5].name, sizeof(ret.metrics[5].name), "SINR.Maximum");
-      ret.metrics[5].value_type = 1;
-      ret.metrics[5].real_val = metrics.max;
-
-      snprintf(ret.metrics[6].name, sizeof(ret.metrics[6].name), "SINR.Count");
-      ret.metrics[6].value_type = 0;
-      ret.metrics[6].int_val = metrics.count;
+      snprintf(ret.metrics[3].name, sizeof(ret.metrics[3].name), "SINR.Count");
+      ret.metrics[3].value_type = 0;
+      ret.metrics[3].int_val = metrics.count;
     }
   }
 

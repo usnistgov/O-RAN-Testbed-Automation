@@ -57,66 +57,7 @@ if [ -f "CMakeLists.txt" ]; then
 fi
 cd ..
 
-# Apply patches to Duranta to add support for additional metrics in the KPI report
-cd openairinterface5g
-git restore openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c
-if [ ! -f "openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c.previous" ]; then
-    cp openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c.previous
-    cp openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c.previous "$PARENT_DIR/install_patch_files/openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.previous.c"
-fi
-echo "Patching ran_func_kpm.c..."
-git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c.patch"
-cd ..
-
-cd openairinterface5g
-git restore openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c
-if [ ! -f "openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c.previous" ]; then
-    cp openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c.previous
-    cp openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c.previous "$PARENT_DIR/install_patch_files/openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.previous.c"
-fi
-echo "Patching ran_func_kpm_subs.c..."
-git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c.patch"
-cd ..
-
-cd openairinterface5g
-git restore openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h
-if [ ! -f "openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.previous" ]; then
-    cp openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.previous
-    cp openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.previous "$PARENT_DIR/install_patch_files/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.previous.h"
-fi
-echo "Patching nr_mac_gNB.h..."
-git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.patch"
-cd ..
-
-cd openairinterface5g
-git restore openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c
-if [ ! -f "openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c.previous" ]; then
-    cp openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c.previous
-    cp openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c.previous "$PARENT_DIR/install_patch_files/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.previous.c"
-fi
-echo "Patching gNB_scheduler_dlsch.c..."
-git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c.patch"
-cd ..
-
-cd openairinterface5g
-git restore openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c
-if [ ! -f "openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c.previous" ]; then
-    cp openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c.previous
-    cp openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c.previous "$PARENT_DIR/install_patch_files/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.previous.c"
-fi
-echo "Patching gNB_scheduler_uci.c..."
-git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c.patch"
-cd ..
-
-cd openairinterface5g
-git restore openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_rc.c
-if [ ! -f "openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_rc.c.previous" ]; then
-    cp openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_rc.c openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_rc.c.previous
-    cp openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_rc.c.previous "$PARENT_DIR/install_patch_files/openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_rc.previous.c"
-fi
-echo "Patching ran_func_rc.c for handover support..."
-git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_rc.c.patch"
-cd ..
+# Apply patches to Duranta
 
 # Support SST values greater than 4
 cd openairinterface5g
@@ -194,4 +135,4 @@ git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openair
 cd ..
 
 echo
-echo "Successfully patched OpenAirInterface."
+echo "Successfully patched Duranta OpenAirInterface."

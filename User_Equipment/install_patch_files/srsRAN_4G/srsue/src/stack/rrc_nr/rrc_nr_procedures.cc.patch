@@ -1,0 +1,31 @@
+diff --git a/srsue/src/stack/rrc_nr/rrc_nr_procedures.cc b/srsue/src/stack/rrc_nr/rrc_nr_procedures.cc
+index 619eac6de..a15efb7d1 100644
+--- a/srsue/src/stack/rrc_nr/rrc_nr_procedures.cc
++++ b/srsue/src/stack/rrc_nr/rrc_nr_procedures.cc
+@@ -22,6 +22,8 @@
+ #include "srsue/hdr/stack/rrc_nr/rrc_nr_procedures.h"
+ #include "srsran/common/standard_streams.h"
+ 
++#include <algorithm>
++
+ #define Error(fmt, ...) rrc_handle.logger.error("Proc \"%s\" - " fmt, name(), ##__VA_ARGS__)
+ #define Warning(fmt, ...) rrc_handle.logger.warning("Proc \"%s\" - " fmt, name(), ##__VA_ARGS__)
+ #define Info(fmt, ...) rrc_handle.logger.info("Proc \"%s\" - " fmt, name(), ##__VA_ARGS__)
+@@ -478,8 +480,15 @@ rrc_nr::cell_selection_proc::handle_cell_search_result(const rrc_interface_phy_n
+   make_phy_search_space0_cfg(&phy_cfg.pdcch.search_space[0]);
+   phy_cfg.pdcch.search_space_present[0] = true;
+ 
+-  // Set dummy offset to pass PRACH config check, real value is provided in SIB1
+-  phy_cfg.prach.freq_offset = 1;
++  // Set an interim offset for the temporary PRACH config check. The final value is provided in SIB1.
++  srsran_cell_t lte_cell = {};
++  if (srsran_carrier_to_cell(&phy_cfg.carrier, &lte_cell) < SRSRAN_SUCCESS) {
++    Error("Converting carrier to cell for PRACH");
++    return proc_outcome_t::error;
++  }
++  uint32_t lte_nr_prach_offset =
++      phy_cfg.carrier.nof_prb > lte_cell.nof_prb ? (phy_cfg.carrier.nof_prb - lte_cell.nof_prb) / 2 : 0;
++  phy_cfg.prach.freq_offset = std::max<uint32_t>(1, lte_nr_prach_offset);
+ 
+   // Update PHY configuration
+   rrc_handle.phy_cfg_state = PHY_CFG_STATE_SA_MIB_CFG;

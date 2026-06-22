@@ -33,6 +33,8 @@ set -e
 
 USE_ZMQ_BROKER=false
 SHOW_ZMQ_BROKER_UI=false
+ZMQ_BROKER_PROCESS_RE="[m]ulti_ue_scenario\.py"
+ZMQ_BROKER_READY_TIMEOUT=30
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
@@ -52,6 +54,65 @@ graceful_shutdown() {
 }
 trap graceful_shutdown SIGINT SIGTERM SIGQUIT
 
+port_is_listening() {
+    PORT=$1
+    if command -v ss >/dev/null 2>&1; then
+        ss -ltn | awk '{ print $4 }' | grep -Eq "[:.]$PORT$"
+        return
+    fi
+    if command -v netstat >/dev/null 2>&1; then
+        netstat -ltn | awk '{ print $4 }' | grep -Eq "[:.]$PORT$"
+        return
+    fi
+    return 0
+}
+
+wait_for_zmq_broker_ready() {
+    BROKER_FILE="zmq_broker/multi_ue_scenario.py"
+    REQUIRED_PORTS="2001"
+
+    if [ -f "$BROKER_FILE" ]; then
+        UE_PORTS=$(awk '/^# UE_CONFIG: / { print $4 }' "$BROKER_FILE")
+        for UE_PORT in $UE_PORTS; do
+            REQUIRED_PORTS="$REQUIRED_PORTS $UE_PORT"
+        done
+    fi
+
+    echo "Expected ZMQ Broker listening ports:$REQUIRED_PORTS"
+    echo -n "Waiting for ZMQ Broker sockets"
+    ATTEMPT=0
+    while true; do
+        ALL_READY=true
+        for PORT in $REQUIRED_PORTS; do
+            if ! port_is_listening "$PORT"; then
+                ALL_READY=false
+                break
+            fi
+        done
+        if [ "$ALL_READY" = true ]; then
+            break
+        fi
+        if ! pgrep -f "$ZMQ_BROKER_PROCESS_RE" >/dev/null; then
+            echo
+            echo "ZMQ Broker stopped before opening sockets. Recent broker log:"
+            tail -n 80 logs/zmq_broker.log
+            exit 1
+        fi
+        echo -n "."
+        sleep 1
+        ATTEMPT=$((ATTEMPT + 1))
+        if [ $ATTEMPT -ge $ZMQ_BROKER_READY_TIMEOUT ]; then
+            echo
+            echo "ZMQ Broker sockets did not become ready after $ZMQ_BROKER_READY_TIMEOUT seconds."
+            echo "Expected listening ports:$REQUIRED_PORTS"
+            echo "Recent broker log:"
+            tail -n 80 logs/zmq_broker.log
+            exit 1
+        fi
+    done
+    echo
+}
+
 if pgrep -x "gnb" >/dev/null; then
     echo "Already running gnb."
 else
@@ -61,8 +122,9 @@ else
     >logs/gnb_stdout.txt
 
     if [ "$USE_ZMQ_BROKER" = "true" ]; then
-        if pgrep -f "[p]ython3 zmq_broker/multi_ue_scenario\.py" >/dev/null; then
+        if pgrep -f "$ZMQ_BROKER_PROCESS_RE" >/dev/null; then
             echo "Already running ZMQ Broker."
+            wait_for_zmq_broker_ready
         else
             >logs/zmq_broker.log
             echo "Starting ZMQ Broker..."
@@ -72,6 +134,12 @@ else
                 QT_QPA_PLATFORM=offscreen nohup python3 zmq_broker/multi_ue_scenario.py >logs/zmq_broker.log 2>&1 &
             fi
             sleep 2
+            if ! pgrep -f "$ZMQ_BROKER_PROCESS_RE" >/dev/null; then
+                echo "ZMQ Broker failed to start. Recent broker log:"
+                tail -n 80 logs/zmq_broker.log
+                exit 1
+            fi
+            wait_for_zmq_broker_ready
         fi
     fi
 

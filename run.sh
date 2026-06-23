@@ -53,9 +53,9 @@ if [ "$USE_ZMQ_BROKER" = "true" ]; then
         echo "ZMQ Broker verifier was not found. Please run ./generate_configurations.sh first."
         exit 1
     fi
-	# Parse the ZeroMQ broker for the list of UEs
-	UE_NUMBERS=($(grep -oP 'UE_CONFIG:\s+\K\d+' Next_Generation_Node_B/zmq_broker/multi_ue_scenario.py))
-	VERIFY_ARGS="--gnb-config Next_Generation_Node_B/configs/gnb.yaml"
+    # Parse the ZeroMQ broker for the list of UEs
+    UE_NUMBERS=($(grep -oP 'UE_CONFIG:\s+\K\d+' Next_Generation_Node_B/zmq_broker/multi_ue_scenario.py))
+    VERIFY_ARGS="--gnb-config Next_Generation_Node_B/configs/gnb.yaml"
     VERIFY_ARGS="$VERIFY_ARGS --broker Next_Generation_Node_B/zmq_broker/multi_ue_scenario.py"
     VERIFY_ARGS="$VERIFY_ARGS --ue-config-dir User_Equipment/configs"
     for UE_NUMBER in "${UE_NUMBERS[@]}"; do
@@ -67,10 +67,24 @@ if [ "$USE_ZMQ_BROKER" = "true" ]; then
     fi
     echo "ZeroMQ Broker UE startup order: ${UE_NUMBERS[*]}"
 else
-	UE_NUMBERS=(1)
+    UE_NUMBERS=(1)
 fi
 
 sudo -v # Ensure sudo session is active
+
+if ! ip link show ogstun >/dev/null 2>&1 ||
+    [ "$(sysctl -n net.ipv4.ip_forward)" != "1" ] ||
+    [ "$(sysctl -n net.ipv6.conf.all.forwarding)" != "1" ]; then
+    echo "Configuring Open5GS UE data-plane network..."
+    sudo ./5G_Core_Network/install_scripts/network_config.sh
+    sudo sysctl -w net.ipv4.ip_forward=1
+    sudo sysctl -w net.ipv6.conf.all.forwarding=1
+fi
+
+if ! lsmod | grep -q '^sctp '; then
+    echo "Enabling SCTP kernel module..."
+    sudo ./5G_Core_Network/install_scripts/enable_sctp.sh
+fi
 
 # Upon exit, gracefully stop all components and fix console in case it breaks
 trap "trap - EXIT SIGINT SIGTERM; echo \"#################################  STOPPING... #################################\"; \"$SCRIPT_DIR/./stop.sh\"; stty sane || true; exit" EXIT SIGINT SIGTERM
@@ -118,7 +132,7 @@ echo "Running User Equipment..."
 cd User_Equipment
 if [ "$USE_ZMQ_BROKER" = "true" ] && [ ${#UE_NUMBERS[@]} -gt 1 ]; then
     for ((i = 1; i < ${#UE_NUMBERS[@]}; i++)); do
-		echo "Running UE ${UE_NUMBERS[$i]} in background..."
+        echo "Running UE ${UE_NUMBERS[$i]} in background..."
         ./run_background.sh "${UE_NUMBERS[$i]}"
     done
 fi

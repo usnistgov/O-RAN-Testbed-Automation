@@ -44,6 +44,7 @@ if [ "$USE_ZMQ_BROKER" = "true" ]; then
     ZMQ_BROKER_CHANNEL_BW_MHZ=10
     GNB_SRATE_MHZ=11.52
     GNB_BASE_SRATE_HZ=11.52e6
+    PDU_SESSION_TIMEOUT=30
 fi
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
@@ -153,6 +154,12 @@ done
 
 # Ensure the correct YAML editor is installed
 "$SCRIPT_DIR/install_scripts/./ensure_consistent_yq.sh"
+
+if [ ! -t 0 ] && [ -z "$("../5G_Core_Network/install_scripts/get_amf_address.sh")" ]; then
+    echo "ERROR: Open5GS AMF addresses are not configured and standard input is not interactive."
+    echo "Please run 5G_Core_Network/generate_configurations.sh before regenerating the gNodeB configuration."
+    exit 1
+fi
 
 echo "Restoring gNodeB configuration file..."
 rm -rf configs

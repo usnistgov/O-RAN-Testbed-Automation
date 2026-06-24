@@ -1,6 +1,5 @@
 # Automation Tool for Deploying 5G O-RAN Testbeds
 
-<<<<<<< HEAD
 The objective of this tutorial is to provide a hands-on, end-to-end guide for deploying and validating an O-RAN compliant 5G testbed using OCUDU, Open5GS, and a Near-RT RIC environment. The tutorial is designed to learn the fundamentals of O-RAN architecture, OCUDU,  E2 integration, and KPI monitoring through a practical deployment workflow.
 By completing this tutorial, users will be able to:
 - Understand the architecture and components of O-RAN networks.
@@ -71,9 +70,9 @@ Users should be able to:
 - Validate UE registration
 - Run traffic and KPI tests
 
-=======
+
 Based on the blueprints described in NIST TN 2311 [\[1\]][nist-tn-2311], this automation tool facilitates the deployment and configuration of 5G Open Radio Access Network (O-RAN) testbeds. Designed to operate in both bare metal and virtualized environments, it simplifies setting up the components required for a 5G O-RAN testbed, including the 5G Core; Next Generation Node B (gNodeB) composed of Radio Unit (RU), Distributed Unit (DU), and Centralized Unit (CU); User Equipment (UE); RAN Intelligent Controller (RIC); and a series of xApps that can be installed in the RIC. This reduces the complexity and time required to operationalize the testbeds described in the report above, and enables more efficient testing and validation to facilitate research and development in 5G/6G technologies.
->>>>>>> b178ddf (Adjust README.md)
+
 
 ## Setting Up a Testbed
 
@@ -86,7 +85,7 @@ The  tool can be used in virtual machines and physical machines with the list of
   <img src="Images/fig.jpg" alt="Diagram of Testbed Open-Source Components" width="70%">
 </div>
 
-<<<<<<< HEAD
+
 
 This tool supports the deployment of 5G O-RAN testbeds using open-source components, OCUDU with O-RAN SC's Near-RT RIC. Below is the list of the supported testbed open-source components.
 
@@ -107,19 +106,18 @@ RICs
 │   └── xApps
 │       └──  KPM Monitor xApp
 5G Core
-<<<<<<< HEAD
 └──  Open5GS: v2.7.7
 
 UEs
 └──  srsRAN_4G: release_25_10
-=======
+
 ├── Open5GS: v2.7.7
 ├── OPENAIR-CN-5G: v2.2.0
 └── free5GC: v4.2.1
 UEs
 ├── srsRAN_4G: release_25_10
 └── Duranta (OAI) 5G UE: 2026.w22
->>>>>>> b178ddf (Adjust README.md)
+
 ```
 
 
@@ -169,11 +167,11 @@ Alternatively, the repository may be cloned over SSH: `git@gitlab.nist.gov:wnd-o
 ---
 
 > [!IMPORTANT]
-<<<<<<< HEAD
+
 > The deployment scenario based on Open 5GS Cpre, srsRAN and O-RAN SC's Near-RT RIC can be installed from the base directory.
 =======
 > The deployment scenario based on Duranta with FlexRIC can be installed from the `OpenAirInterface_Testbed` directory, while the deployment scenario based on srsRAN and O-RAN SC's Near-RT RIC can be installed from the base directory.
->>>>>>> b178ddf (Adjust README.md)
+
 
 Begin the installation process, recommended to be run as the current user rather than as root:
 

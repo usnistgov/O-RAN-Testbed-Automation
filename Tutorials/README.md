@@ -101,10 +101,10 @@ RICs
 │       └──  KPM Monitor xApp
 5G Core
 └──  Open5GS: v2.7.7
-
+│
 UEs
 └──  srsRAN_4G: release_25_10
-
+│
 ├── Open5GS: v2.7.7
 ├── OPENAIR-CN-5G: v2.2.0
 └── free5GC: v4.2.1

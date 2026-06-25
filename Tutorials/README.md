@@ -92,7 +92,7 @@ This tool supports the deployment of 5G O-RAN testbeds using open-source compone
 ```text
 CU/DU
 └──  OCUDU: 26.04
-=======
+
 This tool supports the deployment of 5G O-RAN testbeds using open-source components in two main scenarios: OCUDU with O-RAN SC's Near-RT RIC, and Duranta (OpenAirInterface) with Mosaic5G's FlexRIC. Below is the list of the supported testbed open-source components.
 
 ```text
@@ -100,7 +100,6 @@ CU/DU
 ├── OCUDU: 26.04
 ├── Duranta (OAI) gNB: 2026.w22
 └── O-RAN SC E2 Simulator: M-Release
->>>>>>> b178ddf (Adjust README.md)
 RICs
 ├── O-RAN SC Near-RT RIC: M-Release
 │   └── xApps

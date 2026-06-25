@@ -69,28 +69,31 @@ By default, the Hello World Go xApp (hw-go) is installed automatically. Addition
   - Install with `./additional_scripts/install_xapp_kpi_monitor.sh`.
   - Patched to connect to the InfluxDB pod and write metrics to its database.
     - Upon initialization, the xApp will only connect to pre-existing E2 nodes, therefore, you can restart the xApp by running the install script again which will establish connections to any new E2 nodes.
-    - Metrics will be stored in the InfluxDB pod under `bucket=kpimon, org=influxdata`. Access this data by opening the InfluxDB Client with `./additional_scripts/open_influxdb_client_shell.sh`.
+    - Metrics will be stored in the InfluxDB pod under `bucket=kpimon, org=influxdata` as `UeMetrics` and `cellMetrics` measurements. Access this data by opening the InfluxDB Client with `./additional_scripts/open_influxdb_client_shell.sh`.
   - Information about the xApp's debugging and usage can be found at [\[4\]][abdul-kpimon-go].
   - More information can be found in the documentation [\[5\]][kpimon-go-docs] and code [\[6\]][kpimon-go-code].
 - **5G Cell Anomaly Detection xApp (ad-cell)**:
   - Install with `./additional_scripts/install_xapp_5g_cell_anomaly_detection.sh`.
   - As a prerequisite, the database must contain a sufficient amount of measurements.
+  - The installer patches this xApp to use the RIC InfluxDB `kpimon` bucket and read from `cellMetrics` when the `g-nodeb` measurement is unavailable.
+    - Because `cellMetrics` may not fully match the data expected by the original `g-nodeb` model, the adapter uses default values for unavailable inputs. For more reliable results, provide data that matches the fields expected by the xApp.
   - More information can be found in the documentation [\[7\]][ad-cell-docs] and code [\[8\]][ad-cell-code].
 - **Anomaly Detection xApp (ad)**:
   - Install with `./additional_scripts/install_xapp_anomaly_detection.sh`.
   - Patched to support InfluxDB version 2._X_ instead of InfluxDB 1._X_.
-  - As a prerequisite, the database must contain a sufficient amount of measurements.
+  - The installer loads sample `UEReports` data into the `kpimon` bucket for the Traffic Steering sample flow. Direct use of live KPI data requires an adapter to the `UEReports` schema.
   - More information can be found in the documentation [\[9\]][ad-docs] and code [\[10\]][ad-code].
 - **Quality of Experience Predictor xApp (qp)**:
   - Install with `./additional_scripts/install_xapp_qoe_predictor.sh`.
   - Patched to support InfluxDB version 2._X_ instead of InfluxDB 1._X_.
-  - As a prerequisite, the database must contain a sufficient amount of measurements.
+  - The installer loads sample `CellReports` data into the `kpimon` bucket. Together with `ad`'s `UEReports` data, this provides the sample schema expected by `qp`.
   - More information can be found in the documentation [\[11\]][qp-docs] and code [\[12\]][qp-code].
 - **RIC Control xApp (rc)**:
   - Install with `./additional_scripts/install_xapp_ric_control.sh`.
   - More information can be found in the documentation [\[13\]][rc-docs] and code [\[14\]][rc-code].
 - **Traffic Steering xApp (trafficxapp)**:
   - Install with `./additional_scripts/install_xapp_traffic_steering.sh`.
+  - This xApp does not read InfluxDB directly. In the Traffic Steering sample flow, it receives anomaly updates from `ad` and prediction responses from `qp`.
   - More information can be found in the documentation [\[15\]][trafficxapp-docs] and code [\[16\]][trafficxapp-code].
 - **Hello World Python xApp (hw-python)**:
   - Install with `./additional_scripts/install_xapp_hw-python.sh`.

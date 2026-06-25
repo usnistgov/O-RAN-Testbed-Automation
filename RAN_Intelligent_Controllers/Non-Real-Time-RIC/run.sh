@@ -34,6 +34,14 @@ set -e
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
+if ! command -v kubectl >/dev/null 2>&1; then
+    echo "kubectl is not installed. Please ensure that the Near-RT RIC is installed before running this script."
+    exit 1
+fi
+
+# Kubelet does not support swap
+sudo ./install_scripts/disable_swap.sh
+
 sudo systemctl restart kubelet
 
 NAMESPACES=("istio-system" "strimzi-system" "mariadb-operator" "onap" "nonrtric" "smo" "openebs")

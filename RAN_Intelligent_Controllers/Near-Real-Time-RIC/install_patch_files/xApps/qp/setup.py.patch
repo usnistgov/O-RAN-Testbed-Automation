@@ -1,0 +1,28 @@
+diff --git a/setup.py b/setup.py
+index 9eeb99a..1b478a3 100644
+--- a/setup.py
++++ b/setup.py
+@@ -21,8 +21,21 @@ setup(
+     packages=find_packages(exclude=["tests.*", "tests"]),
+     description="Quality-of-Service Predictor Xapp for Traffic Steering",
+     url="https://gerrit.o-ran-sc.org/r/admin/repos/ric-app/qp",
+-    install_requires=["ricxappframe==3.2.2", "joblib>=0.3.2", "statsmodels>=0.11.1", "mdclogpy<=1.1.1", "influxdb", "pandas==1.5.3", "scikit-learn", "schedule", "joblib"],
+-    entry_points={"console_scripts": ["run-qp.py=src.main:start"]},  # adds a magical entrypoint for Docker
++    install_requires=[
++        "ricxappframe==3.2.2",
++        "joblib>=0.3.2",
++        "statsmodels>=0.11.1",
++        "mdclogpy<=1.1.1",
++        "influxdb_client",
++        "pandas>=1.1.3",
++        "numpy",
++        "scikit-learn",
++        "schedule",
++        "joblib",
++    ],
++    entry_points={
++        "console_scripts": ["run-qp.py=src.main:start"]
++    },  # adds a magical entrypoint for Docker
+     license="Apache 2.0",
+     data_files=[("", ["LICENSE.txt"])],
+ )

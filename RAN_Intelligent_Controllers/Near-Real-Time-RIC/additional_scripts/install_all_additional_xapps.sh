@@ -41,6 +41,6 @@ cd "$SCRIPT_DIR"
 ./install_xapp_kpi_monitor.sh
 ./install_xapp_5g_cell_anomaly_detection.sh
 ./install_xapp_anomaly_detection.sh
+./install_xapp_traffic_steering.sh
 ./install_xapp_qoe_predictor.sh
 ./install_xapp_ric_control.sh
-./install_xapp_traffic_steering.sh

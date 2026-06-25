@@ -1,0 +1,1 @@
+../../Near-Real-Time-RIC/install_scripts/disable_swap.sh

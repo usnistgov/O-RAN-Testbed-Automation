@@ -40,7 +40,7 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-USE_FLEXRIC=true
+USE_FLEXRIC=false
 USE_ZMQ_BROKER=false
 UE_CONFIG_ARGS=""
 for ARG in "$@"; do

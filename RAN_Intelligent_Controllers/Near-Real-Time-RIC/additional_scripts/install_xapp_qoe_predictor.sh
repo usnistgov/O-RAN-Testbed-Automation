@@ -78,30 +78,45 @@ if [ ! -f "$INFLUXDB_TOKEN_PATH" ]; then
 fi
 INFLUXDB_TOKEN=$(jq -r '.token' "$INFLUXDB_TOKEN_PATH")
 
-if [ ! -f "insert.py" ]; then
-    echo "Patching insert.py..."
-    cp insert.py insert.previous.py
-fi
-
-if [ ! -f "setup.py" ]; then
-    echo "Patching setup.py..."
-    cp setup.py setup.previous.py
-fi
-
-if [ ! -f "src/database.py" ]; then
-    echo "Patching src/database.py..."
-    cp src/database.py src/database.previous.py
-fi
-
-if [ ! -f "src/qp_config.ini" ]; then
+git restore src/qp_config.ini
+if [ -f "src/qp_config.ini" ] && [ ! -f "src/qp_config.previous.ini" ]; then
     echo "Patching src/qp_config.ini..."
     cp src/qp_config.ini src/qp_config.previous.ini
+    cp src/qp_config.previous.ini "$PARENT_DIR/install_patch_files/xApps/qp/src/qp_config.previous.ini"
 fi
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/xApps/qp/src/qp_config.ini.patch"
 
-cp "$PARENT_DIR/install_patch_files/xApps/qp/insert.py" insert.py
-cp "$PARENT_DIR/install_patch_files/xApps/qp/setup.py" setup.py
-cp "$PARENT_DIR/install_patch_files/xApps/qp/src/database.py" src/database.py
-cp "$PARENT_DIR/install_patch_files/xApps/qp/src/qp_config.ini" src/qp_config.ini
+git restore insert.py
+if [ -f "insert.py" ] && [ ! -f "insert.previous.py" ]; then
+    echo "Patching insert.py..."
+    cp insert.py insert.previous.py
+    cp insert.previous.py "$PARENT_DIR/install_patch_files/xApps/qp/insert.previous.py"
+fi
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/xApps/qp/insert.py.patch"
+
+git restore setup.py
+if [ -f "setup.py" ] && [ ! -f "setup.previous.py" ]; then
+    echo "Patching setup.py..."
+    cp setup.py setup.previous.py
+    cp setup.previous.py "$PARENT_DIR/install_patch_files/xApps/qp/setup.previous.py"
+fi
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/xApps/qp/setup.py.patch"
+
+git restore src/database.py
+if [ -f "src/database.py" ] && [ ! -f "src/database.previous.py" ]; then
+    echo "Patching src/database.py..."
+    cp src/database.py src/database.previous.py
+    cp src/database.previous.py "$PARENT_DIR/install_patch_files/xApps/qp/src/database.previous.py"
+fi
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/xApps/qp/src/database.py.patch"
+
+if ! grep -q "COPY insert.py /src/insert.py" Dockerfile; then
+    echo "Patching Dockerfile to include the sample data loader..."
+    if [ -f "Dockerfile" ] && [ ! -f "Dockerfile.previous" ]; then
+        cp Dockerfile Dockerfile.previous
+    fi
+    sed -i '/COPY src\/ \/src/a COPY insert.py /src/insert.py' Dockerfile
+fi
 
 # Set the token in src/qp_config.ini
 if grep -q "token *= *.*" src/qp_config.ini; then
@@ -166,7 +181,8 @@ if [ -z "$FIXED_DOCKER_PERMS" ]; then
     fi
 fi
 
-if [ ! -f qp.tar ]; then
+QP_NEWER_FILE=$([ -f qp.tar ] && find Dockerfile setup.py insert.py src -type f -newer qp.tar -print -quit || true)
+if [ ! -f qp.tar ] || [ -n "$QP_NEWER_FILE" ]; then
     docker build --network host -t 127.0.0.1:80/qp:latest .
     docker save -o qp.tar 127.0.0.1:80/qp:latest
     sudo chmod 755 qp.tar
@@ -213,6 +229,11 @@ else
     echo "Application failed to deploy."
     exit 1
 fi
+
+echo "Starting QP sample cell-data loader inside the xApp pod..."
+kubectl rollout status deployment/ricxapp-qp -n ricxapp --timeout=120s
+POD_NAME=$(kubectl get pods -n ricxapp -l app=ricxapp-qp -o jsonpath='{.items[0].metadata.name}')
+kubectl exec -n ricxapp "$POD_NAME" -- /bin/sh -c "pgrep -f '[p]ython3 /src/insert.py' >/dev/null || setsid -f /bin/sh -c 'cd / && exec python3 /src/insert.py >/tmp/qp_insert.log 2>&1 </dev/null'"
 
 cd "$PARENT_DIR"
 

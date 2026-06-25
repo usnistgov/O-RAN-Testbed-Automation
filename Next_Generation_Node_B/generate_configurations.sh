@@ -32,7 +32,7 @@
 set -e
 
 EXPOSE_GNB_TO_HOSTNAME=false
-USE_FLEXRIC=true
+USE_FLEXRIC=false
 USE_ZMQ_BROKER=false
 ZMQ_BROKER_CHANNEL_BW_MHZ=20
 GNB_SRATE_MHZ=23.04
@@ -589,12 +589,13 @@ if [ "$USE_ZMQ_BROKER" = "true" ]; then
         sudo env $APTVARS apt-get install -y gnuradio python3-pyqt5
     fi
 
-    # GNU Radio 3.8 issue with vmcircbuf_default_factory.
-    mkdir -p ~/.gnuradio/prefs
-    if [ ! -f ~/.gnuradio/prefs/vmcircbuf_default_factory ]; then
-        echo "gr::vmcircbuf_mmap_shm_open_factory" >~/.gnuradio/prefs/vmcircbuf_default_factory
-        #echo "gr::vmcircbuf_sysv_shm_factory" >~/.gnuradio/prefs/vmcircbuf_default_factory
-    fi
+    # # GNU Radio 3.8 issue with vmcircbuf_default_factory.
+    # mkdir -p ~/.gnuradio/prefs
+    # if [ ! -f ~/.gnuradio/prefs/vmcircbuf_default_factory ]; then
+    #     echo "gr::vmcircbuf_mmap_shm_open_factory" >~/.gnuradio/prefs/vmcircbuf_default_factory
+    #     #echo "gr::vmcircbuf_sysv_shm_factory" >~/.gnuradio/prefs/vmcircbuf_default_factory
+    # fi
+    rm -f ~/.gnuradio/prefs/vmcircbuf_default_factory
 
     echo "Successfully generated ZMQ Broker Python script for ${#UE_NUMBERS[@]} UEs."
 else

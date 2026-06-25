@@ -1,0 +1,18 @@
+diff --git a/src/qp_config.ini b/src/qp_config.ini
+index 31bbc41..4b5dcc7 100644
+--- a/src/qp_config.ini
++++ b/src/qp_config.ini
+@@ -1,8 +1,9 @@
+ [influxdb]
+-host = ricplt-influxdb.ricplt
+-port = 8086
+-user = admin
+-password = 
++host = r4-influxdb-influxdb2.ricplt
++port = 80
++token =
++org = influxdata
++bucket = kpimon
+ path =
+ database = RIC-Test
+ uemeas = UEReports

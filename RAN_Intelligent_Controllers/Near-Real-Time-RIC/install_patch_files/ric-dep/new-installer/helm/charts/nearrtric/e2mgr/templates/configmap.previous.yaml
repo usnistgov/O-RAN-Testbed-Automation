@@ -1,0 +1,160 @@
+################################################################################
+#   Copyright (c) 2019 AT&T Intellectual Property.                             #
+#   Copyright (c) 2019 Nokia.                                                  #
+#                                                                              #
+#   Licensed under the Apache License, Version 2.0 (the "License");            #
+#   you may not use this file except in compliance with the License.           #
+#   You may obtain a copy of the License at                                    #
+#                                                                              #
+#       http://www.apache.org/licenses/LICENSE-2.0                             #
+#                                                                              #
+#   Unless required by applicable law or agreed to in writing, software        #
+#   distributed under the License is distributed on an "AS IS" BASIS,          #
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.   #
+#   See the License for the specific language governing permissions and        #
+#   limitations under the License.                                             #
+################################################################################
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "common.configmapname.e2mgr" . }}-router-configmap
+  namespace: {{ include "common.namespace.platform" . }}
+data:
+  rmr_verbose: |
+    0
+  router.txt: |
+    newrt|start
+    rte|1080|{{ include "common.servicename.e2mgr.rmr" .      }}.{{ include "common.namespace.platform" . }}:{{ include "common.serviceport.e2mgr.rmr.data" . }}
+    rte|1090|{{ include "common.servicename.e2term.rmr" .     }}.{{ include "common.namespace.platform" . }}:{{ include "common.serviceport.e2term.rmr.data" . }}
+    rte|1100|{{ include "common.servicename.e2term.rmr" .     }}.{{ include "common.namespace.platform" . }}:{{ include "common.serviceport.e2term.rmr.data" . }}
+    rte|1101|{{ include "common.servicename.e2term.rmr" .     }}.{{ include "common.namespace.platform" . }}:{{ include "common.serviceport.e2term.rmr.data" . }}
+    rte|10020|{{ include "common.servicename.e2mgr.rmr" .      }}.{{ include "common.namespace.platform" . }}:{{ include "common.serviceport.e2mgr.rmr.data" . }}
+    rte|10060|{{ include "common.servicename.e2term.rmr" .     }}.{{ include "common.namespace.platform" . }}:{{ include "common.serviceport.e2term.rmr.data" . }}
+    rte|10061|{{ include "common.servicename.e2mgr.rmr" .      }}.{{ include "common.namespace.platform" . }}:{{ include "common.serviceport.e2mgr.rmr.data" . }}
+    rte|10062|{{ include "common.servicename.e2mgr.rmr" .      }}.{{ include "common.namespace.platform" . }}:{{ include "common.serviceport.e2mgr.rmr.data" . }}
+    rte|10070|{{ include "common.servicename.e2term.rmr" .     }}.{{ include "common.namespace.platform" . }}:{{ include "common.serviceport.e2term.rmr.data" . }}
+    rte|10071|{{ include "common.servicename.e2term.rmr" .     }}.{{ include "common.namespace.platform" . }}:{{ include "common.serviceport.e2term.rmr.data" . }}
+    rte|10080|{{ include "common.servicename.e2mgr.rmr" .      }}.{{ include "common.namespace.platform" . }}:{{ include "common.serviceport.e2mgr.rmr.data" . }}
+    rte|10360|{{ include "common.servicename.e2term.rmr" .     }}.{{ include "common.namespace.platform" . }}:{{ include "common.serviceport.e2term.rmr.data" . }}
+    rte|10361|{{ include "common.servicename.e2mgr.rmr" .      }}.{{ include "common.namespace.platform" . }}:{{ include "common.serviceport.e2mgr.rmr.data" . }}
+    rte|10362|{{ include "common.servicename.e2mgr.rmr" .      }}.{{ include "common.namespace.platform" . }}:{{ include "common.serviceport.e2mgr.rmr.data" . }}
+    rte|10370|{{ include "common.servicename.e2mgr.rmr" .      }}.{{ include "common.namespace.platform" . }}:{{ include "common.serviceport.e2mgr.rmr.data" . }}
+    rte|10371|{{ include "common.servicename.e2term.rmr" .     }}.{{ include "common.namespace.platform" . }}:{{ include "common.serviceport.e2term.rmr.data" . }}
+    rte|12010|{{ include "common.servicename.e2term.rmr" .     }}.{{ include "common.namespace.platform" . }}:{{ include "common.serviceport.e2term.rmr.data" . }}
+    rte|12020|{{ include "common.servicename.e2term.rmr" .     }}.{{ include "common.namespace.platform" . }}:{{ include "common.serviceport.e2term.rmr.data" . }}
+    rte|20001|{{ include "common.servicename.a1mediator.rmr" . }}.{{ include "common.namespace.platform" . }}:{{ include "common.serviceport.a1mediator.rmr.data" . }}
+    newrt|end
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "common.configmapname.e2mgr" . }}-configuration-configmap
+  namespace: {{ include "common.namespace.platform" . }}
+data:
+  configuration.yaml: |
+    logging:
+      {{- if hasKey .Values.e2mgr "logLevel" }}
+      logLevel: {{ .Values.e2mgr.logLevel }}
+      {{- else }}
+      logLevel:  "info"
+      {{- end }}
+    http:
+      {{- if hasKey .Values.e2mgr "httpPort" }}
+      port: {{ .Values.e2mgr.httpPort }}
+      {{- else }}
+      port: 3800
+      {{- end }}
+    rmr:
+      {{- if hasKey .Values.e2mgr "rmrPort" }}
+      port: {{ .Values.e2mgr.rmrPort }}
+      {{- else }}
+      port: 3801
+      {{- end }}
+      {{- if hasKey .Values.e2mgr "maxMsgSize" }}
+      maxMsgSize: {{ .Values.e2mgr.maxMsgSize }}
+      {{- else }}
+      maxMsgSize: 65536
+      {{- end }}
+
+    routingManager:
+      {{- if hasKey .Values.e2mgr "baseUrl" }}
+      baseUrl: {{ .Values.e2mgr.baseUrl }}
+      {{- else }}
+      baseUrl: "http://service-ricplt-rtmgr-http:3800/ric/v1/handles/"
+      {{- end }}
+
+    {{- if hasKey .Values.e2mgr "notificationResponseBuffer" }}
+    notificationResponseBuffer: {{ .Values.e2mgr.notificationResponseBuffer }}
+    {{- else }}
+    notificationResponseBuffer: 100
+    {{- end }}
+
+    {{- if hasKey .Values.e2mgr "bigRedButtonTimeoutSec" }}
+    bigRedButtonTimeoutSec: {{ .Values.e2mgr.bigRedButtonTimeoutSec }}
+    {{- else }}
+    bigRedButtonTimeoutSec: 5
+    {{- end }}
+
+    {{- if hasKey .Values.e2mgr "maxConnectionAttempts" }}
+    maxConnectionAttempts: {{ .Values.e2mgr.maxConnectionAttempts }}
+    {{- else }}
+    maxConnectionAttempts: 3
+    {{- end }}
+
+    {{- if hasKey .Values.e2mgr "maxRnibConnectionAttempts" }}
+    maxRnibConnectionAttempts: {{ .Values.e2mgr.maxRnibConnectionAttempts }}
+    {{- else }}
+    maxRnibConnectionAttempts: 3
+    {{- end }}
+
+    {{- if hasKey .Values.e2mgr "rnibRetryIntervalMs" }}
+    rnibRetryIntervalMs: {{ .Values.e2mgr.rnibRetryIntervalMs }}
+    {{- else }}
+    rnibRetryIntervalMs: 10
+    {{- end }}
+
+    {{- if hasKey .Values.e2mgr "keepAliveResponseTimeoutMs" }}
+    keepAliveResponseTimeoutMs: {{ .Values.e2mgr.keepAliveResponseTimeoutMs }}
+    {{- else }}
+    keepAliveResponseTimeoutMs: 360000
+    {{- end }}
+
+    {{- if hasKey .Values.e2mgr "keepAliveDelayMs" }}
+    keepAliveDelayMs: {{ .Values.e2mgr.keepAliveDelayMs }}
+    {{- else }}
+    keepAliveDelayMs: 120000
+    {{- end }}
+
+    globalRicId:
+      {{- if hasKey .Values.e2mgr "ricId" }}
+      ricId: {{ .Values.e2mgr.ricId }}
+      {{- else }}
+      ricId: "AACCE"
+      {{- end }}
+      {{- if hasKey .Values.e2mgr "mcc" }}
+      mcc: {{ .Values.e2mgr.mcc }}
+      {{- else }}
+      mcc: "310"
+      {{- end }}
+      {{- if hasKey .Values.e2mgr "mnc" }}
+      mnc: {{ .Values.e2mgr.mnc }}
+      {{- else }}
+      mnc: "411"
+      {{- end }}
+
+    rnibWriter:
+      {{- if hasKey .Values.e2mgr "stateChangeMessageChannel" }}
+      stateChangeMessageChannel: {{ .Values.e2mgr.stateChangeMessageChannel }}
+      {{- else }}
+      stateChangeMessageChannel: "RAN_CONNECTION_STATUS_CHANGE"
+      {{- end }}
+      {{- if hasKey .Values.e2mgr "ranManipulationMessageChannel" }}
+      ranManipulationMessageChannel: {{ .Values.e2mgr.ranManipulationMessageChannel }}
+      {{- else }}
+      ranManipulationMessageChannel: "RAN_MANIPULATION"
+      {{- end }}
+
+---

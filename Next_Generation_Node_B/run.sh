@@ -47,7 +47,7 @@ cd "$SCRIPT_DIR"
 # Function to handle graceful shutdown
 graceful_shutdown() {
     trap - SIGINT SIGTERM SIGQUIT
-    echo "Shutting down gNodeB gracefully..."
+    echo "Shutting down OCUDU gNodeB gracefully..."
     ./stop.sh
     exit
 }
@@ -107,9 +107,9 @@ wait_for_zmq_broker_ready() {
 }
 
 if pgrep -x "gnb" >/dev/null; then
-    echo "Already running gnb."
+    echo "Already running OCUDU gNodeB."
 else
-    echo "Starting gnb..."
+    echo "Starting OCUDU gNodeB..."
     mkdir -p logs
     >logs/gnb.log
     >logs/gnb_stdout.txt

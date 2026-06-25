@@ -78,12 +78,13 @@ if [ ! -f "$INFLUXDB_TOKEN_PATH" ]; then
 fi
 INFLUXDB_TOKEN=$(jq -r '.token' "$INFLUXDB_TOKEN_PATH")
 
-if [ ! -f "e2sm/wrapper.c.previous" ]; then
-    echo "Backing up e2sm/wrapper.c to e2sm/wrapper.c.previous..."
-    cp e2sm/wrapper.c e2sm/wrapper.c.previous
+git restore e2sm/wrapper.c
+if [ ! -f "e2sm/wrapper.previous.c" ]; then
+    echo "Backing up e2sm/wrapper.c to e2sm/wrapper.previous.c..."
+    cp e2sm/wrapper.c e2sm/wrapper.previous.c
+    cp e2sm/wrapper.previous.c "$PARENT_DIR/install_patch_files/xApps/kpimon-go/e2sm/wrapper.previous.c"
 fi
-echo "Copying the e2sm/wrapper.c file from the install_patch_files directory..."
-cp ../../install_patch_files/xApps/kpimon-go/e2sm/wrapper.c e2sm/wrapper.c
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/xApps/kpimon-go/e2sm/wrapper.c.patch"
 
 if [ ! -f "control/control.go.previous" ]; then
     echo "Backing up control/control.go to control/control.go.previous..."
@@ -206,7 +207,8 @@ if [ -z "$FIXED_DOCKER_PERMS" ]; then
     fi
 fi
 
-if [ ! -f kpimon-go.tar ]; then
+KPIMON_GO_NEWER_FILE=$([ -f kpimon-go.tar ] && find Dockerfile control e2sm kpimon.go -type f -newer kpimon-go.tar -print -quit || true)
+if [ ! -f kpimon-go.tar ] || [ -n "$KPIMON_GO_NEWER_FILE" ]; then
     docker build --network host -t 127.0.0.1:80/kpimon-go:latest .
     docker save -o kpimon-go.tar 127.0.0.1:80/kpimon-go:latest
     sudo chmod 755 kpimon-go.tar

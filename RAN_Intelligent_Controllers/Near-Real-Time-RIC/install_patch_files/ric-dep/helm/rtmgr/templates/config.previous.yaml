@@ -1,0 +1,197 @@
+#
+#==================================================================================
+#   Copyright (c) 2019 AT&T Intellectual Property.
+#   Copyright (c) 2019 Nokia
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#==================================================================================
+#
+#
+#   Abstract:           Configuration values for the routing manager
+#   Date:               29 May 2019
+#
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "common.configmapname.rtmgr" . }}-rtmgrcfg
+data:
+  # FQDN and port info of the platform components for routing manager to form
+  # and distribute corresponding routes to them
+  rtmgrcfg: |
+       "PlatformComponents":
+         -
+           "name": "SUBMAN"
+           "fqdn": "{{ printf "%s.%s" (include "common.servicename.submgr.rmr" .) (include "common.namespace.platform" .) }}"
+           "port": {{ include "common.serviceport.submgr.rmr.data" . }}
+         -
+           "name": "E2MAN"
+           "fqdn": "{{ printf "%s.%s" (include "common.servicename.e2mgr.rmr" .) (include "common.namespace.platform" .) }}"
+           "port": {{ include "common.serviceport.e2mgr.rmr.data" . }}
+         -
+           "name": "A1MEDIATOR"
+           "fqdn": "{{ printf "%s.%s" (include "common.servicename.a1mediator.rmr" .) (include "common.namespace.platform" .) }}"
+           "port": {{ include "common.serviceport.a1mediator.rmr.data" . }}
+
+       "XMURL":
+         "http://{{ include "common.servicename.appmgr.http" . }}:{{ include "common.serviceport.appmgr.http" . }}/ric/v1/xapps"
+       "E2MURL":
+         "http://{{ include "common.servicename.e2mgr.http" . }}:{{ include "common.serviceport.e2mgr.http" . }}/v1/e2t/list"
+       "RTFILE":
+         "/db/rt.json"
+       "CFGFILE":
+         "/cfg/rtmgr-config.yaml"
+       "RPE":
+         "{{ .Values.rtmgr.rpe }}"
+       "SBI":
+         "{{ .Values.rtmgr.sbi }}"
+       "SBIURL":
+         "{{ .Values.rtmgr.sbiurl }}"
+       "NBI":
+         "{{ .Values.rtmgr.nbi }}"
+       "NBIURL":
+         "http://{{ include "common.servicename.rtmgr.http" . }}:{{ include "common.serviceport.rtmgr.http" . }}"
+       "SDL":
+         "file"
+       "local":
+         "host": ":8080"
+       "logger":
+         "level": 4
+       "periodicRoutes":
+         "enable"		   
+       "rmr":
+         "protPort": "tcp:4560"
+         "maxSize": 1024
+         "numWorkers": 1
+         "threadType": 1
+       "messagetypes": [
+          "RIC_HEALTH_CHECK_REQ=100",
+          "RIC_HEALTH_CHECK_RESP=101",
+          "RIC_ALARM=110",
+          "RIC_ALARM_QUERY=111",
+          "RIC_SCTP_CONNECTION_FAILURE=1080",
+          "E2_TERM_INIT=1100",
+          "E2_TERM_KEEP_ALIVE_REQ=1101",
+          "E2_TERM_KEEP_ALIVE_RESP=1102",
+          "RIC_SCTP_CLEAR_ALL=1090",
+          "RAN_CONNECTED=1200",
+          "RAN_RESTARTED=1210",
+          "RAN_RECONFIGURED=1220",
+          "RIC_ENB_LOAD_INFORMATION=10020",
+          "RIC_SN_STATUS_TRANSFER=10040",
+          "RIC_UE_CONTEXT_RELEASE=10050",
+          "RIC_X2_SETUP_REQ=10060",
+          "RIC_X2_SETUP_RESP=10061",
+          "RIC_X2_SETUP_FAILURE=10062",
+          "RIC_X2_RESET=10070",
+          "RIC_X2_RESET_RESP=10071",
+          "RIC_ENB_CONF_UPDATE=10080",
+          "RIC_ENB_CONF_UPDATE_ACK=10081",
+          "RIC_ENB_CONF_UPDATE_FAILURE=10082",
+          "RIC_RES_STATUS_REQ=10090",
+          "RIC_RES_STATUS_RESP=10091",
+          "RIC_RES_STATUS_FAILURE=10092",
+          "RIC_SGNB_ADDITION_REQ=10270",
+          "RIC_SGNB_ADDITION_ACK=10271",
+          "RIC_SGNB_ADDITION_REJECT=10272",
+          "RIC_SGNB_RECONF_COMPLETE=10280",
+          "RIC_SGNB_MOD_REQUEST=10290",
+          "RIC_SGNB_MOD_REQUEST_ACK=10291",
+          "RIC_SGNB_MOD_REQUEST_REJ=10292",
+          "RIC_SGNB_MOD_REQUIRED=10300",
+          "RIC_SGNB_MOD_CONFIRM=10301",
+          "RIC_SGNB_MOD_REFUSE=10302",
+          "RIC_SGNB_RELEASE_REQUEST=10310",
+          "RIC_SGNB_RELEASE_REQUEST_ACK=10311",
+          "RIC_SGNB_RELEASE_REQUIRED=10320",
+          "RIC_SGNB_RELEASE_CONFIRM=10321",
+          "RIC_RRC_TRANSFER=10350",
+          "RIC_ENDC_X2_SETUP_REQ=10360",
+          "RIC_ENDC_X2_SETUP_RESP=10361",
+          "RIC_ENDC_X2_SETUP_FAILURE=10362",
+          "RIC_ENDC_CONF_UPDATE=10370",
+          "RIC_ENDC_CONF_UPDATE_ACK=10371",
+          "RIC_ENDC_CONF_UPDATE_FAILURE=10372",
+          "RIC_SECONDARY_RAT_DATA_USAGE_REPORT=10380",
+          "RIC_E2_SETUP_REQ=12001",
+          "RIC_E2_SETUP_RESP=12002",
+          "RIC_E2_SETUP_FAILURE=12003",
+          "RIC_ERROR_INDICATION=12007",
+          "RIC_SUB_REQ=12010",
+          "RIC_SUB_RESP=12011",
+          "RIC_SUB_FAILURE=12012",
+          "RIC_SUB_DEL_REQ=12020",
+          "RIC_SUB_DEL_RESP=12021",
+          "RIC_SUB_DEL_FAILURE=12022",
+          "RIC_SUB_DEL_REQUIRED=12023",
+          "RIC_CONTROL_REQ=12040",
+          "RIC_CONTROL_ACK=12041",
+          "RIC_CONTROL_FAILURE=12042",
+          "RIC_INDICATION=12050",
+          "A1_POLICY_REQ=20010",
+          "A1_POLICY_RESP=20011",
+          "A1_POLICY_QUERY=20012",
+          "TS_UE_LIST=30000",
+          "TS_QOE_PRED_REQ=30001",
+          "TS_QOE_PREDICTION=30002",
+          "TS_ANOMALY_UPDATE=30003",
+          "TS_ANOMALY_ACK=30004",
+          "MC_REPORT=30010",
+          "DCAPTERM_RTPM_RMR_MSGTYPE=33001",
+          "DCAPTERM_GEO_RMR_MSGTYPE=33002",
+          "RIC_SERVICE_UPDATE=12030",
+          "RIC_SERVICE_UPDATE_ACK=12031",
+          "RIC_SERVICE_UPDATE_FAILURE=12032",
+          "RIC_E2NODE_CONFIG_UPDATE=12070",
+          "RIC_E2NODE_CONFIG_UPDATE_ACK==12071",
+          "RIC_E2NODE_CONFIG_UPDATE_FAILURE=12072",
+          "RIC_E2_RESET_REQ=12004",
+          "RIC_E2_RESET_RESP=12005",
+          ]
+
+       "PlatformRoutes": [
+         { 'messagetype': 'RIC_SUB_REQ', 'senderendpoint': 'SUBMAN', 'subscriptionid': -1, 'endpoint': '', 'meid': '%meid'},
+         { 'messagetype': 'RIC_SUB_DEL_REQ', 'senderendpoint': 'SUBMAN', 'subscriptionid': -1,'endpoint': '', 'meid': '%meid'},
+         { 'messagetype': 'RIC_SUB_RESP', 'senderendpoint': '', 'subscriptionid': -1, 'endpoint': 'SUBMAN', 'meid': ''},
+         { 'messagetype': 'RIC_SUB_DEL_RESP', 'senderendpoint': '', 'subscriptionid': -1, 'endpoint': 'SUBMAN', 'meid': ''},
+         { 'messagetype': 'RIC_SUB_FAILURE', 'senderendpoint': '', 'subscriptionid': -1, 'endpoint': 'SUBMAN', 'meid': ''},
+         { 'messagetype': 'RIC_SUB_DEL_FAILURE', 'senderendpoint': '', 'subscriptionid': -1, 'endpoint': 'SUBMAN', 'meid': ''},
+         { 'messagetype': 'RIC_SUB_DEL_REQUIRED', 'senderendpoint': '', 'subscriptionid': -1, 'endpoint': 'SUBMAN', 'meid': ''},
+         { 'messagetype': 'RIC_X2_SETUP_REQ', 'senderendpoint': 'E2MAN', 'subscriptionid': -1, 'endpoint': '', 'meid': '%meid'},
+         { 'messagetype': 'RIC_X2_RESET', 'senderendpoint': 'E2MAN', 'subscriptionid': -1, 'endpoint': '', 'meid': '%meid'},
+         { 'messagetype': 'RIC_X2_RESET_RESP', 'senderendpoint': 'E2MAN', 'subscriptionid': -1, 'endpoint': '', 'meid': '%meid'},
+         { 'messagetype': 'RIC_ENDC_X2_SETUP_REQ', 'senderendpoint': 'E2MAN', 'subscriptionid': -1, 'endpoint': '', 'meid': '%meid'},
+         { 'messagetype': 'RIC_ENB_CONF_UPDATE_ACK', 'senderendpoint': 'E2MAN', 'subscriptionid': -1, 'endpoint': '', 'meid': '%meid'},
+         { 'messagetype': 'RIC_ENB_CONF_UPDATE_FAILURE', 'senderendpoint': 'E2MAN', 'subscriptionid': -1, 'endpoint': '', 'meid': '%meid'},
+         { 'messagetype': 'RIC_ENDC_CONF_UPDATE_ACK', 'senderendpoint': 'E2MAN', 'subscriptionid': -1, 'endpoint': '', 'meid': '%meid'},
+         { 'messagetype': 'RIC_ENDC_CONF_UPDATE_FAILURE', 'senderendpoint': 'E2MAN', 'subscriptionid': -1, 'endpoint': '', 'meid': '%meid'},
+         { 'messagetype': 'RIC_E2_SETUP_REQ', 'senderendpoint': '', 'subscriptionid': -1, 'endpoint': 'E2MAN', 'meid': ''},
+         { 'messagetype': 'E2_TERM_INIT', 'senderendpoint': '', 'subscriptionid': -1, 'endpoint': 'E2MAN', 'meid': ''},
+         { 'messagetype': 'RIC_X2_SETUP_RESP', 'senderendpoint': '', 'subscriptionid': -1, 'endpoint': 'E2MAN', 'meid': ''},
+         { 'messagetype': 'RIC_X2_SETUP_FAILURE', 'senderendpoint': '', 'subscriptionid': -1, 'endpoint': 'E2MAN', 'meid': ''},
+         { 'messagetype': 'RIC_X2_RESET', 'senderendpoint': '', 'subscriptionid': -1, 'endpoint': 'E2MAN', 'meid': ''},
+         { 'messagetype': 'RIC_X2_RESET_RESP', 'senderendpoint': '', 'subscriptionid': -1, 'endpoint': 'E2MAN', 'meid': ''},
+         { 'messagetype': 'RIC_ENDC_X2_SETUP_RESP', 'senderendpoint': '', 'subscriptionid': -1, 'endpoint': 'E2MAN', 'meid': ''},
+         { 'messagetype': 'RIC_ENDC_X2_SETUP_FAILURE', 'senderendpoint': '', 'subscriptionid': -1, 'endpoint': 'E2MAN', 'meid': ''},
+         { 'messagetype': 'RIC_ENDC_CONF_UPDATE', 'senderendpoint': '', 'subscriptionid': -1, 'endpoint': 'E2MAN', 'meid': ''},
+         { 'messagetype': 'RIC_SCTP_CONNECTION_FAILURE', 'senderendpoint': '', 'subscriptionid': -1, 'endpoint': 'E2MAN', 'meid': ''},
+         { 'messagetype': 'RIC_ERROR_INDICATION', 'senderendpoint': '', 'subscriptionid': -1, 'endpoint': 'E2MAN', 'meid': ''},
+         { 'messagetype': 'RIC_ENB_CONF_UPDATE', 'senderendpoint': '', 'subscriptionid': -1, 'endpoint': 'E2MAN', 'meid': ''},
+         { 'messagetype': 'RIC_ENB_LOAD_INFORMATION', 'senderendpoint': '', 'subscriptionid': -1, 'endpoint': 'E2MAN', 'meid': ''},
+         { 'messagetype': 'E2_TERM_KEEP_ALIVE_RESP', 'senderendpoint': '', 'subscriptionid': -1, 'endpoint': 'E2MAN', 'meid': ''},
+         { 'messagetype': 'A1_POLICY_QUERY', 'senderendpoint': '', 'subscriptionid': -1, 'endpoint': 'A1MEDIATOR', 'meid': ''},
+         { 'messagetype': 'A1_POLICY_RESP', 'senderendpoint': '', 'subscriptionid': -1, 'endpoint': 'A1MEDIATOR', 'meid': ''},
+         { 'messagetype': 'RIC_SERVICE_UPDATE', 'senderendpoint': '', 'subscriptionid': -1, 'endpoint': 'E2MAN', 'meid': ''},
+         { 'messagetype': 'RIC_E2NODE_CONFIG_UPDATE', 'senderendpoint': '', 'subscriptionid': -1, 'endpoint': 'E2MAN', 'meid': ''},
+         { 'messagetype': 'RIC_E2_RESET_REQ', 'senderendpoint': '', 'subscriptionid': -1, 'endpoint': 'E2MAN', 'meid': ''},
+          ]
+

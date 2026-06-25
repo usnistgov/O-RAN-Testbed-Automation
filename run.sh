@@ -37,7 +37,7 @@ if ! command -v realpath &>/dev/null; then
     sudo env $APTVARS apt-get install -y coreutils
 fi
 
-USE_FLEXRIC=true
+USE_FLEXRIC=false
 USE_ZMQ_BROKER=false
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")

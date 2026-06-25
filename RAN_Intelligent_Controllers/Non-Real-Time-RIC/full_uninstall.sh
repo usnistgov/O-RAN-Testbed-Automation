@@ -356,6 +356,9 @@ sudo rm -rf ~/.kube
 echo
 echo "Kubernetes is cleaned up."
 
+echo "Enabling swap to restore system state..."
+sudo ./install_scripts/enable_swap.sh
+
 echo "Performing general system cleanup..."
 sudo apt-get autoremove -y
 sudo apt-get autoclean

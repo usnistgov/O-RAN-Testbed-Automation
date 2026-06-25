@@ -85,3 +85,12 @@ else
     cd ..
     rm -rf "$HOME/k9s-installation"
 fi
+
+if ! command -v kubecolor &>/dev/null; then
+    echo "Installing kubecolor..."
+    sudo env $APTVARS apt-get install -y kubecolor
+    if ! grep -q 'alias kubectl="kubecolor"' ~/.bashrc; then
+        echo 'alias kubectl="kubecolor"' >>~/.bashrc
+    fi
+    source ~/.bashrc
+fi

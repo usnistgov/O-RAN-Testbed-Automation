@@ -90,11 +90,6 @@ The  tool can be used in virtual machines and physical machines with the list of
 This tool supports the deployment of 5G O-RAN testbeds using open-source components, OCUDU with O-RAN SC's Near-RT RIC. Below is the list of the supported testbed open-source components.
 
 ```text
-CU/DU
-└──  OCUDU: 26.04
-
-This tool supports the deployment of 5G O-RAN testbeds using open-source components in two main scenarios: OCUDU with O-RAN SC's Near-RT RIC, and Duranta (OpenAirInterface) with Mosaic5G's FlexRIC. Below is the list of the supported testbed open-source components.
-
 
 CU/DU
 ├── OCUDU: 26.04

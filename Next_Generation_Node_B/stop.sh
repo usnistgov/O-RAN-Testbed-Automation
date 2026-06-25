@@ -37,7 +37,7 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-USE_ZMQ_BROKER=false
+USE_ZMQ_BROKER=true
 
 # Check if the gNodeB is already stopped
 IS_RUNNING=$(./is_running.sh)

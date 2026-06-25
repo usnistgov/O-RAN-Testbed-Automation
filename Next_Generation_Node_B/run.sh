@@ -55,13 +55,22 @@ trap graceful_shutdown SIGINT SIGTERM SIGQUIT
 
 wait_for_zmq_broker_ready() {
     BROKER_FILE="zmq_broker/multi_ue_scenario.py"
-    REQUIRED_PORTS="2001"
+    REQUIRED_PORTS=""
 
     if [ -f "$BROKER_FILE" ]; then
+        CELL_PORTS=$(awk '/^# CELL_CONFIG: / { print $5 }' "$BROKER_FILE")
+        for CELL_PORT in $CELL_PORTS; do
+            REQUIRED_PORTS="$REQUIRED_PORTS $CELL_PORT"
+        done
+        if [ -z "$REQUIRED_PORTS" ]; then
+            REQUIRED_PORTS="2001"
+        fi
         UE_PORTS=$(awk '/^# UE_CONFIG: / { print $4 }' "$BROKER_FILE")
         for UE_PORT in $UE_PORTS; do
             REQUIRED_PORTS="$REQUIRED_PORTS $UE_PORT"
         done
+    else
+        REQUIRED_PORTS="2001"
     fi
 
     echo "Expected ZMQ Broker listening ports:$REQUIRED_PORTS"

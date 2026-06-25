@@ -43,10 +43,22 @@ cd "$SCRIPT_DIR"
 USE_FLEXRIC=false
 USE_ZMQ_BROKER=true
 UE_CONFIG_ARGS=""
-for ARG in "$@"; do
-    if [[ "$ARG" =~ ^[0-9]+$ ]]; then
-        UE_CONFIG_ARGS="$UE_CONFIG_ARGS $ARG"
-    fi
+ORIGINAL_ARGS=("$@")
+while [ $# -gt 0 ]; do
+    case "$1" in
+    --cells | --cell-count)
+        shift
+        if [ $# -gt 0 ]; then
+            shift
+        fi
+        ;;
+    *)
+        if [[ "$1" =~ ^[0-9]+$ ]]; then
+            UE_CONFIG_ARGS="$UE_CONFIG_ARGS $1"
+        fi
+        shift
+        ;;
+    esac
 done
 
 echo "Generating Configurations for 5G Core components..."
@@ -65,7 +77,7 @@ fi
 echo
 echo "Generating Configuration for Next Generation Node B..."
 cd Next_Generation_Node_B
-./generate_configurations.sh "$@"
+./generate_configurations.sh "${ORIGINAL_ARGS[@]}"
 cd ..
 
 echo

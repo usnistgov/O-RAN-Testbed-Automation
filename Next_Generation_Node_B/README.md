@@ -68,6 +68,9 @@ User_Equipment/install_scripts/get_pdu_sessions.sh 2
 User_Equipment/install_scripts/get_pdu_sessions.sh 3
 ```
 
+> [!NOTE]
+> To configure multiple emulated cells with the broker, pass `--cells N` to the base directory generator, e.g., `../generate_configurations.sh --cells 2`. The generated broker creates one gNB-side downlink/uplink port pair per cell and one path-loss control for each cell/UE pair.
+
 ## E2 Interface
 
 By default, the gNodeB's Distributed Unit (DU) connects to the O-RAN Software Community's Near-Real-Time RAN Intelligent Controller (O-RAN SC Near-RT RIC) E2 Terminator. To use FlexRIC instead of O-RAN SC's Near-RT RIC, set all occurrences of `USE_FLEXRIC` to `true`, then run `../generate_configurations.sh`.

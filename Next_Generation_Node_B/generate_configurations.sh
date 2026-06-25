@@ -62,6 +62,7 @@ BASE_EXAMPLE_CONFIG_PATH="$SCRIPT_DIR/ocudu/configs/gnb_rf_b210_fdd_srsUE.yml"
 ENABLE_E2_TERM="true"
 E2_ADDRESS="null"
 UE_NUMBERS=()
+CELL_COUNT=1
 while [[ $# -gt 0 ]]; do
     case $1 in
     --disable-e2-term)
@@ -70,6 +71,18 @@ while [[ $# -gt 0 ]]; do
         ;;
     --e2-term-address)
         E2_ADDRESS="$2"
+        shift 2
+        ;;
+    --cells | --cell-count)
+        CELL_COUNT="$2"
+        if ! [[ "$CELL_COUNT" =~ ^[0-9]+$ ]] || [ "$CELL_COUNT" -lt 1 ]; then
+            echo "ERROR: Cell count must be a positive integer."
+            exit 1
+        fi
+        if [ "$CELL_COUNT" -gt 50 ]; then
+            echo "ERROR: Cell count must be 50 or less to avoid conflicts with UE ZeroMQ ports."
+            exit 1
+        fi
         shift 2
         ;;
     [0-9]*)
@@ -334,7 +347,12 @@ update_yaml() {
 mkdir -p "$SCRIPT_DIR/logs"
 
 if [ "$USE_ZMQ_BROKER" = "true" ]; then
-    DEVICE_ARGS="fail_unlocked=true,tx_port=tcp://127.0.0.1:2000,rx_port=tcp://127.0.0.1:2001,"
+    DEVICE_ARGS="fail_unlocked=true,"
+    for ((CELL_INDEX = 0; CELL_INDEX < CELL_COUNT; CELL_INDEX++)); do
+        CELL_RX_PORT=$((2000 + CELL_INDEX * 2))
+        CELL_TX_PORT=$((2001 + CELL_INDEX * 2))
+        DEVICE_ARGS+="tx_port${CELL_INDEX}=tcp://127.0.0.1:${CELL_RX_PORT},rx_port${CELL_INDEX}=tcp://127.0.0.1:${CELL_TX_PORT},"
+    done
 else
     BASE_SUBNET="10.201.0.0/16"
     SUBNET_SIZE=4
@@ -392,6 +410,13 @@ if [ "$USE_ZMQ_BROKER" = "true" ]; then
     update_yaml "configs/gnb.yaml" "cell_cfg.pucch" "f1_enable_occ" "true"
     update_yaml "configs/gnb.yaml" "cell_cfg.pucch" "nof_cell_sr_res" "7"
     update_yaml "configs/gnb.yaml" "cell_cfg.pucch" "nof_cell_csi_res" "7"
+fi
+
+yq eval -i 'del(.cells)' "configs/gnb.yaml"
+if [ "$USE_ZMQ_BROKER" = "true" ] && [ "$CELL_COUNT" -gt 1 ]; then
+    for ((CELL_INDEX = 0; CELL_INDEX < CELL_COUNT; CELL_INDEX++)); do
+        update_yaml "configs/gnb.yaml" "cells[$CELL_INDEX]" "pci" "$((1 + CELL_INDEX))"
+    done
 fi
 
 # Update configuration values for slicing
@@ -582,7 +607,7 @@ if [ "$USE_ZMQ_BROKER" = "true" ]; then
     done
 
     mkdir -p zmq_broker
-    ./install_scripts/generate_zmq_broker.sh --output "zmq_broker/multi_ue_scenario.py" --sample-rate-hz "$BROKER_SRATE_INT" --slow-down-ratio "$ZMQ_BROKER_SLOW_DOWN_RATIO" $UE_ARGS
+    ./install_scripts/generate_zmq_broker.sh --output "zmq_broker/multi_ue_scenario.py" --sample-rate-hz "$BROKER_SRATE_INT" --slow-down-ratio "$ZMQ_BROKER_SLOW_DOWN_RATIO" --cells "$CELL_COUNT" $UE_ARGS
 
     if ! python3 -c "import gnuradio, PyQt5" >/dev/null 2>&1; then
         echo "Installing GNU Radio runtime for the ZeroMQ Broker..."
@@ -597,7 +622,7 @@ if [ "$USE_ZMQ_BROKER" = "true" ]; then
     # fi
     rm -f ~/.gnuradio/prefs/vmcircbuf_default_factory
 
-    echo "Successfully generated ZMQ Broker Python script for ${#UE_NUMBERS[@]} UEs."
+    echo "Successfully generated ZMQ Broker Python script for $CELL_COUNT cell(s) and ${#UE_NUMBERS[@]} UEs."
 else
     echo "Using direct ZeroMQ connection for UE $UE_NUMBER at *:2100 and $UE_IP:2101 (no ZeroMQ broker)."
 fi

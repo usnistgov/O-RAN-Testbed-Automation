@@ -33,11 +33,12 @@ set -e
 OUTPUT=""
 SAMPLE_RATE_HZ=""
 SLOW_DOWN_RATIO="1"
+CELL_COUNT=1
 UE_NUMBERS=()
 UE_IPS=()
 
 usage() {
-    echo "Usage: $0 --output FILE --sample-rate-hz HZ [--slow-down-ratio N] --ue NUMBER:IP [--ue NUMBER:IP ...]"
+    echo "Usage: $0 --output FILE --sample-rate-hz HZ [--slow-down-ratio N] [--cells N] --ue NUMBER:IP [--ue NUMBER:IP ...]"
 }
 
 while [ $# -gt 0 ]; do
@@ -52,6 +53,10 @@ while [ $# -gt 0 ]; do
         ;;
     --slow-down-ratio)
         SLOW_DOWN_RATIO="$2"
+        shift 2
+        ;;
+    --cells | --cell-count)
+        CELL_COUNT="$2"
         shift 2
         ;;
     --ue)
@@ -89,6 +94,10 @@ if ! [[ "$SAMPLE_RATE_HZ" =~ ^[0-9]+$ ]] || [ "$SAMPLE_RATE_HZ" -lt 1 ]; then
 fi
 if ! [[ "$SLOW_DOWN_RATIO" =~ ^[0-9]+$ ]] || [ "$SLOW_DOWN_RATIO" -lt 1 ]; then
     echo "ERROR: --slow-down-ratio must be a positive integer."
+    exit 1
+fi
+if ! [[ "$CELL_COUNT" =~ ^[0-9]+$ ]] || [ "$CELL_COUNT" -lt 1 ]; then
+    echo "ERROR: --cells must be a positive integer."
     exit 1
 fi
 
@@ -129,6 +138,12 @@ cat >"$OUTPUT" <<EOF
 
 EOF
 
+for CELL_NUMBER in $(seq 1 "$CELL_COUNT"); do
+    CELL_RX_PORT=$((2000 + (CELL_NUMBER - 1) * 2))
+    CELL_TX_PORT=$((2001 + (CELL_NUMBER - 1) * 2))
+    echo "# CELL_CONFIG: $CELL_NUMBER $CELL_RX_PORT $CELL_TX_PORT" >>"$OUTPUT"
+done
+
 for INDEX in "${!UE_NUMBERS[@]}"; do
     UE_NUMBER="${UE_NUMBERS[$INDEX]}"
     UE_RX_PORT=$((2000 + UE_NUMBER * 100))
@@ -158,6 +173,17 @@ from gnuradio.qtgui import Range
 from gnuradio.qtgui import RangeWidget
 
 
+CELL_CONFIGS = [
+EOF
+
+for CELL_NUMBER in $(seq 1 "$CELL_COUNT"); do
+    CELL_RX_PORT=$((2000 + (CELL_NUMBER - 1) * 2))
+    CELL_TX_PORT=$((2001 + (CELL_NUMBER - 1) * 2))
+    echo "    {'number': $CELL_NUMBER, 'rx_port': $CELL_RX_PORT, 'tx_port': $CELL_TX_PORT}," >>"$OUTPUT"
+done
+
+cat >>"$OUTPUT" <<EOF
+]
 UE_CONFIGS = [
 EOF
 
@@ -168,10 +194,10 @@ for INDEX in "${!UE_NUMBERS[@]}"; do
     echo "    {'number': $UE_NUMBER, 'rx_port': $UE_RX_PORT, 'tx_port': $UE_TX_PORT, 'ue_ip': '${UE_IPS[$INDEX]}'}," >>"$OUTPUT"
 done
 
-cat >>"$OUTPUT" <<EOF
+cat >>"$OUTPUT" <<'EOF'
 ]
-SAMPLE_RATE = $SAMPLE_RATE_HZ
-SLOW_DOWN_RATIO = $SLOW_DOWN_RATIO
+SAMPLE_RATE = __SAMPLE_RATE_HZ__
+SLOW_DOWN_RATIO = __SLOW_DOWN_RATIO__
 ZMQ_TIMEOUT = 100
 ZMQ_HWM = -1
 
@@ -179,11 +205,11 @@ ZMQ_HWM = -1
 class multi_ue_scenario(gr.top_block, Qt.QWidget):
     def __init__(self):
         try:
-            gr.top_block.__init__(self, "srsRAN_multi_UE", catch_exceptions=True)
+            gr.top_block.__init__(self, "srsRAN_multi_cell_multi_UE", catch_exceptions=True)
         except TypeError:
-            gr.top_block.__init__(self, "srsRAN_multi_UE")
+            gr.top_block.__init__(self, "srsRAN_multi_cell_multi_UE")
         Qt.QWidget.__init__(self)
-        self.setWindowTitle("srsRAN_multi_UE")
+        self.setWindowTitle("srsRAN_multi_cell_multi_UE")
         qtgui.util.check_set_qss()
 
         self.top_layout = Qt.QVBoxLayout()
@@ -196,75 +222,98 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
 
         self.samp_rate = SAMPLE_RATE
         self.slow_down_ratio = SLOW_DOWN_RATIO
-        self.path_loss_db = {ue["number"]: 0 for ue in UE_CONFIGS}
+        self.path_loss_db = {(cell["number"], ue["number"]): 0 for cell in CELL_CONFIGS for ue in UE_CONFIGS}
+        self.gnb_dl_sources = {}
+        self.gnb_ul_sinks = {}
+        self.dl_throttles = {}
+        self.ue_dl_sinks = {}
+        self.ue_ul_sources = {}
+        self.ue_dl_adds = {}
+        self.cell_ul_adds = {}
         self.dl_gains = {}
         self.ul_gains = {}
-        self.dl_sinks = {}
-        self.ul_sources = {}
         self.path_loss_ranges = {}
         self.path_loss_widgets = {}
 
-        print(f"ZMQ broker sample_rate={SAMPLE_RATE} slow_down_ratio={SLOW_DOWN_RATIO}", flush=True)
-        print("ZMQ broker gNB DL source tcp://127.0.0.1:2000", flush=True)
-        print("ZMQ broker gNB UL sink tcp://127.0.0.1:2001", flush=True)
-
-        self.gnb_dl_source = zeromq.req_source(
-            gr.sizeof_gr_complex, 1, "tcp://127.0.0.1:2000", ZMQ_TIMEOUT, False, ZMQ_HWM
+        print(
+            f"ZMQ broker sample_rate={SAMPLE_RATE} slow_down_ratio={SLOW_DOWN_RATIO} cells={len(CELL_CONFIGS)} ues={len(UE_CONFIGS)}",
+            flush=True,
         )
-        self.gnb_ul_sink = zeromq.rep_sink(
-            gr.sizeof_gr_complex, 1, "tcp://127.0.0.1:2001", ZMQ_TIMEOUT, False, ZMQ_HWM
-        )
-        self.dl_throttle = blocks.throttle(
-            gr.sizeof_gr_complex, self.samp_rate / self.slow_down_ratio, True
-        )
-        self.ul_add = blocks.add_vcc(1)
 
-        self.connect((self.gnb_dl_source, 0), (self.dl_throttle, 0))
+        for cell in CELL_CONFIGS:
+            cell_number = cell["number"]
+            print(
+                f"ZMQ broker Cell{cell_number} gNB DL source tcp://127.0.0.1:{cell['rx_port']} UL sink tcp://127.0.0.1:{cell['tx_port']}",
+                flush=True,
+            )
+            self.gnb_dl_sources[cell_number] = zeromq.req_source(
+                gr.sizeof_gr_complex, 1, f"tcp://127.0.0.1:{cell['rx_port']}", ZMQ_TIMEOUT, False, ZMQ_HWM
+            )
+            self.gnb_ul_sinks[cell_number] = zeromq.rep_sink(
+                gr.sizeof_gr_complex, 1, f"tcp://127.0.0.1:{cell['tx_port']}", ZMQ_TIMEOUT, False, ZMQ_HWM
+            )
+            self.dl_throttles[cell_number] = blocks.throttle(
+                gr.sizeof_gr_complex, self.samp_rate / self.slow_down_ratio, True
+            )
+            self.cell_ul_adds[cell_number] = blocks.add_vcc(1)
 
-        for index, ue in enumerate(UE_CONFIGS):
+            self.connect((self.gnb_dl_sources[cell_number], 0), (self.dl_throttles[cell_number], 0))
+            self.connect((self.cell_ul_adds[cell_number], 0), (self.gnb_ul_sinks[cell_number], 0))
+
+        for ue in UE_CONFIGS:
             ue_number = ue["number"]
             print(
                 f"ZMQ broker UE{ue_number} DL sink tcp://*:{ue['rx_port']} UL source tcp://{ue['ue_ip']}:{ue['tx_port']}",
                 flush=True,
             )
-            self.path_loss_ranges[ue_number] = Range(0, 100, 1, 0, 200)
-            self.path_loss_widgets[ue_number] = RangeWidget(
-                self.path_loss_ranges[ue_number],
-                lambda value, ue_number=ue_number: self.set_path_loss(ue_number, value),
-                f"UE{ue_number} Pathloss [dB]",
-                "counter_slider",
-                float,
-                QtCore.Qt.Horizontal,
-            )
-            self.top_layout.addWidget(self.path_loss_widgets[ue_number])
-
-            gain = self.path_loss_to_gain(self.path_loss_db[ue_number])
-            self.dl_gains[ue_number] = blocks.multiply_const_cc(gain)
-            self.ul_gains[ue_number] = blocks.multiply_const_cc(gain)
-
-            self.dl_sinks[ue_number] = zeromq.rep_sink(
+            self.ue_dl_adds[ue_number] = blocks.add_vcc(1)
+            self.ue_dl_sinks[ue_number] = zeromq.rep_sink(
                 gr.sizeof_gr_complex, 1, f"tcp://*:{ue['rx_port']}", ZMQ_TIMEOUT, False, ZMQ_HWM
             )
-            self.ul_sources[ue_number] = zeromq.req_source(
+            self.ue_ul_sources[ue_number] = zeromq.req_source(
                 gr.sizeof_gr_complex, 1, f"tcp://{ue['ue_ip']}:{ue['tx_port']}", ZMQ_TIMEOUT, False, ZMQ_HWM
             )
+            self.connect((self.ue_dl_adds[ue_number], 0), (self.ue_dl_sinks[ue_number], 0))
 
-            self.connect((self.dl_throttle, 0), (self.dl_gains[ue_number], 0))
-            self.connect((self.dl_gains[ue_number], 0), (self.dl_sinks[ue_number], 0))
-            self.connect((self.ul_sources[ue_number], 0), (self.ul_gains[ue_number], 0))
-            self.connect((self.ul_gains[ue_number], 0), (self.ul_add, index))
+        for cell_index, cell in enumerate(CELL_CONFIGS):
+            cell_number = cell["number"]
+            for ue_index, ue in enumerate(UE_CONFIGS):
+                ue_number = ue["number"]
+                path_key = (cell_number, ue_number)
+                label = f"Cell{cell_number} UE{ue_number} Pathloss [dB]"
 
-        self.connect((self.ul_add, 0), (self.gnb_ul_sink, 0))
+                self.path_loss_ranges[path_key] = Range(0, 100, 1, 0, 200)
+                self.path_loss_widgets[path_key] = RangeWidget(
+                    self.path_loss_ranges[path_key],
+                    lambda value, cell_number=cell_number, ue_number=ue_number: self.set_path_loss(
+                        cell_number, ue_number, value
+                    ),
+                    label,
+                    "counter_slider",
+                    float,
+                    QtCore.Qt.Horizontal,
+                )
+                self.top_layout.addWidget(self.path_loss_widgets[path_key])
+
+                gain = self.path_loss_to_gain(self.path_loss_db[path_key])
+                self.dl_gains[path_key] = blocks.multiply_const_cc(gain)
+                self.ul_gains[path_key] = blocks.multiply_const_cc(gain)
+
+                self.connect((self.dl_throttles[cell_number], 0), (self.dl_gains[path_key], 0))
+                self.connect((self.dl_gains[path_key], 0), (self.ue_dl_adds[ue_number], cell_index))
+                self.connect((self.ue_ul_sources[ue_number], 0), (self.ul_gains[path_key], 0))
+                self.connect((self.ul_gains[path_key], 0), (self.cell_ul_adds[cell_number], ue_index))
 
     @staticmethod
     def path_loss_to_gain(path_loss_db):
         return 10 ** (-1.0 * path_loss_db / 20.0)
 
-    def set_path_loss(self, ue_number, path_loss_db):
-        self.path_loss_db[ue_number] = path_loss_db
+    def set_path_loss(self, cell_number, ue_number, path_loss_db):
+        path_key = (cell_number, ue_number)
+        self.path_loss_db[path_key] = path_loss_db
         gain = self.path_loss_to_gain(path_loss_db)
-        self.dl_gains[ue_number].set_k(gain)
-        self.ul_gains[ue_number].set_k(gain)
+        self.dl_gains[path_key].set_k(gain)
+        self.ul_gains[path_key].set_k(gain)
 
     def closeEvent(self, event):
         self.settings.setValue("geometry", self.saveGeometry())
@@ -297,4 +346,6 @@ if __name__ == "__main__":
     main()
 EOF
 
+sed -i "s/__SAMPLE_RATE_HZ__/$SAMPLE_RATE_HZ/" "$OUTPUT"
+sed -i "s/__SLOW_DOWN_RATIO__/$SLOW_DOWN_RATIO/" "$OUTPUT"
 chmod 755 "$OUTPUT"

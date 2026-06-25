@@ -66,6 +66,22 @@ fi
 
 cd ts
 
+if grep -q "service-ricxapp-ad-rmr:4560" assets/bootstrap.rt; then
+    echo "Patching bootstrap.rt to use AD RMR service..."
+    if [ ! -f "assets/bootstrap.previous.rt" ]; then
+        cp assets/bootstrap.rt assets/bootstrap.previous.rt
+    fi
+    sed -i 's/service-ricxapp-ad-rmr:4560/service-ricxapp-ad-rmr.ricxapp.svc.cluster.local:4560/g' assets/bootstrap.rt
+fi
+
+if [ -f "routes.txt" ] && grep -q "service-ricxapp-ad-rmr:4560" routes.txt; then
+    echo "Patching routes.txt to use AD RMR service..."
+    if [ ! -f "routes.previous.txt" ]; then
+        cp routes.txt routes.previous.txt
+    fi
+    sed -i 's/service-ricxapp-ad-rmr:4560/service-ricxapp-ad-rmr.ricxapp.svc.cluster.local:4560/g' routes.txt
+fi
+
 echo "Creating and modifying the configuration file xapp-descriptor/config-file_updated.json"
 # Check if jq is installed; if not, install it
 if ! command -v jq &>/dev/null; then
@@ -107,7 +123,8 @@ if [ -z "$FIXED_DOCKER_PERMS" ]; then
     fi
 fi
 
-if [ ! -f trafficxapp.tar ]; then
+TRAFFICXAPP_NEWER_FILE=$([ -f trafficxapp.tar ] && find Dockerfile CMakeLists.txt assets src -type f -newer trafficxapp.tar -print -quit || true)
+if [ ! -f trafficxapp.tar ] || [ -n "$TRAFFICXAPP_NEWER_FILE" ]; then
     docker build --network host -t 127.0.0.1:80/trafficxapp:latest .
     docker save -o trafficxapp.tar 127.0.0.1:80/trafficxapp:latest
     sudo chmod 755 trafficxapp.tar

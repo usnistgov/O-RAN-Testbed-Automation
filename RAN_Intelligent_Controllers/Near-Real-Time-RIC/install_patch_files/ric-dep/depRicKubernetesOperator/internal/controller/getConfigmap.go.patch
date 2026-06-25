@@ -1,0 +1,49 @@
+diff --git a/depRicKubernetesOperator/internal/controller/getConfigmap.go b/depRicKubernetesOperator/internal/controller/getConfigmap.go
+index 8e0b67f..70af342 100644
+--- a/depRicKubernetesOperator/internal/controller/getConfigmap.go
++++ b/depRicKubernetesOperator/internal/controller/getConfigmap.go
+@@ -328,26 +328,26 @@ func GetConfigMap() []*corev1.ConfigMap {
+ 				"",
+ 			"router.txt": "newrt|start\n" +
+ 				"rte|1080|service-ricplt-e2mgr-rmr.ricplt:3801\n" +
+-				"rte|1090|service-ricplt-e2term-rmr.ricplt:38000\n" +
+-				"rte|1100|service-ricplt-e2term-rmr.ricplt:38000\n" +
+-				"rte|1101|service-ricplt-e2term-rmr.ricplt:38000\n" +
++				"rte|1090|service-ricplt-e2term-rmr-alpha.ricplt:38000\n" +
++				"rte|1100|service-ricplt-e2term-rmr-alpha.ricplt:38000\n" +
++				"rte|1101|service-ricplt-e2term-rmr-alpha.ricplt:38000\n" +
+ 				"rte|1200|service-ricplt-rsm-rmr.ricplt:4801\n" +
+ 				"rte|1210|service-ricplt-rsm-rmr.ricplt:4801\n" +
+ 				"rte|1220|service-ricplt-rsm-rmr.ricplt:4801\n" +
+ 				"rte|10020|service-ricplt-e2mgr-rmr.ricplt:3801\n" +
+-				"rte|10060|service-ricplt-e2term-rmr.ricplt:38000\n" +
++				"rte|10060|service-ricplt-e2term-rmr-alpha.ricplt:38000\n" +
+ 				"rte|10061|service-ricplt-e2mgr-rmr.ricplt:3801\n" +
+ 				"rte|10062|service-ricplt-e2mgr-rmr.ricplt:3801\n" +
+-				"rte|10070|service-ricplt-e2term-rmr.ricplt:38000\n" +
+-				"rte|10071|service-ricplt-e2term-rmr.ricplt:38000\n" +
++				"rte|10070|service-ricplt-e2term-rmr-alpha.ricplt:38000\n" +
++				"rte|10071|service-ricplt-e2term-rmr-alpha.ricplt:38000\n" +
+ 				"rte|10080|service-ricplt-e2mgr-rmr.ricplt:3801\n" +
+-				"rte|10360|service-ricplt-e2term-rmr.ricplt:38000\n" +
++				"rte|10360|service-ricplt-e2term-rmr-alpha.ricplt:38000\n" +
+ 				"rte|10361|service-ricplt-e2mgr-rmr.ricplt:3801\n" +
+ 				"rte|10362|service-ricplt-e2mgr-rmr.ricplt:3801\n" +
+ 				"rte|10370|service-ricplt-e2mgr-rmr.ricplt:3801\n" +
+-				"rte|10371|service-ricplt-e2term-rmr.ricplt:38000\n" +
+-				"rte|12010|service-ricplt-e2term-rmr.ricplt:38000\n" +
+-				"rte|12020|service-ricplt-e2term-rmr.ricplt:38000\n" +
++				"rte|10371|service-ricplt-e2term-rmr-alpha.ricplt:38000\n" +
++				"rte|12010|service-ricplt-e2term-rmr-alpha.ricplt:38000\n" +
++				"rte|12020|service-ricplt-e2term-rmr-alpha.ricplt:38000\n" +
+ 				"rte|20001|service-ricplt-a1mediator-rmr.ricplt:4562\n" +
+ 				"newrt|end",
+ 		},
+@@ -1587,6 +1587,7 @@ func GetConfigMap() []*corev1.ConfigMap {
+ 				"  { 'messagetype': 'RIC_ENDC_CONF_UPDATE_FAILURE', 'senderendpoint': 'E2MAN', 'subscriptionid': -1, 'endpoint': '', 'meid': '%meid'},\n" +
+ 				"  { 'messagetype': 'RIC_E2_SETUP_REQ', 'senderendpoint': '', 'subscriptionid': -1, 'endpoint': 'E2MAN', 'meid': ''},\n" +
+ 				"  { 'messagetype': 'E2_TERM_INIT', 'senderendpoint': '', 'subscriptionid': -1, 'endpoint': 'E2MAN', 'meid': ''},\n" +
++				"  { 'messagetype': 'E2_TERM_KEEP_ALIVE_REQ', 'senderendpoint': 'E2MAN', 'subscriptionid': -1, 'endpoint': 'E2TERM', 'meid': ''},\n" +
+ 				"  { 'messagetype': 'RIC_X2_SETUP_RESP', 'senderendpoint': '', 'subscriptionid': -1, 'endpoint': 'E2MAN', 'meid': ''},\n" +
+ 				"  { 'messagetype': 'RIC_X2_SETUP_FAILURE', 'senderendpoint': '', 'subscriptionid': -1, 'endpoint': 'E2MAN', 'meid': ''},\n" +
+ 				"  { 'messagetype': 'RIC_X2_RESET', 'senderendpoint': '', 'subscriptionid': -1, 'endpoint': 'E2MAN', 'meid': ''},\n" +

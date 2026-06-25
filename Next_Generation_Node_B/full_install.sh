@@ -36,7 +36,6 @@ CLEAN_INSTALL=false
 DEBUG_SYMBOLS=false
 RUN_TESTS=false
 TUNE_PERFORMANCE=false
-USE_ZMQ_BROKER=false
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
@@ -209,32 +208,6 @@ else
 fi
 
 cd "$SCRIPT_DIR"
-
-if [ "$USE_ZMQ_BROKER" = "true" ] && [ ! -f "zmq_broker/multi_ue_scenario.py" ]; then
-    if ! command -v grcc >/dev/null 2>&1; then
-        echo "Installing GNU Radio Companion Compiler (grcc) for the ZeroMQ Broker..."
-        sudo env $APTVARS apt-get install -y gnuradio
-    fi
-fi
-
-echo
-echo
-if [ "$USE_ZMQ_BROKER" = "true" ]; then
-    mkdir -p zmq_broker
-fi
-if [ "$USE_ZMQ_BROKER" = "true" ] && [ ! -f "zmq_broker/multi_ue_scenario.grc" ]; then
-    if ! command -v jq &>/dev/null; then
-        echo "Installing jq..."
-        sudo env $APTVARS apt-get install -y jq
-    fi
-    DOCS_HASH=$(jq -r '."https://gitlab.com/ocudu/ocudu_docs.git"[1]' ../commit_hashes.json 2>/dev/null)
-    if [ -z "$DOCS_HASH" ] || [ "$DOCS_HASH" = "null" ]; then
-        DOCS_HASH="main"
-    fi
-    echo "Downloading ZeroMQ Broker GNU Radio Companion flowgraph (${DOCS_HASH})..."
-    wget -qO zmq_broker/multi_ue_scenario.grc "https://gitlab.com/ocudu/ocudu_docs/-/raw/${DOCS_HASH}/docs/tutorials/srsue/assets/multi_ue_scenario.grc"
-    wget -qO zmq_broker/multi_ue_scenario.grc.license "https://gitlab.com/ocudu/ocudu_docs/-/raw/${DOCS_HASH}/docs/tutorials/srsue/assets/multi_ue_scenario.grc.license"
-fi
 
 echo
 echo

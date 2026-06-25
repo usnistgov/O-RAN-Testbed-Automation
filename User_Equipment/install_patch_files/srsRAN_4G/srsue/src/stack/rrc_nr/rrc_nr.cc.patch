@@ -1,0 +1,36 @@
+diff --git a/srsue/src/stack/rrc_nr/rrc_nr.cc b/srsue/src/stack/rrc_nr/rrc_nr.cc
+index 8727fa985..abfdec6c3 100644
+--- a/srsue/src/stack/rrc_nr/rrc_nr.cc
++++ b/srsue/src/stack/rrc_nr/rrc_nr.cc
+@@ -1118,8 +1118,12 @@ bool rrc_nr::apply_mac_cell_group(const mac_cell_group_cfg_s& mac_cell_group_cfg
+         sr_cfg.item[0].sched_request_id = asn1_cfg.sched_request_id;
+         sr_cfg.item[0].trans_max        = asn1_cfg.sr_trans_max.to_number();
+         if (asn1_cfg.sr_prohibit_timer_present) {
+-          sr_cfg.item[0].prohibit_timer = asn1_cfg.sr_trans_max;
++          sr_cfg.item[0].prohibit_timer = asn1_cfg.sr_prohibit_timer.to_number();
+         }
++        srsran::console("RRC NR SR config: sr_id=%d trans_max=%d prohibit_timer=%d\n",
++                        sr_cfg.item[0].sched_request_id,
++                        sr_cfg.item[0].trans_max,
++                        sr_cfg.item[0].prohibit_timer);
+         if (mac->set_config(sr_cfg) != SRSRAN_SUCCESS) {
+           logger.error("Couldn't configure SR procedure.");
+           return false;
+@@ -1645,6 +1649,17 @@ bool rrc_nr::apply_sp_cell_ded_ul_pucch(const asn1::rrc_nr::pucch_cfg_s& pucch_c
+           uint32_t pucch_res_id = pucch_cfg.sched_request_res_to_add_mod_list[i].res;
+           if (pucch_res_list.contains(pucch_res_id)) {
+             phy_cfg.pucch.sr_resources[sr_res_id].resource = pucch_res_list[pucch_res_id];
++            srsran::console(
++                "RRC NR PUCCH SR resource: sr_res_id=%d sr_id=%d period=%d offset=%d pucch_res_id=%d format=%d start_prb=%d start_symbol=%d nof_symbols=%d\n",
++                sr_res_id,
++                phy_cfg.pucch.sr_resources[sr_res_id].sr_id,
++                phy_cfg.pucch.sr_resources[sr_res_id].period,
++                phy_cfg.pucch.sr_resources[sr_res_id].offset,
++                pucch_res_id,
++                phy_cfg.pucch.sr_resources[sr_res_id].resource.format,
++                phy_cfg.pucch.sr_resources[sr_res_id].resource.starting_prb,
++                phy_cfg.pucch.sr_resources[sr_res_id].resource.start_symbol_idx,
++                phy_cfg.pucch.sr_resources[sr_res_id].resource.nof_symbols);
+           } else {
+             logger.warning("Warning SR (%d) PUCCH resource is invalid (%d)", sr_res_id, pucch_res_id);
+             phy_cfg.pucch.sr_resources[sr_res_id].configured = false;

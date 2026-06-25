@@ -1,0 +1,244 @@
+diff --git a/src/database.py b/src/database.py
+index 121f3fa..d6b9f74 100644
+--- a/src/database.py
++++ b/src/database.py
+@@ -15,30 +15,26 @@
+ # ==================================================================================
+ import time
+ import pandas as pd
+-from influxdb import DataFrameClient
++from influxdb_client import InfluxDBClient
++from influxdb_client.client.write_api import SYNCHRONOUS
+ from configparser import ConfigParser
+ from mdclogpy import Logger
+-from influxdb.exceptions import InfluxDBClientError, InfluxDBServerError
+-from requests.exceptions import RequestException, ConnectionError
+ 
+ logger = Logger(name=__name__)
+ 
+ 
+ class DATABASE(object):
+-    r""" DATABASE takes an input as database name. It creates a client connection
++    r"""DATABASE takes an input as database name. It creates a client connection
+       to influxDB and It reads/ writes UE data for a given dabtabase and a measurement.
+ 
+-
+     Parameters
+     ----------
+-    host: str (default='r4-influxdb.ricplt.svc.cluster.local')
++    host: str (default='r4-influxdb-influxdb2.ricplt.svc.cluster.local')
+         hostname to connect to InfluxDB
+     port: int (default='8086')
+         port to connect to InfluxDB
+-    username: str (default='root')
+-        user to connect
+-    password: str (default='root')
+-        password of the use
++    token: str (default='')
++        token to connect
+ 
+     Attributes
+     ----------
+@@ -48,30 +44,49 @@ class DATABASE(object):
+         fetched data from database
+     """
+ 
+-    def __init__(self, dbname='Timeseries', user='root', password='root', host="r4-influxdb.ricplt", port='8086', path='', ssl=False):
++    def __init__(
++        self,
++        dbname="Timeseries",
++        token="",
++        org="influxdata",
++        bucket="kpimon",
++        host="r4-influxdb-influxdb2.ricplt",
++        port="80",
++        path="",
++        ssl=False,
++    ):
+         self.data = None
+         self.host = host
+         self.port = port
+-        self.user = user
+-        self.password = password
++        self.token = token
++        self.org = org
++        self.bucket = bucket
+         self.path = path
+         self.ssl = ssl
+         self.dbname = dbname
+         self.client = None
++        self.write_api = None
+         self.config()
+ 
+     def connect(self):
+         if self.client is not None:
+             self.client.close()
+ 
++        self.client = InfluxDBClient(
++            url=f"http://{self.host}:{self.port}", token=self.token, org=self.org
++        )
++        self.write_api = self.client.write_api(write_options=SYNCHRONOUS)
+         try:
+-            self.client = DataFrameClient(self.host, port=self.port, username=self.user, password=self.password, path=self.path, ssl=self.ssl, database=self.dbname, verify_ssl=self.ssl)
+-            version = self.client.request('ping', expected_response_code=204).headers['X-Influxdb-Version']
+-            logger.info("Conected to Influx Database, InfluxDB version : {}".format(version))
++            query_api = self.client.query_api()
++            query_api.query(
++                'from(bucket: "{}") |> range(start: -1m)'.format(self.bucket)
++            )
++            logger.info("Connected to Influx Database")
+             return True
+-
+-        except (RequestException, InfluxDBClientError, InfluxDBServerError, ConnectionError):
+-            logger.error("Failed to establish a new connection with InflulxDB, Please check your url/hostname")
++        except Exception as e:
++            logger.error(
++                f"Failed to establish a new connection with InfluxDB. Please check your URL/hostname: {self.host}. Error: {e}"
++            )
+             time.sleep(120)
+ 
+     def read_data(self, train=False, valid=False, limit=False):
+@@ -82,21 +97,37 @@ class DATABASE(object):
+         meas: str (default='ueMeasReport')
+         limit:int (defualt=False)
+         """
++        # self.data = None
++        # query = 'select * from ' + self.meas
++        # if not train and not valid and not limit:
++        #     query += ' where time>now()-1600ms'
++        # elif train:
++        #     query += ' where time<now()-5m and time>now()-75m'
++        # elif valid:
++        #     query += ' where time>now()-5m'
++        # elif limit:
++        #     query += ' where time>now()-1m limit '+str(limit)
++        # result = self.query(query)
++        # if result and len(result[self.meas]) != 0:
++        #     self.data = result[self.meas]
+         self.data = None
+-        query = 'select * from ' + self.meas
+-        if not train and not valid and not limit:
+-            query += ' where time>now()-1600ms'
+-        elif train:
+-            query += ' where time<now()-5m and time>now()-75m'
++        base_query = f'from(bucket: "{self.bucket}")'
++        if train:
++            query = f'{base_query} |> range(start: -75m, stop: -5m) |> filter(fn: (r) => r._measurement == "{self.meas}")'
+         elif valid:
+-            query += ' where time>now()-5m'
+-        elif limit:
+-            query += ' where time>now()-1m limit '+str(limit)
++            query = f'{base_query} |> range(start: -5m) |> filter(fn: (r) => r._measurement == "{self.meas}")'
++        else:
++            query = f'{base_query} |> range(start: -1600ms) |> filter(fn: (r) => r._measurement == "{self.meas}")'
++        if limit:
++            query += f" |> limit(n: {limit})"
++        query += (
++            ' |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")'
++        )
+         result = self.query(query)
+-        if result and len(result[self.meas]) != 0:
+-            self.data = result[self.meas]
++        if result is not None and not result.empty:
++            self.data = result
+ 
+-    def write_anomaly(self, df, meas='AD'):
++    def write_anomaly(self, df, meas="AD"):
+         """Write data method for a given measurement
+ 
+         Parameters
+@@ -104,34 +135,62 @@ class DATABASE(object):
+         meas: str (default='AD')
+         """
+         try:
+-            self.client.write_points(df, meas)
+-        except (RequestException, InfluxDBClientError, InfluxDBServerError) as e:
+-            logger.error('Failed to send metrics to influxdb')
++            write_api = self.client.write_api()
++            write_api.write(
++                bucket=self.bucket,
++                org=self.org,
++                record=df,
++                data_frame_measurement_name=meas,
++            )
++        except Exception as e:
++            logger.error("Failed to send metrics to influxdb")
+             print(e)
+ 
+     def query(self, query):
+         try:
+-            result = self.client.query(query)
+-        except (RequestException, InfluxDBClientError, InfluxDBServerError, ConnectionError) as e:
+-            logger.error('Failed to connect to influxdb: {}'.format(e))
+-            result = False
++            query_api = self.client.query_api()
++            result = query_api.query_data_frame(query)
++            if isinstance(result, list):
++                result = (
++                    pd.concat(result, ignore_index=False) if result else pd.DataFrame()
++                )
++            if not result.empty:
++                result = result.drop(
++                    columns=[
++                        col
++                        for col in [
++                            "result",
++                            "table",
++                            "_start",
++                            "_stop",
++                            "_measurement",
++                        ]
++                        if col in result.columns
++                    ]
++                )
++                if "_time" in result.columns:
++                    result = result.set_index("_time")
++        except Exception as e:
++            logger.error("Failed to connect to influxdb: {}".format(e))
++            result = pd.DataFrame()
+         return result
+ 
+     def config(self):
+         cfg = ConfigParser()
+-        cfg.read('src/ad_config.ini')
++        cfg.read("src/ad_config.ini")
+         for section in cfg.sections():
+-            if section == 'influxdb':
++            if section == "influxdb":
+                 self.host = cfg.get(section, "host")
+                 self.port = cfg.get(section, "port")
+-                self.user = cfg.get(section, "user")
+-                self.password = cfg.get(section, "password")
++                self.token = cfg.get(section, "token")
++                self.org = cfg.get(section, "org")
++                self.bucket = cfg.get(section, "bucket")
+                 self.path = cfg.get(section, "path")
+                 self.ssl = cfg.get(section, "ssl")
+                 self.dbname = cfg.get(section, "database")
+                 self.meas = cfg.get(section, "measurement")
+ 
+-            if section == 'features':
++            if section == "features":
+                 self.thpt = cfg.get(section, "thpt")
+                 self.rsrp = cfg.get(section, "rsrp")
+                 self.rsrq = cfg.get(section, "rsrq")
+@@ -146,7 +205,7 @@ class DUMMY(DATABASE):
+ 
+     def __init__(self):
+         super().__init__()
+-        self.ue_data = pd.read_csv('src/ue.csv')
++        self.ue_data = pd.read_csv("src/ue.csv")
+ 
+     def connect(self):
+         return True
+@@ -157,8 +216,8 @@ class DUMMY(DATABASE):
+         else:
+             self.data = self.ue_data.head(limit).drop(self.anomaly, axis=1)
+ 
+-    def write_anomaly(self, df, meas_name='AD'):
++    def write_anomaly(self, df, meas_name="AD"):
+         pass
+ 
+     def query(self, query=None):
+-        return {'UEReports': self.ue_data.head(1)}
++        return {"UEReports": self.ue_data.head(1)}

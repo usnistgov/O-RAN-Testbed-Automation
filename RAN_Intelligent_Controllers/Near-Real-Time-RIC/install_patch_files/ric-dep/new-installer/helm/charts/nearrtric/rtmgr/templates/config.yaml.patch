@@ -1,0 +1,12 @@
+diff --git a/new-installer/helm/charts/nearrtric/rtmgr/templates/config.yaml b/new-installer/helm/charts/nearrtric/rtmgr/templates/config.yaml
+index c1e656a..19e13ee 100644
+--- a/new-installer/helm/charts/nearrtric/rtmgr/templates/config.yaml
++++ b/new-installer/helm/charts/nearrtric/rtmgr/templates/config.yaml
+@@ -176,6 +176,7 @@ data:
+          { 'messagetype': 'RIC_ENDC_CONF_UPDATE_FAILURE', 'senderendpoint': 'E2MAN', 'subscriptionid': -1, 'endpoint': '', 'meid': '%meid'},
+          { 'messagetype': 'RIC_E2_SETUP_REQ', 'senderendpoint': '', 'subscriptionid': -1, 'endpoint': 'E2MAN', 'meid': ''},
+          { 'messagetype': 'E2_TERM_INIT', 'senderendpoint': '', 'subscriptionid': -1, 'endpoint': 'E2MAN', 'meid': ''},
++         { 'messagetype': 'E2_TERM_KEEP_ALIVE_REQ', 'senderendpoint': 'E2MAN', 'subscriptionid': -1, 'endpoint': 'E2TERM', 'meid': ''},
+          { 'messagetype': 'RIC_X2_SETUP_RESP', 'senderendpoint': '', 'subscriptionid': -1, 'endpoint': 'E2MAN', 'meid': ''},
+          { 'messagetype': 'RIC_X2_SETUP_FAILURE', 'senderendpoint': '', 'subscriptionid': -1, 'endpoint': 'E2MAN', 'meid': ''},
+          { 'messagetype': 'RIC_X2_RESET', 'senderendpoint': '', 'subscriptionid': -1, 'endpoint': 'E2MAN', 'meid': ''},

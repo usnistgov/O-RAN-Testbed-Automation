@@ -1,0 +1,20 @@
+diff --git a/src/ad_config.ini b/src/ad_config.ini
+index 3028a4e..9267bd1 100644
+--- a/src/ad_config.ini
++++ b/src/ad_config.ini
+@@ -15,10 +15,11 @@
+ # ==================================================================================
+ 
+ [influxdb]
+-host = ricplt-influxdb.ricplt
+-port = 8086
+-user = admin
+-password = 
++host = r4-influxdb-influxdb2.ricplt
++port = 80
++token =
++org = influxdata
++bucket = kpimon
+ path = 
+ database = RIC-Test
+ measurement = UEReports

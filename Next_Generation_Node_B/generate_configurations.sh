@@ -32,9 +32,20 @@
 set -e
 
 EXPOSE_GNB_TO_HOSTNAME=false
-UE_NUMBERS=(1 2 3 4)
 USE_FLEXRIC=false
-USE_ZMQ_BROKER=false
+USE_ZMQ_BROKER=true
+ZMQ_BROKER_CHANNEL_BW_MHZ=20
+GNB_SRATE_MHZ=23.04
+GNB_BASE_SRATE_HZ=23.04e6
+PDU_SESSION_TIMEOUT=3
+ZMQ_BROKER_SLOW_DOWN_RATIO=1
+
+if [ "$USE_ZMQ_BROKER" = "true" ]; then
+    ZMQ_BROKER_CHANNEL_BW_MHZ=10
+    GNB_SRATE_MHZ=11.52
+    GNB_BASE_SRATE_HZ=11.52e6
+    PDU_SESSION_TIMEOUT=30
+fi
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
@@ -50,6 +61,8 @@ BASE_EXAMPLE_CONFIG_PATH="$SCRIPT_DIR/ocudu/configs/gnb_rf_b210_fdd_srsUE.yml"
 # Parse command-line arguments
 ENABLE_E2_TERM="true"
 E2_ADDRESS="null"
+UE_NUMBERS=()
+CELL_COUNT=1
 while [[ $# -gt 0 ]]; do
     case $1 in
     --disable-e2-term)
@@ -60,12 +73,35 @@ while [[ $# -gt 0 ]]; do
         E2_ADDRESS="$2"
         shift 2
         ;;
+    --cells | --cell-count)
+        CELL_COUNT="$2"
+        if ! [[ "$CELL_COUNT" =~ ^[0-9]+$ ]] || [ "$CELL_COUNT" -lt 1 ]; then
+            echo "ERROR: Cell count must be a positive integer."
+            exit 1
+        fi
+        if [ "$CELL_COUNT" -gt 50 ]; then
+            echo "ERROR: Cell count must be 50 or less to avoid conflicts with UE ZeroMQ ports."
+            exit 1
+        fi
+        shift 2
+        ;;
+    [0-9]*)
+        if ! [[ "$1" =~ ^[0-9]+$ ]] || [ "$1" -lt 1 ]; then
+            echo "ERROR: UE number must be a positive integer."
+            exit 1
+        fi
+        UE_NUMBERS+=("$1")
+        shift
+        ;;
     *)
         echo "Unknown argument: $1"
         exit 1
         ;;
     esac
 done
+if [ ${#UE_NUMBERS[@]} -eq 0 ]; then
+    UE_NUMBERS=(1 2 3)
+fi
 
 # Define the path to the YAML file
 YAML_PATH="../5G_Core_Network/options.yaml"
@@ -131,6 +167,12 @@ done
 
 # Ensure the correct YAML editor is installed
 "$SCRIPT_DIR/install_scripts/./ensure_consistent_yq.sh"
+
+if [ ! -t 0 ] && [ -z "$("../5G_Core_Network/install_scripts/get_amf_address.sh")" ]; then
+    echo "ERROR: Open5GS AMF addresses are not configured and standard input is not interactive."
+    echo "Please run 5G_Core_Network/generate_configurations.sh before regenerating the gNodeB configuration."
+    exit 1
+fi
 
 echo "Restoring gNodeB configuration file..."
 rm -rf configs
@@ -305,11 +347,16 @@ update_yaml() {
 mkdir -p "$SCRIPT_DIR/logs"
 
 if [ "$USE_ZMQ_BROKER" = "true" ]; then
-    DEVICE_ARGS="fail_unlocked=true,tx_port=tcp://127.0.0.1:2000,rx_port=tcp://127.0.0.1:2001,"
+    DEVICE_ARGS="fail_unlocked=true,"
+    for ((CELL_INDEX = 0; CELL_INDEX < CELL_COUNT; CELL_INDEX++)); do
+        CELL_RX_PORT=$((2000 + CELL_INDEX * 2))
+        CELL_TX_PORT=$((2001 + CELL_INDEX * 2))
+        DEVICE_ARGS+="tx_port${CELL_INDEX}=tcp://127.0.0.1:${CELL_RX_PORT},rx_port${CELL_INDEX}=tcp://127.0.0.1:${CELL_TX_PORT},"
+    done
 else
     BASE_SUBNET="10.201.0.0/16"
     SUBNET_SIZE=4
-    UE_NUMBER=1
+    UE_NUMBER="${UE_NUMBERS[0]}"
     SUBNET_OFFSET=$((UE_NUMBER * SUBNET_SIZE))
     HOST_IP_OFFSET=$((SUBNET_OFFSET))
     UE_IP_OFFSET=$((SUBNET_OFFSET + 1))
@@ -317,7 +364,7 @@ else
     DEVICE_ARGS="fail_unlocked=true,tx_port=tcp://*:2100,rx_port=tcp://$UE_IP:2101,"
 fi
 
-DEVICE_ARGS+="base_srate=23.04e6"
+DEVICE_ARGS+="base_srate=$GNB_BASE_SRATE_HZ"
 
 # Update configuration values for AMF connection
 update_yaml "configs/gnb.yaml" "cu_cp.amf" "addrs" "$AMF_ADDR"
@@ -334,12 +381,12 @@ fi
 update_yaml "configs/gnb.yaml" "cu_cp.amf.supported_tracking_areas[0]" "tac" $TAC
 update_yaml "configs/gnb.yaml" "cu_cp.amf.supported_tracking_areas[0].plmn_list[0]" "plmn" $PLMN
 update_yaml "configs/gnb.yaml" "cu_cp.inactivity_timer" "7200"
-update_yaml "configs/gnb.yaml" "cu_cp.request_pdu_session_timeout" "3"
+update_yaml "configs/gnb.yaml" "cu_cp.request_pdu_session_timeout" "$PDU_SESSION_TIMEOUT"
 
 # Update configuration values for RF front-end device
 update_yaml "configs/gnb.yaml" "ru_sdr" "device_driver" "zmq"
 update_yaml "configs/gnb.yaml" "ru_sdr" "device_args" "$DEVICE_ARGS"
-update_yaml "configs/gnb.yaml" "ru_sdr" "srate" "23.04"
+update_yaml "configs/gnb.yaml" "ru_sdr" "srate" "$GNB_SRATE_MHZ"
 update_yaml "configs/gnb.yaml" "ru_sdr" "tx_gain" "0" # https://gitlab.com/ocudu/ocudu/-/commit/8c922b067749d89d60c37b60c4bc6292b79a0183
 update_yaml "configs/gnb.yaml" "ru_sdr" "rx_gain" "0"
 update_yaml "configs/gnb.yaml" "ru_sdr" "clock" "default"
@@ -350,6 +397,27 @@ update_yaml "configs/gnb.yaml" "cell_cfg" "nof_antennas_dl" "1"
 update_yaml "configs/gnb.yaml" "cell_cfg" "nof_antennas_ul" "1"
 update_yaml "configs/gnb.yaml" "cell_cfg" "plmn" $PLMN
 update_yaml "configs/gnb.yaml" "cell_cfg" "tac" $TAC
+
+if [ "$USE_ZMQ_BROKER" = "true" ]; then
+    update_yaml "configs/gnb.yaml" "cell_cfg" "channel_bandwidth_MHz" "$ZMQ_BROKER_CHANNEL_BW_MHZ"
+    update_yaml "configs/gnb.yaml" "cell_cfg.pdcch.common" "coreset0_index" "6"
+    update_yaml "configs/gnb.yaml" "cell_cfg.prach" "total_nof_ra_preambles" "64"
+    update_yaml "configs/gnb.yaml" "cell_cfg.prach" "nof_ssb_per_ro" "1"
+    update_yaml "configs/gnb.yaml" "cell_cfg.prach" "nof_cb_preambles_per_ssb" "64"
+    update_yaml "configs/gnb.yaml" "cell_cfg.pucch" "resource_set_size" "7"
+    update_yaml "configs/gnb.yaml" "cell_cfg.pucch" "nof_cell_res_set_configs" "1"
+    update_yaml "configs/gnb.yaml" "cell_cfg.pucch" "f1_nof_cyclic_shifts" "1"
+    update_yaml "configs/gnb.yaml" "cell_cfg.pucch" "f1_enable_occ" "true"
+    update_yaml "configs/gnb.yaml" "cell_cfg.pucch" "nof_cell_sr_res" "7"
+    update_yaml "configs/gnb.yaml" "cell_cfg.pucch" "nof_cell_csi_res" "7"
+fi
+
+yq eval -i 'del(.cells)' "configs/gnb.yaml"
+if [ "$USE_ZMQ_BROKER" = "true" ] && [ "$CELL_COUNT" -gt 1 ]; then
+    for ((CELL_INDEX = 0; CELL_INDEX < CELL_COUNT; CELL_INDEX++)); do
+        update_yaml "configs/gnb.yaml" "cells[$CELL_INDEX]" "pci" "$((1 + CELL_INDEX))"
+    done
+fi
 
 # Update configuration values for slicing
 # Clear existing slice configuration
@@ -448,7 +516,7 @@ update_yaml "configs/gnb.yaml" "cu_cp" "max_nof_dus" ""
 update_yaml "configs/gnb.yaml" "cu_cp" "max_nof_cu_ups" ""
 update_yaml "configs/gnb.yaml" "cu_cp" "max_nof_ues" ""
 update_yaml "configs/gnb.yaml" "cu_cp" "max_nof_drbs_per_ue" ""
-update_yaml "configs/gnb.yaml" "cu_cp" "request_pdu_session_timeout" "3"
+update_yaml "configs/gnb.yaml" "cu_cp" "request_pdu_session_timeout" "$PDU_SESSION_TIMEOUT"
 
 # Update configuration values for gNodeB logging
 update_yaml "configs/gnb.yaml" "log" "filename" "$SCRIPT_DIR/logs/gnb.log"
@@ -517,84 +585,46 @@ update_yaml "configs/gnb.yaml" "ru_sdr" "otw_format" "default"
 #     update_yaml "configs/gnb.yaml" "expert_execution.main_pool" "nof_threads" "$(nproc)"
 # fi
 
-if [ "$USE_ZMQ_BROKER" = "true" ] && [ ! -f "zmq_broker/multi_ue_scenario.py" ]; then
-    echo "Compiling ZeroMQ Broker GNU Radio Companion flowgraph..."
-    mkdir -p zmq_broker
-    if [ ! -f "zmq_broker/multi_ue_scenario.grc" ]; then
-        if ! command -v jq &>/dev/null; then
-            echo "Installing jq..."
-            sudo env $APTVARS apt-get install -y jq
-        fi
-        DOCS_HASH=$(jq -r '."https://gitlab.com/ocudu/ocudu_docs.git"[1]' ../commit_hashes.json 2>/dev/null)
-        if [ -z "$DOCS_HASH" ] || [ "$DOCS_HASH" = "null" ]; then
-            DOCS_HASH="main"
-        fi
-        echo "Downloading ZeroMQ Broker GNU Radio Companion flowgraph (${DOCS_HASH})..."
-        wget -qO zmq_broker/multi_ue_scenario.grc "https://gitlab.com/ocudu/ocudu_docs/-/raw/${DOCS_HASH}/docs/tutorials/srsue/assets/multi_ue_scenario.grc"
-        wget -qO zmq_broker/multi_ue_scenario.grc.license "https://gitlab.com/ocudu/ocudu_docs/-/raw/${DOCS_HASH}/docs/tutorials/srsue/assets/multi_ue_scenario.grc.license"
-    fi
-
-    # GNU Radio 3.8 issue with vmcircbuf_default_factory
-    mkdir -p ~/.gnuradio/prefs
-    if [ ! -f ~/.gnuradio/prefs/vmcircbuf_default_factory ]; then
-        echo "gr::vmcircbuf_sysv_shm_factory" >~/.gnuradio/prefs/vmcircbuf_default_factory
-    fi
-    sudo mkdir -p /root/.gnuradio/prefs
-    if ! sudo test -f /root/.gnuradio/prefs/vmcircbuf_default_factory; then
-        sudo bash -c 'echo "gr::vmcircbuf_sysv_shm_factory" > /root/.gnuradio/prefs/vmcircbuf_default_factory'
-    fi
-
-    # Numpy version must be less than 2 to avoid grcc compatibility issue
-    NUMPY_VERSION=$(python3 -c "import numpy; print(numpy.__version__)" 2>/dev/null || echo "0")
-    NUMPY_MAJOR=$(echo "$NUMPY_VERSION" | cut -d. -f1)
-    if [ "$NUMPY_MAJOR" -ge 2 ]; then
-        echo "Downgrading NumPy to version < 2 for GNU Radio compatibility..."
-        pip3 install "numpy<2" --break-system-packages
-    fi
-
-    grcc -o zmq_broker zmq_broker/multi_ue_scenario.grc
-fi
-
 if [ "$USE_ZMQ_BROKER" = "true" ]; then
-    ZMQ_BROKER_PYTHON_FILE="zmq_broker/multi_ue_scenario.py"
-    if [ ! -f "$ZMQ_BROKER_PYTHON_FILE" ]; then
-        echo "ERROR: Could not find $ZMQ_BROKER_PYTHON_FILE after generation."
+    if [ ! -f "install_scripts/generate_zmq_broker.sh" ]; then
+        echo "ERROR: Could not find install_scripts/generate_zmq_broker.sh."
         exit 1
     fi
 
-    echo "Synchronizing ZeroMQ Broker endpoints with UE subnet mapping..."
+    echo "Generating ZeroMQ Broker Python script..."
 
     # Allocate a /30 (4 addresses) subnet per UE (e.g., UE 1 -> 10.201.0.4/30, Gateway .5, UE .6)
     BASE_SUBNET="10.201.0.0/16"
     SUBNET_SIZE=4
+    BROKER_SRATE_INT=$(awk "BEGIN { printf \"%d\", $GNB_SRATE_MHZ * 1000000 }")
 
-    UE_NUMBER=1
-    while true; do
-        PORT_RX=$((2100 + (UE_NUMBER - 1) * 100))
-        PORT_TX=$((2101 + (UE_NUMBER - 1) * 100))
-
-        # Stop when the UE endpoint does not exist in the broker graph
-        if ! grep -qE "'tcp://(127\\.0\\.0\\.1|\*):$PORT_RX'" "$ZMQ_BROKER_PYTHON_FILE"; then
-            break
-        fi
-
+    UE_ARGS=""
+    for UE_NUMBER in "${UE_NUMBERS[@]}"; do
         SUBNET_OFFSET=$((UE_NUMBER * SUBNET_SIZE))
         UE_IP_OFFSET=$((SUBNET_OFFSET + 1)) # .6
         UE_IP=$(python3 install_scripts/fetch_nth_ip.py "$BASE_SUBNET" "$UE_IP_OFFSET")
-
-        # UE RX: Listen on all interfaces in the host namespace
-        sed -i "s|'tcp://127\\.0\\.0\\.1:$PORT_RX'|'tcp://*:$PORT_RX'|g" "$ZMQ_BROKER_PYTHON_FILE"
-
-        # UE TX: Connect to current UE namespace IP every run
-        sed -i "s|'tcp://127\\.0\\.0\\.1:$PORT_TX'|'tcp://$UE_IP:$PORT_TX'|g" "$ZMQ_BROKER_PYTHON_FILE"
-        sed -i "s|'tcp://10\\.[0-9]\\+\\.[0-9]\\+\\.[0-9]\\+:$PORT_TX'|'tcp://$UE_IP:$PORT_TX'|g" "$ZMQ_BROKER_PYTHON_FILE"
-
-        UE_NUMBER=$((UE_NUMBER + 1))
+        UE_ARGS="$UE_ARGS --ue $UE_NUMBER:$UE_IP"
     done
 
-    echo "Successfully synchronized ZMQ Broker Python script for $((UE_NUMBER - 1)) UEs."
+    mkdir -p zmq_broker
+    ./install_scripts/generate_zmq_broker.sh --output "zmq_broker/multi_ue_scenario.py" --sample-rate-hz "$BROKER_SRATE_INT" --slow-down-ratio "$ZMQ_BROKER_SLOW_DOWN_RATIO" --cells "$CELL_COUNT" $UE_ARGS
+
+    if ! python3 -c "import gnuradio, PyQt5" >/dev/null 2>&1; then
+        echo "Installing GNU Radio runtime for the ZeroMQ Broker..."
+        sudo env $APTVARS apt-get install -y gnuradio python3-pyqt5
+    fi
+
+    # # GNU Radio 3.8 issue with vmcircbuf_default_factory.
+    # mkdir -p ~/.gnuradio/prefs
+    # if [ ! -f ~/.gnuradio/prefs/vmcircbuf_default_factory ]; then
+    #     echo "gr::vmcircbuf_mmap_shm_open_factory" >~/.gnuradio/prefs/vmcircbuf_default_factory
+    #     #echo "gr::vmcircbuf_sysv_shm_factory" >~/.gnuradio/prefs/vmcircbuf_default_factory
+    # fi
+    rm -f ~/.gnuradio/prefs/vmcircbuf_default_factory
+
+    echo "Successfully generated ZMQ Broker Python script for $CELL_COUNT cell(s) and ${#UE_NUMBERS[@]} UEs."
 else
-    echo "Using direct ZeroMQ connection for UE 1 at *:2100 and $UE_IP:2101 (no ZeroMQ broker)."
+    echo "Using direct ZeroMQ connection for UE $UE_NUMBER at *:2100 and $UE_IP:2101 (no ZeroMQ broker)."
 fi
 
 echo "Successfully configured the gNodeB. The configuration file is located in the configs/ directory."

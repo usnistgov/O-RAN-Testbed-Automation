@@ -1,0 +1,86 @@
+diff --git a/src/insert.py b/src/insert.py
+index a5c3a5b..2bc8403 100644
+--- a/src/insert.py
++++ b/src/insert.py
+@@ -31,51 +31,60 @@ class INSERTDATA(DATABASE):
+         super().__init__()
+         self.config()
+         self.connect()
+-#        self.dropdb('RIC-Test')
+-        self.createdb('RIC-Test')
++        self.createdb(self.bucket)
+ 
+     def config(self):
+         cfg = ConfigParser()
+-        cfg.read('ad_config.ini')
++        cfg.read("ad_config.ini")
+         for section in cfg.sections():
+-            if section == 'influxdb':
++            if section == "influxdb":
+                 self.host = cfg.get(section, "host")
+                 self.port = cfg.get(section, "port")
+-                self.user = cfg.get(section, "user")
+-                self.password = cfg.get(section, "password")
++                self.token = cfg.get(section, "token")
++                self.org = cfg.get(section, "org")
++                self.bucket = cfg.get(section, "bucket")
+                 self.path = cfg.get(section, "path")
+                 self.ssl = cfg.get(section, "ssl")
+                 self.dbname = cfg.get(section, "database")
+                 self.meas = cfg.get(section, "measurement")
+ 
+-    def createdb(self, dbname):
+-        if dbname not in self.client.get_list_database():
+-            print("Create database: " + dbname)
+-            self.client.create_database(dbname)
+-            self.client.switch_database(dbname)
++    def createdb(self, bucket_name):
++        bucket_api = self.client.buckets_api()
++        if not bucket_api.find_bucket_by_name(bucket_name):
++            print(f"Create bucket: {bucket_name}")
++            bucket_api.create_bucket(bucket_name=bucket_name, org=self.org)
+ 
+-    def dropdb(self, dbname):
+-        if next((item for item in self.client.get_list_database() if item.get("name") == dbname), None) is not None:
+-            print("DROP database: " + dbname)
+-            self.client.drop_database(dbname)
++    def dropdb(self, bucket_name):
++        bucket_api = self.client.buckets_api()
++        bucket = bucket_api.find_bucket_by_name(bucket_name)
++        if bucket:
++            print(f"DROP bucket: {bucket_name}")
++            bucket_api.delete_bucket(bucket)
+ 
+     def dropmeas(self, measname):
+         print("DROP MEASUREMENT: " + measname)
+-        self.client.query('DROP MEASUREMENT '+measname)
++        self.client.query("DROP MEASUREMENT " + measname)
+ 
+     def assign_timestamp(self, df):
+-        steps = df['measTimeStampRf'].unique()
++        steps = df["measTimeStampRf"].unique()
+         for timestamp in steps:
+-            d = df[df['measTimeStampRf'] == timestamp]
+-            d.index = pd.date_range(start=datetime.datetime.now(), freq='1ms', periods=len(d))
+-            self.client.write_points(d, self.meas)
++            d = df[df["measTimeStampRf"] == timestamp]
++            d.index = pd.date_range(
++                start=datetime.datetime.now(), freq="1ms", periods=len(d)
++            )
++            self.write_api.write(
++                bucket=self.bucket,
++                org=self.org,
++                record=d,
++                data_frame_measurement_name=self.meas,
++            )
+             time.sleep(0.7)
+ 
+ 
+ def populatedb():
+     # inintiate connection and create database UEDATA
+     db = INSERTDATA()
+-    df = pd.read_csv('ue.csv')
++    df = pd.read_csv("ue.csv")
+     while True:
+         db.assign_timestamp(df)
+ 

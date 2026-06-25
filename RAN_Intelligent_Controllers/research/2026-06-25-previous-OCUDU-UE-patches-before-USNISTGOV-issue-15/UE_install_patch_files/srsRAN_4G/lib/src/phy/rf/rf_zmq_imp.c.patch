@@ -1,0 +1,13 @@
+diff --git a/lib/src/phy/rf/rf_zmq_imp.c b/lib/src/phy/rf/rf_zmq_imp.c
+index 976159890..6238fb581 100644
+--- a/lib/src/phy/rf/rf_zmq_imp.c
++++ b/lib/src/phy/rf/rf_zmq_imp.c
+@@ -342,7 +342,7 @@ int rf_zmq_open_multi(char* args, void** h, uint32_t nof_channels)
+ 
+       // log_trx_timeout
+       char tmp2[RF_PARAM_LEN] = {};
+-      parse_string(args, "log_trx_timeout", i, tmp);
++      parse_string(args, "log_trx_timeout", i, tmp2);
+       if (strncmp(tmp2, "true", RF_PARAM_LEN) == 0 || strncmp(tmp2, "yes", RF_PARAM_LEN) == 0) {
+         rx_opts.log_trx_timeout = true;
+       }

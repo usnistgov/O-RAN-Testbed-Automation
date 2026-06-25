@@ -155,11 +155,8 @@ else
             sudo find ric-dep/ -type f -exec sed -i "s/36422/$E2_TERM_PORT/g" {} +
         fi
     fi
-    # Patch the install script and save a backup of the original
-    if [ ! -f "ric-dep/bin/install_k8s_and_helm.previous.sh" ]; then
-        cp ric-dep/bin/install_k8s_and_helm.sh ric-dep/bin/install_k8s_and_helm.previous.sh
-    fi
-    cp "$SCRIPT_DIR/install_patch_files/ric-dep/bin/install_k8s_and_helm.sh" ric-dep/bin/install_k8s_and_helm.sh
+    echo "Patching ric-dep..."
+    ./install_scripts/apply_patches.sh
 
     cd "$SCRIPT_DIR/ric-dep/bin/"
 
@@ -291,6 +288,9 @@ else
             sudo find ric-dep/ -type f -exec sed -i "s/36422/$E2_TERM_PORT/g" {} +
         fi
     fi
+
+    echo "Patching ric-dep..."
+    ./install_scripts/apply_patches.sh
 
     echo "Revising RIC Installation YAML File..."
     RIC_YAML_FILE_NAME="example_recipe_latest_stable.yaml"

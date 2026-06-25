@@ -31,8 +31,9 @@
 # Exit immediately if a command fails
 set -e
 
-USE_ZMQ_BROKER=false
+USE_ZMQ_BROKER=true
 SHOW_ZMQ_BROKER_UI=false
+ZMQ_BROKER_READY_TIMEOUT=30
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
@@ -46,23 +47,86 @@ cd "$SCRIPT_DIR"
 # Function to handle graceful shutdown
 graceful_shutdown() {
     trap - SIGINT SIGTERM SIGQUIT
-    echo "Shutting down gNodeB gracefully..."
+    echo "Shutting down OCUDU gNodeB gracefully..."
     ./stop.sh
     exit
 }
 trap graceful_shutdown SIGINT SIGTERM SIGQUIT
 
+wait_for_zmq_broker_ready() {
+    BROKER_FILE="zmq_broker/multi_ue_scenario.py"
+    REQUIRED_PORTS=""
+
+    if [ -f "$BROKER_FILE" ]; then
+        CELL_PORTS=$(awk '/^# CELL_CONFIG: / { print $5 }' "$BROKER_FILE")
+        for CELL_PORT in $CELL_PORTS; do
+            REQUIRED_PORTS="$REQUIRED_PORTS $CELL_PORT"
+        done
+        if [ -z "$REQUIRED_PORTS" ]; then
+            REQUIRED_PORTS="2001"
+        fi
+        UE_PORTS=$(awk '/^# UE_CONFIG: / { print $4 }' "$BROKER_FILE")
+        for UE_PORT in $UE_PORTS; do
+            REQUIRED_PORTS="$REQUIRED_PORTS $UE_PORT"
+        done
+    else
+        REQUIRED_PORTS="2001"
+    fi
+
+    echo "Expected ZMQ Broker listening ports:$REQUIRED_PORTS"
+    echo -n "Waiting for ZMQ Broker sockets"
+    ATTEMPT=0
+    while true; do
+        ALL_READY=true
+        for PORT in $REQUIRED_PORTS; do # Check if each required port is listening
+            if command -v ss >/dev/null 2>&1; then
+                if ! ss -ltn | awk '{ print $4 }' | grep -Eq "[:.]$PORT$"; then
+                    ALL_READY=false
+                    break
+                fi
+            elif command -v netstat >/dev/null 2>&1; then
+                if ! netstat -ltn | awk '{ print $4 }' | grep -Eq "[:.]$PORT$"; then
+                    ALL_READY=false
+                    break
+                fi
+            fi
+        done
+        if [ "$ALL_READY" = true ]; then
+            break
+        fi
+        if ! pgrep -f "[m]ulti_ue_scenario\.py" >/dev/null; then
+            echo
+            echo "ZMQ Broker stopped before opening sockets. Recent ZeroMQ broker log (logs/zmq_broker.log):"
+            tail -n 80 logs/zmq_broker.log
+            exit 1
+        fi
+        echo -n "."
+        sleep 1
+        ATTEMPT=$((ATTEMPT + 1))
+        if [ $ATTEMPT -ge $ZMQ_BROKER_READY_TIMEOUT ]; then
+            echo
+            echo "ZMQ Broker sockets did not become ready after $ZMQ_BROKER_READY_TIMEOUT seconds."
+            echo "Expected listening ports:$REQUIRED_PORTS"
+            echo "Recent ZeroMQ broker log (logs/zmq_broker.log):"
+            tail -n 80 logs/zmq_broker.log
+            exit 1
+        fi
+    done
+    echo
+}
+
 if pgrep -x "gnb" >/dev/null; then
-    echo "Already running gnb."
+    echo "Already running OCUDU gNodeB."
 else
-    echo "Starting gnb..."
+    echo "Starting OCUDU gNodeB..."
     mkdir -p logs
     >logs/gnb.log
     >logs/gnb_stdout.txt
 
     if [ "$USE_ZMQ_BROKER" = "true" ]; then
-        if pgrep -f "[p]ython3 zmq_broker/multi_ue_scenario\.py" >/dev/null; then
+        if pgrep -f "[m]ulti_ue_scenario\.py" >/dev/null; then
             echo "Already running ZMQ Broker."
+            wait_for_zmq_broker_ready
         else
             >logs/zmq_broker.log
             echo "Starting ZMQ Broker..."
@@ -72,6 +136,12 @@ else
                 QT_QPA_PLATFORM=offscreen nohup python3 zmq_broker/multi_ue_scenario.py >logs/zmq_broker.log 2>&1 &
             fi
             sleep 2
+            if ! pgrep -f "[m]ulti_ue_scenario\.py" >/dev/null; then
+                echo "ZMQ Broker failed to start. Recent ZeroMQ broker log (logs/zmq_broker.log):"
+                tail -n 80 logs/zmq_broker.log
+                exit 1
+            fi
+            wait_for_zmq_broker_ready
         fi
     fi
 

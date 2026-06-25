@@ -42,10 +42,11 @@ cd "$PARENT_DIR"
 UE_NUMBER=$1
 BANDWIDTH=${2:-1M}
 DURATION=${3:-60}
+PDU_SESSION_IP=${4:-}
 
 if [[ -z "$UE_NUMBER" ]]; then
     echo "ERROR: No UE number provided."
-    echo "Usage: $0 <UE_NUMBER> [BANDWIDTH] [DURATION]"
+    echo "Usage: $0 <UE_NUMBER> [BANDWIDTH] [DURATION] [PDU_SESSION_IP]"
     echo "       BANDWIDTH is optional and can be specified in units [k, K, m, M, g, G]. Default is 1M."
     echo "       DURATION is optional and specifies the duration in seconds. Default is 60."
     exit 1
@@ -76,8 +77,8 @@ if [ $DURATION -lt 1 ]; then
     exit 1
 fi
 
-if [ ! -f "configs/ue1.conf" ]; then
-    echo "Configuration was not found for OAI UE 1. Please run ./generate_configurations.sh first."
+if [ ! -f "configs/ue${UE_NUMBER}.conf" ]; then
+    echo "Configuration was not found for UE $UE_NUMBER. Please run ./generate_configurations.sh first."
     exit 1
 fi
 
@@ -105,19 +106,39 @@ if [ -z "$FIXED_DOCKER_PERMS" ]; then
     fi
 fi
 
-LOG_FILE="logs/ue${UE_NUMBER}_stdout.txt"
-if [ ! -f "$LOG_FILE" ]; then
-    echo "ERROR: Log file $LOG_FILE does not exist. Please start the UE first."
-    exit 1
-fi
-PDU_SESSION_IP=$(cat $LOG_FILE | grep "PDU Session Establishment successful" | cut -d ':' -f2 | xargs | tr -d '\r\n')
+if [ -z "$PDU_SESSION_IP" ]; then # Select a PDU session
+    if ! PDU_SESSION_OUTPUT=$(./additional_scripts/get_pdu_sessions.sh "$UE_NUMBER" 2>&1); then
+        echo "$PDU_SESSION_OUTPUT"
+        exit 1
+    fi
 
-if [ -z "$PDU_SESSION_IP" ]; then
-    echo "ERROR: Unable to find PDU Session IP from the log file $LOG_FILE."
-    exit 1
+    PDU_SESSIONS=()
+    while IFS= read -r SESSION; do
+        [ -n "$SESSION" ] && PDU_SESSIONS+=("$SESSION")
+    done <<<"$PDU_SESSION_OUTPUT"
+
+    if [ ${#PDU_SESSIONS[@]} -eq 0 ]; then
+        echo "ERROR: No PDU sessions found for UE $UE_NUMBER."
+        exit 1
+    fi
+
+    if [ ${#PDU_SESSIONS[@]} -eq 1 ]; then
+        PDU_SESSION_IP="${PDU_SESSIONS[0]}"
+    else
+        echo "Available PDU sessions for UE $UE_NUMBER:"
+        for INDEX in "${!PDU_SESSIONS[@]}"; do
+            echo "$((INDEX + 1)). ${PDU_SESSIONS[$INDEX]}"
+        done
+        read -p "Select PDU session: " SELECTION
+        if ! [[ "$SELECTION" =~ ^[0-9]+$ ]] || [ "$SELECTION" -lt 1 ] || [ "$SELECTION" -gt ${#PDU_SESSIONS[@]} ]; then
+            echo "ERROR: Invalid PDU session selection."
+            exit 1
+        fi
+        PDU_SESSION_IP="${PDU_SESSIONS[$((SELECTION - 1))]}"
+    fi
 fi
 
-echo "Successfully found PDU Session IP: $PDU_SESSION_IP"
+echo "Using PDU Session IP: $PDU_SESSION_IP"
 
 if command -v docker >/dev/null 2>&1 && docker ps --format '{{.Names}}' | grep -qw dn_internet; then
     USING_5GDEPLOY=true

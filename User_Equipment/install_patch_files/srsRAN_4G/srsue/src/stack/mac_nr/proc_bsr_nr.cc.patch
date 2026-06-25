@@ -1,0 +1,29 @@
+diff --git a/srsue/src/stack/mac_nr/proc_bsr_nr.cc b/srsue/src/stack/mac_nr/proc_bsr_nr.cc
+index 3c778e5de..fd19f7218 100644
+--- a/srsue/src/stack/mac_nr/proc_bsr_nr.cc
++++ b/srsue/src/stack/mac_nr/proc_bsr_nr.cc
+@@ -140,9 +140,12 @@ bool proc_bsr_nr::check_any_channel()
+ // Checks if only one logical channel has data avaiable for Tx
+ bool proc_bsr_nr::check_new_data(const mac_buffer_states_t& new_buffer_state)
+ {
+-  for (const auto& lcg : buffer_state.lcg_buffer_size) {
+-    if (lcg.second == 0 and new_buffer_state.lcg_buffer_size.at(lcg.first) > 0) {
+-      logger.debug("BSR:   New data available for LCG=%d", lcg.first);
++  for (const auto& new_lcg : new_buffer_state.lcg_buffer_size) {
++    const auto old_lcg_it = buffer_state.lcg_buffer_size.find(new_lcg.first);
++    const auto old_size   = old_lcg_it != buffer_state.lcg_buffer_size.end() ? old_lcg_it->second : 0;
++
++    if (old_size == 0 and new_lcg.second > 0) {
++      logger.debug("BSR:   New data available for LCG=%d old=%d new=%d", new_lcg.first, old_size, new_lcg.second);
+       return true;
+     }
+   }
+@@ -263,7 +266,7 @@ int proc_bsr_nr::setup_lcid(uint32_t lcid, uint32_t new_lcg, uint32_t priority)
+     return SRSRAN_ERROR;
+   }
+ 
+-  it->second = new_lcg;
++  lcg_priorities[priority] = new_lcg;
+ 
+   return SRSRAN_SUCCESS;
+ }

@@ -5,7 +5,7 @@
   "https://github.com/srsran/oran-sc-ric.git": ["", "621ade26251f69a4ad079ba98bb708d8e5aeeb98"],
   "https://github.com/zeromq/libzmq.git": ["", "b946c18f676760387276cd095bbdd8c0e18c09bf"],
   "https://github.com/zeromq/czmq.git": ["", "b669c7eb60cb8f587071ac6ece7cd68d30ac4017"],
-  "https://gitlab.com/ocudu/ocudu.git": ["", "490a9f7e13291d77536b9fabfc6ab70e8cf2c6cd"],
+  "https://gitlab.com/ocudu/ocudu.git": ["", "ec286e2803add48d353b6d3193efbc46fd77a625"],
   "https://gitlab.com/ocudu/ocudu_docs.git": ["", "707255465ef50227f8a0a1270c5ac59372ab18ed"],
   "https://gitlab.com/ocudu/ocudu_elements/ocudu_oran_apps/ocudu_o1_adapter.git": ["", "2c0d50ee0e89c54ef9e04435c0fd783907103d8b"],
   "https://gitlab.com/ocudu/ocudu_elements/ocudu_oran_apps/ocudu_netconf.git": ["", "7fc2b1866ae39a4bfb108acb34e3c3d3759143fa"],

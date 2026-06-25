@@ -222,7 +222,20 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
 
         self.samp_rate = SAMPLE_RATE
         self.slow_down_ratio = SLOW_DOWN_RATIO
-        self.path_loss_db = {(cell["number"], ue["number"]): 0 for cell in CELL_CONFIGS for ue in UE_CONFIGS}
+        # # Equally loud cells
+        # self.path_loss_db = {(cell["number"], ue["number"]): 0 for cell in CELL_CONFIGS for ue in UE_CONFIGS}
+
+        # Set path loss to 0 dB for the cell that matches the UE number with 10, and 90 dB for all other cells
+        self.path_loss_db = {}
+        for cell in CELL_CONFIGS:
+            for ue in UE_CONFIGS:
+                cell_number = cell["number"]
+                ue_number = ue["number"]
+                if cell_number == (ue_number - 10):
+                    self.path_loss_db[(cell_number, ue_number)] = 0
+                else:
+                    self.path_loss_db[(cell_number, ue_number)] = 90
+
         self.gnb_dl_sources = {}
         self.gnb_ul_sinks = {}
         self.dl_throttles = {}

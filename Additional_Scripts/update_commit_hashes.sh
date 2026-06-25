@@ -70,7 +70,7 @@ for REPOSITORY in $(jq 'keys[]' "$JSON_FILE" | tr -d '"'); do
         REPOSITORY="$REPOSITORY_NEW"
     fi
 
-    if [[ "${REPOSITORY,,}" == *"/5gdeploy.git" ]]; then
+    if [[ "$REPOSITORY" == "https://github.com/usnistgov/5gdeploy.git" ]]; then
         echo "Clearing commit hash for $REPOSITORY..."
         JSON_CONTENTS=$(jq ".[\"$REPOSITORY\"][1] = \"\"" <<<"$JSON_CONTENTS")
         echo "    Skipping."

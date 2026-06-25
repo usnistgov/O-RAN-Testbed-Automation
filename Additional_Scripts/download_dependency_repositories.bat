@@ -40,7 +40,7 @@ cd "5G_Core_Network" >nul 2>&1
 if not errorlevel 1 (
     git clone https://github.com/open5gs/open5gs.git
     cd "open5gs"
-    git checkout a420fefa13d3798c06d1fd4d9253f30cf524ac40
+    git checkout ec6b76dccf975373cf108a09b1a4a284aaca20c5
     cd ..\..
 ) else (
     echo ERROR: Failed to cd to 5G_Core_Network. Skipping clone.
@@ -382,7 +382,7 @@ if not exist "OpenAirInterface_Testbed\5G_Core_Network\open5gs" (
     if not errorlevel 1 (
         git clone https://github.com/open5gs/open5gs.git
         cd "open5gs"
-        git checkout a420fefa13d3798c06d1fd4d9253f30cf524ac40
+        git checkout ec6b76dccf975373cf108a09b1a4a284aaca20c5
         cd ..\..\..
     ) else (
         echo ERROR: Failed to cd to OpenAirInterface_Testbed\5G_Core_Network. Skipping clone.
@@ -405,7 +405,7 @@ cd "OpenAirInterface_Testbed\User_Equipment" >nul 2>&1
 if not errorlevel 1 (
     git clone https://github.com/duranta-project/openairinterface5g.git
     cd "openairinterface5g"
-    git checkout f3589d97c2e9a0dec527336c88f988df587c2925
+    git checkout 31eb466a7d598a7f0a8850b0a7405dca16290b9a
     cd ..\..\..
 ) else (
     echo ERROR: Failed to cd to OpenAirInterface_Testbed\User_Equipment. Skipping clone.
@@ -433,7 +433,7 @@ cd "OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC" >nul 2>&1
 if not errorlevel 1 (
     git clone https://github.com/swig/swig.git
     cd "swig"
-    git checkout 6fe73bf1448934bb25099c6e4e9e7155ff644d5e
+    git checkout 9aa54c517f1893ed9391588377fc805574681dea
     cd ..\..\..\..
 ) else (
     echo ERROR: Failed to cd to OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC. Skipping clone.

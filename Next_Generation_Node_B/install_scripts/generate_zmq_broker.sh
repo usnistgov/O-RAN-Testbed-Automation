@@ -198,6 +198,9 @@ cat >>"$OUTPUT" <<'EOF'
 ]
 SAMPLE_RATE = __SAMPLE_RATE_HZ__
 SLOW_DOWN_RATIO = __SLOW_DOWN_RATIO__
+INITIAL_CELL_NUMBER = 1
+INITIAL_CELL_PATH_LOSS_DB = 0
+OTHER_CELL_PATH_LOSS_DB = 35
 ZMQ_TIMEOUT = 100
 ZMQ_HWM = -1
 
@@ -225,16 +228,16 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
         # # Equally loud cells
         # self.path_loss_db = {(cell["number"], ue["number"]): 0 for cell in CELL_CONFIGS for ue in UE_CONFIGS}
 
-        # Set path loss to 0 dB for the cell that matches the UE number with 10, and 90 dB for all other cells
+        # Start all UEs closest to Cell1. Other cells are still audible and can be made stronger from the UI
         self.path_loss_db = {}
         for cell in CELL_CONFIGS:
             for ue in UE_CONFIGS:
                 cell_number = cell["number"]
                 ue_number = ue["number"]
-                if cell_number == (ue_number - 10):
-                    self.path_loss_db[(cell_number, ue_number)] = 0
+                if cell_number == INITIAL_CELL_NUMBER:
+                    self.path_loss_db[(cell_number, ue_number)] = INITIAL_CELL_PATH_LOSS_DB
                 else:
-                    self.path_loss_db[(cell_number, ue_number)] = 90
+                    self.path_loss_db[(cell_number, ue_number)] = OTHER_CELL_PATH_LOSS_DB
 
         self.gnb_dl_sources = {}
         self.gnb_ul_sinks = {}
@@ -295,7 +298,7 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
                 path_key = (cell_number, ue_number)
                 label = f"Cell{cell_number} UE{ue_number} Pathloss [dB]"
 
-                self.path_loss_ranges[path_key] = Range(0, 100, 1, 0, 200)
+                self.path_loss_ranges[path_key] = Range(0, 100, 1, self.path_loss_db[path_key], 200)
                 self.path_loss_widgets[path_key] = RangeWidget(
                     self.path_loss_ranges[path_key],
                     lambda value, cell_number=cell_number, ue_number=ue_number: self.set_path_loss(

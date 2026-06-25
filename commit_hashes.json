@@ -1,14 +1,14 @@
 {
   "https://github.com/usnistgov/5gdeploy.git": ["", ""],
-  "https://github.com/open5gs/open5gs.git": ["", "f77810fa59829b3348b38afbf2b0b43ed350df62"],
+  "https://github.com/open5gs/open5gs.git": ["", "26cbc33a418a292e3b3949be69155898d751bd6e"],
   "https://github.com/srsran/srsRAN_4G.git": ["", "6bcbd9e5bf8686aa7085202cd847c5ddd64a9c16"],
   "https://github.com/srsran/oran-sc-ric.git": ["", "621ade26251f69a4ad079ba98bb708d8e5aeeb98"],
   "https://github.com/zeromq/libzmq.git": ["", "b946c18f676760387276cd095bbdd8c0e18c09bf"],
   "https://github.com/zeromq/czmq.git": ["", "b669c7eb60cb8f587071ac6ece7cd68d30ac4017"],
-  "https://gitlab.com/ocudu/ocudu.git": ["", "80f343d1ddef12ff6356143913e626c4f1e3478f"],
-  "https://gitlab.com/ocudu/ocudu_docs.git": ["", "3e6daa6548e0ee98b58a4dae10032f35569c7ee5"],
-  "https://gitlab.com/ocudu/ocudu_elements/ocudu_oran_apps/ocudu_o1_adapter.git": ["", "4e8dc394bc7d6b35c6181ee43903d35d4552d2b1"],
-  "https://gitlab.com/ocudu/ocudu_elements/ocudu_oran_apps/ocudu_netconf.git": ["", "3468af7d38f0ebe38d6a22b2f36c004cbe4a0053"],
+  "https://gitlab.com/ocudu/ocudu.git": ["", "3f609dea0edcef6efea817a14e4947fead9edc15"],
+  "https://gitlab.com/ocudu/ocudu_docs.git": ["", "8dd2d9e35ec5821cbd4e4154f0925344af809405"],
+  "https://gitlab.com/ocudu/ocudu_elements/ocudu_oran_apps/ocudu_o1_adapter.git": ["", "cc3d7f4c51caaa10fb389459e87a7d6da1191730"],
+  "https://gitlab.com/ocudu/ocudu_elements/ocudu_oran_apps/ocudu_netconf.git": ["", "161f4c714918e95e6cc5e4ccc0669d3ce125e798"],
   "https://gerrit.o-ran-sc.org/r/sim/e2-interface.git": ["m-release", "da6f82f286cdbb38af1178f82f85877b12c2f85b"],
   "https://gerrit.o-ran-sc.org/r/ric-app/hw-go.git": ["h-release", "3a0d348e429ea0f3f3d2a1d5eb54ec8758d1a262"],
   "https://github.com/o-ran-sc/ric-app-hw-python.git": ["g-release", "a6d00525aa2f62f2457d84731da2b7d89e0b1013"],
@@ -27,8 +27,8 @@
   "https://gerrit.onap.org/r/oom.git": ["", "2214f66e9d9f757239d0297353d9194f782e9eac"],
   "https://gerrit.o-ran-sc.org/r/portal/nonrtric-controlpanel.git": ["master", "9f0bc855a687f918548d5dcea7a43913256cdd54"],
   "https://gerrit.o-ran-sc.org/r/nonrtric/plt/rappmanager.git": ["m-release", "3b4813b6dab278581601a06185c146ea47b4ebb7"],
-  "https://gitlab.eurecom.fr/oai/openairinterface5g.git": ["", "d420f8c1231e9651e299b714fde53e392c6880ec"],
-  "https://gitlab.eurecom.fr/oai/o1-adapter.git": ["main", "1cd696960d9b3d28461caa61ced4b173eff1eec9"],
-  "https://github.com/swig/swig.git": ["master", "c02d4fe134e072e4f0c28413f883a6f5c4e8d32f"],
-  "https://gitlab.eurecom.fr/mosaic5g/flexric.git": ["dev", "7805d63c3157dee630f11d6eef2f5ed540f5209a"]
+  "https://github.com/duranta-project/openairinterface5g.git": ["", "f3589d97c2e9a0dec527336c88f988df587c2925"],
+  "https://gitlab.eurecom.fr/oai/o1-adapter.git": ["main", "08f208b2936a6558aa0b30d65faac9d642883ed5"],
+  "https://github.com/swig/swig.git": ["master", "6fe73bf1448934bb25099c6e4e9e7155ff644d5e"],
+  "https://gitlab.eurecom.fr/mosaic5g/flexric.git": ["dev", "ef6d722f22191eea74089966983da1f5ec1fedd4"]
 }

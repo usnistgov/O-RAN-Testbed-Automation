@@ -1,6 +1,6 @@
-## Next Generation Node B
+## Duranta Next Generation Node B
 
-The Next Generation Node B (gNodeB) is a 5G base station configured with OpenAirInterface [\[1\]][oai-gnb], connecting User Equipments (UEs) to the 5G Core Network based on the specifications outlined in 3GPP TS 38.300 [\[2\]][ts3191-3gpp], 3GPP TS 38.401 [\[3\]][ts3219-3gpp], and 3GPP TS 38.413 [\[4\]][ts3223-3gpp].
+The Next Generation Node B (gNodeB) is a 5G base station configured with Duranta [\[1\]][duranta-gnb], connecting User Equipments (UEs) to the 5G Core Network based on the specifications outlined in 3GPP TS 38.300 [\[2\]][ts3191-3gpp], 3GPP TS 38.401 [\[3\]][ts3219-3gpp], and 3GPP TS 38.413 [\[4\]][ts3223-3gpp].
 
 ## Usage
 
@@ -30,7 +30,7 @@ The gNodeB can be deployed in a split Central Unit (CU) and Distributed Unit (DU
 
 ## Telnet Server for Monitoring and Control
 
-This gNodeB supports an optional telnet server for monitoring and controlling the gNodeB [\[5\]][oai-telnet]. Enable it by setting `TELNET_SERVER=true` at the beginning of the `full_install.sh` script before running it. When starting the gNodeB, if the telnet server was installed, it will automatically start and can be accessed by directly typing into the gNodeB terminal or with `telnet 127.0.0.1 9099`. Use the `help` command within the telnet session to view available commands.
+This gNodeB supports an optional telnet server for monitoring and controlling the gNodeB [\[5\]][duranta-telnet]. Enable it by setting `TELNET_SERVER=true` at the beginning of the `full_install.sh` script before running it. When starting the gNodeB, if the telnet server was installed, it will automatically start and can be accessed by directly typing into the gNodeB terminal or with `telnet 127.0.0.1 9099`. Use the `help` command within the telnet session to view available commands.
 
 ### Telnet Connection to O1 Interface
 
@@ -38,7 +38,7 @@ The gNodeB can also be monitored and controlled remotely using the OpenAirInterf
 
 ## ImScope
 
-ImScope can be enabled for the gNodeB by setting `NRSCOPE_GUI=true` at the beginning of the `full_install.sh` script before running it. For more information about ImScope, see the OpenAirInterface documentation [\[7\]][oai-imscope].
+ImScope can be enabled for the gNodeB by setting `NRSCOPE_GUI=true` at the beginning of the `full_install.sh` script before running it. For more information about ImScope, see the Duranta documentation [\[7\]][duranta-imscope].
 
 <details>
   <summary>View Screenshot</summary>
@@ -47,20 +47,20 @@ ImScope can be enabled for the gNodeB by setting `NRSCOPE_GUI=true` at the begin
 
 ## References
 
-1. OpenAirInterface 5G Wireless Implementation. OpenAirInterface. [https://gitlab.eurecom.fr/oai/openairinterface5g][oai-gnb]
+1. Duranta - An open, research-grade RAN + UE reference stack. LF Networking. [https://lfnetworking.org/projects/duranta/][duranta-gnb]
 2. 3GPP TS 38.300: NR; NR and NG-RAN Overall description; Stage-2. [https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=3191][ts3191-3gpp]
 3. 3GPP TS 38.401: NG-RAN; Architecture description. [https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=3219][ts3219-3gpp]
 4. 3GPP TS 38.413: NG-RAN; NG Application Protocol (NGAP). [https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=3223][ts3223-3gpp]
-5. Starting the softmodem with the telnet server. OpenAirInterface. [https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/develop/common/utils/telnetsrv/DOC/telnetusage.md][oai-telnet]
+5. Starting the softmodem with the telnet server. Duranta. [https://github.com/duranta-project/openairinterface5g/blob/develop/common/utils/telnetsrv/DOC/telnetusage.md][duranta-telnet]
 6. OAI O1 Adapter. OpenAirInterface. [https://gitlab.eurecom.fr/oai/o1-adapter][oai-o1-adapter]
-7. ImScope. OpenAirInterface. [https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/develop/openair1/PHY/TOOLS/readme.md?ref_type=heads#imscope][oai-imscope]
+7. ImScope. Duranta. [https://github.com/duranta-project/openairinterface5g/blob/develop/openair1/PHY/TOOLS/readme.md?ref_type=heads#imscope][duranta-imscope]
 
 <!-- References -->
 
-[oai-gnb]: https://gitlab.eurecom.fr/oai/openairinterface5g
+[duranta-gnb]: https://lfnetworking.org/projects/duranta/
 [ts3191-3gpp]: https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=3191
 [ts3219-3gpp]: https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=3219
 [ts3223-3gpp]: https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=3223
-[oai-telnet]: https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/develop/common/utils/telnetsrv/DOC/telnetusage.md
+[duranta-telnet]: https://github.com/duranta-project/openairinterface5g/blob/develop/common/utils/telnetsrv/DOC/telnetusage.md
 [oai-o1-adapter]: https://gitlab.eurecom.fr/oai/o1-adapter
-[oai-imscope]: https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/develop/openair1/PHY/TOOLS/readme.md?ref_type=heads#imscope
+[duranta-imscope]: https://github.com/duranta-project/openairinterface5g/blob/develop/openair1/PHY/TOOLS/readme.md?ref_type=heads#imscope

@@ -174,9 +174,6 @@ static void make_layer_type1_sp_mode1(precoding_weight_matrix&              resu
                                       unsigned                              m,
                                       cf_t                                  polarization_offset)
 {
-  ocudu_assert((panel.n2 == 1) && (panel.o2 == 1),
-               "Unsupported panel configuration. Only the 2x1 panel (i.e., N1 = 2, N2 = 1) is supported.");
-
   // Phase increment for each beam coefficient. This defines the direction of the beam in the horizontal plane.
   float phase_inc_h_rad = TWOPI * (static_cast<float>(l) / static_cast<float>(panel.o1 * panel.n1));
   // Phase increment for each beam coefficient. This defines the direction of the beam in the vertical plane.
@@ -222,6 +219,116 @@ static void make_layer_type1_sp_mode1(precoding_weight_matrix&              resu
   }
 }
 
+/// \brief Gets the parameters \f$k_1\f$ and \f$k_2\f$ as specified in TS38.214 Table 5.2.2.2.1-3.
+/// \return A pair of values that correspond to \f$k_1\f$ and \f$k_2\f$.
+static std::pair<unsigned, unsigned> get_k1_and_k2_2_layers(const pmi_codebook_single_panel_info& panel_info,
+                                                            unsigned                              i_1_3)
+{
+  if (panel_info.n1 > panel_info.n2 && panel_info.n2 > 1) {
+    // Case: N1 > N2 > 1.
+    if (i_1_3 == 0) {
+      return {0, 0};
+    } else if (i_1_3 == 1) {
+      return {panel_info.o1, 0};
+    } else if (i_1_3 == 2) {
+      return {0, panel_info.o2};
+    } else if (i_1_3 == 3) {
+      return {2 * panel_info.o1, 0};
+    }
+  } else if (panel_info.n1 == panel_info.n2) {
+    // Case: N1 = N2.
+    if (i_1_3 == 0) {
+      return {0, 0};
+    } else if (i_1_3 == 1) {
+      return {panel_info.o1, 0};
+    } else if (i_1_3 == 2) {
+      return {0, panel_info.o2};
+    } else if (i_1_3 == 3) {
+      return {panel_info.o1, panel_info.o2};
+    }
+  } else if (panel_info.n1 == 2 && panel_info.n2 == 1) {
+    // Case: N1 = 2, N2 = 1.
+    // Note: The table shows empty cells for i_1_3 = 2 and 3 in this column. This implies i_1_3 is restricted to {0, 1}
+    // for this specific configuration.
+    if (i_1_3 == 0) {
+      return {0, 0};
+    } else if (i_1_3 == 1) {
+      return {panel_info.o1, 0};
+    }
+  } else if (panel_info.n1 > 2 && panel_info.n2 == 1) {
+    // Case: N1 > 2, N2 = 1.
+    if (i_1_3 == 0) {
+      return {0, 0};
+    } else if (i_1_3 == 1) {
+      return {panel_info.o1, 0};
+    } else if (i_1_3 == 2) {
+      return {2 * panel_info.o1, 0};
+    } else if (i_1_3 == 3) {
+      return {3 * panel_info.o1, 0};
+    }
+  }
+
+  return {0, 0};
+}
+
+/// \brief Gets the parameters \f$k_1\f$ and \f$k_2\f$ as specified in TS38.214 Table 5.2.2.2.1-4.
+///
+/// Applicable to 3-layer and 4-layer CSI reporting when \f$P_\text{CSI-RS} < 16\f$.
+/// \return A pair of values that correspond to \f$k_1\f$ and \f$k_2\f$.
+static std::pair<unsigned, unsigned> get_k1_and_k2_3_4_layers(const pmi_codebook_single_panel_info& panel_info,
+                                                              unsigned                              i_1_3)
+{
+  if (panel_info.n1 == 2 && panel_info.n2 == 1) {
+    // Case: N1 = 2, N2 = 1. Note: The table only defines i_1_3 = 0 for this column.
+    ocudu_assert(i_1_3 == 0, "For N1 = 2, N2 = 1, the parameter i_1_3 can only be 0.");
+    return {panel_info.o1, 0};
+  } else if (panel_info.n1 == 4 && panel_info.n2 == 1) {
+    // Case: N1 = 4, N2 = 1. The table leaves i_1_3 = 3 empty for this column.
+    ocudu_assert(i_1_3 <= 2, "For N1 = 4, N2 = 1, the parameter i_1_3 can only take values {0, 1, 2}.");
+    if (i_1_3 == 0) {
+      return {panel_info.o1, 0};
+    } else if (i_1_3 == 1) {
+      return {2 * panel_info.o1, 0};
+    } else if (i_1_3 == 2) {
+      return {3 * panel_info.o1, 0};
+    }
+  } else if (panel_info.n1 == 6 && panel_info.n2 == 1) {
+    // Case: N1 = 6, N2 = 1.
+    if (i_1_3 == 0) {
+      return {panel_info.o1, 0};
+    } else if (i_1_3 == 1) {
+      return {2 * panel_info.o1, 0};
+    } else if (i_1_3 == 2) {
+      return {3 * panel_info.o1, 0};
+    } else if (i_1_3 == 3) {
+      return {4 * panel_info.o1, 0};
+    }
+  } else if (panel_info.n1 == 2 && panel_info.n2 == 2) {
+    // Case: N1 = 2, N2 = 2. Note: The table leaves i_1_3 = 3 empty for this column.
+    ocudu_assert(i_1_3 <= 2, "For N1 = 2, N2 = 2, the parameter i_1_3 can only take values {0, 1, 2}.");
+    if (i_1_3 == 0) {
+      return {panel_info.o1, 0};
+    } else if (i_1_3 == 1) {
+      return {0, panel_info.o2};
+    } else if (i_1_3 == 2) {
+      return {panel_info.o1, panel_info.o2};
+    }
+  } else if (panel_info.n1 == 3 && panel_info.n2 == 2) {
+    // Case: N1 = 3, N2 = 2.
+    if (i_1_3 == 0) {
+      return {panel_info.o1, 0};
+    } else if (i_1_3 == 1) {
+      return {0, panel_info.o2};
+    } else if (i_1_3 == 2) {
+      return {panel_info.o1, panel_info.o2};
+    } else if (i_1_3 == 3) {
+      return {2 * panel_info.o1, 0};
+    }
+  }
+
+  return {0, 0};
+}
+
 precoding_weight_matrix ocudu::make_type1_sp_mode1(const precoding_matrix_indicator& pmi, unsigned nof_layers)
 {
   ocudu_assert(nof_layers <= precoding_constants::MAX_NOF_LAYERS,
@@ -234,32 +341,67 @@ precoding_weight_matrix ocudu::make_type1_sp_mode1(const precoding_matrix_indica
   const auto* type1_sp_pmi = std::get_if<pmi_typeI_single_panel>(&pmi);
   ocudu_assert(type1_sp_pmi != nullptr, "The precoding matrix indication (PMI) must be of type Type I Single-Panel.");
 
-  // Ensure the given panel configuration is supported.
-  ocudu_assert(type1_sp_pmi->panel_config == pmi_codebook_single_panel_config::two_one,
-               "For 4 CSI-RS antenna ports, only the 2x1 panel distribution is supported (i.e., N1 = 2, N2 = 1).");
-
   // Extract the panel information.
   const pmi_codebook_single_panel_info& panel_info = get_single_panel_info(type1_sp_pmi->panel_config);
+  const unsigned                        o1         = panel_info.o1;
+  const unsigned                        o2         = panel_info.o2;
 
   // Calculate the number of CSI-RS ports.
   unsigned nof_ports = 2 * panel_info.n1 * panel_info.n2;
+
+  // Ensure the number of ports is a supported value (positive integer below the maximum number of ports). This also
+  // checks that the given Type I Single-Panel configuration is supported, i.e., N1xN2 = {2x1, 2x2, 4x1}.
+  ocudu_assert(nof_ports > 0 && nof_ports <= precoding_constants::MAX_NOF_PORTS,
+               "The given number of ports (i.e., {}) is out of the range of supported values ({}..{}).",
+               nof_ports,
+               1,
+               precoding_constants::MAX_NOF_PORTS);
+
+  // Ensure the number of layers is a supported value (positive integer below the number of ports).
+  ocudu_assert(nof_layers > 0 && nof_layers <= nof_ports,
+               "The given number of layers (i.e., {}) for the given number of ports (i.e., {}) is out of the range of "
+               "supported values ({}..{}).",
+               nof_layers,
+               nof_ports,
+               1,
+               nof_ports);
+
+  // Whether the antenna panel distribution is 2D, i.e., supports vertical beam selection.
+  const bool is_2d_panel = panel_info.n2 > 1;
 
   // Get the bitwidth for the Precoding Matrix Indicator parameters given the selected panel configuration and number of
   // layers.
   pmi_typeI_single_panel_param_sizes pmi_param_sizes = get_pmi_sizes_typeI_single_panel(panel_info, nof_layers);
 
-  // Derive the number of beams from the beam selector parameter (i_1_1) bitwidth.
-  unsigned nof_beams = pow2(pmi_param_sizes.i_1_1);
+  // Derive the number of horizontal beams from the beam selector parameter (i_1_1) bitwidth.
+  unsigned nof_beams_horizontal = pow2(pmi_param_sizes.i_1_1);
+  // Derive the number of vertical beams from the beam selector parameter (i_1_2) bitwidth.
+  unsigned nof_beams_vertical = pow2(pmi_param_sizes.i_1_2);
+  // Derive the number of possible polarization phase shifts from the selector parameter (i_2) bitwidth.
+  unsigned nof_pol_shifts = pow2(pmi_param_sizes.i_2);
 
-  // Number of possible polarization phase shifts given the number of layers.
-  const unsigned nof_pol_shifts = (nof_layers > 1) ? 2 : 4;
+  // Horizontal beam selector index.
+  const unsigned i_1_1 = type1_sp_pmi->i_1_1;
+
+  // The vertical beam selector index (i_1_2) is required when N2 > 1 (2D panel distribution).
+  ocudu_assert(!is_2d_panel || type1_sp_pmi->i_1_2.has_value(),
+               "Missing parameter i_1_2 for a 2D antenna panel distribution (i.e., N2 = {}).",
+               panel_info.n2);
+  const unsigned i_1_2 = is_2d_panel ? *type1_sp_pmi->i_1_2 : 0;
 
   // Validate the selected horizontal beam identifier (i_1_1).
-  const interval<unsigned, false> beam_selector_range(0, nof_beams);
-  ocudu_assert(beam_selector_range.contains(type1_sp_pmi->i_1_1),
+  const interval<unsigned, false> beam_horizontal_selector_range(0, nof_beams_horizontal);
+  ocudu_assert(beam_horizontal_selector_range.contains(i_1_1),
                "The given beam identifier i_1_1 (i.e., {}) is out of the range {}.",
-               type1_sp_pmi->i_1_1,
-               beam_selector_range);
+               i_1_1,
+               beam_horizontal_selector_range);
+
+  // Validate the selected vertical beam identifier (i_1_2).
+  const interval<unsigned, true> beam_vertical_selector_range(0, nof_beams_vertical);
+  ocudu_assert(beam_vertical_selector_range.contains(i_1_2),
+               "The given beam identifier i_1_2 (i.e., {}) is out of the range {}.",
+               i_1_2,
+               beam_vertical_selector_range);
 
   // Validate the selected polarization shift identifier (i_2).
   const interval<unsigned, false> pol_shift_selector_range(0, nof_pol_shifts);
@@ -274,59 +416,132 @@ precoding_weight_matrix ocudu::make_type1_sp_mode1(const precoding_matrix_indica
   // Polarization phase shift. This defines the relative phase between the cross-polarized antenna elements.
   cf_t phi = std::polar(1.0F, M_PI_2f * static_cast<float>(type1_sp_pmi->i_2));
 
-  // Beam identifiers for each layer.
-  static_vector<unsigned, precoding_constants::MAX_NOF_LAYERS> layer_beam(nof_layers);
+  // Horizontal beam identifiers for each layer.
+  static_vector<unsigned, precoding_constants::MAX_NOF_LAYERS> layer_beam_horizontal(nof_layers);
+  // Vertical beam identifiers for each layer.
+  static_vector<unsigned, precoding_constants::MAX_NOF_LAYERS> layer_beam_vertical(nof_layers);
   // Cross-polarization phase offset for each layer.
   static_vector<cf_t, precoding_constants::MAX_NOF_LAYERS> layer_pol(nof_layers);
 
+  // Extract the i_1_3 value from the optional.
+  unsigned i_1_3 = type1_sp_pmi->i_1_3.value_or(0);
+
+  // For a 3 or 4 layer transmission using 4 antenna ports (N1 = 2, N2 = 1), the beam offset selector can only take the
+  // zero value.
+  if ((type1_sp_pmi->panel_config == pmi_codebook_single_panel_config::two_one) &&
+      (nof_layers == 3 || nof_layers == 4)) {
+    if (i_1_3 != 0) {
+      ocudu_assert(*type1_sp_pmi->i_1_3 == 0,
+                   "For a {} layer transmission using 4 antenna ports (N1 = 2, N2 = 1), the beam offset selector "
+                   "(i_1_3) can only take the zero value.",
+                   nof_layers);
+    }
+  }
+
+  // Derive the number of possible beam offset selector (i_1_3) values from the parameter bitwidth.
+  unsigned nof_possible_beam_offsets = pow2(pmi_param_sizes.i_1_3);
+
+  // For a 2, 3 or 4 layer transmission, a beam offset can be applied based on i_1_3 parameter - ensure the selected
+  // value is in a valid range.
+  if (nof_layers >= 2 && nof_layers <= 4) {
+    const interval<unsigned, false> beam_offset_range(0, nof_possible_beam_offsets);
+    ocudu_assert(beam_offset_range.contains(i_1_3),
+                 "The given beam offset identifier i_1_3 (i.e., {}) is out of the range {}.",
+                 i_1_3,
+                 beam_offset_range);
+  }
+
   switch (nof_layers) {
     case 1: {
-      layer_beam.assign({type1_sp_pmi->i_1_1});
-      layer_pol.assign({phi});
+      // Select beam parameters from TS38.214 Table 5.2.2.2.1-5 for codebook mode 1.
+      layer_beam_horizontal = {i_1_1};
+      layer_beam_vertical   = {i_1_2};
+      layer_pol             = {phi};
       break;
     }
     case 2: {
-      // For two layer - four antenna ports, the beam offset identifier (i.e., i_1_3) can take values 0 or 1.
-      ocudu_assert(type1_sp_pmi->i_1_3.has_value(), "The PMI report is missing the beam offset identifier (i_1_3).");
+      // Get the offset between layers for the given panel configuration based on i_1_3, as per TS 38.214
+      // Table 5.2.2.2.1-3.
+      unsigned k1;
+      unsigned k2;
+      std::tie(k1, k2) = get_k1_and_k2_2_layers(panel_info, i_1_3);
 
-      unsigned                                   i_1_3 = *type1_sp_pmi->i_1_3;
-      static constexpr interval<unsigned, false> beam_offset_range(0, 2);
-      ocudu_assert(beam_offset_range.contains(i_1_3),
-                   "The given beam offset identifier i_1_3 (i.e., {}) is out of the range {}.",
-                   i_1_3,
-                   beam_offset_range);
-
-      // Beam offset between layers, as per TS 38.214 Table 5.2.2.2.1-3 for N1=2 and N2=1.
-      const std::array<unsigned, 2> k1 = {0, panel_info.o1};
-
-      layer_beam.assign({type1_sp_pmi->i_1_1, type1_sp_pmi->i_1_1 + k1[i_1_3]});
-      layer_pol.assign({phi, -phi});
+      layer_beam_horizontal = {i_1_1, i_1_1 + k1};
+      layer_beam_vertical   = {i_1_2, i_1_2 + k2};
+      layer_pol             = {phi, -phi};
       break;
     }
-    case 3: {
-      // Beam offset between layers, as per TS 38.214 Table 5.2.2.2.1-4.
-      const unsigned k1 = panel_info.o1;
-
-      layer_beam.assign({type1_sp_pmi->i_1_1, type1_sp_pmi->i_1_1 + k1, type1_sp_pmi->i_1_1});
-      layer_pol.assign({phi, phi, -phi});
-      break;
-    }
+    // Join the cases of 3 and 4 layers, they share most of the logic based on TS 38.214 Table 5.2.2.2.1-4.
+    case 3:
     case 4: {
-      // Beam offset between layers, as per TS 38.214 Table 5.2.2.2.1-4.
-      const unsigned k1 = panel_info.o1;
+      // Get the offset between layers for the given panel configuration based on i_1_3, as per TS 38.214
+      // Table 5.2.2.2.1-4.
+      unsigned k1;
+      unsigned k2;
+      std::tie(k1, k2)      = get_k1_and_k2_3_4_layers(panel_info, i_1_3);
+      layer_beam_horizontal = {i_1_1, i_1_1 + k1, i_1_1, i_1_1 + k1};
+      layer_beam_vertical   = {i_1_2, i_1_2 + k2, i_1_2, i_1_2 + k2};
+      layer_pol             = {phi, phi, -phi, -phi};
+      break;
+    }
+    case 5: {
+      if (is_2d_panel) {
+        layer_beam_horizontal = {i_1_1, i_1_1, i_1_1 + o1, i_1_1 + o1, i_1_1 + o1};
+      } else {
+        layer_beam_horizontal = {i_1_1, i_1_1, i_1_1 + o1, i_1_1 + o1, i_1_1 + 2 * o1};
+      }
 
-      layer_beam.assign({type1_sp_pmi->i_1_1, type1_sp_pmi->i_1_1 + k1, type1_sp_pmi->i_1_1, type1_sp_pmi->i_1_1 + k1});
-      layer_pol.assign({phi, phi, -phi, -phi});
+      layer_beam_vertical = {i_1_2, i_1_2, i_1_2, i_1_2, i_1_2 + o2};
+      layer_pol           = {phi, -phi, 1.0f, -1.0f, 1.0f};
+      break;
+    }
+    case 6: {
+      if (is_2d_panel) {
+        layer_beam_horizontal = {i_1_1, i_1_1, i_1_1 + o1, i_1_1 + o1, i_1_1 + o1, i_1_1 + o1};
+      } else {
+        layer_beam_horizontal = {i_1_1, i_1_1, i_1_1 + o1, i_1_1 + o1, i_1_1 + 2 * o1, i_1_1 + 2 * o1};
+      }
+
+      layer_beam_vertical = {i_1_2, i_1_2, i_1_2, i_1_2, i_1_2 + o2, i_1_2 + o2};
+      layer_pol           = {phi, -phi, phi, -phi, 1.0f, -1.0f};
+      break;
+    }
+    case 7: {
+      if (is_2d_panel) {
+        layer_beam_horizontal = {i_1_1, i_1_1, i_1_1 + o1, i_1_1, i_1_1, i_1_1 + o1, i_1_1 + o1};
+      } else {
+        layer_beam_horizontal = {
+            i_1_1, i_1_1, i_1_1 + o1, i_1_1 + 2 * o1, i_1_1 + 2 * o1, i_1_1 + 3 * o1, i_1_1 + 3 * o1};
+      }
+
+      layer_beam_vertical = {i_1_2, i_1_2, i_1_2, i_1_2 + o2, i_1_2 + o2, i_1_2 + o2, i_1_2 + o2};
+      layer_pol           = {phi, -phi, phi, 1.0f, -1.0f, 1.0f, -1.0f};
+      break;
+    }
+    case 8: {
+      if (is_2d_panel) {
+        layer_beam_horizontal = {i_1_1, i_1_1, i_1_1 + o1, i_1_1 + o1, i_1_1, i_1_1, i_1_1 + o1, i_1_1 + o1};
+      } else {
+        layer_beam_horizontal = {
+            i_1_1, i_1_1, i_1_1 + o1, i_1_1 + o1, i_1_1 + 2 * o1, i_1_1 + 2 * o1, i_1_1 + 3 * o1, i_1_1 + 3 * o1};
+      }
+
+      layer_beam_vertical = {i_1_2, i_1_2, i_1_2, i_1_2, i_1_2 + o2, i_1_2 + o2, i_1_2 + o2, i_1_2 + o2};
+      layer_pol           = {phi, -phi, phi, -phi, 1.0f, -1.0f, 1.0f, -1.0f};
       break;
     }
     default:
       ocudu_assert(false, "Invalid number of layers.");
-      break;
   }
 
   // Build the coefficients for each port and layer.
   for (unsigned i_layer = 0; i_layer != nof_layers; ++i_layer) {
-    make_layer_type1_sp_mode1(result, panel_info, i_layer, layer_beam[i_layer], 0, layer_pol[i_layer]);
+    make_layer_type1_sp_mode1(result,
+                              panel_info,
+                              i_layer,
+                              layer_beam_horizontal[i_layer],
+                              is_2d_panel ? layer_beam_vertical[i_layer] : 0,
+                              layer_pol[i_layer]);
   }
 
   // Apply scaling.

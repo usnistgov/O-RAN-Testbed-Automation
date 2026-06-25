@@ -37,9 +37,11 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
+USE_ZMQ_BROKER=false
+
 # Check if the gNodeB is already stopped
 IS_RUNNING=$(./is_running.sh)
-if echo "$IS_RUNNING" | grep -q "gNodeB: NOT_RUNNING" && echo "$IS_RUNNING" | grep -q "ZMQ_Broker: NOT_RUNNING"; then
+if echo "$IS_RUNNING" | grep -q "gNodeB: NOT_RUNNING" && ([ "$USE_ZMQ_BROKER" != "true" ] || echo "$IS_RUNNING" | grep -q "ZMQ_Broker: NOT_RUNNING"); then
     echo "$IS_RUNNING"
     exit 0
 fi
@@ -66,7 +68,7 @@ MAX_COUNT=10
 sleep 1
 while [ $COUNT -lt $MAX_COUNT ]; do
     IS_RUNNING=$(./is_running.sh)
-    if echo "$IS_RUNNING" | grep -q "gNodeB: NOT_RUNNING" && echo "$IS_RUNNING" | grep -q "ZMQ_Broker: NOT_RUNNING"; then
+    if echo "$IS_RUNNING" | grep -q "gNodeB: NOT_RUNNING" && ([ "$USE_ZMQ_BROKER" != "true" ] || echo "$IS_RUNNING" | grep -q "ZMQ_Broker: NOT_RUNNING"); then
         echo "The gNodeB has stopped gracefully."
         ./is_running.sh
         exit 0

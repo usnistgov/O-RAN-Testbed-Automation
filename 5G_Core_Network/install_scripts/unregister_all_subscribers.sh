@@ -42,7 +42,7 @@ cd "$PARENT_DIR"
 
 DBCTL_PATH="./open5gs/misc/db/open5gs-dbctl"
 
-./start_webui.sh no-browser
+./start_webui.sh no-browser || exit 1
 
 # Command to remove all subscribers using the open5gs-dbctl tool
 CMD="$DBCTL_PATH reset"

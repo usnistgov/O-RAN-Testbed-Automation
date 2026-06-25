@@ -1,0 +1,43 @@
+diff --git a/lib/mac/mac_dl/mac_cell_processor.cpp b/lib/mac/mac_dl/mac_cell_processor.cpp
+index e36c7c12d8..de7dba3c61 100644
+--- a/lib/mac/mac_dl/mac_cell_processor.cpp
++++ b/lib/mac/mac_dl/mac_cell_processor.cpp
+@@ -11,6 +11,7 @@
+ #include "ocudu/ran/band_helper.h"
+ #include "ocudu/ran/pdsch/pdsch_constants.h"
+ #include "ocudu/scheduler/result/sched_result.h"
++#include "ocudu/support/async/async_no_op_task.h"
+ #include "ocudu/support/async/async_timer.h"
+ #include "ocudu/support/async/execute_on_blocking.h"
+ #include "ocudu/support/executors/execute_until_success.h"
+@@ -71,23 +72,14 @@ async_task<void> mac_cell_processor::start()
+   // Note: This is done in the control executor context to avoid concurrency with other CTRL procedures.
+   sched.handle_cell_activation(cell_cfg.cell_index);
+ 
+-  return execute_and_continue_on_blocking(
+-      cell_exec,
+-      ctrl_exec,
+-      timers,
+-      [this]() noexcept OCUDU_RTSAN_NONBLOCKING {
+-        if (state != cell_state::inactive) {
+-          // No-op.
+-          return;
+-        }
++  if (state != cell_state::inactive) {
++    return launch_no_op_task();
++  }
+ 
+-        state = cell_state::active;
+-        logger.info("cell={}: Cell was activated", fmt::underlying(cell_cfg.cell_index));
+-      },
+-      [this]() {
+-        logger.warning("cell={}: Postponed cell start operation. Cause: Task queue is full",
+-                       fmt::underlying(cell_cfg.cell_index));
+-      });
++  state = cell_state::active;
++  logger.info("cell={}: Cell was activated", fmt::underlying(cell_cfg.cell_index));
++
++  return launch_no_op_task();
+ }
+ 
+ async_task<void> mac_cell_processor::stop()

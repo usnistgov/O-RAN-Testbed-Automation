@@ -70,6 +70,7 @@ unsigned short config_frames[4] = {2,9,11,13};
 #include "openair1/SCHED_NR/sched_nr.h"
 #include "openair2/SDAP/nr_sdap/nr_sdap.h"
 
+RAN_CONTEXT_t RC;
 pthread_cond_t nfapi_sync_cond;
 pthread_mutex_t nfapi_sync_mutex;
 int nfapi_sync_var=-1; //!< protected by mutex \ref nfapi_sync_mutex
@@ -99,13 +100,6 @@ double rx_gain[MAX_NUM_CCs][4] = {{110,0,0,0},{20,0,0,0}};
 int chain_offset = 0;
 int numerology = 0;
 double cpuf;
-
-/* hack: pdcp_run() is required by 4G scheduler which is compiled into
- * nr-softmodem because of linker issues */
-void pdcp_run(const protocol_ctxt_t *const ctxt_pP)
-{
-  abort();
-}
 
 /*------------------------------------------------------------------------*/
 
@@ -443,7 +437,7 @@ int start_L1L2(module_id_t gnb_id)
   return 0;
 }
 
-static  void wait_nfapi_init(char *thread_name)
+static void wait_nfapi_init()
 {
   pthread_mutex_lock( &nfapi_sync_mutex );
 
@@ -659,7 +653,7 @@ int main( int argc, char **argv ) {
     RC.gNB[idx]->if_inst->sl_ahead = sl_ahead;
 
   if (NFAPI_MODE==NFAPI_MODE_PNF) {
-    wait_nfapi_init("main?");
+    wait_nfapi_init();
   }
 
   if (IS_SOFTMODEM_IMSCOPE_ENABLED || IS_SOFTMODEM_IMSCOPE_RECORD_ENABLED) {

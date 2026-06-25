@@ -50,6 +50,7 @@ fi
 
 # Run a sudo command every minute to ensure script execution without user interaction
 ./install_scripts/start_sudo_refresh.sh
+trap './install_scripts/stop_sudo_refresh.sh 2>/dev/null || true' EXIT
 
 # Get the start timestamp in seconds
 INSTALL_START_TIME=$(date +%s)
@@ -207,6 +208,12 @@ cd srsRAN_4G
 echo
 echo
 echo "Building srsRAN_4G..."
+
+# ZMQ_RF_FILE="lib/src/phy/rf/rf_zmq_imp.c"
+# if grep -q 'parse_string(args, "log_trx_timeout", i, tmp);' "$ZMQ_RF_FILE"; then
+#     sed -i 's/parse_string(args, "log_trx_timeout", i, tmp);/parse_string(args, "log_trx_timeout", i, tmp2);/' "$ZMQ_RF_FILE"
+# fi
+"$SCRIPT_DIR/install_scripts/apply_patches.sh"
 
 BOOST_VERSION=$(dpkg -s libboost-dev | grep '^Version:' | awk '{print $2}' | cut -d. -f1,2)
 if [[ $(echo -e "$BOOST_VERSION\n1.89" | sort -V | head -n1) == "1.89" ]]; then # If version 1.89 or higher

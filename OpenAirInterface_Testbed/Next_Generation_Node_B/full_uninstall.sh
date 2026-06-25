@@ -95,5 +95,5 @@ sudo rm -rf install_time.txt
 echo
 echo
 echo "################################################################################"
-echo "# Successfully uninstalled OpenAirInterface UE and gNodeB                      #"
+echo "# Successfully uninstalled Duranta UE and gNodeB                               #"
 echo "################################################################################"

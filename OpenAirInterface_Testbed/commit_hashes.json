@@ -1,6 +1,6 @@
 {
-  "https://gitlab.eurecom.fr/oai/openairinterface5g.git": ["", "d420f8c1231e9651e299b714fde53e392c6880ec"],
-  "https://gitlab.eurecom.fr/oai/o1-adapter.git": ["main", "1cd696960d9b3d28461caa61ced4b173eff1eec9"],
-  "https://github.com/swig/swig.git": ["master", "45c0bd45008892fc1820d5da130063d53e4e5f01"],
-  "https://gitlab.eurecom.fr/mosaic5g/flexric.git": ["dev", "e5e5873f36911c14095a6733275d16464f74d3bf"]
+  "https://github.com/duranta-project/openairinterface5g.git": ["", "f3589d97c2e9a0dec527336c88f988df587c2925"],
+  "https://gitlab.eurecom.fr/oai/o1-adapter.git": ["main", "08f208b2936a6558aa0b30d65faac9d642883ed5"],
+  "https://github.com/swig/swig.git": ["master", "6fe73bf1448934bb25099c6e4e9e7155ff644d5e"],
+  "https://gitlab.eurecom.fr/mosaic5g/flexric.git": ["dev", "ef6d722f22191eea74089966983da1f5ec1fedd4"]
 }

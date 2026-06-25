@@ -231,7 +231,7 @@ echo "" >>download_dependency_repositories.bat
 # OpenAirInterface testbed repositories
 generate_commands "https://github.com/open5gs/open5gs.git" "OpenAirInterface_Testbed\\5G_Core_Network" "open5gs" "ONLY_IF_NOT_EXIST"
 generate_commands "https://github.com/usnistgov/5gdeploy.git" "OpenAirInterface_Testbed\\5G_Core_Network\\Additional_Cores_5GDeploy" "5gdeploy"
-generate_commands "https://gitlab.eurecom.fr/oai/openairinterface5g.git" "OpenAirInterface_Testbed\\User_Equipment" "openairinterface5g"
+generate_commands "https://github.com/duranta-project/openairinterface5g.git" "OpenAirInterface_Testbed\\User_Equipment" "openairinterface5g"
 echo "cd OpenAirInterface_Testbed\\Next_Generation_Node_B" >>download_dependency_repositories.bat
 echo "mklink /D openairinterface5g ..\\User_Equipment\\openairinterface5g" >>download_dependency_repositories.bat
 echo "cd ..\\.." >>download_dependency_repositories.bat

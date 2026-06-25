@@ -52,7 +52,7 @@ sudo rm -rf install_patch_files
 cp -r "$SCRIPT_DIR/../../OpenAirInterface_Testbed/User_Equipment/install_patch_files/" install_patch_files
 ./apply_patches.sh
 
-# # Apply patches to OpenAirInterface to add support for additional metrics in the KPI report
+# # Apply patches to Duranta to add support for additional metrics in the KPI report
 # cp openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c.previous
 # echo
 # echo "Patching ran_func_kpm.c..."

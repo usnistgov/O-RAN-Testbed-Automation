@@ -59,7 +59,7 @@ cd ..
 echo
 echo
 echo "################################################################################"
-echo "# Uninstalling User Equipment (OpenAirInterface)...                            #"
+echo "# Uninstalling User Equipment (Duranta)...                                     #"
 echo "################################################################################"
 echo
 echo
@@ -72,7 +72,7 @@ cd ..
 echo
 echo
 echo "################################################################################"
-echo "# Uninstalling Next Generation Node B (OpenAirInterface)...                    #"
+echo "# Uninstalling Next Generation Node B (Duranta)...                             #"
 echo "################################################################################"
 echo
 echo

@@ -131,7 +131,7 @@ fi
 
 cd "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build"
 
-# Code from (https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/develop/doc/handover-tutorial.md#run-the-setup):
+# Code from (https://github.com/duranta-project/openairinterface5g/blob/develop/doc/handover-tutorial.md#run-the-setup):
 # sudo ./nr-softmodem -O "$DU_CONFIG" $RADIO_ARGS --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS
 
 RADIO_TYPE=$(cat "$SCRIPT_DIR/configs/radio_type.txt" 2>/dev/null || echo "RFSIM")

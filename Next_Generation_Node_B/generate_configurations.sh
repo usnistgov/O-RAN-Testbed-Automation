@@ -34,6 +34,7 @@ set -e
 EXPOSE_GNB_TO_HOSTNAME=false
 UE_NUMBERS=(1 2 3 4)
 USE_FLEXRIC=false
+USE_ZMQ_BROKER=false
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
@@ -303,7 +304,18 @@ update_yaml() {
 
 mkdir -p "$SCRIPT_DIR/logs"
 
-DEVICE_ARGS="fail_unlocked=true,tx_port=tcp://127.0.0.1:2000,rx_port=tcp://127.0.0.1:2001,"
+if [ "$USE_ZMQ_BROKER" = "true" ]; then
+    DEVICE_ARGS="fail_unlocked=true,tx_port=tcp://127.0.0.1:2000,rx_port=tcp://127.0.0.1:2001,"
+else
+    BASE_SUBNET="10.201.0.0/16"
+    SUBNET_SIZE=4
+    UE_NUMBER=1
+    SUBNET_OFFSET=$((UE_NUMBER * SUBNET_SIZE))
+    HOST_IP_OFFSET=$((SUBNET_OFFSET))
+    UE_IP_OFFSET=$((SUBNET_OFFSET + 1))
+    UE_IP=$(python3 install_scripts/fetch_nth_ip.py "$BASE_SUBNET" "$UE_IP_OFFSET")
+    DEVICE_ARGS="fail_unlocked=true,tx_port=tcp://*:2100,rx_port=tcp://$UE_IP:2101,"
+fi
 
 DEVICE_ARGS+="base_srate=23.04e6"
 
@@ -328,6 +340,8 @@ update_yaml "configs/gnb.yaml" "cu_cp.request_pdu_session_timeout" "3"
 update_yaml "configs/gnb.yaml" "ru_sdr" "device_driver" "zmq"
 update_yaml "configs/gnb.yaml" "ru_sdr" "device_args" "$DEVICE_ARGS"
 update_yaml "configs/gnb.yaml" "ru_sdr" "srate" "23.04"
+update_yaml "configs/gnb.yaml" "ru_sdr" "tx_gain" "0" # https://gitlab.com/ocudu/ocudu/-/commit/8c922b067749d89d60c37b60c4bc6292b79a0183
+update_yaml "configs/gnb.yaml" "ru_sdr" "rx_gain" "0"
 update_yaml "configs/gnb.yaml" "ru_sdr" "clock" "default"
 update_yaml "configs/gnb.yaml" "ru_sdr" "sync" "default"
 
@@ -438,7 +452,7 @@ update_yaml "configs/gnb.yaml" "cu_cp" "request_pdu_session_timeout" "3"
 
 # Update configuration values for gNodeB logging
 update_yaml "configs/gnb.yaml" "log" "filename" "$SCRIPT_DIR/logs/gnb.log"
-update_yaml "configs/gnb.yaml" "log" "all_level" "info"
+update_yaml "configs/gnb.yaml" "log" "all_level" "warning"
 update_yaml "configs/gnb.yaml" "log" "hex_max_size" "0"
 
 # Packet capture for NGAP
@@ -503,7 +517,7 @@ update_yaml "configs/gnb.yaml" "ru_sdr" "otw_format" "default"
 #     update_yaml "configs/gnb.yaml" "expert_execution.main_pool" "nof_threads" "$(nproc)"
 # fi
 
-if [ ! -f "zmq_broker/multi_ue_scenario.py" ]; then
+if [ "$USE_ZMQ_BROKER" = "true" ] && [ ! -f "zmq_broker/multi_ue_scenario.py" ]; then
     echo "Compiling ZeroMQ Broker GNU Radio Companion flowgraph..."
     mkdir -p zmq_broker
     if [ ! -f "zmq_broker/multi_ue_scenario.grc" ]; then
@@ -541,42 +555,46 @@ if [ ! -f "zmq_broker/multi_ue_scenario.py" ]; then
     grcc -o zmq_broker zmq_broker/multi_ue_scenario.grc
 fi
 
-ZMQ_BROKER_PYTHON_FILE="zmq_broker/multi_ue_scenario.py"
-if [ ! -f "$ZMQ_BROKER_PYTHON_FILE" ]; then
-    echo "Failed to locate $ZMQ_BROKER_PYTHON_FILE after generation."
-    exit 1
-fi
-
-echo "Synchronizing ZeroMQ Broker endpoints with UE subnet mapping..."
-
-# Allocate a /30 (4 addresses) subnet per UE (e.g., UE 1 -> 10.201.0.4/30, Gateway .5, UE .6)
-BASE_SUBNET="10.201.0.0/16"
-SUBNET_SIZE=4
-
-UE_NUMBER=1
-while true; do
-    PORT_RX=$((2100 + (UE_NUMBER - 1) * 100))
-    PORT_TX=$((2101 + (UE_NUMBER - 1) * 100))
-
-    # Stop when the UE endpoint does not exist in the broker graph
-    if ! grep -qE "'tcp://(127\\.0\\.0\\.1|\*):$PORT_RX'" "$ZMQ_BROKER_PYTHON_FILE"; then
-        break
+if [ "$USE_ZMQ_BROKER" = "true" ]; then
+    ZMQ_BROKER_PYTHON_FILE="zmq_broker/multi_ue_scenario.py"
+    if [ ! -f "$ZMQ_BROKER_PYTHON_FILE" ]; then
+        echo "ERROR: Could not find $ZMQ_BROKER_PYTHON_FILE after generation."
+        exit 1
     fi
 
-    SUBNET_OFFSET=$((UE_NUMBER * SUBNET_SIZE))
-    UE_IP_OFFSET=$((SUBNET_OFFSET + 1)) # .6
-    UE_IP=$(python3 install_scripts/fetch_nth_ip.py "$BASE_SUBNET" "$UE_IP_OFFSET")
+    echo "Synchronizing ZeroMQ Broker endpoints with UE subnet mapping..."
 
-    # UE RX: broker should listen on all interfaces in the host namespace
-    sed -i "s|'tcp://127\\.0\\.0\\.1:$PORT_RX'|'tcp://*:$PORT_RX'|g" "$ZMQ_BROKER_PYTHON_FILE"
+    # Allocate a /30 (4 addresses) subnet per UE (e.g., UE 1 -> 10.201.0.4/30, Gateway .5, UE .6)
+    BASE_SUBNET="10.201.0.0/16"
+    SUBNET_SIZE=4
 
-    # UE TX: force broker to connect to current UE namespace IP every run
-    sed -i "s|'tcp://127\\.0\\.0\\.1:$PORT_TX'|'tcp://$UE_IP:$PORT_TX'|g" "$ZMQ_BROKER_PYTHON_FILE"
-    sed -i "s|'tcp://10\\.[0-9]\\+\\.[0-9]\\+\\.[0-9]\\+:$PORT_TX'|'tcp://$UE_IP:$PORT_TX'|g" "$ZMQ_BROKER_PYTHON_FILE"
+    UE_NUMBER=1
+    while true; do
+        PORT_RX=$((2100 + (UE_NUMBER - 1) * 100))
+        PORT_TX=$((2101 + (UE_NUMBER - 1) * 100))
 
-    UE_NUMBER=$((UE_NUMBER + 1))
-done
+        # Stop when the UE endpoint does not exist in the broker graph
+        if ! grep -qE "'tcp://(127\\.0\\.0\\.1|\*):$PORT_RX'" "$ZMQ_BROKER_PYTHON_FILE"; then
+            break
+        fi
 
-echo "Successfully synchronized ZMQ Broker Python script for $((UE_NUMBER - 1)) UEs."
+        SUBNET_OFFSET=$((UE_NUMBER * SUBNET_SIZE))
+        UE_IP_OFFSET=$((SUBNET_OFFSET + 1)) # .6
+        UE_IP=$(python3 install_scripts/fetch_nth_ip.py "$BASE_SUBNET" "$UE_IP_OFFSET")
+
+        # UE RX: Listen on all interfaces in the host namespace
+        sed -i "s|'tcp://127\\.0\\.0\\.1:$PORT_RX'|'tcp://*:$PORT_RX'|g" "$ZMQ_BROKER_PYTHON_FILE"
+
+        # UE TX: Connect to current UE namespace IP every run
+        sed -i "s|'tcp://127\\.0\\.0\\.1:$PORT_TX'|'tcp://$UE_IP:$PORT_TX'|g" "$ZMQ_BROKER_PYTHON_FILE"
+        sed -i "s|'tcp://10\\.[0-9]\\+\\.[0-9]\\+\\.[0-9]\\+:$PORT_TX'|'tcp://$UE_IP:$PORT_TX'|g" "$ZMQ_BROKER_PYTHON_FILE"
+
+        UE_NUMBER=$((UE_NUMBER + 1))
+    done
+
+    echo "Successfully synchronized ZMQ Broker Python script for $((UE_NUMBER - 1)) UEs."
+else
+    echo "Using direct ZeroMQ connection for UE 1 at *:2100 and $UE_IP:2101 (no ZeroMQ broker)."
+fi
 
 echo "Successfully configured the gNodeB. The configuration file is located in the configs/ directory."

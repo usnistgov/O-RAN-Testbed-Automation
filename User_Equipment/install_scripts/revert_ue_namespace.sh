@@ -36,14 +36,14 @@ set +e
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-UE_NUMBER=$1
+UE_NUMBER="$1"
 
 if [[ -z "$UE_NUMBER" ]]; then
     echo "ERROR: No UE number provided."
     echo "Usage: $0 <UE_NUMBER>"
     exit 1
 fi
-if ! [[ $UE_NUMBER =~ ^[0-9]+$ ]]; then
+if ! [[ "$UE_NUMBER" =~ ^[0-9]+$ ]]; then
     echo "ERROR: UE number must be a number."
     exit 1
 fi
@@ -64,24 +64,25 @@ UE_IP_OFFSET=$((SUBNET_OFFSET + 1)) # .6
 
 # Fetch IPs from subnet using python script
 UE_SUBNET_ID=$(python3 fetch_nth_ip.py "$BASE_SUBNET" $((SUBNET_OFFSET - 1)))
-UE_HOST_IP=$(python3 fetch_nth_ip.py "$BASE_SUBNET" $HOST_IP_OFFSET)
-UE_NS_IP=$(python3 fetch_nth_ip.py "$BASE_SUBNET" $UE_IP_OFFSET)
+UE_HOST_IP=$(python3 fetch_nth_ip.py "$BASE_SUBNET" "$HOST_IP_OFFSET")
+UE_NS_IP=$(python3 fetch_nth_ip.py "$BASE_SUBNET" "$UE_IP_OFFSET")
 
 echo "Removing IP routes and addresses inside the namespace..."
-sudo ip netns exec $UE_NAMESPACE ip route del default via $UE_HOST_IP || true
-sudo ip netns exec $UE_NAMESPACE ip addr del $UE_NS_IP/30 dev v-$UE_NAMESPACE || true
-sudo ip netns exec $UE_NAMESPACE ip link set v-$UE_NAMESPACE down || true
+sudo ip netns exec "$UE_NAMESPACE" ip route del default via "$UE_HOST_IP" dev "v-$UE_NAMESPACE" || true
+sudo ip netns exec "$UE_NAMESPACE" ip addr del "$UE_NS_IP/30" dev "v-$UE_NAMESPACE" || true
+sudo ip netns exec "$UE_NAMESPACE" ip link set "v-$UE_NAMESPACE" down || true
+sudo ip route del "$UE_SUBNET_ID/30" dev "v-eth$UE_NUMBER" 2>/dev/null || true
 
 echo "Removing iptables rules..."
-while sudo iptables -D FORWARD -o "$NETWORK_INTERFACE" -i v-eth$UE_NUMBER -j ACCEPT 2>/dev/null; do :; done
-while sudo iptables -D FORWARD -i "$NETWORK_INTERFACE" -o v-eth$UE_NUMBER -j ACCEPT 2>/dev/null; do :; done
+while sudo iptables -D FORWARD -o "$NETWORK_INTERFACE" -i "v-eth$UE_NUMBER" -j ACCEPT 2>/dev/null; do :; done
+while sudo iptables -D FORWARD -i "$NETWORK_INTERFACE" -o "v-eth$UE_NUMBER" -j ACCEPT 2>/dev/null; do :; done
 while sudo iptables -t nat -D POSTROUTING -s "$UE_SUBNET_ID/30" -o "$NETWORK_INTERFACE" -j MASQUERADE 2>/dev/null; do :; done
 
 echo "Deleting the network devices..."
-sudo ip link set v-eth$UE_NUMBER down
-sudo ip link del v-eth$UE_NUMBER
+sudo ip link set "v-eth$UE_NUMBER" down
+sudo ip link del "v-eth$UE_NUMBER"
 
 echo "Deleting the network namespace..."
-sudo ip netns delete $UE_NAMESPACE
+sudo ip netns delete "$UE_NAMESPACE"
 
 echo "Successfully reverted the UE $UE_NUMBER namespace."

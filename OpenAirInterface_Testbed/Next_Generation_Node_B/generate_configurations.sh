@@ -61,7 +61,7 @@ fi
 
 # There are two types of RSRP/SINR measurements: SSB and CSI
 # Valid values for CSI_REPORT_TYPE: "ssb_rsrp", "ssb_sinr", "cri_rsrp", or "null" (to omit CSI_report_type and set do_CSIRS=1)
-# If using MIMO, then CSI_REPORT_TYPE must not be an SSB-based measurement (https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/develop/doc/RUNMODEM.md#5g-gnb-mimo-configuration)
+# If using MIMO, then CSI_REPORT_TYPE must not be an SSB-based measurement (https://github.com/duranta-project/openairinterface5g/blob/develop/doc/RUNMODEM.md#5g-gnb-mimo-configuration)
 CSI_REPORT_TYPE="ssb_rsrp"
 
 # Function to update or add configuration properties in .conf files, considering sections and uncommenting if needed

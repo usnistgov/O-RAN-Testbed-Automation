@@ -57,42 +57,71 @@ if [[ "$CORE_TO_USE" != "open5gs" && -z "$INTERMEDIATE_CHECK" ]]; then
     fi
 fi
 
-# Detect if systemctl is available
-USE_SYSTEMCTL=false
-if command -v systemctl >/dev/null 2>&1; then
-    if [ "$(cat /proc/1/comm 2>/dev/null)" = "systemd" ]; then
-        OUTPUT="$(systemctl 2>&1 || true)"
-        if echo "$OUTPUT" | grep -qiE 'not supported|System has not been booted with systemd'; then
-            echo "Detected systemctl is not supported. Using background processes instead."
-        elif systemctl list-units >/dev/null 2>&1 || systemctl is-system-running --quiet >/dev/null 2>&1; then
-            USE_SYSTEMCTL=true
-        fi
-    fi
-fi
-
 # Latest components (see https://open5gs.org/open5gs/docs/guide/01-quickstart/#:~:text=Starting%20and%20Stopping%20Open5GS)
 APPS=("mmed" "sgwcd" "smfd" "amfd" "sgwud" "upfd" "hssd" "pcrfd" "nrfd" "scpd" "seppd" "ausfd" "udmd" "pcfd" "nssfd" "bsfd" "udrd" "webui")
 
+component_pids() {
+    local APP="$1"
+    pgrep -f "open5gs-$APP"
+}
+
+webui_pids() {
+    sort -u < <(
+        pgrep -f "open5gs/webui/server/index.js"
+        pgrep -f "open5gs-webui"
+        pgrep -af "node" | grep -F "server/index.js" | awk '{print $1}'
+    )
+}
+
+stop_pids() {
+    local SIGNAL="$1"
+    shift
+    local PIDS=("$@")
+
+    if [ "${#PIDS[@]}" -gt 0 ]; then
+        sudo kill "$SIGNAL" "${PIDS[@]}" 2>/dev/null || true
+    fi
+}
+
 # Iterate through each application and stop if running
 for APP in "${APPS[@]}"; do
-    if [ "$APP" != "webui" ]; then
-        sudo pkill -x "open5gs-$APP" && echo "Component open5gs-$APP has stopped gracefully."
+    if [ "$APP" == "webui" ]; then
+        mapfile -t PIDS < <(webui_pids)
+        if [ "${#PIDS[@]}" -gt 0 ]; then
+            stop_pids "-TERM" "${PIDS[@]}"
+            echo "Component open5gs-$APP has stopped gracefully."
+        fi
+    elif [ "$APP" == "seppd" ]; then
+        mapfile -t PIDS < <(component_pids "$APP" "$SCRIPT_DIR/configs/sepp1.yaml")
+        stop_pids "-TERM" "${PIDS[@]}"
+        mapfile -t PIDS < <(component_pids "$APP" "$SCRIPT_DIR/configs/sepp2.yaml")
+        stop_pids "-TERM" "${PIDS[@]}"
     else
-        if [[ "$USE_SYSTEMCTL" == "true" ]]; then
-            sudo systemctl stop "open5gs-$APP.service" 2>/dev/null
-        else
-            sudo pkill -x "open5gs-$APP" && echo "Component open5gs-$APP has stopped gracefully."
+        mapfile -t PIDS < <(component_pids "$APP" "$SCRIPT_DIR/configs/${APP%?}.yaml")
+        if [ "${#PIDS[@]}" -gt 0 ]; then
+            stop_pids "-TERM" "${PIDS[@]}"
+            echo "Component open5gs-$APP has stopped gracefully."
         fi
     fi
 done
 
+sleep 2
+
 # Iterate through each application and stop if running
 for APP in "${APPS[@]}"; do
-    if [ "$APP" != "webui" ]; then
-        if pgrep -x "open5gs-$APP" >/dev/null; then
-            echo "Stopping open5gs-$APP..."
-            sudo pkill -9 -x "open5gs-$APP"
-        fi
+    if [ "$APP" == "webui" ]; then
+        mapfile -t PIDS < <(webui_pids)
+    elif [ "$APP" == "seppd" ]; then
+        mapfile -t PIDS < <(component_pids "$APP" "$SCRIPT_DIR/configs/sepp1.yaml")
+        stop_pids "-KILL" "${PIDS[@]}"
+        mapfile -t PIDS < <(component_pids "$APP" "$SCRIPT_DIR/configs/sepp2.yaml")
+    else
+        mapfile -t PIDS < <(component_pids "$APP" "$SCRIPT_DIR/configs/${APP%?}.yaml")
+    fi
+
+    if [ "${#PIDS[@]}" -gt 0 ]; then
+        echo "Stopping open5gs-$APP..."
+        stop_pids "-KILL" "${PIDS[@]}"
     fi
 done
 sudo ./install_scripts/revert_network_config.sh

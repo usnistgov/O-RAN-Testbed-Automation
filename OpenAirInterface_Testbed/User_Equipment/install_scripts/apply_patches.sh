@@ -57,7 +57,9 @@ if [ -f "CMakeLists.txt" ]; then
 fi
 cd ..
 
-# Apply patches to Duranta to add support for additional metrics in the KPI report
+# Apply patches to Duranta
+
+# Add support for additional metrics in the KPI report
 cd openairinterface5g
 git restore openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c
 if [ ! -f "openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c.previous" ]; then
@@ -194,4 +196,4 @@ git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openair
 cd ..
 
 echo
-echo "Successfully patched OpenAirInterface."
+echo "Successfully patched Duranta OpenAirInterface."

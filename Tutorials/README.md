@@ -1,6 +1,10 @@
 # Automation Tool for Deploying 5G O-RAN Testbeds
 
-The objective of this tutorial is to provide a hands-on, end-to-end guide for deploying and validating an O-RAN compliant 5G testbed using OCUDU, Open5GS, and a Near-RT RIC environment. The tutorial is designed to learn the fundamentals of O-RAN architecture, OCUDU,  E2 integration, and KPI monitoring through a practical deployment workflow.
+Open Radio Access Network (O-RAN) introduces open interfaces, interoperable components, and cloud-native architectures to modern 5G networks, enabling greater flexibility, multi-vendor interoperability, and intelligent RAN optimization.
+This repository provides a hands-on tutorial for deploying and automating an end-to-end O-RAN compliant 5G testbed using **OCUDU**, **Open5GS**, and a **Near-RT RIC**. It guides users through the complete deployment lifecycle, including core network setup, O-CU/O-DU deployment, E2 integration, UE registration, KPI monitoring, and end-to-end validation.
+
+The project emphasizes automation and reproducibility by providing deployment scripts and configuration management that simplify installation, validation, and monitoring. It serves as a practical platform for learning O-RAN architecture, experimenting with telecom automation, developing xApps, and conducting wireless networking research in academic and public testbed environments.
+
 By completing this tutorial, users will be able to:
 - Understand the architecture and components of O-RAN networks.
 - Deploy and configure the Open5GS 5G Core.

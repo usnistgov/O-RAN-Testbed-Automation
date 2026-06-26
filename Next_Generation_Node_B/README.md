@@ -8,7 +8,7 @@ The Next Generation Node B (gNodeB) is a 5G base station configured with OCUDU [
 - **Rebuild**: Use `./rebuild_code.sh` to rebuild and reinstall the gNodeB software after source changes. The script reuses the existing build directory, so unchanged files are not rebuilt.
 - **Generate Configurations**: Use `./generate_configurations.sh` to create configuration files.
   - The script automatically retrieves the 5G Core Network's AMF address and the SCTP address from the Near-Real-Time RAN Intelligent Controller's E2 Terminator. If either are not found locally, the script will prompt the user to enter the address manually.
-  - An optional list of UE numbers can be provided to generate the ZeroMQ broker configuration for multi-UE emulation (see [here](/Next_Generation_Node_B/README.md#simulating-multiple-ues-with-zeromq-broker) for more information).
+  - An optional list of UE numbers can be provided to generate the ZeroMQ broker configuration for multi-UE emulation (see [here](/Next_Generation_Node_B/README.md#simulating-multiple-ues-and-cells-with-zeromq-broker) for more information).
   - Configuration files can be accessed and modified in the `configs` directory.
 - **Start the gNodeB**: Use `./run.sh` to start the gNodeB, or `./run_background.sh` to run it as a background process where the output is redirected to `logs/gnb_stdout.txt`.
 - **Stop the gNodeB**: Terminate the gNodeB with `./stop.sh`.
@@ -16,10 +16,10 @@ The Next Generation Node B (gNodeB) is a 5G base station configured with OCUDU [
 - **Logs**: Access logs by navigating to the `logs` directory.
 - **Uninstall**: Use `./uninstall.sh` to remove the gNodeB software.
 
-> [!NOTE]
+> [!TIP]
 > If the directory `RAN_Intelligent_Controllers/Near-Real-Time-RIC` is not found, then the `generate_configurations.sh` script will disable the E2 interface. Alternatively, if prompted to enter an E2 address, enter nothing ("") to disable the E2 interface in the gNodeB configuration.
 
-## Simulating Multiple UEs with ZeroMQ Broker
+## Simulating Multiple UEs and Cells with ZeroMQ Broker
 
 By default, the gNodeB connects directly to a single SRS UE. To facilitate multi-UE emulation, the testbed can utilize a ZeroMQ (ZMQ) Broker motivated by the OCUDU Multi-UE Emulation tutorial [\[5][ocudu-multi-ue], [6\]][ocudu-multi-ue-grc]. The broker Python runtime script is generated during configuration from the requested UE list using `install_scripts/generate_zmq_broker.sh`. The ZMQ Broker operates the simulated ZeroMQ channel. Its graphical user interface is disabled by default, but can be enabled by setting `SHOW_ZMQ_BROKER_UI=true` in `run.sh`.
 
@@ -55,21 +55,48 @@ sed -i 's/^USE_ZMQ_BROKER=true$/USE_ZMQ_BROKER=false/' stop.sh
 
 </details>
 
-- When the ZMQ broker is enabled, `run.sh` on the base directory starts all but the first UE as background processes, then first UE in the foreground.
-
 > [!NOTE]
-> To configure a specific emulated UE set, pass the UE numbers to the base directory generator, e.g., `../generate_configurations.sh 1 2 3`. The generated broker creates one downlink and one uplink route for each requested UE, and the base directory `run.sh` launches the generated UE set.
+> When the ZMQ broker is enabled, `run.sh` on the base directory starts all but the first UE as background processes, then first UE in the foreground.
 
-After multiple UEs are running, list the PDU sessions for each UE with the following.
+<details>
+<summary>Configure multiple UEs</summary>
+
+To configure a specific emulated UE set, pass the UE numbers to the base directory generator, e.g., `../generate_configurations.sh 1 2 3`. The generated broker creates one downlink and one uplink route for each requested UE, and the base directory `run.sh` launches the generated UE set.
+
+</details>
+
+<details>
+<summary>Troubleshoot UE attach</summary>
+
+If one or more UEs remain stuck while attaching with the ZMQ broker, check `ZMQ_TIMEOUT` in `Next_Generation_Node_B/zmq_broker/multi_ue_scenario.py`. Slower systems may require an increase from the default value of `100`, but larger values may slow attach and PDU session establishment. `ZMQ_HIGH_WATER_MARK` is left as `-1` by default to use the GNU Radio/ZeroMQ default buffering behavior.
+</details>
+
+
+<details>
+<summary>Configure multiple cells</summary>
+
+To configure multiple cells with the broker, pass `--cells N` to the base directory generator, e.g., `../generate_configurations.sh --cells 2`. The generated broker creates one gNB-side downlink/uplink port pair per cell and one path-loss control for each cell/UE pair.
+
+</details>
+
+<details>
+<summary>Retrieve PDU session IPs</summary>
+
+After multiple UEs are running, the PDU session IP can be retrieved with the following.
 
 ```bash
-User_Equipment/install_scripts/get_pdu_sessions.sh 1
-User_Equipment/install_scripts/get_pdu_sessions.sh 2
-User_Equipment/install_scripts/get_pdu_sessions.sh 3
+# List all PDU sessions for all UEs:
+./User_Equipment/additional_scripts/get_all_pdu_sessions.sh
+
+# List PDU sessions for a specific UE:
+./User_Equipment/install_scripts/get_pdu_sessions.sh 1
+./User_Equipment/install_scripts/get_pdu_sessions.sh 2
+./User_Equipment/install_scripts/get_pdu_sessions.sh 3
 ```
 
-> [!NOTE]
-> To configure multiple emulated cells with the broker, pass `--cells N` to the base directory generator, e.g., `../generate_configurations.sh --cells 2`. The generated broker creates one gNB-side downlink/uplink port pair per cell and one path-loss control for each cell/UE pair.
+</details>
+
+
 
 ## E2 Interface
 

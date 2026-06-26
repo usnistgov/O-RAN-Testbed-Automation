@@ -37,6 +37,10 @@ CELL_COUNT=1
 UE_NUMBERS=()
 UE_IPS=()
 
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+PARENT_DIR=$(dirname "$SCRIPT_DIR")
+cd "$PARENT_DIR"
+
 usage() {
     echo "Usage: $0 --output FILE --sample-rate-hz HZ [--slow-down-ratio N] [--cells N] --ue NUMBER:IP [--ue NUMBER:IP ...]"
 }
@@ -201,8 +205,8 @@ SLOW_DOWN_RATIO = __SLOW_DOWN_RATIO__
 INITIAL_CELL_NUMBER = 1
 INITIAL_CELL_PATH_LOSS_DB = 0
 OTHER_CELL_PATH_LOSS_DB = 35
-ZMQ_TIMEOUT = 100
-ZMQ_HWM = -1
+ZMQ_TIMEOUT = 100 # For slower systems, increase timeout
+ZMQ_HIGH_WATER_MARK = -1
 
 
 class multi_ue_scenario(gr.top_block, Qt.QWidget):
@@ -263,10 +267,10 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
                 flush=True,
             )
             self.gnb_dl_sources[cell_number] = zeromq.req_source(
-                gr.sizeof_gr_complex, 1, f"tcp://127.0.0.1:{cell['rx_port']}", ZMQ_TIMEOUT, False, ZMQ_HWM
+                gr.sizeof_gr_complex, 1, f"tcp://127.0.0.1:{cell['rx_port']}", ZMQ_TIMEOUT, False, ZMQ_HIGH_WATER_MARK
             )
             self.gnb_ul_sinks[cell_number] = zeromq.rep_sink(
-                gr.sizeof_gr_complex, 1, f"tcp://127.0.0.1:{cell['tx_port']}", ZMQ_TIMEOUT, False, ZMQ_HWM
+                gr.sizeof_gr_complex, 1, f"tcp://127.0.0.1:{cell['tx_port']}", ZMQ_TIMEOUT, False, ZMQ_HIGH_WATER_MARK
             )
             self.dl_throttles[cell_number] = blocks.throttle(
                 gr.sizeof_gr_complex, self.samp_rate / self.slow_down_ratio, True
@@ -284,10 +288,10 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
             )
             self.ue_dl_adds[ue_number] = blocks.add_vcc(1)
             self.ue_dl_sinks[ue_number] = zeromq.rep_sink(
-                gr.sizeof_gr_complex, 1, f"tcp://*:{ue['rx_port']}", ZMQ_TIMEOUT, False, ZMQ_HWM
+                gr.sizeof_gr_complex, 1, f"tcp://*:{ue['rx_port']}", ZMQ_TIMEOUT, False, ZMQ_HIGH_WATER_MARK
             )
             self.ue_ul_sources[ue_number] = zeromq.req_source(
-                gr.sizeof_gr_complex, 1, f"tcp://{ue['ue_ip']}:{ue['tx_port']}", ZMQ_TIMEOUT, False, ZMQ_HWM
+                gr.sizeof_gr_complex, 1, f"tcp://{ue['ue_ip']}:{ue['tx_port']}", ZMQ_TIMEOUT, False, ZMQ_HIGH_WATER_MARK
             )
             self.connect((self.ue_dl_adds[ue_number], 0), (self.ue_dl_sinks[ue_number], 0))
 

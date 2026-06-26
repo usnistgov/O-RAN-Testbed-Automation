@@ -55,9 +55,7 @@ if [ "$USE_ZMQ_BROKER" = "true" ]; then
     fi
     # Parse the ZeroMQ broker for the list of UEs
     UE_NUMBERS=($(grep -oP 'UE_CONFIG:\s+\K\d+' Next_Generation_Node_B/zmq_broker/multi_ue_scenario.py))
-    VERIFY_ARGS="--gnb-config Next_Generation_Node_B/configs/gnb.yaml"
-    VERIFY_ARGS="$VERIFY_ARGS --broker Next_Generation_Node_B/zmq_broker/multi_ue_scenario.py"
-    VERIFY_ARGS="$VERIFY_ARGS --ue-config-dir User_Equipment/configs"
+    VERIFY_ARGS=""
     for UE_NUMBER in "${UE_NUMBERS[@]}"; do
         VERIFY_ARGS="$VERIFY_ARGS --ue $UE_NUMBER"
     done

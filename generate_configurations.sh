@@ -89,9 +89,7 @@ cd "$SCRIPT_DIR"
 if [ "$USE_ZMQ_BROKER" = "true" ]; then
     echo
     echo "Verifying ZeroMQ Broker configuration..."
-    VERIFY_ARGS="--gnb-config Next_Generation_Node_B/configs/gnb.yaml"
-    VERIFY_ARGS="$VERIFY_ARGS --broker Next_Generation_Node_B/zmq_broker/multi_ue_scenario.py"
-    VERIFY_ARGS="$VERIFY_ARGS --ue-config-dir User_Equipment/configs"
+    VERIFY_ARGS=""
     for UE_NUMBER in $UE_CONFIG_ARGS; do
         VERIFY_ARGS="$VERIFY_ARGS --ue $UE_NUMBER"
     done

@@ -31,6 +31,9 @@
 set -e
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
+PARENT_DIR=$(dirname "$SCRIPT_DIR")
+cd "$PARENT_DIR"
+
 GNB_CONFIG="configs/gnb.yaml"
 BROKER="zmq_broker/multi_ue_scenario.py"
 UE_CONFIG_DIR="../User_Equipment/configs"
@@ -40,18 +43,6 @@ ERRORS=()
 
 while [ $# -gt 0 ]; do
     case "$1" in
-    --gnb-config)
-        GNB_CONFIG="$2"
-        shift 2
-        ;;
-    --broker)
-        BROKER="$2"
-        shift 2
-        ;;
-    --ue-config-dir)
-        UE_CONFIG_DIR="$2"
-        shift 2
-        ;;
     --ue)
         UE_NUMBERS+=("$2")
         shift 2

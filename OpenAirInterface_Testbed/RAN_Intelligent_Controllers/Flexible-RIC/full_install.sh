@@ -72,6 +72,8 @@ echo "Installing dependencies..."
 sudo env $APTVARS apt-get install -y build-essential automake autoconf libtool bison flex
 sudo env $APTVARS apt-get install -y libsctp-dev python3 cmake-curses-gui libpcre2-dev python3-dev
 
+UBUNTU_CODENAME=$(./install_scripts/get_ubuntu_codename.sh)
+
 # Check if GCC 13 or newer is installed, if not, install it and set it as the default
 MIN_GCC_VERSION="13.0.0"
 INSTALL_GCC=false
@@ -85,6 +87,10 @@ else
 fi
 if [[ "$INSTALL_GCC" == "true" ]]; then
     echo "Installing GCC 13..."
+    if ! curl -fsSL --connect-timeout 10 "https://ppa.launchpadcontent.net/ubuntu-toolchain-r/test/ubuntu/dists/${UBUNTU_CODENAME}/Release" >/dev/null; then
+        echo "ERROR: Cannot reach the Ubuntu Toolchain PPA package repository."
+        exit 1
+    fi
     sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
     sudo apt-get update
     sudo env $APTVARS apt-get install -y gcc-13 g++-13
@@ -101,7 +107,6 @@ if ! command -v cmake &>/dev/null; then
 fi
 CMAKE_VERSION=$(cmake --version | head -n1 | awk '{print $3}')
 if [[ "$CMAKE_VERSION" == 3.16.* ]]; then
-    UBUNTU_CODENAME=$(./install_scripts/get_ubuntu_codename.sh)
     echo "Detected CMake $CMAKE_VERSION. Updating CMake for FlexRIC compatibility..."
     # Add Kitware's apt repository
     wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc | sudo apt-key add -

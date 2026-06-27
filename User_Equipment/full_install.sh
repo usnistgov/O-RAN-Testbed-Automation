@@ -134,6 +134,11 @@ else
 fi
 if [[ "$INSTALL_GCC" == "true" ]]; then
     echo "Installing GCC 13..."
+    UBUNTU_CODENAME=$(./install_scripts/get_ubuntu_codename.sh)
+    if ! curl -fsSL --connect-timeout 10 "https://ppa.launchpadcontent.net/ubuntu-toolchain-r/test/ubuntu/dists/${UBUNTU_CODENAME}/Release" >/dev/null; then
+        echo "ERROR: Cannot reach the Ubuntu Toolchain PPA package repository."
+        exit 1
+    fi
     sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
     sudo apt-get update
     sudo env $APTVARS apt-get install -y gcc-13 g++-13

@@ -37,7 +37,7 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-USE_ZMQ_BROKER=true
+USE_ZMQ_BROKER=false
 
 if pgrep -x "gnb" >/dev/null; then
     echo "gNodeB: RUNNING"

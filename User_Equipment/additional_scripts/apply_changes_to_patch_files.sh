@@ -48,10 +48,7 @@ fi
 
 mkdir -p install_patch_files/srsRAN_4G/lib/src/phy/rf
 mkdir -p install_patch_files/srsRAN_4G/lib/src/phy/ue
-mkdir -p install_patch_files/srsRAN_4G/lib/src/asn1
-mkdir -p install_patch_files/srsRAN_4G/lib/test/asn1
 mkdir -p install_patch_files/srsRAN_4G/srsue/src/phy/nr
-mkdir -p install_patch_files/srsRAN_4G/srsue/hdr/stack/mac_nr
 mkdir -p install_patch_files/srsRAN_4G/srsue/src/stack/mac_nr
 mkdir -p install_patch_files/srsRAN_4G/srsue/src/stack/rrc_nr
 
@@ -60,18 +57,8 @@ cd srsRAN_4G
 # Update patch files from the current srsRAN_4G working tree.
 git diff lib/src/phy/rf/rf_zmq_imp.c >../install_patch_files/srsRAN_4G/lib/src/phy/rf/rf_zmq_imp.c.patch
 git diff lib/src/phy/ue/ue_dl_nr.c >../install_patch_files/srsRAN_4G/lib/src/phy/ue/ue_dl_nr.c.patch
-git diff lib/src/asn1/rrc_nr_utils.cc >../install_patch_files/srsRAN_4G/lib/src/asn1/rrc_nr_utils.cc.patch
-git diff lib/test/asn1/rrc_nr_utils_test.cc >../install_patch_files/srsRAN_4G/lib/test/asn1/rrc_nr_utils_test.cc.patch
 git diff srsue/src/phy/nr/cc_worker.cc >../install_patch_files/srsRAN_4G/srsue/src/phy/nr/cc_worker.cc.patch
-git diff srsue/hdr/stack/mac_nr/proc_sr_nr.h >../install_patch_files/srsRAN_4G/srsue/hdr/stack/mac_nr/proc_sr_nr.h.patch
 git diff srsue/src/stack/mac_nr/mac_nr.cc >../install_patch_files/srsRAN_4G/srsue/src/stack/mac_nr/mac_nr.cc.patch
-git diff srsue/src/stack/mac_nr/proc_bsr_nr.cc >../install_patch_files/srsRAN_4G/srsue/src/stack/mac_nr/proc_bsr_nr.cc.patch
-git diff srsue/src/stack/mac_nr/proc_ra_nr.cc >../install_patch_files/srsRAN_4G/srsue/src/stack/mac_nr/proc_ra_nr.cc.patch
-git diff srsue/src/stack/mac_nr/proc_sr_nr.cc >../install_patch_files/srsRAN_4G/srsue/src/stack/mac_nr/proc_sr_nr.cc.patch
-git diff srsue/src/stack/mac_nr/test/proc_bsr_nr_test.cc >../install_patch_files/srsRAN_4G/srsue/src/stack/mac_nr/proc_bsr_nr_test.cc.patch
-git diff srsue/src/stack/mac_nr/test/proc_ra_nr_test.cc >../install_patch_files/srsRAN_4G/srsue/src/stack/mac_nr/proc_ra_nr_test.cc.patch
-git diff srsue/src/stack/mac_nr/test/proc_sr_nr_test.cc >../install_patch_files/srsRAN_4G/srsue/src/stack/mac_nr/proc_sr_nr_test.cc.patch
-git diff srsue/src/stack/rrc_nr/rrc_nr.cc >../install_patch_files/srsRAN_4G/srsue/src/stack/rrc_nr/rrc_nr.cc.patch
 git diff srsue/src/stack/rrc_nr/rrc_nr_procedures.cc >../install_patch_files/srsRAN_4G/srsue/src/stack/rrc_nr/rrc_nr_procedures.cc.patch
 
 # Update previous-file snapshots and reapply patches to preserve the working tree.
@@ -85,65 +72,15 @@ cp lib/src/phy/ue/ue_dl_nr.c ../install_patch_files/srsRAN_4G/lib/src/phy/ue/ue_
 cp lib/src/phy/ue/ue_dl_nr.c lib/src/phy/ue/ue_dl_nr.c.previous
 git apply --verbose --ignore-whitespace ../install_patch_files/srsRAN_4G/lib/src/phy/ue/ue_dl_nr.c.patch
 
-git restore lib/src/asn1/rrc_nr_utils.cc
-cp lib/src/asn1/rrc_nr_utils.cc ../install_patch_files/srsRAN_4G/lib/src/asn1/rrc_nr_utils.cc.previous
-cp lib/src/asn1/rrc_nr_utils.cc lib/src/asn1/rrc_nr_utils.cc.previous
-git apply --verbose --ignore-whitespace ../install_patch_files/srsRAN_4G/lib/src/asn1/rrc_nr_utils.cc.patch
-
-git restore lib/test/asn1/rrc_nr_utils_test.cc
-cp lib/test/asn1/rrc_nr_utils_test.cc ../install_patch_files/srsRAN_4G/lib/test/asn1/rrc_nr_utils_test.cc.previous
-cp lib/test/asn1/rrc_nr_utils_test.cc lib/test/asn1/rrc_nr_utils_test.cc.previous
-git apply --verbose --ignore-whitespace ../install_patch_files/srsRAN_4G/lib/test/asn1/rrc_nr_utils_test.cc.patch
-
 git restore srsue/src/phy/nr/cc_worker.cc
 cp srsue/src/phy/nr/cc_worker.cc ../install_patch_files/srsRAN_4G/srsue/src/phy/nr/cc_worker.cc.previous
 cp srsue/src/phy/nr/cc_worker.cc srsue/src/phy/nr/cc_worker.cc.previous
 git apply --verbose --ignore-whitespace ../install_patch_files/srsRAN_4G/srsue/src/phy/nr/cc_worker.cc.patch
 
-git restore srsue/hdr/stack/mac_nr/proc_sr_nr.h
-cp srsue/hdr/stack/mac_nr/proc_sr_nr.h ../install_patch_files/srsRAN_4G/srsue/hdr/stack/mac_nr/proc_sr_nr.h.previous
-cp srsue/hdr/stack/mac_nr/proc_sr_nr.h srsue/hdr/stack/mac_nr/proc_sr_nr.h.previous
-git apply --verbose --ignore-whitespace ../install_patch_files/srsRAN_4G/srsue/hdr/stack/mac_nr/proc_sr_nr.h.patch
-
 git restore srsue/src/stack/mac_nr/mac_nr.cc
 cp srsue/src/stack/mac_nr/mac_nr.cc ../install_patch_files/srsRAN_4G/srsue/src/stack/mac_nr/mac_nr.cc.previous
 cp srsue/src/stack/mac_nr/mac_nr.cc srsue/src/stack/mac_nr/mac_nr.cc.previous
 git apply --verbose --ignore-whitespace ../install_patch_files/srsRAN_4G/srsue/src/stack/mac_nr/mac_nr.cc.patch
-
-git restore srsue/src/stack/mac_nr/proc_bsr_nr.cc
-cp srsue/src/stack/mac_nr/proc_bsr_nr.cc ../install_patch_files/srsRAN_4G/srsue/src/stack/mac_nr/proc_bsr_nr.cc.previous
-cp srsue/src/stack/mac_nr/proc_bsr_nr.cc srsue/src/stack/mac_nr/proc_bsr_nr.cc.previous
-git apply --verbose --ignore-whitespace ../install_patch_files/srsRAN_4G/srsue/src/stack/mac_nr/proc_bsr_nr.cc.patch
-
-git restore srsue/src/stack/mac_nr/proc_ra_nr.cc
-cp srsue/src/stack/mac_nr/proc_ra_nr.cc ../install_patch_files/srsRAN_4G/srsue/src/stack/mac_nr/proc_ra_nr.cc.previous
-cp srsue/src/stack/mac_nr/proc_ra_nr.cc srsue/src/stack/mac_nr/proc_ra_nr.cc.previous
-git apply --verbose --ignore-whitespace ../install_patch_files/srsRAN_4G/srsue/src/stack/mac_nr/proc_ra_nr.cc.patch
-
-git restore srsue/src/stack/mac_nr/proc_sr_nr.cc
-cp srsue/src/stack/mac_nr/proc_sr_nr.cc ../install_patch_files/srsRAN_4G/srsue/src/stack/mac_nr/proc_sr_nr.cc.previous
-cp srsue/src/stack/mac_nr/proc_sr_nr.cc srsue/src/stack/mac_nr/proc_sr_nr.cc.previous
-git apply --verbose --ignore-whitespace ../install_patch_files/srsRAN_4G/srsue/src/stack/mac_nr/proc_sr_nr.cc.patch
-
-git restore srsue/src/stack/mac_nr/test/proc_bsr_nr_test.cc
-cp srsue/src/stack/mac_nr/test/proc_bsr_nr_test.cc ../install_patch_files/srsRAN_4G/srsue/src/stack/mac_nr/proc_bsr_nr_test.cc.previous
-cp srsue/src/stack/mac_nr/test/proc_bsr_nr_test.cc srsue/src/stack/mac_nr/test/proc_bsr_nr_test.cc.previous
-git apply --verbose --ignore-whitespace ../install_patch_files/srsRAN_4G/srsue/src/stack/mac_nr/proc_bsr_nr_test.cc.patch
-
-git restore srsue/src/stack/mac_nr/test/proc_ra_nr_test.cc
-cp srsue/src/stack/mac_nr/test/proc_ra_nr_test.cc ../install_patch_files/srsRAN_4G/srsue/src/stack/mac_nr/proc_ra_nr_test.cc.previous
-cp srsue/src/stack/mac_nr/test/proc_ra_nr_test.cc srsue/src/stack/mac_nr/test/proc_ra_nr_test.cc.previous
-git apply --verbose --ignore-whitespace ../install_patch_files/srsRAN_4G/srsue/src/stack/mac_nr/proc_ra_nr_test.cc.patch
-
-git restore srsue/src/stack/mac_nr/test/proc_sr_nr_test.cc
-cp srsue/src/stack/mac_nr/test/proc_sr_nr_test.cc ../install_patch_files/srsRAN_4G/srsue/src/stack/mac_nr/proc_sr_nr_test.cc.previous
-cp srsue/src/stack/mac_nr/test/proc_sr_nr_test.cc srsue/src/stack/mac_nr/test/proc_sr_nr_test.cc.previous
-git apply --verbose --ignore-whitespace ../install_patch_files/srsRAN_4G/srsue/src/stack/mac_nr/proc_sr_nr_test.cc.patch
-
-git restore srsue/src/stack/rrc_nr/rrc_nr.cc
-cp srsue/src/stack/rrc_nr/rrc_nr.cc ../install_patch_files/srsRAN_4G/srsue/src/stack/rrc_nr/rrc_nr.cc.previous
-cp srsue/src/stack/rrc_nr/rrc_nr.cc srsue/src/stack/rrc_nr/rrc_nr.cc.previous
-git apply --verbose --ignore-whitespace ../install_patch_files/srsRAN_4G/srsue/src/stack/rrc_nr/rrc_nr.cc.patch
 
 git restore srsue/src/stack/rrc_nr/rrc_nr_procedures.cc
 cp srsue/src/stack/rrc_nr/rrc_nr_procedures.cc ../install_patch_files/srsRAN_4G/srsue/src/stack/rrc_nr/rrc_nr_procedures.cc.previous

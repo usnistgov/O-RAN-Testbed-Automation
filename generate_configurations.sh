@@ -41,7 +41,7 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
 USE_FLEXRIC=false
-USE_ZMQ_BROKER=true
+USE_ZMQ_BROKER=false
 UE_CONFIG_ARGS=""
 ORIGINAL_ARGS=("$@")
 while [ $# -gt 0 ]; do

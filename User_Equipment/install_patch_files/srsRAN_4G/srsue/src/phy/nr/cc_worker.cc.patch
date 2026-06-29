@@ -1,16 +1,8 @@
 diff --git a/srsue/src/phy/nr/cc_worker.cc b/srsue/src/phy/nr/cc_worker.cc
-index 46e059054..5158d4992 100644
+index 46e059054..9872a6ad7 100644
 --- a/srsue/src/phy/nr/cc_worker.cc
 +++ b/srsue/src/phy/nr/cc_worker.cc
-@@ -22,6 +22,7 @@
- #include "srsue/hdr/phy/nr/cc_worker.h"
- #include "srsran/common/band_helper.h"
- #include "srsran/common/buffer_pool.h"
-+#include "srsran/common/standard_streams.h"
- #include "srsran/common/string_helpers.h"
- #include "srsran/srsran.h"
- 
-@@ -255,7 +256,7 @@ bool cc_worker::decode_pdsch_dl()
+@@ -255,7 +255,7 @@ bool cc_worker::decode_pdsch_dl()
    // Abort if MAC says it doesn't need the TB
    if (not dl_action.tb.enabled) {
      // Force positive ACK
@@ -19,7 +11,7 @@ index 46e059054..5158d4992 100644
        phy.set_pending_ack(dl_slot_cfg.idx, ack_resource, true);
      }
  
-@@ -335,8 +336,8 @@ bool cc_worker::decode_pdsch_dl()
+@@ -335,8 +335,8 @@ bool cc_worker::decode_pdsch_dl()
      }
    }
  
@@ -30,36 +22,3 @@ index 46e059054..5158d4992 100644
      phy.set_pending_ack(dl_slot_cfg.idx, ack_resource, pdsch_res.tb[0].crc);
    }
  
-@@ -615,6 +616,13 @@ bool cc_worker::work_ul()
-   srsran_ue_ul_nr_set_freq_offset(&ue_ul, phy.get_ul_cfo());
- 
-   if (has_pusch_grant) {
-+    srsran::console("NR UL PUSCH grant: tti=%d rnti=0x%x pid=%d tbs=%d mcs=%d\n",
-+                    ul_slot_cfg.idx,
-+                    pusch_cfg.grant.rnti,
-+                    pid,
-+                    pusch_cfg.grant.tb[0].tbs / 8,
-+                    pusch_cfg.grant.tb[0].mcs);
-+
-     // Notify MAC about PUSCH found grant
-     mac_interface_phy_nr::tb_action_ul_t    ul_action    = {};
-     mac_interface_phy_nr::mac_nr_grant_ul_t mac_ul_grant = {};
-@@ -690,6 +698,18 @@ bool cc_worker::work_ul()
-       ERROR("Selecting PUCCH resource");
-       return false;
-     }
-+    srsran::console("NR UL PUCCH UCI: tti=%d rnti=0x%x sr=%d/%d ack_bits=%d csi_reports=%d sr_resource_id=%d format=%d start_prb=%d start_symbol=%d nof_symbols=%d\n",
-+                    ul_slot_cfg.idx,
-+                    uci_data.cfg.pucch.rnti,
-+                    uci_data.value.sr,
-+                    uci_data.cfg.o_sr,
-+                    uci_data.cfg.ack.count,
-+                    uci_data.cfg.nof_csi,
-+                    uci_data.cfg.pucch.sr_resource_id,
-+                    resource.format,
-+                    resource.starting_prb,
-+                    resource.start_symbol_idx,
-+                    resource.nof_symbols);
- 
-     // Encode PUCCH message
-     if (srsran_ue_ul_nr_encode_pucch(&ue_ul, &ul_slot_cfg, &cfg.pucch.common, &resource, &uci_data) < SRSRAN_SUCCESS) {

@@ -190,7 +190,7 @@ Run the testbed with `./run.sh` to start the 5G Core, gNodeB, and UEs 2 and 3 as
 
 <div align="center">
   
-  <img src="Images/output.png" alt="Output" width="70%">
+  <img src="output.png" alt="Output" width="70%">
 </div>
 <!
 ```console

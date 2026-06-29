@@ -88,7 +88,7 @@ The  tool can be used in virtual machines and physical machines with the list of
 
 
 
-This tool supports the deployment of 5G O-RAN testbeds using open-source components, OCUDU with O-RAN SC's Near-RT RIC. Below is the list of the supported testbed open-source components.
+This tool deploys 5G O-RAN testbeds by integrating open-source components, including OCUDU and the O-RAN Software Community (O-RAN SC) Near-Real-Time RAN Intelligent Controller (Near-RT RIC). The following is a list of the supported open-source components.
 
 ```text
 
@@ -111,14 +111,14 @@ UEs
 └── free5GC: v4.2.1
 UEs
 ├── srsRAN_4G: release_25_10
-└── Duranta (OAI) 5G UE: 2026.w22
+
 
 ```
 
 
 ### Minimum System Requirements
 
-Before beginning the installation and setup of the testbed, verify that the system meets the following minimum specifications to prevent issues like pods remaining in pending or crash loop states if using an O-RAN SC RIC.
+Before installing and configuring the testbed, ensure the system meets the minimum hardware and software requirements to avoid deployment issues, such as pods remaining in Pending or CrashLoop states when using the O-RAN SC RIC.
 
 - **Operating System**: Linux distributions based on Ubuntu 20.04 LTS, Ubuntu 22.04 LTS, Ubuntu 24.04 LTS, and Ubuntu 26.04 LTS are supported.
   - _Recommendation: Ubuntu 22.04._
@@ -157,15 +157,13 @@ git clone https://gitlab.nist.gov/gitlab/wnd-oran/o-ran-testbed-init.git
 cd O-RAN-Testbed-Automation
 ```
 
-Alternatively, the repository may be cloned over SSH: `git@gitlab.nist.gov:wnd-oran/o-ran-testbed-init.git`. To use SSH instead of HTTPS for all subsequent `git clone` operations during the installation, set `export USE_GIT_SSH=true` in your terminal before proceeding.
+
 
 ---
 
 > [!IMPORTANT]
 
 > The deployment scenario based on Open 5GS Cpre, srsRAN and O-RAN SC's Near-RT RIC can be installed from the base directory.
-> The deployment scenario based on Duranta with FlexRIC can be installed from the `OpenAirInterface_Testbed` directory, while the deployment scenario based on srsRAN and O-RAN SC's Near-RT RIC can be installed from the base directory.
-
 
 Begin the installation process, recommended to be run as the current user rather than as root:
 

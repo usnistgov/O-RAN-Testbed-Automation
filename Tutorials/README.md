@@ -83,7 +83,7 @@ The  tool can be used in virtual machines and physical machines with the list of
 
 <div align="center">
   
-  <img src="Images/fig.jpg" alt="Diagram of Testbed Open-Source Components" width="70%">
+  <img src="fig.jpg" alt="Diagram of Testbed Open-Source Components" width="70%">
 </div>
 
 

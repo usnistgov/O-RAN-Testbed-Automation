@@ -1,17 +1,16 @@
 diff --git a/lib/src/phy/ue/ue_dl_nr.c b/lib/src/phy/ue/ue_dl_nr.c
-index ecf9807eb..db538f31d 100644
+index ecf9807eb..ce52a78e5 100644
 --- a/lib/src/phy/ue/ue_dl_nr.c
 +++ b/lib/src/phy/ue/ue_dl_nr.c
-@@ -501,12 +501,13 @@ int srsran_ue_dl_nr_find_dl_dci(srsran_ue_dl_nr_t*       q,
+@@ -501,12 +501,12 @@ int srsran_ue_dl_nr_find_dl_dci(srsran_ue_dl_nr_t*       q,
    q->dl_dci_msg_count = 0;
    q->pdcch_info_count = 0;
  
 -  // If the UE looks for a RAR and RA search space is provided, search for it
 -  if (q->cfg.ra_search_space_present && rnti_type == srsran_rnti_type_ra) {
 -    // Find DCIs in the RA search space
-+  // If the UE looks for RAR or contention resolution and RA search space is provided, search for it.
-+  if (q->cfg.ra_search_space_present &&
-+      (rnti_type == srsran_rnti_type_ra || rnti_type == srsran_rnti_type_tc)) {
++  // TS 38.213 Type1-PDCCH CSS configured by ra-SearchSpace carries DCI scrambled by RA-RNTI or TC-RNTI.
++  if (q->cfg.ra_search_space_present && (rnti_type == srsran_rnti_type_ra || rnti_type == srsran_rnti_type_tc)) {
 +    // Find DCIs in the RA search space.
      int ret = ue_dl_nr_find_dci_ss(q, slot_cfg, &q->cfg.ra_search_space, rnti, rnti_type);
      if (ret < SRSRAN_SUCCESS) {

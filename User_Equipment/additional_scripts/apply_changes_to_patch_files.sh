@@ -59,7 +59,6 @@ git diff lib/src/phy/rf/rf_zmq_imp.c >../install_patch_files/srsRAN_4G/lib/src/p
 git diff lib/src/phy/ue/ue_dl_nr.c >../install_patch_files/srsRAN_4G/lib/src/phy/ue/ue_dl_nr.c.patch
 git diff srsue/src/phy/nr/cc_worker.cc >../install_patch_files/srsRAN_4G/srsue/src/phy/nr/cc_worker.cc.patch
 git diff srsue/src/stack/mac_nr/mac_nr.cc >../install_patch_files/srsRAN_4G/srsue/src/stack/mac_nr/mac_nr.cc.patch
-git diff srsue/src/stack/rrc_nr/rrc_nr_procedures.cc >../install_patch_files/srsRAN_4G/srsue/src/stack/rrc_nr/rrc_nr_procedures.cc.patch
 
 # Update previous-file snapshots and reapply patches to preserve the working tree.
 git restore lib/src/phy/rf/rf_zmq_imp.c
@@ -81,11 +80,6 @@ git restore srsue/src/stack/mac_nr/mac_nr.cc
 cp srsue/src/stack/mac_nr/mac_nr.cc ../install_patch_files/srsRAN_4G/srsue/src/stack/mac_nr/mac_nr.cc.previous
 cp srsue/src/stack/mac_nr/mac_nr.cc srsue/src/stack/mac_nr/mac_nr.cc.previous
 git apply --verbose --ignore-whitespace ../install_patch_files/srsRAN_4G/srsue/src/stack/mac_nr/mac_nr.cc.patch
-
-git restore srsue/src/stack/rrc_nr/rrc_nr_procedures.cc
-cp srsue/src/stack/rrc_nr/rrc_nr_procedures.cc ../install_patch_files/srsRAN_4G/srsue/src/stack/rrc_nr/rrc_nr_procedures.cc.previous
-cp srsue/src/stack/rrc_nr/rrc_nr_procedures.cc srsue/src/stack/rrc_nr/rrc_nr_procedures.cc.previous
-git apply --verbose --ignore-whitespace ../install_patch_files/srsRAN_4G/srsue/src/stack/rrc_nr/rrc_nr_procedures.cc.patch
 
 cd ..
 

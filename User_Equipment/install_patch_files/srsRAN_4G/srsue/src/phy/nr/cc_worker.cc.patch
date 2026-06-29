@@ -1,12 +1,14 @@
 diff --git a/srsue/src/phy/nr/cc_worker.cc b/srsue/src/phy/nr/cc_worker.cc
-index 46e059054..9872a6ad7 100644
+index 46e059054..d252e7a98 100644
 --- a/srsue/src/phy/nr/cc_worker.cc
 +++ b/srsue/src/phy/nr/cc_worker.cc
-@@ -255,7 +255,7 @@ bool cc_worker::decode_pdsch_dl()
+@@ -254,8 +254,8 @@ bool cc_worker::decode_pdsch_dl()
+ 
    // Abort if MAC says it doesn't need the TB
    if (not dl_action.tb.enabled) {
-     // Force positive ACK
+-    // Force positive ACK
 -    if (pdsch_cfg.grant.rnti_type == srsran_rnti_type_c) {
++    // Force positive HARQ-ACK
 +    if (pdsch_cfg.grant.rnti_type == srsran_rnti_type_c || pdsch_cfg.grant.rnti_type == srsran_rnti_type_tc) {
        phy.set_pending_ack(dl_slot_cfg.idx, ack_resource, true);
      }
@@ -17,7 +19,7 @@ index 46e059054..9872a6ad7 100644
  
 -  // Enqueue PDSCH ACK information only if the RNTI is type C
 -  if (pdsch_cfg.grant.rnti_type == srsran_rnti_type_c) {
-+  // Enqueue PDSCH ACK information for C-RNTI and temporary C-RNTI scheduled downlink grants.
++  // Enqueue HARQ-ACK for PDSCH scheduled by C-RNTI or TC-RNTI.
 +  if (pdsch_cfg.grant.rnti_type == srsran_rnti_type_c || pdsch_cfg.grant.rnti_type == srsran_rnti_type_tc) {
      phy.set_pending_ack(dl_slot_cfg.idx, ack_resource, pdsch_res.tb[0].crc);
    }

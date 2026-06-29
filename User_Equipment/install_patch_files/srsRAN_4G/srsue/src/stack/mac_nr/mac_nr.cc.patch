@@ -1,5 +1,5 @@
 diff --git a/srsue/src/stack/mac_nr/mac_nr.cc b/srsue/src/stack/mac_nr/mac_nr.cc
-index e697f76c7..318b4a3ff 100644
+index e697f76c7..b6eb66965 100644
 --- a/srsue/src/stack/mac_nr/mac_nr.cc
 +++ b/srsue/src/stack/mac_nr/mac_nr.cc
 @@ -174,7 +174,7 @@ mac_interface_phy_nr::sched_rnti_t mac_nr::get_ul_sched_rnti_nr(const uint32_t t
@@ -11,7 +11,7 @@ index e697f76c7..318b4a3ff 100644
    }
    return {rntis.get_crnti(), srsran_rnti_type_c};
  }
-@@ -191,22 +191,23 @@ bool mac_nr::is_paging_opportunity()
+@@ -191,22 +191,22 @@ bool mac_nr::is_paging_opportunity()
  
  mac_interface_phy_nr::sched_rnti_t mac_nr::get_dl_sched_rnti_nr(const uint32_t tti)
  {
@@ -24,8 +24,7 @@ index e697f76c7..318b4a3ff 100644
 -    return {SRSRAN_PRNTI, srsran_rnti_type_si};
 -  }
 -
-+  // During random access, prioritize the RA procedure RNTIs so SI scheduling does
-+  // not mask the RAR or contention-resolution PDCCH.
++  // During random access, check RA-RNTI/TC-RNTI before SI or paging. TS 38.213 defines these RNTIs for RA PDCCH monitoring;  this code requests one scheduling RNTI per TTI.
    if (proc_ra.is_rar_opportunity(tti)) {
      return {proc_ra.get_rar_rnti(), srsran_rnti_type_ra};
    }

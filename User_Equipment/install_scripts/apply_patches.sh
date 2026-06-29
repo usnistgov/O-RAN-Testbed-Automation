@@ -50,7 +50,6 @@ if [ ! -f "lib/src/phy/rf/rf_zmq_imp.c.previous" ]; then
 fi
 echo "Patching rf_zmq_imp.c to fix log_trx_timeout usage..."
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/srsRAN_4G/lib/src/phy/rf/rf_zmq_imp.c.patch"
-
 if grep -q 'parse_string(args, "log_trx_timeout", i, tmp);' lib/src/phy/rf/rf_zmq_imp.c; then
     echo "ERROR: Failed to apply the srsRAN_4G ZMQ log_trx_timeout parsing fix."
     exit 1
@@ -61,47 +60,28 @@ if ! grep -q 'parse_string(args, "log_trx_timeout", i, tmp2);' lib/src/phy/rf/rf
 fi
 cd ..
 
-# Apply patch to derive a valid temporary PRACH frequency offset before SIB1
+# Apply patches so random-access contention-resolution grants using temporary C-RNTI are found and acknowledged correctly (see 3GPP TS 38.213 and 3GPP TS 38.321)
 cd srsRAN_4G
-git restore srsue/src/stack/rrc_nr/rrc_nr_procedures.cc
-if [ ! -f "srsue/src/stack/rrc_nr/rrc_nr_procedures.cc.previous" ]; then
-    cp srsue/src/stack/rrc_nr/rrc_nr_procedures.cc srsue/src/stack/rrc_nr/rrc_nr_procedures.cc.previous
-    cp srsue/src/stack/rrc_nr/rrc_nr_procedures.cc.previous "$PARENT_DIR/install_patch_files/srsRAN_4G/srsue/src/stack/rrc_nr/rrc_nr_procedures.cc.previous"
-fi
-echo "Patching rrc_nr_procedures.cc to derive temporary PRACH offset..."
-git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/srsRAN_4G/srsue/src/stack/rrc_nr/rrc_nr_procedures.cc.patch"
-cd ..
-
-# Apply patch to use temporary C-RNTI semantics during random access
-cd srsRAN_4G
+echo "Patching mac_nr.cc to use temporary C-RNTI during random access..."
 git restore srsue/src/stack/mac_nr/mac_nr.cc
 if [ ! -f "srsue/src/stack/mac_nr/mac_nr.cc.previous" ]; then
     cp srsue/src/stack/mac_nr/mac_nr.cc srsue/src/stack/mac_nr/mac_nr.cc.previous
     cp srsue/src/stack/mac_nr/mac_nr.cc.previous "$PARENT_DIR/install_patch_files/srsRAN_4G/srsue/src/stack/mac_nr/mac_nr.cc.previous"
 fi
-echo "Patching mac_nr.cc to handle temporary C-RNTI scheduling..."
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/srsRAN_4G/srsue/src/stack/mac_nr/mac_nr.cc.patch"
-cd ..
-
-# Apply patch to search the RA search space for temporary C-RNTI contention resolution
-cd srsRAN_4G
+echo "Patching ue_dl_nr.c to search RA search space for temporary C-RNTI..."
 git restore lib/src/phy/ue/ue_dl_nr.c
 if [ ! -f "lib/src/phy/ue/ue_dl_nr.c.previous" ]; then
     cp lib/src/phy/ue/ue_dl_nr.c lib/src/phy/ue/ue_dl_nr.c.previous
     cp lib/src/phy/ue/ue_dl_nr.c.previous "$PARENT_DIR/install_patch_files/srsRAN_4G/lib/src/phy/ue/ue_dl_nr.c.previous"
 fi
-echo "Patching ue_dl_nr.c to search temporary C-RNTI in RA search space..."
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/srsRAN_4G/lib/src/phy/ue/ue_dl_nr.c.patch"
-cd ..
-
-# Apply patch to ACK downlink grants scheduled with temporary C-RNTI
-cd srsRAN_4G
+echo "Patching cc_worker.cc to acknowledge temporary C-RNTI downlink grants..."
 git restore srsue/src/phy/nr/cc_worker.cc
 if [ ! -f "srsue/src/phy/nr/cc_worker.cc.previous" ]; then
     cp srsue/src/phy/nr/cc_worker.cc srsue/src/phy/nr/cc_worker.cc.previous
     cp srsue/src/phy/nr/cc_worker.cc.previous "$PARENT_DIR/install_patch_files/srsRAN_4G/srsue/src/phy/nr/cc_worker.cc.previous"
 fi
-echo "Patching cc_worker.cc to ACK temporary C-RNTI grants..."
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/srsRAN_4G/srsue/src/phy/nr/cc_worker.cc.patch"
 cd ..
 

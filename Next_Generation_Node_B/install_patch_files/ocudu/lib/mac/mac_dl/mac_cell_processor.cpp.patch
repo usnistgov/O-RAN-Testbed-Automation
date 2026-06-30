@@ -1,5 +1,5 @@
 diff --git a/lib/mac/mac_dl/mac_cell_processor.cpp b/lib/mac/mac_dl/mac_cell_processor.cpp
-index e36c7c12d8..e7e14962a0 100644
+index c5ecf0492b..1c7c5da737 100644
 --- a/lib/mac/mac_dl/mac_cell_processor.cpp
 +++ b/lib/mac/mac_dl/mac_cell_processor.cpp
 @@ -11,6 +11,7 @@
@@ -10,7 +10,7 @@ index e36c7c12d8..e7e14962a0 100644
  #include "ocudu/support/async/async_timer.h"
  #include "ocudu/support/async/execute_on_blocking.h"
  #include "ocudu/support/executors/execute_until_success.h"
-@@ -71,23 +72,14 @@ async_task<void> mac_cell_processor::start()
+@@ -72,23 +73,14 @@ async_task<void> mac_cell_processor::start()
    // Note: This is done in the control executor context to avoid concurrency with other CTRL procedures.
    sched.handle_cell_activation(cell_cfg.cell_index);
  
@@ -41,7 +41,7 @@ index e36c7c12d8..e7e14962a0 100644
  }
  
  async_task<void> mac_cell_processor::stop()
-@@ -214,32 +206,21 @@ async_task<bool> mac_cell_processor::add_ue(const mac_ue_create_request& request
+@@ -215,32 +207,21 @@ async_task<bool> mac_cell_processor::add_ue(const mac_ue_create_request& request
    // > Create a MAC UE DL context.
    mac_dl_ue_context ue_inst(request);
  
@@ -88,7 +88,7 @@ index e36c7c12d8..e7e14962a0 100644
  }
  
  async_task<void> mac_cell_processor::remove_ue(const mac_ue_delete_request& request)
-@@ -277,19 +258,7 @@ async_task<bool> mac_cell_processor::addmod_bearers(du_ue_index_t
+@@ -278,19 +259,7 @@ async_task<bool> mac_cell_processor::addmod_bearers(du_ue_index_t
                                                      span<const mac_logical_channel_config> logical_channels)
  {
    // Note: logical_channels must outlive the returned async_task completion.
@@ -109,7 +109,7 @@ index e36c7c12d8..e7e14962a0 100644
  }
  
  async_task<bool> mac_cell_processor::remove_bearers(du_ue_index_t ue_index, span<const lcid_t> lcids_to_rem)
-@@ -297,17 +266,7 @@ async_task<bool> mac_cell_processor::remove_bearers(du_ue_index_t ue_index, span
+@@ -298,17 +267,7 @@ async_task<bool> mac_cell_processor::remove_bearers(du_ue_index_t ue_index, span
    // Use bitset to minimize capture size.
    auto lcids_to_rem_bset = bit_positions_to_bitset<MAX_NOF_RB_LCIDS>(lcids_to_rem);
  

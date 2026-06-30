@@ -1,8 +1,8 @@
 diff --git a/lib/scheduler/ue_scheduling/ue_fallback_scheduler.h b/lib/scheduler/ue_scheduling/ue_fallback_scheduler.h
-index 3df67d868e..263aeb7fbd 100644
+index 5eab848b19..75153924b3 100644
 --- a/lib/scheduler/ue_scheduling/ue_fallback_scheduler.h
 +++ b/lib/scheduler/ue_scheduling/ue_fallback_scheduler.h
-@@ -189,7 +189,8 @@ private:
+@@ -195,7 +195,8 @@ private:
    // (Implementation-defined) Maximum number of slots the scheduler can look ahead in the resource grid (with respect to
    // the current slot) to find PDSCH space for SRB0 and SRB1. We use it to increase the priority of fallback UE
    // allocations over normal-mode UE allocations.

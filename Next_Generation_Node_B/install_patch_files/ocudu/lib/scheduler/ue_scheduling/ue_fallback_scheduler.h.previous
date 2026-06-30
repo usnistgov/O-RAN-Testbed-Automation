@@ -13,6 +13,7 @@ namespace ocudu {
 class pdcch_resource_allocator;
 class pucch_allocator;
 class uci_allocator;
+class cell_metrics_handler;
 struct cell_resource_allocator;
 struct pdcch_dl_information;
 struct pdcch_ul_information;
@@ -27,9 +28,10 @@ public:
                                  const cell_configuration&         cell_cfg_,
                                  pdcch_resource_allocator&         pdcch_sch_,
                                  // TODO: Remove pucch_alloc and depend only on uci_alloc
-                                 pucch_allocator& pucch_alloc_,
-                                 uci_allocator&   uci_alloc_,
-                                 ue_repository&   ues_);
+                                 pucch_allocator&      pucch_alloc_,
+                                 uci_allocator&        uci_alloc_,
+                                 ue_repository&        ues_,
+                                 cell_metrics_handler& metrics_);
 
   /// Handles DL buffer state reported by upper layers.
   /// \param[in] ue_index UE's DU Index for which SRB0 message needs to be scheduled.
@@ -85,6 +87,10 @@ private:
 
   /// Erase the UEs' HARQ processes that have been acked from the SRB scheduler cache.
   void slot_indication(slot_point sl);
+
+  /// \brief Checks whether the ra-ContentionResolutionTimer has expired for a UE in fallback mode and, if so,
+  /// deactivates it. Returns true if the timer expired and the UE was deactivated.
+  bool handle_conres_expiry(ue& u, slot_point sl_tx);
 
   /// \remark srb_pending => Only ConRes was scheduled and Msg4 is yet to be scheduled.
   enum class dl_sched_outcome { success, next_ue, stop_dl_scheduling };
@@ -201,6 +207,7 @@ private:
   pucch_allocator&          pucch_alloc;
   uci_allocator&            uci_alloc;
   ue_repository&            ues;
+  cell_metrics_handler&     metrics;
 
   bwp_configuration initial_active_dl_bwp;
   // See 3GPP TS 38.213, clause 10.1,

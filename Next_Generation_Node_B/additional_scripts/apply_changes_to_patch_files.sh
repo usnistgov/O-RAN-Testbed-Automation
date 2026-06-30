@@ -47,42 +47,31 @@ if [ ! -d ocudu ]; then
 fi
 
 mkdir -p install_patch_files/ocudu/cmake/modules
-mkdir -p install_patch_files/ocudu/lib/cu_cp/cu_cp_controller
 mkdir -p install_patch_files/ocudu/lib/gateways
 mkdir -p install_patch_files/ocudu/lib/mac/mac_dl
 mkdir -p install_patch_files/ocudu/lib/mac/mac_ul
 mkdir -p install_patch_files/ocudu/lib/radio/zmq
-mkdir -p install_patch_files/ocudu/lib/ran/precoding
 mkdir -p install_patch_files/ocudu/lib/rlc
 mkdir -p install_patch_files/ocudu/lib/scheduler/ue_scheduling
 
 cd ocudu
 
-# Update patch files from the current OCUDU working tree.
 git diff cmake/modules/FindYAMLCPP.cmake >../install_patch_files/ocudu/cmake/modules/FindYAMLCPP.cmake.patch
-git diff lib/cu_cp/cu_cp_controller/cu_up_connection_manager.cpp >../install_patch_files/ocudu/lib/cu_cp/cu_cp_controller/cu_up_connection_manager.cpp.patch
 git diff lib/gateways/sctp_network_gateway_common_impl.cpp >../install_patch_files/ocudu/lib/gateways/sctp_network_gateway_common_impl.cpp.patch
 git diff lib/mac/mac_dl/mac_cell_processor.cpp >../install_patch_files/ocudu/lib/mac/mac_dl/mac_cell_processor.cpp.patch
 git diff lib/mac/mac_ul/mac_ul_processor.cpp >../install_patch_files/ocudu/lib/mac/mac_ul/mac_ul_processor.cpp.patch
 git diff lib/radio/zmq/radio_zmq_rx_channel.cpp >../install_patch_files/ocudu/lib/radio/zmq/radio_zmq_rx_channel.cpp.patch
 git diff lib/radio/zmq/radio_zmq_rx_channel.h >../install_patch_files/ocudu/lib/radio/zmq/radio_zmq_rx_channel.h.patch
-git diff lib/ran/precoding/precoding_codebooks.cpp >../install_patch_files/ocudu/lib/ran/precoding/precoding_codebooks.cpp.patch
-git diff lib/rlc/rlc_tx_am_entity.cpp >../install_patch_files/ocudu/lib/rlc/rlc_tx_am_entity.cpp.patch
-git diff lib/rlc/rlc_tx_am_entity.h >../install_patch_files/ocudu/lib/rlc/rlc_tx_am_entity.h.patch
 git diff lib/rlc/rlc_tx_tm_entity.cpp >../install_patch_files/ocudu/lib/rlc/rlc_tx_tm_entity.cpp.patch
 git diff lib/rlc/rlc_tx_tm_entity.h >../install_patch_files/ocudu/lib/rlc/rlc_tx_tm_entity.h.patch
+git diff lib/rlc/rlc_tx_am_entity.cpp >../install_patch_files/ocudu/lib/rlc/rlc_tx_am_entity.cpp.patch
+git diff lib/rlc/rlc_tx_am_entity.h >../install_patch_files/ocudu/lib/rlc/rlc_tx_am_entity.h.patch
 git diff lib/scheduler/ue_scheduling/ue_fallback_scheduler.h >../install_patch_files/ocudu/lib/scheduler/ue_scheduling/ue_fallback_scheduler.h.patch
 
-# Update previous-file snapshots and reapply patches to preserve the working tree.
 git restore cmake/modules/FindYAMLCPP.cmake
 cp cmake/modules/FindYAMLCPP.cmake ../install_patch_files/ocudu/cmake/modules/FindYAMLCPP.previous.cmake
 cp cmake/modules/FindYAMLCPP.cmake cmake/modules/FindYAMLCPP.cmake.previous
 git apply --verbose --ignore-whitespace ../install_patch_files/ocudu/cmake/modules/FindYAMLCPP.cmake.patch
-
-git restore lib/cu_cp/cu_cp_controller/cu_up_connection_manager.cpp
-cp lib/cu_cp/cu_cp_controller/cu_up_connection_manager.cpp ../install_patch_files/ocudu/lib/cu_cp/cu_cp_controller/cu_up_connection_manager.cpp.previous
-cp lib/cu_cp/cu_cp_controller/cu_up_connection_manager.cpp lib/cu_cp/cu_cp_controller/cu_up_connection_manager.cpp.previous
-git apply --verbose --ignore-whitespace ../install_patch_files/ocudu/lib/cu_cp/cu_cp_controller/cu_up_connection_manager.cpp.patch
 
 git restore lib/gateways/sctp_network_gateway_common_impl.cpp
 cp lib/gateways/sctp_network_gateway_common_impl.cpp ../install_patch_files/ocudu/lib/gateways/sctp_network_gateway_common_impl.previous.cpp
@@ -99,20 +88,15 @@ cp lib/mac/mac_ul/mac_ul_processor.cpp ../install_patch_files/ocudu/lib/mac/mac_
 cp lib/mac/mac_ul/mac_ul_processor.cpp lib/mac/mac_ul/mac_ul_processor.cpp.previous
 git apply --verbose --ignore-whitespace ../install_patch_files/ocudu/lib/mac/mac_ul/mac_ul_processor.cpp.patch
 
-git restore lib/radio/zmq/radio_zmq_rx_channel.cpp
-cp lib/radio/zmq/radio_zmq_rx_channel.cpp ../install_patch_files/ocudu/lib/radio/zmq/radio_zmq_rx_channel.cpp.previous
-cp lib/radio/zmq/radio_zmq_rx_channel.cpp lib/radio/zmq/radio_zmq_rx_channel.cpp.previous
-git apply --verbose --ignore-whitespace ../install_patch_files/ocudu/lib/radio/zmq/radio_zmq_rx_channel.cpp.patch
+git restore lib/rlc/rlc_tx_tm_entity.cpp
+cp lib/rlc/rlc_tx_tm_entity.cpp ../install_patch_files/ocudu/lib/rlc/rlc_tx_tm_entity.cpp.previous
+cp lib/rlc/rlc_tx_tm_entity.cpp lib/rlc/rlc_tx_tm_entity.cpp.previous
+git apply --verbose --ignore-whitespace ../install_patch_files/ocudu/lib/rlc/rlc_tx_tm_entity.cpp.patch
 
-git restore lib/radio/zmq/radio_zmq_rx_channel.h
-cp lib/radio/zmq/radio_zmq_rx_channel.h ../install_patch_files/ocudu/lib/radio/zmq/radio_zmq_rx_channel.h.previous
-cp lib/radio/zmq/radio_zmq_rx_channel.h lib/radio/zmq/radio_zmq_rx_channel.h.previous
-git apply --verbose --ignore-whitespace ../install_patch_files/ocudu/lib/radio/zmq/radio_zmq_rx_channel.h.patch
-
-git restore lib/ran/precoding/precoding_codebooks.cpp
-cp lib/ran/precoding/precoding_codebooks.cpp ../install_patch_files/ocudu/lib/ran/precoding/precoding_codebooks.cpp.previous
-cp lib/ran/precoding/precoding_codebooks.cpp lib/ran/precoding/precoding_codebooks.cpp.previous
-git apply --verbose --ignore-whitespace ../install_patch_files/ocudu/lib/ran/precoding/precoding_codebooks.cpp.patch
+git restore lib/rlc/rlc_tx_tm_entity.h
+cp lib/rlc/rlc_tx_tm_entity.h ../install_patch_files/ocudu/lib/rlc/rlc_tx_tm_entity.h.previous
+cp lib/rlc/rlc_tx_tm_entity.h lib/rlc/rlc_tx_tm_entity.h.previous
+git apply --verbose --ignore-whitespace ../install_patch_files/ocudu/lib/rlc/rlc_tx_tm_entity.h.patch
 
 git restore lib/rlc/rlc_tx_am_entity.cpp
 cp lib/rlc/rlc_tx_am_entity.cpp ../install_patch_files/ocudu/lib/rlc/rlc_tx_am_entity.cpp.previous
@@ -124,15 +108,15 @@ cp lib/rlc/rlc_tx_am_entity.h ../install_patch_files/ocudu/lib/rlc/rlc_tx_am_ent
 cp lib/rlc/rlc_tx_am_entity.h lib/rlc/rlc_tx_am_entity.h.previous
 git apply --verbose --ignore-whitespace ../install_patch_files/ocudu/lib/rlc/rlc_tx_am_entity.h.patch
 
-git restore lib/rlc/rlc_tx_tm_entity.cpp
-cp lib/rlc/rlc_tx_tm_entity.cpp ../install_patch_files/ocudu/lib/rlc/rlc_tx_tm_entity.cpp.previous
-cp lib/rlc/rlc_tx_tm_entity.cpp lib/rlc/rlc_tx_tm_entity.cpp.previous
-git apply --verbose --ignore-whitespace ../install_patch_files/ocudu/lib/rlc/rlc_tx_tm_entity.cpp.patch
+git restore lib/radio/zmq/radio_zmq_rx_channel.cpp
+cp lib/radio/zmq/radio_zmq_rx_channel.cpp ../install_patch_files/ocudu/lib/radio/zmq/radio_zmq_rx_channel.cpp.previous
+cp lib/radio/zmq/radio_zmq_rx_channel.cpp lib/radio/zmq/radio_zmq_rx_channel.cpp.previous
+git apply --verbose --ignore-whitespace ../install_patch_files/ocudu/lib/radio/zmq/radio_zmq_rx_channel.cpp.patch
 
-git restore lib/rlc/rlc_tx_tm_entity.h
-cp lib/rlc/rlc_tx_tm_entity.h ../install_patch_files/ocudu/lib/rlc/rlc_tx_tm_entity.h.previous
-cp lib/rlc/rlc_tx_tm_entity.h lib/rlc/rlc_tx_tm_entity.h.previous
-git apply --verbose --ignore-whitespace ../install_patch_files/ocudu/lib/rlc/rlc_tx_tm_entity.h.patch
+git restore lib/radio/zmq/radio_zmq_rx_channel.h
+cp lib/radio/zmq/radio_zmq_rx_channel.h ../install_patch_files/ocudu/lib/radio/zmq/radio_zmq_rx_channel.h.previous
+cp lib/radio/zmq/radio_zmq_rx_channel.h lib/radio/zmq/radio_zmq_rx_channel.h.previous
+git apply --verbose --ignore-whitespace ../install_patch_files/ocudu/lib/radio/zmq/radio_zmq_rx_channel.h.patch
 
 git restore lib/scheduler/ue_scheduling/ue_fallback_scheduler.h
 cp lib/scheduler/ue_scheduling/ue_fallback_scheduler.h ../install_patch_files/ocudu/lib/scheduler/ue_scheduling/ue_fallback_scheduler.h.previous

@@ -32,7 +32,7 @@ set -e
 
 OUTPUT=""
 SAMPLE_RATE_HZ=""
-SLOW_DOWN_RATIO="1"
+SLOW_DOWN_RATIO=""
 CELL_COUNT=1
 UE_NUMBERS=()
 UE_IPS=()
@@ -176,7 +176,6 @@ from gnuradio import zeromq
 from gnuradio.qtgui import Range
 from gnuradio.qtgui import RangeWidget
 
-
 CELL_CONFIGS = [
 EOF
 
@@ -200,19 +199,21 @@ done
 
 cat >>"$OUTPUT" <<'EOF'
 ]
-SAMPLE_RATE = __SAMPLE_RATE_HZ__
+SAMPLE_RATE_HZ = __SAMPLE_RATE_HZ__
 SLOW_DOWN_RATIO = __SLOW_DOWN_RATIO__
 INITIAL_CELL_NUMBER = 1
 INITIAL_CELL_PATH_LOSS_DB = 0
 OTHER_CELL_PATH_LOSS_DB = 35
-ZMQ_TIMEOUT = 100 # For slower systems, increase timeout
+ZMQ_TIMEOUT = 100
 ZMQ_HIGH_WATER_MARK = -1
 
 
 class multi_ue_scenario(gr.top_block, Qt.QWidget):
     def __init__(self):
         try:
-            gr.top_block.__init__(self, "srsRAN_multi_cell_multi_UE", catch_exceptions=True)
+            gr.top_block.__init__(
+                self, "srsRAN_multi_cell_multi_UE", catch_exceptions=True
+            )
         except TypeError:
             gr.top_block.__init__(self, "srsRAN_multi_cell_multi_UE")
         Qt.QWidget.__init__(self)
@@ -227,7 +228,7 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
         except Exception:
             pass
 
-        self.samp_rate = SAMPLE_RATE
+        self.samp_rate = SAMPLE_RATE_HZ
         self.slow_down_ratio = SLOW_DOWN_RATIO
         # # Equally loud cells
         # self.path_loss_db = {(cell["number"], ue["number"]): 0 for cell in CELL_CONFIGS for ue in UE_CONFIGS}
@@ -239,9 +240,13 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
                 cell_number = cell["number"]
                 ue_number = ue["number"]
                 if cell_number == INITIAL_CELL_NUMBER:
-                    self.path_loss_db[(cell_number, ue_number)] = INITIAL_CELL_PATH_LOSS_DB
+                    self.path_loss_db[(cell_number, ue_number)] = (
+                        INITIAL_CELL_PATH_LOSS_DB
+                    )
                 else:
-                    self.path_loss_db[(cell_number, ue_number)] = OTHER_CELL_PATH_LOSS_DB
+                    self.path_loss_db[(cell_number, ue_number)] = (
+                        OTHER_CELL_PATH_LOSS_DB
+                    )
 
         self.gnb_dl_sources = {}
         self.gnb_ul_sinks = {}
@@ -256,7 +261,7 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
         self.path_loss_widgets = {}
 
         print(
-            f"ZMQ broker sample_rate={SAMPLE_RATE} slow_down_ratio={SLOW_DOWN_RATIO} cells={len(CELL_CONFIGS)} ues={len(UE_CONFIGS)}",
+            f"ZMQ broker sample_rate={SAMPLE_RATE_HZ} slow_down_ratio={SLOW_DOWN_RATIO} cells={len(CELL_CONFIGS)} ues={len(UE_CONFIGS)}",
             flush=True,
         )
 
@@ -267,18 +272,25 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
                 flush=True,
             )
             self.gnb_dl_sources[cell_number] = zeromq.req_source(
-                gr.sizeof_gr_complex, 1, f"tcp://127.0.0.1:{cell['rx_port']}", ZMQ_TIMEOUT, False, ZMQ_HIGH_WATER_MARK
+                gr.sizeof_gr_complex,
+                1,
+                f"tcp://127.0.0.1:{cell['rx_port']}",
+                ZMQ_TIMEOUT,
+                False,
+                ZMQ_HIGH_WATER_MARK,
             )
             self.gnb_ul_sinks[cell_number] = zeromq.rep_sink(
-                gr.sizeof_gr_complex, 1, f"tcp://127.0.0.1:{cell['tx_port']}", ZMQ_TIMEOUT, False, ZMQ_HIGH_WATER_MARK
+                gr.sizeof_gr_complex,
+                1,
+                f"tcp://127.0.0.1:{cell['tx_port']}",
+                ZMQ_TIMEOUT,
+                False,
+                ZMQ_HIGH_WATER_MARK,
             )
             self.dl_throttles[cell_number] = blocks.throttle(
                 gr.sizeof_gr_complex, self.samp_rate / self.slow_down_ratio, True
             )
             self.cell_ul_adds[cell_number] = blocks.add_vcc(1)
-
-            self.connect((self.gnb_dl_sources[cell_number], 0), (self.dl_throttles[cell_number], 0))
-            self.connect((self.cell_ul_adds[cell_number], 0), (self.gnb_ul_sinks[cell_number], 0))
 
         for ue in UE_CONFIGS:
             ue_number = ue["number"]
@@ -288,12 +300,37 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
             )
             self.ue_dl_adds[ue_number] = blocks.add_vcc(1)
             self.ue_dl_sinks[ue_number] = zeromq.rep_sink(
-                gr.sizeof_gr_complex, 1, f"tcp://*:{ue['rx_port']}", ZMQ_TIMEOUT, False, ZMQ_HIGH_WATER_MARK
+                gr.sizeof_gr_complex,
+                1,
+                f"tcp://*:{ue['rx_port']}",
+                ZMQ_TIMEOUT,
+                False,
+                ZMQ_HIGH_WATER_MARK,
             )
             self.ue_ul_sources[ue_number] = zeromq.req_source(
-                gr.sizeof_gr_complex, 1, f"tcp://{ue['ue_ip']}:{ue['tx_port']}", ZMQ_TIMEOUT, False, ZMQ_HIGH_WATER_MARK
+                gr.sizeof_gr_complex,
+                1,
+                f"tcp://{ue['ue_ip']}:{ue['tx_port']}",
+                ZMQ_TIMEOUT,
+                False,
+                ZMQ_HIGH_WATER_MARK,
             )
-            self.connect((self.ue_dl_adds[ue_number], 0), (self.ue_dl_sinks[ue_number], 0))
+
+        for cell in CELL_CONFIGS:
+            cell_number = cell["number"]
+            self.connect(
+                (self.gnb_dl_sources[cell_number], 0),
+                (self.dl_throttles[cell_number], 0),
+            )
+            self.connect(
+                (self.cell_ul_adds[cell_number], 0), (self.gnb_ul_sinks[cell_number], 0)
+            )
+
+        for ue in UE_CONFIGS:
+            ue_number = ue["number"]
+            self.connect(
+                (self.ue_dl_adds[ue_number], 0), (self.ue_dl_sinks[ue_number], 0)
+            )
 
         for cell_index, cell in enumerate(CELL_CONFIGS):
             cell_number = cell["number"]
@@ -302,7 +339,9 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
                 path_key = (cell_number, ue_number)
                 label = f"Cell{cell_number} UE{ue_number} Pathloss [dB]"
 
-                self.path_loss_ranges[path_key] = Range(0, 100, 1, self.path_loss_db[path_key], 200)
+                self.path_loss_ranges[path_key] = Range(
+                    0, 100, 1, self.path_loss_db[path_key], 200
+                )
                 self.path_loss_widgets[path_key] = RangeWidget(
                     self.path_loss_ranges[path_key],
                     lambda value, cell_number=cell_number, ue_number=ue_number: self.set_path_loss(
@@ -315,23 +354,33 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
                 )
                 self.top_layout.addWidget(self.path_loss_widgets[path_key])
 
-                gain = self.path_loss_to_gain(self.path_loss_db[path_key])
+                gain = self.path_loss_db_to_iq_gain(self.path_loss_db[path_key])
                 self.dl_gains[path_key] = blocks.multiply_const_cc(gain)
                 self.ul_gains[path_key] = blocks.multiply_const_cc(gain)
 
-                self.connect((self.dl_throttles[cell_number], 0), (self.dl_gains[path_key], 0))
-                self.connect((self.dl_gains[path_key], 0), (self.ue_dl_adds[ue_number], cell_index))
-                self.connect((self.ue_ul_sources[ue_number], 0), (self.ul_gains[path_key], 0))
-                self.connect((self.ul_gains[path_key], 0), (self.cell_ul_adds[cell_number], ue_index))
+                self.connect(
+                    (self.dl_throttles[cell_number], 0), (self.dl_gains[path_key], 0)
+                )
+                self.connect(
+                    (self.dl_gains[path_key], 0),
+                    (self.ue_dl_adds[ue_number], cell_index),
+                )
+                self.connect(
+                    (self.ue_ul_sources[ue_number], 0), (self.ul_gains[path_key], 0)
+                )
+                self.connect(
+                    (self.ul_gains[path_key], 0),
+                    (self.cell_ul_adds[cell_number], ue_index),
+                )
 
     @staticmethod
-    def path_loss_to_gain(path_loss_db):
-        return 10 ** (-1.0 * path_loss_db / 20.0)
+    def path_loss_db_to_iq_gain(path_loss_db):
+        return 10 ** (-path_loss_db / 20.0)
 
     def set_path_loss(self, cell_number, ue_number, path_loss_db):
         path_key = (cell_number, ue_number)
         self.path_loss_db[path_key] = path_loss_db
-        gain = self.path_loss_to_gain(path_loss_db)
+        gain = self.path_loss_db_to_iq_gain(path_loss_db)
         self.dl_gains[path_key].set_k(gain)
         self.ul_gains[path_key].set_k(gain)
 
@@ -369,3 +418,5 @@ EOF
 sed -i "s/__SAMPLE_RATE_HZ__/$SAMPLE_RATE_HZ/" "$OUTPUT"
 sed -i "s/__SLOW_DOWN_RATIO__/$SLOW_DOWN_RATIO/" "$OUTPUT"
 chmod 755 "$OUTPUT"
+
+echo "Generated ZMQ broker: $OUTPUT"

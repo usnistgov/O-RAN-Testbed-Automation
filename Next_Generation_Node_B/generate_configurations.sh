@@ -38,10 +38,10 @@ ZMQ_BROKER_CHANNEL_BW_MHZ=20
 GNB_SRATE_MHZ=23.04
 GNB_BASE_SRATE_HZ=23.04e6
 PDU_SESSION_TIMEOUT=3
-ZMQ_BROKER_SLOW_DOWN_RATIO=1
 
 if [ "$USE_ZMQ_BROKER" = "true" ]; then
     ZMQ_BROKER_CHANNEL_BW_MHZ=10
+    ZMQ_BROKER_SLOW_DOWN_RATIO=4
     GNB_SRATE_MHZ=11.52
     GNB_BASE_SRATE_HZ=11.52e6
     PDU_SESSION_TIMEOUT=30
@@ -124,6 +124,9 @@ fi
 echo "PLMN value: $PLMN"
 echo "TAC value: $TAC"
 
+# Ensure the correct YAML editor is installed
+"$SCRIPT_DIR/install_scripts/./ensure_consistent_yq.sh"
+
 # Configure the DNN, SST, and SD values
 DNN=($(yq eval '.slices[].dnn' "$YAML_PATH"))
 SST=($(yq eval '.slices[].sst' "$YAML_PATH"))
@@ -164,9 +167,6 @@ for i in "${!SST[@]}"; do
         SD[$i]="$(printf "%06X" "$((16#$CURRENT_SD))")"
     fi
 done
-
-# Ensure the correct YAML editor is installed
-"$SCRIPT_DIR/install_scripts/./ensure_consistent_yq.sh"
 
 if [ ! -t 0 ] && [ -z "$("../5G_Core_Network/install_scripts/get_amf_address.sh")" ]; then
     echo "ERROR: Open5GS AMF addresses are not configured and standard input is not interactive."
@@ -381,7 +381,6 @@ fi
 update_yaml "configs/gnb.yaml" "cu_cp.amf.supported_tracking_areas[0]" "tac" $TAC
 update_yaml "configs/gnb.yaml" "cu_cp.amf.supported_tracking_areas[0].plmn_list[0]" "plmn" $PLMN
 update_yaml "configs/gnb.yaml" "cu_cp.inactivity_timer" "7200"
-update_yaml "configs/gnb.yaml" "cu_cp.request_pdu_session_timeout" "$PDU_SESSION_TIMEOUT"
 
 # Update configuration values for RF front-end device
 update_yaml "configs/gnb.yaml" "ru_sdr" "device_driver" "zmq"

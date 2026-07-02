@@ -38,7 +38,7 @@ GNB_CONFIG="configs/gnb.yaml"
 BROKER="zmq_broker/multi_ue_scenario.py"
 UE_CONFIG_DIR="../User_Equipment/configs"
 UE_NUMBERS=()
-CELL_COUNT=""
+CELL_NUMBERS=()
 ERRORS=()
 
 while [ $# -gt 0 ]; do
@@ -47,8 +47,8 @@ while [ $# -gt 0 ]; do
         UE_NUMBERS+=("$2")
         shift 2
         ;;
-    --cells | --cell-count)
-        CELL_COUNT="$2"
+    --cell)
+        CELL_NUMBERS+=("$2")
         shift 2
         ;;
     *)
@@ -106,34 +106,38 @@ if [ ${#ERRORS[@]} -eq 0 ]; then
     GNB_BASE_SRATE=$(device_arg_value "$GNB_DEVICE_ARGS" "base_srate")
     PDU_TIMEOUT=$(yaml_value "$GNB_CONFIG" "request_pdu_session_timeout")
 
-    if [ -z "$CELL_COUNT" ]; then
-        CELL_COUNT=$(grep -Ec '^# CELL_CONFIG: ' "$BROKER")
-        if [ "$CELL_COUNT" -eq 0 ]; then
-            CELL_COUNT=1
+    if [ ${#CELL_NUMBERS[@]} -eq 0 ]; then
+        for BROKER_CELL in $(grep -E '^# CELL_CONFIG: ' "$BROKER" | awk '{ print $3 }'); do
+            CELL_NUMBERS+=("$BROKER_CELL")
+        done
+        if [ ${#CELL_NUMBERS[@]} -eq 0 ]; then
+            CELL_NUMBERS=(1)
         fi
     fi
-    if ! [[ "$CELL_COUNT" =~ ^[0-9]+$ ]] || [ "$CELL_COUNT" -lt 1 ]; then
-        add_error "Cell count must be a positive integer"
-    else
-        for CELL_NUMBER in $(seq 1 "$CELL_COUNT"); do
-            CELL_INDEX=$((CELL_NUMBER - 1))
-            EXPECTED_CELL_RX_PORT=$((2000 + CELL_INDEX * 2))
-            EXPECTED_CELL_TX_PORT=$((2001 + CELL_INDEX * 2))
+    CELL_COUNT=0
+    for CELL_NUMBER in "${CELL_NUMBERS[@]}"; do
+        if ! [[ "$CELL_NUMBER" =~ ^[0-9]+$ ]] || [ "$CELL_NUMBER" -lt 1 ]; then
+            add_error "Cell number '$CELL_NUMBER' must be a positive integer"
+        else
+            EXPECTED_CELL_RX_PORT=$((2000 + (CELL_NUMBER - 1) * 2))
+            EXPECTED_CELL_TX_PORT=$((2001 + (CELL_NUMBER - 1) * 2))
 
             if [ "$(broker_cell_field "$BROKER" "$CELL_NUMBER" 4)" != "$EXPECTED_CELL_RX_PORT" ]; then
-                add_error "Cell $CELL_NUMBER: broker rx_port must be $EXPECTED_CELL_RX_PORT"
+                add_error "Cell $CELL_NUMBER: broker rx_port must be $EXPECTED_CELL_RX_PORT (got $(broker_cell_field "$BROKER" "$CELL_NUMBER" 4))"
             fi
             if [ "$(broker_cell_field "$BROKER" "$CELL_NUMBER" 5)" != "$EXPECTED_CELL_TX_PORT" ]; then
-                add_error "Cell $CELL_NUMBER: broker tx_port must be $EXPECTED_CELL_TX_PORT"
+                add_error "Cell $CELL_NUMBER: broker tx_port must be $EXPECTED_CELL_TX_PORT (got $(broker_cell_field "$BROKER" "$CELL_NUMBER" 5))"
             fi
-            if [ "$(device_arg_value "$GNB_DEVICE_ARGS" "tx_port$CELL_INDEX")" != "tcp://127.0.0.1:$EXPECTED_CELL_RX_PORT" ]; then
-                add_error "Cell $CELL_NUMBER: gNB tx_port$CELL_INDEX must be tcp://127.0.0.1:$EXPECTED_CELL_RX_PORT for broker mode"
+            if [ "$(device_arg_value "$GNB_DEVICE_ARGS" "tx_port$CELL_COUNT")" != "tcp://127.0.0.1:$EXPECTED_CELL_RX_PORT" ]; then
+                add_error "Cell $CELL_NUMBER: gNB tx_port$CELL_COUNT must be tcp://127.0.0.1:$EXPECTED_CELL_RX_PORT for broker mode"
             fi
-            if [ "$(device_arg_value "$GNB_DEVICE_ARGS" "rx_port$CELL_INDEX")" != "tcp://127.0.0.1:$EXPECTED_CELL_TX_PORT" ]; then
-                add_error "Cell $CELL_NUMBER: gNB rx_port$CELL_INDEX must be tcp://127.0.0.1:$EXPECTED_CELL_TX_PORT for broker mode"
+            if [ "$(device_arg_value "$GNB_DEVICE_ARGS" "rx_port$CELL_COUNT")" != "tcp://127.0.0.1:$EXPECTED_CELL_TX_PORT" ]; then
+                add_error "Cell $CELL_NUMBER: gNB rx_port$CELL_COUNT must be tcp://127.0.0.1:$EXPECTED_CELL_TX_PORT for broker mode"
             fi
-        done
-    fi
+            CELL_COUNT=$((CELL_COUNT + 1))
+        fi
+    done
+
     if [ -z "$GNB_BASE_SRATE" ]; then
         add_error "gNB device_args is missing base_srate"
     fi
@@ -173,25 +177,25 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
     EXPECTED_TX_PORT=$((2001 + UE_NUMBER * 100))
 
     if [ "$(broker_field "$BROKER" "$UE_NUMBER" 4)" != "$EXPECTED_RX_PORT" ]; then
-        add_error "UE $UE_NUMBER: broker rx_port must be $EXPECTED_RX_PORT"
+        add_error "UE $UE_NUMBER: broker rx_port must be $EXPECTED_RX_PORT (got $(broker_field "$BROKER" "$UE_NUMBER" 4))"
     fi
     if [ "$(broker_field "$BROKER" "$UE_NUMBER" 5)" != "$EXPECTED_TX_PORT" ]; then
-        add_error "UE $UE_NUMBER: broker tx_port must be $EXPECTED_TX_PORT"
+        add_error "UE $UE_NUMBER: broker tx_port must be $EXPECTED_TX_PORT (got $(broker_field "$BROKER" "$UE_NUMBER" 5))"
     fi
     if [ "$(broker_field "$BROKER" "$UE_NUMBER" 6)" != "$EXPECTED_UE_IP" ]; then
-        add_error "UE $UE_NUMBER: broker ue_ip must be $EXPECTED_UE_IP"
+        add_error "UE $UE_NUMBER: broker ue_ip must be $EXPECTED_UE_IP (got $(broker_field "$BROKER" "$UE_NUMBER" 6))"
     fi
     if [ "$(device_arg_value "$UE_DEVICE_ARGS" "tx_port")" != "tcp://*:$EXPECTED_TX_PORT" ]; then
-        add_error "UE $UE_NUMBER: tx_port must be tcp://*:$EXPECTED_TX_PORT"
+        add_error "UE $UE_NUMBER: tx_port must be tcp://*:$EXPECTED_TX_PORT (got $(device_arg_value "$UE_DEVICE_ARGS" "tx_port"))"
     fi
     if [ "$(device_arg_value "$UE_DEVICE_ARGS" "rx_port")" != "tcp://$EXPECTED_HOST_IP:$EXPECTED_RX_PORT" ]; then
-        add_error "UE $UE_NUMBER: rx_port must be tcp://$EXPECTED_HOST_IP:$EXPECTED_RX_PORT"
+        add_error "UE $UE_NUMBER: rx_port must be tcp://$EXPECTED_HOST_IP:$EXPECTED_RX_PORT (got $(device_arg_value "$UE_DEVICE_ARGS" "rx_port"))"
     fi
     if [ "$(device_arg_value "$UE_DEVICE_ARGS" "base_srate")" != "$GNB_BASE_SRATE" ]; then
-        add_error "UE $UE_NUMBER: base_srate does not match gNB base_srate"
+        add_error "UE $UE_NUMBER: base_srate does not match gNB base_srate (got $(device_arg_value "$UE_DEVICE_ARGS" "base_srate"))"
     fi
     if [ "$UE_SRATE" != "${GNB_SRATE}e6" ]; then
-        add_error "UE $UE_NUMBER: srate $UE_SRATE does not match gNB srate ${GNB_SRATE}e6"
+        add_error "UE $UE_NUMBER: srate $UE_SRATE does not match gNB srate ${GNB_SRATE}e6 (got ${GNB_SRATE}e6)"
     fi
 done
 
@@ -207,13 +211,17 @@ for BROKER_UE in $(grep -E '^# UE_CONFIG: ' "$BROKER" | awk '{ print $3 }'); do
     fi
 done
 
-if [ -n "$CELL_COUNT" ]; then
-    for BROKER_CELL in $(grep -E '^# CELL_CONFIG: ' "$BROKER" | awk '{ print $3 }'); do
-        if [ "$BROKER_CELL" -lt 1 ] || [ "$BROKER_CELL" -gt "$CELL_COUNT" ]; then
-            add_error "Generated broker contains cell $BROKER_CELL outside configured cell count $CELL_COUNT"
+for BROKER_CELL in $(grep -E '^# CELL_CONFIG: ' "$BROKER" | awk '{ print $3 }'); do
+    FOUND=false
+    for CELL_NUMBER in "${CELL_NUMBERS[@]}"; do
+        if [ "$BROKER_CELL" = "$CELL_NUMBER" ]; then
+            FOUND=true
         fi
     done
-fi
+    if [ "$FOUND" = false ]; then
+        add_error "Generated broker contains cell $BROKER_CELL without matching requested cell"
+    fi
+done
 
 if [ ${#ERRORS[@]} -gt 0 ]; then
     for ERROR in "${ERRORS[@]}"; do
@@ -222,6 +230,4 @@ if [ ${#ERRORS[@]} -gt 0 ]; then
     exit 1
 fi
 
-IFS=$'\n' SORTED_UES=($(printf "%s\n" "${UE_NUMBERS[@]}" | sort -n))
-unset IFS
-echo "Successfully validated ZeroMQ broker configuration for $CELL_COUNT cell(s), gNB, and UE(s): ${SORTED_UES[*]}"
+echo "Successfully validated ZeroMQ broker for UEs: [${UE_NUMBERS[*]}], Cells: [${CELL_NUMBERS[*]}]."

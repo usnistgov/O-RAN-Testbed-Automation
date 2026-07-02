@@ -47,25 +47,27 @@ ZMQ_DEBUG_ARGS=""     # Example: fail_on_disconnect=true,log_trx_timeout=true,tr
 
 # Support input argument for the UE number(s), for example:
 # ./generate_configurations.sh --> configures UE 1, 2, and 3
-# ./generate_configurations.sh 2 --> configures UE 2
-# ./generate_configurations.sh 4 5 6 --> configures UE 4, 5, and 6
-UE_NUMBERS=("$@")
+# ./generate_configurations.sh --ues 2 --> configures UE 2
+# ./generate_configurations.sh --ues 4,5,6 --> configures UE 4, 5, and 6
+UE_NUMBERS=()
+while [[ $# -gt 0 ]]; do
+    if [ "$1" == "--ues" ]; then
+        IFS=',' read -r -a UE_NUMBERS <<<"$2"
+        for UE_NUMBER in "${UE_NUMBERS[@]}"; do
+            if ! [[ "$UE_NUMBER" =~ ^[0-9]+$ ]] || [ "$UE_NUMBER" -lt 1 ]; then
+                echo "ERROR: UE numbers must be comma-separated positive integers."
+                exit 1
+            fi
+        done
+        shift 2
+    else
+        shift
+    fi
+done
 if [ ${#UE_NUMBERS[@]} -eq 0 ]; then
     UE_NUMBERS=(3 2 1)
     CLEAR_CONFIGS=true
 fi
-# Check if the input is a number
-for i in "${UE_NUMBERS[@]}"; do
-    if ! [[ "$i" =~ ^[0-9]+$ ]]; then
-        echo "ERROR: UE number must be a number."
-        exit 1
-    fi
-    if [ "$i" -lt 1 ]; then
-        echo "ERROR: UE number must be greater than or equal to 1."
-        exit 1
-    fi
-    echo "UE $i will be configured."
-done
 
 # Ensure the correct YAML editor is installed
 "$SCRIPT_DIR/install_scripts/./ensure_consistent_yq.sh"
@@ -294,6 +296,8 @@ if [ ! -f "$UE_CREDENTIAL_GENERATOR_SCRIPT" ]; then
 fi
 
 for UE_NUMBER in "${UE_NUMBERS[@]}"; do
+    echo "UE $UE_NUMBER will be configured."
+
     cp "$EXAMPLE_CONFIG_PATH" "configs/ue${UE_NUMBER}.conf"
 
     UE_TX_PORT=$((2001 + UE_NUMBER * 100))

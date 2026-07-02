@@ -8,7 +8,7 @@ The Next Generation Node B (gNodeB) is a 5G base station configured with OCUDU [
 - **Rebuild**: Use `./rebuild_code.sh` to rebuild and reinstall the gNodeB software after source changes. The script reuses the existing build directory, so unchanged files are not rebuilt.
 - **Generate Configurations**: Use `./generate_configurations.sh` to create configuration files.
   - The script automatically retrieves the 5G Core Network's AMF address and the SCTP address from the Near-Real-Time RAN Intelligent Controller's E2 Terminator. If either are not found locally, the script will prompt the user to enter the address manually.
-  - An optional list of UE numbers can be provided to generate the ZeroMQ broker configuration for multi-UE emulation (see [here](/Next_Generation_Node_B/README.md#simulating-multiple-ues-and-cells-with-zeromq-broker) for more information).
+  - An optional list of UE numbers for multi-UE emulation can be provided with `--ues <ue_numbers>` as a comma-separated list, for example `./generate_configurations.sh --ues 1,2,3`, to generate the ZeroMQ broker configuration (see [here](/Next_Generation_Node_B/README.md#simulating-multiple-ues-and-cells-with-zeromq-broker) for more information).
   - Configuration files can be accessed and modified in the `configs` directory.
 - **Start the gNodeB**: Use `./run.sh` to start the gNodeB, or `./run_background.sh` to run it as a background process where the output is redirected to `logs/gnb_stdout.txt`.
 - **Stop the gNodeB**: Terminate the gNodeB with `./stop.sh`.
@@ -36,7 +36,7 @@ sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' generate_configurations.s
 sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' is_running.sh
 sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' run_background.sh
 sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' stop.sh
-````
+```
 
 </details>
 
@@ -61,7 +61,7 @@ sed -i 's/^USE_ZMQ_BROKER=true$/USE_ZMQ_BROKER=false/' stop.sh
 <details>
 <summary>Configure multiple UEs</summary>
 
-To configure a specific emulated UE set, pass the UE numbers to the base directory generator, e.g., `../generate_configurations.sh 1 2 3`. The generated broker creates one downlink and one uplink route for each requested UE, and the base directory `run.sh` launches the generated UE set.
+To configure a specific emulated UE set, pass the UE numbers to the base directory generator with `--ues` as a comma-separated list, e.g., `../generate_configurations.sh --ues 1,2,3`. The generated broker creates one downlink and one uplink route for each requested UE, and the base directory `run.sh` launches the generated UE set.
 
 </details>
 
@@ -75,7 +75,7 @@ If one or more UEs remain stuck while attaching with the ZMQ broker, check `ZMQ_
 <details>
 <summary>Configure multiple cells</summary>
 
-To configure multiple cells with the broker, pass `--cells N` to the base directory generator, e.g., `../generate_configurations.sh --cells 2`. The generated broker creates one gNB-side downlink/uplink port pair per cell and one path-loss control for each cell/UE pair.
+To configure multiple cells with the broker, pass `--cells <cell_numbers>` to the base directory generator, e.g., `../generate_configurations.sh --cells 7,8,9`. The generated broker creates one gNB-side downlink/uplink port pair per cell and one path-loss control for each cell/UE pair. Specific UEs can be specified with `--ues <ue_numbers>`, e.g., `--ues 4,5,6`.
 
 </details>
 

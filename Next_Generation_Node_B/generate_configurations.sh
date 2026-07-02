@@ -41,7 +41,6 @@ PDU_SESSION_TIMEOUT=3
 
 if [ "$USE_ZMQ_BROKER" = "true" ]; then
     ZMQ_BROKER_CHANNEL_BW_MHZ=10
-    ZMQ_BROKER_SLOW_DOWN_RATIO=4
     GNB_SRATE_MHZ=11.52
     GNB_BASE_SRATE_HZ=11.52e6
     PDU_SESSION_TIMEOUT=30
@@ -58,11 +57,16 @@ cd "$SCRIPT_DIR"
 
 BASE_EXAMPLE_CONFIG_PATH="$SCRIPT_DIR/ocudu/configs/gnb_rf_b210_fdd_srsUE.yml"
 
+usage() {
+    echo "Usage: $0 [--disable-e2-term] [--e2-term-address <address>] [--cells <cell_numbers>] [--ues <ue_numbers>]"
+    echo "    For example: $0 --ues 4,5,6 --cells 7,8"}
+}
+
 # Parse command-line arguments
 ENABLE_E2_TERM="true"
 E2_ADDRESS="null"
 UE_NUMBERS=()
-CELL_COUNT=1
+CELL_NUMBERS=()
 while [[ $# -gt 0 ]]; do
     case $1 in
     --disable-e2-term)
@@ -73,34 +77,41 @@ while [[ $# -gt 0 ]]; do
         E2_ADDRESS="$2"
         shift 2
         ;;
-    --cells | --cell-count)
-        CELL_COUNT="$2"
-        if ! [[ "$CELL_COUNT" =~ ^[0-9]+$ ]] || [ "$CELL_COUNT" -lt 1 ]; then
-            echo "ERROR: Cell count must be a positive integer."
-            exit 1
-        fi
-        if [ "$CELL_COUNT" -gt 50 ]; then
-            echo "ERROR: Cell count must be 50 or less to avoid conflicts with UE ZeroMQ ports."
-            exit 1
-        fi
+    --cells)
+        IFS=',' read -r -a PARSED_CELL_NUMBERS <<<"$2"
+        for CELL_NUMBER in "${PARSED_CELL_NUMBERS[@]}"; do
+            if ! [[ "$CELL_NUMBER" =~ ^[0-9]+$ ]] || [ "$CELL_NUMBER" -lt 1 ]; then
+                echo "ERROR: Cell numbers must be positive integers separated by commas."
+                exit 1
+            fi
+            CELL_NUMBERS+=("$CELL_NUMBER")
+        done
         shift 2
         ;;
-    [0-9]*)
-        if ! [[ "$1" =~ ^[0-9]+$ ]] || [ "$1" -lt 1 ]; then
-            echo "ERROR: UE number must be a positive integer."
-            exit 1
-        fi
-        UE_NUMBERS+=("$1")
-        shift
+    --ues)
+        IFS=',' read -r -a parsed_ues <<<"$2"
+        for UE_NUMBER in "${parsed_ues[@]}"; do
+            if ! [[ "$UE_NUMBER" =~ ^[0-9]+$ ]] || [ "$UE_NUMBER" -lt 1 ]; then
+                echo "ERROR: UE numbers must be positive integers separated by commas."
+                exit 1
+            fi
+            UE_NUMBERS+=("$UE_NUMBER")
+        done
+        shift 2
         ;;
     *)
         echo "Unknown argument: $1"
+        echo
+        usage
         exit 1
         ;;
     esac
 done
 if [ ${#UE_NUMBERS[@]} -eq 0 ]; then
     UE_NUMBERS=(1 2 3)
+fi
+if [ ${#CELL_NUMBERS[@]} -eq 0 ]; then
+    CELL_NUMBERS=(1)
 fi
 
 # Define the path to the YAML file
@@ -348,10 +359,12 @@ mkdir -p "$SCRIPT_DIR/logs"
 
 if [ "$USE_ZMQ_BROKER" = "true" ]; then
     DEVICE_ARGS="fail_unlocked=true,"
-    for ((CELL_INDEX = 0; CELL_INDEX < CELL_COUNT; CELL_INDEX++)); do
-        CELL_RX_PORT=$((2000 + CELL_INDEX * 2))
-        CELL_TX_PORT=$((2001 + CELL_INDEX * 2))
-        DEVICE_ARGS+="tx_port${CELL_INDEX}=tcp://127.0.0.1:${CELL_RX_PORT},rx_port${CELL_INDEX}=tcp://127.0.0.1:${CELL_TX_PORT},"
+    CELL_COUNT=0
+    for CELL_NUMBER in "${CELL_NUMBERS[@]}"; do
+        CELL_RX_PORT=$((2000 + (CELL_NUMBER - 1) * 2))
+        CELL_TX_PORT=$((2001 + (CELL_NUMBER - 1) * 2))
+        DEVICE_ARGS="${DEVICE_ARGS}tx_port${CELL_COUNT}=tcp://127.0.0.1:${CELL_RX_PORT},rx_port${CELL_COUNT}=tcp://127.0.0.1:${CELL_TX_PORT},"
+        CELL_COUNT=$((CELL_COUNT + 1))
     done
 else
     BASE_SUBNET="10.201.0.0/16"
@@ -361,10 +374,10 @@ else
     HOST_IP_OFFSET=$((SUBNET_OFFSET))
     UE_IP_OFFSET=$((SUBNET_OFFSET + 1))
     UE_IP=$(python3 install_scripts/fetch_nth_ip.py "$BASE_SUBNET" "$UE_IP_OFFSET")
-    DEVICE_ARGS="fail_unlocked=true,tx_port=tcp://*:2100,rx_port=tcp://$UE_IP:2101,"
+    DEVICE_ARGS="${DEVICE_ARGS}fail_unlocked=true,tx_port=tcp://*:2100,rx_port=tcp://$UE_IP:2101,"
 fi
 
-DEVICE_ARGS+="base_srate=$GNB_BASE_SRATE_HZ"
+DEVICE_ARGS="${DEVICE_ARGS}base_srate=$GNB_BASE_SRATE_HZ"
 
 # Update configuration values for AMF connection
 update_yaml "configs/gnb.yaml" "cu_cp.amf" "addrs" "$AMF_ADDR"
@@ -412,9 +425,11 @@ if [ "$USE_ZMQ_BROKER" = "true" ]; then
 fi
 
 yq eval -i 'del(.cells)' "configs/gnb.yaml"
-if [ "$USE_ZMQ_BROKER" = "true" ] && [ "$CELL_COUNT" -gt 1 ]; then
-    for ((CELL_INDEX = 0; CELL_INDEX < CELL_COUNT; CELL_INDEX++)); do
-        update_yaml "configs/gnb.yaml" "cells[$CELL_INDEX]" "pci" "$((1 + CELL_INDEX))"
+if [ "$USE_ZMQ_BROKER" = "true" ] && [ "${#CELL_NUMBERS[@]}" -gt 1 ]; then
+    CELL_COUNT=0
+    for CELL_NUMBER in "${CELL_NUMBERS[@]}"; do
+        update_yaml "configs/gnb.yaml" "cells[$CELL_COUNT]" "pci" "$CELL_NUMBER"
+        CELL_COUNT=$((CELL_COUNT + 1))
     done
 fi
 
@@ -597,6 +612,9 @@ if [ "$USE_ZMQ_BROKER" = "true" ]; then
     SUBNET_SIZE=4
     BROKER_SRATE_INT=$(awk "BEGIN { printf \"%d\", $GNB_SRATE_MHZ * 1000000 }")
 
+    # Calculate the slow down ratio based on the number of UEs and cells
+    ZMQ_BROKER_SLOW_DOWN_RATIO="$((${#UE_NUMBERS[@]} + ${#CELL_NUMBERS[@]}))"
+
     UE_ARGS=""
     for UE_NUMBER in "${UE_NUMBERS[@]}"; do
         SUBNET_OFFSET=$((UE_NUMBER * SUBNET_SIZE))
@@ -605,8 +623,13 @@ if [ "$USE_ZMQ_BROKER" = "true" ]; then
         UE_ARGS="$UE_ARGS --ue $UE_NUMBER:$UE_IP"
     done
 
+    CELL_ARGS=""
+    for CELL_NUMBER in "${CELL_NUMBERS[@]}"; do
+        CELL_ARGS="$CELL_ARGS --cell $CELL_NUMBER"
+    done
+
     mkdir -p zmq_broker
-    ./install_scripts/generate_zmq_broker.sh --output "zmq_broker/multi_ue_scenario.py" --sample-rate-hz "$BROKER_SRATE_INT" --slow-down-ratio "$ZMQ_BROKER_SLOW_DOWN_RATIO" --cells "$CELL_COUNT" $UE_ARGS
+    ./install_scripts/generate_zmq_broker.sh --output "zmq_broker/multi_ue_scenario.py" --sample-rate-hz "$BROKER_SRATE_INT" --slow-down-ratio "$ZMQ_BROKER_SLOW_DOWN_RATIO" $CELL_ARGS $UE_ARGS
 
     if ! python3 -c "import gnuradio, PyQt5" >/dev/null 2>&1; then
         echo "Installing GNU Radio runtime for the ZeroMQ Broker..."
@@ -621,7 +644,7 @@ if [ "$USE_ZMQ_BROKER" = "true" ]; then
     # fi
     rm -f ~/.gnuradio/prefs/vmcircbuf_default_factory
 
-    echo "Successfully generated ZMQ Broker Python script for $CELL_COUNT cell(s) and ${#UE_NUMBERS[@]} UEs."
+    echo "Successfully generated ZeroMQ broker for UEs: [${UE_NUMBERS[*]}], Cells: [${CELL_NUMBERS[*]}]."
 else
     echo "Using direct ZeroMQ connection for UE $UE_NUMBER at *:2100 and $UE_IP:2101 (no ZeroMQ broker)."
 fi

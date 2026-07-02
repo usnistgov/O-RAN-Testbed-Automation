@@ -49,6 +49,7 @@
 #include "fgs_nas_utils.h"
 #include "fgmm_service_accept.h"
 #include "fgmm_service_reject.h"
+#include "fgmm_registration_reject.h"
 #include "fgmm_authentication_reject.h"
 #include "ds/byte_array.h"
 #include "key_nas_deriver.h"
@@ -128,6 +129,9 @@ static bool unprotected_allowed(byte_array_t buffer, fgs_nas_msg_t msg_type)
     case FGS_DEREGISTRATION_ACCEPT_UE_ORIGINATING: // for non switch off: deregistration type IE set to NORMAL_DEREGISTRATION
       return true;
     case FGS_REGISTRATION_REJECT:
+      // unprotected if the 5GMM cause is not #76 (9.11.3.2)
+      return buffer.len >= sizeof(fgmm_msg_header_t) + 1
+             && buffer.buf[3] != Not_authorized_for_this_CAG_or_authorized_for_CAG_cells_only;
     case FGS_SERVICE_REJECT:
       // unprotected if the 5GMM cause is not #76
       return buffer.buf[4] != Not_authorized_for_this_CAG_or_authorized_for_CAG_cells_only;
@@ -2133,6 +2137,64 @@ static void handle_service_reject(nr_ue_nas_t *nas, const byte_array_t *buffer)
   LOG_E(NAS, "Received NAS Service Reject message with cause %s\n", fgmm_cause_s[msg.cause].text);
 }
 
+/** @brief Handle Registration Reject (8.2.7 / 5.5.1.2.5 of 3GPP TS 24.501)
+ * @todo Per §5.5.1.2.5: forbidden PLMN/TAI, registration attempt counter
+ * @todo N1 NAS signalling release per §5.3.1.3
+ * @todo Optional IEs T3346/T3502, EAP per §5.4.1.2.2.11 */
+static void handle_registration_reject(nr_ue_nas_t *nas, const byte_array_t *buffer)
+{
+  DevAssert(buffer && buffer->buf);
+  if (nas->termination_procedure) {
+    return; // already in termination procedure, ignore registration reject
+  }
+
+  fgs_registration_reject_msg_t msg = {0};
+
+  if (buffer->len < sizeof(fgmm_msg_header_t)) {
+    LOG_E(NAS, "Failed to extract Registration Reject message body: buffer length too short\n");
+    return;
+  }
+
+  const uint8_t *pdu_buffer = buffer->buf;
+  uint32_t msg_length = buffer->len;
+  const uint8_t *end = pdu_buffer + msg_length;
+
+  if (pdu_buffer[1] != PLAIN_5GS_MSG) {
+    fgs_nas_message_security_header_t sp_header = {0};
+    int decoded = decode_5gs_security_protected_header(&sp_header, pdu_buffer, msg_length);
+    if (decoded < 0) {
+      LOG_E(NAS, "Registration Reject: failed to decode security protected header\n");
+      return;
+    }
+    pdu_buffer += decoded;
+  }
+
+  fgmm_msg_header_t mm_header = {0};
+  int decoded = decode_5gmm_msg_header(&mm_header, pdu_buffer, end - pdu_buffer);
+  if (decoded < 0) {
+    LOG_E(NAS, "Registration Reject: failed to decode NAS message header\n");
+    return;
+  }
+  if (mm_header.message_type != FGS_REGISTRATION_REJECT) {
+    LOG_E(NAS, "Expected NAS message type FGS_REGISTRATION_REJECT, got %#x\n", mm_header.message_type);
+    return;
+  }
+  pdu_buffer += decoded;
+
+  const byte_array_t ba = {.buf = (uint8_t *)pdu_buffer, .len = end - pdu_buffer};
+  if (decode_fgs_registration_reject(&msg, &ba) < 0) {
+    LOG_E(NAS, "Registration Reject: failed to decode NAS message body\n");
+    free_fgs_registration_reject(&msg);
+    return;
+  }
+
+  LOG_E(NAS, "Received Registration Reject cause: %s\n", print_info(msg.cause, fgmm_cause_s, sizeofArray(fgmm_cause_s)));
+  free_fgs_registration_reject(&msg);
+  nas->fiveGMM_state = FGS_DEREGISTERED;
+  nas->termination_procedure = true;
+  send_nas_detach_req(nas, false);
+}
+
 void *nas_nrue(void *args_p)
 {
   UNUSED(args_p);
@@ -2398,23 +2460,9 @@ void *nas_nrue(void *args_p)
           case FGS_PDU_SESSION_ESTABLISHMENT_REJ:
             LOG_E(NAS, "Received PDU Session Establishment reject\n");
             break;
-          case FGS_REGISTRATION_REJECT: {
-
-            if (pdu_length < 18) {
-              LOG_E(NAS, "Received Registration reject message too short\n");
-              break;
-            }
-
-            uint8_t cause = pdu_buffer[17];
-            if (cause >= sizeof(cause_text_info) / sizeof(cause_text_info[0])) {
-              LOG_E(NAS, "Received Registration reject cause %d unknown\n", cause);
-              break;
-            }
-
-            LOG_E(NAS, "Received Registration reject cause: %s\n", cause_text_info[cause].text);
-            exit(1);
+          case FGS_REGISTRATION_REJECT:
+            handle_registration_reject(nas, &buffer);
             break;
-          }
           case FGS_SERVICE_ACCEPT: {
             handle_service_accept(nas, &buffer);
             break;

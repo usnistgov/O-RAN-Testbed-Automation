@@ -53,12 +53,18 @@ if [ "$USE_ZMQ_BROKER" = "true" ]; then
         echo "ZMQ Broker verifier was not found. Please run ./generate_configurations.sh first."
         exit 1
     fi
-    # Parse the ZeroMQ broker for the list of UEs
+    # Parse the ZeroMQ broker for the list of UEs and cells
     UE_NUMBERS=($(grep -oP 'UE_CONFIG:\s+\K\d+' Next_Generation_Node_B/zmq_broker/multi_ue_scenario.py))
+    CELL_NUMBERS=($(grep -oP 'CELL_CONFIG:\s+\K\d+' Next_Generation_Node_B/zmq_broker/multi_ue_scenario.py))
     VERIFY_ARGS=""
     for UE_NUMBER in "${UE_NUMBERS[@]}"; do
         VERIFY_ARGS="$VERIFY_ARGS --ue $UE_NUMBER"
     done
+    if [ ${#CELL_NUMBERS[@]} -gt 0 ]; then
+        for CELL in "${CELL_NUMBERS[@]}"; do
+            VERIFY_ARGS="$VERIFY_ARGS --cell $CELL"
+        done
+    fi
     if ! "Next_Generation_Node_B/install_scripts/validate_zmq_broker_config.sh" ${VERIFY_ARGS}; then
         echo "Run ./generate_configurations.sh with the same UE numbers before ./run.sh."
         exit 1

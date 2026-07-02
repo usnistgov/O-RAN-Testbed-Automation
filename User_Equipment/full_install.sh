@@ -31,6 +31,7 @@
 # Exit immediately if a command fails
 set -e
 
+APPLY_PATCHES=false
 BUILD_TESTS=false
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
@@ -208,15 +209,19 @@ if [ ! -d "srsRAN_4G" ]; then
     ./install_scripts/git_clone.sh https://github.com/srsran/srsRAN_4G.git
 fi
 cd srsRAN_4G
+
+if [ "$APPLY_PATCHES" = true ]; then
+    echo "Patching srsRAN_4G..."
+    # ZMQ_RF_FILE="lib/src/phy/rf/rf_zmq_imp.c"
+    # if grep -q 'parse_string(args, "log_trx_timeout", i, tmp);' "$ZMQ_RF_FILE"; then
+    #     sed -i 's/parse_string(args, "log_trx_timeout", i, tmp);/parse_string(args, "log_trx_timeout", i, tmp2);/' "$ZMQ_RF_FILE"
+    # fi
+    "$SCRIPT_DIR/install_scripts/apply_patches.sh"
+fi
+
 echo
 echo
 echo "Building srsRAN_4G..."
-
-# ZMQ_RF_FILE="lib/src/phy/rf/rf_zmq_imp.c"
-# if grep -q 'parse_string(args, "log_trx_timeout", i, tmp);' "$ZMQ_RF_FILE"; then
-#     sed -i 's/parse_string(args, "log_trx_timeout", i, tmp);/parse_string(args, "log_trx_timeout", i, tmp2);/' "$ZMQ_RF_FILE"
-# fi
-"$SCRIPT_DIR/install_scripts/apply_patches.sh"
 
 BOOST_VERSION=$(dpkg -s libboost-dev | grep '^Version:' | awk '{print $2}' | cut -d. -f1,2)
 if [[ $(echo -e "$BOOST_VERSION\n1.89" | sort -V | head -n1) == "1.89" ]]; then # If version 1.89 or higher

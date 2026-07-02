@@ -31,7 +31,24 @@
 # Exit immediately if a command fails
 set -e
 
-UE_NUMBERS=(3 2 1) # Subscribers from UE 3 to UE 1
+UE_NUMBERS=()
+while [[ $# -gt 0 ]]; do
+    if [ "$1" == "--ues" ]; then
+        IFS=',' read -r -a UE_NUMBERS <<<"$2"
+        for UE_NUMBER in "${UE_NUMBERS[@]}"; do
+            if ! [[ "$UE_NUMBER" =~ ^[0-9]+$ ]] || [ "$UE_NUMBER" -lt 1 ]; then
+                echo "ERROR: UE numbers must be comma-separated positive integers."
+                exit 1
+            fi
+        done
+        shift 2
+    else
+        shift
+    fi
+done
+if [ ${#UE_NUMBERS[@]} -eq 0 ]; then
+    UE_NUMBERS=(3 2 1) # Subscribers from UE 3 to UE 1
+fi
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then

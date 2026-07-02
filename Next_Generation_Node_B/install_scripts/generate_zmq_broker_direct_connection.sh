@@ -235,6 +235,8 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
         self.samp_rate = SAMPLE_RATE_HZ
         self.slow_down_ratio = SLOW_DOWN_RATIO
 
+        direct_1x1 = len(CELL_CONFIGS) == 1 and len(UE_CONFIGS) == 1
+
         # # Equally loud cells
         # self.path_loss_db = {(cell["number"], ue["number"]): 0 for cell in CELL_CONFIGS for ue in UE_CONFIGS}
 
@@ -306,7 +308,8 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
             self.dl_throttles[cell_number] = blocks.throttle(
                 gr.sizeof_gr_complex, self.samp_rate / self.slow_down_ratio, True
             )
-            self.cell_ul_adds[cell_number] = blocks.add_vcc(1)
+            if len(UE_CONFIGS) > 1: # Only create cell_ul_adds if more than one UE
+                self.cell_ul_adds[cell_number] = blocks.add_vcc(1)
 
         for ue in UE_CONFIGS:
             ue_number = ue["number"]
@@ -314,7 +317,8 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
                 f"ZMQ broker UE{ue_number} DL sink tcp://*:{ue['rx_port']} UL source tcp://{ue['ue_ip']}:{ue['tx_port']}",
                 flush=True,
             )
-            self.ue_dl_adds[ue_number] = blocks.add_vcc(1)
+            if len(CELL_CONFIGS) > 1: # Only create ue_dl_adds if more than one cell
+                self.ue_dl_adds[ue_number] = blocks.add_vcc(1)
             self.ue_dl_sinks[ue_number] = zeromq.rep_sink(
                 gr.sizeof_gr_complex,
                 1,
@@ -334,25 +338,41 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
 
         for cell in CELL_CONFIGS:
             cell_number = cell["number"]
-            self.connect(
-                (self.gnb_dl_sources[cell_number], 0),
-                (self.dl_throttles[cell_number], 0),
-            )
-            self.connect(
-                (self.cell_ul_adds[cell_number], 0), (self.gnb_ul_sinks[cell_number], 0)
-            )
+            if not direct_1x1:
+                self.connect(
+                    (self.gnb_dl_sources[cell_number], 0),
+                    (self.dl_throttles[cell_number], 0),
+                )
+            if len(UE_CONFIGS) > 1:
+                self.connect(
+                    (self.cell_ul_adds[cell_number], 0),
+                    (self.gnb_ul_sinks[cell_number], 0),
+                )
 
-        for ue in UE_CONFIGS:
-            ue_number = ue["number"]
-            self.connect(
-                (self.ue_dl_adds[ue_number], 0), (self.ue_dl_sinks[ue_number], 0)
-            )
+        if len(CELL_CONFIGS) > 1:
+            for ue in UE_CONFIGS:
+                ue_number = ue["number"]
+                self.connect(
+                    (self.ue_dl_adds[ue_number], 0), (self.ue_dl_sinks[ue_number], 0)
+                )
 
         for cell_index, cell in enumerate(CELL_CONFIGS):
             cell_number = cell["number"]
             for ue_index, ue in enumerate(UE_CONFIGS):
                 ue_number = ue["number"]
                 path_key = (cell_number, ue_number)
+
+                if direct_1x1:
+                    self.connect(
+                        (self.gnb_dl_sources[cell_number], 0),
+                        (self.ue_dl_sinks[ue_number], 0),
+                    )
+                    self.connect(
+                        (self.ue_ul_sources[ue_number], 0),
+                        (self.gnb_ul_sinks[cell_number], 0),
+                    )
+                    continue
+
                 label = f"Cell{cell_number} UE{ue_number} Pathloss [dB]"
 
                 self.path_loss_ranges[path_key] = Range(
@@ -378,16 +398,29 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
                     (self.dl_throttles[cell_number], 0), (self.dl_gains[path_key], 0)
                 )
                 self.connect(
-                    (self.dl_gains[path_key], 0),
-                    (self.ue_dl_adds[ue_number], cell_index),
-                )
-                self.connect(
                     (self.ue_ul_sources[ue_number], 0), (self.ul_gains[path_key], 0)
                 )
-                self.connect(
-                    (self.ul_gains[path_key], 0),
-                    (self.cell_ul_adds[cell_number], ue_index),
-                )
+                if len(CELL_CONFIGS) > 1:
+                    self.connect(
+                        (self.dl_gains[path_key], 0),
+                        (self.ue_dl_adds[ue_number], cell_index),
+                    )
+                else:
+                    self.connect(
+                        (self.dl_gains[path_key], 0),
+                        (self.ue_dl_sinks[ue_number], 0),
+                    )
+
+                if len(UE_CONFIGS) > 1:
+                    self.connect(
+                        (self.ul_gains[path_key], 0),
+                        (self.cell_ul_adds[cell_number], ue_index),
+                    )
+                else:
+                    self.connect(
+                        (self.ul_gains[path_key], 0),
+                        (self.gnb_ul_sinks[cell_number], 0),
+                    )
 
     @staticmethod
     def path_loss_db_to_iq_gain(path_loss_db):

@@ -31,6 +31,9 @@
 # Exit immediately if a command fails
 set -e
 
+DEBUG_SYMBOLS=false
+RUN_TESTS=false
+
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
@@ -38,27 +41,50 @@ if ! command -v realpath &>/dev/null; then
 fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
-PARENT_DIR=$(dirname "$SCRIPT_DIR")
-cd "$PARENT_DIR"
+cd "$SCRIPT_DIR"
 
-if [ ! -d srsRAN_4G ]; then
-    echo "srsRAN_4G directory not found. Please ensure the repository has been cloned."
+echo
+echo
+echo "Rebuilding User Equipment (srsRAN_4G)..."
+
+if [ ! -d "srsRAN_4G" ]; then
+    echo "ERROR: srsRAN_4G source directory not found."
+    echo "Run full_install.sh before running rebuild_code.sh."
     exit 1
 fi
 
-mkdir -p install_patch_files/srsRAN_4G/lib/src/phy/rf
-
 cd srsRAN_4G
 
-# Update patch files from the current srsRAN_4G working tree.
-git diff lib/src/phy/rf/rf_zmq_imp.c >../install_patch_files/srsRAN_4G/lib/src/phy/rf/rf_zmq_imp.c.patch
+BOOST_VERSION=$(dpkg -s libboost-dev | grep '^Version:' | awk '{print $2}' | cut -d. -f1,2)
+if [[ $(echo -e "$BOOST_VERSION\n1.89" | sort -V | head -n1) == "1.89" ]]; then # If version 1.89 or higher
+    # Remove system from list of components since no longer available (https://www.boost.org/doc/libs/latest/libs/system/doc/html/system.html#changes_in_boost_1_89)
+    sed -i 's/list(APPEND BOOST_REQUIRED_COMPONENTS "system")/#list(APPEND BOOST_REQUIRED_COMPONENTS "system")/g' CMakeLists.txt
+fi
 
-# Update previous-file snapshots and reapply patches to preserve the working tree.
-git restore lib/src/phy/rf/rf_zmq_imp.c
-cp lib/src/phy/rf/rf_zmq_imp.c ../install_patch_files/srsRAN_4G/lib/src/phy/rf/rf_zmq_imp.previous.c
-cp lib/src/phy/rf/rf_zmq_imp.c lib/src/phy/rf/rf_zmq_imp.c.previous
-git apply --verbose --ignore-whitespace ../install_patch_files/srsRAN_4G/lib/src/phy/rf/rf_zmq_imp.c.patch
+mkdir -p build
+cd build
 
-cd ..
+SUPPRESS_WARNINGS="-Wno-error=array-bounds -Wno-error=unused-but-set-variable -Wno-error=unused-function -Wno-error=unused-parameter -Wno-error=unused-result -Wno-error=unused-variable -Wno-error=all -Wno-return-type"
 
-echo "Successfully updated srsRAN_4G patch files."
+CMAKE_FLAGS="-DENABLE_WERROR=OFF"
+if [[ "$DEBUG_SYMBOLS" == "true" ]]; then
+    CMAKE_FLAGS="$CMAKE_FLAGS -DCMAKE_BUILD_TYPE=Debug"
+fi
+
+if [[ "$RUN_TESTS" == "true" ]]; then
+    CMAKE_FLAGS="$CMAKE_FLAGS -DBUILD_TESTING=ON"
+else
+    CMAKE_FLAGS="$CMAKE_FLAGS -DBUILD_TESTING=OFF"
+fi
+
+cmake .. -DCMAKE_CXX_FLAGS="$SUPPRESS_WARNINGS" $CMAKE_FLAGS
+cmake --build . -j"$(nproc)"
+if [[ "$RUN_TESTS" == "true" ]]; then
+    ctest -j"$(nproc)"
+fi
+sudo cmake --install .
+sudo ldconfig
+
+cd "$SCRIPT_DIR"
+
+echo "Successfully rebuilt srsRAN_4G User Equipment."

@@ -60,30 +60,5 @@ if ! grep -q 'parse_string(args, "log_trx_timeout", i, tmp2);' lib/src/phy/rf/rf
 fi
 cd ..
 
-# Apply patches so random-access contention-resolution grants using temporary C-RNTI are found and acknowledged correctly (see 3GPP TS 38.213 and 3GPP TS 38.321)
-cd srsRAN_4G
-echo "Patching mac_nr.cc to use temporary C-RNTI during random access..."
-git restore srsue/src/stack/mac_nr/mac_nr.cc
-if [ ! -f "srsue/src/stack/mac_nr/mac_nr.cc.previous" ]; then
-    cp srsue/src/stack/mac_nr/mac_nr.cc srsue/src/stack/mac_nr/mac_nr.cc.previous
-    cp srsue/src/stack/mac_nr/mac_nr.cc.previous "$PARENT_DIR/install_patch_files/srsRAN_4G/srsue/src/stack/mac_nr/mac_nr.cc.previous"
-fi
-git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/srsRAN_4G/srsue/src/stack/mac_nr/mac_nr.cc.patch"
-echo "Patching ue_dl_nr.c to search RA search space for temporary C-RNTI..."
-git restore lib/src/phy/ue/ue_dl_nr.c
-if [ ! -f "lib/src/phy/ue/ue_dl_nr.c.previous" ]; then
-    cp lib/src/phy/ue/ue_dl_nr.c lib/src/phy/ue/ue_dl_nr.c.previous
-    cp lib/src/phy/ue/ue_dl_nr.c.previous "$PARENT_DIR/install_patch_files/srsRAN_4G/lib/src/phy/ue/ue_dl_nr.c.previous"
-fi
-git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/srsRAN_4G/lib/src/phy/ue/ue_dl_nr.c.patch"
-echo "Patching cc_worker.cc to acknowledge temporary C-RNTI downlink grants..."
-git restore srsue/src/phy/nr/cc_worker.cc
-if [ ! -f "srsue/src/phy/nr/cc_worker.cc.previous" ]; then
-    cp srsue/src/phy/nr/cc_worker.cc srsue/src/phy/nr/cc_worker.cc.previous
-    cp srsue/src/phy/nr/cc_worker.cc.previous "$PARENT_DIR/install_patch_files/srsRAN_4G/srsue/src/phy/nr/cc_worker.cc.previous"
-fi
-git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/srsRAN_4G/srsue/src/phy/nr/cc_worker.cc.patch"
-cd ..
-
 echo
 echo "Successfully patched srsRAN_4G."

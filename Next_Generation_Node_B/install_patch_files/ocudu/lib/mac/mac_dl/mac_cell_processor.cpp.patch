@@ -1,5 +1,5 @@
 diff --git a/lib/mac/mac_dl/mac_cell_processor.cpp b/lib/mac/mac_dl/mac_cell_processor.cpp
-index c5ecf0492b..1c7c5da737 100644
+index c5ecf0492b..432618aa5a 100644
 --- a/lib/mac/mac_dl/mac_cell_processor.cpp
 +++ b/lib/mac/mac_dl/mac_cell_processor.cpp
 @@ -11,6 +11,7 @@
@@ -88,11 +88,10 @@ index c5ecf0492b..1c7c5da737 100644
  }
  
  async_task<void> mac_cell_processor::remove_ue(const mac_ue_delete_request& request)
-@@ -278,19 +259,7 @@ async_task<bool> mac_cell_processor::addmod_bearers(du_ue_index_t
-                                                     span<const mac_logical_channel_config> logical_channels)
+@@ -279,18 +260,7 @@ async_task<bool> mac_cell_processor::addmod_bearers(du_ue_index_t
  {
    // Note: logical_channels must outlive the returned async_task completion.
--
+ 
 -  return defer_and_continue_on_blocking(
 -      cell_exec,
 -      ctrl_exec,
@@ -109,22 +108,3 @@ index c5ecf0492b..1c7c5da737 100644
  }
  
  async_task<bool> mac_cell_processor::remove_bearers(du_ue_index_t ue_index, span<const lcid_t> lcids_to_rem)
-@@ -298,17 +267,7 @@ async_task<bool> mac_cell_processor::remove_bearers(du_ue_index_t ue_index, span
-   // Use bitset to minimize capture size.
-   auto lcids_to_rem_bset = bit_positions_to_bitset<MAX_NOF_RB_LCIDS>(lcids_to_rem);
- 
--  return defer_and_continue_on_blocking(
--      cell_exec,
--      ctrl_exec,
--      timers,
--      [this, ue_index, lcids_to_rem_bset]() noexcept OCUDU_RTSAN_NONBLOCKING -> bool {
--        // Remove logical channels.
--        return state == cell_state::active and ue_mng.remove_bearers(ue_index, lcids_to_rem_bset);
--      },
--      [this, ue_index]() {
--        logger.warning("ue={}: Postponed UE bearer removal. Cause: Task queue is full", fmt::underlying(ue_index));
--      });
-+  return launch_no_op_task(state == cell_state::active and ue_mng.remove_bearers(ue_index, lcids_to_rem_bset));
- }
- 
- void mac_cell_processor::handle_slot_indication_impl(slot_point_extended      sl_tx_ext,

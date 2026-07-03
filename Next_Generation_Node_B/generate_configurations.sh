@@ -535,7 +535,16 @@ update_yaml "configs/gnb.yaml" "cu_cp" "request_pdu_session_timeout" "$PDU_SESSI
 # Update configuration values for gNodeB logging
 update_yaml "configs/gnb.yaml" "log" "filename" "$SCRIPT_DIR/logs/gnb.log"
 update_yaml "configs/gnb.yaml" "log" "all_level" "warning"
+update_yaml "configs/gnb.yaml" "log" "mac_level" "warning"
+update_yaml "configs/gnb.yaml" "log" "rlc_level" "warning"
+update_yaml "configs/gnb.yaml" "log" "rrc_level" "warning"
+update_yaml "configs/gnb.yaml" "log" "ngap_level" "warning"
+update_yaml "configs/gnb.yaml" "log" "f1ap_level" "warning"
+update_yaml "configs/gnb.yaml" "log" "du_level" "warning"
+update_yaml "configs/gnb.yaml" "log" "phy_level" "warning"
+update_yaml "configs/gnb.yaml" "log" "radio_level" "warning"
 update_yaml "configs/gnb.yaml" "log" "hex_max_size" "0"
+update_yaml "configs/gnb.yaml" "log" "high_latency_diagnostics_enabled" "false"
 
 # Packet capture for NGAP
 update_yaml "configs/gnb.yaml" "pcap" "ngap_enable" "false"

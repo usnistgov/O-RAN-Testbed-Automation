@@ -32,7 +32,7 @@
 set -e
 
 APPLY_PATCHES=false
-BUILD_TESTS=false
+RUN_TESTS=false
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
@@ -234,7 +234,7 @@ mkdir -p build
 cd build
 SUPPRESS_WARNINGS="-Wno-error=array-bounds -Wno-error=unused-but-set-variable -Wno-error=unused-function -Wno-error=unused-parameter -Wno-error=unused-result -Wno-error=unused-variable -Wno-error=all -Wno-return-type"
 ADDITIONAL_FLAGS="-DENABLE_WERROR=OFF"
-if [[ "$BUILD_TESTS" == "true" ]]; then
+if [[ "$RUN_TESTS" == "true" ]]; then
     ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS -DBUILD_TESTING=ON"
 else
     ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS -DBUILD_TESTING=OFF"

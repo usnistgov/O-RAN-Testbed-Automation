@@ -31,7 +31,7 @@
 # Exit immediately if a command fails
 set -e
 
-APPLY_PATCHES=false
+APPLY_PATCHES=true
 CLEAN_INSTALL=false
 DEBUG_SYMBOLS=false
 RUN_TESTS=false

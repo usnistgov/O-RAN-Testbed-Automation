@@ -99,16 +99,5 @@ echo "Patching rlc_tx_am_entity.cpp..."
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/ocudu/lib/rlc/rlc_tx_am_entity.cpp.patch"
 cd ..
 
-# Apply patch to keep fallback SRB0/ConRes scheduling in the current slot
-cd ocudu
-git restore lib/scheduler/ue_scheduling/ue_fallback_scheduler.h
-if [ ! -f "lib/scheduler/ue_scheduling/ue_fallback_scheduler.h.previous" ]; then
-    cp lib/scheduler/ue_scheduling/ue_fallback_scheduler.h lib/scheduler/ue_scheduling/ue_fallback_scheduler.h.previous
-    cp lib/scheduler/ue_scheduling/ue_fallback_scheduler.h.previous "$PARENT_DIR/install_patch_files/ocudu/lib/scheduler/ue_scheduling/ue_fallback_scheduler.h.previous"
-fi
-echo "Patching ue_fallback_scheduler.h..."
-git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/ocudu/lib/scheduler/ue_scheduling/ue_fallback_scheduler.h.patch"
-cd ..
-
 echo
 echo "Successfully patched OCUDU."

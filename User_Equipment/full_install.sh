@@ -31,7 +31,7 @@
 # Exit immediately if a command fails
 set -e
 
-APPLY_PATCHES=false
+APPLY_PATCHES=true
 RUN_TESTS=false
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"

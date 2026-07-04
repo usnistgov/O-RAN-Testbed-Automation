@@ -41,7 +41,7 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
 USE_FLEXRIC=false
-USE_ZMQ_BROKER=false
+USE_ZMQ_BROKER=true
 ORIGINAL_ARGS=("$@")
 
 CELL_NUMBERS_STR="1"   # Default cells

@@ -31,7 +31,7 @@
 # Exit immediately if a command fails
 set -e
 
-USE_ZMQ_BROKER=false
+USE_ZMQ_BROKER=true
 SHOW_ZMQ_BROKER_UI=true
 ZMQ_BROKER_READY_TIMEOUT=30
 

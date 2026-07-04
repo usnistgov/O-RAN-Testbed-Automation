@@ -21,27 +21,12 @@ The Next Generation Node B (gNodeB) is a 5G base station configured with OCUDU [
 
 ## Simulating Multiple UEs and Cells with ZeroMQ Broker
 
-By default, the gNodeB connects directly to a single SRS UE. To facilitate multi-UE emulation, the testbed can utilize a ZeroMQ (ZMQ) Broker motivated by the OCUDU Multi-UE Emulation tutorial [\[5][ocudu-multi-ue], [6\]][ocudu-multi-ue-grc]. The broker Python runtime script is generated during configuration from the requested UE list using `install_scripts/generate_zmq_broker.sh`. The ZMQ Broker operates the simulated ZeroMQ channel. Its graphical user interface is disabled by default, but can be enabled by setting `SHOW_ZMQ_BROKER_UI=true` in `run.sh`.
+By default, the gNodeB uses a ZeroMQ (ZMQ) Broker with cell 1 and UEs 1, 2, and 3. The broker supports multi-UE and multi-cell emulation and is motivated by the OCUDU Multi-UE Emulation tutorial [\[5][ocudu-multi-ue], [6\]][ocudu-multi-ue-grc]. The broker Python runtime script is generated during configuration from the requested UE list using `install_scripts/generate_zmq_broker.sh`. The broker operates the simulated ZeroMQ channel. Its graphical user interface is disabled by default, but can be enabled by setting `SHOW_ZMQ_BROKER_UI=true` in `run.sh`.
 
-To enable the broker, set all occurrences of `USE_ZMQ_BROKER` to `true`, then run the base directory configuration script: `../generate_configurations.sh`.
-
-<details>
-<summary>Enable ZMQ broker</summary>
-
-```bash
-sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' ../run.sh
-sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' ../generate_configurations.sh
-sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' run.sh
-sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' generate_configurations.sh
-sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' is_running.sh
-sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' run_background.sh
-sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' stop.sh
-```
-
-</details>
+To connect the gNodeB directly to a single SRS UE without the broker, set all occurrences of `USE_ZMQ_BROKER` to `false`, then run the base directory configuration script: `../generate_configurations.sh`.
 
 <details>
-<summary>Disable ZMQ broker (default)</summary>
+<summary>Disable ZMQ broker</summary>
 
 ```bash
 sed -i 's/^USE_ZMQ_BROKER=true$/USE_ZMQ_BROKER=false/' ../run.sh
@@ -55,8 +40,25 @@ sed -i 's/^USE_ZMQ_BROKER=true$/USE_ZMQ_BROKER=false/' stop.sh
 
 </details>
 
+To restore the default broker configuration, set all occurrences of `USE_ZMQ_BROKER` to `true`, then run the base directory configuration script: `../generate_configurations.sh`.
+
+<details>
+<summary>Enable ZMQ broker (default)</summary>
+
+```bash
+sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' ../run.sh
+sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' ../generate_configurations.sh
+sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' run.sh
+sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' generate_configurations.sh
+sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' is_running.sh
+sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' run_background.sh
+sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' stop.sh
+```
+
+</details>
+
 > [!NOTE]
-> When the ZMQ broker is enabled, `run.sh` on the base directory starts all but the first UE as background processes, then first UE in the foreground.
+> When the ZMQ broker is enabled, the base directory `run.sh` starts all but the first UE as background processes, then starts the first UE in the foreground.
 
 <details>
 <summary>Configure multiple UEs</summary>

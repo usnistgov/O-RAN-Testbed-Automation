@@ -76,7 +76,7 @@ if ! command -v cilium &>/dev/null; then
     rm cilium-linux-${CLI_ARCH}.tar.gz cilium-linux-${CLI_ARCH}.tar.gz.sha256sum
 fi
 
-cat <<EOF | sudo tee $CILIUM_MIGRATION_VALUES_FILE
+cat <<EOF | sudo tee "$CILIUM_MIGRATION_VALUES_FILE"
 operator:
   unmanagedPodWatcher:
     restart: false # Migration: Don't restart unmigrated pods
@@ -260,7 +260,7 @@ kubectl delete cnp --all-namespaces --all || true
 echo
 echo "Writing Cilium NetworkPolicy to $CILIUM_POLICY_FILE..."
 CILIUM_POLICY_FILE="$HOME/.kube/cilium-policy.yaml"
-cat <<EOF | sudo tee $CILIUM_POLICY_FILE
+cat <<EOF | sudo tee "$CILIUM_POLICY_FILE"
 apiVersion: "cilium.io/v2"
 kind: CiliumNetworkPolicy
 metadata:
@@ -332,7 +332,7 @@ if kubectl get ns $NAMESPACE >/dev/null 2>&1; then
     if [ ! -f "$NONRTRIC_READ_RESTRICTION_FILE" ]; then
         echo
         echo "Creating Non-RT RIC read restriction Role file..."
-        cat <<EOF | sudo tee $NONRTRIC_READ_RESTRICTION_FILE
+        cat <<EOF | sudo tee "$NONRTRIC_READ_RESTRICTION_FILE"
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
@@ -359,7 +359,7 @@ EOF
     if [ ! -f "$NONRTRIC_ROLE_BINDING_FILE" ]; then
         echo
         echo "Creating Non-RT RIC RoleBinding file..."
-        cat <<EOF | sudo tee $NONRTRIC_ROLE_BINDING_FILE
+        cat <<EOF | sudo tee "$NONRTRIC_ROLE_BINDING_FILE"
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:

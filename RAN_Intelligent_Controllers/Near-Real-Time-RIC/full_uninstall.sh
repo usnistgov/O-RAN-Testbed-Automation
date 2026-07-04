@@ -299,7 +299,7 @@ sudo rm -rf /var/lib/dockershim || true
 sudo rm -rf /var/run/kubernetes || true
 sudo rm -rf /var/lib/cni/ || true
 sudo rm -rf /root/.kube/ || true
-sudo rm -rf $HOME/.kube/ || true
+sudo rm -rf "$HOME/.kube/" || true
 
 # Remove all Kubernetes-related Docker or containerd images
 if command -v docker &>/dev/null; then

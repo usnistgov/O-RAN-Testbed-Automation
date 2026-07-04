@@ -176,8 +176,8 @@ if ! command -v jq &>/dev/null; then
 fi
 
 FILE="deploy/config_updated.json"
-sudo rm -rf $FILE
-cp deploy/config.json $FILE
+sudo rm -rf "$FILE"
+cp deploy/config.json "$FILE"
 # Modify the required fields using jq and overwrite the original file
 jq '.containers[0].image.tag = "latest" |
     .containers[0].image.registry = "127.0.0.1:80" |

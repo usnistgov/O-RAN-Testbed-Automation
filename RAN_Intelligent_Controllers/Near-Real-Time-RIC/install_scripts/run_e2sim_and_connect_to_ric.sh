@@ -78,7 +78,7 @@ OUTPUT_FILE="logs/e2sim_output.txt"
 ./install_scripts/stop_e2sim.sh
 
 echo "Starting a new container 'oransim'..."
-sudo rm -rf $OUTPUT_FILE
+sudo rm -rf "$OUTPUT_FILE"
 docker run -d -it --name oransim -e RAN_FUNC_ID="$RAN_FUNC_ID" -v "$(pwd)/logs:/app/logs" oransim:0.0.999
 
 kubectl get svc -n ricplt | grep e2term-sctp || true

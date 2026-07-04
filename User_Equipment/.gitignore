@@ -6,5 +6,5 @@ install_time.txt
 libzmq
 libzmq/
 logs/
-srsRAN_4G/
+/srsRAN_4G/
 !install_patch_files/

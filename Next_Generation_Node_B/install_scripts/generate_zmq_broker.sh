@@ -168,6 +168,7 @@ import sys
 if sys.platform.startswith("linux"):
     try:
         ctypes.cdll.LoadLibrary("libX11.so").XInitThreads()
+        # ctypes.cdll.LoadLibrary("libX11.so.6").XInitThreads()
     except Exception:
         print("Warning: failed to XInitThreads()")
 
@@ -211,6 +212,26 @@ OTHER_CELL_PATH_LOSS_DB = 35
 ZMQ_TIMEOUT = 100
 ZMQ_HIGH_WATER_MARK = -1
 
+def make_range_widget(range_object, callback, label):
+    try:
+        return RangeWidget(
+            range_object,
+            callback,
+            label,
+            "counter_slider",
+            float,
+            QtCore.Qt.Horizontal,
+        )
+    except TypeError as error: # GNU Radio 3.8/Ubuntu 20.04 support
+        error_message = str(error)
+        if "positional argument" not in error_message or "were given" not in error_message:
+            raise
+        return RangeWidget(
+            range_object,
+            callback,
+            label,
+            "counter_slider",
+        )
 
 class multi_ue_scenario(gr.top_block, Qt.QWidget):
     def __init__(self):
@@ -266,13 +287,10 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
         self.path_loss_ranges = {}
         self.path_loss_widgets = {}
         self.slow_down_ratio_range = Range(1, 20, 0.5, self.slow_down_ratio, 200)
-        self.slow_down_ratio_widget = RangeWidget(
+        self.slow_down_ratio_widget = make_range_widget(
             self.slow_down_ratio_range,
             self.set_slow_down_ratio,
             "Time Slow Down Ratio",
-            "counter_slider",
-            float,
-            QtCore.Qt.Horizontal,
         )
         self.top_layout.addWidget(self.slow_down_ratio_widget)
 
@@ -358,15 +376,12 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
                 self.path_loss_ranges[path_key] = Range(
                     0, 100, 1, self.path_loss_db[path_key], 200
                 )
-                self.path_loss_widgets[path_key] = RangeWidget(
+                self.path_loss_widgets[path_key] = make_range_widget(
                     self.path_loss_ranges[path_key],
                     lambda value, cell_number=cell_number, ue_number=ue_number: self.set_path_loss(
                         cell_number, ue_number, value
                     ),
                     label,
-                    "counter_slider",
-                    float,
-                    QtCore.Qt.Horizontal,
                 )
                 self.top_layout.addWidget(self.path_loss_widgets[path_key])
 

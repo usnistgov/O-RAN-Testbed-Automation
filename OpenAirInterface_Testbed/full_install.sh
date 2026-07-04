@@ -226,15 +226,7 @@ echo "##########################################################################
 echo
 echo
 
-cd 5G_Core_Network
 ./generate_configurations.sh
-cd ../User_Equipment
-./generate_configurations.sh
-cd ../Next_Generation_Node_B
-./generate_configurations.sh
-cd ../RAN_Intelligent_Controllers/Flexible-RIC
-./generate_configurations.sh
-cd ../..
 
 echo
 echo

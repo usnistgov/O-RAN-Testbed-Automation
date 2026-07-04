@@ -44,7 +44,7 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$PARENT_DIR"
 
-# Apply patch to OCUDU to support kernel headers that don't define SCTP_SEND_FAILED_EVENT
+# Apply patch to OCUDU to support kernel headers that do not define SCTP_SEND_FAILED_EVENT
 cd ocudu
 git restore lib/gateways/sctp_network_gateway_common_impl.cpp
 if [ ! -f "lib/gateways/sctp_network_gateway_common_impl.cpp.previous" ]; then
@@ -55,7 +55,7 @@ echo "Patching sctp_network_gateway_common_impl.cpp..."
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/ocudu/lib/gateways/sctp_network_gateway_common_impl.cpp.patch"
 cd ..
 
-# Apply patch to OCUDU to ensure yaml-cpp imported targets are globally visible before aliasing.
+# Apply patch to OCUDU to ensure yaml-cpp imported targets are globally visible before aliasing
 cd ocudu
 git restore cmake/modules/FindYAMLCPP.cmake
 if [ ! -f "cmake/modules/FindYAMLCPP.cmake.previous" ]; then
@@ -66,15 +66,37 @@ echo "Patching FindYAMLCPP.cmake..."
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/ocudu/cmake/modules/FindYAMLCPP.cmake.patch"
 cd ..
 
-# Apply patch to stop using compiler-specific M_PI_2f and instead use static_cast<float>(M_PI_2)
+# Apply patch to avoid DU startup deadlocks when MAC cell activation runs during setup
 cd ocudu
-git restore lib/ran/precoding/precoding_codebooks.cpp
-if [ ! -f "lib/ran/precoding/precoding_codebooks.cpp.previous" ]; then
-    cp lib/ran/precoding/precoding_codebooks.cpp lib/ran/precoding/precoding_codebooks.cpp.previous
-    cp lib/ran/precoding/precoding_codebooks.cpp.previous "$PARENT_DIR/install_patch_files/ocudu/lib/ran/precoding/precoding_codebooks.cpp.previous"
+git restore lib/mac/mac_dl/mac_cell_processor.cpp
+if [ ! -f "lib/mac/mac_dl/mac_cell_processor.cpp.previous" ]; then
+    cp lib/mac/mac_dl/mac_cell_processor.cpp lib/mac/mac_dl/mac_cell_processor.cpp.previous
+    cp lib/mac/mac_dl/mac_cell_processor.cpp.previous "$PARENT_DIR/install_patch_files/ocudu/lib/mac/mac_dl/mac_cell_processor.cpp.previous"
 fi
-echo "Patching precoding_codebooks.cpp..."
-git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/ocudu/lib/ran/precoding/precoding_codebooks.cpp.patch"
+echo "Patching mac_cell_processor.cpp..."
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/ocudu/lib/mac/mac_dl/mac_cell_processor.cpp.patch"
+cd ..
+
+# Apply patch to update RLC TM buffer state inline during attach
+cd ocudu
+git restore lib/rlc/rlc_tx_tm_entity.cpp
+if [ ! -f "lib/rlc/rlc_tx_tm_entity.cpp.previous" ]; then
+    cp lib/rlc/rlc_tx_tm_entity.cpp lib/rlc/rlc_tx_tm_entity.cpp.previous
+    cp lib/rlc/rlc_tx_tm_entity.cpp.previous "$PARENT_DIR/install_patch_files/ocudu/lib/rlc/rlc_tx_tm_entity.cpp.previous"
+fi
+echo "Patching rlc_tx_tm_entity.cpp..."
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/ocudu/lib/rlc/rlc_tx_tm_entity.cpp.patch"
+cd ..
+
+# Apply patch to handle RLC AM status and buffer state inline during attach
+cd ocudu
+git restore lib/rlc/rlc_tx_am_entity.cpp
+if [ ! -f "lib/rlc/rlc_tx_am_entity.cpp.previous" ]; then
+    cp lib/rlc/rlc_tx_am_entity.cpp lib/rlc/rlc_tx_am_entity.cpp.previous
+    cp lib/rlc/rlc_tx_am_entity.cpp.previous "$PARENT_DIR/install_patch_files/ocudu/lib/rlc/rlc_tx_am_entity.cpp.previous"
+fi
+echo "Patching rlc_tx_am_entity.cpp..."
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/ocudu/lib/rlc/rlc_tx_am_entity.cpp.patch"
 cd ..
 
 echo

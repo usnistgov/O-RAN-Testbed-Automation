@@ -98,7 +98,7 @@ cd "Next_Generation_Node_B" >nul 2>&1
 if not errorlevel 1 (
     git clone https://gitlab.com/ocudu/ocudu.git
     cd "ocudu"
-    git checkout 80f343d1ddef12ff6356143913e626c4f1e3478f
+    git checkout 8e48b78bf6ea89e83e93dcee6f4ad0e17da132e1
     cd ..\..
 ) else (
     echo ERROR: Failed to cd to Next_Generation_Node_B. Skipping clone.
@@ -110,7 +110,7 @@ cd "Next_Generation_Node_B" >nul 2>&1
 if not errorlevel 1 (
     git clone https://gitlab.com/ocudu/ocudu_elements/ocudu_oran_apps/ocudu_o1_adapter.git
     cd "ocudu_o1_adapter"
-    git checkout 4e8dc394bc7d6b35c6181ee43903d35d4552d2b1
+    git checkout 776c351aed1e8fe179e244f76c1a58582a0374d5
     cd ..\..
 ) else (
     echo ERROR: Failed to cd to Next_Generation_Node_B. Skipping clone.
@@ -122,7 +122,7 @@ cd "Next_Generation_Node_B" >nul 2>&1
 if not errorlevel 1 (
     git clone https://gitlab.com/ocudu/ocudu_elements/ocudu_oran_apps/ocudu_netconf.git
     cd "ocudu_netconf"
-    git checkout 3468af7d38f0ebe38d6a22b2f36c004cbe4a0053
+    git checkout ddf3a2382a10ee85f7e4642b3a07e7cd789b822d
     cd ..\..
 ) else (
     echo ERROR: Failed to cd to Next_Generation_Node_B. Skipping clone.
@@ -134,7 +134,7 @@ mklink /D czmq ..\User_Equipment\czmq
 if not exist zmq_broker mkdir zmq_broker
 cd zmq_broker
 if not exist "multi_ue_scenario.grc" (
-    curl -L --fail --silent --show-error -o multi_ue_scenario.grc https://gitlab.com/ocudu/ocudu_docs/-/raw/3e6daa6548e0ee98b58a4dae10032f35569c7ee5/docs/tutorials/srsue/assets/multi_ue_scenario.grc
+    curl -L --fail --silent --show-error -o multi_ue_scenario.grc https://gitlab.com/ocudu/ocudu_docs/-/raw/46fc04904dc8ef5050a55323136fc681f3e04f1a/docs/tutorials/srsue/assets/multi_ue_scenario.grc
     if errorlevel 1 (
         echo ERROR: Failed to download multi_ue_scenario.grc
         exit /b 1

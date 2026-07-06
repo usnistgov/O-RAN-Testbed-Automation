@@ -88,16 +88,5 @@ echo "Patching rlc_tx_tm_entity.cpp..."
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/ocudu/lib/rlc/rlc_tx_tm_entity.cpp.patch"
 cd ..
 
-# Apply patch to handle RLC AM status and buffer state inline during attach
-cd ocudu
-git restore lib/rlc/rlc_tx_am_entity.cpp
-if [ ! -f "lib/rlc/rlc_tx_am_entity.cpp.previous" ]; then
-    cp lib/rlc/rlc_tx_am_entity.cpp lib/rlc/rlc_tx_am_entity.cpp.previous
-    cp lib/rlc/rlc_tx_am_entity.cpp.previous "$PARENT_DIR/install_patch_files/ocudu/lib/rlc/rlc_tx_am_entity.cpp.previous"
-fi
-echo "Patching rlc_tx_am_entity.cpp..."
-git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/ocudu/lib/rlc/rlc_tx_am_entity.cpp.patch"
-cd ..
-
 echo
 echo "Successfully patched OCUDU."

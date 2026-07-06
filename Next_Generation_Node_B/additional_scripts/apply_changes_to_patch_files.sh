@@ -58,7 +58,6 @@ git diff cmake/modules/FindYAMLCPP.cmake >../install_patch_files/ocudu/cmake/mod
 git diff lib/gateways/sctp_network_gateway_common_impl.cpp >../install_patch_files/ocudu/lib/gateways/sctp_network_gateway_common_impl.cpp.patch
 git diff lib/mac/mac_dl/mac_cell_processor.cpp >../install_patch_files/ocudu/lib/mac/mac_dl/mac_cell_processor.cpp.patch
 git diff lib/rlc/rlc_tx_tm_entity.cpp >../install_patch_files/ocudu/lib/rlc/rlc_tx_tm_entity.cpp.patch
-git diff lib/rlc/rlc_tx_am_entity.cpp >../install_patch_files/ocudu/lib/rlc/rlc_tx_am_entity.cpp.patch
 
 git restore cmake/modules/FindYAMLCPP.cmake
 cp cmake/modules/FindYAMLCPP.cmake ../install_patch_files/ocudu/cmake/modules/FindYAMLCPP.previous.cmake
@@ -79,11 +78,6 @@ git restore lib/rlc/rlc_tx_tm_entity.cpp
 cp lib/rlc/rlc_tx_tm_entity.cpp ../install_patch_files/ocudu/lib/rlc/rlc_tx_tm_entity.cpp.previous
 cp lib/rlc/rlc_tx_tm_entity.cpp lib/rlc/rlc_tx_tm_entity.cpp.previous
 git apply --verbose --ignore-whitespace ../install_patch_files/ocudu/lib/rlc/rlc_tx_tm_entity.cpp.patch
-
-git restore lib/rlc/rlc_tx_am_entity.cpp
-cp lib/rlc/rlc_tx_am_entity.cpp ../install_patch_files/ocudu/lib/rlc/rlc_tx_am_entity.cpp.previous
-cp lib/rlc/rlc_tx_am_entity.cpp lib/rlc/rlc_tx_am_entity.cpp.previous
-git apply --verbose --ignore-whitespace ../install_patch_files/ocudu/lib/rlc/rlc_tx_am_entity.cpp.patch
 
 cd ..
 

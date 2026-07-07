@@ -11,7 +11,6 @@ The deployment consists of:
 - One UE (srsRAN UE)
 - O-RAN SC Near-RT RIC
 - Grafana Monitoring
-- Prometheus
 - ZMQ metrics
 - Simulated user traffic using ping and iperf3
 
@@ -70,8 +69,6 @@ The installation deploys
 - OCUDU
 - O-RAN SC Near-RT RIC
 - UE
-- Grafana
-- Prometheus
 - Kubernetes components
 
 ---
@@ -89,7 +86,6 @@ Expected output
 Near-RT RIC ......... Running
 OCUDU ............... Running
 UE .................. Running
-Grafana ............. Running
 ```
 
 ---
@@ -142,7 +138,7 @@ time=12 ms
 Open
 
 ```
-http://<grafana-ip>:3000
+http://localhost:3300
 ```
 
 Default credentials
@@ -165,7 +161,6 @@ Useful dashboards include
 - Latency
 - PRB utilization
 - Cell KPIs
-- KPM xApp metrics
 
 ---
 
@@ -214,8 +209,6 @@ Expected throughput
 30–90 Mbps
 ```
 
-(depending on hardware)
-
 ---
 
 ## Observe Grafana
@@ -226,8 +219,6 @@ During iperf execution you should observe
 - CPU usage
 - PRB allocation
 - UE activity
-- Packet counters
-- ZMQ metrics
 
 ---
 
@@ -303,7 +294,6 @@ Verify
 
 - Prometheus running
 - ZMQ broker active
-- KPM xApp connected
 
 ---
 

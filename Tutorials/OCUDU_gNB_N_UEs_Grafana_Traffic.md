@@ -11,7 +11,6 @@ The deployment consists of:
 - One UE (srsRAN UE)
 - O-RAN SC Near-RT RIC
 - Grafana Monitoring
-- ZMQ metrics
 - Simulated user traffic using ping and iperf3
 
 At the end of this tutorial you will be able to

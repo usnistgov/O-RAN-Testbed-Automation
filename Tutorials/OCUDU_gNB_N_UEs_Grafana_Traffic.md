@@ -134,8 +134,11 @@ time=12 ms
 
 ## Launch Grafana
 
-Open
+To visuallize the performance metrics start the grafana WebUI from gNB directory.
 
+- **Start Grafana WebUI**: Start the dashboard and its Docker Compose dependencies with `./start_grafana_webui.sh`.
+- **Stop Grafana WebUI**: Stop the dashboard container with `./stop_grafana_webui.sh`.
+The dashboard is hosted at: 
 ```
 http://localhost:3300
 ```

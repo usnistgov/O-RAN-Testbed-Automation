@@ -1,6 +1,6 @@
-## Tutorial: Deploying  OCUDU gNB with One UE, Grafana Monitoring, and Traffic Simulation
+# Deploying  OCUDU gNB with One UE, Grafana Monitoring, and Traffic Simulation
 
-# Overview
+## Overview
 
 This tutorial demonstrates how to deploy a complete Open RAN testbed using the NIST O-RAN Testbed Automation framework.
 
@@ -28,7 +28,7 @@ At the end of this tutorial you will be able to
 
 
 
-# Prerequisites
+## Prerequisites
 
 Ubuntu 22.04 LTS
 
@@ -48,7 +48,7 @@ Software
 
 ---
 
-# Clone Repository
+## Clone Repository
 
 ```bash
 git clone https://github.com/USNISTGOV/O-RAN-Testbed-Automation.git
@@ -58,7 +58,7 @@ cd O-RAN-Testbed-Automation
 
 ---
 
-# Install the Testbed
+## Install the Testbed
 
 ```bash
 ./full_install.sh
@@ -76,7 +76,7 @@ The installation deploys
 
 ---
 
-# Verify Installation
+## Verify Installation
 
 ```bash
 ./is_running.sh
@@ -94,7 +94,7 @@ Grafana ............. Running
 
 ---
 
-# Start the Testbed
+## Start the Testbed
 
 ```bash
 ./run.sh
@@ -102,7 +102,7 @@ Grafana ............. Running
 
 ---
 
-# Verify UE Attachment
+## Verify UE Attachment
 
 Expected console output
 
@@ -119,7 +119,7 @@ IP Address:
 
 ---
 
-# Verify Network Connectivity
+## Verify Network Connectivity
 
 Inside the UE
 
@@ -137,7 +137,7 @@ time=12 ms
 
 ---
 
-# Launch Grafana
+## Launch Grafana
 
 Open
 
@@ -154,7 +154,7 @@ admin
 
 ---
 
-# Observe Metrics
+## Observe Metrics
 
 Useful dashboards include
 
@@ -169,9 +169,9 @@ Useful dashboards include
 
 ---
 
-# Traffic Simulation
+## Traffic Simulation
 
-## Continuous Ping
+### Continuous Ping
 
 ```bash
 ping 8.8.8.8
@@ -184,7 +184,7 @@ Observe
 
 ---
 
-## iperf3 Server
+### iperf3 Server
 
 On the core network
 
@@ -194,7 +194,7 @@ iperf3 -s
 
 ---
 
-## iperf3 Client
+### iperf3 Client
 
 On the UE
 
@@ -218,7 +218,7 @@ Expected throughput
 
 ---
 
-# Observe Grafana
+## Observe Grafana
 
 During iperf execution you should observe
 
@@ -231,7 +231,7 @@ During iperf execution you should observe
 
 ---
 
-# Useful Commands
+## Useful Commands
 
 Check Kubernetes
 
@@ -259,7 +259,7 @@ Restart
 
 ---
 
-# Expected Results
+## Expected Results
 
 Successful deployment should show
 
@@ -279,9 +279,9 @@ Successful deployment should show
 
 ---
 
-# Troubleshooting
+## Troubleshooting
 
-## UE does not attach
+### UE does not attach
 
 Check
 
@@ -297,7 +297,7 @@ Restart
 
 ---
 
-## Grafana empty
+### Grafana empty
 
 Verify
 
@@ -307,7 +307,7 @@ Verify
 
 ---
 
-## No traffic
+### No traffic
 
 Check
 
@@ -323,7 +323,7 @@ iperf3
 
 ---
 
-# Learning Outcomes
+## Learning Outcomes
 
 After completing this tutorial you will understand
 

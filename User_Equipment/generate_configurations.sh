@@ -237,8 +237,15 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
     update_conf "configs/ue${UE_NUMBER}.conf" "pcap" "nas_filename" "$SCRIPT_DIR/logs/ue${UE_NUMBER}_nas.pcap"
 
     # Update configuration values for Logging
-    update_conf "configs/ue${UE_NUMBER}.conf" "log" "all_level" "none" #warning
     update_conf "configs/ue${UE_NUMBER}.conf" "log" "phy_lib_level" "none"
+    update_conf "configs/ue${UE_NUMBER}.conf" "log" "rf_level" "warning"
+    update_conf "configs/ue${UE_NUMBER}.conf" "log" "phy_level" "warning"
+    update_conf "configs/ue${UE_NUMBER}.conf" "log" "pdcp_level" "warning"
+    update_conf "configs/ue${UE_NUMBER}.conf" "log" "rlc_level" "warning"
+    update_conf "configs/ue${UE_NUMBER}.conf" "log" "mac_level" "warning"
+    update_conf "configs/ue${UE_NUMBER}.conf" "log" "nas_level" "warning"
+    update_conf "configs/ue${UE_NUMBER}.conf" "log" "rrc_level" "warning"
+    update_conf "configs/ue${UE_NUMBER}.conf" "log" "all_level" "warning"
     update_conf "configs/ue${UE_NUMBER}.conf" "log" "all_hex_limit" "32"
     update_conf "configs/ue${UE_NUMBER}.conf" "log" "filename" "$SCRIPT_DIR/logs/ue${UE_NUMBER}.log"
     update_conf "configs/ue${UE_NUMBER}.conf" "log" "file_max_size" "-1"

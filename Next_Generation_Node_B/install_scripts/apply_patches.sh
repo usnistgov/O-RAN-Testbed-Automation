@@ -66,37 +66,32 @@ echo "Patching FindYAMLCPP.cmake..."
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/ocudu/cmake/modules/FindYAMLCPP.cmake.patch"
 cd ..
 
-# Apply patch to avoid DU startup deadlocks when MAC cell activation runs during setup
+# Apply patches when the number of processors is low to allow OCUDU startup, UE attach, and PDU session establishment
+# For more information, see https://gitlab.com/ocudu/ocudu/-/work_items/571
 cd ocudu
 git restore lib/mac/mac_dl/mac_cell_processor.cpp
 if [ ! -f "lib/mac/mac_dl/mac_cell_processor.cpp.previous" ]; then
     cp lib/mac/mac_dl/mac_cell_processor.cpp lib/mac/mac_dl/mac_cell_processor.cpp.previous
     cp lib/mac/mac_dl/mac_cell_processor.cpp.previous "$PARENT_DIR/install_patch_files/ocudu/lib/mac/mac_dl/mac_cell_processor.cpp.previous"
 fi
-echo "Patching mac_cell_processor.cpp..."
-git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/ocudu/lib/mac/mac_dl/mac_cell_processor.cpp.patch"
-cd ..
-
-# Apply patch to update RLC TM buffer state inline during attach
-cd ocudu
 git restore lib/rlc/rlc_tx_tm_entity.cpp
 if [ ! -f "lib/rlc/rlc_tx_tm_entity.cpp.previous" ]; then
     cp lib/rlc/rlc_tx_tm_entity.cpp lib/rlc/rlc_tx_tm_entity.cpp.previous
     cp lib/rlc/rlc_tx_tm_entity.cpp.previous "$PARENT_DIR/install_patch_files/ocudu/lib/rlc/rlc_tx_tm_entity.cpp.previous"
 fi
-echo "Patching rlc_tx_tm_entity.cpp..."
-git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/ocudu/lib/rlc/rlc_tx_tm_entity.cpp.patch"
-cd ..
-
-# Apply patch to handle RLC AM status and buffer state inline during attach
-cd ocudu
 git restore lib/rlc/rlc_tx_am_entity.cpp
 if [ ! -f "lib/rlc/rlc_tx_am_entity.cpp.previous" ]; then
     cp lib/rlc/rlc_tx_am_entity.cpp lib/rlc/rlc_tx_am_entity.cpp.previous
     cp lib/rlc/rlc_tx_am_entity.cpp.previous "$PARENT_DIR/install_patch_files/ocudu/lib/rlc/rlc_tx_am_entity.cpp.previous"
 fi
-echo "Patching rlc_tx_am_entity.cpp..."
-git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/ocudu/lib/rlc/rlc_tx_am_entity.cpp.patch"
+if [ "$(nproc)" -le 4 ]; then
+    echo "Patching mac_cell_processor.cpp, rlc_tx_tm_entity.cpp, and rlc_tx_am_entity.cpp..."
+    git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/ocudu/lib/mac/mac_dl/mac_cell_processor.cpp.patch"
+    git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/ocudu/lib/rlc/rlc_tx_tm_entity.cpp.patch"
+    git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/ocudu/lib/rlc/rlc_tx_am_entity.cpp.patch"
+else
+    echo "Skipping patching mac_cell_processor.cpp, rlc_tx_tm_entity.cpp, and rlc_tx_am_entity.cpp since the number of processors is greater than 4."
+fi
 cd ..
 
 echo

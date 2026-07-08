@@ -502,7 +502,7 @@ update_yaml "configs/gnb.yaml" "ru_sdr" "otw_format" "default"
 
 # if [ $(nproc) -lt 4 ]; then
 #     echo "The number of threads is less than 4. Setting nof_threads to $(nproc)."
-#     update_yaml "configs/gnb.yaml" "expert_execution.main_pool" "nof_threads" "$(nproc)"
+#     update_yaml "configs/gnb.yaml" "expert_execution.threads.main_pool" "nof_threads" "$(nproc)"
 # fi
 
 if [ ! -f "zmq_broker/multi_ue_scenario.py" ]; then

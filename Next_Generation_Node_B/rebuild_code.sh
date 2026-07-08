@@ -31,6 +31,7 @@
 # Exit immediately if a command fails
 set -e
 
+APPLY_PATCHES=true
 DEBUG_SYMBOLS=false
 RUN_TESTS=false
 
@@ -42,6 +43,16 @@ fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
+
+if [ ! -d "ocudu" ]; then
+    echo "ERROR: OCUDU repository not found. Please run full_install.sh first."
+    exit 1
+fi
+
+if [ "$APPLY_PATCHES" = true ]; then
+    echo "Patching OCUDU..."
+    ./install_scripts/apply_patches.sh
+fi
 
 echo
 echo

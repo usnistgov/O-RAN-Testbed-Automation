@@ -65,7 +65,7 @@ Co-authored-by: fjcintron <fernando.cintron@nist.gov>
 
 
 
-## Changelog for v1.7.2: Duranta Integration
+## Changelog for v1.7.2: Duranta Integration and Extended ZeroMQ Support
 
 ### Duranta / OpenAirInterface Testbed
 
@@ -105,18 +105,24 @@ Co-authored-by: fjcintron <fernando.cintron@nist.gov>
 ### General
 
 - Added `additional_scripts/check_e2ap_version.sh` to all gNodeB and RIC components.
-- Updated Docker and Helm version handling across install scripts for current Ubuntu releases.
+- Updated Kubernetes, Helm, and Docker versions and version handling for current Ubuntu releases.
 - Updated Open5GS, Duranta, OCUDU, OCUDU documentation, O1 adapter, Netconf, and SWIG commit hashes.
 - Reorganized patch files to reduce path length issues on Windows ZIP archives.
 - Revised documentation, diagrams, dependency-download scripts, and source code to reflect the Duranta integration.
-- Additional minor improvements.
+- Additional minor robustness, logging, and documentation improvements.
 
 ### Issues Resolved
 - Resolved issue #13: Fixed memory management in O-RAN SC `kpimon-go` xApp, identifying ASN.1 version mismatches.
   - Fixed OCUDU's connectivity with O-RAN SC Near-RT RIC and FlexRIC for E2SM-KPM monitoring.
   - Thanks to @Deshan-Lokuge01 for finding this issue.
-- Resolved issue #14: Issues connecting SRS UE 3 to OCUDU.
-  - Thanks to @ciccio25 for finding this.
+- Resolved issue #16: Fixed O-RAN SC xApp interoperability with OCUDU.
+  - Patched xApps `ad-cell`, `ad`, and `qp` for InfluxDB 2 schema compatibility.
+  - Thanks to @acharyakush8509 for finding this issue.
+- Resolved issue #17: Pinned Flannel version to prevent Kubernetes CNI installation failure.
+  - Thanks to @ciccio25 for finding this issue.
+- Resolved issue #15: Fixed issues connecting SRS UEs to OCUDU in constrained VirtualBox environments.
+  - Led to the opening of OCUDU Work Item 571 [[6]][ocudu-issue-571].
+  - Thanks to @ciccio25 for finding this issue.
 
 **Full Changelog**: https://github.com/usnistgov/O-RAN-Testbed-Automation/compare/v1.7.1...v1.7.2
 
@@ -127,6 +133,7 @@ Co-authored-by: fjcintron <fernando.cintron@nist.gov>
 3. Simulating Multiple UEs and Cells with ZeroMQ Broker. GitHub. [https://github.com/usnistgov/O-RAN-Testbed-Automation/tree/main/Next_Generation_Node_B/README.md#simulating-multiple-ues-and-cells-with-zeromq-broker][gh-ocudu-zmq]
 4. CMP0007. CMake. [https://cmake.org/cmake/help/latest/policy/CMP0007.html][cmake-cmp0007]
 5. ASN.1 Decoding Error (SIGABRT) in kpimon-go with srsRAN E2SM-KPM Payload. GitHub. [https://github.com/usnistgov/O-RAN-Testbed-Automation/issues/13][gh-issue-13]
+6. Work Item #571: MAC/RLC executor stalls during ZMQ UE attach in VirtualBox. OCUDU. [https://gitlab.com/ocudu/ocudu/-/work_items/571][ocudu-issue-571]
 
 <!-- References -->
 
@@ -135,35 +142,39 @@ Co-authored-by: fjcintron <fernando.cintron@nist.gov>
 [gh-ocudu-zmq]: https://github.com/usnistgov/O-RAN-Testbed-Automation/tree/main/Next_Generation_Node_B/README.md#simulating-multiple-ues-and-cells-with-zeromq-broker
 [cmake-cmp0007]: https://cmake.org/cmake/help/latest/policy/CMP0007.html
 [gh-issue-13]: https://github.com/usnistgov/O-RAN-Testbed-Automation/issues/13
+[ocudu-issue-571]: https://gitlab.com/ocudu/ocudu/-/work_items/571
+
 
 Add option to switch to direct ZeroMQ connection rather than ZeroMQ broker (see)
 Add `rebuild_code.sh` to OCUDU to only rebuild changed files.
 Fix FlexRIC installation compatiblity with CMake, and add ASN.1 compiler installation check to ensure successful build.
+O-RAN SC: Add restoration of swap upon Kubernetes uninstallation.
+O-RAN SC: Patched `e2mgr` and `submgr` to prevent disconnection when xApps interact with OCUDU.
+O-RAN SC: Improve O-RAN SC xApp rebuild, patch handling, and documentation.
+OCUDU: Added support for arbitrary number of UEs and cells using ZeroMQ broker generator (still under testing)
 
-============= PREVIOUS CHANGELOGS BELOW =============
 
 ## Changelog for v1.7.1
 
 - Extended testbed support to Ubuntu 26.04 LTS.
 - OpenAirInterface: Added optional UE support for ZeroMQ instead of RF simulator [\[1\]][oai-ue-radio], [\[2\]][oai-zmq-docs].
-- Open5GS: Updated MongoDB from 4.4 to 7.0 for faster subscriber reading and writing.
-  - Implemented a `pkg-config` compatibility shim for `libmongoc-1.0` mapping to `mongoc2` and migrated ping checks for `mongosh`.
+- Migrated testbed terminal usage from `gnome-terminal` to generic `x-terminal-emulator` for broader desktop environment support.
+  - For example, run the handover scenario in new windows with `./OpenAirInterface_Testbed/run_handover_scenario.sh show`.
 - Open5GS: Made the Data Network Name (DNN) configurable at the slice level in `options.yaml`.
+- Open5GS: Updated MongoDB from 4.4 to 7.0 for faster subscriber reading and writing.
 - Open5GS (5gdeploy): Bumped Open5GS Docker component image to `v2.7.7`.
-- FlexRIC: Switched to E2AP_V3 and KPM_V3_00 to correct indication message latency (`collectStartTime`).
-  - Uses 64-bit-encoded `collectStartTime` per E2SM-KPM clause 8.3.12 and IETF RFC 5905 clause 6.
-- FlexRIC: Added build flag to ensure the optimized Release binary is generated rather than Debug.
-- FlexRIC: Added option to disable SQLite to prevent unnecessary database write operations during runtime.
-- FlexRIC: Changed default service model install directory from system to local `flexric/build`, making it configurable.
+- FlexRIC: Added color coding to distinguish metric names, values, and units while logging in KPM monitoring xApps.
+- FlexRIC: Changed default service model install directory from the system path to local `flexric/build`, making it configurable.
   - Included additional script to check when the FlexRIC libraries were last modified.
+- FlexRIC: Added option to disable SQLite to prevent unnecessary database write operations during runtime.
 - FlexRIC: Added a metrics factory (`metrics_factory.c`) to centralize management of E2SM-KPM metrics across xApps.
 - FlexRIC: Added E2 node IDs matching NR CGI (3GPP 38.423 clause 9.2.3.25) to E2SM-KPM monitoring xApps.
-  - Grafana dashboard updated with UE-to-Cell table and CARR.PDSCHMCSDist plots [\[3\]][xapp-dashboard-img], [\[4\]][xapp-dashboard-readme].
-- FlexRIC: Added color coding to distinguish metric names, values, and units while logging in KPM monitoring xApps.
+  - Grafana dashboard updated with UE-to-Cell mapping table and CARR.PDSCHMCSDist plots [\[3\]][xapp-dashboard-img], [\[4\]][xapp-dashboard-readme].
+- FlexRIC: Switched to E2AP_V3 and KPM_V3_00 to fix indication message latency (`collectStartTime`).
+  - 64-bit encoded per E2SM-KPM clause 8.3.12, and IETF RFC 5905 clause 6.
+- FlexRIC: Added build flag to ensure optimized Release binaries are generated instead of Debug binaries.
 - OCUDU: Pinned the OCUDU Documentation commit hash to ensure a stable ZeroMQ broker download URL.
 - OpenAirInterface and SRS UE: Suppressed UE namespace cleanup before re-initializing namespaces.
-- Migrated testbed terminal usage from `gnome-terminal` to generic `x-terminal-emulator` for diverse desktop environment support.
-  - For example, run the handover scenario in new windows with `./OpenAirInterface_Testbed/run_handover_scenario.sh show`.
 - Improved handling of GCC versioning checks to ensure consistent compiler installations.
 - Updated software commit hashes to their latest stable versions.
 - Revised documentation, diagrams, and source code to reflect the changes listed above.
@@ -172,17 +183,18 @@ Fix FlexRIC installation compatiblity with CMake, and add ASN.1 compiler install
 
 ### References
 
-1. OpenAirInterface UE Supported Radio Devices. NIST. [https://github.com/usnistgov/O-RAN-Testbed-Automation/tree/main/OpenAirInterface_Testbed/User_Equipment#supported-radio-devices][oai-ue-radio]
+1. OpenAirInterface UE Supported Radio Devices. NIST. [https://github.com/usnistgov/O-RAN-Testbed-Automation/tree/a7d976fb325d2500cbcd98544803ebfb157fe9bc/OpenAirInterface_Testbed/User_Equipment#supported-radio-devices][oai-ue-radio]
 2. ZeroMQ Documentation. OpenAirInterface. [https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/develop/radio/zmq/README.md][oai-zmq-docs]
-3. Grafana Dashboard KPM Metrics Monitor Image. NIST. [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/Images/xApp_Dashboard.png][xapp-dashboard-img]
-4. KPM Monitor Visualization in Grafana. NIST. [https://github.com/usnistgov/O-RAN-Testbed-Automation/tree/main/OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC#kpm-monitor-visualization-in-grafana][xapp-dashboard-readme]
+3. Grafana Dashboard KPM Metrics Monitor Image. NIST. [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/a7d976fb325d2500cbcd98544803ebfb157fe9bc/Images/xApp_Dashboard.png][xapp-dashboard-img]
+4. KPM Monitor Visualization in Grafana. NIST. [https://github.com/usnistgov/O-RAN-Testbed-Automation/tree/a7d976fb325d2500cbcd98544803ebfb157fe9bc/OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC#kpm-monitor-visualization-in-grafana][xapp-dashboard-readme]
 
 <!-- References -->
 
-[oai-ue-radio]: https://github.com/usnistgov/O-RAN-Testbed-Automation/tree/main/OpenAirInterface_Testbed/User_Equipment#supported-radio-devices
+[oai-ue-radio]: https://github.com/usnistgov/O-RAN-Testbed-Automation/tree/a7d976fb325d2500cbcd98544803ebfb157fe9bc/OpenAirInterface_Testbed/User_Equipment#supported-radio-devices
 [oai-zmq-docs]: https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/develop/radio/zmq/README.md
-[xapp-dashboard-img]: https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/Images/xApp_Dashboard.png
-[xapp-dashboard-readme]: https://github.com/usnistgov/O-RAN-Testbed-Automation/tree/main/OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC#kpm-monitor-visualization-in-grafana
+[xapp-dashboard-img]: https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/a7d976fb325d2500cbcd98544803ebfb157fe9bc/Images/xApp_Dashboard.png
+[xapp-dashboard-readme]: https://github.com/usnistgov/O-RAN-Testbed-Automation/tree/a7d976fb325d2500cbcd98544803ebfb157fe9bc/OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC#kpm-monitor-visualization-in-grafana
+
 
 ## Changelog for v1.7.0: OCUDU Integration
 
@@ -247,7 +259,7 @@ Fix FlexRIC installation compatiblity with CMake, and add ASN.1 compiler install
 6. OCUDU Grafana Dashboard WebUI. NIST. [https://github.com/usnistgov/O-RAN-Testbed-Automation/tree/main/Next_Generation_Node_B#ocudu-grafana-webui][ocudu-grafana]
 7. O-RAN-Testbed-Automation, gNodeB Documentation. NIST. [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/Next_Generation_Node_B/README.md][automation-ocudu]
 8. Handover Tutorial for OAI. OpenAirInterface. [https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/0ba31c0f89dd3162c7d87142da2b0f4e08abeb58/doc/handover-tutorial.md#run-the-setup:~:text=DU0%20and%20DU1%20should%20use%20different%20SSBs][oai-handover-tutorial]
-9. Flexible-RIC xApp Deployment. NIST. [https://github.com/usnistgov/O-RAN-Testbed-Automation/tree/main/OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC/Flexible-RIC#running-an-xapp][flexric-xapp]
+9. Flexible-RIC xApp Deployment. NIST. [https://github.com/usnistgov/O-RAN-Testbed-Automation/tree/main/OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC/#running-an-xapp][flexric-xapp]
 
 <!-- References -->
 
@@ -259,7 +271,8 @@ Fix FlexRIC installation compatiblity with CMake, and add ASN.1 compiler install
 [ocudu-grafana]: https://github.com/usnistgov/O-RAN-Testbed-Automation/tree/main/Next_Generation_Node_B#ocudu-grafana-webui
 [automation-ocudu]: https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/Next_Generation_Node_B/README.md
 [oai-handover-tutorial]: https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/0ba31c0f89dd3162c7d87142da2b0f4e08abeb58/doc/handover-tutorial.md#run-the-setup:~:text=DU0%20and%20DU1%20should%20use%20different%20SSBs
-[flexric-xapp]: https://github.com/usnistgov/O-RAN-Testbed-Automation/tree/main/OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC/Flexible-RIC#running-an-xapp
+[flexric-xapp]: https://github.com/usnistgov/O-RAN-Testbed-Automation/tree/main/OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC/#running-an-xapp
+
 
 ## Changelog for v1.6.0
 
@@ -308,7 +321,7 @@ Fix FlexRIC installation compatiblity with CMake, and add ASN.1 compiler install
 
 **Full Changelog**: https://github.com/usnistgov/O-RAN-Testbed-Automation/compare/v1.5.0...v1.6.0
 
-## Changelog for v1.5.0
+## Changelog for v1.5.0: 5gdeploy Integration
 
 - Added modular core network support via USNISTGOV/5gdeploy [\[1\]][5gdeploy-nist].
   - Supported cores: Open5GS [\[2\]][open5gs-open5gs], OAI CN5G [\[3\]][oaicore-oai], free5GC [\[4\]][free5gc-free5gc], and Open5GCore [\[5\]][open5gcore-phoenix].
@@ -357,6 +370,7 @@ Fix FlexRIC installation compatiblity with CMake, and add ASN.1 compiler install
 [bess-aethercore]: https://github.com/omec-project/bess
 [nist-ndndpdk]: https://doi.org/10.1145/3405656.3418715
 [e2smkpm-oran]: https://specifications.o-ran.org/download?id=810
+
 
 ## Changelog for v1.4.5
 

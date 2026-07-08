@@ -68,7 +68,7 @@ The components that have been verified to support or not support connectivity ar
 Before beginning the installation and setup of the testbed, verify that the system meets the following minimum specifications to prevent issues like pods remaining in pending or crash loop states if using an O-RAN SC RIC.
 
 - **Operating System**: Linux distributions based on Ubuntu 20.04 LTS, Ubuntu 22.04 LTS, Ubuntu 24.04 LTS, and Ubuntu 26.04 LTS are supported.
-  - _Recommendation: Ubuntu 22.04._
+  - _Recommendation: Ubuntu 22.04 on a clean install._
 - **Hard Drive Storage**: Must be `≥ 57` GB.
 - **Base Memory/RAM**: Must be `≥ 6000` MB.
 - **Number of Processors**: Must be `≥ 2` processors.
@@ -121,6 +121,9 @@ cd O-RAN-Testbed-Automation
 ```
 
 Alternatively, the repository may be cloned over SSH: `git clone git@github.com:USNISTGOV/O-RAN-Testbed-Automation.git`. To use SSH instead of HTTPS for all subsequent `git clone` operations during the installation, set `export USE_GIT_SSH=true` in your terminal before proceeding.
+
+> [!TIP]
+> If package updates are slow or fail due to a regional Ubuntu mirror, run `sudo ./Additional_Scripts/set_ubuntu_apt_mirror.sh` to switch APT to the Ubuntu Main Server before retrying.
 
 ---
 

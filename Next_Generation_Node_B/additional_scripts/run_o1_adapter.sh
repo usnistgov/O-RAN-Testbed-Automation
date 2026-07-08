@@ -34,10 +34,25 @@ CURRENT_DIR=$(pwd)
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
 
-cd "$SCRIPT_DIR"
+usage() {
+    echo "Usage: $0 [gnb|cu|cucp|cuup|du|ru]"
+    echo "    Optionally specify the NETCONF configuration profile to load (default: gnb)"
+    echo "    For more information, see https://gitlab.com/ocudu/ocudu_elements/ocudu_oran_apps/ocudu_netconf#run-netopeer2-server-as-standalone-container"
+}
 
-# Upon exit, stop the O1 adapter
-trap 'trap - EXIT SIGINT SIGTERM; echo "Stopping O1 adapter..."; "$SCRIPT_DIR/stop_o1_adapter.sh"; exit' EXIT SIGINT SIGTERM
+if [ "$#" -gt 1 ]; then
+    usage
+    exit 1
+fi
+
+if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+    usage
+    exit 0
+fi
+
+NETCONF_CONFIG_PROFILE="${1:-gnb}"
+
+cd "$SCRIPT_DIR"
 
 # Check if docker is accessible from the current user, and if not, repair its permissions
 if [ -z "$FIXED_DOCKER_PERMS" ]; then
@@ -65,7 +80,7 @@ fi
 
 cd "$PARENT_DIR"
 
-if ! docker images | grep -q "ocudu-netconf"; then
+if ! docker image inspect ocudu-netconf/ocudu-netconf:latest >/dev/null 2>&1; then
     echo "Docker image 'ocudu-netconf/ocudu-netconf:latest' not found. Please run ./install_o1_adapter.sh first."
     exit 1
 fi
@@ -75,10 +90,28 @@ if [ ! -d "ocudu_o1_adapter" ]; then
     exit 1
 fi
 
-echo "Starting OCUDU Netconf..."
-# Code from (https://ocudu.gitlab.io/ocudu_docs/oran_apps/ocudu_netconf/#run-netopeer2-server-as-standalone-container):
+echo "Starting OCUDU Netconf with '$NETCONF_CONFIG_PROFILE' configuration profile..."
+
 cd ocudu_netconf
-docker run -d --name ocudu_netconf -p 830:830 -v "$(pwd)/default_config.xml:/config/default_config.xml" ocudu-netconf/ocudu-netconf:latest /config/default_config.xml
+if docker ps -q -f name=^/ocudu_netconf$ | grep -q .; then
+    echo "ERROR: Docker container name 'ocudu_netconf' is already in use. Stop the existing container before starting the O1 adapter."
+    exit 1
+fi
+if docker ps -aq -f name=^/ocudu_netconf$ | grep -q .; then
+    echo "Removing stopped Docker container 'ocudu_netconf'..."
+    docker rm ocudu_netconf >/dev/null
+fi
+if ss -H -tln "sport = :830" 2>/dev/null | grep -q .; then
+    echo "ERROR: Host port 830 is already in use. Stop the conflicting service before starting the O1 adapter."
+    exit 1
+fi
+
+# Upon exit, stop the O1 adapter
+trap 'trap - EXIT SIGINT SIGTERM; echo "Stopping O1 adapter..."; "$SCRIPT_DIR/stop_o1_adapter.sh"; exit' EXIT SIGINT SIGTERM
+
+# Code from (https://gitlab.com/ocudu/ocudu_elements/ocudu_oran_apps/ocudu_netconf#run-netopeer2-server-as-standalone-container):
+docker run -d --name ocudu_netconf -p 830:830 -v "$(pwd)/default_config.xml:/config/default_config.xml:ro" ocudu-netconf/ocudu-netconf:latest --config "$NETCONF_CONFIG_PROFILE" --custom-config /config/default_config.xml
+
 cd ..
 
 echo "Starting OCUDU O1 Adapter..."

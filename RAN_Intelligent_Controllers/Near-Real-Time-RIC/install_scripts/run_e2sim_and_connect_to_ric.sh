@@ -79,6 +79,14 @@ OUTPUT_FILE="logs/e2sim_output.txt"
 
 echo "Starting a new container 'oransim'..."
 sudo rm -rf "$OUTPUT_FILE"
+if docker ps -q -f name=^/oransim$ | grep -q .; then
+    echo "ERROR: Docker container name 'oransim' is already in use. Stop the existing container before starting the E2 simulator."
+    exit 1
+fi
+if docker ps -aq -f name=^/oransim$ | grep -q .; then
+    echo "Removing stopped Docker container 'oransim'..."
+    docker rm oransim >/dev/null
+fi
 docker run -d -it --name oransim -e RAN_FUNC_ID="$RAN_FUNC_ID" -v "$(pwd)/logs:/app/logs" oransim:0.0.999
 
 kubectl get svc -n ricplt | grep e2term-sctp || true

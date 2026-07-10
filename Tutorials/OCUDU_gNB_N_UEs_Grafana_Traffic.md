@@ -190,7 +190,7 @@ PING 10.45.0.1 (10.45.0.1)
 If the ping succeeds, the UE has end-to-end IP connectivity through the 5G core network.
 
 <b>OCUDU Grafana WebUI Visualization</b><div align="center">
-  <img src="Images/grafana.png" alt="OCUDU Grafana WebUI" width="75%">
+  <img src="grafana.png" alt="OCUDU Grafana WebUI" width="75%">
 </div>
 ---
 

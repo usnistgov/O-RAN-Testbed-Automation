@@ -157,13 +157,13 @@ admin
 
 Useful dashboards include
 
-- CPU utilization
-- Memory
 - UE throughput
 - Packet loss
 - Latency
-- PRB utilization
 - Cell KPIs
+- Downlink MCS
+- Uplink MCS
+- CQI
 
 ---
 

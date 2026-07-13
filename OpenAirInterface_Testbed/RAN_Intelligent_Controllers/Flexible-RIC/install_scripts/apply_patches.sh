@@ -98,6 +98,7 @@ fi
 echo "Patching CMakeLists.txt to list the new xApps for building..."
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/CMakeLists.txt.patch"
 
+<<<<<<< HEAD
 # cd "$FLEXRIC_DIR"
 # echo "Adding stale subscription cleanup support patch to FlexRIC..."
 # STALE_SUBSCRIPTION_PATCH_DIR="$PARENT_DIR/install_patch_files/flexric/stale_subscription_cleanup_support"
@@ -133,6 +134,8 @@ git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric
 # done
 # git apply --verbose --ignore-whitespace "$STALE_SUBSCRIPTION_PATCH_DIR/patch.patch"
 
+=======
+>>>>>>> main
 cd "$PARENT_DIR"
 
 # Apply patch to FlexRIC to add support for disabling the SQLite database with cmake .. -DXAPP_DB=NONE_XAPP
@@ -163,8 +166,6 @@ if [ ! -f "src/xApp/e42_xapp.c.previous" ]; then
     cp src/xApp/e42_xapp.c src/xApp/e42_xapp.c.previous
     cp src/xApp/e42_xapp.c.previous "$PARENT_DIR/install_patch_files/flexric/disable_database_option/src/xApp/e42_xapp.previous.c"
 fi
-# # Omit e42_xapp.c since the stale subscription patch already modified it
-# cp $STALE_SUBSCRIPTION_PATCH_DIR/src/xApp/e42_xapp.c.previous src/xApp/e42_xapp.previous.c
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/disable_database_option/patch.patch"
 cd "$PARENT_DIR"
 

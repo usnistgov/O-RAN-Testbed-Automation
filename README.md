@@ -22,7 +22,11 @@ This tool supports the deployment of 5G O-RAN testbeds using open-source compone
 ```text
 CU/DU
 ├── OCUDU: 26.04
+<<<<<<< HEAD
 ├── Duranta (OAI) gNB: 2026.w24
+=======
+├── Duranta (OAI) gNB: 2026.w25
+>>>>>>> main
 └── O-RAN SC E2 Simulator: M-Release
 RICs
 ├── O-RAN SC Near-RT RIC: M-Release
@@ -48,7 +52,11 @@ RICs
 └── free5GC: v4.2.1
 UEs
 ├── srsRAN_4G: release_25_10
+<<<<<<< HEAD
 └── Duranta (OAI) 5G UE: 2026.w24
+=======
+└── Duranta (OAI) 5G UE: 2026.w25
+>>>>>>> main
 ```
 
 The components that have been verified to support or not support connectivity are included below.
@@ -67,7 +75,7 @@ The components that have been verified to support or not support connectivity ar
 Before beginning the installation and setup of the testbed, verify that the system meets the following minimum specifications to prevent issues like pods remaining in pending or crash loop states if using an O-RAN SC RIC.
 
 - **Operating System**: Linux distributions based on Ubuntu 20.04 LTS, Ubuntu 22.04 LTS, Ubuntu 24.04 LTS, and Ubuntu 26.04 LTS are supported.
-  - _Recommendation: Ubuntu 22.04._
+  - _Recommendation: Ubuntu 22.04 on a clean install._
 - **Hard Drive Storage**: Must be `≥ 57` GB.
 - **Base Memory/RAM**: Must be `≥ 6000` MB.
 - **Number of Processors**: Must be `≥ 2` processors.
@@ -121,6 +129,9 @@ cd O-RAN-Testbed-Automation
 
 Alternatively, the repository may be cloned over SSH: `git clone git@github.com:USNISTGOV/O-RAN-Testbed-Automation.git`. To use SSH instead of HTTPS for all subsequent `git clone` operations during the installation, set `export USE_GIT_SSH=true` in your terminal before proceeding.
 
+> [!TIP]
+> If package updates are slow or fail due to a regional Ubuntu mirror, run `sudo ./Additional_Scripts/set_ubuntu_apt_mirror.sh` to switch APT to the Ubuntu Main Server before retrying.
+
 ---
 
 > [!IMPORTANT]
@@ -146,7 +157,11 @@ Begin the installation process, recommended to be run as the current user rather
   <summary><b>OCUDU and O-RAN SC Near-RT RIC Output</b></summary>
   <hr>
 
+<<<<<<< HEAD
 Run the testbed with `./run.sh` to start the 5G Core, gNodeB, and UE. Use `./is_running.sh` to check if the components are running, and `./stop.sh` to stop the components. The optional RIC starts automatically on boot and can be accessed with `k9s -A`.
+=======
+Run the testbed with `./run.sh` to start the 5G Core, gNodeB, and UEs. Use `./is_running.sh` to check if the components are running, and `./stop.sh` to stop the components. The optional RIC starts automatically on boot and can be accessed with `k9s -A`.
+>>>>>>> main
 
 ```console
 Attaching UE...

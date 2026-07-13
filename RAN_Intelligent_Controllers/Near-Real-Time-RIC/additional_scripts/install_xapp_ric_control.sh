@@ -43,6 +43,7 @@ cd "$PARENT_DIR"
 
 # Run a sudo command every minute to ensure script execution without user interaction
 ./install_scripts/start_sudo_refresh.sh
+trap './install_scripts/stop_sudo_refresh.sh 2>/dev/null || true' EXIT
 
 if ! kubectl get pods -n ricplt | grep r4-influxdb-influxdb2 &>/dev/null; then
     echo "The InfluxDB pod is not running, installing it..."
@@ -76,8 +77,8 @@ if ! command -v jq &>/dev/null; then
 fi
 
 FILE="xapp-descriptor/config_updated.json"
-sudo rm -rf $FILE
-cp xapp-descriptor/config.json $FILE
+sudo rm -rf "$FILE"
+cp xapp-descriptor/config.json "$FILE"
 # Modify the required fields using jq and overwrite the original file
 jq '.containers[0].image.tag = "latest" |
     .containers[0].image.registry = "127.0.0.1:80" |

@@ -69,6 +69,14 @@ for REPOSITORY in $(jq 'keys[]' "$JSON_FILE" | tr -d '"'); do
         JSON_CONTENTS=$(jq ".[\"$REPOSITORY_NEW\"] = .[\"$REPOSITORY\"] | del(.[\"$REPOSITORY\"])" <<<"$JSON_CONTENTS")
         REPOSITORY="$REPOSITORY_NEW"
     fi
+
+    if [[ "$REPOSITORY" == "https://github.com/usnistgov/5gdeploy.git" ]]; then
+        echo "Clearing commit hash for $REPOSITORY..."
+        JSON_CONTENTS=$(jq ".[\"$REPOSITORY\"][1] = \"\"" <<<"$JSON_CONTENTS")
+        echo "    Skipping."
+        continue
+    fi
+
     BRANCH=$(jq -r ".[\"$REPOSITORY\"][0]" <<<"$JSON_CONTENTS")
     PREV_COMMIT_HASH=$(jq -r ".[\"$REPOSITORY\"][1]" <<<"$JSON_CONTENTS")
 

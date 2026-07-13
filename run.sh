@@ -38,11 +38,60 @@ if ! command -v realpath &>/dev/null; then
 fi
 
 USE_FLEXRIC=false
+<<<<<<< HEAD
+=======
+USE_ZMQ_BROKER=true
+>>>>>>> main
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
+UE_NUMBERS=()
+if [ "$USE_ZMQ_BROKER" = "true" ]; then
+    if [ ! -f "Next_Generation_Node_B/zmq_broker/multi_ue_scenario.py" ]; then
+        echo "ZMQ Broker configuration was not found. Please run ./generate_configurations.sh first."
+        exit 1
+    fi
+    if [ ! -f "Next_Generation_Node_B/install_scripts/validate_zmq_broker_config.sh" ]; then
+        echo "ZMQ Broker verifier was not found. Please run ./generate_configurations.sh first."
+        exit 1
+    fi
+    # Parse the ZeroMQ broker for the list of UEs and cells
+    UE_NUMBERS=($(grep -oP 'UE_CONFIG:\s+\K\d+' Next_Generation_Node_B/zmq_broker/multi_ue_scenario.py))
+    CELL_NUMBERS=($(grep -oP 'CELL_CONFIG:\s+\K\d+' Next_Generation_Node_B/zmq_broker/multi_ue_scenario.py))
+    VERIFY_ARGS=""
+    for UE_NUMBER in "${UE_NUMBERS[@]}"; do
+        VERIFY_ARGS="$VERIFY_ARGS --ue $UE_NUMBER"
+    done
+    if [ ${#CELL_NUMBERS[@]} -gt 0 ]; then
+        for CELL in "${CELL_NUMBERS[@]}"; do
+            VERIFY_ARGS="$VERIFY_ARGS --cell $CELL"
+        done
+    fi
+    if ! "Next_Generation_Node_B/install_scripts/validate_zmq_broker_config.sh" ${VERIFY_ARGS}; then
+        echo "Run ./generate_configurations.sh with the same UE numbers before ./run.sh."
+        exit 1
+    fi
+    echo "ZeroMQ Broker UE startup order: ${UE_NUMBERS[*]}"
+else
+    UE_NUMBERS=(1)
+fi
+
 sudo -v # Ensure sudo session is active
+
+if ! ip link show ogstun >/dev/null 2>&1 ||
+    [ "$(sysctl -n net.ipv4.ip_forward)" != "1" ] ||
+    [ "$(sysctl -n net.ipv6.conf.all.forwarding)" != "1" ]; then
+    echo "Configuring Open5GS UE data-plane network..."
+    sudo ./5G_Core_Network/install_scripts/network_config.sh
+    sudo sysctl -w net.ipv4.ip_forward=1
+    sudo sysctl -w net.ipv6.conf.all.forwarding=1
+fi
+
+if ! lsmod | grep -q '^sctp '; then
+    echo "Enabling SCTP kernel module..."
+    sudo ./5G_Core_Network/install_scripts/enable_sctp.sh
+fi
 
 # Upon exit, gracefully stop all components and fix console in case it breaks
 trap "trap - EXIT SIGINT SIGTERM; echo \"#################################  STOPPING... #################################\"; \"$SCRIPT_DIR/./stop.sh\"; stty sane || true; exit" EXIT SIGINT SIGTERM
@@ -88,7 +137,12 @@ cd ..
 echo
 echo "Running User Equipment..."
 cd User_Equipment
-./run_background.sh 3
-./run_background.sh 2
-./run.sh
+if [ "$USE_ZMQ_BROKER" = "true" ] && [ ${#UE_NUMBERS[@]} -gt 1 ]; then
+    for ((i = 1; i < ${#UE_NUMBERS[@]}; i++)); do
+        echo "Running UE ${UE_NUMBERS[$i]} in background..."
+        ./run_background.sh "${UE_NUMBERS[$i]}"
+    done
+fi
+echo "Running UE ${UE_NUMBERS[0]}..."
+./run.sh "${UE_NUMBERS[0]}"
 cd ..

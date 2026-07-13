@@ -35,8 +35,19 @@ if ! command -v jq >/dev/null 2>&1; then
 fi
 
 SUBMGR_IP=$(kubectl get pods -A -o jsonpath='{.items[?(@.metadata.labels.app=="ricplt-submgr")].status.podIP}')
+<<<<<<< HEAD
 
 echo "curl -s \"http://$SUBMGR_IP:8080/ric/v1/get_all_e2nodes\""
 echo
 echo "Connected E2 nodes:"
 curl -s "http://$SUBMGR_IP:8080/ric/v1/get_all_e2nodes" | jq -C .
+=======
+E2MGR_IP=$(kubectl get svc -n ricplt service-ricplt-e2mgr-http -o jsonpath='{.spec.clusterIP}')
+E2MGR_PORT=$(kubectl get svc -n ricplt service-ricplt-e2mgr-http -o jsonpath='{.spec.ports[0].port}')
+
+echo "Fetch connected IDs from submgr: curl -s \"http://$SUBMGR_IP:8080/ric/v1/get_all_e2nodes\""
+echo "Fetch known E2 nodes from e2mgr: curl -s \"http://$E2MGR_IP:$E2MGR_PORT/v1/nodeb/states\""
+
+# curl -s "http://$SUBMGR_IP:8080/ric/v1/get_all_e2nodes" | jq -C .
+curl -s "http://$E2MGR_IP:$E2MGR_PORT/v1/nodeb/states" | jq -C .
+>>>>>>> main

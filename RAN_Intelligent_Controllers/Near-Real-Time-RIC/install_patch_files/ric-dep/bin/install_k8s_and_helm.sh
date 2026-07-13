@@ -148,6 +148,10 @@ sudo env $APTVARS apt-get install -y jq netcat-openbsd make ipset moreutils
 KUBEV="1.33"
 KUBECNIV="1.6"
 HELMV="3.20"
+<<<<<<< HEAD
+=======
+FLANNELV="0.28.5"
+>>>>>>> main
 
 # Fetch the Ubuntu release version regardless of the derivative distro
 if [ -f /etc/upstream-release/lsb-release ]; then
@@ -894,7 +898,7 @@ sudo rm -rf /var/lib/dockershim || true
 sudo rm -rf /var/run/kubernetes || true
 sudo rm -rf /var/lib/cni/ || true
 sudo rm -rf /root/.kube/ || true
-sudo rm -rf $HOME/.kube/ || true
+sudo rm -rf "$HOME/.kube/" || true
 
 # Remove all Kubernetes-related Docker or containerd images
 if command -v docker &>/dev/null; then
@@ -1349,8 +1353,7 @@ KUBE_MINOR=$(echo $KUBEVERSION | cut -d '.' -f2)
 # Ensure CNI directories exist
 sudo mkdir -p /etc/cni/net.d /opt/cni/bin
 if [[ $KUBE_MAJOR -eq 1 && $KUBE_MINOR -ge 28 ]]; then
-    # Apply the latest Flannel configuration for Kubernetes version 1.28 and above
-    if ! kubectl apply -f "https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml"; then
+    if ! kubectl apply -f "https://raw.githubusercontent.com/flannel-io/flannel/v${FLANNELV}/Documentation/kube-flannel.yml"; then
         echo "Failed to apply Flannel configuration."
         exit 1
     fi
@@ -1440,7 +1443,7 @@ if ! kubectl -n kube-system wait --for=condition=Available deploy/coredns --time
         fi
         sleep 1
     done
-    kubectl -n kube-system get cm coredns -o yaml | sed -E "s|forward[[:space:]]+\.[[:space:]].*|forward . ${DNS_SERVER}|g" | kubectl apply -f -
+    kubectl -n kube-system get cm coredns -o yaml | sed -E "s|^([[:space:]]*forward[[:space:]]+\.[[:space:]]+)[^[:space:]]+([[:space:]]*\\{?)|\\1${DNS_SERVER}\\2|g" | kubectl apply -f -
     kubectl -n kube-system rollout restart deploy/coredns
 fi
 

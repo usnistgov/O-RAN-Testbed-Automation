@@ -294,13 +294,7 @@ echo "##########################################################################
 echo
 echo
 
-cd 5G_Core_Network
 ./generate_configurations.sh
-cd ../Next_Generation_Node_B
-./generate_configurations.sh
-cd ../User_Equipment
-./generate_configurations.sh
-cd ..
 
 if [ "$INSTALL_NEAR_RT_RIC" = true ]; then
     if [ "$USE_FLEXRIC" = "true" ]; then

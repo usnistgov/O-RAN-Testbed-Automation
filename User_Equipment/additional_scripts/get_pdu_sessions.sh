@@ -1,0 +1,1 @@
+../install_scripts/get_pdu_sessions.sh

@@ -53,10 +53,17 @@ if [ $UE_NUMBER -lt 1 ]; then
     exit 1
 fi
 
-if [ ! -f "configs/ue1.conf" ]; then
-    echo "Configuration was not found for SRS UE. Please run ./generate_configurations.sh first."
-    exit 1
+UE_CONF_PATH="configs/ue$UE_NUMBER.conf"
+if [ ! -f "$UE_CONF_PATH" ]; then
+    echo "Configuration file for UE $UE_NUMBER not found, creating..."
+    ./generate_configurations.sh "$UE_NUMBER"
+    if [ ! -f "$UE_CONF_PATH" ]; then
+        echo "ERROR: Configuration file for UE $UE_NUMBER not found."
+        exit 1
+    fi
 fi
+
+echo "Using srsue binary: $SCRIPT_DIR/srsRAN_4G/build/srsue/src/srsue"
 echo "Starting User Equipment in background..."
 mkdir -p logs
 >logs/ue${UE_NUMBER}_stdout.txt

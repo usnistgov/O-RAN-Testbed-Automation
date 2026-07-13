@@ -43,6 +43,7 @@ cd "$PARENT_DIR"
 
 # Run a sudo command every minute to ensure script execution without user interaction
 ./install_scripts/start_sudo_refresh.sh
+trap './install_scripts/stop_sudo_refresh.sh 2>/dev/null || true' EXIT
 
 if [ "$CHART_REPO_URL" != "http://0.0.0.0:8090" ]; then
     echo "Registering the Chart Museum URL..."
@@ -71,8 +72,8 @@ if ! command -v jq &>/dev/null; then
 fi
 
 FILE="init/config-file_updated.json"
-sudo rm -rf $FILE
-cp init/config-file.json $FILE
+sudo rm -rf "$FILE"
+cp init/config-file.json "$FILE"
 # Modify the required fields using jq and overwrite the original file
 jq '.containers[0].image.tag = "latest" |
     .containers[0].image.registry = "127.0.0.1:80" |

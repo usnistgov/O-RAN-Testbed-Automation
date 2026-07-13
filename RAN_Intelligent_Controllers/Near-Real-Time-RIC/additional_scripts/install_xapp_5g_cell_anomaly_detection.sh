@@ -43,6 +43,7 @@ cd "$PARENT_DIR"
 
 # Run a sudo command every minute to ensure script execution without user interaction
 ./install_scripts/start_sudo_refresh.sh
+trap './install_scripts/stop_sudo_refresh.sh 2>/dev/null || true' EXIT
 
 if ! kubectl get pods -n ricplt | grep r4-influxdb-influxdb2 &>/dev/null; then
     echo "The InfluxDB pod is not running, installing it..."
@@ -77,18 +78,21 @@ if [ ! -f "$INFLUXDB_TOKEN_PATH" ]; then
 fi
 INFLUXDB_TOKEN=$(jq -r '.token' "$INFLUXDB_TOKEN_PATH")
 
+git restore src/configuration/config.ini
 if [ ! -f "src/configuration/config.previous.ini" ]; then
     echo "Patching src/configuration/config.ini..."
     cp src/configuration/config.ini src/configuration/config.previous.ini
+    cp src/configuration/config.previous.ini "$PARENT_DIR/install_patch_files/xApps/ad-cell/src/configuration/config.previous.ini"
 fi
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/xApps/ad-cell/src/configuration/config.ini.patch"
 
-# Set the InfluxDB URL in src/ad_config.ini
-if grep -q "INFLUX_URL *= *.*" src/configuration/config.ini; then
-    echo "Patching src/configuration/config.ini to change 'INFLUX_URL = $INFLUXDB_TOKEN'..."
-    sed -i "s/INFLUX_URL *= *.*$/INFLUX_URL = http:\/\/r4-influxdb-influxdb2.ricplt:80/g" src/configuration/config.ini
-else
-    echo "Could not find 'INFLUX_URL = *' in src/configuration/config.ini."
+git restore src/manager/InfluxDBManager.py
+if [ ! -f "src/manager/InfluxDBManager.previous.py" ]; then
+    echo "Patching src/manager/InfluxDBManager.py..."
+    cp src/manager/InfluxDBManager.py src/manager/InfluxDBManager.previous.py
+    cp src/manager/InfluxDBManager.previous.py "$PARENT_DIR/install_patch_files/xApps/ad-cell/src/manager/InfluxDBManager.previous.py"
 fi
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/xApps/ad-cell/src/manager/InfluxDBManager.py.patch"
 
 # Set the token in src/ad_config.ini
 if grep -q "INFLUX_TOKEN *= *.*" src/configuration/config.ini; then
@@ -96,22 +100,6 @@ if grep -q "INFLUX_TOKEN *= *.*" src/configuration/config.ini; then
     sed -i "s/INFLUX_TOKEN *= *.*$/INFLUX_TOKEN = $INFLUXDB_TOKEN/g" src/configuration/config.ini
 else
     echo "Could not find 'INFLUX_TOKEN = *' in src/configuration/config.ini."
-fi
-
-# Set the bucket in src/ad_config.ini
-if grep -q "INFLUX_BUCKET *= *.*" src/configuration/config.ini; then
-    echo "Patching src/configuration/config.ini to change 'INFLUX_BUCKET = $INFLUXDB_TOKEN'..."
-    sed -i "s/INFLUX_BUCKET *= *.*$/INFLUX_BUCKET = kpimon/g" src/configuration/config.ini
-else
-    echo "Could not find 'INFLUX_BUCKET = *' in src/configuration/config.ini."
-fi
-
-# Set the org in src/ad_config.ini
-if grep -q "INFLUX_ORG *= *.*" src/configuration/config.ini; then
-    echo "Patching src/configuration/config.ini to change 'INFLUX_ORG = $INFLUXDB_TOKEN'..."
-    sed -i "s/INFLUX_ORG *= *.*$/INFLUX_ORG = influxdata/g" src/configuration/config.ini
-else
-    echo "Could not find 'INFLUX_ORG = *' in src/configuration/config.ini."
 fi
 
 echo "Patch completed for 5G Cell Anamoly Detection xApp (ad-cell)."
@@ -126,8 +114,8 @@ if ! command -v jq &>/dev/null; then
 fi
 
 FILE="init/config-file_updated.json"
-sudo rm -rf $FILE
-cp init/config-file.json $FILE
+sudo rm -rf "$FILE"
+cp init/config-file.json "$FILE"
 # Modify the required fields using jq and overwrite the original file
 jq '.containers[0].image.tag = "latest" |
     .containers[0].image.registry = "127.0.0.1:80" |
@@ -157,7 +145,12 @@ if [ -z "$FIXED_DOCKER_PERMS" ]; then
     fi
 fi
 
+<<<<<<< HEAD
 if [ ! -f ad-cell.tar ]; then
+=======
+AD_CELL_NEWER_FILE=$([ -f ad-cell.tar ] && find Dockerfile setup.py src -type f -newer ad-cell.tar -print -quit || true)
+if [ ! -f ad-cell.tar ] || [ -n "$AD_CELL_NEWER_FILE" ]; then
+>>>>>>> main
     docker build --network host -t 127.0.0.1:80/ad-cell:latest .
     docker save -o ad-cell.tar 127.0.0.1:80/ad-cell:latest
     sudo chmod 755 ad-cell.tar

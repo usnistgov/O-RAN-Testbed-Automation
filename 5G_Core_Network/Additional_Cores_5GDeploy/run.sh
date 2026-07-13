@@ -97,6 +97,21 @@ if [ -z "$FIXED_DOCKER_PERMS" ]; then
 fi
 
 echo "Starting the 5G Core Deployment Helper (5gdeploy) Core..."
+if docker ps -aq -f name=^/amf$ | grep -q .; then
+    echo "ERROR: Docker container name 'amf' is already in use. Stop or remove the existing container before starting the 5G Core."
+    exit 1
+fi
+if [ -f "configs/get_amf_address.txt" ]; then
+    AMF_IP=$(sed -n '1p' configs/get_amf_address.txt)
+    if [ -n "$AMF_IP" ]; then
+        for CONTAINER_ID in $(docker ps -q); do
+            if docker inspect --format '{{range .NetworkSettings.Networks}}{{println .IPAddress}}{{end}}' "$CONTAINER_ID" 2>/dev/null | grep -Fxq "$AMF_IP"; then
+                echo "ERROR: Docker IP address $AMF_IP is already in use. Stop the conflicting container before starting the 5G Core."
+                exit 1
+            fi
+        done
+    fi
+fi
 ./compose.sh up
 
 cd "$SCRIPT_DIR"

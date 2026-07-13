@@ -31,7 +31,24 @@
 # Exit immediately if a command fails
 set -e
 
-UE_NUMBERS=(3 2 1) # Subscribers from UE 3 to UE 1
+UE_NUMBERS=()
+while [[ $# -gt 0 ]]; do
+    if [ "$1" == "--ues" ]; then
+        IFS=',' read -r -a UE_NUMBERS <<<"$2"
+        for UE_NUMBER in "${UE_NUMBERS[@]}"; do
+            if ! [[ "$UE_NUMBER" =~ ^[0-9]+$ ]] || [ "$UE_NUMBER" -lt 1 ]; then
+                echo "ERROR: UE numbers must be comma-separated positive integers."
+                exit 1
+            fi
+        done
+        shift 2
+    else
+        shift
+    fi
+done
+if [ ${#UE_NUMBERS[@]} -eq 0 ]; then
+    UE_NUMBERS=(3 2 1) # Subscribers from UE 3 to UE 1
+fi
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
@@ -196,7 +213,7 @@ mkdir configs
 MONGODB_CONFIG_FILE="/etc/mongod/mongod.conf"
 if [ -f "$MONGODB_CONFIG_FILE" ]; then
     echo "Creating symbolic link for MongoDB configuration file..."
-    sudo ln -s "$MONGODB_CONFIG_FILE" configs/mongod.conf
+    ln -s "$MONGODB_CONFIG_FILE" configs/mongod.conf || sudo ln -s "$MONGODB_CONFIG_FILE" configs/mongod.conf
 fi
 
 # Only remove the logs if no component is running
@@ -499,7 +516,7 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
     # Build the array of slices for subscriber
     SLICES_ARGS=()
     for ((i = 0; i < ${#SST[@]}; i++)); do
-        SLICES_ARGS+=(--apn "$CURRENT_DNN" --sst "${SST[$i]}" --sd "${SD[$i]}")
+        SLICES_ARGS+=(--apn "${DNN[$i]}" --sst "${SST[$i]}" --sd "${SD[$i]}")
         # Apply static IP if UE_IPV4 was found earlier
         if [ -n "$UE_IPV4" ]; then
             SLICES_ARGS+=(--ipv4 "$UE_IPV4")

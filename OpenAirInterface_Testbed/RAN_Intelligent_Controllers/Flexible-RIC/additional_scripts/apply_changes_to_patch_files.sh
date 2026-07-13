@@ -82,6 +82,7 @@ cp examples/xApp/c/kpm_rc/CMakeLists.txt ../install_patch_files/flexric/examples
 cp examples/xApp/c/kpm_rc/CMakeLists.txt examples/xApp/c/kpm_rc/CMakeLists.txt.previous
 git apply --verbose --ignore-whitespace ../install_patch_files/flexric/examples/xApp/c/kpm_rc/CMakeLists.txt.patch
 
+<<<<<<< HEAD
 # STALE_SUBSCRIPTION_PATCH_DIR="../install_patch_files/flexric/stale_subscription_cleanup_support"
 # STALE_SUBSCRIPTION_PATCH_FILES=(
 #     "examples/xApp/c/ctrl/mac_ctrl.c"
@@ -113,6 +114,8 @@ git apply --verbose --ignore-whitespace ../install_patch_files/flexric/examples/
 # done
 # git apply --verbose --ignore-whitespace "$STALE_SUBSCRIPTION_PATCH_DIR/patch.patch"
 
+=======
+>>>>>>> main
 ADDITIONAL_PATCH_FILES=(
     "examples/xApp/c/monitor/xapp_gtp_mac_rlc_pdcp_moni.c"
     "examples/xApp/c/monitor/xapp_rc_moni.c"

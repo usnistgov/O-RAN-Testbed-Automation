@@ -65,6 +65,6 @@ fi
 
 cd "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build"
 
-# Code from (https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/develop/doc/handover-tutorial.md#run-the-setup):
+# Code from (https://github.com/duranta-project/openairinterface5g/blob/develop/doc/handover-tutorial.md#run-the-setup):
 # sudo ./nr-softmodem -O "$CU_CONFIG" $ADDITIONAL_FLAGS
 sudo script -q -f -c "./nr-softmodem -O \"$CU_CONFIG\" $ADDITIONAL_FLAGS" "$SCRIPT_DIR/logs/split_cu_stdout.txt"

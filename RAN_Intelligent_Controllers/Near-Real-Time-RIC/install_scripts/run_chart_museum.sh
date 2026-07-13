@@ -33,16 +33,6 @@ echo "# Script: $(realpath "$0")..."
 # Exit immediately if a command fails
 set -e
 
-# Function to check if a specific port is already used
-function is_port_in_use {
-    local PORT=$1
-    if ss -tulpn | grep -q ":${PORT} "; then
-        return 0 # Port is in use
-    else
-        return 1 # Port is not in use
-    fi
-}
-
 # Container settings
 PORT=8090
 CONTAINER_NAME="chartmuseum"
@@ -54,17 +44,20 @@ if [ $(docker ps -q -f name=^/${CONTAINER_NAME}$ | wc -l) -eq 1 ]; then
     echo "Container '${CONTAINER_NAME}' is already running."
 elif [ $(docker ps -aq -f name=^/${CONTAINER_NAME}$ | wc -l) -eq 1 ]; then
     echo "Container '${CONTAINER_NAME}' exists but is not running, starting container..."
-    docker start ${CONTAINER_NAME}
-else
-    # Check if the port is already in use
-    if is_port_in_use $PORT; then
-        echo "Port ${PORT} is already in use, chartmuseum is already running."
-    else
-        echo "Starting container '${CONTAINER_NAME}'..."
-        docker run --rm -u 0 -it -d -p ${PORT}:8080 \
-            -e DEBUG=1 \
-            -e STORAGE=local \
-            -e STORAGE_LOCAL_ROOTDIR=/charts \
-            -v ${STORAGE_DIR}:/charts ${IMAGE}
+    if ss -H -tln "sport = :${PORT}" 2>/dev/null | grep -q .; then
+        echo "ERROR: Host port ${PORT} is already in use. Stop the conflicting service before starting ChartMuseum."
+        exit 1
     fi
+    docker start "${CONTAINER_NAME}"
+else
+    if ss -H -tln "sport = :${PORT}" 2>/dev/null | grep -q .; then
+        echo "ERROR: Host port ${PORT} is already in use. Stop the conflicting service before starting ChartMuseum."
+        exit 1
+    fi
+    echo "Starting container '${CONTAINER_NAME}'..."
+    docker run --rm -u 0 -it -d --name "${CONTAINER_NAME}" -p "${PORT}:8080" \
+        -e DEBUG=1 \
+        -e STORAGE=local \
+        -e STORAGE_LOCAL_ROOTDIR=/charts \
+        -v "${STORAGE_DIR}:/charts" "${IMAGE}"
 fi

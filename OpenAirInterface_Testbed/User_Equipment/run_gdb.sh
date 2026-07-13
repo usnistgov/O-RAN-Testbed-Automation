@@ -105,7 +105,7 @@ if [ ! -f "$UE_CONF_PATH" ]; then
     echo "Configuration file for UE $UE_NUMBER not found, creating..."
     ./generate_configurations.sh "$UE_NUMBER"
     if [ ! -f "$UE_CONF_PATH" ]; then
-        echo "Configuration file for UE $UE_NUMBER still not found after generation."
+        echo "ERROR: Configuration file for UE $UE_NUMBER not found."
         exit 1
     fi
 fi

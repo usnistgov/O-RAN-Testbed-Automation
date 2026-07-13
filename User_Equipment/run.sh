@@ -53,11 +53,6 @@ if [ $UE_NUMBER -lt 1 ]; then
     exit 1
 fi
 
-if [ ! -f "configs/ue1.conf" ]; then
-    echo "Configuration was not found for SRS UE 1. Please run ./generate_configurations.sh first."
-    exit 1
-fi
-
 # Function to handle graceful shutdown
 graceful_shutdown() {
     trap - SIGINT SIGTERM SIGQUIT
@@ -74,10 +69,12 @@ if [ ! -f "$UE_CONF_PATH" ]; then
     echo "Configuration file for UE $UE_NUMBER not found, creating..."
     ./generate_configurations.sh "$UE_NUMBER"
     if [ ! -f "$UE_CONF_PATH" ]; then
-        echo "Configuration file for UE $UE_NUMBER still not found after generation."
+        echo "ERROR: Configuration file for UE $UE_NUMBER not found."
         exit 1
     fi
 fi
+
+echo "Using srsue binary: $SCRIPT_DIR/srsRAN_4G/build/srsue/src/srsue"
 
 # Give the UE its own network namespace and configure it to access the host network
 sudo ./install_scripts/setup_ue_namespace.sh "$UE_NUMBER"

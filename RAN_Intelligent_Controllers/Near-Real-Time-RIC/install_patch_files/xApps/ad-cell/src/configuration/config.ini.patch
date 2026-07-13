@@ -1,0 +1,15 @@
+diff --git a/src/configuration/config.ini b/src/configuration/config.ini
+index c5bb4d4..62f6ff5 100644
+--- a/src/configuration/config.ini
++++ b/src/configuration/config.ini
+@@ -1,8 +1,8 @@
+ [APP]
+ INFLUX_URL = http://r4-influxdb-influxdb2.ricplt:80
+-INFLUX_TOKEN = 9ifJy_uIS6Qy3phQrYAYiHzRuqCRoWyjy46SIKfBBBnJr5yr-uLuwahWKd-IFN5JtTMvfJseYfyhTDfJSgE_3Q==
++INFLUX_TOKEN =
+ INFLUX_ORG = influxdata
+-INFLUX_BUCKET = g-nodeb
++INFLUX_BUCKET = kpimon
+ DETECTION_COUNT = 3
+ MEASUREMENT_NAME = g-nodeb
+ KPI_FETCH_INTERVAL = 900

@@ -210,7 +210,7 @@ Within E2 Setup Request message, E2 node sends the list of supported service mod
 
 As this section is dedicated for testing with E2 agent emulators, **all RIC INDICATION messages contain random data, as there is no UE connected**.
 
-`XAPP_DURATION` environment variable overwrites the default xApp duration of 20s. If the negative value used, the xApp duration is considered to be infinite.
+`XAPP_DURATION` environment variable overwrites the default xApp infinite duration. A negative value is also considered as infinite.
 
 At runtime, the xApp loads its default configuration from `/usr/local/etc/flexric/flexric.conf`.
 To override specific default values, you can use the following command-line options:
@@ -301,11 +301,11 @@ Import the Grafana configuration:
 FlexRIC is supported on the following distributions: Ubuntu, Red Hat, and Rocky Linux. You can build the images as:
 ```bash
 # Ubuntu
-docker buildx build --no-cache --target oai-flexric --tag oai-flexric:dev --file docker/Dockerfile.flexric.ubuntu .
+docker buildx build --no-cache --target oai-flexric --tag oai-flexric:latest --file docker/Dockerfile.flexric.ubuntu .
 # Red Hat
-docker buildx build --no-cache --target oai-flexric --tag oai-flexric:dev --file docker/Dockerfile.flexric.rhel .
+docker buildx build --no-cache --target oai-flexric --tag oai-flexric:latest --file docker/Dockerfile.flexric.rhel .
 # Rocky Linux
-docker buildx build --no-cache --target oai-flexric --tag oai-flexric:dev --file docker/Dockerfile.flexric.rocky .
+docker buildx build --no-cache --target oai-flexric --tag oai-flexric:latest --file docker/Dockerfile.flexric.rocky .
 ```
 
 In order to reproduce the [bare-metal testbed](#41-bare-metal-testbed) in docker environment, follow the next steps:

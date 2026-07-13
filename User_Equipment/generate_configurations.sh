@@ -42,28 +42,32 @@ cd "$SCRIPT_DIR"
 
 EXAMPLE_CONFIG_PATH="$SCRIPT_DIR/srsRAN_4G/srsue/ue.conf.example"
 CLEAR_CONFIGS=false
+UE_NR_PROFILE="srsue" # Supported: srsue, generic_fr1
+ZMQ_DEBUG_ARGS=""     # Example: fail_on_disconnect=true,log_trx_timeout=true,trx_timeout_ms=1000
 
 # Support input argument for the UE number(s), for example:
 # ./generate_configurations.sh --> configures UE 1, 2, and 3
-# ./generate_configurations.sh 2 --> configures UE 2
-# ./generate_configurations.sh 4 5 6 --> configures UE 4, 5, and 6
-UE_NUMBERS=("$@")
+# ./generate_configurations.sh --ues 2 --> configures UE 2
+# ./generate_configurations.sh --ues 4,5,6 --> configures UE 4, 5, and 6
+UE_NUMBERS=()
+while [[ $# -gt 0 ]]; do
+    if [ "$1" == "--ues" ]; then
+        IFS=',' read -r -a UE_NUMBERS <<<"$2"
+        for UE_NUMBER in "${UE_NUMBERS[@]}"; do
+            if ! [[ "$UE_NUMBER" =~ ^[0-9]+$ ]] || [ "$UE_NUMBER" -lt 1 ]; then
+                echo "ERROR: UE numbers must be comma-separated positive integers."
+                exit 1
+            fi
+        done
+        shift 2
+    else
+        shift
+    fi
+done
 if [ ${#UE_NUMBERS[@]} -eq 0 ]; then
     UE_NUMBERS=(3 2 1)
     CLEAR_CONFIGS=true
 fi
-# Check if the input is a number
-for i in "${UE_NUMBERS[@]}"; do
-    if ! [[ "$i" =~ ^[0-9]+$ ]]; then
-        echo "ERROR: UE number must be a number."
-        exit 1
-    fi
-    if [ "$i" -lt 1 ]; then
-        echo "ERROR: UE number must be greater than or equal to 1."
-        exit 1
-    fi
-    echo "UE $i will be configured."
-done
 
 # Ensure the correct YAML editor is installed
 "$SCRIPT_DIR/install_scripts/./ensure_consistent_yq.sh"
@@ -182,6 +186,109 @@ if [ ! -f "$EXAMPLE_CONFIG_PATH" ]; then
     exit 1
 fi
 
+# NOTE: Does not validate whether a given operating band supports the selected bandwidth/SCS combination (3GPP 38.104 clause 5.3.5: BS channel bandwidth per operating band)
+GNB_CONFIG_PATH="$SCRIPT_DIR/../Next_Generation_Node_B/configs/gnb.yaml"
+NR_BAND="3"
+NR_DL_ARFCN="368500"
+NR_SSB_ARFCN="368410"
+NR_NOF_PRB="106"
+NR_MAX_NOF_PRB="106"
+NR_SCS="15"
+GNB_NR_BW_MHZ="20"
+UE_RF_SRATE_HZ="23.04e6"
+
+if [ -f "$GNB_CONFIG_PATH" ]; then
+    GNB_NR_BAND=$(yq eval '.cell_cfg.band // ""' "$GNB_CONFIG_PATH")
+    GNB_NR_DL_ARFCN=$(yq eval '.cell_cfg.dl_arfcn // ""' "$GNB_CONFIG_PATH")
+    GNB_NR_BW_MHZ=$(yq eval '.cell_cfg.channel_bandwidth_MHz // ""' "$GNB_CONFIG_PATH")
+    GNB_NR_SCS=$(yq eval '.cell_cfg.common_scs // ""' "$GNB_CONFIG_PATH")
+    GNB_RF_SRATE_MHZ=$(yq eval '.ru_sdr.srate // ""' "$GNB_CONFIG_PATH")
+
+    if [[ "$GNB_NR_BAND" =~ ^[0-9]+$ ]]; then
+        NR_BAND="$GNB_NR_BAND"
+    fi
+    if [[ "$GNB_NR_DL_ARFCN" =~ ^[0-9]+$ ]]; then
+        NR_DL_ARFCN="$GNB_NR_DL_ARFCN"
+    fi
+    if [[ "$GNB_NR_SCS" =~ ^[0-9]+$ ]]; then
+        NR_SCS="$GNB_NR_SCS"
+    fi
+    if [[ "$GNB_RF_SRATE_MHZ" =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
+        UE_RF_SRATE_HZ="${GNB_RF_SRATE_MHZ}e6"
+    fi
+
+    # 3GPP 38.104, Table 5.3.2-1: Transmission bandwidth configuration NRB for FR1.
+    case "${GNB_NR_BW_MHZ}_${NR_SCS}" in
+    3_15) NR_NOF_PRB="15" ;;
+    5_15) NR_NOF_PRB="25" ;;
+    10_15) NR_NOF_PRB="52" ;;
+    15_15) NR_NOF_PRB="79" ;;
+    20_15) NR_NOF_PRB="106" ;;
+    25_15) NR_NOF_PRB="133" ;;
+    30_15) NR_NOF_PRB="160" ;;
+    35_15) NR_NOF_PRB="188" ;;
+    40_15) NR_NOF_PRB="216" ;;
+    45_15) NR_NOF_PRB="242" ;;
+    50_15) NR_NOF_PRB="270" ;;
+    5_30) NR_NOF_PRB="11" ;;
+    10_30) NR_NOF_PRB="24" ;;
+    15_30) NR_NOF_PRB="38" ;;
+    20_30) NR_NOF_PRB="51" ;;
+    25_30) NR_NOF_PRB="65" ;;
+    30_30) NR_NOF_PRB="78" ;;
+    35_30) NR_NOF_PRB="92" ;;
+    40_30) NR_NOF_PRB="106" ;;
+    45_30) NR_NOF_PRB="119" ;;
+    50_30) NR_NOF_PRB="133" ;;
+    60_30) NR_NOF_PRB="162" ;;
+    70_30) NR_NOF_PRB="189" ;;
+    80_30) NR_NOF_PRB="217" ;;
+    90_30) NR_NOF_PRB="245" ;;
+    100_30) NR_NOF_PRB="273" ;;
+    10_60) NR_NOF_PRB="11" ;;
+    15_60) NR_NOF_PRB="18" ;;
+    20_60) NR_NOF_PRB="24" ;;
+    25_60) NR_NOF_PRB="31" ;;
+    30_60) NR_NOF_PRB="38" ;;
+    35_60) NR_NOF_PRB="44" ;;
+    40_60) NR_NOF_PRB="51" ;;
+    45_60) NR_NOF_PRB="58" ;;
+    50_60) NR_NOF_PRB="65" ;;
+    60_60) NR_NOF_PRB="79" ;;
+    70_60) NR_NOF_PRB="93" ;;
+    80_60) NR_NOF_PRB="107" ;;
+    90_60) NR_NOF_PRB="121" ;;
+    100_60) NR_NOF_PRB="135" ;;
+    *)
+        echo "ERROR: Unsupported FR1 NR bandwidth/SCS: ${GNB_NR_BW_MHZ} MHz / ${NR_SCS} kHz (3GPP TS 38.104 Table 5.3.2-1)."
+        exit 1
+        ;;
+    esac
+    if [ "$UE_NR_PROFILE" = "srsue" ]; then
+        # OCUDU srsUE tutorial limitation: srsUE SA supports 15 kHz SCS with 5, 10, 15, or 20 MHz BW.
+        # https://ocudu.gitlab.io/ocudu_docs/tutorials/srsue/#limitations
+        case "${GNB_NR_BW_MHZ}_${NR_SCS}" in
+        5_15 | 10_15 | 15_15 | 20_15) ;;
+        *)
+            echo "ERROR: Unsupported srsUE NR bandwidth/SCS: ${GNB_NR_BW_MHZ} MHz / ${NR_SCS} kHz (3GPP TS 38.104 Table 5.3.2-1)."
+            echo "Set UE_NR_PROFILE=generic_fr1 only for a UE implementation that supports this numerology."
+            exit 1
+            ;;
+        esac
+    elif [ "$UE_NR_PROFILE" != "generic_fr1" ]; then
+        echo "ERROR: Unsupported UE_NR_PROFILE '$UE_NR_PROFILE'. Supported: srsue, generic_fr1."
+        exit 1
+    fi
+    NR_MAX_NOF_PRB="$NR_NOF_PRB"
+
+    if [[ "$NR_BAND" = "3" && "$NR_DL_ARFCN" = "368500" && "$NR_SCS" = "15" ]] && [[ "$GNB_NR_BW_MHZ" = "10" || "$GNB_NR_BW_MHZ" = "20" ]]; then
+        NR_SSB_ARFCN="368410"
+    else
+        echo "ERROR: Could not determine SSB ARFCN for UE config. Add a validated derivation for this band/BW/SCS."
+        exit 1
+    fi
+fi
+
 UE_CREDENTIAL_GENERATOR_SCRIPT="$SCRIPT_DIR/ue_credentials_generator.sh"
 if [ ! -f "$UE_CREDENTIAL_GENERATOR_SCRIPT" ]; then
     echo "ERROR: Cannot find $UE_CREDENTIAL_GENERATOR_SCRIPT to generate UE subscriber credentials."
@@ -189,6 +296,8 @@ if [ ! -f "$UE_CREDENTIAL_GENERATOR_SCRIPT" ]; then
 fi
 
 for UE_NUMBER in "${UE_NUMBERS[@]}"; do
+    echo "UE $UE_NUMBER will be configured."
+
     cp "$EXAMPLE_CONFIG_PATH" "configs/ue${UE_NUMBER}.conf"
 
     UE_TX_PORT=$((2001 + UE_NUMBER * 100))
@@ -212,21 +321,29 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
 
     UE_HOST_IP=$(python3 install_scripts/fetch_nth_ip.py "$BASE_SUBNET" $HOST_IP_OFFSET)
 
-    update_conf "configs/ue${UE_NUMBER}.conf" "rf" "device_args" "tx_port=tcp://*:$UE_TX_PORT,rx_port=tcp://$UE_HOST_IP:$UE_RX_PORT,base_srate=23.04e6"
+    DEVICE_ARGS="tx_port=tcp://*:$UE_TX_PORT,rx_port=tcp://$UE_HOST_IP:$UE_RX_PORT,base_srate=$UE_RF_SRATE_HZ,id=ue$UE_NUMBER"
+    if [ -n "$ZMQ_DEBUG_ARGS" ]; then
+        DEVICE_ARGS="$DEVICE_ARGS,$ZMQ_DEBUG_ARGS"
+    fi
+    update_conf "configs/ue${UE_NUMBER}.conf" "rf" "device_args" "$DEVICE_ARGS"
     update_conf "configs/ue${UE_NUMBER}.conf" "rf" "nof_antennas" "1"
     update_conf "configs/ue${UE_NUMBER}.conf" "rf" "freq_offset" "0"
     update_conf "configs/ue${UE_NUMBER}.conf" "rf" "tx_gain" "35"
     update_conf "configs/ue${UE_NUMBER}.conf" "rf" "rx_gain" "60"
-    update_conf "configs/ue${UE_NUMBER}.conf" "rf" "srate" "23.04e6"
+    update_conf "configs/ue${UE_NUMBER}.conf" "rf" "srate" "$UE_RF_SRATE_HZ"
 
     # Update configuration values for RAT (EUTRA)
     update_conf "configs/ue${UE_NUMBER}.conf" "rat.eutra" "nof_carriers" "0" # Disabled EUTRA (LTE) since we are using NR (5G)
 
     # Update configuration values for RAT (NR)
     update_conf "configs/ue${UE_NUMBER}.conf" "rat.nr" "nof_carriers" "1"
-    update_conf "configs/ue${UE_NUMBER}.conf" "rat.nr" "bands" "3"
-    update_conf "configs/ue${UE_NUMBER}.conf" "rat.nr" "max_nof_prb" "106"
-    update_conf "configs/ue${UE_NUMBER}.conf" "rat.nr" "nof_prb" "106"
+    update_conf "configs/ue${UE_NUMBER}.conf" "rat.nr" "bands" "$NR_BAND"
+    update_conf "configs/ue${UE_NUMBER}.conf" "rat.nr" "dl_nr_arfcn" "$NR_DL_ARFCN"
+    update_conf "configs/ue${UE_NUMBER}.conf" "rat.nr" "ssb_nr_arfcn" "$NR_SSB_ARFCN"
+    update_conf "configs/ue${UE_NUMBER}.conf" "rat.nr" "max_nof_prb" "$NR_MAX_NOF_PRB"
+    update_conf "configs/ue${UE_NUMBER}.conf" "rat.nr" "nof_prb" "$NR_NOF_PRB"
+    update_conf "configs/ue${UE_NUMBER}.conf" "rat.nr" "scs" "$NR_SCS"
+    update_conf "configs/ue${UE_NUMBER}.conf" "rat.nr" "ssb_scs" "$NR_SCS"
 
     # Update configuration values for PCAP
     update_conf "configs/ue${UE_NUMBER}.conf" "pcap" "enable" "none"
@@ -237,8 +354,15 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
     update_conf "configs/ue${UE_NUMBER}.conf" "pcap" "nas_filename" "$SCRIPT_DIR/logs/ue${UE_NUMBER}_nas.pcap"
 
     # Update configuration values for Logging
-    update_conf "configs/ue${UE_NUMBER}.conf" "log" "all_level" "none" #warning
-    update_conf "configs/ue${UE_NUMBER}.conf" "log" "phy_lib_level" "none"
+    update_conf "configs/ue${UE_NUMBER}.conf" "log" "phy_lib_level" "warning"
+    update_conf "configs/ue${UE_NUMBER}.conf" "log" "rf_level" "warning"
+    update_conf "configs/ue${UE_NUMBER}.conf" "log" "phy_level" "warning"
+    update_conf "configs/ue${UE_NUMBER}.conf" "log" "pdcp_level" "warning"
+    update_conf "configs/ue${UE_NUMBER}.conf" "log" "rlc_level" "warning"
+    update_conf "configs/ue${UE_NUMBER}.conf" "log" "mac_level" "warning"
+    update_conf "configs/ue${UE_NUMBER}.conf" "log" "nas_level" "warning"
+    update_conf "configs/ue${UE_NUMBER}.conf" "log" "rrc_level" "warning"
+    update_conf "configs/ue${UE_NUMBER}.conf" "log" "all_level" "warning"
     update_conf "configs/ue${UE_NUMBER}.conf" "log" "all_hex_limit" "32"
     update_conf "configs/ue${UE_NUMBER}.conf" "log" "filename" "$SCRIPT_DIR/logs/ue${UE_NUMBER}.log"
     update_conf "configs/ue${UE_NUMBER}.conf" "log" "file_max_size" "-1"

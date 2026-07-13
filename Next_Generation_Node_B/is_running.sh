@@ -37,16 +37,20 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
+USE_ZMQ_BROKER=true
+
+if [ "$USE_ZMQ_BROKER" = "true" ]; then
+    if pgrep -f "[m]ulti_ue_scenario\.py" >/dev/null; then
+        echo "ZMQ_Broker: RUNNING"
+    else
+        echo "ZMQ_Broker: NOT_RUNNING"
+    fi
+fi
+
 if pgrep -x "gnb" >/dev/null; then
     echo "gNodeB: RUNNING"
 else
     echo "gNodeB: NOT_RUNNING"
-fi
-
-if pgrep -f "[p]ython3 zmq_broker/multi_ue_scenario\.py" >/dev/null; then
-    echo "ZMQ_Broker: RUNNING"
-else
-    echo "ZMQ_Broker: NOT_RUNNING"
 fi
 
 if command -v docker &>/dev/null; then

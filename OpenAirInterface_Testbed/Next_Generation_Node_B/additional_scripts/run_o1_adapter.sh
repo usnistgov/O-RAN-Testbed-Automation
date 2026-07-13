@@ -36,9 +36,6 @@ PARENT_DIR=$(dirname "$SCRIPT_DIR")
 
 cd "$SCRIPT_DIR"
 
-# Upon exit, stop the O1 adapter
-trap 'trap - EXIT SIGINT SIGTERM; echo "Stopping O1 adapter..."; "$SCRIPT_DIR/stop_o1_adapter.sh"; exit' EXIT SIGINT SIGTERM
-
 # Check if docker is accessible from the current user, and if not, repair its permissions
 if [ -z "$FIXED_DOCKER_PERMS" ]; then
     if ! OUTPUT=$(docker info 2>&1); then
@@ -76,4 +73,20 @@ if [ ! -d "o1-adapter" ]; then
 fi
 
 cd o1-adapter
+if docker ps -q -f name=^/adapter-gnb$ | grep -q .; then
+    echo "ERROR: Docker container name 'adapter-gnb' is already in use. Stop the existing container before starting the O1 adapter."
+    exit 1
+fi
+if docker ps -aq -f name=^/adapter-gnb$ | grep -q .; then
+    echo "Removing stopped Docker container 'adapter-gnb'..."
+    docker rm adapter-gnb >/dev/null
+fi
+if ss -H -tln "sport = :830" 2>/dev/null | grep -q .; then
+    echo "ERROR: Host port 830 is already in use. Stop the conflicting service before starting the O1 adapter."
+    exit 1
+fi
+
+# Upon exit, stop the O1 adapter
+trap 'trap - EXIT SIGINT SIGTERM; echo "Stopping O1 adapter..."; "$SCRIPT_DIR/stop_o1_adapter.sh"; exit' EXIT SIGINT SIGTERM
+
 ./start-adapter.sh --adapter

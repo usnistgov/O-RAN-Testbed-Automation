@@ -138,9 +138,18 @@ fi
 
 cd nonrtric-controlpanel
 
-if ! docker ps -a | grep -q nonrtric-controlpanel || ! docker ps -a | grep -q nonrtric-gateway; then
+if ! docker ps --format '{{.Names}}' | grep -Eq "^nonrtric-controlpanel$" || ! docker ps --format '{{.Names}}' | grep -Eq "^nonrtric-gateway$"; then
     echo "Starting docker-compose for the control panel and gateway..."
     cd docker-compose
+    for CONTAINER_NAME in nonrtric-controlpanel nonrtric-gateway; do
+        if docker ps -aq -f name=^/${CONTAINER_NAME}$ | grep -q .; then
+            if docker ps -q -f name=^/${CONTAINER_NAME}$ | grep -q .; then
+                continue
+            fi
+            echo "Removing stopped Docker container '${CONTAINER_NAME}'..."
+            docker rm "${CONTAINER_NAME}" >/dev/null
+        fi
+    done
     if ! sudo docker-compose -f docker-compose.yaml -f control-panel/docker-compose.yaml -f nonrtric-gateway/docker-compose.yaml up -d; then
         echo "Docker Compose failed to start, attempting to restart Docker..."
         sudo systemctl restart docker

@@ -43,7 +43,7 @@ PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$PARENT_DIR"
 
 if [ ! -d openairinterface5g ]; then
-    echo "OpenAirInterface directory not found. Please ensure you are in the correct parent directory, and that the oai/openairinterface5g repository has been cloned."
+    echo "Duranta directory not found. Please ensure you are in the correct parent directory, and that the oai/openairinterface5g repository has been cloned."
     exit 1
 fi
 

@@ -56,8 +56,8 @@ echo -e "  List tag keys for a bucket:"
 echo -e "    influx query 'from(bucket: \"kpimon\") |> range(start: -1h) |> keys()' --org influxdata --token \$TOKEN"
 echo -e "  List field keys for a bucket:"
 echo -e "    influx query 'from(bucket: \"kpimon\") |> range(start: -1h) |> keep(columns: [\"_field\"]) |> distinct(column: \"_field\")' --org influxdata --token \$TOKEN"
-echo -e "  List tag values for a specific tag key:"
-echo -e "    influx query 'import \"influxdata/influxdb/schema\"; schema.tagValues(bucket: \"kpimon\", tag: \"your-tag\")' --org influxdata --token \$TOKEN"
+echo -e "  List field values for a specific field key:"
+echo -e "    influx query 'from(bucket: \"kpimon\") |> range(start: -1h) |> filter(fn: (r) => r._field == \"FIELD_NAME\")' --org influxdata --token \$TOKEN"
 echo -e "\nType 'exit' twice to leave the InfluxDB CLI and return to your shell."
 
 # Export the InfluxDB token for use in the InfluxDB CLI

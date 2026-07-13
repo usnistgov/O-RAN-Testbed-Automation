@@ -143,7 +143,7 @@ function set_preference() {
 
 echo
 echo "Configuring Wireshark to handle MAC, RLC, NGAP, GTP-U, E1AP, F1AP, and E2AP packet captures..."
-echo "More information about the configurations can be found at: https://docs.srsran.com/projects/project/en/latest/user_manuals/source/outputs.html#pcaps"
+echo "More information can be found at https://ocudu.gitlab.io/ocudu_docs/user_manual/outputs/#pcaps"
 
 # Update DLT_USER settings
 update_dlt_user 149 "udp"  # For MAC and RLC

@@ -41,10 +41,38 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
 USE_FLEXRIC=false
+<<<<<<< HEAD
+=======
+USE_ZMQ_BROKER=true
+ORIGINAL_ARGS=("$@")
+
+CELL_NUMBERS_STR="1"   # Default cells
+UE_NUMBERS_STR="1,2,3" # Default UEs
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+    --cells)
+        CELL_NUMBERS_STR="$2"
+        shift 2
+        ;;
+    --ues)
+        UE_NUMBERS_STR="$2"
+        shift 2
+        ;;
+    *)
+        shift
+        ;;
+    esac
+done
+
+# Replace commas with spaces
+CELL_CONFIG_ARGS="${CELL_NUMBERS_STR//,/ }"
+UE_CONFIG_ARGS="${UE_NUMBERS_STR//,/ }"
+>>>>>>> main
 
 echo "Generating Configurations for 5G Core components..."
 cd 5G_Core_Network
-./generate_configurations.sh
+./generate_configurations.sh "${ORIGINAL_ARGS[@]}"
 cd ..
 
 if [ "$USE_FLEXRIC" = "true" ]; then
@@ -58,14 +86,28 @@ fi
 echo
 echo "Generating Configuration for Next Generation Node B..."
 cd Next_Generation_Node_B
-./generate_configurations.sh "$@"
+./generate_configurations.sh "${ORIGINAL_ARGS[@]}"
 cd ..
 
 echo
 echo "Generating Configuration for User Equipment..."
 cd User_Equipment
-./generate_configurations.sh
-cd ..
+./generate_configurations.sh "${ORIGINAL_ARGS[@]}"
+cd "$SCRIPT_DIR"
+
+if [ "$USE_ZMQ_BROKER" = "true" ]; then
+    echo "Verifying ZeroMQ Broker configuration..."
+    VERIFY_ARGS=""
+    for UE_NUMBER in $UE_CONFIG_ARGS; do
+        VERIFY_ARGS="$VERIFY_ARGS --ue $UE_NUMBER"
+    done
+    if [ -n "$CELL_NUMBERS_STR" ]; then
+        for CELL_NUMBER in $CELL_CONFIG_ARGS; do
+            VERIFY_ARGS="$VERIFY_ARGS --cell $CELL_NUMBER"
+        done
+    fi
+    Next_Generation_Node_B/install_scripts/validate_zmq_broker_config.sh ${VERIFY_ARGS}
+fi
 
 echo
 echo "Successfully configured testbed components."

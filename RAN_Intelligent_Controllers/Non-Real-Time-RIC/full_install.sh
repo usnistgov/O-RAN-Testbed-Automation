@@ -54,6 +54,7 @@ fi
 
 # Run a sudo command every minute to ensure script execution without user interaction
 ./install_scripts/start_sudo_refresh.sh
+trap './install_scripts/stop_sudo_refresh.sh 2>/dev/null || true' EXIT
 
 # Get the start timestamp in seconds
 INSTALL_START_TIME=$(date +%s)
@@ -373,10 +374,10 @@ else
     echo "Revising the YAML file for the Non-RT RIC pods..."
     RIC_YAML_FILE_PATH="dep/smo-install/helm-override/default/oran-override.yaml"
     RIC_YAML_FILE_PATH_UPDATED="dep/smo-install/helm-override/default/oran-override.yaml"
-    sudo chown "${SUDO_USER:-$USER}" $RIC_YAML_FILE_PATH
+    sudo chown "${SUDO_USER:-$USER}" "$RIC_YAML_FILE_PATH"
     if [ "$RIC_YAML_FILE_PATH" != "$RIC_YAML_FILE_PATH_UPDATED" ]; then
-        sudo cp $RIC_YAML_FILE_PATH $RIC_YAML_FILE_PATH_UPDATED
-        sudo chown "${SUDO_USER:-$USER}" $RIC_YAML_FILE_PATH_UPDATED
+        sudo cp "$RIC_YAML_FILE_PATH" "$RIC_YAML_FILE_PATH_UPDATED"
+        sudo chown "${SUDO_USER:-$USER}" "$RIC_YAML_FILE_PATH_UPDATED"
     fi
     sudo "$SCRIPT_DIR/install_scripts/./revise_example_recipe_yaml.sh" "$RIC_YAML_FILE_PATH_UPDATED"
 

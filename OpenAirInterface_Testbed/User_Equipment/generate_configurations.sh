@@ -54,16 +54,16 @@ if [ ${#UE_NUMBERS[@]} -eq 0 ]; then
     CLEAR_CONFIGS=true
 fi
 # Check if the input is a number
-for i in "${UE_NUMBERS[@]}"; do
-    if ! [[ "$i" =~ ^[0-9]+$ ]]; then
+for UE_NUMBER in "${UE_NUMBERS[@]}"; do
+    if ! [[ "$UE_NUMBER" =~ ^[0-9]+$ ]]; then
         echo "ERROR: UE number must be a number."
         exit 1
     fi
-    if [ "$i" -lt 1 ]; then
+    if [ "$UE_NUMBER" -lt 1 ]; then
         echo "ERROR: UE number must be greater than or equal to 1."
         exit 1
     fi
-    echo "UE $i will be configured."
+    echo "UE $UE_NUMBER will be configured."
 done
 
 # Ensure the correct YAML editor is installed

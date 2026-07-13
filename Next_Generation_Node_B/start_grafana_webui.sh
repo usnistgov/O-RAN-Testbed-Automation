@@ -94,6 +94,10 @@ services:
     container_name: ocudu-influxdb
 EOF
 
+if ss -H -tln "sport = :3300" 2>/dev/null | grep -q .; then
+    echo "ERROR: Host port 3300 is already in use. Stop the conflicting service before starting Grafana."
+    exit 1
+fi
 sudo $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" -f "$OVERRIDE_FILE" up -d grafana
 
 echo "Waiting for Grafana to initialize..."

@@ -1,0 +1,233 @@
+diff --git a/src/manager/InfluxDBManager.py b/src/manager/InfluxDBManager.py
+index 4db178f..21d84b4 100644
+--- a/src/manager/InfluxDBManager.py
++++ b/src/manager/InfluxDBManager.py
+@@ -7,45 +7,68 @@ from .DetectionExecutor import DetectionExecutor
+ 
+ from ..utils import Util
+ 
+-from influxdb_client.client.write_api import SYNCHRONOUS
+-
+ config = configparser.ConfigParser()
+ config.read('/tmp/src/configuration/config.ini')
+ 
+ log = Util.get_logger()
+ 
++
++AD_CELL_DEFAULTS = {
++    "DL Effective Throughput [Mbps]": 1024.0,
++    "UL Effective Throughput [Mbps]": 2048.0,
++    "DL Volume (GB)": 100000.0,
++    "UL Volume (GB)": 40000.0,
++    "RRC.ConnMean": 0.000001,
++    "Avg. CQI": 10.0,
++    "Avg. DL PRB Utilization": 1.0,
++    "Avg. UL PRB Utilization": 1.0,
++    "DRB.PacketLossRateUl": 0.0,
++    "RRC Connection Success Rate (%)": 100.0,
++    "RRC Drop Rate (Session Drop Rate, %)": 0.0,
++    "HO Success Rate (%)": 100.0,
++    "RRE Success Rate (%)": 100.0,
++}
++
++KPIMON_CELL_FIELD_MAP = {
++    "DL Effective Throughput [Mbps]": ["DRB.UEThpDl", "DRB_UEThpDl"],
++    "UL Effective Throughput [Mbps]": ["DRB.UEThpUl", "DRB_UEThpUl"],
++    "RRC.ConnMean": ["RRC.ConnMean", "RRC_ConnMean"],
++}
++
++CELL_NAME_FIELDS = ["Short name", "NR_CGI", "Viavi.NrCgi", "Viavi_NrCgi", "NR_PCI", "Viavi.NrPci", "Viavi_NrPci"]
++DL_VOLUME_FIELDS = ["QosFlow.TotPdcpPduVolumeDl", "QosFlow_TotPdcpPduVolumeDl"]
++UL_VOLUME_FIELDS = ["QosFlow.TotPdcpPduVolumeUl", "QosFlow_TotPdcpPduVolumeUl"]
++DL_PRB_USED_FIELDS = ["RRU.PrbUsedDl", "RRU_PrbUsedDl"]
++UL_PRB_USED_FIELDS = ["RRU.PrbUsedUl", "RRU_PrbUsedUl"]
++DL_PRB_TOTAL_FIELDS = ["RRU.PrbTotDl", "RRU_PrbTotDl"]
++UL_PRB_TOTAL_FIELDS = ["RRU.PrbTotUl", "RRU_PrbTotUl"]
++DL_PRB_AVAILABLE_FIELDS = ["RRU.PrbAvailDl", "RRU_PrbAvailDl"]
++UL_PRB_AVAILABLE_FIELDS = ["RRU.PrbAvailUl", "RRU_PrbAvailUl"]
++
++
+ class InfluxDBManager:
+ 
+     """
+     Retrieves the latest data from InfluxDB for the specified measurement.
+ 
+     This method connects to the configured InfluxDB instance, queries the latest data within the last 48 hours,
+-    and returns the results as a pandas DataFrame. If an error occurs during the query, an empty DataFrame is returned.
+-
+-    Parameters:
+-    measurement (str): The name of the measurement to query from InfluxDB.
+-
+-    Returns:
+-    pd.DataFrame: A pandas DataFrame containing the queried data. An empty DataFrame is returned if an error occurs.
++    and returns the results as a pandas DataFrame. If an error occurs, an empty DataFrame is returned.
+     """
+     def getLatestData(self, measurement) -> pd.DataFrame:
+         log.debug('InfluxDBManager.getLatestData :: getLatestData called')
+-        
+-        client = influxdb_client.InfluxDBClient(url = config.get('APP', 'INFLUX_URL'),
+-                                     token=config.get('APP', 'INFLUX_TOKEN'),
+-                                     org=config.get('APP', 'INFLUX_ORG'))
+-        query_api = client.query_api()
+-
+-        INFLUXDB_BUCKET = config.get('APP', 'INFLUX_BUCKET')
+-        flux_query = f'''
+-        from(bucket: "{INFLUXDB_BUCKET}")
+-            |> range(start: -48h)  // Adjust the range as needed
+-            |> filter(fn: (r) => r["_measurement"] == "{measurement}")
+-            |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
+-        '''
+ 
++        client = influxdb_client.InfluxDBClient(url=config.get('APP', 'INFLUX_URL'),
++                                                token=config.get('APP', 'INFLUX_TOKEN'),
++                                                org=config.get('APP', 'INFLUX_ORG'))
+         try:
+-            df = query_api.query_data_frame(flux_query)
++            df = self._query_measurement(client, measurement)
++            if not df.empty:
++                return df
++
++            if measurement == "g-nodeb":
++                log.info("No g-nodeb data found; checking kpimon cellMetrics compatibility path.")
++                return self._query_kpimon_cell_metrics(client)
++
+             return df
+         except Exception as e:
+             log.error(f"An error occurred while querying InfluxDB: {e}")
+@@ -53,12 +76,110 @@ class InfluxDBManager:
+         finally:
+             client.close()
+ 
++    def _query_measurement(self, client, measurement) -> pd.DataFrame:
++        influxdb_bucket = config.get('APP', 'INFLUX_BUCKET')
++        flux_query = f'''
++        from(bucket: "{influxdb_bucket}")
++            |> range(start: -48h)
++            |> filter(fn: (r) => r["_measurement"] == "{measurement}")
++            |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
++        '''
++        return self._normalize_query_result(client.query_api().query_data_frame(flux_query))
++
++    def _query_kpimon_cell_metrics(self, client) -> pd.DataFrame:
++        df = self._query_measurement(client, "cellMetrics")
++        if df.empty:
++            return df
++
++        adapted = pd.DataFrame(index=df.index)
++        adapted["Short name"] = self._cell_name(df)
++
++        for target_column, source_columns in KPIMON_CELL_FIELD_MAP.items():
++            adapted[target_column] = self._first_available_numeric(df, source_columns, AD_CELL_DEFAULTS[target_column])
++
++        adapted["DL Volume (GB)"] = self._volume_gb(df, DL_VOLUME_FIELDS, AD_CELL_DEFAULTS["DL Volume (GB)"])
++        adapted["UL Volume (GB)"] = self._volume_gb(df, UL_VOLUME_FIELDS, AD_CELL_DEFAULTS["UL Volume (GB)"])
++        adapted["Avg. DL PRB Utilization"] = self._prb_utilization(
++            df,
++            DL_PRB_USED_FIELDS,
++            DL_PRB_TOTAL_FIELDS,
++            DL_PRB_AVAILABLE_FIELDS,
++            AD_CELL_DEFAULTS["Avg. DL PRB Utilization"],
++        )
++        adapted["Avg. UL PRB Utilization"] = self._prb_utilization(
++            df,
++            UL_PRB_USED_FIELDS,
++            UL_PRB_TOTAL_FIELDS,
++            UL_PRB_AVAILABLE_FIELDS,
++            AD_CELL_DEFAULTS["Avg. UL PRB Utilization"],
++        )
++
++        for target_column, default_value in AD_CELL_DEFAULTS.items():
++            if target_column not in adapted.columns:
++                adapted[target_column] = default_value
++
++        log.info("Adapted kpimon cellMetrics rows to the g-nodeb schema expected by ad-cell.")
++        return adapted[["Short name"] + list(AD_CELL_DEFAULTS.keys())]
++
++    def _normalize_query_result(self, result) -> pd.DataFrame:
++        if isinstance(result, list):
++            result = pd.concat(result, ignore_index=False) if result else pd.DataFrame()
++        if result.empty:
++            return pd.DataFrame()
++        return result.drop(
++            columns=[
++                col
++                for col in ["table", "_start", "_stop", "_time", "_measurement", "result"]
++                if col in result.columns
++            ]
++        )
++
++    def _cell_name(self, df) -> pd.Series:
++        for column in CELL_NAME_FIELDS:
++            if column in df.columns:
++                return df[column].astype(str)
++        return pd.Series(["cell-unknown"] * len(df), index=df.index)
++
++    def _first_available_numeric(self, df, columns, default_value) -> pd.Series:
++        for column in columns:
++            if column in df.columns:
++                return pd.to_numeric(df[column], errors="coerce").fillna(default_value)
++        return pd.Series([default_value] * len(df), index=df.index)
++
++    def _volume_gb(self, df, columns, default_value) -> pd.Series:
++        for column in columns:
++            if column in df.columns:
++                volume_gb = pd.to_numeric(df[column], errors="coerce") / 1_000_000_000
++                return volume_gb.fillna(default_value)
++        return pd.Series([default_value] * len(df), index=df.index)
++
++    def _prb_utilization(self, df, used_columns, total_columns, available_columns, default_value) -> pd.Series:
++        if not self._has_any_column(df, used_columns):
++            return pd.Series([default_value] * len(df), index=df.index)
++
++        used = self._first_available_numeric(df, used_columns, default_value)
++        if self._has_any_column(df, total_columns):
++            total = self._first_available_numeric(df, total_columns, default_value)
++        elif self._has_any_column(df, available_columns):
++            available = self._first_available_numeric(df, available_columns, default_value)
++            total = used + available
++        else:
++            return used
++
++        total = total.replace(0, pd.NA)
++        utilization = (used / total) * 100
++        return utilization.fillna(default_value)
++
++    @staticmethod
++    def _has_any_column(df, columns) -> bool:
++        return any(column in df.columns for column in columns)
++
+     """
+     Continuously queries InfluxDB for the latest data based on the configured measurement name.
+-        
++
+     This method retrieves the latest data from InfluxDB for a specified measurement, processes it,
+     and checks if there is sufficient data to perform anomaly detection. If sufficient data is found,
+-    it initiates the anomaly detection process using the DetectionExecutor class. The method runs 
++    it initiates the anomaly detection process using the DetectionExecutor class. The method runs
+     indefinitely with a sleep interval between each query defined by KPI_FETCH_INTERVAL in the configuration.
+     """
+     def query(self):
+@@ -72,15 +193,15 @@ class InfluxDBManager:
+                 log.info(f"Latest data from measurement: '{measurement}'")
+                 Util.log_dataframe(latestDataDF)
+ 
+-                latestDataDF  = latestDataDF.drop(['table', '_start', '_stop', '_time', '_measurement', 'result'], axis=1)
+-
+-                if len(latestDataDF.index) > int(config.get('APP', 'DETECTION_COUNT')):
+-                    log.info(f"Greater than 1 day suffiecient data is present to detect anamoly for cell  '{latestDataDF.loc[0, 'Short name']}'")
++                if "Short name" not in latestDataDF.columns:
++                    log.info(f"Measurement '{measurement}' does not contain a Short name column.")
++                elif len(latestDataDF.index) > int(config.get('APP', 'DETECTION_COUNT')):
++                    log.info(f"Greater than 1 day suffiecient data is present to detect anamoly for cell  '{latestDataDF.iloc[0]['Short name']}'")
+                     log.debug('latestDataDF.shape: [{}]'.format(latestDataDF.shape))
+                     detectionExecutor = DetectionExecutor()
+-                    detectionExecutor.execute(latestDataDF.drop(['Short name'], axis=1))  
++                    detectionExecutor.execute(latestDataDF.drop(['Short name'], axis=1))
+                 else:
+-                    log.info(f"No suffiecient data to detect anamoly for cell  '{latestDataDF.loc[0, 'Short name']}'")       
++                    log.info(f"No suffiecient data to detect anamoly for cell  '{latestDataDF.iloc[0]['Short name']}'")
+             else:
+                 log.info(f"No data available in measurement '{measurement}'.")
+-            time.sleep(int(config.get('APP', 'KPI_FETCH_INTERVAL')))
+\ No newline at end of file
++            time.sleep(int(config.get('APP', 'KPI_FETCH_INTERVAL')))

@@ -44,7 +44,7 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$PARENT_DIR"
 
-# Apply patch to OCUDU to support kernel headers that don't define SCTP_SEND_FAILED_EVENT
+# Apply patch to OCUDU to support kernel headers that do not define SCTP_SEND_FAILED_EVENT
 cd ocudu
 git restore lib/gateways/sctp_network_gateway_common_impl.cpp
 if [ ! -f "lib/gateways/sctp_network_gateway_common_impl.cpp.previous" ]; then
@@ -55,7 +55,7 @@ echo "Patching sctp_network_gateway_common_impl.cpp..."
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/ocudu/lib/gateways/sctp_network_gateway_common_impl.cpp.patch"
 cd ..
 
-# Apply patch to OCUDU to ensure yaml-cpp imported targets are globally visible before aliasing.
+# Apply patch to OCUDU to ensure yaml-cpp imported targets are globally visible before aliasing
 cd ocudu
 git restore cmake/modules/FindYAMLCPP.cmake
 if [ ! -f "cmake/modules/FindYAMLCPP.cmake.previous" ]; then
@@ -66,6 +66,7 @@ echo "Patching FindYAMLCPP.cmake..."
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/ocudu/cmake/modules/FindYAMLCPP.cmake.patch"
 cd ..
 
+<<<<<<< HEAD
 # Apply patch to stop using compiler-specific M_PI_2f and instead use static_cast<float>(M_PI_2)
 cd ocudu
 git restore lib/ran/precoding/precoding_codebooks.cpp
@@ -75,6 +76,34 @@ if [ ! -f "lib/ran/precoding/precoding_codebooks.cpp.previous" ]; then
 fi
 echo "Patching precoding_codebooks.cpp..."
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/ocudu/lib/ran/precoding/precoding_codebooks.cpp.patch"
+=======
+# Apply patches when the number of processors is low to allow OCUDU startup, UE attach, and PDU session establishment
+# For more information, see https://gitlab.com/ocudu/ocudu/-/work_items/571
+cd ocudu
+git restore lib/mac/mac_dl/mac_cell_processor.cpp
+if [ ! -f "lib/mac/mac_dl/mac_cell_processor.cpp.previous" ]; then
+    cp lib/mac/mac_dl/mac_cell_processor.cpp lib/mac/mac_dl/mac_cell_processor.cpp.previous
+    cp lib/mac/mac_dl/mac_cell_processor.cpp.previous "$PARENT_DIR/install_patch_files/ocudu/lib/mac/mac_dl/mac_cell_processor.cpp.previous"
+fi
+git restore lib/rlc/rlc_tx_tm_entity.cpp
+if [ ! -f "lib/rlc/rlc_tx_tm_entity.cpp.previous" ]; then
+    cp lib/rlc/rlc_tx_tm_entity.cpp lib/rlc/rlc_tx_tm_entity.cpp.previous
+    cp lib/rlc/rlc_tx_tm_entity.cpp.previous "$PARENT_DIR/install_patch_files/ocudu/lib/rlc/rlc_tx_tm_entity.cpp.previous"
+fi
+git restore lib/rlc/rlc_tx_am_entity.cpp
+if [ ! -f "lib/rlc/rlc_tx_am_entity.cpp.previous" ]; then
+    cp lib/rlc/rlc_tx_am_entity.cpp lib/rlc/rlc_tx_am_entity.cpp.previous
+    cp lib/rlc/rlc_tx_am_entity.cpp.previous "$PARENT_DIR/install_patch_files/ocudu/lib/rlc/rlc_tx_am_entity.cpp.previous"
+fi
+if [ "$(nproc)" -le 4 ]; then
+    echo "Patching mac_cell_processor.cpp, rlc_tx_tm_entity.cpp, and rlc_tx_am_entity.cpp..."
+    git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/ocudu/lib/mac/mac_dl/mac_cell_processor.cpp.patch"
+    git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/ocudu/lib/rlc/rlc_tx_tm_entity.cpp.patch"
+    git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/ocudu/lib/rlc/rlc_tx_am_entity.cpp.patch"
+else
+    echo "Skipping patching mac_cell_processor.cpp, rlc_tx_tm_entity.cpp, and rlc_tx_am_entity.cpp since the number of processors is greater than 4."
+fi
+>>>>>>> main
 cd ..
 
 echo

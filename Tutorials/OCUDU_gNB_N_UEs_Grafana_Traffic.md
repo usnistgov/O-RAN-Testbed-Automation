@@ -99,10 +99,31 @@ The installation deploys
 Expected output
 
 ```
-5G Core ............. Running
-Near-RT RIC ......... Running
-OCUDU ............... Running
-UE .................. Running
+Checking status of User Equipment...
+User Equipment: RUNNING (ue1)
+
+Checking status of gNodeB...
+gNodeB: RUNNING
+
+Checking status of 5G Core components...
+mmed: RUNNING
+sgwcd: RUNNING
+smfd: RUNNING
+amfd: RUNNING
+sgwud: RUNNING
+upfd: RUNNING
+hssd: RUNNING
+pcrfd: RUNNING
+nrfd: RUNNING
+scpd: RUNNING
+ausfd: RUNNING
+udmd: RUNNING
+pcfd: RUNNING
+nssfd: RUNNING
+bsfd: RUNNING
+udrd: RUNNING
+webui: RUNNING
+
 ```
 
 ---

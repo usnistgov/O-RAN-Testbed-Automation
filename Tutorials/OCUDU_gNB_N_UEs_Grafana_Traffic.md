@@ -187,9 +187,9 @@ Useful dashboards include
 
 ## Traffic Simulation
 
-# Verify Network Connectivity
+After the UE successfully attaches and receives a PDU session, verify that it can reach the UPF gateway. Network traffic can be generated using `ping` and `iperf3` to verify user-plane connectivity and observe performance metrics in Grafana.
 
-After the UE successfully attaches and receives a PDU session, verify that it can reach the UPF gateway.
+The UE runs inside the `ue1` Linux network namespace. All UE traffic generation commands should be executed using:
 
 Run the following command from the host machine:
 
@@ -200,9 +200,16 @@ sudo ip netns exec ue1 ping 10.45.0.1
 Expected output:
 
 ```
-PING 10.45.0.1 (10.45.0.1)
-64 bytes from 10.45.0.1: icmp_seq=1 ttl=64 time=1.2 ms
-64 bytes from 10.45.0.1: icmp_seq=2 ttl=64 time=1.1 ms
+PING 10.45.0.1 (10.45.0.1) 56(84) bytes of data.
+64 bytes from 10.45.0.1: icmp_seq=1 ttl=64 time=98.2 ms
+64 bytes from 10.45.0.1: icmp_seq=2 ttl=64 time=45.5 ms
+64 bytes from 10.45.0.1: icmp_seq=3 ttl=64 time=60.3 ms
+
+^C
+--- 10.45.0.1 ping statistics ---
+11 packets transmitted, 11 received, 0% packet loss, time 10014ms
+rtt min/avg/max/mdev = 26.851/48.636/98.193/18.117 ms
+
 ```
 
 If the ping succeeds, the UE has end-to-end IP connectivity through the 5G core network.
@@ -211,40 +218,6 @@ If the ping succeeds, the UE has end-to-end IP connectivity through the 5G core 
   <img src="grafana.png" alt="OCUDU Grafana WebUI" width="75%">
 </div>
 
-
-# Traffic Simulation
-
-Network traffic can be generated using `ping` and `iperf3` to verify user-plane connectivity and observe performance metrics in Grafana.
-
-The UE runs inside the `ue1` Linux network namespace. All UE traffic generation commands should be executed using:
-
-```bash
-sudo ip netns exec ue1 <command>
-```
-
----
-
-## Continuous Ping
-
-Generate ICMP traffic from the UE to the UPF gateway:
-
-```bash
-sudo ip netns exec ue1 ping 10.45.0.1
-```
-
-Observe:
-
-- Round-trip time (RTT)
-- Packet loss
-- Latency metrics in Grafana
-
-Stop the ping using:
-
-```
-Ctrl+C
-```
-
----
 
 # iperf3 Throughput Test
 
@@ -268,7 +241,22 @@ Start the iperf3 server on the UPF-side interface:
 ```bash
 iperf3 -s -B 10.45.0.1
 ```
+### Expected Output
 
+```bash
+ iperf3 -s -B 10.45.0.1
+-----------------------------------------------------------
+Server listening on 5201
+-----------------------------------------------------------
+Accepted connection from 10.45.0.101, port 50034
+[  5] local 10.45.0.1 port 5201 connected to 10.45.0.101 port 50038
+[ ID] Interval           Transfer     Bitrate
+[  5]   0.00-2.00   sec   384 KBytes  1.57 Mbits/sec                  
+[  5]   2.00-3.53   sec   384 KBytes  2.06 Mbits/sec                  
+[  5]   3.53-4.54   sec   256 KBytes  2.08 Mbits/sec                  
+[  5]   4.54-5.44   sec   256 KBytes  2.34 Mbits/sec                  
+[  5]   5.44-6.84   sec   384 KBytes  2.25 Mbits/sec       
+```
 The server listens on the 5G core data network interface.
 
 ---
@@ -278,10 +266,22 @@ The server listens on the 5G core data network interface.
 Run the iperf3 client from the UE namespace:
 
 ```bash
-sudo ip netns exec ue1 iperf3 -c 10.45.0.1 -t 30
+sudo ip netns exec ue1 iperf3 -c 10.45.0.1 -t 60
+```
+### Expected Output
+```bash
+ sudo ip netns exec ue1 iperf3 -c 10.45.0.1 -t 60
+Connecting to host 10.45.0.1, port 5201
+[  5] local 10.45.0.101 port 50038 connected to 10.45.0.1 port 5201
+[ ID] Interval           Transfer     Bitrate         Retr  Cwnd
+[  5]   0.00-1.00   sec   437 KBytes  3.58 Mbits/sec    1   73.5 KBytes       
+[  5]   1.00-2.00   sec   272 KBytes  2.22 Mbits/sec    0   86.3 KBytes       
+[  5]   2.00-3.00   sec   382 KBytes  3.13 Mbits/sec    0   99.0 KBytes       
+[  5]   3.00-4.00   sec   255 KBytes  2.08 Mbits/sec    0    112 KBytes       
+[  5]   4.00-5.00   sec   509 KBytes  4.18 Mbits/sec    0    124 KBytes  
 ```
 
-This generates a 30-second uplink traffic stream:
+This generates a 60-second uplink traffic stream:
 
 ```
 UE → 5G Core
@@ -296,7 +296,19 @@ To test downlink throughput:
 ```bash
 sudo ip netns exec ue1 iperf3 -c 10.45.0.1 -R -t 30
 ```
-
+### Expected Output
+```bash
+Connecting to host 10.45.0.1, port 5201
+Reverse mode, remote host 10.45.0.1 is sending
+[  5] local 10.45.0.101 port 36996 connected to 10.45.0.1 port 5201
+[ ID] Interval           Transfer     Bitrate
+[  5]   0.00-1.00   sec  1.50 MBytes  12.6 Mbits/sec                  
+[  5]   1.00-2.04   sec  2.00 MBytes  16.1 Mbits/sec                  
+[  5]   2.04-3.04   sec  1.75 MBytes  14.7 Mbits/sec                  
+[  5]   3.04-4.00   sec  1.75 MBytes  15.2 Mbits/sec                  
+[  5]   4.00-5.00   sec  1.75 MBytes  14.7 Mbits/sec                  
+[  5]   5.00-6.05   sec  1.38 MBytes  11.1 Mbits/sec       
+```
 The `-R` option reverses the traffic direction:
 
 ```
@@ -304,30 +316,6 @@ The `-R` option reverses the traffic direction:
 ```
 
 ---
-
-## Example iperf3 Output
-
-Expected output:
-
-```
-ubuntu@ip-172-31-18-66:~$ sudo ip netns exec ue1 iperf3 -c 10.45.0.1 -R -t 60
-Connecting to host 10.45.0.1, port 5201
-Reverse mode, remote host 10.45.0.1 is sending
-[  5] local 10.45.0.101 port 49200 connected to 10.45.0.1 port 5201
-[ ID] Interval           Transfer     Bitrate
-[  5]   0.00-1.04   sec  1.50 MBytes  12.1 Mbits/sec                  
-[  5]   1.04-2.04   sec  1.50 MBytes  12.6 Mbits/sec                  
-[  5]   2.04-3.07   sec  1.50 MBytes  12.2 Mbits/sec                  
-[  5]   3.07-4.08   sec  1.50 MBytes  12.5 Mbits/sec                  
-[  5]   4.08-5.02   sec  1.50 MBytes  13.3 Mbits/sec                  
-[  5]   5.02-6.05   sec  1.62 MBytes  13.3 Mbits/sec                  
-[  5]   6.05-7.02   sec  1.50 MBytes  13.0 Mbits/sec                  
-[  5]   7.02-8.01   sec  1.50 MBytes  12.7 Mbits/sec                  
-[  5]   8.01-9.10   sec  1.50 MBytes  11.6 Mbits/sec                  
-[  5]   9.10-10.04  sec  1.50 MBytes  13.3 Mbits/sec  
-
-iperf Done.
-```
 
 Throughput depends on:
 

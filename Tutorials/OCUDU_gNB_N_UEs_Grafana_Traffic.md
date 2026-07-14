@@ -340,7 +340,7 @@ Expected changes:
 ---
 
 # Troubleshooting Traffic
-
+---
 If no traffic is observed, verify UE connectivity first:
 
 ```bash
@@ -360,7 +360,7 @@ PING 10.45.0.1 (10.45.0.1) 56(84) bytes of data.
 rtt min/avg/max/mdev = 26.851/48.636/98.193/18.117 ms
 ```
 This confirms end-to-end connectivity between the UE and the UPF gateway.
-
+---
 Check the UE namespace:
 
 ```bash
@@ -385,7 +385,7 @@ It is in the UP state.
 It has the expected IP address (for example, 10.45.0.101/24).
 
 If tun_srsue is missing or has no IP address, the PDU session was not established successfully.
-
+---
 Check routing:
 
 ```bash

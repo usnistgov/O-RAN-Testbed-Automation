@@ -1,5 +1,18 @@
 # Deploying  OCUDU gNB with One UE, Grafana Monitoring, and Traffic Simulation
 
+# Table of Contents
+
+- [Overview](#overview)
+- [Prerequisites](#prerequisites)
+- [Install the Testbed](#install-the-testbed)
+- [Start the Testbed](#start-the-testbed)
+- [Launch Grafana](#launch-grafana)
+- [Traffic Simulation](#traffic-simulation)
+- [Multiple UE Deployment](#multiple-ue-deployment)
+- [Useful Commands](#useful-commands)
+- [Troubleshooting](#troubleshooting)
+- [Learning Outcomes](#learning-outcomes)
+
 ## Overview
 
 This tutorial demonstrates how to deploy a complete Open RAN testbed using the NIST O-RAN Testbed Automation framework.

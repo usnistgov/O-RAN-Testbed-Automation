@@ -346,24 +346,60 @@ If no traffic is observed, verify UE connectivity first:
 ```bash
 sudo ip netns exec ue1 ping 10.45.0.1
 ```
+Expected output:
+
+```bash
+PING 10.45.0.1 (10.45.0.1) 56(84) bytes of data.
+64 bytes from 10.45.0.1: icmp_seq=1 ttl=64 time=98.2 ms
+64 bytes from 10.45.0.1: icmp_seq=2 ttl=64 time=45.5 ms
+64 bytes from 10.45.0.1: icmp_seq=3 ttl=64 time=60.3 ms
+
+^C
+--- 10.45.0.1 ping statistics ---
+11 packets transmitted, 11 received, 0% packet loss, time 10014ms
+rtt min/avg/max/mdev = 26.851/48.636/98.193/18.117 ms
+```
+This confirms end-to-end connectivity between the UE and the UPF gateway.
 
 Check the UE namespace:
 
 ```bash
 sudo ip netns exec ue1 ip addr
 ```
+```bash
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host 
+       valid_lft forever preferred_lft forever
+2: tun_srsue: <POINTOPOINT,MULTICAST,NOARP,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UNKNOWN group default qlen 500
+    link/none 
+    inet 10.45.0.101/24 scope global tun_srsue
+       valid_lft forever preferred_lft forever
+```
+Key things to verify:
+
+The tun_srsue interface exists.
+It is in the UP state.
+It has the expected IP address (for example, 10.45.0.101/24).
+
+If tun_srsue is missing or has no IP address, the PDU session was not established successfully.
 
 Check routing:
 
 ```bash
 sudo ip netns exec ue1 ip route
 ```
-
-Verify that the iperf3 server is running:
-
 ```bash
-iperf3 -s -B 10.45.0.1
+default via 10.201.0.5 dev v-ue1 
+10.45.0.0/24 dev tun_srsue proto kernel scope link src 10.45.0.101 
+10.201.0.4/30 dev v-ue1 proto kernel scope link src 10.201.0.6
 ```
+This indicates:
+
+The default route sends all traffic through the UPF gateway (10.45.0.1).
+The UE has a connected route for the 10.45.0.0/24 subnet via tun_srsue.
 
 ---
 

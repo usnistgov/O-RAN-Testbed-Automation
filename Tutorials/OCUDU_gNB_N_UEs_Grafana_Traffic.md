@@ -133,22 +133,26 @@ webui: RUNNING
 ```bash
 ./run.sh
 ```
-
----
-
-## Verify UE Attachment
-
 Expected console output
 
 ```
-Random Access Complete
-
+Opening 1 channels in RF device=zmq with args=tx_port=tcp://*:2101,rx_port=tcp://10.201.0.5:2100,base_srate=23.04e6,id=ue1
+Supported RF device list: UHD zmq file
+CHx base_srate=23.04e6
+CHx id=ue1
+Current sample rate is 1.92 MHz with a base rate of 23.04 MHz (x12 decimation)
+CH0 rx_port=tcp://10.201.0.5:2100
+CH0 tx_port=tcp://*:2101
+Current sample rate is 23.04 MHz with a base rate of 23.04 MHz (x1 decimation)
+Current sample rate is 23.04 MHz with a base rate of 23.04 MHz (x1 decimation)
+Waiting PHY to initialize ... done!
+Attaching UE...
+Random Access Transmission: prach_occasion=0, preamble_index=0, ra-rnti=0x39, tti=334
+Random Access Complete.     c-rnti=0x4601, ta=0
 RRC Connected
+PDU Session Establishment successful. IP: 10.45.0.101
+RRC NR reconfiguration successful.
 
-PDU Session Establishment Successful
-
-IP Address:
-10.45.0.101
 ```
 
 ---

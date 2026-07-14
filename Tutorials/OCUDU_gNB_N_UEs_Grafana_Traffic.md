@@ -410,7 +410,32 @@ Check Kubernetes
 ```bash
 kubectl get pods -A
 ```
-
+```bash
+NAMESPACE      NAME                                                        READY   STATUS    RESTARTS       AGE
+kube-flannel   kube-flannel-ds-r8mkz                                       1/1     Running   0              4d2h
+kube-system    coredns-674b8bbfcf-8nvvv                                    1/1     Running   1 (88m ago)    4d2h
+kube-system    coredns-674b8bbfcf-xzrdf                                    1/1     Running   1 (88m ago)    4d2h
+kube-system    etcd-ip-172-31-18-66                                        1/1     Running   32             4d2h
+kube-system    kube-apiserver-ip-172-31-18-66                              1/1     Running   16             4d2h
+kube-system    kube-controller-manager-ip-172-31-18-66                     1/1     Running   32 (92m ago)   4d2h
+kube-system    kube-proxy-xjrs2                                            1/1     Running   0              4d2h
+kube-system    kube-scheduler-ip-172-31-18-66                              1/1     Running   30 (92m ago)   4d2h
+ricinfra       deployment-tiller-ricxapp-84b87b8c64-g4rdf                  1/1     Running   2 (88m ago)    4d2h
+ricplt         deployment-ricplt-a1mediator-f4888dfd7-755pg                1/1     Running   1 (88m ago)    4d2h
+ricplt         deployment-ricplt-alarmmanager-7f984cdf77-bmw2f             1/1     Running   1 (88m ago)    4d2h
+ricplt         deployment-ricplt-appmgr-549d488cb8-lh46g                   1/1     Running   1 (88m ago)    4d2h
+ricplt         deployment-ricplt-e2mgr-7d9f845865-68hz4                    1/1     Running   2 (88m ago)    4d2h
+ricplt         deployment-ricplt-e2term-alpha-55ff9df9d9-btfz7             1/1     Running   1 (88m ago)    4d2h
+ricplt         deployment-ricplt-o1mediator-6fb8f84c97-t64ml               1/1     Running   1 (88m ago)    4d2h
+ricplt         deployment-ricplt-rtmgr-668f86855f-q9pg5                    1/1     Running   2 (88m ago)    4d2h
+ricplt         deployment-ricplt-submgr-5b8796c997-zfcv9                   1/1     Running   1 (88m ago)    4d2h
+ricplt         deployment-ricplt-vespamgr-848f7bb874-fhc8t                 1/1     Running   1 (88m ago)    4d2h
+ricplt         r4-infrastructure-kong-78657d8f48-f2sjr                     2/2     Running   2 (88m ago)    4d2h
+ricplt         r4-infrastructure-prometheus-alertmanager-b9cc56766-c5xhh   2/2     Running   2 (88m ago)    4d2h
+ricplt         r4-infrastructure-prometheus-server-6476958975-25ssr        1/1     Running   4              4d2h
+ricplt         statefulset-ricplt-dbaas-server-0                           1/1     Running   1 (88m ago)    4d2h
+ricxapp        ricxapp-hw-go-c84579888-hrf2p                               1/1     Running   1 (88m ago)    4d2h
+```
 Check RIC
 
 ```bash
@@ -460,37 +485,58 @@ Check
 ```bash
 ./is_running.sh
 ```
+#### Expected Output
+```bash
+Checking status of User Equipment...
+User Equipment: RUNNING (ue1)
 
-Restart
+Checking status of gNodeB...
+gNodeB: RUNNING
+
+Checking status of 5G Core components...
+mmed: RUNNING
+sgwcd: RUNNING
+smfd: RUNNING
+amfd: RUNNING
+sgwud: RUNNING
+upfd: RUNNING
+hssd: RUNNING
+pcrfd: RUNNING
+nrfd: RUNNING
+scpd: RUNNING
+ausfd: RUNNING
+udmd: RUNNING
+pcfd: RUNNING
+nssfd: RUNNING
+bsfd: RUNNING
+udrd: RUNNING
+webui: RUNNING
+```
+If component is not running, restart the testbed:
+
 
 ```bash
+./stop.sh
 ./run.sh
 ```
 
 ---
 
 ### Grafana empty
-
-Verify
-
-- ZMQ broker active
-
----
-
-### No traffic
-
-Check
+If Grafana does not display metrics, verify that the monitoring pipeline is running correctly.
+ Verify Grafana is running
 
 ```bash
-ping 10.45.0.1
+docker ps | grep grafana
 ```
-
-Then
-
+#### Expected Output
 ```bash
-iperf3
+03b793312bd8   ocudu/grafana         "/run.sh"                33 seconds ago   Up 16 seconds             0.0.0.0:3300->3000/tcp, [::]:3300->3000/tcp   ocudu-grafana
 ```
-
+If Grafana is not running, restart the dashboard:
+```bash
+./start_grafana_webui.sh
+```
 ---
 
 ## Learning Outcomes

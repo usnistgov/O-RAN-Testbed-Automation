@@ -32,10 +32,6 @@
 set -e
 
 EXPOSE_GNB_TO_HOSTNAME=false
-<<<<<<< HEAD
-UE_NUMBERS=(1 2 3 4)
-USE_FLEXRIC=false
-=======
 USE_FLEXRIC=false
 USE_ZMQ_BROKER=true
 ZMQ_BROKER_CHANNEL_BW_MHZ=20
@@ -49,7 +45,6 @@ if [ "$USE_ZMQ_BROKER" = "true" ]; then
     GNB_BASE_SRATE_HZ=11.52e6
     PDU_SESSION_TIMEOUT=30
 fi
->>>>>>> main
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
@@ -643,26 +638,11 @@ if [ "$USE_ZMQ_BROKER" = "true" ]; then
     done
 
     mkdir -p zmq_broker
-<<<<<<< HEAD
-    if [ ! -f "zmq_broker/multi_ue_scenario.grc" ]; then
-        if ! command -v jq &>/dev/null; then
-            echo "Installing jq..."
-            sudo env $APTVARS apt-get install -y jq
-        fi
-        DOCS_HASH=$(jq -r '."https://gitlab.com/ocudu/ocudu_docs.git"[1]' ../commit_hashes.json 2>/dev/null)
-        if [ -z "$DOCS_HASH" ] || [ "$DOCS_HASH" = "null" ]; then
-            DOCS_HASH="main"
-        fi
-        echo "Downloading ZeroMQ Broker GNU Radio Companion flowgraph (${DOCS_HASH})..."
-        wget -qO zmq_broker/multi_ue_scenario.grc "https://gitlab.com/ocudu/ocudu_docs/-/raw/${DOCS_HASH}/docs/tutorials/srsue/assets/multi_ue_scenario.grc"
-        wget -qO zmq_broker/multi_ue_scenario.grc.license "https://gitlab.com/ocudu/ocudu_docs/-/raw/${DOCS_HASH}/docs/tutorials/srsue/assets/multi_ue_scenario.grc.license"
-=======
     ./install_scripts/generate_zmq_broker.sh --output "zmq_broker/multi_ue_scenario.py" --sample-rate-hz "$BROKER_SRATE_INT" --slow-down-ratio "$ZMQ_BROKER_SLOW_DOWN_RATIO" $CELL_ARGS $UE_ARGS
 
     if ! python3 -c "import gnuradio, PyQt5" >/dev/null 2>&1; then
         echo "Installing GNU Radio runtime for the ZeroMQ Broker..."
         sudo env $APTVARS apt-get install -y gnuradio python3-pyqt5
->>>>>>> main
     fi
 
     # # GNU Radio 3.8 issue with vmcircbuf_default_factory.

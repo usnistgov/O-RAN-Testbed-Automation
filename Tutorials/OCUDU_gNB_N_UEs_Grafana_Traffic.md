@@ -457,11 +457,6 @@ ricplt         r4-infrastructure-prometheus-server-6476958975-25ssr        1/1  
 ricplt         statefulset-ricplt-dbaas-server-0                           1/1     Running   1 (88m ago)    4d2h
 ricxapp        ricxapp-hw-go-c84579888-hrf2p                               1/1     Running   1 (88m ago)    4d2h
 ```
-Check RIC
-
-```bash
-k9s -A
-```
 
 Stop testbed
 

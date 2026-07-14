@@ -41,8 +41,6 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
 USE_FLEXRIC=false
-<<<<<<< HEAD
-=======
 USE_ZMQ_BROKER=true
 ORIGINAL_ARGS=("$@")
 
@@ -68,7 +66,6 @@ done
 # Replace commas with spaces
 CELL_CONFIG_ARGS="${CELL_NUMBERS_STR//,/ }"
 UE_CONFIG_ARGS="${UE_NUMBERS_STR//,/ }"
->>>>>>> main
 
 echo "Generating Configurations for 5G Core components..."
 cd 5G_Core_Network

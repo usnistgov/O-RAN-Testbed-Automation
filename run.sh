@@ -38,10 +38,7 @@ if ! command -v realpath &>/dev/null; then
 fi
 
 USE_FLEXRIC=false
-<<<<<<< HEAD
-=======
 USE_ZMQ_BROKER=true
->>>>>>> main
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"

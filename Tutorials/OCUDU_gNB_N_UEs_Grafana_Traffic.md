@@ -74,6 +74,11 @@ cd O-RAN-Testbed-Automation
 ```bash
 ./full_install.sh
 ```
+```text
+################################################################################
+# Successfully installed the Near-RT RIC, 5G Core, gNodeB, and UE.             #
+################################################################################
+```
 
 The installation deploys
 

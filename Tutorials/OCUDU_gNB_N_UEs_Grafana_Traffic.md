@@ -395,7 +395,9 @@ The UE has a connected route for the 10.45.0.0/24 subnet via tun_srsue.
 
 ---
 ## Multiple UE Deployment
+For multi-UE emulation using the OCUDU gNodeB ZeroMQ broker, refer to:
 
+[Multiple UE Deployment and ZeroMQ Broker Configuration](https://github.com/USNISTGOV/O-RAN-Testbed-Automation-Dev/blob/Next_Generation_Node_B/Next_Generation_Node_B/README.md#simulating-multiple-ues-and-cells-with-zeromq-broker)
 ## Useful Commands
 
 Check Kubernetes

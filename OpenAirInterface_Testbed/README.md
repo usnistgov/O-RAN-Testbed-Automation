@@ -14,6 +14,21 @@ This testbed deployment consists of a 5G Core Network by Open5GS [\[1\]][open5gs
 - **Status**: Check which testbed components are running with `./is_running.sh`.
 - **Debugging Information**: Configuration files are in the `configs/` directory, and log files are located in the `logs/` directory for each component.
 
+## Potential Cause for Build Errors
+It may be required for the AVX2 instruction set to be available on the host machine installing the OpenAirInterface testbed.
+
+<details>
+  <summary><b>Enabling VT-x/AMD-V for the AVX2 instruction set</b></summary>
+  <hr>
+  When running a VM to build OpenAirInterface5G, compilation errors may occur if not using VT-x/AMD-V due to an unsupported AVX2 instruction set. In VirtualBox, the lower right corner will show a "V" icon if using VT-x/AMD-V, otherwise, it will show a turtle icon. Additionally, AVX2 support can be verified by checking that `cat /proc/cpuinfo | grep avx2` is not empty. The following steps can be taken to ensure that VT-x/AMD-V is enabled in a VirtualBox VM.
+  
+  - **CPU Virtualization Support**: Look up if the CPU model supports virtualization and ensure that it is enabled in the BIOS.
+  - **Disable Hyper-V**: Hyper-V may prevent VT-x/AMD-V from being enabled. If using Windows, the following options should be unchecked in the "Turn Windows features on or off" settings: "Hyper-V", "Windows Hypervisor Platform", and "Virtual Machine Platform". If a change is made, a reboot is required.
+  - **VirtualBox**: From the VirtualBox Manager, select the VM and click the "Information" tab. Look for "Acceleration: VT-x/AMD-V".
+    - If the VM shows this but the AVX2 instruction set is still disabled, then disabling core isolation is a potential reason. Please exercise extreme caution as it is not advised to disable core isolation. However, it can be disabled in the "Windows Security" settings by unchecking "Memory Integrity" and rebooting.
+  - If `cat /proc/cpuinfo | grep avx2` is not empty, then OpenAirInterface should be able to build without issues.
+</details>
+
 ## Simulating Multiple UEs and Cells with ZeroMQ Broker
 
 The ZeroMQ broker enables multi-UE and multi-cell emulation and is motivated by the OCUDU Multi-UE Emulation tutorial [\[5][ocudu-multi-ue], [6\]][ocudu-multi-ue-grc]. The broker operates the simulated ZeroMQ channel. Its graphical user interface can be toggled by setting `SHOW_ZMQ_BROKER_UI` in `run.sh`.
@@ -53,7 +68,7 @@ sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' Next_Generation_Node_B/st
 </details>
 
 <details>
-<summary>Disable ZeroMQ broker (default, using RF simulator instead)</summary>
+<summary>Disable ZeroMQ broker (default, using RF simulator)</summary>
 
 ```bash
 sed -i 's/^RADIO_TYPE=.*$/RADIO_TYPE="SIMU" # Set to "SIMU", "ZMQ", or "USRP"/' User_Equipment/full_install.sh
@@ -79,21 +94,6 @@ sed -i 's/^USE_ZMQ_BROKER=true$/USE_ZMQ_BROKER=false/' Next_Generation_Node_B/st
 
 When the ZeroMQ broker is enabled, `./run.sh` launches every configured DU and UE before waiting for DU readiness and UE PDU sessions. Individual component launchers also start the broker, but unlike RF Simulator, all configured endpoints must be running for samples to flow.
 
-## Potential Cause for Build Errors
-It may be required for the AVX2 instruction set to be available on the host machine installing the OpenAirInterface testbed.
-
-<details>
-  <summary><b>Enabling VT-x/AMD-V for the AVX2 instruction set</b></summary>
-  <hr>
-  When running a VM to build OpenAirInterface5G, compilation errors may occur if not using VT-x/AMD-V due to an unsupported AVX2 instruction set. In VirtualBox, the lower right corner will show a "V" icon if using VT-x/AMD-V, otherwise, it will show a turtle icon. Additionally, AVX2 support can be verified by checking that `cat /proc/cpuinfo | grep avx2` is not empty. The following steps can be taken to ensure that VT-x/AMD-V is enabled in a VirtualBox VM.
-  
-  - **CPU Virtualization Support**: Look up if the CPU model supports virtualization and ensure that it is enabled in the BIOS.
-  - **Disable Hyper-V**: Hyper-V may prevent VT-x/AMD-V from being enabled. If using Windows, the following options should be unchecked in the "Turn Windows features on or off" settings: "Hyper-V", "Windows Hypervisor Platform", and "Virtual Machine Platform". If a change is made, a reboot is required.
-  - **VirtualBox**: From the VirtualBox Manager, select the VM and click the "Information" tab. Look for "Acceleration: VT-x/AMD-V".
-    - If the VM shows this but the AVX2 instruction set is still disabled, then disabling core isolation is a potential reason. Please exercise extreme caution as it is not advised to disable core isolation. However, it can be disabled in the "Windows Security" settings by unchecking "Memory Integrity" and rebooting.
-  - If `cat /proc/cpuinfo | grep avx2` is not empty, then OpenAirInterface should be able to build without issues.
-</details>
-
 ## Handover Scenario
 
 The script `run_handover_scenario.sh`, based on the handover tutorial [\[4\]][duranta-handover], automates the process of setting up a handover scenario with two DUs and one CU. It starts the 5G Core, FlexRIC, CU, DU 1, and UE 1. After UE connectivity, it starts DU 2 and opens a telnet session to the CU for monitoring and controlling the handover process.
@@ -104,28 +104,27 @@ The script `run_handover_scenario.sh`, based on the handover tutorial [\[4\]][du
 
 
 <details>
-  <summary><b>Example of F1 handover output</b></summary>
+  <summary>
+    <b>Example of F1 handover output</b>
+  </summary>
   <hr>
-  
-<table>
-  <tr>
-    <th align="center"> RF Simulator <br>
-      <sub>1 UE, 2 DUs, 1 CU</sub>
-    </th>
-    <th align="center"> ZeroMQ Broker <br>
-      <sub>3 UEs, 3 DUs, 1 CU</sub>
-    </th>
-  </tr>
-  <tr>
-    <td width="50%" align="center">
-      <img src="../Images/F1_Handover_Example_RF_Simulator.png" alt="F1 handover scenario output using RF Simulator" width="100%">
-    </td>
-    <td width="50%" align="center">
-      <img src="../Images/F1_Handover_Example_ZeroMQ_Broker.png" alt="F1 handover scenario output using ZeroMQ Broker" width="100%">
-    </td>
-  </tr>
-</table>
-
+  <p align="center">
+    <strong>RF Simulator</strong>
+    <br>
+    <sub>1 UE, 2 DUs, 1 CU</sub>
+  </p>
+  <p align="center">
+    <img src="../Images/F1_Handover_Example_RF_Simulator.png" alt="F1 handover scenario output using RF Simulator" width="100%">
+  </p>
+  <hr>
+  <p align="center">
+    <strong>ZeroMQ Broker</strong>
+    <br>
+    <sub>3 UEs, 3 DUs, 1 CU</sub>
+  </p>
+  <p align="center">
+    <img src="../Images/F1_Handover_Example_ZeroMQ_Broker.png" alt="F1 handover scenario output using ZeroMQ Broker" width="100%">
+  </p>
 </details>
 
 ---

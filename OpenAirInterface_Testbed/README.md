@@ -105,24 +105,13 @@ The script `run_handover_scenario.sh`, based on the handover tutorial [\[4\]][du
 
 <details>
   <summary>
-    <b>Example of F1 handover output</b>
+    <strong>Example of F1 handover output</strong>
   </summary>
-  <hr>
-  <p align="center">
-    <strong>RF Simulator</strong>
-    <br>
-    <sub>1 UE, 2 DUs, 1 CU</sub>
-  </p>
-  <p align="center">
+  <br>
+  <strong>RF Simulator</strong> (1 UE, 2 DUs, 1 CU) <p align="center">
     <img src="../Images/F1_Handover_Example_RF_Simulator.png" alt="F1 handover scenario output using RF Simulator" width="100%">
   </p>
-  <hr>
-  <p align="center">
-    <strong>ZeroMQ Broker</strong>
-    <br>
-    <sub>3 UEs, 3 DUs, 1 CU</sub>
-  </p>
-  <p align="center">
+  <strong>ZeroMQ Broker</strong> (3 UEs, 3 DUs, 1 CU) <p align="center">
     <img src="../Images/F1_Handover_Example_ZeroMQ_Broker.png" alt="F1 handover scenario output using ZeroMQ Broker" width="100%">
   </p>
 </details>

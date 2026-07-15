@@ -148,7 +148,7 @@ else
     else
         if [ "$RFSIM_SERVER" -ne 0 ]; then
             echo "RF simulator server mode enabled."
-            RFSIM_SERVER_ARG="--rfsimulator.serveraddr server"
+            RFSIM_SERVER_ARG="--rfsimulator.[0].serveraddr server"
             SERVER_IP=$(sudo ip netns exec ue$UE_NUMBER ip addr show dev v-ue$UE_NUMBER | grep "inet " | awk '{print $2}' | cut -d/ -f1)
             mkdir -p configs
             echo "$SERVER_IP" >configs/get_rfsim_server_address.txt
@@ -158,7 +158,7 @@ else
                 echo "ERROR: Could not find RF simulator server address."
                 exit 1
             fi
-            RFSIM_SERVER_ARG="--rfsimulator.serveraddr $SERVER_IP"
+            RFSIM_SERVER_ARG="--rfsimulator.[0].serveraddr $SERVER_IP"
         fi
     fi
 

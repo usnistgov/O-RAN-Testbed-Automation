@@ -264,9 +264,8 @@ wait_for_ue_to_connect() {
 
 NEXT_UE_ID=1
 if [ "$USE_ZMQ_BROKER" != "true" ]; then
-    # The first UE is the RF simulator server for the DUs.
-    start_ue "$NEXT_UE_ID" true
-    NEXT_UE_ID=$((NEXT_UE_ID + 1))
+    RFSIM_SERVER_IP=$(./User_Equipment/install_scripts/get_ue_namespace_ip.sh ue "$NEXT_UE_ID")
+    echo "$RFSIM_SERVER_IP" >User_Equipment/configs/get_rfsim_server_address.txt
 fi
 
 echo
@@ -287,6 +286,10 @@ fi
 cd ..
 
 if [ "$USE_ZMQ_BROKER" != "true" ]; then
+    # The first UE is the RF simulator server for the DUs
+    start_ue "$NEXT_UE_ID" true
+    NEXT_UE_ID=$((NEXT_UE_ID + 1))
+
     echo -en "\nWaiting for DU 1 to be ready"
     cd Next_Generation_Node_B
     ATTEMPT=0

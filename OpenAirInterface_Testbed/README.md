@@ -67,7 +67,6 @@ sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' Next_Generation_Node_B/st
 ```
 
 </details>
-<hr>
 
 <details>
 <summary>Disable ZeroMQ broker (default, using RF simulator)</summary>

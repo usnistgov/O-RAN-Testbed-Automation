@@ -80,7 +80,7 @@ while [[ $# -gt 0 ]]; do
     --cells)
         IFS=',' read -r -a PARSED_CELL_NUMBERS <<<"$2"
         for CELL_NUMBER in "${PARSED_CELL_NUMBERS[@]}"; do
-            if ! [[ "$CELL_NUMBER" =~ ^[0-9]+$ ]] || [ "$CELL_NUMBER" -lt 1 ]; then
+            if ! [[ "$CELL_NUMBER" =~ ^[1-9][0-9]*$ ]]; then
                 echo "ERROR: Cell numbers must be positive integers separated by commas."
                 exit 1
             fi
@@ -91,7 +91,7 @@ while [[ $# -gt 0 ]]; do
     --ues)
         IFS=',' read -r -a parsed_ues <<<"$2"
         for UE_NUMBER in "${parsed_ues[@]}"; do
-            if ! [[ "$UE_NUMBER" =~ ^[0-9]+$ ]] || [ "$UE_NUMBER" -lt 1 ]; then
+            if ! [[ "$UE_NUMBER" =~ ^[1-9][0-9]*$ ]]; then
                 echo "ERROR: UE numbers must be positive integers separated by commas."
                 exit 1
             fi
@@ -362,18 +362,17 @@ if [ "$USE_ZMQ_BROKER" = "true" ]; then
     CELL_COUNT=0
     for CELL_NUMBER in "${CELL_NUMBERS[@]}"; do
         CELL_RX_PORT=$((2000 + (CELL_NUMBER - 1) * 2))
-        CELL_TX_PORT=$((2001 + (CELL_NUMBER - 1) * 2))
+        CELL_TX_PORT=$((CELL_RX_PORT + 1))
+        if [ "$CELL_TX_PORT" -gt 65535 ]; then
+            echo "ERROR: Cell $CELL_NUMBER has a ZeroMQ port above 65535."
+            exit 1
+        fi
         DEVICE_ARGS="${DEVICE_ARGS}tx_port${CELL_COUNT}=tcp://127.0.0.1:${CELL_RX_PORT},rx_port${CELL_COUNT}=tcp://127.0.0.1:${CELL_TX_PORT},"
         CELL_COUNT=$((CELL_COUNT + 1))
     done
 else
-    BASE_SUBNET="10.201.0.0/16"
-    SUBNET_SIZE=4
     UE_NUMBER="${UE_NUMBERS[0]}"
-    SUBNET_OFFSET=$((UE_NUMBER * SUBNET_SIZE))
-    HOST_IP_OFFSET=$((SUBNET_OFFSET))
-    UE_IP_OFFSET=$((SUBNET_OFFSET + 1))
-    UE_IP=$(python3 install_scripts/fetch_nth_ip.py "$BASE_SUBNET" "$UE_IP_OFFSET")
+    UE_IP=$(../User_Equipment/install_scripts/get_ue_namespace_ip.sh ue "$UE_NUMBER")
     DEVICE_ARGS="${DEVICE_ARGS}fail_unlocked=true,tx_port=tcp://*:2100,rx_port=tcp://$UE_IP:2101,"
 fi
 
@@ -616,9 +615,6 @@ if [ "$USE_ZMQ_BROKER" = "true" ]; then
 
     echo "Generating ZeroMQ Broker Python script..."
 
-    # Allocate a /30 (4 addresses) subnet per UE (e.g., UE 1 -> 10.201.0.4/30, Gateway .5, UE .6)
-    BASE_SUBNET="10.201.0.0/16"
-    SUBNET_SIZE=4
     BROKER_SRATE_INT=$(awk "BEGIN { printf \"%d\", $GNB_SRATE_MHZ * 1000000 }")
 
     # Calculate the slow down ratio based on the number of UEs and cells
@@ -626,9 +622,7 @@ if [ "$USE_ZMQ_BROKER" = "true" ]; then
 
     UE_ARGS=""
     for UE_NUMBER in "${UE_NUMBERS[@]}"; do
-        SUBNET_OFFSET=$((UE_NUMBER * SUBNET_SIZE))
-        UE_IP_OFFSET=$((SUBNET_OFFSET + 1)) # .6
-        UE_IP=$(python3 install_scripts/fetch_nth_ip.py "$BASE_SUBNET" "$UE_IP_OFFSET")
+        UE_IP=$(../User_Equipment/install_scripts/get_ue_namespace_ip.sh ue "$UE_NUMBER")
         UE_ARGS="$UE_ARGS --ue $UE_NUMBER:$UE_IP"
     done
 

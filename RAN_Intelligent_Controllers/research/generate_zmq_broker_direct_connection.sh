@@ -216,12 +216,12 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
     def __init__(self):
         try:
             gr.top_block.__init__(
-                self, "OCUDU_multi_cell_multi_UE", catch_exceptions=True
+                self, "Multi_Cell_Multi_UE_Broker", catch_exceptions=True
             )
         except TypeError:
-            gr.top_block.__init__(self, "OCUDU_multi_cell_multi_UE")
+            gr.top_block.__init__(self, "Multi_Cell_Multi_UE_Broker")
         Qt.QWidget.__init__(self)
-        self.setWindowTitle("OCUDU_multi_cell_multi_UE")
+        self.setWindowTitle("Multi_Cell_Multi_UE_Broker")
         qtgui.util.check_set_qss()
 
         self.top_layout = Qt.QVBoxLayout()

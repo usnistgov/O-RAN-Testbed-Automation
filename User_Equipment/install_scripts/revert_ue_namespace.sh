@@ -43,8 +43,8 @@ if [[ -z "$UE_NUMBER" ]]; then
     echo "Usage: $0 <UE_NUMBER>"
     exit 1
 fi
-if ! [[ "$UE_NUMBER" =~ ^[0-9]+$ ]]; then
-    echo "ERROR: UE number must be a number."
+if ! [[ "$UE_NUMBER" =~ ^[1-9][0-9]*$ ]]; then
+    echo "ERROR: UE number must be a positive integer."
     exit 1
 fi
 
@@ -53,30 +53,21 @@ UE_NAMESPACE="ue$UE_NUMBER"
 NETWORK_INTERFACE=$(ip route | grep default | awk '{print $5}')
 
 # Recalculate the IPs used during setup to identify resources to clean up
-# Allocate a /30 (4 addresses) subnet per UE (e.g., UE 1 -> 10.201.0.4/30, Gateway .5, UE .6)
-BASE_SUBNET="10.201.0.0/16"
-SUBNET_SIZE=4
-
-# Calculate IP offsets
-SUBNET_OFFSET=$((UE_NUMBER * SUBNET_SIZE))
-HOST_IP_OFFSET=$((SUBNET_OFFSET))   # .5
-UE_IP_OFFSET=$((SUBNET_OFFSET + 1)) # .6
-
-# Fetch IPs from subnet using python script
-UE_SUBNET_ID=$(python3 fetch_nth_ip.py "$BASE_SUBNET" $((SUBNET_OFFSET - 1)))
-UE_HOST_IP=$(python3 fetch_nth_ip.py "$BASE_SUBNET" "$HOST_IP_OFFSET")
-UE_NS_IP=$(python3 fetch_nth_ip.py "$BASE_SUBNET" "$UE_IP_OFFSET")
+UE_HOST_IP=$(./get_ue_namespace_ip.sh host "$UE_NUMBER") || exit 1
+UE_NS_IP=$(./get_ue_namespace_ip.sh ue "$UE_NUMBER") || exit 1
+UE_SUBNET_ID=$(./get_ue_namespace_ip.sh subnet "$UE_NUMBER") || exit 1
+UE_PREFIX_LENGTH=$(./get_ue_namespace_ip.sh prefix) || exit 1
 
 echo "Removing IP routes and addresses inside the namespace..."
 sudo ip netns exec "$UE_NAMESPACE" ip route del default via "$UE_HOST_IP" dev "v-$UE_NAMESPACE" || true
-sudo ip netns exec "$UE_NAMESPACE" ip addr del "$UE_NS_IP/30" dev "v-$UE_NAMESPACE" || true
+sudo ip netns exec "$UE_NAMESPACE" ip addr del "$UE_NS_IP/$UE_PREFIX_LENGTH" dev "v-$UE_NAMESPACE" || true
 sudo ip netns exec "$UE_NAMESPACE" ip link set "v-$UE_NAMESPACE" down || true
-sudo ip route del "$UE_SUBNET_ID/30" dev "v-eth$UE_NUMBER" 2>/dev/null || true
+sudo ip route del "$UE_SUBNET_ID/$UE_PREFIX_LENGTH" dev "v-eth$UE_NUMBER" 2>/dev/null || true
 
 echo "Removing iptables rules..."
 while sudo iptables -D FORWARD -o "$NETWORK_INTERFACE" -i "v-eth$UE_NUMBER" -j ACCEPT 2>/dev/null; do :; done
 while sudo iptables -D FORWARD -i "$NETWORK_INTERFACE" -o "v-eth$UE_NUMBER" -j ACCEPT 2>/dev/null; do :; done
-while sudo iptables -t nat -D POSTROUTING -s "$UE_SUBNET_ID/30" -o "$NETWORK_INTERFACE" -j MASQUERADE 2>/dev/null; do :; done
+while sudo iptables -t nat -D POSTROUTING -s "$UE_SUBNET_ID/$UE_PREFIX_LENGTH" -o "$NETWORK_INTERFACE" -j MASQUERADE 2>/dev/null; do :; done
 
 echo "Deleting the network devices..."
 sudo ip link set "v-eth$UE_NUMBER" down

@@ -21,7 +21,7 @@ The Next Generation Node B (gNodeB) is a 5G base station configured with OCUDU [
 
 ## Simulating Multiple UEs and Cells with ZeroMQ Broker
 
-By default, the gNodeB uses a ZeroMQ (ZMQ) Broker with cell 1 and UEs 1, 2, and 3. The broker supports multi-UE and multi-cell emulation and is motivated by the OCUDU Multi-UE Emulation tutorial [\[5][ocudu-multi-ue], [6\]][ocudu-multi-ue-grc]. The broker Python runtime script is generated during configuration from the requested UE list using `install_scripts/generate_zmq_broker.sh`. The broker operates the simulated ZeroMQ channel. Its graphical user interface is disabled by default, but can be enabled by setting `SHOW_ZMQ_BROKER_UI=true` in `run.sh`.
+By default, the gNodeB uses a ZeroMQ (ZMQ) Broker with cell 1 and UEs 1, 2, and 3. The broker supports multi-UE and multi-cell emulation and is motivated by the OCUDU Multi-UE Emulation tutorial [\[5][ocudu-multi-ue], [6\]][ocudu-multi-ue-grc]. The broker Python runtime script is generated during configuration from the requested UE list using `install_scripts/generate_zmq_broker.sh`. The broker operates the simulated ZeroMQ channel. Its graphical user interface can be toggled by setting `SHOW_ZMQ_BROKER_UI` in `run.sh`.
 
 To connect the gNodeB directly to a single SRS UE without the broker, set all occurrences of `USE_ZMQ_BROKER` to `false`, then run the base directory configuration script: `../generate_configurations.sh`.
 

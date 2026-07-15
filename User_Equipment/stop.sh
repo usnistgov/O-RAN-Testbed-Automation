@@ -40,12 +40,8 @@ cd "$SCRIPT_DIR"
 UE_NUMBER=""
 if [ "$#" -eq 1 ]; then
     UE_NUMBER=$1
-    if ! [[ $UE_NUMBER =~ ^[0-9]+$ ]]; then
-        echo "ERROR: UE number must be a number."
-        exit 1
-    fi
-    if [ $UE_NUMBER -lt 1 ]; then
-        echo "ERROR: UE number must be greater than or equal to 1."
+    if ! [[ "$UE_NUMBER" =~ ^[1-9][0-9]*$ ]]; then
+        echo "ERROR: UE number must be a positive integer."
         exit 1
     fi
 fi
@@ -87,7 +83,7 @@ fi
 
 # Wait for the process to terminate gracefully
 COUNT=0
-MAX_COUNT=10
+MAX_COUNT=5
 sleep 1
 while [ $COUNT -lt $MAX_COUNT ]; do
     IS_RUNNING=$(./is_running.sh)
@@ -99,7 +95,7 @@ while [ $COUNT -lt $MAX_COUNT ]; do
             exit 0
         fi
     else
-        if ! echo "$IS_RUNNING" | grep -q "ue$UE_NUMBER"; then
+        if ! echo "$IS_RUNNING" | grep -Eq "(^|[ (])ue${UE_NUMBER}([ )]|$)"; then
             echo "The User Equipment $UE_NUMBER has stopped gracefully."
             remove_ue_namespace "$UE_NUMBER"
             ./is_running.sh

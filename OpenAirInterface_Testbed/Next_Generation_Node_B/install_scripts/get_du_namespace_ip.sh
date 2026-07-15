@@ -1,0 +1,1 @@
+../../../Next_Generation_Node_B/install_scripts/get_du_namespace_ip.sh

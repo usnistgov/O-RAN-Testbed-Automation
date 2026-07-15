@@ -29,6 +29,8 @@
 # copyright protection within the United States.
 
 DISABLE_NRSCOPE_IF_INSTALLED=false
+USE_ZMQ_BROKER=false
+SHOW_ZMQ_BROKER_UI=true
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
@@ -42,6 +44,20 @@ if ! command -v gdb &>/dev/null; then
     echo "Installing GNU Debugger..."
     sudo apt-get update
     sudo env $APTVARS apt-get install -y gdb
+fi
+
+if [ "$USE_ZMQ_BROKER" = "true" ]; then
+    if [ ! -f "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build/liboai_zmqdevif.so" ]; then
+        echo "ERROR: ZeroMQ device library not found. Rerun full_install.sh after setting RADIO_TYPE=\"ZMQ\"."
+        exit 1
+    fi
+
+    "$SCRIPT_DIR/install_scripts/run_zmq_broker.sh" --show-ui "$SHOW_ZMQ_BROKER_UI"
+    if [ $# -eq 0 ]; then
+        set -- 1
+    fi
+    GDB_ARGS=("$@" --gdb)
+    exec "$SCRIPT_DIR/run_split_du.sh" "${GDB_ARGS[@]}"
 fi
 
 ADDITIONAL_FLAGS=""
@@ -65,19 +81,6 @@ fi
 
 cd "$SCRIPT_DIR"
 
-RADIO_TYPE=$(cat "$SCRIPT_DIR/configs/radio_type.txt" 2>/dev/null || echo "RFSIM")
-if [ "$RADIO_TYPE" = "ZMQ" ]; then
-    ZMQ_TX_PORT=4556
-    ZMQ_RX_PORT=4557
-    UE_NUMBER=1
-    UE_NS_IP=$(python3 "$SCRIPT_DIR/install_scripts/fetch_nth_ip.py" "10.201.0.0/16" $((UE_NUMBER * 4 + 1)))
-    RADIO_ARGS="--device.name oai_zmqdevif --zmq.[0].tx_channels tcp://0.0.0.0:$ZMQ_TX_PORT --zmq.[0].rx_channels tcp://$UE_NS_IP:$ZMQ_RX_PORT"
-elif [ "$RADIO_TYPE" = "USRP" ]; then
-    RADIO_ARGS=""
-else
-    RADIO_ARGS="$RADIO_ARGS"
-fi
-
 # Write the hostname IP to the get_rfsim_server_address.txt file
 HOSTNAME_IP=$(hostname -I | awk '{print $1}')
 mkdir -p configs
@@ -90,6 +93,19 @@ fi
 >logs/gnb_stdout.txt
 
 cd "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build"
+
+RADIO_TYPE=$(cat "$SCRIPT_DIR/configs/radio_type.txt" 2>/dev/null || echo "RFSIM")
+if [ "$RADIO_TYPE" = "ZMQ" ]; then
+    ZMQ_TX_PORT=4556
+    ZMQ_RX_PORT=4557
+    UE_NUMBER=1
+    UE_NS_IP=$("$SCRIPT_DIR/install_scripts/get_ue_namespace_ip.sh" ue "$UE_NUMBER")
+    RADIO_ARGS="--device.name oai_zmqdevif --zmq.[0].tx_channels tcp://0.0.0.0:$ZMQ_TX_PORT --zmq.[0].rx_channels tcp://$UE_NS_IP:$ZMQ_RX_PORT"
+elif [ "$RADIO_TYPE" = "USRP" ]; then
+    RADIO_ARGS=""
+else
+    RADIO_ARGS="--rfsim --rfsimulator.[0].serveraddr server --rfsimulator.[0].options chanmod"
+fi
 
 # sudo gdb --args ./nr-softmodem -O "$SCRIPT_DIR/configs/gnb.conf" $RADIO_ARGS --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS
 if [ "$IMSCOPE" = true ]; then # ImScope GUI cannot be run with sudo

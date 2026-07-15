@@ -28,6 +28,7 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
+# Exit immediately if a command fails
 set -e
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
@@ -35,14 +36,26 @@ PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$PARENT_DIR"
 
 GNB_CONFIG="configs/gnb.yaml"
-BROKER="zmq_broker/multi_ue_scenario.py"
 UE_CONFIG_DIR="../User_Equipment/configs"
+BROKER_ONLY=false
 UE_NUMBERS=()
 CELL_NUMBERS=()
 ERRORS=()
 
+usage() {
+    echo "Usage: $0 [--broker-only] [--ue NUMBER ...] [--cell NUMBER ...]"
+}
+
 while [ $# -gt 0 ]; do
     case "$1" in
+    -h | --help)
+        usage
+        exit 0
+        ;;
+    --broker-only)
+        BROKER_ONLY=true
+        shift
+        ;;
     --ue)
         UE_NUMBERS+=("$2")
         shift 2
@@ -52,7 +65,7 @@ while [ $# -gt 0 ]; do
         shift 2
         ;;
     *)
-        echo "Usage: $0 [--gnb-config FILE] [--broker FILE] [--ue-config-dir DIR] [--ue NUMBER ...]"
+        usage
         exit 1
         ;;
     esac
@@ -82,62 +95,41 @@ device_arg_value() {
     echo "$1" | tr ',' '\n' | awk -F= -v key="$2" '$1 == key { print $2; exit }' | xargs || true
 }
 
-broker_field() {
-    grep -E "^# UE_CONFIG: $2 " "$1" | awk -v field="$3" '{ print $field; exit }' || true
-}
-
-broker_cell_field() {
-    grep -E "^# CELL_CONFIG: $2 " "$1" | awk -v field="$3" '{ print $field; exit }' || true
-}
-
-if [ ! -f "$GNB_CONFIG" ]; then
-    add_error "gNB config not found: $GNB_CONFIG"
-fi
-if [ ! -f "$BROKER" ]; then
-    add_error "ZMQ broker not found: $BROKER"
-fi
-if [ ! -d "$UE_CONFIG_DIR" ]; then
-    add_error "UE config directory not found: $UE_CONFIG_DIR"
+if [ ! -x "$SCRIPT_DIR/get_zmq_broker_config.sh" ]; then
+    add_error "ZeroMQ Broker configuration reader not found: $SCRIPT_DIR/get_zmq_broker_config.sh"
+else
+    BROKER=$("$SCRIPT_DIR/get_zmq_broker_config.sh" --broker-file)
+    if [ ! -f "$BROKER" ]; then
+        add_error "ZeroMQ Broker configuration not found: $BROKER"
+    fi
 fi
 
-if [ ${#ERRORS[@]} -eq 0 ]; then
+if [ "$BROKER_ONLY" != "true" ]; then
+    if [ ! -f "$GNB_CONFIG" ]; then
+        add_error "gNB config not found: $GNB_CONFIG"
+    fi
+    if [ ! -d "$UE_CONFIG_DIR" ]; then
+        add_error "UE config directory not found: $UE_CONFIG_DIR"
+    fi
+fi
+
+if [ ${#ERRORS[@]} -eq 0 ] && [ ${#CELL_NUMBERS[@]} -eq 0 ]; then
+    mapfile -t CELL_NUMBERS < <("$SCRIPT_DIR/get_zmq_broker_config.sh" --cells)
+fi
+if [ ${#ERRORS[@]} -eq 0 ] && [ ${#UE_NUMBERS[@]} -eq 0 ]; then
+    mapfile -t UE_NUMBERS < <("$SCRIPT_DIR/get_zmq_broker_config.sh" --ues)
+fi
+if [ ${#CELL_NUMBERS[@]} -eq 0 ]; then
+    add_error "No cells were found in the generated ZeroMQ Broker configuration"
+fi
+if [ ${#UE_NUMBERS[@]} -eq 0 ]; then
+    add_error "No UEs were found in the generated ZeroMQ Broker configuration"
+fi
+
+if [ "$BROKER_ONLY" != "true" ] && [ ${#ERRORS[@]} -eq 0 ]; then
     GNB_DEVICE_ARGS=$(yaml_value "$GNB_CONFIG" "device_args")
     GNB_SRATE=$(yaml_value "$GNB_CONFIG" "srate")
     GNB_BASE_SRATE=$(device_arg_value "$GNB_DEVICE_ARGS" "base_srate")
-    PDU_TIMEOUT=$(yaml_value "$GNB_CONFIG" "request_pdu_session_timeout")
-
-    if [ ${#CELL_NUMBERS[@]} -eq 0 ]; then
-        for BROKER_CELL in $(grep -E '^# CELL_CONFIG: ' "$BROKER" | awk '{ print $3 }'); do
-            CELL_NUMBERS+=("$BROKER_CELL")
-        done
-        if [ ${#CELL_NUMBERS[@]} -eq 0 ]; then
-            CELL_NUMBERS=(1)
-        fi
-    fi
-    CELL_COUNT=0
-    for CELL_NUMBER in "${CELL_NUMBERS[@]}"; do
-        if ! [[ "$CELL_NUMBER" =~ ^[0-9]+$ ]] || [ "$CELL_NUMBER" -lt 1 ]; then
-            add_error "Cell number '$CELL_NUMBER' must be a positive integer"
-        else
-            EXPECTED_CELL_RX_PORT=$((2000 + (CELL_NUMBER - 1) * 2))
-            EXPECTED_CELL_TX_PORT=$((2001 + (CELL_NUMBER - 1) * 2))
-
-            if [ "$(broker_cell_field "$BROKER" "$CELL_NUMBER" 4)" != "$EXPECTED_CELL_RX_PORT" ]; then
-                add_error "Cell $CELL_NUMBER: broker rx_port must be $EXPECTED_CELL_RX_PORT (got $(broker_cell_field "$BROKER" "$CELL_NUMBER" 4))"
-            fi
-            if [ "$(broker_cell_field "$BROKER" "$CELL_NUMBER" 5)" != "$EXPECTED_CELL_TX_PORT" ]; then
-                add_error "Cell $CELL_NUMBER: broker tx_port must be $EXPECTED_CELL_TX_PORT (got $(broker_cell_field "$BROKER" "$CELL_NUMBER" 5))"
-            fi
-            if [ "$(device_arg_value "$GNB_DEVICE_ARGS" "tx_port$CELL_COUNT")" != "tcp://127.0.0.1:$EXPECTED_CELL_RX_PORT" ]; then
-                add_error "Cell $CELL_NUMBER: gNB tx_port$CELL_COUNT must be tcp://127.0.0.1:$EXPECTED_CELL_RX_PORT for broker mode"
-            fi
-            if [ "$(device_arg_value "$GNB_DEVICE_ARGS" "rx_port$CELL_COUNT")" != "tcp://127.0.0.1:$EXPECTED_CELL_TX_PORT" ]; then
-                add_error "Cell $CELL_NUMBER: gNB rx_port$CELL_COUNT must be tcp://127.0.0.1:$EXPECTED_CELL_TX_PORT for broker mode"
-            fi
-            CELL_COUNT=$((CELL_COUNT + 1))
-        fi
-    done
-
     if [ -z "$GNB_BASE_SRATE" ]; then
         add_error "gNB device_args is missing base_srate"
     fi
@@ -146,80 +138,102 @@ if [ ${#ERRORS[@]} -eq 0 ]; then
     fi
 fi
 
-if [ ${#UE_NUMBERS[@]} -eq 0 ] && [ -d "$UE_CONFIG_DIR" ]; then
-    for UE_CONFIG in "$UE_CONFIG_DIR"/ue*.conf; do
-        [ -e "$UE_CONFIG" ] || continue
-        UE_NAME=$(basename "$UE_CONFIG")
-        UE_NUMBER="${UE_NAME#ue}"
-        UE_NUMBER="${UE_NUMBER%.conf}"
-        if [[ "$UE_NUMBER" =~ ^[0-9]+$ ]]; then
-            UE_NUMBERS+=("$UE_NUMBER")
-        fi
-    done
-fi
-
-if [ ${#UE_NUMBERS[@]} -eq 0 ]; then
-    add_error "No UE configs were found to validate"
-fi
-
-for UE_NUMBER in "${UE_NUMBERS[@]}"; do
-    UE_CONFIG="$UE_CONFIG_DIR/ue${UE_NUMBER}.conf"
-    if [ ! -f "$UE_CONFIG" ]; then
-        add_error "UE $UE_NUMBER: missing $UE_CONFIG"
+CELL_COUNT=0
+for CELL_NUMBER in "${CELL_NUMBERS[@]}"; do
+    if ! [[ "$CELL_NUMBER" =~ ^[1-9][0-9]*$ ]]; then
+        add_error "Cell number '$CELL_NUMBER' must be a positive integer"
+        continue
+    fi
+    EXPECTED_CELL_RX_PORT=$((2000 + (CELL_NUMBER - 1) * 2))
+    EXPECTED_CELL_TX_PORT=$((EXPECTED_CELL_RX_PORT + 1))
+    if [ "$EXPECTED_CELL_TX_PORT" -gt 65535 ]; then
+        add_error "Cell $CELL_NUMBER has a ZeroMQ port above 65535"
         continue
     fi
 
-    UE_DEVICE_ARGS=$(conf_section_value "$UE_CONFIG" "rf" "device_args")
-    UE_SRATE=$(conf_section_value "$UE_CONFIG" "rf" "srate")
-    EXPECTED_HOST_IP=$(python3 "$SCRIPT_DIR/fetch_nth_ip.py" "10.201.0.0/16" "$((UE_NUMBER * 4))")
-    EXPECTED_UE_IP=$(python3 "$SCRIPT_DIR/fetch_nth_ip.py" "10.201.0.0/16" "$((UE_NUMBER * 4 + 1))")
+    BROKER_CELL_CONFIG=$("$SCRIPT_DIR/get_zmq_broker_config.sh" --cell "$CELL_NUMBER" 2>/dev/null || true)
+    if [ -z "$BROKER_CELL_CONFIG" ]; then
+        add_error "Cell $CELL_NUMBER is missing from the generated ZeroMQ Broker configuration"
+        continue
+    fi
+    read -r BROKER_CELL_NUMBER BROKER_CELL_RX_PORT BROKER_CELL_TX_PORT <<<"$BROKER_CELL_CONFIG"
+
+    if [ "$BROKER_CELL_NUMBER" != "$CELL_NUMBER" ]; then
+        add_error "Cell $CELL_NUMBER: broker record has cell number $BROKER_CELL_NUMBER"
+    fi
+    if [ "$BROKER_CELL_RX_PORT" != "$EXPECTED_CELL_RX_PORT" ]; then
+        add_error "Cell $CELL_NUMBER: broker rx_port must be $EXPECTED_CELL_RX_PORT (got $BROKER_CELL_RX_PORT)"
+    fi
+    if [ "$BROKER_CELL_TX_PORT" != "$EXPECTED_CELL_TX_PORT" ]; then
+        add_error "Cell $CELL_NUMBER: broker tx_port must be $EXPECTED_CELL_TX_PORT (got $BROKER_CELL_TX_PORT)"
+    fi
+    if [ "$BROKER_ONLY" != "true" ]; then
+        if [ "$(device_arg_value "$GNB_DEVICE_ARGS" "tx_port$CELL_COUNT")" != "tcp://127.0.0.1:$EXPECTED_CELL_RX_PORT" ]; then
+            add_error "Cell $CELL_NUMBER: gNB tx_port$CELL_COUNT must be tcp://127.0.0.1:$EXPECTED_CELL_RX_PORT for broker mode"
+        fi
+        if [ "$(device_arg_value "$GNB_DEVICE_ARGS" "rx_port$CELL_COUNT")" != "tcp://127.0.0.1:$EXPECTED_CELL_TX_PORT" ]; then
+            add_error "Cell $CELL_NUMBER: gNB rx_port$CELL_COUNT must be tcp://127.0.0.1:$EXPECTED_CELL_TX_PORT for broker mode"
+        fi
+    fi
+    CELL_COUNT=$((CELL_COUNT + 1))
+done
+
+for UE_NUMBER in "${UE_NUMBERS[@]}"; do
+    if ! [[ "$UE_NUMBER" =~ ^[1-9][0-9]*$ ]]; then
+        add_error "UE number '$UE_NUMBER' must be a positive integer"
+        continue
+    fi
     EXPECTED_RX_PORT=$((2000 + UE_NUMBER * 100))
-    EXPECTED_TX_PORT=$((2001 + UE_NUMBER * 100))
+    EXPECTED_TX_PORT=$((EXPECTED_RX_PORT + 1))
+    if [ "$EXPECTED_TX_PORT" -gt 65535 ]; then
+        add_error "UE $UE_NUMBER has a ZeroMQ port above 65535"
+        continue
+    fi
 
-    if [ "$(broker_field "$BROKER" "$UE_NUMBER" 4)" != "$EXPECTED_RX_PORT" ]; then
-        add_error "UE $UE_NUMBER: broker rx_port must be $EXPECTED_RX_PORT (got $(broker_field "$BROKER" "$UE_NUMBER" 4))"
+    BROKER_UE_CONFIG=$("$SCRIPT_DIR/get_zmq_broker_config.sh" --ue "$UE_NUMBER" 2>/dev/null || true)
+    if [ -z "$BROKER_UE_CONFIG" ]; then
+        add_error "UE $UE_NUMBER is missing from the generated ZeroMQ Broker configuration"
+        continue
     fi
-    if [ "$(broker_field "$BROKER" "$UE_NUMBER" 5)" != "$EXPECTED_TX_PORT" ]; then
-        add_error "UE $UE_NUMBER: broker tx_port must be $EXPECTED_TX_PORT (got $(broker_field "$BROKER" "$UE_NUMBER" 5))"
-    fi
-    if [ "$(broker_field "$BROKER" "$UE_NUMBER" 6)" != "$EXPECTED_UE_IP" ]; then
-        add_error "UE $UE_NUMBER: broker ue_ip must be $EXPECTED_UE_IP (got $(broker_field "$BROKER" "$UE_NUMBER" 6))"
-    fi
-    if [ "$(device_arg_value "$UE_DEVICE_ARGS" "tx_port")" != "tcp://*:$EXPECTED_TX_PORT" ]; then
-        add_error "UE $UE_NUMBER: tx_port must be tcp://*:$EXPECTED_TX_PORT (got $(device_arg_value "$UE_DEVICE_ARGS" "tx_port"))"
-    fi
-    if [ "$(device_arg_value "$UE_DEVICE_ARGS" "rx_port")" != "tcp://$EXPECTED_HOST_IP:$EXPECTED_RX_PORT" ]; then
-        add_error "UE $UE_NUMBER: rx_port must be tcp://$EXPECTED_HOST_IP:$EXPECTED_RX_PORT (got $(device_arg_value "$UE_DEVICE_ARGS" "rx_port"))"
-    fi
-    if [ "$(device_arg_value "$UE_DEVICE_ARGS" "base_srate")" != "$GNB_BASE_SRATE" ]; then
-        add_error "UE $UE_NUMBER: base_srate does not match gNB base_srate (got $(device_arg_value "$UE_DEVICE_ARGS" "base_srate"))"
-    fi
-    if [ "$UE_SRATE" != "${GNB_SRATE}e6" ]; then
-        add_error "UE $UE_NUMBER: srate $UE_SRATE does not match gNB srate ${GNB_SRATE}e6 (got ${GNB_SRATE}e6)"
-    fi
-done
+    read -r BROKER_UE_NUMBER BROKER_UE_RX_PORT BROKER_UE_TX_PORT BROKER_UE_IP BROKER_HOST_IP <<<"$BROKER_UE_CONFIG"
+    EXPECTED_HOST_IP=$("$PARENT_DIR/../User_Equipment/install_scripts/get_ue_namespace_ip.sh" host "$UE_NUMBER")
+    EXPECTED_UE_IP=$("$PARENT_DIR/../User_Equipment/install_scripts/get_ue_namespace_ip.sh" ue "$UE_NUMBER")
 
-for BROKER_UE in $(grep -E '^# UE_CONFIG: ' "$BROKER" | awk '{ print $3 }'); do
-    FOUND=false
-    for UE_NUMBER in "${UE_NUMBERS[@]}"; do
-        if [ "$BROKER_UE" = "$UE_NUMBER" ]; then
-            FOUND=true
+    if [ "$BROKER_UE_NUMBER" != "$UE_NUMBER" ]; then
+        add_error "UE $UE_NUMBER: broker record has UE number $BROKER_UE_NUMBER"
+    fi
+    if [ "$BROKER_UE_RX_PORT" != "$EXPECTED_RX_PORT" ]; then
+        add_error "UE $UE_NUMBER: broker rx_port must be $EXPECTED_RX_PORT (got $BROKER_UE_RX_PORT)"
+    fi
+    if [ "$BROKER_UE_TX_PORT" != "$EXPECTED_TX_PORT" ]; then
+        add_error "UE $UE_NUMBER: broker tx_port must be $EXPECTED_TX_PORT (got $BROKER_UE_TX_PORT)"
+    fi
+    if [ "$BROKER_UE_IP" != "$EXPECTED_UE_IP" ]; then
+        add_error "UE $UE_NUMBER: broker ue_ip must be $EXPECTED_UE_IP (got $BROKER_UE_IP)"
+    fi
+    if [ "$BROKER_HOST_IP" != "$EXPECTED_HOST_IP" ]; then
+        add_error "UE $UE_NUMBER: broker host IP must be $EXPECTED_HOST_IP (got $BROKER_HOST_IP)"
+    fi
+    if [ "$BROKER_ONLY" != "true" ]; then
+        UE_CONFIG="$UE_CONFIG_DIR/ue${UE_NUMBER}.conf"
+        if [ ! -f "$UE_CONFIG" ]; then
+            add_error "UE $UE_NUMBER: missing $UE_CONFIG"
+            continue
         fi
-    done
-    if [ "$FOUND" = false ]; then
-        add_error "Generated broker contains UE $BROKER_UE without matching UE config"
-    fi
-done
-
-for BROKER_CELL in $(grep -E '^# CELL_CONFIG: ' "$BROKER" | awk '{ print $3 }'); do
-    FOUND=false
-    for CELL_NUMBER in "${CELL_NUMBERS[@]}"; do
-        if [ "$BROKER_CELL" = "$CELL_NUMBER" ]; then
-            FOUND=true
+        UE_DEVICE_ARGS=$(conf_section_value "$UE_CONFIG" "rf" "device_args")
+        UE_SRATE=$(conf_section_value "$UE_CONFIG" "rf" "srate")
+        if [ "$(device_arg_value "$UE_DEVICE_ARGS" "tx_port")" != "tcp://*:$EXPECTED_TX_PORT" ]; then
+            add_error "UE $UE_NUMBER: tx_port must be tcp://*:$EXPECTED_TX_PORT (got $(device_arg_value "$UE_DEVICE_ARGS" "tx_port"))"
         fi
-    done
-    if [ "$FOUND" = false ]; then
-        add_error "Generated broker contains cell $BROKER_CELL without matching requested cell"
+        if [ "$(device_arg_value "$UE_DEVICE_ARGS" "rx_port")" != "tcp://$EXPECTED_HOST_IP:$EXPECTED_RX_PORT" ]; then
+            add_error "UE $UE_NUMBER: rx_port must be tcp://$EXPECTED_HOST_IP:$EXPECTED_RX_PORT (got $(device_arg_value "$UE_DEVICE_ARGS" "rx_port"))"
+        fi
+        if [ "$(device_arg_value "$UE_DEVICE_ARGS" "base_srate")" != "$GNB_BASE_SRATE" ]; then
+            add_error "UE $UE_NUMBER: base_srate does not match gNB base_srate (got $(device_arg_value "$UE_DEVICE_ARGS" "base_srate"))"
+        fi
+        if [ "$UE_SRATE" != "${GNB_SRATE}e6" ]; then
+            add_error "UE $UE_NUMBER: srate $UE_SRATE does not match gNB srate ${GNB_SRATE}e6 (got ${GNB_SRATE}e6)"
+        fi
     fi
 done
 

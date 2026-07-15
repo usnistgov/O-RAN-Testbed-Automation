@@ -41,7 +41,7 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 
 cd "$SCRIPT_DIR"
 
-if ./is_running.sh | grep -E "^gNodeB:" | grep -q "cu"; then
+if ./is_cu_ready.sh | grep -qx true; then
     echo "Already running gNodeB (CU)."
 else
     if [ ! -d "configs" ]; then
@@ -49,20 +49,38 @@ else
         exit 1
     fi
 
-    echo "Starting CU in background..."
+    CU_PID=""
+    if ! ./is_running.sh | grep -Eq '(^|[ (])cu([ )]|$)'; then
+        echo "Starting CU in background..."
 
-    sudo -v # Ensure sudo session is active
-    sudo setsid bash -c "stdbuf -oL -eL \"$SCRIPT_DIR/run_split_cu.sh\" >/dev/null 2>&1" </dev/null &
+        sudo -v # Ensure sudo session is active
+        sudo setsid --wait bash -c "exec stdbuf -oL -eL \"$SCRIPT_DIR/run_split_cu.sh\"" </dev/null >/dev/null 2>&1 &
+        CU_PID=$!
+        if [ -t 0 ]; then
+            stty sane || true
+        fi
+    else
+        echo "Waiting for the running CU to be ready..."
+    fi
 
     ATTEMPT=0
-    while ! (./is_running.sh | grep -E "^gNodeB:" | grep -q "cu"); do
+    while ! ./is_cu_ready.sh | grep -qx true; do
         sleep 0.5
         ATTEMPT=$((ATTEMPT + 1))
+        if { [ -n "$CU_PID" ] && ! ps -p "$CU_PID" >/dev/null; } ||
+            { [ -z "$CU_PID" ] && ! ./is_running.sh | grep -Eq '(^|[ (])cu([ )]|$)'; }; then
+            wait "$CU_PID" 2>/dev/null || true
+            echo "CU exited before its F1-C socket was ready. Check logs/split_cu_stdout.txt."
+            exit 1
+        fi
         if [ $ATTEMPT -ge 120 ]; then
-            echo "CU did not start after 60 seconds, exiting..."
+            echo "CU F1-C socket did not become ready after 60 seconds. Check logs/split_cu_stdout.txt."
             exit 1
         fi
     done
 
+    if [ -t 0 ]; then
+        stty sane || true
+    fi
     ./is_running.sh
 fi

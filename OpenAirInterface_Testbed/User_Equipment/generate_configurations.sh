@@ -53,14 +53,14 @@ if [ ${#UE_NUMBERS[@]} -eq 0 ]; then
     UE_NUMBERS=(3 2 1)
     CLEAR_CONFIGS=true
 fi
-# Check if the input is a number
+# Check if the input is correct
 for UE_NUMBER in "${UE_NUMBERS[@]}"; do
-    if ! [[ "$UE_NUMBER" =~ ^[0-9]+$ ]]; then
-        echo "ERROR: UE number must be a number."
+    if ! [[ "$UE_NUMBER" =~ ^[1-9][0-9]*$ ]]; then
+        echo "ERROR: UE number must be a positive integer."
         exit 1
     fi
-    if [ "$UE_NUMBER" -lt 1 ]; then
-        echo "ERROR: UE number must be greater than or equal to 1."
+    if ! "$SCRIPT_DIR/install_scripts/get_ue_namespace_ip.sh" host "$UE_NUMBER" >/dev/null 2>&1; then
+        echo "ERROR: UE $UE_NUMBER cannot be allocated an address in the namespace subnet."
         exit 1
     fi
     echo "UE $UE_NUMBER will be configured."

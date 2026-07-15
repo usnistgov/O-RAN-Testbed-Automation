@@ -36,6 +36,7 @@ SLOW_DOWN_RATIO=""
 CELL_NUMBERS=()
 UE_NUMBERS=()
 UE_IPS=()
+VALIDATED_CELL_NUMBERS=()
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
@@ -67,7 +68,7 @@ while [ $# -gt 0 ]; do
         UE_VALUE="$2"
         UE_NUMBER="${UE_VALUE%%:*}"
         UE_IP="${UE_VALUE#*:}"
-        if ! [[ "$UE_NUMBER" =~ ^[0-9]+$ ]] || [ "$UE_NUMBER" -lt 1 ] || [ "$UE_IP" = "$UE_VALUE" ]; then
+        if ! [[ "$UE_NUMBER" =~ ^[1-9][0-9]*$ ]] || [ "$UE_IP" = "$UE_VALUE" ]; then
             echo "ERROR: UE must be formatted as NUMBER:IP_ADDRESS."
             exit 1
         fi
@@ -92,20 +93,52 @@ if [ -z "$OUTPUT" ] || [ -z "$SAMPLE_RATE_HZ" ] || [ ${#UE_NUMBERS[@]} -eq 0 ] |
     usage
     exit 1
 fi
-if ! [[ "$SAMPLE_RATE_HZ" =~ ^[0-9]+$ ]] || [ "$SAMPLE_RATE_HZ" -lt 1 ]; then
+if ! [[ "$SAMPLE_RATE_HZ" =~ ^[1-9][0-9]*$ ]]; then
     echo "ERROR: --sample-rate-hz must be a positive integer ($SAMPLE_RATE_HZ)."
     exit 1
 fi
-if ! [[ "$SLOW_DOWN_RATIO" =~ ^[0-9]+$ ]] || [ "$SLOW_DOWN_RATIO" -lt 1 ]; then
+if ! [[ "$SLOW_DOWN_RATIO" =~ ^[1-9][0-9]*$ ]]; then
     echo "ERROR: --slow-down-ratio must be a positive integer ($SLOW_DOWN_RATIO)."
     exit 1
 fi
 
 for CELL_NUMBER in "${CELL_NUMBERS[@]}"; do
-    if ! [[ "$CELL_NUMBER" =~ ^[0-9]+$ ]] || [ "$CELL_NUMBER" -lt 1 ]; then
+    if ! [[ "$CELL_NUMBER" =~ ^[1-9][0-9]*$ ]]; then
         echo "ERROR: --cell must be a positive integer ($CELL_NUMBER)."
         exit 1
     fi
+    for EXISTING_CELL in "${VALIDATED_CELL_NUMBERS[@]}"; do
+        if [ "$EXISTING_CELL" = "$CELL_NUMBER" ]; then
+            echo "ERROR: Cell $CELL_NUMBER was provided more than once."
+            exit 1
+        fi
+    done
+    VALIDATED_CELL_NUMBERS+=("$CELL_NUMBER")
+    CELL_RX_PORT=$((2000 + (CELL_NUMBER - 1) * 2))
+    CELL_TX_PORT=$((CELL_RX_PORT + 1))
+    if [ "$CELL_TX_PORT" -gt 65535 ]; then
+        echo "ERROR: Cell $CELL_NUMBER has a ZeroMQ port above 65535."
+        exit 1
+    fi
+done
+
+for UE_NUMBER in "${UE_NUMBERS[@]}"; do
+    UE_RX_PORT=$((2000 + UE_NUMBER * 100))
+    UE_TX_PORT=$((UE_RX_PORT + 1))
+    if [ "$UE_TX_PORT" -gt 65535 ]; then
+        echo "ERROR: UE $UE_NUMBER has a ZeroMQ port above 65535."
+        exit 1
+    fi
+
+    for CELL_NUMBER in "${CELL_NUMBERS[@]}"; do
+        CELL_RX_PORT=$((2000 + (CELL_NUMBER - 1) * 2))
+        CELL_TX_PORT=$((2001 + (CELL_NUMBER - 1) * 2))
+        if [ "$CELL_RX_PORT" -eq "$UE_RX_PORT" ] || [ "$CELL_RX_PORT" -eq "$UE_TX_PORT" ] ||
+            [ "$CELL_TX_PORT" -eq "$UE_RX_PORT" ] || [ "$CELL_TX_PORT" -eq "$UE_TX_PORT" ]; then
+            echo "ERROR: Cell $CELL_NUMBER and UE $UE_NUMBER produce colliding ZeroMQ ports ($CELL_RX_PORT/$CELL_TX_PORT and $UE_RX_PORT/$UE_TX_PORT)."
+            exit 1
+        fi
+    done
 done
 
 mkdir -p "$(dirname "$OUTPUT")"
@@ -206,8 +239,7 @@ cat >>"$OUTPUT" <<'EOF'
 ]
 SAMPLE_RATE_HZ = __SAMPLE_RATE_HZ__
 SLOW_DOWN_RATIO = __SLOW_DOWN_RATIO__
-INITIAL_CELL_PATH_LOSS_DB_BY_UE = [0, 10, 20]
-DEFAULT_INITIAL_CELL_PATH_LOSS_DB = INITIAL_CELL_PATH_LOSS_DB_BY_UE[-1]
+PRIMARY_CELL_PATH_LOSS_DB = 0
 OTHER_CELL_PATH_LOSS_DB = 35
 ZMQ_TIMEOUT = 100
 ZMQ_HIGH_WATER_MARK = -1
@@ -237,12 +269,12 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
     def __init__(self):
         try:
             gr.top_block.__init__(
-                self, "OCUDU_multi_cell_multi_UE", catch_exceptions=True
+                self, "Multi_Cell_Multi_UE_Broker", catch_exceptions=True
             )
         except TypeError:
-            gr.top_block.__init__(self, "OCUDU_multi_cell_multi_UE")
+            gr.top_block.__init__(self, "Multi_Cell_Multi_UE_Broker")
         Qt.QWidget.__init__(self)
-        self.setWindowTitle("OCUDU_multi_cell_multi_UE")
+        self.setWindowTitle("Multi_Cell_Multi_UE_Broker")
         qtgui.util.check_set_qss()
 
         self.top_layout = Qt.QVBoxLayout()
@@ -259,20 +291,24 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
         # # Equally loud cells
         # self.path_loss_db = {(cell["number"], ue["number"]): 0 for cell in CELL_CONFIGS for ue in UE_CONFIGS}
 
-        # Start all UEs closest to the first configured cell. Other cells are still audible and can be made stronger from the UI
-        initial_cell_number = CELL_CONFIGS[0]["number"]
+        # Map UEs to cells in configured order. If the counts differ, wrap the larger list so every UE and cell has a corresponding closest component
         self.path_loss_db = {}
-        for cell in CELL_CONFIGS:
+        cell_count = len(CELL_CONFIGS)
+        ue_count = len(UE_CONFIGS)
+        for cell_index, cell in enumerate(CELL_CONFIGS):
             for ue_index, ue in enumerate(UE_CONFIGS):
                 cell_number = cell["number"]
                 ue_number = ue["number"]
-                if cell_number == initial_cell_number:
-                    if ue_index < len(INITIAL_CELL_PATH_LOSS_DB_BY_UE):
-                        path_loss_db = INITIAL_CELL_PATH_LOSS_DB_BY_UE[ue_index]
-                    else:
-                        path_loss_db = DEFAULT_INITIAL_CELL_PATH_LOSS_DB
+                if ue_count >= cell_count:
+                    is_mapped_pair = cell_index == ue_index % cell_count
+                else:
+                    is_mapped_pair = ue_index == cell_index % ue_count
+
+                if is_mapped_pair:
+                    path_loss_db = PRIMARY_CELL_PATH_LOSS_DB
                 else:
                     path_loss_db = OTHER_CELL_PATH_LOSS_DB
+
                 self.path_loss_db[(cell_number, ue_number)] = path_loss_db
 
         self.gnb_dl_sources = {}

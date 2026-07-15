@@ -33,8 +33,8 @@ set -e
 
 APPLY_PATCHES=true
 CLEAN_INSTALL=false # Note: If set to true, then full_install.sh needs to be ran in the Next_Generation_Node_B directory too.
-RADIO_TYPE="SIMU"   # Set to "SIMU", "ZMQ", or "USRP"
 DEBUG_SYMBOLS=false
+RADIO_TYPE="SIMU" # Set to "SIMU", "ZMQ", or "USRP"
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
@@ -54,7 +54,9 @@ if ! grep -q avx2 /proc/cpuinfo; then
 fi
 
 # Check for binary to determine if Duranta UE is already installed
-if [ "$CLEAN_INSTALL" = false ] && [ -f "openairinterface5g/cmake_targets/ran_build/build/nr-uesoftmodem" ]; then
+if [ "$CLEAN_INSTALL" = false ] &&
+    [ -f "openairinterface5g/cmake_targets/ran_build/build/nr-uesoftmodem" ] &&
+    { [ "$RADIO_TYPE" != "ZMQ" ] || [ -f "openairinterface5g/cmake_targets/ran_build/build/liboai_zmqdevif.so" ]; }; then
     echo "Duranta UE is already installed, skipping."
     exit 0
 fi

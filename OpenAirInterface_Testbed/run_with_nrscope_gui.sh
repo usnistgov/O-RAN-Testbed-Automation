@@ -31,6 +31,9 @@
 # Exit immediately if a command fails
 set -e
 
+USE_ZMQ_BROKER=false
+SHOW_ZMQ_BROKER_UI=true
+
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
@@ -41,12 +44,45 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
 if [ ! -f "Next_Generation_Node_B/openairinterface5g/cmake_targets/ran_build/build/libimscope.so" ]; then
-    echo "ERROR: Library libimscope.so not found. Please install the gNB with NRSCOPE_GUI set to true."
+    echo "ERROR: ImScope library not found. Rerun Next_Generation_Node_B/full_install.sh after setting NRSCOPE_GUI=true."
     exit 1
 fi
 
+UE_NUMBERS=()
+CELL_NUMBERS=()
+if [ "$USE_ZMQ_BROKER" = "true" ]; then
+    ./Next_Generation_Node_B/install_scripts/validate_zmq_broker_config.sh --broker-only
+    mapfile -t UE_NUMBERS < <(./Next_Generation_Node_B/install_scripts/get_zmq_broker_config.sh --ues)
+    mapfile -t CELL_NUMBERS < <(./Next_Generation_Node_B/install_scripts/get_zmq_broker_config.sh --cells)
+
+    GNB_ZMQ_LIBRARY="$SCRIPT_DIR/Next_Generation_Node_B/openairinterface5g/cmake_targets/ran_build/build/liboai_zmqdevif.so"
+    UE_ZMQ_LIBRARY="$SCRIPT_DIR/User_Equipment/openairinterface5g/cmake_targets/ran_build/build/liboai_zmqdevif.so"
+    if [ ! -f "$GNB_ZMQ_LIBRARY" ] || [ ! -f "$UE_ZMQ_LIBRARY" ]; then
+        echo "ERROR: The OAI gNodeB and UE must be built with ZeroMQ support."
+        if [ ! -f "$GNB_ZMQ_LIBRARY" ]; then
+            echo "Missing gNodeB library: $GNB_ZMQ_LIBRARY"
+        fi
+        if [ ! -f "$UE_ZMQ_LIBRARY" ]; then
+            echo "Missing UE library: $UE_ZMQ_LIBRARY"
+        fi
+        echo "Rerun both full_install.sh scripts after setting RADIO_TYPE=\"ZMQ\"."
+        exit 1
+    fi
+
+    echo "ZeroMQ Broker Duranta UEs: ${UE_NUMBERS[*]}"
+    echo "ZeroMQ Broker Duranta DUs: ${CELL_NUMBERS[*]}"
+fi
+
 # Upon exit, gracefully stop all components and fix console in case it breaks
-trap 'trap - EXIT SIGINT SIGTERM; echo "#################################  STOPPING... #################################"; "$SCRIPT_DIR/./stop.sh"; stty sane || true; exit' EXIT SIGINT SIGTERM
+trap '
+    EXIT_STATUS=$?
+    trap - EXIT SIGINT SIGTERM
+    stty sane || true
+    echo "#################################  STOPPING... #################################"
+    "$SCRIPT_DIR/stop.sh" || true
+    stty sane || true
+    exit "$EXIT_STATUS"
+' EXIT SIGINT SIGTERM
 
 echo "Running 5G Core components..."
 cd 5G_Core_Network
@@ -59,7 +95,7 @@ cd RAN_Intelligent_Controllers/Flexible-RIC
 ./run_background.sh
 
 if $(./is_running.sh | grep -q "NOT_RUNNING"); then
-    echo "Error starting FlexRIC."
+    echo "ERROR: Could not start FlexRIC."
     exit 1
 fi
 cd ../..
@@ -78,36 +114,116 @@ while ! ./5G_Core_Network/is_amf_ready.sh | grep -q "true"; do
 done
 echo -e "\nAMF is ready."
 
-echo
-echo "Running UE..."
-UE_ID=1
-cd User_Equipment
-./run_background.sh "$UE_ID"
-if [ "$SHOW_TERMINALS" = true ]; then
-    nohup x-terminal-emulator -T "UE $UE_ID Log" -e bash -c "tail -f logs/ue${UE_ID}_stdout.txt; exec bash" >/dev/null 2>&1 &
+if [ "$USE_ZMQ_BROKER" = "true" ]; then
+    cd Next_Generation_Node_B
+    echo
+    ./install_scripts/run_zmq_broker.sh --show-ui "$SHOW_ZMQ_BROKER_UI"
+    echo
+    echo "Running DUs..."
+    # The first DU ensures that the CU is ready (starting it)
+    PRIMARY_CELL=${CELL_NUMBERS[0]}
+    for CELL_NUMBER in "${CELL_NUMBERS[@]}"; do
+        if [ "$CELL_NUMBER" != "$PRIMARY_CELL" ]; then
+            ./run_background_split_du.sh "$CELL_NUMBER"
+            stty sane || true
+        fi
+    done
+    echo
+    echo "Running DU $PRIMARY_CELL with NR-Scope..."
+    setsid --wait bash -c "exec stdbuf -oL -eL \"$SCRIPT_DIR/Next_Generation_Node_B/run_split_du.sh\" $PRIMARY_CELL --nrscope" </dev/null >/dev/null 2>&1 &
+    PRIMARY_DU_PID=$!
+    stty sane || true
+    cd ..
+
+    echo
+    echo "Running User Equipment..."
+    cd User_Equipment
+    for UE_NUMBER in "${UE_NUMBERS[@]}"; do
+        ./run_background.sh "$UE_NUMBER"
+        stty sane || true
+    done
+    cd ..
+
+    cd Next_Generation_Node_B
+    for CELL_NUMBER in "${CELL_NUMBERS[@]}"; do
+        LOG_FILE="logs/split_du${CELL_NUMBER}_stdout.txt"
+        echo -en "\nWaiting for DU $CELL_NUMBER to be ready"
+        ATTEMPT=0
+        while ! ./is_du_ready.sh "$CELL_NUMBER" | grep -qx "true"; do
+            stty sane || true
+            echo -n "."
+            sleep 0.5
+            ATTEMPT=$((ATTEMPT + 1))
+            if [ "$CELL_NUMBER" = "$PRIMARY_CELL" ] && ! ps -p "$PRIMARY_DU_PID" >/dev/null; then
+                wait "$PRIMARY_DU_PID" || true
+                echo "DU $PRIMARY_CELL exited before it started. Check $LOG_FILE."
+                exit 1
+            fi
+            if [ $ATTEMPT -ge 120 ]; then
+                echo "DU $CELL_NUMBER did not start after 60 seconds, exiting..."
+                exit 1
+            fi
+            if [ "$CELL_NUMBER" != "$PRIMARY_CELL" ] && ! ./is_running.sh | grep -Eq "(^|[ (])du${CELL_NUMBER}([ )]|$)"; then
+                echo "ERROR: Could not start DU $CELL_NUMBER. Check $LOG_FILE for more information."
+                exit 1
+            fi
+        done
+        echo -e "\nDU $CELL_NUMBER is ready."
+    done
+    cd ../User_Equipment
+
+    for UE_NUMBER in "${UE_NUMBERS[@]}"; do
+        LOG_FILE="logs/ue${UE_NUMBER}_stdout.txt"
+        echo -en "\nWaiting for UE $UE_NUMBER to be ready"
+        ATTEMPT=0
+        while ! ./is_ue_ready.sh "$UE_NUMBER" | grep -qx "true"; do
+            stty sane || true
+            echo -n "."
+            sleep 0.5
+            ATTEMPT=$((ATTEMPT + 1))
+            if [ $ATTEMPT -ge 120 ]; then
+                echo "UE $UE_NUMBER did not start after 60 seconds, exiting..."
+                exit 1
+            fi
+            if ! ./is_running.sh | grep -Eq "(^|[ (])ue${UE_NUMBER}([ )]|$)"; then
+                echo "ERROR: Could not start UE $UE_NUMBER. Check $LOG_FILE for more information."
+                exit 1
+            fi
+        done
+        echo -e "\nUE $UE_NUMBER is ready."
+    done
+    cd ..
+
+    wait "$PRIMARY_DU_PID"
+else
+    echo
+    echo "Running UE..."
+    UE_ID=1
+    cd User_Equipment
+    ./run_background.sh "$UE_ID"
+    stty sane || true
+
+    echo -en "\nWaiting for UE $UE_ID to be ready"
+    ATTEMPT=0
+    while [ ! -f logs/ue${UE_ID}_stdout.txt ] || ! grep -q "TYPE <CTRL-C> TO TERMINATE" logs/ue${UE_ID}_stdout.txt; do
+        stty sane || true
+        echo -n "."
+        sleep 0.5
+        ATTEMPT=$((ATTEMPT + 1))
+        if [ $ATTEMPT -ge 120 ]; then
+            echo "UE $UE_ID did not start after 60 seconds, exiting..."
+            exit 1
+        fi
+        if ! ./is_running.sh | grep -Eq "(^|[ (])ue${UE_ID}([ )]|$)"; then
+            echo "ERROR: Could not start UE $UE_ID. Check logs/ue${UE_ID}_stdout.txt for more information."
+            exit 1
+        fi
+    done
+    echo -e "\nUE $UE_ID is ready."
+    cd ..
+
+    echo
+    echo "Running gNB..."
+    cd Next_Generation_Node_B
+    ./run.sh
 fi
-
-echo -en "\nWaiting for UE $UE_ID to be ready"
-ATTEMPT=0
-while [ ! -f logs/ue${UE_ID}_stdout.txt ] || ! grep -q "TYPE <CTRL-C> TO TERMINATE" logs/ue${UE_ID}_stdout.txt; do
-    echo -n "."
-    sleep 0.5
-    ATTEMPT=$((ATTEMPT + 1))
-    if [ $ATTEMPT -ge 120 ]; then
-        echo "UE $UE_ID did not start after 60 seconds, exiting..."
-        exit 1
-    fi
-    if grep -q "State = NR_RRC_CONNECTED" logs/ue${UE_ID}_stdout.txt; then
-        break
-    elif $(./is_running.sh | grep -q "NOT_RUNNING"); then
-        echo "Error starting UE $UE_ID. Check logs/ue${UE_ID}_stdout.txt for more information."
-        exit 1
-    fi
-done
-echo -e "\nUE $UE_ID is ready."
-cd ..
-
-echo
-echo "Running gNB..."
-cd Next_Generation_Node_B
-./run.sh

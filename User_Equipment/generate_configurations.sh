@@ -54,7 +54,7 @@ while [[ $# -gt 0 ]]; do
     if [ "$1" == "--ues" ]; then
         IFS=',' read -r -a UE_NUMBERS <<<"$2"
         for UE_NUMBER in "${UE_NUMBERS[@]}"; do
-            if ! [[ "$UE_NUMBER" =~ ^[0-9]+$ ]] || [ "$UE_NUMBER" -lt 1 ]; then
+            if ! [[ "$UE_NUMBER" =~ ^[1-9][0-9]*$ ]]; then
                 echo "ERROR: UE numbers must be comma-separated positive integers."
                 exit 1
             fi
@@ -298,10 +298,14 @@ fi
 for UE_NUMBER in "${UE_NUMBERS[@]}"; do
     echo "UE $UE_NUMBER will be configured."
 
-    cp "$EXAMPLE_CONFIG_PATH" "configs/ue${UE_NUMBER}.conf"
-
-    UE_TX_PORT=$((2001 + UE_NUMBER * 100))
     UE_RX_PORT=$((2000 + UE_NUMBER * 100))
+    UE_TX_PORT=$((UE_RX_PORT + 1))
+    if [ "$UE_TX_PORT" -gt 65535 ]; then
+        echo "ERROR: UE $UE_NUMBER has a ZeroMQ port above 65535."
+        exit 1
+    fi
+
+    cp "$EXAMPLE_CONFIG_PATH" "configs/ue${UE_NUMBER}.conf"
 
     # Fetch the UE's OPc, IMEI, IMSI, KEY, and NAMESPACE
     read -r UE_OPC UE_IMEI UE_IMSI UE_KEY UE_NAMESPACE < <("$UE_CREDENTIAL_GENERATOR_SCRIPT" "$UE_NUMBER" "$PLMN")
@@ -309,17 +313,7 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
     # Update configuration values for RF front-end device
     update_conf "configs/ue${UE_NUMBER}.conf" "rf" "device_name" "zmq"
 
-    # Calculate IP offsets for this UE using the same subnetting scheme as in setup_ue_namespace.sh
-    # Allocate a /30 (4 addresses) subnet per UE (e.g., UE 1 -> 10.201.0.4/30, Gateway .5, UE .6)
-    BASE_SUBNET="10.201.0.0/16"
-    SUBNET_SIZE=4
-
-    # Calculate IP offsets
-    SUBNET_OFFSET=$((UE_NUMBER * SUBNET_SIZE))
-    HOST_IP_OFFSET=$((SUBNET_OFFSET))   # .5
-    UE_IP_OFFSET=$((SUBNET_OFFSET + 1)) # .6
-
-    UE_HOST_IP=$(python3 install_scripts/fetch_nth_ip.py "$BASE_SUBNET" $HOST_IP_OFFSET)
+    UE_HOST_IP=$(install_scripts/get_ue_namespace_ip.sh host "$UE_NUMBER")
 
     DEVICE_ARGS="tx_port=tcp://*:$UE_TX_PORT,rx_port=tcp://$UE_HOST_IP:$UE_RX_PORT,base_srate=$UE_RF_SRATE_HZ,id=ue$UE_NUMBER"
     if [ -n "$ZMQ_DEBUG_ARGS" ]; then

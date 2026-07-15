@@ -130,8 +130,8 @@ fi
 
 CORE_IP=$(ip route | grep ogstun | cut -d ' ' -f 9 | xargs)
 if [ -z "$CORE_IP" ]; then # 5GDeploy:
-    if sudo ip netns exec "$UE_NAMESPACE" ip route | grep -q "oaitun_ue$UE_NUMBER"; then
-        SUBNET=$(sudo ip netns exec "$UE_NAMESPACE" ip route | grep "oaitun_ue$UE_NUMBER" | grep -v "default" | awk '{print $1}')
+    if sudo ip netns exec "$UE_NAMESPACE" ip route | grep -qw "oaitun_ue$UE_NUMBER"; then
+        SUBNET=$(sudo ip netns exec "$UE_NAMESPACE" ip route | grep -w "oaitun_ue$UE_NUMBER" | grep -v "default" | awk '{print $1}')
         if [ -n "$SUBNET" ]; then
             CORE_IP=$(remove_cidr_suffix "$SUBNET")
             CORE_IP="${CORE_IP%.0}.1"

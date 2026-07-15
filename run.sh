@@ -43,6 +43,8 @@ USE_ZMQ_BROKER=true
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
+sudo -v # Ensure sudo session is active
+
 UE_NUMBERS=()
 if [ "$USE_ZMQ_BROKER" = "true" ]; then
     if [ ! -f "Next_Generation_Node_B/zmq_broker/multi_ue_scenario.py" ]; then
@@ -74,8 +76,6 @@ else
     UE_NUMBERS=(1)
 fi
 
-sudo -v # Ensure sudo session is active
-
 if ! ip link show ogstun >/dev/null 2>&1 ||
     [ "$(sysctl -n net.ipv4.ip_forward)" != "1" ] ||
     [ "$(sysctl -n net.ipv6.conf.all.forwarding)" != "1" ]; then
@@ -105,7 +105,7 @@ if [ "$USE_FLEXRIC" = "true" ]; then
     ./run_background.sh
 
     if $(./is_running.sh | grep -q "NOT_RUNNING"); then
-        echo "Error starting FlexRIC."
+        echo "ERROR: Could not start FlexRIC."
         exit 1
     fi
     cd ../../..

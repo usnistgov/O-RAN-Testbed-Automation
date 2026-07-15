@@ -67,18 +67,7 @@ else
     >logs/gnb_stdout_gdb.txt
 
     if [ "$USE_ZMQ_BROKER" = "true" ]; then
-        if pgrep -f "[p]ython3 zmq_broker/multi_ue_scenario\.py" >/dev/null; then
-            echo "Already running ZMQ Broker."
-        else
-            >logs/zmq_broker.log
-            echo "Starting ZMQ Broker..."
-            if [ "$SHOW_ZMQ_BROKER_UI" = true ]; then
-                nohup python3 zmq_broker/multi_ue_scenario.py >logs/zmq_broker.log 2>&1 &
-            else
-                QT_QPA_PLATFORM=offscreen nohup python3 zmq_broker/multi_ue_scenario.py >logs/zmq_broker.log 2>&1 &
-            fi
-            sleep 2
-        fi
+        ./install_scripts/run_zmq_broker.sh --show-ui "$SHOW_ZMQ_BROKER_UI"
     fi
 
     sudo chown --recursive "${SUDO_USER:-$USER}" logs

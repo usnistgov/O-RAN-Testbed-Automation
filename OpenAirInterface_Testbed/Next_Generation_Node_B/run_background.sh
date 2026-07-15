@@ -28,6 +28,9 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
+USE_ZMQ_BROKER=false
+SHOW_ZMQ_BROKER_UI=false
+
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
@@ -37,6 +40,18 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 
 cd "$SCRIPT_DIR"
+
+if [ "$USE_ZMQ_BROKER" = "true" ]; then
+    if [ ! -f "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build/liboai_zmqdevif.so" ]; then
+        echo "ERROR: ZeroMQ device library not found. Rerun full_install.sh after setting RADIO_TYPE=\"ZMQ\"."
+        exit 1
+    fi
+    ./install_scripts/run_zmq_broker.sh --show-ui "$SHOW_ZMQ_BROKER_UI"
+    if [ $# -eq 0 ]; then
+        set -- 1
+    fi
+    exec "$SCRIPT_DIR/run_background_split_du.sh" "$@"
+fi
 
 if pgrep -x "nr-softmodem" >/dev/null; then
     echo "Already running gNodeB."
@@ -49,10 +64,12 @@ else
     echo "Starting gNodeB in background..."
 
     sudo -v # Ensure sudo session is active
-    sudo setsid bash -c "stdbuf -oL -eL \"$SCRIPT_DIR/run.sh\" >/dev/null 2>&1" </dev/null &
+    sudo setsid bash -c "exec stdbuf -oL -eL \"$SCRIPT_DIR/run.sh\"" </dev/null >/dev/null 2>&1 &
+    stty sane || true
 
     ATTEMPT=0
     while $(./is_running.sh | grep -q "NOT_RUNNING"); do
+        stty sane || true
         sleep 0.5
         ATTEMPT=$((ATTEMPT + 1))
         if [ $ATTEMPT -ge 120 ]; then
@@ -61,5 +78,6 @@ else
         fi
     done
 
+    stty sane || true
     ./is_running.sh
 fi

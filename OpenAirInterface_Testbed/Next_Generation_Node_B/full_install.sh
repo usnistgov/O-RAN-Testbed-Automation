@@ -33,12 +33,15 @@ set -e
 
 APPLY_PATCHES=true
 CLEAN_INSTALL=false # If SHARE_OAI_DIR_FROM_UE is true, set to false since the UE hosts openairinterface5g
-RADIO_TYPE="SIMU"   # Set to "SIMU", "ZMQ", or "USRP"
+
+RADIO_TYPE="SIMU" # Set to "SIMU", "ZMQ", or "USRP"
+
 DEBUG_SYMBOLS=false
 E2AP_VERSION="E2AP_V3"  # E2AP_V1, E2AP_V2, E2AP_V3
 KPM_VERSION="KPM_V3_00" # KPM_V2_03, KPM_V3_00
 NRSCOPE_GUI=false
 TELNET_SERVER=true
+
 E2_TERM_PORT=36421            # Default is 36421, which will result in no modification
 E2_TERM_PORT_SUBSTITUTE=36423 # If E2_TERM_PORT is used already, substitute it before replacing with E2_TERM_PORT
 SHARE_FLEXRIC_DIR_FROM_TESTBED=false
@@ -61,11 +64,12 @@ if [ "$SHARE_OAI_DIR_FROM_UE" = true ] && [ ! -f "openairinterface5g/cmake_targe
 fi
 
 # Check for binary to determine if Duranta gNB is already installed
-if [ "$CLEAN_INSTALL" = false ] && [ -f "openairinterface5g/cmake_targets/ran_build/build/nr-softmodem" ]; then
-    if [ "$NRSCOPE_GUI" != true ] || [ -f "openairinterface5g/cmake_targets/ran_build/build/libimscope.so" ]; then
-        echo "Duranta gNB is already installed, skipping."
-        exit 0
-    fi
+if [ "$CLEAN_INSTALL" = false ] &&
+    [ -f "openairinterface5g/cmake_targets/ran_build/build/nr-softmodem" ] &&
+    { [ "$RADIO_TYPE" != "ZMQ" ] || [ -f "openairinterface5g/cmake_targets/ran_build/build/liboai_zmqdevif.so" ]; } &&
+    { [ "$NRSCOPE_GUI" != true ] || [ -f "openairinterface5g/cmake_targets/ran_build/build/libimscope.so" ]; }; then
+    echo "Duranta gNB is already installed, skipping."
+    exit 0
 fi
 
 # Run a sudo command every minute to ensure script execution without user interaction

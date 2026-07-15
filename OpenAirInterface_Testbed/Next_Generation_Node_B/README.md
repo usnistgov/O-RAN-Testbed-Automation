@@ -18,7 +18,7 @@ The Next Generation Node B (gNodeB) is a 5G base station configured with Duranta
 
 The gNodeB software supports multiple radio configurations, including the RF Simulator (`SIMU`), ZeroMQ (`ZMQ`), and Universal Software Radio Peripheral (`USRP`). To specify the desired radio device, set the `RADIO_TYPE` variable at the beginning of both the `full_install.sh` and `generate_configurations.sh` scripts prior to compiling and installing the software.
 
-*Note: Currently, the ZeroMQ (`ZMQ`) configuration is limited to supporting a maximum of one connected User Equipment.*
+**Note:** ZMQ supports one gNodeB and one UE by default. Enable the ZeroMQ broker [\[5\]][zeromq-duranta] to support multiple UEs and/or cells.
 
 ## Split CU-DU Deployment
 
@@ -30,15 +30,15 @@ The gNodeB can be deployed in a split Central Unit (CU) and Distributed Unit (DU
 
 ## Telnet Server for Monitoring and Control
 
-This gNodeB supports an optional telnet server for monitoring and controlling the gNodeB [\[5\]][duranta-telnet]. Enable it by setting `TELNET_SERVER=true` at the beginning of the `full_install.sh` script before running it. When starting the gNodeB, if the telnet server was installed, it will automatically start and can be accessed by directly typing into the gNodeB terminal or with `telnet 127.0.0.1 9099`. Use the `help` command within the telnet session to view available commands.
+This gNodeB supports an optional telnet server for monitoring and controlling the gNodeB [\[6\]][duranta-telnet]. Enable it by setting `TELNET_SERVER=true` at the beginning of the `full_install.sh` script before running it. When starting the gNodeB, if the telnet server was installed, it will automatically start and can be accessed by directly typing into the gNodeB terminal or with `telnet 127.0.0.1 9099`. Use the `help` command within the telnet session to view available commands.
 
 ### Telnet Connection to O1 Interface
 
-The gNodeB can also be monitored and controlled remotely using the OpenAirInterface O1 adapter [\[6\]][oai-o1-adapter], which runs as a Docker container. Management scripts for the O1 adapter container are located in the `additional_scripts/` directory. Use `./install_o1_adapter.sh` to configure and build the adapter, `./run_o1_adapter.sh` to start the container which connects to the gNodeB's telnet server, `./stop_o1_adapter.sh` to stop the container, and `./uninstall_o1_adapter.sh` to uninstall it. While running, the endpoint `127.0.0.1:830` can be connected to over NETCONF for Non-RT RIC KPM monitoring and RIC control. Endpoints can be configured by updating the variables set in `install_o1_adapter.sh` (which modifies `o1-adapter/docker/config/config.json`), then re-installing the O1 adapter.
+The gNodeB can also be monitored and controlled remotely using the OpenAirInterface O1 adapter [\[7\]][oai-o1-adapter], which runs as a Docker container. Management scripts for the O1 adapter container are located in the `additional_scripts/` directory. Use `./install_o1_adapter.sh` to configure and build the adapter, `./run_o1_adapter.sh` to start the container which connects to the gNodeB's telnet server, `./stop_o1_adapter.sh` to stop the container, and `./uninstall_o1_adapter.sh` to uninstall it. While running, the endpoint `127.0.0.1:830` can be connected to over NETCONF for Non-RT RIC KPM monitoring and RIC control. Endpoints can be configured by updating the variables set in `install_o1_adapter.sh` (which modifies `o1-adapter/docker/config/config.json`), then re-installing the O1 adapter.
 
 ## ImScope
 
-ImScope can be enabled for the gNodeB by setting `NRSCOPE_GUI=true` at the beginning of the `full_install.sh` script before running it. For more information about ImScope, see the Duranta documentation [\[7\]][duranta-imscope].
+ImScope can be enabled for the gNodeB by setting `NRSCOPE_GUI=true` at the beginning of the `full_install.sh` script before running it. For more information about ImScope, see the Duranta documentation [\[8\]][duranta-imscope].
 
 <details>
   <summary>View Screenshot</summary>
@@ -51,9 +51,10 @@ ImScope can be enabled for the gNodeB by setting `NRSCOPE_GUI=true` at the begin
 2. 3GPP TS 38.300: NR; NR and NG-RAN Overall description; Stage-2. [https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=3191][ts3191-3gpp]
 3. 3GPP TS 38.401: NG-RAN; Architecture description. [https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=3219][ts3219-3gpp]
 4. 3GPP TS 38.413: NG-RAN; NG Application Protocol (NGAP). [https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=3223][ts3223-3gpp]
-5. Starting the softmodem with the telnet server. Duranta. [https://github.com/duranta-project/openairinterface5g/blob/develop/common/utils/telnetsrv/DOC/telnetusage.md][duranta-telnet]
-6. OAI O1 Adapter. OpenAirInterface. [https://gitlab.eurecom.fr/oai/o1-adapter][oai-o1-adapter]
-7. ImScope. Duranta. [https://github.com/duranta-project/openairinterface5g/blob/develop/openair1/PHY/TOOLS/readme.md?ref_type=heads#imscope][duranta-imscope]
+5. ZeroMQ. Duranta. [https://github.com/duranta-project/openairinterface5g/blob/develop/radio/zmq/README.md][zeromq-duranta]
+6. Starting the softmodem with the telnet server. Duranta. [https://github.com/duranta-project/openairinterface5g/blob/develop/common/utils/telnetsrv/DOC/telnetusage.md][duranta-telnet]
+7. OAI O1 Adapter. OpenAirInterface. [https://gitlab.eurecom.fr/oai/o1-adapter][oai-o1-adapter]
+8. ImScope. Duranta. [https://github.com/duranta-project/openairinterface5g/blob/develop/openair1/PHY/TOOLS/readme.md?ref_type=heads#imscope][duranta-imscope]
 
 <!-- References -->
 
@@ -61,6 +62,7 @@ ImScope can be enabled for the gNodeB by setting `NRSCOPE_GUI=true` at the begin
 [ts3191-3gpp]: https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=3191
 [ts3219-3gpp]: https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=3219
 [ts3223-3gpp]: https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=3223
+[zeromq-duranta]: https://github.com/duranta-project/openairinterface5g/blob/develop/radio/zmq/README.md
 [duranta-telnet]: https://github.com/duranta-project/openairinterface5g/blob/develop/common/utils/telnetsrv/DOC/telnetusage.md
 [oai-o1-adapter]: https://gitlab.eurecom.fr/oai/o1-adapter
 [duranta-imscope]: https://github.com/duranta-project/openairinterface5g/blob/develop/openair1/PHY/TOOLS/readme.md?ref_type=heads#imscope

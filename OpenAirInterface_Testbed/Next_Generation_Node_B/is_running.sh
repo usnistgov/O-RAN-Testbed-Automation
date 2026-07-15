@@ -37,6 +37,16 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
+USE_ZMQ_BROKER=false
+
+if [ "$USE_ZMQ_BROKER" = "true" ]; then
+    if pgrep -f "[m]ulti_ue_scenario\.py" >/dev/null; then
+        echo "ZMQ_Broker: RUNNING"
+    else
+        echo "ZMQ_Broker: NOT_RUNNING"
+    fi
+fi
+
 RUNNING_CUDU_NUMBERS=()
 # check for cu.conf from the configuration file path
 while read -r LINE; do

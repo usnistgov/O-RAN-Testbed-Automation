@@ -62,18 +62,14 @@ if [ -z "$DU_NUMBER" ]; then
     echo "    For example, $0 1 [--no-rfsim-server]"
     exit 1
 fi
-if ! [[ $DU_NUMBER =~ ^[0-9]+$ ]]; then
-    echo "ERROR: DU number must be a number."
-    exit 1
-fi
-if [ $DU_NUMBER -lt 1 ]; then
-    echo "ERROR: DU number must be greater than or equal to 1."
+if ! [[ "$DU_NUMBER" =~ ^[1-9][0-9]*$ ]]; then
+    echo "ERROR: DU number must be a positive integer."
     exit 1
 fi
 
 cd "$SCRIPT_DIR"
 
-if ./is_running.sh | grep -E "^gNodeB:" | grep -q "du$DU_NUMBER"; then
+if ./is_running.sh | grep -Eq "(^|[ (])du${DU_NUMBER}([ )]|$)"; then
     echo "Already running gNodeB (DU $DU_NUMBER)."
 else
     if [ ! -d "configs" ]; then
@@ -87,19 +83,27 @@ else
     if [ "$RFSIM_SERVER" -eq 0 ]; then
         RFSIM_SERVER_ARG="--no-rfsim-server"
     fi
-
     sudo -v # Ensure sudo session is active
-    sudo setsid bash -c "stdbuf -oL -eL \"$SCRIPT_DIR/run_split_du.sh\" $DU_NUMBER $RFSIM_SERVER_ARG  >/dev/null 2>&1" </dev/null &
+    sudo setsid --wait bash -c "exec stdbuf -oL -eL \"$SCRIPT_DIR/run_split_du.sh\" $DU_NUMBER $RFSIM_SERVER_ARG" </dev/null >/dev/null 2>&1 &
+    DU_PID=$!
+    stty sane || true
 
     ATTEMPT=0
-    while ! (./is_running.sh | grep -E "^gNodeB:" | grep -q "du$DU_NUMBER"); do
+    while ! ./is_running.sh | grep -Eq "(^|[ (])du${DU_NUMBER}([ )]|$)"; do
+        stty sane || true
         sleep 0.5
+        if ! ps -p "$DU_PID" >/dev/null; then
+            wait "$DU_PID" || true
+            echo "DU $DU_NUMBER exited before it started. Check logs/split_du${DU_NUMBER}_stdout.txt."
+            exit 1
+        fi
         ATTEMPT=$((ATTEMPT + 1))
         if [ $ATTEMPT -ge 120 ]; then
-            echo "DU $DU_NUMBER did not start after 60 seconds, exiting..."
+            echo "DU $DU_NUMBER did not start after 60 seconds. Check logs/split_du${DU_NUMBER}_stdout.txt."
             exit 1
         fi
     done
 
+    stty sane || true
     ./is_running.sh
 fi

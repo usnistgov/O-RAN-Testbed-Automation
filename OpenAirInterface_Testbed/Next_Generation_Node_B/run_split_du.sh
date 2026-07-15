@@ -41,6 +41,10 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 
 # Parse arguments
 RFSIM_SERVER=1
+USE_ZMQ_BROKER=false
+ZMQ_THREAD_POOL="-1,-1"
+ENABLE_NRSCOPE=false
+USE_GDB=false
 while [[ $# -gt 0 ]]; do
     case "$1" in
     [0-9]*)
@@ -51,6 +55,14 @@ while [[ $# -gt 0 ]]; do
         RFSIM_SERVER=0
         shift
         ;;
+    --nrscope)
+        ENABLE_NRSCOPE=true
+        shift
+        ;;
+    --gdb)
+        USE_GDB=true
+        shift
+        ;;
     *)
         echo "Unknown argument: $1"
         exit 1
@@ -59,16 +71,25 @@ while [[ $# -gt 0 ]]; do
 done
 if [ -z "$DU_NUMBER" ]; then
     echo "ERROR: A DU number must be provided as an argument."
-    echo "    For example, $0 1 [--no-rfsim-server]"
+    echo "    For example, $0 1 [--no-rfsim-server] [--nrscope] [--gdb]"
     exit 1
 fi
-if ! [[ $DU_NUMBER =~ ^[0-9]+$ ]]; then
-    echo "ERROR: DU number must be a number."
+if ! [[ "$DU_NUMBER" =~ ^[1-9][0-9]*$ ]]; then
+    echo "ERROR: DU number must bbe a positive integer"
     exit 1
 fi
-if [ $DU_NUMBER -lt 1 ]; then
-    echo "ERROR: DU number must be greater than or equal to 1."
-    exit 1
+
+if [ "$USE_ZMQ_BROKER" = "true" ]; then
+    # Optionally, validate the ZeroMQ broker before starting the DU
+    # "$SCRIPT_DIR/install_scripts/validate_zmq_broker_config.sh" --broker-only --cell "$DU_NUMBER"
+
+    BROKER_CELL_NUMBER=$("$SCRIPT_DIR/install_scripts/get_zmq_broker_config.sh" --cell "$DU_NUMBER" | awk '{print $1}')
+    ZMQ_TX_PORT=$("$SCRIPT_DIR/install_scripts/get_zmq_broker_config.sh" --cell "$DU_NUMBER" | awk '{print $2}')
+    ZMQ_RX_PORT=$("$SCRIPT_DIR/install_scripts/get_zmq_broker_config.sh" --cell "$DU_NUMBER" | awk '{print $3}')
+    if [ ! -f "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build/liboai_zmqdevif.so" ]; then
+        echo "ERROR: ZeroMQ device library not found. Rerun full_install.sh after setting RADIO_TYPE=\"ZMQ\"."
+        exit 1
+    fi
 fi
 
 # Only DU 1 can be the RF simulator server
@@ -88,13 +109,22 @@ ADDITIONAL_FLAGS=""
 #     ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --telnetsrv.listenstdin 1"
 # fi
 
-# DISABLE_NRSCOPE_IF_INSTALLED=false
-# IMSCOPE=false
-# if [ "$DISABLE_NRSCOPE_IF_INSTALLED" = false ] && [ -f "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build/libimscope.so" ]; then
-#     echo "Enabling ImScope..."
-#     ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --imscope -d --log_config.global_log_options utc_time"
-#     IMSCOPE=true
-# fi
+IMSCOPE=false
+if [ "$ENABLE_NRSCOPE" = "true" ]; then
+    if [ ! -f "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build/libimscope.so" ]; then
+        echo "ERROR: ImScope library not found. Rerun full_install.sh after setting NRSCOPE_GUI=true."
+        exit 1
+    fi
+    echo "Enabling ImScope..."
+    ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --imscope -d --log_config.global_log_options utc_time"
+    IMSCOPE=true
+fi
+
+if [ "$USE_GDB" = "true" ] && ! command -v gdb >/dev/null 2>&1; then
+    echo "Installing GNU Debugger..."
+    sudo apt-get update
+    sudo env $APTVARS apt-get install -y gdb
+fi
 
 cd "$SCRIPT_DIR"
 
@@ -113,20 +143,28 @@ fi
 # Give the DU its own network namespace and configure it to access the host network
 sudo ./install_scripts/setup_du_namespace.sh "$DU_NUMBER"
 
-HOSTNAME_IP=$(hostname -I | awk '{print $1}')
-if [ "$RFSIM_SERVER" -eq 0 ]; then
-    SERVER_IP=$(cat configs/get_rfsim_server_address.txt)
-    if [ -z "$SERVER_IP" ]; then
-        echo "ERROR: Could not find RF simulator server address."
-        exit 1
+if [ "$USE_ZMQ_BROKER" = "true" ]; then
+    if ! "$SCRIPT_DIR/is_cu_ready.sh" | grep -qx true; then
+        echo "CU is not ready. Starting CU in background..."
+        "$SCRIPT_DIR/run_background_split_cu.sh"
     fi
-    RFSIM_SERVER_ARG="--rfsimulator.[0].serveraddr $SERVER_IP"
+    RFSIM_SERVER_ARG=""
 else
-    echo "RF simulator server mode enabled."
-    RFSIM_SERVER_ARG="--rfsimulator.[0].serveraddr server"
+    HOSTNAME_IP=$(hostname -I | awk '{print $1}')
+    if [ "$RFSIM_SERVER" -eq 0 ]; then
+        SERVER_IP=$(cat configs/get_rfsim_server_address.txt)
+        if [ -z "$SERVER_IP" ]; then
+            echo "ERROR: Could not find RF simulator server address."
+            exit 1
+        fi
+        RFSIM_SERVER_ARG="--rfsimulator.[0].serveraddr $SERVER_IP"
+    else
+        echo "RF simulator server mode enabled."
+        RFSIM_SERVER_ARG="--rfsimulator.[0].serveraddr server"
 
-    mkdir -p configs
-    echo "$HOSTNAME_IP" >configs/get_rfsim_server_address.txt
+        mkdir -p configs
+        echo "$HOSTNAME_IP" >configs/get_rfsim_server_address.txt
+    fi
 fi
 
 cd "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build"
@@ -135,11 +173,13 @@ cd "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build"
 # sudo ./nr-softmodem -O "$DU_CONFIG" $RADIO_ARGS --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS
 
 RADIO_TYPE=$(cat "$SCRIPT_DIR/configs/radio_type.txt" 2>/dev/null || echo "RFSIM")
-if [ "$RADIO_TYPE" = "ZMQ" ]; then
+if [ "$USE_ZMQ_BROKER" = "true" ]; then
+    RADIO_ARGS="--device.name oai_zmqdevif --zmq.[0].tx_channels tcp://0.0.0.0:$ZMQ_TX_PORT --zmq.[0].rx_channels tcp://127.0.0.1:$ZMQ_RX_PORT --thread-pool $ZMQ_THREAD_POOL"
+elif [ "$RADIO_TYPE" = "ZMQ" ]; then
     ZMQ_TX_PORT=$((4554 + DU_NUMBER * 2))
     ZMQ_RX_PORT=$((4555 + DU_NUMBER * 2))
     UE_NUMBER=$DU_NUMBER
-    UE_NS_IP=$(python3 "$SCRIPT_DIR/install_scripts/fetch_nth_ip.py" "10.201.0.0/16" $(((UE_NUMBER * 4) + 1)))
+    UE_NS_IP=$("$SCRIPT_DIR/install_scripts/get_ue_namespace_ip.sh" ue "$UE_NUMBER")
     RADIO_ARGS="--device.name oai_zmqdevif --zmq.[0].tx_channels tcp://0.0.0.0:$ZMQ_TX_PORT --zmq.[0].rx_channels tcp://$UE_NS_IP:$ZMQ_RX_PORT"
 elif [ "$RADIO_TYPE" = "USRP" ]; then
     RADIO_ARGS=""
@@ -147,24 +187,13 @@ else
     RADIO_ARGS="--rfsim $RFSIM_SERVER_ARG --rfsimulator.[0].options chanmod"
 fi
 
-sudo script -q -f -c "./nr-softmodem -O \"$DU_CONFIG\" $RADIO_ARGS --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS" "$SCRIPT_DIR/logs/split_du${DU_NUMBER}_stdout.txt"
-
-# if [ "$IMSCOPE" = true ]; then # ImScope GUI cannot be run with sudo
-#     script -q -f -c "./nr-softmodem -O \"$DU_CONFIG\" $RADIO_ARGS --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS" "$SCRIPT_DIR/logs/split_du${DU_NUMBER}_stdout.txt"
-# else
-#
-RADIO_TYPE=$(cat "$SCRIPT_DIR/configs/radio_type.txt" 2>/dev/null || echo "RFSIM")
-if [ "$RADIO_TYPE" = "ZMQ" ]; then
-    ZMQ_TX_PORT=$((4554 + DU_NUMBER * 2))
-    ZMQ_RX_PORT=$((4555 + DU_NUMBER * 2))
-    UE_NUMBER=$DU_NUMBER
-    UE_NS_IP=$(python3 "$SCRIPT_DIR/install_scripts/fetch_nth_ip.py" "10.201.0.0/16" $(((UE_NUMBER * 4) + 1)))
-    RADIO_ARGS="--device.name oai_zmqdevif --zmq.[0].tx_channels tcp://0.0.0.0:$ZMQ_TX_PORT --zmq.[0].rx_channels tcp://$UE_NS_IP:$ZMQ_RX_PORT"
-elif [ "$RADIO_TYPE" = "USRP" ]; then
-    RADIO_ARGS=""
-else
-    RADIO_ARGS="--rfsim $RFSIM_SERVER_ARG --rfsimulator.[0].options chanmod"
+SOFTMODEM_COMMAND="./nr-softmodem -O \"$DU_CONFIG\" $RADIO_ARGS --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS"
+if [ "$USE_GDB" = "true" ]; then
+    SOFTMODEM_COMMAND="gdb --args $SOFTMODEM_COMMAND"
 fi
 
-sudo script -q -f -c "./nr-softmodem -O \"$DU_CONFIG\" $RADIO_ARGS --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS" "$SCRIPT_DIR/logs/split_du${DU_NUMBER}_stdout.txt"
-# fi
+if [ "$IMSCOPE" = "true" ]; then
+    script -q -f -c "$SOFTMODEM_COMMAND" "$SCRIPT_DIR/logs/split_du${DU_NUMBER}_stdout.txt"
+else
+    sudo script -q -f -c "$SOFTMODEM_COMMAND" "$SCRIPT_DIR/logs/split_du${DU_NUMBER}_stdout.txt"
+fi

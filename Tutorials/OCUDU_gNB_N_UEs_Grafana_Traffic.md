@@ -15,7 +15,11 @@
 
 ## Overview
 
-This tutorial demonstrates how to deploy a complete Open RAN testbed using the NIST O-RAN Testbed Automation framework.
+This tutorial demonstrates the deployment and validation of an end-to-end Open RAN 5G standalone (SA) network using the NIST O-RAN Testbed Automation framework.The use case deploys an OCUDU gNB connected to an Open5GS 5G Core Network, a simulated srsRAN UE, and an O-RAN SC Near-RT RIC environment. The complete testbed is deployed using automated scripts and Kubernetes-based services, enabling users to quickly set up an experimental Open RAN environment for research, development, and performance evaluation.
+
+After deployment, the UE establishes a connection with the gNB through a simulated RF interface, completes registration and PDU session establishment procedures, and obtains an IP address from the 5G Core network. The testbed then enables user-plane traffic generation using ping and iperf3 to evaluate connectivity, latency, and throughput performance. The integrated Grafana monitoring framework provides real-time visualization of key network performance indicators, including UE throughput, packet rate, latency, packet loss, CQI, modulation and coding scheme (MCS), and active UE statistics. These measurements allow users to analyze the behavior of the RAN and core network under different traffic conditions.
+
+This tutorial provides a complete workflow for deploying, monitoring, and evaluating an Open RAN 5G network with a single UE. It serves as a foundation for further experiments involving multi-UE deployment, xApp development, RAN optimization, and intelligent network control.
 
 The deployment consists of:
 

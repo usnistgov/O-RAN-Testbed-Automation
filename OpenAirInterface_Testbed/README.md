@@ -44,6 +44,7 @@ The ZeroMQ broker enables multi-UE and multi-cell emulation and is motivated by 
 
 <details>
 <summary>Enable ZeroMQ broker</summary>
+<hr>
 
 ```bash
 sed -i 's/^RADIO_TYPE=.*$/RADIO_TYPE="ZMQ" # Set to "SIMU", "ZMQ", or "USRP"/' User_Equipment/full_install.sh
@@ -66,9 +67,11 @@ sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' Next_Generation_Node_B/st
 ```
 
 </details>
+<hr>
 
 <details>
 <summary>Disable ZeroMQ broker (default, using RF simulator)</summary>
+<hr>
 
 ```bash
 sed -i 's/^RADIO_TYPE=.*$/RADIO_TYPE="SIMU" # Set to "SIMU", "ZMQ", or "USRP"/' User_Equipment/full_install.sh
@@ -91,8 +94,9 @@ sed -i 's/^USE_ZMQ_BROKER=true$/USE_ZMQ_BROKER=false/' Next_Generation_Node_B/st
 ```
 
 </details>
+<hr>
 
-When the ZeroMQ broker is enabled, `./run.sh` launches every configured DU and UE before waiting for DU readiness and UE PDU sessions. Individual component launchers also start the broker, but unlike RF Simulator, all configured endpoints must be running for samples to flow.
+When the ZeroMQ broker is enabled, `./run.sh` starts the configured DUs and UEs, then waits for the DUs to become ready and the UEs to establish PDU sessions. The individual component scripts also start the broker. Unlike the RF Simulator, all configured endpoints must be running for samples to flow.
 
 ## Handover Scenario
 

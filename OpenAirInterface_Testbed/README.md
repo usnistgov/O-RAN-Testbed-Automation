@@ -96,24 +96,31 @@ When the ZeroMQ broker is enabled, `./run.sh` launches every configured DU and U
 
 ## Handover Scenario
 
-The script `run_handover_scenario.sh`, based on the handover tutorial [\[4\]][duranta-handover], automates the process of setting up a handover scenario with two DUs and one CU. It starts the 5G Core, FlexRIC, CU, DU 1, and UE 1. After UE connectivity, it starts DU 2 and opens a telnet session to the CU for monitoring and controlling the handover process.
+The script `run_handover_scenario.sh`, based on the handover tutorial [\[4\]][duranta-handover], automates the process of setting up an RF Simulator handover scenario with two DUs and one CU. It starts the 5G Core, FlexRIC, CU, DU 1, and UE 1. After UE connectivity, it starts DU 2 and opens a telnet session to the CU for monitoring and controlling the handover process.
+
   - The variable `TELNET_SERVER` in `Next_Generation_Node_B/full_install.sh` must be set to `true` prior to gNodeB installation.
   - To start each component in its own terminal instance, use `./run_handover_scenario.sh show`.
-  - With the ZeroMQ broker enabled, the optional `--num-ues` and `--num-dus` arguments must match the ZeroMQ broker configuration (e.g., `./run_handover_scenario.sh --num-ues 3 --num-dus 3`).
+  - The optional `--num-ues` and `--num-dus` arguments configure the handover scenario. The RF Simulator supports only one UE. When using a ZeroMQ broker, the numbers of UEs and cells are automatically set to match the broker configuration (e.g., `./run_handover_scenario.sh --num-ues 3 --num-dus 3`).
   - The command `ci trigger_f1_ho 1` will trigger a handover for UE 1 from its current DU to the next DU in a round robin manner.
 
+<details>
+  <summary><b>Example output (RF Simulator, 1 UE, 2 DUs, 1 CU)</b></summary>
+  <hr>
+
+  <p align="center">
+    <img src="../Images/F1_Handover_Example_RF_Simulator.png" alt="F1 Handover Scenario Example Output">
+  </p>
+
+</details>
 
 <details>
-  <summary>
-    <strong>Example of F1 handover output</strong>
-  </summary>
-  <br>
-  <strong>RF Simulator</strong> (1 UE, 2 DUs, 1 CU) <p align="center">
-    <img src="../Images/F1_Handover_Example_RF_Simulator.png" alt="F1 handover scenario output using RF Simulator" width="100%">
+  <summary><b>Example output (ZeroMQ Broker, 3 UEs, 3 DUs, 1 CU)</b></summary>
+  <hr>
+
+  <p align="center">
+    <img src="../Images/F1_Handover_Example_ZeroMQ_Broker.png" alt="F1 Handover Scenario Example Output">
   </p>
-  <strong>ZeroMQ Broker</strong> (3 UEs, 3 DUs, 1 CU) <p align="center">
-    <img src="../Images/F1_Handover_Example_ZeroMQ_Broker.png" alt="F1 handover scenario output using ZeroMQ Broker" width="100%">
-  </p>
+
 </details>
 
 ---

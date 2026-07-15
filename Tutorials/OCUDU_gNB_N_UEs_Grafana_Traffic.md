@@ -395,9 +395,13 @@ The UE has a connected route for the 10.45.0.0/24 subnet via tun_srsue.
 
 ---
 ## Multiple UE Deployment
+The objective is to extend the single-UE deployment scenario by enabling scalable UE emulation using the OCUDU ZeroMQ broker. The broker provides a software-based RF channel abstraction that allows multiple UEs and cells to be simulated without requiring physical radio hardware. This enables researchers and developers to evaluate gNodeB performance, resource scheduling, and RAN behavior under different user densities and traffic conditions.
+
+In this scenario, the OCUDU gNodeB is configured to support multiple UE instances. Each UE performs the standard 5G registration procedure, establishes a PDU session through the 5G Core Network, and receives an independent IP address. Once connected, traffic can be generated from each UE to evaluate network capacity, throughput distribution, latency, and resource allocation.
+
 For multi-UE emulation using the OCUDU gNodeB ZeroMQ broker, refer to:
 
-See <a href="https://github.com/usnistgov/O-RAN-Testbed-Automation-Dev/blob/main/Next_Generation_Node_B/README.md#simulating-multiple-ues-and-cells-with-zeromq-broker">this section</a> for more information.
+See <a href="https://github.com/usnistgov/O-RAN-Testbed-Automation-Dev/blob/main/Next_Generation_Node_B/README.md#simulating-multiple-ues-and-cells-with-zeromq-broker">Multiple UE deployment</a> for more information.
 
 ## Useful Commands
 

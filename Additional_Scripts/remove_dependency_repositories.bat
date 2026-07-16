@@ -64,7 +64,7 @@ REM copyright protection within the United States.
 REM This script will remove the untracked 5G_Core_Network, Next_Generation_Node_B, User_Equipment and RAN_Intelligent_Controllers repositories that were downloaded.
 
 
-echo "# Script: $(realpath "$0")..."
+echo "# Script: $(realpath "$0") $@"
 
 REM Main Testbed Repositories
 if exist "5G_Core_Network\open5gs" rmdir /s /q "5G_Core_Network\open5gs"

@@ -28,6 +28,9 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
+echo "# Script: $(realpath "$0") $@"
+
+# Exit immediately if a command fails
 set -e
 
 OUTPUT=""
@@ -402,12 +405,12 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
                 (self.ue_dl_adds[ue_number], 0), (self.ue_dl_sinks[ue_number], 0)
             )
 
-        for cell_index, cell in enumerate(CELL_CONFIGS):
-            cell_number = cell["number"]
-            for ue_index, ue in enumerate(UE_CONFIGS):
-                ue_number = ue["number"]
+        for ue_index, ue in enumerate(UE_CONFIGS):
+            ue_number = ue["number"]
+            for cell_index, cell in enumerate(CELL_CONFIGS):
+                cell_number = cell["number"]
                 path_key = (cell_number, ue_number)
-                label = f"Cell{cell_number} UE{ue_number} Pathloss [dB]"
+                label = f"UE {ue_number} Cell {cell_number} Path Loss [dB]"
 
                 self.path_loss_ranges[path_key] = Range(
                     0, 100, 1, self.path_loss_db[path_key], 200

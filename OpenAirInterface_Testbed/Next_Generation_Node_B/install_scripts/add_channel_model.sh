@@ -28,6 +28,8 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
+echo "# Script: $(realpath "$0") $@"
+
 # Exit immediately if a command fails
 set -e
 
@@ -78,8 +80,7 @@ awk -v new_block="$NEW_BLOCK" '
 }
 { print }
 ' "$CONFIGURATION_PATH" >"${CONFIGURATION_PATH}.tmp"
-
-mv "${CONFIGURATION_PATH}.tmp" "$CONFIGURATION_PATH"
+mv -f "${CONFIGURATION_PATH}.tmp" "$CONFIGURATION_PATH"
 
 NUM_CHANNELS=$(grep -c "model_name" "$CONFIGURATION_PATH")
 MAX_CHANNELS=$(grep -oP 'max_chan\s*=\s*\K[0-9]+' "$CONFIGURATION_PATH")

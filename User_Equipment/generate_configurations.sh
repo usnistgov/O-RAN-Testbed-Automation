@@ -30,6 +30,7 @@
 
 # Exit immediately if a command fails
 set -e
+echo "# Script: $(realpath "$0") $@"
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
@@ -47,27 +48,25 @@ ZMQ_DEBUG_ARGS=""     # Example: fail_on_disconnect=true,log_trx_timeout=true,tr
 
 # Support input argument for the UE number(s), for example:
 # ./generate_configurations.sh --> configures UE 1, 2, and 3
-# ./generate_configurations.sh --ues 2 --> configures UE 2
-# ./generate_configurations.sh --ues 4,5,6 --> configures UE 4, 5, and 6
-UE_NUMBERS=()
-while [[ $# -gt 0 ]]; do
-    if [ "$1" == "--ues" ]; then
-        IFS=',' read -r -a UE_NUMBERS <<<"$2"
-        for UE_NUMBER in "${UE_NUMBERS[@]}"; do
-            if ! [[ "$UE_NUMBER" =~ ^[1-9][0-9]*$ ]]; then
-                echo "ERROR: UE numbers must be comma-separated positive integers."
-                exit 1
-            fi
-        done
-        shift 2
-    else
-        shift
-    fi
-done
+# ./generate_configurations.sh 2 --> configures UE 2
+# ./generate_configurations.sh 4 5 6 --> configures UE 4, 5, and 6
+UE_NUMBERS=("$@")
 if [ ${#UE_NUMBERS[@]} -eq 0 ]; then
     UE_NUMBERS=(3 2 1)
     CLEAR_CONFIGS=true
 fi
+# Check if the input is correct
+for UE_NUMBER in "${UE_NUMBERS[@]}"; do
+    if ! [[ "$UE_NUMBER" =~ ^[1-9][0-9]*$ ]]; then
+        echo "ERROR: UE number must be a positive integer."
+        exit 1
+    fi
+    if ! "$SCRIPT_DIR/install_scripts/get_ue_namespace_ip.sh" host "$UE_NUMBER" >/dev/null 2>&1; then
+        echo "ERROR: UE $UE_NUMBER cannot be allocated an address in the namespace subnet."
+        exit 1
+    fi
+    echo "UE $UE_NUMBER will be configured."
+done
 
 # Ensure the correct YAML editor is installed
 "$SCRIPT_DIR/install_scripts/./ensure_consistent_yq.sh"
@@ -186,8 +185,9 @@ if [ ! -f "$EXAMPLE_CONFIG_PATH" ]; then
     exit 1
 fi
 
-# NOTE: Does not validate whether a given operating band supports the selected bandwidth/SCS combination (3GPP 38.104 clause 5.3.5: BS channel bandwidth per operating band)
 GNB_CONFIG_PATH="$SCRIPT_DIR/../Next_Generation_Node_B/configs/gnb.yaml"
+
+# Radio configuration presets (band 3 and band 78)
 NR_BAND="3"
 NR_DL_ARFCN="368500"
 NR_SSB_ARFCN="368410"
@@ -196,7 +196,16 @@ NR_MAX_NOF_PRB="106"
 NR_SCS="15"
 GNB_NR_BW_MHZ="20"
 UE_RF_SRATE_HZ="23.04e6"
+# NR_BAND="78" # WARNING: Experimental. It is recommended to connect OCUDU with Duranta's 5G UE for band 78. Instead of uncommenting below, change "USE_DURANTA_UE=true" in the base directory run.sh
+# NR_DL_ARFCN="632628"
+# NR_SSB_ARFCN="632256"
+# NR_NOF_PRB="51"
+# NR_MAX_NOF_PRB="51"
+# NR_SCS="30"
+# GNB_NR_BW_MHZ="20"
+# UE_RF_SRATE_HZ="23.04e6"
 
+# NOTE: Does not validate whether a given operating band supports the selected bandwidth/SCS combination (3GPP 38.104 clause 5.3.5: BS channel bandwidth per operating band)
 if [ -f "$GNB_CONFIG_PATH" ]; then
     GNB_NR_BAND=$(yq eval '.cell_cfg.band // ""' "$GNB_CONFIG_PATH")
     GNB_NR_DL_ARFCN=$(yq eval '.cell_cfg.dl_arfcn // ""' "$GNB_CONFIG_PATH")
@@ -271,6 +280,7 @@ if [ -f "$GNB_CONFIG_PATH" ]; then
         5_15 | 10_15 | 15_15 | 20_15) ;;
         *)
             echo "ERROR: Unsupported srsUE NR bandwidth/SCS: ${GNB_NR_BW_MHZ} MHz / ${NR_SCS} kHz (3GPP TS 38.104 Table 5.3.2-1)."
+            echo "srsUE SA supports 15 kHz SCS with 5, 10, 15, or 20 MHz bandwidth."
             echo "Set UE_NR_PROFILE=generic_fr1 only for a UE implementation that supports this numerology."
             exit 1
             ;;
@@ -283,6 +293,8 @@ if [ -f "$GNB_CONFIG_PATH" ]; then
 
     if [[ "$NR_BAND" = "3" && "$NR_DL_ARFCN" = "368500" && "$NR_SCS" = "15" ]] && [[ "$GNB_NR_BW_MHZ" = "10" || "$GNB_NR_BW_MHZ" = "20" ]]; then
         NR_SSB_ARFCN="368410"
+    elif [[ "$NR_BAND" = "78" && "$NR_DL_ARFCN" = "632628" && "$NR_SCS" = "30" && "$GNB_NR_BW_MHZ" = "20" ]]; then
+        NR_SSB_ARFCN="632256"
     else
         echo "ERROR: Could not determine SSB ARFCN for UE config. Add a validated derivation for this band/BW/SCS."
         exit 1
@@ -404,21 +416,21 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
     # Update configuration values for GUI
     update_conf "configs/ue${UE_NUMBER}.conf" "gui" "enable" "false"
 
-    UE_IPV4=""
-    if [ $UE_NUMBER -gt 3 ]; then
-        echo "UE is greater than registered subscribers, registering UE $UE_NUMBER..."
-        REGISTRATION_DIR=$(dirname "$SCRIPT_DIR")/5G_Core_Network/install_scripts
-        if [ -f "$REGISTRATION_DIR/./register_subscriber.sh" ]; then
-            UE_INDEX=$((UE_NUMBER + 99))
-            UE_IPV4=$(python3 install_scripts/fetch_nth_ip.py "$OGSTUN_IPV4" "$UE_INDEX")
-            if [ $? -eq 0 ]; then
-                IPV4_LINE="--ipv4 $UE_IPV4"
-            else
-                IPV4_LINE=""
-            fi
-            "$REGISTRATION_DIR/./register_subscriber.sh" --imsi "$UE_IMSI" --key "$UE_KEY" --opc "$UE_OPC" --apn "$CURRENT_DNN" --sst "$SST_DEC" --sd "$SD_HEX" $IPV4_LINE || true
-        fi
-    fi
+    # UE_IPV4=""
+    # if [ $UE_NUMBER -gt 3 ]; then
+    #     echo "UE is greater than registered subscribers, registering UE $UE_NUMBER..."
+    #     REGISTRATION_DIR=$(dirname "$SCRIPT_DIR")/5G_Core_Network/install_scripts
+    #     if [ -f "$REGISTRATION_DIR/./register_subscriber.sh" ]; then
+    #         UE_INDEX=$((UE_NUMBER + 99))
+    #         UE_IPV4=$(python3 install_scripts/fetch_nth_ip.py "$OGSTUN_IPV4" "$UE_INDEX")
+    #         if [ $? -eq 0 ]; then
+    #             IPV4_LINE="--ipv4 $UE_IPV4"
+    #         else
+    #             IPV4_LINE=""
+    #         fi
+    #         "$REGISTRATION_DIR/./register_subscriber.sh" --imsi "$UE_IMSI" --key "$UE_KEY" --opc "$UE_OPC" --apn "$CURRENT_DNN" --sst "$SST_DEC" --sd "$SD_HEX" $IPV4_LINE || true
+    #     fi
+    # fi
 
     echo
     echo "Successfully configured UE ${UE_NUMBER}."

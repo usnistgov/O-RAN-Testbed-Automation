@@ -33,6 +33,7 @@ set -e
 
 USE_ZMQ_BROKER=false
 SHOW_ZMQ_BROKER_UI=true
+USE_SRSRAN_UE=false # Experimental
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
@@ -41,6 +42,36 @@ if ! command -v realpath &>/dev/null; then
 fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
+cd "$SCRIPT_DIR"
+
+UE_DIRECTORY="$SCRIPT_DIR/User_Equipment"
+UE_READY_MESSAGE="Received PDU Session Establishment Accept"
+if [ "$USE_SRSRAN_UE" = "true" ]; then
+    if [ "$USE_ZMQ_BROKER" != "true" ]; then
+        echo "ERROR: The srsRAN UE requires the ZeroMQ broker with the Duranta gNodeB. It can be enabled with the following commands:"
+        echo "    sed -i 's/^RADIO_TYPE=.*$/RADIO_TYPE="ZMQ" # Set to "SIMU", "ZMQ", or "USRP"/' User_Equipment/full_install.sh"
+        echo "    sed -i 's/^RADIO_TYPE=.*$/RADIO_TYPE="ZMQ" # Set to "SIMU", "ZMQ", or "USRP"/' User_Equipment/generate_configurations.sh"
+        echo "    sed -i 's/^RADIO_TYPE=.*$/RADIO_TYPE="ZMQ" # Set to "SIMU", "ZMQ", or "USRP"/' Next_Generation_Node_B/full_install.sh"
+        echo "    sed -i 's/^RADIO_TYPE=.*$/RADIO_TYPE="ZMQ" # Set to "SIMU", "ZMQ", or "USRP"/' Next_Generation_Node_B/generate_configurations.sh"
+        echo "    sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' run.sh"
+        echo "    sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' run_handover_scenario.sh"
+        echo "    sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' run_with_grafana_dashboard.sh"
+        echo "    sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' run_with_nrscope_gui.sh"
+        echo "    sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' User_Equipment/run.sh"
+        echo "    sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' User_Equipment/run_background.sh"
+        echo "    sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' User_Equipment/run_gdb.sh"
+        echo "    sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' Next_Generation_Node_B/run.sh"
+        echo "    sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' Next_Generation_Node_B/run_background.sh"
+        echo "    sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' Next_Generation_Node_B/run_gdb.sh"
+        echo "    sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' Next_Generation_Node_B/run_split_du.sh"
+        echo "    sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' Next_Generation_Node_B/is_running.sh"
+        echo "    sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' Next_Generation_Node_B/stop.sh"
+        exit 1
+    fi
+    UE_DIRECTORY="$SCRIPT_DIR/../User_Equipment"
+    UE_READY_MESSAGE="PDU Session Establishment successful" # srsRAN_4G
+    # UE_READY_MESSAGE="Attaching UE..." # srsRAN_4G
+fi
 
 RUN_TELNET_SESSION_AFTER=true
 NUM_UES=1
@@ -128,16 +159,20 @@ if [ "$USE_ZMQ_BROKER" = "true" ]; then
     ./Next_Generation_Node_B/install_scripts/validate_zmq_broker_config.sh "${VALIDATE_BROKER_ARGS[@]}"
 
     GNB_ZMQ_LIBRARY="$SCRIPT_DIR/Next_Generation_Node_B/openairinterface5g/cmake_targets/ran_build/build/liboai_zmqdevif.so"
-    UE_ZMQ_LIBRARY="$SCRIPT_DIR/User_Equipment/openairinterface5g/cmake_targets/ran_build/build/liboai_zmqdevif.so"
+    if [ "$USE_SRSRAN_UE" = "true" ]; then
+        UE_ZMQ_LIBRARY="$UE_DIRECTORY/srsRAN_4G/build/srsue/src/srsue"
+    else
+        UE_ZMQ_LIBRARY="$UE_DIRECTORY/openairinterface5g/cmake_targets/ran_build/build/liboai_zmqdevif.so"
+    fi
     if [ ! -f "$GNB_ZMQ_LIBRARY" ] || [ ! -f "$UE_ZMQ_LIBRARY" ]; then
-        echo "ERROR: The OAI gNodeB and UE must be built with ZeroMQ support."
+        echo "ERROR: The Duranta gNodeB and selected UE must be built with ZeroMQ support."
         if [ ! -f "$GNB_ZMQ_LIBRARY" ]; then
             echo "Missing gNodeB library: $GNB_ZMQ_LIBRARY"
         fi
         if [ ! -f "$UE_ZMQ_LIBRARY" ]; then
             echo "Missing UE library: $UE_ZMQ_LIBRARY"
         fi
-        echo "Rerun both full_install.sh scripts after setting RADIO_TYPE=\"ZMQ\"."
+        echo "Rerun the required full_install.sh scripts with ZeroMQ enabled."
         exit 1
     fi
 fi
@@ -203,7 +238,7 @@ start_ue() {
     IS_RFSIM_SERVER=$2
     echo
     echo "Running UE $UE_ID..."
-    cd User_Equipment
+    cd "$UE_DIRECTORY"
     if [ "$IS_RFSIM_SERVER" = true ]; then
         ./run_background.sh "$UE_ID" --rfsim-server
     else
@@ -215,7 +250,7 @@ start_ue() {
     fi
 
     if [ "$USE_ZMQ_BROKER" = "true" ]; then
-        cd ..
+        cd "$SCRIPT_DIR"
         return
     fi
 
@@ -238,14 +273,15 @@ start_ue() {
         fi
     done
     echo -e "\nUE $UE_ID is ready."
-    cd ..
+    cd "$SCRIPT_DIR"
 }
 
 wait_for_ue_to_connect() {
     UE_ID=$1
+    LOG_FILE="$UE_DIRECTORY/logs/ue${UE_ID}_stdout.txt"
     echo -en "\nWaiting for UE $UE_ID to establish a PDU session"
     ATTEMPT=0
-    while ! ./User_Equipment/is_ue_ready.sh "$UE_ID" | grep -qx "true"; do
+    while [ ! -f "$LOG_FILE" ] || ! grep -qaF "$UE_READY_MESSAGE" "$LOG_FILE"; do
         stty sane || true
         echo -n "."
         sleep 0.5
@@ -254,7 +290,7 @@ wait_for_ue_to_connect() {
             echo "UE $UE_ID did not establish a PDU session after 60 seconds, exiting..."
             exit 1
         fi
-        if ! ./User_Equipment/is_running.sh | grep -Eq "(^|[ (])ue${UE_ID}([ )]|$)" || ! ./Next_Generation_Node_B/is_running.sh | grep -Eq "(^|[ (])du1([ )]|$)"; then
+        if ! "$UE_DIRECTORY/is_running.sh" | grep -Eq "(^|[ (])ue${UE_ID}([ )]|$)" || ! ./Next_Generation_Node_B/is_running.sh | grep -Eq "(^|[ (])du1([ )]|$)"; then
             echo "ERROR: DU 1 or UE $UE_ID may not be running. Check logs for more information."
             exit 1
         fi

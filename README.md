@@ -149,7 +149,7 @@ Begin the installation process, recommended to be run as the current user rather
   <summary><b>OCUDU and O-RAN SC Near-RT RIC Output</b></summary>
   <hr>
 
-Run the testbed with `./run.sh` to start the 5G Core, gNodeB, and UEs. Use `./is_running.sh` to check if the components are running, and `./stop.sh` to stop the components. The optional RIC starts automatically on boot and can be accessed with `k9s -A`.
+Run the testbed with `./run.sh` to start the 5G Core, gNodeB, and UEs. Set `USE_DURANTA_UE=true` in `run.sh` to use Duranta UEs instead of the default srsRAN_4G UEs. To switch between band 3 and band 78, search for `Radio configuration presets` and update each section. Use `./is_running.sh` to check the components and `./stop.sh` to stop them. The optional RIC starts automatically on boot and can be accessed with `k9s -A`.
 
 ```console
 Attaching UE...

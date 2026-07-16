@@ -31,8 +31,8 @@
 # Exit immediately if a command fails
 set -e
 
-USE_ZMQ_BROKER=true
-SHOW_ZMQ_BROKER_UI=false
+USE_ZMQ_BROKER=false
+SHOW_ZMQ_BROKER_UI=true
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then

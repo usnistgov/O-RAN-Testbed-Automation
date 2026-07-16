@@ -36,6 +36,23 @@ RADIO_TYPE="SIMU" # Set to "SIMU", "ZMQ", or "USRP"
 MAKE_GNB_E2_NODE=true
 MAKE_CU_E2_NODE=false
 MAKE_DU_E2_NODE=true
+NEAR_RIC_IP_ADDR="127.0.0.1"
+
+# Radio configuration presets (band 3 and band 78)
+GNB_CONFIG_TEMPLATE="openairinterface5g/targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band1.u0.52PRB.usrpb210.conf"
+NR_BAND="3"
+NR_SSB_ARFCN="368410"
+NR_DL_POINT_A_ARFCN="366592"
+NR_UL_POINT_A_ARFCN="347592"
+NR_CARRIER_BANDWIDTH_RBS="106"
+NR_BWP_LOCATION_AND_BANDWIDTH="28875"
+NR_CORESET0_INDEX="12"
+ZMQ_TX_AMP_BACKOFF_DB="12"
+# GNB_CONFIG_TEMPLATE="openairinterface5g/targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band78.fr1.106PRB.usrpb210.conf"
+# NR_BAND="78"
+# NR_SSB_ARFCN="641280"
+# NR_DL_POINT_A_ARFCN="640008"
+# NR_UL_POINT_A_ARFCN=""
 
 # FLEXRIC_LIBRARY_DIR="/usr/local/lib/flexric/" # Default
 FLEXRIC_LIBRARY_DIR="flexric/build/flexric_libraries/lib/flexric/"
@@ -215,7 +232,27 @@ if [[ $RUNNING_STATUS != *": RUNNING"* ]]; then
     mkdir logs
 fi
 
-cp openairinterface5g/targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band78.fr1.106PRB.usrpb210.conf "$SCRIPT_DIR/configs/gnb.conf"
+cp "$GNB_CONFIG_TEMPLATE" "$SCRIPT_DIR/configs/gnb.conf"
+update_conf "configs/gnb.conf" "absoluteFrequencySSB" "$NR_SSB_ARFCN"
+update_conf "configs/gnb.conf" "dl_frequencyBand" "$NR_BAND"
+update_conf "configs/gnb.conf" "dl_absoluteFrequencyPointA" "$NR_DL_POINT_A_ARFCN"
+update_conf "configs/gnb.conf" "dl_carrierBandwidth" "$NR_CARRIER_BANDWIDTH_RBS"
+update_conf "configs/gnb.conf" "initialDLBWPlocationAndBandwidth" "$NR_BWP_LOCATION_AND_BANDWIDTH"
+update_conf "configs/gnb.conf" "initialDLBWPcontrolResourceSetZero" "$NR_CORESET0_INDEX"
+update_conf "configs/gnb.conf" "ul_frequencyBand" "$NR_BAND"
+update_conf "configs/gnb.conf" "ul_carrierBandwidth" "$NR_CARRIER_BANDWIDTH_RBS"
+update_conf "configs/gnb.conf" "initialULBWPlocationAndBandwidth" "$NR_BWP_LOCATION_AND_BANDWIDTH"
+if grep -q "^[[:space:]]*n_TimingAdvanceOffset[[:space:]]*=" "configs/gnb.conf"; then
+    update_conf "configs/gnb.conf" "n_TimingAdvanceOffset" "1"
+else
+    sed -i "/^[[:space:]]*p0_nominal[[:space:]]*=/a\\        n_TimingAdvanceOffset = 1;" "configs/gnb.conf"
+fi
+if [ -n "$NR_UL_POINT_A_ARFCN" ]; then
+    update_conf "configs/gnb.conf" "ul_absoluteFrequencyPointA" "$NR_UL_POINT_A_ARFCN"
+fi
+if [ "$RADIO_TYPE" = "ZMQ" ]; then
+    sed -i "/^[[:space:]]*prach_dtx_threshold/a\\  tx_amp_backoff_dB = $ZMQ_TX_AMP_BACKOFF_DB;" "configs/gnb.conf"
+fi
 cp openairinterface5g/targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb-cu.sa.f1.conf "$SCRIPT_DIR/configs/split_cu.conf"
 for i in $SPLIT_DU_IDS; do
     cp "$SCRIPT_DIR/configs/gnb.conf" "$SCRIPT_DIR/configs/split_du${i}.conf"
@@ -275,7 +312,26 @@ for CONF_FILE in gnb.conf split_cu.conf "${SPLIT_DUS[@]}"; do
     update_conf "configs/$CONF_FILE" "GNB_IPV4_ADDRESS_FOR_NG_AMF" "\"$N2_ADDR_BIND/24\""
     update_conf "configs/$CONF_FILE" "GNB_IPV4_ADDRESS_FOR_NGU" "\"$N3_ADDR_BIND/24\""
     update_conf "configs/$CONF_FILE" "tracking_area_code" "$TAC"
-    update_conf "configs/$CONF_FILE" "sm_dir" "\"$FULL_SM_DIR\""
+
+    ENABLE_E2_NODE=true
+    if [[ "$CONF_FILE" == "gnb.conf" ]] && [ "$MAKE_GNB_E2_NODE" = "false" ]; then
+        ENABLE_E2_NODE=false
+    elif [[ "$CONF_FILE" == "split_cu.conf" ]] && [ "$MAKE_CU_E2_NODE" = "false" ]; then
+        ENABLE_E2_NODE=false
+    elif [[ "$CONF_FILE" == *"du"* ]] && [ "$MAKE_DU_E2_NODE" = "false" ]; then
+        ENABLE_E2_NODE=false
+    fi
+
+    if [ "$ENABLE_E2_NODE" = "true" ]; then
+        if grep -q "^[[:space:]]*e2_agent[[:space:]]*=[[:space:]]*{" "configs/$CONF_FILE"; then
+            update_conf "configs/$CONF_FILE" "near_ric_ip_addr" "\"$NEAR_RIC_IP_ADDR\""
+            update_conf "configs/$CONF_FILE" "sm_dir" "\"$FULL_SM_DIR\""
+        else
+            printf '\ne2_agent = {\n  near_ric_ip_addr = "%s";\n  sm_dir = "%s";\n};\n' "$NEAR_RIC_IP_ADDR" "$FULL_SM_DIR" >>"configs/$CONF_FILE"
+        fi
+    elif grep -q "^[[:space:]]*e2_agent[[:space:]]*=[[:space:]]*{" "configs/$CONF_FILE"; then
+        sed -i '/^[[:space:]]*e2_agent[[:space:]]*=[[:space:]]*{/,/^[[:space:]]*};/ s/^/#/' "configs/$CONF_FILE"
+    fi
 
     # Configure the Single Network Slice Selection Assistance Information (S-NSSAI)
     update_conf "configs/$CONF_FILE" "plmn_list" "({ mcc = $MCC; mnc = $MNC; mnc_length = $MNC_LENGTH; snssaiList = $SNSSAI_LIST })"
@@ -308,13 +364,6 @@ for CONF_FILE in gnb.conf split_cu.conf "${SPLIT_DUS[@]}"; do
         fi
     fi
 
-    if [[ "$CONF_FILE" == "gnb.conf" ]] && [ "$MAKE_GNB_E2_NODE" = "false" ]; then
-        sed -i '/^e2_agent *= *{/,/^};/ s/^/#/' "configs/$CONF_FILE"
-    elif [[ "$CONF_FILE" == "split_cu.conf" ]] && [ "$MAKE_CU_E2_NODE" = "false" ]; then
-        sed -i '/^e2_agent *= *{/,/^};/ s/^/#/' "configs/$CONF_FILE"
-    elif [[ "$CONF_FILE" == *"du"* ]] && [ "$MAKE_DU_E2_NODE" = "false" ]; then
-        sed -i '/^e2_agent *= *{/,/^};/ s/^/#/' "configs/$CONF_FILE"
-    fi
 done
 
 echo

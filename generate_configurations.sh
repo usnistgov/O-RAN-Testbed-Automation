@@ -41,7 +41,7 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
 USE_FLEXRIC=false
-USE_ZMQ_BROKER=true
+USE_ZMQ_BROKER=false
 ORIGINAL_ARGS=("$@")
 
 CELL_NUMBERS_STR="1"   # Default cells
@@ -81,15 +81,21 @@ if [ "$USE_FLEXRIC" = "true" ]; then
 fi
 
 echo
-echo "Generating Configuration for Next Generation Node B..."
+echo "Generating Configuration for OCUDU Next Generation Node B..."
 cd Next_Generation_Node_B
 ./generate_configurations.sh "${ORIGINAL_ARGS[@]}"
 cd ..
 
 echo
-echo "Generating Configuration for User Equipment..."
+echo "Generating Configuration for srsRAN User Equipment..."
 cd User_Equipment
-./generate_configurations.sh "${ORIGINAL_ARGS[@]}"
+./generate_configurations.sh $UE_CONFIG_ARGS
+cd "$SCRIPT_DIR"
+
+echo
+echo "Generating Configuration for Duranta User Equipment..."
+cd OpenAirInterface_Testbed/User_Equipment
+./generate_configurations.sh $UE_CONFIG_ARGS
 cd "$SCRIPT_DIR"
 
 if [ "$USE_ZMQ_BROKER" = "true" ]; then

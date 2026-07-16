@@ -130,7 +130,7 @@ if ./is_running.sh | grep -Eq "(^|[ (])ue${UE_NUMBER}([ )]|$)"; then
     echo "Already running ue$UE_NUMBER."
 else
     if [ ! -f "$UE_CONF_PATH" ]; then
-        echo "Configuration was not found for OAI UE $UE_NUMBER. Please run ./generate_configurations.sh first."
+        echo "Configuration was not found for Duranta UE $UE_NUMBER. Please run ./generate_configurations.sh first."
         exit 1
     fi
     mkdir -p logs
@@ -162,7 +162,7 @@ else
         fi
     fi
 
-    ADDITIONAL_FLAGS=""
+    ADDITIONAL_FLAGS="-E"
     if [ "$DISABLE_NRSCOPE_IF_INSTALLED" = false ] && [ -f "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build/libimscope.so" ]; then
         echo "Enabling ImScope..."
         ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --imscope -d --log_config.global_log_options utc_time"
@@ -184,11 +184,20 @@ else
         RADIO_ARGS="--rfsim $RFSIM_SERVER_ARG --rfsimulator.[0].options chanmod"
     fi
 
+    # Radio configuration presets (band 3 and band 78)
     BANDWIDTH_RBS=106
-    NUMEROLOGY=1
-    BAND=78
-    DL_CARRIER_FREQUENCY_HZ=3619200000
+    NUMEROLOGY=0
+    BAND=3
+    DL_CARRIER_FREQUENCY_HZ=1842500000
+    UL_CARRIER_OFFSET_HZ=-95000000
+    SSB_START_SUBCARRIER=486
+    # BANDWIDTH_RBS=51
+    # NUMEROLOGY=1
+    # BAND=78
+    # DL_CARRIER_FREQUENCY_HZ=3489420000
+    # UL_CARRIER_OFFSET_HZ=0
+    # SSB_START_SUBCARRIER=0
 
-    # sudo ip netns exec ue$UE_NUMBER ./nr-uesoftmodem -O "../../../../configs/ue$UE_NUMBER.conf" $RADIO_ARGS -r $BANDWIDTH_RBS --numerology $NUMEROLOGY --band $BAND -C $DL_CARRIER_FREQUENCY_HZ
-    sudo script -q -f -c "ip netns exec ue$UE_NUMBER ./nr-uesoftmodem -O \"../../../../configs/ue$UE_NUMBER.conf\" $RADIO_ARGS -r $BANDWIDTH_RBS --numerology $NUMEROLOGY --band $BAND -C $DL_CARRIER_FREQUENCY_HZ $ADDITIONAL_FLAGS" "$SCRIPT_DIR/logs/ue${UE_NUMBER}_stdout.txt"
+    # sudo ip netns exec ue$UE_NUMBER ./nr-uesoftmodem -O "../../../../configs/ue$UE_NUMBER.conf" $RADIO_ARGS -r $BANDWIDTH_RBS --numerology $NUMEROLOGY --band $BAND -C $DL_CARRIER_FREQUENCY_HZ --CO $UL_CARRIER_OFFSET_HZ --ssb $SSB_START_SUBCARRIER
+    sudo script -q -f -c "ip netns exec ue$UE_NUMBER ./nr-uesoftmodem -O \"../../../../configs/ue$UE_NUMBER.conf\" $RADIO_ARGS -r $BANDWIDTH_RBS --numerology $NUMEROLOGY --band $BAND -C $DL_CARRIER_FREQUENCY_HZ --CO $UL_CARRIER_OFFSET_HZ --ssb $SSB_START_SUBCARRIER $ADDITIONAL_FLAGS" "$SCRIPT_DIR/logs/ue${UE_NUMBER}_stdout.txt"
 fi

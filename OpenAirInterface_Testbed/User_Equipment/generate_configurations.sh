@@ -28,6 +28,8 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
+echo "# Script: $(realpath "$0") $@"
+
 # Exit immediately if a command fails
 set -e
 
@@ -221,6 +223,7 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
 
     # Configure the PDU sessions (DNN, SST, SD)
     update_conf "configs/ue$UE_NUMBER.conf" "pdu_sessions" "({ dnn = \"$CURRENT_DNN\"; nssai_sst = $SST_DEC; nssai_sd = 0x$SD_HEX; })"
+    update_conf "configs/ue$UE_NUMBER.conf" "uecap_file" "\"$SCRIPT_DIR/openairinterface5g/targets/PROJECTS/GENERIC-NR-5GC/CONF/uecap_ports1.xml\""
 
     ./install_scripts/add_channel_model.sh "rfsimu_channel_ue$UE_NUMBER"
 
@@ -231,21 +234,21 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
         echo "@include \"channelmod_rfsimu.conf\"" >>"configs/ue$UE_NUMBER.conf"
     fi
 
-    UE_IPV4=""
-    if [ $UE_NUMBER -gt 3 ]; then
-        echo "UE is greater than registered subscribers, registering UE $UE_NUMBER..."
-        REGISTRATION_DIR=$(dirname "$SCRIPT_DIR")/5G_Core_Network/install_scripts
-        if [ -f "$REGISTRATION_DIR/./register_subscriber.sh" ]; then
-            UE_INDEX=$((UE_NUMBER + 99))
-            UE_IPV4=$(python3 install_scripts/fetch_nth_ip.py "$OGSTUN_IPV4" "$UE_INDEX")
-            if [ $? -eq 0 ]; then
-                IPV4_LINE="--ipv4 $UE_IPV4"
-            else
-                IPV4_LINE=""
-            fi
-            "$REGISTRATION_DIR/./register_subscriber.sh" --imsi "$UE_IMSI" --key "$UE_KEY" --opc "$UE_OPC" --apn "$CURRENT_DNN" --sst "$SST_DEC" --sd "$SD_HEX" $IPV4_LINE || true
-        fi
-    fi
+    # UE_IPV4=""
+    # if [ $UE_NUMBER -gt 3 ]; then
+    #     echo "UE is greater than registered subscribers, registering UE $UE_NUMBER..."
+    #     REGISTRATION_DIR=$(dirname "$SCRIPT_DIR")/5G_Core_Network/install_scripts
+    #     if [ -f "$REGISTRATION_DIR/./register_subscriber.sh" ]; then
+    #         UE_INDEX=$((UE_NUMBER + 99))
+    #         UE_IPV4=$(python3 install_scripts/fetch_nth_ip.py "$OGSTUN_IPV4" "$UE_INDEX")
+    #         if [ $? -eq 0 ]; then
+    #             IPV4_LINE="--ipv4 $UE_IPV4"
+    #         else
+    #             IPV4_LINE=""
+    #         fi
+    #         "$REGISTRATION_DIR/./register_subscriber.sh" --imsi "$UE_IMSI" --key "$UE_KEY" --opc "$UE_OPC" --apn "$CURRENT_DNN" --sst "$SST_DEC" --sd "$SD_HEX" $IPV4_LINE || true
+    #     fi
+    # fi
 
     echo
     echo "Successfully configured UE ${UE_NUMBER}."

@@ -38,10 +38,16 @@ if ! command -v realpath &>/dev/null; then
 fi
 
 USE_FLEXRIC=false
-USE_ZMQ_BROKER=true
+USE_ZMQ_BROKER=false
+USE_DURANTA_UE=false
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
+
+UE_DIRECTORY="$SCRIPT_DIR/User_Equipment"
+if [ "$USE_DURANTA_UE" = "true" ]; then
+    UE_DIRECTORY="$SCRIPT_DIR/OpenAirInterface_Testbed/User_Equipment"
+fi
 
 sudo -v # Ensure sudo session is active
 
@@ -91,7 +97,17 @@ if ! lsmod | grep -q '^sctp '; then
 fi
 
 # Upon exit, gracefully stop all components and fix console in case it breaks
-trap "trap - EXIT SIGINT SIGTERM; echo \"#################################  STOPPING... #################################\"; \"$SCRIPT_DIR/./stop.sh\"; stty sane || true; exit" EXIT SIGINT SIGTERM
+trap '
+    EXIT_STATUS=$?
+    trap - EXIT SIGINT SIGTERM
+    echo "#################################  STOPPING... #################################"
+    if [ "$USE_DURANTA_UE" = "true" ]; then
+        "$UE_DIRECTORY/stop.sh" || true
+    fi
+    "$SCRIPT_DIR/stop.sh" || true
+    stty sane || true
+    exit "$EXIT_STATUS"
+' EXIT SIGINT SIGTERM
 
 echo "Running 5G Core components..."
 cd 5G_Core_Network
@@ -133,7 +149,7 @@ cd ..
 
 echo
 echo "Running User Equipment..."
-cd User_Equipment
+cd "$UE_DIRECTORY"
 if [ "$USE_ZMQ_BROKER" = "true" ] && [ ${#UE_NUMBERS[@]} -gt 1 ]; then
     for ((i = 1; i < ${#UE_NUMBERS[@]}; i++)); do
         echo "Running UE ${UE_NUMBERS[$i]} in background..."
@@ -142,4 +158,4 @@ if [ "$USE_ZMQ_BROKER" = "true" ] && [ ${#UE_NUMBERS[@]} -gt 1 ]; then
 fi
 echo "Running UE ${UE_NUMBERS[0]}..."
 ./run.sh "${UE_NUMBERS[0]}"
-cd ..
+cd "$SCRIPT_DIR"

@@ -28,21 +28,20 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
+echo "# Script: $(realpath "$0") $@"
+
 # Exit immediately if a command fails
 set -e
 
 EXPOSE_GNB_TO_HOSTNAME=false
 USE_FLEXRIC=false
-USE_ZMQ_BROKER=true
+USE_ZMQ_BROKER=false
 ZMQ_BROKER_CHANNEL_BW_MHZ=20
 GNB_SRATE_MHZ=23.04
 GNB_BASE_SRATE_HZ=23.04e6
 PDU_SESSION_TIMEOUT=3
 
 if [ "$USE_ZMQ_BROKER" = "true" ]; then
-    ZMQ_BROKER_CHANNEL_BW_MHZ=10
-    GNB_SRATE_MHZ=11.52
-    GNB_BASE_SRATE_HZ=11.52e6
     PDU_SESSION_TIMEOUT=30
 fi
 
@@ -55,11 +54,13 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
+# Radio configuration presets (band 3 and band 78)
 BASE_EXAMPLE_CONFIG_PATH="$SCRIPT_DIR/ocudu/configs/gnb_rf_b210_fdd_srsUE.yml"
+# BASE_EXAMPLE_CONFIG_PATH="$SCRIPT_DIR/ocudu/configs/gnb_rf_b200_tdd_n78_20mhz.yml"
 
 usage() {
     echo "Usage: $0 [--disable-e2-term] [--e2-term-address <address>] [--cells <cell_numbers>] [--ues <ue_numbers>]"
-    echo "    For example: $0 --ues 4,5,6 --cells 7,8"}
+    echo "    For example: $0 --ues 4,5,6 --cells 1,2"}
 }
 
 # Parse command-line arguments
@@ -201,6 +202,7 @@ if [ ! -f "$BASE_EXAMPLE_CONFIG_PATH" ]; then
     exit 1
 fi
 cp "$BASE_EXAMPLE_CONFIG_PATH" configs/gnb.yaml
+CELL_BAND=$(yq eval '.cell_cfg.band' configs/gnb.yaml)
 
 if [ ! -d "../RAN_Intelligent_Controllers/Near-Real-Time-RIC" ] && [ "$USE_FLEXRIC" = "false" ]; then
     echo "Could not find the Near-Real-Time-RIC directory. Disabling E2 termination support."
@@ -411,16 +413,28 @@ update_yaml "configs/gnb.yaml" "cell_cfg" "tac" $TAC
 
 if [ "$USE_ZMQ_BROKER" = "true" ]; then
     update_yaml "configs/gnb.yaml" "cell_cfg" "channel_bandwidth_MHz" "$ZMQ_BROKER_CHANNEL_BW_MHZ"
-    update_yaml "configs/gnb.yaml" "cell_cfg.pdcch.common" "coreset0_index" "6"
+    update_yaml "configs/gnb.yaml" "ru_sdr.amplitude_control" "tx_gain_backoff" "22"
     update_yaml "configs/gnb.yaml" "cell_cfg.prach" "total_nof_ra_preambles" "64"
     update_yaml "configs/gnb.yaml" "cell_cfg.prach" "nof_ssb_per_ro" "1"
     update_yaml "configs/gnb.yaml" "cell_cfg.prach" "nof_cb_preambles_per_ssb" "64"
-    update_yaml "configs/gnb.yaml" "cell_cfg.pucch" "resource_set_size" "7"
-    update_yaml "configs/gnb.yaml" "cell_cfg.pucch" "nof_cell_res_set_configs" "1"
-    update_yaml "configs/gnb.yaml" "cell_cfg.pucch" "f1_nof_cyclic_shifts" "1"
-    update_yaml "configs/gnb.yaml" "cell_cfg.pucch" "f1_enable_occ" "true"
-    update_yaml "configs/gnb.yaml" "cell_cfg.pucch" "nof_cell_sr_res" "7"
-    update_yaml "configs/gnb.yaml" "cell_cfg.pucch" "nof_cell_csi_res" "7"
+    if [ "$CELL_BAND" = "3" ]; then
+        update_yaml "configs/gnb.yaml" "cell_cfg.prach" "prach_frequency_start" "3"
+        update_yaml "configs/gnb.yaml" "cell_cfg.pucch" "resource_set_size" "7"
+        update_yaml "configs/gnb.yaml" "cell_cfg.pucch" "nof_cell_res_set_configs" "1"
+        update_yaml "configs/gnb.yaml" "cell_cfg.pucch" "f1_nof_cyclic_shifts" "1"
+        update_yaml "configs/gnb.yaml" "cell_cfg.pucch" "f1_enable_occ" "true"
+        update_yaml "configs/gnb.yaml" "cell_cfg.pucch" "nof_cell_sr_res" "7"
+        update_yaml "configs/gnb.yaml" "cell_cfg.pucch" "nof_cell_csi_res" "7"
+    elif [ "$CELL_BAND" = "78" ]; then
+        update_yaml "configs/gnb.yaml" "cell_cfg.csi" "csi_rs_enabled" "false"
+        update_yaml "configs/gnb.yaml" "cell_cfg.tdd_ul_dl_cfg" "dl_ul_tx_period" "5"
+        update_yaml "configs/gnb.yaml" "cell_cfg.tdd_ul_dl_cfg" "nof_dl_slots" "3"
+        update_yaml "configs/gnb.yaml" "cell_cfg.tdd_ul_dl_cfg" "nof_dl_symbols" "10"
+        update_yaml "configs/gnb.yaml" "cell_cfg.tdd_ul_dl_cfg" "nof_ul_slots" "1"
+        update_yaml "configs/gnb.yaml" "cell_cfg.tdd_ul_dl_cfg" "nof_ul_symbols" "2"
+        update_yaml "configs/gnb.yaml" "cell_cfg.pucch" "formats" "f0_and_f2"
+        update_yaml "configs/gnb.yaml" "cell_cfg.pucch" "nof_cell_csi_res" "0"
+    fi
 fi
 
 yq eval -i 'del(.cells)' "configs/gnb.yaml"
@@ -617,8 +631,9 @@ if [ "$USE_ZMQ_BROKER" = "true" ]; then
 
     BROKER_SRATE_INT=$(awk "BEGIN { printf \"%d\", $GNB_SRATE_MHZ * 1000000 }")
 
-    # Calculate the slow down ratio based on the number of UEs and cells
-    ZMQ_BROKER_SLOW_DOWN_RATIO="$((${#UE_NUMBERS[@]} + ${#CELL_NUMBERS[@]}))"
+    ZMQ_BROKER_SLOW_DOWN_RATIO="1"
+    # # Optionally, calculate the slow down ratio based on the number of UEs and cells
+    # ZMQ_BROKER_SLOW_DOWN_RATIO="$((${#UE_NUMBERS[@]} + ${#CELL_NUMBERS[@]}))"
 
     UE_ARGS=""
     for UE_NUMBER in "${UE_NUMBERS[@]}"; do

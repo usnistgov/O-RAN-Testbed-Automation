@@ -37,26 +37,43 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-RUNNING_UE_NUMBERS=()
+SRSRAN_UE_NUMBERS=()
+DURANTA_UE_NUMBERS=()
 
 # Attempt to extract the UE number from the configuration file path
 while read -r LINE; do
     UE_NUMBER=$(echo "$LINE" | grep -oP "configs/ue\K\d+\.conf" | sed 's/.conf//')
     if [[ -n $UE_NUMBER ]]; then
         # Add to array only if not already present
-        if [[ ! " ${RUNNING_UE_NUMBERS[@]} " =~ " ue$UE_NUMBER " ]]; then
-            RUNNING_UE_NUMBERS+=("ue$UE_NUMBER")
+        if [[ ! " ${SRSRAN_UE_NUMBERS[*]} " =~ " ue$UE_NUMBER " ]]; then
+            SRSRAN_UE_NUMBERS+=("ue$UE_NUMBER")
         fi
     fi
 done < <(pgrep -af "srsue --config_file" | grep "configs/ue")
 
-# Check if the UE is running
-if [ ${#RUNNING_UE_NUMBERS[@]} -gt 0 ]; then
-    echo "User Equipment: RUNNING (${RUNNING_UE_NUMBERS[*]})"
-else
-    if pgrep -x "srsue" >/dev/null; then
-        echo "User Equipment: RUNNING"
-    else
-        echo "User Equipment: NOT_RUNNING"
+while read -r LINE; do
+    UE_NUMBER=$(echo "$LINE" | grep -oP "configs/ue\K\d+\.conf" | sed 's/.conf//')
+    if [[ -n $UE_NUMBER ]] && [[ ! " ${DURANTA_UE_NUMBERS[*]} " =~ " ue$UE_NUMBER " ]]; then
+        DURANTA_UE_NUMBERS+=("ue$UE_NUMBER")
     fi
+done < <(pgrep -af "nr-uesoftmodem.*-O .*configs/ue")
+
+SRSRAN_RUNNING=false
+DURANTA_RUNNING=false
+if [ ${#SRSRAN_UE_NUMBERS[@]} -gt 0 ] || pgrep -x "srsue" >/dev/null; then
+    SRSRAN_RUNNING=true
+fi
+if [ ${#DURANTA_UE_NUMBERS[@]} -gt 0 ] || pgrep -x "nr-uesoftmodem" >/dev/null; then
+    DURANTA_RUNNING=true
+fi
+
+if [ "$SRSRAN_RUNNING" = "true" ] && [ "$DURANTA_RUNNING" = "true" ]; then
+    echo "User Equipment: RUNNING${SRSRAN_UE_NUMBERS[*]:+ (${SRSRAN_UE_NUMBERS[*]})} (srsRAN_4G)"
+    echo "User Equipment: RUNNING${DURANTA_UE_NUMBERS[*]:+ (${DURANTA_UE_NUMBERS[*]})} (Duranta)"
+elif [ "$SRSRAN_RUNNING" = "true" ]; then
+    echo "User Equipment: RUNNING${SRSRAN_UE_NUMBERS[*]:+ (${SRSRAN_UE_NUMBERS[*]})}"
+elif [ "$DURANTA_RUNNING" = "true" ]; then
+    echo "User Equipment: RUNNING${DURANTA_UE_NUMBERS[*]:+ (${DURANTA_UE_NUMBERS[*]})}"
+else
+    echo "User Equipment: NOT_RUNNING"
 fi

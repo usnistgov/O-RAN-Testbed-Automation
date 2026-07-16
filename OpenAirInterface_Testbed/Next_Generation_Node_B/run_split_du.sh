@@ -97,7 +97,7 @@ if [ "$DU_NUMBER" -ne 1 ]; then
     RFSIM_SERVER=0
 fi
 
-ADDITIONAL_FLAGS=""
+ADDITIONAL_FLAGS="-E"
 # if [ -f "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build/libtelnetsrv.so" ]; then
 #     echo "Found telnet server library. Enabling telnet server..."
 #     TELNET_ADDRESS=127.0.0.1

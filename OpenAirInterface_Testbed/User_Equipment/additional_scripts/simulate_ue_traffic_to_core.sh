@@ -77,7 +77,7 @@ if [ $DURATION -lt 1 ]; then
 fi
 
 if [ ! -f "configs/ue${UE_NUMBER}.conf" ]; then
-    echo "Configuration was not found for OAI UE $UE_NUMBER. Please run ./generate_configurations.sh first."
+    echo "Configuration was not found for Duranta UE $UE_NUMBER. Please run ./generate_configurations.sh first."
     exit 1
 fi
 

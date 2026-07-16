@@ -96,7 +96,7 @@ sed -i 's/^USE_ZMQ_BROKER=true$/USE_ZMQ_BROKER=false/' Next_Generation_Node_B/st
 </details>
 <hr>
 
-When the ZeroMQ broker is enabled, `./run.sh` starts the configured DUs and UEs, then waits for the DUs to become ready and the UEs to establish PDU sessions. The individual component scripts also start the broker. Unlike the RF Simulator, all configured endpoints must be running for samples to flow.
+When the ZeroMQ broker is enabled, `./run.sh` starts the configured DUs and UEs and waits for them to become ready. All configured endpoints must be running for samples to flow.
 
 ## Handover Scenario
 

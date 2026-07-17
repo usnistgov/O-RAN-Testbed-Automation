@@ -145,18 +145,15 @@ if [ "$USE_ZMQ_BROKER" = "true" ]; then
         echo "Using $NUM_UES UE(s) and $NUM_DUS DU(s) from the ZeroMQ broker configuration."
     fi
 
-    VALIDATE_BROKER_ARGS=(--broker-only)
-    DU_ID=1
-    while [ $DU_ID -le "$NUM_DUS" ]; do
-        VALIDATE_BROKER_ARGS+=(--cell "$DU_ID")
-        DU_ID=$((DU_ID + 1))
-    done
-    UE_ID=1
-    while [ $UE_ID -le "$NUM_UES" ]; do
-        VALIDATE_BROKER_ARGS+=(--ue "$UE_ID")
-        UE_ID=$((UE_ID + 1))
-    done
-    ./Next_Generation_Node_B/install_scripts/validate_zmq_broker_config.sh "${VALIDATE_BROKER_ARGS[@]}"
+    BROKER_UE_NUMBERS_STR=$(
+        IFS=,
+        echo "${BROKER_UE_NUMBERS[*]}"
+    )
+    BROKER_CELL_NUMBERS_STR=$(
+        IFS=,
+        echo "${BROKER_CELL_NUMBERS[*]}"
+    )
+    ./Next_Generation_Node_B/install_scripts/validate_zmq_broker_config.sh --broker-only --ues "$BROKER_UE_NUMBERS_STR" --cells "$BROKER_CELL_NUMBERS_STR"
 
     GNB_ZMQ_LIBRARY="$SCRIPT_DIR/Next_Generation_Node_B/openairinterface5g/cmake_targets/ran_build/build/liboai_zmqdevif.so"
     if [ "$USE_SRSRAN_UE" = "true" ]; then

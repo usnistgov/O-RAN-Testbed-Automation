@@ -46,10 +46,11 @@ cd "$SCRIPT_DIR"
 
 CLEAR_CONFIGS=false
 
-# Support input argument for the UE number(s), for example:
-# ./generate_configurations.sh --> configures UE 1, 2, and 3
-# ./generate_configurations.sh 2 --> configures UE 2
-# ./generate_configurations.sh 4 5 6 --> configures UE 4, 5, and 6
+if [ $# -eq 1 ] && { [ "$1" = "-h" ] || [ "$1" = "--help" ]; }; then
+    echo "Usage: $0 [ue_number ...]"
+    exit 0
+fi
+
 UE_NUMBERS=("$@")
 if [ ${#UE_NUMBERS[@]} -eq 0 ]; then
     UE_NUMBERS=(3 2 1)
@@ -59,6 +60,7 @@ fi
 for UE_NUMBER in "${UE_NUMBERS[@]}"; do
     if ! [[ "$UE_NUMBER" =~ ^[1-9][0-9]*$ ]]; then
         echo "ERROR: UE number must be a positive integer."
+        echo "Usage: $0 [ue_number ...]"
         exit 1
     fi
     if ! "$SCRIPT_DIR/install_scripts/get_ue_namespace_ip.sh" host "$UE_NUMBER" >/dev/null 2>&1; then

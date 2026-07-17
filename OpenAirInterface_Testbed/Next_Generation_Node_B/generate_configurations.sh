@@ -31,12 +31,13 @@
 # Exit immediately if a command fails
 set -e
 
-SPLIT_DU_IDS=$(seq 1 3)
 RADIO_TYPE="SIMU" # Set to "SIMU", "ZMQ", or "USRP"
 MAKE_GNB_E2_NODE=true
 MAKE_CU_E2_NODE=false
 MAKE_DU_E2_NODE=true
+ENABLE_NEIGHBOR_CONFIG=true # Allows automatic A2 and A3 event handovers
 NEAR_RIC_IP_ADDR="127.0.0.1"
+ZMQ_BROKER_SAMPLE_RATE_HZ=23040000
 
 # Radio configuration presets (band 3 and band 78)
 GNB_CONFIG_TEMPLATE="openairinterface5g/targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band1.u0.52PRB.usrpb210.conf"
@@ -48,6 +49,7 @@ NR_CARRIER_BANDWIDTH_RBS="106"
 NR_BWP_LOCATION_AND_BANDWIDTH="28875"
 NR_CORESET0_INDEX="12"
 ZMQ_TX_AMP_BACKOFF_DB="12"
+#
 # GNB_CONFIG_TEMPLATE="openairinterface5g/targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band78.fr1.106PRB.usrpb210.conf"
 # NR_BAND="78"
 # NR_SSB_ARFCN="641280"
@@ -65,6 +67,65 @@ fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
+
+usage() {
+    echo "Usage: $0 [--cells <cell_numbers>] [--ues <ue_numbers>]"
+    echo "    For example: $0 --ues 4,5,6 --cells 1,2"}
+}
+
+UE_NUMBERS=()
+CELL_NUMBERS=()
+while [ $# -gt 0 ]; do
+    case "$1" in
+    -h | --help)
+        usage
+        exit 0
+        ;;
+    --cells)
+        if [ $# -lt 2 ] || [ -z "$2" ]; then
+            echo "ERROR: --cells requires comma-separated cell numbers."
+            usage
+            exit 1
+        fi
+        IFS=',' read -r -a PARSED_CELL_NUMBERS <<<"$2"
+        for CELL_NUMBER in "${PARSED_CELL_NUMBERS[@]}"; do
+            if ! [[ "$CELL_NUMBER" =~ ^[1-9][0-9]*$ ]]; then
+                echo "ERROR: Cell numbers must be positive integers separated by commas."
+                exit 1
+            fi
+            CELL_NUMBERS+=("$CELL_NUMBER")
+        done
+        shift 2
+        ;;
+    --ues)
+        if [ $# -lt 2 ] || [ -z "$2" ]; then
+            echo "ERROR: --ues requires comma-separated UE numbers."
+            usage
+            exit 1
+        fi
+        IFS=',' read -r -a PARSED_UE_NUMBERS <<<"$2"
+        for UE_NUMBER in "${PARSED_UE_NUMBERS[@]}"; do
+            if ! [[ "$UE_NUMBER" =~ ^[1-9][0-9]*$ ]]; then
+                echo "ERROR: UE numbers must be positive integers separated by commas."
+                exit 1
+            fi
+            UE_NUMBERS+=("$UE_NUMBER")
+        done
+        shift 2
+        ;;
+    *)
+        echo "ERROR: Unknown argument: $1"
+        usage
+        exit 1
+        ;;
+    esac
+done
+if [ ${#UE_NUMBERS[@]} -eq 0 ]; then
+    UE_NUMBERS=(1 2 3)
+fi
+if [ ${#CELL_NUMBERS[@]} -eq 0 ]; then
+    CELL_NUMBERS=(1)
+fi
 
 FLEXRIC_LIBRARY_DIR="../RAN_Intelligent_Controllers/Flexible-RIC/$FLEXRIC_LIBRARY_DIR"
 if [[ "$FLEXRIC_LIBRARY_DIR" != /* ]]; then
@@ -254,7 +315,7 @@ if [ "$RADIO_TYPE" = "ZMQ" ]; then
     sed -i "/^[[:space:]]*prach_dtx_threshold/a\\  tx_amp_backoff_dB = $ZMQ_TX_AMP_BACKOFF_DB;" "configs/gnb.conf"
 fi
 cp openairinterface5g/targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb-cu.sa.f1.conf "$SCRIPT_DIR/configs/split_cu.conf"
-for i in $SPLIT_DU_IDS; do
+for i in "${CELL_NUMBERS[@]}"; do
     cp "$SCRIPT_DIR/configs/gnb.conf" "$SCRIPT_DIR/configs/split_du${i}.conf"
 done
 
@@ -301,7 +362,7 @@ echo "AMF Binding Address: $N3_ADDR_BIND"
 echo "NGAP Binding Address: $N2_ADDR_BIND/24"
 
 SPLIT_DUS=()
-for i in $SPLIT_DU_IDS; do
+for i in "${CELL_NUMBERS[@]}"; do
     SPLIT_DUS+=("split_du${i}.conf")
 done
 
@@ -376,6 +437,44 @@ for DU_CONF in "${SPLIT_DUS[@]}"; do
     DU_NUMBER=$(echo "$DU_CONF" | grep -oP 'split_du\K[0-9]+')
     ./install_scripts/generate_du_configuration.sh "$DU_NUMBER"
 done
+
+if [ "$ENABLE_NEIGHBOR_CONFIG" = "true" ]; then
+    NEIGHBOR_CONFIG_TEMPLATE="../User_Equipment/openairinterface5g/targets/PROJECTS/GENERIC-NR-5GC/CONF/neighbour-config-rfsim.conf"
+    if [ ! -f "$NEIGHBOR_CONFIG_TEMPLATE" ]; then
+        echo "ERROR: Neighbor configuration template not found: $NEIGHBOR_CONFIG_TEMPLATE"
+        exit 1
+    fi
+    python3 install_scripts/generate_neighbor_configuration.py \
+        "$NEIGHBOR_CONFIG_TEMPLATE" \
+        "configs/neighbor-config.conf" \
+        "${SPLIT_DUS[@]/#/configs/}"
+    sed -i '/^[[:space:]]*nr_cellid[[:space:]]*=/a\    @include "neighbor-config.conf" // Optionally give CU list of neighbor cells so that A2 and A3 handovers can occur automatically' "configs/split_cu.conf"
+    echo "Configured neighbor DUs for CU."
+fi
+
+if [ "$RADIO_TYPE" = "ZMQ" ]; then
+    echo "Generating ZeroMQ Broker Python script..."
+    BROKER_CELL_NUMBERS_STR=$(
+        IFS=,
+        echo "${CELL_NUMBERS[*]}"
+    )
+    BROKER_UE_CONFIGS=()
+    for UE_NUMBER in "${UE_NUMBERS[@]}"; do
+        UE_IP=$(../User_Equipment/install_scripts/get_ue_namespace_ip.sh ue "$UE_NUMBER")
+        BROKER_UE_CONFIGS+=("$UE_NUMBER:$UE_IP")
+    done
+    BROKER_UE_CONFIGS_STR=$(
+        IFS=,
+        echo "${BROKER_UE_CONFIGS[*]}"
+    )
+    ./install_scripts/generate_zmq_broker.sh \
+        --output "zmq_broker/multi_ue_scenario.py" \
+        --sample-rate-hz "$ZMQ_BROKER_SAMPLE_RATE_HZ" \
+        --slow-down-ratio 1 \
+        --cells "$BROKER_CELL_NUMBERS_STR" \
+        --ues "$BROKER_UE_CONFIGS_STR"
+    echo "Successfully generated ZeroMQ broker for UEs: [${UE_NUMBERS[*]}], Cells: [${CELL_NUMBERS[*]}]."
+fi
 
 cd configs
 # Link the get_rfsim_server_address.txt from the UE configuration to here

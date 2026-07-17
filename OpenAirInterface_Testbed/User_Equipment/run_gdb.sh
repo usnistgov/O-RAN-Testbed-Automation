@@ -74,7 +74,7 @@ fi
 
 if [ "$USE_ZMQ_BROKER" = "true" ]; then
     # Optionally, validate the ZeroMQ broker before starting the UE
-    # "$SCRIPT_DIR/install_scripts/validate_zmq_broker_config.sh" --broker-only --ue "$UE_NUMBER"
+    # "$SCRIPT_DIR/install_scripts/validate_zmq_broker_config.sh" --broker-only --ues "$UE_NUMBER"
 
     BROKER_UE_NUMBER=$("$SCRIPT_DIR/install_scripts/get_zmq_broker_config.sh" --ue "$UE_NUMBER" | awk '{print $1}')
     ZMQ_RX_PORT=$("$SCRIPT_DIR/install_scripts/get_zmq_broker_config.sh" --ue "$UE_NUMBER" | awk '{print $2}')
@@ -192,15 +192,16 @@ else
     fi
 
     # Radio configuration presets (band 3 and band 78)
+    BAND=3
     BANDWIDTH_RBS=106
     NUMEROLOGY=0
-    BAND=3
     DL_CARRIER_FREQUENCY_HZ=1842500000
     UL_CARRIER_OFFSET_HZ=-95000000
     SSB_START_SUBCARRIER=486
+    #
+    # BAND=78
     # BANDWIDTH_RBS=51
     # NUMEROLOGY=1
-    # BAND=78
     # DL_CARRIER_FREQUENCY_HZ=3489420000
     # UL_CARRIER_OFFSET_HZ=0
     # SSB_START_SUBCARRIER=0

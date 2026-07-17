@@ -46,10 +46,11 @@ CLEAR_CONFIGS=false
 UE_NR_PROFILE="srsue" # Supported: srsue, generic_fr1
 ZMQ_DEBUG_ARGS=""     # Example: fail_on_disconnect=true,log_trx_timeout=true,trx_timeout_ms=1000
 
-# Support input argument for the UE number(s), for example:
-# ./generate_configurations.sh --> configures UE 1, 2, and 3
-# ./generate_configurations.sh 2 --> configures UE 2
-# ./generate_configurations.sh 4 5 6 --> configures UE 4, 5, and 6
+if [ $# -eq 1 ] && { [ "$1" = "-h" ] || [ "$1" = "--help" ]; }; then
+    echo "Usage: $0 [ue_number ...]"
+    exit 0
+fi
+
 UE_NUMBERS=("$@")
 if [ ${#UE_NUMBERS[@]} -eq 0 ]; then
     UE_NUMBERS=(3 2 1)
@@ -59,6 +60,7 @@ fi
 for UE_NUMBER in "${UE_NUMBERS[@]}"; do
     if ! [[ "$UE_NUMBER" =~ ^[1-9][0-9]*$ ]]; then
         echo "ERROR: UE number must be a positive integer."
+        echo "Usage: $0 [ue_number ...]"
         exit 1
     fi
     if ! "$SCRIPT_DIR/install_scripts/get_ue_namespace_ip.sh" host "$UE_NUMBER" >/dev/null 2>&1; then
@@ -196,7 +198,8 @@ NR_MAX_NOF_PRB="106"
 NR_SCS="15"
 GNB_NR_BW_MHZ="20"
 UE_RF_SRATE_HZ="23.04e6"
-# NR_BAND="78" # WARNING: Experimental. It is recommended to connect OCUDU with Duranta's 5G UE for band 78. Instead of uncommenting below, change "USE_DURANTA_UE=true" in the base directory run.sh
+#
+# NR_BAND="78" # For band 78 it is recommended to connect OCUDU with Duranta's 5G UE by changing "USE_DURANTA_UE=true" in the base directory run.sh
 # NR_DL_ARFCN="632628"
 # NR_SSB_ARFCN="632256"
 # NR_NOF_PRB="51"

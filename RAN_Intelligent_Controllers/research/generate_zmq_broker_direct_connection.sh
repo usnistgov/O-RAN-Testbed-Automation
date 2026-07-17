@@ -42,7 +42,7 @@ PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$PARENT_DIR"
 
 usage() {
-    echo "Usage: $0 --output FILE --sample-rate-hz HZ [--slow-down-ratio N] --cell NUMBER [--cell NUMBER ...] --ue NUMBER:IP [--ue NUMBER:IP ...]"
+    echo "Usage: $0 --output FILE --sample-rate-hz HZ [--slow-down-ratio N] --cells <cell_numbers> --ues <number:ip_addresses>"
 }
 
 while [ $# -gt 0 ]; do
@@ -59,29 +59,43 @@ while [ $# -gt 0 ]; do
         SLOW_DOWN_RATIO="$2"
         shift 2
         ;;
-    --cell)
-        CELL_NUMBERS+=("$2")
-        shift 2
-        ;;
-    --ue)
-        UE_VALUE="$2"
-        UE_NUMBER="${UE_VALUE%%:*}"
-        UE_IP="${UE_VALUE#*:}"
-        if ! [[ "$UE_NUMBER" =~ ^[0-9]+$ ]] || [ "$UE_NUMBER" -lt 1 ] || [ "$UE_IP" = "$UE_VALUE" ]; then
-            echo "ERROR: UE must be formatted as NUMBER:IP_ADDRESS."
+    --cells)
+        if [ $# -lt 2 ] || [ -z "$2" ]; then
+            echo "ERROR: --cells requires comma-separated cell numbers."
+            usage
             exit 1
         fi
-        for EXISTING_UE in "${UE_NUMBERS[@]}"; do
-            if [ "$EXISTING_UE" = "$UE_NUMBER" ]; then
-                echo "ERROR: UE $UE_NUMBER was provided more than once."
+        IFS=',' read -r -a PARSED_CELL_NUMBERS <<<"$2"
+        CELL_NUMBERS+=("${PARSED_CELL_NUMBERS[@]}")
+        shift 2
+        ;;
+    --ues)
+        if [ $# -lt 2 ] || [ -z "$2" ]; then
+            echo "ERROR: --ues requires comma-separated NUMBER:IP_ADDRESS values."
+            usage
+            exit 1
+        fi
+        IFS=',' read -r -a PARSED_UE_CONFIGS <<<"$2"
+        for UE_VALUE in "${PARSED_UE_CONFIGS[@]}"; do
+            UE_NUMBER="${UE_VALUE%%:*}"
+            UE_IP="${UE_VALUE#*:}"
+            if ! [[ "$UE_NUMBER" =~ ^[0-9]+$ ]] || [ "$UE_NUMBER" -lt 1 ] || [ "$UE_IP" = "$UE_VALUE" ]; then
+                echo "ERROR: UEs must be formatted as comma-separated NUMBER:IP_ADDRESS values."
                 exit 1
             fi
+            for EXISTING_UE in "${UE_NUMBERS[@]}"; do
+                if [ "$EXISTING_UE" = "$UE_NUMBER" ]; then
+                    echo "ERROR: UE $UE_NUMBER was provided more than once."
+                    exit 1
+                fi
+            done
+            UE_NUMBERS+=("$UE_NUMBER")
+            UE_IPS+=("$UE_IP")
         done
-        UE_NUMBERS+=("$UE_NUMBER")
-        UE_IPS+=("$UE_IP")
         shift 2
         ;;
     *)
+        echo "ERROR: Unknown argument: $1"
         usage
         exit 1
         ;;
@@ -103,7 +117,7 @@ fi
 
 for CELL_NUMBER in "${CELL_NUMBERS[@]}"; do
     if ! [[ "$CELL_NUMBER" =~ ^[0-9]+$ ]] || [ "$CELL_NUMBER" -lt 1 ]; then
-        echo "ERROR: --cell must be a positive integer ($CELL_NUMBER)."
+        echo "ERROR: --cells must contain positive integers ($CELL_NUMBER)."
         exit 1
     fi
 done
@@ -207,7 +221,7 @@ SAMPLE_RATE_HZ = __SAMPLE_RATE_HZ__
 SLOW_DOWN_RATIO = __SLOW_DOWN_RATIO__
 INITIAL_CELL_PATH_LOSS_DB_BY_UE = [0, 10, 20]
 DEFAULT_INITIAL_CELL_PATH_LOSS_DB = INITIAL_CELL_PATH_LOSS_DB_BY_UE[-1]
-OTHER_CELL_PATH_LOSS_DB = 35
+OTHER_CELL_PATH_LOSS_DB = 12
 ZMQ_TIMEOUT = 100
 ZMQ_HIGH_WATER_MARK = -1
 

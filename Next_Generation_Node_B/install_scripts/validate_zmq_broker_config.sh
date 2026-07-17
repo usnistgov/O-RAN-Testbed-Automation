@@ -45,7 +45,7 @@ CELL_NUMBERS=()
 ERRORS=()
 
 usage() {
-    echo "Usage: $0 [--broker-only] [--ue NUMBER ...] [--cell NUMBER ...]"
+    echo "Usage: $0 [--broker-only] [--ues <ue_numbers>] [--cells <cell_numbers>]"
 }
 
 while [ $# -gt 0 ]; do
@@ -58,15 +58,26 @@ while [ $# -gt 0 ]; do
         BROKER_ONLY=true
         shift
         ;;
-    --ue)
-        UE_NUMBERS+=("$2")
+    --ues)
+        if [ $# -lt 2 ] || [ -z "$2" ]; then
+            echo "ERROR: --ues requires comma-separated UE numbers."
+            usage
+            exit 1
+        fi
+        IFS=',' read -r -a UE_NUMBERS <<<"$2"
         shift 2
         ;;
-    --cell)
-        CELL_NUMBERS+=("$2")
+    --cells)
+        if [ $# -lt 2 ] || [ -z "$2" ]; then
+            echo "ERROR: --cells requires comma-separated cell numbers."
+            usage
+            exit 1
+        fi
+        IFS=',' read -r -a CELL_NUMBERS <<<"$2"
         shift 2
         ;;
     *)
+        echo "ERROR: Unknown argument: $1"
         usage
         exit 1
         ;;

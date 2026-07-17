@@ -38,7 +38,7 @@ if ! command -v realpath &>/dev/null; then
 fi
 
 USE_FLEXRIC=false
-USE_ZMQ_BROKER=false
+USE_ZMQ_BROKER=true
 USE_DURANTA_UE=false
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
@@ -64,16 +64,15 @@ if [ "$USE_ZMQ_BROKER" = "true" ]; then
     # Parse the ZeroMQ broker for the list of UEs and cells
     UE_NUMBERS=($(grep -oP 'UE_CONFIG:\s+\K\d+' Next_Generation_Node_B/zmq_broker/multi_ue_scenario.py))
     CELL_NUMBERS=($(grep -oP 'CELL_CONFIG:\s+\K\d+' Next_Generation_Node_B/zmq_broker/multi_ue_scenario.py))
-    VERIFY_ARGS=""
-    for UE_NUMBER in "${UE_NUMBERS[@]}"; do
-        VERIFY_ARGS="$VERIFY_ARGS --ue $UE_NUMBER"
-    done
-    if [ ${#CELL_NUMBERS[@]} -gt 0 ]; then
-        for CELL in "${CELL_NUMBERS[@]}"; do
-            VERIFY_ARGS="$VERIFY_ARGS --cell $CELL"
-        done
-    fi
-    if ! "Next_Generation_Node_B/install_scripts/validate_zmq_broker_config.sh" ${VERIFY_ARGS}; then
+    UE_NUMBERS_STR=$(
+        IFS=,
+        echo "${UE_NUMBERS[*]}"
+    )
+    CELL_NUMBERS_STR=$(
+        IFS=,
+        echo "${CELL_NUMBERS[*]}"
+    )
+    if ! "Next_Generation_Node_B/install_scripts/validate_zmq_broker_config.sh" --ues "$UE_NUMBERS_STR" --cells "$CELL_NUMBERS_STR"; then
         echo "Run ./generate_configurations.sh with the same UE numbers before ./run.sh."
         exit 1
     fi

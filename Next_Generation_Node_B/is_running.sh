@@ -37,7 +37,7 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-USE_ZMQ_BROKER=false
+USE_ZMQ_BROKER=true
 
 if [ "$USE_ZMQ_BROKER" = "true" ]; then
     if pgrep -f "[m]ulti_ue_scenario\.py" >/dev/null; then

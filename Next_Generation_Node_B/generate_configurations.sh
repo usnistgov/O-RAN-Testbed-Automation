@@ -35,7 +35,7 @@ set -e
 
 EXPOSE_GNB_TO_HOSTNAME=false
 USE_FLEXRIC=false
-USE_ZMQ_BROKER=false
+USE_ZMQ_BROKER=true
 ZMQ_BROKER_CHANNEL_BW_MHZ=20
 GNB_SRATE_MHZ=23.04
 GNB_BASE_SRATE_HZ=23.04e6
@@ -70,15 +70,29 @@ UE_NUMBERS=()
 CELL_NUMBERS=()
 while [[ $# -gt 0 ]]; do
     case $1 in
+    -h | --help)
+        usage
+        exit 0
+        ;;
     --disable-e2-term)
         ENABLE_E2_TERM="false"
         shift
         ;;
     --e2-term-address)
+        if [ $# -lt 2 ] || [ -z "$2" ]; then
+            echo "ERROR: --e2-term-address requires an address."
+            usage
+            exit 1
+        fi
         E2_ADDRESS="$2"
         shift 2
         ;;
     --cells)
+        if [ $# -lt 2 ] || [ -z "$2" ]; then
+            echo "ERROR: --cells requires comma-separated cell numbers."
+            usage
+            exit 1
+        fi
         IFS=',' read -r -a PARSED_CELL_NUMBERS <<<"$2"
         for CELL_NUMBER in "${PARSED_CELL_NUMBERS[@]}"; do
             if ! [[ "$CELL_NUMBER" =~ ^[1-9][0-9]*$ ]]; then
@@ -90,6 +104,11 @@ while [[ $# -gt 0 ]]; do
         shift 2
         ;;
     --ues)
+        if [ $# -lt 2 ] || [ -z "$2" ]; then
+            echo "ERROR: --ues requires comma-separated UE numbers."
+            usage
+            exit 1
+        fi
         IFS=',' read -r -a parsed_ues <<<"$2"
         for UE_NUMBER in "${parsed_ues[@]}"; do
             if ! [[ "$UE_NUMBER" =~ ^[1-9][0-9]*$ ]]; then
@@ -101,7 +120,7 @@ while [[ $# -gt 0 ]]; do
         shift 2
         ;;
     *)
-        echo "Unknown argument: $1"
+        echo "ERROR: Unknown argument: $1"
         echo
         usage
         exit 1
@@ -635,19 +654,22 @@ if [ "$USE_ZMQ_BROKER" = "true" ]; then
     # # Optionally, calculate the slow down ratio based on the number of UEs and cells
     # ZMQ_BROKER_SLOW_DOWN_RATIO="$((${#UE_NUMBERS[@]} + ${#CELL_NUMBERS[@]}))"
 
-    UE_ARGS=""
+    BROKER_UE_CONFIGS=()
     for UE_NUMBER in "${UE_NUMBERS[@]}"; do
         UE_IP=$(../User_Equipment/install_scripts/get_ue_namespace_ip.sh ue "$UE_NUMBER")
-        UE_ARGS="$UE_ARGS --ue $UE_NUMBER:$UE_IP"
+        BROKER_UE_CONFIGS+=("$UE_NUMBER:$UE_IP")
     done
-
-    CELL_ARGS=""
-    for CELL_NUMBER in "${CELL_NUMBERS[@]}"; do
-        CELL_ARGS="$CELL_ARGS --cell $CELL_NUMBER"
-    done
+    BROKER_UE_CONFIGS_STR=$(
+        IFS=,
+        echo "${BROKER_UE_CONFIGS[*]}"
+    )
+    BROKER_CELL_NUMBERS_STR=$(
+        IFS=,
+        echo "${CELL_NUMBERS[*]}"
+    )
 
     mkdir -p zmq_broker
-    ./install_scripts/generate_zmq_broker.sh --output "zmq_broker/multi_ue_scenario.py" --sample-rate-hz "$BROKER_SRATE_INT" --slow-down-ratio "$ZMQ_BROKER_SLOW_DOWN_RATIO" $CELL_ARGS $UE_ARGS
+    ./install_scripts/generate_zmq_broker.sh --output "zmq_broker/multi_ue_scenario.py" --sample-rate-hz "$BROKER_SRATE_INT" --slow-down-ratio "$ZMQ_BROKER_SLOW_DOWN_RATIO" --cells "$BROKER_CELL_NUMBERS_STR" --ues "$BROKER_UE_CONFIGS_STR"
 
     if ! python3 -c "import gnuradio, PyQt5" >/dev/null 2>&1; then
         echo "Installing GNU Radio runtime for the ZeroMQ Broker..."

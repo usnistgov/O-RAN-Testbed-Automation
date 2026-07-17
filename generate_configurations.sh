@@ -92,11 +92,11 @@ cd User_Equipment
 ./generate_configurations.sh $UE_CONFIG_ARGS
 cd "$SCRIPT_DIR"
 
-echo
-echo "Generating Configuration for Duranta User Equipment..."
-cd OpenAirInterface_Testbed/User_Equipment
-./generate_configurations.sh $UE_CONFIG_ARGS
-cd "$SCRIPT_DIR"
+# echo
+# echo "Generating Configuration for Duranta User Equipment..."
+# cd OpenAirInterface_Testbed/User_Equipment
+# ./generate_configurations.sh $UE_CONFIG_ARGS
+# cd "$SCRIPT_DIR"
 
 if [ "$USE_ZMQ_BROKER" = "true" ]; then
     echo "Verifying ZeroMQ Broker configuration..."

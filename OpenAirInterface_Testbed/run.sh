@@ -77,6 +77,7 @@ sudo -v # Ensure sudo session is active
 
 UE_NUMBERS=()
 CELL_NUMBERS=()
+declare -A EXTERNAL_UE_ENDPOINTS=()
 if [ "$USE_ZMQ_BROKER" = "true" ]; then
     ./Next_Generation_Node_B/install_scripts/validate_zmq_broker_config.sh --broker-only
     mapfile -t UE_NUMBERS < <(./Next_Generation_Node_B/install_scripts/get_zmq_broker_config.sh --ues)
@@ -171,6 +172,15 @@ if [ "$USE_ZMQ_BROKER" = "true" ]; then
     echo "Running User Equipment..."
     cd "$UE_DIRECTORY"
     for UE_NUMBER in "${UE_NUMBERS[@]}"; do
+        read -r _ _ UE_TX_PORT _ _ < <(
+            "$SCRIPT_DIR/Next_Generation_Node_B/install_scripts/get_zmq_broker_config.sh" --ue "$UE_NUMBER"
+        )
+        if sudo ip netns exec "ue$UE_NUMBER" ss -ltnH 2>/dev/null |
+            awk '{print $4}' | grep -Eq ":${UE_TX_PORT}$"; then
+            EXTERNAL_UE_ENDPOINTS[$UE_NUMBER]=true
+            echo "Using existing ZeroMQ instance for UE $UE_NUMBER."
+            continue
+        fi
         ./run_background.sh "$UE_NUMBER"
         stty sane || true
     done
@@ -234,6 +244,18 @@ fi
 
 cd "$UE_DIRECTORY"
 for UE_NUMBER in "${UE_NUMBERS[@]}"; do
+    if [ "${EXTERNAL_UE_ENDPOINTS[$UE_NUMBER]:-false}" = "true" ]; then
+        read -r _ _ UE_TX_PORT _ _ < <(
+            "$SCRIPT_DIR/Next_Generation_Node_B/install_scripts/get_zmq_broker_config.sh" --ue "$UE_NUMBER"
+        )
+        if ! sudo ip netns exec "ue$UE_NUMBER" ss -ltnH 2>/dev/null |
+            awk '{print $4}' | grep -Eq ":${UE_TX_PORT}$"; then
+            echo "ERROR: The external ZeroMQ instance for UE $UE_NUMBER is no longer running."
+            exit 1
+        fi
+        echo -e "\nUsing existing ZeroMQ instance for UE $UE_NUMBER."
+        continue
+    fi
     LOG_FILE="logs/ue${UE_NUMBER}_stdout.txt"
     echo -en "\nWaiting for UE $UE_NUMBER to be ready"
     ATTEMPT=0

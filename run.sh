@@ -39,7 +39,7 @@ fi
 
 USE_FLEXRIC=false
 USE_ZMQ_BROKER=true
-USE_DURANTA_UE=false
+USE_DURANTA_UE=true
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
@@ -151,6 +151,14 @@ echo "Running User Equipment..."
 cd "$UE_DIRECTORY"
 if [ "$USE_ZMQ_BROKER" = "true" ] && [ ${#UE_NUMBERS[@]} -gt 1 ]; then
     for ((i = 1; i < ${#UE_NUMBERS[@]}; i++)); do
+        read -r _ _ UE_TX_PORT _ _ < <(
+            "$SCRIPT_DIR/Next_Generation_Node_B/install_scripts/get_zmq_broker_config.sh" --ue "${UE_NUMBERS[$i]}"
+        )
+        if sudo ip netns exec "ue${UE_NUMBERS[$i]}" ss -ltnH 2>/dev/null |
+            awk '{print $4}' | grep -Eq ":${UE_TX_PORT}$"; then
+            echo "Using existing ZeroMQ instance for UE ${UE_NUMBERS[$i]}."
+            continue
+        fi
         echo "Running UE ${UE_NUMBERS[$i]} in background..."
         ./run_background.sh "${UE_NUMBERS[$i]}"
     done

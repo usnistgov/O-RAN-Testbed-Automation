@@ -413,9 +413,8 @@ Successfully validated ZeroMQ broker for UEs: [2 3], Cells: [1 2].
 ZeroMQ Broker UE startup order: 2 3
 Configuring Open5GS UE data-plane network...
 ```
-#### Multiple UE in Grafana dashboard
 
-<b>OCUDU Grafana WebUI Visualization</b><div align="center">
+<b>Multiple UE in Grafana dashboard</b><div align="center">
   <img src="ue-2.png" alt="OCUDU Grafana WebUI" width="75%">
 </div>
 

@@ -416,7 +416,7 @@ Configuring Open5GS UE data-plane network...
 Then run iperf test to simulate traffic from UE to core or core to UE and start grafana WebUI to visualize the simulation.
 
 <b>Multiple UEs in Grafana dashboard</b><div align="center">
-  <img src="ue-2.png" alt="OCUDU Grafana WebUI" width="75%">
+  <img src="ue-23.png" alt="OCUDU Grafana WebUI" width="75%">
 </div>
 
 

@@ -433,9 +433,9 @@ update_yaml "configs/gnb.yaml" "cell_cfg" "tac" $TAC
 if [ "$USE_ZMQ_BROKER" = "true" ]; then
     update_yaml "configs/gnb.yaml" "cell_cfg" "channel_bandwidth_MHz" "$ZMQ_BROKER_CHANNEL_BW_MHZ"
     update_yaml "configs/gnb.yaml" "ru_sdr.amplitude_control" "tx_gain_backoff" "22"
-    update_yaml "configs/gnb.yaml" "cell_cfg.prach" "total_nof_ra_preambles" "64"
+    update_yaml "configs/gnb.yaml" "cell_cfg.prach" "total_nof_ra_preambles" "60"
     update_yaml "configs/gnb.yaml" "cell_cfg.prach" "nof_ssb_per_ro" "1"
-    update_yaml "configs/gnb.yaml" "cell_cfg.prach" "nof_cb_preambles_per_ssb" "64"
+    update_yaml "configs/gnb.yaml" "cell_cfg.prach" "nof_cb_preambles_per_ssb" "60"
     if [ "$CELL_BAND" = "3" ]; then
         update_yaml "configs/gnb.yaml" "cell_cfg.prach" "prach_frequency_start" "3"
         update_yaml "configs/gnb.yaml" "cell_cfg.pucch" "resource_set_size" "7"

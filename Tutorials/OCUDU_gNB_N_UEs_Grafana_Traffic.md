@@ -398,6 +398,27 @@ The UE has a connected route for the 10.45.0.0/24 subnet via tun_srsue.
 The objective is to extend the single-UE deployment scenario by enabling scalable UE emulation using the OCUDU ZeroMQ broker. The broker provides a software-based RF channel abstraction that allows multiple UEs and cells to be simulated without requiring physical radio hardware. This enables researchers and developers to evaluate gNodeB performance, resource scheduling, and RAN behavior under different user densities and traffic conditions.
 
 In this scenario, the OCUDU gNodeB is configured to support multiple UE instances. Each UE performs the standard 5G registration procedure, establishes a PDU session through the 5G Core Network, and receives an independent IP address. Once connected, traffic can be generated from each UE to evaluate network capacity, throughput distribution, latency, and resource allocation.
+To enable multiple UE, run  <./generate_configurations.sh --ues <N> --cells <C> after <./full_install.sh>
+
+```bash
+./generate_configurations.sh --ues 2,3 --cells 1,2
+```
+This will enable ZMQ broker to generate ue 2 and 3 and cell 1 and 2. And then ./run.sh will search which UEs to start.
+
+#### Expected Outcome
+After registering multiple UEs, ./run.sh will return the following console output:
+```bash
+sudo ./run.sh 
+Successfully validated ZeroMQ broker for UEs: [2 3], Cells: [1 2].
+ZeroMQ Broker UE startup order: 2 3
+Configuring Open5GS UE data-plane network...
+```
+#### Multiple UE in Grafana dashboard
+
+<b>OCUDU Grafana WebUI Visualization</b><div align="center">
+  <img src="ue-2.png" alt="OCUDU Grafana WebUI" width="75%">
+</div>
+
 
 For multi-UE emulation using the OCUDU gNodeB ZeroMQ broker, refer to:
 

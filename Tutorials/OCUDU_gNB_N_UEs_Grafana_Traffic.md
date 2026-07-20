@@ -414,14 +414,12 @@ ZeroMQ Broker UE startup order: 2 3
 Configuring Open5GS UE data-plane network...
 ```
 
-<b>Multiple UE in Grafana dashboard</b><div align="center">
+<b>Multiple UEs in Grafana dashboard</b><div align="center">
   <img src="ue-2.png" alt="OCUDU Grafana WebUI" width="75%">
 </div>
 
 
-For multi-UE emulation using the OCUDU gNodeB ZeroMQ broker, refer to:
-
-See <a href="https://github.com/usnistgov/O-RAN-Testbed-Automation-Dev/blob/main/Next_Generation_Node_B/README.md#simulating-multiple-ues-and-cells-with-zeromq-broker">Multiple UE deployment</a> for more information.
+For multi-UE emulation using the OCUDU gNodeB ZeroMQ broker, see <a href="https://github.com/usnistgov/O-RAN-Testbed-Automation-Dev/blob/main/Next_Generation_Node_B/README.md#simulating-multiple-ues-and-cells-with-zeromq-broker">Multiple UE deployment</a> for more information.
 
 ## Useful Commands
 

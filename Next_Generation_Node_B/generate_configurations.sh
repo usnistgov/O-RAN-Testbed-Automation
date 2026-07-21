@@ -429,6 +429,8 @@ update_yaml "configs/gnb.yaml" "cell_cfg" "nof_antennas_dl" "1"
 update_yaml "configs/gnb.yaml" "cell_cfg" "nof_antennas_ul" "1"
 update_yaml "configs/gnb.yaml" "cell_cfg" "plmn" $PLMN
 update_yaml "configs/gnb.yaml" "cell_cfg" "tac" $TAC
+update_yaml "configs/gnb.yaml" "cell_cfg.pdsch" "mcs_table" "qam64"
+update_yaml "configs/gnb.yaml" "cell_cfg.pusch" "mcs_table" "qam64"
 
 if [ "$USE_ZMQ_BROKER" = "true" ]; then
     update_yaml "configs/gnb.yaml" "cell_cfg" "channel_bandwidth_MHz" "$ZMQ_BROKER_CHANNEL_BW_MHZ"

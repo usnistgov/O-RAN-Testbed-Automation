@@ -311,6 +311,8 @@ cp "$GNB_CONFIG_TEMPLATE" "$SCRIPT_DIR/configs/gnb.conf"
 # Fix configuration file syntax errors, e.g., item : { -> item = {
 sed -i -E 's/^([[:space:]]*vrtsim)[[:space:]]*:[[:space:]]*\{[[:space:]]*$/\1 = {/g' "$SCRIPT_DIR/configs/gnb.conf"
 sed -i -E ':a;N;$!ba;s/^([[:space:]]*vrtsim)[[:space:]]*:[[:space:]]*\n[[:space:]]*\{[[:space:]]*$/\1 = {/m' "$SCRIPT_DIR/configs/gnb.conf"
+sed -i "/^[[:space:]]*do_SRS[[:space:]]*=/a\\    force_UL256qam_off = 1;" "configs/gnb.conf"
+sed -i "/^[[:space:]]*do_SRS[[:space:]]*=/a\\    force_256qam_off = 1;" "configs/gnb.conf"
 
 update_conf "configs/gnb.conf" "dl_frequencyBand" "$NR_BAND"
 update_conf "configs/gnb.conf" "ul_frequencyBand" "$NR_BAND"

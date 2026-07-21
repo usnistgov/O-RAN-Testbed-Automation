@@ -48,13 +48,26 @@ NR_UL_POINT_A_ARFCN="347592"
 NR_CARRIER_BANDWIDTH_RBS="106"
 NR_BWP_LOCATION_AND_BANDWIDTH="28875"
 NR_CORESET0_INDEX="12"
+NR_TDD_PERIODICITY=""
+NR_TDD_DL_SLOTS=""
+NR_TDD_DL_SYMBOLS=""
+NR_TDD_UL_SLOTS=""
+NR_TDD_UL_SYMBOLS=""
 ZMQ_TX_AMP_BACKOFF_DB="12"
 #
 # GNB_CONFIG_TEMPLATE="openairinterface5g/targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band78.fr1.106PRB.usrpb210.conf"
 # NR_BAND="78"
-# NR_SSB_ARFCN="641280"
-# NR_DL_POINT_A_ARFCN="640008"
+# NR_SSB_ARFCN="632256"
+# NR_DL_POINT_A_ARFCN="632016"
 # NR_UL_POINT_A_ARFCN=""
+# NR_CARRIER_BANDWIDTH_RBS="51"
+# NR_BWP_LOCATION_AND_BANDWIDTH="13750"
+# NR_CORESET0_INDEX="0"
+# NR_TDD_PERIODICITY="5"
+# NR_TDD_DL_SLOTS="3"
+# NR_TDD_DL_SYMBOLS="10"
+# NR_TDD_UL_SLOTS="1"
+# NR_TDD_UL_SYMBOLS="2"
 
 # FLEXRIC_LIBRARY_DIR="/usr/local/lib/flexric/" # Default
 FLEXRIC_LIBRARY_DIR="flexric/build/flexric_libraries/lib/flexric/"
@@ -294,15 +307,30 @@ if [[ $RUNNING_STATUS != *": RUNNING"* ]]; then
 fi
 
 cp "$GNB_CONFIG_TEMPLATE" "$SCRIPT_DIR/configs/gnb.conf"
-update_conf "configs/gnb.conf" "absoluteFrequencySSB" "$NR_SSB_ARFCN"
+
+# Fix configuration file syntax errors, e.g., item : { -> item = {
+sed -i -E 's/^([[:space:]]*vrtsim)[[:space:]]*:[[:space:]]*\{[[:space:]]*$/\1 = {/g' "$SCRIPT_DIR/configs/gnb.conf"
+sed -i -E ':a;N;$!ba;s/^([[:space:]]*vrtsim)[[:space:]]*:[[:space:]]*\n[[:space:]]*\{[[:space:]]*$/\1 = {/m' "$SCRIPT_DIR/configs/gnb.conf"
+
 update_conf "configs/gnb.conf" "dl_frequencyBand" "$NR_BAND"
-update_conf "configs/gnb.conf" "dl_absoluteFrequencyPointA" "$NR_DL_POINT_A_ARFCN"
-update_conf "configs/gnb.conf" "dl_carrierBandwidth" "$NR_CARRIER_BANDWIDTH_RBS"
-update_conf "configs/gnb.conf" "initialDLBWPlocationAndBandwidth" "$NR_BWP_LOCATION_AND_BANDWIDTH"
-update_conf "configs/gnb.conf" "initialDLBWPcontrolResourceSetZero" "$NR_CORESET0_INDEX"
 update_conf "configs/gnb.conf" "ul_frequencyBand" "$NR_BAND"
-update_conf "configs/gnb.conf" "ul_carrierBandwidth" "$NR_CARRIER_BANDWIDTH_RBS"
-update_conf "configs/gnb.conf" "initialULBWPlocationAndBandwidth" "$NR_BWP_LOCATION_AND_BANDWIDTH"
+if [ -n "$NR_SSB_ARFCN" ]; then
+    update_conf "configs/gnb.conf" "absoluteFrequencySSB" "$NR_SSB_ARFCN"
+fi
+if [ -n "$NR_DL_POINT_A_ARFCN" ]; then
+    update_conf "configs/gnb.conf" "dl_absoluteFrequencyPointA" "$NR_DL_POINT_A_ARFCN"
+fi
+if [ -n "$NR_CARRIER_BANDWIDTH_RBS" ]; then
+    update_conf "configs/gnb.conf" "dl_carrierBandwidth" "$NR_CARRIER_BANDWIDTH_RBS"
+    update_conf "configs/gnb.conf" "ul_carrierBandwidth" "$NR_CARRIER_BANDWIDTH_RBS"
+fi
+if [ -n "$NR_CORESET0_INDEX" ]; then
+    update_conf "configs/gnb.conf" "initialDLBWPcontrolResourceSetZero" "$NR_CORESET0_INDEX"
+fi
+if [ -n "$NR_BWP_LOCATION_AND_BANDWIDTH" ]; then
+    update_conf "configs/gnb.conf" "initialDLBWPlocationAndBandwidth" "$NR_BWP_LOCATION_AND_BANDWIDTH"
+    update_conf "configs/gnb.conf" "initialULBWPlocationAndBandwidth" "$NR_BWP_LOCATION_AND_BANDWIDTH"
+fi
 if grep -q "^[[:space:]]*n_TimingAdvanceOffset[[:space:]]*=" "configs/gnb.conf"; then
     update_conf "configs/gnb.conf" "n_TimingAdvanceOffset" "1"
 else
@@ -311,7 +339,14 @@ fi
 if [ -n "$NR_UL_POINT_A_ARFCN" ]; then
     update_conf "configs/gnb.conf" "ul_absoluteFrequencyPointA" "$NR_UL_POINT_A_ARFCN"
 fi
-if [ "$RADIO_TYPE" = "ZMQ" ]; then
+if [ -n "$NR_TDD_PERIODICITY" ]; then
+    update_conf "configs/gnb.conf" "dl_UL_TransmissionPeriodicity" "$NR_TDD_PERIODICITY"
+    update_conf "configs/gnb.conf" "nrofDownlinkSlots" "$NR_TDD_DL_SLOTS"
+    update_conf "configs/gnb.conf" "nrofDownlinkSymbols" "$NR_TDD_DL_SYMBOLS"
+    update_conf "configs/gnb.conf" "nrofUplinkSlots" "$NR_TDD_UL_SLOTS"
+    update_conf "configs/gnb.conf" "nrofUplinkSymbols" "$NR_TDD_UL_SYMBOLS"
+fi
+if [ "$RADIO_TYPE" = "ZMQ" ] && [ -n "$ZMQ_TX_AMP_BACKOFF_DB" ]; then
     sed -i "/^[[:space:]]*prach_dtx_threshold/a\\  tx_amp_backoff_dB = $ZMQ_TX_AMP_BACKOFF_DB;" "configs/gnb.conf"
 fi
 cp openairinterface5g/targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb-cu.sa.f1.conf "$SCRIPT_DIR/configs/split_cu.conf"

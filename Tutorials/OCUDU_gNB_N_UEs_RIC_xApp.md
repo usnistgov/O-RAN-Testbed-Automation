@@ -25,6 +25,7 @@
 This tutorial demonstrates how to integrate an **OCUDU 5G gNB** with **FlexRIC** using the **O-RAN E2 interface** and deploy a **KPM Monitoring xApp** to monitor real-time Key Performance Measurements (KPMs) from multiple connected User Equipments (UEs).
 
 The goal is to build a complete Near-Real-Time RIC testbed where the gNB exports E2SM-KPM measurements to FlexRIC, and the KPM xApp subscribes to these measurements to monitor the performance of **N active UEs** in real time.
+
 ---
 
 ## Architecture

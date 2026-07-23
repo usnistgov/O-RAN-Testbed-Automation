@@ -78,7 +78,7 @@ echo "Generating configuration for DU $DU_NUMBER..."
 # Set Active_gNBs = ... to Active_gNBs = ( "du${DU_NUMBER}-rfsim");
 sed -i "s|^\([[:space:]]*\)Active_gNBs\s*=.*|\1Active_gNBs = ( \"du${DU_NUMBER}-rfsim\" );|" "$DU_CONF"
 
-HEX=$(printf '%x' "$DU_NUMBER")
+HEX=$(printf '%x' "$DU_NUMBER") # $(printf '%x' $((0xe00 + DU_NUMBER - 1)))
 
 # Set unique gNB_DU_ID, gNB_name, nr_cellid, physCellId, local_n_address, and remote_n_address
 # sed -i "s|^\([[:space:]]*\)gNB_ID\s*=.*|\1gNB_ID = 0x$HEX;|" "$DU_CONF" # Does not need to be unique

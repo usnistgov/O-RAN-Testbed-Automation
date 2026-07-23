@@ -24,8 +24,9 @@ This repository contains two complete monitoring tutorials that build on the bas
 
 | Tutorial | Description |
 |----------|-------------|
-| [OCUDU gNB with N UEs, Grafana Traffic Monitoring](Tutorials/OCUDU_gNB_N_UEs_Grafana_Traffic.md) | Deploy the OCUDU testbed, generate traffic from multiple UEs, collect Prometheus metrics, and visualize network performance using Grafana dashboards. |
-| [OCUDU gNB with N UEs, FlexRIC, and KPM Monitoring xApp](Tutorials/OCUDU_gNB_N_UEs_RIC_xApp.md) | Deploy an OCUDU gNB connected to multiple UEs, integrate it with FlexRIC, subscribe to E2SM-KPM reports, and monitor real-time RAN KPIs using a monitoring xApp. |
+| [OCUDU gNB with N UEs, Grafana Traffic Monitoring](https://github.com/usnistgov/O-RAN-Testbed-Automation-Dev/blob/tutorials/Tutorials/OCUDU_gNB_N_UEs_Grafana_Traffic.md) | Deploy the OCUDU testbed, generate traffic from multiple UEs, collect Prometheus metrics, and visualize network performance using Grafana dashboards. |
+| [OCUDU gNB with N UEs, FlexRIC, and KPM Monitoring xApp](https://github.com/usnistgov/O-RAN-Testbed-Automation-Dev/blob/tutorials/Tutorials/OCUDU_gNB_N_UEs_RIC_xApp.md) | Deploy an OCUDU gNB connected to multiple UEs, integrate it with FlexRIC, subscribe to E2SM-KPM reports, and monitor real-time RAN KPIs using a monitoring xApp. |
+
 
 # Key Features
 

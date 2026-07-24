@@ -49,7 +49,7 @@ GNB_ARGS=()
 
 usage() {
     echo "Usage: $0 [--cells <cell_numbers>] [--ues <ue_numbers>] [--disable-e2-term] [--e2-term-address <address>]"
-    echo "    For example: $0 --ues 4,5,6 --cells 1,2"}
+    echo "    For example: $0 --ues 4,5,6 --cells 1,2"
 }
 
 while [ $# -gt 0 ]; do

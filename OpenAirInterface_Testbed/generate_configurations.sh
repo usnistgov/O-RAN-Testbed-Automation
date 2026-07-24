@@ -45,7 +45,7 @@ UE_NUMBERS_STR="1,2,3"
 
 usage() {
     echo "Usage: $0 [--cells <cell_numbers>] [--ues <ue_numbers>]"
-    echo "    For example: $0 --ues 4,5,6 --cells 1,2"}
+    echo "    For example: $0 --ues 4,5,6 --cells 1,2"
 }
 
 while [ $# -gt 0 ]; do

@@ -17,6 +17,36 @@ By completing this tutorial, users will be able to:
 - Automate deployment workflows for repeatable experimentation and research.
 
 The tutorial aims to provide an accessible and reproducible platform for O-RAN experimentation, telecom automation, and advanced wireless research in public lab and academic environments.
+# Repository Structure
+
+```text
+O-RAN-Testbed-Automation
+│
+├── Tutorials
+├── 5G_Core_Network
+├── Next_Generation_Node_B
+├── User_Equipment
+├── RAN_Intelligent_Controllers
+├── Monitoring
+├── Scripts
+└── README.md
+```
+
+# Supported Deployment Scenarios
+
+| Deployment Scenario | Status |
+|---------------------|--------|
+| Open5GS Core | ✅ |
+| OCUDU gNB | ✅ |
+| Multiple UEs | ✅ |
+| O-RAN SC Near-RT RIC | ✅ |
+| FlexRIC | ✅ |
+| E2SM-KPM Monitoring | ✅ |
+| Grafana Dashboards | ✅ |
+| Traffic Generation | ✅ |
+| KPI Monitoring xApps | ✅ |
+
+---
 
 # Repository Tutorials
 
@@ -240,14 +270,16 @@ UEs
 
 Before installing and configuring the testbed, ensure the system meets the minimum hardware and software requirements to avoid deployment issues, such as pods remaining in Pending or CrashLoop states when using the O-RAN SC RIC.
 
-- **Operating System**: Linux distributions based on Ubuntu 20.04 LTS, Ubuntu 22.04 LTS, Ubuntu 24.04 LTS, and Ubuntu 26.04 LTS are supported.
-  - _Recommendation: Ubuntu 22.04._
-- **Hard Drive Storage**: Must be `≥ 57` GB.
-- **Base Memory/RAM**: Must be `≥ 6000` MB.
-- **Number of Processors**: Must be `≥ 2` processors.
-  - _Recommendation: `≥ 6` processors._
-- **Internet Connectivity**: A stable internet connection must be maintained during the installation otherwise the process may fail and require restarting.
+| Component | Requirement |
+|------------|-------------|
+| Operating System | Ubuntu 20.04 / 22.04 / 24.04 |
+| Storage | ≥57 GB |
+| RAM | ≥6 GB |
+| CPU | ≥2 cores |
+| Recommended CPU | ≥6 cores |
+| Internet | Required |
 
+---
 
 
 ## Installation Guide

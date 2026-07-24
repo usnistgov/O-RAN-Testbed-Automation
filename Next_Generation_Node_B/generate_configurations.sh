@@ -36,9 +36,6 @@ set -e
 EXPOSE_GNB_TO_HOSTNAME=false
 USE_FLEXRIC=false
 USE_ZMQ_BROKER=true
-ZMQ_BROKER_CHANNEL_BW_MHZ=20
-GNB_SRATE_MHZ=23.04
-GNB_BASE_SRATE_HZ=23.04e6
 PDU_SESSION_TIMEOUT=3
 
 if [ "$USE_ZMQ_BROKER" = "true" ]; then
@@ -56,11 +53,20 @@ cd "$SCRIPT_DIR"
 
 # Radio configuration presets (band 3 and band 78)
 BASE_EXAMPLE_CONFIG_PATH="$SCRIPT_DIR/ocudu/configs/gnb_rf_b210_fdd_srsUE.yml"
+GNB_DL_ARFCNS=("368500")
+ZMQ_BROKER_CHANNEL_BW_MHZ=20
+GNB_SRATE_MHZ=23.04
+GNB_BASE_SRATE_HZ=23.04e6
+#
 # BASE_EXAMPLE_CONFIG_PATH="$SCRIPT_DIR/ocudu/configs/gnb_rf_b200_tdd_n78_20mhz.yml"
+# GNB_DL_ARFCNS=("630048" "643296")
+# ZMQ_BROKER_CHANNEL_BW_MHZ=40
+# GNB_SRATE_MHZ=46.08
+# GNB_BASE_SRATE_HZ=46.08e6
 
 usage() {
     echo "Usage: $0 [--disable-e2-term] [--e2-term-address <address>] [--cells <cell_numbers>] [--ues <ue_numbers>]"
-    echo "    For example: $0 --ues 4,5,6 --cells 1,2"}
+    echo "    For example: $0 --ues 4,5,6 --cells 1,2"
 }
 
 # Parse command-line arguments
@@ -369,7 +375,7 @@ update_yaml() {
     # PLMN should be treated as string
     if [[ "$PROPERTY" == "plmn" || "$PROPERTY" == "plmn_list" || "$PROPERTY" == *".plmn" || "$PROPERTY" == *".plmn_list" ]]; then
         yq eval -i "${SECTION}.${PROPERTY} = \"$VALUE\"" "$FILE_PATH"
-    elif [[ "$VALUE" =~ ^[0-9]+$ || "$VALUE" =~ ^[0-9]+\.[0-9]+$ || "$VALUE" =~ ^(true|false)$ ]]; then
+    elif [[ "$VALUE" =~ ^-?[0-9]+$ || "$VALUE" =~ ^-?[0-9]+\.[0-9]+$ || "$VALUE" =~ ^(true|false)$ ]]; then
         yq eval -i "${SECTION}.${PROPERTY} = ${VALUE}" "$FILE_PATH"
     else
         yq eval -i "${SECTION}.${PROPERTY} = \"$VALUE\"" "$FILE_PATH"
@@ -425,6 +431,10 @@ update_yaml "configs/gnb.yaml" "ru_sdr" "clock" "default"
 update_yaml "configs/gnb.yaml" "ru_sdr" "sync" "default"
 
 # Update configuration values for 5G cell parameters
+BASE_CELL_NUMBER="${CELL_NUMBERS[0]}"
+BASE_RADIO_PROFILE_INDEX=$(((BASE_CELL_NUMBER - 1) % ${#GNB_DL_ARFCNS[@]}))
+update_yaml "configs/gnb.yaml" "cell_cfg" "dl_arfcn" "${GNB_DL_ARFCNS[$BASE_RADIO_PROFILE_INDEX]}"
+update_yaml "configs/gnb.yaml" "cell_cfg" "pci" "$((BASE_CELL_NUMBER - 1))"
 update_yaml "configs/gnb.yaml" "cell_cfg" "nof_antennas_dl" "1"
 update_yaml "configs/gnb.yaml" "cell_cfg" "nof_antennas_ul" "1"
 update_yaml "configs/gnb.yaml" "cell_cfg" "plmn" $PLMN
@@ -448,11 +458,18 @@ if [ "$USE_ZMQ_BROKER" = "true" ]; then
         update_yaml "configs/gnb.yaml" "cell_cfg.pucch" "nof_cell_csi_res" "7"
     elif [ "$CELL_BAND" = "78" ]; then
         update_yaml "configs/gnb.yaml" "cell_cfg.csi" "csi_rs_enabled" "false"
-        update_yaml "configs/gnb.yaml" "cell_cfg.tdd_ul_dl_cfg" "dl_ul_tx_period" "5"
-        update_yaml "configs/gnb.yaml" "cell_cfg.tdd_ul_dl_cfg" "nof_dl_slots" "3"
-        update_yaml "configs/gnb.yaml" "cell_cfg.tdd_ul_dl_cfg" "nof_dl_symbols" "10"
-        update_yaml "configs/gnb.yaml" "cell_cfg.tdd_ul_dl_cfg" "nof_ul_slots" "1"
-        update_yaml "configs/gnb.yaml" "cell_cfg.tdd_ul_dl_cfg" "nof_ul_symbols" "2"
+        update_yaml "configs/gnb.yaml" "cell_cfg.pdcch.common" "coreset0_index" "11"
+        update_yaml "configs/gnb.yaml" "cell_cfg.prach" "prach_config_index" "159"
+        update_yaml "configs/gnb.yaml" "cell_cfg.prach" "prach_root_sequence_index" "1"
+        update_yaml "configs/gnb.yaml" "cell_cfg.prach" "preamble_rx_target_pw" "-110"
+        update_yaml "configs/gnb.yaml" "cell_cfg.pusch" "msg3_delta_preamble" "6"
+        update_yaml "configs/gnb.yaml" "cell_cfg.ssb" "ssb_period" "20"
+        update_yaml "configs/gnb.yaml" "cell_cfg.ssb" "ssb_block_power_dbm" "-25"
+        update_yaml "configs/gnb.yaml" "cell_cfg.tdd_ul_dl_cfg" "dl_ul_tx_period" "10"
+        update_yaml "configs/gnb.yaml" "cell_cfg.tdd_ul_dl_cfg" "nof_dl_slots" "7"
+        update_yaml "configs/gnb.yaml" "cell_cfg.tdd_ul_dl_cfg" "nof_dl_symbols" "6"
+        update_yaml "configs/gnb.yaml" "cell_cfg.tdd_ul_dl_cfg" "nof_ul_slots" "2"
+        update_yaml "configs/gnb.yaml" "cell_cfg.tdd_ul_dl_cfg" "nof_ul_symbols" "4"
         update_yaml "configs/gnb.yaml" "cell_cfg.pucch" "formats" "f0_and_f2"
         update_yaml "configs/gnb.yaml" "cell_cfg.pucch" "nof_cell_csi_res" "0"
     fi
@@ -462,7 +479,9 @@ yq eval -i 'del(.cells)' "configs/gnb.yaml"
 if [ "$USE_ZMQ_BROKER" = "true" ] && [ "${#CELL_NUMBERS[@]}" -gt 1 ]; then
     CELL_COUNT=0
     for CELL_NUMBER in "${CELL_NUMBERS[@]}"; do
-        update_yaml "configs/gnb.yaml" "cells[$CELL_COUNT]" "pci" "$CELL_NUMBER"
+        RADIO_PROFILE_INDEX=$(((CELL_NUMBER - 1) % ${#GNB_DL_ARFCNS[@]}))
+        update_yaml "configs/gnb.yaml" "cells[$CELL_COUNT]" "pci" "$((CELL_NUMBER - 1))"
+        update_yaml "configs/gnb.yaml" "cells[$CELL_COUNT]" "dl_arfcn" "${GNB_DL_ARFCNS[$RADIO_PROFILE_INDEX]}"
         CELL_COUNT=$((CELL_COUNT + 1))
     done
 fi

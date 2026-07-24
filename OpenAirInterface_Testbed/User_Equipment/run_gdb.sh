@@ -200,11 +200,11 @@ else
     SSB_START_SUBCARRIER=486
     #
     # BAND=78
-    # BANDWIDTH_RBS=51
+    # BANDWIDTH_RBS=106
     # NUMEROLOGY=1
-    # DL_CARRIER_FREQUENCY_HZ=3489420000
+    # DL_CARRIER_FREQUENCY_HZ=3450720000
     # UL_CARRIER_OFFSET_HZ=0
-    # SSB_START_SUBCARRIER=0
+    # SSB_START_SUBCARRIER=180
 
     # sudo ip netns exec ue$UE_NUMBER sudo gdb --args ./nr-uesoftmodem -O "../../../../configs/ue$UE_NUMBER.conf" $RADIO_ARGS -r $BANDWIDTH_RBS --numerology $NUMEROLOGY --band $BAND -C $DL_CARRIER_FREQUENCY_HZ --CO $UL_CARRIER_OFFSET_HZ --ssb $SSB_START_SUBCARRIER
     sudo script -q -f -c "ip netns exec ue$UE_NUMBER sudo gdb --args ./nr-uesoftmodem -O \"../../../../configs/ue$UE_NUMBER.conf\" $RADIO_ARGS -r $BANDWIDTH_RBS --numerology $NUMEROLOGY --band $BAND -C $DL_CARRIER_FREQUENCY_HZ --CO $UL_CARRIER_OFFSET_HZ --ssb $SSB_START_SUBCARRIER $ADDITIONAL_FLAGS" "$SCRIPT_DIR/logs/ue${UE_NUMBER}_stdout.txt"

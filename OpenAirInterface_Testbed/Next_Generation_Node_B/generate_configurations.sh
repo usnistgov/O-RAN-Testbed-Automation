@@ -37,37 +37,55 @@ MAKE_CU_E2_NODE=false
 MAKE_DU_E2_NODE=true
 ENABLE_NEIGHBOR_CONFIG=true # Allows automatic A2 and A3 event handovers
 NEAR_RIC_IP_ADDR="127.0.0.1"
-ZMQ_BROKER_SAMPLE_RATE_HZ=23040000
 
 # Radio configuration presets (band 3 and band 78)
 GNB_CONFIG_TEMPLATE="openairinterface5g/targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band1.u0.52PRB.usrpb210.conf"
 NR_BAND="3"
-NR_SSB_ARFCN="368410"
-NR_DL_POINT_A_ARFCN="366592"
+NR_SSB_ARFCNS=("368410")
+NR_DL_POINT_A_ARFCNS=("366592")
 NR_UL_POINT_A_ARFCN="347592"
 NR_CARRIER_BANDWIDTH_RBS="106"
 NR_BWP_LOCATION_AND_BANDWIDTH="28875"
 NR_CORESET0_INDEX="12"
+NR_TIMING_ADVANCE_OFFSET="1"
+NR_PREAMBLE_RECEIVED_TARGET_POWER=""
+NR_MSG3_DELTA_PREAMBLE=""
+NR_PRACH_DTX_THRESHOLD=""
+NR_OFDM_OFFSET_DIVISOR=""
+NR_PRACH_ROOT_SEQUENCE_INDEX=""
+NR_SSB_BITMAP=""
 NR_TDD_PERIODICITY=""
 NR_TDD_DL_SLOTS=""
 NR_TDD_DL_SYMBOLS=""
 NR_TDD_UL_SLOTS=""
 NR_TDD_UL_SYMBOLS=""
+ZMQ_BROKER_SAMPLE_RATE_HZ=23040000
 ZMQ_TX_AMP_BACKOFF_DB="12"
 #
 # GNB_CONFIG_TEMPLATE="openairinterface5g/targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band78.fr1.106PRB.usrpb210.conf"
 # NR_BAND="78"
-# NR_SSB_ARFCN="632256"
-# NR_DL_POINT_A_ARFCN="632016"
+# NR_SSB_ARFCNS=("629376" "642624")
+# NR_DL_POINT_A_ARFCNS=("628776" "642024")
 # NR_UL_POINT_A_ARFCN=""
-# NR_CARRIER_BANDWIDTH_RBS="51"
-# NR_BWP_LOCATION_AND_BANDWIDTH="13750"
-# NR_CORESET0_INDEX="0"
-# NR_TDD_PERIODICITY="5"
-# NR_TDD_DL_SLOTS="3"
-# NR_TDD_DL_SYMBOLS="10"
-# NR_TDD_UL_SLOTS="1"
-# NR_TDD_UL_SYMBOLS="2"
+# NR_CARRIER_BANDWIDTH_RBS="106"
+# NR_BWP_LOCATION_AND_BANDWIDTH="28875"
+# NR_CORESET0_INDEX="11"
+# NR_TIMING_ADVANCE_OFFSET=""
+# NR_PREAMBLE_RECEIVED_TARGET_POWER="-110"
+# NR_MSG3_DELTA_PREAMBLE="6"
+# NR_PRACH_DTX_THRESHOLD="200"
+# NR_OFDM_OFFSET_DIVISOR="4294967295"
+# NR_PRACH_ROOT_SEQUENCE_INDEX="1"
+# NR_SSB_BITMAP="1"
+# NR_TDD_PERIODICITY="6"
+# NR_TDD_DL_SLOTS="7"
+# NR_TDD_DL_SYMBOLS="6"
+# NR_TDD_UL_SLOTS="2"
+# NR_TDD_UL_SYMBOLS="4"
+# ZMQ_BROKER_SAMPLE_RATE_HZ=46080000
+
+NR_SSB_ARFCN="${NR_SSB_ARFCNS[0]}"
+NR_DL_POINT_A_ARFCN="${NR_DL_POINT_A_ARFCNS[0]}"
 
 # FLEXRIC_LIBRARY_DIR="/usr/local/lib/flexric/" # Default
 FLEXRIC_LIBRARY_DIR="flexric/build/flexric_libraries/lib/flexric/"
@@ -83,7 +101,7 @@ cd "$SCRIPT_DIR"
 
 usage() {
     echo "Usage: $0 [--cells <cell_numbers>] [--ues <ue_numbers>]"
-    echo "    For example: $0 --ues 4,5,6 --cells 1,2"}
+    echo "    For example: $0 --ues 4,5,6 --cells 1,2"
 }
 
 UE_NUMBERS=()
@@ -333,13 +351,33 @@ if [ -n "$NR_BWP_LOCATION_AND_BANDWIDTH" ]; then
     update_conf "configs/gnb.conf" "initialDLBWPlocationAndBandwidth" "$NR_BWP_LOCATION_AND_BANDWIDTH"
     update_conf "configs/gnb.conf" "initialULBWPlocationAndBandwidth" "$NR_BWP_LOCATION_AND_BANDWIDTH"
 fi
-if grep -q "^[[:space:]]*n_TimingAdvanceOffset[[:space:]]*=" "configs/gnb.conf"; then
-    update_conf "configs/gnb.conf" "n_TimingAdvanceOffset" "1"
-else
-    sed -i "/^[[:space:]]*p0_nominal[[:space:]]*=/a\\        n_TimingAdvanceOffset = 1;" "configs/gnb.conf"
+if [ -n "$NR_TIMING_ADVANCE_OFFSET" ]; then
+    if grep -q "^[[:space:]]*n_TimingAdvanceOffset[[:space:]]*=" "configs/gnb.conf"; then
+        update_conf "configs/gnb.conf" "n_TimingAdvanceOffset" "$NR_TIMING_ADVANCE_OFFSET"
+    else
+        sed -i "/^[[:space:]]*p0_nominal[[:space:]]*=/a\\        n_TimingAdvanceOffset = $NR_TIMING_ADVANCE_OFFSET;" "configs/gnb.conf"
+    fi
 fi
 if [ -n "$NR_UL_POINT_A_ARFCN" ]; then
     update_conf "configs/gnb.conf" "ul_absoluteFrequencyPointA" "$NR_UL_POINT_A_ARFCN"
+fi
+if [ -n "$NR_PREAMBLE_RECEIVED_TARGET_POWER" ]; then
+    update_conf "configs/gnb.conf" "preambleReceivedTargetPower" "$NR_PREAMBLE_RECEIVED_TARGET_POWER"
+fi
+if [ -n "$NR_MSG3_DELTA_PREAMBLE" ]; then
+    update_conf "configs/gnb.conf" "msg3_DeltaPreamble" "$NR_MSG3_DELTA_PREAMBLE"
+fi
+if [ -n "$NR_PRACH_DTX_THRESHOLD" ]; then
+    update_conf "configs/gnb.conf" "prach_dtx_threshold" "$NR_PRACH_DTX_THRESHOLD"
+fi
+if [ -n "$NR_OFDM_OFFSET_DIVISOR" ]; then
+    update_conf "configs/gnb.conf" "ofdm_offset_divisor" "$NR_OFDM_OFFSET_DIVISOR"
+fi
+if [ -n "$NR_PRACH_ROOT_SEQUENCE_INDEX" ]; then
+    update_conf "configs/gnb.conf" "prach_RootSequenceIndex" "$NR_PRACH_ROOT_SEQUENCE_INDEX"
+fi
+if [ -n "$NR_SSB_BITMAP" ]; then
+    update_conf "configs/gnb.conf" "ssb_PositionsInBurst_Bitmap" "$NR_SSB_BITMAP"
 fi
 if [ -n "$NR_TDD_PERIODICITY" ]; then
     update_conf "configs/gnb.conf" "dl_UL_TransmissionPeriodicity" "$NR_TDD_PERIODICITY"
@@ -473,6 +511,16 @@ echo "    Configured CU."
 for DU_CONF in "${SPLIT_DUS[@]}"; do
     DU_NUMBER=$(echo "$DU_CONF" | grep -oP 'split_du\K[0-9]+')
     ./install_scripts/generate_du_configuration.sh "$DU_NUMBER"
+
+    RADIO_PROFILE_INDEX=$(((DU_NUMBER - 1) % ${#NR_SSB_ARFCNS[@]}))
+    update_conf "configs/$DU_CONF" "absoluteFrequencySSB" "${NR_SSB_ARFCNS[$RADIO_PROFILE_INDEX]}"
+    update_conf "configs/$DU_CONF" "dl_absoluteFrequencyPointA" "${NR_DL_POINT_A_ARFCNS[$RADIO_PROFILE_INDEX]}"
+    if [ -n "$NR_PRACH_ROOT_SEQUENCE_INDEX" ]; then
+        update_conf "configs/$DU_CONF" "prach_RootSequenceIndex" "$NR_PRACH_ROOT_SEQUENCE_INDEX"
+    fi
+    if [ -n "$NR_SSB_BITMAP" ]; then
+        update_conf "configs/$DU_CONF" "ssb_PositionsInBurst_Bitmap" "$NR_SSB_BITMAP"
+    fi
 done
 
 if [ "$ENABLE_NEIGHBOR_CONFIG" = "true" ]; then

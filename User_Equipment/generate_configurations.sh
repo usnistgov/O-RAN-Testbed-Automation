@@ -200,13 +200,13 @@ GNB_NR_BW_MHZ="20"
 UE_RF_SRATE_HZ="23.04e6"
 #
 # NR_BAND="78" # For band 78 it is recommended to connect OCUDU with Duranta's 5G UE by changing "USE_DURANTA_UE=true" in the base directory run.sh
-# NR_DL_ARFCN="632628"
-# NR_SSB_ARFCN="632256"
-# NR_NOF_PRB="51"
-# NR_MAX_NOF_PRB="51"
+# NR_DL_ARFCN="630048"
+# NR_SSB_ARFCN="629376"
+# NR_NOF_PRB="106"
+# NR_MAX_NOF_PRB="106"
 # NR_SCS="30"
-# GNB_NR_BW_MHZ="20"
-# UE_RF_SRATE_HZ="23.04e6"
+# GNB_NR_BW_MHZ="40"
+# UE_RF_SRATE_HZ="46.08e6"
 
 # NOTE: Does not validate whether a given operating band supports the selected bandwidth/SCS combination (3GPP 38.104 clause 5.3.5: BS channel bandwidth per operating band)
 if [ -f "$GNB_CONFIG_PATH" ]; then
@@ -296,8 +296,9 @@ if [ -f "$GNB_CONFIG_PATH" ]; then
 
     if [[ "$NR_BAND" = "3" && "$NR_DL_ARFCN" = "368500" && "$NR_SCS" = "15" ]] && [[ "$GNB_NR_BW_MHZ" = "10" || "$GNB_NR_BW_MHZ" = "20" ]]; then
         NR_SSB_ARFCN="368410"
-    elif [[ "$NR_BAND" = "78" && "$NR_DL_ARFCN" = "632628" && "$NR_SCS" = "30" && "$GNB_NR_BW_MHZ" = "20" ]]; then
-        NR_SSB_ARFCN="632256"
+    elif [[ "$NR_BAND" = "78" && "$NR_SCS" = "30" && "$GNB_NR_BW_MHZ" = "40" ]] &&
+        [[ "$NR_DL_ARFCN" = "630048" || "$NR_DL_ARFCN" = "643296" ]]; then
+        NR_SSB_ARFCN="$((NR_DL_ARFCN - 672))"
     else
         echo "ERROR: Could not determine SSB ARFCN for UE config. Add a validated derivation for this band/BW/SCS."
         exit 1

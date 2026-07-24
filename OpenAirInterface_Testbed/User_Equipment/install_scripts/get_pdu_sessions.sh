@@ -46,7 +46,7 @@ if ! [[ "$UE_NUMBER" =~ ^[0-9]+$ ]] || [ "$UE_NUMBER" -lt 1 ]; then
     exit 1
 fi
 
-LOG_FILE="logs/ue${UE_NUMBER}_stdout.txt"
+LOG_FILE="$PARENT_DIR/logs/ue${UE_NUMBER}_stdout.txt"
 if [ ! -f "$LOG_FILE" ]; then
     echo "ERROR: Log file $LOG_FILE does not exist. Please start UE $UE_NUMBER first."
     exit 1

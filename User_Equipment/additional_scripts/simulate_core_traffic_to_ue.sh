@@ -35,7 +35,8 @@ if ! command -v realpath &>/dev/null; then
 fi
 
 CURRENT_DIR=$(pwd)
-SCRIPT_DIR=$(dirname "$(realpath "$0")")
+# The script directory respects symbolic links so that the gNB and UE can patch their own openairinterface5g
+SCRIPT_DIR="$(cd "$(dirname "$0")" >/dev/null 2>&1 && pwd)"
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$PARENT_DIR"
 

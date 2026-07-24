@@ -349,25 +349,6 @@ See <a href="OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC#k
 -->
 </details>
 
-## Software Versioning
-
-For stability of software dependencies, all `git clone` calls are routed through `commit_hashes.json` which specifies a branch and/or commit hash for each repository. This file can be updated manually, or with `./Additional_Scripts/update_commit_hashes.sh` to fetch the latest commit hashes. For information about the automation tool versions, please see the releases page [\[2\]][gh-ota].
-
-## Documentation
-
-For more information about a specific component, refer to the README.md files in the respective subdirectories:
-- README.md [\[3\]][gh-readme]
-- 5G_Core_Network/README.md [\[4\]][gh-5gcore]
-- 5G_Core_Network/Additional_Cores_5GDeploy/README.md [\[5\]][gh-5gdeploy]
-- Next_Generation_Node_B/README.md [\[6\]][gh-gnodeb]
-- User_Equipment/README.md [\[7\]][gh-ue]
-- RAN_Intelligent_Controllers/Near-Real-Time-RIC/README.md [\[8\]][gh-nearrtric]
-- RAN_Intelligent_Controllers/Non-Real-Time-RIC/README.md [\[9\]][gh-nonrtric]
-- OpenAirInterface_Testbed/README.md [\[10\]][gh-oai]
-- OpenAirInterface_Testbed/Next_Generation_Node_B/README.md [\[11\]][gh-oaignb]
-- OpenAirInterface_Testbed/User_Equipment/README.md [\[12\]][gh-oaiue]
-- OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC/README.md [\[13\]][gh-flexric]
-
 
 
 ## References

@@ -32,7 +32,7 @@ O-RAN-Testbed-Automation
 └── README.md
 ```
 
-# Supported Deployment Scenarios
+# Supported Deployment Components
 
 | Deployment Scenario | Status |
 |---------------------|--------|

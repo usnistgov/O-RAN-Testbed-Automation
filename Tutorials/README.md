@@ -178,7 +178,7 @@ Before installing and configuring the testbed, ensure the system meets the minim
 > [!IMPORTANT]
 > Installation instructions are maintained in the **O-RAN-Testbed-Automation-Dev** repository.
 >
-> **Start here:** [https://github.com/usnistgov/O-RAN-Testbed-Automation-Dev#installation-guide](https://github.com/usnistgov/O-RAN-Testbed-Automation-Dev#setting-up-a-testbed)
+> **Start here:**(https://github.com/usnistgov/O-RAN-Testbed-Automation-Dev#installation-guide)
 >
 > Once the installation is complete, return to this repository to continue with the deployment tutorials.
 

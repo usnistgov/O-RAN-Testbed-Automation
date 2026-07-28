@@ -52,17 +52,6 @@ UEs
 
 ```
 
-The components that have been verified to support or not support connectivity are included below.
-
-<div align="center">
-  <picture>
-    <source media="(prefers-color-scheme: light)" srcset="./Images/Support_Light.svg">
-    <source media="(prefers-color-scheme: dark)" srcset="./Images/Support_Dark.svg">
-    <img alt="Diagram of Supported Connections" width="97%">
-  </picture>
-  <!-- <img src="Images/Support_Light.svg" alt="Diagram of Supported Connections" width="97%"> -->
-</div>
-
 ### Minimum System Requirements
 
 Before beginning the installation and setup of the testbed, verify that the system meets the following minimum specifications to prevent issues like pods remaining in pending or crash loop states if using an O-RAN SC RIC.

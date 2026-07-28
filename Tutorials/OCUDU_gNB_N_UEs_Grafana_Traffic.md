@@ -1,4 +1,4 @@
-# Deploying  OCUDU gNB with One UE, Grafana Monitoring, and Traffic Simulation
+# Deploying  OCUDU gNB with Multiple UEs, Grafana Monitoring, and Traffic Simulation
 
 # Table of Contents
 

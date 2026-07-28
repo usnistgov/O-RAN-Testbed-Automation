@@ -22,11 +22,7 @@ This tool supports the deployment of 5G O-RAN testbeds using open-source compone
 ```text
 CU/DU
 ├── OCUDU: 26.04
-<<<<<<< HEAD
-├── Duranta (OAI) gNB: 2026.w24
-=======
 ├── Duranta (OAI) gNB: 2026.w25
->>>>>>> main
 └── O-RAN SC E2 Simulator: M-Release
 RICs
 ├── O-RAN SC Near-RT RIC: M-Release
@@ -52,11 +48,8 @@ RICs
 └── free5GC: v4.2.1
 UEs
 ├── srsRAN_4G: release_25_10
-<<<<<<< HEAD
-└── Duranta (OAI) 5G UE: 2026.w24
-=======
 └── Duranta (OAI) 5G UE: 2026.w25
->>>>>>> main
+
 ```
 
 The components that have been verified to support or not support connectivity are included below.

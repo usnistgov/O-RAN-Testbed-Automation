@@ -228,14 +228,14 @@ See <a href="OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC#k
 ---
 ## Deployment Tutorials
 
-Choose one of the following end-to-end deployment tutorials after completing the installation.
+After completing the base installation, follow one of the end-to-end deployment tutorials below.
 
 ###  Grafana Traffic Monitoring
 
 Deploy an OCUDU-based O-RAN testbed, generate traffic from multiple UEs, collect Prometheus metrics, and visualize network performance using Grafana dashboards.
 
 [OCUDU gNB with N UEs, Grafana Traffic Monitoring](https://github.com/usnistgov/O-RAN-Testbed-Automation-Dev/blob/tutorials/Tutorials/OCUDU_gNB_N_UEs_Grafana_Traffic.md) 
----
+
 
 ###  FlexRIC and KPM Monitoring xApp
 

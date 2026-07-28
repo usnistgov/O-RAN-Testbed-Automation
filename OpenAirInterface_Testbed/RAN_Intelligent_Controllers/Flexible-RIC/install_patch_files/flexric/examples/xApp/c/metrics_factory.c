@@ -87,6 +87,13 @@ bool compute_rsrp_metrics(const char *node_id, const uint32_t *current_dist, siz
     total_current += current_dist[i];
   }
 
+  if (!state->ss_rsrp_initialized)
+  {
+    memcpy(state->last_ss_rsrp_dist, current_dist, limit * sizeof(current_dist[0]));
+    state->ss_rsrp_initialized = true;
+    return true;
+  }
+
   // Per-UE metrics don't have RSRP; return early
   if (total_current == 0)
   {
@@ -163,6 +170,13 @@ bool compute_sinr_metrics(const char *node_id, const uint32_t *current_dist, siz
   for (size_t i = 0; i < limit; i++)
   {
     total_current += current_dist[i];
+  }
+
+  if (!state->ss_sinr_initialized)
+  {
+    memcpy(state->last_ss_sinr_dist, current_dist, limit * sizeof(current_dist[0]));
+    state->ss_sinr_initialized = true;
+    return true;
   }
 
   if (total_current == 0)

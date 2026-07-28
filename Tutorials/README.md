@@ -175,103 +175,12 @@ Before installing and configuring the testbed, ensure the system meets the minim
 
 ## Installation Guide
 
-Run the Update Manager to get packages up-to-date, then reboot.
-
-```console
-sudo apt-get update && sudo apt-get upgrade -y
-```
-
-If using VirtualBox, insert the Guest Additions CD image and install the Guest Additions with the on-screen prompt or the following commands, then reboot.
-
-```console
-sudo apt-get install -y dkms build-essential linux-headers-generic linux-headers-$(uname -r)
-sudo mkdir /media/cdrom
-sudo mount /dev/cdrom /media/cdrom
-cd /media/cdrom
-sudo ./VBoxLinuxAdditions.run
-sudo adduser $USER vboxsf
-```
-
-Next, install Git and clone the O-RAN-Testbed-Automation repository over HTTPS.
-
-```console
-sudo apt-get install -y git
-git clone https://gitlab.nist.gov/gitlab/wnd-oran/o-ran-testbed-init.git
-cd O-RAN-Testbed-Automation
-```
-
-
-
----
-
 > [!IMPORTANT]
-
-> The deployment scenario based on Open 5GS Cpre, srsRAN and O-RAN SC's Near-RT RIC can be installed from the base directory.
-
-Begin the installation process, recommended to be run as the current user rather than as root:
-
-```console
-./full_install.sh
-```
-
-> [!TIP]
-> Due to `set -e`, the scripts will halt upon encountering an error so that it can be corrected before trying again. Since the scripts are idempotent, only the incomplete steps of the installation process will be executed unless specified otherwise. Please be patient until an error occurs or the testbed installation completes successfully.
-
-```text
-################################################################################
-# Successfully installed the Near-RT RIC, 5G Core, gNodeB, and UE.             #
-################################################################################
-```
-
-<details>
-  <summary><b>OCUDU and O-RAN SC Near-RT RIC Output</b></summary>
-  <hr>
-
-Run the testbed with `./run.sh` to start the 5G Core, gNodeB, and UEs 2 and 3 as background processes, and UE 1 in the foreground. Use `./is_running.sh` to check if the components are running, and `./stop.sh` to stop the components. The optional RIC starts automatically on boot and can be accessed with `k9s -A`.
-
-<div align="center">
-  
-  <img src="output.png" alt="Output" width="70%">
-</div>
-<!
-```console
-Attaching UE...
-Random Access Transmission: prach_occasion=0, preamble_index=0, ra-rnti=0x39, tti=174
-Random Access Complete.     c-rnti=0x4601, ta=0
-RRC Connected
-PDU Session Establishment successful. IP: 10.45.0.101
-RRC NR reconfiguration successful.
-```
+> Installation instructions are maintained in the **O-RAN-Testbed-Automation-Dev** repository.
 >
-
-<!--
-<b>OCUDU Grafana WebUI and ZMQ Broker Visualization</b><div align="center">
-  <img src="Images/OCUDU_Grafana_WebUI.png" alt="OCUDU Grafana WebUI and ZMQ Broker" width="75%">
-</div>
-
-See <a href="Next_Generation_Node_B/README.md#ocudu-grafana-webui">this section</a> for more information.
-
-<b>Supplementary O-RAN SC Network Monitoring, Visualization, and Control</b><div align="center">
-  <img src="Images/Cilium_Hubble_UI.png" alt="Hubble UI showing network flows" width="70%">
-</div>
-
-See <a href="RAN_Intelligent_Controllers/Near-Real-Time-RIC#migration-to-cilium">this section</a> for the set up guide.
-</details>
-
----
-
-
-<b>Supplementary Dashboard for KPM Visualization</b><div align="center">
-  <img src="Images/xApp_Dashboard.png" alt="Grafana dashboard of xApp KPM metrics" width="75%">
-</div>
-
-See <a href="OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC#kpm-monitor-visualization-in-grafana">this section</a> for the set up guide.
-</details>
-
----
--->
-</details>
-
+> **Start here:** https://github.com/usnistgov/O-RAN-Testbed-Automation-Dev#installation-guide
+>
+> Once the installation is complete, return to this repository to continue with the deployment tutorials.
 
 
 ## References

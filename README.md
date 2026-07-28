@@ -234,15 +234,15 @@ Choose one of the following end-to-end deployment tutorials after completing the
 
 Deploy an OCUDU-based O-RAN testbed, generate traffic from multiple UEs, collect Prometheus metrics, and visualize network performance using Grafana dashboards.
 
-➡️ **Tutorial:** `Tutorials/OCUDU_gNB_N_UEs_Grafana_Traffic.md`
-
+[OCUDU gNB with N UEs, Grafana Traffic Monitoring](https://github.com/usnistgov/O-RAN-Testbed-Automation-Dev/blob/tutorials/Tutorials/OCUDU_gNB_N_UEs_Grafana_Traffic.md) 
 ---
 
 ###  FlexRIC and KPM Monitoring xApp
 
 Deploy an OCUDU gNB connected to multiple UEs, integrate it with FlexRIC, subscribe to E2SM-KPM reports, and monitor real-time RAN KPIs using a KPM monitoring xApp.
 
-➡️ **Tutorial:** `Tutorials/OCUDU_gNB_N_UEs_RIC_xApp.md`
+[OCUDU gNB with N UEs, FlexRIC, and KPM Monitoring xApp](https://github.com/usnistgov/O-RAN-Testbed-Automation-Dev/blob/tutorials/Tutorials/OCUDU_gNB_N_UEs_RIC_xApp.md)
+
 ## Software Versioning
 
 For stability of software dependencies, all `git clone` calls are routed through `commit_hashes.json` which specifies a branch and/or commit hash for each repository. This file can be updated manually, or with `./Additional_Scripts/update_commit_hashes.sh` to fetch the latest commit hashes. For information about the automation tool versions, please see the releases page [\[3\]][gh-ota].

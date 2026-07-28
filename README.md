@@ -232,14 +232,14 @@ After completing the base installation, follow one of the end-to-end deployment 
 
 ###  Grafana Traffic Monitoring
 
-Deploy an OCUDU-based O-RAN testbed, generate traffic from multiple UEs, collect Prometheus metrics, and visualize network performance using Grafana dashboards.
+Deploy an OCUDU-based O-RAN testbed, generate traffic from multiple UEs, collect Prometheus metrics, and visualize network performance using Grafana dashboards. This tutorial demonstrates how to deploy an OCUDU-based O-RAN testbed with multiple User Equipments (UEs), generate uplink and downlink traffic, collect real-time performance metrics, and visualize network Key Performance Indicators (KPIs) through Grafana dashboards. Users will learn how to validate end-to-end connectivity, monitor throughput and resource utilization, and analyze network behavior during traffic generation.
 
 [OCUDU gNB with N UEs, Grafana Traffic Monitoring](https://github.com/usnistgov/O-RAN-Testbed-Automation-Dev/blob/tutorials/Tutorials/OCUDU_gNB_N_UEs_Grafana_Traffic.md) 
 
 
 ###  FlexRIC and KPM Monitoring xApp
 
-Deploy an OCUDU gNB connected to multiple UEs, integrate it with FlexRIC, subscribe to E2SM-KPM reports, and monitor real-time RAN KPIs using a KPM monitoring xApp.
+Deploy an OCUDU gNB connected to multiple UEs, integrate it with FlexRIC, subscribe to E2SM-KPM reports, and monitor real-time RAN KPIs using a KPM monitoring xApp. This tutorial demonstrates the integration of an OCUDU gNB with the FlexRIC Near-Real-Time RAN Intelligent Controller (Near-RT RIC). It covers E2 interface configuration, deployment of a KPM Monitoring xApp, subscription to E2SM-KPM reports, and real-time collection of radio performance metrics. Users will learn how to monitor RAN KPIs, validate E2 connectivity, and explore the foundations of closed-loop RAN monitoring and intelligent control within an O-RAN-compliant network. |
 
 [OCUDU gNB with N UEs, FlexRIC, and KPM Monitoring xApp](https://github.com/usnistgov/O-RAN-Testbed-Automation-Dev/blob/tutorials/Tutorials/OCUDU_gNB_N_UEs_RIC_xApp.md)
 

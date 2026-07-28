@@ -47,7 +47,71 @@ O-RAN-Testbed-Automation
 | KPI Monitoring xApps | ✅ |
 
 ---
+## Setting Up a Testbed
 
+The  tool can be used in virtual machines and physical machines with the list of open-source components and minimum system requirements specified below. For additional details on the configuration of physical hardware and individual software components, refer to [\[1\]][nist-tn-2311].
+
+### Supported Testbed Open-Source Components
+
+<div align="center">
+  
+  <img src="fig.jpg" alt="Diagram of Testbed Open-Source Components" width="70%">
+</div>
+
+
+
+This tool deploys 5G O-RAN testbeds by integrating open-source components, including OCUDU and the O-RAN Software Community (O-RAN SC) Near-Real-Time RAN Intelligent Controller (Near-RT RIC). The following is a list of the supported open-source components.
+
+```text
+
+CU/DU
+├── OCUDU: 26.04
+├── Duranta (OAI) gNB: 2026.w22
+└── O-RAN SC E2 Simulator: M-Release
+RICs
+├── O-RAN SC Near-RT RIC: M-Release
+│   └── xApps
+│       └──  KPM Monitor xApp
+5G Core
+└──  Open5GS: v2.7.7
+│
+UEs
+└──  srsRAN_4G: release_25_10
+│
+├── Open5GS: v2.7.7
+├── OPENAIR-CN-5G: v2.2.0
+└── free5GC: v4.2.1
+UEs
+├── srsRAN_4G: release_25_10
+
+
+```
+
+
+### Minimum System Requirements
+
+Before installing and configuring the testbed, ensure the system meets the minimum hardware and software requirements to avoid deployment issues, such as pods remaining in Pending or CrashLoop states when using the O-RAN SC RIC.
+
+| Component | Requirement |
+|------------|-------------|
+| Operating System | Ubuntu 20.04 / 22.04 / 24.04 |
+| Storage | ≥57 GB |
+| RAM | ≥6 GB |
+| CPU | ≥2 cores |
+| Recommended CPU | ≥6 cores |
+| Internet | Required |
+
+---
+
+
+## Installation Guide
+
+> [!IMPORTANT]
+> Installation instructions are maintained in the **O-RAN-Testbed-Automation-Dev** repository.
+>
+> **Start here:**(https://github.com/usnistgov/O-RAN-Testbed-Automation-Dev#installation-guide)
+>
+> Once the installation is complete, return to this repository to continue with the deployment tutorials.
 # Repository Tutorials
 
 This repository contains two complete monitoring tutorials that build on the base O-RAN deployment.
@@ -116,71 +180,7 @@ Users should be able to:
 
 
 
-## Setting Up a Testbed
 
-The  tool can be used in virtual machines and physical machines with the list of open-source components and minimum system requirements specified below. For additional details on the configuration of physical hardware and individual software components, refer to [\[1\]][nist-tn-2311].
-
-### Supported Testbed Open-Source Components
-
-<div align="center">
-  
-  <img src="fig.jpg" alt="Diagram of Testbed Open-Source Components" width="70%">
-</div>
-
-
-
-This tool deploys 5G O-RAN testbeds by integrating open-source components, including OCUDU and the O-RAN Software Community (O-RAN SC) Near-Real-Time RAN Intelligent Controller (Near-RT RIC). The following is a list of the supported open-source components.
-
-```text
-
-CU/DU
-├── OCUDU: 26.04
-├── Duranta (OAI) gNB: 2026.w22
-└── O-RAN SC E2 Simulator: M-Release
-RICs
-├── O-RAN SC Near-RT RIC: M-Release
-│   └── xApps
-│       └──  KPM Monitor xApp
-5G Core
-└──  Open5GS: v2.7.7
-│
-UEs
-└──  srsRAN_4G: release_25_10
-│
-├── Open5GS: v2.7.7
-├── OPENAIR-CN-5G: v2.2.0
-└── free5GC: v4.2.1
-UEs
-├── srsRAN_4G: release_25_10
-
-
-```
-
-
-### Minimum System Requirements
-
-Before installing and configuring the testbed, ensure the system meets the minimum hardware and software requirements to avoid deployment issues, such as pods remaining in Pending or CrashLoop states when using the O-RAN SC RIC.
-
-| Component | Requirement |
-|------------|-------------|
-| Operating System | Ubuntu 20.04 / 22.04 / 24.04 |
-| Storage | ≥57 GB |
-| RAM | ≥6 GB |
-| CPU | ≥2 cores |
-| Recommended CPU | ≥6 cores |
-| Internet | Required |
-
----
-
-
-## Installation Guide
-
-> [!IMPORTANT]
-> Installation instructions are maintained in the **O-RAN-Testbed-Automation-Dev** repository.
->
-> **Start here:**(https://github.com/usnistgov/O-RAN-Testbed-Automation-Dev#installation-guide)
->
-> Once the installation is complete, return to this repository to continue with the deployment tutorials.
 
 
 ## References

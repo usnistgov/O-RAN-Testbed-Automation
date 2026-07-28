@@ -82,7 +82,7 @@ UEs
 ├── OPENAIR-CN-5G: v2.2.0
 └── free5GC: v4.2.1
 UEs
-├── srsRAN_4G: release_25_10
+└── srsRAN_4G: release_25_10
 
 
 ```
@@ -106,7 +106,6 @@ Before installing and configuring the testbed, ensure the system meets the minim
 
 ## Installation Guide
 
-> [!IMPORTANT]
 > Installation instructions are maintained in the **O-RAN-Testbed-Automation-Dev** repository.
 >
 > **Start here:**(https://github.com/usnistgov/O-RAN-Testbed-Automation-Dev#installation-guide)

@@ -139,7 +139,8 @@ sed -i 's/^USE_FLEXRIC=false$/USE_FLEXRIC=true/' generate_configurations.sh
 # Tutorial Workflow
 ## Step 1: Start the Testbed
 Run the testbed with `./run.sh` to start the 5G Core, FlexRIC, gNodeB, and UE as background processes. Use `./is_running.sh` to check if the components are running, and `./stop.sh` to stop the components.
-```Expected Output
+#### Expected Output
+```
 Running FlexRIC...
 Starting flexric in background...
 FlexRIC: RUNNING
@@ -187,6 +188,9 @@ PDU Session Establishment successful. IP: 10.45.0.102
 RRC NR reconfiguration successful.
 
 ```
+## Step 2: Launch the KPM Monitoring xApp
+
+
 # KPM Monitoring xApp Use Case
 
 ## Objective

@@ -95,6 +95,47 @@ By completing this tutorial, user will learn how to:
 | UEs | Generate traffic and network measurements |
 
 ---
+## Clone Repository
+
+```bash
+git clone https://github.com/USNISTGOV/O-RAN-Testbed-Automation.git
+
+cd O-RAN-Testbed-Automation
+```
+
+---
+
+## Install the Testbed
+
+```bash
+./full_install.sh
+```
+```text
+################################################################################
+# Successfully installed the Near-RT RIC, 5G Core, gNodeB, and UE.             #
+################################################################################
+```
+
+The installation deploys
+
+- Open5GS
+- OCUDU
+- O-RAN SC Near-RT RIC
+- UE
+- Kubernetes components
+
+---
+## Enable Flexric
+By default, the gNodeB's Distributed Unit (DU) connects to the O-RAN Software Community's Near-Real-Time RAN Intelligent Controller (O-RAN SC Near-RT RIC) E2 Terminator. To use FlexRIC instead of O-RAN SC's Near-RT RIC, set all occurrences of `USE_FLEXRIC` to `true`, then run `../generate_configurations.sh`.
+
+```bash
+sed -i 's/^USE_FLEXRIC=false$/USE_FLEXRIC=true/' ../full_install.sh
+sed -i 's/^USE_FLEXRIC=false$/USE_FLEXRIC=true/' ../full_uninstall.sh
+sed -i 's/^USE_FLEXRIC=false$/USE_FLEXRIC=true/' ../generate_configurations.sh
+sed -i 's/^USE_FLEXRIC=false$/USE_FLEXRIC=true/' ../run.sh
+sed -i 's/^USE_FLEXRIC=false$/USE_FLEXRIC=true/' ../stop.sh
+sed -i 's/^USE_FLEXRIC=false$/USE_FLEXRIC=true/' generate_configurations.sh
+```
 # Tutorial Workflow
 
 # KPM Monitoring xApp Use Case

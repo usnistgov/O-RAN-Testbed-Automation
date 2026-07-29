@@ -137,7 +137,56 @@ sed -i 's/^USE_FLEXRIC=false$/USE_FLEXRIC=true/' ../stop.sh
 sed -i 's/^USE_FLEXRIC=false$/USE_FLEXRIC=true/' generate_configurations.sh
 ```
 # Tutorial Workflow
+## Step 1: Start the Testbed
+Run the testbed with `./run.sh` to start the 5G Core, FlexRIC, gNodeB, and UE as background processes. Use `./is_running.sh` to check if the components are running, and `./stop.sh` to stop the components.
+```Expected Output
+Running FlexRIC...
+Starting flexric in background...
+FlexRIC: RUNNING
 
+Waiting for AMF to be ready..............
+AMF is ready.
+
+Running gNodeB...
+Starting gNodeB in background...
+Waiting for gNodeB to be ready.....
+gNodeB is ready.
+ZMQ_Broker: RUNNING
+gNodeB: RUNNING
+
+Running User Equipment...
+Running UE 3 in background...
+Using srsue binary: /home/ubuntu/O-RAN-Testbed-Automation-Dev/User_Equipment/srsRAN_4G/build/srsue/src/srsue
+Starting User Equipment in background...
+User Equipment: RUNNING (ue3)
+Running UE 2...
+Using srsue binary: /home/ubuntu/O-RAN-Testbed-Automation-Dev/User_Equipment/srsRAN_4G/build/srsue/src/srsue
+# Script: /home/ubuntu/O-RAN-Testbed-Automation-Dev/User_Equipment/install_scripts/setup_ue_namespace.sh...
+Starting srsue (ue2) in namespace ue2...
+Active RF plugins: libsrsran_rf_uhd.so libsrsran_rf_zmq.so
+Inactive RF plugins: 
+Reading configuration file configs/ue2.conf...
+
+Built in Release mode using commit 6bcbd9e5b on branch master.
+
+Opening 1 channels in RF device=zmq with args=tx_port=tcp://*:2201,rx_port=tcp://10.201.0.9:2200,base_srate=11.52e6,id=ue2
+Supported RF device list: UHD zmq file
+CHx base_srate=11.52e6
+CHx id=ue2
+Current sample rate is 1.92 MHz with a base rate of 11.52 MHz (x6 decimation)
+CH0 rx_port=tcp://10.201.0.9:2200
+CH0 tx_port=tcp://*:2201
+Current sample rate is 11.52 MHz with a base rate of 11.52 MHz (x1 decimation)
+Current sample rate is 11.52 MHz with a base rate of 11.52 MHz (x1 decimation)
+Waiting PHY to initialize ... done!
+Attaching UE...
+Random Access Transmission: prach_occasion=0, preamble_index=0, ra-rnti=0x39, tti=174
+Random Access Complete.     c-rnti=0x4601, ta=0
+RRC Connected
+PDU Session Establishment successful. IP: 10.45.0.102
+RRC NR reconfiguration successful.
+
+```
 # KPM Monitoring xApp Use Case
 
 ## Objective

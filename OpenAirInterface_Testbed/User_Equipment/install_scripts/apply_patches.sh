@@ -90,6 +90,17 @@ echo "Patching nr_mac_gNB.h..."
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.patch"
 cd ..
 
+# Prevent exhaustion of UEs by releasing one CBRA UE when the UE list is full
+cd openairinterface5g
+git restore openair2/LAYER2/NR_MAC_gNB/mac_rrc_dl_handler.c
+if [ ! -f "openair2/LAYER2/NR_MAC_gNB/mac_rrc_dl_handler.c.previous" ]; then
+    cp openair2/LAYER2/NR_MAC_gNB/mac_rrc_dl_handler.c openair2/LAYER2/NR_MAC_gNB/mac_rrc_dl_handler.c.previous
+    cp openair2/LAYER2/NR_MAC_gNB/mac_rrc_dl_handler.c.previous "$PARENT_DIR/install_patch_files/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/mac_rrc_dl_handler.previous.c"
+fi
+echo "Patching mac_rrc_dl_handler.c..."
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/mac_rrc_dl_handler.c.patch"
+cd ..
+
 cd openairinterface5g
 git restore openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c
 if [ ! -f "openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c.previous" ]; then
@@ -196,8 +207,4 @@ git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openair
 cd ..
 
 echo
-<<<<<<< HEAD
-echo "Successfully patched OpenAirInterface."
-=======
 echo "Successfully patched Duranta OpenAirInterface."
->>>>>>> main

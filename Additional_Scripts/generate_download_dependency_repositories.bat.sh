@@ -238,7 +238,7 @@ echo "cd ..\\.." >>download_dependency_repositories.bat
 echo "" >>download_dependency_repositories.bat
 generate_commands "https://gitlab.eurecom.fr/oai/o1-adapter.git" "OpenAirInterface_Testbed\\Next_Generation_Node_B" "o1-adapter"
 generate_commands "https://github.com/swig/swig.git" "OpenAirInterface_Testbed\\RAN_Intelligent_Controllers\\Flexible-RIC" "swig"
-generate_commands "https://gitlab.eurecom.fr/mosaic5g/flexric.git" "OpenAirInterface_Testbed\\RAN_Intelligent_Controllers\\Flexible-RIC" "flexric"
+generate_commands "https://github.com/duranta-project/flexric.git" "OpenAirInterface_Testbed\\RAN_Intelligent_Controllers\\Flexible-RIC" "flexric"
 
 echo "" >>download_dependency_repositories.bat
 echo "echo Repositories were cloned successfully." >>download_dependency_repositories.bat

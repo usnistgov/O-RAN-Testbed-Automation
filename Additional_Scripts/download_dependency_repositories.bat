@@ -443,7 +443,7 @@ cd %~dp0..
 if exist "OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC\flexric" rmdir /s /q "OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC\flexric"
 cd "OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC" >nul 2>&1
 if not errorlevel 1 (
-    git clone https://gitlab.eurecom.fr/mosaic5g/flexric.git
+    git clone https://github.com/duranta-project/flexric.git
     cd "flexric"
     git checkout ef6d722f22191eea74089966983da1f5ec1fedd4
     cd ..\..\..\..

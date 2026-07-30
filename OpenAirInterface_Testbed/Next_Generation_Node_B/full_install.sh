@@ -121,7 +121,7 @@ fi
 cd "$SCRIPT_DIR"
 if [ ! -d "$FLEXRIC_DIR/src/agent/e2_agent_api.c" ]; then
     echo "Cloning Flexible RAN Intelligent Controller (FlexRIC)..."
-    ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/mosaic5g/flexric.git "$FLEXRIC_DIR" --https
+    ./install_scripts/git_clone.sh https://github.com/duranta-project/flexric.git "$FLEXRIC_DIR"
 fi
 
 FLEXRIC_PATCH_DIR="../RAN_Intelligent_Controllers/Flexible-RIC"

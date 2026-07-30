@@ -1,6 +1,6 @@
 ## OpenAirInterface Testbed
 
-This testbed deployment consists of a 5G Core Network by Open5GS [\[1\]][open5gs-core], gNodeB and 5G UE by Duranta [\[2\]][duranta-ue-gnb], and FlexRIC by Mosaic5G at Eurecom [\[3\]][mosaic-flexric]. The scripts in these directories build, install, and configure the testbed components similar to the parent directory. Each directory contains a `README.md` file providing more details on the respective testbed component.
+This testbed deployment consists of a 5G Core Network by Open5GS [\[1\]][open5gs-core], as well as a gNodeB, 5G UE, and FlexRIC by Duranta [\[2\]][duranta-ue-gnb], [\[3\]][duranta-flexric]. The scripts in these directories build, install, and configure the testbed components similar to the parent directory. Each directory contains a `README.md` file providing more details on the respective testbed component.
 
 ## Usage
 
@@ -126,8 +126,8 @@ The script `run_handover_scenario.sh`, based on the handover tutorial [\[4\]][du
 ## References
 
 1. Open Source implementation for 5G Core and EPC. Open5GS. [https://github.com/open5gs/open5gs][open5gs-core]
-2. Duranta - An open, research-grade RAN + UE reference stack. LF Networking. [https://lfnetworking.org/projects/duranta/][duranta-ue-gnb]
-3. Flexible RAN Intelligent Controller (FlexRIC) and E2 Agent. Mosaic5G. [https://gitlab.eurecom.fr/mosaic5g/flexric][mosaic-flexric]
+2. Duranta - An open, research-grade RAN + UE reference stack. LF Networking. [https://lfnetworking.org/projects/duranta][duranta-ue-gnb]
+3. Flexible RAN Intelligent Controller (FlexRIC) and E2 Agent. Duranta. [https://github.com/duranta-project/flexric][duranta-flexric]
 4. Handover Tutorial for OAI. Duranta. [https://github.com/duranta-project/openairinterface5g/blob/develop/doc/handover-tutorial.md][duranta-handover]
 5. OCUDU Project Documentation: OCUDU with srsUE. [https://ocudu.gitlab.io/ocudu_docs/tutorials/srsue/#multi-ue-emulation][ocudu-multi-ue]
 6. OCUDU Multi-UE Emulation GRC. [https://gitlab.com/ocudu/ocudu_docs/-/blob/main/docs/tutorials/srsue/assets/multi_ue_scenario.grc][ocudu-multi-ue-grc]
@@ -135,8 +135,8 @@ The script `run_handover_scenario.sh`, based on the handover tutorial [\[4\]][du
 <!-- References -->
 
 [open5gs-core]: https://github.com/open5gs/open5gs
-[duranta-ue-gnb]: https://lfnetworking.org/projects/duranta/
-[mosaic-flexric]: https://gitlab.eurecom.fr/mosaic5g/flexric
+[duranta-ue-gnb]: https://lfnetworking.org/projects/duranta
+[duranta-flexric]: https://github.com/duranta-project/flexric
 [duranta-handover]: https://github.com/duranta-project/openairinterface5g/blob/develop/doc/handover-tutorial.md
 [ocudu-multi-ue]: https://ocudu.gitlab.io/ocudu_docs/tutorials/srsue/#multi-ue-emulation
 [ocudu-multi-ue-grc]: https://gitlab.com/ocudu/ocudu_docs/-/blob/main/docs/tutorials/srsue/assets/multi_ue_scenario.grc

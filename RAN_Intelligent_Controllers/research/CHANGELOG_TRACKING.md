@@ -138,7 +138,7 @@ Co-authored-by: fjcintron <fernando.cintron@nist.gov>
 
 ### References
 
-1. Duranta. LF Networking. [https://lfnetworking.org/projects/duranta/][lf-duranta]
+1. Duranta. LF Networking. [https://lfnetworking.org/projects/duranta][lf-duranta]
 2. Simulating Multiple UEs and Cells with ZeroMQ Broker. GitHub. [https://github.com/usnistgov/O-RAN-Testbed-Automation/tree/main/Next_Generation_Node_B/README.md#simulating-multiple-ues-and-cells-with-zeromq-broker][gh-ocudu-zmq]
 3. OCUDU with FlexRIC. GitHub. [https://github.com/usnistgov/O-RAN-Testbed-Automation/tree/main/Next_Generation_Node_B/README.md#e2-interface][gh-ocudu-e2]
 4. CMP0007. CMake. [https://cmake.org/cmake/help/latest/policy/CMP0007.html][cmake-cmp0007]
@@ -147,7 +147,7 @@ Co-authored-by: fjcintron <fernando.cintron@nist.gov>
 
 <!-- References -->
 
-[lf-duranta]: https://lfnetworking.org/projects/duranta/
+[lf-duranta]: https://lfnetworking.org/projects/duranta
 [gh-ocudu-e2]: https://github.com/usnistgov/O-RAN-Testbed-Automation/tree/main/Next_Generation_Node_B/README.md#e2-interface
 [gh-ocudu-zmq]: https://github.com/usnistgov/O-RAN-Testbed-Automation/tree/main/Next_Generation_Node_B/README.md#simulating-multiple-ues-and-cells-with-zeromq-broker
 [cmake-cmp0007]: https://cmake.org/cmake/help/latest/policy/CMP0007.html

@@ -52,7 +52,7 @@ By default, the RF simulator server is set to the gNodeB host. To make the UE th
 
 ## References
 
-1. Duranta - An open, research-grade RAN + UE reference stack. LF Networking. [https://lfnetworking.org/projects/duranta/][duranta-ue]
+1. Duranta - An open, research-grade RAN + UE reference stack. LF Networking. [https://lfnetworking.org/projects/duranta][duranta-ue]
 2. 3GPP TS 36.300: Evolved Universal Terrestrial Radio Access (E-UTRA) and Evolved Universal Terrestrial Radio Access Network (E-UTRAN); Overall description; Stage 2. [https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=2430][ts2430-3gpp]
 3. 3GPP TS 36.331: Evolved Universal Terrestrial Radio Access (E-UTRA); Radio Resource Control (RRC); Protocol specification. [https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=2440][ts2440-3gpp]
 4. 3GPP TS 36.401: Evolved Universal Terrestrial Radio Access Network (E-UTRAN); Architecture description. [https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=2442][ts2442-3gpp]
@@ -62,7 +62,7 @@ By default, the RF simulator server is set to the gNodeB host. To make the UE th
 
 <!-- References -->
 
-[duranta-ue]: https://lfnetworking.org/projects/duranta/
+[duranta-ue]: https://lfnetworking.org/projects/duranta
 [ts2430-3gpp]: https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=2430
 [ts2440-3gpp]: https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=2440
 [ts2442-3gpp]: https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=2442

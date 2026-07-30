@@ -81,7 +81,7 @@ This testbed configures the FlexRIC Service Model (SM) shared libraries (`.so` f
 
 1. Working Group 3: Near-Real-time RAN Intelligent Controller and E2 Interface Workgroup. O-RAN Alliance. [https://public.o-ran.org/display/WG3/Introduction][oran-wg3]
 2. FlexRIC: an SDK for next-generation SD-RANs. R. Schmidt, M. Irazabal, N. Nikaein. [https://dl.acm.org/doi/10.1145/3485983.3494870][mosaic5g-flexric]
-3. Flexible RAN Intelligent Controller (FlexRIC) and E2 Agent. Mosaic5G. [https://gitlab.eurecom.fr/mosaic5g/flexric][eurecom-nearrtric]
+3. Flexible RAN Intelligent Controller (FlexRIC) and E2 Agent. Duranta. [https://github.com/duranta-project/flexric][eurecom-nearrtric]
 4. 3GPP TS 28.552: 5G; Management and orchestration; 5G performance measurements. [https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=3413][ts28552-3gpp]
 5. 3GPP TS 38.214: 5G; NR; Physical layer procedures for data. [https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=3216][ts38214-3gpp]
 6. The open-source platform for monitoring and observability. Grafana Labs. [https://github.com/grafana/grafana][grafanalabs-grafana]
@@ -91,7 +91,7 @@ This testbed configures the FlexRIC Service Model (SM) shared libraries (`.so` f
 
 [oran-wg3]: https://public.o-ran.org/display/WG3/Introduction
 [mosaic5g-flexric]: https://dl.acm.org/doi/10.1145/3485983.3494870
-[eurecom-nearrtric]: https://gitlab.eurecom.fr/mosaic5g/flexric
+[eurecom-nearrtric]: https://github.com/duranta-project/flexric
 [ts28552-3gpp]: https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=3413
 [ts38214-3gpp]: https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=3216
 [grafanalabs-grafana]: https://github.com/grafana/grafana

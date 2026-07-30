@@ -125,7 +125,7 @@ cd ../..
 
 cd OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC
 ./install_scripts/git_clone.sh https://github.com/swig/swig.git
-./install_scripts/git_clone.sh https://gitlab.eurecom.fr/mosaic5g/flexric.git --https
+./install_scripts/git_clone.sh https://github.com/duranta-project/flexric.git
 cd ../..
 
 echo "Repositories were cloned successfully."

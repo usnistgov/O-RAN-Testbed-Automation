@@ -57,6 +57,7 @@ cd openairinterface5g
 git diff openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c >../install_patch_files/openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c.patch
 git diff openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c >../install_patch_files/openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c.patch
 git diff openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h >../install_patch_files/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.patch
+git diff openair2/LAYER2/NR_MAC_gNB/mac_rrc_dl_handler.c >../install_patch_files/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/mac_rrc_dl_handler.c.patch
 git diff openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c >../install_patch_files/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c.patch
 git diff openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c >../install_patch_files/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c.patch
 git diff openair3/UICC/pdu_session.c >../install_patch_files/openairinterface5g/openair3/UICC/pdu_session.c.patch
@@ -76,6 +77,11 @@ git restore openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h
 cp openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h ../install_patch_files/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.previous.h
 cp openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.previous
 git apply --verbose --ignore-whitespace ../install_patch_files/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.patch
+
+git restore openair2/LAYER2/NR_MAC_gNB/mac_rrc_dl_handler.c
+cp openair2/LAYER2/NR_MAC_gNB/mac_rrc_dl_handler.c ../install_patch_files/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/mac_rrc_dl_handler.previous.c
+cp openair2/LAYER2/NR_MAC_gNB/mac_rrc_dl_handler.c openair2/LAYER2/NR_MAC_gNB/mac_rrc_dl_handler.c.previous
+git apply --verbose --ignore-whitespace ../install_patch_files/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/mac_rrc_dl_handler.c.patch
 
 git restore openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c
 cp openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c ../install_patch_files/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.previous.c

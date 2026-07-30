@@ -1,0 +1,34 @@
+diff --git a/openair2/LAYER2/NR_MAC_gNB/mac_rrc_dl_handler.c b/openair2/LAYER2/NR_MAC_gNB/mac_rrc_dl_handler.c
+index 22f9869730..1c460365dd 100644
+--- a/openair2/LAYER2/NR_MAC_gNB/mac_rrc_dl_handler.c
++++ b/openair2/LAYER2/NR_MAC_gNB/mac_rrc_dl_handler.c
+@@ -571,9 +571,26 @@ static NR_UE_info_t *create_new_UE(gNB_MAC_INST *mac, uint32_t cu_id, const NR_C
+     DevAssert(res);
+   } else {
+     if (!add_new_UE_RA(mac, UE)) {
+-      delete_nr_ue_data(UE, &mac->UE_info.uid_allocator);
+-      LOG_E(NR_MAC, "UE list full while creating new UE\n");
+-      return NULL;
++      bool released_cbra = false;
++      UE_iterator(mac->UE_info.access_ue_list, access_UE) {
++        NR_RA_t *ra = access_UE->ra;
++        if (ra->cfra || ra->ra_state > nrRA_Msg3_retransmission)
++          continue;
++
++        LOG_W(NR_MAC,
++              "RA list full: releasing early CBRA UE %04x for CU-requested UE %04x\n",
++              access_UE->rnti,
++              UE->rnti);
++        nr_release_ra_UE(mac, access_UE->rnti);
++        released_cbra = true;
++        break;
++      }
++
++      if (!released_cbra || !add_new_UE_RA(mac, UE)) {
++        delete_nr_ue_data(UE, &mac->UE_info.uid_allocator);
++        LOG_E(NR_MAC, "UE list full while creating new UE\n");
++        return NULL;
++      }
+     }
+     nr_mac_prepare_ra_ue(mac, UE);
+ 

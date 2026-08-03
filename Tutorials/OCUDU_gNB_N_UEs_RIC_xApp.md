@@ -189,7 +189,7 @@ RRC NR reconfiguration successful.
 
 ```
 ## Step 2: Launch the KPM Monitoring xApp
-After starting the 5G Core, FlexRIC, gNodeB, and UE are properly connected, use the `./run_xapp_kpm_moni_xapp.sh` scripts within the RAN_Intelligent_Controllers/FlexRIC/additional_scripts directory to interact with the gNodeB and UE.
+After starting the 5G Core, FlexRIC, gNodeB, and UE, use the `./run_xapp_kpm_moni_xapp.sh` scripts within the RAN_Intelligent_Controllers/FlexRIC/additional_scripts directory to interact with the gNodeB and UE.
 
 ### Expected Output
 ```

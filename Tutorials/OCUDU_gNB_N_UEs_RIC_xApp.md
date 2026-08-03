@@ -189,8 +189,47 @@ RRC NR reconfiguration successful.
 
 ```
 ## Step 2: Launch the KPM Monitoring xApp
+After starting the 5G Core, FlexRIC, gNodeB, and UE are properly connected, use the `./run_xapp_kpm_moni_xapp.sh` scripts within the RAN_Intelligent_Controllers/FlexRIC/additional_scripts directory to interact with the gNodeB and UE.
 
+### Expected Output
+```
+[NEAR-RIC]: Loading SM ID = 3 with def = ORAN-E2SM-RC 
+[NEAR-RIC]: Loading SM ID = 2 with def = ORAN-E2SM-KPM 
+[NEAR-RIC]: Loading SM ID = 144 with def = PDCP_STATS_V0 
+[NEAR-RIC]: Loading SM ID = 145 with def = SLICE_STATS_V0 
+[NEAR-RIC]: Loading SM ID = 146 with def = TC_STATS_V0 
+[NEAR-RIC]: Loading SM ID = 148 with def = GTP_STATS_V0 
+[NEAR-RIC]: Loading SM ID = 143 with def = RLC_STATS_V0 
+[NEAR-RIC]: Loading SM ID = 142 with def = MAC_STATS_V0 
+[xApp]: E42 SETUP-REQUEST tx
+[xApp]: E42 SETUP-RESPONSE rx 
+[xApp]: xApp ID = 7 
+Connected E2 nodes = 1
+[xApp]: E42 RIC SUBSCRIPTION REQUEST tx RAN_FUNC_ID 2 RIC_REQ_ID 1 
+[xApp]: SUBSCRIPTION RESPONSE rx
+[xApp]: Successfully subscribed to RAN_FUNC_ID 2 
+[xApp] WARNING: Unsupported report style type 1, skipping subscription.
+[xApp] WARNING: Unsupported report style type 2, skipping subscription.
+[xApp]: E42 RIC SUBSCRIPTION REQUEST tx RAN_FUNC_ID 2 RIC_REQ_ID 2 
+[xApp]: SUBSCRIPTION RESPONSE rx
+[xApp]: Successfully subscribed to RAN_FUNC_ID 2 
+[xApp] WARNING: Unsupported report style type 4, skipping subscription.
 
+      1 KPM ind_msg latency = 1785514651163812 [μs]
+DRB.AirIfDelayUl = NULL 
+DRB.RlcDelayUl = NULL 
+DRB.RlcPacketDropRateDl = NULL 
+DRB.RlcSduDelayDl = NULL [μs]
+DRB.RlcSduTransmittedVolumeDL = 0 
+DRB.RlcSduTransmittedVolumeUL = 0 
+DRB.UEThpDl = 0.00 [kbps]
+DRB.UEThpUl = 0.00 [kbps]
+RACH.PreambleDedCell = 0 
+RRU.PrbAvailDl = 0 
+RRU.PrbAvailUl = 0 
+RRU.PrbTotDl = 0 [%]
+RRU.PrbTotUl = 0 [%]
+```
 # KPM Monitoring xApp Use Case
 
 ## Objective

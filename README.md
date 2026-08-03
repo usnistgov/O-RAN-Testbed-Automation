@@ -6,8 +6,8 @@
 - [OCUDU and O-RAN SC Near-RT RIC Output](#ocudu-and-o-ran-sc-near-rt-ric-output)
 - [Duranta and FlexRIC Output](#duranta-and-flexric-output)
 - [Deployment Tutorials](#deployment-tutorials)
- - [OCUDU gNB with N UEs, and Grafana Traffic Monitoring](#ocudu-gnb-with-n-ues-and-grafana-traffic-monitoring)
- - [FlexRIC and KPM Monitoring xApp](#flexric-and-kpm-monitoring-xapp)
+  - [OCUDU gNB with N UEs, and Grafana Traffic Monitoring](#ocudu-gnb-with-n-ues-and-grafana-traffic-monitoring)
+  - [FlexRIC and KPM Monitoring xApp](#flexric-and-kpm-monitoring-xapp)
 - [Software Versioning](#software-versioning)
 - [Documentation](#documentation)
 

@@ -5,11 +5,9 @@
 - [Installation Guide](#installation-guide)
 - [OCUDU and O-RAN SC Near-RT RIC Output](#ocudu-and-o-ran-sc-near-rt-ric-output)
 - [Duranta and FlexRIC Output](#duranta-and-flexric-output)
-- [Deployment Tutorials](#deployment-tutorialls)
+- [Deployment Tutorials](#deployment-tutorials)
  - [OCUDU gNB with N UEs, Grafana Traffic Monitoring](#ocudu-gnb-with-multiple-ues-and-grafana-monitoring)
-  - [OCUDU gNB with Multiple UEs and Grafana Monitoring](#ocudu-gnb-with-multiple-ues-and-grafana-monitoring)
  - [FlexRIC and KPM Monitoring xApp](#flexric-and-kpm-monitoring-xapp)
-  - [OCUDU gNB with Multiple UEs, FlexRIC, and KPM xApp](#ocudu-gnb-with-multiple-ues-flexric-and-kpm-xapp)
 - [Software Versioning](#software-versioning)
 - [Documentation](#documentation)
 

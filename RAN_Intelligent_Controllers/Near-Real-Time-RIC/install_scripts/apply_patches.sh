@@ -58,6 +58,11 @@ cd "ric-dep/depRicKubernetesOperator/internal/controller"
 git restore getConfigmap.go
 if [ ! -f "getConfigmap.previous.go" ]; then
     echo "Patching getConfigmap.go..."
+    if ! command -v dos2unix &>/dev/null; then
+        echo "Package \"dos2unix\" not found, installing..."
+        sudo env $APTVARS apt-get install -y dos2unix
+    fi
+    dos2unix getConfigmap.go
     cp getConfigmap.go getConfigmap.previous.go
     cp getConfigmap.previous.go "$PARENT_DIR/install_patch_files/ric-dep/depRicKubernetesOperator/internal/controller/getConfigmap.previous.go"
 fi
@@ -74,7 +79,7 @@ cp configmap.yaml "$PARENT_DIR/install_patch_files/ric-dep/new-installer/helm/ch
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/ric-dep/new-installer/helm/charts/nearrtric/e2mgr/templates/configmap.yaml.patch"
 cd "$PARENT_DIR"
 
-echo "Patching rtmgr route templates to keep E2_TERM_KEEP_ALIVE_REQ route..."
+echo "Patching rtmgr route templates for valid and reliable E2 routes..."
 cd "ric-dep/helm/rtmgr/templates"
 git restore config.yaml
 cp config.yaml "$PARENT_DIR/install_patch_files/ric-dep/helm/rtmgr/templates/config.previous.yaml"

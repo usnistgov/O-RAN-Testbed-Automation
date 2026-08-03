@@ -86,6 +86,22 @@ if [ ! -f "e2sm/wrapper.previous.c" ]; then
 fi
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/xApps/kpimon-go/e2sm/wrapper.c.patch"
 
+echo "Updating E2SM-KPM MatchingCondItem bindings to the KPM v2.03 layout..."
+git restore e2sm/asn1/kpm2_0.asn
+git restore e2sm/headers/MatchingCondItem.h
+git restore e2sm/lib/MatchingCondItem.c
+rm -f e2sm/headers/LogicalOR.h
+rm -f e2sm/headers/MatchingCondItem-Choice.h
+rm -f e2sm/lib/LogicalOR.c
+rm -f e2sm/lib/MatchingCondItem-Choice.c
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/xApps/kpimon-go/e2sm/asn1/kpm2_0.asn.patch"
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/xApps/kpimon-go/e2sm/headers/LogicalOR.h.patch"
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/xApps/kpimon-go/e2sm/headers/MatchingCondItem-Choice.h.patch"
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/xApps/kpimon-go/e2sm/headers/MatchingCondItem.h.patch"
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/xApps/kpimon-go/e2sm/lib/LogicalOR.c.patch"
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/xApps/kpimon-go/e2sm/lib/MatchingCondItem-Choice.c.patch"
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/xApps/kpimon-go/e2sm/lib/MatchingCondItem.c.patch"
+
 if [ ! -f "control/control.go.previous" ]; then
     echo "Backing up control/control.go to control/control.go.previous..."
     cp control/control.go control/control.go.previous

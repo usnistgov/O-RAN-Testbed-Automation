@@ -7,30 +7,55 @@
 #include "zmq_imported.h"
 #include "log.h"
 
-const float c16_t_to_cf_t_factor = std::numeric_limits<int16_t>::max();
+#include "zmq_simd.h"
+
 static constexpr std::chrono::milliseconds TRANSMIT_TS_ALIGN_TIMEOUT = std::chrono::milliseconds(0);
 static constexpr std::chrono::milliseconds RECEIVE_TS_ALIGN_TIMEOUT = std::chrono::milliseconds(100);
 
 void zmq_tx_channel::transmit(c16_t *samples, size_t nsamps, uint64_t timestamp)
 {
   std::scoped_lock lock(transmit_alignment_mutex_);
-  size_t overflow = 0;
+
+  size_t zeros_to_push = 0;
   if (timestamp > sample_count_) {
-    overflow += buffer_.push_zeros(timestamp - sample_count_);
+    zeros_to_push = timestamp - sample_count_;
     sample_count_ = timestamp;
   }
-  cf_t samples_float[nsamps];
-  for (size_t i = 0; i < nsamps; i++) {
-    samples_float[i].r = samples[i].r / c16_t_to_cf_t_factor;
-    samples_float[i].i = samples[i].i / c16_t_to_cf_t_factor;
+
+  size_t total_samples = zeros_to_push + nsamps;
+  if (total_samples > 0) {
+    zmq_msg_t msg;
+    zmq_msg_init_size(&msg, total_samples * sizeof(cf_t));
+    cf_t *msg_data = static_cast<cf_t *>(zmq_msg_data(&msg));
+
+    if (zeros_to_push > 0) {
+      memset(msg_data, 0, zeros_to_push * sizeof(cf_t));
+    }
+
+    convert_samples_avx512_tx(reinterpret_cast<float *>(&msg_data[zeros_to_push]),
+                              reinterpret_cast<const int16_t *>(samples),
+                              nsamps * 2,
+                              c16_t_to_cf_t_factor);
+
+    std::lock_guard<std::mutex> q_lock(queue_mutex_);
+    queue_.push(std::move(msg));
   }
-  overflow += buffer_.push_samples(samples_float, nsamps);
+
   sample_count_ += nsamps;
-  if (overflow) {
-    LOG_W(HW, "Overflow on ZMQ channel by %lu samples\n", overflow);
-  }
+
   is_tx_enabled_ = true;
   transmit_alignment_cvar_.notify_all();
+}
+
+bool zmq_tx_channel::pop_message(zmq_msg_t *msg)
+{
+  std::lock_guard<std::mutex> lock(queue_mutex_);
+  if (queue_.empty()) {
+    return false;
+  }
+  *msg = std::move(queue_.front());
+  queue_.pop();
+  return true;
 }
 
 void zmq_tx_channel::start(uint64_t init_time)
@@ -54,7 +79,14 @@ bool zmq_tx_channel::align(uint64_t timestamp, std::chrono::milliseconds timeout
     is_tx_enabled_ = false;
   }
   if (sample_count_ < timestamp) {
-    buffer_.push_zeros(timestamp - sample_count_);
+    size_t zeros_to_push = timestamp - sample_count_;
+    zmq_msg_t msg;
+    zmq_msg_init_size(&msg, zeros_to_push * sizeof(cf_t));
+    memset(zmq_msg_data(&msg), 0, zeros_to_push * sizeof(cf_t));
+    {
+      std::lock_guard<std::mutex> q_lock(queue_mutex_);
+      queue_.push(std::move(msg));
+    }
     sample_count_ = timestamp;
   }
   return false;
@@ -63,17 +95,12 @@ bool zmq_tx_channel::align(uint64_t timestamp, std::chrono::milliseconds timeout
 void zmq_rx_channel::receive(c16_t *samples, size_t nsamps)
 {
   size_t samples_popped = 0;
-  cf_t samples_float[nsamps];
   while (samples_popped < (size_t)nsamps && !stopped_) {
-    size_t popped_now = buffer_.pop_samples(samples_float + samples_popped, nsamps - samples_popped);
+    size_t popped_now = buffer_.pop_samples(samples + samples_popped, nsamps - samples_popped);
     samples_popped += popped_now;
     if (popped_now == 0) {
       usleep(100); // wait for more samples to arrive
     }
-  }
-  for (size_t i = 0; i < nsamps; i++) {
-    samples[i].r = samples_float[i].r * c16_t_to_cf_t_factor + 0.5;
-    samples[i].i = samples_float[i].i * c16_t_to_cf_t_factor + 0.5;
   }
 }
 void zmq_rx_channel::stop()

@@ -1,7 +1,16 @@
 diff --git a/src/xApp/act_proc.h b/src/xApp/act_proc.h
-index 06ddf92e..b669513f 100644
+index 06ddf92e..8d5a9b79 100644
 --- a/src/xApp/act_proc.h
 +++ b/src/xApp/act_proc.h
+@@ -34,7 +34,7 @@ typedef enum{
+ typedef struct{
+   act_proc_val_e type;
+   ric_gen_id_t id; 
+-  void (*sm_cb)(sm_ag_if_rd_t const*);
++  void (*sm_cb)(sm_ag_if_rd_t const*, global_e2_node_id_t const*);
+   global_e2_node_id_t e2_node;
+ } act_proc_val_t;
+ 
 @@ -49,7 +49,7 @@ void free_act_proc(act_proc_t* proc);
  
  void free_act_proc_val(void* val);
@@ -11,3 +20,8 @@ index 06ddf92e..b669513f 100644
  
  void rm_act_proc(act_proc_t* act, uint16_t ric_req_id );
  
+@@ -66,4 +66,3 @@ typedef struct{
+ act_proc_ans_t find_act_proc(act_proc_t* proc, uint16_t ric_req_id);
+ 
+ #endif
+-

@@ -22,6 +22,10 @@
 
 #include "uper_decoder.h"
 #include "uper_encoder.h"
+#include "openair1/PHY/defs_nr_common.h"
+#include "openair1/PHY/defs_gNB.h"
+#include "openair3/NRPPA/nrppa_gNB_config.h"
+#include "openair2/F1AP/lib/f1ap_positioning.h"
 
 // Standarized 5QI values and Default Priority levels as mentioned in 3GPP TS 23.501 Table 5.7.4-1
 const uint64_t qos_fiveqi[26] = {1, 2, 3, 4, 65, 66, 67, 71, 72, 73, 74, 76, 5, 6, 7, 8, 9, 69, 70, 79, 80, 82, 83, 84, 85, 86};
@@ -546,7 +550,7 @@ static NR_UE_info_t *create_new_UE(gNB_MAC_INST *mac, uint32_t cu_id, const NR_C
   const nr_mac_config_t *configuration = &mac->radio_config;
   int ssb_index = get_ssbidx_from_beam(mac, UE->UE_beam_index);
   if (is_SA) {
-    cellGroupConfig = get_initial_cellGroupConfig(UE->uid, scc, &mac->radio_config, &mac->rlc_config, ssb_index);
+    cellGroupConfig = get_initial_cellGroupConfig(UE->uid, UE->is_redcap, scc, &mac->radio_config, &mac->rlc_config, ssb_index);
     cellGroupConfig->spCellConfig->reconfigurationWithSync = get_reconfiguration_with_sync(UE->rnti, UE->uid, scc, mac->frame);
   } else {
     NR_UE_NR_Capability_t *cap = get_ue_nr_cap_from_cg_config_info(cgci);
@@ -1127,4 +1131,80 @@ void f1_paging(const f1ap_paging_t *paging)
 
   LOG_I(MAC, "Paging transfer: ue_identity_index=%u, 5G-S-TMSI=0x%012lu\n", paging->ue_identity_index_value, fiveg_s_tmsi);
   nr_mac_pcch_enqueue(module_id, fiveg_s_tmsi, ue_id);
+}
+
+void trp_information_request(const f1ap_trp_information_req_t *req)
+{
+  positioning_config_t positioning_config = RCconfig_nr_positioning();
+  uint8_t NumTRPs = positioning_config.num_trp;
+  f1ap_trp_information_resp_t resp = {0};
+  gNB_MAC_INST *mac = RC.nrmac[0];
+
+  resp.transaction_id = req->transaction_id;
+  // Check if the TRP_ID matches with the list sent in the trp information request
+  if (req->has_trp_list) {
+    uint8_t trp_resp_len = 0;
+    uint32_t trp_list_length = req->trp_list.trp_list_length;
+    DevAssert(trp_list_length > 0);
+    resp.trp_information_list.trp_information_item =
+        calloc_or_fail(trp_list_length, sizeof(*resp.trp_information_list.trp_information_item));
+    for (int i = 0; i < trp_list_length; i++) {
+      for (int j = 0; j < NumTRPs; j++) {
+        if (positioning_config.trps[j].id == req->trp_list.trp_list_item[i].trp_id) {
+          resp.trp_information_list.trp_information_item[trp_resp_len].trp_id = req->trp_list.trp_list_item[i].trp_id;
+          trp_resp_len++;
+        }
+      }
+    }
+    resp.trp_information_list.trp_information_item_length = trp_resp_len;
+  } else {
+    resp.trp_information_list.trp_information_item =
+        calloc_or_fail(NumTRPs, sizeof(*resp.trp_information_list.trp_information_item));
+    for (int i = 0; i < NumTRPs; i++) {
+      f1ap_trp_information_t *trp_info_item = &resp.trp_information_list.trp_information_item[i];
+      trp_info_item->trp_id = positioning_config.trps[i].id;
+      create_trp_info_item(req, trp_info_item, &positioning_config, i);
+    }
+    resp.trp_information_list.trp_information_item_length = NumTRPs;
+  }
+  mac->mac_rrc.trp_information_response(&resp);
+  free_trp_information_resp(&resp);
+}
+
+void positioning_information_request(const f1ap_positioning_information_req_t *req)
+{
+  f1ap_positioning_information_resp_t resp = {.gNB_CU_ue_id = req->gNB_CU_ue_id, .gNB_DU_ue_id = req->gNB_DU_ue_id};
+  gNB_MAC_INST *mac = RC.nrmac[0];
+  NR_UE_info_t *UE = find_nr_UE(&mac->UE_info, req->gNB_DU_ue_id);
+  NR_UE_UL_BWP_t *current_UL_BWP = &UE->current_UL_BWP;
+  NR_ServingCellConfigCommon_t *scc = mac->common_channels[0].ServingCellConfigCommon;
+  if (current_UL_BWP->srs_Config) {
+    resp.srs_configuration = calloc_or_fail(1, sizeof(*resp.srs_configuration));
+    *resp.srs_configuration = cp_rrc_to_f1ap_srs_configuration(current_UL_BWP, scc);
+  }
+  mac->mac_rrc.positioning_information_response(&resp);
+  free_positioning_information_resp(&resp);
+}
+
+void positioning_activation_request(const f1ap_positioning_activation_req_t *req)
+{
+  f1ap_positioning_activation_resp_t resp = {.gNB_CU_ue_id = req->gNB_CU_ue_id, .gNB_DU_ue_id = req->gNB_DU_ue_id};
+  gNB_MAC_INST *mac = RC.nrmac[0];
+  // Currently in OAI-LMF its hardcoded to aperiodic SRS
+  // Ignoring the SRS type and considering periodic SRS
+  NR_SCHED_LOCK(&mac->sched_lock);
+  NR_UE_info_t *UE = find_nr_UE(&mac->UE_info, req->gNB_DU_ue_id);
+  add_pos_act_ue_context(mac, UE->rnti);
+  NR_SCHED_UNLOCK(&mac->sched_lock);
+  mac->mac_rrc.positioning_activation_response(&resp);
+}
+
+void positioning_measurement_request(const f1ap_positioning_measurement_req_t *req)
+{
+  gNB_MAC_INST *mac = RC.nrmac[0];
+  NR_SCHED_LOCK(&mac->sched_lock);
+  positioning_measurement_info_t *pos_meas_info = &mac->pos_meas_info;
+  pos_meas_info->meas_req = cp_positioning_measurement_req(req);
+  pos_meas_info->active = true;
+  NR_SCHED_UNLOCK(&mac->sched_lock);
 }

@@ -112,16 +112,6 @@ git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openair
 cd ..
 
 cd openairinterface5g
-git restore openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c
-if [ ! -f "openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c.previous" ]; then
-    cp openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c.previous
-    cp openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c.previous "$PARENT_DIR/install_patch_files/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.previous.c"
-fi
-echo "Patching gNB_scheduler_uci.c..."
-git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c.patch"
-cd ..
-
-cd openairinterface5g
 git restore openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_rc.c
 if [ ! -f "openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_rc.c.previous" ]; then
     cp openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_rc.c openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_rc.c.previous
@@ -129,17 +119,6 @@ if [ ! -f "openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_rc.c.previous" ]; then
 fi
 echo "Patching ran_func_rc.c for handover support..."
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_rc.c.patch"
-cd ..
-
-# Support SST values greater than 4
-cd openairinterface5g
-git restore openair3/UICC/pdu_session.c
-if [ ! -f "openair3/UICC/pdu_session.c.previous" ]; then
-    cp openair3/UICC/pdu_session.c openair3/UICC/pdu_session.c.previous
-    cp openair3/UICC/pdu_session.c.previous "$PARENT_DIR/install_patch_files/openairinterface5g/openair3/UICC/pdu_session.previous.c"
-fi
-echo "Patching pdu_session.c to support SST values greater than 4..."
-git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface5g/openair3/UICC/pdu_session.c.patch"
 cd ..
 
 # This patch adds support for Linux Mint and Ubuntu 20.04
@@ -204,6 +183,46 @@ if [ ! -f "executables/nr-softmodem.c.previous" ]; then
 fi
 echo "Patching nr-softmodem.c to fix bug with gNB ID handling for DUs and CUs..."
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface5g/executables/nr-softmodem.c.patch"
+cd ..
+
+# Restore periodic RRC MeasurementReports using Duranta's SS-SINR measurement and report mapping
+apply_oai_patch() {
+    local SOURCE_FILE="$1"
+    local PATCH_FILE="$PARENT_DIR/install_patch_files/openairinterface5g/${SOURCE_FILE}.patch"
+    local EXTENSION="${SOURCE_FILE##*.}"
+    local PREVIOUS_FILE="$PARENT_DIR/install_patch_files/openairinterface5g/${SOURCE_FILE%.*}.previous.${EXTENSION}"
+
+    git restore -- "$SOURCE_FILE"
+    if [ ! -f "$PATCH_FILE" ]; then
+        echo "No optional patch for $SOURCE_FILE; leaving the Duranta source unchanged."
+        return 0
+    fi
+    if [ ! -f "${SOURCE_FILE}.previous" ]; then
+        cp "$SOURCE_FILE" "${SOURCE_FILE}.previous"
+        cp "$SOURCE_FILE" "$PREVIOUS_FILE"
+    fi
+    echo "Patching $SOURCE_FILE for periodic SS-SINR MeasurementReports..."
+    git apply --verbose --ignore-whitespace "$PATCH_FILE"
+}
+
+SINR_RRC_PATCH_FILES=(
+    common/utils/nr/nr_common.c
+    common/utils/nr/nr_common.h
+    common/utils/nr/tests/test_nr_common.cpp
+    openair2/COMMON/mac_messages_types.h
+    openair2/LAYER2/NR_MAC_UE/nr_ue_procedures.c
+    openair2/LAYER2/NR_MAC_UE/tests/test_nr_ue_ra_procedures.cpp
+    openair2/RRC/NR/MESSAGES/asn1_msg.c
+    openair2/RRC/NR/MESSAGES/asn1_msg.h
+    openair2/RRC/NR_UE/L2_interface_ue.c
+    openair2/RRC/NR_UE/L2_interface_ue.h
+    openair2/RRC/NR_UE/rrc_UE.c
+)
+
+cd openairinterface5g
+for SOURCE_FILE in "${SINR_RRC_PATCH_FILES[@]}"; do
+    apply_oai_patch "$SOURCE_FILE"
+done
 cd ..
 
 echo

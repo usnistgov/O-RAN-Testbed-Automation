@@ -177,7 +177,7 @@ if [[ -z "${SST[0]}" || -z "${SD[0]}" || "${SST[0]}" == "null" || "${SD[0]}" == 
     exit 1
 fi
 
-# SST/SD are configured in options.yaml as hex without 0x prefix.
+# SST/SD are configured in options.yaml as hex without 0x prefix
 for i in "${!SST[@]}"; do
     CURRENT_DNN="${DNN[$i]}"
     CURRENT_SST="${SST[$i]}"
@@ -441,7 +441,7 @@ OGSTUN_IPV6_1="$(python3 install_scripts/fetch_nth_ip.py "$OGSTUN_IPV6" 0)"
 if [ "$EXPOSE_AMF_OVER_HOSTNAME" = true ]; then
     AMF_IP=$(hostname -I | awk '{print $1}')
     set_configuration_server_ips $AMF_IP
-    # Need an address for the gNodeB to bind to that is not the host IP.
+    # Need an address for the gNodeB to bind to that is not the host IP
     if [ "$IS_OPEN5GS_ON_HOST" = true ]; then
         AMF_IP_BIND=$OGSTUN_IPV4_1
     else

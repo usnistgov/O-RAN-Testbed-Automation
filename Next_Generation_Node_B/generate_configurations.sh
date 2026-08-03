@@ -631,6 +631,7 @@ update_yaml "configs/gnb.yaml" "pcap" "mac_filename" "$SCRIPT_DIR/logs/gnb_mac.p
 # Update configuration for metrics (for Grafana)
 update_yaml "configs/gnb.yaml" "metrics" "autostart_stdout_metrics" "true"
 update_yaml "configs/gnb.yaml" "metrics" "enable_json" "true"
+update_yaml "configs/gnb.yaml" "metrics" "layers.enable_rlc" "true"   # E2SM-KPM style 3 uses RLC reports to find UEs
 update_yaml "configs/gnb.yaml" "remote_control" "bind_addr" "0.0.0.0" # Grafana
 update_yaml "configs/gnb.yaml" "remote_control" "enabled" "true"
 # update_yaml "configs/gnb.yaml" "metrics" "addr" "127.0.0.1"
@@ -643,7 +644,6 @@ update_yaml "configs/gnb.yaml" "remote_control" "enabled" "true"
 # update_yaml "configs/gnb.yaml" "metrics" "layers.enable_pdcp" "false"
 # update_yaml "configs/gnb.yaml" "metrics" "layers.enable_cu_up_executor" "false"
 # update_yaml "configs/gnb.yaml" "metrics" "layers.enable_sched" "true"
-# update_yaml "configs/gnb.yaml" "metrics" "layers.enable_rlc" "false"
 # update_yaml "configs/gnb.yaml" "metrics" "layers.enable_mac" "false"
 # update_yaml "configs/gnb.yaml" "metrics" "layers.enable_executor" "false"
 # update_yaml "configs/gnb.yaml" "metrics" "layers.enable_du_low" "false"

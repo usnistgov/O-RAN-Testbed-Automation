@@ -1,33 +1,28 @@
 diff --git a/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c b/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c
-index a45d2e462b..671f716e8c 100644
+index 7a96cb1f4a..e3097b88f0 100644
 --- a/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c
 +++ b/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c
-@@ -439,12 +439,20 @@ bool read_kpm_sm(void* data)
- }
- 
+@@ -441,6 +441,7 @@ bool read_kpm_sm(void* data)
  static const char* kpm_node_meas_du[] = {
-+  "CARR.WBCQIDist",
    "CARR.PDSCHMCSDist",
-+  "CARR.PUSCHMCSDist",
-+  "L1M.SS-RSRP",
-+  "MR.NRScSSSINR",
+   "CARR.PUSCHMCSDist",
++  "CARR.WBCQIDist",
+   "L1M.SS-RSRP",
    NULL,
  };
- 
+@@ -454,6 +455,7 @@ static const char* kpm_node_meas_cu[] = {
  static const char* kpm_node_meas_gnb[] = {
-+  "CARR.WBCQIDist",
    "CARR.PDSCHMCSDist",
-+  "CARR.PUSCHMCSDist",
-+  "L1M.SS-RSRP",
-+  "MR.NRScSSSINR",
-   NULL,
- };
- 
-@@ -454,6 +462,23 @@ static const char* kpm_meas_du[] = {
+   "CARR.PUSCHMCSDist",
++  "CARR.WBCQIDist",
+   "L1M.SS-RSRP",
+   "MR.NRScSSSINR",
+   "RRC.ConnMean",
+@@ -466,6 +468,23 @@ static const char* kpm_meas_du[] = {
    "DRB.UEThpUl",
    "RRU.PrbTotDl",
    "RRU.PrbTotUl",
-+  
++
 +  "PHY.NPrbDl",
 +  "PHY.DerivedRssiDl",
 +  "PHY.DerivedRsrqDl",
@@ -47,7 +42,7 @@ index a45d2e462b..671f716e8c 100644
    NULL,
  };
  
-@@ -465,6 +490,23 @@ static const char* kpm_meas_gnb[] = {
+@@ -477,6 +496,23 @@ static const char* kpm_meas_gnb[] = {
    "DRB.UEThpUl",
    "RRU.PrbTotDl",
    "RRU.PrbTotUl",

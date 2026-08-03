@@ -32,7 +32,7 @@
 set -e
 
 APPLY_PATCHES=true
-CLEAN_INSTALL=false # Note: If set to true, then full_install.sh needs to be ran in the Next_Generation_Node_B directory too.
+CLEAN_INSTALL=false # Note: If set to true, then full_install.sh needs to be ran in the Next_Generation_Node_B directory too
 DEBUG_SYMBOLS=false
 RADIO_TYPE="SIMU" # Set to "SIMU", "ZMQ", or "USRP"
 

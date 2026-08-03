@@ -1,5 +1,5 @@
 diff --git a/e2sm/wrapper.c b/e2sm/wrapper.c
-index 7704746..83c1fd8 100644
+index 7704746..cdbf59e 100644
 --- a/e2sm/wrapper.c
 +++ b/e2sm/wrapper.c
 @@ -9,21 +9,24 @@ static int write_out(const void *buffer, size_t size, void *app_key) {
@@ -217,7 +217,7 @@ index 7704746..83c1fd8 100644
                  char byte[3] = {hex_values[i], hex_values[i + 1], '\0'};
                  hex_buffer[i / 2] = (char)strtol(byte, NULL, 16);
          }
-@@ -149,124 +168,175 @@ struct encode_act_Def_result encode_action_Definition(const char *hex_values, in
+@@ -149,89 +168,130 @@ struct encode_act_Def_result encode_action_Definition(const char *hex_values, in
          // Print the result
          printf("Hex values as a string: %s\n", hex_buffer);
  
@@ -397,10 +397,10 @@ index 7704746..83c1fd8 100644
          unsigned char bufFormat3[BUFFER_SIZE];
          size_t buf_sizeFormat3 = BUFFER_SIZE;
  
-         long ricStyleTypeFormat3 = 3;
+@@ -239,34 +299,44 @@ struct encode_act_Def_result encode_action_Definition(const char *hex_values, in
          unsigned long granulPeriod = 10000;
  
--        int encodedLengthFormat3ByName = e2sm_encode_ric_action_definition_format3_by_name(&bufFormat3[0], &buf_sizeFormat3, name_format3, sz3, ricStyleTypeFormat3, granulPeriod);
+         int encodedLengthFormat3ByName = e2sm_encode_ric_action_definition_format3_by_name(&bufFormat3[0], &buf_sizeFormat3, name_format3, sz3, ricStyleTypeFormat3, granulPeriod);
 -        printf("length of buff= %ld \n",strlen(bufFormat3));
 -        printf("size of buff= %ld \n",sizeof(bufFormat3));
 -        printf("declared size of buff= %ld \n",BUFFER_SIZE);
@@ -409,11 +409,10 @@ index 7704746..83c1fd8 100644
 -        for(int i=0;i<encodedLengthFormat3ByName;i++){
 -                        //printf("%d ",(int)bufFormat3[i]);
 -			arrayFormat3ByName[i]=(int)bufFormat3[i];
-+        int encodedLengthFormat3ByName = e2sm_encode_ric_action_definition_format3_by_name(&bufFormat3[0], &buf_sizeFormat3, (const char **)name_format3, sz3, ricStyleTypeFormat3, granulPeriod);
 +        printf("length of buff= %ld \n", strlen(bufFormat3));
 +        printf("size of buff= %ld \n", sizeof(bufFormat3));
-+        printf("declared size of buff= %ld \n", BUFFER_SIZE);
-+        printf("encoded length of buff= %ld \n", encodedLengthFormat3ByName);
++        printf("declared size of buff= %d \n", BUFFER_SIZE);
++        printf("encoded length of buff= %d \n", encodedLengthFormat3ByName);
 +        int *arrayFormat3ByName = NULL;
 +        if (encodedLengthFormat3ByName > 0)
 +        {
@@ -1065,8 +1064,8 @@ index 7704746..83c1fd8 100644
 +                *no_label = 0;
 +                M_Label->noLabel = no_label;
 +                M_Item[0] = (MatchingCondItem_t *)calloc(1, sizeof(MatchingCondItem_t));
-+                M_Item[0]->present = MatchingCondItem_PR_measLabel;
-+                M_Item[0]->choice.measLabel = M_Label;
++                M_Item[0]->matchingCondChoice.present = MatchingCondItem_Choice_PR_measLabel;
++                M_Item[0]->matchingCondChoice.choice.measLabel = M_Label;
                  int result1 = ASN_SEQUENCE_ADD(&CondItem[index]->matchingCond, M_Item[0]);
 -                if (result1==-1)
 +                if (result1 == -1)
@@ -1215,8 +1214,8 @@ index 7704746..83c1fd8 100644
 +                *no_label = 0;
 +                M_Label->noLabel = no_label;
 +                M_Item[0] = (MatchingCondItem_t *)calloc(1, sizeof(MatchingCondItem_t));
-+                M_Item[0]->present = MatchingCondItem_PR_measLabel;
-+                M_Item[0]->choice.measLabel = M_Label;
++                M_Item[0]->matchingCondChoice.present = MatchingCondItem_Choice_PR_measLabel;
++                M_Item[0]->matchingCondChoice.choice.measLabel = M_Label;
                  int result1 = ASN_SEQUENCE_ADD(&CondItem[index]->matchingCond, M_Item[0]);
 -                if (result1==-1)
 +                if (result1 == -1)

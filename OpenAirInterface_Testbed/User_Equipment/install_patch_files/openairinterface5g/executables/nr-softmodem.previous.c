@@ -19,6 +19,11 @@ unsigned short config_frames[4] = {2,9,11,13};
 #include "openair2/E2AP/flexric/src/agent/e2_agent_api.h"
 #include "openair2/E2AP/RAN_FUNCTION/init_ran_func.h"
 #endif
+
+#ifdef E3_AGENT
+#include "openair2/E3AP/e3_agent.h"
+#endif
+
 #include "nr-softmodem.h"
 #include <common/utils/assertions.h>
 #include <openair2/GNB_APP/gnb_app.h>
@@ -60,7 +65,6 @@ unsigned short config_frames[4] = {2,9,11,13};
 #include "nr-softmodem-common.h"
 #include "openair2/E1AP/e1ap_common.h"
 #include "pdcp.h"
-#include "radio/COMMON/common_lib.h"
 #include "s1ap_eNB.h"
 #include "sctp_eNB_task.h"
 #include "system.h"
@@ -69,6 +73,7 @@ unsigned short config_frames[4] = {2,9,11,13};
 #include "x2ap_eNB.h"
 #include "openair1/SCHED_NR/sched_nr.h"
 #include "openair2/SDAP/nr_sdap/nr_sdap.h"
+#include "openair3/NRPPA/nrppa_gNB.h"
 
 RAN_CONTEXT_t RC;
 pthread_cond_t nfapi_sync_cond;
@@ -244,6 +249,11 @@ static int create_gNB_tasks(ngran_node_t node_type, configmodule_interface_t *cf
     if (gnb_nb > 0) {
       if (itti_create_task (TASK_NGAP, ngap_gNB_task, NULL) < 0) {
         LOG_E(NGAP, "Create task for NGAP failed\n");
+        return -1;
+      }
+
+      if (itti_create_task(TASK_NRPPA, nrppa_gNB_task, NULL) < 0) {
+        LOG_E(NGAP, "Create task for NRPPA failed\n");
         return -1;
       }
     }
@@ -521,6 +531,13 @@ int main( int argc, char **argv ) {
 
   softmodem_verify_mode(get_softmodem_params());
 
+//////////////////////////////////
+//// Init the E3 Agent
+#ifdef E3_AGENT
+  printf("Init E3 Agent\n");
+  e3_init();
+#endif // E3_AGENT
+
 #if T_TRACER
   T_Config_Init();
 #endif
@@ -726,6 +743,11 @@ int main( int argc, char **argv ) {
   pthread_mutex_destroy(&nfapi_sync_mutex);
 
   time_manager_finish();
+
+#ifdef E3_AGENT
+  printf("Destroy E3 Agent\n");
+  e3_destroy();
+#endif // E3_AGENT
 
   free(pckg);
   logClean();

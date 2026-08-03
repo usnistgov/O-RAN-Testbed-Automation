@@ -59,8 +59,6 @@ git diff openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c >../install_patch_
 git diff openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h >../install_patch_files/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.patch
 git diff openair2/LAYER2/NR_MAC_gNB/mac_rrc_dl_handler.c >../install_patch_files/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/mac_rrc_dl_handler.c.patch
 git diff openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c >../install_patch_files/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c.patch
-git diff openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c >../install_patch_files/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c.patch
-git diff openair3/UICC/pdu_session.c >../install_patch_files/openairinterface5g/openair3/UICC/pdu_session.c.patch
 
 # Update the previous versions of the files
 git restore openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c
@@ -88,15 +86,43 @@ cp openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c ../install_patch_files/opena
 cp openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c.previous
 git apply --verbose --ignore-whitespace ../install_patch_files/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c.patch
 
-git restore openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c
-cp openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c ../install_patch_files/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.previous.c
-cp openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c.previous
-git apply --verbose --ignore-whitespace ../install_patch_files/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c.patch
+update_patch_file() {
+    local SOURCE_FILE="$1"
+    local PATCH_FILE="../install_patch_files/openairinterface5g/${SOURCE_FILE}.patch"
+    local EXTENSION="${SOURCE_FILE##*.}"
+    local PREVIOUS_FILE="../install_patch_files/openairinterface5g/${SOURCE_FILE%.*}.previous.${EXTENSION}"
 
-git restore openair3/UICC/pdu_session.c
-cp openair3/UICC/pdu_session.c ../install_patch_files/openairinterface5g/openair3/UICC/pdu_session.c.previous
-cp openair3/UICC/pdu_session.c openair3/UICC/pdu_session.c.previous
-git apply --verbose --ignore-whitespace ../install_patch_files/openairinterface5g/openair3/UICC/pdu_session.c.patch
+    mkdir -p "$(dirname "$PATCH_FILE")"
+    if git diff --quiet "$SOURCE_FILE"; then
+        echo "No changes for $SOURCE_FILE"
+        rm -f "$PATCH_FILE"
+        return 0
+    fi
+    git diff "$SOURCE_FILE" >"$PATCH_FILE"
+    git restore -- "$SOURCE_FILE"
+    cp "$SOURCE_FILE" "$PREVIOUS_FILE"
+    cp "$SOURCE_FILE" "${SOURCE_FILE}.previous"
+    git apply --verbose --ignore-whitespace "$PATCH_FILE"
+}
+
+# Preserve Duranta PHY/MAC SS-SINR through periodic UE RRC MeasurementReports
+SINR_RRC_PATCH_FILES=(
+    common/utils/nr/nr_common.c
+    common/utils/nr/nr_common.h
+    common/utils/nr/tests/test_nr_common.cpp
+    openair2/COMMON/mac_messages_types.h
+    openair2/LAYER2/NR_MAC_UE/nr_ue_procedures.c
+    openair2/LAYER2/NR_MAC_UE/tests/test_nr_ue_ra_procedures.cpp
+    openair2/RRC/NR/MESSAGES/asn1_msg.c
+    openair2/RRC/NR/MESSAGES/asn1_msg.h
+    openair2/RRC/NR_UE/L2_interface_ue.c
+    openair2/RRC/NR_UE/L2_interface_ue.h
+    openair2/RRC/NR_UE/rrc_UE.c
+)
+
+for SOURCE_FILE in "${SINR_RRC_PATCH_FILES[@]}"; do
+    update_patch_file "$SOURCE_FILE"
+done
 
 cd ..
 

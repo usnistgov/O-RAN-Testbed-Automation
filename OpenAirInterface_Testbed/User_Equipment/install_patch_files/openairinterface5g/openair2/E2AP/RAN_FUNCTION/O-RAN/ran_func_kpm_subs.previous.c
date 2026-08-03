@@ -6,6 +6,8 @@
 
 #include <search.h>
 
+#include "openair2/RRC/NR/rrc_gNB_UE_context.h"
+
 e2_node_level_stats_t cp_node_level_stats(const e2_node_level_stats_t *src)
 {
   e2_node_level_stats_t dst = {
@@ -13,6 +15,8 @@ e2_node_level_stats_t cp_node_level_stats(const e2_node_level_stats_t *src)
     .mac_stats.dl.used_prb_aggregate = src->mac_stats.dl.used_prb_aggregate,
     .mac_stats.ul.total_prb_aggregate = src->mac_stats.ul.total_prb_aggregate,
     .mac_stats.ul.used_prb_aggregate = src->mac_stats.ul.used_prb_aggregate,
+    .rrc_conn_count_sum = src->rrc_conn_count_sum,
+    .rrc_conn_count_samples = src->rrc_conn_count_samples,
   };
 
   return dst;
@@ -81,6 +85,108 @@ static meas_record_lst_t fill_DRB_PdcpSduVolumeUL(__attribute__((unused)) const 
   // Get UL data volume delivered from PDCP layer
   meas_record.int_val = (pdcp.txsdu_bytes - last_pdcp_sdu_total_bytes[ue_idx].ul)*8/1000000;   // [Mb]
   last_pdcp_sdu_total_bytes[ue_idx].ul = pdcp.txsdu_bytes;
+
+  return meas_record;
+}
+
+/* L1M.SS-RSRP — 3GPP TS 28.552 - section 5.1.1.22.1 */
+static meas_record_lst_t fill_L1M_SS_RSRP(const label_info_lst_t label,
+                                          __attribute__((unused)) uint32_t gran_period_ms,
+                                          __attribute__((unused)) cudu_ue_info_pair_t ue_info,
+                                          __attribute__((unused)) const size_t ue_idx,
+                                          __attribute__((unused)) e2_node_level_stats_t* node_stats)
+{
+  meas_record_lst_t meas_record = {0};
+
+  if (label.distBinX == NULL) {
+    printf("[E2 AGENT][E2SM-KPM] L1M.SS-RSRP requested without distBinX label; "
+           "TS 28.552 5.1.1.22.1 is a distribution with no aggregate value, reporting NO_VALUE\n");
+    meas_record.value = NO_VALUE_MEAS_VALUE;
+    return meas_record;
+  }
+
+  if (*label.distBinX > NR_KPM_SS_RSRP_NB_LEVELS - 1) {
+    printf("[E2 AGENT][E2SM-KPM] L1M.SS-RSRP: distBinX %u out of range [0..127], reporting NO_VALUE\n", *label.distBinX);
+    meas_record.value = NO_VALUE_MEAS_VALUE;
+    return meas_record;
+  }
+  const uint32_t bin = *label.distBinX;
+
+  const NR_du_stats_t *du_stats = &RC.nrmac[0]->du_stats;
+
+  uint64_t count = 0;
+  if (label.ssbIndex != NULL) {
+    const uint32_t ssb_wire = *label.ssbIndex;
+    if (ssb_wire > NR_KPM_NB_SSB - 1) {
+      printf("[E2 AGENT][E2SM-KPM] L1M.SS-RSRP: ssbIndex %u out of range [0..63], reporting NO_VALUE\n", ssb_wire);
+      meas_record.value = NO_VALUE_MEAS_VALUE;
+      return meas_record;
+    }
+    const uint32_t ssb = ssb_wire;
+    count = du_stats->ss_rsrp_ssb_dist[ssb][bin];
+  } else {
+    for (int s = 0; s < NR_KPM_NB_SSB; s++)
+      count += du_stats->ss_rsrp_ssb_dist[s][bin];
+  }
+
+  meas_record.value = INTEGER_MEAS_VALUE;
+  meas_record.int_val = (int64_t)count;
+  return meas_record;
+}
+
+/* MR.NRScSSSINR — 3GPP TS 28.552 - section 5.1.1.32 */
+static meas_record_lst_t fill_MR_NRScSSSINR(const label_info_lst_t label,
+                                            __attribute__((unused)) uint32_t gran_period_ms,
+                                            __attribute__((unused)) cudu_ue_info_pair_t ue_info,
+                                            __attribute__((unused)) const size_t ue_idx,
+                                            __attribute__((unused)) e2_node_level_stats_t* node_stats)
+{
+  meas_record_lst_t meas_record = {0};
+
+  if (label.distBinX == NULL) {
+    printf("[E2 AGENT][E2SM-KPM] MR.NRScSSSINR requested without distBinX label; "
+           "TS 28.552 5.1.1.32 is a distribution with no aggregate value, reporting NO_VALUE\n");
+    meas_record.value = NO_VALUE_MEAS_VALUE;
+    return meas_record;
+  }
+
+  if (*label.distBinX > NR_KPM_SS_SINR_NB_LEVELS - 1) {
+    printf("[E2 AGENT][E2SM-KPM] MR.NRScSSSINR: distBinX %u out of range [0..127], reporting NO_VALUE\n", *label.distBinX);
+    meas_record.value = NO_VALUE_MEAS_VALUE;
+    return meas_record;
+  }
+  const uint32_t bin = *label.distBinX;
+
+  meas_record.value = INTEGER_MEAS_VALUE;
+  meas_record.int_val = RC.nrrrc[0]->ss_sinr_cell_dist[bin];
+  return meas_record;
+}
+
+/* RRC.ConnMean — 3GPP TS 28.552 - section 5.1.1.4.1 */
+static meas_record_lst_t fill_RRC_ConnMean(__attribute__((unused)) const label_info_lst_t label,
+                                           __attribute__((unused)) uint32_t gran_period_ms,
+                                           __attribute__((unused)) cudu_ue_info_pair_t ue_info,
+                                           __attribute__((unused)) const size_t ue_idx,
+                                           e2_node_level_stats_t* node_stats)
+{
+  meas_record_lst_t meas_record = {.value = INTEGER_MEAS_VALUE};
+
+  node_stats[1].rrc_conn_count_sum     = RC.nrrrc[0]->rrc_conn_count_sum;
+  node_stats[1].rrc_conn_count_samples = RC.nrrrc[0]->rrc_conn_count_samples;
+
+  const uint64_t d_sum     = node_stats[1].rrc_conn_count_sum     - node_stats[0].rrc_conn_count_sum;
+  const uint64_t d_samples = node_stats[1].rrc_conn_count_samples - node_stats[0].rrc_conn_count_samples;
+
+  if (d_samples > 0) {
+    meas_record.int_val = (long)((d_sum + d_samples / 2) / d_samples);
+    node_stats[0].rrc_conn_count_sum     = node_stats[1].rrc_conn_count_sum;
+    node_stats[0].rrc_conn_count_samples = node_stats[1].rrc_conn_count_samples;
+  } else if (node_stats[1].rrc_conn_count_samples > 0) {
+    meas_record.int_val = (long)((node_stats[1].rrc_conn_count_sum + node_stats[1].rrc_conn_count_samples / 2)
+                                 / node_stats[1].rrc_conn_count_samples);
+  } else {
+    meas_record.int_val = 0;
+  }
 
   return meas_record;
 }
@@ -219,26 +325,72 @@ static meas_record_lst_t fill_CARR_PDSCHMCSDist(const label_info_lst_t label,
                                                 __attribute__((unused)) const size_t ue_idx,
                                                 __attribute__((unused))e2_node_level_stats_t* node_stats)
 {
-  meas_record_lst_t meas_record = {.value = INTEGER_MEAS_VALUE};
+  meas_record_lst_t meas_record = {0};
 
-  uint32_t bin_x = *label.distBinX, bin_y = *label.distBinY, bin_z = *label.distBinZ;
-
-  NR_du_stats_t* du_stats = &RC.nrmac[0]->du_stats;
-
-  if (bin_x <= 8 && bin_y <= 3 && bin_z <= 31) {
-    meas_record.int_val = du_stats->pdsch_mcs_dist[bin_x - 1][bin_y - 1][bin_z];
-  } else {
-    printf("[E2 AGENT] Unknown binX %d, binY %d, binZ %d for \"CARR.PDSCHMCSDist\" measurement\n", bin_x, bin_y, bin_z);
-    meas_record.int_val = 0;
+  if (label.distBinX == NULL || label.distBinY == NULL || label.distBinZ == NULL) {
+    printf("[E2 AGENT][E2SM-KPM] CARR.PDSCHMCSDist requested without distBinX/Y/Z labels; "
+           "TS 28.552 5.1.1.12.1 defines no aggregate value, reporting NO_VALUE\n");
+    meas_record.value = NO_VALUE_MEAS_VALUE;
+    return meas_record;
   }
 
+  const uint32_t bin_x = *label.distBinX;
+  const uint32_t bin_y = *label.distBinY;
+  const uint32_t bin_z = *label.distBinZ;
+
+  if (bin_x < 1 || bin_x > NR_KPM_MAX_LAYERS || bin_y < 1 || bin_y > NR_KPM_NB_MCS_TABLE_DL || bin_z > NR_KPM_NB_MCS - 1) {
+    printf("[E2 AGENT][E2SM-KPM] CARR.PDSCHMCSDist: bin out of range (X=%u Y=%u Z=%u), reporting NO_VALUE\n",
+           bin_x, bin_y, bin_z);
+    meas_record.value = NO_VALUE_MEAS_VALUE;
+    return meas_record;
+  }
+
+  const NR_du_stats_t* du_stats = &RC.nrmac[0]->du_stats;
+  meas_record.value = INTEGER_MEAS_VALUE;
+  meas_record.int_val = du_stats->pdsch_mcs_dist[bin_x - 1][bin_y - 1][bin_z];
+  return meas_record;
+}
+
+/* CARR.PUSCHMCSDist — 3GPP TS 28.552 - section 5.1.1.12.2 */
+static meas_record_lst_t fill_CARR_PUSCHMCSDist(const label_info_lst_t label,
+                                                __attribute__((unused)) uint32_t gran_period_ms,
+                                                __attribute__((unused)) cudu_ue_info_pair_t ue_info,
+                                                __attribute__((unused)) const size_t ue_idx,
+                                                __attribute__((unused))e2_node_level_stats_t* node_stats)
+{
+  meas_record_lst_t meas_record = {0};
+
+  if (label.distBinX == NULL || label.distBinY == NULL || label.distBinZ == NULL) {
+    printf("[E2 AGENT][E2SM-KPM] CARR.PUSCHMCSDist requested without distBinX/Y/Z labels; "
+           "TS 28.552 5.1.1.12.2 defines no aggregate value, reporting NO_VALUE\n");
+    meas_record.value = NO_VALUE_MEAS_VALUE;
+    return meas_record;
+  }
+
+  const uint32_t bin_x = *label.distBinX;
+  const uint32_t bin_y = *label.distBinY;
+  const uint32_t bin_z = *label.distBinZ;
+
+  if (bin_x < 1 || bin_x > NR_KPM_MAX_LAYERS || bin_y > NR_KPM_NB_MCS_TABLE_UL - 1 || bin_z > NR_KPM_NB_MCS - 1) {
+    printf("[E2 AGENT][E2SM-KPM] CARR.PUSCHMCSDist: bin out of range (X=%u Y=%u Z=%u), reporting NO_VALUE\n",
+           bin_x, bin_y, bin_z);
+    meas_record.value = NO_VALUE_MEAS_VALUE;
+    return meas_record;
+  }
+
+  const NR_du_stats_t* du_stats = &RC.nrmac[0]->du_stats;
+  meas_record.value = INTEGER_MEAS_VALUE;
+  meas_record.int_val = du_stats->pusch_mcs_dist[bin_x - 1][bin_y][bin_z];
   return meas_record;
 }
 #endif
 
 static kv_measure_t lst_measure[] = {
-  {.key = "DRB.PdcpSduVolumeDL", .value = fill_DRB_PdcpSduVolumeDL }, 
+  {.key = "DRB.PdcpSduVolumeDL", .value = fill_DRB_PdcpSduVolumeDL },
   {.key = "DRB.PdcpSduVolumeUL", .value = fill_DRB_PdcpSduVolumeUL },
+  {.key = "L1M.SS-RSRP",         .value = fill_L1M_SS_RSRP },
+  {.key = "MR.NRScSSSINR",       .value = fill_MR_NRScSSSINR },
+  {.key = "RRC.ConnMean",        .value = fill_RRC_ConnMean },
 #if defined (NGRAN_GNB_DU)
   {.key = "DRB.RlcSduDelayDl", .value =  fill_DRB_RlcSduDelayDl }, 
   {.key = "DRB.UEThpDl", .value =  fill_DRB_UEThpDl }, 
@@ -246,6 +398,7 @@ static kv_measure_t lst_measure[] = {
   {.key = "RRU.PrbTotDl", .value =  fill_RRU_PrbTotDl }, 
   {.key = "RRU.PrbTotUl", .value =  fill_RRU_PrbTotUl }, 
   {.key = "CARR.PDSCHMCSDist", .value = fill_CARR_PDSCHMCSDist },
+  {.key = "CARR.PUSCHMCSDist", .value = fill_CARR_PUSCHMCSDist },
 #endif
 }; 
 

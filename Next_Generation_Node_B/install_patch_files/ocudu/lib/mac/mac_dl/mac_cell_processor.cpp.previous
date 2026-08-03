@@ -44,7 +44,7 @@ mac_cell_processor::mac_cell_processor(const mac_cell_creation_request& cell_cfg
   dl_harq_buffers(band_helper::get_n_rbs_from_bw(cell_cfg.dl_carrier.carrier_bw,
                                                  cell_cfg.scs_common,
                                                  band_helper::get_freq_range(cell_cfg.dl_carrier.band)),
-                  cell_cfg.dl_carrier.nof_ant,
+                  cell_cfg.sched_req.ran.init_bwp.pdsch.max_nof_layers,
                   cell_cfg.max_harq_buffers),
   // The PDU pool has to be large enough to fit the maximum number of RARs and Paging PDUs per slot for all possible K0
   // values.
@@ -52,8 +52,8 @@ mac_cell_processor::mac_cell_processor(const mac_cell_creation_request& cell_cfg
            MAX_K0_DELAY,
            get_nof_slots_per_subframe(cell_cfg.scs_common) * NOF_SFNS * NOF_SUBFRAMES_PER_FRAME),
   ssb_helper(cell_cfg_req_),
-  sib_assembler(cell_cfg_req_.sys_info),
-  rar_assembler(pdu_pool),
+  sib_assembler(cell_cfg_req_.cell_index, cell_cfg_req_.sys_info, timer_factory{timers_, ctrl_exec_}, sched_),
+  rar_assembler(pdu_pool, sched_.get_cell_rach_handler(cell_cfg_req_.cell_index)),
   dlsch_assembler(ue_mng, dl_harq_buffers),
   paging_assembler(pdu_pool),
   sched(sched_),
@@ -156,9 +156,8 @@ async_task<mac_cell_reconfig_response> mac_cell_processor::reconfigure(const mac
     }
 
     if (request.new_si_pdu_info.has_value()) {
-      // SI message update without SI change notifications nor SIB1 valueTag update.
-      sib_assembler.enqueue_si_message_pdu_updates(*request.new_si_pdu_info);
-      resp.si_pdus_enqueued = true;
+      // SI message update without SIB1 valueTag update.
+      resp.si_pdus_enqueued = sib_assembler.handle_si_message_pdu_updates(*request.new_si_pdu_info);
     }
 
     if (request.slice_reconf_req.has_value()) {
@@ -563,14 +562,20 @@ void mac_cell_processor::write_tx_pdu_pcap(slot_point                sl_tx,
 
   for (unsigned i = 0, e = dl_res.si_pdus.size(); i != e; ++i) {
     const sib_information& dl_alloc = sl_res.dl.bc.sibs[i];
+
+    // Whether this SI-message's dedup should be bypassed altogether. PWS (ETWS/CMAS) SI-messages cycle through
+    // multiple content segments and repetitions without bumping "version" (which only tracks SI scheduling info
+    // updates), so version-based dedup would wrongly suppress genuinely different payloads.
+    bool      is_pws_si_message = false;
+    unsigned* dumped_version    = &sib1_pcap_dumped_version;
     if (dl_alloc.si_indicator != sib_information::sib1) {
       ocudu_assert(dl_alloc.si_msg_index.has_value() and *dl_alloc.si_msg_index < si_pcap_dumped_version.size(),
                    "Invalid SI message index");
+      is_pws_si_message = cell_cfg.sched_req.si_scheduling.si_messages[*dl_alloc.si_msg_index].requires_activation;
+      dumped_version    = &si_pcap_dumped_version[*dl_alloc.si_msg_index];
     }
-    unsigned& dumped_version = (dl_alloc.si_indicator == sib_information::sib1)
-                                   ? sib1_pcap_dumped_version
-                                   : si_pcap_dumped_version[*dl_alloc.si_msg_index];
-    if (dumped_version != dl_alloc.version) {
+
+    if (is_pws_si_message or *dumped_version != dl_alloc.version) {
       const mac_dl_data_result::dl_pdu& sib1_pdu = dl_res.si_pdus[i];
       mac_nr_context_info               context  = {};
       context.radioType           = cell_cfg.sched_req.ran.tdd_cfg.has_value() ? PCAP_TDD_RADIO : PCAP_FDD_RADIO;
@@ -581,7 +586,7 @@ void mac_cell_processor::write_tx_pdu_pcap(slot_point                sl_tx,
       context.sub_frame_number    = sl_tx.subframe_index();
       context.length              = sib1_pdu.pdu.get_buffer().size();
       pcap.push_pdu(context, sib1_pdu.pdu.get_buffer());
-      dumped_version = dl_alloc.version;
+      *dumped_version = dl_alloc.version;
     }
   }
 
@@ -613,23 +618,25 @@ void mac_cell_processor::write_tx_pdu_pcap(slot_point                sl_tx,
     pcap.push_pdu(context, pg_pdu.pdu.get_buffer());
   }
 
-  for (unsigned i = 0, e = dl_res.ue_pdus.size(); i != e; ++i) {
-    const mac_dl_data_result::dl_pdu& ue_pdu   = dl_res.ue_pdus[i];
-    const dl_msg_alloc&               dl_alloc = sl_res.dl.ue_grants[i];
-    if (dl_alloc.pdsch_cfg.codewords[0].new_data) {
-      ocudu::mac_nr_context_info context = {};
-      context.radioType                  = cell_cfg.sched_req.ran.tdd_cfg.has_value() ? PCAP_TDD_RADIO : PCAP_FDD_RADIO;
-      context.direction                  = PCAP_DIRECTION_DOWNLINK;
-      context.rntiType                   = PCAP_C_RNTI;
-      context.rnti                       = to_value(dl_alloc.pdsch_cfg.rnti);
-      context.ueid                       = dl_alloc.context.ue_index == du_ue_index_t::INVALID_DU_UE_INDEX
-                                               ? du_ue_index_t::INVALID_DU_UE_INDEX
-                                               : dl_alloc.context.ue_index + 1;
-      context.harqid                     = dl_alloc.pdsch_cfg.harq_id;
-      context.system_frame_number        = sl_tx.sfn();
-      context.sub_frame_number           = sl_tx.subframe_index();
-      context.length                     = ue_pdu.pdu.get_buffer().size();
-      pcap.push_pdu(context, ue_pdu.pdu.get_buffer());
+  unsigned pdu_idx = 0;
+  for (const dl_msg_alloc& dl_alloc : sl_res.dl.ue_grants) {
+    for (unsigned cw_idx = 0, sz = dl_alloc.pdsch_cfg.codewords.size(); cw_idx != sz; ++cw_idx, ++pdu_idx) {
+      const mac_dl_data_result::dl_pdu& ue_pdu = dl_res.ue_pdus[pdu_idx];
+      if (dl_alloc.pdsch_cfg.codewords[cw_idx].new_data) {
+        ocudu::mac_nr_context_info context = {};
+        context.radioType           = cell_cfg.sched_req.ran.tdd_cfg.has_value() ? PCAP_TDD_RADIO : PCAP_FDD_RADIO;
+        context.direction           = PCAP_DIRECTION_DOWNLINK;
+        context.rntiType            = PCAP_C_RNTI;
+        context.rnti                = to_value(dl_alloc.pdsch_cfg.rnti);
+        context.ueid                = dl_alloc.context.ue_index == du_ue_index_t::INVALID_DU_UE_INDEX
+                                          ? du_ue_index_t::INVALID_DU_UE_INDEX
+                                          : dl_alloc.context.ue_index + 1;
+        context.harqid              = dl_alloc.pdsch_cfg.harq_id;
+        context.system_frame_number = sl_tx.sfn();
+        context.sub_frame_number    = sl_tx.subframe_index();
+        context.length              = ue_pdu.pdu.get_buffer().size();
+        pcap.push_pdu(context, ue_pdu.pdu.get_buffer());
+      }
     }
   }
 }

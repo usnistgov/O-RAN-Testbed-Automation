@@ -28,6 +28,9 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
+# Exit immediately if a command fails
+set -e
+
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
@@ -52,6 +55,7 @@ cd flexric/
 # Update the patch files
 cp examples/xApp/c/metrics_factory.h ../install_patch_files/flexric/examples/xApp/c/metrics_factory.h
 cp examples/xApp/c/metrics_factory.c ../install_patch_files/flexric/examples/xApp/c/metrics_factory.c
+cp examples/xApp/c/metrics_factory_test.c ../install_patch_files/flexric/examples/xApp/c/metrics_factory_test.c
 
 git diff examples/xApp/c/monitor/xapp_kpm_moni.c >../install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni.c.patch
 git diff examples/xApp/c/monitor/CMakeLists.txt >../install_patch_files/flexric/examples/xApp/c/monitor/CMakeLists.txt.patch
@@ -88,6 +92,8 @@ ADDITIONAL_PATCH_FILES=(
     "examples/xApp/c/orange/xapp_es_with_cell_util.c"
     "examples/xApp/c/slice/xapp_slice_moni_ctrl.c"
     "examples/xApp/c/tc/xapp_tc_all.c"
+    "examples/xApp/c/keysight/xapp_keysight_kpm_rc.c"
+    "test/agent-ric-xapp/test_ag_ric_xapp.c"
     "src/xApp/act_proc.c"
     "src/xApp/act_proc.h"
     "src/xApp/e42_xapp_api.h"
@@ -96,12 +102,21 @@ ADDITIONAL_PATCH_FILES=(
     "src/xApp/msg_handler_xapp.c"
 )
 for FILE in "${ADDITIONAL_PATCH_FILES[@]}"; do
+    PATCH_FILE="../install_patch_files/flexric/$FILE.patch"
+    mkdir -p "$(dirname "$PATCH_FILE")"
+    if git diff --quiet "$FILE"; then
+        echo "No changes for $FILE"
+        rm -f "$PATCH_FILE"
+        continue
+    fi
+    git diff "$FILE" >"$PATCH_FILE"
     git restore "$FILE"
     mkdir -p "$(dirname "../install_patch_files/flexric/$FILE")"
     EXTENSION="${FILE##*.}"
     FILE_NO_EXT="${FILE%.*}"
     cp "$FILE" "../install_patch_files/flexric/$FILE_NO_EXT.previous.$EXTENSION"
     cp "$FILE" "$FILE_NO_EXT.previous.$EXTENSION"
+    git apply --verbose --ignore-whitespace "$PATCH_FILE"
 done
 cd ..
 

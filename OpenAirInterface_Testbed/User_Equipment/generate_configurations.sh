@@ -144,7 +144,7 @@ if [[ -z "$SST" || -z "$SD" || "$SST" == "null" || "$SD" == "null" ]]; then
     exit 1
 fi
 
-# SST/SD are configured in options.yaml as hex without 0x prefix.
+# SST/SD are configured in options.yaml as hex without 0x prefix
 SST_HEX="${SST#0x}"
 SST_HEX="${SST_HEX#0X}"
 SST_HEX="${SST_HEX^^}"
@@ -214,13 +214,13 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
     # Fetch the UE's OPc, IMEI, IMSI, KEY, and NAMESPACE
     read -r UE_OPC UE_IMEI UE_IMSI UE_KEY UE_NAMESPACE < <("$UE_CREDENTIAL_GENERATOR_SCRIPT" "$UE_NUMBER" "$PLMN")
 
-    # Unique identifier for the UE within the mobile network. Used by the network to identify the UE during authentication. It ensures that the UE is correctly identified by the network.
+    # Unique identifier for the UE within the mobile network. Used by the network to identify the UE during authentication. It ensures that the UE is correctly identified by the network
     update_conf "configs/ue$UE_NUMBER.conf" "imsi" "\"$UE_IMSI\""
 
     # Cryptographic key shared between the UE and the network, used for encryption during the authentication process.
     update_conf "configs/ue$UE_NUMBER.conf" "key" "\"$UE_KEY\""
 
-    # Operator key for the Milenage Authentication and Key Agreement algorithm used for encryption during the authentication process.
+    # Operator key for the Milenage Authentication and Key Agreement algorithm used for encryption during the authentication process
     update_conf "configs/ue$UE_NUMBER.conf" "opc" "\"$UE_OPC\""
 
     # Configure the PDU sessions (DNN, SST, SD)

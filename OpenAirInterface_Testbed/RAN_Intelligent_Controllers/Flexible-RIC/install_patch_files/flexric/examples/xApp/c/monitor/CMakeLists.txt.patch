@@ -1,5 +1,5 @@
 diff --git a/examples/xApp/c/monitor/CMakeLists.txt b/examples/xApp/c/monitor/CMakeLists.txt
-index 2105b69e..a25c8237 100644
+index 2105b69e..a5b7805a 100644
 --- a/examples/xApp/c/monitor/CMakeLists.txt
 +++ b/examples/xApp/c/monitor/CMakeLists.txt
 @@ -2,8 +2,9 @@
@@ -35,7 +35,7 @@ index 2105b69e..a25c8237 100644
                 xapp_rc_moni.c
                 ${UE_ID_COMMON_E2SM_SRCS}
                 ../../../../src/util/alg_ds/alg/defer.c
-@@ -85,3 +88,41 @@ target_link_libraries(xapp_rc_moni
+@@ -85,3 +88,47 @@ target_link_libraries(xapp_rc_moni
                       -lsctp
                       -ldl
                       )
@@ -77,3 +77,9 @@ index 2105b69e..a25c8237 100644
 +                      )
 +target_compile_definitions(xapp_kpm_moni_write_to_influxdb PRIVATE KPM_MEAS_LIST="${KPM_MEAS_LIST}")
 +
++add_executable(metrics_factory_test
++                ../metrics_factory_test.c
++                      )
++target_compile_definitions(metrics_factory_test PRIVATE ${E2AP_ENCODING} ${E2AP_VERSION} ${XAPP_DB} ${KPM_VERSION})
++
++add_test(NAME metrics_factory_test COMMAND metrics_factory_test)

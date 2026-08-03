@@ -33,10 +33,15 @@ set -e
 
 RADIO_TYPE="SIMU" # Set to "SIMU", "ZMQ", or "USRP"
 MAKE_GNB_E2_NODE=true
-MAKE_CU_E2_NODE=false
-MAKE_DU_E2_NODE=true
+MAKE_CU_E2_NODE=true        # MR.NRScSSSINR is collected by RRC and exposed at NRCellCU scope (28.552 clause 5.1.1.32.1(f))
+MAKE_DU_E2_NODE=true        # L1M.SS-RSRP and DU/MAC measurements exposed from each DU
 ENABLE_NEIGHBOR_CONFIG=true # Allows automatic A2 and A3 event handovers
 NEAR_RIC_IP_ADDR="127.0.0.1"
+
+# There are two types of RSRP/SINR measurements: SSB and CSI
+# Valid values for CSI_REPORT_TYPE: "ssb_rsrp", "ssb_sinr", "cri_rsrp", or "null" (to omit CSI_report_type and set do_CSIRS=1)
+# If using MIMO, then CSI_REPORT_TYPE must not be an SSB-based measurement (https://github.com/duranta-project/openairinterface5g/blob/develop/doc/RUNMODEM.md#5g-gnb-mimo-configuration)
+CSI_REPORT_TYPE="ssb_sinr"
 
 # Radio configuration presets (band 3 and band 78)
 GNB_CONFIG_TEMPLATE="openairinterface5g/targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band1.u0.52PRB.usrpb210.conf"
@@ -168,11 +173,6 @@ if [[ "$FULL_SM_DIR" != */ ]]; then
     FULL_SM_DIR="${FULL_SM_DIR}/"
 fi
 
-# There are two types of RSRP/SINR measurements: SSB and CSI
-# Valid values for CSI_REPORT_TYPE: "ssb_rsrp", "ssb_sinr", "cri_rsrp", or "null" (to omit CSI_report_type and set do_CSIRS=1)
-# If using MIMO, then CSI_REPORT_TYPE must not be an SSB-based measurement (https://github.com/duranta-project/openairinterface5g/blob/develop/doc/RUNMODEM.md#5g-gnb-mimo-configuration)
-CSI_REPORT_TYPE="ssb_rsrp"
-
 # Function to update or add configuration properties in .conf files, considering sections and uncommenting if needed
 update_conf() {
     echo "update_conf($1, $2, $3)"
@@ -244,7 +244,7 @@ if [[ -z "${SST[0]}" || "${SST[0]}" == "null" ]]; then
     exit 1
 fi
 
-# SST/SD are configured in options.yaml as hex without 0x prefix.
+# SST/SD are configured in options.yaml as hex without 0x prefix
 for i in "${!SST[@]}"; do
     CURRENT_DNN="${DNN[$i]}"
     CURRENT_SST="${SST[$i]}"
@@ -533,8 +533,10 @@ if [ "$ENABLE_NEIGHBOR_CONFIG" = "true" ]; then
         "$NEIGHBOR_CONFIG_TEMPLATE" \
         "configs/neighbor-config.conf" \
         "${SPLIT_DUS[@]/#/configs/}"
-    sed -i '/^[[:space:]]*nr_cellid[[:space:]]*=/a\    @include "neighbor-config.conf" // Optionally give CU list of neighbor cells so that A2 and A3 handovers can occur automatically' "configs/split_cu.conf"
-    echo "Configured neighbor DUs for CU."
+    for RRC_CONF in "configs/gnb.conf" "configs/split_cu.conf"; do
+        sed -i '/^[[:space:]]*nr_cellid[[:space:]]*=/a\    @include "neighbor-config.conf" // Configure neighbor cells and periodic UE measurement reports' "$RRC_CONF"
+    done
+    echo "Configured neighbor DUs and periodic UE measurement reports for gNB/CU."
 fi
 
 if [ "$RADIO_TYPE" = "ZMQ" ]; then

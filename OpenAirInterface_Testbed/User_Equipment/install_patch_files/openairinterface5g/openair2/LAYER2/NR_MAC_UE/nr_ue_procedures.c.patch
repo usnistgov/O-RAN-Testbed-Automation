@@ -1,0 +1,43 @@
+diff --git a/openair2/LAYER2/NR_MAC_UE/nr_ue_procedures.c b/openair2/LAYER2/NR_MAC_UE/nr_ue_procedures.c
+index e35ebb7f85..8760fe5c8c 100644
+--- a/openair2/LAYER2/NR_MAC_UE/nr_ue_procedures.c
++++ b/openair2/LAYER2/NR_MAC_UE/nr_ue_procedures.c
+@@ -1645,12 +1645,15 @@ void nr_ue_process_l1_measurements(NR_UE_MAC_INST_t *mac, frame_t frame, int slo
+     mac->csirs_measurements.cqi = l1_measurements->cqi;
+     mac->csirs_measurements.ri = l1_measurements->rank_indicator;
+   }
++  const int sinr_index =
++      !csi_meas && !l1_measurements->is_neighboring_cell ? get_sinr_index(l1_measurements->sinr_dB) : -1;
+   nr_mac_rrc_meas_ind_ue(mac->ue_id,
+                          l1_measurements->gNB_index,
+                          l1_measurements->Nid_cell,
+                          csi_meas,
+                          l1_measurements->is_neighboring_cell,
+-                         l1_measurements->rsrp_dBm);
++                         l1_measurements->rsrp_dBm,
++                         sinr_index);
+ }
+ 
+ initial_pucch_resource_t get_initial_pucch_resource(const int idx)
+@@ -2737,19 +2740,8 @@ int nr_get_csi_measurements(NR_UE_MAC_INST_t *mac,
+   return num_csi;
+ }
+ 
+-// Referred - Table 10.1.16.1-1 in 38.133 V16.7.0.
+-static uint8_t get_sinr_index(float sinr)
+-{
+-  int index = sinr * 2 + 47;
+-  if (sinr >= 40)
+-    index = 127;
+-  if (sinr < -23)
+-    index = 0;
+-
+-  return index;
+-}
+-
+-// Reffered Table 10.1.16.1-2 in 38.133 V16.7.0. Differential value is reported.
++// 38.133 Table 10.1.16.1-2: Differential SS-SINR and CSI-SINR measurement
++// (for L1 reporting) report mapping.
+ static uint8_t get_sinr_diff_index(float best_sinr, float current_sinr)
+ {
+   int diff = best_sinr - current_sinr;

@@ -27,7 +27,7 @@ plmn: 00101
 tac: 7
 
 # Configure the Single Network Slice Selection Assistance Information (S-NSSAI)
-# NOTE: "sst" and "sd" are interpreted as hexadecimal values (no 0x prefix).
+# NOTE: "sst" and "sd" are interpreted as hexadecimal values (no 0x prefix)
 slices:
   - sst: 1
     sd: FFFFFF

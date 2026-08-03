@@ -47,6 +47,16 @@ cd "$SCRIPT_DIR"
 UE_DIRECTORY="$SCRIPT_DIR/User_Equipment"
 if [ "$USE_DURANTA_UE" = "true" ]; then
     UE_DIRECTORY="$SCRIPT_DIR/OpenAirInterface_Testbed/User_Equipment"
+
+    if [ ! -f "$UE_DIRECTORY/run_background.sh" ]; then
+        echo "User Equipment run script not found."
+        exit 1
+    fi
+    if grep -q "USE_ZMQ_BROKER=false" "$UE_DIRECTORY/run_background.sh"; then
+        echo "ERROR: USE_DURANTA_UE=true, but USE_ZMQ_BROKER=false. Enable the ZeroMQ broker by following the instructions in the link below, then try again."
+        echo "    https://github.com/usnistgov/O-RAN-Testbed-Automation/tree/main/OpenAirInterface_Testbed#simulating-multiple-ues-and-cells-with-zeromq-broker"
+        exit 1
+    fi
 fi
 
 sudo -v # Ensure sudo session is active

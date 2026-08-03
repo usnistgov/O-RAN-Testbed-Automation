@@ -34,7 +34,7 @@ set -e
 SHOW_ZMQ_BROKER_UI=true
 ZMQ_BROKER_READY_TIMEOUT=30
 
-# Respect symbolic links so each component writes to its own logs directory.
+# Respect symbolic links so each component writes to its own logs directory
 SCRIPT_DIR="$(cd "$(dirname "$0")" >/dev/null 2>&1 && pwd)"
 PARENT_DIR="$(dirname "$SCRIPT_DIR")"
 

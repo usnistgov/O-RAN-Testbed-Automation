@@ -66,6 +66,14 @@ echo "Patching FindYAMLCPP.cmake..."
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/ocudu/cmake/modules/FindYAMLCPP.cmake.patch"
 cd ..
 
+# Apply patch to report all E2SM-KPM style 3 metrics in one indication
+cd ocudu
+git restore lib/e2/e2sm/e2sm_kpm/e2sm_kpm_report_service_impl.cpp
+git restore tests/unittests/e2/e2sm_kpm_test.cpp
+echo "Patching E2SM-KPM style 3 multi-metric reports..."
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/ocudu/lib/e2/e2sm/e2sm_kpm/multi_metric_style3.patch"
+cd ..
+
 # Apply patches when the number of processors is low to allow OCUDU startup, UE attach, and PDU session establishment
 # For more information, see https://gitlab.com/ocudu/ocudu/-/work_items/571
 cd ocudu

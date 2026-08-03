@@ -1,0 +1,31 @@
+diff --git a/common/utils/nr/tests/test_nr_common.cpp b/common/utils/nr/tests/test_nr_common.cpp
+index 66350ff919..c22cdb1f65 100644
+--- a/common/utils/nr/tests/test_nr_common.cpp
++++ b/common/utils/nr/tests/test_nr_common.cpp
+@@ -3,6 +3,7 @@
+  */
+ 
+ #include <gtest/gtest.h>
++#include <limits>
+ extern "C" {
+ #include "nr_common.h"
+ #include "common/utils/LOG/log.h"
+@@ -21,6 +22,18 @@ TEST(nr_common, nr_timer) {
+   EXPECT_TRUE(nr_timer_expired(&timer));
+ }
+ 
++TEST(nr_common, sinr_report_mapping)
++{
++  // 38.133 Table 10.1.16.1-1: SS-SINR and CSI-SINR measurement report mapping
++  EXPECT_EQ(get_sinr_index(-24.0f), 0);
++  EXPECT_EQ(get_sinr_index(-23.0f), 1);
++  EXPECT_EQ(get_sinr_index(-22.5f), 2);
++  EXPECT_EQ(get_sinr_index(39.0f), 125);
++  EXPECT_EQ(get_sinr_index(39.5f), 126);
++  EXPECT_EQ(get_sinr_index(40.0f), 127);
++  EXPECT_EQ(get_sinr_index(std::numeric_limits<float>::infinity()), 127);
++  EXPECT_EQ(get_sinr_index(std::numeric_limits<float>::quiet_NaN()), 0);
++}
+ 
+ int main(int argc, char **argv)
+ {

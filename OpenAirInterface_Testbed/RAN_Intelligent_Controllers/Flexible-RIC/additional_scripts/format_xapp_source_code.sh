@@ -77,6 +77,9 @@ FILES=(
     "flexric/examples/xApp/c/monitor/xapp_kpm_moni.c"
     "flexric/examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv.c"
     "flexric/examples/xApp/c/monitor/xapp_kpm_moni_write_to_influxdb.c"
+    "flexric/examples/xApp/c/kpm_rc/xapp_kpm_rc.c"
+    "flexric/examples/xApp/c/metrics_factory.c"
+    "flexric/examples/xApp/c/metrics_factory_test.c"
 )
 
 for FILE in "${FILES[@]}"; do

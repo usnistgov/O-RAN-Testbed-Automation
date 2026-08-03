@@ -100,7 +100,7 @@ while [[ $# -gt 0 ]]; do
         echo "  help, -h       Show this help message"
         exit 0
         ;;
-        # NOTE: RF Simulator's client-server architecture does not currently support a virtual multi-UE handover scenario. However, handovers for multiple COTS UEs are supported over the air.
+        # NOTE: RF Simulator's client-server architecture does not currently support a virtual multi-UE handover scenario. However, handovers for multiple COTS UEs are supported over the air and through the ZeroMQ broker.
     --num-ues)
         NUM_UES="$2"
         shift 2
@@ -391,7 +391,7 @@ if [ "$USE_ZMQ_BROKER" = "true" ]; then
         wait_for_ue_to_connect "$UE_ID"
     done
 else
-    # Ensure that DU 1 has connected to the UE before proceeding.
+    # Ensure that DU 1 has connected to the UE before proceeding
     wait_for_ue_to_connect 1
     while [ $NEXT_UE_ID -le "$NUM_UES" ]; do
         start_ue "$NEXT_UE_ID" false

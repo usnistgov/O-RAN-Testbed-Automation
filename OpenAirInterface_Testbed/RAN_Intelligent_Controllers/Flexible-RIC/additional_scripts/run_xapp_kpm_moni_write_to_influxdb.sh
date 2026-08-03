@@ -28,6 +28,9 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
+# Number of milliseconds between each KPI report (default: 1000)
+XAPP_PERIODICITY_MS="${1:-1000}"
+
 # Exit immediately if a command fails
 set -e
 
@@ -137,4 +140,4 @@ echo "Starting xApp KPM monitor to InfluxDB..."
 rm -f /tmp/xapp_db1 /tmp/xapp_db1-shm /tmp/xapp_db1-wal
 
 set -x
-XAPP_DURATION=-1 SST=$SST SD=$SD ./build/examples/xApp/c/monitor/xapp_kpm_moni_write_to_influxdb "$INFLUXDB_TOKEN" $CONFIG_PATH -p "$FULL_SM_DIR"
+XAPP_DURATION=-1 SST=$SST SD=$SD ./build/examples/xApp/c/monitor/xapp_kpm_moni_write_to_influxdb "$INFLUXDB_TOKEN" "$XAPP_PERIODICITY_MS" $CONFIG_PATH -p "$FULL_SM_DIR"

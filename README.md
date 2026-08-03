@@ -222,7 +222,7 @@ See <a href="OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC#k
 
 After completing the base installation, follow one of the end-to-end deployment tutorials below.
 
-###  Grafana Traffic Monitoring
+###  OCUDU gNB with N UEs, Grafana Traffic Monitoring
 
 Deploy an OCUDU-based O-RAN testbed, generate traffic from multiple UEs, collect Prometheus metrics, and visualize network performance using Grafana dashboards. This tutorial demonstrates how to deploy an OCUDU-based O-RAN testbed with multiple User Equipments (UEs), generate uplink and downlink traffic, collect real-time performance metrics, and visualize network Key Performance Indicators (KPIs) through Grafana dashboards. Users will learn how to validate end-to-end connectivity, monitor throughput and resource utilization, and analyze network behavior during traffic generation.
 

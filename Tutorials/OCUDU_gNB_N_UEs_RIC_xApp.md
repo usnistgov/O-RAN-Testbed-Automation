@@ -7,7 +7,7 @@
 - [Prerequisites](#prerequisites)
 - [Testbed Components](#testbed-components)
 - [Clone Repository](#clone-repository)
-- [Install Testbed](#install-testbed)
+- [Install The Testbed](#install-the-testbed)
 - [Enable Flexric](#enable-flexric)
 - [Tutorial Workflow](#tutorial-workflow)
   - [Step 1: Start the Testbed](#step-1-start-the-testbed)

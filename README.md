@@ -150,9 +150,9 @@ Begin the installation process, recommended to be run as the current user rather
 ################################################################################
 ```
 
-<details>
-  <summary><b>OCUDU and O-RAN SC Near-RT RIC Output</b></summary>
-  <hr>
+
+##  OCUDU and O-RAN SC Near-RT RIC Output
+  
 
 Run the testbed with `./run.sh` to start the 5G Core, gNodeB, and UE. Use `./is_running.sh` to check if the components are running, and `./stop.sh` to stop the components. The optional RIC starts automatically on boot and can be accessed with `k9s -A`.
 
@@ -182,9 +182,8 @@ See <a href="RAN_Intelligent_Controllers/Near-Real-Time-RIC#migration-to-cilium"
 
 ---
 
-<details>
-  <summary><b>Duranta and FlexRIC Output</b></summary>
-  <hr>
+ ## Duranta and FlexRIC Output
+  
 
 Run the testbed with `./run.sh` to start the 5G Core, FlexRIC, gNodeB, and UE as background processes, and the KPM monitoring xApp in the foreground. Use `./is_running.sh` to check if the components are running, and `./stop.sh` to stop the components.
 

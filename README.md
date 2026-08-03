@@ -1,71 +1,18 @@
 # Table of Contents
 
 - [Automation Tool for Deploying 5G O-RAN Testbeds](#automation-tool-for-deploying-5g-o-ran-testbeds)
-
-## Setting Up a Testbed
-- [Supported Testbed Open-Source Components](#supported-testbed-open-source-components)
-- [Minimum System Requirements](#minimum-system-requirements)
-- [Virtual Machine Preferences](#virtual-machine-preferences)
-
-## Installation Guide
-- [System Update and Package Installation](#system-update-and-package-installation)
-- [VirtualBox Guest Additions Installation](#virtualbox-guest-additions-installation)
-- [Clone O-RAN-Testbed-Automation Repository](#clone-o-ran-testbed-automation-repository)
-- [APT Mirror Configuration](#apt-mirror-configuration)
-- [Deployment Scenario Selection](#deployment-scenario-selection)
-- [Run Installation Script](#run-installation-script)
-
-## Testbed Deployment Outputs
+- [Setting Up a Testbed](#setting-up-a-testbed)
+- [Installation Guide](#installation-guide)
 - [OCUDU and O-RAN SC Near-RT RIC Output](#ocudu-and-o-ran-sc-near-rt-ric-output)
-  - [Run the Testbed](#run-the-testbed)
-  - [Verify Component Status](#verify-component-status)
-  - [Grafana WebUI and ZMQ Broker Visualization](#grafana-webui-and-zmq-broker-visualization)
-  - [Supplementary Network Monitoring with Cilium Hubble](#supplementary-network-monitoring-with-cilium-hubble)
-
 - [Duranta and FlexRIC Output](#duranta-and-flexric-output)
-  - [Run the Testbed](#run-the-testbed-1)
-  - [Verify FlexRIC Components](#verify-flexric-components)
-  - [E2 Interface Connectivity](#e2-interface-connectivity)
-  - [KPM Monitoring xApp](#kpm-monitoring-xapp)
-  - [KPM Metrics Collection](#kpm-metrics-collection)
-  - [Supplementary KPM Dashboard Visualization](#supplementary-kpm-dashboard-visualization)
-
-# Deployment Tutorials
-
-- [Grafana Traffic Monitoring](#grafana-traffic-monitoring)
+- [Deployment Tutorials](#deployment-tutorialls)
+ - [OCUDU gNB with N UEs, Grafana Traffic Monitoring](#ocudu-gnb-with-multiple-ues-and-grafana-monitoring)
   - [OCUDU gNB with Multiple UEs and Grafana Monitoring](#ocudu-gnb-with-multiple-ues-and-grafana-monitoring)
-
-- [FlexRIC and KPM Monitoring xApp](#flexric-and-kpm-monitoring-xapp)
+ - [FlexRIC and KPM Monitoring xApp](#flexric-and-kpm-monitoring-xapp)
   - [OCUDU gNB with Multiple UEs, FlexRIC, and KPM xApp](#ocudu-gnb-with-multiple-ues-flexric-and-kpm-xapp)
+- [Software Versioning](#software-versioning)
+- [Documentation](#documentation)
 
-# Software Versioning
-- [Repository Commit Hash Management](#repository-commit-hash-management)
-- [Automation Tool Releases](#automation-tool-releases)
-
-# Documentation
-- [Base Directory Documentation](#base-directory-documentation)
-- [5G Core Network Documentation](#5g-core-network-documentation)
-- [Additional 5G Core Deployment Documentation](#additional-5g-core-deployment-documentation)
-- [Next Generation Node B Documentation](#next-generation-node-b-documentation)
-- [User Equipment Documentation](#user-equipment-documentation)
-- [Near-RT RIC Documentation](#near-rt-ric-documentation)
-- [Non-RT RIC Documentation](#non-rt-ric-documentation)
-- [OpenAirInterface Testbed Documentation](#openairinterface-testbed-documentation)
-- [FlexRIC Documentation](#flexric-documentation)
-
-# Contact Information
-
-# NIST Disclaimers
-
-- [NIST Software Disclaimer](#nist-software-disclaimer)
-- [Fair Use and Licensing Statements](#fair-use-and-licensing-statements)
-
-# References
-
-- [NIST TN 2311: Blueprint for Deploying 5G O-RAN Testbeds](#nist-tn-2311-blueprint-for-deploying-5g-o-ran-testbeds)
-- [OCUDU with FlexRIC](#ocudu-with-flexric)
-- [Automation Tool Releases](#automation-tool-releases-1)
-- [O-RAN Testbed Automation Documentation](#o-ran-testbed-automation-documentation)
 
 # Automation Tool for Deploying 5G O-RAN Testbeds
 

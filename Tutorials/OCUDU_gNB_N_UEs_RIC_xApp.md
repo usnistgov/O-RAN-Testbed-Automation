@@ -130,7 +130,6 @@ The installation deploys
 ## OSC Near-RT RIC with KPM xApp
 Run the testbed with `./run.sh` to start the 5G Core, gNodeB, and UE. Use `./is_running.sh` to check if the components are running, and `./stop.sh` to stop the components. The optional RIC starts automatically on boot and can be accessed with `k9s -A`.
 
-Run the testbed with `./run.sh` to start the 5G Core, gNodeB, and UEs. Use `./is_running.sh` to check if the components are running, and `./stop.sh` to stop the components. The optional RIC starts automatically on boot and can be accessed with `k9s -A`.
 
 ### Launch KPM xApp
 

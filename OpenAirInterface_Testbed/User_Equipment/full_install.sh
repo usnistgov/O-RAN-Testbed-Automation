@@ -45,12 +45,17 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-if ! grep -q avx2 /proc/cpuinfo; then
+if [ "$(uname -m)" = "x86_64" ] && ! grep -qw avx2 /proc/cpuinfo; then
     echo "WARNING: Support for AVX2 is not available on this machine. Errors may occur when building due to unsupported AVX instructions."
     echo "Please consider following the instructions \"Enabling VT-x/AMD-V for the AVX2 instruction set\" in OpenAirInterface_Testbed/README.md."
     echo
-    echo "Press any key to continue."
-    read -r -n 1 -s
+    echo "Do you want to proceed? (Y/n)"
+    read -r CONFIRM
+    CONFIRM=$(echo "${CONFIRM:-y}" | tr '[:upper:]' '[:lower:]')
+    if [[ "$CONFIRM" != "y" && "$CONFIRM" != "yes" ]]; then
+        echo "Installation aborted."
+        exit 1
+    fi
 fi
 
 # Check for binary to determine if Duranta UE is already installed

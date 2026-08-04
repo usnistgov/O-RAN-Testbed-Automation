@@ -8,11 +8,12 @@
 - [Testbed Components](#testbed-components)
 - [Clone Repository](#clone-repository)
 - [Install The Testbed](#install-the-testbed)
-- [Enable Flexric](#enable-flexric)
 - [Tutorial Workflow](#tutorial-workflow)
-  - [Step 1: Start the Testbed](#step-1-start-the-testbed)
-  - [Step 2: Launch the KPM Monitoring xApp](#step-2-launch-the-kpm-monitoring-xapp)
-  - [Step 3: Monitor KPIs](#step-3-monitor-kpis)
+- [OSC Near-RT RIC with KPM xApp](#osc-near-rt-ric-with-kpm-xapp)
+- [Flexric with KPM xApp](#flexric-with-kpm-xapp)
+  - [Start the Testbed](#start-the-testbed)
+  - [Launch the KPM Monitoring xApp](#launch-the-kpm-monitoring-xapp)
+  - [Monitor KPIs](#monitor-kpis)
 - [KPM Monitoring xApp Use Case](#kpm-monitoring-xapp-use-case)
   - [Objective](#objective)
   - [xApp Responsibilities](#xapp-responsibilities)
@@ -125,7 +126,15 @@ The installation deploys
 - Kubernetes components
 
 ---
-## Enable Flexric
+# Tutorial Workflow
+## OSC Near-RT RIC with KPM xApp
+Run the testbed with `./run.sh` to start the 5G Core, gNodeB, and UE. Use `./is_running.sh` to check if the components are running, and `./stop.sh` to stop the components. The optional RIC starts automatically on boot and can be accessed with `k9s -A`.
+
+Run the testbed with `./run.sh` to start the 5G Core, gNodeB, and UEs. Use `./is_running.sh` to check if the components are running, and `./stop.sh` to stop the components. The optional RIC starts automatically on boot and can be accessed with `k9s -A`.
+
+### Launch KPM xApp
+
+## Flexric with KPM xApp
 By default, the gNodeB's Distributed Unit (DU) connects to the O-RAN Software Community's Near-Real-Time RAN Intelligent Controller (O-RAN SC Near-RT RIC) E2 Terminator. To use FlexRIC instead of O-RAN SC's Near-RT RIC, set all occurrences of `USE_FLEXRIC` to `true`, then run `../generate_configurations.sh`.
 
 ```bash
@@ -136,8 +145,8 @@ sed -i 's/^USE_FLEXRIC=false$/USE_FLEXRIC=true/' ../run.sh
 sed -i 's/^USE_FLEXRIC=false$/USE_FLEXRIC=true/' ../stop.sh
 sed -i 's/^USE_FLEXRIC=false$/USE_FLEXRIC=true/' generate_configurations.sh
 ```
-# Tutorial Workflow
-## Step 1: Start the Testbed
+
+###  Start the Testbed
 Run the testbed with `./run.sh` to start the 5G Core, FlexRIC, gNodeB, and UE as background processes. Use `./is_running.sh` to check if the components are running, and `./stop.sh` to stop the components.
 #### Expected Output
 ```
@@ -188,10 +197,10 @@ PDU Session Establishment successful. IP: 10.45.0.102
 RRC NR reconfiguration successful.
 
 ```
-## Step 2: Launch the KPM Monitoring xApp
+### Launch the KPM Monitoring xApp
 After starting the 5G Core, FlexRIC, gNodeB, and UE, use the `./run_xapp_kpm_moni_xapp.sh` scripts within the RAN_Intelligent_Controllers/FlexRIC/additional_scripts directory to interact with the gNodeB and UE.
 
-### Expected Output
+#### Expected Output
 ```
 [NEAR-RIC]: Loading SM ID = 3 with def = ORAN-E2SM-RC 
 [NEAR-RIC]: Loading SM ID = 2 with def = ORAN-E2SM-KPM 

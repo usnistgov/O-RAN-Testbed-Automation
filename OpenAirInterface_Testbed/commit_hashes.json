@@ -1,6 +1,6 @@
 {
   "https://github.com/duranta-project/openairinterface5g.git": ["", "c8b78200bf7392b842f7e5b8485837531acaa3e4"],
   "https://gitlab.eurecom.fr/oai/o1-adapter.git": ["main", "08f208b2936a6558aa0b30d65faac9d642883ed5"],
-  "https://github.com/swig/swig.git": ["master", "261f9909d9ebcb57e88c0184c9f46945439659a9"],
+  "https://github.com/swig/swig.git": ["master", "65b1e662e343eead3996e90a6dfbe348b8986f52"],
   "https://github.com/duranta-project/flexric.git": ["dev", "ef6d722f22191eea74089966983da1f5ec1fedd4"]
 }

@@ -1,11 +1,11 @@
 {
   "https://github.com/usnistgov/5gdeploy.git": ["", ""],
-  "https://github.com/open5gs/open5gs.git": ["", "fbf7b380f83da49e99e79df447b9290427fac709"],
+  "https://github.com/open5gs/open5gs.git": ["", "06db7255959405f0ce50cb1a664c4f5d62838a80"],
   "https://github.com/srsran/srsRAN_4G.git": ["", "6bcbd9e5bf8686aa7085202cd847c5ddd64a9c16"],
   "https://github.com/srsran/oran-sc-ric.git": ["", "621ade26251f69a4ad079ba98bb708d8e5aeeb98"],
   "https://github.com/zeromq/libzmq.git": ["", "46493370217ac135246617fa2f6ac819d8b61bfc"],
   "https://github.com/zeromq/czmq.git": ["", "b669c7eb60cb8f587071ac6ece7cd68d30ac4017"],
-  "https://gitlab.com/ocudu/ocudu.git": ["", "7899c6dd7eec599c1be1245a38148e551ec9b337"],
+  "https://gitlab.com/ocudu/ocudu.git": ["", "022e6823dea08133522724f3f3741ba0f4048118"],
   "https://gitlab.com/ocudu/ocudu_docs.git": ["", "edb4d3cde49b4cd44eef0f47f575e550c0ed7081"],
   "https://gitlab.com/ocudu/ocudu_elements/ocudu_oran_apps/ocudu_o1_adapter.git": ["", "c7cfa667408da9109696c4799ed42320886adbde"],
   "https://gitlab.com/ocudu/ocudu_elements/ocudu_oran_apps/ocudu_netconf.git": ["", "bf737b209da892c2a37f280899e2f342c11bfe52"],
@@ -27,8 +27,8 @@
   "https://gerrit.onap.org/r/oom.git": ["", "2214f66e9d9f757239d0297353d9194f782e9eac"],
   "https://gerrit.o-ran-sc.org/r/portal/nonrtric-controlpanel.git": ["master", "9f0bc855a687f918548d5dcea7a43913256cdd54"],
   "https://gerrit.o-ran-sc.org/r/nonrtric/plt/rappmanager.git": ["m-release", "3b4813b6dab278581601a06185c146ea47b4ebb7"],
-  "https://github.com/duranta-project/openairinterface5g.git": ["", "42bf80e9b25dbf521cc692fa6338cbbbebfbcd1d"],
+  "https://github.com/duranta-project/openairinterface5g.git": ["", "c8b78200bf7392b842f7e5b8485837531acaa3e4"],
   "https://gitlab.eurecom.fr/oai/o1-adapter.git": ["main", "08f208b2936a6558aa0b30d65faac9d642883ed5"],
-  "https://github.com/swig/swig.git": ["master", "261f9909d9ebcb57e88c0184c9f46945439659a9"],
+  "https://github.com/swig/swig.git": ["master", "65b1e662e343eead3996e90a6dfbe348b8986f52"],
   "https://github.com/duranta-project/flexric.git": ["dev", "ef6d722f22191eea74089966983da1f5ec1fedd4"]
 }

@@ -1,4 +1,4 @@
-## Tutorial: OCUDU gNB with N UEs, FlexRIC, and KPM Monitoring xApp
+## Tutorial: OCUDU gNB with N UEs, RIC, and KPM Monitoring xApp
 ## Table of Contents
 
 - [Overview](#overview)

@@ -69,6 +69,8 @@ factory_metrics_array_t describe_metric_factory(const char *metric_name);
 
 bool kpm_merge_format_1_indications(const kpm_ind_msg_format_1_t *du, const kpm_ind_msg_format_1_t *cell,
                                     kpm_ind_msg_format_1_t *merged);
+bool kpm_merge_ue_measurements(const meas_report_per_ue_t *du, const meas_report_per_ue_t *cu,
+                               meas_report_per_ue_t *merged);
 
 void free_factory_metrics(factory_metrics_array_t *arr);
 

@@ -156,6 +156,27 @@ int main(void) {
   free_kpm_ind_msg_frm_1(&cell_msg);
   free_kpm_ind_msg_frm_1(&merged);
 
+  uint32_t cu_f1ap_id = 42;
+  meas_report_per_ue_t du_ue = {
+      .ue_meas_report_lst = {.type = GNB_DU_UE_ID_E2SM, .gnb_du = {.gnb_cu_ue_f1ap = cu_f1ap_id}},
+      .ind_msg_format_1 = make_format_1_test_message("DU.UE.Metric", du_record, false),
+  };
+  meas_report_per_ue_t cu_ue = {
+      .ue_meas_report_lst = {.type = GNB_UE_ID_E2SM,
+                             .gnb = {.gnb_cu_ue_f1ap_lst_len = 1, .gnb_cu_ue_f1ap_lst = &cu_f1ap_id}},
+      .ind_msg_format_1 = make_format_1_test_message("CU.UE.Metric", cell_record, false),
+  };
+  meas_report_per_ue_t merged_ue = {0};
+  CHECK(kpm_merge_ue_measurements(&du_ue, &cu_ue, &merged_ue));
+  CHECK(merged_ue.ue_meas_report_lst.type == GNB_DU_UE_ID_E2SM);
+  CHECK(merged_ue.ue_meas_report_lst.gnb_du.gnb_cu_ue_f1ap == cu_f1ap_id);
+  CHECK(merged_ue.ind_msg_format_1.meas_info_lst_len == 2);
+  CHECK(merged_ue.ind_msg_format_1.meas_data_lst[0].meas_record_len == 2);
+  free_ue_id_e2sm(&merged_ue.ue_meas_report_lst);
+  free_kpm_ind_msg_frm_1(&merged_ue.ind_msg_format_1);
+  free_kpm_ind_msg_frm_1(&du_ue.ind_msg_format_1);
+  free_kpm_ind_msg_frm_1(&cu_ue.ind_msg_format_1);
+
   kpm_reset_ue_registry();
 
   return EXIT_SUCCESS;

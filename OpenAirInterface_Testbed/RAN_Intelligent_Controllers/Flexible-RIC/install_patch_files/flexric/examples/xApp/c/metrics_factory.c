@@ -33,6 +33,14 @@ typedef struct {
   bool pending_cell_valid;
 } kpm_cell_callback_slot_t;
 
+#define MAX_PENDING_KPM_UE_REPORTS 256
+
+typedef struct {
+  bool valid;
+  sm_ag_if_rd_t report;
+  global_e2_node_id_t node_id;
+} kpm_ue_pending_report_t;
+
 static pthread_mutex_t kpm_cell_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t kpm_cell_condition = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t kpm_cell_callback_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -41,6 +49,12 @@ static size_t kpm_cell_count;
 static kpm_cell_callback_slot_t kpm_cell_callback_slots[MAX_E2_NODES];
 static size_t kpm_cell_callback_slot_count;
 static _Thread_local const global_e2_node_id_t *kpm_callback_cell_node;
+static pthread_mutex_t kpm_ue_join_mutex = PTHREAD_MUTEX_INITIALIZER;
+static kpm_ue_pending_report_t kpm_ue_pending_reports[MAX_PENDING_KPM_UE_REPORTS];
+static sm_cb kpm_ue_callback_target;
+static uint64_t kpm_ue_join_window_us;
+static _Thread_local const global_e2_node_id_t *kpm_callback_ue_du_node;
+static _Thread_local const global_e2_node_id_t *kpm_callback_ue_cu_node;
 
 static void clear_kpm_cells(void);
 
@@ -55,7 +69,7 @@ bool kpm_merge_format_1_indications(const kpm_ind_msg_format_1_t *du, const kpm_
       du->meas_info_lst_len + cell->meas_info_lst_len >= 65536) {
     return false;
   }
-  for (size_t i = 0; i < du->meas_data_lst_len; ++i) {
+  for (size_t i = 0; i < du->meas_data_lst_len; i++) {
     if (du->meas_data_lst[i].meas_record_len + cell->meas_data_lst[i].meas_record_len >= 65535) {
       return false;
     }
@@ -66,18 +80,18 @@ bool kpm_merge_format_1_indications(const kpm_ind_msg_format_1_t *du, const kpm_
   merged->meas_info_lst_len += cell->meas_info_lst_len;
   merged->meas_info_lst = realloc(merged->meas_info_lst, merged->meas_info_lst_len * sizeof(*merged->meas_info_lst));
   assert(merged->meas_info_lst != NULL && "Memory exhausted");
-  for (size_t i = 0; i < cell->meas_info_lst_len; ++i) {
+  for (size_t i = 0; i < cell->meas_info_lst_len; i++) {
     merged->meas_info_lst[du_info_len + i] = cp_meas_info_format_1_lst(&cell->meas_info_lst[i]);
   }
 
-  for (size_t i = 0; i < merged->meas_data_lst_len; ++i) {
+  for (size_t i = 0; i < merged->meas_data_lst_len; i++) {
     meas_data_lst_t *dst = &merged->meas_data_lst[i];
     const meas_data_lst_t *src = &cell->meas_data_lst[i];
     const size_t du_record_len = dst->meas_record_len;
     dst->meas_record_len += src->meas_record_len;
     dst->meas_record_lst = realloc(dst->meas_record_lst, dst->meas_record_len * sizeof(*dst->meas_record_lst));
     assert(dst->meas_record_lst != NULL && "Memory exhausted");
-    for (size_t j = 0; j < src->meas_record_len; ++j) {
+    for (size_t j = 0; j < src->meas_record_len; j++) {
       dst->meas_record_lst[du_record_len + j] = cp_meas_record_lst(&src->meas_record_lst[j]);
     }
     if (src->incomplete_flag != NULL) {
@@ -89,6 +103,37 @@ bool kpm_merge_format_1_indications(const kpm_ind_msg_format_1_t *du, const kpm_
       }
     }
   }
+  return true;
+}
+
+static bool kpm_ue_ids_match(const ue_id_e2sm_t *du, const ue_id_e2sm_t *cu) {
+  if (du->type != GNB_DU_UE_ID_E2SM || cu->type != GNB_UE_ID_E2SM) {
+    return false;
+  }
+  for (size_t i = 0; i < cu->gnb.gnb_cu_ue_f1ap_lst_len; i++) {
+    if (du->gnb_du.gnb_cu_ue_f1ap == cu->gnb.gnb_cu_ue_f1ap_lst[i]) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool kpm_merge_ue_measurements(const meas_report_per_ue_t *du, const meas_report_per_ue_t *cu,
+                               meas_report_per_ue_t *merged) {
+  assert(du != NULL);
+  assert(cu != NULL);
+  assert(merged != NULL);
+  *merged = (meas_report_per_ue_t){0};
+  if (!kpm_ue_ids_match(&du->ue_meas_report_lst, &cu->ue_meas_report_lst)) {
+    return false;
+  }
+
+  kpm_ind_msg_format_1_t measurements = {0};
+  if (!kpm_merge_format_1_indications(&du->ind_msg_format_1, &cu->ind_msg_format_1, &measurements)) {
+    return false;
+  }
+  merged->ue_meas_report_lst = cp_ue_id_e2sm(&du->ue_meas_report_lst);
+  merged->ind_msg_format_1 = measurements;
   return true;
 }
 
@@ -172,7 +217,7 @@ static void dispatch_kpm_cell_callback(size_t slot, const sm_ag_if_rd_t *rd, con
 
   rc = pthread_mutex_unlock(&kpm_cell_callback_mutex);
   assert(rc == 0);
-  for (size_t i = 0; i < report_count; ++i) {
+  for (size_t i = 0; i < report_count; i++) {
     invoke_kpm_cell_callback(callback_slot, &reports[i], &callback_slot->du_node_id);
     free_sm_ag_if_rd(&reports[i]);
   }
@@ -208,7 +253,7 @@ static const sm_cb kpm_cell_callbacks[MAX_E2_NODES] = {
 };
 
 static sm_cb reserve_kpm_cell_callback(sm_cb callback, const global_e2_node_id_t *du_node_id, uint64_t join_window_us) {
-  for (size_t i = 0; i < kpm_cell_callback_slot_count; ++i) {
+  for (size_t i = 0; i < kpm_cell_callback_slot_count; i++) {
     if (kpm_cell_callback_slots[i].callback == callback &&
         eq_global_e2_node_id(&kpm_cell_callback_slots[i].du_node_id, du_node_id)) {
       kpm_cell_callback_slots[i].join_window_us = join_window_us;
@@ -223,7 +268,239 @@ static sm_cb reserve_kpm_cell_callback(sm_cb callback, const global_e2_node_id_t
   return kpm_cell_callbacks[slot];
 }
 
-void format_e2_node_id(char *dst, size_t dst_len, const global_e2_node_id_t *node_id) {
+static bool is_kpm_format_3_report(const sm_ag_if_rd_t *rd) {
+  return rd != NULL && rd->type == INDICATION_MSG_AGENT_IF_ANS_V0 && rd->ind.type == KPM_STATS_V3_0 &&
+         rd->ind.kpm.ind.msg.type == FORMAT_3_INDICATION_MESSAGE;
+}
+
+static bool is_kpm_du_node(const global_e2_node_id_t *node_id) {
+  return node_id != NULL && node_id->type == ngran_gNB_DU;
+}
+
+static bool is_kpm_cu_node(const global_e2_node_id_t *node_id) {
+  return node_id != NULL && (node_id->type == ngran_gNB_CU || node_id->type == ngran_gNB_CUCP);
+}
+
+static bool same_kpm_gnb(const global_e2_node_id_t *lhs, const global_e2_node_id_t *rhs) {
+  return eq_e2ap_plmn(&lhs->plmn, &rhs->plmn) && eq_e2ap_gnb_id(lhs->nb_id, rhs->nb_id);
+}
+
+static const meas_report_per_ue_t *single_kpm_ue_measurement(const sm_ag_if_rd_t *rd) {
+  assert(is_kpm_format_3_report(rd));
+  const kpm_ind_msg_format_3_t *msg = &rd->ind.kpm.ind.msg.frm_3;
+  assert(msg->ue_meas_report_lst_len == 1);
+  return &msg->meas_report_per_ue[0];
+}
+
+static sm_ag_if_rd_t copy_single_kpm_ue_report(const sm_ag_if_rd_t *rd, size_t index) {
+  sm_ag_if_rd_t copy = cp_sm_ag_if_rd(rd);
+  kpm_ind_msg_format_3_t *dst = &copy.ind.kpm.ind.msg.frm_3;
+  const kpm_ind_msg_format_3_t *src = &rd->ind.kpm.ind.msg.frm_3;
+  meas_report_per_ue_t item = {
+      .ue_meas_report_lst = cp_ue_id_e2sm(&src->meas_report_per_ue[index].ue_meas_report_lst),
+      .ind_msg_format_1 = cp_kpm_ind_msg_frm_1(&src->meas_report_per_ue[index].ind_msg_format_1),
+  };
+  free_kpm_ind_msg_frm_3(dst);
+  dst->ue_meas_report_lst_len = 1;
+  dst->meas_report_per_ue = ecalloc(1, sizeof(*dst->meas_report_per_ue));
+  dst->meas_report_per_ue[0] = item;
+  return copy;
+}
+
+static uint64_t kpm_report_time(const sm_ag_if_rd_t *rd) {
+  return rd->ind.kpm.ind.hdr.kpm_ric_ind_hdr_format_1.collectStartTime;
+}
+
+static bool pending_kpm_ue_matches(const kpm_ue_pending_report_t *pending, const sm_ag_if_rd_t *report,
+                                   const global_e2_node_id_t *node_id) {
+  if (!pending->valid || !same_kpm_gnb(&pending->node_id, node_id) ||
+      is_kpm_du_node(&pending->node_id) == is_kpm_du_node(node_id)) {
+    return false;
+  }
+  const ue_id_e2sm_t *pending_id = &single_kpm_ue_measurement(&pending->report)->ue_meas_report_lst;
+  const ue_id_e2sm_t *report_id = &single_kpm_ue_measurement(report)->ue_meas_report_lst;
+  return is_kpm_du_node(&pending->node_id) ? kpm_ue_ids_match(pending_id, report_id)
+                                           : kpm_ue_ids_match(report_id, pending_id);
+}
+
+static bool pending_kpm_ue_same_source(const kpm_ue_pending_report_t *pending, const sm_ag_if_rd_t *report,
+                                       const global_e2_node_id_t *node_id) {
+  if (!pending->valid || !eq_global_e2_node_id(&pending->node_id, node_id)) {
+    return false;
+  }
+  return eq_ue_id_e2sm(&single_kpm_ue_measurement(&pending->report)->ue_meas_report_lst,
+                       &single_kpm_ue_measurement(report)->ue_meas_report_lst);
+}
+
+static void free_pending_kpm_ue_report(kpm_ue_pending_report_t *pending) {
+  if (pending->valid) {
+    free_sm_ag_if_rd(&pending->report);
+    free_global_e2_node_id(&pending->node_id);
+  }
+  *pending = (kpm_ue_pending_report_t){0};
+}
+
+static void invoke_kpm_ue_callback(const sm_ag_if_rd_t *rd, const global_e2_node_id_t *node_id,
+                                   const global_e2_node_id_t *cu_node_id) {
+  const global_e2_node_id_t *previous_du = kpm_callback_ue_du_node;
+  const global_e2_node_id_t *previous_cu = kpm_callback_ue_cu_node;
+  kpm_callback_ue_du_node = cu_node_id == NULL ? NULL : node_id;
+  kpm_callback_ue_cu_node = cu_node_id;
+  kpm_ue_callback_target(rd, node_id);
+  kpm_callback_ue_du_node = previous_du;
+  kpm_callback_ue_cu_node = previous_cu;
+}
+
+static bool merge_pending_kpm_ue_report(const kpm_ue_pending_report_t *pending, const sm_ag_if_rd_t *report,
+                                        const global_e2_node_id_t *node_id, sm_ag_if_rd_t *merged,
+                                        global_e2_node_id_t *du_node, global_e2_node_id_t *cu_node) {
+  const bool pending_is_du = is_kpm_du_node(&pending->node_id);
+  const sm_ag_if_rd_t *du_report = pending_is_du ? &pending->report : report;
+  const sm_ag_if_rd_t *cu_report = pending_is_du ? report : &pending->report;
+  const global_e2_node_id_t *du = pending_is_du ? &pending->node_id : node_id;
+  const global_e2_node_id_t *cu = pending_is_du ? node_id : &pending->node_id;
+
+  *merged = cp_sm_ag_if_rd(du_report);
+  meas_report_per_ue_t *dst = &merged->ind.kpm.ind.msg.frm_3.meas_report_per_ue[0];
+  meas_report_per_ue_t joined = {0};
+  if (!kpm_merge_ue_measurements(single_kpm_ue_measurement(du_report), single_kpm_ue_measurement(cu_report), &joined)) {
+    free_sm_ag_if_rd(merged);
+    *merged = (sm_ag_if_rd_t){0};
+    return false;
+  }
+  free_ue_id_e2sm(&dst->ue_meas_report_lst);
+  free_kpm_ind_msg_frm_1(&dst->ind_msg_format_1);
+  *dst = joined;
+  *du_node = cp_global_e2_node_id(du);
+  *cu_node = cp_global_e2_node_id(cu);
+  return true;
+}
+
+static void dispatch_single_kpm_ue_report(sm_ag_if_rd_t *report, const global_e2_node_id_t *node_id) {
+  bool report_valid = true;
+  sm_ag_if_rd_t raw = {0};
+  global_e2_node_id_t raw_node = {0};
+  bool raw_valid = false;
+  sm_ag_if_rd_t merged = {0};
+  global_e2_node_id_t du_node = {0};
+  global_e2_node_id_t cu_node = {0};
+  bool merged_valid = false;
+
+  int rc = pthread_mutex_lock(&kpm_ue_join_mutex);
+  assert(rc == 0);
+  size_t match = MAX_PENDING_KPM_UE_REPORTS;
+  for (size_t i = 0; i < MAX_PENDING_KPM_UE_REPORTS; i++) {
+    if (pending_kpm_ue_matches(&kpm_ue_pending_reports[i], report, node_id)) {
+      match = i;
+      break;
+    }
+  }
+
+  if (match != MAX_PENDING_KPM_UE_REPORTS) {
+    kpm_ue_pending_report_t *pending = &kpm_ue_pending_reports[match];
+    const uint64_t pending_time = kpm_report_time(&pending->report);
+    const uint64_t report_time = kpm_report_time(report);
+    const uint64_t difference = pending_time > report_time ? pending_time - report_time : report_time - pending_time;
+    if (difference <= kpm_ue_join_window_us) {
+      merged_valid = merge_pending_kpm_ue_report(pending, report, node_id, &merged, &du_node, &cu_node);
+      if (merged_valid) {
+        free_pending_kpm_ue_report(pending);
+        free_sm_ag_if_rd(report);
+        *report = (sm_ag_if_rd_t){0};
+        report_valid = false;
+      } else {
+        raw = pending->report;
+        raw_node = pending->node_id;
+        raw_valid = true;
+        *pending = (kpm_ue_pending_report_t){0};
+      }
+    } else if (pending_time < report_time) {
+      raw = pending->report;
+      raw_node = pending->node_id;
+      raw_valid = true;
+      *pending = (kpm_ue_pending_report_t){0};
+    } else {
+      raw = *report;
+      raw_node = cp_global_e2_node_id(node_id);
+      raw_valid = true;
+      *report = (sm_ag_if_rd_t){0};
+      report_valid = false;
+    }
+  }
+
+  if (!merged_valid && report_valid) {
+    size_t slot = MAX_PENDING_KPM_UE_REPORTS;
+    for (size_t i = 0; i < MAX_PENDING_KPM_UE_REPORTS; i++) {
+      if (pending_kpm_ue_same_source(&kpm_ue_pending_reports[i], report, node_id)) {
+        slot = i;
+        if (!raw_valid) {
+          raw = kpm_ue_pending_reports[i].report;
+          raw_node = kpm_ue_pending_reports[i].node_id;
+          raw_valid = true;
+          kpm_ue_pending_reports[i] = (kpm_ue_pending_report_t){0};
+        } else {
+          free_pending_kpm_ue_report(&kpm_ue_pending_reports[i]);
+        }
+        break;
+      }
+      if (!kpm_ue_pending_reports[i].valid && slot == MAX_PENDING_KPM_UE_REPORTS) {
+        slot = i;
+      }
+    }
+    if (slot == MAX_PENDING_KPM_UE_REPORTS) {
+      slot = 0;
+      if (!raw_valid) {
+        raw = kpm_ue_pending_reports[slot].report;
+        raw_node = kpm_ue_pending_reports[slot].node_id;
+        raw_valid = true;
+        kpm_ue_pending_reports[slot] = (kpm_ue_pending_report_t){0};
+      } else {
+        free_pending_kpm_ue_report(&kpm_ue_pending_reports[slot]);
+      }
+    }
+    kpm_ue_pending_reports[slot].valid = true;
+    kpm_ue_pending_reports[slot].report = *report;
+    kpm_ue_pending_reports[slot].node_id = cp_global_e2_node_id(node_id);
+    *report = (sm_ag_if_rd_t){0};
+    report_valid = false;
+  }
+  rc = pthread_mutex_unlock(&kpm_ue_join_mutex);
+  assert(rc == 0);
+
+  if (raw_valid) {
+    invoke_kpm_ue_callback(&raw, &raw_node, NULL);
+    free_sm_ag_if_rd(&raw);
+    free_global_e2_node_id(&raw_node);
+  }
+  if (merged_valid) {
+    invoke_kpm_ue_callback(&merged, &du_node, &cu_node);
+    free_sm_ag_if_rd(&merged);
+    free_global_e2_node_id(&du_node);
+    free_global_e2_node_id(&cu_node);
+  }
+}
+
+static void kpm_ue_callback(const sm_ag_if_rd_t *rd, const global_e2_node_id_t *node_id) {
+  if (!is_kpm_format_3_report(rd) || (!is_kpm_du_node(node_id) && !is_kpm_cu_node(node_id))) {
+    kpm_ue_callback_target(rd, node_id);
+    return;
+  }
+  kpm_remember_ues(node_id, &rd->ind.kpm.ind.msg);
+  const kpm_ind_msg_format_3_t *msg = &rd->ind.kpm.ind.msg.frm_3;
+  for (size_t i = 0; i < msg->ue_meas_report_lst_len; i++) {
+    sm_ag_if_rd_t report = copy_single_kpm_ue_report(rd, i);
+    dispatch_single_kpm_ue_report(&report, node_id);
+  }
+}
+
+static sm_cb reserve_kpm_ue_callback(sm_cb callback, uint64_t join_window_us) {
+  assert(kpm_ue_callback_target == NULL || kpm_ue_callback_target == callback);
+  kpm_ue_callback_target = callback;
+  kpm_ue_join_window_us = join_window_us;
+  return kpm_ue_callback;
+}
+
+static void format_single_e2_node_id(char *dst, size_t dst_len, const global_e2_node_id_t *node_id) {
   assert(dst != NULL);
   assert(dst_len > 0);
 
@@ -250,6 +527,18 @@ void format_e2_node_id(char *dst, size_t dst_len, const global_e2_node_id_t *nod
     snprintf(dst, dst_len, "gNB:%" PRIu64, id);
     break;
   }
+}
+
+void format_e2_node_id(char *dst, size_t dst_len, const global_e2_node_id_t *node_id) {
+  if (kpm_callback_ue_du_node != NULL && kpm_callback_ue_cu_node != NULL) {
+    char du[128];
+    char cu[128];
+    format_single_e2_node_id(du, sizeof(du), kpm_callback_ue_du_node);
+    format_single_e2_node_id(cu, sizeof(cu), kpm_callback_ue_cu_node);
+    snprintf(dst, dst_len, "%s+%s", du, cu);
+    return;
+  }
+  format_single_e2_node_id(dst, dst_len, node_id);
 }
 
 void kpm_set_e2_node_topology(const e2_node_arr_xapp_t *nodes) {
@@ -281,7 +570,7 @@ void format_kpm_cell_node_id(char *dst, size_t dst_len, const global_e2_node_id_
   const global_e2_node_id_t *matched_du = NULL;
   size_t match_count = 0;
   const size_t node_count = kpm_topology == NULL ? 0 : kpm_topology->len;
-  for (size_t i = 0; i < node_count; ++i) {
+  for (size_t i = 0; i < node_count; i++) {
     const global_e2_node_id_t *candidate = &kpm_topology->n[i].id;
     if (candidate->type == ngran_gNB_DU && eq_e2ap_plmn(&candidate->plmn, &node_id->plmn) &&
         eq_e2ap_gnb_id(candidate->nb_id, node_id->nb_id)) {
@@ -818,7 +1107,7 @@ static bool same_kpm_ue_id(const ue_id_e2sm_t *lhs, const ue_id_e2sm_t *rhs) {
 static kpm_node_ue_store_t *get_kpm_node_store(const global_e2_node_id_t *node_id, bool create) {
   assert(node_id != NULL);
 
-  for (size_t i = 0; i < kpm_node_ue_store_count; ++i) {
+  for (size_t i = 0; i < kpm_node_ue_store_count; i++) {
     if (eq_global_e2_node_id(&kpm_node_ue_stores[i].node_id, node_id)) {
       return &kpm_node_ue_stores[i];
     }
@@ -839,7 +1128,7 @@ static void remember_kpm_ue(const global_e2_node_id_t *node_id, const ue_id_e2sm
   assert(rc == 0);
 
   kpm_node_ue_store_t *store = get_kpm_node_store(node_id, true);
-  for (size_t i = 0; i < store->len; ++i) {
+  for (size_t i = 0; i < store->len; i++) {
     if (same_kpm_ue_id(&store->ues[i], ue_id)) {
       rc = pthread_mutex_unlock(&kpm_ue_mutex);
       assert(rc == 0);
@@ -867,14 +1156,14 @@ void kpm_remember_ues(const global_e2_node_id_t *node_id, const kpm_ind_msg_t *m
   assert(msg != NULL);
 
   if (msg->type == FORMAT_2_INDICATION_MESSAGE) {
-    for (size_t i = 0; i < msg->frm_2.meas_info_cond_ue_lst_len; ++i) {
+    for (size_t i = 0; i < msg->frm_2.meas_info_cond_ue_lst_len; i++) {
       const meas_info_cond_ue_lst_t *info = &msg->frm_2.meas_info_cond_ue_lst[i];
-      for (size_t j = 0; j < info->ue_id_matched_lst_len; ++j) {
+      for (size_t j = 0; j < info->ue_id_matched_lst_len; j++) {
         remember_kpm_ue(node_id, &info->ue_id_matched_lst[j]);
       }
     }
   } else if (msg->type == FORMAT_3_INDICATION_MESSAGE) {
-    for (size_t i = 0; i < msg->frm_3.ue_meas_report_lst_len; ++i) {
+    for (size_t i = 0; i < msg->frm_3.ue_meas_report_lst_len; i++) {
       remember_kpm_ue(node_id, &msg->frm_3.meas_report_per_ue[i].ue_meas_report_lst);
     }
   }
@@ -911,7 +1200,7 @@ static ue_id_e2sm_t *snapshot_kpm_ues(const global_e2_node_id_t *node_id, size_t
   *len = store->len;
   ue_id_e2sm_t *snapshot = *len == 0 ? NULL : calloc(*len, sizeof(*snapshot));
   assert((*len == 0 || snapshot != NULL) && "Memory exhausted");
-  for (size_t i = 0; i < *len; ++i) {
+  for (size_t i = 0; i < *len; i++) {
     snapshot[i] = cp_ue_id_e2sm(&store->ues[i]);
   }
   rc = pthread_mutex_unlock(&kpm_ue_mutex);
@@ -920,7 +1209,7 @@ static ue_id_e2sm_t *snapshot_kpm_ues(const global_e2_node_id_t *node_id, size_t
 }
 
 static void free_kpm_ue_list(ue_id_e2sm_t *ues, size_t len) {
-  for (size_t i = 0; i < len; ++i) {
+  for (size_t i = 0; i < len; i++) {
     free_ue_id_e2sm(&ues[i]);
   }
   free(ues);
@@ -929,7 +1218,7 @@ static void free_kpm_ue_list(ue_id_e2sm_t *ues, size_t len) {
 void kpm_reset_ue_registry(void) {
   int rc = pthread_mutex_lock(&kpm_ue_mutex);
   assert(rc == 0);
-  for (size_t i = 0; i < kpm_node_ue_store_count; ++i) {
+  for (size_t i = 0; i < kpm_node_ue_store_count; i++) {
     kpm_node_ue_store_t *store = &kpm_node_ue_stores[i];
     free_global_e2_node_id(&store->node_id);
     free_kpm_ue_list(store->ues, store->len);
@@ -942,7 +1231,7 @@ void kpm_reset_ue_registry(void) {
   clear_kpm_cells();
   rc = pthread_mutex_lock(&kpm_cell_callback_mutex);
   assert(rc == 0);
-  for (size_t i = 0; i < kpm_cell_callback_slot_count; ++i) {
+  for (size_t i = 0; i < kpm_cell_callback_slot_count; i++) {
     if (kpm_cell_callback_slots[i].pending_du_valid) {
       free_sm_ag_if_rd(&kpm_cell_callback_slots[i].pending_du);
     }
@@ -956,6 +1245,16 @@ void kpm_reset_ue_registry(void) {
   rc = pthread_mutex_unlock(&kpm_cell_callback_mutex);
   assert(rc == 0);
 
+  rc = pthread_mutex_lock(&kpm_ue_join_mutex);
+  assert(rc == 0);
+  for (size_t i = 0; i < MAX_PENDING_KPM_UE_REPORTS; i++) {
+    free_pending_kpm_ue_report(&kpm_ue_pending_reports[i]);
+  }
+  kpm_ue_callback_target = NULL;
+  kpm_ue_join_window_us = 0;
+  rc = pthread_mutex_unlock(&kpm_ue_join_mutex);
+  assert(rc == 0);
+
   rc = pthread_mutex_lock(&kpm_topology_mutex);
   assert(rc == 0);
   kpm_topology = NULL;
@@ -967,7 +1266,7 @@ static const label_info_lst_t *format_2_measurement_label(const meas_info_cond_u
   static enum_value_e no_label_value = TRUE_ENUM_VALUE;
   static label_info_lst_t no_label = {.noLabel = &no_label_value};
 
-  for (size_t i = 0; i < info->matching_cond_lst_len; ++i) {
+  for (size_t i = 0; i < info->matching_cond_lst_len; i++) {
     if (info->matching_cond_lst[i].cond_type == LABEL_INFO) {
       return &info->matching_cond_lst[i].label_info_lst;
     }
@@ -977,10 +1276,10 @@ static const label_info_lst_t *format_2_measurement_label(const meas_info_cond_u
 
 static bool format_2_ue_seen(const kpm_ind_msg_format_2_t *msg, size_t info_idx, size_t ue_idx) {
   const ue_id_e2sm_t *candidate = &msg->meas_info_cond_ue_lst[info_idx].ue_id_matched_lst[ue_idx];
-  for (size_t i = 0; i <= info_idx; ++i) {
+  for (size_t i = 0; i <= info_idx; i++) {
     const meas_info_cond_ue_lst_t *info = &msg->meas_info_cond_ue_lst[i];
     const size_t limit = i == info_idx ? ue_idx : info->ue_id_matched_lst_len;
-    for (size_t j = 0; j < limit; ++j) {
+    for (size_t j = 0; j < limit; j++) {
       if (same_kpm_ue_id(candidate, &info->ue_id_matched_lst[j])) {
         return true;
       }
@@ -993,16 +1292,16 @@ void kpm_visit_format_2(const kpm_ind_msg_format_2_t *msg, const kpm_format_2_vi
   assert(msg != NULL);
   assert(visitor != NULL);
 
-  for (size_t data_idx = 0; data_idx < msg->meas_data_lst_len; ++data_idx) {
+  for (size_t data_idx = 0; data_idx < msg->meas_data_lst_len; data_idx++) {
     const meas_data_lst_t *data = &msg->meas_data_lst[data_idx];
     size_t expected_records = 0;
-    for (size_t i = 0; i < msg->meas_info_cond_ue_lst_len; ++i) {
+    for (size_t i = 0; i < msg->meas_info_cond_ue_lst_len; i++) {
       expected_records += msg->meas_info_cond_ue_lst[i].ue_id_matched_lst_len;
     }
 
-    for (size_t info_idx = 0; info_idx < msg->meas_info_cond_ue_lst_len; ++info_idx) {
+    for (size_t info_idx = 0; info_idx < msg->meas_info_cond_ue_lst_len; info_idx++) {
       const meas_info_cond_ue_lst_t *candidate_info = &msg->meas_info_cond_ue_lst[info_idx];
-      for (size_t ue_idx = 0; ue_idx < candidate_info->ue_id_matched_lst_len; ++ue_idx) {
+      for (size_t ue_idx = 0; ue_idx < candidate_info->ue_id_matched_lst_len; ue_idx++) {
         if (format_2_ue_seen(msg, info_idx, ue_idx)) {
           continue;
         }
@@ -1013,10 +1312,10 @@ void kpm_visit_format_2(const kpm_ind_msg_format_2_t *msg, const kpm_format_2_vi
         }
 
         size_t record_idx = 0;
-        for (size_t i = 0; i < msg->meas_info_cond_ue_lst_len; ++i) {
+        for (size_t i = 0; i < msg->meas_info_cond_ue_lst_len; i++) {
           const meas_info_cond_ue_lst_t *info = &msg->meas_info_cond_ue_lst[i];
           const label_info_lst_t *label = format_2_measurement_label(info);
-          for (size_t j = 0; j < info->ue_id_matched_lst_len; ++j) {
+          for (size_t j = 0; j < info->ue_id_matched_lst_len; j++) {
             if (record_idx + j < data->meas_record_len && same_kpm_ue_id(candidate, &info->ue_id_matched_lst[j]) &&
                 visitor->measurement != NULL) {
               visitor->measurement(context, &info->meas_type, label, &data->meas_record_lst[record_idx + j]);
@@ -1041,7 +1340,7 @@ void kpm_visit_format_2(const kpm_ind_msg_format_2_t *msg, const kpm_format_2_vi
 
 static sm_ran_function_t *find_ran_function(e2_node_connected_xapp_t *node, uint32_t ran_function_id,
                                             ran_func_def_e type) {
-  for (size_t i = 0; i < node->len_rf; ++i) {
+  for (size_t i = 0; i < node->len_rf; i++) {
     if (node->rf[i].id == ran_function_id && node->rf[i].defn.type == type) {
       return &node->rf[i];
     }
@@ -1056,7 +1355,7 @@ static const seq_report_sty_t *find_rc_common_information_style(e2_node_connecte
   }
 
   const ran_func_def_report_t *report = ran_function->defn.rc.report;
-  for (size_t i = 0; i < report->sz_seq_report_sty; ++i) {
+  for (size_t i = 0; i < report->sz_seq_report_sty; i++) {
     const seq_report_sty_t *style = &report->seq_report_sty[i];
     if (style->report_type == 5 && style->ev_trig_type == FORMAT_5_E2SM_RC_EV_TRIGGER_FORMAT &&
         style->act_frmt_type == FORMAT_1_E2SM_RC_ACT_DEF && style->ind_msg_type == FORMAT_4_E2SM_RC_IND_MSG) {
@@ -1080,7 +1379,7 @@ static rc_sub_data_t make_rc_cell_discovery_subscription(const seq_report_sty_t 
   subscription.ad[0].frmt_1.param_report_def[0].ran_param_id = E2SM_RC_RS5_CELL_CONTEXT_INFORMATION;
 
   bool advertised = false;
-  for (size_t i = 0; i < style->sz_seq_ran_param; ++i) {
+  for (size_t i = 0; i < style->sz_seq_ran_param; i++) {
     advertised |= style->ran_param[i].id == E2SM_RC_RS5_CELL_CONTEXT_INFORMATION;
   }
   assert(advertised && "RC Common Information must advertise Cell Context Information");
@@ -1091,7 +1390,7 @@ static void remember_kpm_cell(const global_e2_node_id_t *du_node_id, const cell_
   int rc = pthread_mutex_lock(&kpm_cell_mutex);
   assert(rc == 0);
 
-  for (size_t i = 0; i < kpm_cell_count; ++i) {
+  for (size_t i = 0; i < kpm_cell_count; i++) {
     if (eq_global_e2_node_id(&kpm_cells[i].du_node_id, du_node_id) && eq_cell_global_id(&kpm_cells[i].cgi, cgi)) {
       rc = pthread_mutex_unlock(&kpm_cell_mutex);
       assert(rc == 0);
@@ -1119,7 +1418,7 @@ static void sm_cb_rc_cell_discovery(const sm_ag_if_rd_t *rd, const global_e2_nod
   if (ind->msg.format != FORMAT_4_E2SM_RC_IND_MSG) {
     return;
   }
-  for (size_t i = 0; i < ind->msg.frmt_4.sz_seq_cell_info_2; ++i) {
+  for (size_t i = 0; i < ind->msg.frmt_4.sz_seq_cell_info_2; i++) {
     const cell_global_id_t *cgi = &ind->msg.frmt_4.seq_cell_info_2[i].cell_global_id;
     if (cgi->type == NR_CGI_RAT_TYPE) {
       remember_kpm_cell(node_id, cgi);
@@ -1129,8 +1428,8 @@ static void sm_cb_rc_cell_discovery(const sm_ag_if_rd_t *rd, const global_e2_nod
 
 static size_t discovered_du_count(const global_e2_node_id_t *const *expected, size_t expected_count) {
   size_t count = 0;
-  for (size_t i = 0; i < expected_count; ++i) {
-    for (size_t j = 0; j < kpm_cell_count; ++j) {
+  for (size_t i = 0; i < expected_count; i++) {
+    for (size_t j = 0; j < kpm_cell_count; j++) {
       if (eq_global_e2_node_id(expected[i], &kpm_cells[j].du_node_id)) {
         ++count;
         break;
@@ -1143,7 +1442,7 @@ static size_t discovered_du_count(const global_e2_node_id_t *const *expected, si
 static void clear_kpm_cells(void) {
   int rc = pthread_mutex_lock(&kpm_cell_mutex);
   assert(rc == 0);
-  for (size_t i = 0; i < kpm_cell_count; ++i) {
+  for (size_t i = 0; i < kpm_cell_count; i++) {
     free_global_e2_node_id(&kpm_cells[i].du_node_id);
     free_cell_global_id(&kpm_cells[i].cgi);
     kpm_cells[i] = (kpm_cell_info_t){0};
@@ -1160,7 +1459,7 @@ static void discover_kpm_cells(const e2_node_arr_xapp_t *nodes, uint32_t wait_ms
   size_t handle_count = 0;
   size_t expected_count = 0;
 
-  for (size_t i = 0; i < nodes->len; ++i) {
+  for (size_t i = 0; i < nodes->len; i++) {
     e2_node_connected_xapp_t *node = &nodes->n[i];
     if (node->id.type != ngran_gNB_DU) {
       continue;
@@ -1202,7 +1501,7 @@ static void discover_kpm_cells(const e2_node_arr_xapp_t *nodes, uint32_t wait_ms
     printf("[xApp] Discovered NR CGI information for %zu of %zu DU(s) through E2SM-RC\n", discovered, expected_count);
   }
 
-  for (size_t i = 0; i < handle_count; ++i) {
+  for (size_t i = 0; i < handle_count; i++) {
     rm_report_sm_xapp_api(handles[i].u.handle);
   }
 }
@@ -1216,13 +1515,13 @@ static kpm_cell_info_t *snapshot_kpm_cells(const global_e2_node_id_t *cu_node_id
   int rc = pthread_mutex_lock(&kpm_cell_mutex);
   assert(rc == 0);
   *count = 0;
-  for (size_t i = 0; i < kpm_cell_count; ++i) {
+  for (size_t i = 0; i < kpm_cell_count; i++) {
     *count += cell_belongs_to_cu(&kpm_cells[i], cu_node_id);
   }
 
   kpm_cell_info_t *snapshot = *count == 0 ? NULL : ecalloc(*count, sizeof(*snapshot));
   size_t next = 0;
-  for (size_t i = 0; i < kpm_cell_count; ++i) {
+  for (size_t i = 0; i < kpm_cell_count; i++) {
     if (cell_belongs_to_cu(&kpm_cells[i], cu_node_id)) {
       snapshot[next].du_node_id = cp_global_e2_node_id(&kpm_cells[i].du_node_id);
       snapshot[next].cgi = cp_cell_global_id(&kpm_cells[i].cgi);
@@ -1235,7 +1534,7 @@ static kpm_cell_info_t *snapshot_kpm_cells(const global_e2_node_id_t *cu_node_id
 }
 
 static void free_kpm_cells(kpm_cell_info_t *cells, size_t count) {
-  for (size_t i = 0; i < count; ++i) {
+  for (size_t i = 0; i < count; i++) {
     free_global_e2_node_id(&cells[i].du_node_id);
     free_cell_global_id(&cells[i].cgi);
   }
@@ -1246,7 +1545,7 @@ static bool has_discovered_kpm_cell(const global_e2_node_id_t *du_node_id) {
   int rc = pthread_mutex_lock(&kpm_cell_mutex);
   assert(rc == 0);
   bool found = false;
-  for (size_t i = 0; i < kpm_cell_count; ++i) {
+  for (size_t i = 0; i < kpm_cell_count; i++) {
     if (eq_global_e2_node_id(&kpm_cells[i].du_node_id, du_node_id)) {
       found = true;
       break;
@@ -1289,7 +1588,7 @@ static kpm_act_def_format_1_t make_kpm_action_format_1(const ric_report_style_it
   // [1, 65535]
   format.meas_info_lst_len = report_item->meas_info_for_action_lst_len;
   format.meas_info_lst = ecalloc(format.meas_info_lst_len, sizeof(*format.meas_info_lst));
-  for (size_t i = 0; i < format.meas_info_lst_len; ++i) {
+  for (size_t i = 0; i < format.meas_info_lst_len; i++) {
     meas_info_format_1_lst_t *measurement = &format.meas_info_lst[i];
     // 8.3.9
     // Measurement Name
@@ -1334,7 +1633,7 @@ static kpm_act_def_t make_kpm_action(const ric_report_style_item_t *report_item,
     kpm_act_def_t action = {.type = FORMAT_3_ACTION_DEFINITION};
     action.frm_3.meas_info_lst_len = report_item->meas_info_for_action_lst_len;
     action.frm_3.meas_info_lst = ecalloc(action.frm_3.meas_info_lst_len, sizeof(*action.frm_3.meas_info_lst));
-    for (size_t i = 0; i < action.frm_3.meas_info_lst_len; ++i) {
+    for (size_t i = 0; i < action.frm_3.meas_info_lst_len; i++) {
       meas_info_format_3_lst_t *measurement = &action.frm_3.meas_info_lst[i];
       measurement->meas_type.type = NAME_MEAS_TYPE;
       measurement->meas_type.name = copy_byte_array(report_item->meas_info_for_action_lst[i].name);
@@ -1369,7 +1668,7 @@ static kpm_act_def_t make_kpm_action(const ric_report_style_item_t *report_item,
     kpm_act_def_t action = {.type = FORMAT_5_ACTION_DEFINITION};
     action.frm_5.ue_id_lst_len = ue_count;
     action.frm_5.ue_id_lst = ecalloc(ue_count, sizeof(*action.frm_5.ue_id_lst));
-    for (size_t i = 0; i < ue_count; ++i) {
+    for (size_t i = 0; i < ue_count; i++) {
       action.frm_5.ue_id_lst[i] = cp_ue_id_e2sm(&ues[i]);
     }
     action.frm_5.action_def_format_1 = make_kpm_action_format_1(report_item, config.period_ms, NULL);
@@ -1412,7 +1711,7 @@ static kpm_sub_data_t make_kpm_subscription(const kpm_ran_function_def_t *ran_fu
 }
 
 sm_ran_function_t *kpm_find_ran_function(e2_node_connected_xapp_t *node, uint32_t ran_function_id) {
-  for (size_t i = 0; i < node->len_rf; ++i) {
+  for (size_t i = 0; i < node->len_rf; i++) {
     if (node->rf[i].id == ran_function_id) {
       assert(node->rf[i].defn.type == KPM_RAN_FUNC_DEF_E);
       return &node->rf[i];
@@ -1449,7 +1748,7 @@ static bool kpm_report_style_enabled(kpm_subscription_config_t config, ric_servi
 }
 
 static bool kpm_report_style_has_measurement(const ric_report_style_item_t *report_item, const char *name) {
-  for (size_t i = 0; i < report_item->meas_info_for_action_lst_len; ++i) {
+  for (size_t i = 0; i < report_item->meas_info_for_action_lst_len; i++) {
     if (cmp_str_ba(name, report_item->meas_info_for_action_lst[i].name) == 0) {
       return true;
     }
@@ -1459,24 +1758,59 @@ static bool kpm_report_style_has_measurement(const ric_report_style_item_t *repo
 
 static bool has_kpm_sinr_source(const e2_node_arr_xapp_t *nodes, uint32_t ran_function_id,
                                 const global_e2_node_id_t *du_node_id) {
-  for (size_t i = 0; i < nodes->len; ++i) {
+  for (size_t i = 0; i < nodes->len; i++) {
     const e2_node_connected_xapp_t *node = &nodes->n[i];
     if ((node->id.type != ngran_gNB_CU && node->id.type != ngran_gNB_CUCP) ||
         !eq_e2ap_plmn(&node->id.plmn, &du_node_id->plmn) || !eq_e2ap_gnb_id(node->id.nb_id, du_node_id->nb_id)) {
       continue;
     }
-    for (size_t j = 0; j < node->len_rf; ++j) {
+    for (size_t j = 0; j < node->len_rf; j++) {
       if (node->rf[j].id != ran_function_id || node->rf[j].defn.type != KPM_RAN_FUNC_DEF_E) {
         continue;
       }
       const kpm_ran_function_def_t *definition = &node->rf[j].defn.kpm;
-      for (size_t k = 0; k < definition->sz_ric_report_style_list; ++k) {
+      for (size_t k = 0; k < definition->sz_ric_report_style_list; k++) {
         const ric_report_style_item_t *style = &definition->ric_report_style_list[k];
         if (style->report_style_type == STYLE_1_RIC_SERVICE_REPORT &&
             kpm_report_style_has_measurement(style, "MR.NRScSSSINR")) {
           return true;
         }
       }
+    }
+  }
+  return false;
+}
+
+static bool node_supports_kpm_report_style(const e2_node_connected_xapp_t *node, uint32_t ran_function_id,
+                                           ric_service_report_e report_style) {
+  for (size_t i = 0; i < node->len_rf; i++) {
+    if (node->rf[i].id != ran_function_id || node->rf[i].defn.type != KPM_RAN_FUNC_DEF_E) {
+      continue;
+    }
+    const kpm_ran_function_def_t *definition = &node->rf[i].defn.kpm;
+    for (size_t j = 0; j < definition->sz_ric_report_style_list; j++) {
+      if (definition->ric_report_style_list[j].report_style_type == report_style) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+static bool has_kpm_ue_join_source(const e2_node_arr_xapp_t *nodes, uint32_t ran_function_id,
+                                   const global_e2_node_id_t *node_id) {
+  if (!is_kpm_du_node(node_id) && !is_kpm_cu_node(node_id)) {
+    return false;
+  }
+  for (size_t i = 0; i < nodes->len; i++) {
+    const e2_node_connected_xapp_t *candidate = &nodes->n[i];
+    if (is_kpm_du_node(node_id) == is_kpm_du_node(&candidate->id) ||
+        (!is_kpm_du_node(&candidate->id) && !is_kpm_cu_node(&candidate->id)) ||
+        !same_kpm_gnb(node_id, &candidate->id)) {
+      continue;
+    }
+    if (node_supports_kpm_report_style(candidate, ran_function_id, STYLE_4_RIC_SERVICE_REPORT)) {
+      return true;
     }
   }
   return false;
@@ -1496,7 +1830,7 @@ kpm_subscription_set_t kpm_subscribe_report_styles(const e2_node_arr_xapp_t *nod
   subscriptions.handles = ecalloc(nodes->len, sizeof(*subscriptions.handles));
   subscriptions.handle_counts = ecalloc(nodes->len, sizeof(*subscriptions.handle_counts));
 
-  for (size_t i = 0; i < nodes->len; ++i) {
+  for (size_t i = 0; i < nodes->len; i++) {
     e2_node_connected_xapp_t *node = &nodes->n[i];
     sm_ran_function_t *ran_function = kpm_find_ran_function(node, ran_function_id);
     const size_t report_style_count = ran_function->defn.kpm.sz_ric_report_style_list;
@@ -1504,7 +1838,7 @@ kpm_subscription_set_t kpm_subscribe_report_styles(const e2_node_arr_xapp_t *nod
 
     // if REPORT Service is supported by E2 node, send SUBSCRIPTION
     // e.g. OAI CU-CP
-    for (size_t j = 0; j < report_style_count; ++j) {
+    for (size_t j = 0; j < report_style_count; j++) {
       ric_report_style_item_t *report_item = &ran_function->defn.kpm.ric_report_style_list[j];
       assert(report_item->report_style_type < END_RIC_SERVICE_REPORT);
       if (!kpm_report_style_enabled(config, report_item->report_style_type)) {
@@ -1520,7 +1854,7 @@ kpm_subscription_set_t kpm_subscribe_report_styles(const e2_node_arr_xapp_t *nod
         size_t cell_count = 0;
         kpm_cell_info_t *cells = snapshot_kpm_cells(&node->id, &cell_count);
         if (cell_count > 0) {
-          for (size_t cell = 0; cell < cell_count; ++cell) {
+          for (size_t cell = 0; cell < cell_count; cell++) {
             const size_t index = subscriptions.handle_counts[i]++;
             sm_cb cell_callback =
                 reserve_kpm_cell_callback(callback, &cells[cell].du_node_id, config.period_ms * UINT64_C(500));
@@ -1538,18 +1872,21 @@ kpm_subscription_set_t kpm_subscribe_report_styles(const e2_node_arr_xapp_t *nod
       if (report_item->report_style_type == STYLE_1_RIC_SERVICE_REPORT && node->id.type == ngran_gNB_DU &&
           has_discovered_kpm_cell(&node->id) && has_kpm_sinr_source(nodes, ran_function_id, &node->id)) {
         report_callback = reserve_kpm_cell_callback(callback, &node->id, config.period_ms * UINT64_C(500));
+      } else if (report_item->report_style_type == STYLE_4_RIC_SERVICE_REPORT &&
+                 has_kpm_ue_join_source(nodes, ran_function_id, &node->id)) {
+        report_callback = reserve_kpm_ue_callback(callback, config.period_ms * UINT64_C(500));
       }
       subscribe_kpm_style(node, ran_function, report_item, config, NULL, 0, NULL, report_callback,
                           &subscriptions.handles[i][index]);
     }
   }
 
-  for (size_t i = 0; i < nodes->len; ++i) {
+  for (size_t i = 0; i < nodes->len; i++) {
     e2_node_connected_xapp_t *node = &nodes->n[i];
     sm_ran_function_t *ran_function = kpm_find_ran_function(node, ran_function_id);
     const size_t report_style_count = ran_function->defn.kpm.sz_ric_report_style_list;
     size_t max_required_ues = 0;
-    for (size_t j = 0; j < report_style_count; ++j) {
+    for (size_t j = 0; j < report_style_count; j++) {
       const ric_service_report_e report_style = ran_function->defn.kpm.ric_report_style_list[j].report_style_type;
       if (!kpm_report_style_enabled(config, report_style)) {
         continue;
@@ -1569,7 +1906,7 @@ kpm_subscription_set_t kpm_subscribe_report_styles(const e2_node_arr_xapp_t *nod
     printf("[xApp] Discovered %zu UE ID(s) for UE-specific KPM subscriptions%s.\n", ue_count,
            discovered < max_required_ues ? " before the discovery timeout" : "");
 
-    for (size_t j = 0; j < report_style_count; ++j) {
+    for (size_t j = 0; j < report_style_count; j++) {
       ric_report_style_item_t *report_item = &ran_function->defn.kpm.ric_report_style_list[j];
       if (!kpm_report_style_enabled(config, report_item->report_style_type)) {
         continue;
@@ -1597,8 +1934,8 @@ void kpm_unsubscribe_report_styles(kpm_subscription_set_t *subscriptions) {
   if (subscriptions == NULL) {
     return;
   }
-  for (size_t i = 0; i < subscriptions->node_count; ++i) {
-    for (size_t j = 0; j < subscriptions->handle_counts[i]; ++j) {
+  for (size_t i = 0; i < subscriptions->node_count; i++) {
+    for (size_t j = 0; j < subscriptions->handle_counts[i]; j++) {
       // Remove the handle previously returned
       if (subscriptions->handles[i][j].success) {
         rm_report_sm_xapp_api(subscriptions->handles[i][j].u.handle);

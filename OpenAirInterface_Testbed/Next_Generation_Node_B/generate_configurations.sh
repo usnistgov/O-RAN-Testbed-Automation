@@ -41,7 +41,7 @@ NEAR_RIC_IP_ADDR="127.0.0.1"
 # There are two types of RSRP/SINR measurements: SSB and CSI
 # Valid values for CSI_REPORT_TYPE: "ssb_rsrp", "ssb_sinr", "cri_rsrp", or "null" (to omit CSI_report_type and set do_CSIRS=1)
 # If using MIMO, then CSI_REPORT_TYPE must not be an SSB-based measurement (https://github.com/duranta-project/openairinterface5g/blob/develop/doc/RUNMODEM.md#5g-gnb-mimo-configuration)
-CSI_REPORT_TYPE="ssb_sinr"
+CSI_REPORT_TYPE="ssb_rsrp"
 
 # Radio configuration presets (band 3 and band 78)
 GNB_CONFIG_TEMPLATE="openairinterface5g/targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band1.u0.52PRB.usrpb210.conf"

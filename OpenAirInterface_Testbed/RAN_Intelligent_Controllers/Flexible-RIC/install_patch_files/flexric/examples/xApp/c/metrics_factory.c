@@ -26,10 +26,16 @@ typedef struct {
 typedef struct {
   sm_cb callback;
   global_e2_node_id_t du_node_id;
+  uint64_t join_window_us;
+  sm_ag_if_rd_t pending_du;
+  sm_ag_if_rd_t pending_cell;
+  bool pending_du_valid;
+  bool pending_cell_valid;
 } kpm_cell_callback_slot_t;
 
 static pthread_mutex_t kpm_cell_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t kpm_cell_condition = PTHREAD_COND_INITIALIZER;
+static pthread_mutex_t kpm_cell_callback_mutex = PTHREAD_MUTEX_INITIALIZER;
 static kpm_cell_info_t kpm_cells[MAX_E2_NODES];
 static size_t kpm_cell_count;
 static kpm_cell_callback_slot_t kpm_cell_callback_slots[MAX_E2_NODES];
@@ -38,12 +44,138 @@ static _Thread_local const global_e2_node_id_t *kpm_callback_cell_node;
 
 static void clear_kpm_cells(void);
 
+bool kpm_merge_format_1_indications(const kpm_ind_msg_format_1_t *du, const kpm_ind_msg_format_1_t *cell,
+                                    kpm_ind_msg_format_1_t *merged) {
+  assert(du != NULL);
+  assert(cell != NULL);
+  assert(merged != NULL);
+  *merged = (kpm_ind_msg_format_1_t){0};
+
+  if (du->meas_data_lst_len == 0 || du->meas_data_lst_len != cell->meas_data_lst_len ||
+      du->meas_info_lst_len + cell->meas_info_lst_len >= 65536) {
+    return false;
+  }
+  for (size_t i = 0; i < du->meas_data_lst_len; ++i) {
+    if (du->meas_data_lst[i].meas_record_len + cell->meas_data_lst[i].meas_record_len >= 65535) {
+      return false;
+    }
+  }
+
+  *merged = cp_kpm_ind_msg_frm_1(du);
+  const size_t du_info_len = merged->meas_info_lst_len;
+  merged->meas_info_lst_len += cell->meas_info_lst_len;
+  merged->meas_info_lst = realloc(merged->meas_info_lst, merged->meas_info_lst_len * sizeof(*merged->meas_info_lst));
+  assert(merged->meas_info_lst != NULL && "Memory exhausted");
+  for (size_t i = 0; i < cell->meas_info_lst_len; ++i) {
+    merged->meas_info_lst[du_info_len + i] = cp_meas_info_format_1_lst(&cell->meas_info_lst[i]);
+  }
+
+  for (size_t i = 0; i < merged->meas_data_lst_len; ++i) {
+    meas_data_lst_t *dst = &merged->meas_data_lst[i];
+    const meas_data_lst_t *src = &cell->meas_data_lst[i];
+    const size_t du_record_len = dst->meas_record_len;
+    dst->meas_record_len += src->meas_record_len;
+    dst->meas_record_lst = realloc(dst->meas_record_lst, dst->meas_record_len * sizeof(*dst->meas_record_lst));
+    assert(dst->meas_record_lst != NULL && "Memory exhausted");
+    for (size_t j = 0; j < src->meas_record_len; ++j) {
+      dst->meas_record_lst[du_record_len + j] = cp_meas_record_lst(&src->meas_record_lst[j]);
+    }
+    if (src->incomplete_flag != NULL) {
+      if (dst->incomplete_flag == NULL) {
+        dst->incomplete_flag = ecalloc(1, sizeof(*dst->incomplete_flag));
+      }
+      if (*src->incomplete_flag == TRUE_ENUM_VALUE) {
+        *dst->incomplete_flag = TRUE_ENUM_VALUE;
+      }
+    }
+  }
+  return true;
+}
+
+static bool is_kpm_format_1_report(const sm_ag_if_rd_t *rd) {
+  return rd != NULL && rd->type == INDICATION_MSG_AGENT_IF_ANS_V0 && rd->ind.type == KPM_STATS_V3_0 &&
+         rd->ind.kpm.ind.msg.type == FORMAT_1_INDICATION_MESSAGE;
+}
+
+static uint64_t kpm_format_1_collect_start_time(const sm_ag_if_rd_t *rd) {
+  return rd->ind.kpm.ind.hdr.kpm_ric_ind_hdr_format_1.collectStartTime;
+}
+
+static void invoke_kpm_cell_callback(const kpm_cell_callback_slot_t *slot, const sm_ag_if_rd_t *rd,
+                                     const global_e2_node_id_t *node_id) {
+  const global_e2_node_id_t *previous = kpm_callback_cell_node;
+  kpm_callback_cell_node = &slot->du_node_id;
+  slot->callback(rd, node_id);
+  kpm_callback_cell_node = previous;
+}
+
+static void move_pending_report(sm_ag_if_rd_t *reports, size_t *report_count, sm_ag_if_rd_t *pending,
+                                bool *pending_valid) {
+  assert(*report_count < 3);
+  reports[(*report_count)++] = *pending;
+  *pending = (sm_ag_if_rd_t){0};
+  *pending_valid = false;
+}
+
 static void dispatch_kpm_cell_callback(size_t slot, const sm_ag_if_rd_t *rd, const global_e2_node_id_t *node_id) {
   assert(slot < kpm_cell_callback_slot_count);
-  const global_e2_node_id_t *previous = kpm_callback_cell_node;
-  kpm_callback_cell_node = &kpm_cell_callback_slots[slot].du_node_id;
-  kpm_cell_callback_slots[slot].callback(rd, node_id);
-  kpm_callback_cell_node = previous;
+  kpm_cell_callback_slot_t *callback_slot = &kpm_cell_callback_slots[slot];
+  if (!is_kpm_format_1_report(rd) || node_id == NULL) {
+    invoke_kpm_cell_callback(callback_slot, rd, node_id);
+    return;
+  }
+
+  sm_ag_if_rd_t reports[3] = {0};
+  size_t report_count = 0;
+  int rc = pthread_mutex_lock(&kpm_cell_callback_mutex);
+  assert(rc == 0);
+
+  const bool is_du = node_id->type == ngran_gNB_DU;
+  sm_ag_if_rd_t *pending = is_du ? &callback_slot->pending_du : &callback_slot->pending_cell;
+  bool *pending_valid = is_du ? &callback_slot->pending_du_valid : &callback_slot->pending_cell_valid;
+  if (*pending_valid) {
+    move_pending_report(reports, &report_count, pending, pending_valid);
+  }
+  *pending = cp_sm_ag_if_rd(rd);
+  *pending_valid = true;
+
+  if (callback_slot->pending_du_valid && callback_slot->pending_cell_valid) {
+    const uint64_t du_time = kpm_format_1_collect_start_time(&callback_slot->pending_du);
+    const uint64_t cell_time = kpm_format_1_collect_start_time(&callback_slot->pending_cell);
+    const uint64_t difference = du_time > cell_time ? du_time - cell_time : cell_time - du_time;
+    if (difference <= callback_slot->join_window_us) {
+      kpm_ind_msg_format_1_t merged = {0};
+      const kpm_ind_msg_format_1_t *du_msg = &callback_slot->pending_du.ind.kpm.ind.msg.frm_1;
+      const kpm_ind_msg_format_1_t *cell_msg = &callback_slot->pending_cell.ind.kpm.ind.msg.frm_1;
+      if (kpm_merge_format_1_indications(du_msg, cell_msg, &merged)) {
+        assert(report_count < 3);
+        reports[report_count] = cp_sm_ag_if_rd(&callback_slot->pending_du);
+        free_kpm_ind_msg_frm_1(&reports[report_count].ind.kpm.ind.msg.frm_1);
+        reports[report_count].ind.kpm.ind.msg.frm_1 = merged;
+        ++report_count;
+        free_sm_ag_if_rd(&callback_slot->pending_du);
+        free_sm_ag_if_rd(&callback_slot->pending_cell);
+        callback_slot->pending_du = (sm_ag_if_rd_t){0};
+        callback_slot->pending_cell = (sm_ag_if_rd_t){0};
+        callback_slot->pending_du_valid = false;
+        callback_slot->pending_cell_valid = false;
+      } else {
+        move_pending_report(reports, &report_count, &callback_slot->pending_du, &callback_slot->pending_du_valid);
+        move_pending_report(reports, &report_count, &callback_slot->pending_cell, &callback_slot->pending_cell_valid);
+      }
+    } else if (du_time < cell_time) {
+      move_pending_report(reports, &report_count, &callback_slot->pending_du, &callback_slot->pending_du_valid);
+    } else {
+      move_pending_report(reports, &report_count, &callback_slot->pending_cell, &callback_slot->pending_cell_valid);
+    }
+  }
+
+  rc = pthread_mutex_unlock(&kpm_cell_callback_mutex);
+  assert(rc == 0);
+  for (size_t i = 0; i < report_count; ++i) {
+    invoke_kpm_cell_callback(callback_slot, &reports[i], &callback_slot->du_node_id);
+    free_sm_ag_if_rd(&reports[i]);
+  }
 }
 
 #define DEFINE_KPM_CELL_CALLBACK(index)                                                                                \
@@ -75,11 +207,19 @@ static const sm_cb kpm_cell_callbacks[MAX_E2_NODES] = {
     kpm_cell_callback_12, kpm_cell_callback_13, kpm_cell_callback_14, kpm_cell_callback_15,
 };
 
-static sm_cb reserve_kpm_cell_callback(sm_cb callback, const global_e2_node_id_t *du_node_id) {
+static sm_cb reserve_kpm_cell_callback(sm_cb callback, const global_e2_node_id_t *du_node_id, uint64_t join_window_us) {
+  for (size_t i = 0; i < kpm_cell_callback_slot_count; ++i) {
+    if (kpm_cell_callback_slots[i].callback == callback &&
+        eq_global_e2_node_id(&kpm_cell_callback_slots[i].du_node_id, du_node_id)) {
+      kpm_cell_callback_slots[i].join_window_us = join_window_us;
+      return kpm_cell_callbacks[i];
+    }
+  }
   assert(kpm_cell_callback_slot_count < MAX_E2_NODES);
   const size_t slot = kpm_cell_callback_slot_count++;
   kpm_cell_callback_slots[slot].callback = callback;
   kpm_cell_callback_slots[slot].du_node_id = cp_global_e2_node_id(du_node_id);
+  kpm_cell_callback_slots[slot].join_window_us = join_window_us;
   return kpm_cell_callbacks[slot];
 }
 
@@ -800,11 +940,21 @@ void kpm_reset_ue_registry(void) {
   assert(rc == 0);
 
   clear_kpm_cells();
+  rc = pthread_mutex_lock(&kpm_cell_callback_mutex);
+  assert(rc == 0);
   for (size_t i = 0; i < kpm_cell_callback_slot_count; ++i) {
+    if (kpm_cell_callback_slots[i].pending_du_valid) {
+      free_sm_ag_if_rd(&kpm_cell_callback_slots[i].pending_du);
+    }
+    if (kpm_cell_callback_slots[i].pending_cell_valid) {
+      free_sm_ag_if_rd(&kpm_cell_callback_slots[i].pending_cell);
+    }
     free_global_e2_node_id(&kpm_cell_callback_slots[i].du_node_id);
     kpm_cell_callback_slots[i] = (kpm_cell_callback_slot_t){0};
   }
   kpm_cell_callback_slot_count = 0;
+  rc = pthread_mutex_unlock(&kpm_cell_callback_mutex);
+  assert(rc == 0);
 
   rc = pthread_mutex_lock(&kpm_topology_mutex);
   assert(rc == 0);
@@ -1092,6 +1242,21 @@ static void free_kpm_cells(kpm_cell_info_t *cells, size_t count) {
   free(cells);
 }
 
+static bool has_discovered_kpm_cell(const global_e2_node_id_t *du_node_id) {
+  int rc = pthread_mutex_lock(&kpm_cell_mutex);
+  assert(rc == 0);
+  bool found = false;
+  for (size_t i = 0; i < kpm_cell_count; ++i) {
+    if (eq_global_e2_node_id(&kpm_cells[i].du_node_id, du_node_id)) {
+      found = true;
+      break;
+    }
+  }
+  rc = pthread_mutex_unlock(&kpm_cell_mutex);
+  assert(rc == 0);
+  return found;
+}
+
 static test_info_lst_t make_kpm_snssai_filter(test_cond_type_e type, test_cond_e cond, uint8_t sst, uint32_t sd) {
   test_info_lst_t filter = {0};
   filter.test_cond_type = type;
@@ -1292,6 +1457,31 @@ static bool kpm_report_style_has_measurement(const ric_report_style_item_t *repo
   return false;
 }
 
+static bool has_kpm_sinr_source(const e2_node_arr_xapp_t *nodes, uint32_t ran_function_id,
+                                const global_e2_node_id_t *du_node_id) {
+  for (size_t i = 0; i < nodes->len; ++i) {
+    const e2_node_connected_xapp_t *node = &nodes->n[i];
+    if ((node->id.type != ngran_gNB_CU && node->id.type != ngran_gNB_CUCP) ||
+        !eq_e2ap_plmn(&node->id.plmn, &du_node_id->plmn) || !eq_e2ap_gnb_id(node->id.nb_id, du_node_id->nb_id)) {
+      continue;
+    }
+    for (size_t j = 0; j < node->len_rf; ++j) {
+      if (node->rf[j].id != ran_function_id || node->rf[j].defn.type != KPM_RAN_FUNC_DEF_E) {
+        continue;
+      }
+      const kpm_ran_function_def_t *definition = &node->rf[j].defn.kpm;
+      for (size_t k = 0; k < definition->sz_ric_report_style_list; ++k) {
+        const ric_report_style_item_t *style = &definition->ric_report_style_list[k];
+        if (style->report_style_type == STYLE_1_RIC_SERVICE_REPORT &&
+            kpm_report_style_has_measurement(style, "MR.NRScSSSINR")) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
 kpm_subscription_set_t kpm_subscribe_report_styles(const e2_node_arr_xapp_t *nodes, uint32_t ran_function_id,
                                                    kpm_subscription_config_t config, sm_cb callback) {
   assert(nodes != NULL);
@@ -1332,7 +1522,8 @@ kpm_subscription_set_t kpm_subscribe_report_styles(const e2_node_arr_xapp_t *nod
         if (cell_count > 0) {
           for (size_t cell = 0; cell < cell_count; ++cell) {
             const size_t index = subscriptions.handle_counts[i]++;
-            sm_cb cell_callback = reserve_kpm_cell_callback(callback, &cells[cell].du_node_id);
+            sm_cb cell_callback =
+                reserve_kpm_cell_callback(callback, &cells[cell].du_node_id, config.period_ms * UINT64_C(500));
             subscribe_kpm_style(node, ran_function, report_item, config, NULL, 0, &cells[cell].cgi, cell_callback,
                                 &subscriptions.handles[i][index]);
           }
@@ -1343,7 +1534,12 @@ kpm_subscription_set_t kpm_subscribe_report_styles(const e2_node_arr_xapp_t *nod
       }
 
       const size_t index = subscriptions.handle_counts[i]++;
-      subscribe_kpm_style(node, ran_function, report_item, config, NULL, 0, NULL, callback,
+      sm_cb report_callback = callback;
+      if (report_item->report_style_type == STYLE_1_RIC_SERVICE_REPORT && node->id.type == ngran_gNB_DU &&
+          has_discovered_kpm_cell(&node->id) && has_kpm_sinr_source(nodes, ran_function_id, &node->id)) {
+        report_callback = reserve_kpm_cell_callback(callback, &node->id, config.period_ms * UINT64_C(500));
+      }
+      subscribe_kpm_style(node, ran_function, report_item, config, NULL, 0, NULL, report_callback,
                           &subscriptions.handles[i][index]);
     }
   }

@@ -67,6 +67,9 @@ bool compute_sinr_metrics(const char *node_id, const uint32_t *current_dist, siz
 factory_metrics_array_t process_metric_factory(const char *node_id, const char *metric_name, const label_info_lst_t *label_info_lst, size_t label_info_lst_len, const meas_record_lst_t *meas_record_lst, size_t rec_idx_start);
 factory_metrics_array_t describe_metric_factory(const char *metric_name);
 
+bool kpm_merge_format_1_indications(const kpm_ind_msg_format_1_t *du, const kpm_ind_msg_format_1_t *cell,
+                                    kpm_ind_msg_format_1_t *merged);
+
 void free_factory_metrics(factory_metrics_array_t *arr);
 
 void format_meas_record_array(char *arr_str, size_t max_len, const label_info_lst_t *label_info_lst, size_t label_info_lst_len, const meas_record_lst_t *meas_record_lst, size_t rec_idx_start);

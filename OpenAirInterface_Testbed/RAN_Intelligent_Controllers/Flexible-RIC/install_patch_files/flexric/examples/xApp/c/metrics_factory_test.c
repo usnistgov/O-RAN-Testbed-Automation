@@ -27,6 +27,26 @@ static void init_distribution_records(label_info_lst_t labels[128], uint16_t bin
   }
 }
 
+static kpm_ind_msg_format_1_t make_format_1_test_message(const char *name, meas_record_lst_t record, bool incomplete) {
+  kpm_ind_msg_format_1_t msg = {0};
+  msg.meas_info_lst_len = 1;
+  msg.meas_info_lst = calloc(1, sizeof(*msg.meas_info_lst));
+  msg.meas_info_lst[0].meas_type.type = NAME_MEAS_TYPE;
+  msg.meas_info_lst[0].meas_type.name = cp_str_to_ba(name);
+  msg.meas_info_lst[0].label_info_lst_len = 1;
+  msg.meas_info_lst[0].label_info_lst = calloc(1, sizeof(*msg.meas_info_lst[0].label_info_lst));
+  msg.meas_data_lst_len = 1;
+  msg.meas_data_lst = calloc(1, sizeof(*msg.meas_data_lst));
+  msg.meas_data_lst[0].meas_record_len = 1;
+  msg.meas_data_lst[0].meas_record_lst = calloc(1, sizeof(*msg.meas_data_lst[0].meas_record_lst));
+  msg.meas_data_lst[0].meas_record_lst[0] = record;
+  if (incomplete) {
+    msg.meas_data_lst[0].incomplete_flag = calloc(1, sizeof(*msg.meas_data_lst[0].incomplete_flag));
+    *msg.meas_data_lst[0].incomplete_flag = TRUE_ENUM_VALUE;
+  }
+  return msg;
+}
+
 int main(void) {
   uint64_t du_id = 1;
   uint64_t second_du_id = 2;
@@ -115,6 +135,26 @@ int main(void) {
   bins[1] = bins[0];
   generated = process_metric_factory("CU:duplicate", "MR.NRScSSSINR", labels, 128, records, 0);
   CHECK(generated.count == 0);
+
+  const meas_record_lst_t du_record = {.value = INTEGER_MEAS_VALUE, .int_val = 7};
+  const meas_record_lst_t cell_record = {.value = REAL_MEAS_VALUE, .real_val = 8.5};
+  kpm_ind_msg_format_1_t du_msg = make_format_1_test_message("DU.Metric", du_record, false);
+  kpm_ind_msg_format_1_t cell_msg = make_format_1_test_message("MR.NRScSSSINR", cell_record, true);
+  kpm_ind_msg_format_1_t merged = {0};
+  CHECK(kpm_merge_format_1_indications(&du_msg, &cell_msg, &merged));
+  CHECK(merged.meas_info_lst_len == 2);
+  CHECK(merged.meas_data_lst_len == 1);
+  CHECK(merged.meas_data_lst[0].meas_record_len == 2);
+  CHECK(merged.meas_data_lst[0].meas_record_lst[0].int_val == 7);
+  CHECK(merged.meas_data_lst[0].meas_record_lst[1].real_val == 8.5);
+  CHECK(merged.meas_data_lst[0].incomplete_flag != NULL);
+  CHECK(*merged.meas_data_lst[0].incomplete_flag == TRUE_ENUM_VALUE);
+  char *merged_name = cp_ba_to_str(merged.meas_info_lst[1].meas_type.name);
+  CHECK(strcmp(merged_name, "MR.NRScSSSINR") == 0);
+  free(merged_name);
+  free_kpm_ind_msg_frm_1(&du_msg);
+  free_kpm_ind_msg_frm_1(&cell_msg);
+  free_kpm_ind_msg_frm_1(&merged);
 
   kpm_reset_ue_registry();
 

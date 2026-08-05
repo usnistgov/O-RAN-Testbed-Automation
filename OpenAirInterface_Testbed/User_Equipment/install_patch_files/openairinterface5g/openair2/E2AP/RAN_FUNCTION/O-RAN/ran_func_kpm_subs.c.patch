@@ -1,16 +1,86 @@
 diff --git a/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c b/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c
-index 13545fd617..ffcca89964 100644
+index 13545fd617..22fb4ab91a 100644
 --- a/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c
 +++ b/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c
-@@ -5,6 +5,7 @@
+@@ -5,8 +5,11 @@
  #include "ran_func_kpm_subs.h"
  
  #include <search.h>
 +#include <math.h> // For log10 in fill_RSRQ
++#include <inttypes.h>
  
  #include "openair2/RRC/NR/rrc_gNB_UE_context.h"
++#include "openair2/RRC/NR/rrc_cell_management.h"
  
-@@ -192,6 +193,341 @@ static meas_record_lst_t fill_RRC_ConnMean(__attribute__((unused)) const label_i
+ e2_node_level_stats_t cp_node_level_stats(const e2_node_level_stats_t *src)
+ {
+@@ -134,10 +137,10 @@ static meas_record_lst_t fill_L1M_SS_RSRP(const label_info_lst_t label,
+   return meas_record;
+ }
+ 
+-/* MR.NRScSSSINR — 3GPP TS 28.552 - section 5.1.1.32 */
++// 28.552, 5.1.1.32: SINR measurement
+ static meas_record_lst_t fill_MR_NRScSSSINR(const label_info_lst_t label,
+                                             __attribute__((unused)) uint32_t gran_period_ms,
+-                                            __attribute__((unused)) cudu_ue_info_pair_t ue_info,
++                                            cudu_ue_info_pair_t ue_info,
+                                             __attribute__((unused)) const size_t ue_idx,
+                                             __attribute__((unused)) e2_node_level_stats_t* node_stats)
+ {
+@@ -157,8 +160,51 @@ static meas_record_lst_t fill_MR_NRScSSSINR(const label_info_lst_t label,
+   }
+   const uint32_t bin = *label.distBinX;
+ 
++  if (ue_info.cell_global_id == NULL) {
++    nr_rrc_cell_container_t *selected_cell = NULL;
++    nr_rrc_cell_container_t *cell = NULL;
++    RB_FOREACH(cell, rrc_cell_tree, &RC.nrrrc[0]->cells) {
++      if (selected_cell != NULL) {
++        meas_record.value = NO_VALUE_MEAS_VALUE;
++        return meas_record;
++      }
++      selected_cell = cell;
++    }
++    if (selected_cell == NULL) {
++      meas_record.value = NO_VALUE_MEAS_VALUE;
++      return meas_record;
++    }
++    meas_record.value = INTEGER_MEAS_VALUE;
++    meas_record.int_val = selected_cell->ss_sinr_dist[bin];
++    return meas_record;
++  }
++  if (ue_info.cell_global_id->type != NR_CGI_RAT_TYPE) {
++    printf("[E2 AGENT][E2SM-KPM] MR.NRScSSSINR requires an NR CGI, reporting NO_VALUE\n");
++    meas_record.value = NO_VALUE_MEAS_VALUE;
++    return meas_record;
++  }
++
++  const nr_cgi_t *nr_cgi = &ue_info.cell_global_id->nr_cgi;
++  nr_rrc_cell_container_t *cell = get_cell_by_cell_id(&RC.nrrrc[0]->cells, nr_cgi->nr_cell_id);
++  if (cell == NULL) {
++    printf("[E2 AGENT][E2SM-KPM] MR.NRScSSSINR: NR Cell ID %" PRIu64 " is not registered, reporting NO_VALUE\n",
++           (uint64_t)nr_cgi->nr_cell_id);
++    meas_record.value = NO_VALUE_MEAS_VALUE;
++    return meas_record;
++  }
++  const plmn_id_t *cell_plmn = &cell->info.plmn;
++  const e2sm_plmn_t *requested_plmn = &nr_cgi->plmn_id;
++  if (cell_plmn->mcc != requested_plmn->mcc || cell_plmn->mnc != requested_plmn->mnc
++      || cell_plmn->mnc_digit_length != requested_plmn->mnc_digit_len) {
++    printf("[E2 AGENT][E2SM-KPM] MR.NRScSSSINR: NR CGI PLMN does not match NR Cell ID %" PRIu64
++           ", reporting NO_VALUE\n",
++           (uint64_t)nr_cgi->nr_cell_id);
++    meas_record.value = NO_VALUE_MEAS_VALUE;
++    return meas_record;
++  }
++
+   meas_record.value = INTEGER_MEAS_VALUE;
+-  meas_record.int_val = RC.nrrrc[0]->ss_sinr_cell_dist[bin];
++  meas_record.int_val = cell->ss_sinr_dist[bin];
+   return meas_record;
+ }
+ 
+@@ -192,6 +238,341 @@ static meas_record_lst_t fill_RRC_ConnMean(__attribute__((unused)) const label_i
  }
  
  #if defined (NGRAN_GNB_DU)
@@ -352,7 +422,7 @@ index 13545fd617..ffcca89964 100644
  static uldlcounter_t last_rlc_pdu_total_bytes[MAX_MOBILES_PER_GNB] = {0};
  static uldlcounter_t last_total_prbs[MAX_MOBILES_PER_GNB] = {0};
  
-@@ -318,6 +654,29 @@ static meas_record_lst_t fill_RRU_PrbTotUl(__attribute__((unused)) const label_i
+@@ -318,6 +699,29 @@ static meas_record_lst_t fill_RRU_PrbTotUl(__attribute__((unused)) const label_i
    return meas_record;
  }
  
@@ -382,7 +452,7 @@ index 13545fd617..ffcca89964 100644
  /* 3GPP TS 28.552 - section 5.1.1.12.1*/
  static meas_record_lst_t fill_CARR_PDSCHMCSDist(const label_info_lst_t label,
                                                  __attribute__((unused)) uint32_t gran_period_ms,
-@@ -392,6 +751,7 @@ static kv_measure_t lst_measure[] = {
+@@ -392,6 +796,7 @@ static kv_measure_t lst_measure[] = {
    {.key = "MR.NRScSSSINR",       .value = fill_MR_NRScSSSINR },
    {.key = "RRC.ConnMean",        .value = fill_RRC_ConnMean },
  #if defined (NGRAN_GNB_DU)
@@ -390,7 +460,7 @@ index 13545fd617..ffcca89964 100644
    {.key = "DRB.RlcSduDelayDl", .value =  fill_DRB_RlcSduDelayDl }, 
    {.key = "DRB.UEThpDl", .value =  fill_DRB_UEThpDl }, 
    {.key = "DRB.UEThpUl", .value =  fill_DRB_UEThpUl }, 
-@@ -399,6 +759,24 @@ static kv_measure_t lst_measure[] = {
+@@ -399,6 +804,24 @@ static kv_measure_t lst_measure[] = {
    {.key = "RRU.PrbTotUl", .value =  fill_RRU_PrbTotUl }, 
    {.key = "CARR.PDSCHMCSDist", .value = fill_CARR_PDSCHMCSDist },
    {.key = "CARR.PUSCHMCSDist", .value = fill_CARR_PUSCHMCSDist },

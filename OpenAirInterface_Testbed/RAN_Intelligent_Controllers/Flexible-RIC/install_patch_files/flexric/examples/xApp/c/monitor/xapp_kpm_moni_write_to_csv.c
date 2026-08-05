@@ -49,10 +49,6 @@
 // Set to the interval in milliseconds at which the xApp should write to the CSV file
 static uint64_t period_ms = 1000;
 
-// For metrics based on the difference between indication messages, the first sample may give a wrong value, so it is
-// skipped.
-bool skip_first_sample = false;
-
 // Set to true if samples containing RSRP.Count == 0 are to be filtered,
 // which is expected to give more stable results at the expense of some data loss
 const bool filter_invalid_rsrp_samples = false;
@@ -104,8 +100,9 @@ static void init_kpm_meas_unit_hash_table(void) {
 
 static char *get_meas_unit(const char *name) {
   char *val = assoc_ht_open_value(&ht, &name);
-  if (!val || strcmp(val, "[]") == 0)
+  if (!val || strcmp(val, "[]") == 0) {
     return "";
+  }
   return val;
 }
 
@@ -117,10 +114,12 @@ static uint32_t cfg_slicing_sd = 0xFFFFFF; // 0xFFFFFF for any SD
 bool csv_wrote_header = false;
 const char *csv_file_path = NULL;
 char csv_header_buffer[2048];
+char csv_line_buffer[9000];
 
 bool csv_wrote_cell_header = false;
 char csv_cell_file_path[1024];
 char csv_cell_header_buffer[2048];
+char csv_cell_line_buffer[9000];
 bool is_cell_metric = false;
 
 typedef struct {
@@ -142,27 +141,29 @@ uint64_t current_ue_id = 0;
 bool filter_current_sample = false;
 int64_t prev_now = 0;
 
-// Buffer to store the current E2 Node ID
-static char current_e2_id_str[256];
+static char current_e2_node_id[256];
 
 static bool csv_append_name_to_csv_header(const char *name, const char *unit) {
   char *target_buffer = is_cell_metric ? csv_cell_header_buffer : csv_header_buffer;
   size_t buffer_size = is_cell_metric ? sizeof(csv_cell_header_buffer) : sizeof(csv_header_buffer);
 
-  if (!name)
+  if (!name) {
     name = "";
-  if (!unit)
+  }
+  if (!unit) {
     unit = "";
+  }
   size_t current_len = strlen(target_buffer);
   size_t name_len = strlen(name);
   size_t unit_len = strlen(unit);
 
   // Don't overflow the buffer
   if (current_len + name_len + unit_len + 4 < buffer_size) { // +4 for " ()", comma, and null terminator
-    if (unit_len > 0)
+    if (unit_len > 0) {
       snprintf(target_buffer + current_len, buffer_size - current_len, "%s (%s),", name, unit);
-    else
+    } else {
       snprintf(target_buffer + current_len, buffer_size - current_len, "%s,", name);
+    }
     return true;
   }
 
@@ -193,17 +194,19 @@ static void csv_free_schema(csv_schema_t *schema) {
 
 static void clean_unit(char *dst, size_t dst_len, const char *unit) {
   size_t len = unit == NULL ? 0 : strlen(unit);
-  if (len > 2 && unit[0] == '[' && unit[len - 1] == ']')
+  if (len > 2 && unit[0] == '[' && unit[len - 1] == ']') {
     snprintf(dst, dst_len, "%.*s", (int)(len - 2), unit + 1);
-  else
+  } else {
     snprintf(dst, dst_len, "%s", unit == NULL ? "" : unit);
+  }
 }
 
 static bool csv_add_metric_column(bool cell_metric, const char *name, const char *unit) {
   csv_schema_t *schema = csv_get_schema(cell_metric);
   for (size_t i = 0; i < schema->count; i++) {
-    if (strcmp(schema->columns[i].name, name) == 0)
+    if (strcmp(schema->columns[i].name, name) == 0) {
       return true;
+    }
   }
 
   if ((cell_metric && csv_wrote_cell_header) || (!cell_metric && csv_wrote_header)) {
@@ -214,8 +217,9 @@ static bool csv_add_metric_column(bool cell_metric, const char *name, const char
   if (schema->count == schema->capacity) {
     size_t new_capacity = schema->capacity == 0 ? 16 : schema->capacity * 2;
     csv_column_t *columns = realloc(schema->columns, new_capacity * sizeof(*columns));
-    if (columns == NULL)
+    if (columns == NULL) {
       return false;
+    }
     schema->columns = columns;
     schema->capacity = new_capacity;
   }
@@ -244,8 +248,9 @@ static void csv_set_metric_value(const char *name, const char *text) {
 
   for (size_t i = 0; i < schema->count; i++) {
     csv_column_t *column = &schema->columns[i];
-    if (strcmp(column->name, name) != 0)
+    if (strcmp(column->name, name) != 0) {
       continue;
+    }
 
     char *copy = strdup(text ? text : "");
     if (copy == NULL) {
@@ -263,20 +268,120 @@ static void csv_set_metric_value(const char *name, const char *text) {
   filter_current_sample = true;
 }
 
-static void csv_write_field(FILE *file, const char *text) {
-  if (text == NULL)
-    text = "";
-  bool quote = strpbrk(text, ",\"\r\n") != NULL;
-  if (quote)
-    fputc('"', file);
-  for (const char *p = text; *p != '\0'; p++) {
-    if (*p == '"')
-      fputc('"', file);
-    fputc(*p, file);
+static void csv_append_string_to_csv_line(const char *str) {
+  if (!str) {
+    str = "";
   }
-  if (quote)
-    fputc('"', file);
-  fputc(',', file);
+  char *target_buffer = is_cell_metric ? csv_cell_line_buffer : csv_line_buffer;
+  size_t buffer_size = is_cell_metric ? sizeof(csv_cell_line_buffer) : sizeof(csv_line_buffer);
+  size_t current_len = strlen(target_buffer);
+
+  if (current_len + strlen(str) + 32 < buffer_size) {
+    if (strpbrk(str, ",\"\r\n") != NULL) {
+      snprintf(target_buffer + current_len, buffer_size - current_len, "\"%s\",", str);
+    } else {
+      snprintf(target_buffer + current_len, buffer_size - current_len, "%s,", str);
+    }
+  } else {
+    fprintf(stderr, "CSV line buffer is full, cannot append more values.\n");
+  }
+}
+
+static void csv_prepend_e2_node_id(void) {
+  char e2_node_id_buffer[600];
+  snprintf(e2_node_id_buffer, sizeof(e2_node_id_buffer), "%s,", current_e2_node_id);
+
+  size_t e2_node_id_len = strlen(e2_node_id_buffer);
+  char *target_buffer = is_cell_metric ? csv_cell_line_buffer : csv_line_buffer;
+  size_t buffer_size = is_cell_metric ? sizeof(csv_cell_line_buffer) : sizeof(csv_line_buffer);
+  size_t current_len = strlen(target_buffer);
+
+  if (e2_node_id_len + current_len < buffer_size) {
+    // Temporary buffer to construct the new line
+    char temp_buffer[9000];
+    size_t total_len = 0;
+    temp_buffer[0] = '\0';
+    strncat(temp_buffer, e2_node_id_buffer, sizeof(temp_buffer) - 1);
+    total_len = strlen(temp_buffer);
+    if (total_len < sizeof(temp_buffer) - 1) {
+      strncat(temp_buffer, target_buffer, sizeof(temp_buffer) - 1 - total_len);
+    }
+    strncpy(target_buffer, temp_buffer, buffer_size - 1);
+    target_buffer[buffer_size - 1] = '\0';
+  } else {
+    fprintf(stderr, "CSV line buffer is full, cannot prepend E2 Node ID.\n");
+  }
+}
+static void csv_prepend_ue_id() {
+  // Ensure the current UE ID is valid
+  if (current_ue_id == 0) {
+    if (filter_invalid_rsrp_samples) {
+      fprintf(stderr, "ERROR: No valid UE ID found.\n");
+    }
+  }
+
+  // Ensure the buffer won't overflow
+  char ue_id_buffer[32];
+  snprintf(ue_id_buffer, sizeof(ue_id_buffer), "%" PRIu64 ",", current_ue_id);
+  size_t ue_id_len = strlen(ue_id_buffer);
+  size_t current_len = strlen(csv_line_buffer);
+
+  if (ue_id_len + current_len < sizeof(csv_line_buffer)) {
+    // Use a temporary buffer to construct the new line
+    char temp_buffer[sizeof(csv_line_buffer)];
+    size_t total_len = 0;
+    temp_buffer[0] = '\0';
+    strncat(temp_buffer, ue_id_buffer, sizeof(temp_buffer) - 1);
+    total_len = strlen(temp_buffer);
+    if (total_len < sizeof(temp_buffer) - 1) {
+      strncat(temp_buffer, csv_line_buffer, sizeof(temp_buffer) - 1 - total_len);
+    }
+    strncpy(csv_line_buffer, temp_buffer, sizeof(csv_line_buffer) - 1);
+    csv_line_buffer[sizeof(csv_line_buffer) - 1] = '\0';
+  } else {
+    fprintf(stderr, "CSV line buffer is full, cannot prepend UE ID.\n");
+  }
+}
+
+static void csv_prepend_timestamp(int64_t arrival_ms, int64_t latency, int64_t batch_id) {
+
+  // Ensure the timestamp is non-negative
+  if (arrival_ms < 0) {
+    fprintf(stderr, "ERROR: Negative timestamp value encountered.\n");
+    return;
+  }
+
+  int64_t reporting_timestamp_offset = 0;
+  if (prev_now > 0) {
+    reporting_timestamp_offset = arrival_ms - prev_now - period_ms;
+  }
+
+  char prefix_buffer[128];
+  if (prev_now <= 0) {
+    snprintf(prefix_buffer, sizeof(prefix_buffer), "%" PRId64 ",%" PRId64 ",,%" PRId64 ",", arrival_ms, batch_id,
+             latency);
+  } else {
+    snprintf(prefix_buffer, sizeof(prefix_buffer), "%" PRId64 ",%" PRId64 ",%" PRId64 ",%" PRId64 ",", arrival_ms,
+             batch_id, reporting_timestamp_offset, latency);
+  }
+
+  // Ensure the buffer won't overflow
+  size_t prefix_len = strlen(prefix_buffer);
+  char *target_buffer = is_cell_metric ? csv_cell_line_buffer : csv_line_buffer;
+  size_t buffer_size = is_cell_metric ? sizeof(csv_cell_line_buffer) : sizeof(csv_line_buffer);
+  size_t current_len = strlen(target_buffer);
+
+  if (prefix_len + current_len < buffer_size) {
+    // Temporary buffer to construct the new line
+    char temp_buffer[9000];
+    temp_buffer[0] = '\0';
+    strncat(temp_buffer, prefix_buffer, sizeof(temp_buffer) - 1);
+    strncat(temp_buffer, target_buffer, sizeof(temp_buffer) - strlen(temp_buffer) - 1);
+    strncpy(target_buffer, temp_buffer, buffer_size - 1);
+    target_buffer[buffer_size - 1] = '\0';
+  } else {
+    fprintf(stderr, "CSV line buffer is full, cannot prepend timestamp and offset.\n");
+  }
 }
 
 static void write_csv_header_to_file() {
@@ -309,33 +414,36 @@ static void write_csv_header_to_file() {
   }
 }
 
-static void write_csv_line_to_file(int64_t arrival_ms, int64_t latency, int64_t batch_id) {
-  const char *path = is_cell_metric ? csv_cell_file_path : csv_file_path;
-  bool wrote_header = is_cell_metric ? csv_wrote_cell_header : csv_wrote_header;
-  if (!wrote_header || path == NULL || path[0] == '\0')
-    return;
+static void write_csv_line_to_file() {
+  if (is_cell_metric) {
+    if (csv_wrote_cell_header && csv_cell_file_path[0] != '\0') {
+      FILE *file = fopen(csv_cell_file_path, "a");
+      if (file == NULL) {
+        fprintf(stderr, "Failed to open CSV cell file for appending: %s\n", csv_cell_file_path);
+        return;
+      }
+      fprintf(file, "%s\n", csv_cell_line_buffer);
+      fclose(file);
 
-  FILE *file = fopen(path, "a");
-  if (file == NULL) {
-    fprintf(stderr, "Failed to open CSV file for appending: %s\n", path);
-    return;
+      printf("CSV cell line written to file: %s\n", csv_cell_file_path);
+    }
+    // Reset the line buffer for the next entry
+    memset(csv_cell_line_buffer, 0, sizeof(csv_cell_line_buffer));
+  } else {
+    if (csv_wrote_header && csv_file_path != NULL) {
+      FILE *file = fopen(csv_file_path, "a");
+      if (file == NULL) {
+        fprintf(stderr, "Failed to open CSV file for appending: %s\n", csv_file_path);
+        return;
+      }
+      fprintf(file, "%s\n", csv_line_buffer);
+      fclose(file);
+
+      printf("CSV line written to file: %s\n", csv_file_path);
+    }
+    // Reset the line buffer for the next entry
+    memset(csv_line_buffer, 0, sizeof(csv_line_buffer));
   }
-
-  fprintf(file, "%" PRId64 ",%" PRId64 ",", arrival_ms, batch_id);
-  if (prev_now > 0)
-    fprintf(file, "%" PRId64, arrival_ms - prev_now - period_ms);
-  fprintf(file, ",%" PRId64 ",", latency);
-  csv_write_field(file, current_e2_id_str);
-  if (!is_cell_metric)
-    fprintf(file, "%" PRIu64 ",", current_ue_id);
-
-  csv_schema_t *schema = csv_get_schema(is_cell_metric);
-  for (size_t i = 0; i < schema->count; i++)
-    csv_write_field(file, schema->columns[i].text);
-  fputc('\n', file);
-  fclose(file);
-
-  printf("CSV %sline written to file: %s\n", is_cell_metric ? "cell " : "", path);
 }
 
 static void log_gnb_ue_id(ue_id_e2sm_t ue_id) {
@@ -402,8 +510,9 @@ static void log_real_value(const char *name_str, const label_info_lst_t label_in
                            const meas_record_lst_t meas_record) {
   (void)label_info;
   char value[32] = "";
-  if (!isnan(meas_record.real_val))
+  if (!isnan(meas_record.real_val)) {
     snprintf(value, sizeof(value), "%.2f", meas_record.real_val);
+  }
   csv_set_metric_value(name_str, value);
 
   // printf("%s = %.2f%s%s\n", name_str, meas_record.real_val, *name_unit ? " " : "", name_unit);
@@ -453,20 +562,24 @@ static check_meas_type match_meas_type[END_MEAS_TYPE] = {
 };
 
 static void finish_measurement_row(int64_t collect_start_time, int64_t latency, int64_t batch_id) {
-  if (skip_first_sample) {
-    printf("Skipping first sample to avoid incorrect initial values.\n");
-    csv_clear_metric_values();
-    skip_first_sample = false;
-    return;
-  }
-
   const int64_t arrival_ms = collect_start_time / 1000 + latency;
   if (filter_current_sample) {
     // Log an empty measurement row after the 0
     printf("Logging empty measurement row\n");
     csv_clear_metric_values();
   }
-  write_csv_line_to_file(arrival_ms, latency, batch_id);
+
+  csv_schema_t *schema = csv_get_schema(is_cell_metric);
+  for (size_t i = 0; i < schema->count; i++) {
+    csv_append_string_to_csv_line(schema->columns[i].text);
+  }
+
+  if (!is_cell_metric) {
+    csv_prepend_ue_id();
+  }
+  csv_prepend_e2_node_id();
+  csv_prepend_timestamp(arrival_ms, latency, batch_id);
+  write_csv_line_to_file();
   csv_clear_metric_values();
   filter_current_sample = false;
   ++csv_num_rows;
@@ -491,7 +604,7 @@ static void log_kpm_measurements(kpm_ind_msg_format_1_t const *msg_frm_1, int64_
           info_item.label_info_lst[0].distBinX != NULL) {
         char *name_str = cp_ba_to_str(info_item.meas_type.name);
         factory_metrics_array_t generated_metrics =
-            process_metric_factory(current_e2_id_str, name_str, info_item.label_info_lst, info_item.label_info_lst_len,
+            process_metric_factory(current_e2_node_id, name_str, info_item.label_info_lst, info_item.label_info_lst_len,
                                    data_item.meas_record_lst, rec_idx);
 
         for (size_t k = 0; k < generated_metrics.count; k++) {
@@ -523,8 +636,9 @@ static void log_kpm_measurements(kpm_ind_msg_format_1_t const *msg_frm_1, int64_
 
           match_meas_type[info_item.meas_type.type](info_item.meas_type, label_info, record_item);
 
-          if (data_item.incomplete_flag && *data_item.incomplete_flag == TRUE_ENUM_VALUE)
+          if (data_item.incomplete_flag && *data_item.incomplete_flag == TRUE_ENUM_VALUE) {
             printf("Measurement Record not reliable");
+          }
         }
       }
     }
@@ -540,8 +654,9 @@ static void log_kpm_ind_msg_frm_3(kpm_ind_msg_format_3_t const *msg, int64_t col
     // log UE ID
     ue_id_e2sm_t const ue_id_e2sm = msg->meas_report_per_ue[i].ue_meas_report_lst;
     ue_id_e2sm_e const type = ue_id_e2sm.type;
-    if (type < END_UE_ID_E2SM && log_ue_id_e2sm[type] != NULL)
+    if (type < END_UE_ID_E2SM && log_ue_id_e2sm[type] != NULL) {
       log_ue_id_e2sm[type](ue_id_e2sm);
+    }
 
     // log measurements
     log_kpm_measurements(&msg->meas_report_per_ue[i].ind_msg_format_1, collect_start_time, latency, batch_id, false);
@@ -557,8 +672,9 @@ typedef struct {
 static void begin_csv_format_2_ue(void *context, const ue_id_e2sm_t *ue_id) {
   (void)context;
   is_cell_metric = false;
-  if (ue_id->type < END_UE_ID_E2SM && log_ue_id_e2sm[ue_id->type] != NULL)
+  if (ue_id->type < END_UE_ID_E2SM && log_ue_id_e2sm[ue_id->type] != NULL) {
     log_ue_id_e2sm[ue_id->type](*ue_id);
+  }
 }
 
 static void add_csv_format_2_measurement(void *context, const meas_type_t *meas_type, const label_info_lst_t *label,
@@ -569,8 +685,9 @@ static void add_csv_format_2_measurement(void *context, const meas_type_t *meas_
 
 static void finish_csv_format_2_ue(void *context, bool incomplete) {
   csv_format_2_context_t *csv = context;
-  if (incomplete)
+  if (incomplete) {
     printf("Measurement Record not reliable\n");
+  }
   finish_measurement_row(csv->collect_start_time, csv->latency, csv->batch_id);
 }
 
@@ -597,8 +714,9 @@ static void load_slice_from_env(void) {
   s = getenv("SST");
   if (s && *s) {
     unsigned long v = strtoul(s, &end, 0);
-    if (end != s && errno == 0 && v <= 0xFFul)
+    if (end != s && errno == 0 && v <= 0xFFul) {
       cfg_slicing_sst = (uint8_t)v;
+    }
   }
 
   errno = 0;
@@ -606,8 +724,9 @@ static void load_slice_from_env(void) {
   s = getenv("SD");
   if (s && *s) {
     unsigned long v = strtoul(s, &end, 0);
-    if (end != s && errno == 0)
+    if (end != s && errno == 0) {
       cfg_slicing_sd = ((uint32_t)v) & 0xFFFFFFu;
+    }
   }
 
   printf("[xApp] Using S-NSSAI SST=%u SD=%06x (env SST/SD can override)\n", (unsigned)cfg_slicing_sst,
@@ -622,12 +741,12 @@ static void sm_cb_kpm(sm_ag_if_rd_t const *rd, global_e2_node_id_t const *node_i
   // Reading Indication Message Format 3
   kpm_ind_data_t const *ind = &rd->ind.kpm.ind;
   kpm_ric_ind_hdr_format_1_t const *hdr_frm_1 = &ind->hdr.kpm_ric_ind_hdr_format_1;
-  if (node_id != NULL)
+  if (node_id != NULL) {
     kpm_remember_ues(node_id, &ind->msg);
+  }
 
   lock_guard(&mtx);
-  // Set current E2 node ID globally
-  format_e2_node_id(current_e2_id_str, sizeof(current_e2_id_str), node_id);
+  format_e2_node_id(current_e2_node_id, sizeof(current_e2_node_id), node_id);
   int64_t const now = time_now_us();
   int64_t latency = (now - hdr_frm_1->collectStartTime) / 1000;
 
@@ -655,6 +774,7 @@ static void sm_cb_kpm(sm_ag_if_rd_t const *rd, global_e2_node_id_t const *node_i
     printf("\n%7d KPM ind_msg latency = %" PRId64 " [ms]\n", counter, latency); // xApp <-> E2 Node
 
     if (ind->msg.type == FORMAT_1_INDICATION_MESSAGE) {
+      format_kpm_cell_node_id(current_e2_node_id, sizeof(current_e2_node_id), node_id);
       log_kpm_measurements(&ind->msg.frm_1, hdr_frm_1->collectStartTime, latency, current_batch_id, true);
     } else if (ind->msg.type == FORMAT_2_INDICATION_MESSAGE) {
       log_kpm_ind_msg_frm_2(&ind->msg.frm_2, hdr_frm_1->collectStartTime, latency, current_batch_id);
@@ -804,8 +924,9 @@ int main(int argc, char *argv[]) {
   kpm_unsubscribe_report_styles(&subscriptions);
 
   // Stop the xApp
-  while (try_stop_xapp_api() == false)
+  while (try_stop_xapp_api() == false) {
     usleep(1000);
+  }
 
   free_kpm_meas_unit_hash_table();
   kpm_reset_ue_registry();

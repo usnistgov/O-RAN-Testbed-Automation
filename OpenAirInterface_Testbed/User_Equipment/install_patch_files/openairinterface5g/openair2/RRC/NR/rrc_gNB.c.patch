@@ -1,0 +1,48 @@
+diff --git a/openair2/RRC/NR/rrc_gNB.c b/openair2/RRC/NR/rrc_gNB.c
+index 4b0ffd38a3..faab08fa8f 100644
+--- a/openair2/RRC/NR/rrc_gNB.c
++++ b/openair2/RRC/NR/rrc_gNB.c
+@@ -1672,9 +1672,9 @@ fallback_rrc_setup:
+   return;
+ }
+ 
+-static void nr_rrc_count_ss_sinr_dist(gNB_RRC_INST *rrc, const NR_MeasResults_t *mr)
++static void nr_rrc_count_ss_sinr_dist(gNB_RRC_INST *rrc, const gNB_RRC_UE_t *ue, const NR_MeasResults_t *mr)
+ {
+-  if (rrc == NULL || mr == NULL)
++  if (rrc == NULL || ue == NULL || mr == NULL)
+     return;
+   if (mr->measResultServingMOList.list.count == 0 || mr->measResultServingMOList.list.array == NULL)
+     return;
+@@ -1688,8 +1688,20 @@ static void nr_rrc_count_ss_sinr_dist(gNB_RRC_INST *rrc, const NR_MeasResults_t
+     if (cr->resultsSSB_Cell == NULL || cr->resultsSSB_Cell->sinr == NULL)
+       continue;
+     const long encoded = *cr->resultsSSB_Cell->sinr;
+-    if (encoded >= 0 && encoded < NR_KPM_SS_SINR_NB_LEVELS)
+-      rrc->ss_sinr_cell_dist[encoded]++;
++    if (serv_mo->servCellId < 0 || serv_mo->servCellId >= RRC_MAX_NUM_SERVING_CELLS || encoded < 0
++        || encoded >= NR_KPM_SS_SINR_NB_LEVELS)
++      continue;
++    const ue_serving_cell_t *serving_cell = rrc_get_ue_serving_cell_by_id(ue, (uint8_t)serv_mo->servCellId);
++    nr_rrc_cell_container_t *cell = serving_cell == NULL ? NULL : get_cell_by_cell_id(&rrc->cells, serving_cell->nci);
++    if (cell == NULL) {
++      LOG_W(NR_RRC,
++            "Cannot attribute SS-SINR level %ld for UE %u: serving cell %ld is not registered\n",
++            encoded,
++            ue->rrc_ue_id,
++            serv_mo->servCellId);
++      continue;
++    }
++    cell->ss_sinr_dist[encoded]++;
+   }
+ }
+ 
+@@ -1876,7 +1888,7 @@ static void rrc_gNB_process_MeasurementReport(gNB_RRC_INST *rrc, gNB_RRC_UE_t *U
+   }
+ 
+   if (report_config->choice.reportConfigNR->reportType.present == NR_ReportConfigNR__reportType_PR_periodical) {
+-    nr_rrc_count_ss_sinr_dist(rrc, &measurementReport->criticalExtensions.choice.measurementReport->measResults);
++    nr_rrc_count_ss_sinr_dist(rrc, UE, &measurementReport->criticalExtensions.choice.measurementReport->measResults);
+     process_Periodical_Measurement_Report(UE, measurementReport);
+     return;
+   }

@@ -57,34 +57,49 @@ cp examples/xApp/c/metrics_factory.h ../install_patch_files/flexric/examples/xAp
 cp examples/xApp/c/metrics_factory.c ../install_patch_files/flexric/examples/xApp/c/metrics_factory.c
 cp examples/xApp/c/metrics_factory_test.c ../install_patch_files/flexric/examples/xApp/c/metrics_factory_test.c
 
-git diff examples/xApp/c/monitor/xapp_kpm_moni.c >../install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni.c.patch
-git diff examples/xApp/c/monitor/CMakeLists.txt >../install_patch_files/flexric/examples/xApp/c/monitor/CMakeLists.txt.patch
 cp examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv.c ../install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv.c
 cp examples/xApp/c/monitor/xapp_kpm_moni_write_to_influxdb.c ../install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni_write_to_influxdb.c
 
-git diff examples/xApp/c/kpm_rc/xapp_kpm_rc.c >../install_patch_files/flexric/examples/xApp/c/kpm_rc/xapp_kpm_rc.c.patch
-git diff examples/xApp/c/kpm_rc/CMakeLists.txt >../install_patch_files/flexric/examples/xApp/c/kpm_rc/CMakeLists.txt.patch
-
 # Update the previous versions of the files
-git restore examples/xApp/c/monitor/xapp_kpm_moni.c
-cp examples/xApp/c/monitor/xapp_kpm_moni.c ../install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni.previous.c
-cp examples/xApp/c/monitor/xapp_kpm_moni.c examples/xApp/c/monitor/xapp_kpm_moni.c.previous
-git apply --verbose --ignore-whitespace ../install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni.c.patch
+if git diff --quiet examples/xApp/c/monitor/xapp_kpm_moni.c; then
+    echo "No changes for examples/xApp/c/monitor/xapp_kpm_moni.c; keeping the existing patch"
+else
+    git diff examples/xApp/c/monitor/xapp_kpm_moni.c >../install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni.c.patch
+    git restore examples/xApp/c/monitor/xapp_kpm_moni.c
+    cp examples/xApp/c/monitor/xapp_kpm_moni.c ../install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni.previous.c
+    cp examples/xApp/c/monitor/xapp_kpm_moni.c examples/xApp/c/monitor/xapp_kpm_moni.c.previous
+    git apply --verbose --ignore-whitespace ../install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni.c.patch
+fi
 
-git restore examples/xApp/c/monitor/CMakeLists.txt
-cp examples/xApp/c/monitor/CMakeLists.txt ../install_patch_files/flexric/examples/xApp/c/monitor/CMakeLists.previous.txt
-cp examples/xApp/c/monitor/CMakeLists.txt examples/xApp/c/monitor/CMakeLists.txt.previous
-git apply --verbose --ignore-whitespace ../install_patch_files/flexric/examples/xApp/c/monitor/CMakeLists.txt.patch
+if git diff --quiet examples/xApp/c/monitor/CMakeLists.txt; then
+    echo "No changes for examples/xApp/c/monitor/CMakeLists.txt; keeping the existing patch"
+else
+    git diff examples/xApp/c/monitor/CMakeLists.txt >../install_patch_files/flexric/examples/xApp/c/monitor/CMakeLists.txt.patch
+    git restore examples/xApp/c/monitor/CMakeLists.txt
+    cp examples/xApp/c/monitor/CMakeLists.txt ../install_patch_files/flexric/examples/xApp/c/monitor/CMakeLists.previous.txt
+    cp examples/xApp/c/monitor/CMakeLists.txt examples/xApp/c/monitor/CMakeLists.txt.previous
+    git apply --verbose --ignore-whitespace ../install_patch_files/flexric/examples/xApp/c/monitor/CMakeLists.txt.patch
+fi
 
-git restore examples/xApp/c/kpm_rc/xapp_kpm_rc.c
-cp examples/xApp/c/kpm_rc/xapp_kpm_rc.c ../install_patch_files/flexric/examples/xApp/c/kpm_rc/xapp_kpm_rc.previous.c
-cp examples/xApp/c/kpm_rc/xapp_kpm_rc.c examples/xApp/c/kpm_rc/xapp_kpm_rc.c.previous
-git apply --verbose --ignore-whitespace ../install_patch_files/flexric/examples/xApp/c/kpm_rc/xapp_kpm_rc.c.patch
+if git diff --quiet examples/xApp/c/kpm_rc/xapp_kpm_rc.c; then
+    echo "No changes for examples/xApp/c/kpm_rc/xapp_kpm_rc.c; keeping the existing patch"
+else
+    git diff examples/xApp/c/kpm_rc/xapp_kpm_rc.c >../install_patch_files/flexric/examples/xApp/c/kpm_rc/xapp_kpm_rc.c.patch
+    git restore examples/xApp/c/kpm_rc/xapp_kpm_rc.c
+    cp examples/xApp/c/kpm_rc/xapp_kpm_rc.c ../install_patch_files/flexric/examples/xApp/c/kpm_rc/xapp_kpm_rc.previous.c
+    cp examples/xApp/c/kpm_rc/xapp_kpm_rc.c examples/xApp/c/kpm_rc/xapp_kpm_rc.c.previous
+    git apply --verbose --ignore-whitespace ../install_patch_files/flexric/examples/xApp/c/kpm_rc/xapp_kpm_rc.c.patch
+fi
 
-git restore examples/xApp/c/kpm_rc/CMakeLists.txt
-cp examples/xApp/c/kpm_rc/CMakeLists.txt ../install_patch_files/flexric/examples/xApp/c/kpm_rc/CMakeLists.previous.txt
-cp examples/xApp/c/kpm_rc/CMakeLists.txt examples/xApp/c/kpm_rc/CMakeLists.txt.previous
-git apply --verbose --ignore-whitespace ../install_patch_files/flexric/examples/xApp/c/kpm_rc/CMakeLists.txt.patch
+if git diff --quiet examples/xApp/c/kpm_rc/CMakeLists.txt; then
+    echo "No changes for examples/xApp/c/kpm_rc/CMakeLists.txt; keeping the existing patch"
+else
+    git diff examples/xApp/c/kpm_rc/CMakeLists.txt >../install_patch_files/flexric/examples/xApp/c/kpm_rc/CMakeLists.txt.patch
+    git restore examples/xApp/c/kpm_rc/CMakeLists.txt
+    cp examples/xApp/c/kpm_rc/CMakeLists.txt ../install_patch_files/flexric/examples/xApp/c/kpm_rc/CMakeLists.previous.txt
+    cp examples/xApp/c/kpm_rc/CMakeLists.txt examples/xApp/c/kpm_rc/CMakeLists.txt.previous
+    git apply --verbose --ignore-whitespace ../install_patch_files/flexric/examples/xApp/c/kpm_rc/CMakeLists.txt.patch
+fi
 
 ADDITIONAL_PATCH_FILES=(
     "examples/xApp/c/monitor/xapp_gtp_mac_rlc_pdcp_moni.c"
@@ -106,7 +121,6 @@ for FILE in "${ADDITIONAL_PATCH_FILES[@]}"; do
     mkdir -p "$(dirname "$PATCH_FILE")"
     if git diff --quiet "$FILE"; then
         echo "No changes for $FILE"
-        rm -f "$PATCH_FILE"
         continue
     fi
     git diff "$FILE" >"$PATCH_FILE"

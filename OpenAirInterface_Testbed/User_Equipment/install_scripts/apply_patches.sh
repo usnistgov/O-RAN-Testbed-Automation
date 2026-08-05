@@ -214,9 +214,12 @@ SINR_RRC_PATCH_FILES=(
     openair2/LAYER2/NR_MAC_UE/tests/test_nr_ue_ra_procedures.cpp
     openair2/RRC/NR/MESSAGES/asn1_msg.c
     openair2/RRC/NR/MESSAGES/asn1_msg.h
+    openair2/RRC/NR/nr_rrc_defs.h
+    openair2/RRC/NR/rrc_gNB.c
     openair2/RRC/NR_UE/L2_interface_ue.c
     openair2/RRC/NR_UE/L2_interface_ue.h
     openair2/RRC/NR_UE/rrc_UE.c
+    openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.h
 )
 
 cd openairinterface5g

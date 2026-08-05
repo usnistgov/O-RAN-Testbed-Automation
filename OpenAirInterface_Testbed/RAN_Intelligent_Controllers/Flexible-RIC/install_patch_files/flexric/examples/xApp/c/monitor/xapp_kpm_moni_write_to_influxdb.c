@@ -103,8 +103,9 @@ static void init_kpm_meas_unit_hash_table(void) {
 
 static char *get_meas_unit(const char *name) {
   char *val = assoc_ht_open_value(&ht, &name);
-  if (!val || strcmp(val, "[]") == 0)
+  if (!val || strcmp(val, "[]") == 0) {
     return "";
+  }
   return val;
 }
 
@@ -126,8 +127,7 @@ uint64_t current_ue_id = 0;
 bool filter_current_sample = false;
 int64_t prev_now = 0;
 
-// Buffer to store the current E2 Node ID
-static char current_e2_id_str[256];
+static char current_e2_node_id[256];
 
 static bool sanitize_metric_name(const char *name, char *out, size_t out_size) {
   size_t j = 0;
@@ -255,10 +255,12 @@ static void log_int_value(const char *name_str, const label_info_lst_t label_inf
                           const meas_record_lst_t meas_record) {
   (void)label_info;
   char *name_unit = get_meas_unit(name_str);
-  if (name_unit && strcmp(name_unit, "[]") == 0)
+  if (name_unit && strcmp(name_unit, "[]") == 0) {
     name_unit = "";
-  if (name_unit == NULL)
+  }
+  if (name_unit == NULL) {
     name_unit = "";
+  }
 
   char safe_metric_name[128];
   if (!sanitize_metric_name(name_str, safe_metric_name, sizeof(safe_metric_name))) {
@@ -301,10 +303,12 @@ static void log_real_value(const char *name_str, const label_info_lst_t label_in
                            const meas_record_lst_t meas_record) {
   (void)label_info;
   char *name_unit = get_meas_unit(name_str);
-  if (name_unit && strcmp(name_unit, "[]") == 0)
+  if (name_unit && strcmp(name_unit, "[]") == 0) {
     name_unit = "";
-  if (name_unit == NULL)
+  }
+  if (name_unit == NULL) {
     name_unit = "";
+  }
 
   char safe_metric_name[128];
   if (!sanitize_metric_name(name_str, safe_metric_name, sizeof(safe_metric_name))) {
@@ -391,7 +395,7 @@ static void finish_measurement(int64_t collect_start_time, int64_t latency, int6
     // Send to InfluxDB
     const int64_t arrival_ms = collect_start_time / 1000 + latency;
     // Ensure E2 node ID is valid for InfluxDB protocol
-    const char *safe_e2_node_id = current_e2_id_str[0] == '\0' ? "unknown" : current_e2_id_str;
+    const char *safe_e2_node_id = current_e2_node_id[0] == '\0' ? "unknown" : current_e2_node_id;
     send_metrics_to_influxdb(current_ue_id, safe_e2_node_id, arrival_ms, influx_fields_buffer, latency, batch_id,
                              is_cell_metric);
   }
@@ -420,10 +424,12 @@ static void log_kpm_measurements(kpm_ind_msg_format_1_t const *msg_frm_1, int64_
       if (info_item.label_info_lst_len > 1 && info_item.meas_type.type == NAME_MEAS_TYPE) {
         char *name_str = cp_ba_to_str(info_item.meas_type.name);
         char *name_unit = get_meas_unit(name_str);
-        if (name_unit && strcmp(name_unit, "[]") == 0)
+        if (name_unit && strcmp(name_unit, "[]") == 0) {
           name_unit = "";
-        if (name_unit == NULL)
+        }
+        if (name_unit == NULL) {
           name_unit = "";
+        }
 
         char safe_metric_name[128];
         if (!sanitize_metric_name(name_str, safe_metric_name, sizeof(safe_metric_name))) {
@@ -452,7 +458,7 @@ static void log_kpm_measurements(kpm_ind_msg_format_1_t const *msg_frm_1, int64_
                                  data_item.meas_record_lst, rec_idx);
 
         factory_metrics_array_t generated_metrics =
-            process_metric_factory(current_e2_id_str, name_str, info_item.label_info_lst, info_item.label_info_lst_len,
+            process_metric_factory(current_e2_node_id, name_str, info_item.label_info_lst, info_item.label_info_lst_len,
                                    data_item.meas_record_lst, rec_idx);
 
         for (size_t k = 0; k < generated_metrics.count; k++) {
@@ -466,10 +472,11 @@ static void log_kpm_measurements(kpm_ind_msg_format_1_t const *msg_frm_1, int64_
           char m_influx_field_name[256];
           const char *unit = "";
           if (!strstr(m.name, ".Count")) {
-            if (strstr(m.name, "SINR"))
+            if (strstr(m.name, "SINR")) {
               unit = "_dB";
-            else
+            } else {
               unit = "_dBm";
+            }
           }
           snprintf(m_influx_field_name, sizeof(m_influx_field_name), "%s%s", m_safe_metric_name, unit);
 
@@ -536,8 +543,9 @@ typedef struct {
 static void begin_influx_format_2_ue(void *context, const ue_id_e2sm_t *ue_id) {
   (void)context;
   reset_measurement_buffers();
-  if (ue_id->type < END_UE_ID_E2SM && log_ue_id_e2sm[ue_id->type] != NULL)
+  if (ue_id->type < END_UE_ID_E2SM && log_ue_id_e2sm[ue_id->type] != NULL) {
     log_ue_id_e2sm[ue_id->type](*ue_id);
+  }
 }
 
 static void add_influx_format_2_measurement(void *context, const meas_type_t *meas_type, const label_info_lst_t *label,
@@ -548,8 +556,9 @@ static void add_influx_format_2_measurement(void *context, const meas_type_t *me
 
 static void finish_influx_format_2_ue(void *context, bool incomplete) {
   influx_format_2_context_t *influx = context;
-  if (incomplete)
+  if (incomplete) {
     printf("Measurement Record not reliable\n");
+  }
   finish_measurement(influx->collect_start_time, influx->latency, influx->batch_id, false);
 }
 
@@ -576,8 +585,9 @@ static void load_slice_from_env(void) {
   s = getenv("SST");
   if (s && *s) {
     unsigned long v = strtoul(s, &end, 0);
-    if (end != s && errno == 0 && v <= 0xFFul)
+    if (end != s && errno == 0 && v <= 0xFFul) {
       cfg_slicing_sst = (uint8_t)v;
+    }
   }
 
   errno = 0;
@@ -585,8 +595,9 @@ static void load_slice_from_env(void) {
   s = getenv("SD");
   if (s && *s) {
     unsigned long v = strtoul(s, &end, 0);
-    if (end != s && errno == 0)
+    if (end != s && errno == 0) {
       cfg_slicing_sd = ((uint32_t)v) & 0xFFFFFFu;
+    }
   }
 
   printf("[xApp] Using S-NSSAI SST=%u SD=%06x (env SST/SD can override)\n", (unsigned)cfg_slicing_sst,
@@ -601,8 +612,9 @@ static void sm_cb_kpm(sm_ag_if_rd_t const *rd, global_e2_node_id_t const *node_i
   // Reading Indication Message Format 3
   kpm_ind_data_t const *ind = &rd->ind.kpm.ind;
   kpm_ric_ind_hdr_format_1_t const *hdr_frm_1 = &ind->hdr.kpm_ric_ind_hdr_format_1;
-  if (node_id != NULL)
+  if (node_id != NULL) {
     kpm_remember_ues(node_id, &ind->msg);
+  }
 
   int64_t const now = time_now_us();
   int64_t latency = (now - hdr_frm_1->collectStartTime) / 1000;
@@ -616,8 +628,7 @@ static void sm_cb_kpm(sm_ag_if_rd_t const *rd, global_e2_node_id_t const *node_i
   {
     lock_guard(&mtx);
 
-    // Set current E2 node ID globally
-    format_e2_node_id(current_e2_id_str, sizeof(current_e2_id_str), node_id);
+    format_e2_node_id(current_e2_node_id, sizeof(current_e2_node_id), node_id);
     // Find the nearest batch ID based on collect start time and period
     if (current_batch_id == 0) {
       current_batch_id = 1;
@@ -633,6 +644,7 @@ static void sm_cb_kpm(sm_ag_if_rd_t const *rd, global_e2_node_id_t const *node_i
     printf("\n%7d KPM ind_msg latency = %" PRId64 " [ms]\n", counter, latency); // xApp <-> E2 Node
 
     if (ind->msg.type == FORMAT_1_INDICATION_MESSAGE) {
+      format_kpm_cell_node_id(current_e2_node_id, sizeof(current_e2_node_id), node_id);
       log_kpm_measurements(&ind->msg.frm_1, hdr_frm_1->collectStartTime, latency, current_batch_id, true);
     } else if (ind->msg.type == FORMAT_2_INDICATION_MESSAGE) {
       log_kpm_ind_msg_frm_2(&ind->msg.frm_2, hdr_frm_1->collectStartTime, latency, current_batch_id);
@@ -705,8 +717,9 @@ int main(int argc, char *argv[]) {
   kpm_unsubscribe_report_styles(&subscriptions);
 
   // Stop the xApp
-  while (try_stop_xapp_api() == false)
+  while (try_stop_xapp_api() == false) {
     usleep(1000);
+  }
 
   free_kpm_meas_unit_hash_table();
   kpm_reset_ue_registry();

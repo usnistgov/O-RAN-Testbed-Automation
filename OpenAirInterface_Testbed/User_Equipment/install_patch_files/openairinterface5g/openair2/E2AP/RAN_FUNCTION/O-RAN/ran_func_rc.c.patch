@@ -1,8 +1,8 @@
 diff --git a/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_rc.c b/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_rc.c
-index 8ab3e431af..144d183847 100644
+index 8ab3e431af..8addd19f4b 100644
 --- a/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_rc.c
 +++ b/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_rc.c
-@@ -11,6 +11,11 @@
+@@ -11,6 +11,12 @@
  #include "../../flexric/src/agent/e2_agent_api.h"
  #include "openair2/E2AP/flexric/src/lib/sm/enc/enc_ue_id.h"
  #include "openair2/E2AP/flexric/src/sm/rc_sm/rc_sm_id.h"
@@ -11,10 +11,180 @@ index 8ab3e431af..144d183847 100644
 +#include "openair2/RRC/NR/rrc_gNB_mobility.h"
 +#include "openair2/RRC/NR/rrc_gNB_UE_context.h"
 +#include "openair2/RRC/NR/rrc_cell_management.h"
++#include "openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h"
  
  #include <stdio.h>
  #include <unistd.h>
-@@ -881,6 +886,110 @@ sm_ag_if_ans_t write_ctrl_rc_sm(void const* data)
+@@ -82,6 +88,15 @@ static seq_ev_trg_style_t fill_ev_tr_format_1(const char *ev_style_name)
+   return ev_trig_style;
+ }
+ 
++static seq_ev_trg_style_t fill_ev_tr_format_5(const char *ev_style_name)
++{
++  seq_ev_trg_style_t ev_trig_style = {0};
++  ev_trig_style.style = 5;
++  ev_trig_style.name = cp_str_to_ba(ev_style_name);
++  ev_trig_style.format = FORMAT_5_E2SM_RC_EV_TRIGGER_FORMAT;
++  return ev_trig_style;
++}
++
+ static void fill_rc_ev_trig(ran_func_def_ev_trig_t* ev_trig)
+ {
+   // Sequence of EVENT TRIGGER styles
+@@ -239,6 +254,22 @@ static seq_report_sty_t fill_report_style_1(const char *report_name)
+   return report_style;
+ }
+ 
++static seq_report_sty_t fill_report_style_5(const char *report_name)
++{
++  seq_report_sty_t report_style = {0};
++  report_style.report_type = 5;
++  report_style.name = cp_str_to_ba(report_name);
++  report_style.ev_trig_type = FORMAT_5_E2SM_RC_EV_TRIGGER_FORMAT;
++  report_style.act_frmt_type = FORMAT_1_E2SM_RC_ACT_DEF;
++  report_style.ind_hdr_type = FORMAT_1_E2SM_RC_IND_HDR;
++  report_style.ind_msg_type = FORMAT_4_E2SM_RC_IND_MSG;
++  report_style.sz_seq_ran_param = 1;
++  report_style.ran_param = calloc_or_fail(1, sizeof(*report_style.ran_param));
++  report_style.ran_param[0].id = E2SM_RC_RS5_CELL_CONTEXT_INFORMATION;
++  report_style.ran_param[0].name = cp_str_to_ba("Cell Context Information");
++  return report_style;
++}
++
+ static void fill_rc_report(ran_func_def_report_t* report)
+ {
+   // Sequence of REPORT styles
+@@ -497,6 +528,23 @@ static e2sm_rc_func_def_t fill_rc_ran_def_null(void)
+   return def;
+ }
+ 
++static e2sm_rc_func_def_t fill_rc_ran_def_du(void)
++{
++  e2sm_rc_func_def_t def = {0};
++  def.name = fill_rc_ran_func_name();
++
++  def.ev_trig = calloc_or_fail(1, sizeof(*def.ev_trig));
++  def.ev_trig->sz_seq_ev_trg_style = 1;
++  def.ev_trig->seq_ev_trg_style = calloc_or_fail(1, sizeof(*def.ev_trig->seq_ev_trg_style));
++  def.ev_trig->seq_ev_trg_style[0] = fill_ev_tr_format_5("On Demand");
++
++  def.report = calloc_or_fail(1, sizeof(*def.report));
++  def.report->sz_seq_report_sty = 1;
++  def.report->seq_report_sty = calloc_or_fail(1, sizeof(*def.report->seq_report_sty));
++  def.report->seq_report_sty[0] = fill_report_style_5("Common Information");
++  return def;
++}
++
+ static e2sm_rc_func_def_t fill_rc_ran_def_cucp(void)
+ {
+   e2sm_rc_func_def_t def = {0};
+@@ -549,7 +597,7 @@ static const fp_rc_func_def ran_def_rc[END_NGRAN_NODE_TYPE] =
+   NULL,
+   fill_rc_ran_def_cu,
+   NULL,
+-  fill_rc_ran_def_null, // DU - at the moment, no Service is supported
++  fill_rc_ran_def_du,
+   NULL,
+   fill_rc_ran_def_cucp,
+   fill_rc_ran_def_null, // CU-UP - at the moment, no Service is supported
+@@ -627,6 +675,64 @@ static void send_aper_ric_ind(const uint32_t ric_req_id, rc_ind_data_t* rc_ind_d
+   printf("[E2 AGENT] Event for RIC request ID %d generated\n", ric_req_id);
+ }
+ 
++static rc_ind_data_t *fill_du_common_information(void)
++{
++  if (RC.nrmac == NULL || RC.nrmac[0] == NULL || RC.nrmac[0]->f1_config.setup_req == NULL) {
++    printf("[E2 AGENT] DU cell information is unavailable\n");
++    return NULL;
++  }
++
++  const f1ap_setup_req_t *setup = RC.nrmac[0]->f1_config.setup_req;
++  rc_ind_data_t *ind = calloc_or_fail(1, sizeof(*ind));
++  ind->hdr.format = FORMAT_1_E2SM_RC_IND_HDR;
++  ind->msg.format = FORMAT_4_E2SM_RC_IND_MSG;
++  ind->msg.frmt_4.sz_seq_cell_info_2 = setup->num_cells_available;
++  ind->msg.frmt_4.seq_cell_info_2 = calloc_or_fail(setup->num_cells_available,
++                                                   sizeof(*ind->msg.frmt_4.seq_cell_info_2));
++
++  for (size_t i = 0; i < setup->num_cells_available; ++i) {
++    const f1ap_served_cell_info_t *cell = &setup->cell[i].info;
++    cell_global_id_t *cgi = &ind->msg.frmt_4.seq_cell_info_2[i].cell_global_id;
++    cgi->type = NR_CGI_RAT_TYPE;
++    cgi->nr_cgi.plmn_id.mcc = cell->plmn.mcc;
++    cgi->nr_cgi.plmn_id.mnc = cell->plmn.mnc;
++    cgi->nr_cgi.plmn_id.mnc_digit_len = cell->plmn.mnc_digit_length;
++    cgi->nr_cgi.nr_cell_id = cell->nr_cellid;
++  }
++
++  return ind;
++}
++
++typedef struct {
++  uint32_t ric_req_id;
++  rc_ind_data_t *ind;
++} delayed_rc_ind_t;
++
++static void *send_delayed_rc_ind(void *data)
++{
++  delayed_rc_ind_t *delayed = data;
++  usleep(10000);
++  send_aper_ric_ind(delayed->ric_req_id, delayed->ind);
++  free(delayed);
++  return NULL;
++}
++
++static bool schedule_rc_ind(uint32_t ric_req_id, rc_ind_data_t *ind)
++{
++  delayed_rc_ind_t *delayed = calloc_or_fail(1, sizeof(*delayed));
++  delayed->ric_req_id = ric_req_id;
++  delayed->ind = ind;
++
++  pthread_t thread;
++  const int rc = pthread_create(&thread, NULL, send_delayed_rc_ind, delayed);
++  if (rc != 0) {
++    free(delayed);
++    return false;
++  }
++  assert(pthread_detach(thread) == 0);
++  return true;
++}
++
+ static rc_ind_data_t* fill_ue_id(const gNB_RRC_UE_t *rrc_ue_context, const uint16_t cond_id)
+ {
+   rc_ind_data_t* rc_ind = malloc_or_fail(sizeof(rc_ind_data_t));
+@@ -856,7 +962,30 @@ sm_ag_if_ans_t write_subs_rc_sm(void const* src)
+       if (wr_rc->rc.et.format + 1 != report_style) { // wr_rc->rc.et.format is an enum -> initialization starts from 0
+         AssertError(false, return ans, "[E2 AGENT] Event Trigger Definition Format %d doesn't correspond to REPORT style %d.\n", wr_rc->rc.et.format + 1, report_style);
+       }
+-      get_list_for_report_style(ric_req_id, &wr_rc->rc.et, wr_rc->rc.ad->frmt_1.sz_param_report_def, wr_rc->rc.ad->frmt_1.param_report_def);
++      if (report_style == 5) {
++        AssertError(wr_rc->rc.et.frmt_5.on_demand == TRUE_ON_DEMAND_FRMT_5,
++                    return ans,
++                    "[E2 AGENT] RC REPORT Style 5 requires an on-demand event trigger\n");
++        for (size_t i = 0; i < wr_rc->rc.ad->frmt_1.sz_param_report_def; ++i) {
++          AssertError(wr_rc->rc.ad->frmt_1.param_report_def[i].ran_param_id == E2SM_RC_RS5_CELL_CONTEXT_INFORMATION,
++                      return ans,
++                      "[E2 AGENT] RC REPORT Style 5 RAN Parameter ID %u is unsupported\n",
++                      wr_rc->rc.ad->frmt_1.param_report_def[i].ran_param_id);
++        }
++
++        rc_ind_data_t *ind = fill_du_common_information();
++        AssertError(ind != NULL, return ans, "[E2 AGENT] Failed to create DU Common Information report\n");
++        if (!schedule_rc_ind(ric_req_id, ind)) {
++          free_rc_ind_data(ind);
++          free(ind);
++          AssertError(false, return ans, "[E2 AGENT] Failed to schedule DU Common Information report\n");
++        }
++      } else {
++        get_list_for_report_style(ric_req_id,
++                                  &wr_rc->rc.et,
++                                  wr_rc->rc.ad->frmt_1.sz_param_report_def,
++                                  wr_rc->rc.ad->frmt_1.param_report_def);
++      }
+       break;
+     }
+ 
+@@ -881,6 +1010,110 @@ sm_ag_if_ans_t write_ctrl_rc_sm(void const* data)
  
    assert(ctrl->hdr.format == FORMAT_1_E2SM_RC_CTRL_HDR && "Indication Header Format received not valid");
    assert(ctrl->msg.format == FORMAT_1_E2SM_RC_CTRL_MSG && "Indication Message Format received not valid");
@@ -125,7 +295,7 @@ index 8ab3e431af..144d183847 100644
    assert(ctrl->hdr.frmt_1.ctrl_act_id == 2 && "Currently only QoS flow mapping configuration supported");
  
    printf("QoS flow mapping configuration\n");
-@@ -916,7 +1025,7 @@ sm_ag_if_ans_t write_ctrl_rc_sm(void const* data)
+@@ -916,7 +1149,7 @@ sm_ag_if_ans_t write_ctrl_rc_sm(void const* data)
    assert(dir == 0 || dir == 1);
  
    printf("qfi = %ld, dir %ld \n", qfi, dir);

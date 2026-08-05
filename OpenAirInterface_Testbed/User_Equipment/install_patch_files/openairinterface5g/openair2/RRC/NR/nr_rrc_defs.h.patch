@@ -1,0 +1,44 @@
+diff --git a/openair2/RRC/NR/nr_rrc_defs.h b/openair2/RRC/NR/nr_rrc_defs.h
+index c425bdd380..42da527ed1 100644
+--- a/openair2/RRC/NR/nr_rrc_defs.h
++++ b/openair2/RRC/NR/nr_rrc_defs.h
+@@ -469,6 +469,9 @@ typedef struct {
+   uint16_t tac;
+ } nr_rrc_cell_info_t;
+ 
++// 38.133, Table 10.1.16.1-1: SS-SINR and CSI-SINR measurement report mapping
++#define NR_KPM_SS_SINR_NB_LEVELS 128
++
+ typedef struct nr_rrc_cell_container_t {
+   /* Tree-related data */
+   RB_ENTRY(nr_rrc_cell_container_t) entries;
+@@ -482,6 +485,8 @@ typedef struct nr_rrc_cell_container_t {
+   NR_SIB1_t *sib1;
+   /* MeasurementTimingConfiguration inter-node (TS 38.331) */
+   NR_MeasurementTimingConfiguration_t *mtc;
++  // 28.552, 5.1.1.32: SINR measurement
++  uint32_t ss_sinr_dist[NR_KPM_SS_SINR_NB_LEVELS];
+ } nr_rrc_cell_container_t;
+ 
+ typedef struct nr_rrc_du_container_t {
+@@ -603,9 +608,6 @@ typedef struct sib2_config_s {
+   bool deriveSSB_IndexFromCell;
+ } sib2_config_t;
+ 
+-/* MR.NRScSSSINR histogram dimension (3GPP TS 28.552 §5.1.1.32). */
+-#define NR_KPM_SS_SINR_NB_LEVELS 128 /* SS-SINR report level: 0..127, TS 38.133 Table 10.1.16.1-1 */
+-
+ //---NR---(completely change)---------------------
+ typedef struct gNB_RRC_INST_s {
+ 
+@@ -652,10 +654,6 @@ typedef struct gNB_RRC_INST_s {
+   nr_pdcp_configuration_t pdcp_config;
+   nr_rlc_configuration_t rlc_config;
+ 
+-  /// cell-wide NR serving-cell SS-SINR distribution, see 28.552 5.1.1.32
+-  /// 0-127 SS-SINR report level (TS 38.133)
+-  uint32_t ss_sinr_cell_dist[NR_KPM_SS_SINR_NB_LEVELS];
+-
+   uint64_t rrc_conn_count_sum;
+   uint64_t rrc_conn_count_samples;
+ } gNB_RRC_INST;

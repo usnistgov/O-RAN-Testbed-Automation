@@ -8,6 +8,7 @@
 #include "../../../src/xApp/e42_xapp_api.h"
 
 #define MAX_E2_NODES 16
+#define KPM_CELL_NODE_ATTRIBUTION 1
 
 typedef struct
 {
@@ -46,6 +47,8 @@ typedef struct
 } factory_metrics_array_t;
 
 void format_e2_node_id(char *dst, size_t dst_len, const global_e2_node_id_t *node_id);
+void format_kpm_cell_node_id(char *dst, size_t dst_len, const global_e2_node_id_t *node_id);
+void kpm_set_e2_node_topology(const e2_node_arr_xapp_t *nodes);
 
 static inline double ss_sinr_level_representative_db(uint32_t level) {
   // 38.133, Table 10.1.16.1-1: SS-SINR and CSI-SINR measurement report mapping
@@ -75,6 +78,7 @@ typedef struct {
   uint8_t sst;
   uint32_t sd;
   uint32_t ue_wait_ms;
+  uint32_t report_style_mask;
 } kpm_subscription_config_t;
 
 typedef struct {

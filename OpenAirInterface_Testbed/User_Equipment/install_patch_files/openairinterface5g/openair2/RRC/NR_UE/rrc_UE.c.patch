@@ -1,5 +1,5 @@
 diff --git a/openair2/RRC/NR_UE/rrc_UE.c b/openair2/RRC/NR_UE/rrc_UE.c
-index bbfd01e48d..60688920bd 100644
+index bbfd01e48d..93514b8c98 100644
 --- a/openair2/RRC/NR_UE/rrc_UE.c
 +++ b/openair2/RRC/NR_UE/rrc_UE.c
 @@ -53,6 +53,8 @@
@@ -27,7 +27,22 @@ index bbfd01e48d..60688920bd 100644
  }
  
  static void nr_rrc_process_reconfigurationWithSync(NR_UE_RRC_INST_t *rrc,
-@@ -1491,6 +1496,41 @@ static void handle_measid_addmod(rrcPerNB_t *rrc,
+@@ -1223,10 +1228,14 @@ static void handle_meas_reporting_remove(rrcPerNB_t *rrc, int id, NR_UE_Timers_C
+   l3_measurements_t *l3_measurements = &rrc->l3_measurements;
+   nr_timer_stop(&l3_measurements->TA2);
+   nr_timer_stop(&l3_measurements->periodic_report_timer);
++  nr_timer_stop(&l3_measurements->periodical_report_timer);
+ 
+   l3_measurements->reports_sent = 0;
+   l3_measurements->max_reports = 0;
+   l3_measurements->report_interval_ms = 0;
++  l3_measurements->periodical_reports_sent = 0;
++  l3_measurements->periodical_max_reports = 0;
++  l3_measurements->periodical_report_interval_ms = 0;
+ }
+ 
+ static void handle_measobj_remove(rrcPerNB_t *rrc, struct NR_MeasObjectToRemoveList *remove_list, NR_UE_Timers_Constants_t *timers)
+@@ -1491,6 +1500,41 @@ static void handle_measid_addmod(rrcPerNB_t *rrc,
    }
  }
  
@@ -46,22 +61,22 @@ index bbfd01e48d..60688920bd 100644
 +
 +    const NR_PeriodicalReportConfig_t *periodical = report_nr->reportType.choice.periodical;
 +    l3_measurements_t *l3_measurements = &rrc->l3_measurements;
-+    l3_measurements->trigger_to_measid = meas_id->measId;
-+    l3_measurements->trigger_quantity = NR_MeasTriggerQuantityOffset_PR_rsrp;
-+    l3_measurements->rs_type = periodical->rsType;
-+    l3_measurements->reports_sent = 0;
-+    l3_measurements->max_reports =
++    l3_measurements->periodical_trigger_to_measid = meas_id->measId;
++    l3_measurements->periodical_rs_type = periodical->rsType;
++    l3_measurements->periodical_reports_sent = 0;
++    l3_measurements->periodical_max_reports =
 +        periodical->reportAmount == NR_PeriodicalReportConfig__reportAmount_infinity
 +            ? INT_MAX
 +            : (1 << periodical->reportAmount);
-+    l3_measurements->report_interval_ms = get_measurement_report_interval_ms(periodical->reportInterval);
-+    l3_measurements->neighbor_cell_valid = false;
-+    nr_timer_setup(&l3_measurements->periodic_report_timer, l3_measurements->report_interval_ms, 10);
-+    nr_timer_start(&l3_measurements->periodic_report_timer);
++    l3_measurements->periodical_report_interval_ms = get_measurement_report_interval_ms(periodical->reportInterval);
++    nr_timer_setup(&l3_measurements->periodical_report_timer,
++                   l3_measurements->periodical_report_interval_ms,
++                   10);
++    nr_timer_start(&l3_measurements->periodical_report_timer);
 +    LOG_I(NR_RRC,
 +          "Started periodical measurement reporting for measId %ld every %ld ms\n",
 +          meas_id->measId,
-+          l3_measurements->report_interval_ms);
++          l3_measurements->periodical_report_interval_ms);
 +    return;
 +  }
 +}
@@ -69,7 +84,7 @@ index bbfd01e48d..60688920bd 100644
  static void nr_rrc_ue_process_measConfig(rrcPerNB_t *rrc,
                                           NR_MeasConfig_t *const measConfig,
                                           NR_UE_Timers_Constants_t *timers,
-@@ -1518,6 +1558,8 @@ static void nr_rrc_ue_process_measConfig(rrcPerNB_t *rrc,
+@@ -1518,6 +1562,8 @@ static void nr_rrc_ue_process_measConfig(rrcPerNB_t *rrc,
    if (measConfig->measIdToAddModList)
      handle_measid_addmod(rrc, measConfig->measIdToAddModList, timers, neighbor_cells, num_neighbors);
  
@@ -78,7 +93,7 @@ index bbfd01e48d..60688920bd 100644
    LOG_W(NR_RRC, "Measurement gaps not yet supported!\n");
  
    if (measConfig->s_MeasureConfig) {
-@@ -2845,20 +2887,36 @@ static void apply_ema(val_init_t *vi_rsrp_dBm, float filter_coeff_rsrp, int rsrp
+@@ -2845,20 +2891,36 @@ static void apply_ema(val_init_t *vi_rsrp_dBm, float filter_coeff_rsrp, int rsrp
    *meas_init = true;
  }
  
@@ -118,7 +133,7 @@ index bbfd01e48d..60688920bd 100644
  }
  
  static long get_measurement_report_interval_ms(NR_ReportInterval_t interval)
-@@ -3187,13 +3245,19 @@ static void nr_rrc_handle_meas_indication(NR_UE_RRC_INST_t *rrc, NRRrcMacMeasDat
+@@ -3187,13 +3249,19 @@ static void nr_rrc_handle_meas_indication(NR_UE_RRC_INST_t *rrc, NRRrcMacMeasDat
      nr_ue_meas_reset(meas_cell, meas_ind->is_csi_meas);
    } else {
      LOG_D(NR_RRC,
@@ -142,7 +157,17 @@ index bbfd01e48d..60688920bd 100644
      nr_ue_check_meas_report(rrc, meas_ind->gnb_index);
    }
  }
-@@ -3760,16 +3824,25 @@ void rrc_ue_generate_measurementReport(rrcPerNB_t *rrc, instance_t ue_id)
+@@ -3756,21 +3824,35 @@ void nr_rrc_set_mac_queue(instance_t instance, notifiedFIFO_t *mac_input_nf)
+   rrc->mac_input_nf = mac_input_nf;
+ }
+ 
+-void rrc_ue_generate_measurementReport(rrcPerNB_t *rrc, instance_t ue_id)
++void rrc_ue_generate_measurementReport(rrcPerNB_t *rrc,
++                                       instance_t ue_id,
++                                       long meas_id,
++                                       long trigger_quantity,
++                                       long rs_type,
++                                       bool neighbor_cell_valid)
  {
    uint8_t buffer[NR_RRC_BUF_SIZE];
    l3_measurements_t *l3m = &rrc->l3_measurements;
@@ -151,12 +176,15 @@ index bbfd01e48d..60688920bd 100644
 -  int neighbor_rsrp_dBm =
 -      l3m->rs_type == NR_NR_RS_Type_ssb ? l3m->neighboring_cell[0].ss_rsrp_dBm.val : l3m->neighboring_cell[0].csi_rsrp_dBm.val;
 -  int neighbor_rsrp_index = get_rsrp_index(neighbor_rsrp_dBm);
+-  uint8_t size = do_nrMeasurementReport_SA(l3m->trigger_to_measid,
+-                                           l3m->trigger_quantity,
+-                                           l3m->rs_type,
 +  const val_init_t *serving_rsrp =
-+      l3m->rs_type == NR_NR_RS_Type_ssb ? &l3m->serving_cell.ss_rsrp_dBm : &l3m->serving_cell.csi_rsrp_dBm;
++      rs_type == NR_NR_RS_Type_ssb ? &l3m->serving_cell.ss_rsrp_dBm : &l3m->serving_cell.csi_rsrp_dBm;
 +  const val_init_t *serving_sinr =
-+      l3m->rs_type == NR_NR_RS_Type_ssb ? &l3m->serving_cell.ss_sinr_index : &l3m->serving_cell.csi_sinr_index;
++      rs_type == NR_NR_RS_Type_ssb ? &l3m->serving_cell.ss_sinr_index : &l3m->serving_cell.csi_sinr_index;
 +  const val_init_t *neighbor_rsrp =
-+      l3m->rs_type == NR_NR_RS_Type_ssb ? &l3m->neighboring_cell[0].ss_rsrp_dBm : &l3m->neighboring_cell[0].csi_rsrp_dBm;
++      rs_type == NR_NR_RS_Type_ssb ? &l3m->neighboring_cell[0].ss_rsrp_dBm : &l3m->neighboring_cell[0].csi_rsrp_dBm;
 +  const int rsrp_index = serving_rsrp->init ? get_rsrp_index(serving_rsrp->val) : -1;
 +  const int sinr_index = serving_sinr->init ? serving_sinr->val : -1;
 +  const int neighbor_rsrp_index = neighbor_rsrp->init ? get_rsrp_index(neighbor_rsrp->val) : -1;
@@ -164,12 +192,14 @@ index bbfd01e48d..60688920bd 100644
 +    LOG_D(NR_RRC, "Skipping MeasurementReport: serving-cell measurements are not initialized\n");
 +    return;
 +  }
-   uint8_t size = do_nrMeasurementReport_SA(l3m->trigger_to_measid,
-                                            l3m->trigger_quantity,
-                                            l3m->rs_type,
++  uint8_t size = do_nrMeasurementReport_SA(meas_id,
++                                           trigger_quantity,
++                                           rs_type,
                                             l3m->serving_cell.Nid_cell,
                                             rsrp_index,
+-                                           l3m->neighbor_cell_valid,
 +                                           sinr_index,
-                                            l3m->neighbor_cell_valid,
++                                           neighbor_cell_valid,
                                             l3m->neighboring_cell[0].Nid_cell,
                                             neighbor_rsrp_index,
+                                            buffer,

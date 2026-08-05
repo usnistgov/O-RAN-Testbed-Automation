@@ -218,6 +218,9 @@ SINR_RRC_PATCH_FILES=(
     openair2/RRC/NR/rrc_gNB.c
     openair2/RRC/NR_UE/L2_interface_ue.c
     openair2/RRC/NR_UE/L2_interface_ue.h
+    openair2/RRC/NR_UE/rrc_defs.h
+    openair2/RRC/NR_UE/rrc_proto.h
+    openair2/RRC/NR_UE/rrc_timers_and_constants.c
     openair2/RRC/NR_UE/rrc_UE.c
     openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.h
 )

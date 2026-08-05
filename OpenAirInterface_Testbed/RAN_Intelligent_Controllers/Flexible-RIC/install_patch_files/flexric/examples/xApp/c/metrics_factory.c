@@ -535,7 +535,8 @@ void format_e2_node_id(char *dst, size_t dst_len, const global_e2_node_id_t *nod
     char cu[128];
     format_single_e2_node_id(du, sizeof(du), kpm_callback_ue_du_node);
     format_single_e2_node_id(cu, sizeof(cu), kpm_callback_ue_cu_node);
-    snprintf(dst, dst_len, "%s+%s", du, cu);
+    // snprintf(dst, dst_len, "%s+%s", du, cu); // Optionally, combine the ID like "DU:1+CU:3584"
+    snprintf(dst, dst_len, "%s", du); // Don't modify the E2 node ID
     return;
   }
   format_single_e2_node_id(dst, dst_len, node_id);

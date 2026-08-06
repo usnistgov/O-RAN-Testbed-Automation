@@ -212,6 +212,7 @@ done
 cat >>"$OUTPUT" <<EOF
 
 import ctypes
+import json
 import signal
 import sys
 import numpy as np
@@ -229,8 +230,6 @@ from gnuradio import blocks
 from gnuradio import gr
 from gnuradio import qtgui
 from gnuradio import zeromq
-from gnuradio.qtgui import Range
-from gnuradio.qtgui import RangeWidget
 
 CELL_CONFIGS = [
 EOF
@@ -259,12 +258,17 @@ SAMPLE_RATE_HZ = __SAMPLE_RATE_HZ__
 SLOW_DOWN_RATIO = __SLOW_DOWN_RATIO__
 PRIMARY_CELL_PATH_LOSS_DB = 0
 OTHER_CELL_PATH_LOSS_DB = 12
+PATH_LOSS_WARNING_DB = 12.0
+PATH_LOSS_RED_DB = 50.0
+PATH_LOSS_MAX_DB = 100.0
 ZMQ_TIMEOUT = 100
 ZMQ_HIGH_WATER_MARK = -1
 DL_AWGN_SNR_DB = 30.0
 UL_AWGN_SNR_DB = 30.0
+AWGN_SNR_MIN_DB = 1.0
+AWGN_SNR_MAX_DB = 100.0
 PATH_ENABLED = True
-PATH_LOSS_COUPLED = True
+PATH_LOSS_LINKED = True
 DL_AWGN_ENABLED = True
 UL_AWGN_ENABLED = True
 
@@ -281,7 +285,11 @@ class awgn_cc(gr.sync_block):
         self.rng = np.random.default_rng()
 
     def set_snr_db(self, snr_db):
-        self.snr_linear = 10.0 ** (float(snr_db) / 10.0)
+        snr_db = float(snr_db)
+        if not np.isfinite(snr_db):
+            return
+        self.snr_db = min(max(snr_db, AWGN_SNR_MIN_DB), AWGN_SNR_MAX_DB)
+        self.snr_linear = 10.0 ** (self.snr_db / 10.0)
 
     def set_enabled(self, enabled):
         self.enabled = bool(enabled)
@@ -299,7 +307,7 @@ class awgn_cc(gr.sync_block):
             return sample_count
 
         signal_power = float(np.vdot(input_samples, input_samples).real) / sample_count
-        if signal_power == 0.0:
+        if signal_power <= 0.0 or not np.isfinite(signal_power):
             np.copyto(output_samples, input_samples)
             return sample_count
 
@@ -309,44 +317,25 @@ class awgn_cc(gr.sync_block):
         np.add(input_samples, noise, out=output_samples)
         return sample_count
 
-
-def make_range_widget(range_object, callback, label):
-    try:
-        return RangeWidget(
-            range_object,
-            callback,
-            label,
-            "counter_slider",
-            float,
-            QtCore.Qt.Horizontal,
-        )
-    except TypeError as error: # GNU Radio 3.8/Ubuntu 20.04 support
-        error_message = str(error)
-        if "positional argument" not in error_message or "were given" not in error_message:
-            raise
-        return RangeWidget(
-            range_object,
-            callback,
-            label,
-            "counter_slider",
-        )
-
 class SliderSpinBox(Qt.QWidget):
     valueChanged = QtCore.pyqtSignal(float)
 
     def __init__(self, minimum, maximum, step, value):
         Qt.QWidget.__init__(self)
         self.minimum = float(minimum)
+        self.maximum = float(maximum)
         self.step = float(step)
 
         layout = Qt.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         self.slider = Qt.QSlider(QtCore.Qt.Horizontal)
         self.slider.setRange(0, int(round((maximum - minimum) / step)))
+        self.slider.setTracking(False)
         self.spin_box = Qt.QDoubleSpinBox()
         self.spin_box.setRange(minimum, maximum)
         self.spin_box.setSingleStep(step)
         self.spin_box.setDecimals(1)
+        self.spin_box.setKeyboardTracking(False)
         self.spin_box.setMinimumWidth(90)
         layout.addWidget(self.slider, 1)
         layout.addWidget(self.spin_box)
@@ -370,6 +359,9 @@ class SliderSpinBox(Qt.QWidget):
 
     def set_value(self, value, emit=True):
         value = float(value)
+        if not np.isfinite(value):
+            return
+        value = min(max(value, self.minimum), self.maximum)
         changed = abs(self.spin_box.value() - value) > 1e-9
         self.slider.blockSignals(True)
         self.spin_box.blockSignals(True)
@@ -390,10 +382,12 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
             gr.top_block.__init__(self, "ZeroMQ Channel Emulator")
         Qt.QWidget.__init__(self)
         self.setWindowTitle("ZeroMQ Channel Emulator")
-        self.resize(500, 560)
+        self.resize(540, 600)
         qtgui.util.check_set_qss()
 
         self.top_layout = Qt.QVBoxLayout()
+        self.top_layout.setContentsMargins(6, 6, 6, 6)
+        self.top_layout.setSpacing(4)
         self.setLayout(self.top_layout)
         self.settings = Qt.QSettings("GNU Radio", "multi_ue_scenario")
         try:
@@ -414,7 +408,8 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
         self.dl_path_loss_db = self.path_loss_db
         self.ul_path_loss_db = {}
         self.path_enabled = {}
-        self.path_loss_coupled = {}
+        self.primary_path = {}
+        self.path_loss_linked = {}
         self.dl_awgn_enabled = {}
         self.dl_awgn_snr_db_by_path = {}
         self.ul_awgn_enabled = {}
@@ -443,12 +438,13 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
                 self.dl_path_loss_db[path_key] = path_loss_db
                 self.ul_path_loss_db[path_key] = path_loss_db
                 self.path_enabled[path_key] = PATH_ENABLED
-                self.path_loss_coupled[path_key] = PATH_LOSS_COUPLED
+                self.primary_path[path_key] = is_mapped_pair
+                self.path_loss_linked[path_key] = PATH_LOSS_LINKED
                 self.dl_awgn_enabled[path_key] = DL_AWGN_ENABLED
                 self.dl_awgn_snr_db_by_path[path_key] = DL_AWGN_SNR_DB
                 self.default_link_settings[path_key] = {
                     "path_enabled": PATH_ENABLED,
-                    "path_loss_coupled": PATH_LOSS_COUPLED,
+                    "path_loss_linked": PATH_LOSS_LINKED,
                     "dl_path_loss_db": path_loss_db,
                     "ul_path_loss_db": path_loss_db,
                     "dl_awgn_enabled": DL_AWGN_ENABLED,
@@ -467,13 +463,16 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
         self.dl_gains = {}
         self.ul_gains = {}
         self.path_enabled_checkboxes = {}
-        self.path_loss_coupled_checkboxes = {}
+        self.path_loss_linked_checkboxes = {}
         self.dl_path_loss_controls = {}
         self.ul_path_loss_controls = {}
         self.dl_awgn_enabled_checkboxes = {}
         self.dl_awgn_snr_controls = {}
         self.ul_awgn_enabled_checkboxes = {}
         self.ul_awgn_snr_controls = {}
+        self.topology_items = {}
+        self.cell_scroll_areas = {}
+        self.link_groups = {}
 
         print(
             f"ZeroMQ Channel Emulator sample_rate={SAMPLE_RATE_HZ} slow_down_ratio={SLOW_DOWN_RATIO} cells={len(CELL_CONFIGS)} ues={len(UE_CONFIGS)}",
@@ -600,27 +599,115 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
         self.build_interface()
 
     def build_interface(self):
-        general_group = Qt.QGroupBox("ZeroMQ Channel Emulator Settings")
-        general_layout = Qt.QVBoxLayout(general_group)
-        self.slow_down_ratio_range = Range(1, 20, 0.5, self.slow_down_ratio, 200)
-        self.slow_down_ratio_widget = make_range_widget(
-            self.slow_down_ratio_range,
-            self.set_slow_down_ratio,
-            "Time Slow Down Ratio",
+        self.topology_table = Qt.QTableWidget(
+            len(CELL_CONFIGS), len(UE_CONFIGS) + 1
         )
-        general_layout.addWidget(self.slow_down_ratio_widget)
-        self.top_layout.addWidget(general_group)
+        topology_font = self.topology_table.font()
+        topology_font.setPointSize(8)
+        self.topology_table.setFont(topology_font)
+        self.topology_table.horizontalHeader().setFont(topology_font)
+        self.topology_table.setHorizontalHeaderLabels(
+            ["Cell"] + [f"UE {ue['number']}" for ue in UE_CONFIGS]
+        )
+        for column in range(len(UE_CONFIGS) + 1):
+            header_item = self.topology_table.horizontalHeaderItem(column)
+            header_item.setFont(topology_font)
+        self.topology_table.verticalHeader().setVisible(False)
+        self.topology_table.setEditTriggers(Qt.QAbstractItemView.NoEditTriggers)
+        self.topology_table.setSelectionMode(Qt.QAbstractItemView.NoSelection)
+        self.topology_table.cellClicked.connect(self.show_topology_item)
+        self.topology_table.horizontalHeader().setSectionsClickable(True)
+        self.topology_table.horizontalHeader().sectionClicked.connect(
+            self.show_topology_ue
+        )
+        self.topology_table.setWordWrap(True)
+        self.topology_table.setTextElideMode(QtCore.Qt.ElideNone)
+        self.topology_table.horizontalHeader().setSectionResizeMode(
+            Qt.QHeaderView.Fixed
+        )
+        self.topology_table.verticalHeader().setSectionResizeMode(
+            Qt.QHeaderView.Fixed
+        )
+        self.topology_table.horizontalHeader().setFixedHeight(24)
+        self.topology_table.setColumnWidth(0, 72)
+        for column in range(1, len(UE_CONFIGS) + 1):
+            self.topology_table.setColumnWidth(column, 105)
+        for row, cell in enumerate(CELL_CONFIGS):
+            self.topology_table.setRowHeight(row, 58)
+            cell_item = Qt.QTableWidgetItem(f"Cell {cell['number']}")
+            cell_item.setTextAlignment(QtCore.Qt.AlignCenter)
+            cell_font = cell_item.font()
+            cell_font.setPointSize(8)
+            cell_item.setFont(cell_font)
+            cell_item.setBackground(Qt.QColor(240, 240, 240))
+            self.topology_table.setItem(row, 0, cell_item)
+        visible_ue_columns = min(len(UE_CONFIGS), 4)
+        table_width = 74 + visible_ue_columns * 105
+        if len(UE_CONFIGS) > visible_ue_columns:
+            table_width += 18
+        self.topology_table.setFixedWidth(table_width)
+        self.topology_table.setFixedHeight(
+            min(224, 26 + len(CELL_CONFIGS) * 58)
+        )
+        topology_section = Qt.QFrame()
+        topology_section.setAutoFillBackground(True)
+        topology_palette = topology_section.palette()
+        topology_palette.setColor(Qt.QPalette.Window, Qt.QColor(255, 255, 255))
+        topology_section.setPalette(topology_palette)
+        topology_layout = Qt.QHBoxLayout(topology_section)
+        topology_layout.setContentsMargins(0, 4, 0, 4)
+        topology_layout.addStretch(1)
+        topology_layout.addWidget(self.topology_table)
+        topology_layout.addStretch(1)
+        self.top_layout.addWidget(topology_section)
+
+        general_layout = Qt.QHBoxLayout()
+        general_layout.setContentsMargins(0, 0, 0, 0)
+        self.slow_down_ratio_control = SliderSpinBox(
+            1, 20, 0.5, self.slow_down_ratio
+        )
+        self.slow_down_ratio_control.valueChanged.connect(self.set_slow_down_ratio)
+        general_layout.addWidget(Qt.QLabel("Time slowdown ratio"))
+        general_layout.addWidget(self.slow_down_ratio_control, 1)
+        self.top_layout.addLayout(general_layout)
 
         self.cell_tabs = Qt.QTabWidget()
         self.top_layout.addWidget(self.cell_tabs, 1)
         for cell in CELL_CONFIGS:
             self.build_cell_tab(cell["number"])
 
+        action_layout = Qt.QHBoxLayout()
+        action_layout.setContentsMargins(0, 0, 0, 0)
+        save_button = Qt.QPushButton("Save")
+        save_button.clicked.connect(lambda checked=False: self.save_scenario())
+        action_layout.addWidget(save_button, 1)
+
+        load_button = Qt.QPushButton("Load")
+        load_button.clicked.connect(lambda checked=False: self.load_scenario())
+        action_layout.addWidget(load_button, 1)
+
+        reset_all_button = Qt.QPushButton("Reset All")
+        reset_all_button.clicked.connect(lambda checked=False: self.reset_all())
+        action_layout.addWidget(reset_all_button, 1)
+
+        self.reset_cell_button = Qt.QPushButton()
+        self.reset_cell_button.clicked.connect(
+            lambda checked=False: self.reset_current_cell()
+        )
+        action_layout.addWidget(self.reset_cell_button, 2)
+        self.top_layout.addLayout(action_layout)
+
+        self.cell_tabs.currentChanged.connect(self.update_reset_cell_button)
+        self.update_reset_cell_button(self.cell_tabs.currentIndex())
+        self.update_topology()
+
     def build_cell_tab(self, cell_number):
         tab = Qt.QWidget()
         tab_layout = Qt.QVBoxLayout(tab)
         scroll_area = Qt.QScrollArea()
         scroll_area.setWidgetResizable(True)
+        scroll_area.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.cell_scroll_areas[cell_number] = scroll_area
         scroll_content = Qt.QWidget()
         controls_layout = Qt.QVBoxLayout(scroll_content)
 
@@ -630,6 +717,9 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
         ul_awgn_enabled = Qt.QCheckBox(
             "Enable uplink Additive White Gaussian Noise (AWGN)"
         )
+        ul_awgn_font = ul_awgn_enabled.font()
+        ul_awgn_font.setPointSize(9)
+        ul_awgn_enabled.setFont(ul_awgn_font)
         ul_awgn_enabled.setChecked(self.ul_awgn_enabled[cell_number])
         ul_awgn_enabled.toggled.connect(
             lambda enabled, cell_number=cell_number: self.set_cell_ul_awgn_enabled(
@@ -640,7 +730,10 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
         receiver_layout.addWidget(ul_awgn_enabled, 0, 0, 1, 2)
 
         ul_awgn_snr_control = SliderSpinBox(
-            -20, 100, 0.1, self.ul_awgn_snr_db_by_cell[cell_number]
+            AWGN_SNR_MIN_DB,
+            AWGN_SNR_MAX_DB,
+            0.1,
+            self.ul_awgn_snr_db_by_cell[cell_number],
         )
         ul_awgn_snr_control.setEnabled(self.ul_awgn_enabled[cell_number])
         ul_awgn_snr_control.valueChanged.connect(
@@ -657,6 +750,7 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
             ue_number = ue["number"]
             path_key = (cell_number, ue_number)
             link_group = Qt.QGroupBox(f"UE {ue_number}")
+            self.link_groups[path_key] = link_group
             link_layout = Qt.QGridLayout(link_group)
             link_layout.setColumnStretch(1, 1)
 
@@ -668,20 +762,20 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
                 )
             )
             self.path_enabled_checkboxes[path_key] = path_enabled
-            link_layout.addWidget(path_enabled, 0, 0)
+            link_layout.addWidget(path_enabled, 0, 0, 1, 2)
 
-            path_loss_coupled = Qt.QCheckBox("Link uplink and downlink path loss")
-            path_loss_coupled.setChecked(self.path_loss_coupled[path_key])
-            path_loss_coupled.toggled.connect(
-                lambda coupled, cell_number=cell_number, ue_number=ue_number: self.set_path_loss_coupled(
-                    cell_number, ue_number, coupled
+            path_loss_linked = Qt.QCheckBox("Link uplink and downlink path loss")
+            path_loss_linked.setChecked(self.path_loss_linked[path_key])
+            path_loss_linked.toggled.connect(
+                lambda linked, cell_number=cell_number, ue_number=ue_number: self.set_path_loss_linked(
+                    cell_number, ue_number, linked
                 )
             )
-            self.path_loss_coupled_checkboxes[path_key] = path_loss_coupled
-            link_layout.addWidget(path_loss_coupled, 0, 1)
+            self.path_loss_linked_checkboxes[path_key] = path_loss_linked
+            link_layout.addWidget(path_loss_linked, 1, 0, 1, 2)
 
             dl_path_loss_control = SliderSpinBox(
-                0, 100, 0.1, self.dl_path_loss_db[path_key]
+                0, PATH_LOSS_MAX_DB, 0.1, self.dl_path_loss_db[path_key]
             )
             dl_path_loss_control.valueChanged.connect(
                 lambda value, cell_number=cell_number, ue_number=ue_number: self.set_dl_path_loss(
@@ -689,11 +783,11 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
                 )
             )
             self.dl_path_loss_controls[path_key] = dl_path_loss_control
-            link_layout.addWidget(Qt.QLabel("Downlink path loss [dB]"), 1, 0)
-            link_layout.addWidget(dl_path_loss_control, 1, 1)
+            link_layout.addWidget(Qt.QLabel("Downlink path loss [dB]"), 2, 0)
+            link_layout.addWidget(dl_path_loss_control, 2, 1)
 
             ul_path_loss_control = SliderSpinBox(
-                0, 100, 0.1, self.ul_path_loss_db[path_key]
+                0, PATH_LOSS_MAX_DB, 0.1, self.ul_path_loss_db[path_key]
             )
             ul_path_loss_control.valueChanged.connect(
                 lambda value, cell_number=cell_number, ue_number=ue_number: self.set_ul_path_loss(
@@ -701,8 +795,8 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
                 )
             )
             self.ul_path_loss_controls[path_key] = ul_path_loss_control
-            link_layout.addWidget(Qt.QLabel("Uplink path loss [dB]"), 2, 0)
-            link_layout.addWidget(ul_path_loss_control, 2, 1)
+            link_layout.addWidget(Qt.QLabel("Uplink path loss [dB]"), 3, 0)
+            link_layout.addWidget(ul_path_loss_control, 3, 1)
 
             dl_awgn_enabled = Qt.QCheckBox("Enable downlink AWGN")
             dl_awgn_enabled.setChecked(self.dl_awgn_enabled[path_key])
@@ -712,10 +806,13 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
                 )
             )
             self.dl_awgn_enabled_checkboxes[path_key] = dl_awgn_enabled
-            link_layout.addWidget(dl_awgn_enabled, 3, 0, 1, 2)
+            link_layout.addWidget(dl_awgn_enabled, 4, 0, 1, 2)
 
             dl_awgn_snr_control = SliderSpinBox(
-                -20, 100, 0.1, self.dl_awgn_snr_db_by_path[path_key]
+                AWGN_SNR_MIN_DB,
+                AWGN_SNR_MAX_DB,
+                0.1,
+                self.dl_awgn_snr_db_by_path[path_key],
             )
             dl_awgn_snr_control.setEnabled(self.dl_awgn_enabled[path_key])
             dl_awgn_snr_control.valueChanged.connect(
@@ -724,23 +821,294 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
                 )
             )
             self.dl_awgn_snr_controls[path_key] = dl_awgn_snr_control
-            link_layout.addWidget(Qt.QLabel("Downlink AWGN SNR [dB]"), 4, 0)
-            link_layout.addWidget(dl_awgn_snr_control, 4, 1)
+            link_layout.addWidget(Qt.QLabel("Downlink AWGN SNR [dB]"), 5, 0)
+            link_layout.addWidget(dl_awgn_snr_control, 5, 1)
             controls_layout.addWidget(link_group)
 
         controls_layout.addStretch(1)
         scroll_area.setWidget(scroll_content)
         tab_layout.addWidget(scroll_area, 1)
-
-        reset_button = Qt.QPushButton(f"Reset Cell {cell_number} to Default")
-        reset_button.clicked.connect(
-            lambda checked=False, cell_number=cell_number: self.reset_cell(cell_number)
-        )
-        reset_layout = Qt.QHBoxLayout()
-        reset_layout.addStretch(1)
-        reset_layout.addWidget(reset_button)
-        tab_layout.addLayout(reset_layout)
         self.cell_tabs.addTab(tab, f"Cell {cell_number}")
+
+    def show_topology_item(self, row, column):
+        if not 0 <= row < len(CELL_CONFIGS):
+            return
+        cell_number = CELL_CONFIGS[row]["number"]
+        self.cell_tabs.setCurrentIndex(row)
+        scroll_area = self.cell_scroll_areas[cell_number]
+        if column == 0:
+            scroll_area.verticalScrollBar().setValue(0)
+        elif 0 < column <= len(UE_CONFIGS):
+            ue_number = UE_CONFIGS[column - 1]["number"]
+            scroll_area.ensureWidgetVisible(
+                self.link_groups[(cell_number, ue_number)], 0, 8
+            )
+        self.topology_table.clearSelection()
+        self.topology_table.setCurrentItem(None)
+
+    def show_topology_ue(self, column):
+        if column > 0:
+            self.show_topology_item(self.cell_tabs.currentIndex(), column)
+
+    def update_topology(self):
+        for row, cell in enumerate(CELL_CONFIGS):
+            for column, ue in enumerate(UE_CONFIGS, start=1):
+                path_key = (cell["number"], ue["number"])
+                self.update_topology_entry(path_key, row, column)
+
+    def update_topology_entry(self, path_key, row=None, column=None):
+        if row is None:
+            cell_numbers = [cell["number"] for cell in CELL_CONFIGS]
+            row = cell_numbers.index(path_key[0])
+        if column is None:
+            ue_numbers = [ue["number"] for ue in UE_CONFIGS]
+            column = ue_numbers.index(path_key[1]) + 1
+
+        item = self.topology_items.get(path_key)
+        if item is None:
+            item = Qt.QTableWidgetItem()
+            item.setTextAlignment(QtCore.Qt.AlignCenter)
+            self.topology_items[path_key] = item
+            self.topology_table.setItem(row, column, item)
+
+        dl_loss = self.dl_path_loss_db[path_key]
+        ul_loss = self.ul_path_loss_db[path_key]
+        enabled = self.path_enabled[path_key]
+        awgn_enabled = self.dl_awgn_enabled[path_key]
+        details = [f"{ul_loss:.1f}/{dl_loss:.1f} dB"]
+        if not enabled:
+            details.append("Off")
+        details.append(f"AWGN: {'On' if awgn_enabled else 'Off'}")
+        item.setText("\n".join(details))
+        item.setToolTip(
+            f"Downlink path loss: {dl_loss:.1f} dB\n"
+            f"Uplink path loss: {ul_loss:.1f} dB\n"
+            f"Path: {'on' if enabled else 'off'}\n"
+            f"Downlink AWGN: {'on' if awgn_enabled else 'off'}"
+        )
+
+        font = item.font()
+        font.setPointSize(8)
+        font.setBold(False)
+        item.setFont(font)
+        if not enabled:
+            item.setBackground(Qt.QColor(232, 232, 232))
+            return
+        path_loss = min(max(max(dl_loss, ul_loss), 0.0), PATH_LOSS_MAX_DB)
+        if path_loss <= PATH_LOSS_WARNING_DB:
+            color_ratio = path_loss / PATH_LOSS_WARNING_DB
+            start_color = (255, 255, 255)
+            end_color = (237, 228, 213)
+        else:
+            color_ratio = (path_loss - PATH_LOSS_WARNING_DB) / (
+                PATH_LOSS_RED_DB - PATH_LOSS_WARNING_DB
+            )
+            color_ratio = min(color_ratio, 1.0)
+            start_color = (255, 226, 181)
+            end_color = (214, 161, 161)
+        color = [
+            round(start + (end - start) * color_ratio)
+            for start, end in zip(start_color, end_color)
+        ]
+        item.setBackground(Qt.QColor(*color))
+
+    def update_reset_cell_button(self, tab_index):
+        if 0 <= tab_index < len(CELL_CONFIGS):
+            cell_number = CELL_CONFIGS[tab_index]["number"]
+            self.reset_cell_button.setText(f"Reset Cell {cell_number} to Default")
+
+    def reset_current_cell(self):
+        tab_index = self.cell_tabs.currentIndex()
+        if 0 <= tab_index < len(CELL_CONFIGS):
+            self.reset_cell(CELL_CONFIGS[tab_index]["number"])
+
+    def reset_all(self):
+        self.slow_down_ratio_control.set_value(SLOW_DOWN_RATIO)
+        for cell in CELL_CONFIGS:
+            self.reset_cell(cell["number"])
+
+    def scenario_state(self):
+        cells = {}
+        for cell in CELL_CONFIGS:
+            cell_number = cell["number"]
+            links = {}
+            for ue in UE_CONFIGS:
+                ue_number = ue["number"]
+                path_key = (cell_number, ue_number)
+                links[str(ue_number)] = {
+                    "enabled": self.path_enabled[path_key],
+                    "path_loss_linked": self.path_loss_linked[path_key],
+                    "downlink_path_loss_db": self.dl_path_loss_db[path_key],
+                    "uplink_path_loss_db": self.ul_path_loss_db[path_key],
+                    "downlink_awgn_enabled": self.dl_awgn_enabled[path_key],
+                    "downlink_awgn_snr_db": self.dl_awgn_snr_db_by_path[path_key],
+                }
+            cells[str(cell_number)] = {
+                "uplink_awgn_enabled": self.ul_awgn_enabled[cell_number],
+                "uplink_awgn_snr_db": self.ul_awgn_snr_db_by_cell[cell_number],
+                "ues": links,
+            }
+        return {
+            "version": 1,
+            "cell_numbers": [cell["number"] for cell in CELL_CONFIGS],
+            "ue_numbers": [ue["number"] for ue in UE_CONFIGS],
+            "slow_down_ratio": self.slow_down_ratio,
+            "cells": cells,
+        }
+
+    def save_scenario(self, file_path=None):
+        interactive = file_path is None
+        if interactive:
+            file_path, _ = Qt.QFileDialog.getSaveFileName(
+                self,
+                "Save ZeroMQ Channel Emulator Scenario",
+                "zmq_channel_emulator_scenario.json",
+                "JSON Files (*.json)",
+            )
+        if not file_path:
+            return False
+        if not str(file_path).lower().endswith(".json"):
+            file_path = f"{file_path}.json"
+        try:
+            with open(file_path, "w", encoding="utf-8") as scenario_file:
+                json.dump(self.scenario_state(), scenario_file, indent=2)
+        except OSError as error:
+            if interactive:
+                Qt.QMessageBox.critical(self, "Save Scenario", str(error))
+            return False
+        return True
+
+    @staticmethod
+    def validate_scenario_number(value, minimum, maximum, label):
+        value = float(value)
+        if not np.isfinite(value) or not minimum <= value <= maximum:
+            raise ValueError(f"{label} must be between {minimum} and {maximum}")
+        return value
+
+    def load_scenario(self, file_path=None):
+        interactive = file_path is None
+        if interactive:
+            file_path, _ = Qt.QFileDialog.getOpenFileName(
+                self,
+                "Load ZeroMQ Channel Emulator Preset",
+                "",
+                "JSON Files (*.json)",
+            )
+        if not file_path:
+            return False
+
+        try:
+            with open(file_path, "r", encoding="utf-8") as scenario_file:
+                state = json.load(scenario_file)
+            if not isinstance(state, dict):
+                raise ValueError("Scenario file must contain a JSON object")
+            if state.get("version") != 1:
+                raise ValueError("This scenario file version is not supported")
+
+            cell_numbers = [cell["number"] for cell in CELL_CONFIGS]
+            ue_numbers = [ue["number"] for ue in UE_CONFIGS]
+            if state.get("cell_numbers") != cell_numbers:
+                raise ValueError("Scenario does not use the current cells")
+            if state.get("ue_numbers") != ue_numbers:
+                raise ValueError("Scenario does not use the current UEs")
+
+            slow_down_ratio = self.validate_scenario_number(
+                state["slow_down_ratio"], 1, 20, "Time slowdown ratio"
+            )
+            validated_cells = {}
+            for cell_number in cell_numbers:
+                cell_state = state["cells"][str(cell_number)]
+                if not isinstance(cell_state["uplink_awgn_enabled"], bool):
+                    raise ValueError("Uplink AWGN enabled must be true or false")
+                validated_links = {}
+                for ue_number in ue_numbers:
+                    link_state = cell_state["ues"][str(ue_number)]
+                    boolean_fields = {
+                        "enabled": "Path enabled",
+                        "path_loss_linked": "Path loss linked",
+                        "downlink_awgn_enabled": "Downlink AWGN enabled",
+                    }
+                    for field, label in boolean_fields.items():
+                        if not isinstance(link_state[field], bool):
+                            raise ValueError(f"{label} must be true or false")
+                    dl_loss = self.validate_scenario_number(
+                        link_state["downlink_path_loss_db"],
+                        0,
+                        PATH_LOSS_MAX_DB,
+                        "Downlink path loss",
+                    )
+                    ul_loss = self.validate_scenario_number(
+                        link_state["uplink_path_loss_db"],
+                        0,
+                        PATH_LOSS_MAX_DB,
+                        "Uplink path loss",
+                    )
+                    if link_state["path_loss_linked"] and dl_loss != ul_loss:
+                        raise ValueError("Linked path-loss values must match")
+                    validated_links[ue_number] = {
+                        **link_state,
+                        "downlink_path_loss_db": dl_loss,
+                        "uplink_path_loss_db": ul_loss,
+                        "downlink_awgn_snr_db": self.validate_scenario_number(
+                            link_state["downlink_awgn_snr_db"],
+                            AWGN_SNR_MIN_DB,
+                            AWGN_SNR_MAX_DB,
+                            "Downlink AWGN SNR",
+                        ),
+                    }
+                validated_cells[cell_number] = {
+                    "uplink_awgn_enabled": cell_state["uplink_awgn_enabled"],
+                    "uplink_awgn_snr_db": self.validate_scenario_number(
+                        cell_state["uplink_awgn_snr_db"],
+                        AWGN_SNR_MIN_DB,
+                        AWGN_SNR_MAX_DB,
+                        "Uplink AWGN SNR",
+                    ),
+                    "ues": validated_links,
+                }
+        except (
+            OSError,
+            ValueError,
+            KeyError,
+            TypeError,
+            AttributeError,
+            json.JSONDecodeError,
+        ) as error:
+            if interactive:
+                Qt.QMessageBox.critical(self, "Load Preset", str(error))
+            return False
+
+        self.slow_down_ratio_control.set_value(slow_down_ratio)
+        for cell_number, cell_state in validated_cells.items():
+            self.ul_awgn_enabled_checkboxes[cell_number].setChecked(
+                cell_state["uplink_awgn_enabled"]
+            )
+            self.ul_awgn_snr_controls[cell_number].set_value(
+                cell_state["uplink_awgn_snr_db"]
+            )
+            for ue_number, link_state in cell_state["ues"].items():
+                path_key = (cell_number, ue_number)
+                self.path_enabled_checkboxes[path_key].setChecked(
+                    link_state["enabled"]
+                )
+                self.path_loss_linked_checkboxes[path_key].setChecked(False)
+                self.dl_path_loss_controls[path_key].set_value(
+                    link_state["downlink_path_loss_db"]
+                )
+                self.ul_path_loss_controls[path_key].set_value(
+                    link_state["uplink_path_loss_db"]
+                )
+                self.path_loss_linked_checkboxes[path_key].setChecked(
+                    link_state["path_loss_linked"]
+                )
+                self.dl_awgn_enabled_checkboxes[path_key].setChecked(
+                    link_state["downlink_awgn_enabled"]
+                )
+                self.dl_awgn_snr_controls[path_key].set_value(
+                    link_state["downlink_awgn_snr_db"]
+                )
+        self.update_topology()
+        return True
 
     @staticmethod
     def path_loss_db_to_iq_gain(path_loss_db):
@@ -759,28 +1127,38 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
         path_key = (cell_number, ue_number)
         self.path_enabled[path_key] = bool(enabled)
         self.update_path_gains(path_key)
+        if hasattr(self, "topology_table"):
+            self.update_topology_entry(path_key)
 
-    def set_path_loss_coupled(self, cell_number, ue_number, coupled):
+    def set_path_loss_linked(self, cell_number, ue_number, linked):
         path_key = (cell_number, ue_number)
-        self.path_loss_coupled[path_key] = bool(coupled)
-        if coupled:
+        self.path_loss_linked[path_key] = bool(linked)
+        if linked:
             self.ul_path_loss_controls[path_key].set_value(
                 self.dl_path_loss_db[path_key]
             )
 
     def set_dl_path_loss(self, cell_number, ue_number, path_loss_db):
         path_key = (cell_number, ue_number)
-        self.dl_path_loss_db[path_key] = float(path_loss_db)
+        self.dl_path_loss_db[path_key] = self.validate_scenario_number(
+            path_loss_db, 0, PATH_LOSS_MAX_DB, "Downlink path loss"
+        )
         self.update_path_gains(path_key)
-        if self.path_loss_coupled[path_key]:
+        if self.path_loss_linked[path_key]:
             self.ul_path_loss_controls[path_key].set_value(path_loss_db)
+        if hasattr(self, "topology_table"):
+            self.update_topology_entry(path_key)
 
     def set_ul_path_loss(self, cell_number, ue_number, path_loss_db):
         path_key = (cell_number, ue_number)
-        self.ul_path_loss_db[path_key] = float(path_loss_db)
+        self.ul_path_loss_db[path_key] = self.validate_scenario_number(
+            path_loss_db, 0, PATH_LOSS_MAX_DB, "Uplink path loss"
+        )
         self.update_path_gains(path_key)
-        if self.path_loss_coupled[path_key]:
+        if self.path_loss_linked[path_key]:
             self.dl_path_loss_controls[path_key].set_value(path_loss_db)
+        if hasattr(self, "topology_table"):
+            self.update_topology_entry(path_key)
 
     def update_path_gains(self, path_key):
         if self.path_enabled[path_key]:
@@ -797,11 +1175,13 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
         self.dl_awgn_enabled[path_key] = bool(enabled)
         self.dl_awgn[path_key].set_enabled(enabled)
         self.dl_awgn_snr_controls[path_key].setEnabled(bool(enabled))
+        if hasattr(self, "topology_table"):
+            self.update_topology_entry(path_key)
 
     def set_link_dl_awgn_snr_db(self, cell_number, ue_number, snr_db):
         path_key = (cell_number, ue_number)
-        self.dl_awgn_snr_db_by_path[path_key] = float(snr_db)
         self.dl_awgn[path_key].set_snr_db(snr_db)
+        self.dl_awgn_snr_db_by_path[path_key] = self.dl_awgn[path_key].snr_db
 
     def set_cell_ul_awgn_enabled(self, cell_number, enabled):
         self.ul_awgn_enabled[cell_number] = bool(enabled)
@@ -809,8 +1189,10 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
         self.ul_awgn_snr_controls[cell_number].setEnabled(bool(enabled))
 
     def set_cell_ul_awgn_snr_db(self, cell_number, snr_db):
-        self.ul_awgn_snr_db_by_cell[cell_number] = float(snr_db)
         self.cell_ul_awgn[cell_number].set_snr_db(snr_db)
+        self.ul_awgn_snr_db_by_cell[cell_number] = self.cell_ul_awgn[
+            cell_number
+        ].snr_db
 
     def reset_cell(self, cell_number):
         cell_defaults = self.default_cell_settings[cell_number]
@@ -827,8 +1209,8 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
             self.path_enabled_checkboxes[path_key].setChecked(
                 defaults["path_enabled"]
             )
-            self.path_loss_coupled_checkboxes[path_key].setChecked(
-                defaults["path_loss_coupled"]
+            self.path_loss_linked_checkboxes[path_key].setChecked(
+                defaults["path_loss_linked"]
             )
             self.dl_path_loss_controls[path_key].set_value(
                 defaults["dl_path_loss_db"]
@@ -844,7 +1226,9 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
             )
 
     def set_slow_down_ratio(self, slow_down_ratio):
-        self.slow_down_ratio = slow_down_ratio
+        self.slow_down_ratio = self.validate_scenario_number(
+            slow_down_ratio, 1, 20, "Time slowdown ratio"
+        )
         for cell_number in self.dl_throttles:
             self.dl_throttles[cell_number].set_sample_rate(
                 self.samp_rate / self.slow_down_ratio

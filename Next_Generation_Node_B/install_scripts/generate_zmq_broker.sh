@@ -257,8 +257,8 @@ cat >>"$OUTPUT" <<'EOF'
 ]
 SAMPLE_RATE_HZ = __SAMPLE_RATE_HZ__
 SLOW_DOWN_RATIO = __SLOW_DOWN_RATIO__
-PRIMARY_CELL_PATH_LOSS_DB = 0
-OTHER_CELL_PATH_LOSS_DB = 12
+# PRIMARY_CELL_PATH_LOSS_DB = 0
+# OTHER_CELL_PATH_LOSS_DB = 12
 PATH_LOSS_WARNING_DB = 12.0
 PATH_LOSS_RED_DB = 50.0
 PATH_LOSS_MAX_DB = 100.0
@@ -401,15 +401,15 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
         self.dl_awgn_snr_db = DL_AWGN_SNR_DB
         self.ul_awgn_snr_db = UL_AWGN_SNR_DB
 
-        # # Equally loud cells
-        # self.path_loss_db = {(cell["number"], ue["number"]): 0 for cell in CELL_CONFIGS for ue in UE_CONFIGS}
+        # # # Equally loud cells
+        # # self.path_loss_db = {(cell["number"], ue["number"]): 0 for cell in CELL_CONFIGS for ue in UE_CONFIGS}
+        # # Map each UE to one primary cell in configured order, wrapping when there are more UEs than cells
 
-        # Map each UE to one primary cell in configured order, wrapping when there are more UEs than cells
         self.path_loss_db = {}
         self.dl_path_loss_db = self.path_loss_db
         self.ul_path_loss_db = {}
         self.path_enabled = {}
-        self.primary_path = {}
+        # self.primary_path = {}
         self.path_loss_linked = {}
         self.dl_awgn_enabled = {}
         self.dl_awgn_snr_db_by_path = {}
@@ -417,7 +417,7 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
         self.ul_awgn_snr_db_by_cell = {}
         self.default_link_settings = {}
         self.default_cell_settings = {}
-        cell_count = len(CELL_CONFIGS)
+        # cell_count = len(CELL_CONFIGS)
         for cell_index, cell in enumerate(CELL_CONFIGS):
             cell_number = cell["number"]
             self.ul_awgn_enabled[cell_number] = UL_AWGN_ENABLED
@@ -428,18 +428,18 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
             }
             for ue_index, ue in enumerate(UE_CONFIGS):
                 ue_number = ue["number"]
-                is_mapped_pair = cell_index == ue_index % cell_count
-
-                if is_mapped_pair:
-                    path_loss_db = PRIMARY_CELL_PATH_LOSS_DB
-                else:
-                    path_loss_db = OTHER_CELL_PATH_LOSS_DB
+                # is_mapped_pair = cell_index == ue_index % cell_count
+                # if is_mapped_pair:
+                #     path_loss_db = PRIMARY_CELL_PATH_LOSS_DB
+                # else:
+                #     path_loss_db = OTHER_CELL_PATH_LOSS_DB
+                path_loss_db = 0
 
                 path_key = (cell_number, ue_number)
                 self.dl_path_loss_db[path_key] = path_loss_db
                 self.ul_path_loss_db[path_key] = path_loss_db
                 self.path_enabled[path_key] = PATH_ENABLED
-                self.primary_path[path_key] = is_mapped_pair
+                # self.primary_path[path_key] = is_mapped_pair
                 self.path_loss_linked[path_key] = PATH_LOSS_LINKED
                 self.dl_awgn_enabled[path_key] = DL_AWGN_ENABLED
                 self.dl_awgn_snr_db_by_path[path_key] = DL_AWGN_SNR_DB

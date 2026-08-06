@@ -214,6 +214,7 @@ cat >>"$OUTPUT" <<EOF
 import ctypes
 import signal
 import sys
+import numpy as np
 
 if sys.platform.startswith("linux"):
     try:
@@ -260,6 +261,42 @@ PRIMARY_CELL_PATH_LOSS_DB = 0
 OTHER_CELL_PATH_LOSS_DB = 12
 ZMQ_TIMEOUT = 100
 ZMQ_HIGH_WATER_MARK = -1
+DL_AWGN_SNR_DB = 30.0
+UL_AWGN_SNR_DB = 30.0
+
+class awgn_cc(gr.sync_block):
+    def __init__(self, snr_db):
+        gr.sync_block.__init__(
+            self,
+            name="Complex AWGN",
+            in_sig=[np.complex64],
+            out_sig=[np.complex64],
+        )
+        self.set_snr_db(snr_db)
+        self.rng = np.random.default_rng()
+
+    def set_snr_db(self, snr_db):
+        self.snr_linear = 10.0 ** (float(snr_db) / 10.0)
+
+    def work(self, input_items, output_items):
+        input_samples = input_items[0]
+        output_samples = output_items[0]
+        sample_count = len(input_samples)
+
+        if sample_count == 0:
+            return 0
+
+        signal_power = float(np.vdot(input_samples, input_samples).real) / sample_count
+        if signal_power == 0.0:
+            np.copyto(output_samples, input_samples)
+            return sample_count
+
+        noise = self.rng.standard_normal(2 * sample_count, dtype=np.float32)
+        noise = noise.view(np.complex64)
+        noise *= np.float32(np.sqrt(signal_power / (2.0 * self.snr_linear)))
+        np.add(input_samples, noise, out=output_samples)
+        return sample_count
+
 
 def make_range_widget(range_object, callback, label):
     try:
@@ -304,6 +341,8 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
 
         self.samp_rate = SAMPLE_RATE_HZ
         self.slow_down_ratio = SLOW_DOWN_RATIO
+        self.dl_awgn_snr_db = DL_AWGN_SNR_DB
+        self.ul_awgn_snr_db = UL_AWGN_SNR_DB
 
         # # Equally loud cells
         # self.path_loss_db = {(cell["number"], ue["number"]): 0 for cell in CELL_CONFIGS for ue in UE_CONFIGS}
@@ -331,6 +370,8 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
         self.ue_ul_sources = {}
         self.ue_dl_adds = {}
         self.cell_ul_adds = {}
+        self.ue_dl_awgn = {}
+        self.cell_ul_awgn = {}
         self.dl_gains = {}
         self.ul_gains = {}
         self.path_loss_ranges = {}
@@ -342,6 +383,22 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
             "Time Slow Down Ratio",
         )
         self.top_layout.addWidget(self.slow_down_ratio_widget)
+
+        self.dl_awgn_snr_range = Range(-20, 100, 1, self.dl_awgn_snr_db, 200)
+        self.dl_awgn_snr_widget = make_range_widget(
+            self.dl_awgn_snr_range,
+            self.set_dl_awgn_snr_db,
+            "Downlink AWGN SNR [dB]",
+        )
+        self.top_layout.addWidget(self.dl_awgn_snr_widget)
+
+        self.ul_awgn_snr_range = Range(-20, 100, 1, self.ul_awgn_snr_db, 200)
+        self.ul_awgn_snr_widget = make_range_widget(
+            self.ul_awgn_snr_range,
+            self.set_ul_awgn_snr_db,
+            "Uplink AWGN SNR [dB]",
+        )
+        self.top_layout.addWidget(self.ul_awgn_snr_widget)
 
         print(
             f"ZMQ broker sample_rate={SAMPLE_RATE_HZ} slow_down_ratio={SLOW_DOWN_RATIO} cells={len(CELL_CONFIGS)} ues={len(UE_CONFIGS)}",
@@ -374,6 +431,7 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
                 gr.sizeof_gr_complex, self.samp_rate / self.slow_down_ratio, True
             )
             self.cell_ul_adds[cell_number] = blocks.add_vcc(1)
+            self.cell_ul_awgn[cell_number] = awgn_cc(self.ul_awgn_snr_db)
 
         for ue in UE_CONFIGS:
             ue_number = ue["number"]
@@ -382,6 +440,7 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
                 flush=True,
             )
             self.ue_dl_adds[ue_number] = blocks.add_vcc(1)
+            self.ue_dl_awgn[ue_number] = awgn_cc(self.dl_awgn_snr_db)
             self.ue_dl_sinks[ue_number] = zeromq.rep_sink(
                 gr.sizeof_gr_complex,
                 1,
@@ -406,13 +465,23 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
                 (self.dl_throttles[cell_number], 0),
             )
             self.connect(
-                (self.cell_ul_adds[cell_number], 0), (self.gnb_ul_sinks[cell_number], 0)
+                (self.cell_ul_adds[cell_number], 0),
+                (self.cell_ul_awgn[cell_number], 0),
+            )
+            self.connect(
+                (self.cell_ul_awgn[cell_number], 0),
+                (self.gnb_ul_sinks[cell_number], 0),
             )
 
         for ue in UE_CONFIGS:
             ue_number = ue["number"]
             self.connect(
-                (self.ue_dl_adds[ue_number], 0), (self.ue_dl_sinks[ue_number], 0)
+                (self.ue_dl_adds[ue_number], 0),
+                (self.ue_dl_awgn[ue_number], 0),
+            )
+            self.connect(
+                (self.ue_dl_awgn[ue_number], 0),
+                (self.ue_dl_sinks[ue_number], 0),
             )
 
         for ue_index, ue in enumerate(UE_CONFIGS):
@@ -420,7 +489,7 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
             for cell_index, cell in enumerate(CELL_CONFIGS):
                 cell_number = cell["number"]
                 path_key = (cell_number, ue_number)
-                label = f"UE {ue_number} Cell {cell_number} Path Loss [dB]"
+                label = f"Jammer Cell {cell_number} Path Loss [dB]" if ue_number == 4 else f"UE {ue_number} Cell {cell_number} Path Loss [dB]"
 
                 self.path_loss_ranges[path_key] = Range(
                     0, 100, 1, self.path_loss_db[path_key], 200
@@ -471,6 +540,16 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
                 self.samp_rate / self.slow_down_ratio
             )
 
+    def set_dl_awgn_snr_db(self, snr_db):
+        self.dl_awgn_snr_db = float(snr_db)
+        for awgn_block in self.ue_dl_awgn.values():
+            awgn_block.set_snr_db(self.dl_awgn_snr_db)
+
+    def set_ul_awgn_snr_db(self, snr_db):
+        self.ul_awgn_snr_db = float(snr_db)
+        for awgn_block in self.cell_ul_awgn.values():
+            awgn_block.set_snr_db(self.ul_awgn_snr_db)
+
     def closeEvent(self, event):
         self.settings.setValue("geometry", self.saveGeometry())
         self.stop()
@@ -500,6 +579,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 EOF
 
 sed -i "s/__SAMPLE_RATE_HZ__/$SAMPLE_RATE_HZ/" "$OUTPUT"

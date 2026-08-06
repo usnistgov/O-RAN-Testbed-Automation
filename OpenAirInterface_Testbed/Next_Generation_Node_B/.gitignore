@@ -4,6 +4,7 @@
 /libzmq
 /logs/
 /o1-adapter
+/zmq_broker/
 install_time.txt
 openairinterface5g
 # Explicitly track patch files

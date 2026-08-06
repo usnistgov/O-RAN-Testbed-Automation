@@ -41,7 +41,8 @@ UE_NUMBERS=()
 UE_IPS=()
 VALIDATED_CELL_NUMBERS=()
 
-SCRIPT_DIR=$(dirname "$(realpath "$0")")
+# The script directory respects symbolic links so that the gNB and UE can patch their own openairinterface5g
+SCRIPT_DIR="$(cd "$(dirname "$0")" >/dev/null 2>&1 && pwd)"
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$PARENT_DIR"
 
@@ -265,7 +266,7 @@ ZMQ_TIMEOUT = 100
 ZMQ_HIGH_WATER_MARK = -1
 DL_AWGN_SNR_DB = 30.0
 UL_AWGN_SNR_DB = 30.0
-AWGN_SNR_MIN_DB = 1.0
+AWGN_SNR_MIN_DB = -30.0
 AWGN_SNR_MAX_DB = 100.0
 PATH_ENABLED = True
 PATH_LOSS_LINKED = True
@@ -283,6 +284,7 @@ class awgn_cc(gr.sync_block):
         self.set_snr_db(snr_db)
         self.set_enabled(enabled)
         self.rng = np.random.default_rng()
+        self.signal_power = None
 
     def set_snr_db(self, snr_db):
         snr_db = float(snr_db)
@@ -302,18 +304,19 @@ class awgn_cc(gr.sync_block):
         if sample_count == 0:
             return 0
 
-        if not self.enabled:
-            np.copyto(output_samples, input_samples)
-            return sample_count
+        active_count = np.count_nonzero(input_samples)
+        if active_count:
+            measured_power = float(np.vdot(input_samples, input_samples).real) / active_count
+            if measured_power > 0.0 and np.isfinite(measured_power):
+                self.signal_power = measured_power
 
-        signal_power = float(np.vdot(input_samples, input_samples).real) / sample_count
-        if signal_power <= 0.0 or not np.isfinite(signal_power):
+        if not self.enabled or self.signal_power is None:
             np.copyto(output_samples, input_samples)
             return sample_count
 
         noise = self.rng.standard_normal(2 * sample_count, dtype=np.float32)
         noise = noise.view(np.complex64)
-        noise *= np.float32(np.sqrt(signal_power / (2.0 * self.snr_linear)))
+        noise *= np.float32(np.sqrt(self.signal_power / (2.0 * self.snr_linear)))
         np.add(input_samples, noise, out=output_samples)
         return sample_count
 
@@ -375,9 +378,7 @@ class SliderSpinBox(Qt.QWidget):
 class multi_ue_scenario(gr.top_block, Qt.QWidget):
     def __init__(self):
         try:
-            gr.top_block.__init__(
-                self, "ZeroMQ Channel Emulator", catch_exceptions=True
-            )
+            gr.top_block.__init__(self, "ZeroMQ Channel Emulator", catch_exceptions=True)
         except TypeError:
             gr.top_block.__init__(self, "ZeroMQ Channel Emulator")
         Qt.QWidget.__init__(self)
@@ -473,18 +474,24 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
         self.topology_items = {}
         self.cell_scroll_areas = {}
         self.link_groups = {}
+        self.selected_topology_path = None
+        self.highlighted_link_group = None
 
-        print(
-            f"ZeroMQ Channel Emulator sample_rate={SAMPLE_RATE_HZ} slow_down_ratio={SLOW_DOWN_RATIO} cells={len(CELL_CONFIGS)} ues={len(UE_CONFIGS)}",
-            flush=True,
+        status = (
+            f"ZeroMQ Channel Emulator sample_rate={SAMPLE_RATE_HZ} "
+            f"slow_down_ratio={SLOW_DOWN_RATIO} cells={len(CELL_CONFIGS)} "
+            f"ues={len(UE_CONFIGS)}"
         )
+        print(status, flush=True)
 
         for cell in CELL_CONFIGS:
             cell_number = cell["number"]
-            print(
-                f"ZeroMQ Channel Emulator Cell{cell_number} gNB DL source tcp://127.0.0.1:{cell['rx_port']} UL sink tcp://127.0.0.1:{cell['tx_port']}",
-                flush=True,
+            status = (
+                f"ZeroMQ Channel Emulator Cell{cell_number} gNB DL source "
+                f"tcp://127.0.0.1:{cell['rx_port']} UL sink "
+                f"tcp://127.0.0.1:{cell['tx_port']}"
             )
+            print(status, flush=True)
             self.gnb_dl_sources[cell_number] = zeromq.req_source(
                 gr.sizeof_gr_complex,
                 1,
@@ -512,10 +519,12 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
 
         for ue in UE_CONFIGS:
             ue_number = ue["number"]
-            print(
-                f"ZeroMQ Channel Emulator UE{ue_number} DL sink tcp://*:{ue['rx_port']} UL source tcp://{ue['ue_ip']}:{ue['tx_port']}",
-                flush=True,
+            status = (
+                f"ZeroMQ Channel Emulator UE{ue_number} DL sink "
+                f"tcp://*:{ue['rx_port']} UL source "
+                f"tcp://{ue['ue_ip']}:{ue['tx_port']}"
             )
+            print(status, flush=True)
             self.ue_dl_adds[ue_number] = blocks.add_vcc(1)
             self.ue_dl_sinks[ue_number] = zeromq.rep_sink(
                 gr.sizeof_gr_complex,
@@ -599,17 +608,13 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
         self.build_interface()
 
     def build_interface(self):
-        self.topology_table = Qt.QTableWidget(
-            len(CELL_CONFIGS), len(UE_CONFIGS) + 1
-        )
+        self.topology_table = Qt.QTableWidget(len(UE_CONFIGS), len(CELL_CONFIGS) + 1)
         topology_font = self.topology_table.font()
         topology_font.setPointSize(8)
         self.topology_table.setFont(topology_font)
         self.topology_table.horizontalHeader().setFont(topology_font)
-        self.topology_table.setHorizontalHeaderLabels(
-            ["Cell"] + [f"UE {ue['number']}" for ue in UE_CONFIGS]
-        )
-        for column in range(len(UE_CONFIGS) + 1):
+        self.topology_table.setHorizontalHeaderLabels([""] + [f"Cell {cell['number']}" for cell in CELL_CONFIGS])
+        for column in range(len(CELL_CONFIGS) + 1):
             header_item = self.topology_table.horizontalHeaderItem(column)
             header_item.setFont(topology_font)
         self.topology_table.verticalHeader().setVisible(False)
@@ -617,49 +622,32 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
         self.topology_table.setSelectionMode(Qt.QAbstractItemView.NoSelection)
         self.topology_table.cellClicked.connect(self.show_topology_item)
         self.topology_table.horizontalHeader().setSectionsClickable(True)
-        self.topology_table.horizontalHeader().sectionClicked.connect(
-            self.show_topology_ue
-        )
+        self.topology_table.horizontalHeader().sectionClicked.connect(self.show_topology_cell)
         self.topology_table.setWordWrap(True)
         self.topology_table.setTextElideMode(QtCore.Qt.ElideNone)
-        self.topology_table.horizontalHeader().setSectionResizeMode(
-            Qt.QHeaderView.Fixed
-        )
-        self.topology_table.verticalHeader().setSectionResizeMode(
-            Qt.QHeaderView.Fixed
-        )
+        self.topology_table.horizontalHeader().setSectionResizeMode(Qt.QHeaderView.Stretch)
+        self.topology_table.horizontalHeader().setSectionResizeMode(0, Qt.QHeaderView.Fixed)
+        self.topology_table.verticalHeader().setSectionResizeMode(Qt.QHeaderView.Fixed)
         self.topology_table.horizontalHeader().setFixedHeight(24)
         self.topology_table.setColumnWidth(0, 72)
-        for column in range(1, len(UE_CONFIGS) + 1):
-            self.topology_table.setColumnWidth(column, 105)
-        for row, cell in enumerate(CELL_CONFIGS):
-            self.topology_table.setRowHeight(row, 58)
-            cell_item = Qt.QTableWidgetItem(f"Cell {cell['number']}")
-            cell_item.setTextAlignment(QtCore.Qt.AlignCenter)
-            cell_font = cell_item.font()
-            cell_font.setPointSize(8)
-            cell_item.setFont(cell_font)
-            cell_item.setBackground(Qt.QColor(240, 240, 240))
-            self.topology_table.setItem(row, 0, cell_item)
-        visible_ue_columns = min(len(UE_CONFIGS), 4)
-        table_width = 74 + visible_ue_columns * 105
-        if len(UE_CONFIGS) > visible_ue_columns:
-            table_width += 18
-        self.topology_table.setFixedWidth(table_width)
-        self.topology_table.setFixedHeight(
-            min(224, 26 + len(CELL_CONFIGS) * 58)
-        )
-        topology_section = Qt.QFrame()
-        topology_section.setAutoFillBackground(True)
-        topology_palette = topology_section.palette()
-        topology_palette.setColor(Qt.QPalette.Window, Qt.QColor(255, 255, 255))
-        topology_section.setPalette(topology_palette)
-        topology_layout = Qt.QHBoxLayout(topology_section)
-        topology_layout.setContentsMargins(0, 4, 0, 4)
-        topology_layout.addStretch(1)
-        topology_layout.addWidget(self.topology_table)
-        topology_layout.addStretch(1)
-        self.top_layout.addWidget(topology_section)
+        for column in range(1, len(CELL_CONFIGS) + 1):
+            self.topology_table.setColumnWidth(column, 200)
+        for row, ue in enumerate(UE_CONFIGS):
+            self.topology_table.setRowHeight(row, 45)
+            ue_item = Qt.QTableWidgetItem(f"UE {ue['number']}")
+            ue_item.setTextAlignment(QtCore.Qt.AlignCenter)
+            ue_font = ue_item.font()
+            ue_font.setPointSize(8)
+            ue_item.setFont(ue_font)
+            ue_item.setBackground(Qt.QColor(240, 240, 240))
+            self.topology_table.setItem(row, 0, ue_item)
+        self.topology_table.setFixedHeight(min(224, 26 + len(UE_CONFIGS) * 45))
+        topology_layout = Qt.QHBoxLayout()
+        topology_layout.setContentsMargins(0, 0, 0, 0)
+        topology_layout.addStretch(10)
+        topology_layout.addWidget(self.topology_table, 90)
+        topology_layout.addStretch(10)
+        self.top_layout.addLayout(topology_layout)
 
         general_layout = Qt.QHBoxLayout()
         general_layout.setContentsMargins(0, 0, 0, 0)
@@ -669,7 +657,43 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
         self.slow_down_ratio_control.valueChanged.connect(self.set_slow_down_ratio)
         general_layout.addWidget(Qt.QLabel("Time slowdown ratio"))
         general_layout.addWidget(self.slow_down_ratio_control, 1)
-        self.top_layout.addLayout(general_layout)
+        actions_button = Qt.QToolButton()
+        actions_button.setText("More Actions")
+        actions_button.setPopupMode(Qt.QToolButton.InstantPopup)
+        actions_menu = Qt.QMenu(actions_button)
+
+        copy_ue_menu = actions_menu.addMenu("Copy Selected UE Settings to")
+        self.copy_ue_actions = {}
+        for ue in UE_CONFIGS:
+            action = copy_ue_menu.addAction(f"UE {ue['number']}")
+            self.copy_ue_actions[ue["number"]] = action
+            action.triggered.connect(
+                lambda checked=False, ue_number=ue["number"]: self.copy_selected_ue(
+                    ue_number
+                )
+            )
+
+        copy_cell_menu = actions_menu.addMenu("Copy Current Cell to")
+        self.copy_cell_actions = {}
+        for cell in CELL_CONFIGS:
+            action = copy_cell_menu.addAction(f"Cell {cell['number']}")
+            self.copy_cell_actions[cell["number"]] = action
+            action.triggered.connect(
+                lambda checked=False, cell_number=cell["number"]: self.copy_current_cell(
+                    cell_number
+                )
+            )
+
+        actions_menu.addAction("Set Path Loss for Current Cell", self.set_current_cell_path_loss)
+        actions_menu.addSeparator()
+        self.awgn_action = actions_menu.addAction("")
+        self.awgn_action.triggered.connect(self.toggle_current_cell_awgn)
+        self.path_loss_link_action = actions_menu.addAction("")
+        self.path_loss_link_action.triggered.connect(self.toggle_current_cell_path_loss_linked)
+        actions_menu.aboutToShow.connect(self.update_actions_menu)
+        actions_button.setMenu(actions_menu)
+        general_layout.addWidget(actions_button)
+        self.top_layout.insertLayout(0, general_layout)
 
         self.cell_tabs = Qt.QTabWidget()
         self.top_layout.addWidget(self.cell_tabs, 1)
@@ -680,21 +704,29 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
         action_layout.setContentsMargins(0, 0, 0, 0)
         save_button = Qt.QPushButton("Save")
         save_button.clicked.connect(lambda checked=False: self.save_scenario())
-        action_layout.addWidget(save_button, 1)
+        action_layout.addWidget(save_button, 2)
 
         load_button = Qt.QPushButton("Load")
         load_button.clicked.connect(lambda checked=False: self.load_scenario())
-        action_layout.addWidget(load_button, 1)
+        action_layout.addWidget(load_button, 2)
 
         reset_all_button = Qt.QPushButton("Reset All")
         reset_all_button.clicked.connect(lambda checked=False: self.reset_all())
-        action_layout.addWidget(reset_all_button, 1)
+        action_layout.addWidget(reset_all_button, 2)
 
         self.reset_cell_button = Qt.QPushButton()
-        self.reset_cell_button.clicked.connect(
-            lambda checked=False: self.reset_current_cell()
-        )
-        action_layout.addWidget(self.reset_cell_button, 2)
+        self.reset_cell_button.clicked.connect(lambda checked=False: self.reset_current_cell())
+        action_layout.addWidget(self.reset_cell_button, 3)
+        action_font = save_button.font()
+        action_font.setPointSize(9)
+        for button in (
+            save_button,
+            load_button,
+            reset_all_button,
+            self.reset_cell_button,
+        ):
+            button.setFont(action_font)
+            button.setSizePolicy(Qt.QSizePolicy.Ignored, Qt.QSizePolicy.Fixed)
         self.top_layout.addLayout(action_layout)
 
         self.cell_tabs.currentChanged.connect(self.update_reset_cell_button)
@@ -714,9 +746,7 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
         receiver_group = Qt.QGroupBox("Uplink")
         receiver_layout = Qt.QGridLayout(receiver_group)
         receiver_layout.setColumnStretch(1, 1)
-        ul_awgn_enabled = Qt.QCheckBox(
-            "Enable uplink Additive White Gaussian Noise (AWGN)"
-        )
+        ul_awgn_enabled = Qt.QCheckBox("Enable uplink Additive White Gaussian Noise (AWGN)")
         ul_awgn_font = ul_awgn_enabled.font()
         ul_awgn_font.setPointSize(9)
         ul_awgn_enabled.setFont(ul_awgn_font)
@@ -830,39 +860,177 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
         tab_layout.addWidget(scroll_area, 1)
         self.cell_tabs.addTab(tab, f"Cell {cell_number}")
 
-    def show_topology_item(self, row, column):
-        if not 0 <= row < len(CELL_CONFIGS):
-            return
-        cell_number = CELL_CONFIGS[row]["number"]
-        self.cell_tabs.setCurrentIndex(row)
-        scroll_area = self.cell_scroll_areas[cell_number]
-        if column == 0:
-            scroll_area.verticalScrollBar().setValue(0)
-        elif 0 < column <= len(UE_CONFIGS):
-            ue_number = UE_CONFIGS[column - 1]["number"]
-            scroll_area.ensureWidgetVisible(
-                self.link_groups[(cell_number, ue_number)], 0, 8
-            )
-        self.topology_table.clearSelection()
-        self.topology_table.setCurrentItem(None)
+    def set_selected_topology_path(self, path_key):
+        previous_path = self.selected_topology_path
+        if self.highlighted_link_group is not None:
+            self.highlighted_link_group.setStyleSheet("")
+            self.highlighted_link_group = None
 
-    def show_topology_ue(self, column):
-        if column > 0:
-            self.show_topology_item(self.cell_tabs.currentIndex(), column)
+        self.selected_topology_path = path_key
+        if previous_path is not None:
+            self.update_topology_entry(previous_path)
+        if path_key is not None:
+            self.highlighted_link_group = self.link_groups[path_key]
+            self.highlighted_link_group.setStyleSheet(
+                "QGroupBox { background-color: #dceeff; border: 1px solid #79a8d8; "
+                "margin-top: 8px; } QGroupBox::title { subcontrol-origin: margin; "
+                "left: 8px; padding: 0 3px; }"
+            )
+            self.update_topology_entry(path_key)
+
+    def show_topology_item(self, row, column):
+        if not 0 <= row < len(UE_CONFIGS):
+            return
+        if column == 0:
+            self.set_selected_topology_path(None)
+        elif 0 < column <= len(CELL_CONFIGS):
+            cell_number = CELL_CONFIGS[column - 1]["number"]
+            ue_number = UE_CONFIGS[row]["number"]
+            path_key = (cell_number, ue_number)
+            self.cell_tabs.setCurrentIndex(column - 1)
+            if self.selected_topology_path == path_key:
+                self.set_selected_topology_path(None)
+                return
+            self.set_selected_topology_path(path_key)
+            scroll_area = self.cell_scroll_areas[cell_number]
+            scroll_area.ensureWidgetVisible(self.link_groups[path_key], 0, 8)
+
+    def show_topology_cell(self, column):
+        self.set_selected_topology_path(None)
+        if 0 < column <= len(CELL_CONFIGS):
+            self.cell_tabs.setCurrentIndex(column - 1)
+
+    def copy_link_settings(self, source_path, target_path):
+        if source_path == target_path:
+            return
+        target_linked = self.path_loss_linked[source_path]
+        self.path_enabled_checkboxes[target_path].setChecked(
+            self.path_enabled[source_path]
+        )
+        self.path_loss_linked_checkboxes[target_path].setChecked(False)
+        self.dl_path_loss_controls[target_path].set_value(
+            self.dl_path_loss_db[source_path]
+        )
+        self.ul_path_loss_controls[target_path].set_value(
+            self.ul_path_loss_db[source_path]
+        )
+        self.path_loss_linked_checkboxes[target_path].setChecked(target_linked)
+        self.dl_awgn_enabled_checkboxes[target_path].setChecked(
+            self.dl_awgn_enabled[source_path]
+        )
+        self.dl_awgn_snr_controls[target_path].set_value(
+            self.dl_awgn_snr_db_by_path[source_path]
+        )
+
+    def copy_selected_ue(self, target_ue_number):
+        if self.selected_topology_path is None:
+            return
+        source_path = self.selected_topology_path
+        self.copy_link_settings(source_path, (source_path[0], target_ue_number))
+
+    def copy_current_cell(self, target_cell_number):
+        source_cell_number = CELL_CONFIGS[self.cell_tabs.currentIndex()]["number"]
+        if source_cell_number == target_cell_number:
+            return
+        self.ul_awgn_enabled_checkboxes[target_cell_number].setChecked(
+            self.ul_awgn_enabled[source_cell_number]
+        )
+        self.ul_awgn_snr_controls[target_cell_number].set_value(
+            self.ul_awgn_snr_db_by_cell[source_cell_number]
+        )
+        for ue in UE_CONFIGS:
+            ue_number = ue["number"]
+            self.copy_link_settings(
+                (source_cell_number, ue_number),
+                (target_cell_number, ue_number),
+            )
+
+    def set_current_cell_path_loss(self):
+        cell_number = CELL_CONFIGS[self.cell_tabs.currentIndex()]["number"]
+        path_loss_db, accepted = Qt.QInputDialog.getDouble(
+            self,
+            "Set Path Loss",
+            "Uplink and downlink path loss [dB]",
+            0.0,
+            0.0,
+            PATH_LOSS_MAX_DB,
+            1,
+        )
+        if not accepted:
+            return
+        for ue in UE_CONFIGS:
+            path_key = (cell_number, ue["number"])
+            linked = self.path_loss_linked[path_key]
+            self.path_loss_linked_checkboxes[path_key].setChecked(False)
+            self.dl_path_loss_controls[path_key].set_value(path_loss_db)
+            self.ul_path_loss_controls[path_key].set_value(path_loss_db)
+            self.path_loss_linked_checkboxes[path_key].setChecked(linked)
+
+    def set_current_cell_awgn(self, enabled):
+        cell_number = CELL_CONFIGS[self.cell_tabs.currentIndex()]["number"]
+        self.ul_awgn_enabled_checkboxes[cell_number].setChecked(enabled)
+        for ue in UE_CONFIGS:
+            self.dl_awgn_enabled_checkboxes[(cell_number, ue["number"])].setChecked(enabled)
+
+    def set_current_cell_path_loss_linked(self, linked):
+        cell_number = CELL_CONFIGS[self.cell_tabs.currentIndex()]["number"]
+        for ue in UE_CONFIGS:
+            self.path_loss_linked_checkboxes[(cell_number, ue["number"])].setChecked(linked)
+
+    def update_actions_menu(self):
+        current_cell = CELL_CONFIGS[self.cell_tabs.currentIndex()]["number"]
+        selected_ue = (
+            self.selected_topology_path[1]
+            if self.selected_topology_path is not None
+            else None
+        )
+        for ue_number, action in self.copy_ue_actions.items():
+            action.setEnabled(selected_ue is not None and ue_number != selected_ue)
+        for cell_number, action in self.copy_cell_actions.items():
+            action.setEnabled(cell_number != current_cell)
+
+        all_awgn_enabled = self.ul_awgn_enabled[current_cell] and all(
+            self.dl_awgn_enabled[(current_cell, ue["number"])]
+            for ue in UE_CONFIGS
+        )
+        awgn_action = "Disable" if all_awgn_enabled else "Enable"
+        self.awgn_action.setText(f"{awgn_action} AWGN for Current Cell")
+        all_path_loss_linked = all(
+            self.path_loss_linked[(current_cell, ue["number"])]
+            for ue in UE_CONFIGS
+        )
+        path_loss_action = "Unlink" if all_path_loss_linked else "Link"
+        self.path_loss_link_action.setText(f"{path_loss_action} Path Loss for Current Cell")
+
+    def toggle_current_cell_awgn(self):
+        cell_number = CELL_CONFIGS[self.cell_tabs.currentIndex()]["number"]
+        all_enabled = self.ul_awgn_enabled[cell_number] and all(
+            self.dl_awgn_enabled[(cell_number, ue["number"])]
+            for ue in UE_CONFIGS
+        )
+        self.set_current_cell_awgn(not all_enabled)
+
+    def toggle_current_cell_path_loss_linked(self):
+        cell_number = CELL_CONFIGS[self.cell_tabs.currentIndex()]["number"]
+        all_linked = all(
+            self.path_loss_linked[(cell_number, ue["number"])]
+            for ue in UE_CONFIGS
+        )
+        self.set_current_cell_path_loss_linked(not all_linked)
 
     def update_topology(self):
-        for row, cell in enumerate(CELL_CONFIGS):
-            for column, ue in enumerate(UE_CONFIGS, start=1):
+        for row, ue in enumerate(UE_CONFIGS):
+            for column, cell in enumerate(CELL_CONFIGS, start=1):
                 path_key = (cell["number"], ue["number"])
                 self.update_topology_entry(path_key, row, column)
 
     def update_topology_entry(self, path_key, row=None, column=None):
         if row is None:
-            cell_numbers = [cell["number"] for cell in CELL_CONFIGS]
-            row = cell_numbers.index(path_key[0])
-        if column is None:
             ue_numbers = [ue["number"] for ue in UE_CONFIGS]
-            column = ue_numbers.index(path_key[1]) + 1
+            row = ue_numbers.index(path_key[1])
+        if column is None:
+            cell_numbers = [cell["number"] for cell in CELL_CONFIGS]
+            column = cell_numbers.index(path_key[0]) + 1
 
         item = self.topology_items.get(path_key)
         if item is None:
@@ -874,22 +1042,26 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
         dl_loss = self.dl_path_loss_db[path_key]
         ul_loss = self.ul_path_loss_db[path_key]
         enabled = self.path_enabled[path_key]
-        awgn_enabled = self.dl_awgn_enabled[path_key]
+        ul_awgn_enabled = self.ul_awgn_enabled[path_key[0]]
+        dl_awgn_enabled = self.dl_awgn_enabled[path_key]
         details = [f"{ul_loss:.1f}/{dl_loss:.1f} dB"]
         if not enabled:
             details.append("Off")
-        details.append(f"AWGN: {'On' if awgn_enabled else 'Off'}")
+        ul_awgn_state = "On" if ul_awgn_enabled else "Off"
+        dl_awgn_state = "On" if dl_awgn_enabled else "Off"
+        details.append(f"AWGN: {ul_awgn_state}/{dl_awgn_state}")
         item.setText("\n".join(details))
         item.setToolTip(
             f"Downlink path loss: {dl_loss:.1f} dB\n"
             f"Uplink path loss: {ul_loss:.1f} dB\n"
             f"Path: {'on' if enabled else 'off'}\n"
-            f"Downlink AWGN: {'on' if awgn_enabled else 'off'}"
+            f"Uplink AWGN: {'on' if ul_awgn_enabled else 'off'}\n"
+            f"Downlink AWGN: {'on' if dl_awgn_enabled else 'off'}"
         )
 
         font = item.font()
         font.setPointSize(8)
-        font.setBold(False)
+        font.setBold(False) #(self.selected_topology_path == path_key)
         item.setFont(font)
         if not enabled:
             item.setBackground(Qt.QColor(232, 232, 232))
@@ -1187,6 +1359,9 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
         self.ul_awgn_enabled[cell_number] = bool(enabled)
         self.cell_ul_awgn[cell_number].set_enabled(enabled)
         self.ul_awgn_snr_controls[cell_number].setEnabled(bool(enabled))
+        if hasattr(self, "topology_table"):
+            for ue in UE_CONFIGS:
+                self.update_topology_entry((cell_number, ue["number"]))
 
     def set_cell_ul_awgn_snr_db(self, cell_number, snr_db):
         self.cell_ul_awgn[cell_number].set_snr_db(snr_db)

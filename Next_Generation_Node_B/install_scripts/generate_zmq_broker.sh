@@ -489,7 +489,7 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
             for cell_index, cell in enumerate(CELL_CONFIGS):
                 cell_number = cell["number"]
                 path_key = (cell_number, ue_number)
-                label = f"Jammer Cell {cell_number} Path Loss [dB]" if ue_number == 4 else f"UE {ue_number} Cell {cell_number} Path Loss [dB]"
+                label = f"UE {ue_number} Cell {cell_number} Path Loss [dB]"
 
                 self.path_loss_ranges[path_key] = Range(
                     0, 100, 1, self.path_loss_db[path_key], 200

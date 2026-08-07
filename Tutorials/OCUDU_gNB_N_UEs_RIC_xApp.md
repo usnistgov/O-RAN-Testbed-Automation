@@ -249,7 +249,7 @@ DRB.RlcSduTransmittedVolumeUL = 13803
 DRB.UEThpDl = 265.00 [kbps]
 DRB.UEThpUl = 13872.00 [kbps]
 ```
-### KPM Performance Evaluation
+### Monitor KPIs
 The console output shows the xApp successfully subscribed to the KPM service model using RAN function ID 2. The xApp received periodic KPM indication message from the connected E2 node. 
 
 #### Successful E2 Connectivity

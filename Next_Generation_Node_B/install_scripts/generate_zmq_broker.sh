@@ -33,21 +33,40 @@ echo "# Script: $(realpath "$0") $@"
 # Exit immediately if a command fails
 set -e
 
-OUTPUT=""
-SAMPLE_RATE_HZ=""
-SLOW_DOWN_RATIO=""
+OUTPUT="zmq_broker/multi_ue_scenario.py"
+SAMPLE_RATE_HZ="23040000"
+SLOW_DOWN_RATIO="1"
 CELL_NUMBERS=()
 UE_NUMBERS=()
 UE_IPS=()
 VALIDATED_CELL_NUMBERS=()
 
-# The script directory respects symbolic links so that the gNB and UE can patch their own openairinterface5g
+# Script directory from the called path, including symlinks
 SCRIPT_DIR="$(cd "$(dirname "$0")" >/dev/null 2>&1 && pwd)"
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
+case "$(basename "$PARENT_DIR")" in
+Next_Generation_Node_B)
+    UE_NAMESPACE_SCRIPT="$PARENT_DIR/../User_Equipment/install_scripts/get_ue_namespace_ip.sh"
+    ;;
+User_Equipment)
+    UE_NAMESPACE_SCRIPT="$PARENT_DIR/install_scripts/get_ue_namespace_ip.sh"
+    ;;
+OpenAirInterface_UE)
+    UE_NAMESPACE_SCRIPT="$PARENT_DIR/../../User_Equipment/install_scripts/get_ue_namespace_ip.sh"
+    ;;
+*)
+    echo "ERROR: Unable to find get_ue_namespace_ip.sh from $PARENT_DIR." >&2
+    exit 1
+    ;;
+esac
+if [ ! -x "$UE_NAMESPACE_SCRIPT" ]; then
+    echo "ERROR: UE namespace address script not found: $UE_NAMESPACE_SCRIPT" >&2
+    exit 1
+fi
 cd "$PARENT_DIR"
 
 usage() {
-    echo "Usage: $0 --output FILE --sample-rate-hz HZ [--slow-down-ratio N] --cells <cell_numbers> --ues <number:ip_addresses>"
+    echo "Usage: $0 --cells <cell_numbers> --ues <ue_numbers> [--output FILE] [--sample-rate-hz HZ] [--slow-down-ratio N]"
 }
 
 while [ $# -gt 0 ]; do
@@ -76,16 +95,14 @@ while [ $# -gt 0 ]; do
         ;;
     --ues)
         if [ $# -lt 2 ] || [ -z "$2" ]; then
-            echo "ERROR: --ues requires comma-separated NUMBER:IP_ADDRESS values."
+            echo "ERROR: --ues requires comma-separated UE numbers."
             usage
             exit 1
         fi
-        IFS=',' read -r -a PARSED_UE_CONFIGS <<<"$2"
-        for UE_VALUE in "${PARSED_UE_CONFIGS[@]}"; do
-            UE_NUMBER="${UE_VALUE%%:*}"
-            UE_IP="${UE_VALUE#*:}"
-            if ! [[ "$UE_NUMBER" =~ ^[1-9][0-9]*$ ]] || [ "$UE_IP" = "$UE_VALUE" ]; then
-                echo "ERROR: UEs must be formatted as comma-separated NUMBER:IP_ADDRESS values."
+        IFS=',' read -r -a PARSED_UE_NUMBERS <<<"$2"
+        for UE_NUMBER in "${PARSED_UE_NUMBERS[@]}"; do
+            if ! [[ "$UE_NUMBER" =~ ^[1-9][0-9]*$ ]]; then
+                echo "ERROR: --ues must contain positive integers ($UE_NUMBER)."
                 exit 1
             fi
             for EXISTING_UE in "${UE_NUMBERS[@]}"; do
@@ -95,7 +112,6 @@ while [ $# -gt 0 ]; do
                 fi
             done
             UE_NUMBERS+=("$UE_NUMBER")
-            UE_IPS+=("$UE_IP")
         done
         shift 2
         ;;
@@ -107,7 +123,7 @@ while [ $# -gt 0 ]; do
     esac
 done
 
-if [ -z "$OUTPUT" ] || [ -z "$SAMPLE_RATE_HZ" ] || [ ${#UE_NUMBERS[@]} -eq 0 ] || [ ${#CELL_NUMBERS[@]} -eq 0 ]; then
+if [ ${#UE_NUMBERS[@]} -eq 0 ] || [ ${#CELL_NUMBERS[@]} -eq 0 ]; then
     usage
     exit 1
 fi
@@ -157,6 +173,8 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
             exit 1
         fi
     done
+    UE_IP=$("$UE_NAMESPACE_SCRIPT" ue "$UE_NUMBER")
+    UE_IPS+=("$UE_IP")
 done
 
 mkdir -p "$(dirname "$OUTPUT")"
@@ -611,6 +629,7 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
         self.topology_table = Qt.QTableWidget(len(UE_CONFIGS), len(CELL_CONFIGS) + 1)
         topology_font = self.topology_table.font()
         topology_font.setPointSize(8)
+        topology_font.setBold(False)
         self.topology_table.setFont(topology_font)
         self.topology_table.horizontalHeader().setFont(topology_font)
         self.topology_table.setHorizontalHeaderLabels([""] + [f"Cell {cell['number']}" for cell in CELL_CONFIGS])

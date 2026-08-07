@@ -48,7 +48,7 @@ UE_DIRECTORY="$SCRIPT_DIR/User_Equipment"
 UE_READY_MESSAGE="Received PDU Session Establishment Accept"
 if [ "$USE_SRSRAN_UE" = "true" ]; then
     if [ "$USE_ZMQ_BROKER" != "true" ]; then
-        echo "ERROR: The srsRAN UE requires the ZeroMQ broker with the Duranta gNodeB. It can be enabled with the following commands:"
+        echo "ERROR: The srsRAN UE requires the ZeroMQ channel emulator with the Duranta gNodeB. It can be enabled with the following commands:"
         echo "    sed -i 's/^RADIO_TYPE=.*$/RADIO_TYPE="ZMQ" # Set to "SIMU", "ZMQ", or "USRP"/' User_Equipment/full_install.sh"
         echo "    sed -i 's/^RADIO_TYPE=.*$/RADIO_TYPE="ZMQ" # Set to "SIMU", "ZMQ", or "USRP"/' User_Equipment/generate_configurations.sh"
         echo "    sed -i 's/^RADIO_TYPE=.*$/RADIO_TYPE="ZMQ" # Set to "SIMU", "ZMQ", or "USRP"/' Next_Generation_Node_B/full_install.sh"
@@ -101,8 +101,8 @@ if [ "$USE_ZMQ_BROKER" = "true" ]; then
         exit 1
     fi
 
-    echo "ZeroMQ Broker Duranta UEs: ${UE_NUMBERS[*]}"
-    echo "ZeroMQ Broker Duranta DUs: ${CELL_NUMBERS[*]}"
+    echo "ZeroMQ Channel Emulator Duranta UEs: ${UE_NUMBERS[*]}"
+    echo "ZeroMQ Channel Emulator Duranta DUs: ${CELL_NUMBERS[*]}"
 else
     UE_NUMBERS=(1)
 fi
@@ -264,8 +264,8 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
         echo -n "."
         sleep 0.5
         ATTEMPT=$((ATTEMPT + 1))
-        if [ $ATTEMPT -ge 120 ]; then
-            echo "UE $UE_NUMBER did not start after 60 seconds, exiting..."
+        if [ $ATTEMPT -ge 240 ]; then
+            echo "UE $UE_NUMBER did not start after 120 seconds, exiting..."
             exit 1
         fi
         if ! ./is_running.sh | grep -Eq "(^|[ (])ue${UE_NUMBER}([ )]|$)"; then

@@ -667,7 +667,7 @@ if [ "$USE_ZMQ_BROKER" = "true" ]; then
         exit 1
     fi
 
-    echo "Generating ZeroMQ Broker Python script..."
+    echo "Generating ZeroMQ channel emulator Python script..."
 
     BROKER_SRATE_INT=$(awk "BEGIN { printf \"%d\", $GNB_SRATE_MHZ * 1000000 }")
 
@@ -675,25 +675,23 @@ if [ "$USE_ZMQ_BROKER" = "true" ]; then
     # # Optionally, calculate the slow down ratio based on the number of UEs and cells
     # ZMQ_BROKER_SLOW_DOWN_RATIO="$((${#UE_NUMBERS[@]} + ${#CELL_NUMBERS[@]}))"
 
-    BROKER_UE_CONFIGS=()
-    for UE_NUMBER in "${UE_NUMBERS[@]}"; do
-        UE_IP=$(../User_Equipment/install_scripts/get_ue_namespace_ip.sh ue "$UE_NUMBER")
-        BROKER_UE_CONFIGS+=("$UE_NUMBER:$UE_IP")
-    done
-    BROKER_UE_CONFIGS_STR=$(
+    BROKER_UE_NUMBERS_STR=$(
         IFS=,
-        echo "${BROKER_UE_CONFIGS[*]}"
+        echo "${UE_NUMBERS[*]}"
     )
     BROKER_CELL_NUMBERS_STR=$(
         IFS=,
         echo "${CELL_NUMBERS[*]}"
     )
 
+    if [ -L zmq_broker ]; then
+        rm -f zmq_broker
+    fi
     mkdir -p zmq_broker
-    ./install_scripts/generate_zmq_broker.sh --output "zmq_broker/multi_ue_scenario.py" --sample-rate-hz "$BROKER_SRATE_INT" --slow-down-ratio "$ZMQ_BROKER_SLOW_DOWN_RATIO" --cells "$BROKER_CELL_NUMBERS_STR" --ues "$BROKER_UE_CONFIGS_STR"
+    ./install_scripts/generate_zmq_broker.sh --output "zmq_broker/multi_ue_scenario.py" --sample-rate-hz "$BROKER_SRATE_INT" --slow-down-ratio "$ZMQ_BROKER_SLOW_DOWN_RATIO" --cells "$BROKER_CELL_NUMBERS_STR" --ues "$BROKER_UE_NUMBERS_STR"
 
     if ! python3 -c "import gnuradio, PyQt5" >/dev/null 2>&1; then
-        echo "Installing GNU Radio runtime for the ZeroMQ Broker..."
+        echo "Installing GNU Radio runtime for the ZeroMQ channel emulator..."
         sudo env $APTVARS apt-get install -y gnuradio python3-pyqt5
     fi
 
@@ -705,9 +703,9 @@ if [ "$USE_ZMQ_BROKER" = "true" ]; then
     # fi
     rm -f ~/.gnuradio/prefs/vmcircbuf_default_factory
 
-    echo "Successfully generated ZeroMQ broker for UEs: [${UE_NUMBERS[*]}], Cells: [${CELL_NUMBERS[*]}]."
+    echo "Successfully generated ZeroMQ channel emulator for UEs: [${UE_NUMBERS[*]}], Cells: [${CELL_NUMBERS[*]}]."
 else
-    echo "Using direct ZeroMQ connection for UE $UE_NUMBER at *:2100 and $UE_IP:2101 (no ZeroMQ broker)."
+    echo "Using direct ZeroMQ connection for UE $UE_NUMBER at *:2100 and $UE_IP:2101 (no ZeroMQ channel emulator)."
 fi
 
 echo "Successfully configured the gNodeB. The configuration file is located in the configs/ directory."

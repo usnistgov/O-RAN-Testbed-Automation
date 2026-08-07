@@ -48,7 +48,7 @@ UE_DIRECTORY="$SCRIPT_DIR/User_Equipment"
 UE_READY_MESSAGE="Received PDU Session Establishment Accept"
 if [ "$USE_SRSRAN_UE" = "true" ]; then
     if [ "$USE_ZMQ_BROKER" != "true" ]; then
-        echo "ERROR: The srsRAN UE requires the ZeroMQ broker with the Duranta gNodeB. It can be enabled with the following commands:"
+        echo "ERROR: The srsRAN UE requires the ZeroMQ channel emulator with the Duranta gNodeB. It can be enabled with the following commands:"
         echo "    sed -i 's/^RADIO_TYPE=.*$/RADIO_TYPE="ZMQ" # Set to "SIMU", "ZMQ", or "USRP"/' User_Equipment/full_install.sh"
         echo "    sed -i 's/^RADIO_TYPE=.*$/RADIO_TYPE="ZMQ" # Set to "SIMU", "ZMQ", or "USRP"/' User_Equipment/generate_configurations.sh"
         echo "    sed -i 's/^RADIO_TYPE=.*$/RADIO_TYPE="ZMQ" # Set to "SIMU", "ZMQ", or "USRP"/' Next_Generation_Node_B/full_install.sh"
@@ -76,7 +76,7 @@ fi
 RUN_TELNET_SESSION_AFTER=true
 NUM_UES=1
 NUM_DUS=2
-RUN_XAPP_KPM_MONITOR=false
+RUN_XAPP_KPM_MONITOR=true
 RUN_GRAFANA_DASHBOARD=false
 
 if [ "$RUN_GRAFANA_DASHBOARD" = true ] && [ "$RUN_XAPP_KPM_MONITOR" = false ]; then
@@ -95,12 +95,12 @@ while [[ $# -gt 0 ]]; do
         echo "Usage: $0 [show] [--num-ues N] [--num-dus N] [help|-h|--help]"
         echo "  show           Show logs in new terminals"
         echo "  --num-ues N    Set number of UEs (default: 1)."
-        echo "                 Note: RF simulator supports only one UE, while the ZeroMQ broker supports multiple UEs."
+        echo "                 Note: RF simulator supports only one UE, while the ZeroMQ channel emulator supports multiple UEs."
         echo "  --num-dus N    Set number of DUs (default: 2)"
         echo "  help, -h       Show this help message"
         exit 0
         ;;
-        # NOTE: RF Simulator's client-server architecture does not currently support a virtual multi-UE handover scenario. However, handovers for multiple COTS UEs are supported over the air and through the ZeroMQ broker.
+        # NOTE: RF Simulator's client-server architecture does not currently support a virtual multi-UE handover scenario. However, handovers for multiple COTS UEs are supported over the air and through the ZeroMQ channel emulator.
     --num-ues)
         NUM_UES="$2"
         shift 2
@@ -139,10 +139,10 @@ if [ "$USE_ZMQ_BROKER" = "true" ]; then
     mapfile -t BROKER_UE_NUMBERS < <(./Next_Generation_Node_B/install_scripts/get_zmq_broker_config.sh --ues)
     mapfile -t BROKER_CELL_NUMBERS < <(./Next_Generation_Node_B/install_scripts/get_zmq_broker_config.sh --cells)
     if [ "$NUM_UES" != "${#BROKER_UE_NUMBERS[@]}" ] || [ "$NUM_DUS" != "${#BROKER_CELL_NUMBERS[@]}" ]; then
-        echo "WARNING: The requested number of UEs or DUs does not match the generated ZeroMQ Broker configuration."
+        echo "WARNING: The requested number of UEs or DUs does not match the generated ZeroMQ channel emulator configuration."
         NUM_UES=${#BROKER_UE_NUMBERS[@]}
         NUM_DUS=${#BROKER_CELL_NUMBERS[@]}
-        echo "Using $NUM_UES UE(s) and $NUM_DUS DU(s) from the ZeroMQ broker configuration."
+        echo "Using $NUM_UES UE(s) and $NUM_DUS DU(s) from the ZeroMQ channel emulator configuration."
     fi
 
     BROKER_UE_NUMBERS_STR=$(

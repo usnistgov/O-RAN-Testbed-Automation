@@ -73,7 +73,7 @@ if [ "$SHOW_ZMQ_BROKER_UI" != "true" ] && [ "$SHOW_ZMQ_BROKER_UI" != "false" ]; 
 fi
 
 if [ "$USE_ZMQ_BROKER" = "true" ]; then
-    # Optionally, validate the ZeroMQ broker before starting the UE
+    # Optionally, validate the ZeroMQ channel emulator before starting the UE
     # "$SCRIPT_DIR/install_scripts/validate_zmq_broker_config.sh" --broker-only --ues "$UE_NUMBER"
 
     BROKER_UE_NUMBER=$("$SCRIPT_DIR/install_scripts/get_zmq_broker_config.sh" --ue "$UE_NUMBER" | awk '{print $1}')

@@ -41,9 +41,9 @@ USE_ZMQ_BROKER=true
 
 if [ "$USE_ZMQ_BROKER" = "true" ]; then
     if pgrep -f "[m]ulti_ue_scenario\.py" >/dev/null; then
-        echo "ZMQ_Broker: RUNNING"
+        echo "ZeroMQ Channel Emulator: RUNNING"
     else
-        echo "ZMQ_Broker: NOT_RUNNING"
+        echo "ZeroMQ Channel Emulator: NOT_RUNNING"
     fi
 fi
 

@@ -540,27 +540,26 @@ if [ "$ENABLE_NEIGHBOR_CONFIG" = "true" ]; then
 fi
 
 if [ "$RADIO_TYPE" = "ZMQ" ]; then
-    echo "Generating ZeroMQ Broker Python script..."
+    echo "Generating ZeroMQ channel emulator Python script..."
+    if [ -L zmq_broker ]; then
+        rm -f zmq_broker
+    fi
+    mkdir -p zmq_broker
     BROKER_CELL_NUMBERS_STR=$(
         IFS=,
         echo "${CELL_NUMBERS[*]}"
     )
-    BROKER_UE_CONFIGS=()
-    for UE_NUMBER in "${UE_NUMBERS[@]}"; do
-        UE_IP=$(../User_Equipment/install_scripts/get_ue_namespace_ip.sh ue "$UE_NUMBER")
-        BROKER_UE_CONFIGS+=("$UE_NUMBER:$UE_IP")
-    done
-    BROKER_UE_CONFIGS_STR=$(
+    BROKER_UE_NUMBERS_STR=$(
         IFS=,
-        echo "${BROKER_UE_CONFIGS[*]}"
+        echo "${UE_NUMBERS[*]}"
     )
     ./install_scripts/generate_zmq_broker.sh \
         --output "zmq_broker/multi_ue_scenario.py" \
         --sample-rate-hz "$ZMQ_BROKER_SAMPLE_RATE_HZ" \
         --slow-down-ratio 1 \
         --cells "$BROKER_CELL_NUMBERS_STR" \
-        --ues "$BROKER_UE_CONFIGS_STR"
-    echo "Successfully generated ZeroMQ broker for UEs: [${UE_NUMBERS[*]}], Cells: [${CELL_NUMBERS[*]}]."
+        --ues "$BROKER_UE_NUMBERS_STR"
+    echo "Successfully generated ZeroMQ channel emulator for UEs: [${UE_NUMBERS[*]}], Cells: [${CELL_NUMBERS[*]}]."
 fi
 
 cd configs

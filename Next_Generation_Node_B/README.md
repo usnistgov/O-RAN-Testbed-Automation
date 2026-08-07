@@ -8,7 +8,7 @@ The Next Generation Node B (gNodeB) is a 5G base station configured with OCUDU [
 - **Rebuild**: Use `./rebuild_code.sh` to rebuild and reinstall the gNodeB software after source changes. The script reuses the existing build directory, so unchanged files are not rebuilt.
 - **Generate Configurations**: Use `./generate_configurations.sh` to create configuration files.
   - The script automatically retrieves the 5G Core Network's AMF address and the SCTP address from the Near-Real-Time RAN Intelligent Controller's E2 Terminator. If either are not found locally, the script will prompt the user to enter the address manually.
-  - An optional list of UE numbers for multi-UE emulation can be provided with `--ues <ue_numbers>` as a comma-separated list, for example `./generate_configurations.sh --ues 1,2,3`, to generate the ZeroMQ broker configuration (see [here](/Next_Generation_Node_B/README.md#simulating-multiple-ues-and-cells-with-zeromq-broker) for more information).
+  - An optional list of UE numbers for multi-UE emulation can be provided with `--ues <ue_numbers>` as a comma-separated list, for example `./generate_configurations.sh --ues 1,2,3`, to generate the ZeroMQ channel emulator configuration (see [here](/Next_Generation_Node_B/README.md#simulating-multiple-ues-and-cells-with-a-zeromq-channel-emulator) for more information).
   - Configuration files can be accessed and modified in the `configs` directory.
 - **Start the gNodeB**: Use `./run.sh` to start the gNodeB, or `./run_background.sh` to run it as a background process where the output is redirected to `logs/gnb_stdout.txt`.
 - **Stop the gNodeB**: Terminate the gNodeB with `./stop.sh`.
@@ -19,14 +19,14 @@ The Next Generation Node B (gNodeB) is a 5G base station configured with OCUDU [
 > [!TIP]
 > If the directory `RAN_Intelligent_Controllers/Near-Real-Time-RIC` is not found, then the `generate_configurations.sh` script will disable the E2 interface. Alternatively, if prompted to enter an E2 address, enter nothing ("") to disable the E2 interface in the gNodeB configuration.
 
-## Simulating Multiple UEs and Cells with ZeroMQ Broker
+## Simulating Multiple UEs and Cells with a ZeroMQ Channel Emulator
 
-By default, the gNodeB uses a ZeroMQ (ZMQ) Broker with cell 1 and UEs 1, 2, and 3. The broker supports multi-UE and multi-cell emulation and is motivated by the OCUDU Multi-UE Emulation tutorial [\[5][ocudu-multi-ue], [6\]][ocudu-multi-ue-grc]. The broker Python runtime script is generated during configuration from the requested UE list using `install_scripts/generate_zmq_broker.sh`. The broker operates the simulated ZeroMQ channel. Its graphical user interface can be toggled by setting `SHOW_ZMQ_BROKER_UI` in `run.sh`.
+By default, the gNodeB uses a ZeroMQ (ZMQ) channel emulator with cell 1 and UEs 1, 2, and 3. It supports multi-UE and multi-cell emulation and is motivated by the OCUDU Multi-UE Emulation tutorial [\[5][ocudu-multi-ue], [6\]][ocudu-multi-ue-grc]. The Python runtime script is generated under `zmq_broker` using `install_scripts/generate_zmq_broker.sh`. The generator accepts comma-separated UE numbers, such as `--ues 1,2,3`. Its graphical user interface can be toggled by setting `SHOW_ZMQ_BROKER_UI` in `run.sh`.
 
-To connect the gNodeB directly to a single SRS UE without the broker, set all occurrences of `USE_ZMQ_BROKER` to `false`, then run the base directory configuration script: `../generate_configurations.sh`.
+To connect the gNodeB directly to a single SRS UE without the channel emulator, set all occurrences of `USE_ZMQ_BROKER` to `false`, then run the base directory configuration script: `../generate_configurations.sh`.
 
 <details>
-<summary>Disable ZMQ broker</summary>
+<summary>Disable ZeroMQ channel emulator</summary>
 
 ```bash
 sed -i 's/^USE_ZMQ_BROKER=true$/USE_ZMQ_BROKER=false/' ../run.sh
@@ -40,10 +40,10 @@ sed -i 's/^USE_ZMQ_BROKER=true$/USE_ZMQ_BROKER=false/' stop.sh
 
 </details>
 
-To restore the default broker configuration, set all occurrences of `USE_ZMQ_BROKER` to `true`, then run the base directory configuration script: `../generate_configurations.sh`.
+To restore the default channel emulator configuration, set all occurrences of `USE_ZMQ_BROKER` to `true`, then run the base directory configuration script: `../generate_configurations.sh`.
 
 <details>
-<summary>Enable ZMQ broker (default)</summary>
+<summary>Enable ZeroMQ channel emulator (default)</summary>
 
 ```bash
 sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' ../run.sh
@@ -58,26 +58,26 @@ sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' stop.sh
 </details>
 
 > [!NOTE]
-> When the ZMQ broker is enabled, the base directory `run.sh` starts all but the first UE as background processes, then starts the first UE in the foreground.
+> When the ZeroMQ channel emulator is enabled, the base directory `run.sh` starts all but the first UE as background processes, then starts the first UE in the foreground.
 
 <details>
 <summary>Configure multiple UEs</summary>
 
-To configure a specific emulated UE set, pass the UE numbers to the base directory generator with `--ues` as a comma-separated list, e.g., `../generate_configurations.sh --ues 1,2,3`. The generated broker creates one downlink and one uplink route for each requested UE, and the base directory `run.sh` launches the generated UE set.
+To configure a specific emulated UE set, pass the UE numbers to the base directory generator with `--ues` as a comma-separated list, e.g., `../generate_configurations.sh --ues 1,2,3`. The generated channel emulator creates one downlink and one uplink route for each requested UE, and the base directory `run.sh` launches the generated UE set.
 
 </details>
 
 <details>
 <summary>Troubleshoot UE attach</summary>
 
-If one or more UEs remain stuck while attaching with the ZMQ broker, check `ZMQ_TIMEOUT` in `Next_Generation_Node_B/zmq_broker/multi_ue_scenario.py`. Slower systems may require an increase from the default value of `100`, but larger values may slow attach and PDU session establishment. `ZMQ_HIGH_WATER_MARK` is left as `-1` by default to use the GNU Radio/ZeroMQ default buffering behavior.
+If one or more UEs remain stuck while attaching with the ZeroMQ channel emulator, check `ZMQ_TIMEOUT` in `Next_Generation_Node_B/zmq_broker/multi_ue_scenario.py`. Slower systems may require an increase from the default value of `100`, but larger values may slow attach and PDU session establishment. `ZMQ_HIGH_WATER_MARK` is left as `-1` by default to use the GNU Radio/ZeroMQ default buffering behavior.
 </details>
 
 
 <details>
 <summary>Configure multiple cells</summary>
 
-To configure multiple cells with the broker, pass `--cells <cell_numbers>` to the base directory generator, e.g., `../generate_configurations.sh --cells 7,8,9`. The generated broker creates one gNB-side downlink/uplink port pair per cell and one path-loss control for each cell/UE pair. Specific UEs can be specified with `--ues <ue_numbers>`, e.g., `--ues 4,5,6`.
+To configure multiple cells with the channel emulator, pass `--cells <cell_numbers>` to the base directory generator, e.g., `../generate_configurations.sh --cells 1,2,3`. The generated channel emulator creates one gNB-side downlink/uplink port pair per cell and one path-loss control for each cell/UE pair. Specific UEs can be specified with `--ues <ue_numbers>`, e.g., `--ues 9,8,7`.
 
 </details>
 
@@ -145,7 +145,7 @@ The gNodeB includes support for visualizing performance metrics via a Grafana da
 - **Start Grafana WebUI**: Start the dashboard and its Docker Compose dependencies with `./start_grafana_webui.sh`.
 - **Stop Grafana WebUI**: Stop the dashboard container with `./stop_grafana_webui.sh`.
 
-![OCUDU Grafana WebUI and ZMQ Broker](../Images/OCUDU_Grafana_WebUI.png)
+![OCUDU Grafana WebUI and ZeroMQ Channel Emulator](../Images/OCUDU_Grafana_WebUI.png)
 
 ## References
 

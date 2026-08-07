@@ -30,7 +30,7 @@ To customize the SIM subscriber information or to get more information about how
 
 The UE software supports multiple radio configurations, including the RF Simulator (`SIMU`), ZeroMQ (`ZMQ`), and Universal Software Radio Peripheral (`USRP`). To specify the desired radio device, set the `RADIO_TYPE` variable at the beginning of both the `full_install.sh` and `generate_configurations.sh` scripts prior to compiling and installing the software.
 
-**Note:** ZMQ supports one gNodeB and one UE by default. Enable the ZeroMQ broker [\[7\]][zeromq-duranta] to support multiple UEs and/or cells.
+**Note:** ZMQ supports one gNodeB and one UE by default. Enable the ZeroMQ channel emulator [\[7\]][zeromq-duranta] to support multiple UEs and/or cells.
 
 ## RF Simulator Server
 

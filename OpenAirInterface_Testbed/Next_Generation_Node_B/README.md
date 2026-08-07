@@ -18,7 +18,7 @@ The Next Generation Node B (gNodeB) is a 5G base station configured with Duranta
 
 The gNodeB software supports multiple radio configurations, including the RF Simulator (`SIMU`), ZeroMQ (`ZMQ`), and Universal Software Radio Peripheral (`USRP`). To specify the desired radio device, set the `RADIO_TYPE` variable at the beginning of both the `full_install.sh` and `generate_configurations.sh` scripts prior to compiling and installing the software.
 
-**Note:** ZMQ supports one gNodeB and one UE by default. Enable the ZeroMQ broker [\[5\]][zeromq-duranta] to support multiple UEs and/or cells.
+**Note:** ZMQ supports one gNodeB and one UE by default. Enable the ZeroMQ channel emulator [\[5\]][zeromq-duranta] to support multiple UEs and/or cells.
 
 ## Split CU-DU Deployment
 

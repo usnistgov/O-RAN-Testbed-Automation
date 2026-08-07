@@ -31,7 +31,9 @@
 # Exit immediately if a command fails
 set -e
 
+# Script directory from the called path, including symlinks
 SCRIPT_DIR="$(cd "$(dirname "$0")" >/dev/null 2>&1 && pwd)"
+PARENT_DIR=$(dirname "$SCRIPT_DIR")
 
 usage() {
     echo "Usage: $0 {--broker-file|--cells|--ues|--listen-ports|--cell NUMBER|--ue NUMBER}"
@@ -47,12 +49,26 @@ if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
     exit 0
 fi
 
-BROKER_FILE="$SCRIPT_DIR/../zmq_broker/multi_ue_scenario.py"
+case "$(basename "$PARENT_DIR")" in
+Next_Generation_Node_B)
+    BROKER_FILE="$PARENT_DIR/zmq_broker/multi_ue_scenario.py"
+    UE_NAMESPACE_SCRIPT="$PARENT_DIR/../User_Equipment/install_scripts/get_ue_namespace_ip.sh"
+    ;;
+User_Equipment)
+    BROKER_FILE="$PARENT_DIR/../Next_Generation_Node_B/zmq_broker/multi_ue_scenario.py"
+    UE_NAMESPACE_SCRIPT="$PARENT_DIR/install_scripts/get_ue_namespace_ip.sh"
+    ;;
+OpenAirInterface_UE)
+    BROKER_FILE="$PARENT_DIR/../../Next_Generation_Node_B/zmq_broker/multi_ue_scenario.py"
+    UE_NAMESPACE_SCRIPT="$PARENT_DIR/../../User_Equipment/install_scripts/get_ue_namespace_ip.sh"
+    ;;
+*)
+    echo "ERROR: Unable to determine the ZeroMQ channel emulator directory from $PARENT_DIR." >&2
+    exit 1
+    ;;
+esac
 if [ ! -f "$BROKER_FILE" ]; then
-    BROKER_FILE="$SCRIPT_DIR/../../../Next_Generation_Node_B/zmq_broker/multi_ue_scenario.py"
-fi
-if [ ! -f "$BROKER_FILE" ]; then
-    echo "ERROR: ZeroMQ Broker configuration not found. Run generate_configurations.sh first." >&2
+    echo "ERROR: ZeroMQ channel emulator configuration not found. Run generate_configurations.sh first." >&2
     exit 1
 fi
 
@@ -93,7 +109,7 @@ case "$1" in
     fi
     CELL_CONFIG=$(awk -v cell="$2" '$1 == "#" && $2 == "CELL_CONFIG:" && $3 == cell { print $3, $4, $5; exit }' "$BROKER_FILE")
     if [ -z "$CELL_CONFIG" ]; then
-        echo "ERROR: Cell $2 is not present in the generated ZeroMQ Broker configuration." >&2
+        echo "ERROR: Cell $2 is not present in the generated ZeroMQ channel emulator configuration." >&2
         exit 1
     fi
     read -r CELL_NUMBER BROKER_CELL_RX_PORT BROKER_CELL_TX_PORT <<<"$CELL_CONFIG"
@@ -106,15 +122,15 @@ case "$1" in
     fi
     UE_CONFIG=$(awk -v ue="$2" '$1 == "#" && $2 == "UE_CONFIG:" && $3 == ue { print $3, $4, $5, $6; exit }' "$BROKER_FILE")
     if [ -z "$UE_CONFIG" ]; then
-        echo "ERROR: UE $2 is not present in the generated ZeroMQ Broker configuration." >&2
+        echo "ERROR: UE $2 is not present in the generated ZeroMQ channel emulator configuration." >&2
         exit 1
     fi
     read -r UE_NUMBER UE_RX_PORT UE_TX_PORT UE_IP <<<"$UE_CONFIG"
     if ! [[ "$UE_IP" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
-        echo "ERROR: UE $2 has an invalid broker IP address: $UE_IP" >&2
+        echo "ERROR: UE $2 has an invalid ZeroMQ channel emulator IP address: $UE_IP" >&2
         exit 1
     fi
-    UE_HOST_IP=$("$SCRIPT_DIR/../../User_Equipment/install_scripts/get_ue_namespace_ip.sh" host "$UE_NUMBER")
+    UE_HOST_IP=$("$UE_NAMESPACE_SCRIPT" host "$UE_NUMBER")
     echo "$UE_NUMBER $UE_RX_PORT $UE_TX_PORT $UE_IP $UE_HOST_IP"
     ;;
 *)

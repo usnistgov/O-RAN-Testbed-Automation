@@ -80,7 +80,7 @@ if ! [[ "$DU_NUMBER" =~ ^[1-9][0-9]*$ ]]; then
 fi
 
 if [ "$USE_ZMQ_BROKER" = "true" ]; then
-    # Optionally, validate the ZeroMQ broker before starting the DU
+    # Optionally, validate the ZeroMQ channel emulator before starting the DU
     # "$SCRIPT_DIR/install_scripts/validate_zmq_broker_config.sh" --broker-only --cells "$DU_NUMBER"
 
     BROKER_CELL_NUMBER=$("$SCRIPT_DIR/install_scripts/get_zmq_broker_config.sh" --cell "$DU_NUMBER" | awk '{print $1}')

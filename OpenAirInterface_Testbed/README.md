@@ -30,15 +30,12 @@ It may be required for the AVX2 instruction set to be available on the host mach
   - If `cat /proc/cpuinfo | grep avx2` is not empty, then OpenAirInterface should be able to build without issues.
 </details>
 
-## Simulating Multiple UEs and Cells with ZeroMQ Broker
+## Simulating Multiple UEs and Cells with a ZeroMQ Channel Emulator
 
-The ZeroMQ broker enables multi-UE and multi-cell emulation and is motivated by the OCUDU Multi-UE Emulation tutorial [\[5][ocudu-multi-ue], [6\]][ocudu-multi-ue-grc]. The broker operates the simulated ZeroMQ channel. Its graphical user interface can be toggled by setting `SHOW_ZMQ_BROKER_UI` in `run.sh`.
-
-> [!NOTE]
-> The ZeroMQ broker is shared with the OCUDU testbed under `../Next_Generation_Node_B`.
+The ZeroMQ channel emulator supports multi-UE and multi-cell emulation and is motivated by the OCUDU Multi-UE Emulation tutorial [\[5][ocudu-multi-ue], [6\]][ocudu-multi-ue-grc]. Its generator, `Next_Generation_Node_B/install_scripts/generate_zmq_broker.sh`, accepts comma-separated UE numbers, such as `--ues 1,2,3`. Its graphical user interface can be toggled by setting `SHOW_ZMQ_BROKER_UI` in `run.sh`.
 
 <details>
-<summary>Enable ZeroMQ broker</summary>
+<summary>Enable ZeroMQ channel emulator</summary>
 <hr>
 
 ```bash
@@ -64,7 +61,7 @@ sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' Next_Generation_Node_B/st
 </details>
 
 <details>
-<summary>Disable ZeroMQ broker (default, using RF simulator)</summary>
+<summary>Disable ZeroMQ channel emulator (default, using RF simulator)</summary>
 <hr>
 
 ```bash
@@ -90,7 +87,7 @@ sed -i 's/^USE_ZMQ_BROKER=true$/USE_ZMQ_BROKER=false/' Next_Generation_Node_B/st
 </details>
 <hr>
 
-When the ZeroMQ broker is enabled, `./run.sh` starts the configured DUs and UEs and waits for them to become ready. All configured endpoints must be running for samples to flow.
+When the ZeroMQ channel emulator is enabled, `./run.sh` starts the configured DUs and UEs and waits for them to become ready. All configured endpoints must be running for samples to flow.
 
 ## Handover Scenario
 
@@ -98,7 +95,7 @@ The script `run_handover_scenario.sh`, based on the handover tutorial [\[4\]][du
 
   - The variable `TELNET_SERVER` in `Next_Generation_Node_B/full_install.sh` must be set to `true` prior to gNodeB installation.
   - To start each component in its own terminal instance, use `./run_handover_scenario.sh show`.
-  - The optional `--num-ues` and `--num-dus` arguments configure the handover scenario. The RF Simulator supports only one UE. When using a ZeroMQ broker, the numbers of UEs and cells are automatically set to match the broker configuration (e.g., `./run_handover_scenario.sh --num-ues 3 --num-dus 3`).
+  - The optional `--num-ues` and `--num-dus` arguments configure the handover scenario. The RF Simulator supports only one UE. When using the ZeroMQ channel emulator, the numbers of UEs and cells are automatically set to match its configuration (e.g., `./run_handover_scenario.sh --num-ues 3 --num-dus 3`).
   - The command `ci trigger_f1_ho 1` will trigger a handover for UE 1 from its current DU to the next DU in a round robin manner.
 
 <details>
@@ -112,7 +109,7 @@ The script `run_handover_scenario.sh`, based on the handover tutorial [\[4\]][du
 </details>
 
 <details>
-  <summary><b>Example output (ZeroMQ Broker, 3 UEs, 3 DUs, 1 CU)</b></summary>
+  <summary><b>Example output (ZeroMQ Channel Emulator, 3 UEs, 3 DUs, 1 CU)</b></summary>
   <hr>
 
   <p align="center">

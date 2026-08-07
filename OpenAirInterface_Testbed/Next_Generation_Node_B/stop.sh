@@ -73,7 +73,7 @@ remove_all_du_namespaces() {
 
 IS_RUNNING=$(./is_running.sh)
 if echo "$IS_RUNNING" | grep -q "gNodeB: NOT_RUNNING" &&
-    { [ -n "$SELECTOR" ] || [ "$USE_ZMQ_BROKER" != "true" ] || echo "$IS_RUNNING" | grep -q "ZMQ_Broker: NOT_RUNNING"; }; then
+    { [ -n "$SELECTOR" ] || [ "$USE_ZMQ_BROKER" != "true" ] || echo "$IS_RUNNING" | grep -q "ZeroMQ Channel Emulator: NOT_RUNNING"; }; then
     # Remove DU namespaces
     if [ -z "$DU_NUMBER" ]; then
         remove_all_du_namespaces
@@ -88,7 +88,7 @@ fi
 if [ -z "$SELECTOR" ]; then
     sudo pkill -f "[n]r-softmodem" >/dev/null 2>&1
     if [ "$USE_ZMQ_BROKER" = "true" ] && pgrep -f "[m]ulti_ue_scenario\.py" >/dev/null; then
-        echo "Stopping ZMQ Broker..."
+        echo "Stopping ZeroMQ Channel Emulator..."
         sudo pkill -f "[m]ulti_ue_scenario\.py" >/dev/null 2>&1
     fi
     if [ -t 0 ]; then
@@ -118,7 +118,7 @@ while [ $COUNT -lt $MAX_COUNT ]; do
     IS_RUNNING=$(./is_running.sh)
     if [ -z "$SELECTOR" ]; then
         if echo "$IS_RUNNING" | grep -q "gNodeB: NOT_RUNNING" &&
-            { [ "$USE_ZMQ_BROKER" != "true" ] || echo "$IS_RUNNING" | grep -q "ZMQ_Broker: NOT_RUNNING"; }; then
+            { [ "$USE_ZMQ_BROKER" != "true" ] || echo "$IS_RUNNING" | grep -q "ZeroMQ Channel Emulator: NOT_RUNNING"; }; then
             echo "The gNodeB has stopped gracefully."
             remove_all_du_namespaces
             ./is_running.sh

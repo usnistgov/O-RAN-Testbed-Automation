@@ -60,6 +60,9 @@ cd Next_Generation_Node_B
 ./install_scripts/git_clone.sh https://gitlab.com/ocudu/ocudu_elements/ocudu_oran_apps/ocudu_netconf.git
 ln -s "../User_Equipment/libzmq" libzmq # Use User_Equipment's ZMQ
 ln -s "../User_Equipment/czmq" czmq
+if [ -L zmq_broker ]; then
+    rm -f zmq_broker
+fi
 mkdir -p zmq_broker
 
 DOCS_HASH=$(jq -r '."https://gitlab.com/ocudu/ocudu_docs.git"[1]' ../commit_hashes.json 2>/dev/null)

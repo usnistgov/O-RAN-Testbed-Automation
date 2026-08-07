@@ -53,8 +53,8 @@ if [ "$USE_DURANTA_UE" = "true" ]; then
         exit 1
     fi
     if grep -q "USE_ZMQ_BROKER=false" "$UE_DIRECTORY/run_background.sh"; then
-        echo "ERROR: USE_DURANTA_UE=true, but USE_ZMQ_BROKER=false. Enable the ZeroMQ broker by following the instructions in the link below, then try again."
-        echo "    https://github.com/usnistgov/O-RAN-Testbed-Automation/tree/main/OpenAirInterface_Testbed#simulating-multiple-ues-and-cells-with-zeromq-broker"
+        echo "ERROR: USE_DURANTA_UE=true, but USE_ZMQ_BROKER=false. Enable the ZeroMQ channel emulator by following the instructions in the link below, then try again."
+        echo "    https://github.com/usnistgov/O-RAN-Testbed-Automation/tree/main/OpenAirInterface_Testbed#simulating-multiple-ues-and-cells-with-a-zeromq-channel-emulator"
         exit 1
     fi
 fi
@@ -64,14 +64,14 @@ sudo -v # Ensure sudo session is active
 UE_NUMBERS=()
 if [ "$USE_ZMQ_BROKER" = "true" ]; then
     if [ ! -f "Next_Generation_Node_B/zmq_broker/multi_ue_scenario.py" ]; then
-        echo "ZMQ Broker configuration was not found. Please run ./generate_configurations.sh first."
+        echo "ZeroMQ channel emulator configuration was not found. Please run ./generate_configurations.sh first."
         exit 1
     fi
     if [ ! -f "Next_Generation_Node_B/install_scripts/validate_zmq_broker_config.sh" ]; then
-        echo "ZMQ Broker verifier was not found. Please run ./generate_configurations.sh first."
+        echo "ZeroMQ channel emulator verifier was not found. Please run ./generate_configurations.sh first."
         exit 1
     fi
-    # Parse the ZeroMQ broker for the list of UEs and cells
+    # Parse the ZeroMQ channel emulator for the list of UEs and cells
     UE_NUMBERS=($(grep -oP 'UE_CONFIG:\s+\K\d+' Next_Generation_Node_B/zmq_broker/multi_ue_scenario.py))
     CELL_NUMBERS=($(grep -oP 'CELL_CONFIG:\s+\K\d+' Next_Generation_Node_B/zmq_broker/multi_ue_scenario.py))
     UE_NUMBERS_STR=$(
@@ -86,7 +86,7 @@ if [ "$USE_ZMQ_BROKER" = "true" ]; then
         echo "Run ./generate_configurations.sh with the same UE numbers before ./run.sh."
         exit 1
     fi
-    echo "ZeroMQ Broker UE startup order: ${UE_NUMBERS[*]}"
+    echo "ZeroMQ channel emulator UE startup order: ${UE_NUMBERS[*]}"
 else
     UE_NUMBERS=(1)
 fi

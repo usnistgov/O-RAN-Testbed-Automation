@@ -34,7 +34,7 @@ set -e
 SHOW_ZMQ_BROKER_UI=true
 ZMQ_BROKER_READY_TIMEOUT=30
 
-# Respect symbolic links so each component writes to its own logs directory
+# Script directory from the called path, including symlinks
 SCRIPT_DIR="$(cd "$(dirname "$0")" >/dev/null 2>&1 && pwd)"
 PARENT_DIR="$(dirname "$SCRIPT_DIR")"
 
@@ -84,7 +84,7 @@ if ! pgrep -f "[m]ulti_ue_scenario\.py" >/dev/null; then
 
     mkdir -p "$PARENT_DIR/logs"
     >"$BROKER_LOG"
-    echo "Starting ZMQ Broker..."
+    echo "Starting ZeroMQ Channel Emulator..."
     if [ "$SHOW_ZMQ_BROKER_UI" = "true" ]; then
         nohup python3 "$BROKER_FILE" >"$BROKER_LOG" 2>&1 &
     else
@@ -92,7 +92,7 @@ if ! pgrep -f "[m]ulti_ue_scenario\.py" >/dev/null; then
     fi
     sleep 2
     if ! pgrep -f "[m]ulti_ue_scenario\.py" >/dev/null; then
-        echo "ZMQ Broker failed to start. Recent log output:"
+        echo "ZeroMQ Channel Emulator failed to start. Recent log output:"
         tail -n 80 "$BROKER_LOG" 2>/dev/null || true
         exit 1
     fi
@@ -101,18 +101,18 @@ fi
 
 mapfile -t REQUIRED_PORTS < <("$PARENT_DIR/install_scripts/get_zmq_broker_config.sh" --listen-ports)
 if [ ${#REQUIRED_PORTS[@]} -eq 0 ]; then
-    echo "ERROR: ZMQ Broker configuration does not contain any listening ports."
+    echo "ERROR: ZeroMQ Channel Emulator configuration does not contain any listening ports."
     exit 1
 fi
 
 if ! command -v ss >/dev/null 2>&1 && ! command -v netstat >/dev/null 2>&1; then
-    echo "ERROR: Either ss or netstat is required to check the ZMQ Broker sockets."
+    echo "ERROR: Either ss or netstat is required to check the ZeroMQ Channel Emulator sockets."
     exit 1
 fi
 
 if [ "$BROKER_STARTED" = "true" ]; then
-    echo "Expected ZMQ Broker listening ports: ${REQUIRED_PORTS[*]}"
-    echo -n "Waiting for ZMQ Broker sockets"
+    echo "Expected ZeroMQ Channel Emulator listening ports: ${REQUIRED_PORTS[*]}"
+    echo -n "Waiting for ZeroMQ Channel Emulator sockets"
 fi
 ATTEMPT=0
 while true; do
@@ -139,7 +139,7 @@ while true; do
         if [ "$BROKER_STARTED" = "true" ]; then
             echo
         fi
-        echo "ZMQ Broker stopped before opening its sockets. Recent log output:"
+        echo "ZeroMQ Channel Emulator stopped before opening its sockets. Recent log output:"
         tail -n 80 "$BROKER_LOG" 2>/dev/null || true
         exit 1
     fi
@@ -153,7 +153,7 @@ while true; do
         if [ "$BROKER_STARTED" = "true" ]; then
             echo
         fi
-        echo "ZMQ Broker sockets did not become ready after $ZMQ_BROKER_READY_TIMEOUT seconds."
+        echo "ZeroMQ Channel Emulator sockets did not become ready after $ZMQ_BROKER_READY_TIMEOUT seconds."
         echo "Recent log output:"
         tail -n 80 "$BROKER_LOG" 2>/dev/null || true
         exit 1

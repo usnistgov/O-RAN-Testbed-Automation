@@ -33,7 +33,7 @@ echo "# Script: $(realpath "$0") $@"
 # Exit immediately if a command fails
 set -e
 
-# The script directory respects symbolic links so that the gNB and UE can patch their own openairinterface5g
+# Script directory from the called path, including symlinks
 SCRIPT_DIR="$(cd "$(dirname "$0")" >/dev/null 2>&1 && pwd)"
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$PARENT_DIR"
@@ -110,11 +110,11 @@ device_arg_value() {
 }
 
 if [ ! -x "$SCRIPT_DIR/get_zmq_broker_config.sh" ]; then
-    add_error "ZeroMQ Broker configuration reader not found: $SCRIPT_DIR/get_zmq_broker_config.sh"
+    add_error "ZeroMQ channel emulator configuration reader not found: $SCRIPT_DIR/get_zmq_broker_config.sh"
 else
     BROKER=$("$SCRIPT_DIR/get_zmq_broker_config.sh" --broker-file)
     if [ ! -f "$BROKER" ]; then
-        add_error "ZeroMQ Broker configuration not found: $BROKER"
+        add_error "ZeroMQ channel emulator configuration not found: $BROKER"
     fi
 fi
 
@@ -134,10 +134,10 @@ if [ ${#ERRORS[@]} -eq 0 ] && [ ${#UE_NUMBERS[@]} -eq 0 ]; then
     mapfile -t UE_NUMBERS < <("$SCRIPT_DIR/get_zmq_broker_config.sh" --ues)
 fi
 if [ ${#CELL_NUMBERS[@]} -eq 0 ]; then
-    add_error "No cells were found in the generated ZeroMQ Broker configuration"
+    add_error "No cells were found in the generated ZeroMQ channel emulator configuration"
 fi
 if [ ${#UE_NUMBERS[@]} -eq 0 ]; then
-    add_error "No UEs were found in the generated ZeroMQ Broker configuration"
+    add_error "No UEs were found in the generated ZeroMQ channel emulator configuration"
 fi
 
 if [ "$BROKER_ONLY" != "true" ] && [ ${#ERRORS[@]} -eq 0 ]; then
@@ -167,26 +167,26 @@ for CELL_NUMBER in "${CELL_NUMBERS[@]}"; do
 
     BROKER_CELL_CONFIG=$("$SCRIPT_DIR/get_zmq_broker_config.sh" --cell "$CELL_NUMBER" 2>/dev/null || true)
     if [ -z "$BROKER_CELL_CONFIG" ]; then
-        add_error "Cell $CELL_NUMBER is missing from the generated ZeroMQ Broker configuration"
+        add_error "Cell $CELL_NUMBER is missing from the generated ZeroMQ channel emulator configuration"
         continue
     fi
     read -r BROKER_CELL_NUMBER BROKER_CELL_RX_PORT BROKER_CELL_TX_PORT <<<"$BROKER_CELL_CONFIG"
 
     if [ "$BROKER_CELL_NUMBER" != "$CELL_NUMBER" ]; then
-        add_error "Cell $CELL_NUMBER: broker record has cell number $BROKER_CELL_NUMBER"
+        add_error "Cell $CELL_NUMBER: channel emulator record has cell number $BROKER_CELL_NUMBER"
     fi
     if [ "$BROKER_CELL_RX_PORT" != "$EXPECTED_CELL_RX_PORT" ]; then
-        add_error "Cell $CELL_NUMBER: broker rx_port must be $EXPECTED_CELL_RX_PORT (got $BROKER_CELL_RX_PORT)"
+        add_error "Cell $CELL_NUMBER: channel emulator rx_port must be $EXPECTED_CELL_RX_PORT (got $BROKER_CELL_RX_PORT)"
     fi
     if [ "$BROKER_CELL_TX_PORT" != "$EXPECTED_CELL_TX_PORT" ]; then
-        add_error "Cell $CELL_NUMBER: broker tx_port must be $EXPECTED_CELL_TX_PORT (got $BROKER_CELL_TX_PORT)"
+        add_error "Cell $CELL_NUMBER: channel emulator tx_port must be $EXPECTED_CELL_TX_PORT (got $BROKER_CELL_TX_PORT)"
     fi
     if [ "$BROKER_ONLY" != "true" ]; then
         if [ "$(device_arg_value "$GNB_DEVICE_ARGS" "tx_port$CELL_COUNT")" != "tcp://127.0.0.1:$EXPECTED_CELL_RX_PORT" ]; then
-            add_error "Cell $CELL_NUMBER: gNB tx_port$CELL_COUNT must be tcp://127.0.0.1:$EXPECTED_CELL_RX_PORT for broker mode"
+            add_error "Cell $CELL_NUMBER: gNB tx_port$CELL_COUNT must be tcp://127.0.0.1:$EXPECTED_CELL_RX_PORT for channel emulator mode"
         fi
         if [ "$(device_arg_value "$GNB_DEVICE_ARGS" "rx_port$CELL_COUNT")" != "tcp://127.0.0.1:$EXPECTED_CELL_TX_PORT" ]; then
-            add_error "Cell $CELL_NUMBER: gNB rx_port$CELL_COUNT must be tcp://127.0.0.1:$EXPECTED_CELL_TX_PORT for broker mode"
+            add_error "Cell $CELL_NUMBER: gNB rx_port$CELL_COUNT must be tcp://127.0.0.1:$EXPECTED_CELL_TX_PORT for channel emulator mode"
         fi
     fi
     CELL_COUNT=$((CELL_COUNT + 1))
@@ -206,7 +206,7 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
 
     BROKER_UE_CONFIG=$("$SCRIPT_DIR/get_zmq_broker_config.sh" --ue "$UE_NUMBER" 2>/dev/null || true)
     if [ -z "$BROKER_UE_CONFIG" ]; then
-        add_error "UE $UE_NUMBER is missing from the generated ZeroMQ Broker configuration"
+        add_error "UE $UE_NUMBER is missing from the generated ZeroMQ channel emulator configuration"
         continue
     fi
     read -r BROKER_UE_NUMBER BROKER_UE_RX_PORT BROKER_UE_TX_PORT BROKER_UE_IP BROKER_HOST_IP <<<"$BROKER_UE_CONFIG"
@@ -214,19 +214,19 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
     EXPECTED_UE_IP=$("$PARENT_DIR/../User_Equipment/install_scripts/get_ue_namespace_ip.sh" ue "$UE_NUMBER")
 
     if [ "$BROKER_UE_NUMBER" != "$UE_NUMBER" ]; then
-        add_error "UE $UE_NUMBER: broker record has UE number $BROKER_UE_NUMBER"
+        add_error "UE $UE_NUMBER: channel emulator record has UE number $BROKER_UE_NUMBER"
     fi
     if [ "$BROKER_UE_RX_PORT" != "$EXPECTED_RX_PORT" ]; then
-        add_error "UE $UE_NUMBER: broker rx_port must be $EXPECTED_RX_PORT (got $BROKER_UE_RX_PORT)"
+        add_error "UE $UE_NUMBER: channel emulator rx_port must be $EXPECTED_RX_PORT (got $BROKER_UE_RX_PORT)"
     fi
     if [ "$BROKER_UE_TX_PORT" != "$EXPECTED_TX_PORT" ]; then
-        add_error "UE $UE_NUMBER: broker tx_port must be $EXPECTED_TX_PORT (got $BROKER_UE_TX_PORT)"
+        add_error "UE $UE_NUMBER: channel emulator tx_port must be $EXPECTED_TX_PORT (got $BROKER_UE_TX_PORT)"
     fi
     if [ "$BROKER_UE_IP" != "$EXPECTED_UE_IP" ]; then
-        add_error "UE $UE_NUMBER: broker ue_ip must be $EXPECTED_UE_IP (got $BROKER_UE_IP)"
+        add_error "UE $UE_NUMBER: channel emulator ue_ip must be $EXPECTED_UE_IP (got $BROKER_UE_IP)"
     fi
     if [ "$BROKER_HOST_IP" != "$EXPECTED_HOST_IP" ]; then
-        add_error "UE $UE_NUMBER: broker host IP must be $EXPECTED_HOST_IP (got $BROKER_HOST_IP)"
+        add_error "UE $UE_NUMBER: channel emulator host IP must be $EXPECTED_HOST_IP (got $BROKER_HOST_IP)"
     fi
     if [ "$BROKER_ONLY" != "true" ]; then
         UE_CONFIG="$UE_CONFIG_DIR/ue${UE_NUMBER}.conf"
@@ -258,4 +258,4 @@ if [ ${#ERRORS[@]} -gt 0 ]; then
     exit 1
 fi
 
-echo "Successfully validated ZeroMQ broker for UEs: [${UE_NUMBERS[*]}], Cells: [${CELL_NUMBERS[*]}]."
+echo "Successfully validated ZeroMQ channel emulator for UEs: [${UE_NUMBERS[*]}], Cells: [${CELL_NUMBERS[*]}]."

@@ -131,7 +131,7 @@ cd "$SCRIPT_DIR"
 # cd "$SCRIPT_DIR"
 
 if [ "$USE_ZMQ_BROKER" = "true" ]; then
-    echo "Verifying ZeroMQ Broker configuration..."
+    echo "Verifying ZeroMQ channel emulator configuration..."
     Next_Generation_Node_B/install_scripts/validate_zmq_broker_config.sh --ues "$UE_NUMBERS_STR" --cells "$CELL_NUMBERS_STR"
 fi
 

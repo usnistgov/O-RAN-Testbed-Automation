@@ -69,11 +69,11 @@ Co-authored-by: fjcintron <fernando.cintron@nist.gov>
 
 
 
-## Changelog for v1.7.2: Duranta Integration and Extended ZeroMQ Support
+## Changelog for v1.8.0: Duranta Integration and Extended ZeroMQ Support
 
 ### Duranta / OpenAirInterface Testbed
 
-- Switched the OpenAirInterface-based gNodeB and UE implementation to Duranta (OpenAirInterface) 2026.w24 [[1]][lf-duranta].
+- Switched the OpenAirInterface-based gNodeB and UE implementation to Duranta (OpenAirInterface) 2026.w31 [[1]][lf-duranta].
 - Duranta RF simulator: Allocated each gNodeB and UE its own channel model configuration for multi-node scenarios.
   - Duranta handover scenario: Configured DUs to support F1 handovers when the DU count exceeds two.
 - Duranta gNodeB: Added configuration support to select `ssb_rsrp`, `cri_rsrp`, `ssb_sinr`, or CSIRS-based reporting.
@@ -82,13 +82,14 @@ Co-authored-by: fjcintron <fernando.cintron@nist.gov>
 
 ### Next Generation Node B
 
-- OCUDU: Added ZeroMQ broker configuration generation for simultaneous multi-cell and multi-UE scenarios.
+- OCUDU: Added ZeroMQ configuration generation for simultaneous multi-cell and multi-UE scenarios.
   - When generating configurations, pass `--cells [cell_id_array]` and/or `--ues [ue_id_array]`.
-  - For more information, see Simulating Multiple UEs and Cells with ZeroMQ Broker [[2]][gh-ocudu-zmq].
-- OCUDU: Made the ZeroMQ broker simple to disable for direct single-UE connections to the gNodeB.
-- OCUDU: Fixed generation of `cu_cp.inactivity_timer` in gnb.yaml and added simple way to connect with FlexRIC [[3]][gh-ocudu-e2].
-- OCUDU: Updated dependency download handling for the latest OCUDU documentation and ZeroMQ-device requirements.
+  - For more information, see Simulating Multiple UEs and Cells with a ZeroMQ Channel Emulator [[2]][gh-ocudu-zmq].
+- OCUDU: Made the ZeroMQ channel emulator simple to disable for direct single-UE connections to gNodeB.
+- OCUDU: Improved interoperability by adding option to connect to Duranta 5G UEs instead of only srsRAN_4G UEs.
+- OCUDU: Improved interoperability by simplifying connectivity of OCUDU to FlexRIC [[3]][gh-ocudu-e2].
 - OCUDU: Added `rebuild_code.sh` to rebuild source changes without rerunning a full installation.
+- OCUDU: Updated dependency download handling for the latest OCUDU documentation and ZeroMQ-device requirements.
 
 ### User Equipment
 
@@ -112,6 +113,7 @@ Co-authored-by: fjcintron <fernando.cintron@nist.gov>
 
 ### General
 
+- General: Simplified toggling of band 3 and band 78 across testbed, with band 3 remaining the default for srsRAN_4G compatibility.
 - Added `additional_scripts/check_e2ap_version.sh` to all gNodeB and RIC components.
 - Updated Kubernetes, Helm, and Docker versions and version handling for current Ubuntu releases.
 - Updated Open5GS, Duranta, OCUDU, OCUDU documentation, O1 adapter, NETCONF, and SWIG commit hashes.
@@ -134,12 +136,12 @@ Co-authored-by: fjcintron <fernando.cintron@nist.gov>
 - Resolved issue #18: Improved setup guidance and startup conflict detection for more predictable new-user deployments.
   - Thanks to @ciccio25 for suggesting these improvements.
 
-**Full Changelog**: https://github.com/usnistgov/O-RAN-Testbed-Automation/compare/v1.7.1...v1.7.2
+**Full Changelog**: https://github.com/usnistgov/O-RAN-Testbed-Automation/compare/v1.7.1...v1.8.0
 
 ### References
 
 1. Duranta. LF Networking. [https://lfnetworking.org/projects/duranta][lf-duranta]
-2. Simulating Multiple UEs and Cells with ZeroMQ Broker. GitHub. [https://github.com/usnistgov/O-RAN-Testbed-Automation/tree/main/Next_Generation_Node_B/README.md#simulating-multiple-ues-and-cells-with-zeromq-broker][gh-ocudu-zmq]
+2. Simulating Multiple UEs and Cells with a ZeroMQ Channel Emulator. GitHub. [https://github.com/usnistgov/O-RAN-Testbed-Automation/tree/main/Next_Generation_Node_B/README.md#simulating-multiple-ues-and-cells-with-a-zeromq-channel-emulator][gh-ocudu-zmq]
 3. OCUDU with FlexRIC. GitHub. [https://github.com/usnistgov/O-RAN-Testbed-Automation/tree/main/Next_Generation_Node_B/README.md#e2-interface][gh-ocudu-e2]
 4. CMP0007. CMake. [https://cmake.org/cmake/help/latest/policy/CMP0007.html][cmake-cmp0007]
 5. ASN.1 Decoding Error (SIGABRT) in kpimon-go with srsRAN E2SM-KPM Payload. GitHub. [https://github.com/usnistgov/O-RAN-Testbed-Automation/issues/13][gh-issue-13]
@@ -149,10 +151,16 @@ Co-authored-by: fjcintron <fernando.cintron@nist.gov>
 
 [lf-duranta]: https://lfnetworking.org/projects/duranta
 [gh-ocudu-e2]: https://github.com/usnistgov/O-RAN-Testbed-Automation/tree/main/Next_Generation_Node_B/README.md#e2-interface
-[gh-ocudu-zmq]: https://github.com/usnistgov/O-RAN-Testbed-Automation/tree/main/Next_Generation_Node_B/README.md#simulating-multiple-ues-and-cells-with-zeromq-broker
+[gh-ocudu-zmq]: https://github.com/usnistgov/O-RAN-Testbed-Automation/tree/main/Next_Generation_Node_B/README.md#simulating-multiple-ues-and-cells-with-a-zeromq-channel-emulator
 [cmake-cmp0007]: https://cmake.org/cmake/help/latest/policy/CMP0007.html
 [gh-issue-13]: https://github.com/usnistgov/O-RAN-Testbed-Automation/issues/13
 [ocudu-issue-571]: https://gitlab.com/ocudu/ocudu/-/work_items/571
+
+--- to  be added above
+
+- OCUDU: Added `rebuild_code.sh` to rebuild source changes without rerunning a full installation.
+
+
 
 
 ## Changelog for v1.7.1

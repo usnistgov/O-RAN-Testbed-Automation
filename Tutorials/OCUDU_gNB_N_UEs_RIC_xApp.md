@@ -201,43 +201,103 @@ After starting the 5G Core, FlexRIC, gNodeB, and UE, use the `./run_xapp_kpm_mon
 
 #### Expected Output
 ```
-[NEAR-RIC]: Loading SM ID = 3 with def = ORAN-E2SM-RC 
-[NEAR-RIC]: Loading SM ID = 2 with def = ORAN-E2SM-KPM 
-[NEAR-RIC]: Loading SM ID = 144 with def = PDCP_STATS_V0 
-[NEAR-RIC]: Loading SM ID = 145 with def = SLICE_STATS_V0 
-[NEAR-RIC]: Loading SM ID = 146 with def = TC_STATS_V0 
-[NEAR-RIC]: Loading SM ID = 148 with def = GTP_STATS_V0 
-[NEAR-RIC]: Loading SM ID = 143 with def = RLC_STATS_V0 
-[NEAR-RIC]: Loading SM ID = 142 with def = MAC_STATS_V0 
-[xApp]: E42 SETUP-REQUEST tx
-[xApp]: E42 SETUP-RESPONSE rx 
-[xApp]: xApp ID = 7 
-Connected E2 nodes = 1
-[xApp]: E42 RIC SUBSCRIPTION REQUEST tx RAN_FUNC_ID 2 RIC_REQ_ID 1 
-[xApp]: SUBSCRIPTION RESPONSE rx
-[xApp]: Successfully subscribed to RAN_FUNC_ID 2 
-[xApp] WARNING: Unsupported report style type 1, skipping subscription.
-[xApp] WARNING: Unsupported report style type 2, skipping subscription.
-[xApp]: E42 RIC SUBSCRIPTION REQUEST tx RAN_FUNC_ID 2 RIC_REQ_ID 2 
-[xApp]: SUBSCRIPTION RESPONSE rx
-[xApp]: Successfully subscribed to RAN_FUNC_ID 2 
-[xApp] WARNING: Unsupported report style type 4, skipping subscription.
+[XApp]: SUBSCRIPTION RESPONSE rx
+[XApp]: Successfully subscribed to RAN_FUNC_ID 2
+[XApp] Subscribing to KPM report style 3.
+[XApp]: E42 RIC SUBSCRIPTION REQUEST tx RAN_FUNC_ID 2 RIC_REQ_ID 2
+[XApp]: SUBSCRIPTION RESPONSE rx
+[XApp]: Successfully subscribed to RAN_FUNC_ID 2
+[XApp] Subscribing to KPM report style 4.
+[XApp]: E42 RIC SUBSCRIPTION REQUEST tx RAN_FUNC_ID 2 RIC_REQ_ID 3
+[XApp]: SUBSCRIPTION RESPONSE rx
+[XApp]: Successfully subscribed to RAN_FUNC_ID 2
 
-      1 KPM ind_msg latency = 1785514651163812 [μs]
-DRB.AirIfDelayUl = NULL 
-DRB.RlcDelayUl = NULL 
-DRB.RlcPacketDropRateDl = NULL 
-DRB.RlcSduDelayDl = NULL [μs]
-DRB.RlcSduTransmittedVolumeDL = 0 
-DRB.RlcSduTransmittedVolumeUL = 0 
-DRB.UEThpDl = 0.00 [kbps]
-DRB.UEThpUl = 0.00 [kbps]
-RACH.PreambleDedCell = 0 
-RRU.PrbAvailDl = 0 
-RRU.PrbAvailUl = 0 
+E2 node: DU:0
+
+    1 KPM ind_msg latency = 252296672587512435 [μs]
+
+DRB.AirIfDelayUl = 30.00
+DRB.RlcDelayUl = 11.10
+DRB.RlcPacketDropRateDl = 0
+DRB.RlcSduDelayDl = 7.70 [μs]
+DRB.RlcSduTransmittedVolumeDL = 246
+DRB.RlcSduTransmittedVolumeUL = 13803
+DRB.UEThpDl = 265.00 [kbps]
+DRB.UEThpUl = 13872.00 [kbps]
+
+RACH.PreambleDedCell = 0
+
+RRU.PrbAvailDl = 105
+RRU.PrbAvailUl = 2
 RRU.PrbTotDl = 0 [%]
-RRU.PrbTotUl = 0 [%]
+RRU.PrbTotUl = 98 [%]
+RRU.PrbUsedDl = 1
+RRU.PrbUsedUl = 104
+
+E2 node: DU:0
+
+    2 KPM ind_msg latency = 229372533753335962 [μs]
+
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 0
+
+DRB.AirIfDelayUl = 30.00
+DRB.RlcDelayUl = 11.10
+DRB.RlcPacketDropRateDl = 0
+DRB.RlcSduDelayDl = 7.70 [μs]
+DRB.RlcSduTransmittedVolumeDL = 246
+DRB.RlcSduTransmittedVolumeUL = 13803
+DRB.UEThpDl = 265.00 [kbps]
+DRB.UEThpUl = 13872.00 [kbps]
 ```
+### KPM Performance Evaluation
+The console output shows the xApp successfully subscribed to the KPM service model using RAN function ID 2. The xApp received periodic KPM indication message from the connected E2 node. 
+
+#### Successful E2 Connectivity
+
+- The FlexRIC xApp successfully established an **E2 connection** with the gNB-DU.
+- One E2 node was detected and successfully registered with the **Near-RT RIC**.
+- KPM subscriptions were successfully accepted, enabling continuous monitoring of RAN performance metrics.
+
+---
+
+#### Throughput Performance
+
+- The measured **uplink throughput (~13.8 Mbps)** was significantly higher than the **downlink throughput (~265 kbps)**.
+- This indicates that the test traffic was primarily **uplink-focused**, resulting in higher utilization of uplink radio resources.
+
+---
+
+#### Latency Performance
+
+The measured latency values were:
+
+| Metric | Value |
+|---|---:|
+| UL RLC Delay | ~11 µs |
+| DL RLC SDU Delay | ~7.7 µs |
+| UL Air Interface Delay | ~30 µs |
+
+- The low latency values indicate efficient packet processing and fast communication between the **UE and gNB-DU**.
+- The results demonstrate suitable performance for near-real-time RAN monitoring and optimization applications.
+
+---
+
+#### Packet Reliability
+
+- The measured **downlink packet drop rate was 0%**.
+- No significant packet loss or RLC retransmission issues were observed.
+- This demonstrates stable radio communication and reliable data transmission.
+
+---
+
+#### Radio Resource Utilization
+
+- **Uplink PRB utilization reached approximately 98%**, indicating that most available uplink radio resources were allocated to the UE.
+- **Downlink PRB utilization remained close to 0%**, showing that downlink resources were mostly unused during the measurement period.
+- The PRB utilization pattern matches the observed traffic profile, where uplink traffic dominated over downlink traffic.
+
+---
+
 # KPM Monitoring xApp Use Case
 
 ## Objective

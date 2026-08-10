@@ -38,7 +38,7 @@ if ! command -v realpath &>/dev/null; then
 fi
 
 USE_FLEXRIC=false
-USE_ZMQ_BROKER=true
+USE_ZMQ_CHANNEL_EMULATOR=true
 USE_DURANTA_UE=false
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
@@ -52,8 +52,8 @@ if [ "$USE_DURANTA_UE" = "true" ]; then
         echo "User Equipment run script not found."
         exit 1
     fi
-    if grep -q "USE_ZMQ_BROKER=false" "$UE_DIRECTORY/run_background.sh"; then
-        echo "ERROR: USE_DURANTA_UE=true, but USE_ZMQ_BROKER=false. Enable the ZeroMQ channel emulator by following the instructions in the link below, then try again."
+    if grep -q "USE_ZMQ_CHANNEL_EMULATOR=false" "$UE_DIRECTORY/run_background.sh"; then
+        echo "ERROR: USE_DURANTA_UE=true, but USE_ZMQ_CHANNEL_EMULATOR=false. Enable the ZeroMQ channel emulator by following the instructions in the link below, then try again."
         echo "    https://github.com/usnistgov/O-RAN-Testbed-Automation/tree/main/OpenAirInterface_Testbed#simulating-multiple-ues-and-cells-with-a-zeromq-channel-emulator"
         exit 1
     fi
@@ -62,18 +62,18 @@ fi
 sudo -v # Ensure sudo session is active
 
 UE_NUMBERS=()
-if [ "$USE_ZMQ_BROKER" = "true" ]; then
-    if [ ! -f "Next_Generation_Node_B/zmq_broker/multi_ue_scenario.py" ]; then
+if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ]; then
+    if [ ! -f "Next_Generation_Node_B/zmq_channel_emulator/zmq_channel_emulator.py" ]; then
         echo "ZeroMQ channel emulator configuration was not found. Please run ./generate_configurations.sh first."
         exit 1
     fi
-    if [ ! -f "Next_Generation_Node_B/install_scripts/validate_zmq_broker_config.sh" ]; then
+    if [ ! -f "Next_Generation_Node_B/install_scripts/validate_zmq_channel_emulator_config.sh" ]; then
         echo "ZeroMQ channel emulator verifier was not found. Please run ./generate_configurations.sh first."
         exit 1
     fi
     # Parse the ZeroMQ channel emulator for the list of UEs and cells
-    UE_NUMBERS=($(grep -oP 'UE_CONFIG:\s+\K\d+' Next_Generation_Node_B/zmq_broker/multi_ue_scenario.py))
-    CELL_NUMBERS=($(grep -oP 'CELL_CONFIG:\s+\K\d+' Next_Generation_Node_B/zmq_broker/multi_ue_scenario.py))
+    UE_NUMBERS=($(grep -oP 'UE_CONFIG:\s+\K\d+' Next_Generation_Node_B/zmq_channel_emulator/zmq_channel_emulator.py))
+    CELL_NUMBERS=($(grep -oP 'CELL_CONFIG:\s+\K\d+' Next_Generation_Node_B/zmq_channel_emulator/zmq_channel_emulator.py))
     UE_NUMBERS_STR=$(
         IFS=,
         echo "${UE_NUMBERS[*]}"
@@ -82,7 +82,7 @@ if [ "$USE_ZMQ_BROKER" = "true" ]; then
         IFS=,
         echo "${CELL_NUMBERS[*]}"
     )
-    if ! "Next_Generation_Node_B/install_scripts/validate_zmq_broker_config.sh" --ues "$UE_NUMBERS_STR" --cells "$CELL_NUMBERS_STR"; then
+    if ! "Next_Generation_Node_B/install_scripts/validate_zmq_channel_emulator_config.sh" --ues "$UE_NUMBERS_STR" --cells "$CELL_NUMBERS_STR"; then
         echo "Run ./generate_configurations.sh with the same UE numbers before ./run.sh."
         exit 1
     fi
@@ -159,10 +159,10 @@ cd ..
 echo
 echo "Running User Equipment..."
 cd "$UE_DIRECTORY"
-if [ "$USE_ZMQ_BROKER" = "true" ] && [ ${#UE_NUMBERS[@]} -gt 1 ]; then
+if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ] && [ ${#UE_NUMBERS[@]} -gt 1 ]; then
     for ((i = 1; i < ${#UE_NUMBERS[@]}; i++)); do
         read -r _ _ UE_TX_PORT _ _ < <(
-            "$SCRIPT_DIR/Next_Generation_Node_B/install_scripts/get_zmq_broker_config.sh" --ue "${UE_NUMBERS[$i]}"
+            "$SCRIPT_DIR/Next_Generation_Node_B/install_scripts/get_zmq_channel_emulator_config.sh" --ue "${UE_NUMBERS[$i]}"
         )
         if sudo ip netns exec "ue${UE_NUMBERS[$i]}" ss -ltnH 2>/dev/null |
             awk '{print $4}' | grep -Eq ":${UE_TX_PORT}$"; then

@@ -31,8 +31,8 @@
 # Exit immediately if a command fails
 set -e
 
-USE_ZMQ_BROKER=false
-SHOW_ZMQ_BROKER_UI=false
+USE_ZMQ_CHANNEL_EMULATOR=false
+SHOW_ZMQ_CHANNEL_EMULATOR_UI=false
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
@@ -66,8 +66,8 @@ else
     >logs/gnb.log
     >logs/gnb_stdout_gdb.txt
 
-    if [ "$USE_ZMQ_BROKER" = "true" ]; then
-        ./install_scripts/run_zmq_broker.sh --show-ui "$SHOW_ZMQ_BROKER_UI"
+    if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ]; then
+        ./install_scripts/run_zmq_channel_emulator.sh --show-ui "$SHOW_ZMQ_CHANNEL_EMULATOR_UI"
     fi
 
     sudo chown --recursive "${SUDO_USER:-$USER}" logs

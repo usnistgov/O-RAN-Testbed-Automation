@@ -36,7 +36,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" >/dev/null 2>&1 && pwd)"
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
 
 usage() {
-    echo "Usage: $0 {--broker-file|--cells|--ues|--listen-ports|--cell NUMBER|--ue NUMBER}"
+    echo "Usage: $0 {--channel-emulator-file|--cells|--ues|--listen-ports|--cell NUMBER|--ue NUMBER}"
 }
 
 if [ $# -lt 1 ]; then
@@ -51,15 +51,15 @@ fi
 
 case "$(basename "$PARENT_DIR")" in
 Next_Generation_Node_B)
-    BROKER_FILE="$PARENT_DIR/zmq_broker/multi_ue_scenario.py"
+    CHANNEL_EMULATOR_FILE="$PARENT_DIR/zmq_channel_emulator/zmq_channel_emulator.py"
     UE_NAMESPACE_SCRIPT="$PARENT_DIR/../User_Equipment/install_scripts/get_ue_namespace_ip.sh"
     ;;
 User_Equipment)
-    BROKER_FILE="$PARENT_DIR/../Next_Generation_Node_B/zmq_broker/multi_ue_scenario.py"
+    CHANNEL_EMULATOR_FILE="$PARENT_DIR/../Next_Generation_Node_B/zmq_channel_emulator/zmq_channel_emulator.py"
     UE_NAMESPACE_SCRIPT="$PARENT_DIR/install_scripts/get_ue_namespace_ip.sh"
     ;;
 OpenAirInterface_UE)
-    BROKER_FILE="$PARENT_DIR/../../Next_Generation_Node_B/zmq_broker/multi_ue_scenario.py"
+    CHANNEL_EMULATOR_FILE="$PARENT_DIR/../../Next_Generation_Node_B/zmq_channel_emulator/zmq_channel_emulator.py"
     UE_NAMESPACE_SCRIPT="$PARENT_DIR/../../User_Equipment/install_scripts/get_ue_namespace_ip.sh"
     ;;
 *)
@@ -67,32 +67,32 @@ OpenAirInterface_UE)
     exit 1
     ;;
 esac
-if [ ! -f "$BROKER_FILE" ]; then
+if [ ! -f "$CHANNEL_EMULATOR_FILE" ]; then
     echo "ERROR: ZeroMQ channel emulator configuration not found. Run generate_configurations.sh first." >&2
     exit 1
 fi
 
 case "$1" in
---broker-file)
+--channel-emulator-file)
     if [ $# -ne 1 ]; then
         usage
         exit 1
     fi
-    echo "$BROKER_FILE"
+    echo "$CHANNEL_EMULATOR_FILE"
     ;;
 --cells)
     if [ $# -ne 1 ]; then
         usage
         exit 1
     fi
-    awk '$1 == "#" && $2 == "CELL_CONFIG:" { print $3 }' "$BROKER_FILE"
+    awk '$1 == "#" && $2 == "CELL_CONFIG:" { print $3 }' "$CHANNEL_EMULATOR_FILE"
     ;;
 --ues)
     if [ $# -ne 1 ]; then
         usage
         exit 1
     fi
-    awk '$1 == "#" && $2 == "UE_CONFIG:" { print $3 }' "$BROKER_FILE"
+    awk '$1 == "#" && $2 == "UE_CONFIG:" { print $3 }' "$CHANNEL_EMULATOR_FILE"
     ;;
 --listen-ports)
     if [ $# -ne 1 ]; then
@@ -100,27 +100,27 @@ case "$1" in
         exit 1
     fi
     awk '$1 == "#" && $2 == "CELL_CONFIG:" { print $5 }
-         $1 == "#" && $2 == "UE_CONFIG:" { print $4 }' "$BROKER_FILE"
+         $1 == "#" && $2 == "UE_CONFIG:" { print $4 }' "$CHANNEL_EMULATOR_FILE"
     ;;
 --cell)
     if [ $# -ne 2 ] || ! [[ "$2" =~ ^[1-9][0-9]*$ ]]; then
         usage
         exit 1
     fi
-    CELL_CONFIG=$(awk -v cell="$2" '$1 == "#" && $2 == "CELL_CONFIG:" && $3 == cell { print $3, $4, $5; exit }' "$BROKER_FILE")
+    CELL_CONFIG=$(awk -v cell="$2" '$1 == "#" && $2 == "CELL_CONFIG:" && $3 == cell { print $3, $4, $5; exit }' "$CHANNEL_EMULATOR_FILE")
     if [ -z "$CELL_CONFIG" ]; then
         echo "ERROR: Cell $2 is not present in the generated ZeroMQ channel emulator configuration." >&2
         exit 1
     fi
-    read -r CELL_NUMBER BROKER_CELL_RX_PORT BROKER_CELL_TX_PORT <<<"$CELL_CONFIG"
-    echo "$CELL_NUMBER $BROKER_CELL_RX_PORT $BROKER_CELL_TX_PORT"
+    read -r CELL_NUMBER CHANNEL_EMULATOR_CELL_RX_PORT CHANNEL_EMULATOR_CELL_TX_PORT <<<"$CELL_CONFIG"
+    echo "$CELL_NUMBER $CHANNEL_EMULATOR_CELL_RX_PORT $CHANNEL_EMULATOR_CELL_TX_PORT"
     ;;
 --ue)
     if [ $# -ne 2 ] || ! [[ "$2" =~ ^[1-9][0-9]*$ ]]; then
         usage
         exit 1
     fi
-    UE_CONFIG=$(awk -v ue="$2" '$1 == "#" && $2 == "UE_CONFIG:" && $3 == ue { print $3, $4, $5, $6; exit }' "$BROKER_FILE")
+    UE_CONFIG=$(awk -v ue="$2" '$1 == "#" && $2 == "UE_CONFIG:" && $3 == ue { print $3, $4, $5, $6; exit }' "$CHANNEL_EMULATOR_FILE")
     if [ -z "$UE_CONFIG" ]; then
         echo "ERROR: UE $2 is not present in the generated ZeroMQ channel emulator configuration." >&2
         exit 1

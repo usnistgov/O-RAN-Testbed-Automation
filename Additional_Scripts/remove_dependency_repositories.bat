@@ -88,7 +88,7 @@ if exist "User_Equipment\install_time.txt" del /f /q "User_Equipment\install_tim
 if exist "Next_Generation_Node_B\ocudu" rmdir /s /q "Next_Generation_Node_B\ocudu"
 if exist "Next_Generation_Node_B\ocudu_o1_adapter" rmdir /s /q "Next_Generation_Node_B\ocudu_o1_adapter"
 if exist "Next_Generation_Node_B\ocudu_netconf" rmdir /s /q "Next_Generation_Node_B\ocudu_netconf"
-if exist "Next_Generation_Node_B\zmq_broker" rmdir /s /q "Next_Generation_Node_B\zmq_broker"
+if exist "Next_Generation_Node_B\zmq_channel_emulator" rmdir /s /q "Next_Generation_Node_B\zmq_channel_emulator"
 if exist "Next_Generation_Node_B\czmq" rmdir /s /q "Next_Generation_Node_B\czmq"
 if exist "Next_Generation_Node_B\libzmq" rmdir /s /q "Next_Generation_Node_B\libzmq"
 if exist "Next_Generation_Node_B\logs" rmdir /s /q "Next_Generation_Node_B\logs"

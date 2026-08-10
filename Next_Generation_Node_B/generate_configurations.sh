@@ -35,10 +35,10 @@ set -e
 
 EXPOSE_GNB_TO_HOSTNAME=false
 USE_FLEXRIC=false
-USE_ZMQ_BROKER=true
+USE_ZMQ_CHANNEL_EMULATOR=true
 PDU_SESSION_TIMEOUT=3
 
-if [ "$USE_ZMQ_BROKER" = "true" ]; then
+if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ]; then
     PDU_SESSION_TIMEOUT=30
 fi
 
@@ -54,13 +54,13 @@ cd "$SCRIPT_DIR"
 # Radio configuration presets (band 3 and band 78)
 BASE_EXAMPLE_CONFIG_PATH="$SCRIPT_DIR/ocudu/configs/gnb_rf_b210_fdd_srsUE.yml"
 GNB_DL_ARFCNS=("368500")
-ZMQ_BROKER_CHANNEL_BW_MHZ=20
+ZMQ_CHANNEL_EMULATOR_CHANNEL_BW_MHZ=20
 GNB_SRATE_MHZ=23.04
 GNB_BASE_SRATE_HZ=23.04e6
 #
 # BASE_EXAMPLE_CONFIG_PATH="$SCRIPT_DIR/ocudu/configs/gnb_rf_b200_tdd_n78_20mhz.yml"
 # GNB_DL_ARFCNS=("630048" "643296")
-# ZMQ_BROKER_CHANNEL_BW_MHZ=40
+# ZMQ_CHANNEL_EMULATOR_CHANNEL_BW_MHZ=40
 # GNB_SRATE_MHZ=46.08
 # GNB_BASE_SRATE_HZ=46.08e6
 
@@ -384,7 +384,7 @@ update_yaml() {
 
 mkdir -p "$SCRIPT_DIR/logs"
 
-if [ "$USE_ZMQ_BROKER" = "true" ]; then
+if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ]; then
     DEVICE_ARGS="fail_unlocked=true,"
     CELL_COUNT=0
     for CELL_NUMBER in "${CELL_NUMBERS[@]}"; do
@@ -442,8 +442,8 @@ update_yaml "configs/gnb.yaml" "cell_cfg" "tac" $TAC
 update_yaml "configs/gnb.yaml" "cell_cfg.pdsch" "mcs_table" "qam64"
 update_yaml "configs/gnb.yaml" "cell_cfg.pusch" "mcs_table" "qam64"
 
-if [ "$USE_ZMQ_BROKER" = "true" ]; then
-    update_yaml "configs/gnb.yaml" "cell_cfg" "channel_bandwidth_MHz" "$ZMQ_BROKER_CHANNEL_BW_MHZ"
+if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ]; then
+    update_yaml "configs/gnb.yaml" "cell_cfg" "channel_bandwidth_MHz" "$ZMQ_CHANNEL_EMULATOR_CHANNEL_BW_MHZ"
     update_yaml "configs/gnb.yaml" "ru_sdr.amplitude_control" "tx_gain_backoff" "22"
     update_yaml "configs/gnb.yaml" "cell_cfg.prach" "total_nof_ra_preambles" "60"
     update_yaml "configs/gnb.yaml" "cell_cfg.prach" "nof_ssb_per_ro" "1"
@@ -476,7 +476,7 @@ if [ "$USE_ZMQ_BROKER" = "true" ]; then
 fi
 
 yq eval -i 'del(.cells)' "configs/gnb.yaml"
-if [ "$USE_ZMQ_BROKER" = "true" ] && [ "${#CELL_NUMBERS[@]}" -gt 1 ]; then
+if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ] && [ "${#CELL_NUMBERS[@]}" -gt 1 ]; then
     CELL_COUNT=0
     for CELL_NUMBER in "${CELL_NUMBERS[@]}"; do
         RADIO_PROFILE_INDEX=$(((CELL_NUMBER - 1) % ${#GNB_DL_ARFCNS[@]}))
@@ -661,34 +661,34 @@ update_yaml "configs/gnb.yaml" "ru_sdr" "otw_format" "default"
 #    update_yaml "configs/gnb.yaml" "expert_execution.threads.main_pool" "nof_threads" "$(nproc)"
 # fi
 
-if [ "$USE_ZMQ_BROKER" = "true" ]; then
-    if [ ! -f "install_scripts/generate_zmq_broker.sh" ]; then
-        echo "ERROR: Could not find install_scripts/generate_zmq_broker.sh."
+if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ]; then
+    if [ ! -f "install_scripts/generate_zmq_channel_emulator.sh" ]; then
+        echo "ERROR: Could not find install_scripts/generate_zmq_channel_emulator.sh."
         exit 1
     fi
 
     echo "Generating ZeroMQ channel emulator Python script..."
 
-    BROKER_SRATE_INT=$(awk "BEGIN { printf \"%d\", $GNB_SRATE_MHZ * 1000000 }")
+    CHANNEL_EMULATOR_SRATE_INT=$(awk "BEGIN { printf \"%d\", $GNB_SRATE_MHZ * 1000000 }")
 
-    ZMQ_BROKER_SLOW_DOWN_RATIO="1"
+    ZMQ_CHANNEL_EMULATOR_SLOW_DOWN_RATIO="1"
     # # Optionally, calculate the slow down ratio based on the number of UEs and cells
-    # ZMQ_BROKER_SLOW_DOWN_RATIO="$((${#UE_NUMBERS[@]} + ${#CELL_NUMBERS[@]}))"
+    # ZMQ_CHANNEL_EMULATOR_SLOW_DOWN_RATIO="$((${#UE_NUMBERS[@]} + ${#CELL_NUMBERS[@]}))"
 
-    BROKER_UE_NUMBERS_STR=$(
+    CHANNEL_EMULATOR_UE_NUMBERS_STR=$(
         IFS=,
         echo "${UE_NUMBERS[*]}"
     )
-    BROKER_CELL_NUMBERS_STR=$(
+    CHANNEL_EMULATOR_CELL_NUMBERS_STR=$(
         IFS=,
         echo "${CELL_NUMBERS[*]}"
     )
 
-    if [ -L zmq_broker ]; then
-        rm -f zmq_broker
+    if [ -L zmq_channel_emulator ]; then
+        rm -f zmq_channel_emulator
     fi
-    mkdir -p zmq_broker
-    ./install_scripts/generate_zmq_broker.sh --output "zmq_broker/multi_ue_scenario.py" --sample-rate-hz "$BROKER_SRATE_INT" --slow-down-ratio "$ZMQ_BROKER_SLOW_DOWN_RATIO" --cells "$BROKER_CELL_NUMBERS_STR" --ues "$BROKER_UE_NUMBERS_STR"
+    mkdir -p zmq_channel_emulator
+    ./install_scripts/generate_zmq_channel_emulator.sh --output "zmq_channel_emulator/zmq_channel_emulator.py" --sample-rate-hz "$CHANNEL_EMULATOR_SRATE_INT" --slow-down-ratio "$ZMQ_CHANNEL_EMULATOR_SLOW_DOWN_RATIO" --cells "$CHANNEL_EMULATOR_CELL_NUMBERS_STR" --ues "$CHANNEL_EMULATOR_UE_NUMBERS_STR"
 
     if ! python3 -c "import gnuradio, PyQt5" >/dev/null 2>&1; then
         echo "Installing GNU Radio runtime for the ZeroMQ channel emulator..."

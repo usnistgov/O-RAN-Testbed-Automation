@@ -36,12 +36,12 @@ SHOW_JAMMER_UI=false
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 ROOT_DIR=$(realpath "$SCRIPT_DIR/../../..")
 UE_DIRECTORY="$ROOT_DIR/User_Equipment"
-BROKER_FILE="$ROOT_DIR/Next_Generation_Node_B/zmq_broker/multi_ue_scenario.py"
+CHANNEL_EMULATOR_FILE="$ROOT_DIR/Next_Generation_Node_B/zmq_channel_emulator/zmq_channel_emulator.py"
 JAMMER_SCRIPT="$SCRIPT_DIR/partial_band_interference_n78_with_random_control.py"
 
-if [ ! -f "$BROKER_FILE" ] ||
-    ! grep -q "^# UE_CONFIG: 3 2300 2301 10.201.0.14$" "$BROKER_FILE"; then
-    echo "UE 3 is not configured in the ZeroMQ broker."
+if [ ! -f "$CHANNEL_EMULATOR_FILE" ] ||
+    ! grep -q "^# UE_CONFIG: 3 2300 2301 10.201.0.14$" "$CHANNEL_EMULATOR_FILE"; then
+    echo "UE 3 is not configured in the ZeroMQ channel emulator."
     echo "Run ./generate_configurations.sh --ues 1,2,3 --cells 1,2 first."
     exit 1
 fi

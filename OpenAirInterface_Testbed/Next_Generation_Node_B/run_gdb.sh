@@ -29,8 +29,8 @@
 # copyright protection within the United States.
 
 DISABLE_NRSCOPE_IF_INSTALLED=false
-USE_ZMQ_BROKER=false
-SHOW_ZMQ_BROKER_UI=true
+USE_ZMQ_CHANNEL_EMULATOR=false
+SHOW_ZMQ_CHANNEL_EMULATOR_UI=true
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
@@ -46,13 +46,13 @@ if ! command -v gdb &>/dev/null; then
     sudo env $APTVARS apt-get install -y gdb
 fi
 
-if [ "$USE_ZMQ_BROKER" = "true" ]; then
+if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ]; then
     if [ ! -f "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build/liboai_zmqdevif.so" ]; then
         echo "ERROR: ZeroMQ device library not found. Rerun full_install.sh after setting RADIO_TYPE=\"ZMQ\"."
         exit 1
     fi
 
-    "$SCRIPT_DIR/install_scripts/run_zmq_broker.sh" --show-ui "$SHOW_ZMQ_BROKER_UI"
+    "$SCRIPT_DIR/install_scripts/run_zmq_channel_emulator.sh" --show-ui "$SHOW_ZMQ_CHANNEL_EMULATOR_UI"
     if [ $# -eq 0 ]; then
         set -- 1
     fi

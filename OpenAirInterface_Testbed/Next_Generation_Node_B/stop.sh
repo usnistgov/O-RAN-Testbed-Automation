@@ -37,7 +37,7 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-USE_ZMQ_BROKER=false
+USE_ZMQ_CHANNEL_EMULATOR=false
 
 SELECTOR=""
 if [ "$#" -eq 1 ]; then
@@ -73,7 +73,7 @@ remove_all_du_namespaces() {
 
 IS_RUNNING=$(./is_running.sh)
 if echo "$IS_RUNNING" | grep -q "gNodeB: NOT_RUNNING" &&
-    { [ -n "$SELECTOR" ] || [ "$USE_ZMQ_BROKER" != "true" ] || echo "$IS_RUNNING" | grep -q "ZeroMQ Channel Emulator: NOT_RUNNING"; }; then
+    { [ -n "$SELECTOR" ] || [ "$USE_ZMQ_CHANNEL_EMULATOR" != "true" ] || echo "$IS_RUNNING" | grep -q "ZeroMQ Channel Emulator: NOT_RUNNING"; }; then
     # Remove DU namespaces
     if [ -z "$DU_NUMBER" ]; then
         remove_all_du_namespaces
@@ -87,9 +87,9 @@ fi
 # Send a graceful shutdown signal to the gNodeB process
 if [ -z "$SELECTOR" ]; then
     sudo pkill -f "[n]r-softmodem" >/dev/null 2>&1
-    if [ "$USE_ZMQ_BROKER" = "true" ] && pgrep -f "[m]ulti_ue_scenario\.py" >/dev/null; then
+    if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ] && pgrep -f "[z]mq_channel_emulator\.py" >/dev/null; then
         echo "Stopping ZeroMQ Channel Emulator..."
-        sudo pkill -f "[m]ulti_ue_scenario\.py" >/dev/null 2>&1
+        sudo pkill -f "[z]mq_channel_emulator\.py" >/dev/null 2>&1
     fi
     if [ -t 0 ]; then
         stty sane || true
@@ -118,7 +118,7 @@ while [ $COUNT -lt $MAX_COUNT ]; do
     IS_RUNNING=$(./is_running.sh)
     if [ -z "$SELECTOR" ]; then
         if echo "$IS_RUNNING" | grep -q "gNodeB: NOT_RUNNING" &&
-            { [ "$USE_ZMQ_BROKER" != "true" ] || echo "$IS_RUNNING" | grep -q "ZeroMQ Channel Emulator: NOT_RUNNING"; }; then
+            { [ "$USE_ZMQ_CHANNEL_EMULATOR" != "true" ] || echo "$IS_RUNNING" | grep -q "ZeroMQ Channel Emulator: NOT_RUNNING"; }; then
             echo "The gNodeB has stopped gracefully."
             remove_all_du_namespaces
             ./is_running.sh
@@ -143,8 +143,8 @@ done
 if [ -z "$SELECTOR" ]; then
     echo "The gNodeB did not stop in time, sending forceful kill signal..."
     sudo pkill -9 -f "[n]r-softmodem" >/dev/null 2>&1
-    if [ "$USE_ZMQ_BROKER" = "true" ]; then
-        sudo pkill -9 -f "[m]ulti_ue_scenario\.py" >/dev/null 2>&1
+    if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ]; then
+        sudo pkill -9 -f "[z]mq_channel_emulator\.py" >/dev/null 2>&1
     fi
     remove_all_du_namespaces
     if [ -t 0 ]; then

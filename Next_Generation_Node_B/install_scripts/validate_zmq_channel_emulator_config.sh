@@ -40,13 +40,13 @@ cd "$PARENT_DIR"
 
 GNB_CONFIG="configs/gnb.yaml"
 UE_CONFIG_DIR="../User_Equipment/configs"
-BROKER_ONLY=false
+CHANNEL_EMULATOR_ONLY=false
 UE_NUMBERS=()
 CELL_NUMBERS=()
 ERRORS=()
 
 usage() {
-    echo "Usage: $0 [--broker-only] [--ues <ue_numbers>] [--cells <cell_numbers>]"
+    echo "Usage: $0 [--channel-emulator-only] [--ues <ue_numbers>] [--cells <cell_numbers>]"
 }
 
 while [ $# -gt 0 ]; do
@@ -55,8 +55,8 @@ while [ $# -gt 0 ]; do
         usage
         exit 0
         ;;
-    --broker-only)
-        BROKER_ONLY=true
+    --channel-emulator-only)
+        CHANNEL_EMULATOR_ONLY=true
         shift
         ;;
     --ues)
@@ -109,16 +109,16 @@ device_arg_value() {
     echo "$1" | tr ',' '\n' | awk -F= -v key="$2" '$1 == key { print $2; exit }' | xargs || true
 }
 
-if [ ! -x "$SCRIPT_DIR/get_zmq_broker_config.sh" ]; then
-    add_error "ZeroMQ channel emulator configuration reader not found: $SCRIPT_DIR/get_zmq_broker_config.sh"
+if [ ! -x "$SCRIPT_DIR/get_zmq_channel_emulator_config.sh" ]; then
+    add_error "ZeroMQ channel emulator configuration reader not found: $SCRIPT_DIR/get_zmq_channel_emulator_config.sh"
 else
-    BROKER=$("$SCRIPT_DIR/get_zmq_broker_config.sh" --broker-file)
-    if [ ! -f "$BROKER" ]; then
-        add_error "ZeroMQ channel emulator configuration not found: $BROKER"
+    CHANNEL_EMULATOR=$("$SCRIPT_DIR/get_zmq_channel_emulator_config.sh" --channel-emulator-file)
+    if [ ! -f "$CHANNEL_EMULATOR" ]; then
+        add_error "ZeroMQ channel emulator configuration not found: $CHANNEL_EMULATOR"
     fi
 fi
 
-if [ "$BROKER_ONLY" != "true" ]; then
+if [ "$CHANNEL_EMULATOR_ONLY" != "true" ]; then
     if [ ! -f "$GNB_CONFIG" ]; then
         add_error "gNB config not found: $GNB_CONFIG"
     fi
@@ -128,10 +128,10 @@ if [ "$BROKER_ONLY" != "true" ]; then
 fi
 
 if [ ${#ERRORS[@]} -eq 0 ] && [ ${#CELL_NUMBERS[@]} -eq 0 ]; then
-    mapfile -t CELL_NUMBERS < <("$SCRIPT_DIR/get_zmq_broker_config.sh" --cells)
+    mapfile -t CELL_NUMBERS < <("$SCRIPT_DIR/get_zmq_channel_emulator_config.sh" --cells)
 fi
 if [ ${#ERRORS[@]} -eq 0 ] && [ ${#UE_NUMBERS[@]} -eq 0 ]; then
-    mapfile -t UE_NUMBERS < <("$SCRIPT_DIR/get_zmq_broker_config.sh" --ues)
+    mapfile -t UE_NUMBERS < <("$SCRIPT_DIR/get_zmq_channel_emulator_config.sh" --ues)
 fi
 if [ ${#CELL_NUMBERS[@]} -eq 0 ]; then
     add_error "No cells were found in the generated ZeroMQ channel emulator configuration"
@@ -140,7 +140,7 @@ if [ ${#UE_NUMBERS[@]} -eq 0 ]; then
     add_error "No UEs were found in the generated ZeroMQ channel emulator configuration"
 fi
 
-if [ "$BROKER_ONLY" != "true" ] && [ ${#ERRORS[@]} -eq 0 ]; then
+if [ "$CHANNEL_EMULATOR_ONLY" != "true" ] && [ ${#ERRORS[@]} -eq 0 ]; then
     GNB_DEVICE_ARGS=$(yaml_value "$GNB_CONFIG" "device_args")
     GNB_SRATE=$(yaml_value "$GNB_CONFIG" "srate")
     GNB_BASE_SRATE=$(device_arg_value "$GNB_DEVICE_ARGS" "base_srate")
@@ -165,23 +165,23 @@ for CELL_NUMBER in "${CELL_NUMBERS[@]}"; do
         continue
     fi
 
-    BROKER_CELL_CONFIG=$("$SCRIPT_DIR/get_zmq_broker_config.sh" --cell "$CELL_NUMBER" 2>/dev/null || true)
-    if [ -z "$BROKER_CELL_CONFIG" ]; then
+    CHANNEL_EMULATOR_CELL_CONFIG=$("$SCRIPT_DIR/get_zmq_channel_emulator_config.sh" --cell "$CELL_NUMBER" 2>/dev/null || true)
+    if [ -z "$CHANNEL_EMULATOR_CELL_CONFIG" ]; then
         add_error "Cell $CELL_NUMBER is missing from the generated ZeroMQ channel emulator configuration"
         continue
     fi
-    read -r BROKER_CELL_NUMBER BROKER_CELL_RX_PORT BROKER_CELL_TX_PORT <<<"$BROKER_CELL_CONFIG"
+    read -r CHANNEL_EMULATOR_CELL_NUMBER CHANNEL_EMULATOR_CELL_RX_PORT CHANNEL_EMULATOR_CELL_TX_PORT <<<"$CHANNEL_EMULATOR_CELL_CONFIG"
 
-    if [ "$BROKER_CELL_NUMBER" != "$CELL_NUMBER" ]; then
-        add_error "Cell $CELL_NUMBER: channel emulator record has cell number $BROKER_CELL_NUMBER"
+    if [ "$CHANNEL_EMULATOR_CELL_NUMBER" != "$CELL_NUMBER" ]; then
+        add_error "Cell $CELL_NUMBER: channel emulator record has cell number $CHANNEL_EMULATOR_CELL_NUMBER"
     fi
-    if [ "$BROKER_CELL_RX_PORT" != "$EXPECTED_CELL_RX_PORT" ]; then
-        add_error "Cell $CELL_NUMBER: channel emulator rx_port must be $EXPECTED_CELL_RX_PORT (got $BROKER_CELL_RX_PORT)"
+    if [ "$CHANNEL_EMULATOR_CELL_RX_PORT" != "$EXPECTED_CELL_RX_PORT" ]; then
+        add_error "Cell $CELL_NUMBER: channel emulator rx_port must be $EXPECTED_CELL_RX_PORT (got $CHANNEL_EMULATOR_CELL_RX_PORT)"
     fi
-    if [ "$BROKER_CELL_TX_PORT" != "$EXPECTED_CELL_TX_PORT" ]; then
-        add_error "Cell $CELL_NUMBER: channel emulator tx_port must be $EXPECTED_CELL_TX_PORT (got $BROKER_CELL_TX_PORT)"
+    if [ "$CHANNEL_EMULATOR_CELL_TX_PORT" != "$EXPECTED_CELL_TX_PORT" ]; then
+        add_error "Cell $CELL_NUMBER: channel emulator tx_port must be $EXPECTED_CELL_TX_PORT (got $CHANNEL_EMULATOR_CELL_TX_PORT)"
     fi
-    if [ "$BROKER_ONLY" != "true" ]; then
+    if [ "$CHANNEL_EMULATOR_ONLY" != "true" ]; then
         if [ "$(device_arg_value "$GNB_DEVICE_ARGS" "tx_port$CELL_COUNT")" != "tcp://127.0.0.1:$EXPECTED_CELL_RX_PORT" ]; then
             add_error "Cell $CELL_NUMBER: gNB tx_port$CELL_COUNT must be tcp://127.0.0.1:$EXPECTED_CELL_RX_PORT for channel emulator mode"
         fi
@@ -204,31 +204,31 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
         continue
     fi
 
-    BROKER_UE_CONFIG=$("$SCRIPT_DIR/get_zmq_broker_config.sh" --ue "$UE_NUMBER" 2>/dev/null || true)
-    if [ -z "$BROKER_UE_CONFIG" ]; then
+    CHANNEL_EMULATOR_UE_CONFIG=$("$SCRIPT_DIR/get_zmq_channel_emulator_config.sh" --ue "$UE_NUMBER" 2>/dev/null || true)
+    if [ -z "$CHANNEL_EMULATOR_UE_CONFIG" ]; then
         add_error "UE $UE_NUMBER is missing from the generated ZeroMQ channel emulator configuration"
         continue
     fi
-    read -r BROKER_UE_NUMBER BROKER_UE_RX_PORT BROKER_UE_TX_PORT BROKER_UE_IP BROKER_HOST_IP <<<"$BROKER_UE_CONFIG"
+    read -r CHANNEL_EMULATOR_UE_NUMBER CHANNEL_EMULATOR_UE_RX_PORT CHANNEL_EMULATOR_UE_TX_PORT CHANNEL_EMULATOR_UE_IP CHANNEL_EMULATOR_HOST_IP <<<"$CHANNEL_EMULATOR_UE_CONFIG"
     EXPECTED_HOST_IP=$("$PARENT_DIR/../User_Equipment/install_scripts/get_ue_namespace_ip.sh" host "$UE_NUMBER")
     EXPECTED_UE_IP=$("$PARENT_DIR/../User_Equipment/install_scripts/get_ue_namespace_ip.sh" ue "$UE_NUMBER")
 
-    if [ "$BROKER_UE_NUMBER" != "$UE_NUMBER" ]; then
-        add_error "UE $UE_NUMBER: channel emulator record has UE number $BROKER_UE_NUMBER"
+    if [ "$CHANNEL_EMULATOR_UE_NUMBER" != "$UE_NUMBER" ]; then
+        add_error "UE $UE_NUMBER: channel emulator record has UE number $CHANNEL_EMULATOR_UE_NUMBER"
     fi
-    if [ "$BROKER_UE_RX_PORT" != "$EXPECTED_RX_PORT" ]; then
-        add_error "UE $UE_NUMBER: channel emulator rx_port must be $EXPECTED_RX_PORT (got $BROKER_UE_RX_PORT)"
+    if [ "$CHANNEL_EMULATOR_UE_RX_PORT" != "$EXPECTED_RX_PORT" ]; then
+        add_error "UE $UE_NUMBER: channel emulator rx_port must be $EXPECTED_RX_PORT (got $CHANNEL_EMULATOR_UE_RX_PORT)"
     fi
-    if [ "$BROKER_UE_TX_PORT" != "$EXPECTED_TX_PORT" ]; then
-        add_error "UE $UE_NUMBER: channel emulator tx_port must be $EXPECTED_TX_PORT (got $BROKER_UE_TX_PORT)"
+    if [ "$CHANNEL_EMULATOR_UE_TX_PORT" != "$EXPECTED_TX_PORT" ]; then
+        add_error "UE $UE_NUMBER: channel emulator tx_port must be $EXPECTED_TX_PORT (got $CHANNEL_EMULATOR_UE_TX_PORT)"
     fi
-    if [ "$BROKER_UE_IP" != "$EXPECTED_UE_IP" ]; then
-        add_error "UE $UE_NUMBER: channel emulator ue_ip must be $EXPECTED_UE_IP (got $BROKER_UE_IP)"
+    if [ "$CHANNEL_EMULATOR_UE_IP" != "$EXPECTED_UE_IP" ]; then
+        add_error "UE $UE_NUMBER: channel emulator ue_ip must be $EXPECTED_UE_IP (got $CHANNEL_EMULATOR_UE_IP)"
     fi
-    if [ "$BROKER_HOST_IP" != "$EXPECTED_HOST_IP" ]; then
-        add_error "UE $UE_NUMBER: channel emulator host IP must be $EXPECTED_HOST_IP (got $BROKER_HOST_IP)"
+    if [ "$CHANNEL_EMULATOR_HOST_IP" != "$EXPECTED_HOST_IP" ]; then
+        add_error "UE $UE_NUMBER: channel emulator host IP must be $EXPECTED_HOST_IP (got $CHANNEL_EMULATOR_HOST_IP)"
     fi
-    if [ "$BROKER_ONLY" != "true" ]; then
+    if [ "$CHANNEL_EMULATOR_ONLY" != "true" ]; then
         UE_CONFIG="$UE_CONFIG_DIR/ue${UE_NUMBER}.conf"
         if [ ! -f "$UE_CONFIG" ]; then
             add_error "UE $UE_NUMBER: missing $UE_CONFIG"

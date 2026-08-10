@@ -64,7 +64,7 @@ NR_TDD_DL_SLOTS=""
 NR_TDD_DL_SYMBOLS=""
 NR_TDD_UL_SLOTS=""
 NR_TDD_UL_SYMBOLS=""
-ZMQ_BROKER_SAMPLE_RATE_HZ=23040000
+ZMQ_CHANNEL_EMULATOR_SAMPLE_RATE_HZ=23040000
 ZMQ_TX_AMP_BACKOFF_DB="12"
 #
 # GNB_CONFIG_TEMPLATE="openairinterface5g/targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band78.fr1.106PRB.usrpb210.conf"
@@ -87,7 +87,7 @@ ZMQ_TX_AMP_BACKOFF_DB="12"
 # NR_TDD_DL_SYMBOLS="6"
 # NR_TDD_UL_SLOTS="2"
 # NR_TDD_UL_SYMBOLS="4"
-# ZMQ_BROKER_SAMPLE_RATE_HZ=46080000
+# ZMQ_CHANNEL_EMULATOR_SAMPLE_RATE_HZ=46080000
 
 NR_SSB_ARFCN="${NR_SSB_ARFCNS[0]}"
 NR_DL_POINT_A_ARFCN="${NR_DL_POINT_A_ARFCNS[0]}"
@@ -541,24 +541,24 @@ fi
 
 if [ "$RADIO_TYPE" = "ZMQ" ]; then
     echo "Generating ZeroMQ channel emulator Python script..."
-    if [ -L zmq_broker ]; then
-        rm -f zmq_broker
+    if [ -L zmq_channel_emulator ]; then
+        rm -f zmq_channel_emulator
     fi
-    mkdir -p zmq_broker
-    BROKER_CELL_NUMBERS_STR=$(
+    mkdir -p zmq_channel_emulator
+    CHANNEL_EMULATOR_CELL_NUMBERS_STR=$(
         IFS=,
         echo "${CELL_NUMBERS[*]}"
     )
-    BROKER_UE_NUMBERS_STR=$(
+    CHANNEL_EMULATOR_UE_NUMBERS_STR=$(
         IFS=,
         echo "${UE_NUMBERS[*]}"
     )
-    ./install_scripts/generate_zmq_broker.sh \
-        --output "zmq_broker/multi_ue_scenario.py" \
-        --sample-rate-hz "$ZMQ_BROKER_SAMPLE_RATE_HZ" \
+    ./install_scripts/generate_zmq_channel_emulator.sh \
+        --output "zmq_channel_emulator/zmq_channel_emulator.py" \
+        --sample-rate-hz "$ZMQ_CHANNEL_EMULATOR_SAMPLE_RATE_HZ" \
         --slow-down-ratio 1 \
-        --cells "$BROKER_CELL_NUMBERS_STR" \
-        --ues "$BROKER_UE_NUMBERS_STR"
+        --cells "$CHANNEL_EMULATOR_CELL_NUMBERS_STR" \
+        --ues "$CHANNEL_EMULATOR_UE_NUMBERS_STR"
     echo "Successfully generated ZeroMQ channel emulator for UEs: [${UE_NUMBERS[*]}], Cells: [${CELL_NUMBERS[*]}]."
 fi
 

@@ -31,8 +31,8 @@
 # Exit immediately if a command fails
 set -e
 
-SHOW_ZMQ_BROKER_UI=true
-ZMQ_BROKER_READY_TIMEOUT=30
+SHOW_ZMQ_CHANNEL_EMULATOR_UI=true
+ZMQ_CHANNEL_EMULATOR_READY_TIMEOUT=30
 
 # Script directory from the called path, including symlinks
 SCRIPT_DIR="$(cd "$(dirname "$0")" >/dev/null 2>&1 && pwd)"
@@ -58,7 +58,7 @@ while [ $# -gt 0 ]; do
             usage
             exit 1
         fi
-        SHOW_ZMQ_BROKER_UI=$2
+        SHOW_ZMQ_CHANNEL_EMULATOR_UI=$2
         shift 2
         ;;
     *)
@@ -69,37 +69,37 @@ while [ $# -gt 0 ]; do
     esac
 done
 
-if [ "$SHOW_ZMQ_BROKER_UI" != "true" ] && [ "$SHOW_ZMQ_BROKER_UI" != "false" ]; then
-    echo "ERROR: SHOW_ZMQ_BROKER_UI must be true or false."
+if [ "$SHOW_ZMQ_CHANNEL_EMULATOR_UI" != "true" ] && [ "$SHOW_ZMQ_CHANNEL_EMULATOR_UI" != "false" ]; then
+    echo "ERROR: SHOW_ZMQ_CHANNEL_EMULATOR_UI must be true or false."
     usage
     exit 1
 fi
 
-BROKER_FILE=$("$PARENT_DIR/install_scripts/get_zmq_broker_config.sh" --broker-file)
-BROKER_LOG="$PARENT_DIR/logs/zmq_broker.log"
-BROKER_STARTED=false
+CHANNEL_EMULATOR_FILE=$("$PARENT_DIR/install_scripts/get_zmq_channel_emulator_config.sh" --channel-emulator-file)
+CHANNEL_EMULATOR_LOG="$PARENT_DIR/logs/zmq_channel_emulator.log"
+CHANNEL_EMULATOR_STARTED=false
 
-if ! pgrep -f "[m]ulti_ue_scenario\.py" >/dev/null; then
-    "$PARENT_DIR/install_scripts/validate_zmq_broker_config.sh" --broker-only
+if ! pgrep -f "[z]mq_channel_emulator\.py" >/dev/null; then
+    "$PARENT_DIR/install_scripts/validate_zmq_channel_emulator_config.sh" --channel-emulator-only
 
     mkdir -p "$PARENT_DIR/logs"
-    >"$BROKER_LOG"
+    >"$CHANNEL_EMULATOR_LOG"
     echo "Starting ZeroMQ Channel Emulator..."
-    if [ "$SHOW_ZMQ_BROKER_UI" = "true" ]; then
-        nohup python3 "$BROKER_FILE" >"$BROKER_LOG" 2>&1 &
+    if [ "$SHOW_ZMQ_CHANNEL_EMULATOR_UI" = "true" ]; then
+        nohup python3 "$CHANNEL_EMULATOR_FILE" >"$CHANNEL_EMULATOR_LOG" 2>&1 &
     else
-        QT_QPA_PLATFORM=offscreen nohup python3 "$BROKER_FILE" >"$BROKER_LOG" 2>&1 &
+        QT_QPA_PLATFORM=offscreen nohup python3 "$CHANNEL_EMULATOR_FILE" >"$CHANNEL_EMULATOR_LOG" 2>&1 &
     fi
     sleep 2
-    if ! pgrep -f "[m]ulti_ue_scenario\.py" >/dev/null; then
+    if ! pgrep -f "[z]mq_channel_emulator\.py" >/dev/null; then
         echo "ZeroMQ Channel Emulator failed to start. Recent log output:"
-        tail -n 80 "$BROKER_LOG" 2>/dev/null || true
+        tail -n 80 "$CHANNEL_EMULATOR_LOG" 2>/dev/null || true
         exit 1
     fi
-    BROKER_STARTED=true
+    CHANNEL_EMULATOR_STARTED=true
 fi
 
-mapfile -t REQUIRED_PORTS < <("$PARENT_DIR/install_scripts/get_zmq_broker_config.sh" --listen-ports)
+mapfile -t REQUIRED_PORTS < <("$PARENT_DIR/install_scripts/get_zmq_channel_emulator_config.sh" --listen-ports)
 if [ ${#REQUIRED_PORTS[@]} -eq 0 ]; then
     echo "ERROR: ZeroMQ Channel Emulator configuration does not contain any listening ports."
     exit 1
@@ -110,7 +110,7 @@ if ! command -v ss >/dev/null 2>&1 && ! command -v netstat >/dev/null 2>&1; then
     exit 1
 fi
 
-if [ "$BROKER_STARTED" = "true" ]; then
+if [ "$CHANNEL_EMULATOR_STARTED" = "true" ]; then
     echo "Expected ZeroMQ Channel Emulator listening ports: ${REQUIRED_PORTS[*]}"
     echo -n "Waiting for ZeroMQ Channel Emulator sockets"
 fi
@@ -130,32 +130,32 @@ while true; do
     done
 
     if [ "$ALL_READY" = "true" ]; then
-        if [ "$BROKER_STARTED" = "true" ]; then
+        if [ "$CHANNEL_EMULATOR_STARTED" = "true" ]; then
             echo
         fi
         break
     fi
-    if ! pgrep -f "[m]ulti_ue_scenario\.py" >/dev/null; then
-        if [ "$BROKER_STARTED" = "true" ]; then
+    if ! pgrep -f "[z]mq_channel_emulator\.py" >/dev/null; then
+        if [ "$CHANNEL_EMULATOR_STARTED" = "true" ]; then
             echo
         fi
         echo "ZeroMQ Channel Emulator stopped before opening its sockets. Recent log output:"
-        tail -n 80 "$BROKER_LOG" 2>/dev/null || true
+        tail -n 80 "$CHANNEL_EMULATOR_LOG" 2>/dev/null || true
         exit 1
     fi
 
-    if [ "$BROKER_STARTED" = "true" ]; then
+    if [ "$CHANNEL_EMULATOR_STARTED" = "true" ]; then
         echo -n "."
     fi
     sleep 1
     ATTEMPT=$((ATTEMPT + 1))
-    if [ "$ATTEMPT" -ge "$ZMQ_BROKER_READY_TIMEOUT" ]; then
-        if [ "$BROKER_STARTED" = "true" ]; then
+    if [ "$ATTEMPT" -ge "$ZMQ_CHANNEL_EMULATOR_READY_TIMEOUT" ]; then
+        if [ "$CHANNEL_EMULATOR_STARTED" = "true" ]; then
             echo
         fi
-        echo "ZeroMQ Channel Emulator sockets did not become ready after $ZMQ_BROKER_READY_TIMEOUT seconds."
+        echo "ZeroMQ Channel Emulator sockets did not become ready after $ZMQ_CHANNEL_EMULATOR_READY_TIMEOUT seconds."
         echo "Recent log output:"
-        tail -n 80 "$BROKER_LOG" 2>/dev/null || true
+        tail -n 80 "$CHANNEL_EMULATOR_LOG" 2>/dev/null || true
         exit 1
     fi
 done

@@ -37,11 +37,11 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-USE_ZMQ_BROKER=true
+USE_ZMQ_CHANNEL_EMULATOR=true
 
 # Check if the gNodeB is already stopped
 IS_RUNNING=$(./is_running.sh)
-if echo "$IS_RUNNING" | grep -q "gNodeB: NOT_RUNNING" && ([ "$USE_ZMQ_BROKER" != "true" ] || echo "$IS_RUNNING" | grep -q "ZeroMQ Channel Emulator: NOT_RUNNING"); then
+if echo "$IS_RUNNING" | grep -q "gNodeB: NOT_RUNNING" && ([ "$USE_ZMQ_CHANNEL_EMULATOR" != "true" ] || echo "$IS_RUNNING" | grep -q "ZeroMQ Channel Emulator: NOT_RUNNING"); then
     echo "$IS_RUNNING"
     exit 0
 fi
@@ -60,7 +60,7 @@ fi
 
 # Send a graceful shutdown signal to the gNodeB process
 sudo pkill -f "[g]nb" >/dev/null 2>&1
-sudo pkill -f "[m]ulti_ue_scenario\.py" >/dev/null 2>&1
+sudo pkill -f "[z]mq_channel_emulator\.py" >/dev/null 2>&1
 
 # Wait for the process to terminate gracefully
 COUNT=0
@@ -68,7 +68,7 @@ MAX_COUNT=5
 sleep 1
 while [ $COUNT -lt $MAX_COUNT ]; do
     IS_RUNNING=$(./is_running.sh)
-    if echo "$IS_RUNNING" | grep -q "gNodeB: NOT_RUNNING" && ([ "$USE_ZMQ_BROKER" != "true" ] || echo "$IS_RUNNING" | grep -q "ZeroMQ Channel Emulator: NOT_RUNNING"); then
+    if echo "$IS_RUNNING" | grep -q "gNodeB: NOT_RUNNING" && ([ "$USE_ZMQ_CHANNEL_EMULATOR" != "true" ] || echo "$IS_RUNNING" | grep -q "ZeroMQ Channel Emulator: NOT_RUNNING"); then
         echo "The gNodeB has stopped gracefully."
         ./is_running.sh
         exit 0
@@ -81,4 +81,4 @@ done
 # If the process is still running after 20 seconds, send a forceful kill signal
 echo "The gNodeB did not stop in time, sending forceful kill signal..."
 sudo pkill -9 -f "[g]nb" >/dev/null 2>&1
-sudo pkill -9 -f "[m]ulti_ue_scenario\.py" >/dev/null 2>&1
+sudo pkill -9 -f "[z]mq_channel_emulator\.py" >/dev/null 2>&1

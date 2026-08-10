@@ -33,7 +33,7 @@ echo "# Script: $(realpath "$0") $@"
 # Exit immediately if a command fails
 set -e
 
-OUTPUT="zmq_broker/multi_ue_scenario.py"
+OUTPUT="zmq_channel_emulator/zmq_channel_emulator.py"
 SAMPLE_RATE_HZ="23040000"
 SLOW_DOWN_RATIO="1"
 CELL_NUMBERS=()
@@ -210,7 +210,7 @@ cat >"$OUTPUT" <<EOF
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-# WARNING: Auto-generated ZeroMQ Channel Emulator, overwritten with the script: ./Next_Generation_Node_B/install_scripts/generate_zmq_broker.sh
+# WARNING: Auto-generated ZeroMQ Channel Emulator, overwritten with the script: ./Next_Generation_Node_B/install_scripts/generate_zmq_channel_emulator.sh
 
 EOF
 
@@ -275,8 +275,6 @@ cat >>"$OUTPUT" <<'EOF'
 ]
 SAMPLE_RATE_HZ = __SAMPLE_RATE_HZ__
 SLOW_DOWN_RATIO = __SLOW_DOWN_RATIO__
-# PRIMARY_CELL_PATH_LOSS_DB = 0
-# OTHER_CELL_PATH_LOSS_DB = 12
 PATH_LOSS_WARNING_DB = 12.0
 PATH_LOSS_RED_DB = 50.0
 PATH_LOSS_MAX_DB = 100.0
@@ -393,7 +391,7 @@ class SliderSpinBox(Qt.QWidget):
         if emit and changed:
             self.valueChanged.emit(value)
 
-class multi_ue_scenario(gr.top_block, Qt.QWidget):
+class zmq_channel_emulator(gr.top_block, Qt.QWidget):
     def __init__(self):
         try:
             gr.top_block.__init__(self, "ZeroMQ Channel Emulator", catch_exceptions=True)
@@ -408,7 +406,7 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
         self.top_layout.setContentsMargins(6, 6, 6, 6)
         self.top_layout.setSpacing(4)
         self.setLayout(self.top_layout)
-        self.settings = Qt.QSettings("GNU Radio", "multi_ue_scenario")
+        self.settings = Qt.QSettings("GNU Radio", "zmq_channel_emulator")
         try:
             self.restoreGeometry(self.settings.value("geometry"))
         except Exception:
@@ -419,15 +417,9 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
         self.dl_awgn_snr_db = DL_AWGN_SNR_DB
         self.ul_awgn_snr_db = UL_AWGN_SNR_DB
 
-        # # # Equally loud cells
-        # # self.path_loss_db = {(cell["number"], ue["number"]): 0 for cell in CELL_CONFIGS for ue in UE_CONFIGS}
-        # # Map each UE to one primary cell in configured order, wrapping when there are more UEs than cells
-
-        self.path_loss_db = {}
-        self.dl_path_loss_db = self.path_loss_db
+        self.dl_path_loss_db = {}
         self.ul_path_loss_db = {}
         self.path_enabled = {}
-        # self.primary_path = {}
         self.path_loss_linked = {}
         self.dl_awgn_enabled = {}
         self.dl_awgn_snr_db_by_path = {}
@@ -435,8 +427,7 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
         self.ul_awgn_snr_db_by_cell = {}
         self.default_link_settings = {}
         self.default_cell_settings = {}
-        # cell_count = len(CELL_CONFIGS)
-        for cell_index, cell in enumerate(CELL_CONFIGS):
+        for cell in CELL_CONFIGS:
             cell_number = cell["number"]
             self.ul_awgn_enabled[cell_number] = UL_AWGN_ENABLED
             self.ul_awgn_snr_db_by_cell[cell_number] = UL_AWGN_SNR_DB
@@ -444,20 +435,14 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
                 "ul_awgn_enabled": UL_AWGN_ENABLED,
                 "ul_awgn_snr_db": UL_AWGN_SNR_DB,
             }
-            for ue_index, ue in enumerate(UE_CONFIGS):
+            for ue in UE_CONFIGS:
                 ue_number = ue["number"]
-                # is_mapped_pair = cell_index == ue_index % cell_count
-                # if is_mapped_pair:
-                #     path_loss_db = PRIMARY_CELL_PATH_LOSS_DB
-                # else:
-                #     path_loss_db = OTHER_CELL_PATH_LOSS_DB
                 path_loss_db = 0
 
                 path_key = (cell_number, ue_number)
                 self.dl_path_loss_db[path_key] = path_loss_db
                 self.ul_path_loss_db[path_key] = path_loss_db
                 self.path_enabled[path_key] = PATH_ENABLED
-                # self.primary_path[path_key] = is_mapped_pair
                 self.path_loss_linked[path_key] = PATH_LOSS_LINKED
                 self.dl_awgn_enabled[path_key] = DL_AWGN_ENABLED
                 self.dl_awgn_snr_db_by_path[path_key] = DL_AWGN_SNR_DB
@@ -1317,6 +1302,9 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
     def set_path_enabled(self, cell_number, ue_number, enabled):
         path_key = (cell_number, ue_number)
         self.path_enabled[path_key] = bool(enabled)
+        self.dl_awgn[path_key].set_enabled(
+            bool(enabled) and self.dl_awgn_enabled[path_key]
+        )
         self.update_path_gains(path_key)
         if hasattr(self, "topology_table"):
             self.update_topology_entry(path_key)
@@ -1364,7 +1352,9 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
     def set_link_dl_awgn_enabled(self, cell_number, ue_number, enabled):
         path_key = (cell_number, ue_number)
         self.dl_awgn_enabled[path_key] = bool(enabled)
-        self.dl_awgn[path_key].set_enabled(enabled)
+        self.dl_awgn[path_key].set_enabled(
+            bool(enabled) and self.path_enabled[path_key]
+        )
         self.dl_awgn_snr_controls[path_key].setEnabled(bool(enabled))
         if hasattr(self, "topology_table"):
             self.update_topology_entry(path_key)
@@ -1447,7 +1437,7 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
 
 def main():
     qapp = Qt.QApplication(sys.argv)
-    tb = multi_ue_scenario()
+    tb = zmq_channel_emulator()
     tb.start()
     tb.show()
 

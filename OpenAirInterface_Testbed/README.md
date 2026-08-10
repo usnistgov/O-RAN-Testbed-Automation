@@ -32,7 +32,7 @@ It may be required for the AVX2 instruction set to be available on the host mach
 
 ## Simulating Multiple UEs and Cells with a ZeroMQ Channel Emulator
 
-The ZeroMQ channel emulator supports multi-UE and multi-cell emulation and is motivated by the OCUDU Multi-UE Emulation tutorial [\[5][ocudu-multi-ue], [6\]][ocudu-multi-ue-grc]. Its generator, `Next_Generation_Node_B/install_scripts/generate_zmq_broker.sh`, accepts comma-separated UE numbers, such as `--ues 1,2,3`. Its graphical user interface can be toggled by setting `SHOW_ZMQ_BROKER_UI` in `run.sh`.
+The ZeroMQ channel emulator supports multi-UE and multi-cell emulation and is motivated by the OCUDU Multi-UE Emulation tutorial [\[5][ocudu-multi-ue], [6\]][ocudu-multi-ue-grc]. Its generator, `Next_Generation_Node_B/install_scripts/generate_zmq_channel_emulator.sh`, accepts comma-separated UE numbers, such as `--ues 1,2,3`. Its graphical user interface can be toggled by setting `SHOW_ZMQ_CHANNEL_EMULATOR_UI` in `run.sh`.
 
 <details>
 <summary>Enable ZeroMQ channel emulator</summary>
@@ -43,19 +43,19 @@ sed -i 's/^RADIO_TYPE=.*$/RADIO_TYPE="ZMQ" # Set to "SIMU", "ZMQ", or "USRP"/' U
 sed -i 's/^RADIO_TYPE=.*$/RADIO_TYPE="ZMQ" # Set to "SIMU", "ZMQ", or "USRP"/' User_Equipment/generate_configurations.sh
 sed -i 's/^RADIO_TYPE=.*$/RADIO_TYPE="ZMQ" # Set to "SIMU", "ZMQ", or "USRP"/' Next_Generation_Node_B/full_install.sh
 sed -i 's/^RADIO_TYPE=.*$/RADIO_TYPE="ZMQ" # Set to "SIMU", "ZMQ", or "USRP"/' Next_Generation_Node_B/generate_configurations.sh
-sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' run.sh
-sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' run_handover_scenario.sh
-sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' run_with_grafana_dashboard.sh
-sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' run_with_nrscope_gui.sh
-sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' User_Equipment/run.sh
-sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' User_Equipment/run_background.sh
-sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' User_Equipment/run_gdb.sh
-sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' Next_Generation_Node_B/run.sh
-sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' Next_Generation_Node_B/run_background.sh
-sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' Next_Generation_Node_B/run_gdb.sh
-sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' Next_Generation_Node_B/run_split_du.sh
-sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' Next_Generation_Node_B/is_running.sh
-sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' Next_Generation_Node_B/stop.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' run.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' run_handover_scenario.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' run_with_grafana_dashboard.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' run_with_nrscope_gui.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' User_Equipment/run.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' User_Equipment/run_background.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' User_Equipment/run_gdb.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' Next_Generation_Node_B/run.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' Next_Generation_Node_B/run_background.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' Next_Generation_Node_B/run_gdb.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' Next_Generation_Node_B/run_split_du.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' Next_Generation_Node_B/is_running.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' Next_Generation_Node_B/stop.sh
 ```
 
 </details>
@@ -69,19 +69,19 @@ sed -i 's/^RADIO_TYPE=.*$/RADIO_TYPE="SIMU" # Set to "SIMU", "ZMQ", or "USRP"/' 
 sed -i 's/^RADIO_TYPE=.*$/RADIO_TYPE="SIMU" # Set to "SIMU", "ZMQ", or "USRP"/' User_Equipment/generate_configurations.sh
 sed -i 's/^RADIO_TYPE=.*$/RADIO_TYPE="SIMU" # Set to "SIMU", "ZMQ", or "USRP"/' Next_Generation_Node_B/full_install.sh
 sed -i 's/^RADIO_TYPE=.*$/RADIO_TYPE="SIMU" # Set to "SIMU", "ZMQ", or "USRP"/' Next_Generation_Node_B/generate_configurations.sh
-sed -i 's/^USE_ZMQ_BROKER=true$/USE_ZMQ_BROKER=false/' run.sh
-sed -i 's/^USE_ZMQ_BROKER=true$/USE_ZMQ_BROKER=false/' run_handover_scenario.sh
-sed -i 's/^USE_ZMQ_BROKER=true$/USE_ZMQ_BROKER=false/' run_with_grafana_dashboard.sh
-sed -i 's/^USE_ZMQ_BROKER=true$/USE_ZMQ_BROKER=false/' run_with_nrscope_gui.sh
-sed -i 's/^USE_ZMQ_BROKER=true$/USE_ZMQ_BROKER=false/' User_Equipment/run.sh
-sed -i 's/^USE_ZMQ_BROKER=true$/USE_ZMQ_BROKER=false/' User_Equipment/run_background.sh
-sed -i 's/^USE_ZMQ_BROKER=true$/USE_ZMQ_BROKER=false/' User_Equipment/run_gdb.sh
-sed -i 's/^USE_ZMQ_BROKER=true$/USE_ZMQ_BROKER=false/' Next_Generation_Node_B/run.sh
-sed -i 's/^USE_ZMQ_BROKER=true$/USE_ZMQ_BROKER=false/' Next_Generation_Node_B/run_background.sh
-sed -i 's/^USE_ZMQ_BROKER=true$/USE_ZMQ_BROKER=false/' Next_Generation_Node_B/run_gdb.sh
-sed -i 's/^USE_ZMQ_BROKER=true$/USE_ZMQ_BROKER=false/' Next_Generation_Node_B/run_split_du.sh
-sed -i 's/^USE_ZMQ_BROKER=true$/USE_ZMQ_BROKER=false/' Next_Generation_Node_B/is_running.sh
-sed -i 's/^USE_ZMQ_BROKER=true$/USE_ZMQ_BROKER=false/' Next_Generation_Node_B/stop.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=true$/USE_ZMQ_CHANNEL_EMULATOR=false/' run.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=true$/USE_ZMQ_CHANNEL_EMULATOR=false/' run_handover_scenario.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=true$/USE_ZMQ_CHANNEL_EMULATOR=false/' run_with_grafana_dashboard.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=true$/USE_ZMQ_CHANNEL_EMULATOR=false/' run_with_nrscope_gui.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=true$/USE_ZMQ_CHANNEL_EMULATOR=false/' User_Equipment/run.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=true$/USE_ZMQ_CHANNEL_EMULATOR=false/' User_Equipment/run_background.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=true$/USE_ZMQ_CHANNEL_EMULATOR=false/' User_Equipment/run_gdb.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=true$/USE_ZMQ_CHANNEL_EMULATOR=false/' Next_Generation_Node_B/run.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=true$/USE_ZMQ_CHANNEL_EMULATOR=false/' Next_Generation_Node_B/run_background.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=true$/USE_ZMQ_CHANNEL_EMULATOR=false/' Next_Generation_Node_B/run_gdb.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=true$/USE_ZMQ_CHANNEL_EMULATOR=false/' Next_Generation_Node_B/run_split_du.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=true$/USE_ZMQ_CHANNEL_EMULATOR=false/' Next_Generation_Node_B/is_running.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=true$/USE_ZMQ_CHANNEL_EMULATOR=false/' Next_Generation_Node_B/stop.sh
 ```
 
 </details>
@@ -113,7 +113,7 @@ The script `run_handover_scenario.sh`, based on the handover tutorial [\[4\]][du
   <hr>
 
   <p align="center">
-    <img src="../Images/F1_Handover_Example_ZeroMQ_Broker.png" alt="F1 Handover Scenario Example Output">
+    <img src="../Images/F1_Handover_Example_ZeroMQ_Channel_Emulator.png" alt="F1 Handover Scenario Example Output">
   </p>
 
 </details>

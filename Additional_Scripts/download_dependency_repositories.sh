@@ -60,18 +60,18 @@ cd Next_Generation_Node_B
 ./install_scripts/git_clone.sh https://gitlab.com/ocudu/ocudu_elements/ocudu_oran_apps/ocudu_netconf.git
 ln -s "../User_Equipment/libzmq" libzmq # Use User_Equipment's ZMQ
 ln -s "../User_Equipment/czmq" czmq
-if [ -L zmq_broker ]; then
-    rm -f zmq_broker
+if [ -L zmq_channel_emulator ]; then
+    rm -f zmq_channel_emulator
 fi
-mkdir -p zmq_broker
+mkdir -p zmq_channel_emulator
 
 DOCS_HASH=$(jq -r '."https://gitlab.com/ocudu/ocudu_docs.git"[1]' ../commit_hashes.json 2>/dev/null)
 if [ -z "$DOCS_HASH" ] || [ "$DOCS_HASH" == "null" ]; then
     echo "ERROR: Unable to retrieve commit hash for ocudu_docs repository."
     exit 1
 fi
-wget -qO zmq_broker/multi_ue_scenario.grc "https://gitlab.com/ocudu/ocudu_docs/-/raw/${DOCS_HASH}/docs/tutorials/srsue/assets/multi_ue_scenario.grc"
-wget -qO zmq_broker/multi_ue_scenario.grc.license "https://gitlab.com/ocudu/ocudu_docs/-/raw/${DOCS_HASH}/docs/tutorials/srsue/assets/multi_ue_scenario.grc.license"
+wget -qO zmq_channel_emulator/multi_ue_scenario.grc "https://gitlab.com/ocudu/ocudu_docs/-/raw/${DOCS_HASH}/docs/tutorials/srsue/assets/multi_ue_scenario.grc"
+wget -qO zmq_channel_emulator/multi_ue_scenario.grc.license "https://gitlab.com/ocudu/ocudu_docs/-/raw/${DOCS_HASH}/docs/tutorials/srsue/assets/multi_ue_scenario.grc.license"
 
 cd ..
 

@@ -41,7 +41,7 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
 USE_FLEXRIC=false
-USE_ZMQ_BROKER=true
+USE_ZMQ_CHANNEL_EMULATOR=true
 
 CELL_NUMBERS_STR="1"   # Default cells
 UE_NUMBERS_STR="1,2,3" # Default UEs
@@ -130,9 +130,9 @@ cd "$SCRIPT_DIR"
 # ./generate_configurations.sh "${UE_CONFIG_ARGS[@]}"
 # cd "$SCRIPT_DIR"
 
-if [ "$USE_ZMQ_BROKER" = "true" ]; then
+if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ]; then
     echo "Verifying ZeroMQ channel emulator configuration..."
-    Next_Generation_Node_B/install_scripts/validate_zmq_broker_config.sh --ues "$UE_NUMBERS_STR" --cells "$CELL_NUMBERS_STR"
+    Next_Generation_Node_B/install_scripts/validate_zmq_channel_emulator_config.sh --ues "$UE_NUMBERS_STR" --cells "$CELL_NUMBERS_STR"
 fi
 
 echo

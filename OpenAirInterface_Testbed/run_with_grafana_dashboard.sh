@@ -31,8 +31,8 @@
 # Exit immediately if a command fails
 set -e
 
-USE_ZMQ_BROKER=false
-SHOW_ZMQ_BROKER_UI=true
+USE_ZMQ_CHANNEL_EMULATOR=false
+SHOW_ZMQ_CHANNEL_EMULATOR_UI=true
 USE_SRSRAN_UE=false # Experimental
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
@@ -47,25 +47,25 @@ cd "$SCRIPT_DIR"
 UE_DIRECTORY="$SCRIPT_DIR/User_Equipment"
 UE_READY_MESSAGE="Received PDU Session Establishment Accept"
 if [ "$USE_SRSRAN_UE" = "true" ]; then
-    if [ "$USE_ZMQ_BROKER" != "true" ]; then
+    if [ "$USE_ZMQ_CHANNEL_EMULATOR" != "true" ]; then
         echo "ERROR: The srsRAN UE requires the ZeroMQ channel emulator with the Duranta gNodeB. It can be enabled with the following commands:"
         echo "    sed -i 's/^RADIO_TYPE=.*$/RADIO_TYPE="ZMQ" # Set to "SIMU", "ZMQ", or "USRP"/' User_Equipment/full_install.sh"
         echo "    sed -i 's/^RADIO_TYPE=.*$/RADIO_TYPE="ZMQ" # Set to "SIMU", "ZMQ", or "USRP"/' User_Equipment/generate_configurations.sh"
         echo "    sed -i 's/^RADIO_TYPE=.*$/RADIO_TYPE="ZMQ" # Set to "SIMU", "ZMQ", or "USRP"/' Next_Generation_Node_B/full_install.sh"
         echo "    sed -i 's/^RADIO_TYPE=.*$/RADIO_TYPE="ZMQ" # Set to "SIMU", "ZMQ", or "USRP"/' Next_Generation_Node_B/generate_configurations.sh"
-        echo "    sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' run.sh"
-        echo "    sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' run_handover_scenario.sh"
-        echo "    sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' run_with_grafana_dashboard.sh"
-        echo "    sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' run_with_nrscope_gui.sh"
-        echo "    sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' User_Equipment/run.sh"
-        echo "    sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' User_Equipment/run_background.sh"
-        echo "    sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' User_Equipment/run_gdb.sh"
-        echo "    sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' Next_Generation_Node_B/run.sh"
-        echo "    sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' Next_Generation_Node_B/run_background.sh"
-        echo "    sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' Next_Generation_Node_B/run_gdb.sh"
-        echo "    sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' Next_Generation_Node_B/run_split_du.sh"
-        echo "    sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' Next_Generation_Node_B/is_running.sh"
-        echo "    sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' Next_Generation_Node_B/stop.sh"
+        echo "    sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' run.sh"
+        echo "    sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' run_handover_scenario.sh"
+        echo "    sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' run_with_grafana_dashboard.sh"
+        echo "    sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' run_with_nrscope_gui.sh"
+        echo "    sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' User_Equipment/run.sh"
+        echo "    sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' User_Equipment/run_background.sh"
+        echo "    sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' User_Equipment/run_gdb.sh"
+        echo "    sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' Next_Generation_Node_B/run.sh"
+        echo "    sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' Next_Generation_Node_B/run_background.sh"
+        echo "    sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' Next_Generation_Node_B/run_gdb.sh"
+        echo "    sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' Next_Generation_Node_B/run_split_du.sh"
+        echo "    sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' Next_Generation_Node_B/is_running.sh"
+        echo "    sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' Next_Generation_Node_B/stop.sh"
         exit 1
     fi
     UE_DIRECTORY="$SCRIPT_DIR/../User_Equipment"
@@ -75,10 +75,10 @@ fi
 
 UE_NUMBERS=()
 CELL_NUMBERS=()
-if [ "$USE_ZMQ_BROKER" = "true" ]; then
-    ./Next_Generation_Node_B/install_scripts/validate_zmq_broker_config.sh --broker-only
-    mapfile -t UE_NUMBERS < <(./Next_Generation_Node_B/install_scripts/get_zmq_broker_config.sh --ues)
-    mapfile -t CELL_NUMBERS < <(./Next_Generation_Node_B/install_scripts/get_zmq_broker_config.sh --cells)
+if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ]; then
+    ./Next_Generation_Node_B/install_scripts/validate_zmq_channel_emulator_config.sh --channel-emulator-only
+    mapfile -t UE_NUMBERS < <(./Next_Generation_Node_B/install_scripts/get_zmq_channel_emulator_config.sh --ues)
+    mapfile -t CELL_NUMBERS < <(./Next_Generation_Node_B/install_scripts/get_zmq_channel_emulator_config.sh --cells)
 
     GNB_ZMQ_LIBRARY="$SCRIPT_DIR/Next_Generation_Node_B/openairinterface5g/cmake_targets/ran_build/build/liboai_zmqdevif.so"
     if [ "$USE_SRSRAN_UE" = "true" ]; then
@@ -171,9 +171,9 @@ done
 echo -e "\nAMF is ready."
 
 cd Next_Generation_Node_B
-if [ "$USE_ZMQ_BROKER" = "true" ]; then
+if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ]; then
     echo
-    ./install_scripts/run_zmq_broker.sh --show-ui "$SHOW_ZMQ_BROKER_UI"
+    ./install_scripts/run_zmq_channel_emulator.sh --show-ui "$SHOW_ZMQ_CHANNEL_EMULATOR_UI"
     echo
     echo "Running DUs..."
     # The first DU ensures that the CU is ready (starting it)
@@ -188,7 +188,7 @@ else
 fi
 cd ..
 
-if [ "$USE_ZMQ_BROKER" = "true" ]; then
+if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ]; then
     echo
     echo "Running User Equipment..."
     cd "$UE_DIRECTORY"
@@ -200,7 +200,7 @@ if [ "$USE_ZMQ_BROKER" = "true" ]; then
 fi
 
 cd Next_Generation_Node_B
-if [ "$USE_ZMQ_BROKER" = "true" ]; then
+if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ]; then
     for CELL_NUMBER in "${CELL_NUMBERS[@]}"; do
         LOG_FILE="logs/split_du${CELL_NUMBER}_stdout.txt"
         echo -en "\nWaiting for DU $CELL_NUMBER to be ready"
@@ -243,7 +243,7 @@ else
 fi
 cd ..
 
-if [ "$USE_ZMQ_BROKER" != "true" ]; then
+if [ "$USE_ZMQ_CHANNEL_EMULATOR" != "true" ]; then
     echo
     echo "Running User Equipment..."
     cd "$UE_DIRECTORY"

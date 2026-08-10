@@ -37,10 +37,10 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-USE_ZMQ_BROKER=true
+USE_ZMQ_CHANNEL_EMULATOR=true
 
-if [ "$USE_ZMQ_BROKER" = "true" ]; then
-    if pgrep -f "[m]ulti_ue_scenario\.py" >/dev/null; then
+if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ]; then
+    if pgrep -f "[z]mq_channel_emulator\.py" >/dev/null; then
         echo "ZeroMQ Channel Emulator: RUNNING"
     else
         echo "ZeroMQ Channel Emulator: NOT_RUNNING"

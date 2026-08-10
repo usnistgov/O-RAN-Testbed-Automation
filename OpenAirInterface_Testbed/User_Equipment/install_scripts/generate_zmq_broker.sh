@@ -1,1 +1,0 @@
-../../../Next_Generation_Node_B/install_scripts/generate_zmq_broker.sh

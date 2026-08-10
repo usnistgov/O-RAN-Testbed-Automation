@@ -90,7 +90,7 @@ if command -v docker &>/dev/null && [ -n "$(sudo docker images -q ocudu-netconf/
     ./additional_scripts/uninstall_o1_adapter.sh bypass_confirmation || true
 fi
 
-sudo rm -rf zmq_broker/
+sudo rm -rf zmq_channel_emulator/
 sudo rm -rf ocudu
 sudo rm -rf ocudu_o1_adapter
 sudo rm -rf ocudu_netconf

@@ -178,8 +178,8 @@ generate_commands "https://gitlab.com/ocudu/ocudu_elements/ocudu_oran_apps/ocudu
 echo "cd Next_Generation_Node_B" >>download_dependency_repositories.bat
 echo "mklink /D libzmq ..\\User_Equipment\\libzmq" >>download_dependency_repositories.bat # Use User_Equipment's ZMQ
 echo "mklink /D czmq ..\\User_Equipment\\czmq" >>download_dependency_repositories.bat
-echo "if not exist zmq_broker mkdir zmq_broker" >>download_dependency_repositories.bat
-echo "cd zmq_broker" >>download_dependency_repositories.bat
+echo "if not exist zmq_channel_emulator mkdir zmq_channel_emulator" >>download_dependency_repositories.bat
+echo "cd zmq_channel_emulator" >>download_dependency_repositories.bat
 echo "if not exist \"multi_ue_scenario.grc\" (" >>download_dependency_repositories.bat
 
 DOCS_HASH=$(jq -r '."https://gitlab.com/ocudu/ocudu_docs.git"[1]' ../commit_hashes.json 2>/dev/null)

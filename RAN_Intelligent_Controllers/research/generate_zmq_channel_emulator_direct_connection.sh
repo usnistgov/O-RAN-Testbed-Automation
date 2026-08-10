@@ -155,7 +155,7 @@ cat >"$OUTPUT" <<EOF
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-# WARNING: Auto-generated ZeroMQ broker, overwritten with the script: ./Next_Generation_Node_B/install_scripts/generate_zmq_broker.sh
+# WARNING: Auto-generated ZeroMQ channel emulator, overwritten with the script: ./Next_Generation_Node_B/install_scripts/generate_zmq_channel_emulator.sh
 
 EOF
 
@@ -226,21 +226,21 @@ ZMQ_TIMEOUT = 100
 ZMQ_HIGH_WATER_MARK = -1
 
 
-class multi_ue_scenario(gr.top_block, Qt.QWidget):
+class zmq_channel_emulator(gr.top_block, Qt.QWidget):
     def __init__(self):
         try:
             gr.top_block.__init__(
-                self, "Multi_Cell_Multi_UE_Broker", catch_exceptions=True
+                self, "ZeroMQ Channel Emulator", catch_exceptions=True
             )
         except TypeError:
-            gr.top_block.__init__(self, "Multi_Cell_Multi_UE_Broker")
+            gr.top_block.__init__(self, "ZeroMQ Channel Emulator")
         Qt.QWidget.__init__(self)
-        self.setWindowTitle("Multi_Cell_Multi_UE_Broker")
+        self.setWindowTitle("ZeroMQ Channel Emulator")
         qtgui.util.check_set_qss()
 
         self.top_layout = Qt.QVBoxLayout()
         self.setLayout(self.top_layout)
-        self.settings = Qt.QSettings("GNU Radio", "multi_ue_scenario")
+        self.settings = Qt.QSettings("GNU Radio", "zmq_channel_emulator")
         try:
             self.restoreGeometry(self.settings.value("geometry"))
         except Exception:
@@ -293,14 +293,14 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
         self.top_layout.addWidget(self.slow_down_ratio_widget)
 
         print(
-            f"ZMQ broker sample_rate={SAMPLE_RATE_HZ} slow_down_ratio={SLOW_DOWN_RATIO} cells={len(CELL_CONFIGS)} ues={len(UE_CONFIGS)}",
+            f"ZMQ channel emulator sample_rate={SAMPLE_RATE_HZ} slow_down_ratio={SLOW_DOWN_RATIO} cells={len(CELL_CONFIGS)} ues={len(UE_CONFIGS)}",
             flush=True,
         )
 
         for cell in CELL_CONFIGS:
             cell_number = cell["number"]
             print(
-                f"ZMQ broker Cell{cell_number} gNB DL source tcp://127.0.0.1:{cell['rx_port']} UL sink tcp://127.0.0.1:{cell['tx_port']}",
+                f"ZMQ channel emulator Cell{cell_number} gNB DL source tcp://127.0.0.1:{cell['rx_port']} UL sink tcp://127.0.0.1:{cell['tx_port']}",
                 flush=True,
             )
             self.gnb_dl_sources[cell_number] = zeromq.req_source(
@@ -328,7 +328,7 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
         for ue in UE_CONFIGS:
             ue_number = ue["number"]
             print(
-                f"ZMQ broker UE{ue_number} DL sink tcp://*:{ue['rx_port']} UL source tcp://{ue['ue_ip']}:{ue['tx_port']}",
+                f"ZMQ channel emulator UE{ue_number} DL sink tcp://*:{ue['rx_port']} UL source tcp://{ue['ue_ip']}:{ue['tx_port']}",
                 flush=True,
             )
             if len(CELL_CONFIGS) > 1: # Only create ue_dl_adds if more than one cell
@@ -463,7 +463,7 @@ class multi_ue_scenario(gr.top_block, Qt.QWidget):
 
 def main():
     qapp = Qt.QApplication(sys.argv)
-    tb = multi_ue_scenario()
+    tb = zmq_channel_emulator()
     tb.start()
     tb.show()
 
@@ -489,4 +489,4 @@ sed -i "s/__SAMPLE_RATE_HZ__/$SAMPLE_RATE_HZ/" "$OUTPUT"
 sed -i "s/__SLOW_DOWN_RATIO__/$SLOW_DOWN_RATIO/" "$OUTPUT"
 chmod 755 "$OUTPUT"
 
-echo "Generated ZMQ broker: $OUTPUT"
+echo "Generated ZMQ channel emulator: $OUTPUT"

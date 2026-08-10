@@ -66,7 +66,7 @@ sudo rm -rf User_Equipment/install_time.txt
 sudo rm -rf Next_Generation_Node_B/ocudu
 sudo rm -rf Next_Generation_Node_B/ocudu_o1_adapter
 sudo rm -rf Next_Generation_Node_B/ocudu_netconf
-sudo rm -rf Next_Generation_Node_B/zmq_broker
+sudo rm -rf Next_Generation_Node_B/zmq_channel_emulator
 sudo rm -rf Next_Generation_Node_B/czmq
 sudo rm -rf Next_Generation_Node_B/libzmq
 sudo rm -rf Next_Generation_Node_B/logs

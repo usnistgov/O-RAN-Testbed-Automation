@@ -21,38 +21,38 @@ The Next Generation Node B (gNodeB) is a 5G base station configured with OCUDU [
 
 ## Simulating Multiple UEs and Cells with a ZeroMQ Channel Emulator
 
-By default, the gNodeB uses a ZeroMQ (ZMQ) channel emulator with cell 1 and UEs 1, 2, and 3. It supports multi-UE and multi-cell emulation and is motivated by the OCUDU Multi-UE Emulation tutorial [\[5][ocudu-multi-ue], [6\]][ocudu-multi-ue-grc]. The Python runtime script is generated under `zmq_broker` using `install_scripts/generate_zmq_broker.sh`. The generator accepts comma-separated UE numbers, such as `--ues 1,2,3`. Its graphical user interface can be toggled by setting `SHOW_ZMQ_BROKER_UI` in `run.sh`.
+By default, the gNodeB uses a ZeroMQ (ZMQ) channel emulator with cell 1 and UEs 1, 2, and 3. It supports multi-UE and multi-cell emulation and is motivated by the OCUDU Multi-UE Emulation tutorial [\[5][ocudu-multi-ue], [6\]][ocudu-multi-ue-grc]. The Python runtime script is generated under `zmq_channel_emulator` using `install_scripts/generate_zmq_channel_emulator.sh`. The generator accepts comma-separated UE numbers, such as `--ues 1,2,3`. Its graphical user interface can be toggled by setting `SHOW_ZMQ_CHANNEL_EMULATOR_UI` in `run.sh`.
 
-To connect the gNodeB directly to a single SRS UE without the channel emulator, set all occurrences of `USE_ZMQ_BROKER` to `false`, then run the base directory configuration script: `../generate_configurations.sh`.
+To connect the gNodeB directly to a single SRS UE without the channel emulator, set all occurrences of `USE_ZMQ_CHANNEL_EMULATOR` to `false`, then run the base directory configuration script: `../generate_configurations.sh`.
 
 <details>
 <summary>Disable ZeroMQ channel emulator</summary>
 
 ```bash
-sed -i 's/^USE_ZMQ_BROKER=true$/USE_ZMQ_BROKER=false/' ../run.sh
-sed -i 's/^USE_ZMQ_BROKER=true$/USE_ZMQ_BROKER=false/' ../generate_configurations.sh
-sed -i 's/^USE_ZMQ_BROKER=true$/USE_ZMQ_BROKER=false/' run.sh
-sed -i 's/^USE_ZMQ_BROKER=true$/USE_ZMQ_BROKER=false/' generate_configurations.sh
-sed -i 's/^USE_ZMQ_BROKER=true$/USE_ZMQ_BROKER=false/' is_running.sh
-sed -i 's/^USE_ZMQ_BROKER=true$/USE_ZMQ_BROKER=false/' run_background.sh
-sed -i 's/^USE_ZMQ_BROKER=true$/USE_ZMQ_BROKER=false/' stop.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=true$/USE_ZMQ_CHANNEL_EMULATOR=false/' ../run.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=true$/USE_ZMQ_CHANNEL_EMULATOR=false/' ../generate_configurations.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=true$/USE_ZMQ_CHANNEL_EMULATOR=false/' run.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=true$/USE_ZMQ_CHANNEL_EMULATOR=false/' generate_configurations.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=true$/USE_ZMQ_CHANNEL_EMULATOR=false/' is_running.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=true$/USE_ZMQ_CHANNEL_EMULATOR=false/' run_background.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=true$/USE_ZMQ_CHANNEL_EMULATOR=false/' stop.sh
 ```
 
 </details>
 
-To restore the default channel emulator configuration, set all occurrences of `USE_ZMQ_BROKER` to `true`, then run the base directory configuration script: `../generate_configurations.sh`.
+To restore the default channel emulator configuration, set all occurrences of `USE_ZMQ_CHANNEL_EMULATOR` to `true`, then run the base directory configuration script: `../generate_configurations.sh`.
 
 <details>
 <summary>Enable ZeroMQ channel emulator (default)</summary>
 
 ```bash
-sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' ../run.sh
-sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' ../generate_configurations.sh
-sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' run.sh
-sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' generate_configurations.sh
-sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' is_running.sh
-sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' run_background.sh
-sed -i 's/^USE_ZMQ_BROKER=false$/USE_ZMQ_BROKER=true/' stop.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' ../run.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' ../generate_configurations.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' run.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' generate_configurations.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' is_running.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' run_background.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' stop.sh
 ```
 
 </details>
@@ -70,7 +70,7 @@ To configure a specific emulated UE set, pass the UE numbers to the base directo
 <details>
 <summary>Troubleshoot UE attach</summary>
 
-If one or more UEs remain stuck while attaching with the ZeroMQ channel emulator, check `ZMQ_TIMEOUT` in `Next_Generation_Node_B/zmq_broker/multi_ue_scenario.py`. Slower systems may require an increase from the default value of `100`, but larger values may slow attach and PDU session establishment. `ZMQ_HIGH_WATER_MARK` is left as `-1` by default to use the GNU Radio/ZeroMQ default buffering behavior.
+If one or more UEs remain stuck while attaching with the ZeroMQ channel emulator, check `ZMQ_TIMEOUT` in `Next_Generation_Node_B/zmq_channel_emulator/zmq_channel_emulator.py`. Slower systems may require an increase from the default value of `100`, but larger values may slow attach and PDU session establishment. `ZMQ_HIGH_WATER_MARK` is left as `-1` by default to use the GNU Radio/ZeroMQ default buffering behavior.
 </details>
 
 

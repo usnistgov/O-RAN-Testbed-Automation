@@ -41,7 +41,7 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 
 # Parse arguments
 RFSIM_SERVER=1
-USE_ZMQ_BROKER=false
+USE_ZMQ_CHANNEL_EMULATOR=false
 ZMQ_THREAD_POOL="-1,-1"
 ENABLE_NRSCOPE=false
 USE_GDB=false
@@ -79,13 +79,13 @@ if ! [[ "$DU_NUMBER" =~ ^[1-9][0-9]*$ ]]; then
     exit 1
 fi
 
-if [ "$USE_ZMQ_BROKER" = "true" ]; then
+if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ]; then
     # Optionally, validate the ZeroMQ channel emulator before starting the DU
-    # "$SCRIPT_DIR/install_scripts/validate_zmq_broker_config.sh" --broker-only --cells "$DU_NUMBER"
+    # "$SCRIPT_DIR/install_scripts/validate_zmq_channel_emulator_config.sh" --channel-emulator-only --cells "$DU_NUMBER"
 
-    BROKER_CELL_NUMBER=$("$SCRIPT_DIR/install_scripts/get_zmq_broker_config.sh" --cell "$DU_NUMBER" | awk '{print $1}')
-    ZMQ_TX_PORT=$("$SCRIPT_DIR/install_scripts/get_zmq_broker_config.sh" --cell "$DU_NUMBER" | awk '{print $2}')
-    ZMQ_RX_PORT=$("$SCRIPT_DIR/install_scripts/get_zmq_broker_config.sh" --cell "$DU_NUMBER" | awk '{print $3}')
+    CHANNEL_EMULATOR_CELL_NUMBER=$("$SCRIPT_DIR/install_scripts/get_zmq_channel_emulator_config.sh" --cell "$DU_NUMBER" | awk '{print $1}')
+    ZMQ_TX_PORT=$("$SCRIPT_DIR/install_scripts/get_zmq_channel_emulator_config.sh" --cell "$DU_NUMBER" | awk '{print $2}')
+    ZMQ_RX_PORT=$("$SCRIPT_DIR/install_scripts/get_zmq_channel_emulator_config.sh" --cell "$DU_NUMBER" | awk '{print $3}')
     if [ ! -f "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build/liboai_zmqdevif.so" ]; then
         echo "ERROR: ZeroMQ device library not found. Rerun full_install.sh after setting RADIO_TYPE=\"ZMQ\"."
         exit 1
@@ -143,7 +143,7 @@ fi
 # Give the DU its own network namespace and configure it to access the host network
 sudo ./install_scripts/setup_du_namespace.sh "$DU_NUMBER"
 
-if [ "$USE_ZMQ_BROKER" = "true" ]; then
+if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ]; then
     if ! "$SCRIPT_DIR/is_cu_ready.sh" | grep -qx true; then
         echo "CU is not ready. Starting CU in background..."
         "$SCRIPT_DIR/run_background_split_cu.sh"
@@ -173,7 +173,7 @@ cd "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build"
 # sudo ./nr-softmodem -O "$DU_CONFIG" $RADIO_ARGS --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS
 
 RADIO_TYPE=$(cat "$SCRIPT_DIR/configs/radio_type.txt" 2>/dev/null || echo "RFSIM")
-if [ "$USE_ZMQ_BROKER" = "true" ]; then
+if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ]; then
     RADIO_ARGS="--device.name oai_zmqdevif --zmq.[0].tx_channels tcp://0.0.0.0:$ZMQ_TX_PORT --zmq.[0].rx_channels tcp://127.0.0.1:$ZMQ_RX_PORT --thread-pool $ZMQ_THREAD_POOL"
 elif [ "$RADIO_TYPE" = "ZMQ" ]; then
     ZMQ_TX_PORT=$((4554 + DU_NUMBER * 2))

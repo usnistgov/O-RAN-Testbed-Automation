@@ -86,13 +86,13 @@ for ((CELL_NUMBER = 1; CELL_NUMBER <= NUMBER_OF_CELLS; CELL_NUMBER++)); do
     CELL_NUMBERS="${CELL_NUMBERS:+$CELL_NUMBERS,}$CELL_NUMBER"
 done
 
-sed -i 's/^USE_ZMQ_BROKER=.*$/USE_ZMQ_BROKER=true/' \
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=.*$/USE_ZMQ_CHANNEL_EMULATOR=true/' \
     "$ROOT_DIR/generate_configurations.sh" \
     "$ROOT_DIR/run.sh"
 sed -i 's/^RADIO_TYPE=.*$/RADIO_TYPE="ZMQ" # Set to "SIMU", "ZMQ", or "USRP"/' \
     "$OAI_TESTBED_DIR/Next_Generation_Node_B/generate_configurations.sh" \
     "$OAI_TESTBED_DIR/User_Equipment/generate_configurations.sh"
-sed -i 's/^USE_ZMQ_BROKER=.*$/USE_ZMQ_BROKER=true/' \
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=.*$/USE_ZMQ_CHANNEL_EMULATOR=true/' \
     "$OAI_TESTBED_DIR/run.sh" \
     "$OAI_TESTBED_DIR/Next_Generation_Node_B/is_running.sh" \
     "$OAI_TESTBED_DIR/Next_Generation_Node_B/run_split_du.sh" \
@@ -111,7 +111,7 @@ cd "$OAI_TESTBED_DIR"
 ./generate_configurations.sh --ues "$UE_NUMBERS" --cells "$CELL_NUMBERS"
 
 read -r _ _ JAMMER_TX_PORT _ _ < <(
-    "$ROOT_DIR/Next_Generation_Node_B/install_scripts/get_zmq_broker_config.sh" --ue "$JAMMER_UE_NUMBER"
+    "$ROOT_DIR/Next_Generation_Node_B/install_scripts/get_zmq_channel_emulator_config.sh" --ue "$JAMMER_UE_NUMBER"
 )
 
 JAMMER_PID=""

@@ -225,7 +225,7 @@ After completing the base installation, follow one of the end-to-end deployment 
 
 Deploy an OCUDU-based O-RAN testbed, generate traffic from multiple UEs, collect Prometheus metrics, and visualize network performance using Grafana dashboards. This tutorial demonstrates how to deploy an OCUDU-based O-RAN testbed with multiple User Equipments (UEs), generate uplink and downlink traffic, collect real-time performance metrics, and visualize network Key Performance Indicators (KPIs) through Grafana dashboards. Users will learn how to validate end-to-end connectivity, monitor throughput and resource utilization, and analyze network behavior during traffic generation.
 
-[OCUDU gNB with N UEs, Grafana Traffic Monitoring](https://github.com/usnistgov/O-RAN-Testbed-Automation-Dev/blob/tutorials/Tutorials/OCUDU_gNB_N_UEs_Grafana_Traffic.md) 
+[OCUDU gNB with N UEs, Grafana Traffic Monitoring](Tutorials/OCUDU_gNB_N_UEs_Grafana_Traffic.md)
 
 
 ###  FlexRIC and KPM Monitoring xApp

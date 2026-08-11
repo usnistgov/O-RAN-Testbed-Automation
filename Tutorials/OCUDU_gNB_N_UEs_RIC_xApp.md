@@ -128,13 +128,17 @@ The installation deploys
 ---
 # Tutorial Workflow
 ## OSC Near-RT RIC with KPM xApp
+This tutorial demonstrates how to deploy the O-RAN Software Community (OSC) Near-Real-Time RAN Intelligent Controller (Near-RT RIC) and connect it to a compatible O-RAN E2 node. It also shows how to deploy and run a KPM xApp to collect and monitor Key Performance Measurements (KPM) from the connected RAN.
+
+The tutorial covers the deployment of the Near-RT RIC components, configuration of the E2 interface, and execution of the KPM xApp to retrieve RAN performance metrics. This provides a practical example of using the Near-RT RIC to monitor RAN behavior through the O-RAN E2 interface.
+
 Run the testbed with `./run.sh` to start the 5G Core, gNodeB, and UE. Use `./is_running.sh` to check if the components are running, and `./stop.sh` to stop the components. The optional RIC starts automatically on boot and can be accessed with `k9s -A`.
 
 
 ### Launch KPM xApp
 
 ## Flexric with KPM xApp
-By default, the gNodeB's Distributed Unit (DU) connects to the O-RAN Software Community's Near-Real-Time RAN Intelligent Controller (O-RAN SC Near-RT RIC) E2 Terminator. To use FlexRIC instead of O-RAN SC's Near-RT RIC, set all occurrences of `USE_FLEXRIC` to `true`, then run `../generate_configurations.sh`.
+By default, the gNodeB's Distributed Unit (DU) connects to the O-RAN SC Near-RT RIC E2 Terminator. To use FlexRIC instead of O-RAN SC's Near-RT RIC, set all occurrences of `USE_FLEXRIC` to `true`, then run `../generate_configurations.sh`.
 
 ```bash
 sed -i 's/^USE_FLEXRIC=false$/USE_FLEXRIC=true/' ../full_install.sh

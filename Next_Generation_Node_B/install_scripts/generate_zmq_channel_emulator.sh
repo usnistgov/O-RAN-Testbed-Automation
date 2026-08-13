@@ -65,6 +65,23 @@ if [ ! -x "$UE_NAMESPACE_SCRIPT" ]; then
 fi
 cd "$PARENT_DIR"
 
+if ! python3 -c 'import numpy as np; import sys; sys.exit(0 if int(np.__version__.split(".", 1)[0]) < 2 else 1)' >/dev/null 2>&1; then
+    echo "Installing NumPy via pip..."
+    python3 -m pip install --user 'numpy<2'
+fi
+
+if ! python3 -m pip show PyQt5 >/dev/null 2>&1; then
+    echo "Installing PyQt5 via pip..."
+    python3 -m pip install --user PyQt5
+fi
+
+if ! python3 -c 'from gnuradio import blocks' >/dev/null 2>&1; then
+    echo "Installing GNU Radio via apt-get..."
+    APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
+    sudo apt-get update
+    sudo env $APTVARS apt-get install -y gnuradio
+fi
+
 usage() {
     echo "Usage: $0 --cells <cell_numbers> --ues <ue_numbers> [--output FILE] [--sample-rate-hz HZ] [--slow-down-ratio N]"
 }
@@ -234,7 +251,16 @@ import ctypes
 import json
 import signal
 import sys
+
 import numpy as np
+
+from PyQt5 import Qt
+from PyQt5 import QtCore
+
+from gnuradio import blocks
+from gnuradio import gr
+from gnuradio import qtgui
+from gnuradio import zeromq
 
 if sys.platform.startswith("linux"):
     try:
@@ -242,13 +268,6 @@ if sys.platform.startswith("linux"):
         # ctypes.cdll.LoadLibrary("libX11.so.6").XInitThreads()
     except Exception:
         print("Warning: failed to XInitThreads()")
-
-from PyQt5 import Qt
-from PyQt5 import QtCore
-from gnuradio import blocks
-from gnuradio import gr
-from gnuradio import qtgui
-from gnuradio import zeromq
 
 CELL_CONFIGS = [
 EOF

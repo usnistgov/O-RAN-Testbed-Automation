@@ -38,12 +38,37 @@ The gNodeB can also be monitored and controlled remotely using the OpenAirInterf
 
 ## ImScope
 
-ImScope can be enabled for the gNodeB by setting `NRSCOPE_GUI=true` at the beginning of the `full_install.sh` script before running it. For more information about ImScope, see the Duranta documentation [\[8\]][duranta-imscope].
+ImScope can be built for the gNodeB by setting `USE_IMSCOPE=true` at the beginning of `full_install.sh` before running it. Set `USE_IMSCOPE=true` in `run.sh`, or pass `--imscope` to `run.sh` or `run_split_du.sh`, to display it at runtime. For more information, see the Duranta documentation [\[8\]][duranta-imscope].
 
 <details>
   <summary>View Screenshot</summary>
   <img src="../../Images/OpenAirInterface_ImScope.png" alt="Screenshot of ImScope" />
 </details>
+
+<details>
+<summary>Enable ImScope</summary>
+<hr>
+
+```bash
+sed -i 's/^USE_IMSCOPE=.*$/USE_IMSCOPE=true/' full_install.sh
+sed -i 's/^USE_IMSCOPE=.*$/USE_IMSCOPE=true/' ../User_Equipment/full_install.sh
+sed -i 's/^USE_IMSCOPE=.*$/USE_IMSCOPE=true/' ../run.sh
+```
+
+</details>
+
+<details>
+<summary>Disable ImScope (default)</summary>
+<hr>
+
+```bash
+sed -i 's/^USE_IMSCOPE=.*$/USE_IMSCOPE=false/' full_install.sh
+sed -i 's/^USE_IMSCOPE=.*$/USE_IMSCOPE=false/' ../User_Equipment/full_install.sh
+sed -i 's/^USE_IMSCOPE=.*$/USE_IMSCOPE=false/' ../run.sh
+```
+
+</details>
+
 
 ## References
 

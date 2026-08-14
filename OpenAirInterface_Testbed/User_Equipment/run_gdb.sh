@@ -40,7 +40,7 @@ cd "$SCRIPT_DIR"
 # Default values
 UE_NUMBER=1
 RFSIM_SERVER=0
-DISABLE_NRSCOPE_IF_INSTALLED=false
+USE_IMSCOPE=false
 USE_ZMQ_CHANNEL_EMULATOR=false
 SHOW_ZMQ_CHANNEL_EMULATOR_UI=true
 ZMQ_THREAD_POOL="-1,-1"
@@ -170,9 +170,13 @@ else
     fi
 
     ADDITIONAL_FLAGS="-E"
-    if [ "$DISABLE_NRSCOPE_IF_INSTALLED" = false ] && [ -f "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build/libimscope.so" ]; then
+    if [ "$USE_IMSCOPE" = "true" ]; then
+        if [ ! -f "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build/libimscope.so" ]; then
+            echo "ERROR: ImScope library not found. Rerun full_install.sh after setting USE_IMSCOPE=true."
+            exit 1
+        fi
         echo "Enabling ImScope..."
-        ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --imscope -d --log_config.global_log_options utc_time"
+        ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --imscope --log_config.global_log_options utc_time"
     fi
 
     cd "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build"

@@ -34,6 +34,7 @@ set -e
 USE_ZMQ_CHANNEL_EMULATOR=false
 SHOW_ZMQ_CHANNEL_EMULATOR_UI=true
 USE_SRSRAN_UE=false # Experimental
+USE_IMSCOPE=false
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
@@ -43,6 +44,23 @@ fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+    --imscope)
+        USE_IMSCOPE=true
+        shift
+        ;;
+    --no-imscope)
+        USE_IMSCOPE=false
+        shift
+        ;;
+    *)
+        echo "Unknown argument: $1"
+        exit 1
+        ;;
+    esac
+done
 
 UE_DIRECTORY="$SCRIPT_DIR/User_Equipment"
 UE_READY_MESSAGE="Received PDU Session Establishment Accept"
@@ -56,7 +74,6 @@ if [ "$USE_SRSRAN_UE" = "true" ]; then
         echo "    sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' run.sh"
         echo "    sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' run_handover_scenario.sh"
         echo "    sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' run_with_grafana_dashboard.sh"
-        echo "    sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' run_with_nrscope_gui.sh"
         echo "    sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' User_Equipment/run.sh"
         echo "    sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' User_Equipment/run_background.sh"
         echo "    sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' User_Equipment/run_gdb.sh"
@@ -71,6 +88,12 @@ if [ "$USE_SRSRAN_UE" = "true" ]; then
     UE_DIRECTORY="$SCRIPT_DIR/../User_Equipment"
     UE_READY_MESSAGE="PDU Session Establishment successful" # srsRAN_4G
     # UE_READY_MESSAGE="Attaching UE..." # srsRAN_4G
+fi
+
+if [ "$USE_IMSCOPE" = "true" ] &&
+    [ ! -f "$SCRIPT_DIR/Next_Generation_Node_B/openairinterface5g/cmake_targets/ran_build/build/libimscope.so" ]; then
+    echo "ERROR: ImScope library not found. Rerun Next_Generation_Node_B/full_install.sh after setting USE_IMSCOPE=true."
+    exit 1
 fi
 
 sudo -v # Ensure sudo session is active
@@ -155,14 +178,23 @@ if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ]; then
     echo
     echo "Running DUs..."
     # The first DU ensures that the CU is ready (starting it)
+    PRIMARY_CELL=${CELL_NUMBERS[0]}
     for CELL_NUMBER in "${CELL_NUMBERS[@]}"; do
-        ./run_background_split_du.sh "$CELL_NUMBER"
+        if [ "$USE_IMSCOPE" = "true" ] && [ "$CELL_NUMBER" = "$PRIMARY_CELL" ]; then
+            ./run_background_split_du.sh "$CELL_NUMBER" --imscope
+        else
+            ./run_background_split_du.sh "$CELL_NUMBER"
+        fi
         stty sane || true
     done
 else
     echo
     echo "Running gNodeB..."
-    ./run_background.sh
+    if [ "$USE_IMSCOPE" = "true" ]; then
+        ./run_background.sh --imscope
+    else
+        ./run_background.sh
+    fi
 fi
 stty sane || true
 cd ..

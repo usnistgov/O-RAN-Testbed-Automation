@@ -41,6 +41,7 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 
 # Parse arguments
 RFSIM_SERVER=1
+USE_IMSCOPE=false
 while [[ $# -gt 0 ]]; do
     case "$1" in
     [0-9]*)
@@ -51,6 +52,10 @@ while [[ $# -gt 0 ]]; do
         RFSIM_SERVER=0
         shift
         ;;
+    --imscope)
+        USE_IMSCOPE=true
+        shift
+        ;;
     *)
         echo "Unknown argument: $1"
         exit 1
@@ -59,7 +64,7 @@ while [[ $# -gt 0 ]]; do
 done
 if [ -z "$DU_NUMBER" ]; then
     echo "ERROR: A DU number must be provided as an argument."
-    echo "    For example, $0 1 [--no-rfsim-server]"
+    echo "    For example, $0 1 [--no-rfsim-server] [--imscope]"
     exit 1
 fi
 if ! [[ "$DU_NUMBER" =~ ^[1-9][0-9]*$ ]]; then
@@ -84,7 +89,18 @@ else
         RFSIM_SERVER_ARG="--no-rfsim-server"
     fi
     sudo -v # Ensure sudo session is active
-    sudo setsid --wait bash -c "exec stdbuf -oL -eL \"$SCRIPT_DIR/run_split_du.sh\" $DU_NUMBER $RFSIM_SERVER_ARG" </dev/null >/dev/null 2>&1 &
+    if [ "$USE_IMSCOPE" = "true" ]; then
+        if ! "$SCRIPT_DIR/is_cu_ready.sh" | grep -qx true; then
+            "$SCRIPT_DIR/run_background_split_cu.sh"
+        fi
+        sudo "$SCRIPT_DIR/install_scripts/setup_du_namespace.sh" "$DU_NUMBER"
+        if [ -f "$SCRIPT_DIR/logs/split_du${DU_NUMBER}_stdout.txt" ]; then
+            sudo chown "${SUDO_USER:-$USER}" "$SCRIPT_DIR/logs/split_du${DU_NUMBER}_stdout.txt"
+        fi
+        setsid --wait bash -c "exec stdbuf -oL -eL \"$SCRIPT_DIR/run_split_du.sh\" $DU_NUMBER $RFSIM_SERVER_ARG --imscope" </dev/null >/dev/null 2>&1 &
+    else
+        sudo setsid --wait bash -c "exec stdbuf -oL -eL \"$SCRIPT_DIR/run_split_du.sh\" $DU_NUMBER $RFSIM_SERVER_ARG" </dev/null >/dev/null 2>&1 &
+    fi
     DU_PID=$!
     stty sane || true
 

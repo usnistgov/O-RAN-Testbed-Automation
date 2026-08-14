@@ -39,7 +39,7 @@ RADIO_TYPE="SIMU" # Set to "SIMU", "ZMQ", or "USRP"
 DEBUG_SYMBOLS=false
 E2AP_VERSION="E2AP_V3"  # E2AP_V1, E2AP_V2, E2AP_V3
 KPM_VERSION="KPM_V3_00" # KPM_V2_03, KPM_V3_00
-NRSCOPE_GUI=false
+USE_IMSCOPE=false
 TELNET_SERVER=true
 
 E2_TERM_PORT=36421            # Default is 36421, which will result in no modification
@@ -67,7 +67,7 @@ fi
 if [ "$CLEAN_INSTALL" = false ] &&
     [ -f "openairinterface5g/cmake_targets/ran_build/build/nr-softmodem" ] &&
     { [ "$RADIO_TYPE" != "ZMQ" ] || [ -f "openairinterface5g/cmake_targets/ran_build/build/liboai_zmqdevif.so" ]; } &&
-    { [ "$NRSCOPE_GUI" != true ] || [ -f "openairinterface5g/cmake_targets/ran_build/build/libimscope.so" ]; }; then
+    { [ "$USE_IMSCOPE" != true ] || [ -f "openairinterface5g/cmake_targets/ran_build/build/libimscope.so" ]; }; then
     echo "Duranta gNB is already installed, skipping."
     exit 0
 fi
@@ -189,9 +189,10 @@ if [[ "$INSTALL_GCC" == "true" ]]; then
         exit 1
     fi
     sudo apt-get update
-    sudo env $APTVARS apt-get install -y gcc-13 g++-13
+    sudo env $APTVARS apt-get install -y gcc-13 g++-13 cpp-13
     sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 100
     sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-13 100
+    sudo update-alternatives --install /usr/bin/cpp cpp /usr/bin/cpp-13 100
 fi
 
 if ! command -v cmake &>/dev/null; then
@@ -243,9 +244,8 @@ if [ "$TELNET_SERVER" = true ]; then
         sudo env $APTVARS apt-get install -y telnet
     fi
 fi
-if [ "$NRSCOPE_GUI" = true ]; then
+if [ "$USE_IMSCOPE" = true ]; then
     sudo env $APTVARS apt-get install -y libglfw3-dev libopengl-dev
-    sudo env $APTVARS apt-get install -y libforms-bin libforms-dev
     ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --build-lib imscope"
 fi
 
@@ -323,6 +323,10 @@ source oaienv
 # Install OAI dependencies
 cd "$SCRIPT_DIR/openairinterface5g/cmake_targets"
 ./build_oai -I
+
+if [ "$USE_IMSCOPE" = true ]; then
+    "$SCRIPT_DIR/install_scripts/ensure_imscope_dependencies.sh"
+fi
 
 # Build OAI 5G gNB
 cd "$SCRIPT_DIR/openairinterface5g/cmake_targets"

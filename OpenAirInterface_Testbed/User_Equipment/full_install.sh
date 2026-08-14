@@ -35,6 +35,7 @@ APPLY_PATCHES=true
 CLEAN_INSTALL=false # Note: If set to true, then full_install.sh needs to be ran in the Next_Generation_Node_B directory too
 DEBUG_SYMBOLS=false
 RADIO_TYPE="SIMU" # Set to "SIMU", "ZMQ", or "USRP"
+USE_IMSCOPE=false
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
@@ -61,7 +62,8 @@ fi
 # Check for binary to determine if Duranta UE is already installed
 if [ "$CLEAN_INSTALL" = false ] &&
     [ -f "openairinterface5g/cmake_targets/ran_build/build/nr-uesoftmodem" ] &&
-    { [ "$RADIO_TYPE" != "ZMQ" ] || [ -f "openairinterface5g/cmake_targets/ran_build/build/liboai_zmqdevif.so" ]; }; then
+    { [ "$RADIO_TYPE" != "ZMQ" ] || [ -f "openairinterface5g/cmake_targets/ran_build/build/liboai_zmqdevif.so" ]; } &&
+    { [ "$USE_IMSCOPE" != true ] || [ -f "openairinterface5g/cmake_targets/ran_build/build/libimscope.so" ]; }; then
     echo "Duranta UE is already installed, skipping."
     exit 0
 fi
@@ -114,9 +116,10 @@ if [[ "$INSTALL_GCC" == "true" ]]; then
         exit 1
     fi
     sudo apt-get update
-    sudo env $APTVARS apt-get install -y gcc-13 g++-13
+    sudo env $APTVARS apt-get install -y gcc-13 g++-13 cpp-13
     sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 100
     sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-13 100
+    sudo update-alternatives --install /usr/bin/cpp cpp /usr/bin/cpp-13 100
 fi
 
 if ! command -v cmake &>/dev/null; then
@@ -164,6 +167,10 @@ if [ "$CLEAN_INSTALL" = true ]; then
 fi
 if [ "$DEBUG_SYMBOLS" = true ]; then
     ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS -g"
+fi
+if [ "$USE_IMSCOPE" = true ]; then
+    sudo env $APTVARS apt-get install -y libglfw3-dev libopengl-dev
+    ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --build-lib imscope"
 fi
 
 cd "$SCRIPT_DIR"
@@ -240,6 +247,10 @@ source oaienv
 # Install OAI dependencies
 cd "$SCRIPT_DIR/openairinterface5g/cmake_targets"
 ./build_oai -I
+
+if [ "$USE_IMSCOPE" = true ]; then
+    "$SCRIPT_DIR/install_scripts/ensure_imscope_dependencies.sh"
+fi
 
 # Build OAI 5G UE
 cd "$SCRIPT_DIR/openairinterface5g/cmake_targets"

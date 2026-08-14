@@ -28,7 +28,7 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-DISABLE_NRSCOPE_IF_INSTALLED=false
+USE_IMSCOPE=false
 USE_ZMQ_CHANNEL_EMULATOR=false
 SHOW_ZMQ_CHANNEL_EMULATOR_UI=true
 
@@ -40,6 +40,21 @@ fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 
+ENV_ARGS=()
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+    --imscope)
+        USE_IMSCOPE=true
+        shift
+        ;;
+    *)
+        ENV_ARGS+=("$1")
+        shift
+        ;;
+    esac
+done
+set -- "${ENV_ARGS[@]}"
+
 if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ]; then
     if [ ! -f "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build/liboai_zmqdevif.so" ]; then
         echo "ERROR: ZeroMQ device library not found. Rerun full_install.sh after setting RADIO_TYPE=\"ZMQ\"."
@@ -48,6 +63,9 @@ if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ]; then
     "$SCRIPT_DIR/install_scripts/run_zmq_channel_emulator.sh" --show-ui "$SHOW_ZMQ_CHANNEL_EMULATOR_UI"
     if [ $# -eq 0 ]; then
         set -- 1
+    fi
+    if [ "$USE_IMSCOPE" = "true" ]; then
+        set -- "$@" --imscope
     fi
     exec "$SCRIPT_DIR/run_split_du.sh" "$@"
 fi
@@ -63,11 +81,13 @@ if [ -f "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build/libtelnets
     ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --telnetsrv.listenport $TELNET_PORT"
     ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --telnetsrv.listenstdin 1"
 fi
-IMSCOPE=false
-if [ "$DISABLE_NRSCOPE_IF_INSTALLED" = false ] && [ -f "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build/libimscope.so" ]; then
+if [ "$USE_IMSCOPE" = "true" ]; then
+    if [ ! -f "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build/libimscope.so" ]; then
+        echo "ERROR: ImScope library not found. Rerun full_install.sh after setting USE_IMSCOPE=true."
+        exit 1
+    fi
     echo "Enabling ImScope..."
-    ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --imscope -d --log_config.global_log_options utc_time"
-    IMSCOPE=true
+    ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --imscope --log_config.global_log_options utc_time"
 fi
 
 cd "$SCRIPT_DIR"
@@ -85,7 +105,7 @@ fi
 
 cd "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build"
 
-# Code from (https://github.com/OPENAIRINTERFACE/openairinterface5g/blob/develop/radio/rfsimulator/README.md#5g-case):
+# Code from (https://github.com/duranta-project/openairinterface5g/blob/develop/radio/rfsimulator/README.md#5g-case):
 # sudo ./nr-softmodem -O "$SCRIPT_DIR/configs/gnb.conf" $RADIO_ARGS --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS
 
 RADIO_TYPE=$(cat "$SCRIPT_DIR/configs/radio_type.txt" 2>/dev/null || echo "RFSIM")
@@ -101,7 +121,7 @@ else
     RADIO_ARGS="--rfsim --rfsimulator.[0].serveraddr server --rfsimulator.[0].options chanmod"
 fi
 
-if [ "$IMSCOPE" = true ]; then # ImScope GUI cannot be run with sudo
+if [ "$USE_IMSCOPE" = true ]; then # ImScope GUI cannot be run with sudo
     script -q -f -c "./nr-softmodem -O \"$SCRIPT_DIR/configs/gnb.conf\" $RADIO_ARGS --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS" "$SCRIPT_DIR/logs/gnb_stdout.txt"
 else
     sudo script -q -f -c "./nr-softmodem -O \"$SCRIPT_DIR/configs/gnb.conf\" $RADIO_ARGS --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS" "$SCRIPT_DIR/logs/gnb_stdout.txt"

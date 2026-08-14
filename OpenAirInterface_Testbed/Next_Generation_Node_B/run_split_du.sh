@@ -43,7 +43,7 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 RFSIM_SERVER=1
 USE_ZMQ_CHANNEL_EMULATOR=false
 ZMQ_THREAD_POOL="-1,-1"
-ENABLE_NRSCOPE=false
+USE_IMSCOPE=false
 USE_GDB=false
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -55,8 +55,8 @@ while [[ $# -gt 0 ]]; do
         RFSIM_SERVER=0
         shift
         ;;
-    --nrscope)
-        ENABLE_NRSCOPE=true
+    --imscope)
+        USE_IMSCOPE=true
         shift
         ;;
     --gdb)
@@ -71,7 +71,7 @@ while [[ $# -gt 0 ]]; do
 done
 if [ -z "$DU_NUMBER" ]; then
     echo "ERROR: A DU number must be provided as an argument."
-    echo "    For example, $0 1 [--no-rfsim-server] [--nrscope] [--gdb]"
+    echo "    For example, $0 1 [--no-rfsim-server] [--imscope] [--gdb]"
     exit 1
 fi
 if ! [[ "$DU_NUMBER" =~ ^[1-9][0-9]*$ ]]; then
@@ -109,15 +109,13 @@ ADDITIONAL_FLAGS="-E"
 #     ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --telnetsrv.listenstdin 1"
 # fi
 
-IMSCOPE=false
-if [ "$ENABLE_NRSCOPE" = "true" ]; then
+if [ "$USE_IMSCOPE" = "true" ]; then
     if [ ! -f "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build/libimscope.so" ]; then
-        echo "ERROR: ImScope library not found. Rerun full_install.sh after setting NRSCOPE_GUI=true."
+        echo "ERROR: ImScope library not found. Rerun full_install.sh after setting USE_IMSCOPE=true."
         exit 1
     fi
     echo "Enabling ImScope..."
-    ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --imscope -d --log_config.global_log_options utc_time"
-    IMSCOPE=true
+    ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --imscope --log_config.global_log_options utc_time"
 fi
 
 if [ "$USE_GDB" = "true" ] && ! command -v gdb >/dev/null 2>&1; then
@@ -128,6 +126,12 @@ fi
 
 cd "$SCRIPT_DIR"
 
+DU_NAMESPACE="du$DU_NUMBER"
+DU_NAMESPACE_EXISTS=false
+if ip netns list | awk '{print $1}' | grep -qx "$DU_NAMESPACE"; then
+    DU_NAMESPACE_EXISTS=true
+fi
+
 DU_CONFIG="$SCRIPT_DIR/configs/split_du$DU_NUMBER.conf"
 if [ ! -f "$DU_CONFIG" ]; then
     echo "Generating configuration for DU $DU_NUMBER..."
@@ -136,12 +140,16 @@ fi
 
 mkdir -p logs
 if [ -f "logs/split_du${DU_NUMBER}_stdout.txt" ]; then
-    sudo chown "${SUDO_USER:-$USER}" logs/split_du${DU_NUMBER}_stdout.txt
+    if [ "$DU_NAMESPACE_EXISTS" = "false" ]; then
+        sudo chown "${SUDO_USER:-$USER}" logs/split_du${DU_NUMBER}_stdout.txt
+    fi
 fi
 >logs/split_du${DU_NUMBER}_stdout.txt
 
 # Give the DU its own network namespace and configure it to access the host network
-sudo ./install_scripts/setup_du_namespace.sh "$DU_NUMBER"
+if [ "$DU_NAMESPACE_EXISTS" = "false" ]; then
+    sudo ./install_scripts/setup_du_namespace.sh "$DU_NUMBER"
+fi
 
 if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ]; then
     if ! "$SCRIPT_DIR/is_cu_ready.sh" | grep -qx true; then
@@ -192,7 +200,7 @@ if [ "$USE_GDB" = "true" ]; then
     SOFTMODEM_COMMAND="gdb --args $SOFTMODEM_COMMAND"
 fi
 
-if [ "$IMSCOPE" = "true" ]; then
+if [ "$USE_IMSCOPE" = "true" ]; then
     script -q -f -c "$SOFTMODEM_COMMAND" "$SCRIPT_DIR/logs/split_du${DU_NUMBER}_stdout.txt"
 else
     sudo script -q -f -c "$SOFTMODEM_COMMAND" "$SCRIPT_DIR/logs/split_du${DU_NUMBER}_stdout.txt"

@@ -46,7 +46,6 @@ sed -i 's/^RADIO_TYPE=.*$/RADIO_TYPE="ZMQ" # Set to "SIMU", "ZMQ", or "USRP"/' N
 sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' run.sh
 sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' run_handover_scenario.sh
 sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' run_with_grafana_dashboard.sh
-sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' run_with_nrscope_gui.sh
 sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' User_Equipment/run.sh
 sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' User_Equipment/run_background.sh
 sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' User_Equipment/run_gdb.sh
@@ -72,7 +71,6 @@ sed -i 's/^RADIO_TYPE=.*$/RADIO_TYPE="SIMU" # Set to "SIMU", "ZMQ", or "USRP"/' 
 sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=true$/USE_ZMQ_CHANNEL_EMULATOR=false/' run.sh
 sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=true$/USE_ZMQ_CHANNEL_EMULATOR=false/' run_handover_scenario.sh
 sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=true$/USE_ZMQ_CHANNEL_EMULATOR=false/' run_with_grafana_dashboard.sh
-sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=true$/USE_ZMQ_CHANNEL_EMULATOR=false/' run_with_nrscope_gui.sh
 sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=true$/USE_ZMQ_CHANNEL_EMULATOR=false/' User_Equipment/run.sh
 sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=true$/USE_ZMQ_CHANNEL_EMULATOR=false/' User_Equipment/run_background.sh
 sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=true$/USE_ZMQ_CHANNEL_EMULATOR=false/' User_Equipment/run_gdb.sh

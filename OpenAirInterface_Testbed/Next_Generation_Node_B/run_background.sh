@@ -30,7 +30,7 @@
 
 USE_ZMQ_CHANNEL_EMULATOR=false
 SHOW_ZMQ_CHANNEL_EMULATOR_UI=false
-USE_IMSCOPE=false
+IMSCOPE_ENABLED=false
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
@@ -44,7 +44,7 @@ ENV_ARGS=()
 while [[ $# -gt 0 ]]; do
     case "$1" in
     --imscope)
-        USE_IMSCOPE=true
+        IMSCOPE_ENABLED=true
         shift
         ;;
     *)
@@ -66,7 +66,7 @@ if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ]; then
     if [ $# -eq 0 ]; then
         set -- 1
     fi
-    if [ "$USE_IMSCOPE" = "true" ]; then
+    if [ "$IMSCOPE_ENABLED" = "true" ]; then
         set -- "$@" --imscope
     fi
     exec "$SCRIPT_DIR/run_background_split_du.sh" "$@"
@@ -83,7 +83,7 @@ else
     echo "Starting gNodeB in background..."
 
     sudo -v # Ensure sudo session is active
-    if [ "$USE_IMSCOPE" = "true" ]; then
+    if [ "$IMSCOPE_ENABLED" = "true" ]; then
         setsid bash -c "exec stdbuf -oL -eL \"$SCRIPT_DIR/run.sh\" --imscope" </dev/null >/dev/null 2>&1 &
     else
         sudo setsid bash -c "exec stdbuf -oL -eL \"$SCRIPT_DIR/run.sh\"" </dev/null >/dev/null 2>&1 &

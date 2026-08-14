@@ -43,7 +43,7 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 RFSIM_SERVER=1
 USE_ZMQ_CHANNEL_EMULATOR=false
 ZMQ_THREAD_POOL="-1,-1"
-USE_IMSCOPE=false
+IMSCOPE_ENABLED=false
 USE_GDB=false
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -56,7 +56,7 @@ while [[ $# -gt 0 ]]; do
         shift
         ;;
     --imscope)
-        USE_IMSCOPE=true
+        IMSCOPE_ENABLED=true
         shift
         ;;
     --gdb)
@@ -109,7 +109,7 @@ ADDITIONAL_FLAGS="-E"
 #     ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --telnetsrv.listenstdin 1"
 # fi
 
-if [ "$USE_IMSCOPE" = "true" ]; then
+if [ "$IMSCOPE_ENABLED" = "true" ]; then
     if [ ! -f "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build/libimscope.so" ]; then
         echo "ERROR: ImScope library not found. Rerun full_install.sh after setting USE_IMSCOPE=true."
         exit 1
@@ -200,7 +200,7 @@ if [ "$USE_GDB" = "true" ]; then
     SOFTMODEM_COMMAND="gdb --args $SOFTMODEM_COMMAND"
 fi
 
-if [ "$USE_IMSCOPE" = "true" ]; then
+if [ "$IMSCOPE_ENABLED" = "true" ]; then
     script -q -f -c "$SOFTMODEM_COMMAND" "$SCRIPT_DIR/logs/split_du${DU_NUMBER}_stdout.txt"
 else
     sudo script -q -f -c "$SOFTMODEM_COMMAND" "$SCRIPT_DIR/logs/split_du${DU_NUMBER}_stdout.txt"

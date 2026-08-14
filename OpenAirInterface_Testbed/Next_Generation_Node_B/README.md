@@ -38,7 +38,8 @@ The gNodeB can also be monitored and controlled remotely using the OpenAirInterf
 
 ## ImScope
 
-ImScope can be built for the gNodeB by setting `USE_IMSCOPE=true` at the beginning of `full_install.sh` before running it. Set `USE_IMSCOPE=true` in `run.sh`, or pass `--imscope` to `run.sh` or `run_split_du.sh`, to display it at runtime. For more information, see the Duranta documentation [\[8\]][duranta-imscope].
+ImScope can be built for the gNodeB and UE by setting `USE_IMSCOPE=true` in their respective `full_install.sh` scripts before running them. Set `USE_IMSCOPE=true` in `../run.sh`, or pass `--imscope` or `--no-imscope` to `../run.sh` to override the runtime setting. For more information, see the Duranta documentation [[8]][duranta-imscope].
+
 
 <details>
   <summary>View Screenshot</summary>
@@ -51,14 +52,7 @@ ImScope can be built for the gNodeB by setting `USE_IMSCOPE=true` at the beginni
 
 ```bash
 sed -i 's/^USE_IMSCOPE=.*$/USE_IMSCOPE=true/' full_install.sh
-sed -i 's/^USE_IMSCOPE=.*$/USE_IMSCOPE=true/' run_background_split_du.sh
-sed -i 's/^USE_IMSCOPE=.*$/USE_IMSCOPE=true/' run_background.sh
-sed -i 's/^USE_IMSCOPE=.*$/USE_IMSCOPE=true/' run_gdb.sh
-sed -i 's/^USE_IMSCOPE=.*$/USE_IMSCOPE=true/' run_split_du.sh
-sed -i 's/^USE_IMSCOPE=.*$/USE_IMSCOPE=true/' run.sh
 sed -i 's/^USE_IMSCOPE=.*$/USE_IMSCOPE=true/' ../User_Equipment/full_install.sh
-sed -i 's/^USE_IMSCOPE=.*$/USE_IMSCOPE=true/' ../User_Equipment/run_gdb.sh
-sed -i 's/^USE_IMSCOPE=.*$/USE_IMSCOPE=true/' ../User_Equipment/run.sh
 sed -i 's/^USE_IMSCOPE=.*$/USE_IMSCOPE=true/' ../run.sh
 ```
 
@@ -70,14 +64,7 @@ sed -i 's/^USE_IMSCOPE=.*$/USE_IMSCOPE=true/' ../run.sh
 
 ```bash
 sed -i 's/^USE_IMSCOPE=.*$/USE_IMSCOPE=false/' full_install.sh
-sed -i 's/^USE_IMSCOPE=.*$/USE_IMSCOPE=false/' run_background_split_du.sh
-sed -i 's/^USE_IMSCOPE=.*$/USE_IMSCOPE=false/' run_background.sh
-sed -i 's/^USE_IMSCOPE=.*$/USE_IMSCOPE=false/' run_gdb.sh
-sed -i 's/^USE_IMSCOPE=.*$/USE_IMSCOPE=false/' run_split_du.sh
-sed -i 's/^USE_IMSCOPE=.*$/USE_IMSCOPE=false/' run.sh
 sed -i 's/^USE_IMSCOPE=.*$/USE_IMSCOPE=false/' ../User_Equipment/full_install.sh
-sed -i 's/^USE_IMSCOPE=.*$/USE_IMSCOPE=false/' ../User_Equipment/run_gdb.sh
-sed -i 's/^USE_IMSCOPE=.*$/USE_IMSCOPE=false/' ../User_Equipment/run.sh
 sed -i 's/^USE_IMSCOPE=.*$/USE_IMSCOPE=false/' ../run.sh
 ```
 

@@ -28,7 +28,7 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-USE_IMSCOPE=false
+IMSCOPE_ENABLED=false
 USE_ZMQ_CHANNEL_EMULATOR=false
 SHOW_ZMQ_CHANNEL_EMULATOR_UI=true
 
@@ -44,7 +44,7 @@ ENV_ARGS=()
 while [[ $# -gt 0 ]]; do
     case "$1" in
     --imscope)
-        USE_IMSCOPE=true
+        IMSCOPE_ENABLED=true
         shift
         ;;
     *)
@@ -71,7 +71,7 @@ if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ]; then
         set -- 1
     fi
     set -- "$@" --gdb
-    if [ "$USE_IMSCOPE" = "true" ]; then
+    if [ "$IMSCOPE_ENABLED" = "true" ]; then
         set -- "$@" --imscope
     fi
     exec "$SCRIPT_DIR/run_split_du.sh" "$@"
@@ -88,7 +88,7 @@ if [ -f "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build/libtelnets
     ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --telnetsrv.listenport $TELNET_PORT"
     ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --telnetsrv.listenstdin 1"
 fi
-if [ "$USE_IMSCOPE" = "true" ]; then
+if [ "$IMSCOPE_ENABLED" = "true" ]; then
     if [ ! -f "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build/libimscope.so" ]; then
         echo "ERROR: ImScope library not found. Rerun full_install.sh after setting USE_IMSCOPE=true."
         exit 1
@@ -129,7 +129,7 @@ else
 fi
 
 # sudo gdb --args ./nr-softmodem -O "$SCRIPT_DIR/configs/gnb.conf" $RADIO_ARGS --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS
-if [ "$USE_IMSCOPE" = true ]; then # ImScope GUI cannot be run with sudo
+if [ "$IMSCOPE_ENABLED" = true ]; then # ImScope GUI cannot be run with sudo
     script -q -f -c "gdb --args ./nr-softmodem -O \"$SCRIPT_DIR/configs/gnb.conf\" $RADIO_ARGS --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS" "$SCRIPT_DIR/logs/gnb_stdout.txt"
 else
     sudo script -q -f -c "gdb --args ./nr-softmodem -O \"$SCRIPT_DIR/configs/gnb.conf\" $RADIO_ARGS --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS" "$SCRIPT_DIR/logs/gnb_stdout.txt"

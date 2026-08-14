@@ -41,7 +41,7 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 
 # Parse arguments
 RFSIM_SERVER=1
-USE_IMSCOPE=false
+IMSCOPE_ENABLED=false
 while [[ $# -gt 0 ]]; do
     case "$1" in
     [0-9]*)
@@ -53,7 +53,7 @@ while [[ $# -gt 0 ]]; do
         shift
         ;;
     --imscope)
-        USE_IMSCOPE=true
+        IMSCOPE_ENABLED=true
         shift
         ;;
     *)
@@ -89,7 +89,7 @@ else
         RFSIM_SERVER_ARG="--no-rfsim-server"
     fi
     sudo -v # Ensure sudo session is active
-    if [ "$USE_IMSCOPE" = "true" ]; then
+    if [ "$IMSCOPE_ENABLED" = "true" ]; then
         if ! "$SCRIPT_DIR/is_cu_ready.sh" | grep -qx true; then
             "$SCRIPT_DIR/run_background_split_cu.sh"
         fi

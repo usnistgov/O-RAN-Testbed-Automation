@@ -170,6 +170,7 @@ if [ "$DEBUG_SYMBOLS" = true ]; then
 fi
 if [ "$USE_IMSCOPE" = true ]; then
     sudo env $APTVARS apt-get install -y libglfw3-dev libopengl-dev
+    # sudo env $APTVARS apt-get install -y libforms-bin libforms-dev
     ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --build-lib imscope"
 fi
 

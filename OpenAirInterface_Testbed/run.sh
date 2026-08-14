@@ -90,8 +90,7 @@ if [ "$USE_SRSRAN_UE" = "true" ]; then
     # UE_READY_MESSAGE="Attaching UE..." # srsRAN_4G
 fi
 
-if [ "$USE_IMSCOPE" = "true" ] &&
-    [ ! -f "$SCRIPT_DIR/Next_Generation_Node_B/openairinterface5g/cmake_targets/ran_build/build/libimscope.so" ]; then
+if [ "$USE_IMSCOPE" = "true" ] && [ ! -f "$SCRIPT_DIR/Next_Generation_Node_B/openairinterface5g/cmake_targets/ran_build/build/libimscope.so" ]; then
     echo "ERROR: ImScope library not found. Rerun Next_Generation_Node_B/full_install.sh after setting USE_IMSCOPE=true."
     exit 1
 fi

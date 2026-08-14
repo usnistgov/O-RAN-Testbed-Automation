@@ -51,7 +51,14 @@ ImScope can be built for the gNodeB by setting `USE_IMSCOPE=true` at the beginni
 
 ```bash
 sed -i 's/^USE_IMSCOPE=.*$/USE_IMSCOPE=true/' full_install.sh
+sed -i 's/^USE_IMSCOPE=.*$/USE_IMSCOPE=true/' run_background_split_du.sh
+sed -i 's/^USE_IMSCOPE=.*$/USE_IMSCOPE=true/' run_background.sh
+sed -i 's/^USE_IMSCOPE=.*$/USE_IMSCOPE=true/' run_gdb.sh
+sed -i 's/^USE_IMSCOPE=.*$/USE_IMSCOPE=true/' run_split_du.sh
+sed -i 's/^USE_IMSCOPE=.*$/USE_IMSCOPE=true/' run.sh
 sed -i 's/^USE_IMSCOPE=.*$/USE_IMSCOPE=true/' ../User_Equipment/full_install.sh
+sed -i 's/^USE_IMSCOPE=.*$/USE_IMSCOPE=true/' ../User_Equipment/run_gdb.sh
+sed -i 's/^USE_IMSCOPE=.*$/USE_IMSCOPE=true/' ../User_Equipment/run.sh
 sed -i 's/^USE_IMSCOPE=.*$/USE_IMSCOPE=true/' ../run.sh
 ```
 
@@ -63,7 +70,14 @@ sed -i 's/^USE_IMSCOPE=.*$/USE_IMSCOPE=true/' ../run.sh
 
 ```bash
 sed -i 's/^USE_IMSCOPE=.*$/USE_IMSCOPE=false/' full_install.sh
+sed -i 's/^USE_IMSCOPE=.*$/USE_IMSCOPE=false/' run_background_split_du.sh
+sed -i 's/^USE_IMSCOPE=.*$/USE_IMSCOPE=false/' run_background.sh
+sed -i 's/^USE_IMSCOPE=.*$/USE_IMSCOPE=false/' run_gdb.sh
+sed -i 's/^USE_IMSCOPE=.*$/USE_IMSCOPE=false/' run_split_du.sh
+sed -i 's/^USE_IMSCOPE=.*$/USE_IMSCOPE=false/' run.sh
 sed -i 's/^USE_IMSCOPE=.*$/USE_IMSCOPE=false/' ../User_Equipment/full_install.sh
+sed -i 's/^USE_IMSCOPE=.*$/USE_IMSCOPE=false/' ../User_Equipment/run_gdb.sh
+sed -i 's/^USE_IMSCOPE=.*$/USE_IMSCOPE=false/' ../User_Equipment/run.sh
 sed -i 's/^USE_IMSCOPE=.*$/USE_IMSCOPE=false/' ../run.sh
 ```
 

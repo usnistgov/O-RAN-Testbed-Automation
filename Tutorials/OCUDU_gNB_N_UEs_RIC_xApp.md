@@ -131,11 +131,40 @@ The installation deploys
 This tutorial demonstrates how to deploy the O-RAN Software Community (OSC) Near-Real-Time RAN Intelligent Controller (Near-RT RIC) and connect it to a compatible O-RAN E2 node. It also shows how to deploy and run a KPM xApp to collect and monitor Key Performance Measurements (KPM) from the connected RAN.
 
 The tutorial covers the deployment of the Near-RT RIC components, configuration of the E2 interface, and execution of the KPM xApp to retrieve RAN performance metrics. This provides a practical example of using the Near-RT RIC to monitor RAN behavior through the O-RAN E2 interface.
+After successful installation run `kubectl get pods -A` and check all the pods are running.
+```bash
+sudo kubectl get pods -A
+NAMESPACE      NAME                                                        READY   STATUS    RESTARTS       AGE
+kube-flannel   kube-flannel-ds-74qcr                                       1/1     Running   0              160m
+kube-system    coredns-674b8bbfcf-l2fqm                                    1/1     Running   0              160m
+kube-system    coredns-674b8bbfcf-ll4bq                                    1/1     Running   0              160m
+kube-system    etcd-ip-172-31-32-66                                        1/1     Running   3              160m
+kube-system    kube-apiserver-ip-172-31-32-66                              1/1     Running   6              160m
+kube-system    kube-controller-manager-ip-172-31-32-66                     1/1     Running   8              160m
+kube-system    kube-proxy-v248v                                            1/1     Running   0              160m
+kube-system    kube-scheduler-ip-172-31-32-66                              1/1     Running   7              160m
+ricinfra       deployment-tiller-ricxapp-84b87b8c64-nq4ds                  1/1     Running   0              159m
+ricplt         deployment-ricplt-a1mediator-f4888dfd7-88xh9                1/1     Running   0              159m
+ricplt         deployment-ricplt-alarmmanager-7f984cdf77-s8j2f             1/1     Running   0              158m
+ricplt         deployment-ricplt-appmgr-549d488cb8-nqbkg                   1/1     Running   0              159m
+ricplt         deployment-ricplt-e2mgr-7d9f845865-9gn4l                    1/1     Running   0              159m
+ricplt         deployment-ricplt-e2term-alpha-55ff9df9d9-5v5lc             1/1     Running   0              159m
+ricplt         deployment-ricplt-o1mediator-6fb8f84c97-8cqln               1/1     Running   0              158m
+ricplt         deployment-ricplt-rtmgr-668f86855f-kt4d2                    1/1     Running   1 (158m ago)   159m
+ricplt         deployment-ricplt-submgr-5b8796c997-vn872                   1/1     Running   0              158m
+ricplt         deployment-ricplt-vespamgr-848f7bb874-48bpg                 1/1     Running   0              158m
+ricplt         r4-influxdb-influxdb2-0                                     1/1     Running   0              144m
+ricplt         r4-infrastructure-kong-78657d8f48-chz9k                     2/2     Running   0              159m
+ricplt         r4-infrastructure-prometheus-alertmanager-b9cc56766-g8jjr   2/2     Running   0              159m
+ricplt         r4-infrastructure-prometheus-server-6476958975-g5s5l        1/1     Running   0              159m
+ricplt         statefulset-ricplt-dbaas-server-0                           1/1     Running   0              159m
+ricxapp        ricxapp-hw-go-c84579888-q5xf2                               1/1     Running   0              155m
+```
+Then run the testbed with `./run.sh` to start the 5G Core, gNodeB, and UE. Use `./is_running.sh` to check if the components are running, and `./stop.sh` to stop the components. The optional RIC starts automatically on boot and can be accessed with `k9s -A`.
 
-Run the testbed with `./run.sh` to start the 5G Core, gNodeB, and UE. Use `./is_running.sh` to check if the components are running, and `./stop.sh` to stop the components. The optional RIC starts automatically on boot and can be accessed with `k9s -A`.
 
-
-### Launch KPM xApp
+### Install KPM xApp
+Install KPM xApp with ./additional_scripts/install_xapp_kpi_monitor.sh. The xApp will only connect to connected E2 nodes,
 
 ## Flexric with KPM xApp
 By default, the gNodeB's Distributed Unit (DU) connects to the O-RAN SC Near-RT RIC E2 Terminator. To use FlexRIC instead of O-RAN SC's Near-RT RIC, set all occurrences of `USE_FLEXRIC` to `true`, then run `../generate_configurations.sh`.

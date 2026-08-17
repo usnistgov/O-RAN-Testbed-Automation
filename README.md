@@ -7,7 +7,7 @@
 - [Duranta and FlexRIC Output](#duranta-and-flexric-output)
 - [Deployment Tutorials](#deployment-tutorials)
   - [OCUDU gNB with N UEs, and Grafana Traffic Monitoring](#ocudu-gnb-with-n-ues-and-grafana-traffic-monitoring)
-  - [FlexRIC and KPM Monitoring xApp](#flexric-and-kpm-monitoring-xapp)
+  - [RIC and KPM Monitoring xApp](#ric-and-kpm-monitoring-xapp)
 - [Software Versioning](#software-versioning)
 - [Documentation](#documentation)
 
@@ -228,11 +228,11 @@ Deploy an OCUDU-based O-RAN testbed, generate traffic from multiple UEs, collect
 [OCUDU gNB with N UEs, Grafana Traffic Monitoring](Tutorials/OCUDU_gNB_N_UEs_Grafana_Traffic.md)
 
 
-###  FlexRIC and KPM Monitoring xApp
+###  RIC and KPM Monitoring xApp
 
-Deploy an OCUDU gNB connected to multiple UEs, integrate it with FlexRIC, subscribe to E2SM-KPM reports, and monitor real-time RAN KPIs using a KPM monitoring xApp. This tutorial demonstrates the integration of an OCUDU gNB with the FlexRIC Near-Real-Time RAN Intelligent Controller (Near-RT RIC). It covers E2 interface configuration, deployment of a KPM Monitoring xApp, subscription to E2SM-KPM reports, and real-time collection of radio performance metrics. Users will learn how to monitor RAN KPIs, validate E2 connectivity, and explore the foundations of closed-loop RAN monitoring and intelligent control within an O-RAN-compliant network. 
+Deploy an OCUDU gNB connected to multiple UEs, integrate it with RIC, subscribe to E2SM-KPM reports, and monitor real-time RAN KPIs using a KPM monitoring xApp. This tutorial demonstrates the integration of an OCUDU gNB with the FlexRIC and OSC Near-Real-Time RAN Intelligent Controller (Near-RT RIC). It covers E2 interface configuration, deployment of a KPM Monitoring xApp, subscription to E2SM-KPM reports, and real-time collection of radio performance metrics. Users will learn how to monitor RAN KPIs, validate E2 connectivity, and explore the foundations of closed-loop RAN monitoring and intelligent control within an O-RAN-compliant network. 
 
-[OCUDU gNB with N UEs, FlexRIC, and KPM Monitoring xApp](Tutorials/OCUDU_gNB_N_UEs_RIC_xApp.md)
+[OCUDU gNB with N UEs, RIC, and KPM Monitoring xApp](Tutorials/OCUDU_gNB_N_UEs_RIC_xApp.md)
 ## Software Versioning
 
 For stability of software dependencies, all `git clone` calls are routed through `commit_hashes.json` which specifies a branch and/or commit hash for each repository. This file can be updated manually, or with `./Additional_Scripts/update_commit_hashes.sh` to fetch the latest commit hashes. For information about the automation tool versions, please see the releases page [\[3\]][gh-ota].

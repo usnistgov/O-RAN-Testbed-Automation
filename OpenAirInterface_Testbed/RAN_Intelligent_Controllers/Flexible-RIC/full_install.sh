@@ -69,11 +69,7 @@ trap './install_scripts/stop_sudo_refresh.sh 2>/dev/null || true' EXIT
 INSTALL_START_TIME=$(date +%s)
 
 echo "Installing dependencies..."
-<<<<<<< HEAD
-sudo env $APTVARS apt-get install -y build-essential automake bison flex
-=======
 sudo env $APTVARS apt-get install -y build-essential automake autoconf libtool bison flex
->>>>>>> main
 sudo env $APTVARS apt-get install -y libsctp-dev python3 cmake-curses-gui libpcre2-dev python3-dev
 
 # Check if GCC 13 or newer is installed, if not, install it and set it as the default
@@ -97,8 +93,6 @@ if [[ "$INSTALL_GCC" == "true" ]]; then
     sudo env $APTVARS apt-get install -y gcc-13 g++-13
     sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 100
     sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-13 100
-<<<<<<< HEAD
-=======
 fi
 export CFLAGS="-Wno-error=incompatible-pointer-types"
 export CXXFLAGS="-Wno-error=incompatible-pointer-types"
@@ -117,10 +111,7 @@ if [[ "$CMAKE_VERSION" == 3.16.* ]]; then
     sudo apt-add-repository -y "deb https://apt.kitware.com/ubuntu/ $UBUNTU_CODENAME main"
     sudo apt-get update
     sudo env $APTVARS apt-get install -y cmake
->>>>>>> main
 fi
-export CFLAGS="-Wno-error=incompatible-pointer-types"
-export CXXFLAGS="-Wno-error=incompatible-pointer-types"
 
 if [ ! -d "swig" ]; then
     echo "Cloning SWIG..."
@@ -145,7 +136,7 @@ cd "$SCRIPT_DIR"
 
 if [ ! -d "flexric" ]; then
     echo "Cloning Flexible RAN Intelligent Controller (FlexRIC)..."
-    ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/mosaic5g/flexric.git --https
+    ./install_scripts/git_clone.sh https://github.com/duranta-project/flexric.git
 fi
 
 CURRENT_E2_PORT=$(sed -nE 's/.*e2ap_server_port *= *([0-9]+);/\1/p' flexric/src/agent/e2_agent_api.c)
@@ -217,11 +208,7 @@ PREFIX_DIR="${FLEXRIC_LIBRARY_DIR%/lib/flexric*}"
 if [[ "$PREFIX_DIR" != /* ]]; then
     PREFIX_DIR="$SCRIPT_DIR/$PREFIX_DIR"
 fi
-<<<<<<< HEAD
-CC=gcc CXX=g++ cmake .. -DCMAKE_INSTALL_PREFIX="$PREFIX_DIR" -DXAPP_DB=NONE_XAPP -DE2AP_VERSION=$E2AP_VERSION -DKPM_VERSION=$KPM_VERSION $ADDITIONAL_FLAGS
-=======
 CC=gcc CXX=g++ cmake .. -DCMAKE_INSTALL_PREFIX="$PREFIX_DIR" -DASN1C_EXEC="$ASN1C_EXEC_PATH" -DASN1C_EXEC_PATH="$ASN1C_EXEC_PATH" -DXAPP_DB=NONE_XAPP -DE2AP_VERSION="$E2AP_VERSION" -DKPM_VERSION="$KPM_VERSION" $ADDITIONAL_FLAGS
->>>>>>> main
 make -j$(nproc)
 
 echo "Installing FlexRIC..."

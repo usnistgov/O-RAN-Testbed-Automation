@@ -209,33 +209,6 @@ fi
 
 cd "$SCRIPT_DIR"
 
-<<<<<<< HEAD
-if [ ! -f "zmq_broker/multi_ue_scenario.py" ]; then
-    if ! command -v grcc >/dev/null 2>&1; then
-        echo "Installing GNU Radio Companion Compiler (grcc) for the ZeroMQ Broker..."
-        sudo env $APTVARS apt-get install -y gnuradio
-    fi
-fi
-
-echo
-echo
-mkdir -p zmq_broker
-if [ ! -f "zmq_broker/multi_ue_scenario.grc" ]; then
-    if ! command -v jq &>/dev/null; then
-        echo "Installing jq..."
-        sudo env $APTVARS apt-get install -y jq
-    fi
-    DOCS_HASH=$(jq -r '."https://gitlab.com/ocudu/ocudu_docs.git"[1]' ../commit_hashes.json 2>/dev/null)
-    if [ -z "$DOCS_HASH" ] || [ "$DOCS_HASH" = "null" ]; then
-        DOCS_HASH="main"
-    fi
-    echo "Downloading ZeroMQ Broker GNU Radio Companion flowgraph (${DOCS_HASH})..."
-    wget -qO zmq_broker/multi_ue_scenario.grc "https://gitlab.com/ocudu/ocudu_docs/-/raw/${DOCS_HASH}/docs/tutorials/srsue/assets/multi_ue_scenario.grc"
-    wget -qO zmq_broker/multi_ue_scenario.grc.license "https://gitlab.com/ocudu/ocudu_docs/-/raw/${DOCS_HASH}/docs/tutorials/srsue/assets/multi_ue_scenario.grc.license"
-fi
-
-=======
->>>>>>> main
 echo
 echo
 echo "Compiling and Installing OCUDU..."

@@ -257,6 +257,7 @@ import numpy as np
 from PyQt5 import Qt
 from PyQt5 import QtCore
 
+from gnuradio import analog
 from gnuradio import blocks
 from gnuradio import gr
 from gnuradio import qtgui
@@ -308,52 +309,84 @@ PATH_LOSS_LINKED = True
 DL_AWGN_ENABLED = True
 UL_AWGN_ENABLED = True
 
-class awgn_cc(gr.sync_block):
+
+class awgn_mix_cc(gr.sync_block):
     def __init__(self, snr_db, enabled=True):
         gr.sync_block.__init__(
             self,
-            name="Complex AWGN",
-            in_sig=[np.complex64],
+            name="Complex AWGN Mixer",
+            in_sig=[np.complex64, np.complex64],
             out_sig=[np.complex64],
         )
+        self.enabled = bool(enabled)
+        self.snr_gain = np.float32(10.0 ** (-float(snr_db) / 20.0))
+
+    def set_snr_db(self, snr_db):
+        self.snr_gain = np.float32(10.0 ** (-float(snr_db) / 20.0))
+
+    def set_enabled(self, enabled):
+        self.enabled = bool(enabled)
+
+    def work(self, input_items, output_items):
+        signal_samples = input_items[0]
+        noise_samples = input_items[1]
+        output_samples = output_items[0]
+        sample_count = len(output_samples)
+
+        if sample_count == 0:
+            return 0
+
+        if not self.enabled:
+            np.copyto(output_samples, signal_samples)
+            return sample_count
+
+        signal_power = float(np.vdot(signal_samples, signal_samples).real) / sample_count
+        if signal_power <= 0.0 or not np.isfinite(signal_power):
+            np.copyto(output_samples, signal_samples)
+            return sample_count
+
+        noise_gain = np.float32(np.sqrt(signal_power)) * self.snr_gain
+        np.multiply(noise_samples, noise_gain, out=output_samples)
+        np.add(signal_samples, output_samples, out=output_samples)
+        return sample_count
+
+
+class awgn_cc(gr.hier_block2):
+    def __init__(self, snr_db, enabled=True):
+        gr.hier_block2.__init__(
+            self,
+            "Complex AWGN",
+            gr.io_signature(1, 1, gr.sizeof_gr_complex),
+            gr.io_signature(1, 1, gr.sizeof_gr_complex),
+        )
+        self.enabled = False
+        self.snr_db = 0.0
+        self.mixer = awgn_mix_cc(0.0, False)
+        self.noise_source = analog.fastnoise_source_c(
+            analog.GR_GAUSSIAN,
+            1.0,
+            int(np.random.randint(1, 2**31 - 1)),
+            8192,
+        )
+
+        self.connect(self, (self.mixer, 0))
+        self.connect(self.noise_source, (self.mixer, 1))
+        self.connect(self.mixer, self)
+
         self.set_snr_db(snr_db)
         self.set_enabled(enabled)
-        self.rng = np.random.default_rng()
-        self.signal_power = None
 
     def set_snr_db(self, snr_db):
         snr_db = float(snr_db)
         if not np.isfinite(snr_db):
             return
         self.snr_db = min(max(snr_db, AWGN_SNR_MIN_DB), AWGN_SNR_MAX_DB)
-        self.snr_linear = 10.0 ** (self.snr_db / 10.0)
+        self.mixer.set_snr_db(self.snr_db)
 
     def set_enabled(self, enabled):
         self.enabled = bool(enabled)
+        self.mixer.set_enabled(self.enabled)
 
-    def work(self, input_items, output_items):
-        input_samples = input_items[0]
-        output_samples = output_items[0]
-        sample_count = len(input_samples)
-
-        if sample_count == 0:
-            return 0
-
-        active_count = np.count_nonzero(input_samples)
-        if active_count:
-            measured_power = float(np.vdot(input_samples, input_samples).real) / active_count
-            if measured_power > 0.0 and np.isfinite(measured_power):
-                self.signal_power = measured_power
-
-        if not self.enabled or self.signal_power is None:
-            np.copyto(output_samples, input_samples)
-            return sample_count
-
-        noise = self.rng.standard_normal(2 * sample_count, dtype=np.float32)
-        noise = noise.view(np.complex64)
-        noise *= np.float32(np.sqrt(self.signal_power / (2.0 * self.snr_linear)))
-        np.add(input_samples, noise, out=output_samples)
-        return sample_count
 
 class SliderSpinBox(Qt.QWidget):
     valueChanged = QtCore.pyqtSignal(float)
@@ -410,10 +443,13 @@ class SliderSpinBox(Qt.QWidget):
         if emit and changed:
             self.valueChanged.emit(value)
 
+
 class zmq_channel_emulator(gr.top_block, Qt.QWidget):
     def __init__(self):
         try:
-            gr.top_block.__init__(self, "ZeroMQ Channel Emulator", catch_exceptions=True)
+            gr.top_block.__init__(
+                self, "ZeroMQ Channel Emulator", catch_exceptions=True
+            )
         except TypeError:
             gr.top_block.__init__(self, "ZeroMQ Channel Emulator")
         Qt.QWidget.__init__(self)
@@ -548,6 +584,10 @@ class zmq_channel_emulator(gr.top_block, Qt.QWidget):
             )
             print(status, flush=True)
             self.ue_dl_adds[ue_number] = blocks.add_vcc(1)
+            self.dl_awgn[ue_number] = awgn_cc(
+                self.dl_awgn_snr_db,
+                DL_AWGN_ENABLED,
+            )
             self.ue_dl_sinks[ue_number] = zeromq.rep_sink(
                 gr.sizeof_gr_complex,
                 1,
@@ -584,6 +624,10 @@ class zmq_channel_emulator(gr.top_block, Qt.QWidget):
             ue_number = ue["number"]
             self.connect(
                 (self.ue_dl_adds[ue_number], 0),
+                (self.dl_awgn[ue_number], 0),
+            )
+            self.connect(
+                (self.dl_awgn[ue_number], 0),
                 (self.ue_dl_sinks[ue_number], 0),
             )
 
@@ -604,19 +648,12 @@ class zmq_channel_emulator(gr.top_block, Qt.QWidget):
                     ul_gain = 0.0
                 self.dl_gains[path_key] = blocks.multiply_const_cc(dl_gain)
                 self.ul_gains[path_key] = blocks.multiply_const_cc(ul_gain)
-                self.dl_awgn[path_key] = awgn_cc(
-                    self.dl_awgn_snr_db_by_path[path_key],
-                    self.dl_awgn_enabled[path_key],
-                )
 
                 self.connect(
                     (self.dl_throttles[cell_number], 0), (self.dl_gains[path_key], 0)
                 )
                 self.connect(
-                    (self.dl_gains[path_key], 0), (self.dl_awgn[path_key], 0)
-                )
-                self.connect(
-                    (self.dl_awgn[path_key], 0),
+                    (self.dl_gains[path_key], 0),
                     (self.ue_dl_adds[ue_number], cell_index),
                 )
                 self.connect(
@@ -636,7 +673,9 @@ class zmq_channel_emulator(gr.top_block, Qt.QWidget):
         topology_font.setBold(False)
         self.topology_table.setFont(topology_font)
         self.topology_table.horizontalHeader().setFont(topology_font)
-        self.topology_table.setHorizontalHeaderLabels([""] + [f"Cell {cell['number']}" for cell in CELL_CONFIGS])
+        self.topology_table.setHorizontalHeaderLabels(
+            [""] + [f"Cell {cell['number']}" for cell in CELL_CONFIGS]
+        )
         for column in range(len(CELL_CONFIGS) + 1):
             header_item = self.topology_table.horizontalHeaderItem(column)
             header_item.setFont(topology_font)
@@ -645,11 +684,17 @@ class zmq_channel_emulator(gr.top_block, Qt.QWidget):
         self.topology_table.setSelectionMode(Qt.QAbstractItemView.NoSelection)
         self.topology_table.cellClicked.connect(self.show_topology_item)
         self.topology_table.horizontalHeader().setSectionsClickable(True)
-        self.topology_table.horizontalHeader().sectionClicked.connect(self.show_topology_cell)
+        self.topology_table.horizontalHeader().sectionClicked.connect(
+            self.show_topology_cell
+        )
         self.topology_table.setWordWrap(True)
         self.topology_table.setTextElideMode(QtCore.Qt.ElideNone)
-        self.topology_table.horizontalHeader().setSectionResizeMode(Qt.QHeaderView.Stretch)
-        self.topology_table.horizontalHeader().setSectionResizeMode(0, Qt.QHeaderView.Fixed)
+        self.topology_table.horizontalHeader().setSectionResizeMode(
+            Qt.QHeaderView.Stretch
+        )
+        self.topology_table.horizontalHeader().setSectionResizeMode(
+            0, Qt.QHeaderView.Fixed
+        )
         self.topology_table.verticalHeader().setSectionResizeMode(Qt.QHeaderView.Fixed)
         self.topology_table.horizontalHeader().setFixedHeight(24)
         self.topology_table.setColumnWidth(0, 72)
@@ -674,9 +719,7 @@ class zmq_channel_emulator(gr.top_block, Qt.QWidget):
 
         general_layout = Qt.QHBoxLayout()
         general_layout.setContentsMargins(0, 0, 0, 0)
-        self.slow_down_ratio_control = SliderSpinBox(
-            1, 20, 0.5, self.slow_down_ratio
-        )
+        self.slow_down_ratio_control = SliderSpinBox(1, 20, 0.5, self.slow_down_ratio)
         self.slow_down_ratio_control.valueChanged.connect(self.set_slow_down_ratio)
         general_layout.addWidget(Qt.QLabel("Time slowdown ratio"))
         general_layout.addWidget(self.slow_down_ratio_control, 1)
@@ -702,17 +745,21 @@ class zmq_channel_emulator(gr.top_block, Qt.QWidget):
             action = copy_cell_menu.addAction(f"Cell {cell['number']}")
             self.copy_cell_actions[cell["number"]] = action
             action.triggered.connect(
-                lambda checked=False, cell_number=cell["number"]: self.copy_current_cell(
-                    cell_number
-                )
+                lambda checked=False, cell_number=cell[
+                    "number"
+                ]: self.copy_current_cell(cell_number)
             )
 
-        actions_menu.addAction("Set Path Loss for Current Cell", self.set_current_cell_path_loss)
+        actions_menu.addAction(
+            "Set Path Loss for Current Cell", self.set_current_cell_path_loss
+        )
         actions_menu.addSeparator()
         self.awgn_action = actions_menu.addAction("")
         self.awgn_action.triggered.connect(self.toggle_current_cell_awgn)
         self.path_loss_link_action = actions_menu.addAction("")
-        self.path_loss_link_action.triggered.connect(self.toggle_current_cell_path_loss_linked)
+        self.path_loss_link_action.triggered.connect(
+            self.toggle_current_cell_path_loss_linked
+        )
         actions_menu.aboutToShow.connect(self.update_actions_menu)
         actions_button.setMenu(actions_menu)
         general_layout.addWidget(actions_button)
@@ -738,7 +785,9 @@ class zmq_channel_emulator(gr.top_block, Qt.QWidget):
         action_layout.addWidget(reset_all_button, 2)
 
         self.reset_cell_button = Qt.QPushButton()
-        self.reset_cell_button.clicked.connect(lambda checked=False: self.reset_current_cell())
+        self.reset_cell_button.clicked.connect(
+            lambda checked=False: self.reset_current_cell()
+        )
         action_layout.addWidget(self.reset_cell_button, 3)
         action_font = save_button.font()
         action_font.setPointSize(9)
@@ -769,7 +818,9 @@ class zmq_channel_emulator(gr.top_block, Qt.QWidget):
         receiver_group = Qt.QGroupBox("Uplink")
         receiver_layout = Qt.QGridLayout(receiver_group)
         receiver_layout.setColumnStretch(1, 1)
-        ul_awgn_enabled = Qt.QCheckBox("Enable uplink Additive White Gaussian Noise (AWGN)")
+        ul_awgn_enabled = Qt.QCheckBox(
+            "Enable uplink Additive White Gaussian Noise (AWGN)"
+        )
         ul_awgn_font = ul_awgn_enabled.font()
         ul_awgn_font.setPointSize(9)
         ul_awgn_enabled.setFont(ul_awgn_font)
@@ -992,13 +1043,13 @@ class zmq_channel_emulator(gr.top_block, Qt.QWidget):
     def set_current_cell_awgn(self, enabled):
         cell_number = CELL_CONFIGS[self.cell_tabs.currentIndex()]["number"]
         self.ul_awgn_enabled_checkboxes[cell_number].setChecked(enabled)
-        for ue in UE_CONFIGS:
-            self.dl_awgn_enabled_checkboxes[(cell_number, ue["number"])].setChecked(enabled)
 
     def set_current_cell_path_loss_linked(self, linked):
         cell_number = CELL_CONFIGS[self.cell_tabs.currentIndex()]["number"]
         for ue in UE_CONFIGS:
-            self.path_loss_linked_checkboxes[(cell_number, ue["number"])].setChecked(linked)
+            self.path_loss_linked_checkboxes[(cell_number, ue["number"])].setChecked(
+                linked
+            )
 
     def update_actions_menu(self):
         current_cell = CELL_CONFIGS[self.cell_tabs.currentIndex()]["number"]
@@ -1012,32 +1063,24 @@ class zmq_channel_emulator(gr.top_block, Qt.QWidget):
         for cell_number, action in self.copy_cell_actions.items():
             action.setEnabled(cell_number != current_cell)
 
-        all_awgn_enabled = self.ul_awgn_enabled[current_cell] and all(
-            self.dl_awgn_enabled[(current_cell, ue["number"])]
-            for ue in UE_CONFIGS
-        )
-        awgn_action = "Disable" if all_awgn_enabled else "Enable"
-        self.awgn_action.setText(f"{awgn_action} AWGN for Current Cell")
+        awgn_action = "Disable" if self.ul_awgn_enabled[current_cell] else "Enable"
+        self.awgn_action.setText(f"{awgn_action} Uplink AWGN for Current Cell")
         all_path_loss_linked = all(
-            self.path_loss_linked[(current_cell, ue["number"])]
-            for ue in UE_CONFIGS
+            self.path_loss_linked[(current_cell, ue["number"])] for ue in UE_CONFIGS
         )
         path_loss_action = "Unlink" if all_path_loss_linked else "Link"
-        self.path_loss_link_action.setText(f"{path_loss_action} Path Loss for Current Cell")
+        self.path_loss_link_action.setText(
+            f"{path_loss_action} Path Loss for Current Cell"
+        )
 
     def toggle_current_cell_awgn(self):
         cell_number = CELL_CONFIGS[self.cell_tabs.currentIndex()]["number"]
-        all_enabled = self.ul_awgn_enabled[cell_number] and all(
-            self.dl_awgn_enabled[(cell_number, ue["number"])]
-            for ue in UE_CONFIGS
-        )
-        self.set_current_cell_awgn(not all_enabled)
+        self.set_current_cell_awgn(not self.ul_awgn_enabled[cell_number])
 
     def toggle_current_cell_path_loss_linked(self):
         cell_number = CELL_CONFIGS[self.cell_tabs.currentIndex()]["number"]
         all_linked = all(
-            self.path_loss_linked[(cell_number, ue["number"])]
-            for ue in UE_CONFIGS
+            self.path_loss_linked[(cell_number, ue["number"])] for ue in UE_CONFIGS
         )
         self.set_current_cell_path_loss_linked(not all_linked)
 
@@ -1084,7 +1127,7 @@ class zmq_channel_emulator(gr.top_block, Qt.QWidget):
 
         font = item.font()
         font.setPointSize(8)
-        font.setBold(False) #(self.selected_topology_path == path_key)
+        font.setBold(False)  # (self.selected_topology_path == path_key)
         item.setFont(font)
         if not enabled:
             item.setBackground(Qt.QColor(232, 232, 232))
@@ -1121,6 +1164,16 @@ class zmq_channel_emulator(gr.top_block, Qt.QWidget):
         self.slow_down_ratio_control.set_value(SLOW_DOWN_RATIO)
         for cell in CELL_CONFIGS:
             self.reset_cell(cell["number"])
+        for ue in UE_CONFIGS:
+            ue_number = ue["number"]
+            path_key = (CELL_CONFIGS[0]["number"], ue_number)
+            defaults = self.default_link_settings[path_key]
+            self.set_link_dl_awgn_enabled(
+                path_key[0], ue_number, defaults["dl_awgn_enabled"]
+            )
+            self.set_link_dl_awgn_snr_db(
+                path_key[0], ue_number, defaults["dl_awgn_snr_db"]
+            )
 
     def scenario_state(self):
         cells = {}
@@ -1211,6 +1264,7 @@ class zmq_channel_emulator(gr.top_block, Qt.QWidget):
                 state["slow_down_ratio"], 1, 20, "Time slowdown ratio"
             )
             validated_cells = {}
+            validated_dl_awgn_by_ue = {}
             for cell_number in cell_numbers:
                 cell_state = state["cells"][str(cell_number)]
                 if not isinstance(cell_state["uplink_awgn_enabled"], bool):
@@ -1240,16 +1294,28 @@ class zmq_channel_emulator(gr.top_block, Qt.QWidget):
                     )
                     if link_state["path_loss_linked"] and dl_loss != ul_loss:
                         raise ValueError("Linked path-loss values must match")
-                    validated_links[ue_number] = {
-                        **link_state,
-                        "downlink_path_loss_db": dl_loss,
-                        "uplink_path_loss_db": ul_loss,
-                        "downlink_awgn_snr_db": self.validate_scenario_number(
+                    dl_awgn_state = {
+                        "enabled": link_state["downlink_awgn_enabled"],
+                        "snr_db": self.validate_scenario_number(
                             link_state["downlink_awgn_snr_db"],
                             AWGN_SNR_MIN_DB,
                             AWGN_SNR_MAX_DB,
                             "Downlink AWGN SNR",
                         ),
+                    }
+                    if (
+                        ue_number in validated_dl_awgn_by_ue
+                        and validated_dl_awgn_by_ue[ue_number] != dl_awgn_state
+                    ):
+                        raise ValueError(
+                            "Downlink AWGN settings must match across cells for each UE"
+                        )
+                    validated_dl_awgn_by_ue[ue_number] = dl_awgn_state
+                    validated_links[ue_number] = {
+                        **link_state,
+                        "downlink_path_loss_db": dl_loss,
+                        "uplink_path_loss_db": ul_loss,
+                        "downlink_awgn_snr_db": dl_awgn_state["snr_db"],
                     }
                 validated_cells[cell_number] = {
                     "uplink_awgn_enabled": cell_state["uplink_awgn_enabled"],
@@ -1283,9 +1349,7 @@ class zmq_channel_emulator(gr.top_block, Qt.QWidget):
             )
             for ue_number, link_state in cell_state["ues"].items():
                 path_key = (cell_number, ue_number)
-                self.path_enabled_checkboxes[path_key].setChecked(
-                    link_state["enabled"]
-                )
+                self.path_enabled_checkboxes[path_key].setChecked(link_state["enabled"])
                 self.path_loss_linked_checkboxes[path_key].setChecked(False)
                 self.dl_path_loss_controls[path_key].set_value(
                     link_state["downlink_path_loss_db"]
@@ -1296,12 +1360,13 @@ class zmq_channel_emulator(gr.top_block, Qt.QWidget):
                 self.path_loss_linked_checkboxes[path_key].setChecked(
                     link_state["path_loss_linked"]
                 )
-                self.dl_awgn_enabled_checkboxes[path_key].setChecked(
-                    link_state["downlink_awgn_enabled"]
-                )
-                self.dl_awgn_snr_controls[path_key].set_value(
-                    link_state["downlink_awgn_snr_db"]
-                )
+        first_cell_number = cell_numbers[0]
+        for ue_number, dl_awgn_state in validated_dl_awgn_by_ue.items():
+            path_key = (first_cell_number, ue_number)
+            self.dl_awgn_enabled_checkboxes[path_key].setChecked(
+                dl_awgn_state["enabled"]
+            )
+            self.dl_awgn_snr_controls[path_key].set_value(dl_awgn_state["snr_db"])
         self.update_topology()
         return True
 
@@ -1321,9 +1386,6 @@ class zmq_channel_emulator(gr.top_block, Qt.QWidget):
     def set_path_enabled(self, cell_number, ue_number, enabled):
         path_key = (cell_number, ue_number)
         self.path_enabled[path_key] = bool(enabled)
-        self.dl_awgn[path_key].set_enabled(
-            bool(enabled) and self.dl_awgn_enabled[path_key]
-        )
         self.update_path_gains(path_key)
         if hasattr(self, "topology_table"):
             self.update_topology_entry(path_key)
@@ -1369,19 +1431,31 @@ class zmq_channel_emulator(gr.top_block, Qt.QWidget):
         self.ul_gains[path_key].set_k(ul_gain)
 
     def set_link_dl_awgn_enabled(self, cell_number, ue_number, enabled):
-        path_key = (cell_number, ue_number)
-        self.dl_awgn_enabled[path_key] = bool(enabled)
-        self.dl_awgn[path_key].set_enabled(
-            bool(enabled) and self.path_enabled[path_key]
-        )
-        self.dl_awgn_snr_controls[path_key].setEnabled(bool(enabled))
-        if hasattr(self, "topology_table"):
-            self.update_topology_entry(path_key)
+        enabled = bool(enabled)
+        self.dl_awgn[ue_number].set_enabled(enabled)
+        for cell in CELL_CONFIGS:
+            path_key = (cell["number"], ue_number)
+            self.dl_awgn_enabled[path_key] = enabled
+            checkbox = self.dl_awgn_enabled_checkboxes.get(path_key)
+            if checkbox is not None and checkbox.isChecked() != enabled:
+                checkbox.blockSignals(True)
+                checkbox.setChecked(enabled)
+                checkbox.blockSignals(False)
+            control = self.dl_awgn_snr_controls.get(path_key)
+            if control is not None:
+                control.setEnabled(enabled)
+            if hasattr(self, "topology_table"):
+                self.update_topology_entry(path_key)
 
     def set_link_dl_awgn_snr_db(self, cell_number, ue_number, snr_db):
-        path_key = (cell_number, ue_number)
-        self.dl_awgn[path_key].set_snr_db(snr_db)
-        self.dl_awgn_snr_db_by_path[path_key] = self.dl_awgn[path_key].snr_db
+        self.dl_awgn[ue_number].set_snr_db(snr_db)
+        value = self.dl_awgn[ue_number].snr_db
+        for cell in CELL_CONFIGS:
+            path_key = (cell["number"], ue_number)
+            self.dl_awgn_snr_db_by_path[path_key] = value
+            control = self.dl_awgn_snr_controls.get(path_key)
+            if control is not None:
+                control.set_value(value, emit=False)
 
     def set_cell_ul_awgn_enabled(self, cell_number, enabled):
         self.ul_awgn_enabled[cell_number] = bool(enabled)
@@ -1393,9 +1467,7 @@ class zmq_channel_emulator(gr.top_block, Qt.QWidget):
 
     def set_cell_ul_awgn_snr_db(self, cell_number, snr_db):
         self.cell_ul_awgn[cell_number].set_snr_db(snr_db)
-        self.ul_awgn_snr_db_by_cell[cell_number] = self.cell_ul_awgn[
-            cell_number
-        ].snr_db
+        self.ul_awgn_snr_db_by_cell[cell_number] = self.cell_ul_awgn[cell_number].snr_db
 
     def reset_cell(self, cell_number):
         cell_defaults = self.default_cell_settings[cell_number]
@@ -1409,24 +1481,12 @@ class zmq_channel_emulator(gr.top_block, Qt.QWidget):
         for ue in UE_CONFIGS:
             path_key = (cell_number, ue["number"])
             defaults = self.default_link_settings[path_key]
-            self.path_enabled_checkboxes[path_key].setChecked(
-                defaults["path_enabled"]
-            )
+            self.path_enabled_checkboxes[path_key].setChecked(defaults["path_enabled"])
             self.path_loss_linked_checkboxes[path_key].setChecked(
                 defaults["path_loss_linked"]
             )
-            self.dl_path_loss_controls[path_key].set_value(
-                defaults["dl_path_loss_db"]
-            )
-            self.ul_path_loss_controls[path_key].set_value(
-                defaults["ul_path_loss_db"]
-            )
-            self.dl_awgn_enabled_checkboxes[path_key].setChecked(
-                defaults["dl_awgn_enabled"]
-            )
-            self.dl_awgn_snr_controls[path_key].set_value(
-                defaults["dl_awgn_snr_db"]
-            )
+            self.dl_path_loss_controls[path_key].set_value(defaults["dl_path_loss_db"])
+            self.ul_path_loss_controls[path_key].set_value(defaults["ul_path_loss_db"])
 
     def set_slow_down_ratio(self, slow_down_ratio):
         self.slow_down_ratio = self.validate_scenario_number(
@@ -1439,8 +1499,8 @@ class zmq_channel_emulator(gr.top_block, Qt.QWidget):
 
     def set_dl_awgn_snr_db(self, snr_db):
         self.dl_awgn_snr_db = float(snr_db)
-        for path_key in self.dl_awgn:
-            self.dl_awgn_snr_controls[path_key].set_value(snr_db)
+        for ue_number in self.dl_awgn:
+            self.set_link_dl_awgn_snr_db(CELL_CONFIGS[0]["number"], ue_number, snr_db)
 
     def set_ul_awgn_snr_db(self, snr_db):
         self.ul_awgn_snr_db = float(snr_db)

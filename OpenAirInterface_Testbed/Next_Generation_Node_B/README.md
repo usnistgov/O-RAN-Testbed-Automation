@@ -38,7 +38,7 @@ The gNodeB can also be monitored and controlled remotely using the OpenAirInterf
 
 ## ImScope
 
-ImScope can be built for the gNodeB and UE by setting `USE_IMSCOPE=true` in their respective `full_install.sh` scripts before running them. Set `USE_IMSCOPE=true` in `../run.sh`, or pass `--imscope` or `--no-imscope` to `../run.sh` to override the runtime setting. For more information, see the Duranta documentation [[8]][duranta-imscope].
+ImScope can be built for the gNodeB and UE by setting `USE_IMSCOPE=true` in their respective `full_install.sh` scripts before running them. Set `USE_IMSCOPE=true` in `../run.sh`, or pass `--imscope` or `--no-imscope` to `../run.sh` to override the runtime setting. The "Save IQ" button saves captured I/Q data to CSV files in `openairinterface5g/cmake_targets/ran_build/build/`. For more information, see the Duranta documentation [[8]][duranta-imscope].
 
 
 <details>

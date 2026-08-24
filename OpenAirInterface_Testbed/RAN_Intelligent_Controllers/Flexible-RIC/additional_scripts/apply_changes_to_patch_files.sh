@@ -101,6 +101,17 @@ else
     git apply --verbose --ignore-whitespace ../install_patch_files/flexric/examples/xApp/c/kpm_rc/CMakeLists.txt.patch
 fi
 
+if git diff --quiet src/sm/kpm_sm/kpm_sm_v03.00/dec/dec_asn/dec_ric_ind_hdr_frm_1.c; then
+    echo "No changes for src/sm/kpm_sm/kpm_sm_v03.00/dec/dec_asn/dec_ric_ind_hdr_frm_1.c; keeping the existing patch"
+else
+    mkdir -p ../install_patch_files/flexric/src/sm/kpm_sm/kpm_sm_v03.00/dec/dec_asn
+    git diff src/sm/kpm_sm/kpm_sm_v03.00/dec/dec_asn/dec_ric_ind_hdr_frm_1.c >../install_patch_files/flexric/src/sm/kpm_sm/kpm_sm_v03.00/dec/dec_asn/dec_ric_ind_hdr_frm_1.c.patch
+    git restore src/sm/kpm_sm/kpm_sm_v03.00/dec/dec_asn/dec_ric_ind_hdr_frm_1.c
+    cp src/sm/kpm_sm/kpm_sm_v03.00/dec/dec_asn/dec_ric_ind_hdr_frm_1.c ../install_patch_files/flexric/src/sm/kpm_sm/kpm_sm_v03.00/dec/dec_asn/dec_ric_ind_hdr_frm_1.previous.c
+    cp src/sm/kpm_sm/kpm_sm_v03.00/dec/dec_asn/dec_ric_ind_hdr_frm_1.c src/sm/kpm_sm/kpm_sm_v03.00/dec/dec_asn/dec_ric_ind_hdr_frm_1.previous.c
+    git apply --verbose --ignore-whitespace ../install_patch_files/flexric/src/sm/kpm_sm/kpm_sm_v03.00/dec/dec_asn/dec_ric_ind_hdr_frm_1.c.patch
+fi
+
 ADDITIONAL_PATCH_FILES=(
     "examples/xApp/c/monitor/xapp_gtp_mac_rlc_pdcp_moni.c"
     "examples/xApp/c/monitor/xapp_rc_moni.c"

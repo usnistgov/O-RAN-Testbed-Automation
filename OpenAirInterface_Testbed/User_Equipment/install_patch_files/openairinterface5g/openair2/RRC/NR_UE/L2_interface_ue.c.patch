@@ -1,5 +1,5 @@
 diff --git a/openair2/RRC/NR_UE/L2_interface_ue.c b/openair2/RRC/NR_UE/L2_interface_ue.c
-index 882bd19dcd..c7420e366d 100644
+index 7a426fb2b1..b80f16d42e 100644
 --- a/openair2/RRC/NR_UE/L2_interface_ue.c
 +++ b/openair2/RRC/NR_UE/L2_interface_ue.c
 @@ -13,7 +13,13 @@

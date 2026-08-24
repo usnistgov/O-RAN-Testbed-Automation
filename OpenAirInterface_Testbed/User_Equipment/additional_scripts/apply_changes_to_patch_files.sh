@@ -213,36 +213,6 @@ else
     git apply --verbose --ignore-whitespace ../install_patch_files/openairinterface5g/openair2/RRC/NR_UE/L2_interface_ue.h.patch
 fi
 
-if git diff --quiet openair2/RRC/NR_UE/rrc_defs.h; then
-    echo "No changes for openair2/RRC/NR_UE/rrc_defs.h"
-else
-    git diff openair2/RRC/NR_UE/rrc_defs.h >../install_patch_files/openairinterface5g/openair2/RRC/NR_UE/rrc_defs.h.patch
-    git restore openair2/RRC/NR_UE/rrc_defs.h
-    cp openair2/RRC/NR_UE/rrc_defs.h ../install_patch_files/openairinterface5g/openair2/RRC/NR_UE/rrc_defs.previous.h
-    cp openair2/RRC/NR_UE/rrc_defs.h openair2/RRC/NR_UE/rrc_defs.h.previous
-    git apply --verbose --ignore-whitespace ../install_patch_files/openairinterface5g/openair2/RRC/NR_UE/rrc_defs.h.patch
-fi
-
-if git diff --quiet openair2/RRC/NR_UE/rrc_proto.h; then
-    echo "No changes for openair2/RRC/NR_UE/rrc_proto.h"
-else
-    git diff openair2/RRC/NR_UE/rrc_proto.h >../install_patch_files/openairinterface5g/openair2/RRC/NR_UE/rrc_proto.h.patch
-    git restore openair2/RRC/NR_UE/rrc_proto.h
-    cp openair2/RRC/NR_UE/rrc_proto.h ../install_patch_files/openairinterface5g/openair2/RRC/NR_UE/rrc_proto.previous.h
-    cp openair2/RRC/NR_UE/rrc_proto.h openair2/RRC/NR_UE/rrc_proto.h.previous
-    git apply --verbose --ignore-whitespace ../install_patch_files/openairinterface5g/openair2/RRC/NR_UE/rrc_proto.h.patch
-fi
-
-if git diff --quiet openair2/RRC/NR_UE/rrc_timers_and_constants.c; then
-    echo "No changes for openair2/RRC/NR_UE/rrc_timers_and_constants.c"
-else
-    git diff openair2/RRC/NR_UE/rrc_timers_and_constants.c >../install_patch_files/openairinterface5g/openair2/RRC/NR_UE/rrc_timers_and_constants.c.patch
-    git restore openair2/RRC/NR_UE/rrc_timers_and_constants.c
-    cp openair2/RRC/NR_UE/rrc_timers_and_constants.c ../install_patch_files/openairinterface5g/openair2/RRC/NR_UE/rrc_timers_and_constants.previous.c
-    cp openair2/RRC/NR_UE/rrc_timers_and_constants.c openair2/RRC/NR_UE/rrc_timers_and_constants.c.previous
-    git apply --verbose --ignore-whitespace ../install_patch_files/openairinterface5g/openair2/RRC/NR_UE/rrc_timers_and_constants.c.patch
-fi
-
 if git diff --quiet openair2/RRC/NR_UE/rrc_UE.c; then
     echo "No changes for openair2/RRC/NR_UE/rrc_UE.c"
 else

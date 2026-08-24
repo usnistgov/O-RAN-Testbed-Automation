@@ -331,6 +331,43 @@ static void nr_rrc_transfer_protected_rrc_message(const gNB_RRC_INST *rrc,
 #endif
 }
 
+typedef struct deliver_ue_context_modif_confirm_s {
+  const gNB_RRC_INST *rrc;
+  f1ap_ue_context_modif_confirm_t *confirm;
+  sctp_assoc_t assoc_id;
+} deliver_ue_context_modif_confirm_t;
+
+static void rrc_deliver_ue_context_modif_confirm(void *deliver_pdu_data, ue_id_t ue_id, int srb_id, char *buf, int size, int sdu_id)
+{
+  UNUSED(ue_id);
+  UNUSED(sdu_id);
+  DevAssert(deliver_pdu_data != NULL);
+  deliver_ue_context_modif_confirm_t *data = (deliver_ue_context_modif_confirm_t *)deliver_pdu_data;
+  data->confirm->rrc_container = (uint8_t *)buf;
+  data->confirm->rrc_container_length = size;
+  data->rrc->mac_rrc.ue_context_modification_confirm(data->assoc_id, data->confirm);
+}
+
+static void nr_rrc_transfer_protected_ue_reconfig_confirm(const gNB_RRC_INST *rrc,
+                                                          const gNB_RRC_UE_t *ue_p,
+                                                          uint8_t srb_id,
+                                                          const uint8_t *buffer,
+                                                          int size)
+{
+  DevAssert(size > 0);
+  f1_ue_data_t ue_data = cu_get_f1_ue_data(ue_p->rrc_ue_id);
+  RETURN_IF_INVALID_ASSOC_ID(ue_data.du_assoc_id);
+  f1ap_ue_context_modif_confirm_t confirm = { .gNB_CU_ue_id = ue_p->rrc_ue_id, .gNB_DU_ue_id = ue_data.secondary_ue};
+  deliver_ue_context_modif_confirm_t data = {.rrc = rrc, .confirm = &confirm, .assoc_id = ue_data.du_assoc_id};
+  nr_pdcp_data_req_srb(ue_p->rrc_ue_id,
+                       srb_id,
+                       rrc_gNB_mui++,
+                       size,
+                       (unsigned char *const)buffer,
+                       rrc_deliver_ue_context_modif_confirm,
+                       &data);
+}
+
 static void rrc_gNB_CU_DU_init(gNB_RRC_INST *rrc)
 {
   switch (rrc->node_type) {
@@ -1265,7 +1302,9 @@ static void rrc_gNB_process_RRCReestablishmentComplete(gNB_RRC_INST *rrc, gNB_RR
   }
 }
 
-int nr_rrc_reconfiguration_req(gNB_RRC_INST *rrc, gNB_RRC_UE_t *ue_p)
+/* \brief Explicit request for reconfiguration from DU, after UE context
+ * modificatien required. Send in a UE context modification confirm message. */
+static int nr_rrc_reconfiguration_req(gNB_RRC_INST *rrc, gNB_RRC_UE_t *ue_p)
 {
   uint8_t xid = rrc_gNB_get_next_transaction_identifier(rrc->module_id);
   ue_p->xids[xid] = RRC_DEDICATED_RECONF;
@@ -1277,8 +1316,7 @@ int nr_rrc_reconfiguration_req(gNB_RRC_INST *rrc, gNB_RRC_UE_t *ue_p)
     LOG_E(NR_RRC, "UE %d: Failed to generate RRCReconfiguration\n", ue_p->rrc_ue_id);
     return -1;
   }
-  const uint32_t msg_id = NR_DL_DCCH_MessageType__c1_PR_rrcReconfiguration;
-  nr_rrc_transfer_protected_rrc_message(rrc, ue_p, DL_SCH_LCID_DCCH, msg_id, msg.buf, msg.len);
+  nr_rrc_transfer_protected_ue_reconfig_confirm(rrc, ue_p, DL_SCH_LCID_DCCH, msg.buf, msg.len);
   free_byte_array(msg);
   free_RRCReconfiguration_params(params);
   return 0;
@@ -1317,6 +1355,8 @@ static void rrc_handle_RRCSetupRequest(gNB_RRC_INST *rrc,
            rrcSetupRequest->ue_Identity.choice.randomValue.size);
 
     ue_context_p = rrc_gNB_create_ue_context(assoc_id, msg->crnti, rrc, random_value, msg->gNB_DU_ue_id);
+    if (!ue_context_p)
+      return;
   } else if (NR_InitialUE_Identity_PR_ng_5G_S_TMSI_Part1 == rrcSetupRequest->ue_Identity.present) {
     /* <5G-S-TMSI> = <AMF Set ID><AMF Pointer><5G-TMSI> 48-bit */
     /* ng-5G-S-TMSI-Part1                  BIT STRING (SIZE (39)) */
@@ -1331,7 +1371,8 @@ static void rrc_handle_RRCSetupRequest(gNB_RRC_INST *rrc,
     LOG_I(NR_RRC, "Received UE 5G-S-TMSI-Part1 %ld\n", s_tmsi_part1);
 
     ue_context_p = rrc_gNB_create_ue_context(assoc_id, msg->crnti, rrc, s_tmsi_part1, msg->gNB_DU_ue_id);
-    AssertFatal(ue_context_p != NULL, "out of memory\n");
+    if (!ue_context_p)
+      return;
     gNB_RRC_UE_t *UE = &ue_context_p->ue_context;
     UE->Initialue_identity_5g_s_TMSI.presence = true;
     UE->ng_5G_S_TMSI_Part1 = s_tmsi_part1;
@@ -1342,6 +1383,8 @@ static void rrc_handle_RRCSetupRequest(gNB_RRC_INST *rrc,
            rrcSetupRequest->ue_Identity.choice.randomValue.size);
 
     ue_context_p = rrc_gNB_create_ue_context(assoc_id, msg->crnti, rrc, random_value, msg->gNB_DU_ue_id);
+    if (!ue_context_p)
+      return;
     LOG_E(NR_RRC, "RRCSetupRequest without random UE identity or S-TMSI not supported, let's reject the UE %04x\n", msg->crnti);
     rrc_gNB_generate_RRCReject(rrc, ue_context_p);
     return;
@@ -1665,6 +1708,8 @@ fallback_rrc_setup:
     rrc_gNB_send_NGAP_UE_CONTEXT_RELEASE_REQ(0, ue_context_p, cause);
 
   rrc_gNB_ue_context_t *new = rrc_gNB_create_ue_context(assoc_id, msg->crnti, rrc, random_value, msg->gNB_DU_ue_id);
+  if (!new)
+    return;
   activate_srb(&new->ue_context, 1);
   added = rrc_update_ue_pcell(&new->ue_context, current_cell);
   DevAssert(added);
@@ -1949,6 +1994,11 @@ static void handle_ueCapabilityInformation(gNB_RRC_INST *rrc, gNB_RRC_UE_t *UE, 
     const NR_UE_CapabilityRAT_ContainerList_t *ue_CapabilityRAT_ContainerList =
         ue_cap_info->criticalExtensions.choice.ueCapabilityInformation->ue_CapabilityRAT_ContainerList;
 
+    if (!ue_CapabilityRAT_ContainerList) {
+      LOG_E(NR_RRC, "ue_CapabilityRAT_ContainerList is NULL, nothing to handle\n");
+      return;
+    }
+
     /* Encode UE-CapabilityRAT-ContainerList for sending to the DU */
     FREE_AND_ZERO_BYTE_ARRAY(UE->ue_cap_buffer);
     UE->ue_cap_buffer.len = uper_encode_to_new_buffer(&asn_DEF_NR_UE_CapabilityRAT_ContainerList,
@@ -1956,7 +2006,7 @@ static void handle_ueCapabilityInformation(gNB_RRC_INST *rrc, gNB_RRC_UE_t *UE, 
                                                       ue_CapabilityRAT_ContainerList,
                                                       (void **)&UE->ue_cap_buffer.buf);
     if (UE->ue_cap_buffer.len <= 0) {
-      LOG_E(RRC, "could not encode UE-CapabilityRAT-ContainerList, abort handling capabilities\n");
+      LOG_E(NR_RRC, "could not encode UE-CapabilityRAT-ContainerList, abort handling capabilities\n");
       return;
     }
     LOG_UE_UL_EVENT(UE, "Received UE capabilities\n");
@@ -2923,8 +2973,13 @@ static void rrc_CU_process_ue_modification_required(MessageDef *msg_p, instance_
     store_cgc(UE, &temp_cgc);
 
     /* trigger reconfiguration */
-    if (!UE->ongoing_reconfiguration)
+    if (!UE->ongoing_reconfiguration) {
       nr_rrc_reconfiguration_req(rrc, UE);
+    } else {
+      LOG_W(NR_RRC, "UE %d UE Context Modification Request: has ongoing reconfiguration\n", UE->rrc_ue_id);
+      /* TODO send reject? */
+    }
+
     return;
   }
   LOG_W(RRC,
@@ -3788,6 +3843,10 @@ void *rrc_gnb_task(void *args_p)
         free_trp_information_resp(&F1AP_TRP_INFORMATION_RESP(msg_p));
         break;
 
+      case F1AP_TRP_INFORMATION_FAILURE:
+        rrc_CU_process_trp_information_failure(&F1AP_TRP_INFORMATION_FAILURE(msg_p));
+        break;
+
       case NRPPA_POSITIONING_INFORMATION_REQ:
         rrc_gNB_process_positioning_information_request(RC.nrrrc[instance], &NRPPA_POSITIONING_INFORMATION_REQ(msg_p));
         break;
@@ -3815,6 +3874,10 @@ void *rrc_gnb_task(void *args_p)
       case F1AP_POSITIONING_MEASUREMENT_RESP:
         rrc_CU_process_positioning_measurement_response(&F1AP_POSITIONING_MEASUREMENT_RESP(msg_p));
         free_positioning_measurement_resp(&F1AP_POSITIONING_MEASUREMENT_RESP(msg_p));
+        break;
+
+      case F1AP_POSITIONING_MEASUREMENT_FAILURE:
+        rrc_CU_process_positioning_measurement_failure(&F1AP_POSITIONING_MEASUREMENT_FAILURE(msg_p));
         break;
 
       default:

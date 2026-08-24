@@ -22,8 +22,6 @@
 
 #include "uper_decoder.h"
 #include "uper_encoder.h"
-#include "openair1/PHY/defs_nr_common.h"
-#include "openair1/PHY/defs_gNB.h"
 #include "openair3/NRPPA/nrppa_gNB_config.h"
 #include "openair2/F1AP/lib/f1ap_positioning.h"
 
@@ -907,53 +905,65 @@ void ue_context_modification_request(const f1ap_ue_context_mod_req_t *req)
 
 void ue_context_modification_confirm(const f1ap_ue_context_modif_confirm_t *confirm)
 {
-  LOG_I(MAC, "Received UE Context Modification Confirm for UE %04x\n", confirm->gNB_DU_ue_id);
+  LOG_I(NR_MAC, "Received UE Context Modification Confirm for UE %04x\n", confirm->gNB_DU_ue_id);
 
   gNB_MAC_INST *mac = RC.nrmac[0];
   NR_SCHED_LOCK(&mac->sched_lock);
   /* check first that the scheduler knows such UE */
   NR_UE_info_t *UE = find_nr_UE(&mac->UE_info, confirm->gNB_DU_ue_id);
   if (UE == NULL) {
-    LOG_E(MAC, "ERROR: unknown UE with RNTI %04x, ignoring UE Context Modification Confirm\n", confirm->gNB_DU_ue_id);
+    LOG_E(NR_MAC, "ERROR: unknown UE with RNTI %04x, ignoring UE Context Modification Confirm\n", confirm->gNB_DU_ue_id);
     NR_SCHED_UNLOCK(&mac->sched_lock);
     return;
   }
+  if (UE->cm_info.trigger_info == BEAM_SWITCH) {
+    LOG_I(NR_MAC, "[UE %x] Switching to beam with ID %d (from %d)\n", UE->rnti, UE->cm_info.new_state, UE->UE_beam_index);
+    UE->UE_beam_index = UE->cm_info.new_state;
+  } else if (UE->cm_info.trigger_info == BWP_SWITCH)
+    UE->local_bwp_id = UE->cm_info.new_state;
+  UE->cm_info.trigger_info = NO_TRIGGER;
   NR_SCHED_UNLOCK(&mac->sched_lock);
 
   if (confirm->rrc_container_length > 0) {
     logical_chan_id_t id = 1;
     nr_rlc_srb_recv_sdu(confirm->gNB_DU_ue_id, id, confirm->rrc_container, confirm->rrc_container_length);
   }
-  /* nothing else to be done? */
 }
 
 void ue_context_modification_refuse(const f1ap_ue_context_modif_refuse_t *refuse)
 {
-  /* Currently, we only use the UE Context Modification Required procedure to
-   * trigger a RRC reconfigurtion after Msg.3 with C-RNTI MAC CE. If the CU
-   * refuses, it cannot do this reconfiguration, leaving the UE in an
-   * unconfigured state. Therefore, we just free all RA-related info, and
-   * request the release of the UE.  */
-  LOG_W(MAC, "Received UE Context Modification Refuse for %04x, requesting release\n", refuse->gNB_DU_ue_id);
+  LOG_W(NR_MAC, "Received UE Context Modification Refuse for %04x\n", refuse->gNB_DU_ue_id);
 
   gNB_MAC_INST *mac = RC.nrmac[0];
   NR_SCHED_LOCK(&mac->sched_lock);
   NR_UE_info_t *UE = find_nr_UE(&RC.nrmac[0]->UE_info, refuse->gNB_DU_ue_id);
   if (UE == NULL) {
-    LOG_E(MAC, "ERROR: unknown UE with RNTI %04x, ignoring UE Context Modification Refuse\n", refuse->gNB_DU_ue_id);
+    LOG_E(NR_MAC, "ERROR: unknown UE with RNTI %04x, ignoring UE Context Modification Refuse\n", refuse->gNB_DU_ue_id);
     NR_SCHED_UNLOCK(&mac->sched_lock);
     return;
   }
 
+  /* if the UE Context Modification Required procedure was initiated
+   * for a RRC reconfigurtion after Msg.3 with C-RNTI MAC CE, if the CU
+   * refuses, it cannot do this reconfiguration, leaving the UE in an
+   * unconfigured state. Therefore, we just free all RA-related info, and
+   * request the release of the UE.  */
+  bool release = UE->cm_info.trigger_info == MSG3_CRNTI;
+  ASN_STRUCT_FREE(asn_DEF_NR_CellGroupConfig, UE->reconfigCellGroup);
+  UE->reconfigCellGroup = NULL;
+  UE->cm_info.trigger_info = NO_TRIGGER;
   NR_SCHED_UNLOCK(&mac->sched_lock);
 
-  f1ap_ue_context_rel_req_t request = {
-    .gNB_CU_ue_id = refuse->gNB_CU_ue_id,
-    .gNB_DU_ue_id = refuse->gNB_DU_ue_id,
-    .cause = F1AP_CAUSE_RADIO_NETWORK,
-    .cause_value = F1AP_CauseRadioNetwork_procedure_cancelled,
-  };
-  mac->mac_rrc.ue_context_release_request(&request);
+  if (release) {
+    LOG_W(NR_MAC, "Context Modification Required after MSG3 with C-RNTI, requesting release\n");
+    f1ap_ue_context_rel_req_t request = {
+      .gNB_CU_ue_id = refuse->gNB_CU_ue_id,
+      .gNB_DU_ue_id = refuse->gNB_DU_ue_id,
+      .cause = F1AP_CAUSE_RADIO_NETWORK,
+      .cause_value = F1AP_CauseRadioNetwork_procedure_cancelled,
+    };
+    mac->mac_rrc.ue_context_release_request(&request);
+  }
 }
 
 void ue_context_release_command(const f1ap_ue_context_rel_cmd_t *cmd)
@@ -992,6 +1002,93 @@ void ue_context_release_command(const f1ap_ue_context_rel_cmd_t *cmd)
   NR_SCHED_UNLOCK(&mac->sched_lock);
 }
 
+static void process_reestablishment(gNB_MAC_INST *mac, uint32_t new_dl_rrc_id, uint32_t old_dl_rrc_id)
+{
+  /* check first that the scheduler knows such UE */
+  NR_UE_info_t *UE = find_ra_UE(&mac->UE_info, new_dl_rrc_id);
+  if (!UE) {
+    LOG_E(MAC, "ERROR: couldn't find UE with RNTI %04x, ignoring DL RRC Message Transfer\n", new_dl_rrc_id);
+    return;
+  }
+
+  NR_UE_info_t *oldUE = find_nr_UE(&mac->UE_info, old_dl_rrc_id);
+  if (!oldUE) {
+    /* No matching UE-associated logical F1-connection for the old gNB-DU UE F1AP ID.
+     * Per TS 38.473, if there's no matching connection, there's nothing to release. */
+    LOG_W(NR_MAC,
+          "DL RRC Message Transfer: old gNB-DU UE F1AP ID %04x has no matching UE-associated F1-connection, nothing to relese\n",
+          old_dl_rrc_id);
+    /* Clean up any F1 UE data associated with the old gNB-DU UE F1AP ID */
+    if (du_exists_f1_ue_data(old_dl_rrc_id))
+      du_remove_f1_ue_data(old_dl_rrc_id);
+    return;
+  }
+
+  // Per TS 38.401: "Find UE context based on old gNB-DU UE F1AP ID, replace old C-RNTI/PCI with new C-RNTI/PCI"
+  rnti_t new_rnti = UE->rnti;
+  // assigning the old RNTI to the new UE so that mac_remove_nr_ue prints correct RNTI when removing
+  UE->rnti = oldUE->rnti;
+  oldUE->rnti = new_rnti;
+  for (int i = 1; i < seq_arr_size(&oldUE->UE_sched_ctrl.lc_config); ++i) {
+    const nr_lc_config_t *c = seq_arr_at(&oldUE->UE_sched_ctrl.lc_config, i);
+    nr_lc_config_t new = *c;
+    new.suspended = true;
+    nr_mac_add_lcid(&UE->UE_sched_ctrl, &new);
+  }
+  // need to move the oldUE to RA list because it still needs to transmit MSG4
+  NR_RA_t *temp_ra = UE->ra;
+  oldUE->ra = temp_ra;
+  UE->ra = NULL;
+  NR_UE_sched_ctrl_t temp_sc;
+  memcpy(&temp_sc, &UE->UE_sched_ctrl, sizeof(NR_UE_sched_ctrl_t));
+  memcpy(&UE->UE_sched_ctrl, &oldUE->UE_sched_ctrl, sizeof(NR_UE_sched_ctrl_t));
+  memcpy(&oldUE->UE_sched_ctrl, &temp_sc, sizeof(NR_UE_sched_ctrl_t));
+  mac_remove_nr_ue(mac, UE->rnti);
+  NR_UE_info_t *r = remove_UE_from_list(MAX_MOBILES_PER_GNB + 1, mac->UE_info.connected_ue_list, oldUE->rnti);
+  DevAssert(r == oldUE);
+  add_UE_to_list(NR_NB_RA_PROC_MAX, mac->UE_info.access_ue_list, oldUE);
+  nr_rlc_remove_ue(new_dl_rrc_id);
+  nr_rlc_update_id(old_dl_rrc_id, new_dl_rrc_id);
+  instance_t f1inst = get_f1_gtp_instance();
+  if (f1inst >= 0) // we actually use F1-U
+    gtpv1u_update_ue_id(f1inst, old_dl_rrc_id, new_dl_rrc_id);
+
+  /* Per TS 38.331 5.3.7.2: the UE releases the spCellConfig, so we drop it
+   * from the current configuration. It will be reapplied when the
+   * reconfiguration has succeeded (indicated by the CU).
+   * Guard against double reestablishment: if reestablish_rlc is already set,
+   * reconfigCellGroup was saved by the first reestablishment and
+   * CellGroup.spCellConfig is already NULL — don't overwrite. */
+  if (!oldUE->reestablish_rlc) {
+    asn_copy(&asn_DEF_NR_CellGroupConfig, (void **)&oldUE->reconfigCellGroup, oldUE->CellGroup);
+    ASN_STRUCT_FREE(asn_DEF_NR_SpCellConfig, oldUE->CellGroup->spCellConfig);
+    oldUE->CellGroup->spCellConfig = NULL;
+    reset_sc_info(&oldUE->sc_info);
+    configure_UE_BWP(mac,
+                     mac->common_channels[0].ServingCellConfigCommon,
+                     oldUE,
+                     true,
+                     NR_SearchSpace__searchSpaceType_PR_common,
+                     -1,
+                     -1);
+  } else {
+    LOG_W(NR_MAC,
+          "UE %04x: reestablishment while other reestablishment still pending keeping saved reconfigCellGroup with spCellConfig\n",
+          oldUE->rnti);
+  }
+  oldUE->reestablish_rlc = true;
+  /* Per TS 38.331 clause 5.3.7.4: apply gNB RLC configuration for SRB1 to match the UE RLC configuration defined in 9.2.1.
+   * Use configuration file values for timers t_poll_retransmit, t_reassembly and t_status_prohibit */
+  nr_rlc_configuration_t rlc_configuration = mac->rlc_config;
+  rlc_configuration.srb.poll_pdu = -1;
+  rlc_configuration.srb.poll_byte = -1;
+  rlc_configuration.srb.max_retx_threshold = 8;
+  rlc_configuration.srb.sn_field_length = 12;
+  NR_RLC_Config_t *rlc_Config = nr_srb_config(&rlc_configuration);
+  nr_rlc_reconfigure_entity(new_dl_rrc_id, 1, rlc_Config);
+  ASN_STRUCT_FREE(asn_DEF_NR_RLC_Config, rlc_Config);
+}
+
 /** @brief Process a DL RRC MESSAGE TRANSFER. Handles delivery of an RRC message to a UE
  * via the F1AP DL RRC MESSAGE TRANSFER procedure, as specified in TS 38.473. This procedure
  * is also responsible for re-establishing UE context when required (e.g., during RRC connection
@@ -1006,17 +1103,6 @@ void dl_rrc_message_transfer(const f1ap_dl_rrc_message_t *dl_rrc)
         dl_rrc->srb_id);
 
   gNB_MAC_INST *mac = RC.nrmac[0];
-  pthread_mutex_lock(&mac->sched_lock);
-  /* check first that the scheduler knows such UE */
-  NR_UE_info_t *UE = find_nr_UE(&mac->UE_info, dl_rrc->gNB_DU_ue_id);
-  UE = UE ? UE : find_ra_UE(&mac->UE_info, dl_rrc->gNB_DU_ue_id);
-  if (UE == NULL) {
-    LOG_E(MAC, "ERROR: unknown UE with RNTI %04x, ignoring DL RRC Message Transfer\n", dl_rrc->gNB_DU_ue_id);
-    pthread_mutex_unlock(&mac->sched_lock);
-    return;
-  }
-  pthread_mutex_unlock(&mac->sched_lock);
-
   if (!du_exists_f1_ue_data(dl_rrc->gNB_DU_ue_id)) {
     LOG_D(NR_MAC, "No CU UE ID stored for UE RNTI %04x, adding CU UE ID %d\n", dl_rrc->gNB_DU_ue_id, dl_rrc->gNB_CU_ue_id);
     f1_ue_data_t new_ue_data = {.secondary_ue = dl_rrc->gNB_CU_ue_id};
@@ -1033,83 +1119,13 @@ void dl_rrc_message_transfer(const f1ap_dl_rrc_message_t *dl_rrc)
    * it shall release the old gNB-DU UE F1AP ID and the related configurations associated
    * with the old gNB-DU UE F1AP ID." */
   if (dl_rrc->old_gNB_DU_ue_id != NULL) {
-    AssertFatal(*dl_rrc->old_gNB_DU_ue_id != dl_rrc->gNB_DU_ue_id,
-                "logic bug: current and old gNB DU UE ID cannot be the same\n");
-    NR_UE_info_t *oldUE = find_nr_UE(&mac->UE_info, *dl_rrc->old_gNB_DU_ue_id);
-    if (oldUE == NULL) {
-      /* No matching UE-associated logical F1-connection for the old gNB-DU UE F1AP ID.
-       * Per TS 38.473, if there's no matching connection, there's nothing to release. */
-      LOG_I(NR_MAC,
-           "DL RRC Message Transfer: old gNB-DU UE F1AP ID %04x has no matching UE-associated logical F1-connection, nothing to "
-           "release\n",
-           *dl_rrc->old_gNB_DU_ue_id);
-      /* Clean up any F1 UE data associated with the old gNB-DU UE F1AP ID */
-      if (du_exists_f1_ue_data(*dl_rrc->old_gNB_DU_ue_id)) {
-        du_remove_f1_ue_data(*dl_rrc->old_gNB_DU_ue_id);
-      }
-    } else {
-      /* Per TS 38.401: "Find UE context based on old gNB-DU UE F1AP ID, replace
-       * old C-RNTI/PCI with new C-RNTI/PCI". Below, we do the inverse: we keep
-       * the new UE context (with new C-RNTI), but set up everything to reuse the
-       * old config. */
-      pthread_mutex_lock(&mac->sched_lock);
-      uid_t temp_uid = UE->uid;
-      UE->uid = oldUE->uid;
-      oldUE->uid = temp_uid;
-      for (int i = 1; i < seq_arr_size(&oldUE->UE_sched_ctrl.lc_config); ++i) {
-        const nr_lc_config_t *c = seq_arr_at(&oldUE->UE_sched_ctrl.lc_config, i);
-        nr_lc_config_t new = *c;
-        new.suspended = true;
-        nr_mac_add_lcid(&UE->UE_sched_ctrl, &new);
-      }
-      ASN_STRUCT_FREE(asn_DEF_NR_CellGroupConfig, UE->CellGroup);
-      UE->CellGroup = oldUE->CellGroup;
-      oldUE->CellGroup = NULL;
-      ASN_STRUCT_FREE(asn_DEF_NR_CellGroupConfig, UE->reconfigCellGroup);
-      UE->reconfigCellGroup = oldUE->reconfigCellGroup;
-      oldUE->reconfigCellGroup = NULL;
-      UE->reestablish_rlc = oldUE->reestablish_rlc;
-      ASN_STRUCT_FREE(asn_DEF_NR_UE_NR_Capability, UE->capability);
-      UE->capability = oldUE->capability;
-      oldUE->capability = NULL;
-      UE->mac_stats = oldUE->mac_stats;
-      UE->measgap_config = oldUE->measgap_config;
-      UE->local_bwp_id = oldUE->local_bwp_id;
-      mac_remove_nr_ue(mac, *dl_rrc->old_gNB_DU_ue_id);
-      pthread_mutex_unlock(&mac->sched_lock);
-      nr_rlc_remove_ue(dl_rrc->gNB_DU_ue_id);
-      nr_rlc_update_id(*dl_rrc->old_gNB_DU_ue_id, dl_rrc->gNB_DU_ue_id);
-      instance_t f1inst = get_f1_gtp_instance();
-      if (f1inst >= 0) // we actually use F1-U
-        gtpv1u_update_ue_id(f1inst, *dl_rrc->old_gNB_DU_ue_id, dl_rrc->gNB_DU_ue_id);
-    }
-    /* Per TS 38.331 5.3.7.2: the UE releases the spCellConfig, so we drop it
-     * from the current configuration. It will be reapplied when the
-     * reconfiguration has succeeded (indicated by the CU).
-     * Guard against double reestablishment: if reestablish_rlc is already set,
-     * reconfigCellGroup was saved by the first reestablishment and
-     * CellGroup.spCellConfig is already NULL — don't overwrite. */
-    if (!UE->reestablish_rlc) {
-      asn_copy(&asn_DEF_NR_CellGroupConfig, (void **)&UE->reconfigCellGroup, UE->CellGroup);
-      ASN_STRUCT_FREE(asn_DEF_NR_SpCellConfig, UE->CellGroup->spCellConfig);
-      UE->CellGroup->spCellConfig = NULL;
-    } else {
-      LOG_W(NR_MAC, "UE %04x: reestablishment while previous reestablishment still pending, "
-            "keeping saved reconfigCellGroup with spCellConfig\n", UE->rnti);
-    }
-    UE->reestablish_rlc = true;
-    /* Per TS 38.331 clause 5.3.7.4: apply gNB RLC configuration for SRB1 to match the UE RLC configuration defined in 9.2.1.
-     * Use configuration file values for timers t_poll_retransmit, t_reassembly and t_status_prohibit */
-    nr_rlc_configuration_t rlc_configuration = mac->rlc_config;
-    rlc_configuration.srb.poll_pdu = -1;
-    rlc_configuration.srb.poll_byte = -1;
-    rlc_configuration.srb.max_retx_threshold = 8;
-    rlc_configuration.srb.sn_field_length = 12;
-    NR_RLC_Config_t *rlc_Config = nr_srb_config(&rlc_configuration);
-    nr_rlc_reconfigure_entity(dl_rrc->gNB_DU_ue_id, 1, rlc_Config);
-    ASN_STRUCT_FREE(asn_DEF_NR_RLC_Config, rlc_Config);
+    if (*dl_rrc->old_gNB_DU_ue_id != dl_rrc->gNB_DU_ue_id) {
+      NR_SCHED_LOCK(&mac->sched_lock);
+      process_reestablishment(mac, dl_rrc->gNB_DU_ue_id, *dl_rrc->old_gNB_DU_ue_id);
+      NR_SCHED_UNLOCK(&mac->sched_lock);
+    } else
+      LOG_E(NR_MAC, "Current and old gNB DU UE ID are the same (%04x), cannot do reestablishment\n", dl_rrc->gNB_DU_ue_id);
   }
-
   /* the DU ue id is the RNTI */
   nr_rlc_srb_recv_sdu(dl_rrc->gNB_DU_ue_id, dl_rrc->srb_id, dl_rrc->rrc_container, dl_rrc->rrc_container_length);
 }
@@ -1135,10 +1151,17 @@ void f1_paging(const f1ap_paging_t *paging)
 
 void trp_information_request(const f1ap_trp_information_req_t *req)
 {
-  positioning_config_t positioning_config = RCconfig_nr_positioning();
-  uint8_t NumTRPs = positioning_config.num_trp;
-  f1ap_trp_information_resp_t resp = {0};
   gNB_MAC_INST *mac = RC.nrmac[0];
+  positioning_config_t *positioning_config = mac->positioning_config;
+  if (positioning_config == NULL) {
+    LOG_E(NR_PHY, "No TRPs configured for positioning in the configuration file\n");
+    f1ap_trp_information_failure_t fail = {.transaction_id = req->transaction_id};
+    fail.cause = F1AP_CAUSE_RADIO_NETWORK;
+    mac->mac_rrc.trp_information_failure(&fail);
+    return;
+  }
+  uint8_t NumTRPs = positioning_config->num_trp;
+  f1ap_trp_information_resp_t resp = {0};
 
   resp.transaction_id = req->transaction_id;
   // Check if the TRP_ID matches with the list sent in the trp information request
@@ -1150,7 +1173,7 @@ void trp_information_request(const f1ap_trp_information_req_t *req)
         calloc_or_fail(trp_list_length, sizeof(*resp.trp_information_list.trp_information_item));
     for (int i = 0; i < trp_list_length; i++) {
       for (int j = 0; j < NumTRPs; j++) {
-        if (positioning_config.trps[j].id == req->trp_list.trp_list_item[i].trp_id) {
+        if (positioning_config->trps[j].id == req->trp_list.trp_list_item[i].trp_id) {
           resp.trp_information_list.trp_information_item[trp_resp_len].trp_id = req->trp_list.trp_list_item[i].trp_id;
           trp_resp_len++;
         }
@@ -1162,8 +1185,8 @@ void trp_information_request(const f1ap_trp_information_req_t *req)
         calloc_or_fail(NumTRPs, sizeof(*resp.trp_information_list.trp_information_item));
     for (int i = 0; i < NumTRPs; i++) {
       f1ap_trp_information_t *trp_info_item = &resp.trp_information_list.trp_information_item[i];
-      trp_info_item->trp_id = positioning_config.trps[i].id;
-      create_trp_info_item(req, trp_info_item, &positioning_config, i);
+      trp_info_item->trp_id = positioning_config->trps[i].id;
+      create_trp_info_item(req, trp_info_item, positioning_config, i);
     }
     resp.trp_information_list.trp_information_item_length = NumTRPs;
   }

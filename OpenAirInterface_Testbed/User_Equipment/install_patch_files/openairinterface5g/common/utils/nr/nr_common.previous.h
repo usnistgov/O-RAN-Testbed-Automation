@@ -173,6 +173,8 @@ typedef struct frame_structure_s {
 typedef struct {
   /// Time shift in number of samples estimated based on DMRS-PDSCH/PUSCH
   int est_delay;
+  /// True when est_delay is based on a clear enough channel impulse response peak
+  bool valid;
   /// Max position in OFDM symbol related to time shift estimation based on DMRS-PDSCH/PUSCH
   int delay_max_pos;
   /// Max value related to time shift estimation based on DMRS-PDSCH/PUSCH
@@ -197,6 +199,29 @@ typedef struct meas_s {
   val_init_t ss_rsrp_dBm;
   val_init_t csi_rsrp_dBm;
 } meas_t;
+
+// Configuration parameters required for 5G Positioning
+// TRP Cartesian Coordinate information
+typedef struct trp_s {
+  // TRP id
+  uint32_t id;
+  // TRP x-axis value
+  int32_t x_axis;
+  // TRP y-axis value
+  int32_t y_axis;
+  // TRP z-axis value
+  int32_t z_axis;
+  // 0 = mm, 1 = cm, 2 = dm
+  uint8_t unit;
+} trp_t;
+
+#define MAX_NUM_TRPs 8
+typedef struct {
+  trp_t trps[MAX_NUM_TRPs];
+  uint8_t num_trp;
+  // Serving gNB indicator
+  bool is_serving_gNB;
+} positioning_config_t;
 
 /** @brief Returns NR RSRP index per 3GPP TS 38.133 Table 10.1.6.1-1 */
 uint8_t get_rsrp_index(int rsrp_dBm);

@@ -1,8 +1,8 @@
 diff --git a/openair2/RRC/NR/rrc_gNB.c b/openair2/RRC/NR/rrc_gNB.c
-index 4b0ffd38a3..faab08fa8f 100644
+index 0c14ee7f20..fbb9495893 100644
 --- a/openair2/RRC/NR/rrc_gNB.c
 +++ b/openair2/RRC/NR/rrc_gNB.c
-@@ -1672,9 +1672,9 @@ fallback_rrc_setup:
+@@ -1717,9 +1717,9 @@ fallback_rrc_setup:
    return;
  }
  
@@ -14,7 +14,7 @@ index 4b0ffd38a3..faab08fa8f 100644
      return;
    if (mr->measResultServingMOList.list.count == 0 || mr->measResultServingMOList.list.array == NULL)
      return;
-@@ -1688,8 +1688,20 @@ static void nr_rrc_count_ss_sinr_dist(gNB_RRC_INST *rrc, const NR_MeasResults_t
+@@ -1733,8 +1733,20 @@ static void nr_rrc_count_ss_sinr_dist(gNB_RRC_INST *rrc, const NR_MeasResults_t
      if (cr->resultsSSB_Cell == NULL || cr->resultsSSB_Cell->sinr == NULL)
        continue;
      const long encoded = *cr->resultsSSB_Cell->sinr;
@@ -37,7 +37,7 @@ index 4b0ffd38a3..faab08fa8f 100644
    }
  }
  
-@@ -1876,7 +1888,7 @@ static void rrc_gNB_process_MeasurementReport(gNB_RRC_INST *rrc, gNB_RRC_UE_t *U
+@@ -1921,7 +1933,7 @@ static void rrc_gNB_process_MeasurementReport(gNB_RRC_INST *rrc, gNB_RRC_UE_t *U
    }
  
    if (report_config->choice.reportConfigNR->reportType.present == NR_ReportConfigNR__reportType_PR_periodical) {

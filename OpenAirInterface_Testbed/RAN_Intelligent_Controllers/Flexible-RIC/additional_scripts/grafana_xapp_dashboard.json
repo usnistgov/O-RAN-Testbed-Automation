@@ -21,7 +21,7 @@
       "type": "grafana",
       "id": "grafana",
       "name": "Grafana",
-      "version": "13.0.1"
+      "version": "13.1.0"
     },
     {
       "type": "panel",
@@ -57,7 +57,7 @@
       "type": "datasource",
       "id": "yesoreyeram-infinity-datasource",
       "name": "Infinity",
-      "version": "3.7.4"
+      "version": "3.10.1"
     }
   ],
   "annotations": {
@@ -84,7 +84,7 @@
   "panels": [
     {
       "gridPos": {
-        "h": 4,
+        "h": 5,
         "w": 10,
         "x": 0,
         "y": 0
@@ -99,158 +99,9 @@
         "content": "<img src=\"http://localhost:3030/NIST.svg\" style=\"max-width: 100%; max-height: 100%; height: auto;\" />",
         "mode": "html"
       },
-      "pluginVersion": "13.0.1",
+      "pluginVersion": "13.1.0",
       "transparent": true,
       "type": "text"
-    },
-    {
-      "datasource": {
-        "type": "datasource",
-        "uid": "-- Dashboard --"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "custom": {
-            "align": "center",
-            "cellOptions": {
-              "type": "color-text"
-            },
-            "filterable": false,
-            "footer": {
-              "reducers": []
-            },
-            "inspect": false,
-            "minWidth": 50,
-            "wrapText": false
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "super-light-yellow",
-                "value": 0
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 2,
-        "x": 10,
-        "y": 0
-      },
-      "id": 21,
-      "options": {
-        "cellHeight": "sm",
-        "enablePagination": false,
-        "showHeader": false
-      },
-      "pluginVersion": "13.0.1",
-      "targets": [
-        {
-          "datasource": {
-            "type": "datasource",
-            "uid": "-- Dashboard --"
-          },
-          "panelId": 20,
-          "refId": "A"
-        }
-      ],
-      "title": "UE IDs",
-      "transformations": [
-        {
-          "id": "filterFieldsByName",
-          "options": {
-            "include": {
-              "names": [
-                "Time (UNIX ms)",
-                "UE ID"
-              ]
-            }
-          }
-        },
-        {
-          "id": "groupToNestedTable",
-          "options": {
-            "fields": {
-              "Time (UNIX ms)": {
-                "aggregations": [],
-                "operation": "groupby"
-              },
-              "UE ID": {
-                "aggregations": [
-                  "allValues"
-                ],
-                "operation": "aggregate"
-              },
-              "UE_ID": {
-                "aggregations": [
-                  "allValues"
-                ],
-                "operation": "aggregate"
-              },
-              "UNIX Epoch (ms)": {
-                "aggregations": [],
-                "operation": "groupby"
-              },
-              "Value": {
-                "aggregations": []
-              }
-            },
-            "showSubframeHeaders": false
-          }
-        },
-        {
-          "id": "reduce",
-          "options": {
-            "includeTimeField": false,
-            "mode": "reduceFields",
-            "reducers": [
-              "last"
-            ]
-          }
-        },
-        {
-          "id": "extractFields",
-          "options": {
-            "delimiter": ",",
-            "format": "delimiter",
-            "keepTime": false,
-            "replace": true,
-            "source": "UE ID (allValues)"
-          }
-        },
-        {
-          "disabled": true,
-          "id": "transpose",
-          "options": {
-            "firstFieldName": "UE IDs"
-          }
-        },
-        {
-          "disabled": true,
-          "id": "filterFieldsByName",
-          "options": {
-            "byVariable": false,
-            "include": {
-              "names": [
-                "1"
-              ]
-            }
-          }
-        }
-      ],
-      "transparent": true,
-      "type": "table"
     },
     {
       "datasource": {
@@ -263,6 +114,45 @@
             "fixedColor": "super-light-yellow",
             "mode": "fixed"
           },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 1,
+            "drawStyle": "bars",
+            "fillOpacity": 100,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "stepBefore",
+            "lineStyle": {
+              "fill": "solid"
+            },
+            "lineWidth": 0,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 0,
+          "min": 0,
           "noValue": "0",
           "thresholds": {
             "mode": "absolute",
@@ -276,35 +166,38 @@
                 "value": 80
               }
             ]
-          }
+          },
+          "unit": "UEs"
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 4,
-        "w": 2,
-        "x": 12,
+        "h": 5,
+        "w": 4,
+        "x": 10,
         "y": 0
       },
-      "id": 20,
+      "id": 50,
       "options": {
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "percentChangeColorMode": "standard",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
+        "annotations": {
+          "clustering": -1,
+          "multiLane": false
         },
-        "showPercentChange": false,
-        "textMode": "auto",
-        "wideLayout": true
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "enableFacetedFilter": false,
+          "overflow": "ellipsis",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
       },
-      "pluginVersion": "13.0.1",
+      "pluginVersion": "13.1.0",
       "targets": [
         {
           "columns": [
@@ -314,7 +207,17 @@
               "type": "timestamp_epoch"
             },
             {
+              "selector": "Batch ID (Mapping Cell with UE)",
+              "text": "Batch ID",
+              "type": "string"
+            },
+            {
               "selector": "Reporting Time Offset (ms)",
+              "text": "",
+              "type": "number"
+            },
+            {
+              "selector": "Indication Latency (ms)",
               "text": "",
               "type": "number"
             },
@@ -480,15 +383,21 @@
           }
         }
       ],
-      "title": "Num. UEs",
+      "title": "UEs Over Time",
       "transformations": [
         {
           "id": "groupBy",
           "options": {
             "fields": {
-              "Time (UNIX ms)": {
+              "Batch ID": {
                 "aggregations": [],
                 "operation": "groupby"
+              },
+              "Time (UNIX ms)": {
+                "aggregations": [
+                  "last"
+                ],
+                "operation": "aggregate"
               },
               "UE": {
                 "aggregations": [
@@ -498,7 +407,7 @@
               },
               "UE ID": {
                 "aggregations": [
-                  "count"
+                  "distinctCount"
                 ],
                 "operation": "aggregate"
               },
@@ -508,56 +417,45 @@
               }
             }
           }
+        },
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "Time (UNIX ms) (last)",
+                "UE ID (distinctCount)"
+              ]
+            }
+          }
         }
       ],
-      "type": "stat"
+      "type": "timeseries"
     },
     {
       "datasource": {
         "type": "datasource",
         "uid": "-- Dashboard --"
       },
+      "description": "Mapping to show what UE is connected to what E2 node.",
       "fieldConfig": {
         "defaults": {
           "color": {
-            "fixedColor": "super-light-yellow",
-            "mode": "fixed"
+            "mode": "thresholds"
           },
           "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
+            "align": "center",
+            "cellOptions": {
+              "type": "color-text"
             },
-            "insertNulls": false,
-            "lineInterpolation": "smooth",
-            "lineWidth": 2,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
+            "filterable": false,
+            "footer": {
+              "reducers": []
             },
-            "showPoints": "auto",
-            "showValues": false,
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
+            "inspect": false,
+            "minWidth": 50,
+            "wrapText": false
           },
-          "decimals": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -570,77 +468,171 @@
                 "value": 80
               }
             ]
-          },
-          "unit": "UEs"
+          }
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 4,
-        "w": 3,
+        "h": 5,
+        "w": 4,
         "x": 14,
         "y": 0
       },
-      "id": 22,
+      "id": 49,
       "options": {
-        "annotations": {
-          "clustering": -1,
-          "multiLane": false
-        },
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": false
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
-        }
+        "cellHeight": "sm",
+        "enablePagination": false,
+        "showHeader": true
       },
-      "pluginVersion": "13.0.1",
+      "pluginVersion": "13.1.0",
       "targets": [
         {
           "datasource": {
             "type": "datasource",
             "uid": "-- Dashboard --"
           },
-          "panelId": 20,
+          "panelId": 50,
           "refId": "A"
         }
       ],
-      "title": "UEs Over Time",
+      "title": "UE Mapping",
       "transformations": [
         {
-          "id": "groupBy",
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "E2 Node ID",
+                "UE ID",
+                "Batch ID"
+              ]
+            }
+          }
+        },
+        {
+          "id": "groupToNestedTable",
           "options": {
             "fields": {
-              "Time (UNIX ms)": {
+              "Batch ID": {
                 "aggregations": [],
                 "operation": "groupby"
               },
-              "UE": {
+              "E2 Node ID": {
                 "aggregations": [
-                  "count"
+                  "allValues"
                 ],
                 "operation": "aggregate"
               },
+              "Time (UNIX ms)": {
+                "aggregations": []
+              },
               "UE ID": {
                 "aggregations": [
-                  "count"
+                  "allValues"
+                ],
+                "operation": "aggregate"
+              },
+              "UE_ID": {
+                "aggregations": [
+                  "allValues"
                 ],
                 "operation": "aggregate"
               },
               "UNIX Epoch (ms)": {
                 "aggregations": [],
                 "operation": "groupby"
+              },
+              "Value": {
+                "aggregations": []
               }
+            },
+            "showSubframeHeaders": false
+          }
+        },
+        {
+          "id": "reduce",
+          "options": {
+            "includeTimeField": false,
+            "mode": "reduceFields",
+            "reducers": [
+              "lastNotNull"
+            ]
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Batch ID": true,
+              "E2 Node ID (allValues)": false,
+              "UE ID (allValues)": false,
+              "__nestedFrames": true
+            },
+            "includeByName": {},
+            "indexByName": {
+              "E2 Node ID (allValues)": 1,
+              "UE ID (allValues)": 0,
+              "__nestedFrames": 2
+            },
+            "renameByName": {
+              "0": "UE ID",
+              "0 1": "E2 ID",
+              "E2 Node ID (allValues)": "E2 ID",
+              "UE ID (allValues)": "UE ID"
+            }
+          }
+        },
+        {
+          "id": "transpose",
+          "options": {}
+        },
+        {
+          "id": "extractFields",
+          "options": {
+            "delimiter": ",",
+            "format": "delimiter",
+            "keepTime": false,
+            "replace": false,
+            "source": "1"
+          }
+        },
+        {
+          "id": "transpose",
+          "options": {
+            "firstFieldName": ""
+          }
+        },
+        {
+          "id": "filterByValue",
+          "options": {
+            "filters": [
+              {
+                "config": {
+                  "id": "substring",
+                  "options": {
+                    "value": "["
+                  }
+                },
+                "fieldName": "UE ID"
+              }
+            ],
+            "match": "any",
+            "type": "exclude"
+          }
+        },
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "UE ID",
+                "E2 ID"
+              ]
             }
           }
         }
       ],
-      "type": "timeseries"
+      "type": "table"
     },
     {
       "datasource": {
@@ -711,8 +703,8 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 5,
-        "x": 17,
+        "w": 6,
+        "x": 18,
         "y": 0
       },
       "id": 19,
@@ -721,6 +713,7 @@
         "legend": {
           "calcs": [],
           "displayMode": "list",
+          "overflow": "ellipsis",
           "placement": "bottom",
           "showLegend": false
         },
@@ -740,14 +733,14 @@
         "sizing": "auto",
         "valueMode": "color"
       },
-      "pluginVersion": "13.0.1",
+      "pluginVersion": "13.1.0",
       "targets": [
         {
           "datasource": {
             "type": "datasource",
             "uid": "-- Dashboard --"
           },
-          "panelId": 20,
+          "panelId": 50,
           "refId": "A"
         }
       ],
@@ -922,10 +915,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 4,
-        "w": 2,
-        "x": 22,
-        "y": 0
+        "h": 3,
+        "w": 6,
+        "x": 18,
+        "y": 4
       },
       "id": 46,
       "options": {
@@ -945,18 +938,18 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "13.0.1",
+      "pluginVersion": "13.1.0",
       "targets": [
         {
           "datasource": {
             "type": "datasource",
             "uid": "-- Dashboard --"
           },
-          "panelId": 20,
+          "panelId": 50,
           "refId": "A"
         }
       ],
-      "title": "Time Offset (ms)",
+      "title": "Latency (ms)",
       "transformations": [
         {
           "id": "filterFieldsByName",
@@ -964,7 +957,7 @@
             "include": {
               "names": [
                 "Time (UNIX ms)",
-                "Reporting Time Offset (ms)"
+                "Indication Latency (ms)"
               ]
             }
           }
@@ -1086,7 +1079,7 @@
         "h": 7,
         "w": 7,
         "x": 0,
-        "y": 4
+        "y": 5
       },
       "id": 1,
       "options": {
@@ -1097,6 +1090,8 @@
         "legend": {
           "calcs": [],
           "displayMode": "list",
+          "enableFacetedFilter": false,
+          "overflow": "ellipsis",
           "placement": "bottom",
           "showLegend": true
         },
@@ -1106,7 +1101,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "13.0.1",
+      "pluginVersion": "13.1.0",
       "targets": [
         {
           "columns": [
@@ -1336,7 +1331,7 @@
         "h": 7,
         "w": 4,
         "x": 7,
-        "y": 4
+        "y": 5
       },
       "id": 13,
       "options": {
@@ -1347,6 +1342,8 @@
         "legend": {
           "calcs": [],
           "displayMode": "list",
+          "enableFacetedFilter": false,
+          "overflow": "ellipsis",
           "placement": "bottom",
           "showLegend": true
         },
@@ -1356,7 +1353,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "13.0.1",
+      "pluginVersion": "13.1.0",
       "targets": [
         {
           "datasource": {
@@ -1481,7 +1478,7 @@
         "h": 7,
         "w": 7,
         "x": 11,
-        "y": 4
+        "y": 5
       },
       "id": 5,
       "options": {
@@ -1492,6 +1489,8 @@
         "legend": {
           "calcs": [],
           "displayMode": "list",
+          "enableFacetedFilter": false,
+          "overflow": "ellipsis",
           "placement": "bottom",
           "showLegend": true
         },
@@ -1501,14 +1500,14 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "13.0.1",
+      "pluginVersion": "13.1.0",
       "targets": [
         {
           "datasource": {
             "type": "datasource",
             "uid": "-- Dashboard --"
           },
-          "panelId": 20,
+          "panelId": 50,
           "refId": "A"
         }
       ],
@@ -1630,7 +1629,7 @@
         "h": 4,
         "w": 6,
         "x": 18,
-        "y": 4
+        "y": 7
       },
       "id": 4,
       "options": {
@@ -1641,6 +1640,8 @@
         "legend": {
           "calcs": [],
           "displayMode": "list",
+          "enableFacetedFilter": false,
+          "overflow": "ellipsis",
           "placement": "bottom",
           "showLegend": true
         },
@@ -1650,14 +1651,14 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "13.0.1",
+      "pluginVersion": "13.1.0",
       "targets": [
         {
           "datasource": {
             "type": "datasource",
             "uid": "-- Dashboard --"
           },
-          "panelId": 20,
+          "panelId": 50,
           "refId": "A"
         }
       ],
@@ -1805,10 +1806,10 @@
         ]
       },
       "gridPos": {
-        "h": 6,
+        "h": 5,
         "w": 6,
         "x": 18,
-        "y": 8
+        "y": 11
       },
       "id": 32,
       "options": {
@@ -1819,6 +1820,8 @@
         "legend": {
           "calcs": [],
           "displayMode": "list",
+          "enableFacetedFilter": false,
+          "overflow": "ellipsis",
           "placement": "bottom",
           "showLegend": true
         },
@@ -1828,14 +1831,14 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "13.0.1",
+      "pluginVersion": "13.1.0",
       "targets": [
         {
           "datasource": {
             "type": "datasource",
             "uid": "-- Dashboard --"
           },
-          "panelId": 20,
+          "panelId": 50,
           "refId": "A"
         }
       ],
@@ -1957,7 +1960,7 @@
         "h": 4,
         "w": 7,
         "x": 0,
-        "y": 11
+        "y": 12
       },
       "id": 9,
       "options": {
@@ -1968,6 +1971,8 @@
         "legend": {
           "calcs": [],
           "displayMode": "list",
+          "enableFacetedFilter": false,
+          "overflow": "ellipsis",
           "placement": "bottom",
           "showLegend": true
         },
@@ -1977,14 +1982,14 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "13.0.1",
+      "pluginVersion": "13.1.0",
       "targets": [
         {
           "datasource": {
             "type": "datasource",
             "uid": "-- Dashboard --"
           },
-          "panelId": 20,
+          "panelId": 50,
           "refId": "A"
         }
       ],
@@ -2097,21 +2102,6 @@
                 }
               }
             ]
-          },
-          {
-            "__systemRef": "hideSeriesFrom",
-            "matcher": {
-              "id": "byNames",
-              "options": {
-                "mode": "exclude",
-                "names": [
-                  "PHY.NPrbDl"
-                ],
-                "prefix": "All except:",
-                "readOnly": true
-              }
-            },
-            "properties": []
           }
         ]
       },
@@ -2119,7 +2109,7 @@
         "h": 6,
         "w": 4,
         "x": 7,
-        "y": 11
+        "y": 12
       },
       "id": 12,
       "options": {
@@ -2130,6 +2120,8 @@
         "legend": {
           "calcs": [],
           "displayMode": "list",
+          "enableFacetedFilter": false,
+          "overflow": "ellipsis",
           "placement": "bottom",
           "showLegend": true
         },
@@ -2139,14 +2131,14 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "13.0.1",
+      "pluginVersion": "13.1.0",
       "targets": [
         {
           "datasource": {
             "type": "datasource",
             "uid": "-- Dashboard --"
           },
-          "panelId": 20,
+          "panelId": 50,
           "refId": "A"
         }
       ],
@@ -2282,7 +2274,7 @@
         "h": 7,
         "w": 7,
         "x": 11,
-        "y": 11
+        "y": 12
       },
       "id": 15,
       "options": {
@@ -2293,6 +2285,8 @@
         "legend": {
           "calcs": [],
           "displayMode": "list",
+          "enableFacetedFilter": false,
+          "overflow": "ellipsis",
           "placement": "bottom",
           "showLegend": true
         },
@@ -2302,14 +2296,14 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "13.0.1",
+      "pluginVersion": "13.1.0",
       "targets": [
         {
           "datasource": {
             "type": "datasource",
             "uid": "-- Dashboard --"
           },
-          "panelId": 20,
+          "panelId": 50,
           "refId": "A"
         }
       ],
@@ -2322,154 +2316,6 @@
               "names": [
                 "RRU.PrbTotDl (%)",
                 "RRU.PrbTotUl (%)",
-                "Time (UNIX ms)",
-                "UE ID"
-              ]
-            }
-          }
-        },
-        {
-          "id": "filterByValue",
-          "options": {
-            "filters": [
-              {
-                "config": {
-                  "id": "equal",
-                  "options": {
-                    "value": "${Select_UE_ID}"
-                  }
-                },
-                "fieldName": "UE ID"
-              }
-            ],
-            "match": "any",
-            "type": "include"
-          }
-        }
-      ],
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "datasource",
-        "uid": "-- Dashboard --"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "showValues": false,
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "red",
-                "value": 0.8
-              }
-            ]
-          },
-          "unit": "percentunit"
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "DRB.HarqBlockErrorRateDl (%)"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "light-blue",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 6,
-        "x": 18,
-        "y": 14
-      },
-      "id": 38,
-      "options": {
-        "annotations": {
-          "clustering": -1,
-          "multiLane": false
-        },
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "13.0.1",
-      "targets": [
-        {
-          "datasource": {
-            "type": "datasource",
-            "uid": "-- Dashboard --"
-          },
-          "panelId": 20,
-          "refId": "A"
-        }
-      ],
-      "title": "HARQ Block Error Rate",
-      "transformations": [
-        {
-          "id": "filterFieldsByName",
-          "options": {
-            "include": {
-              "names": [
-                "DRB.HarqBlockErrorRateDl (%)",
                 "Time (UNIX ms)",
                 "UE ID"
               ]
@@ -2594,7 +2440,7 @@
         "h": 9,
         "w": 7,
         "x": 0,
-        "y": 15
+        "y": 16
       },
       "id": 14,
       "options": {
@@ -2605,6 +2451,8 @@
         "legend": {
           "calcs": [],
           "displayMode": "list",
+          "enableFacetedFilter": false,
+          "overflow": "ellipsis",
           "placement": "bottom",
           "showLegend": true
         },
@@ -2614,14 +2462,14 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "13.0.1",
+      "pluginVersion": "13.1.0",
       "targets": [
         {
           "datasource": {
             "type": "datasource",
             "uid": "-- Dashboard --"
           },
-          "panelId": 20,
+          "panelId": 50,
           "refId": "A"
         }
       ],
@@ -2636,6 +2484,156 @@
                 "UE ID",
                 "PUCCH.Snr (dB)",
                 "PUSCH.Snr (dB)"
+              ]
+            }
+          }
+        },
+        {
+          "id": "filterByValue",
+          "options": {
+            "filters": [
+              {
+                "config": {
+                  "id": "equal",
+                  "options": {
+                    "value": "${Select_UE_ID}"
+                  }
+                },
+                "fieldName": "UE ID"
+              }
+            ],
+            "match": "any",
+            "type": "include"
+          }
+        }
+      ],
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Dashboard --"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 0.8
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "DRB.HarqBlockErrorRateDl (%)"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "light-blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 16
+      },
+      "id": 38,
+      "options": {
+        "annotations": {
+          "clustering": -1,
+          "multiLane": false
+        },
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "enableFacetedFilter": false,
+          "overflow": "ellipsis",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "13.1.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "-- Dashboard --"
+          },
+          "panelId": 50,
+          "refId": "A"
+        }
+      ],
+      "title": "HARQ Block Error Rate",
+      "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "DRB.HarqBlockErrorRateDl (%)",
+                "Time (UNIX ms)",
+                "UE ID"
               ]
             }
           }
@@ -2741,7 +2739,7 @@
         "h": 7,
         "w": 4,
         "x": 7,
-        "y": 17
+        "y": 18
       },
       "id": 47,
       "options": {
@@ -2752,6 +2750,8 @@
         "legend": {
           "calcs": [],
           "displayMode": "list",
+          "enableFacetedFilter": false,
+          "overflow": "ellipsis",
           "placement": "bottom",
           "showLegend": true
         },
@@ -2761,14 +2761,14 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "13.0.1",
+      "pluginVersion": "13.1.0",
       "targets": [
         {
           "datasource": {
             "type": "datasource",
             "uid": "-- Dashboard --"
           },
-          "panelId": 20,
+          "panelId": 50,
           "refId": "A"
         }
       ],
@@ -2965,7 +2965,7 @@
         "h": 6,
         "w": 7,
         "x": 11,
-        "y": 18
+        "y": 19
       },
       "id": 36,
       "options": {
@@ -2976,6 +2976,8 @@
         "legend": {
           "calcs": [],
           "displayMode": "list",
+          "enableFacetedFilter": false,
+          "overflow": "ellipsis",
           "placement": "bottom",
           "showLegend": true
         },
@@ -2985,14 +2987,14 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "13.0.1",
+      "pluginVersion": "13.1.0",
       "targets": [
         {
           "datasource": {
             "type": "datasource",
             "uid": "-- Dashboard --"
           },
-          "panelId": 20,
+          "panelId": 50,
           "refId": "A"
         }
       ],
@@ -3114,7 +3116,7 @@
         "h": 5,
         "w": 6,
         "x": 18,
-        "y": 19
+        "y": 20
       },
       "id": 39,
       "options": {
@@ -3125,6 +3127,8 @@
         "legend": {
           "calcs": [],
           "displayMode": "list",
+          "enableFacetedFilter": false,
+          "overflow": "ellipsis",
           "placement": "bottom",
           "showLegend": true
         },
@@ -3134,14 +3138,14 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "13.0.1",
+      "pluginVersion": "13.1.0",
       "targets": [
         {
           "datasource": {
             "type": "datasource",
             "uid": "-- Dashboard --"
           },
-          "panelId": 20,
+          "panelId": 50,
           "refId": "A"
         }
       ],
@@ -3186,9 +3190,9 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 24
+        "y": 25
       },
-      "id": 49,
+      "id": 51,
       "panels": [
         {
           "datasource": {
@@ -3232,7 +3236,7 @@
             "h": 3,
             "w": 6,
             "x": 0,
-            "y": 25
+            "y": 26
           },
           "id": 48,
           "options": {
@@ -3240,14 +3244,14 @@
             "enablePagination": false,
             "showHeader": false
           },
-          "pluginVersion": "13.0.1",
+          "pluginVersion": "13.1.0",
           "targets": [
             {
               "datasource": {
                 "type": "datasource",
                 "uid": "-- Dashboard --"
               },
-              "panelId": 20,
+              "panelId": 50,
               "refId": "A"
             }
           ],
@@ -3404,13 +3408,14 @@
             "h": 4,
             "w": 5,
             "x": 6,
-            "y": 25
+            "y": 26
           },
           "id": 40,
           "options": {
             "legend": {
               "calcs": [],
               "displayMode": "list",
+              "overflow": "ellipsis",
               "placement": "bottom",
               "showLegend": true
             },
@@ -3420,14 +3425,14 @@
               "sort": "none"
             }
           },
-          "pluginVersion": "13.0.1",
+          "pluginVersion": "13.1.0",
           "targets": [
             {
               "datasource": {
                 "type": "datasource",
                 "uid": "-- Dashboard --"
               },
-              "panelId": 20,
+              "panelId": 50,
               "refId": "A"
             }
           ],
@@ -3563,7 +3568,7 @@
             "h": 4,
             "w": 3,
             "x": 11,
-            "y": 25
+            "y": 26
           },
           "id": 41,
           "options": {
@@ -3574,6 +3579,8 @@
             "legend": {
               "calcs": [],
               "displayMode": "list",
+              "enableFacetedFilter": false,
+              "overflow": "ellipsis",
               "placement": "bottom",
               "showLegend": true
             },
@@ -3583,14 +3590,14 @@
               "sort": "none"
             }
           },
-          "pluginVersion": "13.0.1",
+          "pluginVersion": "13.1.0",
           "targets": [
             {
               "datasource": {
                 "type": "datasource",
                 "uid": "-- Dashboard --"
               },
-              "panelId": 20,
+              "panelId": 50,
               "refId": "A"
             }
           ],
@@ -3711,7 +3718,7 @@
             "h": 4,
             "w": 3,
             "x": 14,
-            "y": 25
+            "y": 26
           },
           "id": 42,
           "options": {
@@ -3722,6 +3729,8 @@
             "legend": {
               "calcs": [],
               "displayMode": "list",
+              "enableFacetedFilter": false,
+              "overflow": "ellipsis",
               "placement": "bottom",
               "showLegend": true
             },
@@ -3731,14 +3740,14 @@
               "sort": "none"
             }
           },
-          "pluginVersion": "13.0.1",
+          "pluginVersion": "13.1.0",
           "targets": [
             {
               "datasource": {
                 "type": "datasource",
                 "uid": "-- Dashboard --"
               },
-              "panelId": 20,
+              "panelId": 50,
               "refId": "A"
             }
           ],
@@ -3847,7 +3856,7 @@
             "h": 4,
             "w": 7,
             "x": 17,
-            "y": 25
+            "y": 26
           },
           "id": 29,
           "options": {
@@ -3855,6 +3864,7 @@
             "legend": {
               "calcs": [],
               "displayMode": "list",
+              "overflow": "ellipsis",
               "placement": "bottom",
               "showLegend": false
             },
@@ -3874,14 +3884,14 @@
             "sizing": "auto",
             "valueMode": "color"
           },
-          "pluginVersion": "13.0.1",
+          "pluginVersion": "13.1.0",
           "targets": [
             {
               "datasource": {
                 "type": "datasource",
                 "uid": "-- Dashboard --"
               },
-              "panelId": 20,
+              "panelId": 50,
               "refId": "A"
             }
           ],
@@ -4085,7 +4095,7 @@
             "h": 6,
             "w": 6,
             "x": 0,
-            "y": 28
+            "y": 29
           },
           "id": 30,
           "options": {
@@ -4096,6 +4106,8 @@
             "legend": {
               "calcs": [],
               "displayMode": "list",
+              "enableFacetedFilter": false,
+              "overflow": "ellipsis",
               "placement": "bottom",
               "showLegend": true
             },
@@ -4105,14 +4117,14 @@
               "sort": "none"
             }
           },
-          "pluginVersion": "13.0.1",
+          "pluginVersion": "13.1.0",
           "targets": [
             {
               "datasource": {
                 "type": "datasource",
                 "uid": "-- Dashboard --"
               },
-              "panelId": 20,
+              "panelId": 50,
               "refId": "A"
             }
           ],
@@ -4214,13 +4226,14 @@
             "h": 4,
             "w": 5,
             "x": 6,
-            "y": 29
+            "y": 30
           },
           "id": 6,
           "options": {
             "legend": {
               "calcs": [],
               "displayMode": "list",
+              "overflow": "ellipsis",
               "placement": "bottom",
               "showLegend": true
             },
@@ -4230,14 +4243,14 @@
               "sort": "none"
             }
           },
-          "pluginVersion": "13.0.1",
+          "pluginVersion": "13.1.0",
           "targets": [
             {
               "datasource": {
                 "type": "datasource",
                 "uid": "-- Dashboard --"
               },
-              "panelId": 20,
+              "panelId": 50,
               "refId": "A"
             }
           ],
@@ -4437,7 +4450,7 @@
             "h": 8,
             "w": 5,
             "x": 11,
-            "y": 29
+            "y": 30
           },
           "id": 33,
           "options": {
@@ -4448,6 +4461,8 @@
             "legend": {
               "calcs": [],
               "displayMode": "list",
+              "enableFacetedFilter": false,
+              "overflow": "ellipsis",
               "placement": "bottom",
               "showLegend": true
             },
@@ -4457,14 +4472,14 @@
               "sort": "none"
             }
           },
-          "pluginVersion": "13.0.1",
+          "pluginVersion": "13.1.0",
           "targets": [
             {
               "datasource": {
                 "type": "datasource",
                 "uid": "-- Dashboard --"
               },
-              "panelId": 20,
+              "panelId": 50,
               "refId": "A"
             }
           ],
@@ -4583,7 +4598,7 @@
             "h": 8,
             "w": 8,
             "x": 16,
-            "y": 29
+            "y": 30
           },
           "id": 2,
           "options": {
@@ -4594,6 +4609,8 @@
             "legend": {
               "calcs": [],
               "displayMode": "list",
+              "enableFacetedFilter": false,
+              "overflow": "ellipsis",
               "placement": "bottom",
               "showLegend": true
             },
@@ -4603,14 +4620,14 @@
               "sort": "none"
             }
           },
-          "pluginVersion": "13.0.1",
+          "pluginVersion": "13.1.0",
           "targets": [
             {
               "datasource": {
                 "type": "datasource",
                 "uid": "-- Dashboard --"
               },
-              "panelId": 20,
+              "panelId": 50,
               "refId": "A"
             }
           ],
@@ -4815,13 +4832,14 @@
             "h": 4,
             "w": 5,
             "x": 6,
-            "y": 33
+            "y": 34
           },
           "id": 43,
           "options": {
             "legend": {
               "calcs": [],
               "displayMode": "list",
+              "overflow": "ellipsis",
               "placement": "bottom",
               "showLegend": true
             },
@@ -4831,14 +4849,14 @@
               "sort": "none"
             }
           },
-          "pluginVersion": "13.0.1",
+          "pluginVersion": "13.1.0",
           "targets": [
             {
               "datasource": {
                 "type": "datasource",
                 "uid": "-- Dashboard --"
               },
-              "panelId": 20,
+              "panelId": 50,
               "refId": "A"
             }
           ],
@@ -4957,7 +4975,7 @@
             "h": 3,
             "w": 6,
             "x": 0,
-            "y": 34
+            "y": 35
           },
           "id": 45,
           "options": {
@@ -4968,6 +4986,8 @@
             "legend": {
               "calcs": [],
               "displayMode": "list",
+              "enableFacetedFilter": false,
+              "overflow": "ellipsis",
               "placement": "bottom",
               "showLegend": false
             },
@@ -4977,14 +4997,14 @@
               "sort": "none"
             }
           },
-          "pluginVersion": "13.0.1",
+          "pluginVersion": "13.1.0",
           "targets": [
             {
               "datasource": {
                 "type": "datasource",
                 "uid": "-- Dashboard --"
               },
-              "panelId": 20,
+              "panelId": 50,
               "refId": "A"
             }
           ],
@@ -5078,8 +5098,8 @@
         "allValue": "-1",
         "allowCustomValue": true,
         "current": {
-          "text": "500",
-          "value": "500"
+          "text": "$__all",
+          "value": "$__all"
         },
         "description": "The number of samples to show, interpolating from the start and end of the time window",
         "includeAll": true,
@@ -5111,7 +5131,7 @@
             "value": "200"
           },
           {
-            "selected": true,
+            "selected": false,
             "text": "500",
             "value": "500"
           },

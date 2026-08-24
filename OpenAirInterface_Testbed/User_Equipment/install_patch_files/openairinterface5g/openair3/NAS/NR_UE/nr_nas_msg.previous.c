@@ -622,6 +622,38 @@ static int fill_imeisv(FGSMobileIdentity *mi, const uicc_t *uicc)
   return 19;
 }
 
+/** @brief Fill requested 5GS Mobile Identity (TS 24.501, 9.11.3.4) according to identity type.
+ *
+ * @param mobile_identity Pointer to the mobile identity structure to fill
+ * @param nas Pointer to the UE NAS context
+ * @param identitytype Type of identity to fill
+ * @return Encoded identity size in bytes, 0 on failure
+ */
+static int nas_fill_5gs_mobile_identity(FGSMobileIdentity *mobile_identity, const nr_ue_nas_t *nas, uint8_t identitytype)
+{
+  switch (identitytype) {
+    case FGS_MOBILE_IDENTITY_SUCI:
+      return fill_suci(mobile_identity, nas->uicc);
+    case FGS_MOBILE_IDENTITY_5G_GUTI:
+      if (!nas->guti) {
+        LOG_W(NAS, "Cannot build Identity Response with 5G-GUTI: UE has no valid GUTI\n");
+        return 0;
+      }
+      return fill_guti(mobile_identity, nas->guti);
+    case FGS_MOBILE_IDENTITY_IMEISV:
+      return fill_imeisv(mobile_identity, nas->uicc);
+    case FGS_MOBILE_IDENTITY_5GS_TMSI:
+      if (!nas->guti) {
+        LOG_W(NAS, "Cannot build Identity Response with 5G-S-TMSI: UE has no valid GUTI\n");
+        return 0;
+      }
+      return fill_fgstmsi(&mobile_identity->stmsi, nas->guti);
+    default:
+      LOG_W(NAS, "Cannot build Identity Response: requested identity type %d is unsupported\n", identitytype);
+      return 0;
+  }
+}
+
 void transferRES(uint8_t ck[16], uint8_t ik[16], uint8_t *input, uint8_t rand[16], uint8_t *output, plmn_id_t *plmn_id)
 {
   uint8_t S[100] = {0};
@@ -1189,7 +1221,8 @@ void generateServiceRequest(as_nas_info_t *initialNasMsg, nr_ue_nas_t *nas)
   }
 }
 
-static void generateIdentityResponse(as_nas_info_t *initialNasMsg, const uint8_t identitytype, uicc_t *uicc)
+/** @brief Build Identity Response according to requested identity type (8.2.22 of 3GPP TS 24.501) */
+static void generateIdentityResponse(const nr_ue_nas_t *nas, as_nas_info_t *initialNasMsg, uint8_t identitytype)
 {
   int size = sizeof(fgmm_msg_header_t);
   fgmm_nas_message_plain_t plain = {0};
@@ -1198,11 +1231,13 @@ static void generateIdentityResponse(as_nas_info_t *initialNasMsg, const uint8_t
   plain.header = set_mm_header(FGS_IDENTITY_RESPONSE, PLAIN_5GS_MSG);
   size += sizeof(plain.header);
 
-  // set identity response
+  /** Build Identity Response according to requested identity type: if identity
+   * is unavailable in UE context (e.g., missing 5G-GUTI), return */
   fgmm_identity_response_msg *mm_msg = &plain.mm_msg.fgs_identity_response;
-  if (identitytype == FGS_MOBILE_IDENTITY_SUCI) {
-    size += fill_suci(&mm_msg->fgsmobileidentity, uicc);
-  }
+  int identity_size = nas_fill_5gs_mobile_identity(&mm_msg->fgsmobileidentity, nas, identitytype);
+  if (identity_size <= 0)
+    return;
+  size += identity_size;
 
   // encode the message
   initialNasMsg->nas_data = malloc_or_fail(size * sizeof(*initialNasMsg->nas_data));
@@ -1234,13 +1269,15 @@ static void handle_identity_request(as_nas_info_t *initialNasMsg, nr_ue_nas_t *n
         "Received IDENTITY REQUEST for identity type: %s\n",
         print_info(msg.fgsmobileidentity, fgs_identity_type_text, sizeofArray(fgs_identity_type_text)));
 
-  if (mm_header.message_type == NAS_SECURITY_UNPROTECTED && msg.fgsmobileidentity != FGS_MOBILE_IDENTITY_SUCI) {
-    // see 3GPP TS 24.501 4.4.4.2
-    LOG_E(NAS, "Only SUCI mobile identity is expected in a security-unprotected request\n");
+  if (mm_header.security_header_type == PLAIN_5GS_MSG && msg.fgsmobileidentity != FGS_MOBILE_IDENTITY_SUCI) {
+    // TS 24.501, 4.4.4.2: unprotected Identity Request is processable only when the requested identity is SUCI.
+    LOG_E(NAS, "Drop unprotected Identity Request: SUCI required (TS 24.501 4.4.4.2), got %d\n", msg.fgsmobileidentity);
     return;
   }
 
-  generateIdentityResponse(initialNasMsg, msg.fgsmobileidentity, nas->uicc);
+  generateIdentityResponse(nas, initialNasMsg, msg.fgsmobileidentity);
+  if (initialNasMsg->length <= 0)
+    LOG_W(NAS, "Dropped Identity Response: unable to build Identity Response for identity type %d\n", msg.fgsmobileidentity);
 }
 
 static void generateAuthenticationResp(nr_ue_nas_t *nas, as_nas_info_t *initialNasMsg, uint8_t *buf)

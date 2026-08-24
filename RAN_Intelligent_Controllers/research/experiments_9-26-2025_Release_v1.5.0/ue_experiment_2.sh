@@ -69,7 +69,7 @@ restart_other_components() {
     ./run_background.sh
 
     if $(./is_running.sh | grep -q "NOT_RUNNING"); then
-        echo "Error starting FlexRIC."
+        echo "ERROR: Could not start FlexRIC."
         exit 1
     fi
     cd ../..
@@ -106,7 +106,7 @@ restart_other_components() {
         if grep -q "TYPE <CTRL-C> TO TERMINATE" logs/gnb_stdout.txt; then
             break
         elif $(./is_running.sh | grep -q "NOT_RUNNING"); then
-            echo "Error starting gNodeB. Check logs/gnb_stdout.txt for more information."
+            echo "ERROR: Could not start gNodeB. Check logs/gnb_stdout.txt for more information."
             exit 1
         fi
     done

@@ -82,6 +82,9 @@ cp "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/metrics_factory.h" "
 echo "Adding metrics_factory.c..."
 cp "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/metrics_factory.c" "$FLEXRIC_DIR"/examples/xApp/c/
 
+echo "Adding metrics_factory_test.c..."
+cp "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/metrics_factory_test.c" "$FLEXRIC_DIR"/examples/xApp/c/
+
 echo "Adding xapp_kpm_moni_write_to_csv.c..."
 cp "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv.c" "$FLEXRIC_DIR"/examples/xApp/c/monitor/
 
@@ -139,6 +142,9 @@ git restore examples/xApp/c/monitor/xapp_rc_moni.c
 git restore examples/xApp/c/orange/xapp_es_with_cell_util.c
 git restore examples/xApp/c/slice/xapp_slice_moni_ctrl.c
 git restore examples/xApp/c/tc/xapp_tc_all.c
+git restore examples/xApp/c/keysight/xapp_keysight_kpm_rc.c
+git restore test/agent-ric/test_near_ric.c
+git restore test/agent-ric-xapp/test_ag_ric_xapp.c
 git restore src/xApp/act_proc.c
 git restore src/xApp/act_proc.h
 git restore src/xApp/e42_xapp_api.h
@@ -164,6 +170,18 @@ fi
 if [ ! -f "examples/xApp/c/tc/xapp_tc_all.c.previous" ]; then
     cp examples/xApp/c/tc/xapp_tc_all.c examples/xApp/c/tc/xapp_tc_all.c.previous
     cp examples/xApp/c/tc/xapp_tc_all.c.previous "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/tc/xapp_tc_all.previous.c"
+fi
+if [ ! -f "examples/xApp/c/keysight/xapp_keysight_kpm_rc.c.previous" ]; then
+    cp examples/xApp/c/keysight/xapp_keysight_kpm_rc.c examples/xApp/c/keysight/xapp_keysight_kpm_rc.c.previous
+    cp examples/xApp/c/keysight/xapp_keysight_kpm_rc.c.previous "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/keysight/xapp_keysight_kpm_rc.previous.c"
+fi
+if [ ! -f "test/agent-ric/test_near_ric.c.previous" ]; then
+    cp test/agent-ric/test_near_ric.c test/agent-ric/test_near_ric.c.previous
+    cp test/agent-ric/test_near_ric.c.previous "$PARENT_DIR/install_patch_files/flexric/test/agent-ric/test_near_ric.previous.c"
+fi
+if [ ! -f "test/agent-ric-xapp/test_ag_ric_xapp.c.previous" ]; then
+    cp test/agent-ric-xapp/test_ag_ric_xapp.c test/agent-ric-xapp/test_ag_ric_xapp.c.previous
+    cp test/agent-ric-xapp/test_ag_ric_xapp.c.previous "$PARENT_DIR/install_patch_files/flexric/test/agent-ric-xapp/test_ag_ric_xapp.previous.c"
 fi
 if [ ! -f "src/xApp/act_proc.c.previous" ]; then
     cp src/xApp/act_proc.c src/xApp/act_proc.c.previous
@@ -194,6 +212,9 @@ git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/orange/xapp_es_with_cell_util.c.patch"
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/slice/xapp_slice_moni_ctrl.c.patch"
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/tc/xapp_tc_all.c.patch"
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/keysight/xapp_keysight_kpm_rc.c.patch"
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/test/agent-ric/test_near_ric.c.patch"
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/test/agent-ric-xapp/test_ag_ric_xapp.c.patch"
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/src/xApp/act_proc.c.patch"
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/src/xApp/act_proc.h.patch"
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/src/xApp/e42_xapp_api.h.patch"

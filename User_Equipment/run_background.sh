@@ -44,12 +44,8 @@ UE_NUMBER=1
 if [ "$#" -eq 1 ]; then
     UE_NUMBER=$1
 fi
-if ! [[ $UE_NUMBER =~ ^[0-9]+$ ]]; then
-    echo "ERROR: UE number must be a number."
-    exit 1
-fi
-if [ $UE_NUMBER -lt 1 ]; then
-    echo "ERROR: UE number must be greater than or equal to 1."
+if ! [[ "$UE_NUMBER" =~ ^[1-9][0-9]*$ ]]; then
+    echo "ERROR: UE number must be a positive integer."
     exit 1
 fi
 
@@ -70,10 +66,10 @@ mkdir -p logs
 sudo chown --recursive "${SUDO_USER:-$USER}" logs
 
 sudo -v # Ensure sudo session is active
-sudo setsid bash -c "stdbuf -oL -eL \"$SCRIPT_DIR/run.sh\" $UE_NUMBER >/dev/null 2>&1" </dev/null &
+sudo setsid bash -c "exec stdbuf -oL -eL \"$SCRIPT_DIR/run.sh\" $UE_NUMBER" </dev/null >/dev/null 2>&1 &
 
 ATTEMPT=0
-while ! ./is_running.sh | grep -q "ue$UE_NUMBER"; do
+while ! ./is_running.sh | grep -Eq "(^|[ (])ue${UE_NUMBER}([ )]|$)"; do
     sleep 0.5
     ATTEMPT=$((ATTEMPT + 1))
     if [ $ATTEMPT -ge 120 ]; then

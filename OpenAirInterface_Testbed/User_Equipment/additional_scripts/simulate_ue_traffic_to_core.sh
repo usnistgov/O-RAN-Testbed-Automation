@@ -34,7 +34,8 @@ if ! command -v realpath &>/dev/null; then
     sudo env $APTVARS apt-get install -y coreutils
 fi
 
-SCRIPT_DIR=$(dirname "$(realpath "$0")")
+# Script directory from the called path, including symlinks
+SCRIPT_DIR="$(cd "$(dirname "$0")" >/dev/null 2>&1 && pwd)"
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$PARENT_DIR"
 
@@ -77,7 +78,7 @@ if [ $DURATION -lt 1 ]; then
 fi
 
 if [ ! -f "configs/ue${UE_NUMBER}.conf" ]; then
-    echo "Configuration was not found for OAI UE $UE_NUMBER. Please run ./generate_configurations.sh first."
+    echo "Configuration was not found for Duranta UE $UE_NUMBER. Please run ./generate_configurations.sh first."
     exit 1
 fi
 
@@ -130,8 +131,8 @@ fi
 
 CORE_IP=$(ip route | grep ogstun | cut -d ' ' -f 9 | xargs)
 if [ -z "$CORE_IP" ]; then # 5GDeploy:
-    if sudo ip netns exec "$UE_NAMESPACE" ip route | grep -q "oaitun_ue$UE_NUMBER"; then
-        SUBNET=$(sudo ip netns exec "$UE_NAMESPACE" ip route | grep "oaitun_ue$UE_NUMBER" | grep -v "default" | awk '{print $1}')
+    if sudo ip netns exec "$UE_NAMESPACE" ip route | grep -qw "oaitun_ue$UE_NUMBER"; then
+        SUBNET=$(sudo ip netns exec "$UE_NAMESPACE" ip route | grep -w "oaitun_ue$UE_NUMBER" | grep -v "default" | awk '{print $1}')
         if [ -n "$SUBNET" ]; then
             CORE_IP=$(remove_cidr_suffix "$SUBNET")
             CORE_IP="${CORE_IP%.0}.1"

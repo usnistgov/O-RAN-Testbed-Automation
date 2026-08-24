@@ -1,0 +1,108 @@
+%% IQ Constellation Plot
+clear;
+clc;
+
+% -------------------------------------------------------------------------
+% Configuration
+% -------------------------------------------------------------------------
+
+% Available scenarios:
+%scenario = "AWGN_PLUS5_PL0";
+%scenario = "AWGN_0_PL0";
+%scenario = "AWGN_MINUS5_PL0";
+scenario = "AWGN_MINUS5_PL25";
+
+max_points = 30000;
+
+% -------------------------------------------------------------------------
+% Select input file
+% -------------------------------------------------------------------------
+
+switch scenario
+    case "AWGN_PLUS5_PL0"
+        filename = "COMBINED_AWGN_5.csv";
+
+    case "AWGN_0_PL0"
+        filename = "COMBINED_AWGN-0.csv";
+
+    case "AWGN_MINUS5_PL0"
+        filename = "COMBINED_AWGN-5.csv";
+
+    case "AWGN_MINUS5_PL25"
+        filename = "COMBINED_AWGN-5_PL_25.csv";
+
+    otherwise
+        error("Unknown scenario: %s", scenario);
+end
+
+% -------------------------------------------------------------------------
+% Load IQ data
+% -------------------------------------------------------------------------
+
+data = readtable(filename, "Delimiter", ";");
+
+I = data.real;
+Q = data.imag;
+
+% Uniformly sample across the complete dataset
+num_points = min(max_points, length(I));
+indices = round(linspace(1, length(I), num_points));
+
+I = I(indices);
+Q = Q(indices);
+
+% -------------------------------------------------------------------------
+% Plot
+% -------------------------------------------------------------------------
+
+figure("Color", "w", "Position", [100 100 650 650]);
+
+scatter(I, Q, 3, "k", "filled");%, "MarkerFaceAlpha", 0.35, "MarkerEdgeAlpha", 0.35);
+
+xlabel("In-phase (I)", "FontSize", 24);
+ylabel("Quadrature (Q)", "FontSize", 24);
+
+grid on;
+box on;
+
+axis equal;
+pbaspect([1 1 1]);
+
+ax = gca;
+ax.FontSize = 24;
+ax.LineWidth = 1.2;
+ax.TickDir = "out";
+ax.GridAlpha = 0.20;
+ax.MinorGridAlpha = 0.10;
+ax.XMinorGrid = "on";
+ax.YMinorGrid = "on";
+
+% Use symmetric I/Q limits
+%limit = max(abs([I; Q]));
+%limit = 1.05 * limit;
+
+if scenario == "AWGN_MINUS5_PL25"
+    xlim([-250 1000]);
+    ylim([-250 1000]);
+    xticks([-1000, -500, -250, 0, 250, 500, 1000]);
+    yticks([-1000, -500, -250, 0, 250, 500, 1000]);
+
+    % Zoomed in window
+    inset_ax = axes("Units", "pixels", "Position", [200, 200, 700, 700])
+    scatter(inset_ax, I, Q, 1, "k", "filled");
+    xlim([-30, 30]);
+    ylim([-30, 30]);
+    xticks(inset_ax, [-30, -15, 0, 15, 30]);
+    yticks(inset_ax, [-30, -15, 0, 15, 30]);
+    axis(inset_ax, "equal");
+    pbaspect(inset_ax, [1, 1, 1]);
+    grid(inset_ax, "on");
+    box(inset_ax, "on");
+    inset_ax.FontSize = 16(inset_ax, "on");
+else
+    limit=500
+    xlim([-limit limit]);
+    ylim([-limit limit]);
+    xticks([-500, -250, 0, 250, 500]);
+    yticks([-500, -250, 0, 250, 500]);
+end

@@ -35,7 +35,7 @@ This tool supports the deployment of 5G O-RAN testbeds using open-source compone
 ```text
 CU/DU
 ├── OCUDU: 26.04
-├── Duranta (OAI) gNB: 2026.w25
+├── Duranta (OAI) gNB: 2026.w31
 └── O-RAN SC E2 Simulator: M-Release
 RICs
 ├── O-RAN SC Near-RT RIC: M-Release
@@ -61,7 +61,10 @@ RICs
 └── free5GC: v4.2.1
 UEs
 ├── srsRAN_4G: release_25_10
-└── Duranta (OAI) 5G UE: 2026.w25
+└── Duranta (OAI) 5G UE: 2026.w31
+```
+
+The components that have been verified to support or not support connectivity are included below.
 
 ```
 
@@ -149,11 +152,7 @@ Begin the installation process, recommended to be run as the current user rather
 ```
 
 
-##  OCUDU and O-RAN SC Near-RT RIC Output
-  
-
-Run the testbed with `./run.sh` to start the 5G Core, gNodeB, and UE. Use `./is_running.sh` to check if the components are running, and `./stop.sh` to stop the components. The optional RIC starts automatically on boot and can be accessed with `k9s -A`.
-
+Run the testbed with `./run.sh` to start the 5G Core, gNodeB, and UEs. Set `USE_DURANTA_UE=true` in `run.sh` to use Duranta UEs instead of the default srsRAN_4G UEs. To switch between band 3 and band 78, search for `Radio configuration presets` and update each section. Use `./is_running.sh` to check the components and `./stop.sh` to stop them. The optional RIC starts automatically on boot and can be accessed with `k9s -A`.
 
 ```console
 Attaching UE...
@@ -164,8 +163,8 @@ PDU Session Establishment successful. IP: 10.45.0.101
 RRC NR reconfiguration successful.
 ```
 
-<b>OCUDU Grafana WebUI and ZMQ Broker Visualization</b><div align="center">
-  <img src="Images/grafana.png" alt="OCUDU Grafana WebUI and ZMQ Broker" width="75%">
+<b>OCUDU Grafana WebUI and ZeroMQ Channel Emulator Visualization</b><div align="center">
+  <img src="Images/OCUDU_Grafana_WebUI.png" alt="OCUDU Grafana WebUI and ZeroMQ Channel Emulator" width="75%">
 </div>
 
 See <a href="Next_Generation_Node_B/README.md#ocudu-grafana-webui">this section</a> for more information.

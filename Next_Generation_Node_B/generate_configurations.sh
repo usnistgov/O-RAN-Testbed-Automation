@@ -28,21 +28,17 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
+echo "# Script: $(realpath "$0") $@"
+
 # Exit immediately if a command fails
 set -e
 
 EXPOSE_GNB_TO_HOSTNAME=false
 USE_FLEXRIC=false
-USE_ZMQ_BROKER=true
-ZMQ_BROKER_CHANNEL_BW_MHZ=20
-GNB_SRATE_MHZ=23.04
-GNB_BASE_SRATE_HZ=23.04e6
+USE_ZMQ_CHANNEL_EMULATOR=true
 PDU_SESSION_TIMEOUT=3
 
-if [ "$USE_ZMQ_BROKER" = "true" ]; then
-    ZMQ_BROKER_CHANNEL_BW_MHZ=10
-    GNB_SRATE_MHZ=11.52
-    GNB_BASE_SRATE_HZ=11.52e6
+if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ]; then
     PDU_SESSION_TIMEOUT=30
 fi
 
@@ -55,11 +51,22 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
+# Radio configuration presets (band 3 and band 78)
 BASE_EXAMPLE_CONFIG_PATH="$SCRIPT_DIR/ocudu/configs/gnb_rf_b210_fdd_srsUE.yml"
+GNB_DL_ARFCNS=("368500")
+ZMQ_CHANNEL_EMULATOR_CHANNEL_BW_MHZ=20
+GNB_SRATE_MHZ=23.04
+GNB_BASE_SRATE_HZ=23.04e6
+#
+# BASE_EXAMPLE_CONFIG_PATH="$SCRIPT_DIR/ocudu/configs/gnb_rf_b200_tdd_n78_20mhz.yml"
+# GNB_DL_ARFCNS=("630048" "643296")
+# ZMQ_CHANNEL_EMULATOR_CHANNEL_BW_MHZ=40
+# GNB_SRATE_MHZ=46.08
+# GNB_BASE_SRATE_HZ=46.08e6
 
 usage() {
     echo "Usage: $0 [--disable-e2-term] [--e2-term-address <address>] [--cells <cell_numbers>] [--ues <ue_numbers>]"
-    echo "    For example: $0 --ues 4,5,6 --cells 7,8"}
+    echo "    For example: $0 --ues 4,5,6 --cells 1,2"
 }
 
 # Parse command-line arguments
@@ -69,18 +76,32 @@ UE_NUMBERS=()
 CELL_NUMBERS=()
 while [[ $# -gt 0 ]]; do
     case $1 in
+    -h | --help)
+        usage
+        exit 0
+        ;;
     --disable-e2-term)
         ENABLE_E2_TERM="false"
         shift
         ;;
     --e2-term-address)
+        if [ $# -lt 2 ] || [ -z "$2" ]; then
+            echo "ERROR: --e2-term-address requires an address."
+            usage
+            exit 1
+        fi
         E2_ADDRESS="$2"
         shift 2
         ;;
     --cells)
+        if [ $# -lt 2 ] || [ -z "$2" ]; then
+            echo "ERROR: --cells requires comma-separated cell numbers."
+            usage
+            exit 1
+        fi
         IFS=',' read -r -a PARSED_CELL_NUMBERS <<<"$2"
         for CELL_NUMBER in "${PARSED_CELL_NUMBERS[@]}"; do
-            if ! [[ "$CELL_NUMBER" =~ ^[0-9]+$ ]] || [ "$CELL_NUMBER" -lt 1 ]; then
+            if ! [[ "$CELL_NUMBER" =~ ^[1-9][0-9]*$ ]]; then
                 echo "ERROR: Cell numbers must be positive integers separated by commas."
                 exit 1
             fi
@@ -89,9 +110,14 @@ while [[ $# -gt 0 ]]; do
         shift 2
         ;;
     --ues)
+        if [ $# -lt 2 ] || [ -z "$2" ]; then
+            echo "ERROR: --ues requires comma-separated UE numbers."
+            usage
+            exit 1
+        fi
         IFS=',' read -r -a parsed_ues <<<"$2"
         for UE_NUMBER in "${parsed_ues[@]}"; do
-            if ! [[ "$UE_NUMBER" =~ ^[0-9]+$ ]] || [ "$UE_NUMBER" -lt 1 ]; then
+            if ! [[ "$UE_NUMBER" =~ ^[1-9][0-9]*$ ]]; then
                 echo "ERROR: UE numbers must be positive integers separated by commas."
                 exit 1
             fi
@@ -100,7 +126,7 @@ while [[ $# -gt 0 ]]; do
         shift 2
         ;;
     *)
-        echo "Unknown argument: $1"
+        echo "ERROR: Unknown argument: $1"
         echo
         usage
         exit 1
@@ -201,6 +227,7 @@ if [ ! -f "$BASE_EXAMPLE_CONFIG_PATH" ]; then
     exit 1
 fi
 cp "$BASE_EXAMPLE_CONFIG_PATH" configs/gnb.yaml
+CELL_BAND=$(yq eval '.cell_cfg.band' configs/gnb.yaml)
 
 if [ ! -d "../RAN_Intelligent_Controllers/Near-Real-Time-RIC" ] && [ "$USE_FLEXRIC" = "false" ]; then
     echo "Could not find the Near-Real-Time-RIC directory. Disabling E2 termination support."
@@ -348,7 +375,7 @@ update_yaml() {
     # PLMN should be treated as string
     if [[ "$PROPERTY" == "plmn" || "$PROPERTY" == "plmn_list" || "$PROPERTY" == *".plmn" || "$PROPERTY" == *".plmn_list" ]]; then
         yq eval -i "${SECTION}.${PROPERTY} = \"$VALUE\"" "$FILE_PATH"
-    elif [[ "$VALUE" =~ ^[0-9]+$ || "$VALUE" =~ ^[0-9]+\.[0-9]+$ || "$VALUE" =~ ^(true|false)$ ]]; then
+    elif [[ "$VALUE" =~ ^-?[0-9]+$ || "$VALUE" =~ ^-?[0-9]+\.[0-9]+$ || "$VALUE" =~ ^(true|false)$ ]]; then
         yq eval -i "${SECTION}.${PROPERTY} = ${VALUE}" "$FILE_PATH"
     else
         yq eval -i "${SECTION}.${PROPERTY} = \"$VALUE\"" "$FILE_PATH"
@@ -357,23 +384,22 @@ update_yaml() {
 
 mkdir -p "$SCRIPT_DIR/logs"
 
-if [ "$USE_ZMQ_BROKER" = "true" ]; then
+if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ]; then
     DEVICE_ARGS="fail_unlocked=true,"
     CELL_COUNT=0
     for CELL_NUMBER in "${CELL_NUMBERS[@]}"; do
         CELL_RX_PORT=$((2000 + (CELL_NUMBER - 1) * 2))
-        CELL_TX_PORT=$((2001 + (CELL_NUMBER - 1) * 2))
+        CELL_TX_PORT=$((CELL_RX_PORT + 1))
+        if [ "$CELL_TX_PORT" -gt 65535 ]; then
+            echo "ERROR: Cell $CELL_NUMBER has a ZeroMQ port above 65535."
+            exit 1
+        fi
         DEVICE_ARGS="${DEVICE_ARGS}tx_port${CELL_COUNT}=tcp://127.0.0.1:${CELL_RX_PORT},rx_port${CELL_COUNT}=tcp://127.0.0.1:${CELL_TX_PORT},"
         CELL_COUNT=$((CELL_COUNT + 1))
     done
 else
-    BASE_SUBNET="10.201.0.0/16"
-    SUBNET_SIZE=4
     UE_NUMBER="${UE_NUMBERS[0]}"
-    SUBNET_OFFSET=$((UE_NUMBER * SUBNET_SIZE))
-    HOST_IP_OFFSET=$((SUBNET_OFFSET))
-    UE_IP_OFFSET=$((SUBNET_OFFSET + 1))
-    UE_IP=$(python3 install_scripts/fetch_nth_ip.py "$BASE_SUBNET" "$UE_IP_OFFSET")
+    UE_IP=$(../User_Equipment/install_scripts/get_ue_namespace_ip.sh ue "$UE_NUMBER")
     DEVICE_ARGS="${DEVICE_ARGS}fail_unlocked=true,tx_port=tcp://*:2100,rx_port=tcp://$UE_IP:2101,"
 fi
 
@@ -405,30 +431,57 @@ update_yaml "configs/gnb.yaml" "ru_sdr" "clock" "default"
 update_yaml "configs/gnb.yaml" "ru_sdr" "sync" "default"
 
 # Update configuration values for 5G cell parameters
+BASE_CELL_NUMBER="${CELL_NUMBERS[0]}"
+BASE_RADIO_PROFILE_INDEX=$(((BASE_CELL_NUMBER - 1) % ${#GNB_DL_ARFCNS[@]}))
+update_yaml "configs/gnb.yaml" "cell_cfg" "dl_arfcn" "${GNB_DL_ARFCNS[$BASE_RADIO_PROFILE_INDEX]}"
+update_yaml "configs/gnb.yaml" "cell_cfg" "pci" "$((BASE_CELL_NUMBER - 1))"
 update_yaml "configs/gnb.yaml" "cell_cfg" "nof_antennas_dl" "1"
 update_yaml "configs/gnb.yaml" "cell_cfg" "nof_antennas_ul" "1"
 update_yaml "configs/gnb.yaml" "cell_cfg" "plmn" $PLMN
 update_yaml "configs/gnb.yaml" "cell_cfg" "tac" $TAC
+update_yaml "configs/gnb.yaml" "cell_cfg.pdsch" "mcs_table" "qam64"
+update_yaml "configs/gnb.yaml" "cell_cfg.pusch" "mcs_table" "qam64"
 
-if [ "$USE_ZMQ_BROKER" = "true" ]; then
-    update_yaml "configs/gnb.yaml" "cell_cfg" "channel_bandwidth_MHz" "$ZMQ_BROKER_CHANNEL_BW_MHZ"
-    update_yaml "configs/gnb.yaml" "cell_cfg.pdcch.common" "coreset0_index" "6"
-    update_yaml "configs/gnb.yaml" "cell_cfg.prach" "total_nof_ra_preambles" "64"
+if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ]; then
+    update_yaml "configs/gnb.yaml" "cell_cfg" "channel_bandwidth_MHz" "$ZMQ_CHANNEL_EMULATOR_CHANNEL_BW_MHZ"
+    update_yaml "configs/gnb.yaml" "ru_sdr.amplitude_control" "tx_gain_backoff" "22"
+    update_yaml "configs/gnb.yaml" "cell_cfg.prach" "total_nof_ra_preambles" "60"
     update_yaml "configs/gnb.yaml" "cell_cfg.prach" "nof_ssb_per_ro" "1"
-    update_yaml "configs/gnb.yaml" "cell_cfg.prach" "nof_cb_preambles_per_ssb" "64"
-    update_yaml "configs/gnb.yaml" "cell_cfg.pucch" "resource_set_size" "7"
-    update_yaml "configs/gnb.yaml" "cell_cfg.pucch" "nof_cell_res_set_configs" "1"
-    update_yaml "configs/gnb.yaml" "cell_cfg.pucch" "f1_nof_cyclic_shifts" "1"
-    update_yaml "configs/gnb.yaml" "cell_cfg.pucch" "f1_enable_occ" "true"
-    update_yaml "configs/gnb.yaml" "cell_cfg.pucch" "nof_cell_sr_res" "7"
-    update_yaml "configs/gnb.yaml" "cell_cfg.pucch" "nof_cell_csi_res" "7"
+    update_yaml "configs/gnb.yaml" "cell_cfg.prach" "nof_cb_preambles_per_ssb" "60"
+    if [ "$CELL_BAND" = "3" ]; then
+        update_yaml "configs/gnb.yaml" "cell_cfg.prach" "prach_frequency_start" "3"
+        update_yaml "configs/gnb.yaml" "cell_cfg.pucch" "resource_set_size" "7"
+        update_yaml "configs/gnb.yaml" "cell_cfg.pucch" "nof_cell_res_set_configs" "1"
+        update_yaml "configs/gnb.yaml" "cell_cfg.pucch" "f1_nof_cyclic_shifts" "1"
+        update_yaml "configs/gnb.yaml" "cell_cfg.pucch" "f1_enable_occ" "true"
+        update_yaml "configs/gnb.yaml" "cell_cfg.pucch" "nof_cell_sr_res" "7"
+        update_yaml "configs/gnb.yaml" "cell_cfg.pucch" "nof_cell_csi_res" "7"
+    elif [ "$CELL_BAND" = "78" ]; then
+        update_yaml "configs/gnb.yaml" "cell_cfg.csi" "csi_rs_enabled" "false"
+        update_yaml "configs/gnb.yaml" "cell_cfg.pdcch.common" "coreset0_index" "11"
+        update_yaml "configs/gnb.yaml" "cell_cfg.prach" "prach_config_index" "159"
+        update_yaml "configs/gnb.yaml" "cell_cfg.prach" "prach_root_sequence_index" "1"
+        update_yaml "configs/gnb.yaml" "cell_cfg.prach" "preamble_rx_target_pw" "-110"
+        update_yaml "configs/gnb.yaml" "cell_cfg.pusch" "msg3_delta_preamble" "6"
+        update_yaml "configs/gnb.yaml" "cell_cfg.ssb" "ssb_period" "20"
+        update_yaml "configs/gnb.yaml" "cell_cfg.ssb" "ssb_block_power_dbm" "-25"
+        update_yaml "configs/gnb.yaml" "cell_cfg.tdd_ul_dl_cfg" "dl_ul_tx_period" "10"
+        update_yaml "configs/gnb.yaml" "cell_cfg.tdd_ul_dl_cfg" "nof_dl_slots" "7"
+        update_yaml "configs/gnb.yaml" "cell_cfg.tdd_ul_dl_cfg" "nof_dl_symbols" "6"
+        update_yaml "configs/gnb.yaml" "cell_cfg.tdd_ul_dl_cfg" "nof_ul_slots" "2"
+        update_yaml "configs/gnb.yaml" "cell_cfg.tdd_ul_dl_cfg" "nof_ul_symbols" "4"
+        update_yaml "configs/gnb.yaml" "cell_cfg.pucch" "formats" "f0_and_f2"
+        update_yaml "configs/gnb.yaml" "cell_cfg.pucch" "nof_cell_csi_res" "0"
+    fi
 fi
 
 yq eval -i 'del(.cells)' "configs/gnb.yaml"
-if [ "$USE_ZMQ_BROKER" = "true" ] && [ "${#CELL_NUMBERS[@]}" -gt 1 ]; then
+if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ] && [ "${#CELL_NUMBERS[@]}" -gt 1 ]; then
     CELL_COUNT=0
     for CELL_NUMBER in "${CELL_NUMBERS[@]}"; do
-        update_yaml "configs/gnb.yaml" "cells[$CELL_COUNT]" "pci" "$CELL_NUMBER"
+        RADIO_PROFILE_INDEX=$(((CELL_NUMBER - 1) % ${#GNB_DL_ARFCNS[@]}))
+        update_yaml "configs/gnb.yaml" "cells[$CELL_COUNT]" "pci" "$((CELL_NUMBER - 1))"
+        update_yaml "configs/gnb.yaml" "cells[$CELL_COUNT]" "dl_arfcn" "${GNB_DL_ARFCNS[$RADIO_PROFILE_INDEX]}"
         CELL_COUNT=$((CELL_COUNT + 1))
     done
 fi
@@ -578,6 +631,7 @@ update_yaml "configs/gnb.yaml" "pcap" "mac_filename" "$SCRIPT_DIR/logs/gnb_mac.p
 # Update configuration for metrics (for Grafana)
 update_yaml "configs/gnb.yaml" "metrics" "autostart_stdout_metrics" "true"
 update_yaml "configs/gnb.yaml" "metrics" "enable_json" "true"
+update_yaml "configs/gnb.yaml" "metrics" "layers.enable_rlc" "true"   # E2SM-KPM style 3 uses RLC reports to find UEs
 update_yaml "configs/gnb.yaml" "remote_control" "bind_addr" "0.0.0.0" # Grafana
 update_yaml "configs/gnb.yaml" "remote_control" "enabled" "true"
 # update_yaml "configs/gnb.yaml" "metrics" "addr" "127.0.0.1"
@@ -590,7 +644,6 @@ update_yaml "configs/gnb.yaml" "remote_control" "enabled" "true"
 # update_yaml "configs/gnb.yaml" "metrics" "layers.enable_pdcp" "false"
 # update_yaml "configs/gnb.yaml" "metrics" "layers.enable_cu_up_executor" "false"
 # update_yaml "configs/gnb.yaml" "metrics" "layers.enable_sched" "true"
-# update_yaml "configs/gnb.yaml" "metrics" "layers.enable_rlc" "false"
 # update_yaml "configs/gnb.yaml" "metrics" "layers.enable_mac" "false"
 # update_yaml "configs/gnb.yaml" "metrics" "layers.enable_executor" "false"
 # update_yaml "configs/gnb.yaml" "metrics" "layers.enable_du_low" "false"
@@ -608,40 +661,37 @@ update_yaml "configs/gnb.yaml" "ru_sdr" "otw_format" "default"
 #    update_yaml "configs/gnb.yaml" "expert_execution.threads.main_pool" "nof_threads" "$(nproc)"
 # fi
 
-if [ "$USE_ZMQ_BROKER" = "true" ]; then
-    if [ ! -f "install_scripts/generate_zmq_broker.sh" ]; then
-        echo "ERROR: Could not find install_scripts/generate_zmq_broker.sh."
+if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ]; then
+    if [ ! -f "install_scripts/generate_zmq_channel_emulator.sh" ]; then
+        echo "ERROR: Could not find install_scripts/generate_zmq_channel_emulator.sh."
         exit 1
     fi
 
-    echo "Generating ZeroMQ Broker Python script..."
+    echo "Generating ZeroMQ channel emulator Python script..."
 
-    # Allocate a /30 (4 addresses) subnet per UE (e.g., UE 1 -> 10.201.0.4/30, Gateway .5, UE .6)
-    BASE_SUBNET="10.201.0.0/16"
-    SUBNET_SIZE=4
-    BROKER_SRATE_INT=$(awk "BEGIN { printf \"%d\", $GNB_SRATE_MHZ * 1000000 }")
+    CHANNEL_EMULATOR_SRATE_INT=$(awk "BEGIN { printf \"%d\", $GNB_SRATE_MHZ * 1000000 }")
 
-    # Calculate the slow down ratio based on the number of UEs and cells
-    ZMQ_BROKER_SLOW_DOWN_RATIO="$((${#UE_NUMBERS[@]} + ${#CELL_NUMBERS[@]}))"
+    ZMQ_CHANNEL_EMULATOR_SLOW_DOWN_RATIO="1"
+    # # Optionally, calculate the slow down ratio based on the number of UEs and cells
+    # ZMQ_CHANNEL_EMULATOR_SLOW_DOWN_RATIO="$((${#UE_NUMBERS[@]} + ${#CELL_NUMBERS[@]}))"
 
-    UE_ARGS=""
-    for UE_NUMBER in "${UE_NUMBERS[@]}"; do
-        SUBNET_OFFSET=$((UE_NUMBER * SUBNET_SIZE))
-        UE_IP_OFFSET=$((SUBNET_OFFSET + 1)) # .6
-        UE_IP=$(python3 install_scripts/fetch_nth_ip.py "$BASE_SUBNET" "$UE_IP_OFFSET")
-        UE_ARGS="$UE_ARGS --ue $UE_NUMBER:$UE_IP"
-    done
+    CHANNEL_EMULATOR_UE_NUMBERS_STR=$(
+        IFS=,
+        echo "${UE_NUMBERS[*]}"
+    )
+    CHANNEL_EMULATOR_CELL_NUMBERS_STR=$(
+        IFS=,
+        echo "${CELL_NUMBERS[*]}"
+    )
 
-    CELL_ARGS=""
-    for CELL_NUMBER in "${CELL_NUMBERS[@]}"; do
-        CELL_ARGS="$CELL_ARGS --cell $CELL_NUMBER"
-    done
-
-    mkdir -p zmq_broker
-    ./install_scripts/generate_zmq_broker.sh --output "zmq_broker/multi_ue_scenario.py" --sample-rate-hz "$BROKER_SRATE_INT" --slow-down-ratio "$ZMQ_BROKER_SLOW_DOWN_RATIO" $CELL_ARGS $UE_ARGS
+    if [ -L zmq_channel_emulator ]; then
+        rm -f zmq_channel_emulator
+    fi
+    mkdir -p zmq_channel_emulator
+    ./install_scripts/generate_zmq_channel_emulator.sh --output "zmq_channel_emulator/zmq_channel_emulator.py" --sample-rate-hz "$CHANNEL_EMULATOR_SRATE_INT" --slow-down-ratio "$ZMQ_CHANNEL_EMULATOR_SLOW_DOWN_RATIO" --cells "$CHANNEL_EMULATOR_CELL_NUMBERS_STR" --ues "$CHANNEL_EMULATOR_UE_NUMBERS_STR"
 
     if ! python3 -c "import gnuradio, PyQt5" >/dev/null 2>&1; then
-        echo "Installing GNU Radio runtime for the ZeroMQ Broker..."
+        echo "Installing GNU Radio runtime for the ZeroMQ channel emulator..."
         sudo env $APTVARS apt-get install -y gnuradio python3-pyqt5
     fi
 
@@ -653,9 +703,9 @@ if [ "$USE_ZMQ_BROKER" = "true" ]; then
     # fi
     rm -f ~/.gnuradio/prefs/vmcircbuf_default_factory
 
-    echo "Successfully generated ZeroMQ broker for UEs: [${UE_NUMBERS[*]}], Cells: [${CELL_NUMBERS[*]}]."
+    echo "Successfully generated ZeroMQ channel emulator for UEs: [${UE_NUMBERS[*]}], Cells: [${CELL_NUMBERS[*]}]."
 else
-    echo "Using direct ZeroMQ connection for UE $UE_NUMBER at *:2100 and $UE_IP:2101 (no ZeroMQ broker)."
+    echo "Using direct ZeroMQ connection for UE $UE_NUMBER at *:2100 and $UE_IP:2101 (no ZeroMQ channel emulator)."
 fi
 
 echo "Successfully configured the gNodeB. The configuration file is located in the configs/ directory."

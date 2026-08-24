@@ -31,8 +31,8 @@
 # Exit immediately if a command fails
 set -e
 
-USE_ZMQ_BROKER=false
-SHOW_ZMQ_BROKER_UI=false
+USE_ZMQ_CHANNEL_EMULATOR=false
+SHOW_ZMQ_CHANNEL_EMULATOR_UI=false
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
@@ -66,19 +66,8 @@ else
     >logs/gnb.log
     >logs/gnb_stdout_gdb.txt
 
-    if [ "$USE_ZMQ_BROKER" = "true" ]; then
-        if pgrep -f "[p]ython3 zmq_broker/multi_ue_scenario\.py" >/dev/null; then
-            echo "Already running ZMQ Broker."
-        else
-            >logs/zmq_broker.log
-            echo "Starting ZMQ Broker..."
-            if [ "$SHOW_ZMQ_BROKER_UI" = true ]; then
-                nohup python3 zmq_broker/multi_ue_scenario.py >logs/zmq_broker.log 2>&1 &
-            else
-                QT_QPA_PLATFORM=offscreen nohup python3 zmq_broker/multi_ue_scenario.py >logs/zmq_broker.log 2>&1 &
-            fi
-            sleep 2
-        fi
+    if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ]; then
+        ./install_scripts/run_zmq_channel_emulator.sh --show-ui "$SHOW_ZMQ_CHANNEL_EMULATOR_UI"
     fi
 
     sudo chown --recursive "${SUDO_USER:-$USER}" logs

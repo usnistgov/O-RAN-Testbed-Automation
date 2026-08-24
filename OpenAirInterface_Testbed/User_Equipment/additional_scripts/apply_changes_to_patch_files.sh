@@ -37,7 +37,7 @@ if ! command -v realpath &>/dev/null; then
     sudo env $APTVARS apt-get install -y coreutils
 fi
 
-# The script directory respects symbolic links so that the gNB and UE can patch their own openairinterface5g
+# Script directory from the called path, including symlinks
 SCRIPT_DIR="$(cd "$(dirname "$0")" >/dev/null 2>&1 && pwd)"
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$PARENT_DIR"
@@ -56,10 +56,10 @@ cd openairinterface5g
 # Update the patch files
 git diff openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c >../install_patch_files/openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c.patch
 git diff openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c >../install_patch_files/openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c.patch
+git diff openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_rc.c >../install_patch_files/openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_rc.c.patch
 git diff openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h >../install_patch_files/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.patch
+git diff openair2/LAYER2/NR_MAC_gNB/mac_rrc_dl_handler.c >../install_patch_files/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/mac_rrc_dl_handler.c.patch
 git diff openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c >../install_patch_files/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c.patch
-git diff openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c >../install_patch_files/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c.patch
-git diff openair3/UICC/pdu_session.c >../install_patch_files/openairinterface5g/openair3/UICC/pdu_session.c.patch
 
 # Update the previous versions of the files
 git restore openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c
@@ -72,25 +72,196 @@ cp openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c ../install_patch_files/o
 cp openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c.previous
 git apply --verbose --ignore-whitespace ../install_patch_files/openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.c.patch
 
+git restore openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_rc.c
+cp openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_rc.c ../install_patch_files/openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_rc.previous.c
+cp openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_rc.c openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_rc.c.previous
+git apply --verbose --ignore-whitespace ../install_patch_files/openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_rc.c.patch
+
 git restore openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h
 cp openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h ../install_patch_files/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.previous.h
 cp openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.previous
 git apply --verbose --ignore-whitespace ../install_patch_files/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h.patch
+
+git restore openair2/LAYER2/NR_MAC_gNB/mac_rrc_dl_handler.c
+cp openair2/LAYER2/NR_MAC_gNB/mac_rrc_dl_handler.c ../install_patch_files/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/mac_rrc_dl_handler.previous.c
+cp openair2/LAYER2/NR_MAC_gNB/mac_rrc_dl_handler.c openair2/LAYER2/NR_MAC_gNB/mac_rrc_dl_handler.c.previous
+git apply --verbose --ignore-whitespace ../install_patch_files/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/mac_rrc_dl_handler.c.patch
 
 git restore openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c
 cp openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c ../install_patch_files/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.previous.c
 cp openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c.previous
 git apply --verbose --ignore-whitespace ../install_patch_files/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c.patch
 
-git restore openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c
-cp openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c ../install_patch_files/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.previous.c
-cp openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c.previous
-git apply --verbose --ignore-whitespace ../install_patch_files/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c.patch
+# Preserve Duranta PHY/MAC SS-SINR through periodic UE RRC MeasurementReports
+if git diff --quiet common/utils/nr/nr_common.c; then
+    echo "No changes for common/utils/nr/nr_common.c"
+else
+    git diff common/utils/nr/nr_common.c >../install_patch_files/openairinterface5g/common/utils/nr/nr_common.c.patch
+    git restore common/utils/nr/nr_common.c
+    cp common/utils/nr/nr_common.c ../install_patch_files/openairinterface5g/common/utils/nr/nr_common.previous.c
+    cp common/utils/nr/nr_common.c common/utils/nr/nr_common.c.previous
+    git apply --verbose --ignore-whitespace ../install_patch_files/openairinterface5g/common/utils/nr/nr_common.c.patch
+fi
 
-git restore openair3/UICC/pdu_session.c
-cp openair3/UICC/pdu_session.c ../install_patch_files/openairinterface5g/openair3/UICC/pdu_session.c.previous
-cp openair3/UICC/pdu_session.c openair3/UICC/pdu_session.c.previous
-git apply --verbose --ignore-whitespace ../install_patch_files/openairinterface5g/openair3/UICC/pdu_session.c.patch
+if git diff --quiet common/utils/nr/nr_common.h; then
+    echo "No changes for common/utils/nr/nr_common.h"
+else
+    git diff common/utils/nr/nr_common.h >../install_patch_files/openairinterface5g/common/utils/nr/nr_common.h.patch
+    git restore common/utils/nr/nr_common.h
+    cp common/utils/nr/nr_common.h ../install_patch_files/openairinterface5g/common/utils/nr/nr_common.previous.h
+    cp common/utils/nr/nr_common.h common/utils/nr/nr_common.h.previous
+    git apply --verbose --ignore-whitespace ../install_patch_files/openairinterface5g/common/utils/nr/nr_common.h.patch
+fi
+
+if git diff --quiet common/utils/nr/tests/test_nr_common.cpp; then
+    echo "No changes for common/utils/nr/tests/test_nr_common.cpp"
+else
+    git diff common/utils/nr/tests/test_nr_common.cpp >../install_patch_files/openairinterface5g/common/utils/nr/tests/test_nr_common.cpp.patch
+    git restore common/utils/nr/tests/test_nr_common.cpp
+    cp common/utils/nr/tests/test_nr_common.cpp ../install_patch_files/openairinterface5g/common/utils/nr/tests/test_nr_common.previous.cpp
+    cp common/utils/nr/tests/test_nr_common.cpp common/utils/nr/tests/test_nr_common.cpp.previous
+    git apply --verbose --ignore-whitespace ../install_patch_files/openairinterface5g/common/utils/nr/tests/test_nr_common.cpp.patch
+fi
+
+if git diff --quiet openair2/COMMON/mac_messages_types.h; then
+    echo "No changes for openair2/COMMON/mac_messages_types.h"
+else
+    git diff openair2/COMMON/mac_messages_types.h >../install_patch_files/openairinterface5g/openair2/COMMON/mac_messages_types.h.patch
+    git restore openair2/COMMON/mac_messages_types.h
+    cp openair2/COMMON/mac_messages_types.h ../install_patch_files/openairinterface5g/openair2/COMMON/mac_messages_types.previous.h
+    cp openair2/COMMON/mac_messages_types.h openair2/COMMON/mac_messages_types.h.previous
+    git apply --verbose --ignore-whitespace ../install_patch_files/openairinterface5g/openair2/COMMON/mac_messages_types.h.patch
+fi
+
+if git diff --quiet openair2/LAYER2/NR_MAC_UE/nr_ue_procedures.c; then
+    echo "No changes for openair2/LAYER2/NR_MAC_UE/nr_ue_procedures.c"
+else
+    git diff openair2/LAYER2/NR_MAC_UE/nr_ue_procedures.c >../install_patch_files/openairinterface5g/openair2/LAYER2/NR_MAC_UE/nr_ue_procedures.c.patch
+    git restore openair2/LAYER2/NR_MAC_UE/nr_ue_procedures.c
+    cp openair2/LAYER2/NR_MAC_UE/nr_ue_procedures.c ../install_patch_files/openairinterface5g/openair2/LAYER2/NR_MAC_UE/nr_ue_procedures.previous.c
+    cp openair2/LAYER2/NR_MAC_UE/nr_ue_procedures.c openair2/LAYER2/NR_MAC_UE/nr_ue_procedures.c.previous
+    git apply --verbose --ignore-whitespace ../install_patch_files/openairinterface5g/openair2/LAYER2/NR_MAC_UE/nr_ue_procedures.c.patch
+fi
+
+if git diff --quiet openair2/LAYER2/NR_MAC_UE/tests/test_nr_ue_ra_procedures.cpp; then
+    echo "No changes for openair2/LAYER2/NR_MAC_UE/tests/test_nr_ue_ra_procedures.cpp"
+else
+    git diff openair2/LAYER2/NR_MAC_UE/tests/test_nr_ue_ra_procedures.cpp >../install_patch_files/openairinterface5g/openair2/LAYER2/NR_MAC_UE/tests/test_nr_ue_ra_procedures.cpp.patch
+    git restore openair2/LAYER2/NR_MAC_UE/tests/test_nr_ue_ra_procedures.cpp
+    cp openair2/LAYER2/NR_MAC_UE/tests/test_nr_ue_ra_procedures.cpp ../install_patch_files/openairinterface5g/openair2/LAYER2/NR_MAC_UE/tests/test_nr_ue_ra_procedures.previous.cpp
+    cp openair2/LAYER2/NR_MAC_UE/tests/test_nr_ue_ra_procedures.cpp openair2/LAYER2/NR_MAC_UE/tests/test_nr_ue_ra_procedures.cpp.previous
+    git apply --verbose --ignore-whitespace ../install_patch_files/openairinterface5g/openair2/LAYER2/NR_MAC_UE/tests/test_nr_ue_ra_procedures.cpp.patch
+fi
+
+if git diff --quiet openair2/RRC/NR/MESSAGES/asn1_msg.c; then
+    echo "No changes for openair2/RRC/NR/MESSAGES/asn1_msg.c"
+else
+    git diff openair2/RRC/NR/MESSAGES/asn1_msg.c >../install_patch_files/openairinterface5g/openair2/RRC/NR/MESSAGES/asn1_msg.c.patch
+    git restore openair2/RRC/NR/MESSAGES/asn1_msg.c
+    cp openair2/RRC/NR/MESSAGES/asn1_msg.c ../install_patch_files/openairinterface5g/openair2/RRC/NR/MESSAGES/asn1_msg.previous.c
+    cp openair2/RRC/NR/MESSAGES/asn1_msg.c openair2/RRC/NR/MESSAGES/asn1_msg.c.previous
+    git apply --verbose --ignore-whitespace ../install_patch_files/openairinterface5g/openair2/RRC/NR/MESSAGES/asn1_msg.c.patch
+fi
+
+if git diff --quiet openair2/RRC/NR/MESSAGES/asn1_msg.h; then
+    echo "No changes for openair2/RRC/NR/MESSAGES/asn1_msg.h"
+else
+    git diff openair2/RRC/NR/MESSAGES/asn1_msg.h >../install_patch_files/openairinterface5g/openair2/RRC/NR/MESSAGES/asn1_msg.h.patch
+    git restore openair2/RRC/NR/MESSAGES/asn1_msg.h
+    cp openair2/RRC/NR/MESSAGES/asn1_msg.h ../install_patch_files/openairinterface5g/openair2/RRC/NR/MESSAGES/asn1_msg.previous.h
+    cp openair2/RRC/NR/MESSAGES/asn1_msg.h openair2/RRC/NR/MESSAGES/asn1_msg.h.previous
+    git apply --verbose --ignore-whitespace ../install_patch_files/openairinterface5g/openair2/RRC/NR/MESSAGES/asn1_msg.h.patch
+fi
+
+if git diff --quiet openair2/RRC/NR/nr_rrc_defs.h; then
+    echo "No changes for openair2/RRC/NR/nr_rrc_defs.h"
+else
+    git diff openair2/RRC/NR/nr_rrc_defs.h >../install_patch_files/openairinterface5g/openair2/RRC/NR/nr_rrc_defs.h.patch
+    git restore openair2/RRC/NR/nr_rrc_defs.h
+    cp openair2/RRC/NR/nr_rrc_defs.h ../install_patch_files/openairinterface5g/openair2/RRC/NR/nr_rrc_defs.previous.h
+    cp openair2/RRC/NR/nr_rrc_defs.h openair2/RRC/NR/nr_rrc_defs.h.previous
+    git apply --verbose --ignore-whitespace ../install_patch_files/openairinterface5g/openair2/RRC/NR/nr_rrc_defs.h.patch
+fi
+
+if git diff --quiet openair2/RRC/NR/rrc_gNB.c; then
+    echo "No changes for openair2/RRC/NR/rrc_gNB.c"
+else
+    git diff openair2/RRC/NR/rrc_gNB.c >../install_patch_files/openairinterface5g/openair2/RRC/NR/rrc_gNB.c.patch
+    git restore openair2/RRC/NR/rrc_gNB.c
+    cp openair2/RRC/NR/rrc_gNB.c ../install_patch_files/openairinterface5g/openair2/RRC/NR/rrc_gNB.previous.c
+    cp openair2/RRC/NR/rrc_gNB.c openair2/RRC/NR/rrc_gNB.c.previous
+    git apply --verbose --ignore-whitespace ../install_patch_files/openairinterface5g/openair2/RRC/NR/rrc_gNB.c.patch
+fi
+
+if git diff --quiet openair2/RRC/NR_UE/L2_interface_ue.c; then
+    echo "No changes for openair2/RRC/NR_UE/L2_interface_ue.c"
+else
+    git diff openair2/RRC/NR_UE/L2_interface_ue.c >../install_patch_files/openairinterface5g/openair2/RRC/NR_UE/L2_interface_ue.c.patch
+    git restore openair2/RRC/NR_UE/L2_interface_ue.c
+    cp openair2/RRC/NR_UE/L2_interface_ue.c ../install_patch_files/openairinterface5g/openair2/RRC/NR_UE/L2_interface_ue.previous.c
+    cp openair2/RRC/NR_UE/L2_interface_ue.c openair2/RRC/NR_UE/L2_interface_ue.c.previous
+    git apply --verbose --ignore-whitespace ../install_patch_files/openairinterface5g/openair2/RRC/NR_UE/L2_interface_ue.c.patch
+fi
+
+if git diff --quiet openair2/RRC/NR_UE/L2_interface_ue.h; then
+    echo "No changes for openair2/RRC/NR_UE/L2_interface_ue.h"
+else
+    git diff openair2/RRC/NR_UE/L2_interface_ue.h >../install_patch_files/openairinterface5g/openair2/RRC/NR_UE/L2_interface_ue.h.patch
+    git restore openair2/RRC/NR_UE/L2_interface_ue.h
+    cp openair2/RRC/NR_UE/L2_interface_ue.h ../install_patch_files/openairinterface5g/openair2/RRC/NR_UE/L2_interface_ue.previous.h
+    cp openair2/RRC/NR_UE/L2_interface_ue.h openair2/RRC/NR_UE/L2_interface_ue.h.previous
+    git apply --verbose --ignore-whitespace ../install_patch_files/openairinterface5g/openair2/RRC/NR_UE/L2_interface_ue.h.patch
+fi
+
+if git diff --quiet openair2/RRC/NR_UE/rrc_defs.h; then
+    echo "No changes for openair2/RRC/NR_UE/rrc_defs.h"
+else
+    git diff openair2/RRC/NR_UE/rrc_defs.h >../install_patch_files/openairinterface5g/openair2/RRC/NR_UE/rrc_defs.h.patch
+    git restore openair2/RRC/NR_UE/rrc_defs.h
+    cp openair2/RRC/NR_UE/rrc_defs.h ../install_patch_files/openairinterface5g/openair2/RRC/NR_UE/rrc_defs.previous.h
+    cp openair2/RRC/NR_UE/rrc_defs.h openair2/RRC/NR_UE/rrc_defs.h.previous
+    git apply --verbose --ignore-whitespace ../install_patch_files/openairinterface5g/openair2/RRC/NR_UE/rrc_defs.h.patch
+fi
+
+if git diff --quiet openair2/RRC/NR_UE/rrc_proto.h; then
+    echo "No changes for openair2/RRC/NR_UE/rrc_proto.h"
+else
+    git diff openair2/RRC/NR_UE/rrc_proto.h >../install_patch_files/openairinterface5g/openair2/RRC/NR_UE/rrc_proto.h.patch
+    git restore openair2/RRC/NR_UE/rrc_proto.h
+    cp openair2/RRC/NR_UE/rrc_proto.h ../install_patch_files/openairinterface5g/openair2/RRC/NR_UE/rrc_proto.previous.h
+    cp openair2/RRC/NR_UE/rrc_proto.h openair2/RRC/NR_UE/rrc_proto.h.previous
+    git apply --verbose --ignore-whitespace ../install_patch_files/openairinterface5g/openair2/RRC/NR_UE/rrc_proto.h.patch
+fi
+
+if git diff --quiet openair2/RRC/NR_UE/rrc_timers_and_constants.c; then
+    echo "No changes for openair2/RRC/NR_UE/rrc_timers_and_constants.c"
+else
+    git diff openair2/RRC/NR_UE/rrc_timers_and_constants.c >../install_patch_files/openairinterface5g/openair2/RRC/NR_UE/rrc_timers_and_constants.c.patch
+    git restore openair2/RRC/NR_UE/rrc_timers_and_constants.c
+    cp openair2/RRC/NR_UE/rrc_timers_and_constants.c ../install_patch_files/openairinterface5g/openair2/RRC/NR_UE/rrc_timers_and_constants.previous.c
+    cp openair2/RRC/NR_UE/rrc_timers_and_constants.c openair2/RRC/NR_UE/rrc_timers_and_constants.c.previous
+    git apply --verbose --ignore-whitespace ../install_patch_files/openairinterface5g/openair2/RRC/NR_UE/rrc_timers_and_constants.c.patch
+fi
+
+if git diff --quiet openair2/RRC/NR_UE/rrc_UE.c; then
+    echo "No changes for openair2/RRC/NR_UE/rrc_UE.c"
+else
+    git diff openair2/RRC/NR_UE/rrc_UE.c >../install_patch_files/openairinterface5g/openair2/RRC/NR_UE/rrc_UE.c.patch
+    git restore openair2/RRC/NR_UE/rrc_UE.c
+    cp openair2/RRC/NR_UE/rrc_UE.c ../install_patch_files/openairinterface5g/openair2/RRC/NR_UE/rrc_UE.previous.c
+    cp openair2/RRC/NR_UE/rrc_UE.c openair2/RRC/NR_UE/rrc_UE.c.previous
+    git apply --verbose --ignore-whitespace ../install_patch_files/openairinterface5g/openair2/RRC/NR_UE/rrc_UE.c.patch
+fi
+
+if git diff --quiet openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.h; then
+    echo "No changes for openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.h"
+else
+    git diff openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.h >../install_patch_files/openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.h.patch
+    git restore openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.h
+    cp openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.h ../install_patch_files/openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.previous.h
+    cp openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.h openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.h.previous
+    git apply --verbose --ignore-whitespace ../install_patch_files/openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.h.patch
+fi
 
 cd ..
 

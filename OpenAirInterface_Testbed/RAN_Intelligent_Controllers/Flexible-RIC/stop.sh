@@ -55,7 +55,7 @@ sudo pkill -f "[n]earRT-RIC" >/dev/null 2>&1
 
 # Wait for the process to terminate gracefully
 COUNT=0
-MAX_COUNT=10
+MAX_COUNT=5
 sleep 1
 while [ $COUNT -lt $MAX_COUNT ]; do
     IS_RUNNING=$(./is_running.sh)

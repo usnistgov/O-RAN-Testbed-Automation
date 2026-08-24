@@ -44,12 +44,8 @@ UE_NUMBER=1
 if [ "$#" -eq 1 ]; then
     UE_NUMBER=$1
 fi
-if ! [[ $UE_NUMBER =~ ^[0-9]+$ ]]; then
-    echo "ERROR: UE number must be a number."
-    exit 1
-fi
-if [ $UE_NUMBER -lt 1 ]; then
-    echo "ERROR: UE number must be greater than or equal to 1."
+if ! [[ "$UE_NUMBER" =~ ^[1-9][0-9]*$ ]]; then
+    echo "ERROR: UE number must be a positive integer."
     exit 1
 fi
 
@@ -79,7 +75,7 @@ echo "Using srsue binary: $SCRIPT_DIR/srsRAN_4G/build/srsue/src/srsue"
 # Give the UE its own network namespace and configure it to access the host network
 sudo ./install_scripts/setup_ue_namespace.sh "$UE_NUMBER"
 
-if ./is_running.sh | grep -q "ue$UE_NUMBER"; then
+if ./is_running.sh | grep -Eq "(^|[ (])ue${UE_NUMBER}([ )]|$)"; then
     echo "Already running ue$UE_NUMBER."
 else
     if [ ! -f "$UE_CONF_PATH" ]; then

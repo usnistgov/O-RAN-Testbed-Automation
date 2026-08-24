@@ -1,33 +1,36 @@
 diff --git a/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c b/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c
-index a45d2e462b..671f716e8c 100644
+index 7a96cb1f4a..d434786e04 100644
 --- a/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c
 +++ b/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c
-@@ -439,12 +439,20 @@ bool read_kpm_sm(void* data)
- }
+@@ -83,6 +83,7 @@ static meas_data_lst_t fill_kpm_meas_data_item(const meas_info_format_1_lst_t* m
+ static kpm_ind_msg_format_1_t fill_kpm_ind_msg_frm_1(cudu_ue_info_pair_t ue_info, const size_t ue_idx, const kpm_act_def_format_1_t* act_def_fr_1)
+ {
+   kpm_ind_msg_format_1_t msg_frm_1 = {0};
++  ue_info.cell_global_id = act_def_fr_1->cell_global_id;
  
+   // Measurement Data contains a set of Meas Records, each collected at each granularity period
+   msg_frm_1.meas_data_lst_len = 1;  /*  this value is equal to (kpm_ric_event_trigger_format_1.report_period_ms/act_def_fr_1->gran_period_ms)
+@@ -441,6 +442,7 @@ bool read_kpm_sm(void* data)
  static const char* kpm_node_meas_du[] = {
-+  "CARR.WBCQIDist",
    "CARR.PDSCHMCSDist",
-+  "CARR.PUSCHMCSDist",
-+  "L1M.SS-RSRP",
-+  "MR.NRScSSSINR",
+   "CARR.PUSCHMCSDist",
++  "CARR.WBCQIDist",
+   "L1M.SS-RSRP",
    NULL,
  };
- 
+@@ -454,6 +456,7 @@ static const char* kpm_node_meas_cu[] = {
  static const char* kpm_node_meas_gnb[] = {
-+  "CARR.WBCQIDist",
    "CARR.PDSCHMCSDist",
-+  "CARR.PUSCHMCSDist",
-+  "L1M.SS-RSRP",
-+  "MR.NRScSSSINR",
-   NULL,
- };
- 
-@@ -454,6 +462,23 @@ static const char* kpm_meas_du[] = {
+   "CARR.PUSCHMCSDist",
++  "CARR.WBCQIDist",
+   "L1M.SS-RSRP",
+   "MR.NRScSSSINR",
+   "RRC.ConnMean",
+@@ -466,6 +469,23 @@ static const char* kpm_meas_du[] = {
    "DRB.UEThpUl",
    "RRU.PrbTotDl",
    "RRU.PrbTotUl",
-+  
++
 +  "PHY.NPrbDl",
 +  "PHY.DerivedRssiDl",
 +  "PHY.DerivedRsrqDl",
@@ -47,7 +50,7 @@ index a45d2e462b..671f716e8c 100644
    NULL,
  };
  
-@@ -465,6 +490,23 @@ static const char* kpm_meas_gnb[] = {
+@@ -477,6 +497,23 @@ static const char* kpm_meas_gnb[] = {
    "DRB.UEThpUl",
    "RRU.PrbTotDl",
    "RRU.PrbTotUl",

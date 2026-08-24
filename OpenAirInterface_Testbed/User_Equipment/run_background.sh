@@ -40,6 +40,8 @@ cd "$SCRIPT_DIR"
 # Default values
 UE_NUMBER=1
 RFSIM_SERVER=0
+USE_ZMQ_CHANNEL_EMULATOR=false
+SHOW_ZMQ_CHANNEL_EMULATOR_UI=false
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -59,17 +61,8 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-if ! [[ $UE_NUMBER =~ ^[0-9]+$ ]]; then
-    echo "ERROR: UE number must be a number."
-    exit 1
-fi
-if [ $UE_NUMBER -lt 1 ]; then
-    echo "ERROR: UE number must be greater than or equal to 1."
-    exit 1
-fi
-
-if [ ! -f "configs/ue1.conf" ]; then
-    echo "Configuration was not found for OAI UE 1. Please run ./generate_configurations.sh first."
+if ! [[ "$UE_NUMBER" =~ ^[1-9][0-9]*$ ]]; then
+    echo "ERROR: UE number must be a positive integer."
     exit 1
 fi
 
@@ -79,12 +72,16 @@ RFSIM_SERVER_ARG=""
 if [ "$RFSIM_SERVER" -ne 0 ]; then
     RFSIM_SERVER_ARG="--rfsim-server"
 fi
-
+if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ]; then
+    "$SCRIPT_DIR/install_scripts/run_zmq_channel_emulator.sh" --show-ui "$SHOW_ZMQ_CHANNEL_EMULATOR_UI"
+fi
 sudo -v # Ensure sudo session is active
-sudo setsid bash -c "stdbuf -oL -eL \"$SCRIPT_DIR/run.sh\" $UE_NUMBER $RFSIM_SERVER_ARG >/dev/null 2>&1" </dev/null &
+sudo setsid bash -c "exec stdbuf -oL -eL \"$SCRIPT_DIR/run.sh\" $UE_NUMBER $RFSIM_SERVER_ARG" </dev/null >/dev/null 2>&1 &
+stty sane || true
 
 ATTEMPT=0
-while $(./is_running.sh | grep -q "NOT_RUNNING"); do
+while ! ./is_running.sh | grep -Eq "(^|[ (])ue${UE_NUMBER}([ )]|$)"; do
+    stty sane || true
     sleep 0.5
     ATTEMPT=$((ATTEMPT + 1))
     if [ $ATTEMPT -ge 120 ]; then
@@ -93,4 +90,5 @@ while $(./is_running.sh | grep -q "NOT_RUNNING"); do
     fi
 done
 
+stty sane || true
 ./is_running.sh

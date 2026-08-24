@@ -1,0 +1,1 @@
+../../../Next_Generation_Node_B/install_scripts/validate_zmq_channel_emulator_config.sh

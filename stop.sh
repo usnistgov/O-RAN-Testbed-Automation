@@ -51,7 +51,7 @@ fi
 echo "Stopping User Equipment..."
 cd User_Equipment
 sudo ./stop.sh
-cd ..
+cd "$SCRIPT_DIR"
 
 echo
 echo "Stopping gNodeB..."

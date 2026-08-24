@@ -56,7 +56,7 @@ cd RAN_Intelligent_Controllers/Flexible-RIC
 ./run_background.sh
 
 if $(./is_running.sh | grep -q "NOT_RUNNING"); then
-    echo "Error starting FlexRIC."
+    echo "ERROR: Could not start FlexRIC."
     exit 1
 fi
 cd ../..
@@ -93,7 +93,7 @@ while [ ! -f logs/gnb_stdout.txt ] || ! grep -q "TYPE <CTRL-C> TO TERMINATE" log
     if grep -q "TYPE <CTRL-C> TO TERMINATE" logs/gnb_stdout.txt; then
         break
     elif $(./is_running.sh | grep -q "NOT_RUNNING"); then
-        echo "Error starting gNodeB. Check logs/gnb_stdout.txt for more information."
+        echo "ERROR: Could not start gNodeB. Check logs/gnb_stdout.txt for more information."
         stty sane || true
         exit 1
     fi
@@ -121,7 +121,7 @@ while [ ! -f logs/ue1_stdout.txt ] || ! grep -q "TYPE <CTRL-C> TO TERMINATE" log
     if grep -q "State = NR_RRC_CONNECTED" logs/ue1_stdout.txt; then
         break
     elif ! ./is_running.sh | grep -E "^User Equipment:" | grep -q "ue1"; then
-        echo "Error starting UE 1. Check logs/ue1_stdout.txt for more information."
+        echo "ERROR: Could not start UE 1. Check logs/ue1_stdout.txt for more information."
         stty sane || true
         exit 1
     fi

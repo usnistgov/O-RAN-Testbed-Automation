@@ -1,0 +1,12 @@
+diff --git a/openair2/RRC/NR/MESSAGES/asn1_msg.h b/openair2/RRC/NR/MESSAGES/asn1_msg.h
+index ab824bdcdf..3c0dd2333c 100644
+--- a/openair2/RRC/NR/MESSAGES/asn1_msg.h
++++ b/openair2/RRC/NR/MESSAGES/asn1_msg.h
+@@ -116,6 +116,7 @@ int do_nrMeasurementReport_SA(long trigger_to_measid,
+                               long rs_type,
+                               uint16_t Nid_cell,
+                               int rsrp_index,
++                              int sinr_index,
+                               bool neighbor_cell_valid,
+                               uint16_t neighbor_Nid_cell,
+                               int neighbor_rsrp_index,

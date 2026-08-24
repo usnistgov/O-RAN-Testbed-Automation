@@ -28,6 +28,8 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
+echo "# Script: $(realpath "$0") $@"
+
 # Exit immediately if a command fails
 set -e
 
@@ -37,7 +39,7 @@ if ! command -v realpath &>/dev/null; then
     sudo env $APTVARS apt-get install -y coreutils
 fi
 
-# The script directory respects symbolic links so that the gNB and UE can patch their own openairinterface5g
+# Script directory from the called path, including symlinks
 SCRIPT_DIR="$(cd "$(dirname "$0")" >/dev/null 2>&1 && pwd)"
 PARENT_DIR="$(dirname "$SCRIPT_DIR")"
 cd "$PARENT_DIR"
@@ -78,8 +80,7 @@ awk -v new_block="$NEW_BLOCK" '
 }
 { print }
 ' "$CONFIGURATION_PATH" >"${CONFIGURATION_PATH}.tmp"
-
-mv "${CONFIGURATION_PATH}.tmp" "$CONFIGURATION_PATH"
+mv -f "${CONFIGURATION_PATH}.tmp" "$CONFIGURATION_PATH"
 
 NUM_CHANNELS=$(grep -c "model_name" "$CONFIGURATION_PATH")
 MAX_CHANNELS=$(grep -oP 'max_chan\s*=\s*\K[0-9]+' "$CONFIGURATION_PATH")

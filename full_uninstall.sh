@@ -116,7 +116,7 @@ if [ "$USE_FLEXRIC" = "true" ]; then
         echo
         echo "The O-RAN SC components may not be fully uninstalled. To remove them, run ./RAN_Intelligent_Controllers/Near-Real-Time-RIC/full_uninstall.sh"
     fi
-else
+elif [ -d "RAN_Intelligent_Controllers/Near-Real-Time-RIC" ]; then
     echo
     echo
     echo "################################################################################"

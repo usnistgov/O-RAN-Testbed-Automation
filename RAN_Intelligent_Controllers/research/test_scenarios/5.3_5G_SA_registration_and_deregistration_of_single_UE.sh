@@ -77,7 +77,7 @@ cd RAN_Intelligent_Controllers/Flexible-RIC
 ./run_background.sh
 
 if $(./is_running.sh | grep -q "NOT_RUNNING"); then
-    echo "Error starting FlexRIC."
+    echo "ERROR: Could not start FlexRIC."
     exit 1
 fi
 cd ../..
@@ -125,7 +125,7 @@ for i in {1..10}; do
         if grep -q "TYPE <CTRL-C> TO TERMINATE" logs/gnb_stdout.txt; then
             break
         elif $(./is_running.sh | grep -q "NOT_RUNNING"); then
-            echo "Error starting gNodeB. Check logs/gnb_stdout.txt for more information."
+            echo "ERROR: Could not start gNodeB. Check logs/gnb_stdout.txt for more information."
             exit 1
         fi
     done
@@ -151,7 +151,7 @@ for i in {1..10}; do
             UE_READY=true
             break
         elif $(./is_running.sh | grep -q "NOT_RUNNING"); then
-            echo "Error starting UE. Check logs/ue1_stdout.txt for more information."
+            echo "ERROR: Could not start UE. Check logs/ue1_stdout.txt for more information."
             break
         fi
     done

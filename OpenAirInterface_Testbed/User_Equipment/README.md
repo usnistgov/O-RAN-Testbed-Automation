@@ -30,7 +30,7 @@ To customize the SIM subscriber information or to get more information about how
 
 The UE software supports multiple radio configurations, including the RF Simulator (`SIMU`), ZeroMQ (`ZMQ`), and Universal Software Radio Peripheral (`USRP`). To specify the desired radio device, set the `RADIO_TYPE` variable at the beginning of both the `full_install.sh` and `generate_configurations.sh` scripts prior to compiling and installing the software.
 
-*Note: Currently, the ZeroMQ (`ZMQ`) configuration is limited to supporting a maximum of one User Equipment.*
+**Note:** ZMQ supports one gNodeB and one UE by default. Enable the ZeroMQ channel emulator [\[7\]][zeromq-duranta] to support multiple UEs and/or cells.
 
 ## RF Simulator Server
 
@@ -52,18 +52,20 @@ By default, the RF simulator server is set to the gNodeB host. To make the UE th
 
 ## References
 
-1. Duranta - An open, research-grade RAN + UE reference stack. LF Networking. [https://lfnetworking.org/projects/duranta/][duranta-ue]
+1. Duranta - An open, research-grade RAN + UE reference stack. LF Networking. [https://lfnetworking.org/projects/duranta][duranta-ue]
 2. 3GPP TS 36.300: Evolved Universal Terrestrial Radio Access (E-UTRA) and Evolved Universal Terrestrial Radio Access Network (E-UTRAN); Overall description; Stage 2. [https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=2430][ts2430-3gpp]
 3. 3GPP TS 36.331: Evolved Universal Terrestrial Radio Access (E-UTRA); Radio Resource Control (RRC); Protocol specification. [https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=2440][ts2440-3gpp]
 4. 3GPP TS 36.401: Evolved Universal Terrestrial Radio Access Network (E-UTRAN); Architecture description. [https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=2442][ts2442-3gpp]
 5. 3GPP TS 36.413: Evolved Universal Terrestrial Radio Access Network (E-UTRAN); S1 Application Protocol (S1AP). [https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=2446][ts2446-3gpp]
 6. 3GPP TS 23.401: General Packet Radio Service (GPRS) enhancements for Evolved Universal Terrestrial Radio Access Network (E-UTRAN) access. [https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=849][ts849-3gpp]
+7. ZeroMQ. Duranta. [https://github.com/duranta-project/openairinterface5g/blob/develop/radio/zmq/README.md][zeromq-duranta]
 
 <!-- References -->
 
-[duranta-ue]: https://lfnetworking.org/projects/duranta/
+[duranta-ue]: https://lfnetworking.org/projects/duranta
 [ts2430-3gpp]: https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=2430
 [ts2440-3gpp]: https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=2440
 [ts2442-3gpp]: https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=2442
 [ts2446-3gpp]: https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=2446
 [ts849-3gpp]: https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=849
+[zeromq-duranta]: https://github.com/duranta-project/openairinterface5g/blob/develop/radio/zmq/README.md

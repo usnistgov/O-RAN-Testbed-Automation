@@ -886,11 +886,9 @@ void nr_dlsch_preprocessor(gNB_MAC_INST *mac, post_process_pdsch_t *pp_pdsch)
   for (int i = 0; i < num_beams; i++)
     n_rb_sched[i] = bw;
 
-  int average_agg_level = 4; // TODO find a better estimation
-  int max_sched_ues = bw / (average_agg_level * NR_NB_REG_PER_CCE);
-
   // FAPI cannot handle more than MAX_DCI_CORESET DCIs
-  max_sched_ues = min(max_sched_ues, MAX_DCI_CORESET);
+  static_assert(4 < MAX_DCI_CORESET, "cannot have more concurrent UEs than MAX_DCI_CORESET\n");
+  int max_sched_ues = 4;
 
   nr_dl_schedule(mac, pp_pdsch, UE_info->connected_ue_list, max_sched_ues, num_beams, n_rb_sched);
 }
@@ -938,9 +936,13 @@ nfapi_nr_dl_tti_pdsch_pdu_rel15_t *prepare_pdsch_pdu(nfapi_nr_dl_tti_request_pdu
   pdsch_pdu->numDmrsCdmGrpsNoData = dmrs_parms->numDmrsCdmGrpsNoData;
   pdsch_pdu->dmrsPorts = (1 << sched_pdsch->nrOfLayers) - 1;  // FIXME with a better implementation
   // Pdsch Allocation in frequency domain
-  pdsch_pdu->resourceAlloc = 1;
-  pdsch_pdu->rbStart = sched_pdsch->rbStart;
-  pdsch_pdu->rbSize = sched_pdsch->rbSize;
+  pdsch_pdu->resourceAlloc = sched_pdsch->alloc_type;
+  if (sched_pdsch->alloc_type == PDSCH_TYPE1) {
+    pdsch_pdu->rbStart = sched_pdsch->rbStart;
+    pdsch_pdu->rbSize = sched_pdsch->rbSize;
+  } else {
+    memcpy(pdsch_pdu->rbBitmap, sched_pdsch->rbBitmap, sizeof(pdsch_pdu->rbBitmap));
+  }
   pdsch_pdu->VRBtoPRBMapping = 0; // non-interleaved
   // Resource Allocation in time domain
   const NR_tda_info_t *tda_info = &sched_pdsch->tda_info;
@@ -1261,6 +1263,11 @@ void post_process_dlsch(gNB_MAC_INST *nr_mac,
         tpc);
   DevAssert(sched_pdsch->rbSize > 0);
 
+  DevAssert(nrOfLayers >= 1 && nrOfLayers <= NR_KPM_MAX_LAYERS);
+  DevAssert(current_BWP->mcsTableIdx >= 0 && current_BWP->mcsTableIdx < NR_KPM_NB_MCS_TABLE_DL);
+  DevAssert(sched_pdsch->mcs < NR_KPM_NB_MCS);
+  nr_mac->du_stats.pdsch_mcs_dist[nrOfLayers - 1][current_BWP->mcsTableIdx][sched_pdsch->mcs] += sched_pdsch->rbSize;
+
   const int bwp_id = current_BWP->bwp_id;
   const int coresetid = sched_ctrl->coreset->controlResourceSetId;
 
@@ -1340,11 +1347,6 @@ void post_process_dlsch(gNB_MAC_INST *nr_mac,
                                                        current_harq_pid,
                                                        0,
                                                        false);
-
-  NR_PDSCH_Config_t *pdsch_Config = current_BWP->pdsch_Config;
-  AssertFatal(
-      pdsch_Config == NULL || pdsch_Config->resourceAllocation == NR_PDSCH_Config__resourceAllocation_resourceAllocationType1,
-      "Only frequency resource allocation type 1 is currently supported\n");
 
   LOG_D(NR_MAC,
         "%4d.%2d DCI type 1 payload: freq_alloc %d (%d,%d,%d), "

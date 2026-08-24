@@ -9,5 +9,5 @@
 /ocudu/
 /ocudu_netconf/
 /ocudu_o1_adapter/
-/zmq_broker/
+/zmq_channel_emulator/
 !install_patch_files/

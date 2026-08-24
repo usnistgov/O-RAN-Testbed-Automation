@@ -1,0 +1,12 @@
+diff --git a/openair2/COMMON/mac_messages_types.h b/openair2/COMMON/mac_messages_types.h
+index 0a58f09718..468a53b526 100644
+--- a/openair2/COMMON/mac_messages_types.h
++++ b/openair2/COMMON/mac_messages_types.h
+@@ -136,6 +136,7 @@ typedef struct NRRrcMacSBcchDataInd_s {
+ typedef struct NRRrcMacMeasDataInd_s {
+   uint8_t gnb_index;
+   int rsrp_dBm;
++  int sinr_index;
+   uint16_t Nid_cell;
+   bool is_csi_meas;
+   bool is_neighboring_cell;

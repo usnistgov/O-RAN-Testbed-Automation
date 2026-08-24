@@ -28,7 +28,7 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-echo "# Script: $(realpath "$0")..."
+echo "# Script: $(realpath "$0") $@"
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
@@ -72,7 +72,7 @@ if ! getent passwd mongodb >/dev/null 2>&1; then
     sudo useradd -r -M -d /var/lib/mongodb -s /bin/false -g mongodb mongodb
 fi
 sudo mkdir -p /var/lib/mongodb /var/log/mongodb
-sudo chown -R mongodb:mongodb /var/lib/mongodb /var/log/mongodb
+sudo chown --recursive mongodb:mongodb /var/lib/mongodb /var/log/mongodb
 
 # Detect if systemctl is available
 USE_SYSTEMCTL=false

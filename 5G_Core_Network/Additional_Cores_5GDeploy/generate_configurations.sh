@@ -203,7 +203,7 @@ if [[ -z "$SST" || -z "$SD" || "$SST" == "null" || "$SD" == "null" ]]; then
     exit 1
 fi
 
-# SST/SD are configured in options.yaml as hex without 0x prefix.
+# SST/SD are configured in options.yaml as hex without 0x prefix
 SST_HEX="${SST#0x}"
 SST_HEX="${SST_HEX#0X}"
 SST_HEX="${SST_HEX^^}"

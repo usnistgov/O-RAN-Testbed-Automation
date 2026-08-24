@@ -28,6 +28,8 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
+echo "# Script: $(realpath "$0") $@"
+
 # Exit immediately if a command fails
 set -e
 
@@ -44,23 +46,25 @@ cd "$SCRIPT_DIR"
 
 CLEAR_CONFIGS=false
 
-# Support input argument for the UE number(s), for example:
-# ./generate_configurations.sh --> configures UE 1, 2, and 3
-# ./generate_configurations.sh 2 --> configures UE 2
-# ./generate_configurations.sh 4 5 6 --> configures UE 4, 5, and 6
+if [ $# -eq 1 ] && { [ "$1" = "-h" ] || [ "$1" = "--help" ]; }; then
+    echo "Usage: $0 [ue_number ...]"
+    exit 0
+fi
+
 UE_NUMBERS=("$@")
 if [ ${#UE_NUMBERS[@]} -eq 0 ]; then
     UE_NUMBERS=(3 2 1)
     CLEAR_CONFIGS=true
 fi
-# Check if the input is a number
+# Check if the input is correct
 for UE_NUMBER in "${UE_NUMBERS[@]}"; do
-    if ! [[ "$UE_NUMBER" =~ ^[0-9]+$ ]]; then
-        echo "ERROR: UE number must be a number."
+    if ! [[ "$UE_NUMBER" =~ ^[1-9][0-9]*$ ]]; then
+        echo "ERROR: UE number must be a positive integer."
+        echo "Usage: $0 [ue_number ...]"
         exit 1
     fi
-    if [ "$UE_NUMBER" -lt 1 ]; then
-        echo "ERROR: UE number must be greater than or equal to 1."
+    if ! "$SCRIPT_DIR/install_scripts/get_ue_namespace_ip.sh" host "$UE_NUMBER" >/dev/null 2>&1; then
+        echo "ERROR: UE $UE_NUMBER cannot be allocated an address in the namespace subnet."
         exit 1
     fi
     echo "UE $UE_NUMBER will be configured."
@@ -140,7 +144,7 @@ if [[ -z "$SST" || -z "$SD" || "$SST" == "null" || "$SD" == "null" ]]; then
     exit 1
 fi
 
-# SST/SD are configured in options.yaml as hex without 0x prefix.
+# SST/SD are configured in options.yaml as hex without 0x prefix
 SST_HEX="${SST#0x}"
 SST_HEX="${SST_HEX#0X}"
 SST_HEX="${SST_HEX^^}"
@@ -210,17 +214,18 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
     # Fetch the UE's OPc, IMEI, IMSI, KEY, and NAMESPACE
     read -r UE_OPC UE_IMEI UE_IMSI UE_KEY UE_NAMESPACE < <("$UE_CREDENTIAL_GENERATOR_SCRIPT" "$UE_NUMBER" "$PLMN")
 
-    # Unique identifier for the UE within the mobile network. Used by the network to identify the UE during authentication. It ensures that the UE is correctly identified by the network.
+    # Unique identifier for the UE within the mobile network. Used by the network to identify the UE during authentication. It ensures that the UE is correctly identified by the network
     update_conf "configs/ue$UE_NUMBER.conf" "imsi" "\"$UE_IMSI\""
 
     # Cryptographic key shared between the UE and the network, used for encryption during the authentication process.
     update_conf "configs/ue$UE_NUMBER.conf" "key" "\"$UE_KEY\""
 
-    # Operator key for the Milenage Authentication and Key Agreement algorithm used for encryption during the authentication process.
+    # Operator key for the Milenage Authentication and Key Agreement algorithm used for encryption during the authentication process
     update_conf "configs/ue$UE_NUMBER.conf" "opc" "\"$UE_OPC\""
 
     # Configure the PDU sessions (DNN, SST, SD)
     update_conf "configs/ue$UE_NUMBER.conf" "pdu_sessions" "({ dnn = \"$CURRENT_DNN\"; nssai_sst = $SST_DEC; nssai_sd = 0x$SD_HEX; })"
+    update_conf "configs/ue$UE_NUMBER.conf" "uecap_file" "\"$SCRIPT_DIR/openairinterface5g/targets/PROJECTS/GENERIC-NR-5GC/CONF/uecap_ports1.xml\""
 
     ./install_scripts/add_channel_model.sh "rfsimu_channel_ue$UE_NUMBER"
 
@@ -231,21 +236,21 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
         echo "@include \"channelmod_rfsimu.conf\"" >>"configs/ue$UE_NUMBER.conf"
     fi
 
-    UE_IPV4=""
-    if [ $UE_NUMBER -gt 3 ]; then
-        echo "UE is greater than registered subscribers, registering UE $UE_NUMBER..."
-        REGISTRATION_DIR=$(dirname "$SCRIPT_DIR")/5G_Core_Network/install_scripts
-        if [ -f "$REGISTRATION_DIR/./register_subscriber.sh" ]; then
-            UE_INDEX=$((UE_NUMBER + 99))
-            UE_IPV4=$(python3 install_scripts/fetch_nth_ip.py "$OGSTUN_IPV4" "$UE_INDEX")
-            if [ $? -eq 0 ]; then
-                IPV4_LINE="--ipv4 $UE_IPV4"
-            else
-                IPV4_LINE=""
-            fi
-            "$REGISTRATION_DIR/./register_subscriber.sh" --imsi "$UE_IMSI" --key "$UE_KEY" --opc "$UE_OPC" --apn "$CURRENT_DNN" --sst "$SST_DEC" --sd "$SD_HEX" $IPV4_LINE || true
-        fi
-    fi
+    # UE_IPV4=""
+    # if [ $UE_NUMBER -gt 3 ]; then
+    #     echo "UE is greater than registered subscribers, registering UE $UE_NUMBER..."
+    #     REGISTRATION_DIR=$(dirname "$SCRIPT_DIR")/5G_Core_Network/install_scripts
+    #     if [ -f "$REGISTRATION_DIR/./register_subscriber.sh" ]; then
+    #         UE_INDEX=$((UE_NUMBER + 99))
+    #         UE_IPV4=$(python3 install_scripts/fetch_nth_ip.py "$OGSTUN_IPV4" "$UE_INDEX")
+    #         if [ $? -eq 0 ]; then
+    #             IPV4_LINE="--ipv4 $UE_IPV4"
+    #         else
+    #             IPV4_LINE=""
+    #         fi
+    #         "$REGISTRATION_DIR/./register_subscriber.sh" --imsi "$UE_IMSI" --key "$UE_KEY" --opc "$UE_OPC" --apn "$CURRENT_DNN" --sst "$SST_DEC" --sd "$SD_HEX" $IPV4_LINE || true
+    #     fi
+    # fi
 
     echo
     echo "Successfully configured UE ${UE_NUMBER}."

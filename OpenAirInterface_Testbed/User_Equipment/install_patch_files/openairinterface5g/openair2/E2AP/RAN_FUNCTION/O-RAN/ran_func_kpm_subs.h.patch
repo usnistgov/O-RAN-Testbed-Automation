@@ -1,0 +1,13 @@
+diff --git a/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.h b/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.h
+index 14d1975c4e..05f5f2c0d3 100644
+--- a/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.h
++++ b/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.h
+@@ -14,7 +14,7 @@
+ typedef struct {
+   uint32_t rrc_ue_id;
+   NR_UE_info_t* ue;
+-
++  const cell_global_id_t *cell_global_id;
+ } cudu_ue_info_pair_t;
+ 
+ typedef struct {

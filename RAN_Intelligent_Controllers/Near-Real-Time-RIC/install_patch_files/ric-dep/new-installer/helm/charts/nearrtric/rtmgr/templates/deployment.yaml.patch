@@ -1,0 +1,15 @@
+diff --git a/new-installer/helm/charts/nearrtric/rtmgr/templates/deployment.yaml b/new-installer/helm/charts/nearrtric/rtmgr/templates/deployment.yaml
+index 7854a89..de40ff8 100644
+--- a/new-installer/helm/charts/nearrtric/rtmgr/templates/deployment.yaml
++++ b/new-installer/helm/charts/nearrtric/rtmgr/templates/deployment.yaml
+@@ -49,7 +49,9 @@ spec:
+         - name: {{ include "common.containername.rtmgr" . }}
+           image: {{ include "common.dockerregistry.url" $imagectx }}/{{ .Values.rtmgr.image.name }}:{{ .Values.rtmgr.image.tag }}
+           imagePullPolicy: {{ include "common.dockerregistry.pullpolicy" $pullpolicyctx }}
+-          command: ["/run_rtmgr.sh"]
++          command: ["/bin/sh", "-c"]
++          args:
++            - until curl --fail --silent "http://{{ include "common.servicename.e2mgr.http" . }}:{{ include "common.serviceport.e2mgr.http" . }}/v1/e2t/list" | grep --quiet '"address"'; do sleep 2; done; exec /run_rtmgr.sh
+           #command: ["/bin/sh"]
+           #args: ["-c", "while true; do echo hello; sleep 10;done"]
+           envFrom:

@@ -136,20 +136,19 @@ cd ..
 cd openairinterface5g
 git restore radio/zmq/zmq_simd.h
 if [ ! -f "radio/zmq/zmq_simd.h.previous" ]; then
-	cp radio/zmq/zmq_simd.h radio/zmq/zmq_simd.h.previous
-	cp radio/zmq/zmq_simd.h.previous "$PARENT_DIR/install_patch_files/openairinterface5g/radio/zmq/zmq_simd.previous.h"
+    cp radio/zmq/zmq_simd.h radio/zmq/zmq_simd.h.previous
+    cp radio/zmq/zmq_simd.h.previous "$PARENT_DIR/install_patch_files/openairinterface5g/radio/zmq/zmq_simd.previous.h"
 fi
 echo "Patching zmq_simd.h to fix rounding of negative I/Q samples..."
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface5g/radio/zmq/zmq_simd.h.patch"
 git restore radio/zmq/tests/test_zmq_radio.cpp
 if [ ! -f "radio/zmq/tests/test_zmq_radio.cpp.previous" ]; then
-	cp radio/zmq/tests/test_zmq_radio.cpp radio/zmq/tests/test_zmq_radio.cpp.previous
-	cp radio/zmq/tests/test_zmq_radio.cpp.previous "$PARENT_DIR/install_patch_files/openairinterface5g/radio/zmq/tests/test_zmq_radio.previous.cpp"
+    cp radio/zmq/tests/test_zmq_radio.cpp radio/zmq/tests/test_zmq_radio.cpp.previous
+    cp radio/zmq/tests/test_zmq_radio.cpp.previous "$PARENT_DIR/install_patch_files/openairinterface5g/radio/zmq/tests/test_zmq_radio.previous.cpp"
 fi
 echo "Patching test_zmq_radio.cpp to fix rounding of negative I/Q samples..."
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface5g/radio/zmq/tests/test_zmq_radio.cpp.patch"
 cd ..
-
 
 # This patch adds C++11 compatibility to the ZeroMQ ring buffer code
 cd openairinterface5g

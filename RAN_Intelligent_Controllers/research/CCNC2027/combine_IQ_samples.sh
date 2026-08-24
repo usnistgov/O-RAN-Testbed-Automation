@@ -10,10 +10,10 @@ for dir in AWGN*/; do
     echo "Combining $dir_name -> $output"
 
     # Write header once
-    echo "real;imag" > "$output"
+    echo "real;imag" >"$output"
 
     # Append all IQ rows, skipping each file's header
     for file in "$dir"iq_*.csv; do
-        tail -n +2 "$file" >> "$output"
+        tail -n +2 "$file" >>"$output"
     done
 done

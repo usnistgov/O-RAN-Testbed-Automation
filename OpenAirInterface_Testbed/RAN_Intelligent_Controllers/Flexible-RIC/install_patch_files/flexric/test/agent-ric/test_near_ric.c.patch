@@ -1,0 +1,33 @@
+diff --git a/test/agent-ric/test_near_ric.c b/test/agent-ric/test_near_ric.c
+index 6ab56863..98178883 100644
+--- a/test/agent-ric/test_near_ric.c
++++ b/test/agent-ric/test_near_ric.c
+@@ -238,10 +238,19 @@ int main(int argc, char *argv[])
+ 
+   // Parse arguments
+   init_agent_api( mcc, mnc, mnc_digit_len, nb_id, cu_du_id, ran_type, io, &args);
+-  sleep(1);
+-
+-  e2_nodes_api_t e2_nodes = e2_nodes_near_ric_api();
+-  assert(e2_nodes.len > 0 && "No E2 Nodes connected");
++  e2_nodes_api_t e2_nodes = {0};
++  for(size_t elapsed_ms = 0; elapsed_ms < 10000 && e2_nodes.len == 0; elapsed_ms += 100){
++    free_e2_nodes_api(&e2_nodes);
++    e2_nodes = e2_nodes_near_ric_api();
++    if(e2_nodes.len == 0)
++      usleep(100000);
++  }
++  if(e2_nodes.len == 0){
++    fprintf(stderr, "No E2 Nodes connected after 10 seconds\n");
++    stop_agent_api();
++    stop_near_ric_api();
++    return EXIT_FAILURE;
++  }
+ 
+   global_e2_node_id_t const* id = &e2_nodes.n[0].id;
+ 
+@@ -326,4 +335,3 @@ int main(int argc, char *argv[])
+ 
+   printf("Test communicating E2-Agent and Near-RIC run SUCCESSFULLY\n");
+ }
+-

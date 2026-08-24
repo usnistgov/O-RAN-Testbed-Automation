@@ -108,6 +108,7 @@ ADDITIONAL_PATCH_FILES=(
     "examples/xApp/c/slice/xapp_slice_moni_ctrl.c"
     "examples/xApp/c/tc/xapp_tc_all.c"
     "examples/xApp/c/keysight/xapp_keysight_kpm_rc.c"
+    "test/agent-ric/test_near_ric.c"
     "test/agent-ric-xapp/test_ag_ric_xapp.c"
     "src/xApp/act_proc.c"
     "src/xApp/act_proc.h"

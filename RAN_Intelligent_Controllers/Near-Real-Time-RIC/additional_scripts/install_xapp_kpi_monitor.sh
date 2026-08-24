@@ -102,10 +102,12 @@ git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/xApps/k
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/xApps/kpimon-go/e2sm/lib/MatchingCondItem-Choice.c.patch"
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/xApps/kpimon-go/e2sm/lib/MatchingCondItem.c.patch"
 
+git restore control/control.go
 if [ ! -f "control/control.go.previous" ]; then
     echo "Backing up control/control.go to control/control.go.previous..."
     cp control/control.go control/control.go.previous
 fi
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/xApps/kpimon-go/control/control.go.patch"
 
 # Replace my-org with influxdata in control/control.go
 if grep -q '"my-org"' control/control.go; then
@@ -125,7 +127,7 @@ kubectl exec -n ricplt -it r4-influxdb-influxdb2-0 -- influx bucket create --org
 # Set influxdb2.NewClient("http://r4-influxdb-influxdb2.ricplt:80", "$INFLUXDB_TOKEN")
 if grep -q "influxdb2.NewClient(" control/control.go; then
     echo "Patching control/control.go to replace 'influxdb2.NewClient(' with the new client call..."
-    if [ ! -f "src/control/control.go.previous" ]; then
+    if [ ! -f "control/control.go.previous" ]; then
         cp control/control.go control/control.go.previous
     fi
     sed -i "s|influxdb2.NewClient([^)]*)|influxdb2.NewClient(\"http://r4-influxdb-influxdb2.ricplt:80\", \"$INFLUXDB_TOKEN\")|g" control/control.go

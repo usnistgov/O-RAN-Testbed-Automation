@@ -80,8 +80,10 @@ cd ric-dep
 git diff depRicKubernetesOperator/internal/controller/getConfigmap.go >"$PARENT_DIR/install_patch_files/ric-dep/depRicKubernetesOperator/internal/controller/getConfigmap.go.patch"
 git diff helm/e2mgr/templates/configmap.yaml >"$PARENT_DIR/install_patch_files/ric-dep/helm/e2mgr/templates/configmap.yaml.patch"
 git diff helm/rtmgr/templates/config.yaml >"$PARENT_DIR/install_patch_files/ric-dep/helm/rtmgr/templates/config.yaml.patch"
+git diff helm/rtmgr/templates/deployment.yaml >"$PARENT_DIR/install_patch_files/ric-dep/helm/rtmgr/templates/deployment.yaml.patch"
 git diff new-installer/helm/charts/nearrtric/e2mgr/templates/configmap.yaml >"$PARENT_DIR/install_patch_files/ric-dep/new-installer/helm/charts/nearrtric/e2mgr/templates/configmap.yaml.patch"
 git diff new-installer/helm/charts/nearrtric/rtmgr/templates/config.yaml >"$PARENT_DIR/install_patch_files/ric-dep/new-installer/helm/charts/nearrtric/rtmgr/templates/config.yaml.patch"
+git diff new-installer/helm/charts/nearrtric/rtmgr/templates/deployment.yaml >"$PARENT_DIR/install_patch_files/ric-dep/new-installer/helm/charts/nearrtric/rtmgr/templates/deployment.yaml.patch"
 
 git restore bin/install_k8s_and_helm.sh
 cp bin/install_k8s_and_helm.sh "$PARENT_DIR/install_patch_files/ric-dep/bin/install_k8s_and_helm.previous.sh"
@@ -103,6 +105,11 @@ cp helm/rtmgr/templates/config.yaml "$PARENT_DIR/install_patch_files/ric-dep/hel
 cp helm/rtmgr/templates/config.yaml helm/rtmgr/templates/config.previous.yaml
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/ric-dep/helm/rtmgr/templates/config.yaml.patch"
 
+git restore helm/rtmgr/templates/deployment.yaml
+cp helm/rtmgr/templates/deployment.yaml "$PARENT_DIR/install_patch_files/ric-dep/helm/rtmgr/templates/deployment.previous.yaml"
+cp helm/rtmgr/templates/deployment.yaml helm/rtmgr/templates/deployment.previous.yaml
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/ric-dep/helm/rtmgr/templates/deployment.yaml.patch"
+
 git restore new-installer/helm/charts/nearrtric/e2mgr/templates/configmap.yaml
 cp new-installer/helm/charts/nearrtric/e2mgr/templates/configmap.yaml "$PARENT_DIR/install_patch_files/ric-dep/new-installer/helm/charts/nearrtric/e2mgr/templates/configmap.previous.yaml"
 cp new-installer/helm/charts/nearrtric/e2mgr/templates/configmap.yaml new-installer/helm/charts/nearrtric/e2mgr/templates/configmap.previous.yaml
@@ -112,6 +119,11 @@ git restore new-installer/helm/charts/nearrtric/rtmgr/templates/config.yaml
 cp new-installer/helm/charts/nearrtric/rtmgr/templates/config.yaml "$PARENT_DIR/install_patch_files/ric-dep/new-installer/helm/charts/nearrtric/rtmgr/templates/config.previous.yaml"
 cp new-installer/helm/charts/nearrtric/rtmgr/templates/config.yaml new-installer/helm/charts/nearrtric/rtmgr/templates/config.previous.yaml
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/ric-dep/new-installer/helm/charts/nearrtric/rtmgr/templates/config.yaml.patch"
+
+git restore new-installer/helm/charts/nearrtric/rtmgr/templates/deployment.yaml
+cp new-installer/helm/charts/nearrtric/rtmgr/templates/deployment.yaml "$PARENT_DIR/install_patch_files/ric-dep/new-installer/helm/charts/nearrtric/rtmgr/templates/deployment.previous.yaml"
+cp new-installer/helm/charts/nearrtric/rtmgr/templates/deployment.yaml new-installer/helm/charts/nearrtric/rtmgr/templates/deployment.previous.yaml
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/ric-dep/new-installer/helm/charts/nearrtric/rtmgr/templates/deployment.yaml.patch"
 
 cd "$PARENT_DIR"
 
@@ -152,6 +164,7 @@ git diff --no-index -- /dev/null e2sm/lib/LogicalOR.c >"$PARENT_DIR/install_patc
 git diff --no-index -- /dev/null e2sm/lib/MatchingCondItem-Choice.c >"$PARENT_DIR/install_patch_files/xApps/kpimon-go/e2sm/lib/MatchingCondItem-Choice.c.patch" || [ "$?" -eq 1 ]
 git diff e2sm/lib/MatchingCondItem.c >"$PARENT_DIR/install_patch_files/xApps/kpimon-go/e2sm/lib/MatchingCondItem.c.patch"
 git diff e2sm/wrapper.c >"$PARENT_DIR/install_patch_files/xApps/kpimon-go/e2sm/wrapper.c.patch"
+git diff control/control.go >"$PARENT_DIR/install_patch_files/xApps/kpimon-go/control/control.go.patch"
 
 git restore e2sm/asn1/kpm2_0.asn
 cp e2sm/asn1/kpm2_0.asn "$PARENT_DIR/install_patch_files/xApps/kpimon-go/e2sm/asn1/kpm2_0.previous.asn"
@@ -172,6 +185,11 @@ git restore e2sm/wrapper.c
 cp e2sm/wrapper.c "$PARENT_DIR/install_patch_files/xApps/kpimon-go/e2sm/wrapper.previous.c"
 cp e2sm/wrapper.c e2sm/wrapper.previous.c
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/xApps/kpimon-go/e2sm/wrapper.c.patch"
+
+git restore control/control.go
+cp control/control.go "$PARENT_DIR/install_patch_files/xApps/kpimon-go/control/control.go.previous"
+cp control/control.go control/control.go.previous
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/xApps/kpimon-go/control/control.go.patch"
 
 cd "$PARENT_DIR"
 

@@ -64,7 +64,7 @@ UEs
 └── Duranta (OAI) 5G UE: 2026.w31
 ```
 
-The components that have been verified to support or not support connectivity are included below.
+The components that have been verified to support connectivity are included below.
 
 
 ### Minimum System Requirements

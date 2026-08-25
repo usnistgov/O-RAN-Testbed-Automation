@@ -42,7 +42,7 @@ The ZeroMQ channel emulator supports multi-UE and multi-cell emulation. When `US
 sed -i 's/^RADIO_TYPE=.*$/RADIO_TYPE="ZMQ" # Set to "SIMU", "ZMQ", or "USRP"/' User_Equipment/full_install.sh
 sed -i 's/^RADIO_TYPE=.*$/RADIO_TYPE="ZMQ" # Set to "SIMU", "ZMQ", or "USRP"/' User_Equipment/generate_configurations.sh
 sed -i 's/^RADIO_TYPE=.*$/RADIO_TYPE="ZMQ" # Set to "SIMU", "ZMQ", or "USRP"/' Next_Generation_Node_B/full_install.sh
-sed -i 's/^RADIO_TYPE=.*$/RADIO_TYPE="ZMQ" # Set to "SIMU", "ZMQ", or "USRP"/' Next_Generation_Node_B/generate_configurations.sh
+sed -i 's/^RADIO_TYPE=.*$/RADIO_TYPE="ZMQ"                   # Set to "SIMU", "ZMQ", or "USRP"/' Next_Generation_Node_B/generate_configurations.sh
 sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' run.sh
 sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' run_handover_scenario.sh
 sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' run_with_grafana_dashboard.sh
@@ -67,7 +67,7 @@ sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' Next_
 sed -i 's/^RADIO_TYPE=.*$/RADIO_TYPE="SIMU" # Set to "SIMU", "ZMQ", or "USRP"/' User_Equipment/full_install.sh
 sed -i 's/^RADIO_TYPE=.*$/RADIO_TYPE="SIMU" # Set to "SIMU", "ZMQ", or "USRP"/' User_Equipment/generate_configurations.sh
 sed -i 's/^RADIO_TYPE=.*$/RADIO_TYPE="SIMU" # Set to "SIMU", "ZMQ", or "USRP"/' Next_Generation_Node_B/full_install.sh
-sed -i 's/^RADIO_TYPE=.*$/RADIO_TYPE="SIMU" # Set to "SIMU", "ZMQ", or "USRP"/' Next_Generation_Node_B/generate_configurations.sh
+sed -i 's/^RADIO_TYPE=.*$/RADIO_TYPE="SIMU"                  # Set to "SIMU", "ZMQ", or "USRP"/' Next_Generation_Node_B/generate_configurations.sh
 sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=true$/USE_ZMQ_CHANNEL_EMULATOR=false/' run.sh
 sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=true$/USE_ZMQ_CHANNEL_EMULATOR=false/' run_handover_scenario.sh
 sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=true$/USE_ZMQ_CHANNEL_EMULATOR=false/' run_with_grafana_dashboard.sh

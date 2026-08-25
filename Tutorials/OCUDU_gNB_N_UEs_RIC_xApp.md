@@ -315,53 +315,43 @@ After starting the 5G Core, FlexRIC, gNodeB, and UE, use the `./run_xapp_kpm_mon
 
 #### Expected Output
 ```
-[XApp]: SUBSCRIPTION RESPONSE rx
-[XApp]: Successfully subscribed to RAN_FUNC_ID 2
-[XApp] Subscribing to KPM report style 3.
-[XApp]: E42 RIC SUBSCRIPTION REQUEST tx RAN_FUNC_ID 2 RIC_REQ_ID 2
-[XApp]: SUBSCRIPTION RESPONSE rx
-[XApp]: Successfully subscribed to RAN_FUNC_ID 2
-[XApp] Subscribing to KPM report style 4.
-[XApp]: E42 RIC SUBSCRIPTION REQUEST tx RAN_FUNC_ID 2 RIC_REQ_ID 3
-[XApp]: SUBSCRIPTION RESPONSE rx
-[XApp]: Successfully subscribed to RAN_FUNC_ID 2
-
+[xApp]: E42 SETUP-REQUEST tx
+[xApp]: E42 SETUP-RESPONSE rx 
+[xApp]: xApp ID = 7 
+Connected E2 nodes = 1
+[xApp] Using S-NSSAI SST=1 SD=ffffff (env SST/SD can override)
+[xApp] Subscribing to KPM report style 1.
+[xApp]: E42 RIC SUBSCRIPTION REQUEST tx RAN_FUNC_ID 2 RIC_REQ_ID 1 
+[xApp]: SUBSCRIPTION RESPONSE rx
+[xApp]: Successfully subscribed to RAN_FUNC_ID 2 
+[xApp] Subscribing to KPM report style 3.
+[xApp]: E42 RIC SUBSCRIPTION REQUEST tx RAN_FUNC_ID 2 RIC_REQ_ID 2 
+[xApp]: SUBSCRIPTION RESPONSE rx
+[xApp]: Successfully subscribed to RAN_FUNC_ID 2 
+[xApp] Subscribing to KPM report style 4.
+[xApp]: E42 RIC SUBSCRIPTION REQUEST tx RAN_FUNC_ID 2 RIC_REQ_ID 3 
+[xApp]: SUBSCRIPTION RESPONSE rx
+[xApp]: Successfully subscribed to RAN_FUNC_ID 2 
 E2 node: DU:0
 
-    1 KPM ind_msg latency = 252296672587512435 [μs]
-
-DRB.AirIfDelayUl = 30.00
-DRB.RlcDelayUl = 11.10
-DRB.RlcPacketDropRateDl = 0
-DRB.RlcSduDelayDl = 7.70 [μs]
-DRB.RlcSduTransmittedVolumeDL = 246
-DRB.RlcSduTransmittedVolumeUL = 13803
-DRB.UEThpDl = 265.00 [kbps]
-DRB.UEThpUl = 13872.00 [kbps]
-
-RACH.PreambleDedCell = 0
-
-RRU.PrbAvailDl = 105
-RRU.PrbAvailUl = 2
-RRU.PrbTotDl = 0 [%]
-RRU.PrbTotUl = 98 [%]
-RRU.PrbUsedDl = 1
-RRU.PrbUsedUl = 104
-
+      1 KPM ind_msg latency = 1492 [μs]
+DRB.AirIfDelayUl = 30.00 
+DRB.RlcDelayUl = 4.81 
+DRB.RlcPacketDropRateDl = 0 
+DRB.RlcSduDelayDl = 3732.70 [μs]
+DRB.RlcSduTransmittedVolumeDL = 58448 
+DRB.RlcSduTransmittedVolumeUL = 768 
+DRB.UEThpDl = 59044.00 [kbps]
+DRB.UEThpUl = 816.00 [kbps]
+RACH.PreambleDedCell = 0 
+RRU.PrbAvailDl = 16 
+RRU.PrbAvailUl = 98 
+RRU.PrbTotDl = 84 [%]
+RRU.PrbTotUl = 7 [%]
+RRU.PrbUsedDl = 90 
+RRU.PrbUsedUl = 8 
 E2 node: DU:0
 
-    2 KPM ind_msg latency = 229372533753335962 [μs]
-
-UE ID type = gNB-DU, gnb_cu_ue_f1ap = 0
-
-DRB.AirIfDelayUl = 30.00
-DRB.RlcDelayUl = 11.10
-DRB.RlcPacketDropRateDl = 0
-DRB.RlcSduDelayDl = 7.70 [μs]
-DRB.RlcSduTransmittedVolumeDL = 246
-DRB.RlcSduTransmittedVolumeUL = 13803
-DRB.UEThpDl = 265.00 [kbps]
-DRB.UEThpUl = 13872.00 [kbps]
 ```
 ### Monitor KPIs
 The console output shows the xApp successfully subscribed to the KPM service model using RAN function ID 2. The xApp received periodic KPM indication message from the connected E2 node. 
@@ -376,8 +366,9 @@ The console output shows the xApp successfully subscribed to the KPM service mod
 
 #### Throughput Performance
 
-- The measured **uplink throughput (~13.8 Mbps)** was significantly higher than the **downlink throughput (~265 kbps)**.
-- This indicates that the test traffic was primarily **uplink-focused**, resulting in higher utilization of uplink radio resources.
+- The measured **downlink throughput (~59.0 Mbps)** was significantly higher than the **uplink throughput (~816 kbps)**.
+- This indicates that the test traffic was primarily **downlink-focused**, resulting in higher utilization of downlink radio resources.
+- The measured transmitted SDU volume was **58,448** for downlink and **768** for uplink, further confirming the downlink-dominant traffic profile.
 
 ---
 
@@ -387,30 +378,60 @@ The measured latency values were:
 
 | Metric | Value |
 |---|---:|
-| UL RLC Delay | ~11 µs |
-| DL RLC SDU Delay | ~7.7 µs |
+| KPM Indication Message Latency | ~1,492 µs |
+| UL RLC Delay | ~4.81 µs |
+| DL RLC SDU Delay | ~3,732.70 µs |
 | UL Air Interface Delay | ~30 µs |
 
-- The low latency values indicate efficient packet processing and fast communication between the **UE and gNB-DU**.
-- The results demonstrate suitable performance for near-real-time RAN monitoring and optimization applications.
+- The **UL RLC delay of ~4.81 µs** and **UL air-interface delay of ~30 µs** indicate relatively fast uplink packet processing.
+- The measured **DL RLC SDU delay of ~3.73 ms** is considerably higher than the uplink RLC delay, indicating additional delay in downlink packet processing or transmission.
+- The **KPM indication message latency of ~1.49 ms** represents the latency associated with reporting performance measurements to the monitoring/control framework.
 
 ---
 
 #### Packet Reliability
 
-- The measured **downlink packet drop rate was 0%**.
-- No significant packet loss or RLC retransmission issues were observed.
-- This demonstrates stable radio communication and reliable data transmission.
+- The measured **downlink RLC packet drop rate was 0%**.
+- No downlink packet drops were observed during the measurement period.
+- This indicates reliable packet delivery at the RLC layer under the tested conditions.
 
 ---
 
 #### Radio Resource Utilization
 
-- **Uplink PRB utilization reached approximately 98%**, indicating that most available uplink radio resources were allocated to the UE.
-- **Downlink PRB utilization remained close to 0%**, showing that downlink resources were mostly unused during the measurement period.
-- The PRB utilization pattern matches the observed traffic profile, where uplink traffic dominated over downlink traffic.
+The measured PRB-related values were:
+
+| Metric | Value |
+|---|---:|
+| DL PRB Available | 16 |
+| UL PRB Available | 98 |
+| DL PRB Total | 84% |
+| UL PRB Total | 7% |
+| DL PRB Used | 90 |
+| UL PRB Used | 8 |
+
+- **Downlink PRB usage (~90)** was substantially higher than **uplink PRB usage (~8)**.
+- This utilization pattern is consistent with the measured traffic profile, where **downlink throughput (~59 Mbps)** was much higher than **uplink throughput (~816 kbps)**.
+- The relatively high downlink resource utilization suggests that the UE was primarily consuming downlink radio resources during the measurement period.
 
 ---
+
+#### Additional KPM Measurements
+
+| KPM Metric | Value |
+|---|---:|
+| RACH Preamble Detected Cell | 0 |
+| DL RLC SDU Transmitted Volume | 58,448 |
+| UL RLC SDU Transmitted Volume | 768 |
+| E2 Node | DU:0 |
+
+---
+
+## Overall Performance Summary
+
+Overall, the measurements indicate a **downlink-dominant traffic scenario**, with approximately **59 Mbps DL throughput** and **0.816 Mbps UL throughput**. The **0% DL packet drop rate** demonstrates reliable packet delivery, while the PRB measurements show substantially greater **downlink radio resource utilization** compared with uplink utilization.
+
+The measured **UL RLC delay (~4.81 µs)** and **UL air-interface delay (~30 µs)** indicate low uplink processing and transmission latency, while the **DL RLC SDU delay (~3.73 ms)** was comparatively higher.
 
 # KPM Monitoring xApp Use Case
 

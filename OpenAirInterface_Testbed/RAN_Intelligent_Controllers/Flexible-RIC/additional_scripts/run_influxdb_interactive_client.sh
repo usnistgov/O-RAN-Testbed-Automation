@@ -45,7 +45,7 @@ INFLUXDB_TOKEN=$(jq -r '.token' "$INFLUXDB_TOKEN_PATH")
 while true; do
     echo -e "\n----------------------------------------------------------------"
     echo -e "  InfluxDB Client"
-    echo -e "  Org: $INFLUXDB_ORG | Bucket: $INFLUXDB_BUCKET"
+    echo -e "  Org: $INFLUXDB_ORG, Bucket: $INFLUXDB_BUCKET"
     echo -e "----------------------------------------------------------------"
     echo -e "  1) List all buckets"
     echo -e "  2) List measurements in '$INFLUXDB_BUCKET' (last 1h)"

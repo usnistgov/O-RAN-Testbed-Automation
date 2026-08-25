@@ -224,6 +224,7 @@ apply_oai_patch() {
 }
 
 SINR_RRC_PATCH_FILES=(
+    openair1/PHY/NR_UE_ESTIMATION/nr_ue_measurements.c
     common/utils/nr/nr_common.c
     common/utils/nr/nr_common.h
     common/utils/nr/tests/test_nr_common.cpp
@@ -234,6 +235,7 @@ SINR_RRC_PATCH_FILES=(
     openair2/RRC/NR/MESSAGES/asn1_msg.h
     openair2/RRC/NR/nr_rrc_defs.h
     openair2/RRC/NR/rrc_gNB.c
+    openair2/NR_UE_PHY_INTERFACE/NR_IF_Module.h
     openair2/RRC/NR_UE/L2_interface_ue.c
     openair2/RRC/NR_UE/L2_interface_ue.h
     openair2/RRC/NR_UE/rrc_UE.c

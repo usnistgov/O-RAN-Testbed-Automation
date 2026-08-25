@@ -1,0 +1,14 @@
+diff --git a/openair2/NR_UE_PHY_INTERFACE/NR_IF_Module.h b/openair2/NR_UE_PHY_INTERFACE/NR_IF_Module.h
+index b992e49b7d..395368867f 100644
+--- a/openair2/NR_UE_PHY_INTERFACE/NR_IF_Module.h
++++ b/openair2/NR_UE_PHY_INTERFACE/NR_IF_Module.h
+@@ -233,7 +233,8 @@ typedef void (nr_ue_meas_ind_f)(module_id_t module_id,
+                                 uint16_t Nid_cell,
+                                 bool csi_meas,
+                                 bool is_neighboring_cell,
+-                                int rsrp_dBm);
++                                int rsrp_dBm,
++                                int sinr_index);
+ 
+ /*
+  * Generic type of an application-defined callback to return various

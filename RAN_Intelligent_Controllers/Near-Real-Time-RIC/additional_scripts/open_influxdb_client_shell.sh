@@ -56,7 +56,7 @@ while true; do
     echo
     echo "----------------------------------------------------------------"
     echo "  Near-RT RIC InfluxDB Client"
-    echo "  Org: $INFLUXDB_ORG | Bucket: $INFLUXDB_BUCKET"
+    echo "  Org: $INFLUXDB_ORG, Bucket: $INFLUXDB_BUCKET"
     echo "----------------------------------------------------------------"
     echo "  1) List all buckets"
     echo "  2) List measurements in '$INFLUXDB_BUCKET' (last 1h)"

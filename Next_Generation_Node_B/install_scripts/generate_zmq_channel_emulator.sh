@@ -65,14 +65,25 @@ if [ ! -x "$UE_NAMESPACE_SCRIPT" ]; then
 fi
 cd "$PARENT_DIR"
 
+APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! python3 -c 'import numpy as np; import sys; sys.exit(0 if int(np.__version__.split(".", 1)[0]) < 2 else 1)' >/dev/null 2>&1; then
     echo "Installing NumPy via pip..."
-    python3 -m pip install --user 'numpy<2'
+    if ! python3 -m pip install --user 'numpy<2'; then
+        echo
+        echo "Installing NumPy via apt-get, since pip install failed..."
+        sudo apt-get update
+        sudo env $APTVARS apt-get install -y python3-numpy
+    fi
 fi
 
 if ! python3 -m pip show PyQt5 >/dev/null 2>&1; then
     echo "Installing PyQt5 via pip..."
-    python3 -m pip install --user PyQt5
+    if ! python3 -m pip install --user PyQt5; then
+        echo
+        echo "Installing PyQt5 via apt-get, since pip install failed..."
+        sudo apt-get update
+        sudo env $APTVARS apt-get install -y python3-pyqt5
+    fi
 fi
 
 if ! python3 -c 'from gnuradio import blocks' >/dev/null 2>&1; then

@@ -306,7 +306,7 @@ cd "RAN_Intelligent_Controllers\Non-Real-Time-RIC" >nul 2>&1
 if not errorlevel 1 (
     git clone https://gerrit.o-ran-sc.org/r/nonrtric/plt/rappmanager.git
     cd "rappmanager"
-    git checkout 3b4813b6dab278581601a06185c146ea47b4ebb7
+    git checkout 1eca521d8fd88de890e4fc7f3e5e2d262673d8c9
     cd ..\..\..
 ) else (
     echo ERROR: Failed to cd to RAN_Intelligent_Controllers\Non-Real-Time-RIC. Skipping clone.
@@ -342,7 +342,7 @@ cd "RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\smo-install" >nul 2>&1
 if not errorlevel 1 (
     git clone https://github.com/onap/multicloud-k8s.git
     cd "multicloud-k8s"
-    git checkout a3c6f080e9a015c7aab0d351af3864f239fb2931
+    git checkout f76da968efe25ee14e8b5b43d3e526eab50497cc
     cd ..\..\..\..\..
 ) else (
     echo ERROR: Failed to cd to RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\smo-install. Skipping clone.
@@ -354,7 +354,7 @@ cd "RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\smo-install" >nul 2>&1
 if not errorlevel 1 (
     git clone https://gerrit.onap.org/r/oom.git
     cd "onap_oom"
-    git checkout 2214f66e9d9f757239d0297353d9194f782e9eac
+    git checkout 4f72676662ed4a04321633cbe6947c1443d11947
     cd ..\..\..\..\..
 ) else (
     echo ERROR: Failed to cd to RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\smo-install. Skipping clone.
@@ -366,7 +366,7 @@ cd "RAN_Intelligent_Controllers\Non-Real-Time-RIC" >nul 2>&1
 if not errorlevel 1 (
     git clone https://gerrit.o-ran-sc.org/r/portal/nonrtric-controlpanel.git
     cd "nonrtric-controlpanel"
-    git checkout 9f0bc855a687f918548d5dcea7a43913256cdd54
+    git checkout fb9683fa6f729dc556e44beb803c7434f895b854
     cd ..\..\..
 ) else (
     echo ERROR: Failed to cd to RAN_Intelligent_Controllers\Non-Real-Time-RIC. Skipping clone.

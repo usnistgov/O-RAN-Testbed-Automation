@@ -66,7 +66,6 @@ UEs
 
 The components that have been verified to support or not support connectivity are included below.
 
-```
 
 ### Minimum System Requirements
 

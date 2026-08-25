@@ -10,6 +10,7 @@
 - [Install The Testbed](#install-the-testbed)
 - [Tutorial Workflow](#tutorial-workflow)
 - [OSC Near-RT RIC with KPM xApp](#osc-near-rt-ric-with-kpm-xapp)
+  - [View KPI Metrics](#view-kpi-metrics)
 - [Flexric with KPM xApp](#flexric-with-kpm-xapp)
   - [Start the Testbed](#start-the-testbed)
   - [Launch the KPM Monitoring xApp](#launch-the-kpm-monitoring-xapp)
@@ -195,6 +196,55 @@ ricplt         statefulset-ricplt-dbaas-server-0                           1/1  
 ricxapp        ricxapp-hw-go-c84579888-q5xf2                               1/1     Running   0              155m
 ricxapp        ricxapp-kpimon-go-85dc5fdf8b-5s7sg                          1/1     Running   0              38m
 ```
+
+### View KPI metrics
+Upon installation, metrics will be stored in the InfluxDB pod under bucket=kpimon, org=influxdata as UeMetrics and cellMetrics measurements. Access this data by opening the InfluxDB Client with ./additional_scripts/open_influxdb_client_shell.sh.
+
+```bash
+sudo ./open_influxdb_client_shell.sh 
+
+----------------------------------------------------------------
+  Near-RT RIC InfluxDB Client
+  Org: influxdata | Bucket: kpimon
+----------------------------------------------------------------
+  1) List all buckets
+  2) List measurements in 'kpimon' (last 1h)
+  3) List field keys in 'kpimon' (last 1h)
+  4) View current KPI metrics
+  5) View the latest 20 KPI records
+  6) Enter a custom influx command
+  7) Open an interactive shell in the InfluxDB pod
+  8) Exit
+----------------------------------------------------------------
+Select a number: 4
+
+Latest KPI metrics:
+
+UeMetrics
+  DRB.AirIfDelayUl = 30
+  DRB.RlcDelayUl = 5.888718128204346
+  DRB.RlcPacketDropRateDl = 0
+  DRB.RlcSduDelayDl = 3520.10009765625
+  DRB.RlcSduTransmittedVolumeDL = 60071
+  DRB.RlcSduTransmittedVolumeUL = 710
+  DRB.UEThpDl = 59044
+  DRB.UEThpUl = 756
+  RRU.PrbAvailDl = 16
+  RRU.PrbAvailUl = 96
+  RRU.PrbTotDl = 84
+  RRU.PrbTotUl = 9
+  RRU.PrbUsedDl = 90
+  RRU.PrbUsedUl = 10
+
+```
+Additionally, the metrics can be  visualized in xApp logs. Run `sudo kubectl  logs -f -n ricxapp  <pod name>`
+
+```RIC Indication message from {gnbd_001_001_00019b_0} received
+2026/08/24 21:49:13 Indication Header format = 1
+ parsing for UE metrics 
+ No of ue= 1
+map[DRB.AirIfDelayUl:30 DRB.RlcDelayUl:5.215263843536377 DRB.RlcPacketDropRateDl:0 DRB.RlcSduDelayDl:3472.39990234375 DRB.RlcSduTransmittedVolumeDL:59446 DRB.RlcSduTransmittedVolumeUL:775 DRB.UEThpDl:59044 DRB.UEThpUl:824 RRU.PrbAvailDl:16 RRU.PrbAvailUl:95 RRU.PrbTotDl:84 RRU.PrbTotUl:10 RRU.PrbUsedDl:90 RRU.PrbUsedUl:11] ```
+
 ## Flexric with KPM xApp
 By default, the gNodeB's Distributed Unit (DU) connects to the O-RAN SC Near-RT RIC E2 Terminator. To use FlexRIC instead of O-RAN SC's Near-RT RIC, set all occurrences of `USE_FLEXRIC` to `true`, then run `../generate_configurations.sh`.
 

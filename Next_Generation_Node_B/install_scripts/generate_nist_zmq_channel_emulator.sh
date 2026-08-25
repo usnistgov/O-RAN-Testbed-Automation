@@ -41,6 +41,10 @@ UE_NUMBERS=()
 UE_IPS=()
 VALIDATED_CELL_NUMBERS=()
 
+usage() {
+    echo "Usage: $0 --cells <cell_numbers> --ues <ue_numbers> [--output FILE] [--sample-rate-hz HZ] [--slow-down-ratio N]"
+}
+
 # Script directory from the called path, including symlinks
 SCRIPT_DIR="$(cd "$(dirname "$0")" >/dev/null 2>&1 && pwd)"
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
@@ -92,10 +96,6 @@ if ! python3 -c 'from gnuradio import blocks' >/dev/null 2>&1; then
     sudo apt-get update
     sudo env $APTVARS apt-get install -y gnuradio
 fi
-
-usage() {
-    echo "Usage: $0 --cells <cell_numbers> --ues <ue_numbers> [--output FILE] [--sample-rate-hz HZ] [--slow-down-ratio N]"
-}
 
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -205,7 +205,10 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
     UE_IPS+=("$UE_IP")
 done
 
-mkdir -p "$(dirname "$OUTPUT")"
+ZMQ_DIR="$(dirname "$OUTPUT")"
+mkdir -p "$ZMQ_DIR"
+rm -f "$ZMQ_DIR/multi_ue_scenario.grc" "$ZMQ_DIR/multi_ue_scenario.grc.license" \
+    "$ZMQ_DIR/multi_ue_scenario.grc.tmp" "$ZMQ_DIR/multi_ue_scenario.grc.license.tmp"
 
 cat >"$OUTPUT" <<EOF
 #!/usr/bin/env python3
@@ -238,7 +241,7 @@ cat >"$OUTPUT" <<EOF
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-# WARNING: Auto-generated ZeroMQ Channel Emulator, overwritten with the script: ./Next_Generation_Node_B/install_scripts/generate_zmq_channel_emulator.sh
+# WARNING: Auto-generated ZeroMQ Channel Emulator, overwritten with the script: ./Next_Generation_Node_B/install_scripts/generate_nist_zmq_channel_emulator.sh
 
 EOF
 

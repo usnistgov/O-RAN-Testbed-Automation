@@ -32,7 +32,7 @@ It may be required for the AVX2 instruction set to be available on the host mach
 
 ## Simulating Multiple UEs and Cells with a ZeroMQ Channel Emulator
 
-The ZeroMQ channel emulator supports multi-UE and multi-cell emulation and is motivated by the OCUDU Multi-UE Emulation tutorial [\[5][ocudu-multi-ue], [6\]][ocudu-multi-ue-grc]. Its generator, `Next_Generation_Node_B/install_scripts/generate_zmq_channel_emulator.sh`, accepts comma-separated UE numbers, such as `--ues 1,2,3`. Its graphical user interface can be toggled by setting `SHOW_ZMQ_CHANNEL_EMULATOR_UI` in `run.sh`.
+The ZeroMQ channel emulator supports multi-UE and multi-cell emulation. When `USE_NIST_ZMQ_CHANNEL_EMULATOR` is set to `false`, the OCUDU Multi-UE Emulation tutorial broker [\[5][ocudu-multi-ue], [6\]][ocudu-multi-ue-grc] is used instead. Its generator, `Next_Generation_Node_B/install_scripts/generate_nist_zmq_channel_emulator.sh`, accepts comma-separated UE and cell numbers, such as `--ues 1,2,3 --cells 1,2`. Its graphical user interface can be toggled by setting `SHOW_ZMQ_CHANNEL_EMULATOR_UI` in `run.sh`.
 
 <details>
 <summary>Enable ZeroMQ channel emulator</summary>

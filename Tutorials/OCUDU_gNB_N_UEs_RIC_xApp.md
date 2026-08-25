@@ -198,10 +198,10 @@ ricxapp        ricxapp-kpimon-go-85dc5fdf8b-5s7sg                          1/1  
 ```
 
 ### View KPI metrics
-Upon installation, metrics will be stored in the InfluxDB pod under bucket=kpimon, org=influxdata as UeMetrics and cellMetrics measurements. Access this data by opening the InfluxDB Client with ./additional_scripts/open_influxdb_client_shell.sh.
+Upon installation, metrics will be stored in the InfluxDB pod under bucket=kpimon, org=influxdata as UeMetrics measurements. Access this data by opening the InfluxDB Client with `./additional_scripts/open_influxdb_client_shell.sh`.
 
 ```bash
-sudo ./open_influxdb_client_shell.sh 
+ ./open_influxdb_client_shell.sh 
 
 ----------------------------------------------------------------
   Near-RT RIC InfluxDB Client
@@ -237,13 +237,14 @@ UeMetrics
   RRU.PrbUsedUl = 10
 
 ```
-Additionally, the metrics can be  visualized in xApp logs. Run `sudo kubectl  logs -f -n ricxapp  <pod name>`
+Additionally, the metrics can be  visualized in xApp logs. Run ` kubectl  logs -f -n ricxapp  <pod name>`
 
-```RIC Indication message from {gnbd_001_001_00019b_0} received
+``` RIC Indication message from {gnbd_001_001_00019b_0} received
 2026/08/24 21:49:13 Indication Header format = 1
  parsing for UE metrics 
  No of ue= 1
-map[DRB.AirIfDelayUl:30 DRB.RlcDelayUl:5.215263843536377 DRB.RlcPacketDropRateDl:0 DRB.RlcSduDelayDl:3472.39990234375 DRB.RlcSduTransmittedVolumeDL:59446 DRB.RlcSduTransmittedVolumeUL:775 DRB.UEThpDl:59044 DRB.UEThpUl:824 RRU.PrbAvailDl:16 RRU.PrbAvailUl:95 RRU.PrbTotDl:84 RRU.PrbTotUl:10 RRU.PrbUsedDl:90 RRU.PrbUsedUl:11] ```
+map[DRB.AirIfDelayUl:30 DRB.RlcDelayUl:5.215263843536377 DRB.RlcPacketDropRateDl:0 DRB.RlcSduDelayDl:3472.39990234375 DRB.RlcSduTransmittedVolumeDL:59446 DRB.RlcSduTransmittedVolumeUL:775 DRB.UEThpDl:59044 DRB.UEThpUl:824 RRU.PrbAvailDl:16 RRU.PrbAvailUl:95 RRU.PrbTotDl:84 RRU.PrbTotUl:10 RRU.PrbUsedDl:90 RRU.PrbUsedUl:11]
+Parsing UE Metric Done ```
 
 ## Flexric with KPM xApp
 By default, the gNodeB's Distributed Unit (DU) connects to the O-RAN SC Near-RT RIC E2 Terminator. To use FlexRIC instead of O-RAN SC's Near-RT RIC, set all occurrences of `USE_FLEXRIC` to `true`, then run `../generate_configurations.sh`.

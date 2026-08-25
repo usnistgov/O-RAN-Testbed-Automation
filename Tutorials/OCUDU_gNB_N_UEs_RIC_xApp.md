@@ -245,7 +245,7 @@ Additionally, the metrics can be  visualized in xApp logs. Run ` kubectl  logs -
  No of ue= 1
 map[DRB.AirIfDelayUl:30 DRB.RlcDelayUl:5.215263843536377 DRB.RlcPacketDropRateDl:0 DRB.RlcSduDelayDl:3472.39990234375 DRB.RlcSduTransmittedVolumeDL:59446 DRB.RlcSduTransmittedVolumeUL:775 DRB.UEThpDl:59044 DRB.UEThpUl:824 RRU.PrbAvailDl:16 RRU.PrbAvailUl:95 RRU.PrbTotDl:84 RRU.PrbTotUl:10 RRU.PrbUsedDl:90 RRU.PrbUsedUl:11]
 Parsing UE Metric Done ```
-
+---
 ## Flexric with KPM xApp
 By default, the gNodeB's Distributed Unit (DU) connects to the O-RAN SC Near-RT RIC E2 Terminator. To use FlexRIC instead of O-RAN SC's Near-RT RIC, set all occurrences of `USE_FLEXRIC` to `true`, then run `../generate_configurations.sh`.
 

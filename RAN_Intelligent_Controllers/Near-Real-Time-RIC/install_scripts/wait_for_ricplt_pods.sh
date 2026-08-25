@@ -167,6 +167,19 @@ else
     wait_for_all_pods_running "kube-flannel" "ricinfra" "ricplt"
 fi
 
+# Restart E2 Terminator if it hasn't registered with E2 Manager after rtmgr initialization
+E2T_LIST=$(kubectl get --raw="/api/v1/namespaces/ricplt/services/http:service-ricplt-e2mgr-http:3800/proxy/v1/e2t/list" 2>/dev/null || true)
+if ! echo "$E2T_LIST" | grep -q '"e2tAddress"'; then
+    echo "E2 Manager has no registered E2Term instance... restarting E2Term after rtmgr initialization..."
+    kubectl rollout restart deployment/deployment-ricplt-e2term-alpha -n ricplt
+    kubectl rollout status deployment/deployment-ricplt-e2term-alpha -n ricplt --timeout=300s
+    E2T_LIST=$(kubectl get --raw="/api/v1/namespaces/ricplt/services/http:service-ricplt-e2mgr-http:3800/proxy/v1/e2t/list")
+    if ! echo "$E2T_LIST" | grep -q '"e2tAddress"'; then
+        echo "ERROR: E2Term did not register with E2 Manager after its restart."
+        exit 1
+    fi
+fi
+
 # Remove the unnecessary tiller-secret-generator pod if it has completed
 CMD="kubectl get pods -n ricinfra --no-headers | grep 'tiller-secret-generator' | awk '{print \$1, \$3}'"
 POD_INFO=$(eval $CMD)

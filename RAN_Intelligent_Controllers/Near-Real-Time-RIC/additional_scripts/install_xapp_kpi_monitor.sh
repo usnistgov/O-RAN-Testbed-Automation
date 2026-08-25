@@ -36,10 +36,22 @@ echo "# Script: $(realpath "$0") $@"
 # Exit immediately if a command fails
 set -e
 
+CLEAN_INSTALL=false
+
 CURRENT_DIR=$(pwd)
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$PARENT_DIR"
+
+if [ "$CLEAN_INSTALL" != "true" ] && XAPP_DEPLOYMENT=$(kubectl get deployment -n ricxapp -o name 2>/dev/null | grep -m1 'kpimon-go' || true) && [ -n "$XAPP_DEPLOYMENT" ]; then
+        echo "Restarting KPI Monitor xApp (kpimon-go)..."
+        if kubectl rollout restart -n ricxapp "$XAPP_DEPLOYMENT" && kubectl rollout status -n ricxapp "$XAPP_DEPLOYMENT" --timeout=60s; then
+            echo "Successfully restarted KPI Monitor xApp."
+            exit 0
+        fi
+        # Otherwise continue to the full installation process
+    fi
+fi
 
 # Run a sudo command every minute to ensure script execution without user interaction
 ./install_scripts/start_sudo_refresh.sh

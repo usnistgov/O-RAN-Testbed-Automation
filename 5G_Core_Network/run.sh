@@ -36,6 +36,7 @@ fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
+RUN_MODE="${1:-background}"
 
 # Ensure that the correct script is used
 if [ -f "options.yaml" ]; then
@@ -178,8 +179,17 @@ run_in_terminal() {
     nohup x-terminal-emulator -T "$APP_NAME" -e /bin/sh -c "./open5gs/install/bin/$APP_NAME -c $CONFIG_FILE" >/dev/null 2>&1 &
 }
 
-# Latest components (see https://open5gs.org/open5gs/docs/guide/01-quickstart/#:~:text=Starting%20and%20Stopping%20Open5GS)
-APPS=("mmed" "sgwcd" "smfd" "amfd" "sgwud" "upfd" "hssd" "pcrfd" "nrfd" "scpd" "seppd" "ausfd" "udmd" "pcfd" "nssfd" "bsfd" "udrd" "webui")
+# The experiment only needs the 5G SA control/user plane. Keep the default full
+# list for existing workflows and expose a smaller, background-only mode.
+if [[ "$RUN_MODE" == "minimal-5g" ]]; then
+    # Start discovery and data services before the session/control-plane NFs.
+    # The experiment runner also waits for NRF registration and PFCP association.
+    APPS=("nrfd" "scpd" "upfd" "udrd" "udmd" "ausfd" "bsfd" "pcfd" "nssfd" "smfd" "amfd")
+    echo "Starting the minimal Open5GS 5G SA component set..."
+else
+    # Latest components (see https://open5gs.org/open5gs/docs/guide/01-quickstart/)
+    APPS=("mmed" "sgwcd" "smfd" "amfd" "sgwud" "upfd" "hssd" "pcrfd" "nrfd" "scpd" "seppd" "ausfd" "udmd" "pcfd" "nssfd" "bsfd" "udrd" "webui")
+fi
 
 # Check if the last application is 'webui'
 if [ "${APPS[-1]}" == "webui" ]; then
@@ -188,7 +198,7 @@ if [ "${APPS[-1]}" == "webui" ]; then
     ./start_webui.sh no-browser
 fi
 
-if [[ $1 == "show" ]]; then
+if [[ "$RUN_MODE" == "show" ]]; then
     # Run in separate terminal windows
     for APP in "${APPS[@]}"; do
         run_in_terminal "$APP"
@@ -200,4 +210,4 @@ else
     done
 fi
 
-./is_running.sh
+./is_running.sh "$RUN_MODE"

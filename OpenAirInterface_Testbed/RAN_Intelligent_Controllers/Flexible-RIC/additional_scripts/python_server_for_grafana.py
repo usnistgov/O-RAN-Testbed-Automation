@@ -34,12 +34,34 @@ import urllib.parse
 import mmap
 import time
 import random
+from datetime import datetime
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(script_dir)
 base_dir = os.path.dirname(os.path.dirname(os.path.dirname(parent_dir)))
 
 class SingleFileHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
+
+    @staticmethod
+    def timestamp_ms_from_line(line: bytes):
+        fields = line.rstrip(b'\r\n').split(b',', 2)
+        if not fields:
+            return None
+
+        # Legacy files start with UNIX ms; current files start with ISO 8601
+        # and retain UNIX ms as the second column for exact filtering/joining.
+        first = fields[0].strip()
+        if first.isdigit():
+            return int(first)
+        if len(fields) > 1:
+            second = fields[1].strip()
+            if second.isdigit():
+                return int(second)
+
+        try:
+            return int(datetime.fromisoformat(first.decode('ascii')).timestamp() * 1000)
+        except (UnicodeDecodeError, ValueError, OverflowError):
+            return None
 
     # Perform a binary search to find the offset in the mmap file where the timestamp is greater than or equal to the target timestamp.
     def find_offset(self, mmap_file: mmap.mmap, header_end_offset: int, target_timestamp: int):
@@ -57,9 +79,8 @@ class SingleFileHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             if not line:
                 high = mid
                 continue
-            try:
-                timestamp = int(line.split(b',', 1)[0])
-            except ValueError:
+            timestamp = self.timestamp_ms_from_line(line)
+            if timestamp is None:
                 high = mid
                 continue
 
@@ -76,12 +97,9 @@ class SingleFileHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             line = mmap_file.readline()
             if not line:
                 break
-            try:
-                ts = int(line.split(b',', 1)[0])
-                if ts >= target_timestamp:
-                    return pos
-            except ValueError:
-                continue
+            ts = self.timestamp_ms_from_line(line)
+            if ts is not None and ts >= target_timestamp:
+                return pos
         # If no timestamp equal to or greater than the target was found, return the start of data (just after header)
         return header_end_offset
 
@@ -155,7 +173,7 @@ class SingleFileHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                     last_newline_idx = mmap_file.rfind(b'\n', 0, mmap_file.size() - 1)
                     if last_newline_idx != -1:
                         mmap_file.seek(last_newline_idx + 1)
-                        last_timestamp_in_file = int(mmap_file.readline().split(b',', 1)[0])
+                        last_timestamp_in_file = self.timestamp_ms_from_line(mmap_file.readline())
                 except Exception:
                     pass
                 start = header_end if from_timestamp is None else self.find_offset(mmap_file, header_end, from_timestamp)
@@ -195,7 +213,7 @@ class SingleFileHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                         line = mmap_file.readline()
                         if not line:
                             break
-                        timestamp = int(line.split(b',', 1)[0]) if line.split(b',', 1)[0].isdigit() else None
+                        timestamp = self.timestamp_ms_from_line(line)
 
                         # Calculate the timestamp period using the first two timestamps
                         if timestamp_period_estimation is None and prev_timestamp is not None and timestamp is not None and to_timestamp is not None and approx_num_samples_param:
@@ -236,7 +254,7 @@ class SingleFileHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                         line = mmap_file.readline()
                         if not line:
                             break
-                        timestamp = int(line.split(b',', 1)[0]) if line.split(b',', 1)[0].isdigit() else None
+                        timestamp = self.timestamp_ms_from_line(line)
 
                         # Calculate the timestamp period using the first two timestamps
                         if timestamp_period_estimation is None and prev_timestamp is not None and timestamp is not None and to_timestamp is not None and approx_num_samples_param:

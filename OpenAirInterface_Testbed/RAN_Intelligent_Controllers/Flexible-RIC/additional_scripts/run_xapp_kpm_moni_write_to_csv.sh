@@ -58,7 +58,8 @@ fi
 cd "$PARENT_DIR/flexric/"
 
 # Optionally, ensure that the output CSV file is empty before running the xApp)
-OUTPUT_CSV_PATH="$PARENT_DIR/logs/KPI_Metrics.csv"
+OUTPUT_CSV_PATH="${OUTPUT_CSV_PATH:-$PARENT_DIR/logs/KPI_Metrics.csv}"
+mkdir -p "$(dirname "$OUTPUT_CSV_PATH")"
 if [ ! -f "$OUTPUT_CSV_PATH" ]; then
     touch "$OUTPUT_CSV_PATH"
 else

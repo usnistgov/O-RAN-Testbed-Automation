@@ -108,6 +108,45 @@ static char *get_meas_unit(const char *name) {
   return val;
 }
 
+static bool is_pdcp_volume_metric(const char *name) {
+  return strcmp(name, "DRB.PdcpSduVolumeDL") == 0 || strcmp(name, "DRB.PdcpSduVolumeUL") == 0;
+}
+
+static uint64_t pdcp_megabits_to_bytes(double megabits) {
+  if (megabits <= 0.0)
+    return 0;
+  return (uint64_t)llround(megabits * 1000000.0 / 8.0);
+}
+
+static bool format_iso8601_ms(int64_t epoch_ms, char *buffer, size_t buffer_size) {
+  time_t seconds = (time_t)(epoch_ms / 1000);
+  int64_t milliseconds = epoch_ms % 1000;
+  if (milliseconds < 0) {
+    milliseconds += 1000;
+    seconds--;
+  }
+
+  struct tm local_time = {0};
+  if (localtime_r(&seconds, &local_time) == NULL)
+    return false;
+
+  char date_time[32] = {0};
+  char compact_offset[8] = {0};
+  if (strftime(date_time, sizeof(date_time), "%Y-%m-%dT%H:%M:%S", &local_time) == 0 ||
+      strftime(compact_offset, sizeof(compact_offset), "%z", &local_time) == 0)
+    return false;
+
+  char offset[8] = {0};
+  if (strlen(compact_offset) == 5) {
+    snprintf(offset, sizeof(offset), "%c%c%c:%c%c", compact_offset[0], compact_offset[1], compact_offset[2],
+             compact_offset[3], compact_offset[4]);
+  } else {
+    snprintf(offset, sizeof(offset), "%s", compact_offset);
+  }
+
+  return snprintf(buffer, buffer_size, "%s.%03" PRId64 "%s", date_time, milliseconds, offset) > 0;
+}
+
 // Overwritten if environment variables SST and SD are set
 static uint8_t cfg_slicing_sst = 1;
 static uint32_t cfg_slicing_sd = 0xFFFFFF; // 0xFFFFFF for any SD
@@ -163,6 +202,18 @@ static void csv_append_int_to_csv_line(meas_record_lst_t meas_record) {
 
   if (current_len + 32 < buffer_size) { // Reserve space for int/float and comma
     snprintf(target_buffer + current_len, buffer_size - current_len, "%ld,", (long)meas_record.int_val);
+  } else {
+    fprintf(stderr, "CSV line buffer is full, cannot append more values.\n");
+  }
+}
+
+static void csv_append_uint64_to_csv_line(uint64_t value) {
+  char *target_buffer = is_cell_metric ? csv_cell_line_buffer : csv_line_buffer;
+  size_t buffer_size = is_cell_metric ? sizeof(csv_cell_line_buffer) : sizeof(csv_line_buffer);
+  size_t current_len = strlen(target_buffer);
+
+  if (current_len + 32 < buffer_size) {
+    snprintf(target_buffer + current_len, buffer_size - current_len, "%" PRIu64 ",", value);
   } else {
     fprintf(stderr, "CSV line buffer is full, cannot append more values.\n");
   }
@@ -270,13 +321,19 @@ static void csv_prepend_timestamp(int64_t arrival_ms, int64_t latency, int64_t b
     reporting_timestamp_offset = arrival_ms - prev_now - period_ms;
   }
 
-  char prefix_buffer[128];
+  char iso_time[48] = {0};
+  if (!format_iso8601_ms(arrival_ms, iso_time, sizeof(iso_time))) {
+    fprintf(stderr, "ERROR: Cannot format timestamp value.\n");
+    return;
+  }
+
+  char prefix_buffer[192];
   if (prev_now <= 0) {
-    snprintf(prefix_buffer, sizeof(prefix_buffer), "%" PRId64 ",%" PRId64 ",,%" PRId64 ",", arrival_ms, batch_id,
-             latency);
+    snprintf(prefix_buffer, sizeof(prefix_buffer), "%s,%" PRId64 ",%" PRId64 ",,%" PRId64 ",", iso_time,
+             arrival_ms, batch_id, latency);
   } else {
-    snprintf(prefix_buffer, sizeof(prefix_buffer), "%" PRId64 ",%" PRId64 ",%" PRId64 ",%" PRId64 ",", arrival_ms,
-             batch_id, reporting_timestamp_offset, latency);
+    snprintf(prefix_buffer, sizeof(prefix_buffer), "%s,%" PRId64 ",%" PRId64 ",%" PRId64 ",%" PRId64 ",",
+             iso_time, arrival_ms, batch_id, reporting_timestamp_offset, latency);
   }
 
   // Ensure the buffer won't overflow
@@ -399,7 +456,8 @@ static log_ue_id log_ue_id_e2sm[END_UE_ID_E2SM] = {
 static void log_int_value(const char *name_str, const label_info_lst_t label_info,
                           const meas_record_lst_t meas_record) {
   (void)label_info;
-  char *name_unit = get_meas_unit(name_str);
+  const bool pdcp_volume = is_pdcp_volume_metric(name_str);
+  char *name_unit = pdcp_volume ? "bytes" : get_meas_unit(name_str);
   if (name_unit && strcmp(name_unit, "[]") == 0)
     name_unit = "";
   if (name_unit == NULL)
@@ -415,7 +473,10 @@ static void log_int_value(const char *name_str, const label_info_lst_t label_inf
     }
     csv_append_name_to_csv_header(name_str, clean_unit);
   }
-  csv_append_int_to_csv_line(meas_record);
+  if (pdcp_volume)
+    csv_append_uint64_to_csv_line(pdcp_megabits_to_bytes((double)meas_record.int_val));
+  else
+    csv_append_int_to_csv_line(meas_record);
 
   // if (label_info.noLabel != NULL) {
   //   printf("%s = %d%s%s\n", name_str, meas_record.int_val, *name_unit ? " " : "", name_unit);
@@ -436,7 +497,8 @@ static void log_int_value(const char *name_str, const label_info_lst_t label_inf
 static void log_real_value(const char *name_str, const label_info_lst_t label_info,
                            const meas_record_lst_t meas_record) {
   (void)label_info;
-  char *name_unit = get_meas_unit(name_str);
+  const bool pdcp_volume = is_pdcp_volume_metric(name_str);
+  char *name_unit = pdcp_volume ? "bytes" : get_meas_unit(name_str);
   if (name_unit && strcmp(name_unit, "[]") == 0)
     name_unit = "";
   if (name_unit == NULL)
@@ -452,7 +514,10 @@ static void log_real_value(const char *name_str, const label_info_lst_t label_in
     }
     csv_append_name_to_csv_header(name_str, clean_unit);
   }
-  csv_append_real_to_csv_line(meas_record);
+  if (pdcp_volume)
+    csv_append_uint64_to_csv_line(pdcp_megabits_to_bytes(meas_record.real_val));
+  else
+    csv_append_real_to_csv_line(meas_record);
 
   // printf("%s = %.2f%s%s\n", name_str, meas_record.real_val, *name_unit ? " " : "", name_unit);
 }
@@ -986,6 +1051,7 @@ int main(int argc, char *argv[]) {
 
   is_cell_metric = false;
   csv_wrote_header = false;
+  csv_append_name_to_csv_header("Time", "ISO 8601");
   csv_append_name_to_csv_header("Time", "UNIX ms");
   csv_append_name_to_csv_header("Batch ID (Mapping Cell with UE)", "");
   csv_append_name_to_csv_header("Reporting Time Offset", "ms");
@@ -995,6 +1061,7 @@ int main(int argc, char *argv[]) {
 
   is_cell_metric = true;
   csv_wrote_cell_header = false;
+  csv_append_name_to_csv_header("Time", "ISO 8601");
   csv_append_name_to_csv_header("Time", "UNIX ms");
   csv_append_name_to_csv_header("Batch ID (Mapping Cell with UE)", "");
   csv_append_name_to_csv_header("Reporting Time Offset", "ms");

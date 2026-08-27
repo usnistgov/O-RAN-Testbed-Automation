@@ -39,11 +39,11 @@ By default, the RF simulator server is set to the gNodeB host. To make the UE th
 ## Interacting with the UE
 
 - **Simulate UE traffic to Core**:
-  `./additional_scripts/simulate_ue_traffic_to_core.sh <UE_NUMBER> [BANDWIDTH] [DURATION]`
+  `./additional_scripts/simulate_ue_traffic_to_core.sh <UE_NUMBER> [BANDWIDTH] [DURATION] [PORT]`
   - Sends traffic from the UE to the core. Default bandwidth: 1M, duration: 60s.
 
 - **Simulate Core traffic to UE**:
-  `./additional_scripts/simulate_core_traffic_to_ue.sh <UE_NUMBER> [BANDWIDTH] [DURATION]`
+  `./additional_scripts/simulate_core_traffic_to_ue.sh <UE_NUMBER> [BANDWIDTH] [DURATION] [PORT]`
   - Sends traffic from the core to the UE. Default bandwidth: 1M, duration: 60s.
 
 - **Open UE shell**:

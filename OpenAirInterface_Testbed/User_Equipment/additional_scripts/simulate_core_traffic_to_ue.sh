@@ -34,7 +34,6 @@ if ! command -v realpath &>/dev/null; then
     sudo env $APTVARS apt-get install -y coreutils
 fi
 
-CURRENT_DIR=$(pwd)
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$PARENT_DIR"
@@ -42,12 +41,14 @@ cd "$PARENT_DIR"
 UE_NUMBER=$1
 BANDWIDTH=${2:-1M}
 DURATION=${3:-60}
+IPERF_PORT=${4:-}
 
 if [[ -z "$UE_NUMBER" ]]; then
     echo "ERROR: No UE number provided."
-    echo "Usage: $0 <UE_NUMBER> [BANDWIDTH] [DURATION]"
+    echo "Usage: $0 <UE_NUMBER> [BANDWIDTH] [DURATION] [PORT]"
     echo "       BANDWIDTH is optional and can be specified in units [k, K, m, M, g, G]. Default is 1M."
     echo "       DURATION is optional and specifies the duration in seconds. Default is 60."
+    echo "       PORT is optional. Default is 5000 + UE_NUMBER."
     exit 1
 fi
 
@@ -58,6 +59,14 @@ fi
 
 if [ $UE_NUMBER -lt 1 ]; then
     echo "ERROR: UE number must be greater than or equal to 1."
+    exit 1
+fi
+
+if [ -z "$IPERF_PORT" ]; then
+    IPERF_PORT=$((5000 + UE_NUMBER))
+fi
+if ! [[ $IPERF_PORT =~ ^[0-9]+$ ]] || [ "$IPERF_PORT" -lt 1 ] || [ "$IPERF_PORT" -gt 65535 ]; then
+    echo "ERROR: PORT must be an integer between 1 and 65535."
     exit 1
 fi
 
@@ -81,28 +90,10 @@ if [ ! -f "configs/ue1.conf" ]; then
     exit 1
 fi
 
-# Check if docker is accessible from the current user, and if not, repair its permissions
-if [ -z "$FIXED_DOCKER_PERMS" ]; then
-    if ! OUTPUT=$(docker info 2>&1); then
-        if echo "$OUTPUT" | grep -qiE 'permission denied|cannot connect to the docker daemon'; then
-            echo "Docker permissions will repair on reboot."
-            sudo groupadd -f docker
-            if [ -n "$SUDO_USER" ]; then
-                sudo usermod -aG docker "${SUDO_USER:-root}"
-            else
-                sudo usermod -aG docker "${USER:-root}"
-            fi
-            # Rather than requiring a reboot to apply docker permissions, set the docker group and re-run the parent script
-            export FIXED_DOCKER_PERMS=1
-            if ! command -v sg &>/dev/null; then
-                echo
-                echo "WARNING: Could not find set group (sg) command, docker may fail without sudo until the system reboots."
-                echo
-            else
-                exec sg docker -c "$(printf '%q ' "$CURRENT_DIR/$0" "$@")"
-            fi
-        fi
-    fi
+UE_NAMESPACE="ue$UE_NUMBER"
+if ! ip netns list | grep -qw "$UE_NAMESPACE"; then
+    echo "ERROR: Namespace $UE_NAMESPACE does not exist. Please start the UE first with: ./run_background.sh $UE_NUMBER"
+    exit 1
 fi
 
 LOG_FILE="logs/ue${UE_NUMBER}_stdout.txt"
@@ -119,20 +110,60 @@ fi
 
 echo "Successfully found PDU Session IP: $PDU_SESSION_IP"
 
-if command -v docker >/dev/null 2>&1 && docker ps --format '{{.Names}}' | grep -qw dn_internet; then
+CORE_OPTIONS="$PARENT_DIR/../5G_Core_Network/options.yaml"
+CORE_TO_USE=$(awk '$1 == "core_to_use:" { print $2; exit }' "$CORE_OPTIONS" 2>/dev/null)
+if [[ "$CORE_TO_USE" == 5gdeploy-* ]]; then
+    command -v docker >/dev/null 2>&1 || {
+        echo "ERROR: Docker is required by core_to_use=$CORE_TO_USE."
+        exit 1
+    }
+    docker info >/dev/null 2>&1 || {
+        echo "ERROR: Docker is not accessible while core_to_use=$CORE_TO_USE."
+        exit 1
+    }
+    docker ps --format '{{.Names}}' | grep -qw dn_internet || {
+        echo "ERROR: The 5GDeploy dn_internet container is not running."
+        exit 1
+    }
     USING_5GDEPLOY=true
 else
     USING_5GDEPLOY=false
 fi
 
-if [ "$USING_5GDEPLOY" = true ]; then # 5GDeploy:
-    docker exec -it dn_internet apk add --no-cache iperf
-    docker exec -it dn_internet iperf -c $PDU_SESSION_IP -u -i 1 -b $BANDWIDTH -t $DURATION
-else # Open5GS:
-    if ! command -v iperf &>/dev/null; then
-        echo "Package \"iperf\" not found, installing..."
-        sudo env $APTVARS apt-get install -y iperf
-    fi
+if ! command -v iperf &>/dev/null; then
+    echo "Package \"iperf\" not found, installing..."
+    sudo env $APTVARS apt-get install -y iperf
+fi
 
-    iperf -c $PDU_SESSION_IP -u -i 1 -b $BANDWIDTH -t $DURATION
+mkdir -p logs
+SERVER_LOG="logs/iperf_dl_server_ue${UE_NUMBER}.log"
+sudo ip netns exec "$UE_NAMESPACE" timeout "$((DURATION + 15))" \
+    iperf -s -u -B "$PDU_SESSION_IP" -p "$IPERF_PORT" -i 1 >"$SERVER_LOG" 2>&1 &
+IPERF_SERVER_PID=$!
+
+cleanup_server() {
+    if sudo kill -0 "$IPERF_SERVER_PID" 2>/dev/null; then
+        sudo kill "$IPERF_SERVER_PID" 2>/dev/null || true
+        wait "$IPERF_SERVER_PID" 2>/dev/null || true
+    fi
+}
+trap cleanup_server EXIT
+trap 'exit 130' INT TERM
+
+sleep 1
+if ! sudo kill -0 "$IPERF_SERVER_PID" 2>/dev/null; then
+    echo "ERROR: Unable to start the iperf2 server in $UE_NAMESPACE on $PDU_SESSION_IP:$IPERF_PORT."
+    cat "$SERVER_LOG"
+    exit 1
+fi
+
+echo "Generating core-to-UE UDP traffic at $BANDWIDTH for ${DURATION}s on port $IPERF_PORT..."
+
+if [ "$USING_5GDEPLOY" = true ]; then # 5GDeploy:
+    docker exec dn_internet apk add --no-cache iperf
+    docker exec dn_internet iperf -c "$PDU_SESSION_IP" -u -i 1 \
+        -b "$BANDWIDTH" -t "$DURATION" -p "$IPERF_PORT"
+else # Open5GS:
+    iperf -c "$PDU_SESSION_IP" -u -i 1 -b "$BANDWIDTH" \
+        -t "$DURATION" -p "$IPERF_PORT"
 fi

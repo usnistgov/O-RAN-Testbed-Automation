@@ -42,6 +42,12 @@ KPM_VERSION="KPM_V3_00"       # KPM_V2_03, KPM_V3_00
 E2_TERM_PORT=36421            # Ensure this matches the gNodeB's full_install.sh E2_TERM_PORT. Default is 36421, which will result in no modification
 E2_TERM_PORT_SUBSTITUTE=36423 # If E2_TERM_PORT is used already, substitute it before replacing with E2_TERM_PORT
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
+BUILD_JOBS="${BUILD_JOBS:-$(nproc)}"
+
+if ! [[ "$BUILD_JOBS" =~ ^[1-9][0-9]*$ ]]; then
+    echo "ERROR: BUILD_JOBS must be a positive integer." >&2
+    exit 1
+fi
 
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
@@ -63,13 +69,18 @@ fi
 
 # Run a sudo command every minute to ensure script execution without user interaction
 ./install_scripts/start_sudo_refresh.sh
+cleanup_sudo_refresh() {
+    ./install_scripts/stop_sudo_refresh.sh >/dev/null 2>&1 || true
+}
+trap cleanup_sudo_refresh EXIT
 
 # Get the start timestamp in seconds
 INSTALL_START_TIME=$(date +%s)
 
 echo "Installing dependencies..."
+echo "Using $BUILD_JOBS parallel build jobs."
 sudo env $APTVARS apt-get install -y build-essential automake bison flex
-sudo env $APTVARS apt-get install -y libsctp-dev python3 cmake-curses-gui libpcre2-dev python3-dev
+sudo env $APTVARS apt-get install -y libsctp-dev python3 cmake-curses-gui libpcre2-dev python3-dev swig
 
 # Check if GCC 13 or newer is installed, if not, install it and set it as the default
 MIN_GCC_VERSION="13.0.0"
@@ -93,23 +104,25 @@ fi
 export CFLAGS="-Wno-error=incompatible-pointer-types"
 export CXXFLAGS="-Wno-error=incompatible-pointer-types"
 
-if [ ! -d "swig" ]; then
-    echo "Cloning SWIG..."
-    ./install_scripts/git_clone.sh https://github.com/swig/swig.git
-fi
+MIN_SWIG_VERSION="4.1"
+SWIG_VERSION=$(swig -version | awk '/SWIG Version/ { print $3; exit }')
+if [ -z "$SWIG_VERSION" ] || dpkg --compare-versions "$SWIG_VERSION" lt "$MIN_SWIG_VERSION"; then
+    if [ ! -d "swig" ]; then
+        echo "SWIG $MIN_SWIG_VERSION or newer was not found, cloning SWIG..."
+        ./install_scripts/git_clone.sh https://github.com/swig/swig.git
+    fi
 
-if ! command -v swig &>/dev/null; then
     echo "Building SWIG..."
     cd swig
     ./autogen.sh
     ./configure --prefix=/usr/
-    make -j$(nproc)
+    make -j"$BUILD_JOBS"
 
     echo "Installing SWIG..."
     sudo make install
     cd ..
 else
-    echo "SWIG is already installed, skipping."
+    echo "SWIG $SWIG_VERSION is already installed, skipping source build."
 fi
 
 cd "$SCRIPT_DIR"
@@ -158,7 +171,7 @@ if [[ "$PREFIX_DIR" != /* ]]; then
     PREFIX_DIR="$SCRIPT_DIR/$PREFIX_DIR"
 fi
 CC=gcc CXX=g++ cmake .. -DCMAKE_INSTALL_PREFIX="$PREFIX_DIR" -DXAPP_DB=NONE_XAPP -DE2AP_VERSION=$E2AP_VERSION -DKPM_VERSION=$KPM_VERSION $ADDITIONAL_FLAGS
-make -j$(nproc)
+make -j"$BUILD_JOBS"
 
 echo "Installing FlexRIC..."
 make install
@@ -169,6 +182,7 @@ cd "$SCRIPT_DIR"
 
 # Stop the sudo timeout refresher, it is no longer necessary to run
 ./install_scripts/stop_sudo_refresh.sh
+trap - EXIT
 
 # Calculate how long the script took to run
 INSTALL_END_TIME=$(date +%s)

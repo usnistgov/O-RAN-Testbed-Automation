@@ -32,10 +32,10 @@
 set -e
 
 SPLIT_DU_IDS=$(seq 1 3)
-RADIO_TYPE="SIMU" # Set to "SIMU", "ZMQ", or "USRP"
-MAKE_GNB_E2_NODE=true
-MAKE_CU_E2_NODE=false
-MAKE_DU_E2_NODE=true
+RADIO_TYPE="${RADIO_TYPE:-SIMU}" # Set to "SIMU", "ZMQ", or "USRP"
+MAKE_GNB_E2_NODE="${MAKE_GNB_E2_NODE:-true}"
+MAKE_CU_E2_NODE="${MAKE_CU_E2_NODE:-false}"
+MAKE_DU_E2_NODE="${MAKE_DU_E2_NODE:-true}"
 
 # FLEXRIC_LIBRARY_DIR="/usr/local/lib/flexric/" # Default
 FLEXRIC_LIBRARY_DIR="flexric/build/flexric_libraries/lib/flexric/"

@@ -36,6 +36,7 @@ fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
+RUN_MODE="${1:-full}"
 
 # Ensure that the correct script is used
 if [ -f "options.yaml" ]; then
@@ -97,8 +98,12 @@ check_service() {
 
 INCLUDE_SEPP=$(yq eval '.include_sepp' options.yaml)
 
-# Latest components (see https://open5gs.org/open5gs/docs/guide/01-quickstart/#:~:text=Starting%20and%20Stopping%20Open5GS)
-APPS=("mmed" "sgwcd" "smfd" "amfd" "sgwud" "upfd" "hssd" "pcrfd" "nrfd" "scpd" "seppd" "ausfd" "udmd" "pcfd" "nssfd" "bsfd" "udrd" "webui")
+if [[ "$RUN_MODE" == "minimal-5g" ]]; then
+    APPS=("smfd" "amfd" "upfd" "nrfd" "scpd" "ausfd" "udmd" "bsfd" "pcfd" "nssfd" "udrd")
+else
+    # Latest components (see https://open5gs.org/open5gs/docs/guide/01-quickstart/)
+    APPS=("mmed" "sgwcd" "smfd" "amfd" "sgwud" "upfd" "hssd" "pcrfd" "nrfd" "scpd" "seppd" "ausfd" "udmd" "pcfd" "nssfd" "bsfd" "udrd" "webui")
+fi
 
 for APP in "${APPS[@]}"; do
     if [ "$APP" == "seppd" ]; then

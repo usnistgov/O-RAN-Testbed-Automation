@@ -81,7 +81,8 @@ if [ "$RFSIM_SERVER" -ne 0 ]; then
 fi
 
 sudo -v # Ensure sudo session is active
-sudo setsid bash -c "stdbuf -oL -eL \"$SCRIPT_DIR/run.sh\" $UE_NUMBER $RFSIM_SERVER_ARG >/dev/null 2>&1" </dev/null &
+sudo setsid bash -c "exec stdbuf -oL -eL \"$SCRIPT_DIR/run.sh\" $UE_NUMBER $RFSIM_SERVER_ARG >/dev/null 2>&1" \
+    </dev/null >/dev/null 2>&1 &
 
 ATTEMPT=0
 while $(./is_running.sh | grep -q "NOT_RUNNING"); do

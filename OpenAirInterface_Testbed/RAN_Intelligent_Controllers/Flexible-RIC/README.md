@@ -22,8 +22,8 @@ This installation of the Near-RT RIC supports six xApps.
   - Sets `XAPP_DURATION=-1` to run indefinitely and include new metrics (see below).
     - List of metrics printed to console for each UE sample:
       ```console
-      DRB.PdcpSduVolumeDL (kb) - Downlink volume of the UE since the last sample
-      DRB.PdcpSduVolumeUL (kb) - Uplink volume of the UE since the last sample
+      DRB.PdcpSduVolumeDL (bytes) - Downlink volume of the UE since the last sample
+      DRB.PdcpSduVolumeUL (bytes) - Uplink volume of the UE since the last sample
       DRB.RlcSduDelayDl (μs) - Delay downlink, (100ms-windowed) per-packet sojourn (SDU to PDU) in microseconds
       DRB.UEThpDl (kbps) - Downlink throughput of the UE since the last sample
       DRB.UEThpUl (kbps) - Uplink throughput of the UE since the last sample

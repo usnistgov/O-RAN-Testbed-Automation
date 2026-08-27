@@ -41,12 +41,14 @@ cd "$PARENT_DIR"
 UE_NUMBER=$1
 BANDWIDTH=${2:-1M}
 DURATION=${3:-60}
+IPERF_PORT=${4:-}
 
 if [[ -z "$UE_NUMBER" ]]; then
     echo "ERROR: No UE number provided."
-    echo "Usage: $0 <UE_NUMBER> [BANDWIDTH] [DURATION]"
+    echo "Usage: $0 <UE_NUMBER> [BANDWIDTH] [DURATION] [PORT]"
     echo "       BANDWIDTH is optional and can be specified in units [k, K, m, M, g, G]. Default is 1M."
     echo "       DURATION is optional and specifies the duration in seconds. Default is 60."
+    echo "       PORT is optional. Default is 5000 + UE_NUMBER."
     exit 1
 fi
 
@@ -57,6 +59,14 @@ fi
 
 if [ $UE_NUMBER -lt 1 ]; then
     echo "ERROR: UE number must be greater than or equal to 1."
+    exit 1
+fi
+
+if [ -z "$IPERF_PORT" ]; then
+    IPERF_PORT=$((5000 + UE_NUMBER))
+fi
+if ! [[ $IPERF_PORT =~ ^[0-9]+$ ]] || [ "$IPERF_PORT" -lt 1 ] || [ "$IPERF_PORT" -gt 65535 ]; then
+    echo "ERROR: PORT must be an integer between 1 and 65535."
     exit 1
 fi
 
@@ -133,4 +143,27 @@ if ! command -v iperf &>/dev/null; then
     sudo env $APTVARS apt-get install -y iperf
 fi
 
-sudo ip netns exec ue$UE_NUMBER iperf -c $CORE_IP -u -i 1 -b $BANDWIDTH -t $DURATION
+mkdir -p logs
+SERVER_LOG="logs/iperf_ul_server_ue${UE_NUMBER}.log"
+timeout "$((DURATION + 15))" iperf -s -u -B "$CORE_IP" -p "$IPERF_PORT" -i 1 >"$SERVER_LOG" 2>&1 &
+IPERF_SERVER_PID=$!
+
+cleanup_server() {
+    if kill -0 "$IPERF_SERVER_PID" 2>/dev/null; then
+        kill "$IPERF_SERVER_PID" 2>/dev/null || true
+        wait "$IPERF_SERVER_PID" 2>/dev/null || true
+    fi
+}
+trap cleanup_server EXIT
+trap 'exit 130' INT TERM
+
+sleep 1
+if ! kill -0 "$IPERF_SERVER_PID" 2>/dev/null; then
+    echo "ERROR: Unable to start the iperf2 server on $CORE_IP:$IPERF_PORT."
+    cat "$SERVER_LOG"
+    exit 1
+fi
+
+echo "Generating UE-to-core UDP traffic at $BANDWIDTH for ${DURATION}s on port $IPERF_PORT..."
+sudo ip netns exec "ue$UE_NUMBER" iperf -c "$CORE_IP" -u -i 1 \
+    -b "$BANDWIDTH" -t "$DURATION" -p "$IPERF_PORT"

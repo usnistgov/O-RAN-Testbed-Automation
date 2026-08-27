@@ -65,7 +65,8 @@ else
     >logs/flexric_stdout.txt
 
     cd "$SCRIPT_DIR/flexric"
-    setsid bash -c "stdbuf -oL -eL ./build/examples/ric/nearRT-RIC -c \"../configs/flexric.conf\" -p \"$FULL_SM_DIR\" > ../logs/flexric_stdout.txt 2>&1" </dev/null &
+    setsid bash -c "exec stdbuf -oL -eL ./build/examples/ric/nearRT-RIC -c \"../configs/flexric.conf\" -p \"$FULL_SM_DIR\" > ../logs/flexric_stdout.txt 2>&1" \
+        </dev/null >/dev/null 2>&1 &
 
     cd "$SCRIPT_DIR"
     while $(./is_running.sh | grep -q "NOT_RUNNING"); do

@@ -1,14 +1,15 @@
 diff --git a/lib/rlc/rlc_tx_tm_entity.cpp b/lib/rlc/rlc_tx_tm_entity.cpp
-index cec4cc91e2..0c60f245e0 100644
+index 36c08c5015..5a2b1aa813 100644
 --- a/lib/rlc/rlc_tx_tm_entity.cpp
 +++ b/lib/rlc/rlc_tx_tm_entity.cpp
-@@ -134,10 +134,7 @@ void rlc_tx_tm_entity::handle_changed_buffer_state()
+@@ -135,11 +135,7 @@ void rlc_tx_tm_entity::handle_changed_buffer_state()
  {
    if (not pending_buffer_state.test_and_set(std::memory_order_seq_cst)) {
      logger.log_debug("Triggering buffer state update to lower layer");
 -    // Redirect handling of status to pcell_executor
 -    if (not pcell_executor.defer([this]() { update_mac_buffer_state(); })) {
 -      logger.log_error("Failed to enqueue buffer state update");
+-      pending_buffer_state.clear(std::memory_order_seq_cst);
 -    }
 +    update_mac_buffer_state();
    } else {

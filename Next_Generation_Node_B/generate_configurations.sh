@@ -36,6 +36,7 @@ set -e
 EXPOSE_GNB_TO_HOSTNAME=false
 USE_FLEXRIC=false
 USE_ZMQ_CHANNEL_EMULATOR=true
+USE_NIST_ZMQ_CHANNEL_EMULATOR=true # Set to false to use OCUDU’s default one-cell, three-UE ZeroMQ broker
 PDU_SESSION_TIMEOUT=3
 
 if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ]; then
@@ -662,13 +663,7 @@ update_yaml "configs/gnb.yaml" "ru_sdr" "otw_format" "default"
 # fi
 
 if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ]; then
-    if [ ! -f "install_scripts/generate_zmq_channel_emulator.sh" ]; then
-        echo "ERROR: Could not find install_scripts/generate_zmq_channel_emulator.sh."
-        exit 1
-    fi
-
     echo "Generating ZeroMQ channel emulator Python script..."
-
     CHANNEL_EMULATOR_SRATE_INT=$(awk "BEGIN { printf \"%d\", $GNB_SRATE_MHZ * 1000000 }")
 
     ZMQ_CHANNEL_EMULATOR_SLOW_DOWN_RATIO="1"
@@ -688,7 +683,11 @@ if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ]; then
         rm -f zmq_channel_emulator
     fi
     mkdir -p zmq_channel_emulator
-    ./install_scripts/generate_zmq_channel_emulator.sh --output "zmq_channel_emulator/zmq_channel_emulator.py" --sample-rate-hz "$CHANNEL_EMULATOR_SRATE_INT" --slow-down-ratio "$ZMQ_CHANNEL_EMULATOR_SLOW_DOWN_RATIO" --cells "$CHANNEL_EMULATOR_CELL_NUMBERS_STR" --ues "$CHANNEL_EMULATOR_UE_NUMBERS_STR"
+    if [ "$USE_NIST_ZMQ_CHANNEL_EMULATOR" = "true" ]; then
+        ./install_scripts/generate_nist_zmq_channel_emulator.sh --output "zmq_channel_emulator/zmq_channel_emulator.py" --sample-rate-hz "$CHANNEL_EMULATOR_SRATE_INT" --slow-down-ratio "$ZMQ_CHANNEL_EMULATOR_SLOW_DOWN_RATIO" --cells "$CHANNEL_EMULATOR_CELL_NUMBERS_STR" --ues "$CHANNEL_EMULATOR_UE_NUMBERS_STR"
+    else
+        ./install_scripts/generate_ocudu_zmq_broker.sh --output "zmq_channel_emulator/zmq_channel_emulator.py" --cells "$CHANNEL_EMULATOR_CELL_NUMBERS_STR" --ues "$CHANNEL_EMULATOR_UE_NUMBERS_STR"
+    fi
 
     if ! python3 -c "import gnuradio, PyQt5" >/dev/null 2>&1; then
         echo "Installing GNU Radio runtime for the ZeroMQ channel emulator..."

@@ -31,6 +31,8 @@
 # Exit immediately if a command fails
 set -e
 
+OVERRIDE_PCELL_EXECUTOR_PATCHES=""
+
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
@@ -50,15 +52,11 @@ mkdir -p install_patch_files/ocudu/cmake/modules
 mkdir -p install_patch_files/ocudu/lib/gateways
 mkdir -p install_patch_files/ocudu/lib/mac/mac_dl
 mkdir -p install_patch_files/ocudu/lib/rlc
-mkdir -p install_patch_files/ocudu/lib/scheduler/ue_scheduling
 
 cd ocudu
 
 git diff cmake/modules/FindYAMLCPP.cmake >../install_patch_files/ocudu/cmake/modules/FindYAMLCPP.cmake.patch
 git diff lib/gateways/sctp_network_gateway_common_impl.cpp >../install_patch_files/ocudu/lib/gateways/sctp_network_gateway_common_impl.cpp.patch
-git diff lib/mac/mac_dl/mac_cell_processor.cpp >../install_patch_files/ocudu/lib/mac/mac_dl/mac_cell_processor.cpp.patch
-git diff lib/rlc/rlc_tx_tm_entity.cpp >../install_patch_files/ocudu/lib/rlc/rlc_tx_tm_entity.cpp.patch
-git diff lib/rlc/rlc_tx_am_entity.cpp >../install_patch_files/ocudu/lib/rlc/rlc_tx_am_entity.cpp.patch
 
 git restore cmake/modules/FindYAMLCPP.cmake
 cp cmake/modules/FindYAMLCPP.cmake ../install_patch_files/ocudu/cmake/modules/FindYAMLCPP.previous.cmake
@@ -70,21 +68,26 @@ cp lib/gateways/sctp_network_gateway_common_impl.cpp ../install_patch_files/ocud
 cp lib/gateways/sctp_network_gateway_common_impl.cpp lib/gateways/sctp_network_gateway_common_impl.cpp.previous
 git apply --verbose --ignore-whitespace ../install_patch_files/ocudu/lib/gateways/sctp_network_gateway_common_impl.cpp.patch
 
-git restore lib/mac/mac_dl/mac_cell_processor.cpp
-cp lib/mac/mac_dl/mac_cell_processor.cpp ../install_patch_files/ocudu/lib/mac/mac_dl/mac_cell_processor.cpp.previous
-cp lib/mac/mac_dl/mac_cell_processor.cpp lib/mac/mac_dl/mac_cell_processor.cpp.previous
-git apply --verbose --ignore-whitespace ../install_patch_files/ocudu/lib/mac/mac_dl/mac_cell_processor.cpp.patch
+if [ "$(nproc)" -le 4 ] || [ "$OVERRIDE_PCELL_EXECUTOR_PATCHES" = "true" ]; then
+    git diff lib/mac/mac_dl/mac_cell_processor.cpp >../install_patch_files/ocudu/lib/mac/mac_dl/mac_cell_processor.cpp.patch
+    git diff lib/rlc/rlc_tx_tm_entity.cpp >../install_patch_files/ocudu/lib/rlc/rlc_tx_tm_entity.cpp.patch
+    git diff lib/rlc/rlc_tx_am_entity.cpp >../install_patch_files/ocudu/lib/rlc/rlc_tx_am_entity.cpp.patch
 
-git restore lib/rlc/rlc_tx_tm_entity.cpp
-cp lib/rlc/rlc_tx_tm_entity.cpp ../install_patch_files/ocudu/lib/rlc/rlc_tx_tm_entity.cpp.previous
-cp lib/rlc/rlc_tx_tm_entity.cpp lib/rlc/rlc_tx_tm_entity.cpp.previous
-git apply --verbose --ignore-whitespace ../install_patch_files/ocudu/lib/rlc/rlc_tx_tm_entity.cpp.patch
+    git restore lib/mac/mac_dl/mac_cell_processor.cpp
+    cp lib/mac/mac_dl/mac_cell_processor.cpp ../install_patch_files/ocudu/lib/mac/mac_dl/mac_cell_processor.cpp.previous
+    cp lib/mac/mac_dl/mac_cell_processor.cpp lib/mac/mac_dl/mac_cell_processor.cpp.previous
+    git apply --verbose --ignore-whitespace ../install_patch_files/ocudu/lib/mac/mac_dl/mac_cell_processor.cpp.patch
 
-git restore lib/rlc/rlc_tx_am_entity.cpp
-cp lib/rlc/rlc_tx_am_entity.cpp ../install_patch_files/ocudu/lib/rlc/rlc_tx_am_entity.cpp.previous
-cp lib/rlc/rlc_tx_am_entity.cpp lib/rlc/rlc_tx_am_entity.cpp.previous
-git apply --verbose --ignore-whitespace ../install_patch_files/ocudu/lib/rlc/rlc_tx_am_entity.cpp.patch
+    git restore lib/rlc/rlc_tx_tm_entity.cpp
+    cp lib/rlc/rlc_tx_tm_entity.cpp ../install_patch_files/ocudu/lib/rlc/rlc_tx_tm_entity.cpp.previous
+    cp lib/rlc/rlc_tx_tm_entity.cpp lib/rlc/rlc_tx_tm_entity.cpp.previous
+    git apply --verbose --ignore-whitespace ../install_patch_files/ocudu/lib/rlc/rlc_tx_tm_entity.cpp.patch
 
+    git restore lib/rlc/rlc_tx_am_entity.cpp
+    cp lib/rlc/rlc_tx_am_entity.cpp ../install_patch_files/ocudu/lib/rlc/rlc_tx_am_entity.cpp.previous
+    cp lib/rlc/rlc_tx_am_entity.cpp lib/rlc/rlc_tx_am_entity.cpp.previous
+    git apply --verbose --ignore-whitespace ../install_patch_files/ocudu/lib/rlc/rlc_tx_am_entity.cpp.patch
+fi
 cd ..
 
 echo "Successfully updated OCUDU patch files."

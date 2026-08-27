@@ -173,12 +173,8 @@ if [ -z "$FIXED_DOCKER_PERMS" ]; then
     fi
 fi
 
-<<<<<<< HEAD
-if [ ! -f ad.tar ]; then
-=======
 AD_NEWER_FILE=$([ -f ad.tar ] && find Dockerfile setup.py src -type f -newer ad.tar -print -quit || true)
 if [ ! -f ad.tar ] || [ -n "$AD_NEWER_FILE" ]; then
->>>>>>> main
     docker build --network host -t 127.0.0.1:80/ad:latest .
     docker save -o ad.tar 127.0.0.1:80/ad:latest
     sudo chmod 755 ad.tar

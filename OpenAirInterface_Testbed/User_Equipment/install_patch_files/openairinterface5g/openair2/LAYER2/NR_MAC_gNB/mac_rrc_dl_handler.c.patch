@@ -1,8 +1,8 @@
 diff --git a/openair2/LAYER2/NR_MAC_gNB/mac_rrc_dl_handler.c b/openair2/LAYER2/NR_MAC_gNB/mac_rrc_dl_handler.c
-index 5e7f015666..6400054bb4 100644
+index a188aada57..cc613187b2 100644
 --- a/openair2/LAYER2/NR_MAC_gNB/mac_rrc_dl_handler.c
 +++ b/openair2/LAYER2/NR_MAC_gNB/mac_rrc_dl_handler.c
-@@ -575,9 +575,26 @@ static NR_UE_info_t *create_new_UE(gNB_MAC_INST *mac, uint32_t cu_id, const NR_C
+@@ -573,9 +573,26 @@ static NR_UE_info_t *create_new_UE(gNB_MAC_INST *mac, uint32_t cu_id, const NR_C
      DevAssert(res);
    } else {
      if (!add_new_UE_RA(mac, UE)) {

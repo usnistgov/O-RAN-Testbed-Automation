@@ -1,0 +1,13 @@
+diff --git a/openair1/PHY/NR_UE_ESTIMATION/nr_ue_measurements.c b/openair1/PHY/NR_UE_ESTIMATION/nr_ue_measurements.c
+index c799644838..558542ee0f 100644
+--- a/openair1/PHY/NR_UE_ESTIMATION/nr_ue_measurements.c
++++ b/openair1/PHY/NR_UE_ESTIMATION/nr_ue_measurements.c
+@@ -178,7 +178,7 @@ static void send_ssb_rsrp_meas(PHY_VARS_NR_UE *ue,
+ static void send_neighbor_cell_meas(PHY_VARS_NR_UE *ue, const UE_nr_rxtx_proc_t *proc, uint16_t Nid_cell, int rsrp_dBm)
+ {
+   if (ue->if_inst && ue->if_inst->meas_ind)
+-    ue->if_inst->meas_ind(ue->Mod_id, proc->gNB_id, Nid_cell, false, true, rsrp_dBm);
++    ue->if_inst->meas_ind(ue->Mod_id, proc->gNB_id, Nid_cell, false, true, rsrp_dBm, -1);
+ }
+ 
+ // This function implements:

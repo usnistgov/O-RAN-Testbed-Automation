@@ -881,15 +881,16 @@ int do_RRCSetupComplete(uint8_t *buffer,
   return((enc_rval.encoded+7)/8);
 }
 
-// TODO: This function is only implemented for event A2/A3
+// This function is implemented for event A2/A3 and periodical report
 int do_nrMeasurementReport_SA(long trigger_to_measid,
                               long trigger_quantity,
+                              bool report_rsrp,
                               long rs_type,
                               uint16_t Nid_cell,
                               int rsrp_index,
-                              bool neighbor_cell_valid,
-                              uint16_t neighbor_Nid_cell,
-                              int neighbor_rsrp_index,
+                              int num_neighbor_cells,
+                              const uint16_t *neighbor_Nid_cells,
+                              const int *neighbor_rsrp_indexes,
                               uint8_t *buffer,
                               size_t buffer_size)
 {
@@ -914,7 +915,7 @@ int do_nrMeasurementReport_SA(long trigger_to_measid,
   *pci = Nid_cell;
 
   struct NR_MeasQuantityResults *active_mq_res = calloc_or_fail(1, sizeof(*active_mq_res));
-  if (trigger_quantity == NR_MeasTriggerQuantityOffset_PR_rsrp) {
+  if (trigger_quantity == NR_MeasTriggerQuantityOffset_PR_rsrp || report_rsrp) {
     asn1cCalloc(active_mq_res->rsrp, rsrp);
     // Assign precomputed RSRP index
     *rsrp = rsrp_index;
@@ -926,27 +927,30 @@ int do_nrMeasurementReport_SA(long trigger_to_measid,
 
   ASN_SEQUENCE_ADD(&mrIE->measResults.measResultServingMOList.list, measResultServMo);
 
-  // Neighbor cell
-  if (neighbor_cell_valid) {
+  // Neighbor cells
+  if (num_neighbor_cells > 0) {
     struct NR_MeasResults__measResultNeighCells *measResultNeighCells = calloc_or_fail(1, sizeof(*measResultNeighCells));
     mrIE->measResults.measResultNeighCells = measResultNeighCells;
     measResultNeighCells->present = NR_MeasResults__measResultNeighCells_PR_measResultListNR;
     NR_MeasResultListNR_t *measResultListNR = calloc_or_fail(1, sizeof(*measResultListNR));
     measResultNeighCells->choice.measResultListNR = measResultListNR;
-    struct NR_MeasResultNR *meas_result_neigh_cell = calloc_or_fail(1, sizeof(*meas_result_neigh_cell));
-    asn1cCalloc(meas_result_neigh_cell->physCellId, neighbor_pci);
-    *neighbor_pci = neighbor_Nid_cell;
-    struct NR_MeasResultNR__measResult__cellResults *cellResults = &meas_result_neigh_cell->measResult.cellResults;
-    struct NR_MeasQuantityResults *neigh_mq_res = calloc_or_fail(1, sizeof(*neigh_mq_res));
-    if (trigger_quantity == NR_MeasTriggerQuantityOffset_PR_rsrp) {
-      asn1cCalloc(neigh_mq_res->rsrp, rsrp);
-      *rsrp = neighbor_rsrp_index;
-      if (rs_type == NR_NR_RS_Type_ssb)
-        cellResults->resultsSSB_Cell = neigh_mq_res;
-      else
-        cellResults->resultsCSI_RS_Cell = neigh_mq_res;
+
+    for (int i = 0; i < num_neighbor_cells; i++) {
+      struct NR_MeasResultNR *meas_result_neigh_cell = calloc_or_fail(1, sizeof(*meas_result_neigh_cell));
+      asn1cCalloc(meas_result_neigh_cell->physCellId, neighbor_pci);
+      *neighbor_pci = neighbor_Nid_cells[i];
+      struct NR_MeasResultNR__measResult__cellResults *cellResults = &meas_result_neigh_cell->measResult.cellResults;
+      struct NR_MeasQuantityResults *neigh_mq_res = calloc_or_fail(1, sizeof(*neigh_mq_res));
+      if (trigger_quantity == NR_MeasTriggerQuantityOffset_PR_rsrp || report_rsrp) {
+        asn1cCalloc(neigh_mq_res->rsrp, rsrp);
+        *rsrp = neighbor_rsrp_indexes[i];
+        if (rs_type == NR_NR_RS_Type_ssb)
+          cellResults->resultsSSB_Cell = neigh_mq_res;
+        else
+          cellResults->resultsCSI_RS_Cell = neigh_mq_res;
+      }
+      ASN_SEQUENCE_ADD(&measResultListNR->list, meas_result_neigh_cell);
     }
-    ASN_SEQUENCE_ADD(&measResultListNR->list, meas_result_neigh_cell);
   }
 
   enc_rval = uper_encode_to_buffer(&asn_DEF_NR_UL_DCCH_Message, NULL, (void *)&ul_dcch_msg, buffer, buffer_size);
@@ -958,7 +962,9 @@ int do_nrMeasurementReport_SA(long trigger_to_measid,
 
   LOG_I(NR_RRC, "MeasurementReport Encoded %zd bits (%zd bytes)\n", enc_rval.encoded, (enc_rval.encoded + 7) / 8);
 
-  return ((enc_rval.encoded + 7) / 8);
+  int ret = (enc_rval.encoded + 7) / 8;
+  ASN_STRUCT_FREE_CONTENTS_ONLY(asn_DEF_NR_UL_DCCH_Message, &ul_dcch_msg);
+  return ret;
 }
 
 byte_array_t do_NR_DLInformationTransfer(uint8_t transaction_id, uint32_t pdu_length, uint8_t *pdu_buffer)

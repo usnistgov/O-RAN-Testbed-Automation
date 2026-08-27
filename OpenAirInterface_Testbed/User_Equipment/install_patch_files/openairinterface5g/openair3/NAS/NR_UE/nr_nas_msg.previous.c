@@ -49,10 +49,7 @@
 #include "fgs_nas_utils.h"
 #include "fgmm_service_accept.h"
 #include "fgmm_service_reject.h"
-<<<<<<< HEAD
-=======
 #include "fgmm_registration_reject.h"
->>>>>>> main
 #include "fgmm_authentication_reject.h"
 #include "ds/byte_array.h"
 #include "key_nas_deriver.h"
@@ -132,12 +129,9 @@ static bool unprotected_allowed(byte_array_t buffer, fgs_nas_msg_t msg_type)
     case FGS_DEREGISTRATION_ACCEPT_UE_ORIGINATING: // for non switch off: deregistration type IE set to NORMAL_DEREGISTRATION
       return true;
     case FGS_REGISTRATION_REJECT:
-<<<<<<< HEAD
-=======
       // unprotected if the 5GMM cause is not #76 (9.11.3.2)
       return buffer.len >= sizeof(fgmm_msg_header_t) + 1
              && buffer.buf[3] != Not_authorized_for_this_CAG_or_authorized_for_CAG_cells_only;
->>>>>>> main
     case FGS_SERVICE_REJECT:
       // unprotected if the 5GMM cause is not #76
       return buffer.buf[4] != Not_authorized_for_this_CAG_or_authorized_for_CAG_cells_only;
@@ -589,12 +583,8 @@ static int fill_fgstmsi(Stmsi5GSMobileIdentity_t *stmsi, const Guti5GSMobileIden
   stmsi->digit1 = DIGIT1;
   stmsi->spare = 0;
   stmsi->typeofidentity = FGS_MOBILE_IDENTITY_5GS_TMSI;
-<<<<<<< HEAD
-  return 10;
-=======
   /* 2 octets length field + 7 octets encoded 5G-S-TMSI contents */
   return 9;
->>>>>>> main
 }
 
 static int fill_imeisv(FGSMobileIdentity *mi, const uicc_t *uicc)
@@ -831,19 +821,6 @@ nr_ue_nas_t *get_ue_nas_info(module_id_t module_id)
   return &nr_ue_nas[module_id];
 }
 
-<<<<<<< HEAD
-static FGSRegistrationType set_fgs_ksi(nr_ue_nas_t *nas)
-{
-  if (nas->fiveGMM_mode == FGS_IDLE) {
-    /**
-     * the UE is IDLE, therefore ngKSI was deleted, along all K_AMF, ciphering key, integrity key
-     * (i.e. the 5G NAS security context associated with the ngKSI is no longer valid)
-     * see 4.4.2 of 3GPP TS 24.501
-     */
-    return NAS_KEY_SET_IDENTIFIER_NOT_AVAILABLE;
-  }
-  return 0x0;
-=======
 /** @brief Select KSI for outgoing initial NAS message
  * use stored KSI when integrity context exists, else NOT_AVAILABLE. */
 static FGSRegistrationType set_fgs_ksi(nr_ue_nas_t *nas)
@@ -852,7 +829,6 @@ static FGSRegistrationType set_fgs_ksi(nr_ue_nas_t *nas)
     return *nas->ksi & 0x07;
 
   return NAS_KEY_SET_IDENTIFIER_NOT_AVAILABLE;
->>>>>>> main
 }
 
 /**
@@ -1019,10 +995,6 @@ void generateRegistrationRequest(as_nas_info_t *initialNasMsg, nr_ue_nas_t *nas,
       uint8_t *kamf = nas->security.kamf;
       uint8_t *kgnb = nas->security.kgnb;
       derive_kgnb(kamf, nas->security.nas_count_ul, kgnb);
-<<<<<<< HEAD
-      int nas_itti_kgnb_refresh_req(instance_t instance, const uint8_t kgnb[32]);
-=======
->>>>>>> main
       nas_itti_kgnb_refresh_req(nas->UE_id, nas->security.kgnb);
     }
     // Allocate buffer (including NAS message container size)
@@ -1063,11 +1035,7 @@ void generateServiceRequest(as_nas_info_t *initialNasMsg, nr_ue_nas_t *nas)
   int size = 0;
 
   // NAS is security protected if has valid security contexts
-<<<<<<< HEAD
-  bool security_protected = nas->security_container->ciphering_context && nas->security_container->integrity_context;
-=======
   bool security_protected = nas->security_container && nas->security_container->integrity_context;
->>>>>>> main
 
   // Set 5GMM plain header
   fgmm_nas_message_plain_t plain = {0};
@@ -1078,23 +1046,12 @@ void generateServiceRequest(as_nas_info_t *initialNasMsg, nr_ue_nas_t *nas)
   // Service Type
   mm_msg->serviceType = SERVICE_TYPE_DATA;
   // NAS key set identifier
-<<<<<<< HEAD
-  mm_msg->naskeysetidentifier.naskeysetidentifier = NAS_KEY_SET_IDENTIFIER_NOT_AVAILABLE;
-  mm_msg->naskeysetidentifier.tsc = NAS_KEY_SET_IDENTIFIER_NATIVE;
-=======
   mm_msg->naskeysetidentifier.tsc = NAS_KEY_SET_IDENTIFIER_NATIVE;
   mm_msg->naskeysetidentifier.naskeysetidentifier = set_fgs_ksi(nas);
->>>>>>> main
   size += 1;
   // 5G-S-TMSI
   size += fill_fgstmsi(&mm_msg->fiveg_s_tmsi, nas->guti);
 
-<<<<<<< HEAD
-  /* message encoding */
-  initialNasMsg->nas_data = malloc_or_fail(size * sizeof(*initialNasMsg->nas_data));
-  if (security_protected) {
-    fgmm_nas_msg_security_protected_t sp = {0};
-=======
   // PDU session status is a non-cleartext Service Request IE (TS 24.501 8.2.16.3).
   // Here configured UE PDU sessions are marked active to trigger the NAS container path.
   uint8_t pdu_session_status[MAX_NUM_PSI] = {0};
@@ -1111,16 +1068,11 @@ void generateServiceRequest(as_nas_info_t *initialNasMsg, nr_ue_nas_t *nas)
   if (security_protected) {
     fgmm_nas_msg_security_protected_t sp = {0};
     FGCNasMessageContainer nas_container = {0};
->>>>>>> main
 
     // Set security protected 5GS NAS message header (see 9.1.1 of 3GPP TS 24.501)
     sp.header.protocol_discriminator = FGS_MOBILITY_MANAGEMENT_MESSAGE;
     sp.header.security_header_type = INTEGRITY_PROTECTED;
     sp.header.sequence_number = nas->security.nas_count_ul & 0xff;
-<<<<<<< HEAD
-    size += sizeof(sp.header);
-
-=======
     const int plain_sr_size = size;
     size += sizeof(sp.header);
 
@@ -1160,7 +1112,6 @@ void generateServiceRequest(as_nas_info_t *initialNasMsg, nr_ue_nas_t *nas)
 
     initialNasMsg->nas_data = malloc_or_fail(size * sizeof(*initialNasMsg->nas_data));
 
->>>>>>> main
     // Payload: plain message
     sp.plain = plain;
 
@@ -1169,25 +1120,6 @@ void generateServiceRequest(as_nas_info_t *initialNasMsg, nr_ue_nas_t *nas)
     initialNasMsg->length =
         security_header_len
         + mm_msg_encode(&sp.plain, (uint8_t *)(initialNasMsg->nas_data + security_header_len), size - security_header_len);
-<<<<<<< HEAD
-    /* ciphering */
-    uint8_t buf[initialNasMsg->length - 7];
-    nas_stream_cipher_t stream_cipher;
-    stream_cipher.context = nas->security_container->ciphering_context;
-    AssertFatal(nas->security.nas_count_ul <= 0xffffff, "fatal: NAS COUNT UL too big (todo: fix that)\n");
-    stream_cipher.count = nas->security.nas_count_ul;
-    stream_cipher.bearer = 1;
-    stream_cipher.direction = 0;
-    stream_cipher.message = (unsigned char *)(initialNasMsg->nas_data + 7);
-    /* length in bits */
-    stream_cipher.blength = (initialNasMsg->length - 7) << 3;
-    stream_compute_encrypt(nas->security_container->ciphering_algorithm, &stream_cipher, buf);
-    memcpy(stream_cipher.message, buf, initialNasMsg->length - 7);
-    /* integrity protection */
-    uint8_t mac[4];
-    stream_cipher.context = nas->security_container->integrity_context;
-    stream_cipher.count = nas->security.nas_count_ul++;
-=======
     /* integrity protection */
     uint8_t mac[4];
     nas_stream_cipher_t stream_cipher = {0};
@@ -1195,7 +1127,6 @@ void generateServiceRequest(as_nas_info_t *initialNasMsg, nr_ue_nas_t *nas)
     const uint32_t sr_ul_count = nas->security.nas_count_ul;
     stream_cipher.count = sr_ul_count;
     nas->security.nas_count_ul++;
->>>>>>> main
     stream_cipher.bearer = 1;
     stream_cipher.direction = 0;
     stream_cipher.message = (unsigned char *)(initialNasMsg->nas_data + 6);
@@ -1205,16 +1136,12 @@ void generateServiceRequest(as_nas_info_t *initialNasMsg, nr_ue_nas_t *nas)
     LOG_D(NAS, "Integrity protected initial NAS message: mac = %x %x %x %x \n", mac[0], mac[1], mac[2], mac[3]);
     for (int i = 0; i < 4; i++)
       initialNasMsg->nas_data[2 + i] = mac[i];
-<<<<<<< HEAD
-  } else {
-=======
 
     /* Keep AS security in sync with updated NAS UL count for post-paging reconnect */
     derive_kgnb(nas->security.kamf, sr_ul_count, nas->security.kgnb);
     nas_itti_kgnb_refresh_req(nas->UE_id, nas->security.kgnb);
   } else {
     initialNasMsg->nas_data = malloc_or_fail(size * sizeof(*initialNasMsg->nas_data));
->>>>>>> main
     // plain encoding
     initialNasMsg->length = mm_msg_encode(&plain, initialNasMsg->nas_data, size);
     LOG_I(NAS, "PLAIN_5GS_MSG initial NAS message: Service Request with length %d \n", initialNasMsg->length);
@@ -1830,12 +1757,9 @@ static void handle_pdu_session_accept(const nr_ue_nas_t *nas, uint8_t *pdu_buffe
     return;
   }
 
-<<<<<<< HEAD
-=======
   // Set QFI before starting UE interface thread to avoid early SDUs using 0-initialized QFI.
   set_qfi(msg.qos_rules.rule->qfi, sm_header.pdu_session_id, instance);
 
->>>>>>> main
   // process PDU Session: pass ID -1 to not append PDU ID to interface
   bool is_default = idx == 0;
   if (msg.pdu_type == PDU_SESSION_TYPE_ETHER) {
@@ -1845,11 +1769,6 @@ static void handle_pdu_session_accept(const nr_ue_nas_t *nas, uint8_t *pdu_buffe
   } else {
     LOG_W(NAS, "Unhandled PDU session type %d, ignoring PDU session ID %d\n", msg.pdu_type, sm_header.pdu_session_id);
   }
-<<<<<<< HEAD
-
-  set_qfi(msg.qos_rules.rule->qfi, sm_header.pdu_session_id, instance);
-=======
->>>>>>> main
 }
 
 /**
@@ -2047,8 +1966,6 @@ static void send_nas_uplink_data_req(nr_ue_nas_t *nas, const as_nas_info_t *init
   itti_send_msg_to_task(TASK_RRC_NRUE, nas->UE_id, msg);
 }
 
-<<<<<<< HEAD
-=======
 /** Send initial NAS to RRC as NAS_INITIAL_UL_TRANSFER_REQ (e.g. paging Service Request, TS 24.501 §5.6.1).
  *  RRC buffers for RRCSetupComplete dedicatedNAS when no SRB (TS 38.331 §5.3.3.4). */
 static void send_nas_initial_ul_transfer_req(nr_ue_nas_t *nas, const as_nas_info_t *initial_nas_msg)
@@ -2061,7 +1978,6 @@ static void send_nas_initial_ul_transfer_req(nr_ue_nas_t *nas, const as_nas_info
   itti_send_msg_to_task(TASK_RRC_NRUE, nas->UE_id, msg);
 }
 
->>>>>>> main
 static void send_nas_detach_req(nr_ue_nas_t *nas, bool wait_release)
 {
   MessageDef *msg = itti_alloc_new_message(TASK_NAS_NRUE, nas->UE_id, NAS_DETACH_REQ);
@@ -2229,12 +2145,9 @@ static int process_gprs_timer(gprs_timer_t *timer)
 static void handle_service_accept(nr_ue_nas_t *nas, const byte_array_t *buffer)
 {
   LOG_I(NAS, "Received NAS Service Accept message\n");
-<<<<<<< HEAD
-=======
   /** TS 24.501 §5.6.1.4: SERVICE ACCEPT - successful service request,
    * exit 5GMM-SERVICE-REQUEST-INITIATED, enter 5GMM-REGISTERED (§5.1.3.2.1.2.6). */
   nas->fiveGMM_state = FGS_REGISTERED;
->>>>>>> main
   fgs_service_accept_msg_t msg = {0};
   decode_fgs_service_accept(&msg, buffer);
   // Extract timer t3448 in seconds (optional IE)
@@ -2249,12 +2162,9 @@ static void handle_service_accept(nr_ue_nas_t *nas, const byte_array_t *buffer)
 
 static void handle_service_reject(nr_ue_nas_t *nas, const byte_array_t *buffer)
 {
-<<<<<<< HEAD
-=======
   /* TS 24.501 §5.6.1.5: abort service request: enter 5GMM-REGISTERED */
   if (nas->fiveGMM_state == FGS_SERVICE_REQUEST_INITIATED)
     nas->fiveGMM_state = FGS_REGISTERED;
->>>>>>> main
   fgs_service_reject_msg_t msg = {0};
   decode_fgs_service_reject(&msg, buffer);
   // Extract timer t3448 in seconds (optional IE)
@@ -2264,8 +2174,6 @@ static void handle_service_reject(nr_ue_nas_t *nas, const byte_array_t *buffer)
   LOG_E(NAS, "Received NAS Service Reject message with cause %s\n", fgmm_cause_s[msg.cause].text);
 }
 
-<<<<<<< HEAD
-=======
 /** @brief Handle Registration Reject (8.2.7 / 5.5.1.2.5 of 3GPP TS 24.501)
  * @todo Per §5.5.1.2.5: forbidden PLMN/TAI, registration attempt counter
  * @todo N1 NAS signalling release per §5.3.1.3
@@ -2324,7 +2232,6 @@ static void handle_registration_reject(nr_ue_nas_t *nas, const byte_array_t *buf
   send_nas_detach_req(nas, false);
 }
 
->>>>>>> main
 void *nas_nrue(void *args_p)
 {
   UNUSED(args_p);
@@ -2368,13 +2275,6 @@ void *nas_nrue(void *args_p)
         /* TODO not processed by NAS currently */
         break;
 
-<<<<<<< HEAD
-      case NAS_PAGING_IND:
-        LOG_I(NAS, "[UE %ld] Received %s: cause %u\n", nas->UE_id, ITTI_MSG_NAME(msg_p), NAS_PAGING_IND(msg_p).cause);
-
-        /* TODO not processed by NAS currently */
-        break;
-=======
       case NAS_PAGING_IND: {
         LOG_I(NAS, "[UE %ld] Received %s: cause %u\n", nas->UE_id, ITTI_MSG_NAME(msg_p), NAS_PAGING_IND(msg_p).cause);
         if (NAS_PAGING_IND(msg_p).cause != AS_CONNECTION_ESTABLISH) {
@@ -2444,7 +2344,6 @@ void *nas_nrue(void *args_p)
               (unsigned)initialNasMsg.length);
         break;
       }
->>>>>>> main
 
       case NAS_PDU_SESSION_REQ: {
         as_nas_info_t pduEstablishMsg = {0};
@@ -2483,23 +2382,17 @@ void *nas_nrue(void *args_p)
         }
 
         fgs_nas_msg_t msg_type = get_msg_type(ba.buf, ba.len);
-<<<<<<< HEAD
-=======
         LOG_D(NAS,
               "[UE %ld] NAS_CONN_ESTABLI_CNF decoded NAS msg_type=%s (%d)\n",
               nas->UE_id,
               print_info(msg_type, message_text_info, sizeofArray(message_text_info)),
               msg_type);
->>>>>>> main
         if (msg_type == FGS_REGISTRATION_ACCEPT) {
           handle_registration_accept(nas, ba.buf, ba.len);
         } else if (msg_type == FGS_PDU_SESSION_ESTABLISHMENT_ACC) {
           handle_pdu_session_accept(nas, ba.buf, ba.len, nas->UE_id);
-<<<<<<< HEAD
-=======
         } else if (msg_type == FGS_SERVICE_ACCEPT) {
           handle_service_accept(nas, &ba);
->>>>>>> main
         }
 
         // Free NAS buffer memory after use (coming from RRC)
@@ -2511,14 +2404,10 @@ void *nas_nrue(void *args_p)
         LOG_I(NAS, "[UE %ld] Received %s: cause %s\n",
               nas->UE_id, ITTI_MSG_NAME (msg_p), nr_release_cause_desc[NR_NAS_CONN_RELEASE_IND (msg_p).cause]);
         /* In N1 mode, upon indication from lower layers that the access stratum connection has been released,
-<<<<<<< HEAD
-           the UE shall enter 5GMM-IDLE mode and consider the N1 NAS signalling connection released (3GPP TS 24.501) */
-=======
            the UE shall enter 5GMM-IDLE mode and consider the N1 NAS signalling connection released (TS 24.501 §5.3.1.3).
            If SR incomplete (5GMM-SERVICE-REQUEST-INITIATED) §5.6.1.7 l): abort SR, enter 5GMM-REGISTERED (TODO: stop T3517). */
         if (nas->fiveGMM_state == FGS_SERVICE_REQUEST_INITIATED)
           nas->fiveGMM_state = FGS_REGISTERED;
->>>>>>> main
         nas->fiveGMM_mode = FGS_IDLE;
         // TODO handle connection release
         if (nas->termination_procedure) {
@@ -2608,29 +2497,9 @@ void *nas_nrue(void *args_p)
           case FGS_PDU_SESSION_ESTABLISHMENT_REJ:
             LOG_E(NAS, "Received PDU Session Establishment reject\n");
             break;
-<<<<<<< HEAD
-          case FGS_REGISTRATION_REJECT: {
-
-            if (pdu_length < 18) {
-              LOG_E(NAS, "Received Registration reject message too short\n");
-              break;
-            }
-
-            uint8_t cause = pdu_buffer[17];
-            if (cause >= sizeof(cause_text_info) / sizeof(cause_text_info[0])) {
-              LOG_E(NAS, "Received Registration reject cause %d unknown\n", cause);
-              break;
-            }
-
-            LOG_E(NAS, "Received Registration reject cause: %s\n", cause_text_info[cause].text);
-            exit(1);
-            break;
-          }
-=======
           case FGS_REGISTRATION_REJECT:
             handle_registration_reject(nas, &buffer);
             break;
->>>>>>> main
           case FGS_SERVICE_ACCEPT: {
             handle_service_accept(nas, &buffer);
             break;
@@ -2658,13 +2527,8 @@ void *nas_nrue(void *args_p)
         const char *ip = "10.0.1.2";
         const int qfi = 7;
         const bool is_default = true;
-<<<<<<< HEAD
-        create_ue_ip_if(ip, NULL, nas->UE_id, pdu_session_id, is_default);
-        set_qfi(qfi, pdu_session_id, nas->UE_id);
-=======
         set_qfi(qfi, pdu_session_id, nas->UE_id);
         create_ue_ip_if(ip, NULL, nas->UE_id, pdu_session_id, is_default);
->>>>>>> main
         break;
       }
 

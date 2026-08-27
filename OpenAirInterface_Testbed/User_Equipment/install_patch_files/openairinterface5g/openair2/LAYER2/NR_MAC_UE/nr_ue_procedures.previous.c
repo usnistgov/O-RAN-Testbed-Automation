@@ -765,6 +765,24 @@ static bool get_cw_info(NR_UE_DL_HARQ_STATUS_t *current_harq,
   return true;
 }
 
+/* Counterpart of the UL accumulation in nr_ue_dl_scheduler(), so that the DL line of
+ * print_ue_mac_stats() can report the same averages. Weighted by TBS like the UL side, and
+ * accumulated on every grant including retransmissions so the per-TB averages divide by the
+ * same round total the print uses. */
+static void accumulate_dl_stats(NR_UE_MAC_INST_t *mac,
+                                const fapi_nr_dl_config_dlsch_pdu_rel15_t *dlsch_pdu,
+                                const fapi_nr_dl_cw_info_t *cw_info,
+                                int number_rbs)
+{
+  int bits = cw_info->TBS;
+  mac->stats.dl.total_bits += bits;
+  mac->stats.dl.target_code_rate += (uint64_t)cw_info->targetCodeRate * bits;
+  if (cw_info->qamModOrder)
+    mac->stats.dl.total_symbols += bits / cw_info->qamModOrder;
+  mac->stats.dl.rb_size += number_rbs;
+  mac->stats.dl.nr_of_symbols += dlsch_pdu->number_symbols;
+}
+
 static int nr_ue_process_dci_dl_10_p_rnti(NR_UE_MAC_INST_t *mac,
                                           frame_t frame,
                                           int slot,
@@ -1475,6 +1493,7 @@ static int nr_ue_process_dci_dl_11(NR_UE_MAC_INST_t *mac,
                     cw_idx)) {
       if (current_harq->round < sizeofArray(mac->stats.dl.rounds))
         mac->stats.dl.rounds[current_harq->round]++;
+      accumulate_dl_stats(mac, dlsch_pdu, &dlsch_pdu->cw_info[0], number_rbs);
       // set the harq status at MAC for feedback
       set_harq_status(mac,
                       dci->pucch_resource_indicator,
@@ -1507,6 +1526,7 @@ static int nr_ue_process_dci_dl_11(NR_UE_MAC_INST_t *mac,
                     cw_idx)) {
       if (current_harq->round < sizeofArray(mac->stats.dl.rounds))
         mac->stats.dl.rounds[current_harq->round]++;
+      accumulate_dl_stats(mac, dlsch_pdu, &dlsch_pdu->cw_info[1], number_rbs);
       // set the harq status at MAC for feedback
       set_harq_status(mac,
                       dci->pucch_resource_indicator,
@@ -1640,8 +1660,10 @@ void nr_ue_process_l1_measurements(NR_UE_MAC_INST_t *mac, frame_t frame, int slo
     mac->ssb_measurements[ssb_index].ssb_sinr_dB = l1_measurements->sinr_dB;
   } else if (csi_meas) {
     mac->csirs_measurements.rsrp_dBm = l1_measurements->rsrp_dBm;
-    mac->csirs_measurements.i1 = l1_measurements->i1;
-    mac->csirs_measurements.i2 = l1_measurements->i2;
+    mac->csirs_measurements.i_1_1 = l1_measurements->i_1_1;
+    mac->csirs_measurements.i_1_2 = l1_measurements->i_1_2;
+    mac->csirs_measurements.i_1_3 = l1_measurements->i_1_3;
+    mac->csirs_measurements.i_2 = l1_measurements->i_2;
     mac->csirs_measurements.cqi = l1_measurements->cqi;
     mac->csirs_measurements.ri = l1_measurements->rank_indicator;
   }
@@ -2950,11 +2972,46 @@ static nfapi_nr_ue_csi_payload_t get_ssb_rsrp_payload(NR_UE_MAC_INST_t *mac,
   return csi;
 }
 
+// Pack i_1,1 || i_1,2 || i_1,3 into the X1 PMI field, with i_1,1 in the most significant bits
+// (ordering per TS 38.212 Sections 6.3.1.1.2 and 6.3.2.1.2).
+// Sub-field widths are inferred from the total pmi_x1_bitlen, which is unique across the Type1 Single Panel configurations
+// covered by the PMI estimator:
+//   ports | rank | pmi_x1_bitlen | i_1,1 | i_1,2 | i_1,3
+//     2   | 1,2  |       0       |   -   |   -   |   -
+//     4   |   1  |       3       |   3   |   0   |   0
+//     4   |   2  |       4       |   3   |   0   |   1
+//     8   |   1  |       6       |   3   |   3   |   0
+//     8   |   2  |       8       |   3   |   3   |   2
+static uint16_t pack_pmi_x1(int pmi_x1_bitlen, uint8_t i_1_1, uint8_t i_1_2, uint8_t i_1_3)
+{
+  int bits_12 = 0, bits_13 = 0;
+  switch (pmi_x1_bitlen) {
+    case 0:
+      return 0; // 2-port: no X1
+    case 3:
+      break; // 4-port rank 1
+    case 4:
+      bits_13 = 1;
+      break; // 4-port rank 2
+    case 6:
+      bits_12 = 3;
+      break; // 8-port rank 1
+    case 8:
+      bits_12 = 3;
+      bits_13 = 2;
+      break; // 8-port rank 2
+    default:
+      LOG_W(NR_MAC, "pack_pmi_x1: unsupported pmi_x1_bitlen %d (Type1 SinglePanel only)\n", pmi_x1_bitlen);
+      return 0;
+  }
+  return ((uint16_t)i_1_1 << (bits_12 + bits_13)) | ((uint16_t)i_1_2 << bits_13) | (uint16_t)i_1_3;
+}
+
 static nfapi_nr_ue_csi_payload_t get_csirs_RI_PMI_CQI_payload(NR_UE_MAC_INST_t *mac,
-                                                  const struct NR_CSI_ReportConfig *csi_reportconfig,
-                                                  const NR_CSI_ResourceConfigId_t csi_ResourceConfigId,
-                                                  const NR_CSI_MeasConfig_t *csi_MeasConfig,
-                                                  const CSI_mapping_t mapping_type)
+                                                              const struct NR_CSI_ReportConfig *csi_reportconfig,
+                                                              const NR_CSI_ResourceConfigId_t csi_ResourceConfigId,
+                                                              const NR_CSI_MeasConfig_t *csi_MeasConfig,
+                                                              const CSI_mapping_t mapping_type)
 {
   int p1_bits = 0;
   int p2_bits = 0;
@@ -2963,66 +3020,81 @@ static nfapi_nr_ue_csi_payload_t get_csirs_RI_PMI_CQI_payload(NR_UE_MAC_INST_t *
   AssertFatal(mapping_type != SUBBAND_ON_PUCCH, "CSI mapping for subband PMI and CQI not implemented\n");
 
   for (int csi_resourceidx = 0; csi_resourceidx < csi_MeasConfig->csi_ResourceConfigToAddModList->list.count; csi_resourceidx++) {
-
     struct NR_CSI_ResourceConfig *csi_resourceconfig = csi_MeasConfig->csi_ResourceConfigToAddModList->list.array[csi_resourceidx];
-    if (csi_resourceconfig->csi_ResourceConfigId == csi_ResourceConfigId) {
+    if (csi_resourceconfig->csi_ResourceConfigId != csi_ResourceConfigId)
+      continue;
 
-      for (int csi_idx = 0; csi_idx < csi_MeasConfig->nzp_CSI_RS_ResourceSetToAddModList->list.count; csi_idx++) {
-        if (csi_MeasConfig->nzp_CSI_RS_ResourceSetToAddModList->list.array[csi_idx]->nzp_CSI_ResourceSetId ==
-            *(csi_resourceconfig->csi_RS_ResourceSetList.choice.nzp_CSI_RS_SSB->nzp_CSI_RS_ResourceSetList->list.array[0])) {
+    for (int csi_idx = 0; csi_idx < csi_MeasConfig->nzp_CSI_RS_ResourceSetToAddModList->list.count; csi_idx++) {
+      if (csi_MeasConfig->nzp_CSI_RS_ResourceSetToAddModList->list.array[csi_idx]->nzp_CSI_ResourceSetId
+          != *(csi_resourceconfig->csi_RS_ResourceSetList.choice.nzp_CSI_RS_SSB->nzp_CSI_RS_ResourceSetList->list.array[0]))
+        continue;
 
-          nr_csi_report_t *csi_report = NULL;
-          for (int i = 0; i < MAX_CSI_REPORTCONFIG; i++) {
-            if (mac->csi_report_template[i].reportConfigId == csi_reportconfig->reportConfigId) {
-              csi_report = &mac->csi_report_template[i];
-              break;
-            }
-          }
-          AssertFatal(csi_report, "Couldn't find CSI report with ID %ld\n", csi_reportconfig->reportConfigId);
-          int cri_bitlen = csi_report->csi_meas_bitlen.cri_bitlen;
-          int ri_bitlen = csi_report->csi_meas_bitlen.ri_bitlen;
-          int pmi_x1_bitlen = csi_report->csi_meas_bitlen.pmi_x1_bitlen[mac->csirs_measurements.ri];
-          int pmi_x2_bitlen = csi_report->csi_meas_bitlen.pmi_x2_bitlen[mac->csirs_measurements.ri];
-          int cqi_bitlen = csi_report->csi_meas_bitlen.cqi_bitlen[mac->csirs_measurements.ri];
-          int padding_bitlen = 0;
-          // TODO: Improvements will be needed to cri_bitlen>0 and pmi_x1_bitlen>0
-          if (mapping_type == ON_PUSCH) {
-            p1_bits = cri_bitlen + ri_bitlen + cqi_bitlen;
-            p2_bits = pmi_x1_bitlen + pmi_x2_bitlen;
-            temp_payload_1 = (0/*mac->csi_measurements.cri*/ << (cqi_bitlen + ri_bitlen)) |
-                             (mac->csirs_measurements.ri << cqi_bitlen) |
-                             (mac->csirs_measurements.cqi);
-            temp_payload_2 = (mac->csirs_measurements.i1 << pmi_x2_bitlen) |
-                             mac->csirs_measurements.i2;
-          }
-          else {
-            p1_bits = nr_get_csi_bitlen(csi_report);
-            padding_bitlen = p1_bits - (cri_bitlen + ri_bitlen + pmi_x1_bitlen + pmi_x2_bitlen + cqi_bitlen);
-            temp_payload_1 = (0/*mac->csi_measurements.cri*/ << (cqi_bitlen + pmi_x2_bitlen + pmi_x1_bitlen + padding_bitlen + ri_bitlen)) |
-                             (mac->csirs_measurements.ri << (cqi_bitlen + pmi_x2_bitlen + pmi_x1_bitlen + padding_bitlen)) |
-                             (mac->csirs_measurements.i1 << (cqi_bitlen + pmi_x2_bitlen)) |
-                             (mac->csirs_measurements.i2 << (cqi_bitlen)) |
-                             (mac->csirs_measurements.cqi);
-          }
-
-          temp_payload_1 = reverse_bits(temp_payload_1, p1_bits);
-          temp_payload_2 = reverse_bits(temp_payload_2, p2_bits);
-          LOG_D(NR_MAC, "cri_bitlen = %d\n", cri_bitlen);
-          LOG_D(NR_MAC, "ri_bitlen = %d\n", ri_bitlen);
-          LOG_D(NR_MAC, "pmi_x1_bitlen = %d\n", pmi_x1_bitlen);
-          LOG_D(NR_MAC, "pmi_x2_bitlen = %d\n", pmi_x2_bitlen);
-          LOG_D(NR_MAC, "cqi_bitlen = %d\n", cqi_bitlen);
-          LOG_D(NR_MAC, "csi_part1_payload = 0x%lx\n", temp_payload_1);
-          LOG_D(NR_MAC, "csi_part2_payload = 0x%lx\n", temp_payload_2);
-          LOG_D(NR_MAC, "part1_bits = %d\n", p1_bits);
-          LOG_D(NR_MAC, "part2_bits = %d\n", p2_bits);
+      nr_csi_report_t *csi_report = NULL;
+      for (int i = 0; i < MAX_CSI_REPORTCONFIG; i++) {
+        if (mac->csi_report_template[i].reportConfigId == csi_reportconfig->reportConfigId) {
+          csi_report = &mac->csi_report_template[i];
           break;
         }
       }
+      AssertFatal(csi_report, "Couldn't find CSI report with ID %ld\n", csi_reportconfig->reportConfigId);
+
+      const uint8_t ri = mac->csirs_measurements.ri;
+      const int cri_bitlen = csi_report->csi_meas_bitlen.cri_bitlen;
+      const int ri_bitlen = csi_report->csi_meas_bitlen.ri_bitlen;
+      const int pmi_x1_bitlen = csi_report->csi_meas_bitlen.pmi_x1_bitlen[ri];
+      const int pmi_x2_bitlen = csi_report->csi_meas_bitlen.pmi_x2_bitlen[ri];
+      const int cqi_bitlen = csi_report->csi_meas_bitlen.cqi_bitlen[ri];
+      int padding_bitlen = 0;
+
+      // Reconstruct X1 from the separate i_1,1 / i_1,2 / i_1,3 fields; X2 is just i_2.
+      const uint16_t pmi_x1 =
+          pack_pmi_x1(pmi_x1_bitlen, mac->csirs_measurements.i_1_1, mac->csirs_measurements.i_1_2, mac->csirs_measurements.i_1_3);
+      const uint8_t pmi_x2 = mac->csirs_measurements.i_2;
+
+      // TODO: Improvements will be needed to cri_bitlen>0 and pmi_x1_bitlen>0
+      if (mapping_type == ON_PUSCH) {
+        p1_bits = cri_bitlen + ri_bitlen + cqi_bitlen;
+        p2_bits = pmi_x1_bitlen + pmi_x2_bitlen;
+        temp_payload_1 = ((uint64_t)0 /* cri */ << (cqi_bitlen + ri_bitlen)) | ((uint64_t)ri << cqi_bitlen)
+                         | (uint64_t)mac->csirs_measurements.cqi;
+        temp_payload_2 = ((uint64_t)pmi_x1 << pmi_x2_bitlen) | (uint64_t)pmi_x2;
+      } else {
+        p1_bits = nr_get_csi_bitlen(csi_report);
+        padding_bitlen = p1_bits - (cri_bitlen + ri_bitlen + pmi_x1_bitlen + pmi_x2_bitlen + cqi_bitlen);
+        temp_payload_1 = ((uint64_t)0 /* cri */ << (cqi_bitlen + pmi_x2_bitlen + pmi_x1_bitlen + padding_bitlen + ri_bitlen))
+                         | ((uint64_t)ri << (cqi_bitlen + pmi_x2_bitlen + pmi_x1_bitlen + padding_bitlen))
+                         | ((uint64_t)pmi_x1 << (cqi_bitlen + pmi_x2_bitlen)) | ((uint64_t)pmi_x2 << cqi_bitlen)
+                         | (uint64_t)mac->csirs_measurements.cqi;
+      }
+
+      temp_payload_1 = reverse_bits(temp_payload_1, p1_bits);
+      temp_payload_2 = reverse_bits(temp_payload_2, p2_bits);
+
+      LOG_D(NR_MAC, "cri_bitlen = %d\n", cri_bitlen);
+      LOG_D(NR_MAC, "ri_bitlen = %d\n", ri_bitlen);
+      LOG_D(NR_MAC,
+            "pmi_x1_bitlen = %d (i_1,1=%u i_1,2=%u i_1,3=%u -> X1=0x%x)\n",
+            pmi_x1_bitlen,
+            mac->csirs_measurements.i_1_1,
+            mac->csirs_measurements.i_1_2,
+            mac->csirs_measurements.i_1_3,
+            pmi_x1);
+      LOG_D(NR_MAC, "pmi_x2_bitlen = %d (i_2=%u)\n", pmi_x2_bitlen, pmi_x2);
+      LOG_D(NR_MAC, "cqi_bitlen = %d\n", cqi_bitlen);
+      LOG_D(NR_MAC, "csi_part1_payload = 0x%lx\n", temp_payload_1);
+      LOG_D(NR_MAC, "csi_part2_payload = 0x%lx\n", temp_payload_2);
+      LOG_D(NR_MAC, "part1_bits = %d\n", p1_bits);
+      LOG_D(NR_MAC, "part2_bits = %d\n", p2_bits);
+      break;
     }
   }
   AssertFatal(p1_bits <= 32 && p2_bits <= 32, "Not supporting CSI report with more than 32 bits\n");
-  nfapi_nr_ue_csi_payload_t csi = {.part1_payload = temp_payload_1, .part2_payload = temp_payload_2, .p1_bits = p1_bits, csi.p2_bits = p2_bits};
+  nfapi_nr_ue_csi_payload_t csi = {
+      .part1_payload = temp_payload_1,
+      .part2_payload = temp_payload_2,
+      .p1_bits = p1_bits,
+      .p2_bits = p2_bits,
+  };
   return csi;
 }
 
@@ -3755,6 +3827,9 @@ static nr_dci_format_t nr_extract_dci_00_10(NR_UE_MAC_INST_t *mac,
       // sys info = 0 for SIB1 and 1 for other SIB
       if (mac->get_sib1 == 0 && sys_info == 0)
         return NR_DCI_NONE;
+      // received DCI for other SI while still waiting to receive SIB1
+      if (mac->get_sib1 != 0 && sys_info == 1)
+        return NR_DCI_NONE;
       break;
     case TYPE_C_RNTI_ :
       // Identifier for DCI formats
@@ -4004,7 +4079,7 @@ static void nr_ue_process_mac_pdu(NR_UE_MAC_INST_t *mac, nr_downlink_indication_
 {
   frame_t frameP = dl_info->frame;
   int slot = dl_info->slot;
-  fapi_nr_pdsch_pdu_t *pdsch_pdu = &(dl_info->rx_ind->rx_indication_body + pdu_id)->pdsch_pdu;
+  fapi_nr_pdsch_pdu_t *pdsch_pdu = &dl_info->rx_ind->rx_indication_body[pdu_id].pdsch_pdu;
   uint8_t *pduP = pdsch_pdu->pdu;
   int32_t pdu_len = (int32_t)pdsch_pdu->pdu_length;
   uint8_t CC_id = dl_info->cc_id;

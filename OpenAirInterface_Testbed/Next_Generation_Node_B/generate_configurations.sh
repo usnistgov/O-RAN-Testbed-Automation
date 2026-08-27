@@ -31,7 +31,8 @@
 # Exit immediately if a command fails
 set -e
 
-RADIO_TYPE="SIMU" # Set to "SIMU", "ZMQ", or "USRP"
+RADIO_TYPE="SIMU"                  # Set to "SIMU", "ZMQ", or "USRP"
+USE_NIST_ZMQ_CHANNEL_EMULATOR=true # Set to false to use OCUDU’s default one-cell, three-UE ZeroMQ broker
 MAKE_GNB_E2_NODE=true
 MAKE_CU_E2_NODE=true        # MR.NRScSSSINR is collected by RRC and exposed at NRCellCU scope (28.552 clause 5.1.1.32.1(f))
 MAKE_DU_E2_NODE=true        # L1M.SS-RSRP and DU/MAC measurements exposed from each DU
@@ -529,10 +530,7 @@ if [ "$ENABLE_NEIGHBOR_CONFIG" = "true" ]; then
         echo "ERROR: Neighbor configuration template not found: $NEIGHBOR_CONFIG_TEMPLATE"
         exit 1
     fi
-    python3 install_scripts/generate_neighbor_configuration.py \
-        "$NEIGHBOR_CONFIG_TEMPLATE" \
-        "configs/neighbor-config.conf" \
-        "${SPLIT_DUS[@]/#/configs/}"
+    python3 install_scripts/generate_neighbor_configuration.py "$NEIGHBOR_CONFIG_TEMPLATE" "configs/neighbor-config.conf" "${SPLIT_DUS[@]/#/configs/}"
     for RRC_CONF in "configs/gnb.conf" "configs/split_cu.conf"; do
         sed -i '/^[[:space:]]*nr_cellid[[:space:]]*=/a\    @include "neighbor-config.conf" // Configure neighbor cells and periodic UE measurement reports' "$RRC_CONF"
     done
@@ -553,12 +551,11 @@ if [ "$RADIO_TYPE" = "ZMQ" ]; then
         IFS=,
         echo "${UE_NUMBERS[*]}"
     )
-    ./install_scripts/generate_zmq_channel_emulator.sh \
-        --output "zmq_channel_emulator/zmq_channel_emulator.py" \
-        --sample-rate-hz "$ZMQ_CHANNEL_EMULATOR_SAMPLE_RATE_HZ" \
-        --slow-down-ratio 1 \
-        --cells "$CHANNEL_EMULATOR_CELL_NUMBERS_STR" \
-        --ues "$CHANNEL_EMULATOR_UE_NUMBERS_STR"
+    if [ "$USE_NIST_ZMQ_CHANNEL_EMULATOR" = "true" ]; then
+        ./install_scripts/generate_nist_zmq_channel_emulator.sh --output "zmq_channel_emulator/zmq_channel_emulator.py" --sample-rate-hz "$ZMQ_CHANNEL_EMULATOR_SAMPLE_RATE_HZ" --slow-down-ratio 1 --cells "$CHANNEL_EMULATOR_CELL_NUMBERS_STR" --ues "$CHANNEL_EMULATOR_UE_NUMBERS_STR"
+    else
+        ./install_scripts/generate_ocudu_zmq_broker.sh --output "zmq_channel_emulator/zmq_channel_emulator.py" --cells "$CHANNEL_EMULATOR_CELL_NUMBERS_STR" --ues "$CHANNEL_EMULATOR_UE_NUMBERS_STR"
+    fi
     echo "Successfully generated ZeroMQ channel emulator for UEs: [${UE_NUMBERS[*]}], Cells: [${CELL_NUMBERS[*]}]."
 fi
 

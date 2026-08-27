@@ -63,8 +63,6 @@ Co-authored-by: fjcintron <fernando.cintron@nist.gov>
 """
 
 
-<<<<<<< HEAD
-=======
 
 
 
@@ -165,31 +163,10 @@ Co-authored-by: fjcintron <fernando.cintron@nist.gov>
 
 
 
->>>>>>> main
 ## Changelog for v1.7.1
 
 - Extended testbed support to Ubuntu 26.04 LTS.
 - OpenAirInterface: Added optional UE support for ZeroMQ instead of RF simulator [\[1\]][oai-ue-radio], [\[2\]][oai-zmq-docs].
-<<<<<<< HEAD
-- Open5GS: Updated MongoDB from 4.4 to 7.0 for faster subscriber reading and writing.
-  - Implemented a `pkg-config` compatibility shim for `libmongoc-1.0` mapping to `mongoc2` and migrated ping checks for `mongosh`.
-- Open5GS: Made the Data Network Name (DNN) configurable at the slice level in `options.yaml`.
-- Open5GS (5gdeploy): Bumped Open5GS Docker component image to `v2.7.7`.
-- FlexRIC: Switched to E2AP_V3 and KPM_V3_00 to correct indication message latency (`collectStartTime`).
-  - Uses 64-bit-encoded `collectStartTime` per E2SM-KPM clause 8.3.12 and IETF RFC 5905 clause 6.
-- FlexRIC: Added build flag to ensure the optimized Release binary is generated rather than Debug.
-- FlexRIC: Added option to disable SQLite to prevent unnecessary database write operations during runtime.
-- FlexRIC: Changed default service model install directory from system to local `flexric/build`, making it configurable.
-  - Included additional script to check when the FlexRIC libraries were last modified.
-- FlexRIC: Added a metrics factory (`metrics_factory.c`) to centralize management of E2SM-KPM metrics across xApps.
-- FlexRIC: Added E2 node IDs matching NR CGI (3GPP 38.423 clause 9.2.3.25) to E2SM-KPM monitoring xApps.
-  - Grafana dashboard updated with UE-to-Cell table and CARR.PDSCHMCSDist plots [\[3\]][xapp-dashboard-img], [\[4\]][xapp-dashboard-readme].
-- FlexRIC: Added color coding to distinguish metric names, values, and units while logging in KPM monitoring xApps.
-- OCUDU: Pinned the OCUDU Documentation commit hash to ensure a stable ZeroMQ broker download URL.
-- OpenAirInterface and SRS UE: Suppressed UE namespace cleanup before re-initializing namespaces.
-- Migrated testbed terminal usage from `gnome-terminal` to generic `x-terminal-emulator` for diverse desktop environment support.
-  - For example, run the handover scenario in new windows with `./OpenAirInterface_Testbed/run_handover_scenario.sh show`.
-=======
 - Migrated testbed terminal usage from `gnome-terminal` to generic `x-terminal-emulator` for broader desktop environment support.
   - For example, run the handover scenario in new windows with `./OpenAirInterface_Testbed/run_handover_scenario.sh show`.
 - Open5GS: Made the Data Network Name (DNN) configurable at the slice level in `options.yaml`.
@@ -207,7 +184,6 @@ Co-authored-by: fjcintron <fernando.cintron@nist.gov>
 - FlexRIC: Added build flag to ensure optimized Release binaries are generated instead of Debug binaries.
 - OCUDU: Pinned the OCUDU Documentation commit hash to ensure a stable ZeroMQ broker download URL.
 - OpenAirInterface and SRS UE: Suppressed UE namespace cleanup before re-initializing namespaces.
->>>>>>> main
 - Improved handling of GCC versioning checks to ensure consistent compiler installations.
 - Updated software commit hashes to their latest stable versions.
 - Revised documentation, diagrams, and source code to reflect the changes listed above.
@@ -216,22 +192,6 @@ Co-authored-by: fjcintron <fernando.cintron@nist.gov>
 
 ### References
 
-<<<<<<< HEAD
-1. OpenAirInterface UE Supported Radio Devices. NIST. [https://github.com/usnistgov/O-RAN-Testbed-Automation/tree/main/OpenAirInterface_Testbed/User_Equipment#supported-radio-devices][oai-ue-radio]
-2. ZeroMQ Documentation. OpenAirInterface. [https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/develop/radio/zmq/README.md][oai-zmq-docs]
-3. Grafana Dashboard KPM Metrics Monitor Image. NIST. [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/Images/xApp_Dashboard.png][xapp-dashboard-img]
-4. KPM Monitor Visualization in Grafana. NIST. [https://github.com/usnistgov/O-RAN-Testbed-Automation/tree/main/OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC#kpm-monitor-visualization-in-grafana][xapp-dashboard-readme]
-
-<!-- References -->
-
-[oai-ue-radio]: https://github.com/usnistgov/O-RAN-Testbed-Automation/tree/main/OpenAirInterface_Testbed/User_Equipment#supported-radio-devices
-[oai-zmq-docs]: https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/develop/radio/zmq/README.md
-[xapp-dashboard-img]: https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/Images/xApp_Dashboard.png
-[xapp-dashboard-readme]: https://github.com/usnistgov/O-RAN-Testbed-Automation/tree/main/OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC#kpm-monitor-visualization-in-grafana
-
-
-============= PREVIOUS CHANGELOGS BELOW =============
-=======
 1. OpenAirInterface UE Supported Radio Devices. NIST. [https://github.com/usnistgov/O-RAN-Testbed-Automation/tree/a7d976fb325d2500cbcd98544803ebfb157fe9bc/OpenAirInterface_Testbed/User_Equipment#supported-radio-devices][oai-ue-radio]
 2. ZeroMQ Documentation. OpenAirInterface. [https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/develop/radio/zmq/README.md][oai-zmq-docs]
 3. Grafana Dashboard KPM Metrics Monitor Image. NIST. [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/a7d976fb325d2500cbcd98544803ebfb157fe9bc/Images/xApp_Dashboard.png][xapp-dashboard-img]
@@ -243,7 +203,6 @@ Co-authored-by: fjcintron <fernando.cintron@nist.gov>
 [oai-zmq-docs]: https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/develop/radio/zmq/README.md
 [xapp-dashboard-img]: https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/a7d976fb325d2500cbcd98544803ebfb157fe9bc/Images/xApp_Dashboard.png
 [xapp-dashboard-readme]: https://github.com/usnistgov/O-RAN-Testbed-Automation/tree/a7d976fb325d2500cbcd98544803ebfb157fe9bc/OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC#kpm-monitor-visualization-in-grafana
->>>>>>> main
 
 
 ## Changelog for v1.7.0: OCUDU Integration
@@ -321,12 +280,8 @@ Co-authored-by: fjcintron <fernando.cintron@nist.gov>
 [ocudu-grafana]: https://github.com/usnistgov/O-RAN-Testbed-Automation/tree/main/Next_Generation_Node_B#ocudu-grafana-webui
 [automation-ocudu]: https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/Next_Generation_Node_B/README.md
 [oai-handover-tutorial]: https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/0ba31c0f89dd3162c7d87142da2b0f4e08abeb58/doc/handover-tutorial.md#run-the-setup:~:text=DU0%20and%20DU1%20should%20use%20different%20SSBs
-<<<<<<< HEAD
-[flexric-xapp]: https://github.com/usnistgov/O-RAN-Testbed-Automation/tree/main/OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC/Flexible-RIC#running-an-xapp
-=======
 [flexric-xapp]: https://github.com/usnistgov/O-RAN-Testbed-Automation/tree/main/OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC/#running-an-xapp
 
->>>>>>> main
 
 ## Changelog for v1.6.0
 

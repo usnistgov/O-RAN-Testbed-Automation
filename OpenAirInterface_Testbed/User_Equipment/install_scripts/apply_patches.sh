@@ -132,6 +132,24 @@ echo "Patching build_helper to extend Linux support..."
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface5g/cmake_targets/tools/build_helper.patch"
 cd ..
 
+# This patch fixes the ZeroMQ bug where negative I/Q samples are not rounded in the wrong directions
+cd openairinterface5g
+git restore radio/zmq/zmq_simd.h
+if [ ! -f "radio/zmq/zmq_simd.h.previous" ]; then
+    cp radio/zmq/zmq_simd.h radio/zmq/zmq_simd.h.previous
+    cp radio/zmq/zmq_simd.h.previous "$PARENT_DIR/install_patch_files/openairinterface5g/radio/zmq/zmq_simd.previous.h"
+fi
+echo "Patching zmq_simd.h to fix rounding of negative I/Q samples..."
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface5g/radio/zmq/zmq_simd.h.patch"
+git restore radio/zmq/tests/test_zmq_radio.cpp
+if [ ! -f "radio/zmq/tests/test_zmq_radio.cpp.previous" ]; then
+    cp radio/zmq/tests/test_zmq_radio.cpp radio/zmq/tests/test_zmq_radio.cpp.previous
+    cp radio/zmq/tests/test_zmq_radio.cpp.previous "$PARENT_DIR/install_patch_files/openairinterface5g/radio/zmq/tests/test_zmq_radio.previous.cpp"
+fi
+echo "Patching test_zmq_radio.cpp to fix rounding of negative I/Q samples..."
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface5g/radio/zmq/tests/test_zmq_radio.cpp.patch"
+cd ..
+
 # This patch adds C++11 compatibility to the ZeroMQ ring buffer code
 cd openairinterface5g
 git restore radio/zmq/ring_buffer.cpp
@@ -206,6 +224,7 @@ apply_oai_patch() {
 }
 
 SINR_RRC_PATCH_FILES=(
+    openair1/PHY/NR_UE_ESTIMATION/nr_ue_measurements.c
     common/utils/nr/nr_common.c
     common/utils/nr/nr_common.h
     common/utils/nr/tests/test_nr_common.cpp
@@ -216,11 +235,9 @@ SINR_RRC_PATCH_FILES=(
     openair2/RRC/NR/MESSAGES/asn1_msg.h
     openair2/RRC/NR/nr_rrc_defs.h
     openair2/RRC/NR/rrc_gNB.c
+    openair2/NR_UE_PHY_INTERFACE/NR_IF_Module.h
     openair2/RRC/NR_UE/L2_interface_ue.c
     openair2/RRC/NR_UE/L2_interface_ue.h
-    openair2/RRC/NR_UE/rrc_defs.h
-    openair2/RRC/NR_UE/rrc_proto.h
-    openair2/RRC/NR_UE/rrc_timers_and_constants.c
     openair2/RRC/NR_UE/rrc_UE.c
     openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.h
 )

@@ -155,7 +155,7 @@ cat >"$OUTPUT" <<EOF
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-# WARNING: Auto-generated ZeroMQ channel emulator, overwritten with the script: ./Next_Generation_Node_B/install_scripts/generate_zmq_channel_emulator.sh
+# WARNING: Auto-generated ZeroMQ channel emulator, overwritten with the script: ./Next_Generation_Node_B/install_scripts/generate_nist_zmq_channel_emulator.sh
 
 EOF
 

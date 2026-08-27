@@ -1,8 +1,8 @@
 diff --git a/openair2/LAYER2/NR_MAC_UE/nr_ue_procedures.c b/openair2/LAYER2/NR_MAC_UE/nr_ue_procedures.c
-index e35ebb7f85..8760fe5c8c 100644
+index 5f49874bbd..6223e1e134 100644
 --- a/openair2/LAYER2/NR_MAC_UE/nr_ue_procedures.c
 +++ b/openair2/LAYER2/NR_MAC_UE/nr_ue_procedures.c
-@@ -1645,12 +1645,15 @@ void nr_ue_process_l1_measurements(NR_UE_MAC_INST_t *mac, frame_t frame, int slo
+@@ -1667,12 +1667,15 @@ void nr_ue_process_l1_measurements(NR_UE_MAC_INST_t *mac, frame_t frame, int slo
      mac->csirs_measurements.cqi = l1_measurements->cqi;
      mac->csirs_measurements.ri = l1_measurements->rank_indicator;
    }
@@ -19,7 +19,7 @@ index e35ebb7f85..8760fe5c8c 100644
  }
  
  initial_pucch_resource_t get_initial_pucch_resource(const int idx)
-@@ -2737,19 +2740,8 @@ int nr_get_csi_measurements(NR_UE_MAC_INST_t *mac,
+@@ -2759,19 +2762,8 @@ int nr_get_csi_measurements(NR_UE_MAC_INST_t *mac,
    return num_csi;
  }
  

@@ -223,6 +223,17 @@ git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/src/xApp/msg_handler_xapp.c.patch"
 cd "$PARENT_DIR"
 
+# Apply the KPM v3 timestamp compatibility patch for OCUDU and FlexRIC agents
+cd "$FLEXRIC_DIR"
+echo "Patching the KPM v3 collectStartTime decoder for NTP and legacy FlexRIC timestamps..."
+git restore src/sm/kpm_sm/kpm_sm_v03.00/dec/dec_asn/dec_ric_ind_hdr_frm_1.c
+if [ ! -f "src/sm/kpm_sm/kpm_sm_v03.00/dec/dec_asn/dec_ric_ind_hdr_frm_1.previous.c" ]; then
+    cp src/sm/kpm_sm/kpm_sm_v03.00/dec/dec_asn/dec_ric_ind_hdr_frm_1.c src/sm/kpm_sm/kpm_sm_v03.00/dec/dec_asn/dec_ric_ind_hdr_frm_1.previous.c
+    cp src/sm/kpm_sm/kpm_sm_v03.00/dec/dec_asn/dec_ric_ind_hdr_frm_1.previous.c "$PARENT_DIR/install_patch_files/flexric/src/sm/kpm_sm/kpm_sm_v03.00/dec/dec_asn/dec_ric_ind_hdr_frm_1.previous.c"
+fi
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/src/sm/kpm_sm/kpm_sm_v03.00/dec/dec_asn/dec_ric_ind_hdr_frm_1.c.patch"
+cd "$PARENT_DIR"
+
 # # Apply patch to FlexRIC to make collectStartTime 64 bits for v02.01 and v02.03 (already fixed in v03.00) as per E2SM-KPM clause 8.3.12 and IETF RFC 5905 clause 6
 # cd "$FLEXRIC_DIR"
 # echo "Adding patch to make collectStartTime 64 bits in v02.01 and v02.03 as per E2SM-KPM clause 8.3.12 and IETF RFC 5905 clause 6..."

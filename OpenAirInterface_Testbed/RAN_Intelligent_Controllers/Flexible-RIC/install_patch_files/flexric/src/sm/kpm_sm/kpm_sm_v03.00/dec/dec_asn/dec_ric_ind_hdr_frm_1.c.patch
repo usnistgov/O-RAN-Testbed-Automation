@@ -1,0 +1,73 @@
+diff --git a/src/sm/kpm_sm/kpm_sm_v03.00/dec/dec_asn/dec_ric_ind_hdr_frm_1.c b/src/sm/kpm_sm/kpm_sm_v03.00/dec/dec_asn/dec_ric_ind_hdr_frm_1.c
+index c8aedc0f..b7270cde 100644
+--- a/src/sm/kpm_sm/kpm_sm_v03.00/dec/dec_asn/dec_ric_ind_hdr_frm_1.c
++++ b/src/sm/kpm_sm/kpm_sm_v03.00/dec/dec_asn/dec_ric_ind_hdr_frm_1.c
+@@ -3,31 +3,40 @@
+  */
+ 
+ #include <assert.h>
+-#include "../../../../../util/conversions.h"
+-#include <arpa/inet.h> // ntohl
++#include <stdint.h>
++#include <stdlib.h>
++#include <string.h>
++#include <time.h>
+ 
+ #include "dec_ric_ind_hdr_frm_1.h"
+ 
+-// #define ntohll(x) ((1==ntohl(1)) ? (x) : ((uint64_t)ntohl((x) & 0xFFFFFFFF) << 32) | ntohl((x) >> 32))
++static uint64_t timestamp_distance(uint64_t lhs, uint64_t rhs)
++{
++  return lhs > rhs ? lhs - rhs : rhs - lhs;
++}
+ 
+-// uint64_t ntohll(uint64_t x)
+-// {
+-//   return (uint64_t)((uint64_t)ntohl((x) & 0xFFFFFFFFLL) << 32) | (uint32_t)ntohl(x);
+-// }
++static uint64_t decode_collect_start_time(const OCTET_STRING_t* timestamp)
++{
++  assert(timestamp != NULL);
++  assert(timestamp->buf != NULL);
++  assert(timestamp->size == sizeof(uint64_t));
+ 
+-// #define ntohll(x) ((((uint64_t)ntohl(x)) << 32) + ntohl((x) >> 32))
++  uint64_t raw_time = 0;
++  for (size_t i = 0; i < timestamp->size; ++i) raw_time = (raw_time << 8) | timestamp->buf[i];
+ 
+-// #define NTOHLL(x) ((1==ntohl(1)) ? (x) : (((uint64_t)ntohl((x) & 0xFFFFFFFFUL)) << 32) | ntohl((uint32_t)((x) >> 32)))
++  // Preserve compatibility with Duranta/OpenAirInterface timestamp format
++  uint64_t const flexric_time_us = (raw_time << 32) | (raw_time >> 32);
+ 
+-uint64_t ntohll(uint64_t x)
+-{
+-  uint32_t x1 = (uint32_t)((x & 0xFFFFFFFF00000000LL) >> 32);
+-  uint32_t x2 = (uint32_t)(x & 0xFFFFFFFFLL);
+-  x1 = ntohl(x1);
+-  x2 = ntohl(x2);
+-  uint64_t v = ((uint64_t)x1) << 32 | x2;
++  // Convert RFC 5905 64-bit NTP format Timestamp to Unix microseconds
++  uint64_t const ntp_seconds = raw_time >> 32;
++  uint64_t const ntp_fraction = raw_time & UINT32_MAX;
++  uint64_t const ntp_unix_epoch_offset = 2208988800ULL;
++  if (ntp_seconds < ntp_unix_epoch_offset) return flexric_time_us;
++
++  uint64_t const ntp_time_us = (ntp_seconds - ntp_unix_epoch_offset) * 1000000ULL + ((ntp_fraction * 1000000ULL) >> 32);
++  uint64_t const now_us = (uint64_t)time(NULL) * 1000000ULL;
+ 
+-  return v;
++  return timestamp_distance(flexric_time_us, now_us) < timestamp_distance(ntp_time_us, now_us) ? flexric_time_us : ntp_time_us;
+ }
+ 
+ 
+@@ -35,9 +44,7 @@ kpm_ric_ind_hdr_format_1_t kpm_dec_ind_hdr_frm_1_asn(const E2SM_KPM_IndicationHe
+ {
+     kpm_ric_ind_hdr_format_1_t ind_hdr = {0};
+ 
+-    uint64_t reversed_ts;
+-    reversed_ts = octet_string_to_int_64(ind_hdr_asn->colletStartTime);
+-    ind_hdr.collectStartTime = ntohll(reversed_ts);
++    ind_hdr.collectStartTime = decode_collect_start_time(&ind_hdr_asn->colletStartTime);
+     
+     if (ind_hdr_asn->fileFormatversion != NULL){
+       ind_hdr.fileformat_version = calloc(1, sizeof(byte_array_t));

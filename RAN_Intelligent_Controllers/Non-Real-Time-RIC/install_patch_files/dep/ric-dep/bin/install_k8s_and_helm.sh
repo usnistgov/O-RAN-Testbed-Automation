@@ -148,10 +148,7 @@ sudo env $APTVARS apt-get install -y jq netcat-openbsd make ipset moreutils
 KUBEV="1.33"
 KUBECNIV="1.6"
 HELMV="3.20"
-<<<<<<< HEAD
-=======
 FLANNELV="0.28.5"
->>>>>>> main
 
 # Fetch the Ubuntu release version regardless of the derivative distro
 if [ -f /etc/upstream-release/lsb-release ]; then

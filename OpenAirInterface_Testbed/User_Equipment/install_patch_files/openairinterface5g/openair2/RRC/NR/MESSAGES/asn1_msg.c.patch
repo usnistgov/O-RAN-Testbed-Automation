@@ -1,30 +1,23 @@
 diff --git a/openair2/RRC/NR/MESSAGES/asn1_msg.c b/openair2/RRC/NR/MESSAGES/asn1_msg.c
-index 1edb9a93f7..d753c64a19 100644
+index 387cfcffbe..82cdc1dcc6 100644
 --- a/openair2/RRC/NR/MESSAGES/asn1_msg.c
 +++ b/openair2/RRC/NR/MESSAGES/asn1_msg.c
-@@ -881,12 +881,13 @@ int do_RRCSetupComplete(uint8_t *buffer,
-   return((enc_rval.encoded+7)/8);
- }
- 
--// TODO: This function is only implemented for event A2/A3
-+// Measurement results used by periodical reports and events A2/A3.
- int do_nrMeasurementReport_SA(long trigger_to_measid,
-                               long trigger_quantity,
+@@ -888,6 +888,7 @@ int do_nrMeasurementReport_SA(long trigger_to_measid,
                                long rs_type,
                                uint16_t Nid_cell,
                                int rsrp_index,
 +                              int sinr_index,
-                               bool neighbor_cell_valid,
-                               uint16_t neighbor_Nid_cell,
-                               int neighbor_rsrp_index,
-@@ -914,14 +915,21 @@ int do_nrMeasurementReport_SA(long trigger_to_measid,
+                               int num_neighbor_cells,
+                               const uint16_t *neighbor_Nid_cells,
+                               const int *neighbor_rsrp_indexes,
+@@ -915,14 +916,22 @@ int do_nrMeasurementReport_SA(long trigger_to_measid,
    *pci = Nid_cell;
  
    struct NR_MeasQuantityResults *active_mq_res = calloc_or_fail(1, sizeof(*active_mq_res));
--  if (trigger_quantity == NR_MeasTriggerQuantityOffset_PR_rsrp) {
-+  if (trigger_quantity == NR_MeasTriggerQuantityOffset_PR_rsrp && rsrp_index >= 0) {
+-  if (trigger_quantity == NR_MeasTriggerQuantityOffset_PR_rsrp || report_rsrp) {
++  if ((trigger_quantity == NR_MeasTriggerQuantityOffset_PR_rsrp || report_rsrp) && rsrp_index >= 0) {
      asn1cCalloc(active_mq_res->rsrp, rsrp);
--    // Assign precomputed RSRP index
+     // Assign precomputed RSRP index
      *rsrp = rsrp_index;
 +  }
 +  if (sinr_index >= 0) {

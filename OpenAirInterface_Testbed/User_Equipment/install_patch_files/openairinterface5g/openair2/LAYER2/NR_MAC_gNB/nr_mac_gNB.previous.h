@@ -764,9 +764,9 @@ typedef struct NR_mac_stats {
   uint64_t ulsch_total_bytes_scheduled;
   uint32_t pucch0_DTX;
   int cumul_rsrp;
-  uint8_t num_rsrp_meas;
+  uint32_t num_rsrp_meas;
   int cumul_sinrx10;
-  uint8_t num_sinr_meas;
+  uint32_t num_sinr_meas;
   char srs_stats[50]; // Statistics may differ depending on SRS usage
   int deltaMCS;
   int NPRB;
@@ -792,9 +792,11 @@ typedef struct nr_mac_rrc_ul_if_s {
   ue_context_release_complete_func_t ue_context_release_complete;
   initial_ul_rrc_message_transfer_func_t initial_ul_rrc_message_transfer;
   trp_information_response_func_t trp_information_response;
+  trp_information_failure_func_t trp_information_failure;
   positioning_information_response_func_t positioning_information_response;
   positioning_activation_response_func_t positioning_activation_response;
   positioning_measurement_response_func_t positioning_measurement_response;
+  positioning_measurement_failure_func_t positioning_measurement_failure;
 } nr_mac_rrc_ul_if_t;
 
 typedef struct measgap_config {
@@ -809,6 +811,18 @@ typedef struct measgap_config {
   long mgl;
   int mgl_slots;
 } measgap_config_t;
+
+typedef enum {
+  NO_TRIGGER,
+  MSG3_CRNTI,
+  BWP_SWITCH,
+  BEAM_SWITCH
+} reconfig_trigger_state_t;
+
+typedef struct {
+  int new_state;
+  reconfig_trigger_state_t trigger_info;
+} context_modification_info_t;
 
 /*! \brief UE list used by gNB to order UEs/CC for scheduling*/
 typedef struct NR_UE_info {
@@ -847,6 +861,7 @@ typedef struct NR_UE_info {
   // dedicated BWP is always 1 from the UE's point of view, even if the gNB has multiple BWPs.
   // The below ID is the "true" (non-consecutive) BWP ID from the gNB's point of view
   NR_BWP_Id_t local_bwp_id;
+  context_modification_info_t cm_info;
 } NR_UE_info_t;
 
 typedef struct {
@@ -1323,6 +1338,7 @@ typedef struct gNB_MAC_INST_s {
 
   seq_arr_t pos_act_ue_arr;
   positioning_measurement_info_t pos_meas_info;
+  positioning_config_t *positioning_config;
 } gNB_MAC_INST;
 
 #endif /*__LAYER2_NR_MAC_GNB_H__ */

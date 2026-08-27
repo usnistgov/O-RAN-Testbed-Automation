@@ -124,12 +124,8 @@ if [ -z "$FIXED_DOCKER_PERMS" ]; then
     fi
 fi
 
-<<<<<<< HEAD
-if [ ! -f trafficxapp.tar ]; then
-=======
 TRAFFICXAPP_NEWER_FILE=$([ -f trafficxapp.tar ] && find Dockerfile CMakeLists.txt assets src -type f -newer trafficxapp.tar -print -quit || true)
 if [ ! -f trafficxapp.tar ] || [ -n "$TRAFFICXAPP_NEWER_FILE" ]; then
->>>>>>> main
     docker build --network host -t 127.0.0.1:80/trafficxapp:latest .
     docker save -o trafficxapp.tar 127.0.0.1:80/trafficxapp:latest
     sudo chmod 755 trafficxapp.tar

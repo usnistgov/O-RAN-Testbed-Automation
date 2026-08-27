@@ -103,7 +103,7 @@ if [[ "$USE_SYSTEMCTL" == "true" ]]; then
     fi
 fi
 
-# Instructions are from: https://lf-o-ran-sc.atlassian.net/wiki/spaces/RICNR/pages/679903652/Release+M+-+Run+in+Kubernetes
+# Instructions are from: https://lf-o-ran-sc.atlassian.net/wiki/spaces/RICNR/pages/929792370/Release+N+-+Run+in+Kubernetes
 if [ ! -d dep ]; then
     echo
     echo "Cloning A1 dependencies..."

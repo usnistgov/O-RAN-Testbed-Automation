@@ -181,12 +181,8 @@ if [ -z "$FIXED_DOCKER_PERMS" ]; then
     fi
 fi
 
-<<<<<<< HEAD
-if [ ! -f qp.tar ]; then
-=======
 QP_NEWER_FILE=$([ -f qp.tar ] && find Dockerfile setup.py insert.py src -type f -newer qp.tar -print -quit || true)
 if [ ! -f qp.tar ] || [ -n "$QP_NEWER_FILE" ]; then
->>>>>>> main
     docker build --network host -t 127.0.0.1:80/qp:latest .
     docker save -o qp.tar 127.0.0.1:80/qp:latest
     sudo chmod 755 qp.tar

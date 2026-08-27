@@ -1,5 +1,7 @@
 # Automation Tool for Deploying 5G O-RAN Testbeds
-# Table of Contents
+
+## Table of Contents
+
 - [Overview](#overview)
 - [Setting Up a Testbed](#setting-up-a-testbed)
 - [Installation Guide](#installation-guide)
@@ -11,8 +13,8 @@
 - [Software Versioning](#software-versioning)
 - [Documentation](#documentation)
 
+## Overview
 
-# Overview
 Based on the blueprints described in NIST TN 2311 [\[1\]][nist-tn-2311], this automation tool facilitates the deployment and configuration of 5G Open Radio Access Network (O-RAN) testbeds. Designed to operate in both bare metal and virtualized environments, it simplifies setting up the components required for a 5G O-RAN testbed, including the 5G Core; Next Generation Node B (gNodeB) composed of Radio Unit (RU), Distributed Unit (DU), and Centralized Unit (CU); User Equipment (UE); RAN Intelligent Controller (RIC); and a series of xApps that can be installed in the RIC. This reduces the complexity and time required to operationalize the testbeds described in the report above, and enables more efficient testing and validation to facilitate research and development in 5G/6G technologies.
 
 ## Setting Up a Testbed
@@ -66,6 +68,14 @@ UEs
 
 The components that have been verified to support connectivity are included below.
 
+<div align="center">
+  <picture>
+    <source media="(prefers-color-scheme: light)" srcset="./Images/Support_Light.svg">
+    <source media="(prefers-color-scheme: dark)" srcset="./Images/Support_Dark.svg">
+    <img alt="Diagram of Supported Connections" width="97%">
+  </picture>
+  <!-- <img src="Images/Support_Light.svg" alt="Diagram of Supported Connections" width="97%"> -->
+</div>
 
 ### Minimum System Requirements
 
@@ -150,6 +160,9 @@ Begin the installation process, recommended to be run as the current user rather
 ################################################################################
 ```
 
+<details>
+  <summary><b>OCUDU and O-RAN SC Near-RT RIC Output</b></summary>
+  <hr>
 
 Run the testbed with `./run.sh` to start the 5G Core, gNodeB, and UEs. Set `USE_DURANTA_UE=true` in `run.sh` to use Duranta UEs instead of the default srsRAN_4G UEs. To switch between band 3 and band 78, search for `Radio configuration presets` and update each section. Use `./is_running.sh` to check the components and `./stop.sh` to stop them. The optional RIC starts automatically on boot and can be accessed with `k9s -A`.
 
@@ -177,8 +190,9 @@ See <a href="RAN_Intelligent_Controllers/Near-Real-Time-RIC#migration-to-cilium"
 
 ---
 
- ## Duranta and FlexRIC Output
-  
+<details>
+  <summary><b>Duranta and FlexRIC Output</b></summary>
+  <hr>
 
 Run the testbed with `./run.sh` to start the 5G Core, FlexRIC, gNodeB, and UE as background processes, and the KPM monitoring xApp in the foreground. Use `./is_running.sh` to check if the components are running, and `./stop.sh` to stop the components.
 
@@ -215,6 +229,7 @@ See <a href="OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC#k
 </details>
 
 ---
+
 ## Deployment Tutorials
 
 After completing the base installation, follow one of the end-to-end deployment tutorials below.
@@ -231,6 +246,7 @@ Deploy an OCUDU-based O-RAN testbed, generate traffic from multiple UEs, collect
 Deploy an OCUDU gNB connected to multiple UEs, integrate it with RIC, subscribe to E2SM-KPM reports, and monitor real-time RAN KPIs using a KPM monitoring xApp. This tutorial demonstrates the integration of an OCUDU gNB with the FlexRIC and OSC Near-Real-Time RAN Intelligent Controller (Near-RT RIC). It covers E2 interface configuration, deployment of a KPM Monitoring xApp, subscription to E2SM-KPM reports, and real-time collection of radio performance metrics. Users will learn how to monitor RAN KPIs, validate E2 connectivity, and explore the foundations of closed-loop RAN monitoring and intelligent control within an O-RAN-compliant network. 
 
 [OCUDU gNB with N UEs, RIC, and KPM Monitoring xApp](Tutorials/OCUDU_gNB_N_UEs_RIC_xApp.md)
+
 ## Software Versioning
 
 For stability of software dependencies, all `git clone` calls are routed through `commit_hashes.json` which specifies a branch and/or commit hash for each repository. This file can be updated manually, or with `./Additional_Scripts/update_commit_hashes.sh` to fetch the latest commit hashes. For information about the automation tool versions, please see the releases page [\[3\]][gh-ota].

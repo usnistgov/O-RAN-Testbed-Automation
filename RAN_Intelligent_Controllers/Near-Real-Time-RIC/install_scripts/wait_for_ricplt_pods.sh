@@ -86,19 +86,25 @@ wait_for_all_pods_running() {
         if [ $ALL_PODS_RUNNING -eq 1 ]; then
             # Check if E2Term has registered with E2 Manager after rtmgr initialization
             if [[ " ${NAMESPACES[*]} " =~ " ricplt " ]]; then
-                local E2T_LIST=$(kubectl get --raw="/api/v1/namespaces/ricplt/services/http:service-ricplt-e2mgr-http:3800/proxy/v1/e2t/list" 2>/dev/null || true)
-                if ! echo "$E2T_LIST" | grep -q '"e2tAddress"'; then
-                    ALL_PODS_RUNNING=0
-                    if [ $ALREADY_RESTARTED_E2TERM -eq 0 ]; then
-                        echo
-                        echo "E2 Manager has no registered E2Term instance... restarting E2Term after rtmgr initialization..."
-                        kubectl rollout restart deployment/deployment-ricplt-e2term-alpha -n ricplt
-                        ALREADY_RESTARTED_E2TERM=1
-                        sleep 3
-                    else
-                        echo
-                        echo "Waiting for E2Term to register with E2 Manager..."
+                local E2T_LIST
+                if E2T_LIST=$(kubectl get --raw="/api/v1/namespaces/ricplt/services/http:service-ricplt-e2mgr-http:3800/proxy/v1/e2t/list" 2>/dev/null) && [[ "$E2T_LIST" == \[*\] ]]; then
+                    if ! echo "$E2T_LIST" | grep -q '"e2tAddress"'; then
+                        ALL_PODS_RUNNING=0
+                        if [ $ALREADY_RESTARTED_E2TERM -eq 0 ]; then
+                            echo
+                            echo "E2 Manager has no registered E2Term instance... restarting E2Term after rtmgr initialization..."
+                            kubectl rollout restart deployment/deployment-ricplt-e2term-alpha -n ricplt
+                            ALREADY_RESTARTED_E2TERM=1
+                            sleep 3
+                        else
+                            echo
+                            echo "Waiting for E2Term to register with E2 Manager..."
+                        fi
                     fi
+                else
+                    ALL_PODS_RUNNING=0
+                    echo
+                    echo "Waiting for E2 Manager API to become ready..."
                 fi
             fi
         fi

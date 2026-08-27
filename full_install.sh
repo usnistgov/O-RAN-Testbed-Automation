@@ -297,6 +297,12 @@ echo
 ./generate_configurations.sh
 
 if [ "$INSTALL_NEAR_RT_RIC" = true ]; then
+    if [ "$USE_FLEXRIC" = "true" ]; then
+        cd OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC
+        ./generate_configurations.sh
+        cd ../../..
+    fi
+
     echo
     echo
     echo "################################################################################"

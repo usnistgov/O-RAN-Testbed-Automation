@@ -31,12 +31,8 @@
 # Exit immediately if a command fails
 set -e
 
-<<<<<<< HEAD
-BUILD_TESTS=false
-=======
 APPLY_PATCHES=true
 RUN_TESTS=false
->>>>>>> main
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
@@ -238,11 +234,7 @@ mkdir -p build
 cd build
 SUPPRESS_WARNINGS="-Wno-error=array-bounds -Wno-error=unused-but-set-variable -Wno-error=unused-function -Wno-error=unused-parameter -Wno-error=unused-result -Wno-error=unused-variable -Wno-error=all -Wno-return-type"
 ADDITIONAL_FLAGS="-DENABLE_WERROR=OFF"
-<<<<<<< HEAD
-if [[ "$BUILD_TESTS" == "true" ]]; then
-=======
 if [[ "$RUN_TESTS" == "true" ]]; then
->>>>>>> main
     ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS -DBUILD_TESTING=ON"
 else
     ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS -DBUILD_TESTING=OFF"

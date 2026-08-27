@@ -42,6 +42,7 @@ wait_for_all_pods_running() {
     local ALL_PODS_RUNNING=0
     local NODE_NAME=$(kubectl get nodes -o jsonpath='{.items[0].metadata.name}')
     local ALREADY_TERMINATED_E2TERM=0
+    local ALREADY_RESTARTED_E2TERM=0
 
     echo "Initiating wait for all pods to be in 'Running' or 'Completed' state across specified namespaces."
 
@@ -81,6 +82,27 @@ wait_for_all_pods_running() {
                 break
             }
         done
+
+        if [ $ALL_PODS_RUNNING -eq 1 ]; then
+            # Check if E2Term has registered with E2 Manager after rtmgr initialization
+            if [[ " ${NAMESPACES[*]} " =~ " ricplt " ]]; then
+                local E2T_LIST=$(kubectl get --raw="/api/v1/namespaces/ricplt/services/http:service-ricplt-e2mgr-http:3800/proxy/v1/e2t/list" 2>/dev/null || true)
+                if ! echo "$E2T_LIST" | grep -q '"e2tAddress"'; then
+                    ALL_PODS_RUNNING=0
+                    if [ $ALREADY_RESTARTED_E2TERM -eq 0 ]; then
+                        echo
+                        echo "E2 Manager has no registered E2Term instance... restarting E2Term after rtmgr initialization..."
+                        kubectl rollout restart deployment/deployment-ricplt-e2term-alpha -n ricplt
+                        ALREADY_RESTARTED_E2TERM=1
+                        sleep 3
+                    else
+                        echo
+                        echo "Waiting for E2Term to register with E2 Manager..."
+                    fi
+                fi
+            fi
+        fi
+
         if [ $ALL_PODS_RUNNING -eq 1 ]; then
             echo "All pods are in the desired state across specified namespaces."
             break
@@ -165,19 +187,6 @@ if [ "$HELMVERSION" != "2" ]; then
 else
     echo "Helm version 2 is in use."
     wait_for_all_pods_running "kube-flannel" "ricinfra" "ricplt"
-fi
-
-# Restart E2 Terminator if it hasn't registered with E2 Manager after rtmgr initialization
-E2T_LIST=$(kubectl get --raw="/api/v1/namespaces/ricplt/services/http:service-ricplt-e2mgr-http:3800/proxy/v1/e2t/list" 2>/dev/null || true)
-if ! echo "$E2T_LIST" | grep -q '"e2tAddress"'; then
-    echo "E2 Manager has no registered E2Term instance... restarting E2Term after rtmgr initialization..."
-    kubectl rollout restart deployment/deployment-ricplt-e2term-alpha -n ricplt
-    kubectl rollout status deployment/deployment-ricplt-e2term-alpha -n ricplt --timeout=300s
-    E2T_LIST=$(kubectl get --raw="/api/v1/namespaces/ricplt/services/http:service-ricplt-e2mgr-http:3800/proxy/v1/e2t/list")
-    if ! echo "$E2T_LIST" | grep -q '"e2tAddress"'; then
-        echo "ERROR: E2Term did not register with E2 Manager after its restart."
-        exit 1
-    fi
 fi
 
 # Remove the unnecessary tiller-secret-generator pod if it has completed

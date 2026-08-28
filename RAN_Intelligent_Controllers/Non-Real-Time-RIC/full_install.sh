@@ -155,6 +155,12 @@ if [ ! -d smo-install/onap_oom ] || [ -z "$(ls -A smo-install/onap_oom)" ]; then
 fi
 
 echo
+echo "Installing k9s..."
+if ! sudo ./install_scripts/install_k9s.sh; then
+    echo "Could not install k9s at the moment, skipping."
+fi
+
+echo
 echo "Installing Docker, Kubernetes, and Helm..."
 # Determine if Kubernetes should be reset
 SHOULD_RESET_KUBE=false
@@ -226,12 +232,6 @@ fi
 sudo systemctl start kubelet
 
 cd "$SCRIPT_DIR"
-
-echo
-echo "Installing k9s..."
-if ! sudo ./install_scripts/install_k9s.sh; then
-    echo "Could not install k9s at the moment, skipping."
-fi
 
 # Check if istioctl exists and repair a broken or non-executable installation
 if command -v istioctl &>/dev/null; then
@@ -462,6 +462,7 @@ if [ -n "$INSTALL_START_TIME" ]; then
     echo "$DURATION_MINUTES minutes" >>install_time.txt
 fi
 
+stty sane || true
 echo
 echo
 echo "################################################################################"

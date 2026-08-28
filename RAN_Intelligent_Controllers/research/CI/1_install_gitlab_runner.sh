@@ -46,4 +46,4 @@ curl -L "https://packages.gitlab.com/install/repositories/runner/gitlab-runner/s
 sudo apt update
 sudo apt install -y gitlab-runner
 
-echo "Successfully installed GitLab Runner."
+echo "Successfully completed GitLab Runner installation."

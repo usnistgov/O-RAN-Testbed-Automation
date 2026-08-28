@@ -231,4 +231,4 @@ if [ -n "$INSTALL_START_TIME" ]; then
     echo "$DURATION_MINUTES minutes" >>install_time.txt
 fi
 
-echo "The FlexRIC installation completed successfully."
+echo "Successfully completed the FlexRIC installation."

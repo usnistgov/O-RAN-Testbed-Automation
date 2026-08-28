@@ -148,4 +148,4 @@ sudo apt-get autoremove --purge -y
 # Reset the shell's command hash table to recognize changes in available executables
 hash -r
 
-echo "Successfully uninstalled Docker."
+echo "Successfully completed Docker uninstallation."

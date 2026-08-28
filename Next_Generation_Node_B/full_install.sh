@@ -204,7 +204,7 @@ if ! pkg-config --exists libzmq || ! pkg-config --exists libczmq; then
     echo "ZeroMQ was not installed correctly. Exiting."
     exit 1
 else
-    echo "ZeroMQ installed successfully."
+    echo "Successfully installed ZeroMQ."
 fi
 
 cd "$SCRIPT_DIR"
@@ -257,4 +257,4 @@ if [[ "$TUNE_PERFORMANCE" == "true" ]]; then
     cd ..
 fi
 
-echo "The gNodeB installation completed successfully."
+echo "Successfully completed the gNodeB installation."

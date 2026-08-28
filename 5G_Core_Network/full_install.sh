@@ -352,4 +352,4 @@ if [ -n "$INSTALL_START_TIME" ]; then
     echo "$DURATION_MINUTES minutes" >>install_time.txt
 fi
 
-echo "The Open5GS installation completed successfully."
+echo "Successfully completed the Open5GS installation."

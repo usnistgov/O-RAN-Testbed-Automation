@@ -83,4 +83,4 @@ sudo rm -rf install_time.txt
 sudo rm /etc/profile.d/open5gs_ld_library_path.sh
 unset LD_LIBRARY_PATH
 
-echo "The Open5GS uninstallation completed successfully."
+echo "Successfully completed Open5GS uninstallation."

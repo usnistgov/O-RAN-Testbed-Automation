@@ -40,7 +40,7 @@ MAX_ATTEMPTS=10
 while ((ATTEMPTS++ < MAX_ATTEMPTS)); do
     echo "Attempting to disable ufw..."
     if output=$(sudo ufw disable 2>&1); then
-        echo "ufw disabled successfully."
+        echo "Successfully disabled ufw."
         break
     else
         echo "    Failed to disable ufw: $output"

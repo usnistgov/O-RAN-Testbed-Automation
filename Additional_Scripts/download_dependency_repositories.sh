@@ -131,4 +131,4 @@ cd OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC
 ./install_scripts/git_clone.sh https://github.com/duranta-project/flexric.git
 cd ../..
 
-echo "Repositories were cloned successfully."
+echo "Successfully cloned repositories."

@@ -119,7 +119,7 @@ wait_for_all_pods_running() {
         # Check if the e2term pod is the only one not ready, and prompt the user to restart it
         local PRINTED_E2TERM_MSG=0
         local NOT_READY_PODS=""
-        if [ $ALREADY_TERMINATED_E2TERM -eq 0 ]; then
+        if [ $ALREADY_TERMINATED_E2TERM -eq 0 ] && [ $ALREADY_RESTARTED_E2TERM -eq 0 ]; then
             POD_STATUS=$(kubectl get pods -n ricplt --no-headers 2>/dev/null)
             NOT_READY_PODS=$(echo "$POD_STATUS" | awk '{
                 split($2, arr, "/");

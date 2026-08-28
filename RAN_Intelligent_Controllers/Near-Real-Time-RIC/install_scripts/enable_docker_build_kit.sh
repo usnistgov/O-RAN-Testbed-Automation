@@ -107,7 +107,7 @@ if [ ! -f "$BUILDX_PATH" ]; then
         HTTP_STATUS=$(curl -L -w "%{http_code}" -o "$BUILDX_PATH" "$BUILDX_BINARY_URL")
         if [ "$HTTP_STATUS" -eq 200 ]; then
             sudo chmod +x "$BUILDX_PATH"
-            echo "Docker Buildx installed successfully."
+            echo "Successfully installed Docker Buildx."
         else
             echo "Failed to download Docker Buildx, HTTP status was $HTTP_STATUS. Skipping."
             rm -f "$BUILDX_PATH"

@@ -90,5 +90,5 @@ if dpkg -l | grep -q influxdb; then
     echo "Please check the output above for errors."
     exit 1
 else
-    echo "Successfully uninstalled InfluxDB 2.x."
+    echo "Successfully completed InfluxDB 2.x uninstallation."
 fi

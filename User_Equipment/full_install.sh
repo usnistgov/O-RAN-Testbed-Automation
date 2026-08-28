@@ -243,7 +243,7 @@ cmake .. -DCMAKE_CXX_FLAGS="$SUPPRESS_WARNINGS" $ADDITIONAL_FLAGS
 make clean
 make -j$(nproc)
 sudo make -j$(nproc) install
-echo "srsRAN_4G was installed successfully."
+echo "Successfully installed srsRAN_4G."
 
 cd "$SCRIPT_DIR"
 
@@ -260,4 +260,4 @@ if [ -n "$INSTALL_START_TIME" ]; then
     echo "$DURATION_MINUTES minutes" >>install_time.txt
 fi
 
-echo "The User Equipment installation completed successfully."
+echo "Successfully completed the User Equipment installation."

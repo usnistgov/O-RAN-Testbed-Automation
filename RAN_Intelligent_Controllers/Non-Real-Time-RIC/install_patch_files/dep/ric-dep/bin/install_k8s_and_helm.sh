@@ -727,7 +727,7 @@ if [ "$USE_SYSTEMCTL" = true ]; then
         echo "Failed to start Docker after $MAX_ATTEMPTS attempts."
         exit 1
     else
-        echo "Docker started successfully."
+        echo "Successfully started Docker."
     fi
 else
     echo "Starting Docker process..."
@@ -776,7 +776,7 @@ else
             exit 1
         fi
     fi
-    echo "Docker started successfully."
+    echo "Successfully started Docker."
 fi
 
 # -----------------------------------------------------------------------------
@@ -831,7 +831,7 @@ if command -v kubeadm &>/dev/null; then
     mount | grep '/var/lib/kubelet' | awk '{print $3}' | xargs -r sudo umount -f
     echo "Resetting Kubernetes..."
     echo "y" | sudo kubeadm reset -f -v5
-    echo "Kubernetes reset successfully."
+    echo "Successfully reset Kubernetes."
 fi
 
 # Stop Kubernetes services using systemd
@@ -1310,7 +1310,7 @@ if [[ $ATTEMPT -gt $MAX_ATTEMPTS ]]; then
     echo "Kubernetes Initialization: All attempts at \"kubeadm init\" failed. Exiting..."
     exit 1
 else
-    echo "Kubernetes initialized successfully."
+    echo "Successfully initialized Kubernetes."
     # Set the KUBECONFIG variable to the config file's location
     mkdir -p "$HOME/.kube"
     sudo chown --recursive "${SUDO_USER:-$USER}" "$HOME/.kube"
@@ -1470,7 +1470,7 @@ else
     kubectl taint nodes --all node.kubernetes.io/not-ready:NoSchedule- node-role.kubernetes.io/master- || echo "Taint node-role.kubernetes.io/master not found."
 fi
 
-echo "Kubernetes installed successfully."
+echo "Successfully installed Kubernetes."
 
 # -----------------------------------------------------------------------------
 # Helm installation
@@ -1541,7 +1541,7 @@ until helm version; do
     sleep 15
 done
 
-echo "Helm installed successfully."
+echo "Successfully installed Helm."
 
 # -----------------------------------------------------------------------------
 # Kubernetes configuration for local storage and Helm repo
@@ -1581,4 +1581,4 @@ echo "127.0.0.1 $HELM_REPO_HOST" | sudo tee -a /etc/hosts || true
 # Reset the shell's command hash table to recognize changes in available executables
 hash -r
 
-echo "Script completed successfully."
+echo "Successfully completed the script."

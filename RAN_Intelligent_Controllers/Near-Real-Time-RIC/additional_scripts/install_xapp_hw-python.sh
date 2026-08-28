@@ -156,6 +156,7 @@ cd "$PARENT_DIR"
 # Stop the sudo timeout refresher, it is no longer necessary to run
 ./install_scripts/stop_sudo_refresh.sh
 
+stty sane || true
 echo
 echo
 echo "################################################################################"

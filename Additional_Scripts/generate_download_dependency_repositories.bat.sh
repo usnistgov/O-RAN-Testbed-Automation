@@ -241,7 +241,7 @@ generate_commands "https://github.com/swig/swig.git" "OpenAirInterface_Testbed\\
 generate_commands "https://github.com/duranta-project/flexric.git" "OpenAirInterface_Testbed\\RAN_Intelligent_Controllers\\Flexible-RIC" "flexric"
 
 echo "" >>download_dependency_repositories.bat
-echo "echo Repositories were cloned successfully." >>download_dependency_repositories.bat
+echo "echo Successfully cloned repositories." >>download_dependency_repositories.bat
 echo "pause" >>download_dependency_repositories.bat
 
 echo "Windows batch file 'download_dependency_repositories.bat' has been generated."

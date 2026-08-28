@@ -180,5 +180,6 @@ else
     fi
 fi
 
+stty sane || true
 echo "Repository $CONVERTED_URL is cloned to $CURRENT_DIR/$NAME."
 echo

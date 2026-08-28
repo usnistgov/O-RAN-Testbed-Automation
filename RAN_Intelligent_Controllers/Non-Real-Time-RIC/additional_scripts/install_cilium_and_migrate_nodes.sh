@@ -416,6 +416,7 @@ until cilium status --wait; do
     sleep 5
 done
 
+stty sane || true
 echo
 echo
 echo "################################################################################"

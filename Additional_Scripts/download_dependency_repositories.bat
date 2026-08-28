@@ -452,5 +452,5 @@ if not errorlevel 1 (
 )
 
 
-echo Repositories were cloned successfully.
+echo Successfully cloned repositories.
 pause

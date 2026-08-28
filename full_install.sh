@@ -303,12 +303,14 @@ if [ "$INSTALL_NEAR_RT_RIC" = true ]; then
         cd ../../..
     fi
 
+    stty sane || true
     echo
     echo
     echo "################################################################################"
     echo "# Successfully installed the Near-RT RIC, 5G Core, gNodeB, and UE.             #"
     echo "################################################################################"
 else
+    stty sane || true
     echo
     echo
     echo "################################################################################"

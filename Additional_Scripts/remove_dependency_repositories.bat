@@ -143,4 +143,4 @@ if exist "OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC\logs
 if exist "OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC\configs" rmdir /s /q "OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC\configs"
 if exist "OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC\install_time.txt" del /f /q "OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC\install_time.txt"
 
-echo "Repositories were removed successfully."
+echo "Successfully removed repositories."

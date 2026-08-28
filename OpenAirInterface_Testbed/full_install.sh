@@ -228,6 +228,7 @@ echo
 
 ./generate_configurations.sh
 
+stty sane || true
 echo
 echo
 echo "################################################################################"

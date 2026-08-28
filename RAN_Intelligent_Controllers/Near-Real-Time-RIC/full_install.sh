@@ -537,4 +537,4 @@ if [ -n "$INSTALL_START_TIME" ]; then
     echo "$DURATION_MINUTES minutes" >>install_time.txt
 fi
 
-echo "The Near-Real Time RAN Intelligent Controller installation completed successfully."
+echo "Successfully completed the Near-Real Time RAN Intelligent Controller installation."

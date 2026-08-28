@@ -128,4 +128,4 @@ sudo rm -rf OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC/in
 # Echo every command as it is ran
 set +x
 
-echo "Repositories were removed successfully."
+echo "Successfully removed repositories."

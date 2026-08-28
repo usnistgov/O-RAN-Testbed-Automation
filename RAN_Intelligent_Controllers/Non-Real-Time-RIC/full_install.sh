@@ -462,6 +462,7 @@ if [ -n "$INSTALL_START_TIME" ]; then
     echo "$DURATION_MINUTES minutes" >>install_time.txt
 fi
 
+stty sane || true
 echo
 echo
 echo "################################################################################"

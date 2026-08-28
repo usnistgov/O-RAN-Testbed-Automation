@@ -310,7 +310,7 @@ if [ "$RADIO_TYPE" = "ZMQ" ]; then
         echo "ZeroMQ was not installed correctly. Exiting."
         exit 1
     else
-        echo "ZeroMQ installed successfully."
+        echo "Successfully installed ZeroMQ."
     fi
 
     cd "$SCRIPT_DIR"
@@ -352,4 +352,4 @@ if [ -n "$INSTALL_START_TIME" ]; then
     echo "$DURATION_MINUTES minutes" >>install_time.txt
 fi
 
-echo "The gNodeB installation completed successfully."
+echo "Successfully completed the gNodeB installation."

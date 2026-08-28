@@ -129,7 +129,7 @@ else
             exit 1
         fi
     fi
-    echo "Docker started successfully."
+    echo "Successfully started Docker."
 fi
 
-echo "Docker DNS configuration updated successfully."
+echo "Successfully updated Docker DNS configuration."

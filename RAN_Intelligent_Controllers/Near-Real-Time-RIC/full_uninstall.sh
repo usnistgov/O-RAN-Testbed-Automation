@@ -204,7 +204,7 @@ if command -v kubeadm &>/dev/null; then
     mount | grep '/var/lib/kubelet' | awk '{print $3}' | xargs -r sudo umount -f
     echo "Resetting Kubernetes..."
     echo "y" | sudo kubeadm reset -f -v5
-    echo "Kubernetes reset successfully."
+    echo "Successfully reset Kubernetes."
 fi
 
 # Stop Kubernetes services using systemd

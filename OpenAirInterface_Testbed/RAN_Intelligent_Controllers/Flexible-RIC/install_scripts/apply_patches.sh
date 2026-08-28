@@ -82,6 +82,9 @@ cp "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/metrics_factory.h" "
 echo "Adding metrics_factory.c..."
 cp "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/metrics_factory.c" "$FLEXRIC_DIR"/examples/xApp/c/
 
+echo "Adding metrics_factory_test.c..."
+cp "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/metrics_factory_test.c" "$FLEXRIC_DIR"/examples/xApp/c/
+
 echo "Adding xapp_kpm_moni_write_to_csv.c..."
 cp "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv.c" "$FLEXRIC_DIR"/examples/xApp/c/monitor/
 
@@ -97,41 +100,6 @@ if [ ! -f "examples/xApp/c/monitor/CMakeLists.txt.previous" ]; then
 fi
 echo "Patching CMakeLists.txt to list the new xApps for building..."
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/monitor/CMakeLists.txt.patch"
-
-# cd "$FLEXRIC_DIR"
-# echo "Adding stale subscription cleanup support patch to FlexRIC..."
-# STALE_SUBSCRIPTION_PATCH_DIR="$PARENT_DIR/install_patch_files/flexric/stale_subscription_cleanup_support"
-# mkdir -p "$STALE_SUBSCRIPTION_PATCH_DIR"
-# STALE_SUBSCRIPTION_PATCH_FILES=(
-#     "examples/xApp/c/ctrl/mac_ctrl.c"
-#     "examples/xApp/c/helloworld/hw.c"
-#     "examples/xApp/c/keysight/xapp_keysight_kpm_rc.c"
-#     "examples/xApp/c/monitor/xapp_rc_moni.c"
-#     "examples/xApp/c/orange/xapp_es_with_cell_util.c"
-#     "examples/xApp/c/slice/xapp_slice_moni_ctrl.c"
-#     "examples/xApp/c/tc/xapp_tc_all.c"
-#     "examples/xApp/c/tc/xapp_tc_codel.c"
-#     "examples/xApp/c/tc/xapp_tc_ecn.c"
-#     "examples/xApp/c/tc/xapp_tc_partition.c"
-#     "src/ric/iApp/map_ric_id.c"
-#     "src/ric/iApp/map_ric_id.h"
-#     "src/ric/iApp/msg_handler_iapp.c"
-#     "src/xApp/e42_xapp.c"
-#     "src/xApp/e42_xapp.h"
-#     "src/xApp/e42_xapp_api.c"
-#     "src/xApp/e42_xapp_api.h"
-#     "src/xApp/msg_handler_xapp.c"
-# )
-
-# for FILE in "${STALE_SUBSCRIPTION_PATCH_FILES[@]}"; do
-#     git restore "$FILE"
-#     if [ ! -f "$FILE.previous" ]; then
-#         cp "$FILE" "$FILE.previous"
-#         mkdir -p "$(dirname "$STALE_SUBSCRIPTION_PATCH_DIR/$FILE")"
-#         cp "$FILE.previous" "$STALE_SUBSCRIPTION_PATCH_DIR/$FILE.previous"
-#     fi
-# done
-# git apply --verbose --ignore-whitespace "$STALE_SUBSCRIPTION_PATCH_DIR/patch.patch"
 
 cd "$PARENT_DIR"
 
@@ -163,8 +131,6 @@ if [ ! -f "src/xApp/e42_xapp.c.previous" ]; then
     cp src/xApp/e42_xapp.c src/xApp/e42_xapp.c.previous
     cp src/xApp/e42_xapp.c.previous "$PARENT_DIR/install_patch_files/flexric/disable_database_option/src/xApp/e42_xapp.previous.c"
 fi
-# # Omit e42_xapp.c since the stale subscription patch already modified it
-# cp $STALE_SUBSCRIPTION_PATCH_DIR/src/xApp/e42_xapp.c.previous src/xApp/e42_xapp.previous.c
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/disable_database_option/patch.patch"
 cd "$PARENT_DIR"
 
@@ -176,6 +142,9 @@ git restore examples/xApp/c/monitor/xapp_rc_moni.c
 git restore examples/xApp/c/orange/xapp_es_with_cell_util.c
 git restore examples/xApp/c/slice/xapp_slice_moni_ctrl.c
 git restore examples/xApp/c/tc/xapp_tc_all.c
+git restore examples/xApp/c/keysight/xapp_keysight_kpm_rc.c
+git restore test/agent-ric/test_near_ric.c
+git restore test/agent-ric-xapp/test_ag_ric_xapp.c
 git restore src/xApp/act_proc.c
 git restore src/xApp/act_proc.h
 git restore src/xApp/e42_xapp_api.h
@@ -201,6 +170,18 @@ fi
 if [ ! -f "examples/xApp/c/tc/xapp_tc_all.c.previous" ]; then
     cp examples/xApp/c/tc/xapp_tc_all.c examples/xApp/c/tc/xapp_tc_all.c.previous
     cp examples/xApp/c/tc/xapp_tc_all.c.previous "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/tc/xapp_tc_all.previous.c"
+fi
+if [ ! -f "examples/xApp/c/keysight/xapp_keysight_kpm_rc.c.previous" ]; then
+    cp examples/xApp/c/keysight/xapp_keysight_kpm_rc.c examples/xApp/c/keysight/xapp_keysight_kpm_rc.c.previous
+    cp examples/xApp/c/keysight/xapp_keysight_kpm_rc.c.previous "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/keysight/xapp_keysight_kpm_rc.previous.c"
+fi
+if [ ! -f "test/agent-ric/test_near_ric.c.previous" ]; then
+    cp test/agent-ric/test_near_ric.c test/agent-ric/test_near_ric.c.previous
+    cp test/agent-ric/test_near_ric.c.previous "$PARENT_DIR/install_patch_files/flexric/test/agent-ric/test_near_ric.previous.c"
+fi
+if [ ! -f "test/agent-ric-xapp/test_ag_ric_xapp.c.previous" ]; then
+    cp test/agent-ric-xapp/test_ag_ric_xapp.c test/agent-ric-xapp/test_ag_ric_xapp.c.previous
+    cp test/agent-ric-xapp/test_ag_ric_xapp.c.previous "$PARENT_DIR/install_patch_files/flexric/test/agent-ric-xapp/test_ag_ric_xapp.previous.c"
 fi
 if [ ! -f "src/xApp/act_proc.c.previous" ]; then
     cp src/xApp/act_proc.c src/xApp/act_proc.c.previous
@@ -231,12 +212,26 @@ git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/orange/xapp_es_with_cell_util.c.patch"
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/slice/xapp_slice_moni_ctrl.c.patch"
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/tc/xapp_tc_all.c.patch"
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/examples/xApp/c/keysight/xapp_keysight_kpm_rc.c.patch"
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/test/agent-ric/test_near_ric.c.patch"
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/test/agent-ric-xapp/test_ag_ric_xapp.c.patch"
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/src/xApp/act_proc.c.patch"
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/src/xApp/act_proc.h.patch"
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/src/xApp/e42_xapp_api.h.patch"
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/src/xApp/msg_dispatcher_xapp.c.patch"
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/src/xApp/msg_dispatcher_xapp.h.patch"
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/src/xApp/msg_handler_xapp.c.patch"
+cd "$PARENT_DIR"
+
+# Apply the KPM v3 timestamp compatibility patch for OCUDU and FlexRIC agents
+cd "$FLEXRIC_DIR"
+echo "Patching the KPM v3 collectStartTime decoder for NTP and legacy FlexRIC timestamps..."
+git restore src/sm/kpm_sm/kpm_sm_v03.00/dec/dec_asn/dec_ric_ind_hdr_frm_1.c
+if [ ! -f "src/sm/kpm_sm/kpm_sm_v03.00/dec/dec_asn/dec_ric_ind_hdr_frm_1.previous.c" ]; then
+    cp src/sm/kpm_sm/kpm_sm_v03.00/dec/dec_asn/dec_ric_ind_hdr_frm_1.c src/sm/kpm_sm/kpm_sm_v03.00/dec/dec_asn/dec_ric_ind_hdr_frm_1.previous.c
+    cp src/sm/kpm_sm/kpm_sm_v03.00/dec/dec_asn/dec_ric_ind_hdr_frm_1.previous.c "$PARENT_DIR/install_patch_files/flexric/src/sm/kpm_sm/kpm_sm_v03.00/dec/dec_asn/dec_ric_ind_hdr_frm_1.previous.c"
+fi
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/flexric/src/sm/kpm_sm/kpm_sm_v03.00/dec/dec_asn/dec_ric_ind_hdr_frm_1.c.patch"
 cd "$PARENT_DIR"
 
 # # Apply patch to FlexRIC to make collectStartTime 64 bits for v02.01 and v02.03 (already fixed in v03.00) as per E2SM-KPM clause 8.3.12 and IETF RFC 5905 clause 6

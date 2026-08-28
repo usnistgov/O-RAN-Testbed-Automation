@@ -1,0 +1,12 @@
+diff --git a/lib/cu_cp/cu_cp_controller/cu_up_connection_manager.cpp b/lib/cu_cp/cu_cp_controller/cu_up_connection_manager.cpp
+index e117457177..448ec29a41 100644
+--- a/lib/cu_cp/cu_cp_controller/cu_up_connection_manager.cpp
++++ b/lib/cu_cp/cu_cp_controller/cu_up_connection_manager.cpp
+@@ -51,6 +51,7 @@ public:
+   {
+     if (not connected()) {
+       parent.logger.warning("Discarding CU-UP E1AP message. Cause: CU-UP connection has been closed.");
++      return;
+     }
+ 
+     // Forward message.

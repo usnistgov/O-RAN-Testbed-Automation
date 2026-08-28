@@ -32,9 +32,10 @@
 set -e
 
 APPLY_PATCHES=true
-CLEAN_INSTALL=false # Note: If set to true, then full_install.sh needs to be ran in the Next_Generation_Node_B directory too.
-RADIO_TYPE="SIMU"   # Set to "SIMU", "ZMQ", or "USRP"
+CLEAN_INSTALL=false # Note: If set to true, then full_install.sh needs to be ran in the Next_Generation_Node_B directory too
 DEBUG_SYMBOLS=false
+RADIO_TYPE="SIMU" # Set to "SIMU", "ZMQ", or "USRP"
+USE_IMSCOPE=false
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
@@ -45,39 +46,48 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-if ! grep -q avx2 /proc/cpuinfo; then
+if [ "$(uname -m)" = "x86_64" ] && ! grep -qw avx2 /proc/cpuinfo; then
     echo "WARNING: Support for AVX2 is not available on this machine. Errors may occur when building due to unsupported AVX instructions."
     echo "Please consider following the instructions \"Enabling VT-x/AMD-V for the AVX2 instruction set\" in OpenAirInterface_Testbed/README.md."
     echo
-    echo "Press any key to continue."
-    read -r -n 1 -s
+    echo "Do you want to proceed? (Y/n)"
+    read -r CONFIRM
+    CONFIRM=$(echo "${CONFIRM:-y}" | tr '[:upper:]' '[:lower:]')
+    if [[ "$CONFIRM" != "y" && "$CONFIRM" != "yes" ]]; then
+        echo "Installation aborted."
+        exit 1
+    fi
 fi
 
-# Check for binary to determine if OpenAirInterface is already installed
-if [ "$CLEAN_INSTALL" = false ] && [ -f "openairinterface5g/cmake_targets/ran_build/build/nr-uesoftmodem" ]; then
-    echo "OpenAirInterface UE is already installed, skipping."
+# Check for binary to determine if Duranta UE is already installed
+if [ "$CLEAN_INSTALL" = false ] &&
+    [ -f "openairinterface5g/cmake_targets/ran_build/build/nr-uesoftmodem" ] &&
+    { [ "$RADIO_TYPE" != "ZMQ" ] || [ -f "openairinterface5g/cmake_targets/ran_build/build/liboai_zmqdevif.so" ]; } &&
+    { [ "$USE_IMSCOPE" != true ] || [ -f "openairinterface5g/cmake_targets/ran_build/build/libimscope.so" ]; }; then
+    echo "Duranta UE is already installed, skipping."
     exit 0
 fi
 
 # Run a sudo command every minute to ensure script execution without user interaction
 ./install_scripts/start_sudo_refresh.sh
+trap './install_scripts/stop_sudo_refresh.sh 2>/dev/null || true' EXIT
 
 # Get the start timestamp in seconds
 INSTALL_START_TIME=$(date +%s)
 
 if [ ! -d "openairinterface5g" ]; then
     echo "Cloning openairinterface5g..."
-    ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/oai/openairinterface5g.git openairinterface5g --https
+    ./install_scripts/git_clone.sh https://github.com/duranta-project/openairinterface5g.git openairinterface5g
 fi
 
 if [ "$APPLY_PATCHES" = true ]; then
-    echo "Patching OpenAirInterface..."
+    echo "Patching Duranta UE..."
     ./install_scripts/apply_patches.sh
 fi
 
 echo
 echo
-echo "Installing User Equipment (OpenAirInterface)..."
+echo "Installing User Equipment (Duranta)..."
 # Modifies the needrestart configuration to suppress interactive prompts
 if [ -d /etc/needrestart ]; then
     sudo install -d -m 0755 /etc/needrestart/conf.d
@@ -101,11 +111,15 @@ else
 fi
 if [[ "$INSTALL_GCC" == "true" ]]; then
     echo "Installing GCC 13..."
-    sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+    if ! sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test; then
+        echo "ERROR: Failed to add the Ubuntu Toolchain PPA."
+        exit 1
+    fi
     sudo apt-get update
-    sudo env $APTVARS apt-get install -y gcc-13 g++-13
+    sudo env $APTVARS apt-get install -y gcc-13 g++-13 cpp-13
     sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 100
     sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-13 100
+    sudo update-alternatives --install /usr/bin/cpp cpp /usr/bin/cpp-13 100
 fi
 
 if ! command -v cmake &>/dev/null; then
@@ -115,10 +129,11 @@ if ! command -v cmake &>/dev/null; then
 fi
 CMAKE_VERSION=$(cmake --version | head -n1 | awk '{print $3}')
 if [[ "$CMAKE_VERSION" == 3.16.* ]]; then
-    echo "Detected CMake 3.16. Updating CMake for compatibility with OpenAirInterface..."
+    UBUNTU_CODENAME=$(./install_scripts/get_ubuntu_codename.sh)
+    echo "Detected CMake $CMAKE_VERSION. Updating CMake for Duranta compatibility..."
     # Add Kitware's apt repository
     wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc | sudo apt-key add -
-    sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ focal main'
+    sudo apt-add-repository -y "deb https://apt.kitware.com/ubuntu/ $UBUNTU_CODENAME main"
     sudo apt-get update
     sudo env $APTVARS apt-get install -y cmake
 fi
@@ -152,6 +167,11 @@ if [ "$CLEAN_INSTALL" = true ]; then
 fi
 if [ "$DEBUG_SYMBOLS" = true ]; then
     ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS -g"
+fi
+if [ "$USE_IMSCOPE" = true ]; then
+    sudo env $APTVARS apt-get install -y libglfw3-dev libopengl-dev
+    # sudo env $APTVARS apt-get install -y libforms-bin libforms-dev
+    ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --build-lib imscope"
 fi
 
 cd "$SCRIPT_DIR"
@@ -220,7 +240,7 @@ if [ "$RADIO_TYPE" = "ZMQ" ]; then
     cd "$SCRIPT_DIR"
 fi
 
-echo "Compiling and Installing OpenAirInterface UE..."
+echo "Compiling and Installing Duranta UE..."
 
 cd "$SCRIPT_DIR/openairinterface5g"
 source oaienv
@@ -228,6 +248,10 @@ source oaienv
 # Install OAI dependencies
 cd "$SCRIPT_DIR/openairinterface5g/cmake_targets"
 ./build_oai -I
+
+if [ "$USE_IMSCOPE" = true ]; then
+    "$SCRIPT_DIR/install_scripts/ensure_imscope_dependencies.sh"
+fi
 
 # Build OAI 5G UE
 cd "$SCRIPT_DIR/openairinterface5g/cmake_targets"

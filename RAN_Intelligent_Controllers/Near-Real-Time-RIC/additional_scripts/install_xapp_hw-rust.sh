@@ -28,7 +28,7 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-echo "# Script: $(realpath "$0")..."
+echo "# Script: $(realpath "$0") $@"
 
 # Run this script to build and deploy the Hello World Rust xApp (hw-rust) in the Near-Real-Time RIC.
 # More information can be found at: https://github.com/o-ran-sc/ric-app-hw-rust
@@ -43,6 +43,7 @@ cd "$PARENT_DIR"
 
 # Run a sudo command every minute to ensure script execution without user interaction
 ./install_scripts/start_sudo_refresh.sh
+trap './install_scripts/stop_sudo_refresh.sh 2>/dev/null || true' EXIT
 
 if [ "$CHART_REPO_URL" != "http://0.0.0.0:8090" ]; then
     echo "Registering the Chart Museum URL..."
@@ -71,8 +72,8 @@ if ! command -v jq &>/dev/null; then
 fi
 
 FILE="config/config-file_updated.json"
-sudo rm -rf $FILE
-cp config/config-file.json $FILE
+sudo rm -rf "$FILE"
+cp config/config-file.json "$FILE"
 # Modify the required fields using jq and overwrite the original file
 jq '.containers[0].image.tag = "latest" |
     .containers[0].image.registry = "127.0.0.1:80" |

@@ -34,7 +34,7 @@ if ! command -v realpath &>/dev/null; then
     sudo env $APTVARS apt-get install -y coreutils
 fi
 
-echo "# Script: $(realpath "$0")..."
+echo "# Script: $(realpath "$0") $@"
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
@@ -55,7 +55,7 @@ DEFAULT_IPV6=""
 APNS=()
 IPV4S=()
 
-./start_webui.sh no-browser
+./start_webui.sh no-browser || exit 1
 
 # Function to display usage
 usage() {

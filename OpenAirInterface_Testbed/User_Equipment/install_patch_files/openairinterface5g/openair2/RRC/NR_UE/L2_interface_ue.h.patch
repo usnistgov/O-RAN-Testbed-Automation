@@ -1,0 +1,19 @@
+diff --git a/openair2/RRC/NR_UE/L2_interface_ue.h b/openair2/RRC/NR_UE/L2_interface_ue.h
+index 5121f0859e..161ddd0b5e 100644
+--- a/openair2/RRC/NR_UE/L2_interface_ue.h
++++ b/openair2/RRC/NR_UE/L2_interface_ue.h
+@@ -24,7 +24,8 @@ void nr_mac_rrc_meas_ind_ue(module_id_t module_id,
+                             uint16_t Nid_cell,
+                             bool csi_meas,
+                             bool is_neighboring_cell,
+-                            int rsrp_dBm);
++                            int rsrp_dBm,
++                            int sinr_index);
+ void nr_mac_rrc_inactivity_timer_ind(const module_id_t mod_id);
+ void nr_mac_rrc_msg3_ind(const module_id_t mod_id, const int rnti, bool prepare_payload);
+ void nr_ue_rrc_timer_trigger(int instance, int hfn, int frame, int gnb_id);
+@@ -32,4 +33,3 @@ void nr_mac_rrc_ra_ind(const module_id_t mod_id, bool success);
+ void process_msg_rcc_to_mac(nr_mac_rrc_message_t *msg, int instance_id);
+ void nr_mac_rrc_verification_failed(const module_id_t mod_id);
+ #endif
+-

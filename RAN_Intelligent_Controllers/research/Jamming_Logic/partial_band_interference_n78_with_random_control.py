@@ -32,7 +32,8 @@ from PyQt5 import Qt
 from argparse import ArgumentParser
 from gnuradio.eng_arg import eng_float, intx
 from gnuradio import eng_notation
-from gnuradio import uhd
+# from gnuradio import uhd
+from gnuradio import zeromq
 
 
 
@@ -76,32 +77,50 @@ class partial_band_interference_n78(gr.top_block, Qt.QWidget):
         ##################################################
         self.f_low = f_low = -3.6e6
         self.BW = BW = 7.2e6
-        self.samp_rate = samp_rate = 7.2e6
+        # self.samp_rate = samp_rate = 7.2e6
+        self.samp_rate = samp_rate = 23.04e6
         self.gain_tx = gain_tx = 52
-        self.freq_center = freq_center = 3619.2e6
+        # self.freq_center = freq_center = 3619.2e6
+        self.freq_center = freq_center = 1842.5e6
         self.f_high = f_high = f_low+BW
 
         ##################################################
         # Blocks
         ##################################################
-        self.uhd_usrp_sink_0 = uhd.usrp_sink(
-            ",".join(("", "type=b200")),
-            uhd.stream_args(
-                cpu_format="fc32",
-                args='',
-                channels=list(range(0,1)),
-            ),
-            "",
-        )
-        self.uhd_usrp_sink_0.set_clock_source('external', 0)
-        self.uhd_usrp_sink_0.set_time_source('external', 0)
-        self.uhd_usrp_sink_0.set_samp_rate(samp_rate)
-        self.uhd_usrp_sink_0.set_time_unknown_pps(uhd.time_spec(0))
+        # self.uhd_usrp_sink_0 = uhd.usrp_sink(
+        #     ",".join(("", "type=b200")),
+        #     uhd.stream_args(
+        #         cpu_format="fc32",
+        #         args='',
+        #         channels=list(range(0,1)),
+        #     ),
+        #     "",
+        # )
+        # self.uhd_usrp_sink_0.set_clock_source('external', 0)
+        # self.uhd_usrp_sink_0.set_time_source('external', 0)
+        # self.uhd_usrp_sink_0.set_samp_rate(samp_rate)
+        # self.uhd_usrp_sink_0.set_time_unknown_pps(uhd.time_spec(0))
 
-        self.uhd_usrp_sink_0.set_center_freq(freq_center, 0)
-        self.uhd_usrp_sink_0.set_antenna("TX/RX", 0)
-        self.uhd_usrp_sink_0.set_bandwidth(BW, 0)
-        self.uhd_usrp_sink_0.set_gain(gain_tx, 0)
+        # self.uhd_usrp_sink_0.set_center_freq(freq_center, 0)
+        # self.uhd_usrp_sink_0.set_antenna("TX/RX", 0)
+        # self.uhd_usrp_sink_0.set_bandwidth(BW, 0)
+        # self.uhd_usrp_sink_0.set_gain(gain_tx, 0)
+        self.zeromq_req_source_0 = zeromq.req_source(
+            gr.sizeof_gr_complex,
+            1,
+            'tcp://10.201.0.13:2300',
+            100,
+            False,
+            -1,
+        )
+        self.zeromq_rep_sink_0 = zeromq.rep_sink(
+            gr.sizeof_gr_complex,
+            1,
+            'tcp://*:2301',
+            100,
+            False,
+            -1,
+        )
         self.low_pass_filter_0 = filter.fir_filter_ccf(
             1,
             firdes.low_pass(
@@ -111,6 +130,8 @@ class partial_band_interference_n78(gr.top_block, Qt.QWidget):
                 20e3,
                 window.WIN_HAMMING,
                 6.76))
+        self.blocks_null_sink_0 = blocks.null_sink(gr.sizeof_gr_complex)
+        self.blocks_multiply_const_vxx_0 = blocks.multiply_const_cc(0)
         self.blocks_throttle_0 = blocks.throttle(gr.sizeof_gr_complex*1, samp_rate,True)
         self.analog_fastnoise_source_x_0 = analog.fastnoise_source_c(analog.GR_GAUSSIAN, 1, 0, 16384)
 
@@ -120,7 +141,10 @@ class partial_band_interference_n78(gr.top_block, Qt.QWidget):
         ##################################################
         self.connect((self.analog_fastnoise_source_x_0, 0), (self.blocks_throttle_0, 0))
         self.connect((self.blocks_throttle_0, 0), (self.low_pass_filter_0, 0))
-        self.connect((self.low_pass_filter_0, 0), (self.uhd_usrp_sink_0, 0))
+        # self.connect((self.low_pass_filter_0, 0), (self.uhd_usrp_sink_0, 0))
+        self.connect((self.low_pass_filter_0, 0), (self.blocks_multiply_const_vxx_0, 0))
+        self.connect((self.blocks_multiply_const_vxx_0, 0), (self.zeromq_rep_sink_0, 0))
+        self.connect((self.zeromq_req_source_0, 0), (self.blocks_null_sink_0, 0))
 
 
     def closeEvent(self, event):
@@ -144,7 +168,7 @@ class partial_band_interference_n78(gr.top_block, Qt.QWidget):
     def set_BW(self, BW):
         self.BW = BW
         self.set_f_high(self.f_low+self.BW)
-        self.uhd_usrp_sink_0.set_bandwidth(self.BW, 0)
+        # self.uhd_usrp_sink_0.set_bandwidth(self.BW, 0)
 
     def get_samp_rate(self):
         return self.samp_rate
@@ -153,21 +177,21 @@ class partial_band_interference_n78(gr.top_block, Qt.QWidget):
         self.samp_rate = samp_rate
         self.blocks_throttle_0.set_sample_rate(self.samp_rate)
         self.low_pass_filter_0.set_taps(firdes.low_pass(1, self.samp_rate, self.f_high, 20e3, window.WIN_HAMMING, 6.76))
-        self.uhd_usrp_sink_0.set_samp_rate(self.samp_rate)
+        # self.uhd_usrp_sink_0.set_samp_rate(self.samp_rate)
 
     def get_gain_tx(self):
         return self.gain_tx
 
     def set_gain_tx(self, gain_tx):
         self.gain_tx = gain_tx
-        self.uhd_usrp_sink_0.set_gain(self.gain_tx, 0)
+        # self.uhd_usrp_sink_0.set_gain(self.gain_tx, 0)
 
     def get_freq_center(self):
         return self.freq_center
 
     def set_freq_center(self, freq_center):
         self.freq_center = freq_center
-        self.uhd_usrp_sink_0.set_center_freq(self.freq_center, 0)
+        # self.uhd_usrp_sink_0.set_center_freq(self.freq_center, 0)
 
     def get_f_high(self):
         return self.f_high
@@ -189,14 +213,19 @@ def main(top_block_cls=partial_band_interference_n78, options=None):
     tb = top_block_cls()
 
     tb.show()
+    tb.start()
 
     ##################################################
     # Start of radio stats printing
     ##################################################
-    radio_on_event_delay_from = 5
-    radio_on_event_delay_to = 30
+    # radio_on_event_delay_from = 5
+    # radio_on_event_delay_to = 30
+    # radio_off_event_delay_from = 20
+    # radio_off_event_delay_to = 120
+    radio_on_event_delay_from = 20
+    radio_on_event_delay_to = 20
     radio_off_event_delay_from = 20
-    radio_off_event_delay_to = 120
+    radio_off_event_delay_to = 20
 
     import csv
     import os
@@ -265,12 +294,14 @@ def main(top_block_cls=partial_band_interference_n78, options=None):
             delay_duration = ""
         if radio_on:
             print("Turning radio OFF")
-            tb.stop()
-            tb.wait()
+            # tb.stop()
+            # tb.wait()
+            tb.blocks_multiply_const_vxx_0.set_k(0)
             radio_on = False
         else:
             print("Turning radio ON")
-            tb.start()
+            # tb.start()
+            tb.blocks_multiply_const_vxx_0.set_k(1)
             radio_on = True
         print_radio_stats()
         if reschedule:
@@ -284,10 +315,12 @@ def main(top_block_cls=partial_band_interference_n78, options=None):
     toggle_radio_event(reschedule=True)
 
     def sig_handler(sig=None, frame=None):
+        nonlocal radio_on
         nonlocal delay_duration
         delay_duration = 0
         radio_on = False
         print("Exiting gracefully...")
+        tb.blocks_multiply_const_vxx_0.set_k(0)
         tb.stop()
         print_radio_stats()
 

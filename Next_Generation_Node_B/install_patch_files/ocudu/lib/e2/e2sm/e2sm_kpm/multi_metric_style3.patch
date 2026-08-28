@@ -1,0 +1,125 @@
+diff --git a/lib/e2/e2sm/e2sm_kpm/e2sm_kpm_report_service_impl.cpp b/lib/e2/e2sm/e2sm_kpm/e2sm_kpm_report_service_impl.cpp
+index 41ff559b13..bdd6808b1d 100644
+--- a/lib/e2/e2sm/e2sm_kpm/e2sm_kpm_report_service_impl.cpp
++++ b/lib/e2/e2sm/e2sm_kpm/e2sm_kpm_report_service_impl.cpp
+@@ -266,6 +266,7 @@ bool e2sm_kpm_report_service_style3::collect_measurements()
+   std::vector<asn1::e2sm::ue_id_c> cur_matching_ues;
+   std::vector<meas_record_item_c>  meas_records_items;
+   meas_data_item_s                 meas_data_item;
++  uint32_t                         meas_record_offset = 0;
+ 
+   // Copy condition list info from action.
+   for (auto& meas_cond_ueid : ric_ind_message.meas_cond_ue_id_list) {
+@@ -274,15 +275,8 @@ bool e2sm_kpm_report_service_style3::collect_measurements()
+     cur_matching_ues.clear();
+     meas_provider.get_ues_matching_test_conditions(meas_cond_ueid.matching_cond, cur_matching_ues);
+ 
+-    if (meas_cond_ueid.matching_ue_id_list.size() == 0 and cur_matching_ues.size() > 0) {
+-      // First measurement collection is will be now.
+-      for (auto& ue : cur_matching_ues) {
+-        matching_ue_id_item_s matching_ueid_item;
+-        matching_ueid_item.ue_id = ue;
+-        meas_cond_ueid.matching_ue_id_list.push_back(matching_ueid_item);
+-      }
+-    } else if (meas_cond_ueid.matching_ue_id_list.size() > 0 and cur_matching_ues.size() > 0) {
+-      // Check if some new UEs satisfy conditions and add them at the end.
++    if (cur_matching_ues.size() > 0) {
++      // Check if some new UEs satisfy conditions and add them to this measurement condition.
+       for (auto& ue : cur_matching_ues) {
+         auto it = std::find_if(meas_cond_ueid.matching_ue_id_list.begin(),
+                                meas_cond_ueid.matching_ue_id_list.end(),
+@@ -291,12 +285,18 @@ bool e2sm_kpm_report_service_style3::collect_measurements()
+           matching_ue_id_item_s matching_ueid_item;
+           matching_ueid_item.ue_id = ue;
+ 
+-          // For the new UEs, fill the previous records with NO_VALUE.
+-          // New UE is at the end of the matching_ue_id_list, so just add NO_VALUE at the end of each meas_record.
++          // Insert NO_VALUE for this UE into previous measurement data. Records are grouped by measurement
++          // condition, so append to this condition's block rather than to the end of the complete record.
++          uint32_t insert_pos = meas_record_offset + meas_cond_ueid.matching_ue_id_list.size();
+           meas_record_item_c meas_record_item;
+           meas_record_item.set_no_value();
+           for (auto& meas_data : ric_ind_message.meas_data) {
+-            meas_data.meas_record.push_back(meas_record_item);
++            uint32_t old_size = meas_data.meas_record.size();
++            meas_data.meas_record.resize(old_size + 1);
++            std::move_backward(meas_data.meas_record.begin() + insert_pos,
++                               meas_data.meas_record.begin() + old_size,
++                               meas_data.meas_record.end());
++            meas_data.meas_record[insert_pos] = meas_record_item;
+           }
+           meas_cond_ueid.matching_ue_id_list.push_back(matching_ueid_item);
+         }
+@@ -335,9 +335,14 @@ bool e2sm_kpm_report_service_style3::collect_measurements()
+     for (auto& record_item : meas_records_items) {
+       meas_data_item.meas_record.push_back(record_item);
+     }
+-    ric_ind_message.meas_data.push_back(meas_data_item);
+-    // TODO: currently only single meas_cond_ueid is supported. How to store meas_records of multiple?
+-    break;
++    meas_record_offset += meas_cond_ueid.matching_ue_id_list.size();
++  }
++
++  // Format 2 stores one MeasurementDataItem per granularity period.
++  // Its MeasurementRecord contains one value per matching UE for each
++  // measurement condition, ordered according to measCondUEidList.
++  if (meas_data_item.meas_record.size() != 0) {
++    ric_ind_message.meas_data.push_back(std::move(meas_data_item));
+   }
+   return true;
+ }
+diff --git a/tests/unittests/e2/e2sm_kpm_test.cpp b/tests/unittests/e2/e2sm_kpm_test.cpp
+index 4824d87e12..892ff3c2f8 100644
+--- a/tests/unittests/e2/e2sm_kpm_test.cpp
++++ b/tests/unittests/e2/e2sm_kpm_test.cpp
+@@ -393,7 +393,7 @@ TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style3)
+       {31, 32, 33, 0, 35},
+       {41, 42, 43, 0, 45},
+   };
+-  uint32_t nof_metrics   = 1;
++  uint32_t nof_metrics   = 2;
+   uint32_t nof_meas_data = presence.size();
+   // Measurement records are no_value before UE is present and satisfies conditions.
+   std::vector<std::vector<uint32_t>> cond_presence;
+@@ -456,6 +456,9 @@ TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style3)
+   ASSERT_FALSE(e2sm_kpm_iface->action_supported(ric_action));
+ 
+   action_def_f3.meas_cond_list[0].meas_type.set_meas_name().from_string("DRB.UEThpDl"); // Change to a valid metric.
++  meas_cond_item_s second_meas_cond_item = action_def_f3.meas_cond_list[0];
++  second_meas_cond_item.meas_type.set_meas_name().from_string("DRB.RlcSduDelayDl");
++  action_def_f3.meas_cond_list.push_back(second_meas_cond_item);
+   ric_action = generate_e2sm_kpm_ric_action(action_def);
+ 
+   if (g_enable_pcap) {
+@@ -480,6 +483,8 @@ TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style3)
+   for (unsigned i = 0; i < nof_meas_data; ++i) {
+     // Push dummy metric measurements
+     du_meas_provider->push_measurements_int(presence[i], cond_satisfied[i], meas_values[i]);
++    du_meas_provider->push_measurements_float(
++        presence[i], cond_satisfied[i], {0.15625, 0.15625, 0.15625, 0.15625, 0.15625});
+     // Trigger measurement collection.
+     report_service->collect_measurements();
+   }
+@@ -511,10 +516,22 @@ TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style3)
+       if (cond_presence[i][ue_idx]) {
+         TESTASSERT_EQ(meas_values[i][ue_idx],
+                       ric_ind_msg.ind_msg_formats.ind_msg_format2().meas_data[i].meas_record[j].integer());
++        TESTASSERT_EQ(0.15625,
++                      ric_ind_msg.ind_msg_formats.ind_msg_format2()
++                          .meas_data[i]
++                          .meas_record[nof_reported_ues + j]
++                          .real()
++                          .value);
+       } else {
+         TESTASSERT_EQ(
+             fmt::underlying(meas_record_item_c::types_opts::no_value),
+             fmt::underlying(ric_ind_msg.ind_msg_formats.ind_msg_format2().meas_data[i].meas_record[j].type().value));
++        TESTASSERT_EQ(fmt::underlying(meas_record_item_c::types_opts::no_value),
++                      fmt::underlying(ric_ind_msg.ind_msg_formats.ind_msg_format2()
++                                          .meas_data[i]
++                                          .meas_record[nof_reported_ues + j]
++                                          .type()
++                                          .value));
+       }
+     }
+   }

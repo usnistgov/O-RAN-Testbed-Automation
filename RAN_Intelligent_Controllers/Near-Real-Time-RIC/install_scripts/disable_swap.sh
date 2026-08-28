@@ -28,7 +28,10 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-echo "# Script: $(realpath "$0")..."
+echo "# Script: $(realpath "$0") $@"
+
+SWAP_STATE_DIR="${SWAP_STATE_DIR:-/var/lib/nist-oran-testbed}"
+SWAP_STATE_FILE="${SWAP_STATE_FILE:-$SWAP_STATE_DIR/swap_fstab_entries}"
 
 # Detect if systemctl is available
 USE_SYSTEMCTL=false
@@ -44,18 +47,28 @@ if command -v systemctl >/dev/null 2>&1; then
 fi
 
 echo "Checking for traditional swap in /etc/fstab..."
-SWAPFILES=$(grep swap /etc/fstab | sed '/^[ \t]*#/ d' | sed 's/[\t ]/ /g' | tr -s " " | cut -f1 -d' ')
+sudo install -d -m 0755 "$SWAP_STATE_DIR"
+sudo awk '$0 !~ /^[[:space:]]*#/ && $3 == "swap" { print }' /etc/fstab | sudo tee "$SWAP_STATE_FILE" >/dev/null
+
+if [ -s "$SWAP_STATE_FILE" ]; then
+    echo "Saved traditional swap entries to $SWAP_STATE_FILE."
+else
+    echo "No traditional swap entries to save."
+    sudo rm -f "$SWAP_STATE_FILE"
+fi
+
+SWAPFILES=$(sudo awk '$0 !~ /^[[:space:]]*#/ && $3 == "swap" { print $1 }' /etc/fstab)
 if [ ! -z "$SWAPFILES" ]; then
     for SWAPFILE in $SWAPFILES; do
         if [ ! -z "$SWAPFILE" ]; then
             echo "Disabling swap file $SWAPFILE"
-            if [[ $SWAPFILE == UUID* ]]; then
+            if [[ "$SWAPFILE" == UUID* ]]; then
                 UUID=$(echo "$SWAPFILE" | cut -f2 -d'=')
-                sudo swapoff -U "$UUID"
+                sudo swapoff -U "$UUID" || true
             else
-                sudo swapoff "$SWAPFILE"
+                sudo swapoff "$SWAPFILE" || true
             fi
-            sudo sed -i "\%$SWAPFILE%d" /etc/fstab
+            sudo sed -i "\%^[[:space:]]*$SWAPFILE[[:space:]]%d" /etc/fstab
         fi
     done
 else
@@ -63,19 +76,18 @@ else
 fi
 # Disable zram swap
 echo "Checking for zram swap devices..."
-ZRAM_DEVICES=$(sudo swapon --show=NAME,TYPE | grep partition | grep zram | cut -d' ' -f1)
+ZRAM_DEVICES=$(sudo swapon --noheadings --show=NAME 2>/dev/null | grep -E '(^|/)zram[0-9]+$' || true)
 if [ ! -z "$ZRAM_DEVICES" ]; then
-    for ZRAM in $ZRAM_DEVICES; do
-        # Handle case where device path might already include '/dev/'
-        ZRAM_DEVICE_PATH=$(echo "$ZRAM" | grep -q "^/dev/" && echo "$ZRAM" || echo "/dev/$ZRAM")
-        echo "Disabling zram device $ZRAM_DEVICE_PATH"
-        sudo swapoff "$ZRAM_DEVICE_PATH"
+    for ZRAM_DEVICE in $ZRAM_DEVICES; do
+        echo "Disabling zram device $ZRAM_DEVICE"
+        sudo swapoff "$ZRAM_DEVICE" || true
     done
     # Disable zram services if they exist
     if [ "$USE_SYSTEMCTL" = true ]; then
-        systemctl list-units --type=service | grep zram | cut -d' ' -f1 | while read -r SERVICE; do
+        ZRAM_SERVICES=$(systemctl list-unit-files --type=service --no-legend 2>/dev/null | awk '/zram/ { print $1 }' || true)
+        for SERVICE in $ZRAM_SERVICES; do
             echo "Disabling zram service $SERVICE"
-            sudo systemctl disable --now "$SERVICE"
+            sudo systemctl disable --now "$SERVICE" || true
         done
     fi
 else
@@ -83,7 +95,7 @@ else
 fi
 
 echo "Verifying swap is disabled..."
-if sudo swapon --show | grep -q 'swap'; then
+if sudo swapon --noheadings --show=NAME 2>/dev/null | grep -q .; then
     echo "WARNING: Swap is still active."
     sudo swapon --show
 else

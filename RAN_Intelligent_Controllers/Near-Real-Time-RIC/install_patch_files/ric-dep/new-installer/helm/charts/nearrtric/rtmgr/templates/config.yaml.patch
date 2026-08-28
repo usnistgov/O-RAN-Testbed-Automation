@@ -1,0 +1,34 @@
+diff --git a/new-installer/helm/charts/nearrtric/rtmgr/templates/config.yaml b/new-installer/helm/charts/nearrtric/rtmgr/templates/config.yaml
+index c1e656a..8c35003 100644
+--- a/new-installer/helm/charts/nearrtric/rtmgr/templates/config.yaml
++++ b/new-installer/helm/charts/nearrtric/rtmgr/templates/config.yaml
+@@ -37,6 +37,10 @@ data:
+            "name": "E2MAN"
+            "fqdn": "{{ printf "%s.%s" (include "common.servicename.e2mgr.rmr" .) (include "common.namespace.platform" .) }}"
+            "port": {{ include "common.serviceport.e2mgr.rmr.data" . }}
++         -
++           "name": "E2TERM"
++           "fqdn": "service-ricplt-e2term-rmr-alpha.{{ include "common.namespace.platform" . }}"
++           "port": {{ include "common.serviceport.e2term.rmr.data" . }}
+          -
+            "name": "A1MEDIATOR"
+            "fqdn": "{{ printf "%s.%s" (include "common.servicename.a1mediator.rmr" .) (include "common.namespace.platform" .) }}"
+@@ -152,7 +156,7 @@ data:
+           "RIC_SERVICE_UPDATE_ACK=12031",
+           "RIC_SERVICE_UPDATE_FAILURE=12032",
+           "RIC_E2NODE_CONFIG_UPDATE=12070",
+-          "RIC_E2NODE_CONFIG_UPDATE_ACK==12071",
++          "RIC_E2NODE_CONFIG_UPDATE_ACK=12071",
+           "RIC_E2NODE_CONFIG_UPDATE_FAILURE=12072",
+           "RIC_E2_RESET_REQ=12004",
+           "RIC_E2_RESET_RESP=12005",
+@@ -176,6 +180,9 @@ data:
+          { 'messagetype': 'RIC_ENDC_CONF_UPDATE_FAILURE', 'senderendpoint': 'E2MAN', 'subscriptionid': -1, 'endpoint': '', 'meid': '%meid'},
+          { 'messagetype': 'RIC_E2_SETUP_REQ', 'senderendpoint': '', 'subscriptionid': -1, 'endpoint': 'E2MAN', 'meid': ''},
+          { 'messagetype': 'E2_TERM_INIT', 'senderendpoint': '', 'subscriptionid': -1, 'endpoint': 'E2MAN', 'meid': ''},
++         { 'messagetype': 'RIC_E2_SETUP_RESP', 'senderendpoint': 'E2MAN', 'subscriptionid': -1, 'endpoint': 'E2TERM', 'meid': ''},
++         { 'messagetype': 'RIC_E2_SETUP_FAILURE', 'senderendpoint': 'E2MAN', 'subscriptionid': -1, 'endpoint': 'E2TERM', 'meid': ''},
++         { 'messagetype': 'E2_TERM_KEEP_ALIVE_REQ', 'senderendpoint': 'E2MAN', 'subscriptionid': -1, 'endpoint': 'E2TERM', 'meid': ''},
+          { 'messagetype': 'RIC_X2_SETUP_RESP', 'senderendpoint': '', 'subscriptionid': -1, 'endpoint': 'E2MAN', 'meid': ''},
+          { 'messagetype': 'RIC_X2_SETUP_FAILURE', 'senderendpoint': '', 'subscriptionid': -1, 'endpoint': 'E2MAN', 'meid': ''},
+          { 'messagetype': 'RIC_X2_RESET', 'senderendpoint': '', 'subscriptionid': -1, 'endpoint': 'E2MAN', 'meid': ''},

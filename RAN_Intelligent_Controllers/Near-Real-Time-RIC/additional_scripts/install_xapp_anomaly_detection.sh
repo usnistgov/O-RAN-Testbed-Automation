@@ -28,7 +28,7 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-echo "# Script: $(realpath "$0")..."
+echo "# Script: $(realpath "$0") $@"
 
 # Run this script to build and deploy the Anamoly Detection xApp (ad) in the Near-Real-Time RIC.
 # More information can be found at: https://github.com/o-ran-sc/ric-app-ad and https://docs.o-ran-sc.org/projects/o-ran-sc-ric-app-ad/en/latest/overview.html
@@ -43,6 +43,7 @@ cd "$PARENT_DIR"
 
 # Run a sudo command every minute to ensure script execution without user interaction
 ./install_scripts/start_sudo_refresh.sh
+trap './install_scripts/stop_sudo_refresh.sh 2>/dev/null || true' EXIT
 
 if ! kubectl get pods -n ricplt | grep r4-influxdb-influxdb2 &>/dev/null; then
     echo "The InfluxDB pod is not running, installing it..."
@@ -77,27 +78,37 @@ if [ ! -f "$INFLUXDB_TOKEN_PATH" ]; then
 fi
 INFLUXDB_TOKEN=$(jq -r '.token' "$INFLUXDB_TOKEN_PATH")
 
+git restore src/ad_config.ini
 if [ ! -f "src/ad_config.previous.ini" ]; then
     echo "Patching src/ad_config.ini..."
     cp src/ad_config.ini src/ad_config.previous.ini
+    cp src/ad_config.previous.ini "$PARENT_DIR/install_patch_files/xApps/ad/src/ad_config.previous.ini"
 fi
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/xApps/ad/src/ad_config.ini.patch"
+
+git restore src/database.py
 if [ ! -f "src/database.previous.py" ]; then
     echo "Patching src/database.py..."
     cp src/database.py src/database.previous.py
+    cp src/database.previous.py "$PARENT_DIR/install_patch_files/xApps/ad/src/database.previous.py"
 fi
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/xApps/ad/src/database.py.patch"
+
+git restore src/insert.py
 if [ ! -f "src/insert.previous.py" ]; then
     echo "Patching src/insert.py..."
     cp src/insert.py src/insert.previous.py
+    cp src/insert.previous.py "$PARENT_DIR/install_patch_files/xApps/ad/src/insert.previous.py"
 fi
-if [ ! -f "setup.py.previous" ]; then
-    echo "Patching setup.py..."
-    cp setup.py setup.py.previous
-fi
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/xApps/ad/src/insert.py.patch"
 
-cp "$PARENT_DIR/install_patch_files/xApps/ad/src/ad_config.ini" src/ad_config.ini
-cp "$PARENT_DIR/install_patch_files/xApps/ad/src/database.py" src/database.py
-cp "$PARENT_DIR/install_patch_files/xApps/ad/src/insert.py" src/insert.py
-cp "$PARENT_DIR/install_patch_files/xApps/ad/setup.py" setup.py
+git restore setup.py
+if [ ! -f "setup.previous.py" ]; then
+    echo "Patching setup.py..."
+    cp setup.py setup.previous.py
+    cp setup.previous.py "$PARENT_DIR/install_patch_files/xApps/ad/setup.previous.py"
+fi
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/xApps/ad/setup.py.patch"
 
 # Set the token in src/ad_config.ini
 if grep -q "token *= *.*" src/ad_config.ini; then
@@ -119,8 +130,8 @@ if ! command -v jq &>/dev/null; then
 fi
 
 FILE="xapp-descriptor/config_updated.json"
-sudo rm -rf $FILE
-cp xapp-descriptor/config.json $FILE
+sudo rm -rf "$FILE"
+cp xapp-descriptor/config.json "$FILE"
 # Modify the required fields using jq and overwrite the original file
 jq '.containers[0].image.tag = "latest" |
     .containers[0].image.registry = "127.0.0.1:80" |
@@ -162,7 +173,8 @@ if [ -z "$FIXED_DOCKER_PERMS" ]; then
     fi
 fi
 
-if [ ! -f ad.tar ]; then
+AD_NEWER_FILE=$([ -f ad.tar ] && find Dockerfile setup.py src -type f -newer ad.tar -print -quit || true)
+if [ ! -f ad.tar ] || [ -n "$AD_NEWER_FILE" ]; then
     docker build --network host -t 127.0.0.1:80/ad:latest .
     docker save -o ad.tar 127.0.0.1:80/ad:latest
     sudo chmod 755 ad.tar
@@ -210,9 +222,10 @@ else
     exit 1
 fi
 
-# echo "Inserting data into the InfluxDB..."
-# POD_NAME=$(kubectl get pods --all-namespaces | grep ricxapp-ad | awk '{print $2}')
-# kubectl exec -n ricxapp -it $POD_NAME -- /bin/sh -c "python3 /src/insert.py"
+echo "Starting AD sample data loader inside the xApp pod..."
+kubectl rollout status deployment/ricxapp-ad -n ricxapp --timeout=120s
+POD_NAME=$(kubectl get pods -n ricxapp -l app=ricxapp-ad -o jsonpath='{.items[0].metadata.name}')
+kubectl exec -n ricxapp "$POD_NAME" -- /bin/sh -c "pgrep -f '[p]ython3 insert.py' >/dev/null || setsid -f /bin/sh -c 'cd /src && exec python3 insert.py >/tmp/ad_insert.log 2>&1 </dev/null'"
 
 cd "$PARENT_DIR"
 

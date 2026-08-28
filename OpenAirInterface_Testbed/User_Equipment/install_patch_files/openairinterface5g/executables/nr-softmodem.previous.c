@@ -19,6 +19,11 @@ unsigned short config_frames[4] = {2,9,11,13};
 #include "openair2/E2AP/flexric/src/agent/e2_agent_api.h"
 #include "openair2/E2AP/RAN_FUNCTION/init_ran_func.h"
 #endif
+
+#ifdef E3_AGENT
+#include "openair2/E3AP/e3_agent.h"
+#endif
+
 #include "nr-softmodem.h"
 #include <common/utils/assertions.h>
 #include <openair2/GNB_APP/gnb_app.h>
@@ -60,7 +65,6 @@ unsigned short config_frames[4] = {2,9,11,13};
 #include "nr-softmodem-common.h"
 #include "openair2/E1AP/e1ap_common.h"
 #include "pdcp.h"
-#include "radio/COMMON/common_lib.h"
 #include "s1ap_eNB.h"
 #include "sctp_eNB_task.h"
 #include "system.h"
@@ -69,7 +73,9 @@ unsigned short config_frames[4] = {2,9,11,13};
 #include "x2ap_eNB.h"
 #include "openair1/SCHED_NR/sched_nr.h"
 #include "openair2/SDAP/nr_sdap/nr_sdap.h"
+#include "openair3/NRPPA/nrppa_gNB.h"
 
+RAN_CONTEXT_t RC;
 pthread_cond_t nfapi_sync_cond;
 pthread_mutex_t nfapi_sync_mutex;
 int nfapi_sync_var=-1; //!< protected by mutex \ref nfapi_sync_mutex
@@ -80,32 +86,11 @@ int sync_var=-1; //!< protected by mutex \ref sync_mutex.
 int config_sync_var=-1;
 int oai_exit = 0;
 
-unsigned int mmapped_dma=0;
-
 uint64_t downlink_frequency[MAX_NUM_CCs][4];
 int64_t uplink_frequency_offset[MAX_NUM_CCs][4];
 char *uecap_file;
 
-runmode_t mode = normal_txrx;
-
-#if MAX_NUM_CCs == 1
-double tx_gain[MAX_NUM_CCs][4] = {{20,0,0,0}};
-double rx_gain[MAX_NUM_CCs][4] = {{110,0,0,0}};
-#else
-double tx_gain[MAX_NUM_CCs][4] = {{20,0,0,0},{20,0,0,0}};
-double rx_gain[MAX_NUM_CCs][4] = {{110,0,0,0},{20,0,0,0}};
-#endif
-
-int chain_offset = 0;
-int numerology = 0;
 double cpuf;
-
-/* hack: pdcp_run() is required by 4G scheduler which is compiled into
- * nr-softmodem because of linker issues */
-void pdcp_run(const protocol_ctxt_t *const ctxt_pP)
-{
-  abort();
-}
 
 /*------------------------------------------------------------------------*/
 
@@ -193,7 +178,10 @@ static int create_gNB_tasks(ngran_node_t node_type, configmodule_interface_t *cf
   if (RC.nb_nr_macrlc_inst > 0)
     RCconfig_nr_macrlc(cfg);
 
-  if (RC.nb_nr_L1_inst>0) AssertFatal(l1_north_init_gNB()==0,"could not initialize L1 north interface\n");
+  if (RC.nb_nr_L1_inst > 0) {
+    int ret = l1_north_init_gNB();
+    AssertFatal(ret == 0, "could not initialize L1 north interface\n");
+  }
 
   AssertFatal (gnb_nb <= RC.nb_nr_inst,
                "Number of gNB is greater than gNB defined in configuration file (%d/%d)!",
@@ -250,6 +238,11 @@ static int create_gNB_tasks(ngran_node_t node_type, configmodule_interface_t *cf
     if (gnb_nb > 0) {
       if (itti_create_task (TASK_NGAP, ngap_gNB_task, NULL) < 0) {
         LOG_E(NGAP, "Create task for NGAP failed\n");
+        return -1;
+      }
+
+      if (itti_create_task(TASK_NRPPA, nrppa_gNB_task, NULL) < 0) {
+        LOG_E(NGAP, "Create task for NRPPA failed\n");
         return -1;
       }
     }
@@ -443,7 +436,7 @@ int start_L1L2(module_id_t gnb_id)
   return 0;
 }
 
-static  void wait_nfapi_init(char *thread_name)
+static void wait_nfapi_init()
 {
   pthread_mutex_lock( &nfapi_sync_mutex );
 
@@ -516,7 +509,6 @@ int main( int argc, char **argv ) {
   setvbuf(stdout, NULL, _IONBF, 0);
   setvbuf(stderr, NULL, _IONBF, 0);
 #endif
-  mode = normal_txrx;
   logInit();
   lock_memory_to_ram();
   get_options(uniqCfg);
@@ -526,6 +518,13 @@ int main( int argc, char **argv ) {
           "no SYS_NICE capability: cannot set thread priority and affinity, consider running with sudo for optimum performance\n");
 
   softmodem_verify_mode(get_softmodem_params());
+
+//////////////////////////////////
+//// Init the E3 Agent
+#ifdef E3_AGENT
+  printf("Init E3 Agent\n");
+  e3_init();
+#endif // E3_AGENT
 
 #if T_TRACER
   T_Config_Init();
@@ -613,7 +612,7 @@ int main( int argc, char **argv ) {
 
     for (ru_id=0; ru_id<RC.nb_RU; ru_id++) {
       RC.ru[ru_id]->rf_map.card=0;
-      RC.ru[ru_id]->rf_map.chain=CC_id+chain_offset;
+      RC.ru[ru_id]->rf_map.chain = CC_id;
       if (ru_id==0) sl_ahead = RC.ru[ru_id]->sl_ahead;	
       else AssertFatal(RC.ru[ru_id]->sl_ahead != RC.ru[0]->sl_ahead,"RU %d has different sl_ahead %d than RU 0 %d\n",ru_id,RC.ru[ru_id]->sl_ahead,RC.ru[0]->sl_ahead);
     }
@@ -659,7 +658,7 @@ int main( int argc, char **argv ) {
     RC.gNB[idx]->if_inst->sl_ahead = sl_ahead;
 
   if (NFAPI_MODE==NFAPI_MODE_PNF) {
-    wait_nfapi_init("main?");
+    wait_nfapi_init();
   }
 
   if (IS_SOFTMODEM_IMSCOPE_ENABLED || IS_SOFTMODEM_IMSCOPE_RECORD_ENABLED) {
@@ -732,6 +731,11 @@ int main( int argc, char **argv ) {
   pthread_mutex_destroy(&nfapi_sync_mutex);
 
   time_manager_finish();
+
+#ifdef E3_AGENT
+  printf("Destroy E3 Agent\n");
+  e3_destroy();
+#endif // E3_AGENT
 
   free(pckg);
   logClean();

@@ -28,7 +28,7 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-echo "# Script: $(realpath "$0")..."
+echo "# Script: $(realpath "$0") $@"
 
 # Exit immediately if a command fails
 set -e
@@ -36,15 +36,15 @@ set -e
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-UE_NUMBER=$1
+UE_NUMBER="$1"
 
 if [[ -z "$UE_NUMBER" ]]; then
     echo "ERROR: No UE number provided."
     echo "Usage: $0 <UE_NUMBER>"
     exit 1
 fi
-if ! [[ $UE_NUMBER =~ ^[0-9]+$ ]]; then
-    echo "ERROR: UE number must be a number."
+if ! [[ "$UE_NUMBER" =~ ^[1-9][0-9]*$ ]]; then
+    echo "ERROR: UE number must be a positive integer."
     exit 1
 fi
 
@@ -53,48 +53,46 @@ UE_NAMESPACE="ue$UE_NUMBER"
 # Give the UE its own network namespace and configure it to access the host network
 NETWORK_INTERFACE=$(ip route | grep default | awk '{print $5}')
 
-# Allocate a /30 (4 addresses) subnet per UE (e.g., UE 1 -> 10.201.0.4/30, Gateway .5, UE .6)
-BASE_SUBNET="10.201.0.0/16"
-SUBNET_SIZE=4
+UE_HOST_IP=$(./get_ue_namespace_ip.sh host "$UE_NUMBER")
+UE_NS_IP=$(./get_ue_namespace_ip.sh ue "$UE_NUMBER")
+UE_SUBNET_ID=$(./get_ue_namespace_ip.sh subnet "$UE_NUMBER")
+UE_PREFIX_LENGTH=$(./get_ue_namespace_ip.sh prefix)
 
-# Calculate IP offsets
-SUBNET_OFFSET=$((UE_NUMBER * SUBNET_SIZE))
-HOST_IP_OFFSET=$((SUBNET_OFFSET))   # .5
-UE_IP_OFFSET=$((SUBNET_OFFSET + 1)) # .6
+if sudo ip netns list | grep -qE "^${UE_NAMESPACE}( |$)" &&
+    ip link show "v-eth$UE_NUMBER" >/dev/null 2>&1 &&
+    sudo ip netns exec "$UE_NAMESPACE" ip link show "v-$UE_NAMESPACE" >/dev/null 2>&1; then
+    echo "Reusing existing namespace $UE_NAMESPACE and v-eth$UE_NUMBER."
+else
+    # Clean up existing artifacts for this UE
+    sudo ip netns delete "$UE_NAMESPACE" 2>/dev/null || true
+    sudo ip link delete "v-eth$UE_NUMBER" 2>/dev/null || true
 
-# Fetch IPs from subnet using python script
-UE_SUBNET_ID=$(python3 fetch_nth_ip.py "$BASE_SUBNET" $((SUBNET_OFFSET - 1)))
-UE_HOST_IP=$(python3 fetch_nth_ip.py "$BASE_SUBNET" $HOST_IP_OFFSET)
-UE_NS_IP=$(python3 fetch_nth_ip.py "$BASE_SUBNET" $UE_IP_OFFSET)
-
-# Clean up existing artifacts for this UE
-sudo ip netns delete $UE_NAMESPACE 2>/dev/null || true
-sudo ip link delete v-eth$UE_NUMBER 2>/dev/null || true
-
-# Create namespace and veth pair
-sudo ip netns add $UE_NAMESPACE
-sudo ip link add v-eth$UE_NUMBER type veth peer name v-$UE_NAMESPACE
-sudo ip link set v-$UE_NAMESPACE netns $UE_NAMESPACE
+    # Create namespace and veth pair
+    sudo ip netns add "$UE_NAMESPACE"
+    sudo ip link add "v-eth$UE_NUMBER" type veth peer name "v-$UE_NAMESPACE"
+    sudo ip link set "v-$UE_NAMESPACE" netns "$UE_NAMESPACE"
+fi
 
 # Configure host side interface
-sudo ip addr add $UE_HOST_IP/30 dev v-eth$UE_NUMBER
-sudo ip link set v-eth$UE_NUMBER up
+sudo ip addr replace "$UE_HOST_IP/$UE_PREFIX_LENGTH" dev "v-eth$UE_NUMBER"
+sudo ip link set "v-eth$UE_NUMBER" up
+sudo ip route replace "$UE_SUBNET_ID/$UE_PREFIX_LENGTH" dev "v-eth$UE_NUMBER" src "$UE_HOST_IP"
 
 # Configure NAT to masquerade traffic and allow forwarding
-if ! sudo iptables -t nat -C POSTROUTING -s "$UE_SUBNET_ID/30" -o "$NETWORK_INTERFACE" -j MASQUERADE 2>/dev/null; then
-    sudo iptables -t nat -A POSTROUTING -s "$UE_SUBNET_ID/30" -o "$NETWORK_INTERFACE" -j MASQUERADE
+if ! sudo iptables -t nat -C POSTROUTING -s "$UE_SUBNET_ID/$UE_PREFIX_LENGTH" -o "$NETWORK_INTERFACE" -j MASQUERADE 2>/dev/null; then
+    sudo iptables -t nat -A POSTROUTING -s "$UE_SUBNET_ID/$UE_PREFIX_LENGTH" -o "$NETWORK_INTERFACE" -j MASQUERADE
 fi
-if ! sudo iptables -C FORWARD -i "$NETWORK_INTERFACE" -o v-eth$UE_NUMBER -j ACCEPT 2>/dev/null; then
-    sudo iptables -A FORWARD -i "$NETWORK_INTERFACE" -o v-eth$UE_NUMBER -j ACCEPT
+if ! sudo iptables -C FORWARD -i "$NETWORK_INTERFACE" -o "v-eth$UE_NUMBER" -j ACCEPT 2>/dev/null; then
+    sudo iptables -A FORWARD -i "$NETWORK_INTERFACE" -o "v-eth$UE_NUMBER" -j ACCEPT
 fi
-if ! sudo iptables -C FORWARD -o "$NETWORK_INTERFACE" -i v-eth$UE_NUMBER -j ACCEPT 2>/dev/null; then
-    sudo iptables -A FORWARD -o "$NETWORK_INTERFACE" -i v-eth$UE_NUMBER -j ACCEPT
+if ! sudo iptables -C FORWARD -o "$NETWORK_INTERFACE" -i "v-eth$UE_NUMBER" -j ACCEPT 2>/dev/null; then
+    sudo iptables -A FORWARD -o "$NETWORK_INTERFACE" -i "v-eth$UE_NUMBER" -j ACCEPT
 fi
 
 # Configure namespace side interface
-sudo ip netns exec $UE_NAMESPACE ip link set dev lo up
-sudo ip netns exec $UE_NAMESPACE ip addr add $UE_NS_IP/30 dev v-$UE_NAMESPACE
-sudo ip netns exec $UE_NAMESPACE ip link set v-$UE_NAMESPACE up
+sudo ip netns exec "$UE_NAMESPACE" ip link set dev lo up
+sudo ip netns exec "$UE_NAMESPACE" ip addr replace "$UE_NS_IP/$UE_PREFIX_LENGTH" dev "v-$UE_NAMESPACE"
+sudo ip netns exec "$UE_NAMESPACE" ip link set "v-$UE_NAMESPACE" up
 
 # Set default route in namespace to point to host gateway
-sudo ip netns exec $UE_NAMESPACE ip route add default via $UE_HOST_IP
+sudo ip netns exec "$UE_NAMESPACE" ip route replace default via "$UE_HOST_IP" dev "v-$UE_NAMESPACE"

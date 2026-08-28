@@ -39,7 +39,7 @@ if ! command -v realpath &>/dev/null; then
     sudo env $APTVARS apt-get install -y coreutils
 fi
 
-echo "# Script: $(realpath "$0")..."
+echo "# Script: $(realpath "$0") $@"
 
 # Stop the InfluxDB service if it is running
 if systemctl list-units --full -all | grep -Fq "influxdb.service"; then

@@ -65,13 +65,24 @@ sudo ./install_scripts/network_config.sh
 
 INCLUDE_SEPP=$(yq eval '.include_sepp' options.yaml)
 
+is_component_running() {
+    local APP_NAME="$1"
+    pgrep -f "$APP_NAME" >/dev/null
+}
+
 run_in_background() {
     local APP_NAME="open5gs-$1"
     if [ "$1" == "seppd" ]; then
         if [ "$INCLUDE_SEPP" == true ]; then
-            local SEPP1_RUNNING=$(pgrep -f "[o]pen5gs-sepp.*sepp1\.yaml")
-            local SEPP2_RUNNING=$(pgrep -f "[o]pen5gs-sepp.*sepp2\.yaml")
-            if [ -z "$SEPP1_RUNNING" ]; then
+            local SEPP1_RUNNING=false
+            local SEPP2_RUNNING=false
+            if is_component_running "$APP_NAME" "$SCRIPT_DIR/configs/sepp1.yaml"; then
+                SEPP1_RUNNING=true
+            fi
+            if is_component_running "$APP_NAME" "$SCRIPT_DIR/configs/sepp2.yaml"; then
+                SEPP2_RUNNING=true
+            fi
+            if [ "$SEPP1_RUNNING" != true ]; then
                 CONFIG_FILE_1="$SCRIPT_DIR/configs/sepp1.yaml"
                 if [ ! -f "$CONFIG_FILE_1" ]; then
                     echo "Configuration file not found: $CONFIG_FILE_1"
@@ -86,7 +97,7 @@ run_in_background() {
             else
                 echo "Already running $APP_NAME 1."
             fi
-            if [ -z "$SEPP2_RUNNING" ]; then
+            if [ "$SEPP2_RUNNING" != true ]; then
                 CONFIG_FILE_2="$SCRIPT_DIR/configs/sepp2.yaml"
                 if [ ! -f "$CONFIG_FILE_2" ]; then
                     echo "Configuration file not found: $CONFIG_FILE_2"
@@ -104,14 +115,14 @@ run_in_background() {
         fi
         return
     fi
-    if pgrep -x "$APP_NAME" >/dev/null; then
-        echo "Already running $APP_NAME."
-        return
-    fi
     local CONFIG_FILE="$SCRIPT_DIR/configs/${1%?}.yaml"
     if [ ! -f "$CONFIG_FILE" ]; then
         echo "Configuration file not found: $CONFIG_FILE"
         exit 1
+    fi
+    if is_component_running "$APP_NAME" "$CONFIG_FILE"; then
+        echo "Already running $APP_NAME for this directory."
+        return
     fi
 
     # Remove the log file if it exists before starting the application
@@ -127,9 +138,15 @@ run_in_terminal() {
     local APP_NAME="open5gs-$1"
     if [ "$1" == "seppd" ]; then
         if [ "$INCLUDE_SEPP" == true ]; then
-            local SEPP1_RUNNING=$(pgrep -f "[o]pen5gs-sepp.*sepp1\.yaml")
-            local SEPP2_RUNNING=$(pgrep -f "[o]pen5gs-sepp.*sepp2\.yaml")
-            if [ -z "$SEPP1_RUNNING" ]; then
+            local SEPP1_RUNNING=false
+            local SEPP2_RUNNING=false
+            if is_component_running "$APP_NAME" "$SCRIPT_DIR/configs/sepp1.yaml"; then
+                SEPP1_RUNNING=true
+            fi
+            if is_component_running "$APP_NAME" "$SCRIPT_DIR/configs/sepp2.yaml"; then
+                SEPP2_RUNNING=true
+            fi
+            if [ "$SEPP1_RUNNING" != true ]; then
                 CONFIG_FILE_1="$SCRIPT_DIR/configs/sepp1.yaml"
                 if [ ! -f "$CONFIG_FILE_1" ]; then
                     echo "Configuration file not found: $CONFIG_FILE_1"
@@ -143,7 +160,7 @@ run_in_terminal() {
             else
                 echo "Already running $APP_NAME 1."
             fi
-            if [ -z "$SEPP2_RUNNING" ]; then
+            if [ "$SEPP2_RUNNING" != true ]; then
                 CONFIG_FILE_2="$SCRIPT_DIR/configs/sepp2.yaml"
                 if [ ! -f "$CONFIG_FILE_2" ]; then
                     echo "Configuration file not found: $CONFIG_FILE_2"
@@ -160,14 +177,14 @@ run_in_terminal() {
         fi
         return
     fi
-    if pgrep -x "$APP_NAME" >/dev/null; then
-        echo "Already running $APP_NAME."
-        return
-    fi
     local CONFIG_FILE="$SCRIPT_DIR/configs/${1%?}.yaml"
     if [ ! -f "$CONFIG_FILE" ]; then
         echo "Configuration file not found: $CONFIG_FILE"
         exit 1
+    fi
+    if is_component_running "$APP_NAME" "$CONFIG_FILE"; then
+        echo "Already running $APP_NAME for this directory."
+        return
     fi
 
     # Remove the log file if it exists before starting the application

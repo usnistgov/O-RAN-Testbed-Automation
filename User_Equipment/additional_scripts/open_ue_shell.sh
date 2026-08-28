@@ -52,14 +52,14 @@ if [ $UE_NUMBER -lt 1 ]; then
 fi
 
 if [ ! -f "configs/ue1.conf" ]; then
-    echo "Configuration was not found for OAI UE 1. Please run ./generate_configurations.sh first."
+    echo "Configuration was not found for Duranta UE 1. Please run ./generate_configurations.sh first."
     exit 1
 fi
 
 UE_NAMESPACE="ue$UE_NUMBER"
 
 # If the namespace doesn't exist
-if ! ip netns list | grep -q "$UE_NAMESPACE"; then
+if ! ip netns list | grep -qE "^${UE_NAMESPACE}( |$)"; then
     echo "ERROR: Namespace $UE_NAMESPACE does not exist. Please start the UE first with: ./run_background.sh $UE_NUMBER"
     exit 1
 fi

@@ -43,12 +43,8 @@ cd "$SCRIPT_DIR"
 UE_NUMBER=""
 if [ "$#" -eq 1 ]; then
     UE_NUMBER=$1
-    if ! [[ $UE_NUMBER =~ ^[0-9]+$ ]]; then
-        echo "ERROR: UE number must be a number."
-        exit 1
-    fi
-    if [ $UE_NUMBER -lt 1 ]; then
-        echo "ERROR: UE number must be greater than or equal to 1."
+    if ! [[ "$UE_NUMBER" =~ ^[1-9][0-9]*$ ]]; then
+        echo "ERROR: UE number must be a positive integer."
         exit 1
     fi
 fi
@@ -84,9 +80,11 @@ fi
 # Send a graceful shutdown signal to the UE process
 if [ -z "$UE_NUMBER" ]; then
     sudo pkill -f "[n]r-uesoftmodem" >/dev/null 2>&1
+    sudo pkill -f "[s]rsue" >/dev/null 2>&1
     stty sane || true
 else
-    sudo pkill -f "[n]r-uesoftmodem -O ../../../../configs/ue$UE_NUMBER.conf" >/dev/null 2>&1
+    sudo pkill -f "[n]r-uesoftmodem.*configs/ue$UE_NUMBER.conf" >/dev/null 2>&1
+    sudo pkill -f "[s]rsue --config_file configs/ue$UE_NUMBER.conf" >/dev/null 2>&1
 fi
 
 # Wait for the process to terminate gracefully
@@ -103,7 +101,7 @@ while [ $COUNT -lt $MAX_COUNT ]; do
             exit 0
         fi
     else
-        if ! echo "$IS_RUNNING" | grep -q "ue$UE_NUMBER"; then
+        if ! echo "$IS_RUNNING" | grep -Eq "(^|[ (])ue${UE_NUMBER}([ )]|$)"; then
             echo "The User Equipment $UE_NUMBER has stopped gracefully."
             remove_ue_namespace "$UE_NUMBER"
             ./is_running.sh
@@ -119,10 +117,12 @@ done
 if [ -z "$UE_NUMBER" ]; then
     echo "The User Equipment did not stop in time, sending forceful kill signal..."
     sudo pkill -9 -f "[n]r-uesoftmodem" >/dev/null 2>&1
+    sudo pkill -9 -f "[s]rsue" >/dev/null 2>&1
     remove_all_ue_namespaces
 else
     echo "The User Equipment $UE_NUMBER did not stop in time, sending forceful kill signal..."
-    sudo pkill -9 -f "[n]r-uesoftmodem -O ../../../../configs/ue$UE_NUMBER.conf" >/dev/null 2>&1
+    sudo pkill -9 -f "[n]r-uesoftmodem.*configs/ue$UE_NUMBER.conf" >/dev/null 2>&1
+    sudo pkill -9 -f "[s]rsue --config_file configs/ue$UE_NUMBER.conf" >/dev/null 2>&1
     remove_ue_namespace "$UE_NUMBER"
 fi
 

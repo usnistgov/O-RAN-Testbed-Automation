@@ -31,6 +31,9 @@
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
+WEBUI_DIR="$SCRIPT_DIR/open5gs/webui"
+WEBUI_SERVER="$WEBUI_DIR/server/index.js"
+
 NO_BROWSER=false
 for ARG in "$@"; do
     if [[ "$ARG" == "no-browser" ]]; then
@@ -39,37 +42,17 @@ for ARG in "$@"; do
     fi
 done
 
-# Detect if systemctl is available
-USE_SYSTEMCTL=false
-if command -v systemctl >/dev/null 2>&1; then
-    if [ "$(cat /proc/1/comm 2>/dev/null)" = "systemd" ]; then
-        OUTPUT="$(systemctl 2>&1 || true)"
-        if echo "$OUTPUT" | grep -qiE 'not supported|System has not been booted with systemd'; then
-            echo "Detected systemctl is not supported. Using background processes instead."
-        elif systemctl list-units >/dev/null 2>&1 || systemctl is-system-running --quiet >/dev/null 2>&1; then
-            USE_SYSTEMCTL=true
-        fi
-    fi
-fi
-
 # Ensure that MongoDB is running
-sudo ./install_scripts/start_mongodb.sh
+sudo ./install_scripts/start_mongodb.sh || exit 1
 
-if [[ "$USE_SYSTEMCTL" == "true" ]]; then
-    if ! systemctl is-active --quiet "open5gs-webui"; then
-        echo "Starting webui service..."
-        sudo systemctl start open5gs-webui
-    fi
-else
-    # Check if the WebUI server is already running by looking for the Node.js process in the correct directory
-    if ! pgrep -f "[o]pen5gs-webui" >/dev/null; then
-        echo "Starting webui process..."
-        cd open5gs/webui
-        npm install
-        # nohup node --title="open5gs-webui" server/index.js >logs/webui_stdout.txt 2>&1 &
-        nohup node --title="open5gs-webui" server/index.js >/dev/null 2>&1 &
-        cd "$SCRIPT_DIR"
-    fi
+# Check if the WebUI server is already running before starting a new instance
+if ! pgrep -af "node" | grep -F -- "$WEBUI_SERVER" >/dev/null; then
+    echo "Starting webui process..."
+    cd "$WEBUI_DIR"
+    npm install --no-audit --no-fund --loglevel=error
+    # nohup node "$WEBUI_SERVER" >"$SCRIPT_DIR/logs/webui_stdout.txt" 2>&1 &
+    nohup node "$WEBUI_SERVER" >/dev/null 2>&1 &
+    cd "$SCRIPT_DIR"
 fi
 
 WEBUI_PORT=9999

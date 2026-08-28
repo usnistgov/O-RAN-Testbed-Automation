@@ -37,16 +37,20 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
+USE_ZMQ_CHANNEL_EMULATOR=true
+
+if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ]; then
+    if pgrep -f "[z]mq_channel_emulator\.py" >/dev/null; then
+        echo "ZeroMQ Channel Emulator: RUNNING"
+    else
+        echo "ZeroMQ Channel Emulator: NOT_RUNNING"
+    fi
+fi
+
 if pgrep -x "gnb" >/dev/null; then
     echo "gNodeB: RUNNING"
 else
     echo "gNodeB: NOT_RUNNING"
-fi
-
-if pgrep -f "[p]ython3 zmq_broker/multi_ue_scenario\.py" >/dev/null; then
-    echo "ZMQ_Broker: RUNNING"
-else
-    echo "ZMQ_Broker: NOT_RUNNING"
 fi
 
 if command -v docker &>/dev/null; then

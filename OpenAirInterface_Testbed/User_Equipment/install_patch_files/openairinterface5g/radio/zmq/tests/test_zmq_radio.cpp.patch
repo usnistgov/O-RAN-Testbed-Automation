@@ -1,0 +1,26 @@
+diff --git a/radio/zmq/tests/test_zmq_radio.cpp b/radio/zmq/tests/test_zmq_radio.cpp
+index 7d0baa2a94..f401df428b 100644
+--- a/radio/zmq/tests/test_zmq_radio.cpp
++++ b/radio/zmq/tests/test_zmq_radio.cpp
+@@ -168,8 +168,8 @@ TEST_F(ZMQTest, TxRxSamplesSIMD)
+     c16_t tx_samples[size];
+     openair0_timestamp_t tx_timestamp = rx_timestamp + size;
+     for (int i = 0; i < size; i++) {
+-      tx_samples[i].r = (int16_t)i;
+-      tx_samples[i].i = (int16_t)(i + 1);
++      tx_samples[i].r = (int16_t)(i - size / 2);
++      tx_samples[i].i = (int16_t)(size / 2 - i);
+     }
+     samples[0] = tx_samples;
+     ASSERT_EQ(device1.trx_write_func(&device1, tx_timestamp, samples, size, 1, 0), size);
+@@ -186,8 +186,8 @@ TEST_F(ZMQTest, TxRxSamplesSIMD)
+     openair0_timestamp_t rx_timestamp2;
+     ASSERT_EQ(device2.trx_read_func(&device2, &rx_timestamp2, samples, size, 1), size);
+     for (int i = 0; i < size; i++) {
+-      ASSERT_EQ(rx_samples[i].r, (int16_t)i);
+-      ASSERT_EQ(rx_samples[i].i, (int16_t)(i + 1));
++      ASSERT_EQ(rx_samples[i].r, (int16_t)(i - size / 2));
++      ASSERT_EQ(rx_samples[i].i, (int16_t)(size / 2 - i));
+     }
+     ASSERT_EQ(rx_timestamp + size, rx_timestamp2);
+   });

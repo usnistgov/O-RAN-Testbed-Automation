@@ -83,6 +83,7 @@ fi
 
 # Run a sudo command every minute to ensure script execution without user interaction
 ./install_scripts/start_sudo_refresh.sh
+trap './install_scripts/stop_sudo_refresh.sh 2>/dev/null || true' EXIT
 
 if [ "$USE_SYSTEMCTL" = true ]; then
     # Prevent the unattended-upgrades service from creating dpkg locks that would error the script
@@ -298,7 +299,7 @@ sudo rm -rf /var/lib/dockershim || true
 sudo rm -rf /var/run/kubernetes || true
 sudo rm -rf /var/lib/cni/ || true
 sudo rm -rf /root/.kube/ || true
-sudo rm -rf $HOME/.kube/ || true
+sudo rm -rf "$HOME/.kube/" || true
 
 # Remove all Kubernetes-related Docker or containerd images
 if command -v docker &>/dev/null; then
@@ -369,6 +370,9 @@ sudo ip link delete weave 2>/dev/null || true
 sudo rm -rf ~/.kube
 echo
 echo "Kubernetes is cleaned up."
+
+echo "Enabling swap to restore system state..."
+sudo ./install_scripts/enable_swap.sh
 
 echo "Performing general system cleanup..."
 sudo apt-get autoremove -y

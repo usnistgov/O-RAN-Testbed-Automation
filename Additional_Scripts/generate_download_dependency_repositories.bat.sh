@@ -36,7 +36,7 @@ if ! command -v realpath &>/dev/null; then
     sudo env $APTVARS apt-get install -y coreutils
 fi
 
-echo "# Script: $(realpath "$0")..."
+echo "# Script: $(realpath "$0") $@"
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
@@ -178,8 +178,8 @@ generate_commands "https://gitlab.com/ocudu/ocudu_elements/ocudu_oran_apps/ocudu
 echo "cd Next_Generation_Node_B" >>download_dependency_repositories.bat
 echo "mklink /D libzmq ..\\User_Equipment\\libzmq" >>download_dependency_repositories.bat # Use User_Equipment's ZMQ
 echo "mklink /D czmq ..\\User_Equipment\\czmq" >>download_dependency_repositories.bat
-echo "if not exist zmq_broker mkdir zmq_broker" >>download_dependency_repositories.bat
-echo "cd zmq_broker" >>download_dependency_repositories.bat
+echo "if not exist zmq_channel_emulator mkdir zmq_channel_emulator" >>download_dependency_repositories.bat
+echo "cd zmq_channel_emulator" >>download_dependency_repositories.bat
 echo "if not exist \"multi_ue_scenario.grc\" (" >>download_dependency_repositories.bat
 
 DOCS_HASH=$(jq -r '."https://gitlab.com/ocudu/ocudu_docs.git"[1]' ../commit_hashes.json 2>/dev/null)
@@ -231,14 +231,14 @@ echo "" >>download_dependency_repositories.bat
 # OpenAirInterface testbed repositories
 generate_commands "https://github.com/open5gs/open5gs.git" "OpenAirInterface_Testbed\\5G_Core_Network" "open5gs" "ONLY_IF_NOT_EXIST"
 generate_commands "https://github.com/usnistgov/5gdeploy.git" "OpenAirInterface_Testbed\\5G_Core_Network\\Additional_Cores_5GDeploy" "5gdeploy"
-generate_commands "https://gitlab.eurecom.fr/oai/openairinterface5g.git" "OpenAirInterface_Testbed\\User_Equipment" "openairinterface5g"
+generate_commands "https://github.com/duranta-project/openairinterface5g.git" "OpenAirInterface_Testbed\\User_Equipment" "openairinterface5g"
 echo "cd OpenAirInterface_Testbed\\Next_Generation_Node_B" >>download_dependency_repositories.bat
 echo "mklink /D openairinterface5g ..\\User_Equipment\\openairinterface5g" >>download_dependency_repositories.bat
 echo "cd ..\\.." >>download_dependency_repositories.bat
 echo "" >>download_dependency_repositories.bat
 generate_commands "https://gitlab.eurecom.fr/oai/o1-adapter.git" "OpenAirInterface_Testbed\\Next_Generation_Node_B" "o1-adapter"
 generate_commands "https://github.com/swig/swig.git" "OpenAirInterface_Testbed\\RAN_Intelligent_Controllers\\Flexible-RIC" "swig"
-generate_commands "https://gitlab.eurecom.fr/mosaic5g/flexric.git" "OpenAirInterface_Testbed\\RAN_Intelligent_Controllers\\Flexible-RIC" "flexric"
+generate_commands "https://github.com/duranta-project/flexric.git" "OpenAirInterface_Testbed\\RAN_Intelligent_Controllers\\Flexible-RIC" "flexric"
 
 echo "" >>download_dependency_repositories.bat
 echo "echo Repositories were cloned successfully." >>download_dependency_repositories.bat

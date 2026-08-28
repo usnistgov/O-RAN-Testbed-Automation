@@ -1,0 +1,21 @@
+diff --git a/common/utils/nr/nr_common.c b/common/utils/nr/nr_common.c
+index 57025a5a06..8a01932770 100644
+--- a/common/utils/nr/nr_common.c
++++ b/common/utils/nr/nr_common.c
+@@ -98,6 +98,16 @@ uint8_t get_rsrp_index(int rsrp_dBm)
+   return (uint8_t)index;
+ }
+ 
++/** @brief 38.133 Table 10.1.16.1-1: SS-SINR and CSI-SINR measurement report mapping */
++uint8_t get_sinr_index(float sinr_dB)
++{
++  if (isnan(sinr_dB) || sinr_dB < -23.0f)
++    return 0;
++  if (sinr_dB >= 40.0f)
++    return 127;
++  return (uint8_t)(2.0f * sinr_dB + 47.0f);
++}
++
+ #define NUM_BW_ENTRIES 15
+ 
+ static const int tables_5_3_2[5][NUM_BW_ENTRIES] = {

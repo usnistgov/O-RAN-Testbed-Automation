@@ -57,6 +57,7 @@ fi
 
 # Run a sudo command every minute to ensure script execution without user interaction
 ./install_scripts/start_sudo_refresh.sh
+trap './install_scripts/stop_sudo_refresh.sh 2>/dev/null || true' EXIT
 
 # Detect if systemctl is available
 USE_SYSTEMCTL=false
@@ -102,7 +103,7 @@ if [[ "$USE_SYSTEMCTL" == "true" ]]; then
     fi
 fi
 
-# Instructions are from: https://lf-o-ran-sc.atlassian.net/wiki/spaces/RICNR/pages/679903652/Release+M+-+Run+in+Kubernetes
+# Instructions are from: https://lf-o-ran-sc.atlassian.net/wiki/spaces/RICNR/pages/929792370/Release+N+-+Run+in+Kubernetes
 if [ ! -d dep ]; then
     echo
     echo "Cloning A1 dependencies..."
@@ -254,9 +255,9 @@ else
     echo "Revising the YAML file for the A1 pods..."
     RIC_YAML_FILE_PATH="dep/RECIPE_EXAMPLE/NONRTRIC/example_recipe.yaml"
     RIC_YAML_FILE_PATH_UPDATED="dep/RECIPE_EXAMPLE/NONRTRIC/example_recipe_updated.yaml"
-    sudo chown "${SUDO_USER:-$USER}" $RIC_YAML_FILE_PATH
-    sudo cp $RIC_YAML_FILE_PATH $RIC_YAML_FILE_PATH_UPDATED
-    sudo chown "${SUDO_USER:-$USER}" $RIC_YAML_FILE_PATH_UPDATED
+    sudo chown "${SUDO_USER:-$USER}" "$RIC_YAML_FILE_PATH"
+    sudo cp "$RIC_YAML_FILE_PATH" "$RIC_YAML_FILE_PATH_UPDATED"
+    sudo chown "${SUDO_USER:-$USER}" "$RIC_YAML_FILE_PATH_UPDATED"
 
     # Function to update YAML configuration files
     update_yaml() {
@@ -274,33 +275,33 @@ else
     # First, replace all true to false using sed
     sed -i 's/true/false/g' "$RIC_YAML_FILE_PATH_UPDATED"
 
-    update_yaml $RIC_YAML_FILE_PATH_UPDATED '.nonrtric.installPms' 'false'
-    update_yaml $RIC_YAML_FILE_PATH_UPDATED '.nonrtric.installA1controller' 'false'
-    update_yaml $RIC_YAML_FILE_PATH_UPDATED '.nonrtric.installA1simulator' 'true'
-    update_yaml $RIC_YAML_FILE_PATH_UPDATED '.nonrtric.installControlpanel' 'false'
-    update_yaml $RIC_YAML_FILE_PATH_UPDATED '.nonrtric.installInformationservice' 'false'
-    update_yaml $RIC_YAML_FILE_PATH_UPDATED '.nonrtric.installRappcatalogueservice' 'false'
-    update_yaml $RIC_YAML_FILE_PATH_UPDATED '.nonrtric.installRappcatalogueenhancedservice' 'false'
-    update_yaml $RIC_YAML_FILE_PATH_UPDATED '.nonrtric.installNonrtricgateway' 'false'
-    update_yaml $RIC_YAML_FILE_PATH_UPDATED '.nonrtric.installKong' 'false'
-    update_yaml $RIC_YAML_FILE_PATH_UPDATED '.nonrtric.installDmaapadapterservice' 'false'
-    update_yaml $RIC_YAML_FILE_PATH_UPDATED '.nonrtric.installDmaapmediatorservice' 'false'
-    update_yaml $RIC_YAML_FILE_PATH_UPDATED '.nonrtric.installHelmmanager' 'false'
-    update_yaml $RIC_YAML_FILE_PATH_UPDATED '.nonrtric.installOrufhrecovery' 'false'
-    update_yaml $RIC_YAML_FILE_PATH_UPDATED '.nonrtric.installRansliceassurance' 'false'
-    update_yaml $RIC_YAML_FILE_PATH_UPDATED '.nonrtric.installCapifcore' 'false'
-    update_yaml $RIC_YAML_FILE_PATH_UPDATED '.nonrtric.installServicemanager' 'false'
-    update_yaml $RIC_YAML_FILE_PATH_UPDATED '.nonrtric.installRanpm' 'false'
-    update_yaml $RIC_YAML_FILE_PATH_UPDATED '.nonrtric.installrAppmanager' 'false'
-    update_yaml $RIC_YAML_FILE_PATH_UPDATED '.nonrtric.installDmeParticipant' 'false'
-    update_yaml $RIC_YAML_FILE_PATH_UPDATED '.nonrtric.volume1.size' '2Gi'
-    update_yaml $RIC_YAML_FILE_PATH_UPDATED '.nonrtric.volume1.storageClassName' 'pms-storage'
-    update_yaml $RIC_YAML_FILE_PATH_UPDATED '.nonrtric.volume1.hostPath' '/var/nonrtric/pms-storage'
-    update_yaml $RIC_YAML_FILE_PATH_UPDATED '.nonrtric.volume2.size' '2Gi'
-    update_yaml $RIC_YAML_FILE_PATH_UPDATED '.nonrtric.volume2.storageClassName' 'ics-storage'
-    update_yaml $RIC_YAML_FILE_PATH_UPDATED '.nonrtric.volume2.hostPath' '/var/nonrtric/ics-storage'
-    update_yaml $RIC_YAML_FILE_PATH_UPDATED '.nonrtric.volume3.size' '1Gi'
-    update_yaml $RIC_YAML_FILE_PATH_UPDATED '.nonrtric.volume3.storageClassName' 'helmmanager-storage'
+    update_yaml "$RIC_YAML_FILE_PATH_UPDATED" '.nonrtric.installPms' 'false'
+    update_yaml "$RIC_YAML_FILE_PATH_UPDATED" '.nonrtric.installA1controller' 'false'
+    update_yaml "$RIC_YAML_FILE_PATH_UPDATED" '.nonrtric.installA1simulator' 'true'
+    update_yaml "$RIC_YAML_FILE_PATH_UPDATED" '.nonrtric.installControlpanel' 'false'
+    update_yaml "$RIC_YAML_FILE_PATH_UPDATED" '.nonrtric.installInformationservice' 'false'
+    update_yaml "$RIC_YAML_FILE_PATH_UPDATED" '.nonrtric.installRappcatalogueservice' 'false'
+    update_yaml "$RIC_YAML_FILE_PATH_UPDATED" '.nonrtric.installRappcatalogueenhancedservice' 'false'
+    update_yaml "$RIC_YAML_FILE_PATH_UPDATED" '.nonrtric.installNonrtricgateway' 'false'
+    update_yaml "$RIC_YAML_FILE_PATH_UPDATED" '.nonrtric.installKong' 'false'
+    update_yaml "$RIC_YAML_FILE_PATH_UPDATED" '.nonrtric.installDmaapadapterservice' 'false'
+    update_yaml "$RIC_YAML_FILE_PATH_UPDATED" '.nonrtric.installDmaapmediatorservice' 'false'
+    update_yaml "$RIC_YAML_FILE_PATH_UPDATED" '.nonrtric.installHelmmanager' 'false'
+    update_yaml "$RIC_YAML_FILE_PATH_UPDATED" '.nonrtric.installOrufhrecovery' 'false'
+    update_yaml "$RIC_YAML_FILE_PATH_UPDATED" '.nonrtric.installRansliceassurance' 'false'
+    update_yaml "$RIC_YAML_FILE_PATH_UPDATED" '.nonrtric.installCapifcore' 'false'
+    update_yaml "$RIC_YAML_FILE_PATH_UPDATED" '.nonrtric.installServicemanager' 'false'
+    update_yaml "$RIC_YAML_FILE_PATH_UPDATED" '.nonrtric.installRanpm' 'false'
+    update_yaml "$RIC_YAML_FILE_PATH_UPDATED" '.nonrtric.installrAppmanager' 'false'
+    update_yaml "$RIC_YAML_FILE_PATH_UPDATED" '.nonrtric.installDmeParticipant' 'false'
+    update_yaml "$RIC_YAML_FILE_PATH_UPDATED" '.nonrtric.volume1.size' '2Gi'
+    update_yaml "$RIC_YAML_FILE_PATH_UPDATED" '.nonrtric.volume1.storageClassName' 'pms-storage'
+    update_yaml "$RIC_YAML_FILE_PATH_UPDATED" '.nonrtric.volume1.hostPath' '/var/nonrtric/pms-storage'
+    update_yaml "$RIC_YAML_FILE_PATH_UPDATED" '.nonrtric.volume2.size' '2Gi'
+    update_yaml "$RIC_YAML_FILE_PATH_UPDATED" '.nonrtric.volume2.storageClassName' 'ics-storage'
+    update_yaml "$RIC_YAML_FILE_PATH_UPDATED" '.nonrtric.volume2.hostPath' '/var/nonrtric/ics-storage'
+    update_yaml "$RIC_YAML_FILE_PATH_UPDATED" '.nonrtric.volume3.size' '1Gi'
+    update_yaml "$RIC_YAML_FILE_PATH_UPDATED" '.nonrtric.volume3.storageClassName' 'helmmanager-storage'
 
     cd "$PARENT_DIR/dep/"
 

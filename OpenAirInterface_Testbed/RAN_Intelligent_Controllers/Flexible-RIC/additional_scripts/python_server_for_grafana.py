@@ -41,7 +41,7 @@ base_dir = os.path.dirname(os.path.dirname(os.path.dirname(parent_dir)))
 
 class SingleFileHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
-    # Perform a binary search to find the offset in the mmap file where the timestamp is greater than or equal to the target timestamp.
+    # Perform a binary search to find the offset in the mmap file where the timestamp is greater than or equal to the target timestamp
     def find_offset(self, mmap_file: mmap.mmap, header_end_offset: int, target_timestamp: int):
         low, high = header_end_offset, mmap_file.size()
         result_offset = mmap_file.size()

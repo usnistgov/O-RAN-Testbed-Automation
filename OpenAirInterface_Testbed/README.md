@@ -1,6 +1,6 @@
 ## OpenAirInterface Testbed
 
-This testbed deployment consists of a 5G Core Network by Open5GS [\[1\]][open5gs-core], gNodeB and 5G UE by OpenAirInterface at Eurecom [\[2\]][oai-ue-gnb], and FlexRIC by Mosaic5G at Eurecom [\[3\]][mosaic-flexric]. The scripts in these directories build, install, and configure the testbed components similar to the parent directory. Each directory contains a `README.md` file providing more details on the respective testbed component.
+This testbed deployment consists of a 5G Core Network by Open5GS [\[1\]][open5gs-core], as well as a gNodeB, 5G UE, and FlexRIC by Duranta [\[2\]][duranta-ue-gnb], [\[3\]][duranta-flexric]. The scripts in these directories build, install, and configure the testbed components similar to the parent directory. Each directory contains a `README.md` file providing more details on the respective testbed component.
 
 ## Usage
 
@@ -21,28 +21,97 @@ It may be required for the AVX2 instruction set to be available on the host mach
   <summary><b>Enabling VT-x/AMD-V for the AVX2 instruction set</b></summary>
   <hr>
   When running a VM to build OpenAirInterface5G, compilation errors may occur if not using VT-x/AMD-V due to an unsupported AVX2 instruction set. In VirtualBox, the lower right corner will show a "V" icon if using VT-x/AMD-V, otherwise, it will show a turtle icon. Additionally, AVX2 support can be verified by checking that `cat /proc/cpuinfo | grep avx2` is not empty. The following steps can be taken to ensure that VT-x/AMD-V is enabled in a VirtualBox VM.
-  
+
   - **CPU Virtualization Support**: Look up if the CPU model supports virtualization and ensure that it is enabled in the BIOS.
   - **Disable Hyper-V**: Hyper-V may prevent VT-x/AMD-V from being enabled. If using Windows, the following options should be unchecked in the "Turn Windows features on or off" settings: "Hyper-V", "Windows Hypervisor Platform", and "Virtual Machine Platform". If a change is made, a reboot is required.
   - **VirtualBox**: From the VirtualBox Manager, select the VM and click the "Information" tab. Look for "Acceleration: VT-x/AMD-V".
     - If the VM shows this but the AVX2 instruction set is still disabled, then disabling core isolation is a potential reason. Please exercise extreme caution as it is not advised to disable core isolation. However, it can be disabled in the "Windows Security" settings by unchecking "Memory Integrity" and rebooting.
+    - Users have also reported that switching from VirtualBox to VMware resolves the issue.
   - If `cat /proc/cpuinfo | grep avx2` is not empty, then OpenAirInterface should be able to build without issues.
 </details>
 
-## Handover Scenario
+## Simulating Multiple UEs and Cells with a ZeroMQ Channel Emulator
 
-The script `run_handover_scenario.sh`, based on the handover tutorial [\[4\]][oai-handover], automates the process of setting up a handover scenario with two DUs and one CU. It starts the 5G Core, FlexRIC, CU, DU 1, and UE 1. After UE connectivity, it starts DU 2 and opens a telnet session to the CU for monitoring and controlling the handover process.
-  - The variable `TELNET_SERVER` in `Next_Generation_Node_B/full_install.sh` must be set to `true` prior to gNodeB installation.
-  - To start each component in its own terminal instance, use `./run_handover_scenario.sh show`.
-  - The command `ci trigger_f1_ho 1` will trigger a handover for UE 1 from its current DU to the next DU in a round robin manner.
-
+The ZeroMQ channel emulator supports multi-UE and multi-cell emulation. When `USE_NIST_ZMQ_CHANNEL_EMULATOR` is set to `false`, the OCUDU Multi-UE Emulation tutorial broker [\[5][ocudu-multi-ue], [6\]][ocudu-multi-ue-grc] is used instead. Its generator, `Next_Generation_Node_B/install_scripts/generate_nist_zmq_channel_emulator.sh`, accepts comma-separated UE and cell numbers, such as `--ues 1,2,3 --cells 1,2`. Its graphical user interface can be toggled by setting `SHOW_ZMQ_CHANNEL_EMULATOR_UI` in `run.sh`.
 
 <details>
-  <summary><b>Example of F1 handover output</b></summary>
+<summary>Enable ZeroMQ channel emulator</summary>
+<hr>
+
+```bash
+sed -i 's/^RADIO_TYPE=.*$/RADIO_TYPE="ZMQ" # Set to "SIMU", "ZMQ", or "USRP"/' User_Equipment/full_install.sh
+sed -i 's/^RADIO_TYPE=.*$/RADIO_TYPE="ZMQ" # Set to "SIMU", "ZMQ", or "USRP"/' User_Equipment/generate_configurations.sh
+sed -i 's/^RADIO_TYPE=.*$/RADIO_TYPE="ZMQ" # Set to "SIMU", "ZMQ", or "USRP"/' Next_Generation_Node_B/full_install.sh
+sed -i 's/^RADIO_TYPE=.*$/RADIO_TYPE="ZMQ"                   # Set to "SIMU", "ZMQ", or "USRP"/' Next_Generation_Node_B/generate_configurations.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' run.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' run_handover_scenario.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' run_with_grafana_dashboard.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' User_Equipment/run.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' User_Equipment/run_background.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' User_Equipment/run_gdb.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' Next_Generation_Node_B/run.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' Next_Generation_Node_B/run_background.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' Next_Generation_Node_B/run_gdb.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' Next_Generation_Node_B/run_split_du.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' Next_Generation_Node_B/is_running.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' Next_Generation_Node_B/stop.sh
+```
+
+</details>
+
+<details>
+<summary>Disable ZeroMQ channel emulator (default, using RF simulator)</summary>
+<hr>
+
+```bash
+sed -i 's/^RADIO_TYPE=.*$/RADIO_TYPE="SIMU" # Set to "SIMU", "ZMQ", or "USRP"/' User_Equipment/full_install.sh
+sed -i 's/^RADIO_TYPE=.*$/RADIO_TYPE="SIMU" # Set to "SIMU", "ZMQ", or "USRP"/' User_Equipment/generate_configurations.sh
+sed -i 's/^RADIO_TYPE=.*$/RADIO_TYPE="SIMU" # Set to "SIMU", "ZMQ", or "USRP"/' Next_Generation_Node_B/full_install.sh
+sed -i 's/^RADIO_TYPE=.*$/RADIO_TYPE="SIMU"                  # Set to "SIMU", "ZMQ", or "USRP"/' Next_Generation_Node_B/generate_configurations.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=true$/USE_ZMQ_CHANNEL_EMULATOR=false/' run.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=true$/USE_ZMQ_CHANNEL_EMULATOR=false/' run_handover_scenario.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=true$/USE_ZMQ_CHANNEL_EMULATOR=false/' run_with_grafana_dashboard.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=true$/USE_ZMQ_CHANNEL_EMULATOR=false/' User_Equipment/run.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=true$/USE_ZMQ_CHANNEL_EMULATOR=false/' User_Equipment/run_background.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=true$/USE_ZMQ_CHANNEL_EMULATOR=false/' User_Equipment/run_gdb.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=true$/USE_ZMQ_CHANNEL_EMULATOR=false/' Next_Generation_Node_B/run.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=true$/USE_ZMQ_CHANNEL_EMULATOR=false/' Next_Generation_Node_B/run_background.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=true$/USE_ZMQ_CHANNEL_EMULATOR=false/' Next_Generation_Node_B/run_gdb.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=true$/USE_ZMQ_CHANNEL_EMULATOR=false/' Next_Generation_Node_B/run_split_du.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=true$/USE_ZMQ_CHANNEL_EMULATOR=false/' Next_Generation_Node_B/is_running.sh
+sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=true$/USE_ZMQ_CHANNEL_EMULATOR=false/' Next_Generation_Node_B/stop.sh
+```
+
+</details>
+<hr>
+
+When the ZeroMQ channel emulator is enabled, `./run.sh` starts the configured DUs and UEs and waits for them to become ready. All configured endpoints must be running for samples to flow.
+
+## Handover Scenario
+
+The script `run_handover_scenario.sh`, based on the handover tutorial [\[4\]][duranta-handover], automates the process of setting up an RF Simulator handover scenario with two DUs and one CU. It starts the 5G Core, FlexRIC, CU, DU 1, and UE 1. After UE connectivity, it starts DU 2 and opens a telnet session to the CU for monitoring and controlling the handover process.
+
+  - The variable `TELNET_SERVER` in `Next_Generation_Node_B/full_install.sh` must be set to `true` prior to gNodeB installation.
+  - To start each component in its own terminal instance, use `./run_handover_scenario.sh show`.
+  - The optional `--num-ues` and `--num-dus` arguments configure the handover scenario. The RF Simulator supports only one UE. When using the ZeroMQ channel emulator, the numbers of UEs and cells are automatically set to match its configuration (e.g., `./run_handover_scenario.sh --num-ues 3 --num-dus 3`).
+  - The command `ci trigger_f1_ho 1` will trigger a handover for UE 1 from its current DU to the next DU in a round robin manner.
+
+<details>
+  <summary><b>Example output (RF Simulator, 1 UE, 2 DUs, 1 CU)</b></summary>
   <hr>
-  
+
   <p align="center">
-    <img src="../Images/F1_Handover_Scenario_Example.png" alt="F1 Handover Scenario Example Output">
+    <img src="../Images/F1_Handover_Example_RF_Simulator.png" alt="F1 Handover Scenario Example Output">
+  </p>
+
+</details>
+
+<details>
+  <summary><b>Example output (ZeroMQ Channel Emulator, 3 UEs, 3 DUs, 1 CU)</b></summary>
+  <hr>
+
+  <p align="center">
+    <img src="../Images/F1_Handover_Example_ZeroMQ_Channel_Emulator.png" alt="F1 Handover Scenario Example Output">
   </p>
 
 </details>
@@ -52,13 +121,17 @@ The script `run_handover_scenario.sh`, based on the handover tutorial [\[4\]][oa
 ## References
 
 1. Open Source implementation for 5G Core and EPC. Open5GS. [https://github.com/open5gs/open5gs][open5gs-core]
-2. Openairinterface 5G Wireless Implementation. OpenAirInterface. [https://gitlab.eurecom.fr/oai/openairinterface5g][oai-ue-gnb]
-3. Flexible RAN Intelligent Controller (FlexRIC) and E2 Agent. Mosaic5G. [https://gitlab.eurecom.fr/mosaic5g/flexric][mosaic-flexric]
-4. OpenAirInterface Handover Tutorial. OpenAirInterface. [https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/develop/doc/handover-tutorial.md][oai-handover]
+2. Duranta - An open, research-grade RAN + UE reference stack. LF Networking. [https://lfnetworking.org/projects/duranta][duranta-ue-gnb]
+3. Flexible RAN Intelligent Controller (FlexRIC) and E2 Agent. Duranta. [https://github.com/duranta-project/flexric][duranta-flexric]
+4. Handover Tutorial for OAI. Duranta. [https://github.com/duranta-project/openairinterface5g/blob/develop/doc/handover-tutorial.md][duranta-handover]
+5. OCUDU Project Documentation: OCUDU with srsUE. [https://ocudu.gitlab.io/ocudu_docs/tutorials/srsue/#multi-ue-emulation][ocudu-multi-ue]
+6. OCUDU Multi-UE Emulation GRC. [https://gitlab.com/ocudu/ocudu_docs/-/blob/main/docs/tutorials/srsue/assets/multi_ue_scenario.grc][ocudu-multi-ue-grc]
 
 <!-- References -->
 
 [open5gs-core]: https://github.com/open5gs/open5gs
-[oai-ue-gnb]: https://gitlab.eurecom.fr/oai/openairinterface5g
-[mosaic-flexric]: https://gitlab.eurecom.fr/mosaic5g/flexric
-[oai-handover]: https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/develop/doc/handover-tutorial.md
+[duranta-ue-gnb]: https://lfnetworking.org/projects/duranta
+[duranta-flexric]: https://github.com/duranta-project/flexric
+[duranta-handover]: https://github.com/duranta-project/openairinterface5g/blob/develop/doc/handover-tutorial.md
+[ocudu-multi-ue]: https://ocudu.gitlab.io/ocudu_docs/tutorials/srsue/#multi-ue-emulation
+[ocudu-multi-ue-grc]: https://gitlab.com/ocudu/ocudu_docs/-/blob/main/docs/tutorials/srsue/assets/multi_ue_scenario.grc

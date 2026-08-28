@@ -31,6 +31,9 @@
 # Exit immediately if a command fails
 set -e
 
+USE_ZMQ_CHANNEL_EMULATOR=true
+SHOW_ZMQ_CHANNEL_EMULATOR_UI=true
+
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
@@ -48,13 +51,8 @@ else
         exit 1
     fi
 
-    # Allow ZMQ Broker UI to access the display if xhost is available
-    ZMQ_BROKER_UI_ENV=""
-    if [ -n "$DISPLAY" ]; then
-        ZMQ_BROKER_UI_ENV="DISPLAY=$DISPLAY XAUTHORITY=${XAUTHORITY:-$HOME/.Xauthority}"
-        if command -v xhost &>/dev/null; then
-            xhost +SI:localuser:root >/dev/null 2>&1 || true
-        fi
+    if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ]; then
+        ./install_scripts/run_zmq_channel_emulator.sh --show-ui "$SHOW_ZMQ_CHANNEL_EMULATOR_UI"
     fi
 
     echo "Starting gNodeB in background..."
@@ -63,22 +61,42 @@ else
     sudo chown --recursive "${SUDO_USER:-$USER}" logs
 
     sudo -v # Ensure sudo session is active
-    sudo env $ZMQ_BROKER_UI_ENV setsid bash -c "stdbuf -oL -eL \"$SCRIPT_DIR/run.sh\" >/dev/null 2>&1" </dev/null &
+    sudo setsid bash -c "exec stdbuf -oL -eL \"$SCRIPT_DIR/run.sh\"" </dev/null >/dev/null 2>&1 &
 
+    echo -n "Waiting for gNodeB to be ready"
     ATTEMPT=0
-    # while [ ! -f logs/gnb_stdout.txt ] || ! grep -q "gNB started" logs/gnb_stdout.txt; do
-    while [ ! -f logs/gnb_stdout.txt ] || ! (grep -q "gNB started" logs/gnb_stdout.txt || grep -q -E "N2: Connection to AMF on .* completed" logs/gnb_stdout.txt); do
-        sleep 0.5
-        ATTEMPT=$((ATTEMPT + 1))
-        if [ $ATTEMPT -ge 120 ]; then
-            echo "gNodeB did not start after 60 seconds, exiting..."
+    while true; do
+        if ! GNB_READY_OUTPUT=$(./is_gnb_ready.sh); then
+            GNB_READY_OUTPUT="error"
+        fi
+        if [ "$GNB_READY_OUTPUT" = "true" ]; then
+            break
+        fi
+        if [ "$GNB_READY_OUTPUT" = "error" ]; then
+            echo
+            echo "gNodeB failed to start. Recent stdout:"
+            tail -n 80 logs/gnb_stdout.txt
             exit 1
         fi
-        if [ -f logs/gnb_stdout.txt ] && (grep -q "Error" logs/gnb_stdout.txt || grep -q "OCUDU ERROR:" logs/gnb_stdout.txt); then
-            echo "Error starting gNodeB. Check logs/gnb_stdout.txt for more information."
+
+        echo -n "."
+        sleep 0.5
+        ATTEMPT=$((ATTEMPT + 1))
+
+        if [ $ATTEMPT -ge 120 ]; then
+            echo
+            echo "gNodeB did not report readiness after 60 seconds."
+            echo
+            echo "Recent stdout:"
+            [ -f logs/gnb_stdout.txt ] && tail -n 120 logs/gnb_stdout.txt
+            if [ -s logs/gnb.log ]; then
+                echo
+                echo "Recent gNB log:"
+                tail -n 120 logs/gnb.log
+            fi
             exit 1
         fi
     done
-
+    echo -e "\ngNodeB is ready."
     ./is_running.sh
 fi

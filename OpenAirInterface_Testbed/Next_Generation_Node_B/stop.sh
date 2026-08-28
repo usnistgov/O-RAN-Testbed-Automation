@@ -37,20 +37,17 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-# Check if the gNodeB is already stopped
-if $(./is_running.sh | grep -q "gNodeB: NOT_RUNNING"); then
-    ./is_running.sh
-    exit 0
-fi
+USE_ZMQ_CHANNEL_EMULATOR=false
 
+SELECTOR=""
 if [ "$#" -eq 1 ]; then
     SELECTOR=$1
 fi
 
 DU_NUMBER=""
-if [[ $SELECTOR =~ ^[0-9]+$ ]]; then
+if [[ $SELECTOR =~ ^[1-9][0-9]*$ ]]; then
     DU_NUMBER=$SELECTOR
-elif [[ $SELECTOR =~ ^du[0-9]+$ ]]; then
+elif [[ $SELECTOR =~ ^du[1-9][0-9]*$ ]]; then
     DU_NUMBER=${SELECTOR:2}
 fi
 
@@ -74,8 +71,9 @@ remove_all_du_namespaces() {
     done
 }
 
-# Check if the DU is already stopped
-if $(./is_running.sh | grep -q "gNodeB: NOT_RUNNING"); then
+IS_RUNNING=$(./is_running.sh)
+if echo "$IS_RUNNING" | grep -q "gNodeB: NOT_RUNNING" &&
+    { [ -n "$SELECTOR" ] || [ "$USE_ZMQ_CHANNEL_EMULATOR" != "true" ] || echo "$IS_RUNNING" | grep -q "ZeroMQ Channel Emulator: NOT_RUNNING"; }; then
     # Remove DU namespaces
     if [ -z "$DU_NUMBER" ]; then
         remove_all_du_namespaces
@@ -89,7 +87,13 @@ fi
 # Send a graceful shutdown signal to the gNodeB process
 if [ -z "$SELECTOR" ]; then
     sudo pkill -f "[n]r-softmodem" >/dev/null 2>&1
-    stty sane || true
+    if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ] && pgrep -f "[z]mq_channel_emulator\.py" >/dev/null; then
+        echo "Stopping ZeroMQ Channel Emulator..."
+        sudo pkill -f "[z]mq_channel_emulator\.py" >/dev/null 2>&1
+    fi
+    if [ -t 0 ]; then
+        stty sane || true
+    fi
 else
     # Find all nr-softmodem processes with -O <config> argument
     pgrep -af "nr-softmodem.*-O" | while read -r LINE; do
@@ -113,7 +117,8 @@ sleep 1
 while [ $COUNT -lt $MAX_COUNT ]; do
     IS_RUNNING=$(./is_running.sh)
     if [ -z "$SELECTOR" ]; then
-        if echo "$IS_RUNNING" | grep -q "gNodeB: NOT_RUNNING"; then
+        if echo "$IS_RUNNING" | grep -q "gNodeB: NOT_RUNNING" &&
+            { [ "$USE_ZMQ_CHANNEL_EMULATOR" != "true" ] || echo "$IS_RUNNING" | grep -q "ZeroMQ Channel Emulator: NOT_RUNNING"; }; then
             echo "The gNodeB has stopped gracefully."
             remove_all_du_namespaces
             ./is_running.sh
@@ -138,8 +143,13 @@ done
 if [ -z "$SELECTOR" ]; then
     echo "The gNodeB did not stop in time, sending forceful kill signal..."
     sudo pkill -9 -f "[n]r-softmodem" >/dev/null 2>&1
+    if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ]; then
+        sudo pkill -9 -f "[z]mq_channel_emulator\.py" >/dev/null 2>&1
+    fi
     remove_all_du_namespaces
-    stty sane || true
+    if [ -t 0 ]; then
+        stty sane || true
+    fi
 else
     echo "The gNodeB component '$SELECTOR' did not stop in time, sending forceful kill signal..."
     # Find all nr-softmodem processes with -O <config> argument

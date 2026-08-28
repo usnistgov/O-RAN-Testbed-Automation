@@ -31,7 +31,8 @@
 # Exit immediately if a command fails
 set -e
 
-BUILD_TESTS=false
+APPLY_PATCHES=true
+RUN_TESTS=false
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
@@ -50,6 +51,7 @@ fi
 
 # Run a sudo command every minute to ensure script execution without user interaction
 ./install_scripts/start_sudo_refresh.sh
+trap './install_scripts/stop_sudo_refresh.sh 2>/dev/null || true' EXIT
 
 # Get the start timestamp in seconds
 INSTALL_START_TIME=$(date +%s)
@@ -133,7 +135,10 @@ else
 fi
 if [[ "$INSTALL_GCC" == "true" ]]; then
     echo "Installing GCC 13..."
-    sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+    if ! sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test; then
+        echo "ERROR: Failed to add the Ubuntu Toolchain PPA."
+        exit 1
+    fi
     sudo apt-get update
     sudo env $APTVARS apt-get install -y gcc-13 g++-13
     sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 100
@@ -204,6 +209,16 @@ if [ ! -d "srsRAN_4G" ]; then
     ./install_scripts/git_clone.sh https://github.com/srsran/srsRAN_4G.git
 fi
 cd srsRAN_4G
+
+if [ "$APPLY_PATCHES" = true ]; then
+    echo "Patching srsRAN_4G..."
+    # ZMQ_RF_FILE="lib/src/phy/rf/rf_zmq_imp.c"
+    # if grep -q 'parse_string(args, "log_trx_timeout", i, tmp);' "$ZMQ_RF_FILE"; then
+    #     sed -i 's/parse_string(args, "log_trx_timeout", i, tmp);/parse_string(args, "log_trx_timeout", i, tmp2);/' "$ZMQ_RF_FILE"
+    # fi
+    "$SCRIPT_DIR/install_scripts/apply_patches.sh"
+fi
+
 echo
 echo
 echo "Building srsRAN_4G..."
@@ -219,7 +234,7 @@ mkdir -p build
 cd build
 SUPPRESS_WARNINGS="-Wno-error=array-bounds -Wno-error=unused-but-set-variable -Wno-error=unused-function -Wno-error=unused-parameter -Wno-error=unused-result -Wno-error=unused-variable -Wno-error=all -Wno-return-type"
 ADDITIONAL_FLAGS="-DENABLE_WERROR=OFF"
-if [[ "$BUILD_TESTS" == "true" ]]; then
+if [[ "$RUN_TESTS" == "true" ]]; then
     ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS -DBUILD_TESTING=ON"
 else
     ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS -DBUILD_TESTING=OFF"

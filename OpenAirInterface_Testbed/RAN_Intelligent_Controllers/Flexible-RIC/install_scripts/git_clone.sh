@@ -28,7 +28,7 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-echo "# Script: $(realpath "$0")..."
+echo "# Script: $(realpath "$0") $@"
 
 # Exit immediately if a command fails
 set -e
@@ -122,19 +122,19 @@ cd "$CURRENT_DIR"
 
 # Create the JSON file if it does not exist
 if [[ ! -f "$JSON_FILE" ]]; then
-    echo "{}" >$JSON_FILE
+    echo "{}" >"$JSON_FILE"
 fi
 
 # Remove the repository if it exists and is not a git repository
 if [[ -d "$NAME" && ! -d "$NAME/.git" ]]; then
     echo "Removing $NAME directory because it is not a git repository..."
-    sudo rm -rf $NAME
+    sudo rm -rf "$NAME"
 fi
 
 # Verify that the repository is on the correct commit hash
 if jq -e --arg url "$URL" '.[$url][1]' "$JSON_FILE" &>/dev/null; then
-    BRANCH=$(jq -r ".\"$URL\"[0]" $JSON_FILE)
-    TARGET_COMMIT_HASH=$(jq -r ".\"$URL\"[1]" $JSON_FILE)
+    BRANCH=$(jq -r ".\"$URL\"[0]" "$JSON_FILE")
+    TARGET_COMMIT_HASH=$(jq -r ".\"$URL\"[1]" "$JSON_FILE")
 
     # If the repository does not exist, clone it
     if [[ ! -d "$NAME" ]]; then

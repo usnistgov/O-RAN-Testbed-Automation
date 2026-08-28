@@ -28,7 +28,7 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-echo "# Script: $(realpath "$0")..."
+echo "# Script: $(realpath "$0") $@"
 
 # Exit immediately if a command fails
 set -e
@@ -84,4 +84,13 @@ else
     # Clean up the installation directory if the download fails
     cd ..
     rm -rf "$HOME/k9s-installation"
+fi
+
+if ! command -v kubecolor &>/dev/null; then
+    echo "Installing kubecolor..."
+    sudo env $APTVARS apt-get install -y kubecolor
+fi
+if ! grep -q 'alias kubectl="kubecolor"' ~/.bashrc; then
+    echo 'alias kubectl="kubecolor"' >>~/.bashrc
+    source ~/.bashrc
 fi

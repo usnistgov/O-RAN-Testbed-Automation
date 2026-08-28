@@ -1,0 +1,36 @@
+diff --git a/openair2/RRC/NR/MESSAGES/asn1_msg.c b/openair2/RRC/NR/MESSAGES/asn1_msg.c
+index 387cfcffbe..82cdc1dcc6 100644
+--- a/openair2/RRC/NR/MESSAGES/asn1_msg.c
++++ b/openair2/RRC/NR/MESSAGES/asn1_msg.c
+@@ -888,6 +888,7 @@ int do_nrMeasurementReport_SA(long trigger_to_measid,
+                               long rs_type,
+                               uint16_t Nid_cell,
+                               int rsrp_index,
++                              int sinr_index,
+                               int num_neighbor_cells,
+                               const uint16_t *neighbor_Nid_cells,
+                               const int *neighbor_rsrp_indexes,
+@@ -915,14 +916,22 @@ int do_nrMeasurementReport_SA(long trigger_to_measid,
+   *pci = Nid_cell;
+ 
+   struct NR_MeasQuantityResults *active_mq_res = calloc_or_fail(1, sizeof(*active_mq_res));
+-  if (trigger_quantity == NR_MeasTriggerQuantityOffset_PR_rsrp || report_rsrp) {
++  if ((trigger_quantity == NR_MeasTriggerQuantityOffset_PR_rsrp || report_rsrp) && rsrp_index >= 0) {
+     asn1cCalloc(active_mq_res->rsrp, rsrp);
+     // Assign precomputed RSRP index
+     *rsrp = rsrp_index;
++  }
++  if (sinr_index >= 0) {
++    asn1cCalloc(active_mq_res->sinr, sinr);
++    *sinr = sinr_index;
++  }
++  if (active_mq_res->rsrp || active_mq_res->sinr) {
+     if (rs_type == NR_NR_RS_Type_ssb)
+       measResultServingCell->measResult.cellResults.resultsSSB_Cell = active_mq_res;
+     else
+       measResultServingCell->measResult.cellResults.resultsCSI_RS_Cell = active_mq_res;
++  } else {
++    free(active_mq_res);
+   }
+ 
+   ASN_SEQUENCE_ADD(&mrIE->measResults.measResultServingMOList.list, measResultServMo);

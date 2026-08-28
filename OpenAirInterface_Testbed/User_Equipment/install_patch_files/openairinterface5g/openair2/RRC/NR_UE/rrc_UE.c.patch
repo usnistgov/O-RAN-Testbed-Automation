@@ -1,0 +1,114 @@
+diff --git a/openair2/RRC/NR_UE/rrc_UE.c b/openair2/RRC/NR_UE/rrc_UE.c
+index ed9bd90b8b..946df5d449 100644
+--- a/openair2/RRC/NR_UE/rrc_UE.c
++++ b/openair2/RRC/NR_UE/rrc_UE.c
+@@ -928,10 +928,13 @@ static void nr_rrc_manage_rlc_bearers(NR_UE_RRC_INST_t *rrc, const NR_CellGroupC
+ 
+ static void nr_ue_meas_reset(meas_t *meas_cell, bool csi_meas)
+ {
+-  if (csi_meas)
++  if (csi_meas) {
+     meas_cell->csi_rsrp_dBm.init = false;
+-  else
++    meas_cell->csi_sinr_index.init = false;
++  } else {
+     meas_cell->ss_rsrp_dBm.init = false;
++    meas_cell->ss_sinr_index.init = false;
++  }
+ }
+ 
+ static void nr_rrc_process_reconfigurationWithSync(NR_UE_RRC_INST_t *rrc,
+@@ -2955,20 +2958,36 @@ static void apply_ema(val_init_t *vi_rsrp_dBm, float filter_coeff_rsrp, int rsrp
+   *meas_init = true;
+ }
+ 
+-void nr_ue_meas_filtering(rrcPerNB_t *rrc, meas_t *meas_cell, uint16_t Nid_cell, bool csi_meas, int rsrp_dBm)
++void nr_ue_meas_filtering(rrcPerNB_t *rrc,
++                          meas_t *meas_cell,
++                          uint16_t Nid_cell,
++                          bool csi_meas,
++                          int rsrp_dBm,
++                          int sinr_index)
+ {
+   l3_measurements_t *l3_measurements = &rrc->l3_measurements;
+ 
+   if (meas_cell->Nid_cell != Nid_cell) {
+     meas_cell->ss_rsrp_dBm.init = false;
+     meas_cell->csi_rsrp_dBm.init = false;
++    meas_cell->ss_sinr_index.init = false;
++    meas_cell->csi_sinr_index.init = false;
+   }
+   meas_cell->Nid_cell = Nid_cell;
+ 
+-  if (csi_meas)
++  if (csi_meas) {
+     apply_ema(&meas_cell->csi_rsrp_dBm, l3_measurements->csi_RS_filter_coeff_rsrp, rsrp_dBm);
+-  else
++    if (sinr_index >= 0) {
++      meas_cell->csi_sinr_index.val = sinr_index;
++      meas_cell->csi_sinr_index.init = true;
++    }
++  } else {
+     apply_ema(&meas_cell->ss_rsrp_dBm, l3_measurements->ssb_filter_coeff_rsrp, rsrp_dBm);
++    if (sinr_index >= 0) {
++      meas_cell->ss_sinr_index.val = sinr_index;
++      meas_cell->ss_sinr_index.init = true;
++    }
++  }
+ }
+ 
+ static int get_rsrp_value(const meas_t *cell)
+@@ -3265,13 +3284,19 @@ static void nr_rrc_handle_meas_indication(NR_UE_RRC_INST_t *rrc, NRRrcMacMeasDat
+     meas_cell->Nid_cell = meas_ind->Nid_cell;
+     nr_ue_meas_reset(meas_cell, meas_ind->is_csi_meas);
+   } else {
+-    RRCLOG_D("[%s][Nid_cell %i] Received %s measurements: RSRP = %i (dBm)\n",
++    RRCLOG_D("[%s][Nid_cell %i] Received %s measurements: RSRP = %i dBm, SINR level = %i\n",
+              meas_ind->is_neighboring_cell ? "Neighboring cell" : "Active cell",
+              meas_ind->Nid_cell,
+              meas_ind->is_csi_meas ? "CSI meas" : "SSB meas",
+-             meas_ind->rsrp_dBm);
+-
+-    nr_ue_meas_filtering(rrcNB, meas_cell, meas_ind->Nid_cell, meas_ind->is_csi_meas, meas_ind->rsrp_dBm);
++             meas_ind->rsrp_dBm,
++             meas_ind->sinr_index);
++
++    nr_ue_meas_filtering(rrcNB,
++                         meas_cell,
++                         meas_ind->Nid_cell,
++                         meas_ind->is_csi_meas,
++                         meas_ind->rsrp_dBm,
++                         meas_ind->sinr_index);
+     nr_ue_check_meas_report(rrc, meas_ind->gnb_index);
+   }
+ }
+@@ -3830,8 +3855,19 @@ void rrc_ue_generate_measurementReport(rrcPerNB_t *rrc, instance_t ue_id, int me
+   uint8_t buffer[NR_RRC_BUF_SIZE];
+   l3_measurements_t *l3m = &rrc->l3_measurements;
+   meas_report_params_t *params = &l3m->meas_report[meas_id];
+-  int rsrp_dBm = params->rs_type == NR_NR_RS_Type_ssb ? l3m->serving_cell.ss_rsrp_dBm.val : l3m->serving_cell.csi_rsrp_dBm.val;
+-  int rsrp_index = get_rsrp_index(rsrp_dBm);
++
++  const val_init_t *serving_rsrp =
++      params->rs_type == NR_NR_RS_Type_ssb ? &l3m->serving_cell.ss_rsrp_dBm : &l3m->serving_cell.csi_rsrp_dBm;
++  const val_init_t *serving_sinr =
++      params->rs_type == NR_NR_RS_Type_ssb ? &l3m->serving_cell.ss_sinr_index : &l3m->serving_cell.csi_sinr_index;
++  const int rsrp_index = serving_rsrp->init ? get_rsrp_index(serving_rsrp->val) : -1;
++  const int sinr_index = serving_sinr->init ? serving_sinr->val : -1;
++
++  if (rsrp_index < 0 && sinr_index < 0) {
++    LOG_D(NR_RRC, "Skipping MeasurementReport: serving-cell measurements are not initialized\n");
++    return;
++  }
++
+   uint16_t neighbor_pcis[NUMBER_OF_NEIGHBORING_CELLS_MAX];
+   int neighbor_rsrp_indexes[NUMBER_OF_NEIGHBORING_CELLS_MAX];
+   int num_neighbors = 0;
+@@ -3882,6 +3918,7 @@ void rrc_ue_generate_measurementReport(rrcPerNB_t *rrc, instance_t ue_id, int me
+                                            params->rs_type,
+                                            l3m->serving_cell.Nid_cell,
+                                            rsrp_index,
++                                           sinr_index,
+                                            num_neighbors,
+                                            neighbor_pcis,
+                                            neighbor_rsrp_indexes,

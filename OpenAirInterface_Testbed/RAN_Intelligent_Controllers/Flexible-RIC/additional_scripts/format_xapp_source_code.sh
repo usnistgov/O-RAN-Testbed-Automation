@@ -37,7 +37,7 @@ if ! command -v realpath &>/dev/null; then
     sudo env $APTVARS apt-get install -y coreutils
 fi
 
-echo "# Script: $(realpath "$0")..."
+echo "# Script: $(realpath "$0") $@"
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
@@ -77,6 +77,9 @@ FILES=(
     "flexric/examples/xApp/c/monitor/xapp_kpm_moni.c"
     "flexric/examples/xApp/c/monitor/xapp_kpm_moni_write_to_csv.c"
     "flexric/examples/xApp/c/monitor/xapp_kpm_moni_write_to_influxdb.c"
+    "flexric/examples/xApp/c/kpm_rc/xapp_kpm_rc.c"
+    "flexric/examples/xApp/c/metrics_factory.c"
+    "flexric/examples/xApp/c/metrics_factory_test.c"
 )
 
 for FILE in "${FILES[@]}"; do

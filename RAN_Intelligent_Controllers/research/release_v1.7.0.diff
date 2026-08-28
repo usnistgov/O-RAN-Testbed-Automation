@@ -2663,7 +2663,7 @@ index e7f4c46..eb4a872 100755
 -            break
 -        elif [ $(grep -q "Error" logs/gnb_stdout.txt) ] || [ $(grep -q "srsRAN ERROR:" logs/gnb_stdout.txt) ]; then
 +        if [ -f logs/gnb_stdout.txt ] && (grep -q "Error" logs/gnb_stdout.txt || grep -q "OCUDU ERROR:" logs/gnb_stdout.txt); then
-             echo "Error starting gNodeB. Check logs/gnb_stdout.txt for more information."
+             echo "ERROR: Could not start gNodeB. Check logs/gnb_stdout.txt for more information."
              exit 1
          fi
 diff --git a/Next_Generation_Node_B/stop.sh b/Next_Generation_Node_B/stop.sh

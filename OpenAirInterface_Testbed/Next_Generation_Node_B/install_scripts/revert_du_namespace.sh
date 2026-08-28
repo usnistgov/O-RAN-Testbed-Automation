@@ -28,7 +28,7 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-echo "# Script: $(realpath "$0")..."
+echo "# Script: $(realpath "$0") $@"
 
 # Do not exit immediately if a command fails
 set +e
@@ -36,15 +36,15 @@ set +e
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-DU_NUMBER=$1
+DU_NUMBER="$1"
 
 if [[ -z "$DU_NUMBER" ]]; then
     echo "ERROR: No DU number provided."
     echo "Usage: $0 <DU_NUMBER>"
     exit 1
 fi
-if ! [[ $DU_NUMBER =~ ^[0-9]+$ ]]; then
-    echo "ERROR: DU number must be a number."
+if ! [[ "$DU_NUMBER" =~ ^[1-9][0-9]*$ ]]; then
+    echo "ERROR: DU number must be a positive integer."
     exit 1
 fi
 
@@ -53,35 +53,27 @@ DU_NAMESPACE="du$DU_NUMBER"
 NETWORK_INTERFACE=$(ip route | grep default | awk '{print $5}')
 
 # Recalculate the IPs used during setup to identify resources to clean up
-# Allocate a /30 (4 addresses) subnet per DU (e.g., DU 1 -> 10.200.0.4/30, Gateway .5, DU .6)
-BASE_SUBNET="10.200.0.0/16"
-SUBNET_SIZE=4
-
-# Calculate IP offsets
-SUBNET_OFFSET=$((DU_NUMBER * SUBNET_SIZE))
-HOST_IP_OFFSET=$((SUBNET_OFFSET))   # .5
-DU_IP_OFFSET=$((SUBNET_OFFSET + 1)) # .6
-
-# Fetch IPs from subnet using python script
-DU_SUBNET_ID=$(python3 fetch_nth_ip.py "$BASE_SUBNET" $((SUBNET_OFFSET - 1)))
-DU_HOST_IP=$(python3 fetch_nth_ip.py "$BASE_SUBNET" $HOST_IP_OFFSET)
-DU_NS_IP=$(python3 fetch_nth_ip.py "$BASE_SUBNET" $DU_IP_OFFSET)
+DU_SUBNET_ID=$(./get_du_namespace_ip.sh subnet "$DU_NUMBER") || exit 1
+DU_HOST_IP=$(./get_du_namespace_ip.sh host "$DU_NUMBER") || exit 1
+DU_NS_IP=$(./get_du_namespace_ip.sh du "$DU_NUMBER") || exit 1
+DU_PREFIX_LENGTH=$(./get_du_namespace_ip.sh prefix) || exit 1
 
 echo "Removing IP routes and addresses inside the namespace..."
-sudo ip netns exec $DU_NAMESPACE ip route del default via $DU_HOST_IP || true
-sudo ip netns exec $DU_NAMESPACE ip addr del $DU_NS_IP/30 dev v-$DU_NAMESPACE || true
-sudo ip netns exec $DU_NAMESPACE ip link set v-$DU_NAMESPACE down || true
+sudo ip netns exec "$DU_NAMESPACE" ip route del default via "$DU_HOST_IP" dev "v-$DU_NAMESPACE" || true
+sudo ip netns exec "$DU_NAMESPACE" ip addr del "$DU_NS_IP/$DU_PREFIX_LENGTH" dev "v-$DU_NAMESPACE" || true
+sudo ip netns exec "$DU_NAMESPACE" ip link set "v-$DU_NAMESPACE" down || true
+sudo ip route del "$DU_SUBNET_ID/$DU_PREFIX_LENGTH" dev "v-eth-du$DU_NUMBER" 2>/dev/null || true
 
 echo "Removing iptables rules..."
-while sudo iptables -D FORWARD -o "$NETWORK_INTERFACE" -i v-eth-du$DU_NUMBER -j ACCEPT 2>/dev/null; do :; done
-while sudo iptables -D FORWARD -i "$NETWORK_INTERFACE" -o v-eth-du$DU_NUMBER -j ACCEPT 2>/dev/null; do :; done
-while sudo iptables -t nat -D POSTROUTING -s "$DU_SUBNET_ID/30" -o "$NETWORK_INTERFACE" -j MASQUERADE 2>/dev/null; do :; done
+while sudo iptables -D FORWARD -o "$NETWORK_INTERFACE" -i "v-eth-du$DU_NUMBER" -j ACCEPT 2>/dev/null; do :; done
+while sudo iptables -D FORWARD -i "$NETWORK_INTERFACE" -o "v-eth-du$DU_NUMBER" -j ACCEPT 2>/dev/null; do :; done
+while sudo iptables -t nat -D POSTROUTING -s "$DU_SUBNET_ID/$DU_PREFIX_LENGTH" -o "$NETWORK_INTERFACE" -j MASQUERADE 2>/dev/null; do :; done
 
 echo "Deleting the network devices..."
-sudo ip link set v-eth-du$DU_NUMBER down
-sudo ip link del v-eth-du$DU_NUMBER
+sudo ip link set "v-eth-du$DU_NUMBER" down
+sudo ip link del "v-eth-du$DU_NUMBER"
 
 echo "Deleting the network namespace..."
-sudo ip netns delete $DU_NAMESPACE
+sudo ip netns delete "$DU_NAMESPACE"
 
 echo "Successfully reverted the DU $DU_NUMBER namespace."

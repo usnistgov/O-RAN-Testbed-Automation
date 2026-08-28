@@ -1,0 +1,101 @@
+diff --git a/lib/mac/mac_dl/mac_cell_processor.cpp b/lib/mac/mac_dl/mac_cell_processor.cpp
+index 3b2fa98d0d..b88487548a 100644
+--- a/lib/mac/mac_dl/mac_cell_processor.cpp
++++ b/lib/mac/mac_dl/mac_cell_processor.cpp
+@@ -69,22 +69,14 @@ async_task<void> mac_cell_processor::start()
+   // Note: This is done in the control executor context to avoid concurrency with other CTRL procedures.
+   sched.handle_cell_activation(cell_cfg.cell_index);
+ 
+-  return execute_and_continue_on_blocking(
+-      cell_exec,
+-      ctrl_exec,
+-      timers,
+-      [this]() noexcept OCUDU_RTSAN_NONBLOCKING {
+-        if (state != cell_state::inactive) {
+-          // No-op.
+-          return;
+-        }
++  if (state != cell_state::inactive) {
++    return launch_no_op_task();
++  }
+ 
+-        state = cell_state::active;
+-        logger.info("cell={}: Cell was activated", cell_cfg.cell_index);
+-      },
+-      [this]() {
+-        logger.warning("cell={}: Postponed cell start operation. Cause: Task queue is full", cell_cfg.cell_index);
+-      });
++  state = cell_state::active;
++  logger.info("cell={}: Cell was activated", cell_cfg.cell_index);
++
++  return launch_no_op_task();
+ }
+ 
+ async_task<void> mac_cell_processor::stop()
+@@ -243,32 +235,21 @@ async_task<bool> mac_cell_processor::add_ue(const mac_ue_create_request& request
+   // > Create a MAC UE DL context.
+   mac_dl_ue_context ue_inst(request);
+ 
+-  // > Update the UE context inside the cell executor.
+-  return defer_and_continue_on_blocking(
+-      cell_exec,
+-      ctrl_exec,
+-      timers,
+-      [this, ue_inst = std::move(ue_inst)]() mutable noexcept OCUDU_RTSAN_NONBLOCKING {
+-        // > Insert UE and DL bearers.
+-
+-        // Note: Ensure we only do so if the cell is active.
+-        if (state != cell_state::active) {
+-          // Note: We do not need to call dl_harq_buffers.deallocate_ue_buffers(...) because the buffers were reset
+-          // on cell deactivation.
+-          return false;
+-        }
++  // > Insert UE and DL bearers.
++  // Note: Ensure we only do so if the cell is active.
++  if (state != cell_state::active) {
++    // Note: We do not need to call dl_harq_buffers.deallocate_ue_buffers(...) because the buffers were reset on cell
++    // deactivation.
++    return launch_no_op_task(false);
++  }
+ 
+-        const du_ue_index_t ue_idx = ue_inst.get_ue_index();
+-        const rnti_t        rnti   = ue_inst.get_rnti();
+-        if (ue_mng.add_ue(std::move(ue_inst))) {
+-          logger.debug("ue={} rnti={} proc=\"MAC UE Creation\": MAC UE DL context created successfully.", ue_idx, rnti);
+-          return true;
+-        }
+-        return false;
+-      },
+-      [this, ue_index = request.ue_index]() {
+-        logger.warning("ue={}: Postponed UE creation. Cause: Task queue is full", fmt::underlying(ue_index));
+-      });
++  const du_ue_index_t ue_idx = ue_inst.get_ue_index();
++  const rnti_t        rnti   = ue_inst.get_rnti();
++  if (ue_mng.add_ue(std::move(ue_inst))) {
++    logger.debug("ue={} rnti={} proc=\"MAC UE Creation\": MAC UE DL context created successfully.", ue_idx, rnti);
++    return launch_no_op_task(true);
++  }
++  return launch_no_op_task(false);
+ }
+ 
+ async_task<void> mac_cell_processor::remove_ue(const mac_ue_delete_request& request)
+@@ -307,18 +288,7 @@ async_task<bool> mac_cell_processor::addmod_bearers(du_ue_index_t
+ {
+   // Note: logical_channels must outlive the returned async_task completion.
+ 
+-  return defer_and_continue_on_blocking(
+-      cell_exec,
+-      ctrl_exec,
+-      timers,
+-      [this, ue_index, logical_channels]() noexcept OCUDU_RTSAN_NONBLOCKING {
+-        // Configure logical channels.
+-        return state == cell_state::active and ue_mng.addmod_bearers(ue_index, logical_channels);
+-      },
+-      [this, ue_index]() {
+-        logger.warning("ue={}: Postponed UE bearer add/mod operation. Cause: Task queue is full",
+-                       fmt::underlying(ue_index));
+-      });
++  return launch_no_op_task(state == cell_state::active and ue_mng.addmod_bearers(ue_index, logical_channels));
+ }
+ 
+ async_task<bool> mac_cell_processor::remove_bearers(du_ue_index_t ue_index, span<const lcid_t> lcids_to_rem)

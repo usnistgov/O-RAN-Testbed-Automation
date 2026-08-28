@@ -1,0 +1,1 @@
+../../../Next_Generation_Node_B/install_scripts/generate_nist_zmq_channel_emulator.sh

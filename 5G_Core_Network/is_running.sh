@@ -59,39 +59,37 @@ if [[ "$CORE_TO_USE" != "open5gs" && -z "$INTERMEDIATE_CHECK" ]]; then
     unset INTERMEDIATE_CHECK
 fi
 
-# Detect if systemctl is available
-USE_SYSTEMCTL=false
-if command -v systemctl >/dev/null 2>&1; then
-    if [ "$(cat /proc/1/comm 2>/dev/null)" = "systemd" ]; then
-        OUTPUT="$(systemctl 2>&1 || true)"
-        if echo "$OUTPUT" | grep -qiE 'not supported|System has not been booted with systemd'; then
-            echo "Detected systemctl is not supported. Using background processes instead."
-        elif systemctl list-units >/dev/null 2>&1 || systemctl is-system-running --quiet >/dev/null 2>&1; then
-            USE_SYSTEMCTL=true
-        fi
-    fi
-fi
-
 check_service() {
-    local SERVICE_NAME="open5gs-$1"
-    local SEARCH_PATTERN="[o]pen5gs-$1"
+    local APP="$1"
     local DISPLAY_NAME="$2"
-    if pgrep -f "$SEARCH_PATTERN" >/dev/null; then
+    local CONFIG_FILE="$3"
+    local SEARCH_PATTERN="open5gs-$APP"
+
+    if pgrep -af "$SEARCH_PATTERN" | grep -F -- "$CONFIG_FILE" >/dev/null; then
+        echo "$DISPLAY_NAME: RUNNING"
+    elif pgrep -af "$SEARCH_PATTERN" >/dev/null; then
         echo "$DISPLAY_NAME: RUNNING"
     else
-        if [ "$USE_SYSTEMCTL" == "true" ]; then
-            if systemctl is-active --quiet "$SERVICE_NAME" || systemctl is-active --quiet "$SEARCH_PATTERN"; then
-                echo "$DISPLAY_NAME: RUNNING"
-            else
-                echo "$DISPLAY_NAME: NOT_RUNNING"
-            fi
-        else
-            if pgrep -f "$SEARCH_PATTERN" >/dev/null; then
-                echo "$DISPLAY_NAME: RUNNING"
-            else
-                echo "$DISPLAY_NAME: NOT_RUNNING"
-            fi
-        fi
+        echo "$DISPLAY_NAME: NOT_RUNNING"
+    fi
+}
+
+check_webui() {
+    local WEBUI_SERVER="$SCRIPT_DIR/open5gs/webui/server/index.js"
+    if pgrep -af "node" | grep -F -- "$WEBUI_SERVER" >/dev/null; then
+        echo "webui: RUNNING"
+    elif pgrep -af "node" | grep -F -- "/open5gs/webui/server/index.js" >/dev/null; then
+        echo "webui: RUNNING"
+    elif pgrep -af "open5gs-webui" >/dev/null; then
+        echo "webui: RUNNING"
+    elif pgrep -af "node server/index.js" >/dev/null; then
+        echo "webui: RUNNING"
+    elif command -v systemctl >/dev/null 2>&1 && systemctl is-active --quiet open5gs-webui 2>/dev/null; then
+        echo "webui: RUNNING"
+    # elif command -v ss >/dev/null 2>&1 && ss -ltn 2>/dev/null | awk '{print $4}' | grep -Eq '(^|:)9999$'; then
+    #     echo "webui: RUNNING"
+    else
+        echo "webui: NOT_RUNNING"
     fi
 }
 
@@ -103,11 +101,13 @@ APPS=("mmed" "sgwcd" "smfd" "amfd" "sgwud" "upfd" "hssd" "pcrfd" "nrfd" "scpd" "
 for APP in "${APPS[@]}"; do
     if [ "$APP" == "seppd" ]; then
         if [ "$INCLUDE_SEPP" == true ]; then
-            check_service "seppd.*sepp1.yaml" "seppd_1"
-            check_service "seppd.*sepp2.yaml" "seppd_2"
+            check_service "seppd" "seppd_1" "$SCRIPT_DIR/configs/sepp1.yaml"
+            check_service "seppd" "seppd_2" "$SCRIPT_DIR/configs/sepp2.yaml"
         fi
+    elif [ "$APP" == "webui" ]; then
+        check_webui
     else
-        check_service "$APP" "$APP"
+        check_service "$APP" "$APP" "$SCRIPT_DIR/configs/${APP%?}.yaml"
     fi
 done
 

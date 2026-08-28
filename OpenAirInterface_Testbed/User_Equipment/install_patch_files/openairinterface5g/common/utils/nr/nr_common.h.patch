@@ -1,0 +1,23 @@
+diff --git a/common/utils/nr/nr_common.h b/common/utils/nr/nr_common.h
+index 312d159be5..b3440605e7 100644
+--- a/common/utils/nr/nr_common.h
++++ b/common/utils/nr/nr_common.h
+@@ -198,6 +198,8 @@ typedef struct meas_s {
+   uint16_t Nid_cell;
+   val_init_t ss_rsrp_dBm;
+   val_init_t csi_rsrp_dBm;
++  val_init_t ss_sinr_index;
++  val_init_t csi_sinr_index;
+ } meas_t;
+ 
+ // Configuration parameters required for 5G Positioning
+@@ -226,6 +228,9 @@ typedef struct {
+ /** @brief Returns NR RSRP index per 3GPP TS 38.133 Table 10.1.6.1-1 */
+ uint8_t get_rsrp_index(int rsrp_dBm);
+ 
++/** @brief Returns NR SINR index per 38.133 Table 10.1.16.1-1 */
++uint8_t get_sinr_index(float sinr_dB);
++
+ /**
+  * @brief To start a timer
+  * @param timer Timer to be started

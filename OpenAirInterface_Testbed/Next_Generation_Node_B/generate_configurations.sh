@@ -31,11 +31,67 @@
 # Exit immediately if a command fails
 set -e
 
-SPLIT_DU_IDS=$(seq 1 3)
-RADIO_TYPE="SIMU" # Set to "SIMU", "ZMQ", or "USRP"
+RADIO_TYPE="SIMU"                  # Set to "SIMU", "ZMQ", or "USRP"
+USE_NIST_ZMQ_CHANNEL_EMULATOR=true # Set to false to use OCUDU’s default one-cell, three-UE ZeroMQ broker
 MAKE_GNB_E2_NODE=true
-MAKE_CU_E2_NODE=false
-MAKE_DU_E2_NODE=true
+MAKE_CU_E2_NODE=true        # MR.NRScSSSINR is collected by RRC and exposed at NRCellCU scope (28.552 clause 5.1.1.32.1(f))
+MAKE_DU_E2_NODE=true        # L1M.SS-RSRP and DU/MAC measurements exposed from each DU
+ENABLE_NEIGHBOR_CONFIG=true # Allows automatic A2 and A3 event handovers
+NEAR_RIC_IP_ADDR="127.0.0.1"
+
+# There are two types of RSRP/SINR measurements: SSB and CSI
+# Valid values for CSI_REPORT_TYPE: "ssb_rsrp", "ssb_sinr", "cri_rsrp", or "null" (to omit CSI_report_type and set do_CSIRS=1)
+# If using MIMO, then CSI_REPORT_TYPE must not be an SSB-based measurement (https://github.com/duranta-project/openairinterface5g/blob/develop/doc/RUNMODEM.md#5g-gnb-mimo-configuration)
+CSI_REPORT_TYPE="ssb_rsrp"
+
+# Radio configuration presets (band 3 and band 78)
+GNB_CONFIG_TEMPLATE="openairinterface5g/targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band1.u0.52PRB.usrpb210.conf"
+NR_BAND="3"
+NR_SSB_ARFCNS=("368410")
+NR_DL_POINT_A_ARFCNS=("366592")
+NR_UL_POINT_A_ARFCN="347592"
+NR_CARRIER_BANDWIDTH_RBS="106"
+NR_BWP_LOCATION_AND_BANDWIDTH="28875"
+NR_CORESET0_INDEX="12"
+NR_TIMING_ADVANCE_OFFSET="1"
+NR_PREAMBLE_RECEIVED_TARGET_POWER=""
+NR_MSG3_DELTA_PREAMBLE=""
+NR_PRACH_DTX_THRESHOLD=""
+NR_OFDM_OFFSET_DIVISOR=""
+NR_PRACH_ROOT_SEQUENCE_INDEX=""
+NR_SSB_BITMAP=""
+NR_TDD_PERIODICITY=""
+NR_TDD_DL_SLOTS=""
+NR_TDD_DL_SYMBOLS=""
+NR_TDD_UL_SLOTS=""
+NR_TDD_UL_SYMBOLS=""
+ZMQ_CHANNEL_EMULATOR_SAMPLE_RATE_HZ=23040000
+ZMQ_TX_AMP_BACKOFF_DB="12"
+#
+# GNB_CONFIG_TEMPLATE="openairinterface5g/targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band78.fr1.106PRB.usrpb210.conf"
+# NR_BAND="78"
+# NR_SSB_ARFCNS=("629376" "642624")
+# NR_DL_POINT_A_ARFCNS=("628776" "642024")
+# NR_UL_POINT_A_ARFCN=""
+# NR_CARRIER_BANDWIDTH_RBS="106"
+# NR_BWP_LOCATION_AND_BANDWIDTH="28875"
+# NR_CORESET0_INDEX="11"
+# NR_TIMING_ADVANCE_OFFSET=""
+# NR_PREAMBLE_RECEIVED_TARGET_POWER="-110"
+# NR_MSG3_DELTA_PREAMBLE="6"
+# NR_PRACH_DTX_THRESHOLD="200"
+# NR_OFDM_OFFSET_DIVISOR="4294967295"
+# NR_PRACH_ROOT_SEQUENCE_INDEX="1"
+# NR_SSB_BITMAP="1"
+# NR_TDD_PERIODICITY="6"
+# NR_TDD_DL_SLOTS="7"
+# NR_TDD_DL_SYMBOLS="6"
+# NR_TDD_UL_SLOTS="2"
+# NR_TDD_UL_SYMBOLS="4"
+# ZMQ_CHANNEL_EMULATOR_SAMPLE_RATE_HZ=46080000
+
+NR_SSB_ARFCN="${NR_SSB_ARFCNS[0]}"
+NR_DL_POINT_A_ARFCN="${NR_DL_POINT_A_ARFCNS[0]}"
 
 # FLEXRIC_LIBRARY_DIR="/usr/local/lib/flexric/" # Default
 FLEXRIC_LIBRARY_DIR="flexric/build/flexric_libraries/lib/flexric/"
@@ -49,6 +105,65 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
+usage() {
+    echo "Usage: $0 [--cells <cell_numbers>] [--ues <ue_numbers>]"
+    echo "    For example: $0 --ues 4,5,6 --cells 1,2"
+}
+
+UE_NUMBERS=()
+CELL_NUMBERS=()
+while [ $# -gt 0 ]; do
+    case "$1" in
+    -h | --help)
+        usage
+        exit 0
+        ;;
+    --cells)
+        if [ $# -lt 2 ] || [ -z "$2" ]; then
+            echo "ERROR: --cells requires comma-separated cell numbers."
+            usage
+            exit 1
+        fi
+        IFS=',' read -r -a PARSED_CELL_NUMBERS <<<"$2"
+        for CELL_NUMBER in "${PARSED_CELL_NUMBERS[@]}"; do
+            if ! [[ "$CELL_NUMBER" =~ ^[1-9][0-9]*$ ]]; then
+                echo "ERROR: Cell numbers must be positive integers separated by commas."
+                exit 1
+            fi
+            CELL_NUMBERS+=("$CELL_NUMBER")
+        done
+        shift 2
+        ;;
+    --ues)
+        if [ $# -lt 2 ] || [ -z "$2" ]; then
+            echo "ERROR: --ues requires comma-separated UE numbers."
+            usage
+            exit 1
+        fi
+        IFS=',' read -r -a PARSED_UE_NUMBERS <<<"$2"
+        for UE_NUMBER in "${PARSED_UE_NUMBERS[@]}"; do
+            if ! [[ "$UE_NUMBER" =~ ^[1-9][0-9]*$ ]]; then
+                echo "ERROR: UE numbers must be positive integers separated by commas."
+                exit 1
+            fi
+            UE_NUMBERS+=("$UE_NUMBER")
+        done
+        shift 2
+        ;;
+    *)
+        echo "ERROR: Unknown argument: $1"
+        usage
+        exit 1
+        ;;
+    esac
+done
+if [ ${#UE_NUMBERS[@]} -eq 0 ]; then
+    UE_NUMBERS=(1 2 3)
+fi
+if [ ${#CELL_NUMBERS[@]} -eq 0 ]; then
+    CELL_NUMBERS=(1)
+fi
+
 FLEXRIC_LIBRARY_DIR="../RAN_Intelligent_Controllers/Flexible-RIC/$FLEXRIC_LIBRARY_DIR"
 if [[ "$FLEXRIC_LIBRARY_DIR" != /* ]]; then
     FULL_SM_DIR="$(realpath "$SCRIPT_DIR/$FLEXRIC_LIBRARY_DIR" 2>/dev/null || echo "$SCRIPT_DIR/$FLEXRIC_LIBRARY_DIR")"
@@ -58,11 +173,6 @@ fi
 if [[ "$FULL_SM_DIR" != */ ]]; then
     FULL_SM_DIR="${FULL_SM_DIR}/"
 fi
-
-# There are two types of RSRP/SINR measurements: SSB and CSI
-# Valid values for CSI_REPORT_TYPE: "ssb_rsrp", "ssb_sinr", "cri_rsrp", or "null" (to omit CSI_report_type and set do_CSIRS=1)
-# If using MIMO, then CSI_REPORT_TYPE must not be an SSB-based measurement (https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/develop/doc/RUNMODEM.md#5g-gnb-mimo-configuration)
-CSI_REPORT_TYPE="ssb_rsrp"
 
 # Function to update or add configuration properties in .conf files, considering sections and uncommenting if needed
 update_conf() {
@@ -135,7 +245,7 @@ if [[ -z "${SST[0]}" || "${SST[0]}" == "null" ]]; then
     exit 1
 fi
 
-# SST/SD are configured in options.yaml as hex without 0x prefix.
+# SST/SD are configured in options.yaml as hex without 0x prefix
 for i in "${!SST[@]}"; do
     CURRENT_DNN="${DNN[$i]}"
     CURRENT_SST="${SST[$i]}"
@@ -215,9 +325,73 @@ if [[ $RUNNING_STATUS != *": RUNNING"* ]]; then
     mkdir logs
 fi
 
-cp openairinterface5g/targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band78.fr1.106PRB.usrpb210.conf "$SCRIPT_DIR/configs/gnb.conf"
+cp "$GNB_CONFIG_TEMPLATE" "$SCRIPT_DIR/configs/gnb.conf"
+
+# Fix configuration file syntax errors, e.g., item : { -> item = {
+sed -i -E 's/^([[:space:]]*vrtsim)[[:space:]]*:[[:space:]]*\{[[:space:]]*$/\1 = {/g' "$SCRIPT_DIR/configs/gnb.conf"
+sed -i -E ':a;N;$!ba;s/^([[:space:]]*vrtsim)[[:space:]]*:[[:space:]]*\n[[:space:]]*\{[[:space:]]*$/\1 = {/m' "$SCRIPT_DIR/configs/gnb.conf"
+sed -i "/^[[:space:]]*do_SRS[[:space:]]*=/a\\    force_UL256qam_off = 1;" "configs/gnb.conf"
+sed -i "/^[[:space:]]*do_SRS[[:space:]]*=/a\\    force_256qam_off = 1;" "configs/gnb.conf"
+
+update_conf "configs/gnb.conf" "dl_frequencyBand" "$NR_BAND"
+update_conf "configs/gnb.conf" "ul_frequencyBand" "$NR_BAND"
+if [ -n "$NR_SSB_ARFCN" ]; then
+    update_conf "configs/gnb.conf" "absoluteFrequencySSB" "$NR_SSB_ARFCN"
+fi
+if [ -n "$NR_DL_POINT_A_ARFCN" ]; then
+    update_conf "configs/gnb.conf" "dl_absoluteFrequencyPointA" "$NR_DL_POINT_A_ARFCN"
+fi
+if [ -n "$NR_CARRIER_BANDWIDTH_RBS" ]; then
+    update_conf "configs/gnb.conf" "dl_carrierBandwidth" "$NR_CARRIER_BANDWIDTH_RBS"
+    update_conf "configs/gnb.conf" "ul_carrierBandwidth" "$NR_CARRIER_BANDWIDTH_RBS"
+fi
+if [ -n "$NR_CORESET0_INDEX" ]; then
+    update_conf "configs/gnb.conf" "initialDLBWPcontrolResourceSetZero" "$NR_CORESET0_INDEX"
+fi
+if [ -n "$NR_BWP_LOCATION_AND_BANDWIDTH" ]; then
+    update_conf "configs/gnb.conf" "initialDLBWPlocationAndBandwidth" "$NR_BWP_LOCATION_AND_BANDWIDTH"
+    update_conf "configs/gnb.conf" "initialULBWPlocationAndBandwidth" "$NR_BWP_LOCATION_AND_BANDWIDTH"
+fi
+if [ -n "$NR_TIMING_ADVANCE_OFFSET" ]; then
+    if grep -q "^[[:space:]]*n_TimingAdvanceOffset[[:space:]]*=" "configs/gnb.conf"; then
+        update_conf "configs/gnb.conf" "n_TimingAdvanceOffset" "$NR_TIMING_ADVANCE_OFFSET"
+    else
+        sed -i "/^[[:space:]]*p0_nominal[[:space:]]*=/a\\        n_TimingAdvanceOffset = $NR_TIMING_ADVANCE_OFFSET;" "configs/gnb.conf"
+    fi
+fi
+if [ -n "$NR_UL_POINT_A_ARFCN" ]; then
+    update_conf "configs/gnb.conf" "ul_absoluteFrequencyPointA" "$NR_UL_POINT_A_ARFCN"
+fi
+if [ -n "$NR_PREAMBLE_RECEIVED_TARGET_POWER" ]; then
+    update_conf "configs/gnb.conf" "preambleReceivedTargetPower" "$NR_PREAMBLE_RECEIVED_TARGET_POWER"
+fi
+if [ -n "$NR_MSG3_DELTA_PREAMBLE" ]; then
+    update_conf "configs/gnb.conf" "msg3_DeltaPreamble" "$NR_MSG3_DELTA_PREAMBLE"
+fi
+if [ -n "$NR_PRACH_DTX_THRESHOLD" ]; then
+    update_conf "configs/gnb.conf" "prach_dtx_threshold" "$NR_PRACH_DTX_THRESHOLD"
+fi
+if [ -n "$NR_OFDM_OFFSET_DIVISOR" ]; then
+    update_conf "configs/gnb.conf" "ofdm_offset_divisor" "$NR_OFDM_OFFSET_DIVISOR"
+fi
+if [ -n "$NR_PRACH_ROOT_SEQUENCE_INDEX" ]; then
+    update_conf "configs/gnb.conf" "prach_RootSequenceIndex" "$NR_PRACH_ROOT_SEQUENCE_INDEX"
+fi
+if [ -n "$NR_SSB_BITMAP" ]; then
+    update_conf "configs/gnb.conf" "ssb_PositionsInBurst_Bitmap" "$NR_SSB_BITMAP"
+fi
+if [ -n "$NR_TDD_PERIODICITY" ]; then
+    update_conf "configs/gnb.conf" "dl_UL_TransmissionPeriodicity" "$NR_TDD_PERIODICITY"
+    update_conf "configs/gnb.conf" "nrofDownlinkSlots" "$NR_TDD_DL_SLOTS"
+    update_conf "configs/gnb.conf" "nrofDownlinkSymbols" "$NR_TDD_DL_SYMBOLS"
+    update_conf "configs/gnb.conf" "nrofUplinkSlots" "$NR_TDD_UL_SLOTS"
+    update_conf "configs/gnb.conf" "nrofUplinkSymbols" "$NR_TDD_UL_SYMBOLS"
+fi
+if [ "$RADIO_TYPE" = "ZMQ" ] && [ -n "$ZMQ_TX_AMP_BACKOFF_DB" ]; then
+    sed -i "/^[[:space:]]*prach_dtx_threshold/a\\  tx_amp_backoff_dB = $ZMQ_TX_AMP_BACKOFF_DB;" "configs/gnb.conf"
+fi
 cp openairinterface5g/targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb-cu.sa.f1.conf "$SCRIPT_DIR/configs/split_cu.conf"
-for i in $SPLIT_DU_IDS; do
+for i in "${CELL_NUMBERS[@]}"; do
     cp "$SCRIPT_DIR/configs/gnb.conf" "$SCRIPT_DIR/configs/split_du${i}.conf"
 done
 
@@ -264,7 +438,7 @@ echo "AMF Binding Address: $N3_ADDR_BIND"
 echo "NGAP Binding Address: $N2_ADDR_BIND/24"
 
 SPLIT_DUS=()
-for i in $SPLIT_DU_IDS; do
+for i in "${CELL_NUMBERS[@]}"; do
     SPLIT_DUS+=("split_du${i}.conf")
 done
 
@@ -275,7 +449,26 @@ for CONF_FILE in gnb.conf split_cu.conf "${SPLIT_DUS[@]}"; do
     update_conf "configs/$CONF_FILE" "GNB_IPV4_ADDRESS_FOR_NG_AMF" "\"$N2_ADDR_BIND/24\""
     update_conf "configs/$CONF_FILE" "GNB_IPV4_ADDRESS_FOR_NGU" "\"$N3_ADDR_BIND/24\""
     update_conf "configs/$CONF_FILE" "tracking_area_code" "$TAC"
-    update_conf "configs/$CONF_FILE" "sm_dir" "\"$FULL_SM_DIR\""
+
+    ENABLE_E2_NODE=true
+    if [[ "$CONF_FILE" == "gnb.conf" ]] && [ "$MAKE_GNB_E2_NODE" = "false" ]; then
+        ENABLE_E2_NODE=false
+    elif [[ "$CONF_FILE" == "split_cu.conf" ]] && [ "$MAKE_CU_E2_NODE" = "false" ]; then
+        ENABLE_E2_NODE=false
+    elif [[ "$CONF_FILE" == *"du"* ]] && [ "$MAKE_DU_E2_NODE" = "false" ]; then
+        ENABLE_E2_NODE=false
+    fi
+
+    if [ "$ENABLE_E2_NODE" = "true" ]; then
+        if grep -q "^[[:space:]]*e2_agent[[:space:]]*=[[:space:]]*{" "configs/$CONF_FILE"; then
+            update_conf "configs/$CONF_FILE" "near_ric_ip_addr" "\"$NEAR_RIC_IP_ADDR\""
+            update_conf "configs/$CONF_FILE" "sm_dir" "\"$FULL_SM_DIR\""
+        else
+            printf '\ne2_agent = {\n  near_ric_ip_addr = "%s";\n  sm_dir = "%s";\n};\n' "$NEAR_RIC_IP_ADDR" "$FULL_SM_DIR" >>"configs/$CONF_FILE"
+        fi
+    elif grep -q "^[[:space:]]*e2_agent[[:space:]]*=[[:space:]]*{" "configs/$CONF_FILE"; then
+        sed -i '/^[[:space:]]*e2_agent[[:space:]]*=[[:space:]]*{/,/^[[:space:]]*};/ s/^/#/' "configs/$CONF_FILE"
+    fi
 
     # Configure the Single Network Slice Selection Assistance Information (S-NSSAI)
     update_conf "configs/$CONF_FILE" "plmn_list" "({ mcc = $MCC; mnc = $MNC; mnc_length = $MNC_LENGTH; snssaiList = $SNSSAI_LIST })"
@@ -308,13 +501,6 @@ for CONF_FILE in gnb.conf split_cu.conf "${SPLIT_DUS[@]}"; do
         fi
     fi
 
-    if [[ "$CONF_FILE" == "gnb.conf" ]] && [ "$MAKE_GNB_E2_NODE" = "false" ]; then
-        sed -i '/^e2_agent *= *{/,/^};/ s/^/#/' "configs/$CONF_FILE"
-    elif [[ "$CONF_FILE" == "split_cu.conf" ]] && [ "$MAKE_CU_E2_NODE" = "false" ]; then
-        sed -i '/^e2_agent *= *{/,/^};/ s/^/#/' "configs/$CONF_FILE"
-    elif [[ "$CONF_FILE" == *"du"* ]] && [ "$MAKE_DU_E2_NODE" = "false" ]; then
-        sed -i '/^e2_agent *= *{/,/^};/ s/^/#/' "configs/$CONF_FILE"
-    fi
 done
 
 echo
@@ -326,7 +512,52 @@ echo "    Configured CU."
 for DU_CONF in "${SPLIT_DUS[@]}"; do
     DU_NUMBER=$(echo "$DU_CONF" | grep -oP 'split_du\K[0-9]+')
     ./install_scripts/generate_du_configuration.sh "$DU_NUMBER"
+
+    RADIO_PROFILE_INDEX=$(((DU_NUMBER - 1) % ${#NR_SSB_ARFCNS[@]}))
+    update_conf "configs/$DU_CONF" "absoluteFrequencySSB" "${NR_SSB_ARFCNS[$RADIO_PROFILE_INDEX]}"
+    update_conf "configs/$DU_CONF" "dl_absoluteFrequencyPointA" "${NR_DL_POINT_A_ARFCNS[$RADIO_PROFILE_INDEX]}"
+    if [ -n "$NR_PRACH_ROOT_SEQUENCE_INDEX" ]; then
+        update_conf "configs/$DU_CONF" "prach_RootSequenceIndex" "$NR_PRACH_ROOT_SEQUENCE_INDEX"
+    fi
+    if [ -n "$NR_SSB_BITMAP" ]; then
+        update_conf "configs/$DU_CONF" "ssb_PositionsInBurst_Bitmap" "$NR_SSB_BITMAP"
+    fi
 done
+
+if [ "$ENABLE_NEIGHBOR_CONFIG" = "true" ]; then
+    NEIGHBOR_CONFIG_TEMPLATE="../User_Equipment/openairinterface5g/targets/PROJECTS/GENERIC-NR-5GC/CONF/neighbour-config-rfsim.conf"
+    if [ ! -f "$NEIGHBOR_CONFIG_TEMPLATE" ]; then
+        echo "ERROR: Neighbor configuration template not found: $NEIGHBOR_CONFIG_TEMPLATE"
+        exit 1
+    fi
+    python3 install_scripts/generate_neighbor_configuration.py "$NEIGHBOR_CONFIG_TEMPLATE" "configs/neighbor-config.conf" "${SPLIT_DUS[@]/#/configs/}"
+    for RRC_CONF in "configs/gnb.conf" "configs/split_cu.conf"; do
+        sed -i '/^[[:space:]]*nr_cellid[[:space:]]*=/a\    @include "neighbor-config.conf" // Configure neighbor cells and periodic UE measurement reports' "$RRC_CONF"
+    done
+    echo "Configured neighbor DUs and periodic UE measurement reports for gNB/CU."
+fi
+
+if [ "$RADIO_TYPE" = "ZMQ" ]; then
+    echo "Generating ZeroMQ channel emulator Python script..."
+    if [ -L zmq_channel_emulator ]; then
+        rm -f zmq_channel_emulator
+    fi
+    mkdir -p zmq_channel_emulator
+    CHANNEL_EMULATOR_CELL_NUMBERS_STR=$(
+        IFS=,
+        echo "${CELL_NUMBERS[*]}"
+    )
+    CHANNEL_EMULATOR_UE_NUMBERS_STR=$(
+        IFS=,
+        echo "${UE_NUMBERS[*]}"
+    )
+    if [ "$USE_NIST_ZMQ_CHANNEL_EMULATOR" = "true" ]; then
+        ./install_scripts/generate_nist_zmq_channel_emulator.sh --output "zmq_channel_emulator/zmq_channel_emulator.py" --sample-rate-hz "$ZMQ_CHANNEL_EMULATOR_SAMPLE_RATE_HZ" --slow-down-ratio 1 --cells "$CHANNEL_EMULATOR_CELL_NUMBERS_STR" --ues "$CHANNEL_EMULATOR_UE_NUMBERS_STR"
+    else
+        ./install_scripts/generate_ocudu_zmq_broker.sh --output "zmq_channel_emulator/zmq_channel_emulator.py" --cells "$CHANNEL_EMULATOR_CELL_NUMBERS_STR" --ues "$CHANNEL_EMULATOR_UE_NUMBERS_STR"
+    fi
+    echo "Successfully generated ZeroMQ channel emulator for UEs: [${UE_NUMBERS[*]}], Cells: [${CELL_NUMBERS[*]}]."
+fi
 
 cd configs
 # Link the get_rfsim_server_address.txt from the UE configuration to here

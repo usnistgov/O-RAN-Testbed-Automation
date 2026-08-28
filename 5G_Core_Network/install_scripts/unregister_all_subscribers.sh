@@ -34,7 +34,7 @@ if ! command -v realpath &>/dev/null; then
     sudo env $APTVARS apt-get install -y coreutils
 fi
 
-echo "# Script: $(realpath "$0")..."
+echo "# Script: $(realpath "$0") $@"
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
@@ -42,7 +42,7 @@ cd "$PARENT_DIR"
 
 DBCTL_PATH="./open5gs/misc/db/open5gs-dbctl"
 
-./start_webui.sh no-browser
+./start_webui.sh no-browser || exit 1
 
 # Command to remove all subscribers using the open5gs-dbctl tool
 CMD="$DBCTL_PATH reset"

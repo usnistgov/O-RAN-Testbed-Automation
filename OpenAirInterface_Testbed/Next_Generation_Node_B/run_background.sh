@@ -28,6 +28,10 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
+USE_ZMQ_CHANNEL_EMULATOR=false
+SHOW_ZMQ_CHANNEL_EMULATOR_UI=false
+IMSCOPE_ENABLED=false
+
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
@@ -36,23 +40,59 @@ fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 
+ENV_ARGS=()
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+    --imscope)
+        IMSCOPE_ENABLED=true
+        shift
+        ;;
+    *)
+        ENV_ARGS+=("$1")
+        shift
+        ;;
+    esac
+done
+set -- "${ENV_ARGS[@]}"
+
 cd "$SCRIPT_DIR"
+
+if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ]; then
+    if [ ! -f "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build/liboai_zmqdevif.so" ]; then
+        echo "ERROR: ZeroMQ device library not found. Rerun full_install.sh after setting RADIO_TYPE=\"ZMQ\"."
+        exit 1
+    fi
+    ./install_scripts/run_zmq_channel_emulator.sh --show-ui "$SHOW_ZMQ_CHANNEL_EMULATOR_UI"
+    if [ $# -eq 0 ]; then
+        set -- 1
+    fi
+    if [ "$IMSCOPE_ENABLED" = "true" ]; then
+        set -- "$@" --imscope
+    fi
+    exec "$SCRIPT_DIR/run_background_split_du.sh" "$@"
+fi
 
 if pgrep -x "nr-softmodem" >/dev/null; then
     echo "Already running gNodeB."
 else
     if [ ! -f "configs/gnb.conf" ]; then
-        echo "Configuration was not found for OAI gNodeB. Please run ./generate_configurations.sh first."
+        echo "Configuration was not found for Duranta gNodeB. Please run ./generate_configurations.sh first."
         exit 1
     fi
 
     echo "Starting gNodeB in background..."
 
     sudo -v # Ensure sudo session is active
-    sudo setsid bash -c "stdbuf -oL -eL \"$SCRIPT_DIR/run.sh\" >/dev/null 2>&1" </dev/null &
+    if [ "$IMSCOPE_ENABLED" = "true" ]; then
+        setsid bash -c "exec stdbuf -oL -eL \"$SCRIPT_DIR/run.sh\" --imscope" </dev/null >/dev/null 2>&1 &
+    else
+        sudo setsid bash -c "exec stdbuf -oL -eL \"$SCRIPT_DIR/run.sh\"" </dev/null >/dev/null 2>&1 &
+    fi
+    stty sane || true
 
     ATTEMPT=0
     while $(./is_running.sh | grep -q "NOT_RUNNING"); do
+        stty sane || true
         sleep 0.5
         ATTEMPT=$((ATTEMPT + 1))
         if [ $ATTEMPT -ge 120 ]; then
@@ -61,5 +101,6 @@ else
         fi
     done
 
+    stty sane || true
     ./is_running.sh
 fi

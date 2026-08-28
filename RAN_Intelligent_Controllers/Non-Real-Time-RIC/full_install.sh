@@ -54,6 +54,7 @@ fi
 
 # Run a sudo command every minute to ensure script execution without user interaction
 ./install_scripts/start_sudo_refresh.sh
+trap './install_scripts/stop_sudo_refresh.sh 2>/dev/null || true' EXIT
 
 # Get the start timestamp in seconds
 INSTALL_START_TIME=$(date +%s)
@@ -104,7 +105,7 @@ if [[ "$USE_SYSTEMCTL" == "true" ]]; then
     fi
 fi
 
-# Instructions are from: https://lf-o-ran-sc.atlassian.net/wiki/spaces/RICNR/pages/679903652/Release+M+-+Run+in+Kubernetes
+# Instructions are from: https://lf-o-ran-sc.atlassian.net/wiki/spaces/RICNR/pages/929792370/Release+N+-+Run+in+Kubernetes
 if [ ! -d dep ]; then
     echo
     echo "Cloning Non-RT RIC dependencies..."
@@ -216,9 +217,9 @@ else
     echo
     echo "Installing Helm Chart and Museum..."
     cd "$SCRIPT_DIR/dep/ric-dep/bin/"
-    if helm plugin list | grep -q servecm; then
+    if sudo helm plugin list | grep -q servecm; then
         echo "servecm plugin already installed, removing..."
-        helm plugin remove servecm
+        sudo helm plugin remove servecm
     fi
     sudo ./install_common_templates_to_helm.sh
 fi
@@ -232,12 +233,14 @@ if ! sudo ./install_scripts/install_k9s.sh; then
     echo "Could not install k9s at the moment, skipping."
 fi
 
-# Check if istioctl exists and is a broken link
+# Check if istioctl exists and repair a broken or non-executable installation
 if command -v istioctl &>/dev/null; then
     ISTIOCTL_PATH=$(command -v istioctl)
     if [ ! -e "$ISTIOCTL_PATH" ]; then
         sudo rm "$ISTIOCTL_PATH"
         hash -d istioctl 2>/dev/null || true
+    elif [ ! -x "$ISTIOCTL_PATH" ]; then
+        sudo chmod 755 "$ISTIOCTL_PATH"
     fi
 fi
 if ! command -v istioctl &>/dev/null; then
@@ -257,6 +260,7 @@ if ! command -v istioctl &>/dev/null; then
         exit 1
     fi
     if [ -f bin/istioctl ]; then
+        sudo chmod 755 bin/istioctl
         sudo rm -f /usr/local/bin/istioctl
         sudo ln -sf "$(pwd)/bin/istioctl" /usr/local/bin/istioctl
         echo "Successfully installed Istio."
@@ -373,10 +377,10 @@ else
     echo "Revising the YAML file for the Non-RT RIC pods..."
     RIC_YAML_FILE_PATH="dep/smo-install/helm-override/default/oran-override.yaml"
     RIC_YAML_FILE_PATH_UPDATED="dep/smo-install/helm-override/default/oran-override.yaml"
-    sudo chown "${SUDO_USER:-$USER}" $RIC_YAML_FILE_PATH
+    sudo chown "${SUDO_USER:-$USER}" "$RIC_YAML_FILE_PATH"
     if [ "$RIC_YAML_FILE_PATH" != "$RIC_YAML_FILE_PATH_UPDATED" ]; then
-        sudo cp $RIC_YAML_FILE_PATH $RIC_YAML_FILE_PATH_UPDATED
-        sudo chown "${SUDO_USER:-$USER}" $RIC_YAML_FILE_PATH_UPDATED
+        sudo cp "$RIC_YAML_FILE_PATH" "$RIC_YAML_FILE_PATH_UPDATED"
+        sudo chown "${SUDO_USER:-$USER}" "$RIC_YAML_FILE_PATH_UPDATED"
     fi
     sudo "$SCRIPT_DIR/install_scripts/./revise_example_recipe_yaml.sh" "$RIC_YAML_FILE_PATH_UPDATED"
 

@@ -1,5 +1,20 @@
 # Automation Tool for Deploying 5G O-RAN Testbeds
 
+## Table of Contents
+
+- [Overview](#overview)
+- [Setting Up a Testbed](#setting-up-a-testbed)
+- [Installation Guide](#installation-guide)
+- [OCUDU and O-RAN SC Near-RT RIC Output](#ocudu-and-o-ran-sc-near-rt-ric-output)
+- [Duranta and FlexRIC Output](#duranta-and-flexric-output)
+- [Deployment Tutorials](#deployment-tutorials)
+  - [OCUDU gNB with N UEs, and Grafana Traffic Monitoring](#ocudu-gnb-with-n-ues-and-grafana-traffic-monitoring)
+  - [RIC and KPM Monitoring xApp](#ric-and-kpm-monitoring-xapp)
+- [Software Versioning](#software-versioning)
+- [Documentation](#documentation)
+
+## Overview
+
 Based on the blueprints described in NIST TN 2311 [\[1\]][nist-tn-2311], this automation tool facilitates the deployment and configuration of 5G Open Radio Access Network (O-RAN) testbeds. Designed to operate in both bare metal and virtualized environments, it simplifies setting up the components required for a 5G O-RAN testbed, including the 5G Core; Next Generation Node B (gNodeB) composed of Radio Unit (RU), Distributed Unit (DU), and Centralized Unit (CU); User Equipment (UE); RAN Intelligent Controller (RIC); and a series of xApps that can be installed in the RIC. This reduces the complexity and time required to operationalize the testbeds described in the report above, and enables more efficient testing and validation to facilitate research and development in 5G/6G technologies.
 
 ## Setting Up a Testbed
@@ -22,10 +37,10 @@ This tool supports the deployment of 5G O-RAN testbeds using open-source compone
 ```text
 CU/DU
 ├── OCUDU: 26.04
-├── Duranta (OAI) gNB: 2026.w24
-└── O-RAN SC E2 Simulator: M-Release
+├── Duranta (OAI) gNB: 2026.w34
+└── O-RAN SC E2 Simulator: N-Release
 RICs
-├── O-RAN SC Near-RT RIC: M-Release
+├── O-RAN SC Near-RT RIC: N-Release
 │   └── xApps
 │       ├── Hello World xApps (Go, Python, and Rust)
 │       ├── KPM Monitor xApp
@@ -40,7 +55,7 @@ RICs
 │       ├── MAC + RLC + PDCP + GTP Monitor xApp
 │       ├── RIC Control xApp
 │       └── RIC Control Monitor xApp
-└── O-RAN SC Non-RT RIC: M-Release
+└── O-RAN SC Non-RT RIC: N-Release
     └── Minimal prototype with no rApp support.
 5G Core
 ├── Open5GS: v2.8.0
@@ -48,10 +63,10 @@ RICs
 └── free5GC: v4.2.1
 UEs
 ├── srsRAN_4G: release_25_10
-└── Duranta (OAI) 5G UE: 2026.w24
+└── Duranta (OAI) 5G UE: 2026.w34
 ```
 
-The components that have been verified to support or not support connectivity are included below.
+The components that have been verified to support connectivity are included below.
 
 <div align="center">
   <!-- <picture>
@@ -67,7 +82,7 @@ The components that have been verified to support or not support connectivity ar
 Before beginning the installation and setup of the testbed, verify that the system meets the following minimum specifications to prevent issues like pods remaining in pending or crash loop states if using an O-RAN SC RIC.
 
 - **Operating System**: Linux distributions based on Ubuntu 20.04 LTS, Ubuntu 22.04 LTS, Ubuntu 24.04 LTS, and Ubuntu 26.04 LTS are supported.
-  - _Recommendation: Ubuntu 22.04._
+  - _Recommendation: Ubuntu 22.04 on a clean install._
 - **Hard Drive Storage**: Must be `≥ 57` GB.
 - **Base Memory/RAM**: Must be `≥ 6000` MB.
 - **Number of Processors**: Must be `≥ 2` processors.
@@ -121,6 +136,9 @@ cd O-RAN-Testbed-Automation
 
 Alternatively, the repository may be cloned over SSH: `git clone git@github.com:USNISTGOV/O-RAN-Testbed-Automation.git`. To use SSH instead of HTTPS for all subsequent `git clone` operations during the installation, set `export USE_GIT_SSH=true` in your terminal before proceeding.
 
+> [!TIP]
+> If package updates are slow or fail due to a regional Ubuntu mirror, run `sudo ./Additional_Scripts/set_ubuntu_apt_mirror.sh` to switch APT to the Ubuntu Main Server before retrying.
+
 ---
 
 > [!IMPORTANT]
@@ -146,7 +164,7 @@ Begin the installation process, recommended to be run as the current user rather
   <summary><b>OCUDU and O-RAN SC Near-RT RIC Output</b></summary>
   <hr>
 
-Run the testbed with `./run.sh` to start the 5G Core, gNodeB, and UE. Use `./is_running.sh` to check if the components are running, and `./stop.sh` to stop the components. The optional RIC starts automatically on boot and can be accessed with `k9s -A`.
+Run the testbed with `./run.sh` to start the 5G Core, gNodeB, and UEs. Set `USE_DURANTA_UE=true` in `run.sh` to use Duranta UEs instead of the default srsRAN_4G UEs. To switch between band 3 and band 78, search for `Radio configuration presets` and update each section. Use `./is_running.sh` to check the components and `./stop.sh` to stop them. The optional RIC starts automatically on boot and can be accessed with `k9s -A`.
 
 ```console
 Attaching UE...
@@ -157,8 +175,8 @@ PDU Session Establishment successful. IP: 10.45.0.101
 RRC NR reconfiguration successful.
 ```
 
-<b>OCUDU Grafana WebUI and ZMQ Broker Visualization</b><div align="center">
-  <img src="Images/OCUDU_Grafana_WebUI.png" alt="OCUDU Grafana WebUI and ZMQ Broker" width="75%">
+<b>OCUDU Grafana WebUI and ZeroMQ Channel Emulator Visualization</b><div align="center">
+  <img src="Images/OCUDU_Grafana_WebUI.png" alt="OCUDU Grafana WebUI and ZeroMQ Channel Emulator" width="75%">
 </div>
 
 See <a href="Next_Generation_Node_B/README.md#ocudu-grafana-webui">this section</a> for more information.
@@ -211,6 +229,23 @@ See <a href="OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC#k
 </details>
 
 ---
+
+## Deployment Tutorials
+
+After completing the base installation, follow one of the end-to-end deployment tutorials below.
+
+###  OCUDU gNB with N UEs, Grafana Traffic Monitoring
+
+Deploy an OCUDU-based O-RAN testbed, generate traffic from multiple UEs, collect Prometheus metrics, and visualize network performance using Grafana dashboards. This tutorial demonstrates how to deploy an OCUDU-based O-RAN testbed with multiple User Equipments (UEs), generate uplink and downlink traffic, collect real-time performance metrics, and visualize network Key Performance Indicators (KPIs) through Grafana dashboards. Users will learn how to validate end-to-end connectivity, monitor throughput and resource utilization, and analyze network behavior during traffic generation.
+
+[OCUDU gNB with N UEs, Grafana Traffic Monitoring](Tutorials/OCUDU_gNB_N_UEs_Grafana_Traffic.md)
+
+
+###  RIC and KPM Monitoring xApp
+
+Deploy an OCUDU gNB connected to multiple UEs, integrate it with RIC, subscribe to E2SM-KPM reports, and monitor real-time RAN KPIs using a KPM monitoring xApp. This tutorial demonstrates the integration of an OCUDU gNB with the FlexRIC and OSC Near-Real-Time RAN Intelligent Controller (Near-RT RIC). It covers E2 interface configuration, deployment of a KPM Monitoring xApp, subscription to E2SM-KPM reports, and real-time collection of radio performance metrics. Users will learn how to monitor RAN KPIs, validate E2 connectivity, and explore the foundations of closed-loop RAN monitoring and intelligent control within an O-RAN-compliant network. 
+
+[OCUDU gNB with N UEs, RIC, and KPM Monitoring xApp](Tutorials/OCUDU_gNB_N_UEs_RIC_xApp.md)
 
 ## Software Versioning
 

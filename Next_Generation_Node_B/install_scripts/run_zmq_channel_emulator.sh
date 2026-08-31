@@ -32,9 +32,9 @@
 set -e
 
 ZMQ_CHANNEL_EMULATOR_READY_TIMEOUT=30
-SHOW_ZMQ_CHANNEL_EMULATOR_UI=true
+SHOW_ZMQ_CHANNEL_EMULATOR_GUI=true
 if [ -z "${DISPLAY:-}" ] && [ -z "${WAYLAND_DISPLAY:-}" ]; then
-    SHOW_ZMQ_CHANNEL_EMULATOR_UI=false
+    SHOW_ZMQ_CHANNEL_EMULATOR_GUI=false
 fi
 
 # Script directory from the called path, including symlinks
@@ -61,7 +61,7 @@ while [ $# -gt 0 ]; do
             usage
             exit 1
         fi
-        SHOW_ZMQ_CHANNEL_EMULATOR_UI=$2
+        SHOW_ZMQ_CHANNEL_EMULATOR_GUI=$2
         shift 2
         ;;
     *)
@@ -72,8 +72,8 @@ while [ $# -gt 0 ]; do
     esac
 done
 
-if [ "$SHOW_ZMQ_CHANNEL_EMULATOR_UI" != "true" ] && [ "$SHOW_ZMQ_CHANNEL_EMULATOR_UI" != "false" ]; then
-    echo "ERROR: SHOW_ZMQ_CHANNEL_EMULATOR_UI must be true or false."
+if [ "$SHOW_ZMQ_CHANNEL_EMULATOR_GUI" != "true" ] && [ "$SHOW_ZMQ_CHANNEL_EMULATOR_GUI" != "false" ]; then
+    echo "ERROR: SHOW_ZMQ_CHANNEL_EMULATOR_GUI must be true or false."
     usage
     exit 1
 fi
@@ -88,7 +88,7 @@ if ! pgrep -f "[z]mq_channel_emulator\.py" >/dev/null; then
     mkdir -p "$PARENT_DIR/logs"
     >"$CHANNEL_EMULATOR_LOG"
     echo "Starting ZeroMQ Channel Emulator..."
-    if [ "$SHOW_ZMQ_CHANNEL_EMULATOR_UI" = "true" ]; then
+    if [ "$SHOW_ZMQ_CHANNEL_EMULATOR_GUI" = "true" ]; then
         nohup python3 "$CHANNEL_EMULATOR_FILE" >"$CHANNEL_EMULATOR_LOG" 2>&1 &
     else
         QT_QPA_PLATFORM=offscreen nohup python3 "$CHANNEL_EMULATOR_FILE" >"$CHANNEL_EMULATOR_LOG" 2>&1 &

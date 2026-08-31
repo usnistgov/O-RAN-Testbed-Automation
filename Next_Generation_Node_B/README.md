@@ -21,7 +21,7 @@ The Next Generation Node B (gNodeB) is a 5G base station configured with OCUDU [
 
 ## Simulating Multiple UEs and Cells with a ZeroMQ Channel Emulator
 
-By default, the gNodeB uses a ZeroMQ (ZMQ) channel emulator with cell 1 and UEs 1, 2, and 3. It supports multi-UE and multi-cell emulation. When `USE_NIST_ZMQ_CHANNEL_EMULATOR` is set to `false`, the OCUDU Multi-UE Emulation tutorial broker [\[5][ocudu-multi-ue], [6\]][ocudu-multi-ue-grc] is used instead. The Python runtime script is generated under `zmq_channel_emulator` using `install_scripts/generate_nist_zmq_channel_emulator.sh`. The generator accepts comma-separated UE and cell numbers, such as `--ues 1,2,3 --cells 1,2`. Its graphical user interface can be toggled by setting `SHOW_ZMQ_CHANNEL_EMULATOR_UI` in `run.sh`.
+By default, the gNodeB uses a ZeroMQ (ZMQ) channel emulator with cell 1 and UEs 1, 2, and 3. It supports multi-UE and multi-cell emulation. When `USE_NIST_ZMQ_CHANNEL_EMULATOR` is set to `false`, the OCUDU Multi-UE Emulation tutorial broker [\[5][ocudu-multi-ue], [6\]][ocudu-multi-ue-grc] is used instead. The Python runtime script is generated under `zmq_channel_emulator` using `install_scripts/generate_nist_zmq_channel_emulator.sh`. The generator accepts comma-separated UE and cell numbers, such as `--ues 1,2,3 --cells 1,2`. Its graphical user interface can be toggled by setting `SHOW_ZMQ_CHANNEL_EMULATOR_GUI` in `run.sh`.
 
 To connect the gNodeB directly to a single SRS UE without the channel emulator, set all occurrences of `USE_ZMQ_CHANNEL_EMULATOR` to `false`, then run the base directory configuration script: `../generate_configurations.sh`.
 

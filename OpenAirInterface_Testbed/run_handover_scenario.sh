@@ -33,9 +33,9 @@ set -e
 
 USE_SRSRAN_UE=false # Experimental
 USE_ZMQ_CHANNEL_EMULATOR=false
-SHOW_ZMQ_CHANNEL_EMULATOR_UI=true
+SHOW_ZMQ_CHANNEL_EMULATOR_GUI=true
 if [ -z "${DISPLAY:-}" ] && [ -z "${WAYLAND_DISPLAY:-}" ]; then
-    SHOW_ZMQ_CHANNEL_EMULATOR_UI=false
+    SHOW_ZMQ_CHANNEL_EMULATOR_GUI=false
 fi
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
@@ -220,7 +220,7 @@ echo -e "\nAMF is ready."
 cd Next_Generation_Node_B
 if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ]; then
     echo
-    ./install_scripts/run_zmq_channel_emulator.sh --show-ui "$SHOW_ZMQ_CHANNEL_EMULATOR_UI"
+    ./install_scripts/run_zmq_channel_emulator.sh --show-ui "$SHOW_ZMQ_CHANNEL_EMULATOR_GUI"
 else
     echo
     echo "Running CU..."

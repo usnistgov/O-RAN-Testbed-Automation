@@ -46,7 +46,7 @@ done
 sudo ./install_scripts/start_mongodb.sh || exit 1
 
 # Check if the WebUI server is already running before starting a new instance
-if ! pgrep -af "node" | grep -F -- "$WEBUI_SERVER" >/dev/null; then
+if ! pgrep -af "node" | grep -F -- "server/index.js" >/dev/null; then
     echo "Starting webui process..."
     cd "$WEBUI_DIR"
     npm install --no-audit --no-fund --loglevel=error

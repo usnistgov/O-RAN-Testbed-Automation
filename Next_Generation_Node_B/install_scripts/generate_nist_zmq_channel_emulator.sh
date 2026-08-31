@@ -496,7 +496,7 @@ class zmq_channel_emulator(gr.top_block, Qt.QWidget):
         self.ul_awgn_snr_db_by_cell = {}
         self.default_link_settings = {}
         self.default_cell_settings = {}
-        for cell in CELL_CONFIGS:
+        for cell_index, cell in enumerate(CELL_CONFIGS):
             cell_number = cell["number"]
             self.ul_awgn_enabled[cell_number] = UL_AWGN_ENABLED
             self.ul_awgn_snr_db_by_cell[cell_number] = UL_AWGN_SNR_DB
@@ -506,7 +506,10 @@ class zmq_channel_emulator(gr.top_block, Qt.QWidget):
             }
             for ue in UE_CONFIGS:
                 ue_number = ue["number"]
-                path_loss_db = 0
+                if cell_index == (ue_number - 1) % len(CELL_CONFIGS):
+                    path_loss_db = 0
+                else:
+                    path_loss_db = 12
 
                 path_key = (cell_number, ue_number)
                 self.dl_path_loss_db[path_key] = path_loss_db

@@ -483,6 +483,7 @@ if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ] && [ "${#CELL_NUMBERS[@]}" -gt 1 ]; 
         RADIO_PROFILE_INDEX=$(((CELL_NUMBER - 1) % ${#GNB_DL_ARFCNS[@]}))
         update_yaml "configs/gnb.yaml" "cells[$CELL_COUNT]" "pci" "$((CELL_NUMBER - 1))"
         update_yaml "configs/gnb.yaml" "cells[$CELL_COUNT]" "dl_arfcn" "${GNB_DL_ARFCNS[$RADIO_PROFILE_INDEX]}"
+        update_yaml "configs/gnb.yaml" "cells[$CELL_COUNT].prach" "prach_root_sequence_index" "$((CELL_COUNT * 64))"
         CELL_COUNT=$((CELL_COUNT + 1))
     done
 fi

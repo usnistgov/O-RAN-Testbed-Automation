@@ -1,20 +1,5 @@
 # Automation Tool for Deploying 5G O-RAN Testbeds
 
-## Table of Contents
-
-- [Overview](#overview)
-- [Setting Up a Testbed](#setting-up-a-testbed)
-- [Installation Guide](#installation-guide)
-- [OCUDU and O-RAN SC Near-RT RIC Output](#ocudu-and-o-ran-sc-near-rt-ric-output)
-- [Duranta and FlexRIC Output](#duranta-and-flexric-output)
-- [Deployment Tutorials](#deployment-tutorials)
-  - [OCUDU gNB with N UEs, and Grafana Traffic Monitoring](#ocudu-gnb-with-n-ues-and-grafana-traffic-monitoring)
-  - [RIC and KPM Monitoring xApp](#ric-and-kpm-monitoring-xapp)
-- [Software Versioning](#software-versioning)
-- [Documentation](#documentation)
-
-## Overview
-
 Based on the blueprints described in NIST TN 2311 [\[1\]][nist-tn-2311], this automation tool facilitates the deployment and configuration of 5G Open Radio Access Network (O-RAN) testbeds. Designed to operate in both bare metal and virtualized environments, it simplifies setting up the components required for a 5G O-RAN testbed, including the 5G Core; Next Generation Node B (gNodeB) composed of Radio Unit (RU), Distributed Unit (DU), and Centralized Unit (CU); User Equipment (UE); RAN Intelligent Controller (RIC); and a series of xApps that can be installed in the RIC. This reduces the complexity and time required to operationalize the testbeds described in the report above, and enables more efficient testing and validation to facilitate research and development in 5G/6G technologies.
 
 ## Setting Up a Testbed
@@ -232,20 +217,10 @@ See <a href="OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC#k
 
 ## Deployment Tutorials
 
-After completing the base installation, follow one of the end-to-end deployment tutorials below.
-
-###  OCUDU gNB with N UEs, Grafana Traffic Monitoring
-
-Deploy an OCUDU-based O-RAN testbed, generate traffic from multiple UEs, collect Prometheus metrics, and visualize network performance using Grafana dashboards. This tutorial demonstrates how to deploy an OCUDU-based O-RAN testbed with multiple User Equipments (UEs), generate uplink and downlink traffic, collect real-time performance metrics, and visualize network Key Performance Indicators (KPIs) through Grafana dashboards. Users will learn how to validate end-to-end connectivity, monitor throughput and resource utilization, and analyze network behavior during traffic generation.
-
-[OCUDU gNB with N UEs, Grafana Traffic Monitoring](Tutorials/OCUDU_gNB_N_UEs_Grafana_Traffic.md)
-
-
-###  RIC and KPM Monitoring xApp
-
-Deploy an OCUDU gNB connected to multiple UEs, integrate it with RIC, subscribe to E2SM-KPM reports, and monitor real-time RAN KPIs using a KPM monitoring xApp. This tutorial demonstrates the integration of an OCUDU gNB with the FlexRIC and OSC Near-Real-Time RAN Intelligent Controller (Near-RT RIC). It covers E2 interface configuration, deployment of a KPM Monitoring xApp, subscription to E2SM-KPM reports, and real-time collection of radio performance metrics. Users will learn how to monitor RAN KPIs, validate E2 connectivity, and explore the foundations of closed-loop RAN monitoring and intelligent control within an O-RAN-compliant network. 
-
-[OCUDU gNB with N UEs, RIC, and KPM Monitoring xApp](Tutorials/OCUDU_gNB_N_UEs_RIC_xApp.md)
+| Tutorial | Focus |
+|----------|-------|
+| [OCUDU Multi-Cell and Multi-UE Grafana Monitoring](Tutorials/OCUDU_gNB_N_UEs_Grafana_Traffic.md) | Configure multiple cells and UEs, generate traffic, and monitor performance in Grafana |
+| [OCUDU RIC and KPM Monitoring](Tutorials/OCUDU_gNB_N_UEs_RIC_xApp.md) | Connect OCUDU to the O-RAN SC Near-RT RIC or FlexRIC and monitor E2SM-KPM reports |
 
 ## Software Versioning
 

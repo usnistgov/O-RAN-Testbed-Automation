@@ -41,9 +41,12 @@ cd "$SCRIPT_DIR"
 UE_NUMBER=1
 RFSIM_SERVER=0
 USE_IMSCOPE=false
+ZMQ_THREAD_POOL="-1,-1"
 USE_ZMQ_CHANNEL_EMULATOR=false
 SHOW_ZMQ_CHANNEL_EMULATOR_UI=true
-ZMQ_THREAD_POOL="-1,-1"
+if [ -z "${DISPLAY:-}" ] && [ -z "${WAYLAND_DISPLAY:-}" ]; then
+    SHOW_ZMQ_CHANNEL_EMULATOR_UI=false
+fi
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do

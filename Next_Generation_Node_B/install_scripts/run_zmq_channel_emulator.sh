@@ -31,8 +31,11 @@
 # Exit immediately if a command fails
 set -e
 
-SHOW_ZMQ_CHANNEL_EMULATOR_UI=true
 ZMQ_CHANNEL_EMULATOR_READY_TIMEOUT=30
+SHOW_ZMQ_CHANNEL_EMULATOR_UI=true
+if [ -z "${DISPLAY:-}" ] && [ -z "${WAYLAND_DISPLAY:-}" ]; then
+    SHOW_ZMQ_CHANNEL_EMULATOR_UI=false
+fi
 
 # Script directory from the called path, including symlinks
 SCRIPT_DIR="$(cd "$(dirname "$0")" >/dev/null 2>&1 && pwd)"

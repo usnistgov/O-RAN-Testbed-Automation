@@ -31,10 +31,13 @@
 # Exit immediately if a command fails
 set -e
 
+USE_IMSCOPE=false
+USE_SRSRAN_UE=false # Experimental
 USE_ZMQ_CHANNEL_EMULATOR=false
 SHOW_ZMQ_CHANNEL_EMULATOR_UI=true
-USE_SRSRAN_UE=false # Experimental
-USE_IMSCOPE=false
+if [ -z "${DISPLAY:-}" ] && [ -z "${WAYLAND_DISPLAY:-}" ]; then
+    SHOW_ZMQ_CHANNEL_EMULATOR_UI=false
+fi
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then

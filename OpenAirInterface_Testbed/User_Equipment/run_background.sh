@@ -42,6 +42,9 @@ UE_NUMBER=1
 RFSIM_SERVER=0
 USE_ZMQ_CHANNEL_EMULATOR=false
 SHOW_ZMQ_CHANNEL_EMULATOR_UI=false
+if [ -z "${DISPLAY:-}" ] && [ -z "${WAYLAND_DISPLAY:-}" ]; then
+    SHOW_ZMQ_CHANNEL_EMULATOR_UI=false
+fi
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do

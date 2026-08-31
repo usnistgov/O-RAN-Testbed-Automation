@@ -432,6 +432,12 @@ int8_t nr_ue_process_dci_freq_dom_resource_assignment(nfapi_nr_ue_pusch_pdu_t *p
   return 0;
 }
 
+/* TS 38.213 9.2.3: UE has PUCCH-ResourceSet configured in PUCCH-Config */
+static inline bool nr_ue_has_dedicated_pucch_resource_set(const NR_PUCCH_Config_t *cfg)
+{
+  return cfg && cfg->resourceSetToAddModList && cfg->resourceSetToAddModList->list.array[0];
+}
+
 static void set_harq_status(NR_UE_MAC_INST_t *mac,
                             uint8_t pucch_id,
                             uint8_t harq_id,
@@ -445,9 +451,11 @@ static void set_harq_status(NR_UE_MAC_INST_t *mac,
                             int slot)
 {
   NR_UE_DL_HARQ_STATUS_t *current_harq = &mac->dl_harq_info[harq_id][cw_id];
+  const NR_PUCCH_Config_t *pucch_Config = mac->current_UL_BWP ? mac->current_UL_BWP->pucch_Config : NULL;
   current_harq->active = true;
   current_harq->ack_received = false;
   current_harq->pucch_resource_indicator = pucch_id;
+  current_harq->pucch_resource_common = !nr_ue_has_dedicated_pucch_resource_set(pucch_Config);
   current_harq->n_CCE = n_CCE;
   current_harq->N_CCE = N_CCE;
   current_harq->dai_cumul = 0;
@@ -2400,6 +2408,7 @@ bool get_downlink_ack(NR_UE_MAC_INST_t *mac, frame_t frame, int slot, PUCCH_sche
   uint32_t dai_total[NR_DL_MAX_NB_CW][NR_MAX_HARQ_PROCESSES] = {{0},{0}}; /* for multiple cells */
   int number_harq_feedback = 0;
   uint32_t dai_max = 0;
+  bool pucch_common = false;
 
   NR_UE_DL_BWP_t *current_DL_BWP = mac->current_DL_BWP;
   NR_UE_UL_BWP_t *current_UL_BWP = mac->current_UL_BWP;
@@ -2468,6 +2477,8 @@ bool get_downlink_ack(NR_UE_MAC_INST_t *mac, frame_t frame, int slot, PUCCH_sche
             pucch->harq_ack_pucch_res_ind = temp_ind;
             pucch->n_CCE = current_harq->n_CCE;
             pucch->N_CCE = current_harq->N_CCE;
+            if (current_harq->pucch_resource_common)
+              pucch_common = true;
             LOG_D(NR_MAC,"%4d.%2d Sent %d ack on harq pid %d\n", frame, slot, current_harq->ack, dl_harq_pid);
           }
         }
@@ -2549,7 +2560,7 @@ bool get_downlink_ack(NR_UE_MAC_INST_t *mac, frame_t frame, int slot, PUCCH_sche
   }
 
   NR_PUCCH_Config_t *pucch_Config = current_UL_BWP ? current_UL_BWP->pucch_Config : NULL;
-  if (!(pucch_Config && pucch_Config->resourceSetToAddModList && pucch_Config->resourceSetToAddModList->list.array[0]))
+  if (pucch_common || !nr_ue_has_dedicated_pucch_resource_set(pucch_Config))
     configure_initial_pucch(pucch, res_ind, current_UL_BWP->pucch_ConfigCommon->pucch_ResourceCommon);
   else {
     int resource_set_id = find_pucch_resource_set(pucch_Config, O_ACK);

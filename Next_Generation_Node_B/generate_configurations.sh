@@ -264,11 +264,15 @@ if [ "$ENABLE_E2_TERM" = "true" ]; then
             PROMPT_FOR_E2_ADDRESS="true"
         else
             SERVICE_INFO=$(kubectl get service -n ricplt 2>/dev/null | grep service-ricplt-e2term-sctp || echo "")
+            E2_ENDPOINTS=$(kubectl get endpoints service-ricplt-e2term-sctp -n ricplt -o jsonpath='{.subsets[*].addresses[*].ip}' 2>/dev/null || echo "")
 
-            # Check if SERVICE_INFO is empty
+            # Check E2 service availability
             if [ -z "$SERVICE_INFO" ]; then
                 echo "No service found or kubectl command failed."
                 PROMPT_FOR_E2_ADDRESS="true"
+            elif [ -z "$E2_ENDPOINTS" ]; then
+                echo "E2 termination service has no ready endpoints."
+                IP_E2TERM=""
             else
                 # Use awk to extract the IP and the correct port based on the connection context
                 IP_E2TERM=$(echo "$SERVICE_INFO" | awk '{print $3}')

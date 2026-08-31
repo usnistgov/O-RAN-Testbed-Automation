@@ -51,6 +51,11 @@ if [ $# -eq 1 ] && { [ "$1" = "-h" ] || [ "$1" = "--help" ]; }; then
     exit 0
 fi
 
+if [ ! -x "openairinterface5g/cmake_targets/ran_build/build/nr-uesoftmodem" ]; then
+    echo "ERROR: The Duranta OpenAirInterface UE is not installed." >&2
+    exit 1
+fi
+
 UE_NUMBERS=("$@")
 if [ ${#UE_NUMBERS[@]} -eq 0 ]; then
     UE_NUMBERS=(3 2 1)

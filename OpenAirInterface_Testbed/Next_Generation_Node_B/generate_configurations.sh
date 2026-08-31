@@ -58,7 +58,7 @@ NR_PREAMBLE_RECEIVED_TARGET_POWER=""
 NR_MSG3_DELTA_PREAMBLE=""
 NR_PRACH_DTX_THRESHOLD=""
 NR_OFDM_OFFSET_DIVISOR=""
-NR_PRACH_ROOT_SEQUENCE_INDEX=""
+NR_PRACH_ROOT_SEQUENCE_INDEX="0"
 NR_SSB_BITMAP=""
 NR_TDD_PERIODICITY=""
 NR_TDD_DL_SLOTS=""
@@ -517,7 +517,7 @@ for DU_CONF in "${SPLIT_DUS[@]}"; do
     update_conf "configs/$DU_CONF" "absoluteFrequencySSB" "${NR_SSB_ARFCNS[$RADIO_PROFILE_INDEX]}"
     update_conf "configs/$DU_CONF" "dl_absoluteFrequencyPointA" "${NR_DL_POINT_A_ARFCNS[$RADIO_PROFILE_INDEX]}"
     if [ -n "$NR_PRACH_ROOT_SEQUENCE_INDEX" ]; then
-        update_conf "configs/$DU_CONF" "prach_RootSequenceIndex" "$NR_PRACH_ROOT_SEQUENCE_INDEX"
+        update_conf "configs/$DU_CONF" "prach_RootSequenceIndex" "$((NR_PRACH_ROOT_SEQUENCE_INDEX + (DU_NUMBER - 1) * 64))"
     fi
     if [ -n "$NR_SSB_BITMAP" ]; then
         update_conf "configs/$DU_CONF" "ssb_PositionsInBurst_Bitmap" "$NR_SSB_BITMAP"

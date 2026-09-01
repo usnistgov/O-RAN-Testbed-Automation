@@ -12,7 +12,7 @@ The automation tool can be used in virtual machines and physical machines with t
   <picture>
     <source media="(prefers-color-scheme: light)" srcset="Images/Architecture_Light.svg">
     <source media="(prefers-color-scheme: dark)" srcset="Images/Architecture_Dark.svg">
-    <img src="https://raw.githubusercontent.com/usnistgov/O-RAN-Testbed-Automation/refs/heads/main/Images/Architecture_Light.svg" alt="Diagram of Testbed Open-Source Components" width="70%">
+    <img src="Images/Architecture_Light.svg" alt="Diagram of Testbed Open-Source Components" width="70%">
   </picture>
 </div>
 
@@ -56,7 +56,7 @@ The components that have been verified to support or not support connectivity ar
   <picture>
     <source media="(prefers-color-scheme: light)" srcset="Images/Support_Light.svg">
     <source media="(prefers-color-scheme: dark)" srcset="Images/Support_Dark.svg">
-    <img src="https://raw.githubusercontent.com/usnistgov/O-RAN-Testbed-Automation/refs/heads/main/Images/Support_Light.svg" alt="Diagram of Supported Connections" width="97%">
+    <img src="Images/Support_Light.svg" alt="Diagram of Supported Connections" width="97%">
   </picture>
 </div>
 
@@ -273,7 +273,7 @@ USNISTGOV/O-RAN-Testbed-Automation is developed and maintained by the NIST Wirel
     <picture>
       <source media="(prefers-color-scheme: light)" srcset="Images/125_NIST_Light.png">
       <source media="(prefers-color-scheme: dark)" srcset="Images/125_NIST_Dark.png">
-      <img src="https://raw.githubusercontent.com/usnistgov/O-RAN-Testbed-Automation/refs/heads/main/Images/125_NIST_Light.png" alt="National Institute of Standards and Technology" width="85%">
+      <img src="Images/125_NIST_Light.png" alt="National Institute of Standards and Technology" width="85%">
     </picture>
   </a>
 </div>

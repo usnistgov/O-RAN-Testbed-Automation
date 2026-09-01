@@ -1,39 +1,43 @@
-# Deploying  OCUDU gNB with Multiple UEs, Grafana Monitoring, and Traffic Simulation
+# Deploying OCUDU gNB with Multiple Cells and UEs, Grafana Monitoring, and Traffic Simulation
 
-# Table of Contents
+## Table of Contents
 
 - [Overview](#overview)
 - [Prerequisites](#prerequisites)
+- [Clone Repository](#clone-repository)
 - [Install the Testbed](#install-the-testbed)
 - [Start the Testbed](#start-the-testbed)
+- [Verify Network Connectivity](#verify-network-connectivity)
 - [Launch Grafana](#launch-grafana)
 - [Traffic Simulation](#traffic-simulation)
-- [Multiple UE Deployment](#multiple-ue-deployment)
+- [Observe Grafana Metrics](#observe-grafana-metrics)
+- [Troubleshooting Traffic](#troubleshooting-traffic)
+- [Verify Multiple UEs and Cells](#verify-multiple-ues-and-cells)
 - [Useful Commands](#useful-commands)
+- [Expected Results](#expected-results)
 - [Troubleshooting](#troubleshooting)
 - [Learning Outcomes](#learning-outcomes)
 
 ## Overview
 
-This tutorial demonstrates the deployment and validation of an end-to-end Open RAN 5G standalone (SA) network using the NIST O-RAN Testbed Automation framework.The use case deploys an OCUDU gNB connected to an Open5GS 5G Core Network, a simulated srsRAN UE, and an O-RAN SC Near-RT RIC environment. The complete testbed is deployed using automated scripts and Kubernetes-based services, enabling users to quickly set up an experimental Open RAN environment for research, development, and performance evaluation.
+This tutorial demonstrates the deployment and validation of an end-to-end Open RAN 5G standalone (SA) network using the NIST O-RAN Testbed Automation framework. The example deploys an OCUDU gNB with two cells, three simulated srsRAN UEs, an Open5GS 5G Core Network, and an O-RAN SC Near-RT RIC environment. Automated scripts and Kubernetes-based services provide a repeatable environment for research, development, and performance evaluation.
 
-After deployment, the UE establishes a connection with the gNB through a simulated RF interface, completes registration and PDU session establishment procedures, and obtains an IP address from the 5G Core network. The testbed then enables user-plane traffic generation using ping and iperf3 to evaluate connectivity, latency, and throughput performance. The integrated Grafana monitoring framework provides real-time visualization of key network performance indicators, including UE throughput, packet rate, latency, packet loss, CQI, modulation and coding scheme (MCS), and active UE statistics. These measurements allow users to analyze the behavior of the RAN and core network under different traffic conditions.
-
-This tutorial provides a complete workflow for deploying, monitoring, and evaluating an Open RAN 5G network with a single UE. It serves as a foundation for further experiments involving multi-UE deployment, xApp development, RAN optimization, and intelligent network control.
+After deployment, each UE connects to a serving cell through the ZeroMQ channel emulator, completes registration and PDU session establishment, and receives an IP address from the 5G Core Network. The tutorial uses `ping` and `iperf3` to generate and evaluate user-plane traffic. Grafana displays network performance indicators, including UE throughput, packet rate, latency, packet loss, CQI, modulation and coding scheme (MCS), and active UE statistics.
 
 The deployment consists of:
 
 - Open5GS Core Network
 - OCUDU gNB
-- One UE (srsRAN UE)
+- srsRAN UE software
 - O-RAN SC Near-RT RIC
 - Grafana Monitoring
-- Simulated user traffic using ping and iperf3
+- Simulated user traffic
 
 At the end of this tutorial you will be able to
 
 - Deploy a complete 5G network
-- Attach one UE
+- Configure multiple cells
+- Attach multiple UEs
 - Verify connectivity
 - Generate network traffic
 - Observe KPIs in Grafana
@@ -41,25 +45,9 @@ At the end of this tutorial you will be able to
 
 ---
 
-
-
 ## Prerequisites
 
-Ubuntu 22.04 LTS
-
-Minimum hardware
-
-- 6 CPU cores
-- 8 GB RAM
-- 60 GB storage
-
-Software
-
-- Git
-- Docker
-- Kubernetes
-- kubectl
-- Helm
+- A supported Ubuntu-based Linux distribution; see the [minimum system requirements](../README.md#minimum-system-requirements)
 
 ---
 
@@ -78,7 +66,7 @@ cd O-RAN-Testbed-Automation
 ```bash
 ./full_install.sh
 ```
-```text
+```console
 ################################################################################
 # Successfully installed the Near-RT RIC, 5G Core, gNodeB, and UE.             #
 ################################################################################
@@ -88,21 +76,29 @@ The installation deploys
 
 - Open5GS
 - OCUDU
-- O-RAN SC Near-RT RIC
-- UE
+- srsRAN UE software
 - Kubernetes components
+- O-RAN SC Near-RT RIC
 
 ---
 
-
 ## Start the Testbed
 
+Generate matching configurations for UEs 1, 2, and 3, cells 1 and 2, and the ZeroMQ channel emulator:
+
 ```bash
+./generate_configurations.sh --ues 1,2,3 --cells 1,2
 ./run.sh
 ```
-Expected console output
 
-```
+The following channel emulator interface should appear, showing that UE 1 connects to Cell 1, UE 2 connects to Cell 2, and UE 3 connects to Cell 1.
+<div align="center">
+  <img src="assets/channel_emulator.png" alt="Channel Emulator" width="50%">
+</div>
+
+Example UE 1 output from a successful run:
+
+```console
 Opening 1 channels in RF device=zmq with args=tx_port=tcp://*:2101,rx_port=tcp://10.201.0.5:2100,base_srate=23.04e6,id=ue1
 Supported RF device list: UHD zmq file
 CHx base_srate=23.04e6
@@ -114,42 +110,54 @@ Current sample rate is 23.04 MHz with a base rate of 23.04 MHz (x1 decimation)
 Current sample rate is 23.04 MHz with a base rate of 23.04 MHz (x1 decimation)
 Waiting PHY to initialize ... done!
 Attaching UE...
-Random Access Transmission: prach_occasion=0, preamble_index=0, ra-rnti=0x39, tti=334
-Random Access Complete.     c-rnti=0x4601, ta=0
+Random Access Transmission: prach_occasion=0, preamble_index=41, ra-rnti=0x39, tti=174
+Random Access Complete.     c-rnti=0x4602, ta=0
 RRC Connected
 PDU Session Establishment successful. IP: 10.45.0.101
 RRC NR reconfiguration successful.
-
 ```
 
 ---
 
 ## Verify Network Connectivity
 
-Inside the UE
+Each UE runs in its own Linux network namespace. Open a shell for UE 1 from the top-level directory of the repository:
 
 ```bash
-ping 10.45.0.1
+./User_Equipment/additional_scripts/open_ue_shell.sh 1
 ```
 
-Expected
+Run the connectivity check inside that shell:
 
+```bash
+ping 10.45.0.1 -c 3
 ```
-64 bytes from 10.45.0.1
 
-time=12 ms
+Example output from a successful run:
+
+```console
+PING 10.45.0.1 (10.45.0.1) 56(84) bytes of data.
+64 bytes from 10.45.0.1: icmp_seq=1 ttl=64 time=194 ms
+64 bytes from 10.45.0.1: icmp_seq=2 ttl=64 time=199 ms
+64 bytes from 10.45.0.1: icmp_seq=3 ttl=64 time=257 ms
+
+--- 10.45.0.1 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2003ms
+rtt min/avg/max/mdev = 194.499/216.813/256.660/28.243 ms
 ```
+
+The replies and `0% packet loss` confirm connectivity to the Open5GS user-plane gateway. Use `exit` to return to the host shell, and repeat the command with UE number `2` or `3` to check connectivity with the other UEs.
 
 ---
 
 ## Launch Grafana
 
-To visuallize the performance metrics start the grafana WebUI from gNB directory.
+To visualize the performance metrics, start the Grafana WebUI.
 
-- **Start Grafana WebUI**: Start the dashboard and its Docker Compose dependencies with `./start_grafana_webui.sh`.
-- **Stop Grafana WebUI**: Stop the dashboard container with `./stop_grafana_webui.sh`.
+- **Start Grafana WebUI**: Start the dashboard and its Docker Compose dependencies with `./Next_Generation_Node_B/start_grafana_webui.sh`.
+- **Stop Grafana WebUI**: Stop the dashboard container with `./Next_Generation_Node_B/stop_grafana_webui.sh`.
 
-The dashboard is hosted at: 
+The dashboard is hosted at:
 ```
 http://localhost:3300
 ```
@@ -161,11 +169,7 @@ admin
 admin
 ```
 
----
-
-## Observe Metrics
-
-Useful dashboards include
+Useful dashboards include:
 
 - UE throughput
 - Packet loss
@@ -175,152 +179,136 @@ Useful dashboards include
 - Uplink MCS
 - CQI
 
+The panels receive data when one or more UEs are generating traffic.
+
 ---
 
 ## Traffic Simulation
 
-After the UE successfully attaches and receives a PDU session, verify that it can reach the UPF gateway. Network traffic can be generated using `ping` and `iperf3` to verify user-plane connectivity and observe performance metrics in Grafana.
-
-The UE runs inside the `ue1` Linux network namespace. All UE traffic generation commands should be executed using:
-
-Run the following command from the host machine:
-
-```bash
-sudo ip netns exec ue1 ping 10.45.0.1
-```
-
-Expected output:
-
-```
-PING 10.45.0.1 (10.45.0.1) 56(84) bytes of data.
-64 bytes from 10.45.0.1: icmp_seq=1 ttl=64 time=98.2 ms
-64 bytes from 10.45.0.1: icmp_seq=2 ttl=64 time=45.5 ms
-64 bytes from 10.45.0.1: icmp_seq=3 ttl=64 time=60.3 ms
-
-^C
---- 10.45.0.1 ping statistics ---
-11 packets transmitted, 11 received, 0% packet loss, time 10014ms
-rtt min/avg/max/mdev = 26.851/48.636/98.193/18.117 ms
-
-```
-
-If the ping succeeds, the UE has end-to-end IP connectivity through the 5G core network.
+The following manual `iperf3` tests generate uplink and downlink traffic between UE 1 and the Open5GS user-plane gateway.
 
 <b>OCUDU Grafana WebUI Visualization</b><div align="center">
-  <img src="grafana.png" alt="OCUDU Grafana WebUI" width="75%">
+  <img src="assets/grafana.png" alt="OCUDU Grafana WebUI" width="75%">
 </div>
 
+### Install iperf3
 
-# iperf3 Throughput Test
-
-`iperf3` can be used to generate user-plane traffic and measure throughput between the UE and the core network.
-
-## Install iperf3 (if required)
-
-On the host:
+Install `iperf3` on the host if it is not already available:
 
 ```bash
 sudo apt update
 sudo apt install iperf3
 ```
 
----
+### Start the iperf3 Server
 
-## Start iperf3 Server
-
-Start the iperf3 server on the UPF-side interface:
+In one host terminal, start the server on the Open5GS user-plane gateway address:
 
 ```bash
 iperf3 -s -B 10.45.0.1
 ```
-### Expected Output
+Example output from a successful run:
 
-```bash
- iperf3 -s -B 10.45.0.1
+```console
+iperf3 -s -B 10.45.0.1
 -----------------------------------------------------------
 Server listening on 5201
 -----------------------------------------------------------
 Accepted connection from 10.45.0.101, port 50034
 [  5] local 10.45.0.1 port 5201 connected to 10.45.0.101 port 50038
 [ ID] Interval           Transfer     Bitrate
-[  5]   0.00-2.00   sec   384 KBytes  1.57 Mbits/sec                  
-[  5]   2.00-3.53   sec   384 KBytes  2.06 Mbits/sec                  
-[  5]   3.53-4.54   sec   256 KBytes  2.08 Mbits/sec                  
-[  5]   4.54-5.44   sec   256 KBytes  2.34 Mbits/sec                  
-[  5]   5.44-6.84   sec   384 KBytes  2.25 Mbits/sec       
+[  5]   0.00-2.00   sec   384 KBytes  1.57 Mbits/sec
+[  5]   2.00-3.53   sec   384 KBytes  2.06 Mbits/sec
+[  5]   3.53-4.54   sec   256 KBytes  2.08 Mbits/sec
+[  5]   4.54-5.44   sec   256 KBytes  2.34 Mbits/sec
+[  5]   5.44-6.84   sec   384 KBytes  2.25 Mbits/sec
 ```
-The server listens on the 5G core data network interface.
 
----
+### Generate Uplink Traffic
 
-## Generate Uplink Traffic
-
-Run the iperf3 client from the UE namespace:
+In another host terminal, run the `iperf3` client in the UE 1 namespace:
 
 ```bash
 sudo ip netns exec ue1 iperf3 -c 10.45.0.1 -t 60
 ```
-### Expected Output
-```bash
- sudo ip netns exec ue1 iperf3 -c 10.45.0.1 -t 60
+
+> [!NOTE]
+> This can also be done by opening a shell in the UE namespace.
+
+Example output from a successful run:
+
+```console
+sudo ip netns exec ue1 iperf3 -c 10.45.0.1 -t 60
 Connecting to host 10.45.0.1, port 5201
 [  5] local 10.45.0.101 port 50038 connected to 10.45.0.1 port 5201
 [ ID] Interval           Transfer     Bitrate         Retr  Cwnd
-[  5]   0.00-1.00   sec   437 KBytes  3.58 Mbits/sec    1   73.5 KBytes       
-[  5]   1.00-2.00   sec   272 KBytes  2.22 Mbits/sec    0   86.3 KBytes       
-[  5]   2.00-3.00   sec   382 KBytes  3.13 Mbits/sec    0   99.0 KBytes       
-[  5]   3.00-4.00   sec   255 KBytes  2.08 Mbits/sec    0    112 KBytes       
-[  5]   4.00-5.00   sec   509 KBytes  4.18 Mbits/sec    0    124 KBytes  
+[  5]   0.00-1.00   sec   437 KBytes  3.58 Mbits/sec    1   73.5 KBytes
+[  5]   1.00-2.00   sec   272 KBytes  2.22 Mbits/sec    0   86.3 KBytes
+[  5]   2.00-3.00   sec   382 KBytes  3.13 Mbits/sec    0   99.0 KBytes
+[  5]   3.00-4.00   sec   255 KBytes  2.08 Mbits/sec    0    112 KBytes
+[  5]   4.00-5.00   sec   509 KBytes  4.18 Mbits/sec    0    124 KBytes
 ```
 
-This generates a 60-second uplink traffic stream:
+This sends traffic from the UE to the 5G Core for 60 seconds.
 
+```mermaid
+flowchart LR
+    UE["UE 1"] --> CORE["5G Core"]
 ```
-UE → 5G Core
-```
 
----
+### Generate Downlink Traffic
 
-## Generate Downlink Traffic
-
-To test downlink throughput:
+Leave the core network `iperf3` server running. Now use reverse mode to send traffic from the server to UE 1:
 
 ```bash
 sudo ip netns exec ue1 iperf3 -c 10.45.0.1 -R -t 30
 ```
-### Expected Output
-```bash
+
+Example output from a successful run:
+
+```console
 Connecting to host 10.45.0.1, port 5201
 Reverse mode, remote host 10.45.0.1 is sending
 [  5] local 10.45.0.101 port 36996 connected to 10.45.0.1 port 5201
 [ ID] Interval           Transfer     Bitrate
-[  5]   0.00-1.00   sec  1.50 MBytes  12.6 Mbits/sec                  
-[  5]   1.00-2.04   sec  2.00 MBytes  16.1 Mbits/sec                  
-[  5]   2.04-3.04   sec  1.75 MBytes  14.7 Mbits/sec                  
-[  5]   3.04-4.00   sec  1.75 MBytes  15.2 Mbits/sec                  
-[  5]   4.00-5.00   sec  1.75 MBytes  14.7 Mbits/sec                  
-[  5]   5.00-6.05   sec  1.38 MBytes  11.1 Mbits/sec       
-```
-The `-R` option reverses the traffic direction:
-
-```
-5G Core → UE
+[  5]   0.00-1.00   sec  1.50 MBytes  12.6 Mbits/sec
+[  5]   1.00-2.04   sec  2.00 MBytes  16.1 Mbits/sec
+[  5]   2.04-3.04   sec  1.75 MBytes  14.7 Mbits/sec
+[  5]   3.04-4.00   sec  1.75 MBytes  15.2 Mbits/sec
+[  5]   4.00-5.00   sec  1.75 MBytes  14.7 Mbits/sec
+[  5]   5.00-6.05   sec  1.38 MBytes  11.1 Mbits/sec
 ```
 
----
+The `-R` option reverses the direction so the 5G Core sends traffic to the UE.
+
+```mermaid
+flowchart RL
+    CORE["5G Core"] --> UE["UE 1"]
+```
+
+### Scripted Alternative
+
+For simpler traffic generation, the UE scripts select the namespace and PDU session automatically. These scripts use `iperf` (iperf2), rather than `iperf3`, and accept the UE number, target bandwidth, and duration in seconds:
+
+```bash
+./User_Equipment/additional_scripts/simulate_ue_traffic_to_core.sh 1 1M 60
+```
+```bash
+./User_Equipment/additional_scripts/simulate_core_traffic_to_ue.sh 1 1M 60
+```
 
 Throughput depends on:
 
 - Host CPU resources
 - Network configuration
 - gNB configuration
-- RF simulation parameters
+- Channel emulator settings
 
 ---
 
-# Observe Grafana Metrics
+## Observe Grafana Metrics
 
-While running `ping` or `iperf3`, monitor the Grafana dashboard.
+While running `ping`, the manual `iperf3` test, or either `iperf` traffic script, monitor the Grafana dashboard.
 
 Expected changes:
 
@@ -331,96 +319,79 @@ Expected changes:
 
 ---
 
-# Troubleshooting Traffic
----
-If no traffic is observed, verify UE connectivity first:
+## Troubleshooting Traffic
+
+If no traffic is observed, open the UE shell:
 
 ```bash
-sudo ip netns exec ue1 ping 10.45.0.1
+./User_Equipment/additional_scripts/open_ue_shell.sh 1
 ```
-Expected output:
+
+Repeat the connectivity check above, then inspect the UE interfaces:
 
 ```bash
-PING 10.45.0.1 (10.45.0.1) 56(84) bytes of data.
-64 bytes from 10.45.0.1: icmp_seq=1 ttl=64 time=98.2 ms
-64 bytes from 10.45.0.1: icmp_seq=2 ttl=64 time=45.5 ms
-64 bytes from 10.45.0.1: icmp_seq=3 ttl=64 time=60.3 ms
-
-^C
---- 10.45.0.1 ping statistics ---
-11 packets transmitted, 11 received, 0% packet loss, time 10014ms
-rtt min/avg/max/mdev = 26.851/48.636/98.193/18.117 ms
+ip addr
 ```
-This confirms end-to-end connectivity between the UE and the UPF gateway.
----
-Check the UE namespace:
 
-```bash
-sudo ip netns exec ue1 ip addr
-```
-```bash
+Example output from a successful run:
+
+```console
 1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
     link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
     inet 127.0.0.1/8 scope host lo
        valid_lft forever preferred_lft forever
-    inet6 ::1/128 scope host 
+    inet6 ::1/128 scope host
        valid_lft forever preferred_lft forever
 2: tun_srsue: <POINTOPOINT,MULTICAST,NOARP,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UNKNOWN group default qlen 500
-    link/none 
+    link/none
     inet 10.45.0.101/24 scope global tun_srsue
        valid_lft forever preferred_lft forever
 ```
-Key things to verify:
 
-The tun_srsue interface exists.
-It is in the UP state.
-It has the expected IP address (for example, 10.45.0.101/24).
+The `tun_srsue` interface should be up and have a PDU address. If it is missing or has no address, the PDU session was not established.
 
-If tun_srsue is missing or has no IP address, the PDU session was not established successfully.
----
-Check routing:
+Check the routes from the same shell:
 
 ```bash
-sudo ip netns exec ue1 ip route
+ip route
 ```
-```bash
-default via 10.201.0.5 dev v-ue1 
-10.45.0.0/24 dev tun_srsue proto kernel scope link src 10.45.0.101 
+
+Example output from a successful run:
+
+```console
+default via 10.201.0.5 dev v-ue1
+10.45.0.0/24 dev tun_srsue proto kernel scope link src 10.45.0.101
 10.201.0.4/30 dev v-ue1 proto kernel scope link src 10.201.0.6
 ```
-This indicates:
 
-The default route sends all traffic through the UPF gateway (10.45.0.1).
-The UE has a connected route for the 10.45.0.0/24 subnet via tun_srsue.
+The routing table should include the PDU subnet. Run `exit` to return to the host.
 
----
-## Multiple UE Deployment
-The objective is to extend the single-UE deployment scenario by enabling scalable UE emulation using the OCUDU ZeroMQ broker. The broker provides a software-based RF channel abstraction that allows multiple UEs and cells to be simulated without requiring physical radio hardware. This enables researchers and developers to evaluate gNodeB performance, resource scheduling, and RAN behavior under different user densities and traffic conditions.
+## Verify Multiple UEs and Cells
 
-In this scenario, the OCUDU gNodeB is configured to support multiple UE instances. Each UE performs the standard 5G registration procedure, establishes a PDU session through the 5G Core Network, and receives an independent IP address. Once connected, traffic can be generated from each UE to evaluate network capacity, throughput distribution, latency, and resource allocation.
-To enable multiple UE, run  `<./generate_configurations.sh --ues <N> --cells <C>` where N is idendifying number for each UE, and C identifying number for each cell.
+The configuration generated earlier uses UEs 1, 2, and 3 with cells 1 and 2. Verify the running components with:
 
 ```bash
-./generate_configurations.sh --ues 2,3 --cells 1,2
+./is_running.sh
 ```
-This will enable ZMQ broker to generate ue 2 and 3 and cell 1 and 2. And then ./run.sh will search which UEs to start.
 
-#### Expected Outcome
-After registering multiple UEs, ./run.sh will return the following console output:
+The output should report all three UEs, the gNodeB, and the ZeroMQ channel emulator as running. Generate traffic for each UE separately to compare their measurements in Grafana.
+
+Both cells are configured even if Grafana initially reports only one cell with active UEs. That panel counts cells currently serving a UE; UE-to-cell paths can be adjusted in the ZeroMQ channel emulator interface.
+
+List the PDU session addresses assigned to the running UEs with:
+
 ```bash
-sudo ./run.sh 
-Successfully validated ZeroMQ broker for UEs: [2 3], Cells: [1 2].
-ZeroMQ Broker UE startup order: 2 3
-Configuring Open5GS UE data-plane network...
+./User_Equipment/additional_scripts/get_all_pdu_sessions.sh
 ```
-Then run iperf test to simulate traffic from UE to core or core to UE and start grafana WebUI to visualize the simulation.
+
+The dashboard below shows two active UEs. The number of active UEs can differ from the number configured.
 
 <b>Multiple UEs in Grafana dashboard</b><div align="center">
-  <img src="ue-23.png" alt="OCUDU Grafana WebUI" width="75%">
+  <img src="assets/ue-23.png" alt="Grafana dashboard showing multiple UEs" width="75%">
 </div>
 
 
-For multi-UE emulation using the OCUDU gNodeB ZeroMQ broker, see <a href="https://github.com/usnistgov/O-RAN-Testbed-Automation-Dev/blob/main/Next_Generation_Node_B/README.md#simulating-multiple-ues-and-cells-with-zeromq-broker">Multiple UE deployment</a> for more information.
+For more information, see [Simulating Multiple UEs and Cells with a ZeroMQ Channel Emulator](../Next_Generation_Node_B/README.md#simulating-multiple-ues-and-cells-with-a-zeromq-channel-emulator).
 
 ## Useful Commands
 
@@ -429,7 +400,7 @@ Check Kubernetes
 ```bash
 kubectl get pods -A
 ```
-```bash
+```console
 NAMESPACE      NAME                                                        READY   STATUS    RESTARTS       AGE
 kube-flannel   kube-flannel-ds-r8mkz                                       1/1     Running   0              4d2h
 kube-system    coredns-674b8bbfcf-8nvvv                                    1/1     Running   1 (88m ago)    4d2h
@@ -474,19 +445,13 @@ Restart
 
 Successful deployment should show
 
-✓ UE attached
-
-✓ PDU session established
-
-✓ Internet connectivity
-
-✓ Active Grafana dashboard
-
-✓ Live KPIs
-
-✓ Traffic visible
-
-✓ Near-RT RIC operational
+- UEs attached
+- PDU sessions established
+- Core network connectivity
+- Active Grafana dashboard
+- Live KPIs
+- Traffic visible
+- Near-RT RIC operational
 
 ---
 
@@ -499,34 +464,10 @@ Check
 ```bash
 ./is_running.sh
 ```
-#### Expected Output
-```bash
-Checking status of User Equipment...
-User Equipment: RUNNING (ue1)
 
-Checking status of gNodeB...
-gNodeB: RUNNING
+Verify that the output reports UEs 1, 2, and 3, the ZeroMQ channel emulator, and the gNodeB as running.
 
-Checking status of 5G Core components...
-mmed: RUNNING
-sgwcd: RUNNING
-smfd: RUNNING
-amfd: RUNNING
-sgwud: RUNNING
-upfd: RUNNING
-hssd: RUNNING
-pcrfd: RUNNING
-nrfd: RUNNING
-scpd: RUNNING
-ausfd: RUNNING
-udmd: RUNNING
-pcfd: RUNNING
-nssfd: RUNNING
-bsfd: RUNNING
-udrd: RUNNING
-webui: RUNNING
-```
-If component is not running, restart the testbed:
+If a component is not running, restart the testbed:
 
 
 ```bash
@@ -537,19 +478,28 @@ If component is not running, restart the testbed:
 ---
 
 ### Grafana empty
-If Grafana does not display metrics, verify that the monitoring pipeline is running correctly.
- Verify Grafana is running
+If Grafana does not display metrics, check its status:
+
+```bash
+./Next_Generation_Node_B/is_running.sh
+```
+
+To inspect the Grafana container directly, run:
 
 ```bash
 docker ps | grep grafana
 ```
-#### Expected Output
-```bash
+
+Example output from a successful run:
+
+```console
 03b793312bd8   ocudu/grafana         "/run.sh"                33 seconds ago   Up 16 seconds             0.0.0.0:3300->3000/tcp, [::]:3300->3000/tcp   ocudu-grafana
 ```
+
 If Grafana is not running, restart the dashboard:
+
 ```bash
-./start_grafana_webui.sh
+./Next_Generation_Node_B/start_grafana_webui.sh
 ```
 ---
 

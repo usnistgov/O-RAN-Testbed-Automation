@@ -80,6 +80,16 @@ while [ $# -gt 0 ]; do
     esac
 done
 
+if [ ! -x "Next_Generation_Node_B/openairinterface5g/cmake_targets/ran_build/build/nr-softmodem" ]; then
+    echo "ERROR: The Duranta OpenAirInterface gNodeB is not installed." >&2
+    exit 1
+fi
+
+if [ ! -x "User_Equipment/openairinterface5g/cmake_targets/ran_build/build/nr-uesoftmodem" ]; then
+    echo "ERROR: The Duranta OpenAirInterface UE is not installed." >&2
+    exit 1
+fi
+
 IFS=',' read -r -a UE_CONFIG_ARGS <<<"$UE_NUMBERS_STR"
 
 echo "Generating Configurations for 5G Core components..."

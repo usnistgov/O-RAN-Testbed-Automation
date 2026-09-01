@@ -157,6 +157,17 @@ while [ $# -gt 0 ]; do
         ;;
     esac
 done
+
+if [ ! -x "openairinterface5g/cmake_targets/ran_build/build/nr-softmodem" ]; then
+    echo "ERROR: The Duranta OpenAirInterface gNodeB is not installed." >&2
+    exit 1
+fi
+
+if [ ! -f "$GNB_CONFIG_TEMPLATE" ]; then
+    echo "ERROR: Duranta gNodeB configuration template not found: $GNB_CONFIG_TEMPLATE" >&2
+    exit 1
+fi
+
 if [ ${#UE_NUMBERS[@]} -eq 0 ]; then
     UE_NUMBERS=(1 2 3)
 fi

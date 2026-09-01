@@ -32,7 +32,10 @@
 set -e
 
 USE_ZMQ_CHANNEL_EMULATOR=false
-SHOW_ZMQ_CHANNEL_EMULATOR_UI=false
+SHOW_ZMQ_CHANNEL_EMULATOR_GUI=false
+if [ -z "${DISPLAY:-}" ] && [ -z "${WAYLAND_DISPLAY:-}" ]; then
+    SHOW_ZMQ_CHANNEL_EMULATOR_GUI=false
+fi
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
@@ -67,7 +70,7 @@ else
     >logs/gnb_stdout_gdb.txt
 
     if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ]; then
-        ./install_scripts/run_zmq_channel_emulator.sh --show-ui "$SHOW_ZMQ_CHANNEL_EMULATOR_UI"
+        ./install_scripts/run_zmq_channel_emulator.sh --show-ui "$SHOW_ZMQ_CHANNEL_EMULATOR_GUI"
     fi
 
     sudo chown --recursive "${SUDO_USER:-$USER}" logs

@@ -41,9 +41,12 @@ cd "$SCRIPT_DIR"
 UE_NUMBER=1
 RFSIM_SERVER=0
 USE_IMSCOPE=false
-USE_ZMQ_CHANNEL_EMULATOR=false
-SHOW_ZMQ_CHANNEL_EMULATOR_UI=true
 ZMQ_THREAD_POOL="-1,-1"
+USE_ZMQ_CHANNEL_EMULATOR=false
+SHOW_ZMQ_CHANNEL_EMULATOR_GUI=true
+if [ -z "${DISPLAY:-}" ] && [ -z "${WAYLAND_DISPLAY:-}" ]; then
+    SHOW_ZMQ_CHANNEL_EMULATOR_GUI=false
+fi
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -67,8 +70,8 @@ if ! [[ "$UE_NUMBER" =~ ^[1-9][0-9]*$ ]]; then
     echo "ERROR: UE number must be a positive integer."
     exit 1
 fi
-if [ "$SHOW_ZMQ_CHANNEL_EMULATOR_UI" != "true" ] && [ "$SHOW_ZMQ_CHANNEL_EMULATOR_UI" != "false" ]; then
-    echo "ERROR: SHOW_ZMQ_CHANNEL_EMULATOR_UI must be true or false."
+if [ "$SHOW_ZMQ_CHANNEL_EMULATOR_GUI" != "true" ] && [ "$SHOW_ZMQ_CHANNEL_EMULATOR_GUI" != "false" ]; then
+    echo "ERROR: SHOW_ZMQ_CHANNEL_EMULATOR_GUI must be true or false."
     exit 1
 fi
 
@@ -84,7 +87,7 @@ if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ]; then
         echo "ERROR: ZeroMQ device library not found. Rerun full_install.sh after setting RADIO_TYPE=\"ZMQ\"."
         exit 1
     fi
-    "$SCRIPT_DIR/install_scripts/run_zmq_channel_emulator.sh" --show-ui "$SHOW_ZMQ_CHANNEL_EMULATOR_UI"
+    "$SCRIPT_DIR/install_scripts/run_zmq_channel_emulator.sh" --show-ui "$SHOW_ZMQ_CHANNEL_EMULATOR_GUI"
 fi
 
 # Function to handle graceful shutdown

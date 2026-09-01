@@ -41,7 +41,10 @@ cd "$SCRIPT_DIR"
 UE_NUMBER=1
 RFSIM_SERVER=0
 USE_ZMQ_CHANNEL_EMULATOR=false
-SHOW_ZMQ_CHANNEL_EMULATOR_UI=false
+SHOW_ZMQ_CHANNEL_EMULATOR_GUI=false
+if [ -z "${DISPLAY:-}" ] && [ -z "${WAYLAND_DISPLAY:-}" ]; then
+    SHOW_ZMQ_CHANNEL_EMULATOR_GUI=false
+fi
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -73,7 +76,7 @@ if [ "$RFSIM_SERVER" -ne 0 ]; then
     RFSIM_SERVER_ARG="--rfsim-server"
 fi
 if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ]; then
-    "$SCRIPT_DIR/install_scripts/run_zmq_channel_emulator.sh" --show-ui "$SHOW_ZMQ_CHANNEL_EMULATOR_UI"
+    "$SCRIPT_DIR/install_scripts/run_zmq_channel_emulator.sh" --show-ui "$SHOW_ZMQ_CHANNEL_EMULATOR_GUI"
 fi
 sudo -v # Ensure sudo session is active
 sudo setsid bash -c "exec stdbuf -oL -eL \"$SCRIPT_DIR/run.sh\" $UE_NUMBER $RFSIM_SERVER_ARG" </dev/null >/dev/null 2>&1 &

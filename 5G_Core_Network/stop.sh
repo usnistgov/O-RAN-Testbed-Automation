@@ -60,6 +60,11 @@ fi
 # Latest components (see https://open5gs.org/open5gs/docs/guide/01-quickstart/#:~:text=Starting%20and%20Stopping%20Open5GS)
 APPS=("mmed" "sgwcd" "smfd" "amfd" "sgwud" "upfd" "hssd" "pcrfd" "nrfd" "scpd" "seppd" "ausfd" "udmd" "pcfd" "nssfd" "bsfd" "udrd" "webui")
 
+if command -v systemctl >/dev/null 2>&1 && systemctl is-active --quiet open5gs-webui 2>/dev/null; then
+    echo "Stopping open5gs-webui service..."
+    sudo systemctl stop open5gs-webui
+fi
+
 component_pids() {
     local APP="$1"
     pgrep -f "open5gs-$APP"

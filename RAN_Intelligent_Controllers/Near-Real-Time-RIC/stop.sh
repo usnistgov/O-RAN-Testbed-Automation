@@ -36,6 +36,8 @@ cd "$SCRIPT_DIR"
 
 echo "# Script: $(realpath "$0") $@"
 
+sudo ./install_scripts/stop_e2sim.sh
+
 echo "Stopping the cluster..."
 sudo systemctl start kubelet
 if kubectl get pdb r4-influxdb-influxdb2 -n ricplt &>/dev/null; then

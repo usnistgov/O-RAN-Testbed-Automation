@@ -1,6 +1,6 @@
 # Automation Tool for Deploying 5G O-RAN Testbeds
 
-Based on the blueprints described in NIST TN 2311 [\[1\]][nist-tn-2311], this automation tool facilitates the deployment and configuration of 5G Open Radio Access Network (O-RAN) testbeds. Designed to operate in both bare metal and virtualized environments, it simplifies setting up the components required for a 5G O-RAN testbed, including the 5G Core; Next Generation Node B (gNodeB) composed of Radio Unit (RU), Distributed Unit (DU), and Centralized Unit (CU); User Equipment (UE); RAN Intelligent Controller (RIC); and a series of xApps that can be installed in the RIC. This reduces the complexity and time required to operationalize the testbeds described in the report above, and enables more efficient testing and validation to facilitate research and development in 5G technologies.
+Based on the blueprints described in NIST TN 2311 [\[1\]][nist-tn-2311], this automation tool facilitates the deployment and configuration of 5G Open Radio Access Network (O-RAN) testbeds. Designed to operate in both bare metal and virtualized environments, it simplifies setting up the components required for a 5G O-RAN testbed, including the 5G Core; Next Generation Node B (gNodeB) composed of Radio Unit (RU), Distributed Unit (DU), and Centralized Unit (CU); User Equipment (UE); RAN Intelligent Controller (RIC); and a series of xApps that can be installed in the RIC. This reduces the complexity and time required to operationalize the testbeds described in the report above, and enables more efficient testing and validation to facilitate research and development in 5G/6G technologies.
 
 ## Setting Up a Testbed
 
@@ -10,22 +10,21 @@ The automation tool can be used in virtual machines and physical machines with t
 
 <div align="center">
   <picture>
-    <source media="(prefers-color-scheme: light)" srcset="./Images/Architecture_Light.svg">
-    <source media="(prefers-color-scheme: dark)" srcset="./Images/Architecture_Dark.svg">
-    <img alt="Diagram of Testbed Open-Source Components" width="70%">
+    <source media="(prefers-color-scheme: light)" srcset="Images/Architecture_Light.svg">
+    <source media="(prefers-color-scheme: dark)" srcset="Images/Architecture_Dark.svg">
+    <img src="Images/Architecture_Light.svg" alt="Diagram of Testbed Open-Source Components" width="70%">
   </picture>
-  <!-- <img src="Images/Architecture_Light.svg" alt="Diagram of Testbed Open-Source Components" width="70%"> -->
 </div>
 
-This tool supports the deployment of 5G O-RAN testbeds using open-source components in two main scenarios: OCUDU with O-RAN SC's Near-RT RIC, and OpenAirInterface with Mosaic5G's FlexRIC. Below is the list of the supported testbed open-source components.
+This tool supports the deployment of 5G O-RAN testbeds using open-source components in two main scenarios: OCUDU with O-RAN SC's Near-RT RIC, and Duranta (OpenAirInterface) with Mosaic5G's FlexRIC. Below is the list of the supported testbed open-source components.
 
 ```text
 CU/DU
 ├── OCUDU: 26.04
-├── OpenAirInterface gNB: 2026.w22
-└── O-RAN SC E2 Simulator: M-Release
+├── Duranta (OAI) gNB: 2026.w35
+└── O-RAN SC E2 Simulator: N-Release
 RICs
-├── O-RAN SC Near-RT RIC: M-Release
+├── O-RAN SC Near-RT RIC: N-Release
 │   └── xApps
 │       ├── Hello World xApps (Go, Python, and Rust)
 │       ├── KPM Monitor xApp
@@ -40,27 +39,25 @@ RICs
 │       ├── MAC + RLC + PDCP + GTP Monitor xApp
 │       ├── RIC Control xApp
 │       └── RIC Control Monitor xApp
-└── O-RAN SC Non-RT RIC: M-Release
+└── O-RAN SC Non-RT RIC: N-Release
     └── Minimal prototype with no rApp support.
 5G Core
-├── Open5GS: v2.7.7
+├── Open5GS: v2.8.0
 ├── OPENAIR-CN-5G: v2.2.0
 └── free5GC: v4.2.1
-
 UEs
 ├── srsRAN_4G: release_25_10
-└── OpenAirInterface 5G UE: 2026.w22
+└── Duranta (OAI) 5G UE: 2026.w35
 ```
 
-The components that have been verified to support or not support connectivity are included below.
+The components that have been verified to support connectivity are included below.
 
 <div align="center">
   <picture>
-    <source media="(prefers-color-scheme: light)" srcset="./Images/Support_Light.svg">
-    <source media="(prefers-color-scheme: dark)" srcset="./Images/Support_Dark.svg">
-    <img alt="Diagram of Supported Connections" width="97%">
+    <source media="(prefers-color-scheme: light)" srcset="Images/Support_Light.svg">
+    <source media="(prefers-color-scheme: dark)" srcset="Images/Support_Dark.svg">
+    <img src="Images/Support_Light.svg" alt="Diagram of Supported Connections" width="97%">
   </picture>
-  <!-- <img src="Images/Support_Light.svg" alt="Diagram of Supported Connections" width="97%"> -->
 </div>
 
 ### Minimum System Requirements
@@ -128,7 +125,8 @@ Alternatively, the repository may be cloned over SSH: `git clone git@github.com:
 ---
 
 > [!IMPORTANT]
-> The deployment scenario based on OpenAirInterface with FlexRIC can be installed from the `OpenAirInterface_Testbed` directory, while the deployment scenario based on srsRAN and O-RAN SC's Near-RT RIC can be installed from the base directory.
+> The deployment scenario based on Duranta with FlexRIC can be installed from the `OpenAirInterface_Testbed` directory, while the deployment scenario based on srsRAN and O-RAN SC's Near-RT RIC can be installed from the base directory.
+> - To use OCUDU with FlexRIC instead of O-RAN SC's Near-RT RIC, refer to [\[2\]][gh-ocudu-e2].
 
 Begin the installation process, recommended to be run as the current user rather than as root:
 
@@ -149,7 +147,7 @@ Begin the installation process, recommended to be run as the current user rather
   <summary><b>OCUDU and O-RAN SC Near-RT RIC Output</b></summary>
   <hr>
 
-Run the testbed with `./run.sh` to start the 5G Core, gNodeB, and UEs 2 and 3 as background processes, and UE 1 in the foreground. Use `./is_running.sh` to check if the components are running, and `./stop.sh` to stop the components. The optional RIC starts automatically on boot and can be accessed with `k9s -A`.
+Run the testbed with `./run.sh` to start the 5G Core, gNodeB, and UEs. Set `USE_DURANTA_UE=true` in `run.sh` and `generate_configurations.sh` to use Duranta UEs instead of the default srsRAN_4G UEs. To switch from band 3 to band 78, search for `Radio configuration presets` and update each section. Use `./is_running.sh` to check the components and `./stop.sh` to stop them. The optional RIC starts automatically on boot and can be accessed with `k9s -A`.
 
 ```console
 Attaching UE...
@@ -160,8 +158,8 @@ PDU Session Establishment successful. IP: 10.45.0.101
 RRC NR reconfiguration successful.
 ```
 
-<b>OCUDU Grafana WebUI and ZMQ Broker Visualization</b><div align="center">
-  <img src="Images/OCUDU_Grafana_WebUI.png" alt="OCUDU Grafana WebUI and ZMQ Broker" width="75%">
+<b>OCUDU Grafana WebUI and ZeroMQ Channel Emulator Visualization</b><div align="center">
+  <img src="Images/OCUDU_Grafana_WebUI.png" alt="OCUDU Grafana WebUI and ZeroMQ Channel Emulator" width="75%">
 </div>
 
 See <a href="Next_Generation_Node_B/README.md#ocudu-grafana-webui">this section</a> for more information.
@@ -176,33 +174,43 @@ See <a href="RAN_Intelligent_Controllers/Near-Real-Time-RIC#migration-to-cilium"
 ---
 
 <details>
-  <summary><b>OpenAirInterface and FlexRIC Output</b></summary>
+  <summary><b>Duranta and FlexRIC Output</b></summary>
   <hr>
 
 Run the testbed with `./run.sh` to start the 5G Core, FlexRIC, gNodeB, and UE as background processes, and the KPM monitoring xApp in the foreground. Use `./is_running.sh` to check if the components are running, and `./stop.sh` to stop the components.
 
 ```console
 Connected E2 nodes = 1
+[xApp] Using S-NSSAI SST=1 SD=ffffff (env SST/SD can override)
+[xApp] Subscribing to KPM report style 1.
 [xApp]: E42 RIC SUBSCRIPTION REQUEST tx RAN_FUNC_ID 2 RIC_REQ_ID 1 
 [xApp]: SUBSCRIPTION RESPONSE rx
 [xApp]: Successfully subscribed to RAN_FUNC_ID 2 
+[xApp] Subscribing to KPM report style 4.
 [xApp]: E42 RIC SUBSCRIPTION REQUEST tx RAN_FUNC_ID 2 RIC_REQ_ID 2 
 [xApp]: SUBSCRIPTION RESPONSE rx
 [xApp]: Successfully subscribed to RAN_FUNC_ID 2 
+E2 node: gNB:3584
 
-      1 KPM ind_msg latency = 1021 [μs]
+      1 KPM ind_msg latency = 1053 [μs]
 UE ID type = gNB, amf_ue_ngap_id = 1
 ran_ue_id = 1
 DRB.PdcpSduVolumeDL = 0 [Mb]
 DRB.PdcpSduVolumeUL = 0 [Mb]
 DRB.RlcSduDelayDl = 0.00 [μs]
 DRB.UEThpDl = 0.02 [kbps]
-DRB.UEThpUl = 0.51 [kbps]
+DRB.UEThpUl = 0.44 [kbps]
 RRU.PrbTotDl = 0 [%]
-RRU.PrbTotUl = 0 [%]
+RRU.PrbTotUl = 8 [%]
+E2 node: gNB:3584
 
-      2 KPM ind_msg latency = 3516 [μs]
-CARR.PDSCHMCSDist = [[[195, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]], [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]], [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]], [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]], [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]], [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]], [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]], [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]] [PDSCH_RBs]
+      2 KPM ind_msg latency = 8904 [μs]
+CARR.PDSCHMCSDist = [...]
+CARR.PUSCHMCSDist = [...]
+L1M.SS-RSRP = [...]
+MR.NRScSSSINR = [...]
+RRC.ConnMean = 0 
+E2 node: gNB:3584
 ...
 ```
 
@@ -215,28 +223,35 @@ See <a href="OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC#k
 
 ---
 
+## Deployment Tutorials
+
+| Tutorial | Focus |
+|----------|-------|
+| [Deploying OCUDU gNB with Multiple Cells and UEs, Grafana Monitoring, and Traffic Simulation][gh-tutorial1] [\[3\]][gh-tutorial1] | Configure multiple cells and UEs, generate traffic, and monitor performance in Grafana |
+| [OCUDU gNB with Multiple Cells and UEs, RIC, and KPM Monitoring][gh-tutorial2] [\[4\]][gh-tutorial2] | Connect OCUDU to the O-RAN SC Near-RT RIC or FlexRIC and monitor E2SM-KPM reports |
+
 ## Software Versioning
 
-For stability of software dependencies, all `git clone` calls are routed through `commit_hashes.json` which specifies a branch and/or commit hash for each repository. This file can be updated manually, or with `./Additional_Scripts/update_commit_hashes.sh` to fetch the latest commit hashes. For information about the automation tool versions, please see the releases page [\[2\]][gh-ota].
+For stability of software dependencies, all `git clone` calls are routed through `commit_hashes.json` which specifies a branch and/or commit hash for each repository. This file can be updated manually, or with `./Additional_Scripts/update_commit_hashes.sh` to fetch the latest commit hashes. For information about the automation tool versions, please see the releases page [\[5\]][gh-ota].
 
 ## Documentation
 
 For more information about a specific component, refer to the README.md files in the respective subdirectories:
-- README.md [\[3\]][gh-readme]
-- 5G_Core_Network/README.md [\[4\]][gh-5gcore]
-- 5G_Core_Network/Additional_Cores_5GDeploy/README.md [\[5\]][gh-5gdeploy]
-- Next_Generation_Node_B/README.md [\[6\]][gh-gnodeb]
-- User_Equipment/README.md [\[7\]][gh-ue]
-- RAN_Intelligent_Controllers/Near-Real-Time-RIC/README.md [\[8\]][gh-nearrtric]
-- RAN_Intelligent_Controllers/Non-Real-Time-RIC/README.md [\[9\]][gh-nonrtric]
-- OpenAirInterface_Testbed/README.md [\[10\]][gh-oai]
-- OpenAirInterface_Testbed/Next_Generation_Node_B/README.md [\[11\]][gh-oaignb]
-- OpenAirInterface_Testbed/User_Equipment/README.md [\[12\]][gh-oaiue]
-- OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC/README.md [\[13\]][gh-flexric]
+- README.md [\[6\]][gh-readme]
+- 5G_Core_Network/README.md [\[7\]][gh-5gcore]
+- 5G_Core_Network/Additional_Cores_5GDeploy/README.md [\[8\]][gh-5gdeploy]
+- Next_Generation_Node_B/README.md [\[9\]][gh-gnodeb]
+- User_Equipment/README.md [\[10\]][gh-ue]
+- RAN_Intelligent_Controllers/Near-Real-Time-RIC/README.md [\[11\]][gh-nearrtric]
+- RAN_Intelligent_Controllers/Non-Real-Time-RIC/README.md [\[12\]][gh-nonrtric]
+- OpenAirInterface_Testbed/README.md [\[13\]][gh-oai]
+- OpenAirInterface_Testbed/Next_Generation_Node_B/README.md [\[14\]][gh-oaignb]
+- OpenAirInterface_Testbed/User_Equipment/README.md [\[15\]][gh-oaiue]
+- OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC/README.md [\[16\]][gh-flexric]
 
 ## Contact Information
 
-USNISTGOV/O-RAN-Testbed-Automation is developed and maintained by the NIST Wireless Networks Division [\[14\]][nist-wnd], as part of their Open RAN Research Program [\[15\]][nist-oran].  Contacts for this software:
+USNISTGOV/O-RAN-Testbed-Automation is developed and maintained by the NIST Wireless Networks Division [\[17\]][nist-wnd], as part of their Open RAN Research Program [\[18\]][nist-oran].  Contacts for this software:
 
 - Simeon J. Wuthier, @Simewu
 - Fernando J. Cintrón, @fjcintron
@@ -244,45 +259,50 @@ USNISTGOV/O-RAN-Testbed-Automation is developed and maintained by the NIST Wirel
 
 ## NIST Disclaimers
 
-- **NIST Software Disclaimer** [\[16\]][gh-nsd]
-- **Fair Use and Licensing Statements of NIST Data/Works** [\[17\]][gh-license]
+- **NIST Software Disclaimer** [\[19\]][gh-nsd]
+- **Fair Use and Licensing Statements of NIST Data/Works** [\[20\]][gh-license]
 
 ## References
 
 1. Liu, Peng, Lee, Kyehwan, Cintrón, Fernando J., Wuthier, Simeon, Savaliya, Bhadresh, Montgomery, Douglas, Rouil, Richard (2024). Blueprint for Deploying 5G O-RAN Testbeds: A Guide to Using Diverse O-RAN Software Stacks. National Institute of Standards and Technology. [https://doi.org/10.6028/NIST.TN.2311][nist-tn-2311].
-2. Releases, Automation Tool for Deploying 5G O-RAN Testbeds. GitHub. [https://github.com/USNISTGOV/O-RAN-Testbed-Automation/releases][gh-ota].
-3. Documentation of Base Directory. [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/README.md][gh-readme]
-4. Documentation of 5G Core Network (Open5GS). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/5G_Core_Network/README.md][gh-5gcore].
-5. Documentation of Additional Cores for 5G Deployment. [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/5G_Core_Network/Additional_Cores_5GDeploy/README.md][gh-5gdeploy].
-6. Documentation of Next Generation Node B (OCUDU). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/Next_Generation_Node_B/README.md][gh-gnodeb].
-7. Documentation of User Equipment (srsRAN_4G). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/User_Equipment/README.md][gh-ue].
-8. Documentation of Near-Real Time RAN Intelligent Controller (O-RAN SC). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/RAN_Intelligent_Controllers/Near-Real-Time-RIC/README.md][gh-nearrtric].
-9. Documentation of Non-Real Time RAN Intelligent Controller (O-RAN SC). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/RAN_Intelligent_Controllers/Non-Real-Time-RIC/README.md][gh-nonrtric].
-10. Documentation of OpenAirInterface Testbed. [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/OpenAirInterface_Testbed/README.md][gh-oai].
-11. Documentation of Next Generation Node B (OpenAirInterface). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/OpenAirInterface_Testbed/Next_Generation_Node_B/README.md][gh-oaignb].
-12. Documentation of User Equipment (OpenAirInterface). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/OpenAirInterface_Testbed/User_Equipment/README.md][gh-oaiue].
-13. Documentation of Near-Real Time RAN Intelligent Controller (FlexRIC). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC/README.md][gh-flexric].
-14. Wireless Networks Division. National Institute of Standards and Technology. [https://www.nist.gov/ctl/Wireless-Networks-Division][nist-wnd].
-15. Open RAN Research at NIST. National Institute of Standards and Technology. [https://www.nist.gov/programs-projects/Open-RAN-Research-NIST][nist-oran].
-16. NIST Software Disclaimer. [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/NIST Software Disclaimer.md][gh-nsd].
-17. Fair Use and Licensing Statements of NIST Data/Works: [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/LICENSE][gh-license].
+2. OCUDU with FlexRIC. [https://github.com/usnistgov/O-RAN-Testbed-Automation/tree/main/Next_Generation_Node_B/README.md#e2-interface][gh-ocudu-e2].
+3. Deploying OCUDU gNB with Multiple Cells and UEs, Grafana Monitoring, and Traffic Simulation. [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/Tutorials/OCUDU_gNB_N_UEs_Grafana_Traffic.md][gh-tutorial1].
+4. OCUDU gNB with Multiple Cells and UEs, RIC, and KPM Monitoring. [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/Tutorials/OCUDU_gNB_N_UEs_RIC_xApp.md][gh-tutorial2].
+5. Releases, Automation Tool for Deploying 5G O-RAN Testbeds. [https://github.com/USNISTGOV/O-RAN-Testbed-Automation/releases][gh-ota].
+6. Documentation of Base Directory. [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/README.md][gh-readme]
+7. Documentation of 5G Core Network (Open5GS). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/5G_Core_Network/README.md][gh-5gcore].
+8. Documentation of Additional Cores for 5G Deployment. [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/5G_Core_Network/Additional_Cores_5GDeploy/README.md][gh-5gdeploy].
+9. Documentation of Next Generation Node B (OCUDU). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/Next_Generation_Node_B/README.md][gh-gnodeb].
+10. Documentation of User Equipment (srsRAN_4G). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/User_Equipment/README.md][gh-ue].
+11. Documentation of Near-Real Time RAN Intelligent Controller (O-RAN SC). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/RAN_Intelligent_Controllers/Near-Real-Time-RIC/README.md][gh-nearrtric].
+12. Documentation of Non-Real Time RAN Intelligent Controller (O-RAN SC). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/RAN_Intelligent_Controllers/Non-Real-Time-RIC/README.md][gh-nonrtric].
+13. Documentation of OpenAirInterface Testbed. [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/OpenAirInterface_Testbed/README.md][gh-oai].
+14. Documentation of Next Generation Node B (Duranta). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/OpenAirInterface_Testbed/Next_Generation_Node_B/README.md][gh-oaignb].
+15. Documentation of User Equipment (Duranta). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/OpenAirInterface_Testbed/User_Equipment/README.md][gh-oaiue].
+16. Documentation of Near-Real Time RAN Intelligent Controller (FlexRIC). [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC/README.md][gh-flexric].
+17. Wireless Networks Division. National Institute of Standards and Technology. [https://www.nist.gov/ctl/Wireless-Networks-Division][nist-wnd].
+18. Open RAN Research at NIST. National Institute of Standards and Technology. [https://www.nist.gov/programs-projects/Open-RAN-Research-NIST][nist-oran].
+19. NIST Software Disclaimer. [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/NIST Software Disclaimer.md][gh-nsd].
+20. Fair Use and Licensing Statements of NIST Data/Works: [https://github.com/usnistgov/O-RAN-Testbed-Automation/blob/main/LICENSE][gh-license].
 
 ## <!-- HR 2 -->
 
 <div align="center">
   <a href="https://www.nist.gov" target="_blank">
     <picture>
-      <source media="(prefers-color-scheme: light)" srcset="./Images/125_NIST_Light.png">
-      <source media="(prefers-color-scheme: dark)" srcset="./Images/125_NIST_Dark.png">
-      <img alt="National Institute of Standards and Technology" width="85%">
+      <source media="(prefers-color-scheme: light)" srcset="Images/125_NIST_Light.png">
+      <source media="(prefers-color-scheme: dark)" srcset="Images/125_NIST_Dark.png">
+      <img src="Images/125_NIST_Light.png" alt="National Institute of Standards and Technology" width="85%">
     </picture>
-    <!-- <img src="Images/125_NIST_Light.png" alt="National Institute of Standards and Technology" width="85%"> -->
   </a>
 </div>
 
 <!-- References -->
 
 [nist-tn-2311]: https://doi.org/10.6028/NIST.TN.2311
+[gh-ocudu-e2]: Next_Generation_Node_B/README.md#e2-interface
+[gh-tutorial1]: Tutorials/OCUDU_gNB_N_UEs_Grafana_Traffic.md
+[gh-tutorial2]: Tutorials/OCUDU_gNB_N_UEs_RIC_xApp.md
 [gh-ota]: https://github.com/USNISTGOV/O-RAN-Testbed-Automation/releases
 [gh-readme]: README.md
 [gh-5gcore]: 5G_Core_Network/README.md

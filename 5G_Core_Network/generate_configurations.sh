@@ -31,7 +31,22 @@
 # Exit immediately if a command fails
 set -e
 
-UE_NUMBERS=(3 2 1) # Subscribers from UE 3 to UE 1
+if [ $# -eq 1 ] && { [ "$1" = "-h" ] || [ "$1" = "--help" ]; }; then
+    echo "Usage: $0 [ue_number ...]"
+    exit 0
+fi
+
+UE_NUMBERS=("$@")
+if [ ${#UE_NUMBERS[@]} -eq 0 ]; then
+    UE_NUMBERS=(3 2 1) # Subscribers from UE 3 to UE 1
+fi
+for UE_NUMBER in "${UE_NUMBERS[@]}"; do
+    if ! [[ "$UE_NUMBER" =~ ^[1-9][0-9]*$ ]]; then
+        echo "ERROR: UE number must be a positive integer."
+        echo "Usage: $0 [ue_number ...]"
+        exit 1
+    fi
+done
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
@@ -162,7 +177,7 @@ if [[ -z "${SST[0]}" || -z "${SD[0]}" || "${SST[0]}" == "null" || "${SD[0]}" == 
     exit 1
 fi
 
-# SST/SD are configured in options.yaml as hex without 0x prefix.
+# SST/SD are configured in options.yaml as hex without 0x prefix
 for i in "${!SST[@]}"; do
     CURRENT_DNN="${DNN[$i]}"
     CURRENT_SST="${SST[$i]}"
@@ -196,7 +211,7 @@ mkdir configs
 MONGODB_CONFIG_FILE="/etc/mongod/mongod.conf"
 if [ -f "$MONGODB_CONFIG_FILE" ]; then
     echo "Creating symbolic link for MongoDB configuration file..."
-    sudo ln -s "$MONGODB_CONFIG_FILE" configs/mongod.conf
+    ln -s "$MONGODB_CONFIG_FILE" configs/mongod.conf || sudo ln -s "$MONGODB_CONFIG_FILE" configs/mongod.conf
 fi
 
 # Only remove the logs if no component is running
@@ -426,7 +441,7 @@ OGSTUN_IPV6_1="$(python3 install_scripts/fetch_nth_ip.py "$OGSTUN_IPV6" 0)"
 if [ "$EXPOSE_AMF_OVER_HOSTNAME" = true ]; then
     AMF_IP=$(hostname -I | awk '{print $1}')
     set_configuration_server_ips $AMF_IP
-    # Need an address for the gNodeB to bind to that is not the host IP.
+    # Need an address for the gNodeB to bind to that is not the host IP
     if [ "$IS_OPEN5GS_ON_HOST" = true ]; then
         AMF_IP_BIND=$OGSTUN_IPV4_1
     else
@@ -499,7 +514,7 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
     # Build the array of slices for subscriber
     SLICES_ARGS=()
     for ((i = 0; i < ${#SST[@]}; i++)); do
-        SLICES_ARGS+=(--apn "$CURRENT_DNN" --sst "${SST[$i]}" --sd "${SD[$i]}")
+        SLICES_ARGS+=(--apn "${DNN[$i]}" --sst "${SST[$i]}" --sd "${SD[$i]}")
         # Apply static IP if UE_IPV4 was found earlier
         if [ -n "$UE_IPV4" ]; then
             SLICES_ARGS+=(--ipv4 "$UE_IPV4")

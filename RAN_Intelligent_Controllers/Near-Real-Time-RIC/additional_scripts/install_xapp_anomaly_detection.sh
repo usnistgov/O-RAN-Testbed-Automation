@@ -28,7 +28,7 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-echo "# Script: $(realpath "$0")..."
+echo "# Script: $(realpath "$0") $@"
 
 # Run this script to build and deploy the Anamoly Detection xApp (ad) in the Near-Real-Time RIC.
 # More information can be found at: https://github.com/o-ran-sc/ric-app-ad and https://docs.o-ran-sc.org/projects/o-ran-sc-ric-app-ad/en/latest/overview.html
@@ -43,6 +43,7 @@ cd "$PARENT_DIR"
 
 # Run a sudo command every minute to ensure script execution without user interaction
 ./install_scripts/start_sudo_refresh.sh
+trap './install_scripts/stop_sudo_refresh.sh 2>/dev/null || true' EXIT
 
 if ! kubectl get pods -n ricplt | grep r4-influxdb-influxdb2 &>/dev/null; then
     echo "The InfluxDB pod is not running, installing it..."
@@ -129,8 +130,8 @@ if ! command -v jq &>/dev/null; then
 fi
 
 FILE="xapp-descriptor/config_updated.json"
-sudo rm -rf $FILE
-cp xapp-descriptor/config.json $FILE
+sudo rm -rf "$FILE"
+cp xapp-descriptor/config.json "$FILE"
 # Modify the required fields using jq and overwrite the original file
 jq '.containers[0].image.tag = "latest" |
     .containers[0].image.registry = "127.0.0.1:80" |
@@ -231,6 +232,7 @@ cd "$PARENT_DIR"
 # Stop the sudo timeout refresher, it is no longer necessary to run
 ./install_scripts/stop_sudo_refresh.sh
 
+stty sane || true
 echo
 echo
 echo "################################################################################"

@@ -1,0 +1,33 @@
+diff --git a/e2sm/asn1/kpm2_0.asn b/e2sm/asn1/kpm2_0.asn
+index f9d812d..8fee31a 100644
+--- a/e2sm/asn1/kpm2_0.asn
++++ b/e2sm/asn1/kpm2_0.asn
+@@ -32,6 +32,8 @@ TimeStamp ::= OCTET STRING (SIZE(4))
+ 
+ GranularityPeriod ::= INTEGER (1.. 4294967295)
+ 
++LogicalOR ::= ENUMERATED {true, ...}
++
+ MeasurementType ::= CHOICE {
+ 	measName				MeasurementTypeName,
+ 	measID				MeasurementTypeID,
+@@ -176,7 +178,13 @@ MeasurementCondUEidItem ::= SEQUENCE {
+ 
+ MatchingCondList ::= SEQUENCE (SIZE(1..maxnoofConditionInfo)) OF MatchingCondItem
+ 
+-MatchingCondItem ::= CHOICE{
++MatchingCondItem ::= SEQUENCE {
++	matchingCondChoice	MatchingCondItem-Choice,
++	logicalOR				LogicalOR						OPTIONAL,
++	...
++}
++
++MatchingCondItem-Choice ::= CHOICE{
+ 	measLabel			MeasurementLabel,
+ 	testCondInfo		TestCondInfo,
+ 	...
+@@ -324,4 +332,3 @@ RIC-ReportStyle-Item ::= SEQUENCE{
+ END
+ 
+ -- ASN1STOP
+-

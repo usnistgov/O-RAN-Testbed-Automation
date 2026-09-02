@@ -48,12 +48,12 @@ if [ -z "$DU_NUMBER" ]; then
     echo "    For example, $0 1 [--no-rfsim-server]"
     exit 1
 fi
-if ! [[ $DU_NUMBER =~ ^[0-9]+$ ]]; then
-    echo "ERROR: DU number must be a number."
+if ! [[ "$DU_NUMBER" =~ ^[1-9][0-9]*$ ]]; then
+    echo "ERROR: DU number must be a positive integer."
     exit 1
 fi
-if [ $DU_NUMBER -lt 1 ]; then
-    echo "ERROR: DU number must be greater than or equal to 1."
+if ! install_scripts/get_du_namespace_ip.sh du "$DU_NUMBER" >/dev/null 2>&1; then
+    echo "ERROR: DU $DU_NUMBER cannot be allocated an address in the namespace subnet."
     exit 1
 fi
 
@@ -78,7 +78,7 @@ echo "Generating configuration for DU $DU_NUMBER..."
 # Set Active_gNBs = ... to Active_gNBs = ( "du${DU_NUMBER}-rfsim");
 sed -i "s|^\([[:space:]]*\)Active_gNBs\s*=.*|\1Active_gNBs = ( \"du${DU_NUMBER}-rfsim\" );|" "$DU_CONF"
 
-HEX=$(printf '%x' $((0xe00 + DU_NUMBER - 1)))
+HEX=$(printf '%x' "$DU_NUMBER") # $(printf '%x' $((0xe00 + DU_NUMBER - 1)))
 
 # Set unique gNB_DU_ID, gNB_name, nr_cellid, physCellId, local_n_address, and remote_n_address
 # sed -i "s|^\([[:space:]]*\)gNB_ID\s*=.*|\1gNB_ID = 0x$HEX;|" "$DU_CONF" # Does not need to be unique
@@ -101,12 +101,6 @@ sed -i "s|^\([[:space:]]*\)physCellId\s*=.*|\1physCellId = $((DU_NUMBER - 1));|"
 sed -i "s|^\([[:space:]]*\)prach_RootSequenceIndex\s*=.*|\1prach_RootSequenceIndex                                     = $DU_NUMBER;|" "$DU_CONF"
 SSB_BITMAP=$((1 << (DU_NUMBER - 1)))
 sed -i "s|^\([[:space:]]*\)ssb_PositionsInBurst_Bitmap\s*=.*|\1ssb_PositionsInBurst_Bitmap = $SSB_BITMAP;|" "$DU_CONF"
-
-if ! command -v python3 &>/dev/null; then
-    echo "Python is not installed. Installing Python..."
-    sudo apt-get update
-    sudo apt-get install -y python3
-fi
 
 DU_IP_INDEX=$((DU_NUMBER + 99)) # The CU is 127.0.0.100, and DU 1 is 127.0.0.101
 LOCAL_N_ADDRESS="$(python3 install_scripts/fetch_nth_ip.py "127.0.0.0/16" "$DU_IP_INDEX")"

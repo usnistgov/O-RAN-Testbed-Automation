@@ -28,7 +28,7 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-# The number of milliseconds between each KPI report (default: 1000)
+# Number of milliseconds between each KPI report (default: 1000)
 XAPP_PERIODICITY_MS="${1:-1000}"
 
 # Exit immediately if a command fails
@@ -40,7 +40,7 @@ if ! command -v realpath &>/dev/null; then
     sudo env $APTVARS apt-get install -y coreutils
 fi
 
-echo "# Script: $(realpath "$0")..."
+echo "# Script: $(realpath "$0") $@"
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")

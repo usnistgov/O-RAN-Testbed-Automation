@@ -37,7 +37,7 @@ if ! command -v realpath &>/dev/null; then
     sudo env $APTVARS apt-get install -y coreutils
 fi
 
-echo "# Script: $(realpath "$0")..."
+echo "# Script: $(realpath "$0") $@"
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
@@ -90,5 +90,5 @@ if dpkg -l | grep -q influxdb; then
     echo "Please check the output above for errors."
     exit 1
 else
-    echo "Successfully uninstalled InfluxDB 2.x."
+    echo "Successfully completed InfluxDB 2.x uninstallation."
 fi

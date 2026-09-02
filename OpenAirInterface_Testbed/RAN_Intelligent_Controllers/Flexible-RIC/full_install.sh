@@ -52,7 +52,7 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
 # Check for binary to determine if FlexRIC is already installed
-if [ "$CLEAN_INSTALL" != "true" ] && [ -f "flexric/build/examples/ric/nearRT-RIC" ]; then
+if [ "$CLEAN_INSTALL" != "true" ] && [ -f "flexric/build/examples/ric/nearRT-RIC" ] && [ -d "$FLEXRIC_LIBRARY_DIR" ]; then
     echo "FlexRIC is already installed, skipping."
     exit 0
 fi
@@ -63,12 +63,13 @@ fi
 
 # Run a sudo command every minute to ensure script execution without user interaction
 ./install_scripts/start_sudo_refresh.sh
+trap './install_scripts/stop_sudo_refresh.sh 2>/dev/null || true' EXIT
 
 # Get the start timestamp in seconds
 INSTALL_START_TIME=$(date +%s)
 
 echo "Installing dependencies..."
-sudo env $APTVARS apt-get install -y build-essential automake bison flex
+sudo env $APTVARS apt-get install -y build-essential automake autoconf libtool bison flex
 sudo env $APTVARS apt-get install -y libsctp-dev python3 cmake-curses-gui libpcre2-dev python3-dev
 
 # Check if GCC 13 or newer is installed, if not, install it and set it as the default
@@ -84,7 +85,10 @@ else
 fi
 if [[ "$INSTALL_GCC" == "true" ]]; then
     echo "Installing GCC 13..."
-    sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+    if ! sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test; then
+        echo "ERROR: Failed to add the Ubuntu Toolchain PPA."
+        exit 1
+    fi
     sudo apt-get update
     sudo env $APTVARS apt-get install -y gcc-13 g++-13
     sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 100
@@ -92,6 +96,22 @@ if [[ "$INSTALL_GCC" == "true" ]]; then
 fi
 export CFLAGS="-Wno-error=incompatible-pointer-types"
 export CXXFLAGS="-Wno-error=incompatible-pointer-types"
+
+if ! command -v cmake &>/dev/null; then
+    echo "Installing CMake..."
+    sudo apt-get update
+    sudo env $APTVARS apt-get install -y cmake
+fi
+CMAKE_VERSION=$(cmake --version | head -n1 | awk '{print $3}')
+if [[ "$CMAKE_VERSION" == 3.16.* ]]; then
+    UBUNTU_CODENAME=$(./install_scripts/get_ubuntu_codename.sh)
+    echo "Detected CMake $CMAKE_VERSION. Updating CMake for FlexRIC compatibility..."
+    # Add Kitware's apt repository
+    wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc | sudo apt-key add -
+    sudo apt-add-repository -y "deb https://apt.kitware.com/ubuntu/ $UBUNTU_CODENAME main"
+    sudo apt-get update
+    sudo env $APTVARS apt-get install -y cmake
+fi
 
 if [ ! -d "swig" ]; then
     echo "Cloning SWIG..."
@@ -116,12 +136,12 @@ cd "$SCRIPT_DIR"
 
 if [ ! -d "flexric" ]; then
     echo "Cloning Flexible RAN Intelligent Controller (FlexRIC)..."
-    ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/mosaic5g/flexric.git --https
+    ./install_scripts/git_clone.sh https://github.com/duranta-project/flexric.git
 fi
 
 CURRENT_E2_PORT=$(sed -nE 's/.*e2ap_server_port *= *([0-9]+);/\1/p' flexric/src/agent/e2_agent_api.c)
 if [ -z "$CURRENT_E2_PORT" ]; then
-    echo "ERROR: e2ap_server_port not found in flexric/src/agent/e2_agent_api.c" >&2
+    echo "ERROR: e2ap_server_port not found in flexric/src/agent/e2_agent_api.c"
     exit 1
 fi
 # Check if the substitute port is already in use
@@ -142,6 +162,37 @@ if [ "$APPLY_PATCHES" = true ]; then
     ./install_scripts/apply_patches.sh
 fi
 
+# Use Duranta OpenAirInterface build_helper if asn1c is not found
+ASN1C_EXEC_PATH="/opt/asn1c/bin/asn1c"
+if [ ! -x "$ASN1C_EXEC_PATH" ]; then
+    PARENT_DIR=$(dirname "$SCRIPT_DIR")
+    BASE_DIR=$(dirname "$PARENT_DIR")
+    cd "$BASE_DIR/User_Equipment"
+    if [ ! -d "openairinterface5g" ]; then
+        echo "Cloning Duranta OpenAirInterface repository for asn1c installer ($BASE_DIR/User_Equipment/openairinterface5g)..."
+        ./install_scripts/git_clone.sh https://github.com/duranta-project/openairinterface5g.git openairinterface5g
+        APPLY_DURANTA_PATCHES=true
+        if [ "$APPLY_DURANTA_PATCHES" = true ]; then
+            echo "Patching Duranta UE..."
+            ./install_scripts/apply_patches.sh
+        fi
+    fi
+    # Install OAI dependencies
+    cd openairinterface5g/cmake_targets
+    ./build_oai -I
+    if [ ! -x "$ASN1C_EXEC_PATH" ]; then
+        echo "ERROR: Duranta did not install asn1c at $ASN1C_EXEC_PATH."
+        exit 1
+    fi
+    cd "$SCRIPT_DIR"
+    echo "Successfully installed dependencies required to build FlexRIC."
+    echo
+fi
+if ! "$ASN1C_EXEC_PATH" -h 2>&1 | grep -q -- "-gen-UPER"; then
+    echo "ERROR: $ASN1C_EXEC_PATH does not support -gen-UPER."
+    exit 1
+fi
+
 ADDITIONAL_FLAGS="-DCMAKE_BUILD_TYPE=Release"
 if [ "$DEBUG_SYMBOLS" = true ]; then
     ADDITIONAL_FLAGS="-DCMAKE_BUILD_TYPE=Debug"
@@ -157,7 +208,7 @@ PREFIX_DIR="${FLEXRIC_LIBRARY_DIR%/lib/flexric*}"
 if [[ "$PREFIX_DIR" != /* ]]; then
     PREFIX_DIR="$SCRIPT_DIR/$PREFIX_DIR"
 fi
-CC=gcc CXX=g++ cmake .. -DCMAKE_INSTALL_PREFIX="$PREFIX_DIR" -DXAPP_DB=NONE_XAPP -DE2AP_VERSION=$E2AP_VERSION -DKPM_VERSION=$KPM_VERSION $ADDITIONAL_FLAGS
+CC=gcc CXX=g++ cmake .. -DCMAKE_INSTALL_PREFIX="$PREFIX_DIR" -DASN1C_EXEC="$ASN1C_EXEC_PATH" -DASN1C_EXEC_PATH="$ASN1C_EXEC_PATH" -DXAPP_DB=NONE_XAPP -DE2AP_VERSION="$E2AP_VERSION" -DKPM_VERSION="$KPM_VERSION" $ADDITIONAL_FLAGS
 make -j$(nproc)
 
 echo "Installing FlexRIC..."
@@ -180,4 +231,4 @@ if [ -n "$INSTALL_START_TIME" ]; then
     echo "$DURATION_MINUTES minutes" >>install_time.txt
 fi
 
-echo "The FlexRIC installation completed successfully."
+echo "Successfully completed the FlexRIC installation."

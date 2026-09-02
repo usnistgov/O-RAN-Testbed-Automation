@@ -31,7 +31,11 @@
 # Exit immediately if a command fails
 set -e
 
-SHOW_ZMQ_BROKER_UI=false
+USE_ZMQ_CHANNEL_EMULATOR=true
+SHOW_ZMQ_CHANNEL_EMULATOR_GUI=true
+if [ -z "${DISPLAY:-}" ] && [ -z "${WAYLAND_DISPLAY:-}" ]; then
+    SHOW_ZMQ_CHANNEL_EMULATOR_GUI=false
+fi
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
@@ -45,31 +49,22 @@ cd "$SCRIPT_DIR"
 # Function to handle graceful shutdown
 graceful_shutdown() {
     trap - SIGINT SIGTERM SIGQUIT
-    echo "Shutting down gNodeB gracefully..."
+    echo "Shutting down OCUDU gNodeB gracefully..."
     ./stop.sh
     exit
 }
 trap graceful_shutdown SIGINT SIGTERM SIGQUIT
 
 if pgrep -x "gnb" >/dev/null; then
-    echo "Already running gnb."
+    echo "Already running OCUDU gNodeB."
 else
-    echo "Starting gnb..."
+    echo "Starting OCUDU gNodeB..."
     mkdir -p logs
     >logs/gnb.log
     >logs/gnb_stdout.txt
 
-    if pgrep -f "[p]ython3 zmq_broker/multi_ue_scenario\.py" >/dev/null; then
-        echo "Already running ZMQ Broker."
-    else
-        >logs/zmq_broker.log
-        echo "Starting ZMQ Broker..."
-        if [ "$SHOW_ZMQ_BROKER_UI" = true ]; then
-            nohup python3 zmq_broker/multi_ue_scenario.py >logs/zmq_broker.log 2>&1 &
-        else
-            QT_QPA_PLATFORM=offscreen nohup python3 zmq_broker/multi_ue_scenario.py >logs/zmq_broker.log 2>&1 &
-        fi
-        sleep 2
+    if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ]; then
+        ./install_scripts/run_zmq_channel_emulator.sh --show-ui "$SHOW_ZMQ_CHANNEL_EMULATOR_GUI"
     fi
 
     sudo chown --recursive "${SUDO_USER:-$USER}" logs

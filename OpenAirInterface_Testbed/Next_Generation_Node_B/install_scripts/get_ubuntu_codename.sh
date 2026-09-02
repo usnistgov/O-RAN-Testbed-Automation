@@ -1,0 +1,1 @@
+../../User_Equipment/install_scripts/get_ubuntu_codename.sh

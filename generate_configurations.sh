@@ -40,11 +40,69 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
+USE_DURANTA_UE=false
 USE_FLEXRIC=false
+USE_ZMQ_CHANNEL_EMULATOR=true
+
+CELL_NUMBERS_STR="1"   # Default cells
+UE_NUMBERS_STR="1,2,3" # Default UEs
+GNB_ARGS=()
+
+usage() {
+    echo "Usage: $0 [--cells <cell_numbers>] [--ues <ue_numbers>] [--disable-e2-term] [--e2-term-address <address>]"
+    echo "    For example: $0 --ues 4,5,6 --cells 1,2"
+}
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+    -h | --help)
+        usage
+        exit 0
+        ;;
+    --cells)
+        if [ $# -lt 2 ] || [ -z "$2" ]; then
+            echo "ERROR: --cells requires comma-separated cell numbers."
+            usage
+            exit 1
+        fi
+        CELL_NUMBERS_STR="$2"
+        shift 2
+        ;;
+    --ues)
+        if [ $# -lt 2 ] || [ -z "$2" ]; then
+            echo "ERROR: --ues requires comma-separated UE numbers."
+            usage
+            exit 1
+        fi
+        UE_NUMBERS_STR="$2"
+        shift 2
+        ;;
+    --disable-e2-term)
+        GNB_ARGS+=(--disable-e2-term)
+        shift
+        ;;
+    --e2-term-address)
+        if [ $# -lt 2 ] || [ -z "$2" ]; then
+            echo "ERROR: --e2-term-address requires an address."
+            usage
+            exit 1
+        fi
+        GNB_ARGS+=(--e2-term-address "$2")
+        shift 2
+        ;;
+    *)
+        echo "ERROR: Unknown argument: $1"
+        usage
+        exit 1
+        ;;
+    esac
+done
+
+IFS=',' read -r -a UE_CONFIG_ARGS <<<"$UE_NUMBERS_STR"
 
 echo "Generating Configurations for 5G Core components..."
 cd 5G_Core_Network
-./generate_configurations.sh
+./generate_configurations.sh "${UE_CONFIG_ARGS[@]}"
 cd ..
 
 if [ "$USE_FLEXRIC" = "true" ]; then
@@ -56,16 +114,29 @@ if [ "$USE_FLEXRIC" = "true" ]; then
 fi
 
 echo
-echo "Generating Configuration for Next Generation Node B..."
+echo "Generating Configuration for OCUDU Next Generation Node B..."
 cd Next_Generation_Node_B
-./generate_configurations.sh "$@"
+./generate_configurations.sh "${GNB_ARGS[@]}" --cells "$CELL_NUMBERS_STR" --ues "$UE_NUMBERS_STR"
 cd ..
 
-echo
-echo "Generating Configuration for User Equipment..."
-cd User_Equipment
-./generate_configurations.sh
-cd ..
+if [ "$USE_DURANTA_UE" = "true" ]; then
+    echo
+    echo "Generating Configuration for Duranta User Equipment..."
+    cd OpenAirInterface_Testbed/User_Equipment
+    ./generate_configurations.sh "${UE_CONFIG_ARGS[@]}"
+    cd "$SCRIPT_DIR"
+else
+    echo
+    echo "Generating Configuration for srsRAN User Equipment..."
+    cd User_Equipment
+    ./generate_configurations.sh "${UE_CONFIG_ARGS[@]}"
+    cd "$SCRIPT_DIR"
+fi
+
+if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ]; then
+    echo "Verifying ZeroMQ channel emulator configuration..."
+    Next_Generation_Node_B/install_scripts/validate_zmq_channel_emulator_config.sh --ues "$UE_NUMBERS_STR" --cells "$CELL_NUMBERS_STR"
+fi
 
 echo
 echo "Successfully configured testbed components."

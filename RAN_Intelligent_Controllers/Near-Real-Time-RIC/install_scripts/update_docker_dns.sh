@@ -28,7 +28,7 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-echo "# Script: $(realpath "$0")..."
+echo "# Script: $(realpath "$0") $@"
 
 # Exit immediately if a command fails
 set -e
@@ -129,7 +129,7 @@ else
             exit 1
         fi
     fi
-    echo "Docker started successfully."
+    echo "Successfully started Docker."
 fi
 
-echo "Docker DNS configuration updated successfully."
+echo "Successfully updated Docker DNS configuration."

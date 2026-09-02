@@ -41,6 +41,7 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 
 # Parse arguments
 RFSIM_SERVER=1
+IMSCOPE_ENABLED=false
 while [[ $# -gt 0 ]]; do
     case "$1" in
     [0-9]*)
@@ -51,6 +52,10 @@ while [[ $# -gt 0 ]]; do
         RFSIM_SERVER=0
         shift
         ;;
+    --imscope)
+        IMSCOPE_ENABLED=true
+        shift
+        ;;
     *)
         echo "Unknown argument: $1"
         exit 1
@@ -59,21 +64,17 @@ while [[ $# -gt 0 ]]; do
 done
 if [ -z "$DU_NUMBER" ]; then
     echo "ERROR: A DU number must be provided as an argument."
-    echo "    For example, $0 1 [--no-rfsim-server]"
+    echo "    For example, $0 1 [--no-rfsim-server] [--imscope]"
     exit 1
 fi
-if ! [[ $DU_NUMBER =~ ^[0-9]+$ ]]; then
-    echo "ERROR: DU number must be a number."
-    exit 1
-fi
-if [ $DU_NUMBER -lt 1 ]; then
-    echo "ERROR: DU number must be greater than or equal to 1."
+if ! [[ "$DU_NUMBER" =~ ^[1-9][0-9]*$ ]]; then
+    echo "ERROR: DU number must be a positive integer."
     exit 1
 fi
 
 cd "$SCRIPT_DIR"
 
-if ./is_running.sh | grep -E "^gNodeB:" | grep -q "du$DU_NUMBER"; then
+if ./is_running.sh | grep -Eq "(^|[ (])du${DU_NUMBER}([ )]|$)"; then
     echo "Already running gNodeB (DU $DU_NUMBER)."
 else
     if [ ! -d "configs" ]; then
@@ -87,19 +88,38 @@ else
     if [ "$RFSIM_SERVER" -eq 0 ]; then
         RFSIM_SERVER_ARG="--no-rfsim-server"
     fi
-
     sudo -v # Ensure sudo session is active
-    sudo setsid bash -c "stdbuf -oL -eL \"$SCRIPT_DIR/run_split_du.sh\" $DU_NUMBER $RFSIM_SERVER_ARG  >/dev/null 2>&1" </dev/null &
+    if [ "$IMSCOPE_ENABLED" = "true" ]; then
+        if ! "$SCRIPT_DIR/is_cu_ready.sh" | grep -qx true; then
+            "$SCRIPT_DIR/run_background_split_cu.sh"
+        fi
+        sudo "$SCRIPT_DIR/install_scripts/setup_du_namespace.sh" "$DU_NUMBER"
+        if [ -f "$SCRIPT_DIR/logs/split_du${DU_NUMBER}_stdout.txt" ]; then
+            sudo chown "${SUDO_USER:-$USER}" "$SCRIPT_DIR/logs/split_du${DU_NUMBER}_stdout.txt"
+        fi
+        setsid --wait bash -c "exec stdbuf -oL -eL \"$SCRIPT_DIR/run_split_du.sh\" $DU_NUMBER $RFSIM_SERVER_ARG --imscope" </dev/null >/dev/null 2>&1 &
+    else
+        sudo setsid --wait bash -c "exec stdbuf -oL -eL \"$SCRIPT_DIR/run_split_du.sh\" $DU_NUMBER $RFSIM_SERVER_ARG" </dev/null >/dev/null 2>&1 &
+    fi
+    DU_PID=$!
+    stty sane || true
 
     ATTEMPT=0
-    while ! (./is_running.sh | grep -E "^gNodeB:" | grep -q "du$DU_NUMBER"); do
+    while ! ./is_running.sh | grep -Eq "(^|[ (])du${DU_NUMBER}([ )]|$)"; do
+        stty sane || true
         sleep 0.5
+        if ! ps -p "$DU_PID" >/dev/null; then
+            wait "$DU_PID" || true
+            echo "DU $DU_NUMBER exited before it started. Check logs/split_du${DU_NUMBER}_stdout.txt."
+            exit 1
+        fi
         ATTEMPT=$((ATTEMPT + 1))
         if [ $ATTEMPT -ge 120 ]; then
-            echo "DU $DU_NUMBER did not start after 60 seconds, exiting..."
+            echo "DU $DU_NUMBER did not start after 60 seconds. Check logs/split_du${DU_NUMBER}_stdout.txt."
             exit 1
         fi
     done
 
+    stty sane || true
     ./is_running.sh
 fi

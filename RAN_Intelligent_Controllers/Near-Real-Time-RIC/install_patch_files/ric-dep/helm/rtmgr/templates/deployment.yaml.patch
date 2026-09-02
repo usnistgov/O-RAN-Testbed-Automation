@@ -1,0 +1,18 @@
+diff --git a/helm/rtmgr/templates/deployment.yaml b/helm/rtmgr/templates/deployment.yaml
+index 7854a89..7217b23 100644
+--- a/helm/rtmgr/templates/deployment.yaml
++++ b/helm/rtmgr/templates/deployment.yaml
+@@ -45,6 +45,13 @@ spec:
+       hostname: {{ include "common.name.rtmgr" . }}
+       imagePullSecrets:
+         - name: {{ include "common.dockerregistry.credential" $imagectx }}
++      initContainers:
++        - name: wait-for-e2mgr
++          image: {{ include "common.dockerregistry.url" $imagectx }}/{{ .Values.rtmgr.image.name }}:{{ .Values.rtmgr.image.tag }}
++          imagePullPolicy: {{ include "common.dockerregistry.pullpolicy" $pullpolicyctx }}
++          command: ["/bin/sh", "-c"]
++          args:
++            - until curl --fail --silent --output /dev/null "http://{{ include "common.servicename.e2mgr.http" . }}:{{ include "common.serviceport.e2mgr.http" . }}/v1/e2t/list"; do sleep 2; done
+       containers:
+         - name: {{ include "common.containername.rtmgr" . }}
+           image: {{ include "common.dockerregistry.url" $imagectx }}/{{ .Values.rtmgr.image.name }}:{{ .Values.rtmgr.image.tag }}

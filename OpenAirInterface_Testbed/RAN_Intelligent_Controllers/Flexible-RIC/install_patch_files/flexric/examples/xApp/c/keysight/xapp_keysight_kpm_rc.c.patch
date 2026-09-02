@@ -1,0 +1,37 @@
+diff --git a/examples/xApp/c/keysight/xapp_keysight_kpm_rc.c b/examples/xApp/c/keysight/xapp_keysight_kpm_rc.c
+index a536d534..502e072c 100644
+--- a/examples/xApp/c/keysight/xapp_keysight_kpm_rc.c
++++ b/examples/xApp/c/keysight/xapp_keysight_kpm_rc.c
+@@ -75,8 +75,9 @@ static int64_t get_matched_drb_id(const gnb_e2sm_t gnb_ue_id)
+ // Get RC Indication Messages -> begin
+ ////////////
+ 
+-static void sm_cb_rc(sm_ag_if_rd_t const *rd)
++static void sm_cb_rc(sm_ag_if_rd_t const *rd, global_e2_node_id_t const *node_id)
+ {
++  (void)node_id;
+   assert(rd != NULL);
+   assert(rd->type == INDICATION_MSG_AGENT_IF_ANS_V0);
+   assert(rd->ind.type == RAN_CTRL_STATS_V1_03);
+@@ -129,8 +130,9 @@ static void sm_cb_rc(sm_ag_if_rd_t const *rd)
+ // Get KPM Indication Messages -> begin
+ ////////////
+ 
+-static void sm_cb_kpm_1(sm_ag_if_rd_t const *rd)
++static void sm_cb_kpm_1(sm_ag_if_rd_t const *rd, global_e2_node_id_t const *node_id)
+ {
++  (void)node_id;
+   assert(rd != NULL);
+   assert(rd->type == INDICATION_MSG_AGENT_IF_ANS_V0);
+   assert(rd->ind.type == KPM_STATS_V3_0);
+@@ -200,8 +202,9 @@ static void sm_cb_kpm_1(sm_ag_if_rd_t const *rd)
+ }
+ 
+ 
+-static void sm_cb_kpm_3(sm_ag_if_rd_t const *rd)
++static void sm_cb_kpm_3(sm_ag_if_rd_t const *rd, global_e2_node_id_t const *node_id)
+ {
++  (void)node_id;
+   assert(rd != NULL);
+   assert(rd->type == INDICATION_MSG_AGENT_IF_ANS_V0);
+   assert(rd->ind.type == KPM_STATS_V3_0);

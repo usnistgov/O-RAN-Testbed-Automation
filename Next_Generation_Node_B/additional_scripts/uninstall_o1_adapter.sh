@@ -67,4 +67,4 @@ fi
 sudo rm -rf ocudu_o1_adapter
 sudo rm -rf ocudu_netconf
 
-echo "Successfully uninstalled O1 Adapter."
+echo "Successfully completed O1 Adapter uninstallation."

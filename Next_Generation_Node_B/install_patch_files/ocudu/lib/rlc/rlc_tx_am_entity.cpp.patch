@@ -1,8 +1,8 @@
 diff --git a/lib/rlc/rlc_tx_am_entity.cpp b/lib/rlc/rlc_tx_am_entity.cpp
-index 199c8e311a..98e466d2be 100644
+index 74011d041b..52cd0c3f44 100644
 --- a/lib/rlc/rlc_tx_am_entity.cpp
 +++ b/lib/rlc/rlc_tx_am_entity.cpp
-@@ -624,11 +624,7 @@ size_t rlc_tx_am_entity::build_retx_pdu(span<uint8_t> rlc_pdu_buf)
+@@ -656,11 +656,7 @@ size_t rlc_tx_am_entity::build_retx_pdu(span<uint8_t> rlc_pdu_buf)
  
  void rlc_tx_am_entity::on_status_pdu(rlc_am_status_pdu status)
  {
@@ -15,13 +15,14 @@ index 199c8e311a..98e466d2be 100644
  }
  
  void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status) noexcept OCUDU_RTSAN_NONBLOCKING
-@@ -969,10 +965,7 @@ void rlc_tx_am_entity::handle_changed_buffer_state()
+@@ -1001,11 +997,7 @@ void rlc_tx_am_entity::handle_changed_buffer_state()
  {
    if (not pending_buffer_state.test_and_set(std::memory_order_seq_cst)) {
      logger.log_debug("Triggering buffer state update to lower layer");
 -    // Redirect handling of status to pcell_executor
 -    if (not pcell_executor.defer([this]() { update_mac_buffer_state(/* force_notify */ false); })) {
 -      logger.log_error("Failed to enqueue buffer state update");
+-      pending_buffer_state.clear(std::memory_order_seq_cst);
 -    }
 +    update_mac_buffer_state(/* force_notify */ false);
    } else {

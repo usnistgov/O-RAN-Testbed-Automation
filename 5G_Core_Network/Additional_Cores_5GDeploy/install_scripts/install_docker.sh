@@ -96,7 +96,6 @@ else # Use docker-ce
         DOCKERV="28.1"
     fi
 
-    DOCKERV="28.1"
     UBUNTU_CODENAME=$(grep -oP '^UBUNTU_CODENAME=\K.*' /etc/os-release 2>/dev/null)
     # If not found, try to extract VERSION_CODENAME as a fallback
     if [[ -z "$UBUNTU_CODENAME" ]]; then
@@ -267,7 +266,7 @@ if [ "$USE_SYSTEMCTL" = true ]; then
         echo "Failed to start Docker after $MAX_ATTEMPTS attempts."
         exit 1
     else
-        echo "Docker started successfully."
+        echo "Successfully started Docker."
     fi
 else
     echo "Starting Docker process..."
@@ -316,7 +315,7 @@ else
             exit 1
         fi
     fi
-    echo "Docker started successfully."
+    echo "Successfully started Docker."
 fi
 
-echo "Successfully installed Docker $DOCKERVERSION"
+echo "Successfully completed Docker $DOCKERVERSION installation."

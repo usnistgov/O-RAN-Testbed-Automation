@@ -40,7 +40,7 @@ if ! command -v realpath &>/dev/null; then
     sudo env $APTVARS apt-get install -y coreutils
 fi
 
-# The script directory respects symbolic links so that the gNB and UE can patch their own openairinterface5g
+# Script directory from the called path, including symlinks
 SCRIPT_DIR="$(cd "$(dirname "$0")" >/dev/null 2>&1 && pwd)"
 PARENT_DIR="$(dirname "$SCRIPT_DIR")"
 cd "$PARENT_DIR"
@@ -57,16 +57,17 @@ if [ -f "CMakeLists.txt" ]; then
 fi
 cd ..
 
-# Apply patches to OpenAirInterface
-# Support SST values greater than 4
+# Apply patches to Duranta
+
+# Prevent exhaustion of UEs by releasing one CBRA UE when the UE list is full
 cd openairinterface5g
-git restore openair3/UICC/pdu_session.c
-if [ ! -f "openair3/UICC/pdu_session.c.previous" ]; then
-    cp openair3/UICC/pdu_session.c openair3/UICC/pdu_session.c.previous
-    cp openair3/UICC/pdu_session.c.previous "$PARENT_DIR/install_patch_files/openairinterface5g/openair3/UICC/pdu_session.previous.c"
+git restore openair2/LAYER2/NR_MAC_gNB/mac_rrc_dl_handler.c
+if [ ! -f "openair2/LAYER2/NR_MAC_gNB/mac_rrc_dl_handler.c.previous" ]; then
+    cp openair2/LAYER2/NR_MAC_gNB/mac_rrc_dl_handler.c openair2/LAYER2/NR_MAC_gNB/mac_rrc_dl_handler.c.previous
+    cp openair2/LAYER2/NR_MAC_gNB/mac_rrc_dl_handler.c.previous "$PARENT_DIR/install_patch_files/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/mac_rrc_dl_handler.previous.c"
 fi
-echo "Patching pdu_session.c to support SST values greater than 4..."
-git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface5g/openair3/UICC/pdu_session.c.patch"
+echo "Patching mac_rrc_dl_handler.c..."
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/mac_rrc_dl_handler.c.patch"
 cd ..
 
 # This patch adds support for Linux Mint and Ubuntu 20.04
@@ -78,6 +79,24 @@ if [ ! -f "cmake_targets/tools/build_helper.previous" ]; then
 fi
 echo "Patching build_helper to extend Linux support..."
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface5g/cmake_targets/tools/build_helper.patch"
+cd ..
+
+# This patch fixes the ZeroMQ bug where negative I/Q samples are not rounded in the wrong directions
+cd openairinterface5g
+git restore radio/zmq/zmq_simd.h
+if [ ! -f "radio/zmq/zmq_simd.h.previous" ]; then
+    cp radio/zmq/zmq_simd.h radio/zmq/zmq_simd.h.previous
+    cp radio/zmq/zmq_simd.h.previous "$PARENT_DIR/install_patch_files/openairinterface5g/radio/zmq/zmq_simd.previous.h"
+fi
+echo "Patching zmq_simd.h to fix rounding of negative I/Q samples..."
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface5g/radio/zmq/zmq_simd.h.patch"
+git restore radio/zmq/tests/test_zmq_radio.cpp
+if [ ! -f "radio/zmq/tests/test_zmq_radio.cpp.previous" ]; then
+    cp radio/zmq/tests/test_zmq_radio.cpp radio/zmq/tests/test_zmq_radio.cpp.previous
+    cp radio/zmq/tests/test_zmq_radio.cpp.previous "$PARENT_DIR/install_patch_files/openairinterface5g/radio/zmq/tests/test_zmq_radio.previous.cpp"
+fi
+echo "Patching test_zmq_radio.cpp to fix rounding of negative I/Q samples..."
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface5g/radio/zmq/tests/test_zmq_radio.cpp.patch"
 cd ..
 
 # This patch adds C++11 compatibility to the ZeroMQ ring buffer code
@@ -133,5 +152,15 @@ echo "Patching nr-softmodem.c to fix bug with gNB ID handling for DUs and CUs...
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface5g/executables/nr-softmodem.c.patch"
 cd ..
 
+cd openairinterface5g
+git restore openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.h
+if [ ! -f "openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.h.previous" ]; then
+    cp openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.h openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.h.previous
+    cp openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.h.previous "$PARENT_DIR/install_patch_files/openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.previous.h"
+fi
+echo "Patching ran_func_kpm_subs.h for cell_global_id in cudu_ue_info_pair_t..."
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/openairinterface5g/openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm_subs.h.patch"
+cd ..
+
 echo
-echo "Successfully patched OpenAirInterface."
+echo "Successfully patched Duranta OpenAirInterface."

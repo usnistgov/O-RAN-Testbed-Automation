@@ -33,6 +33,7 @@ set -e
 
 E2AP_VERSION="E2AP_V2"  # E2AP_V1, E2AP_V2, E2AP_V3
 KPM_VERSION="KPM_V2_03" # KPM_V2_03, KPM_V3_00
+OVERRIDE_PCELL_EXECUTOR_PATCHES=""
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
@@ -66,6 +67,14 @@ echo "Patching FindYAMLCPP.cmake..."
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/ocudu/cmake/modules/FindYAMLCPP.cmake.patch"
 cd ..
 
+# Apply patch to report all E2SM-KPM style 3 metrics in one indication
+cd ocudu
+git restore lib/e2/e2sm/e2sm_kpm/e2sm_kpm_report_service_impl.cpp
+git restore tests/unittests/e2/e2sm_kpm_test.cpp
+echo "Patching E2SM-KPM style 3 multi-metric reports..."
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/ocudu/lib/e2/e2sm/e2sm_kpm/multi_metric_style3.patch"
+cd ..
+
 # Apply patches when the number of processors is low to allow OCUDU startup, UE attach, and PDU session establishment
 # For more information, see https://gitlab.com/ocudu/ocudu/-/work_items/571
 cd ocudu
@@ -84,7 +93,7 @@ if [ ! -f "lib/rlc/rlc_tx_am_entity.cpp.previous" ]; then
     cp lib/rlc/rlc_tx_am_entity.cpp lib/rlc/rlc_tx_am_entity.cpp.previous
     cp lib/rlc/rlc_tx_am_entity.cpp.previous "$PARENT_DIR/install_patch_files/ocudu/lib/rlc/rlc_tx_am_entity.cpp.previous"
 fi
-if [ "$(nproc)" -le 4 ]; then
+if [ "$(nproc)" -le 4 ] || [ "$OVERRIDE_PCELL_EXECUTOR_PATCHES" = "true" ]; then
     echo "Patching mac_cell_processor.cpp, rlc_tx_tm_entity.cpp, and rlc_tx_am_entity.cpp..."
     git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/ocudu/lib/mac/mac_dl/mac_cell_processor.cpp.patch"
     git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/ocudu/lib/rlc/rlc_tx_tm_entity.cpp.patch"

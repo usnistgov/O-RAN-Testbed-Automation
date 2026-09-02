@@ -33,12 +33,15 @@ set -e
 
 APPLY_PATCHES=true
 CLEAN_INSTALL=false # If SHARE_OAI_DIR_FROM_UE is true, set to false since the UE hosts openairinterface5g
-RADIO_TYPE="SIMU"   # Set to "SIMU", "ZMQ", or "USRP"
+
+RADIO_TYPE="SIMU" # Set to "SIMU", "ZMQ", or "USRP"
+
 DEBUG_SYMBOLS=false
 E2AP_VERSION="E2AP_V3"  # E2AP_V1, E2AP_V2, E2AP_V3
 KPM_VERSION="KPM_V3_00" # KPM_V2_03, KPM_V3_00
-NRSCOPE_GUI=false
+USE_IMSCOPE=false
 TELNET_SERVER=true
+
 E2_TERM_PORT=36421            # Default is 36421, which will result in no modification
 E2_TERM_PORT_SUBSTITUTE=36423 # If E2_TERM_PORT is used already, substitute it before replacing with E2_TERM_PORT
 SHARE_FLEXRIC_DIR_FROM_TESTBED=false
@@ -60,16 +63,18 @@ if [ "$SHARE_OAI_DIR_FROM_UE" = true ] && [ ! -f "openairinterface5g/cmake_targe
     ln -s "../User_Equipment/openairinterface5g" openairinterface5g
 fi
 
-# Check for binary to determine if OpenAirInterface is already installed
-if [ "$CLEAN_INSTALL" = false ] && [ -f "openairinterface5g/cmake_targets/ran_build/build/nr-softmodem" ]; then
-    if [ "$NRSCOPE_GUI" != true ] || [ -f "openairinterface5g/cmake_targets/ran_build/build/libimscope.so" ]; then
-        echo "OpenAirInterface gNB is already installed, skipping."
-        exit 0
-    fi
+# Check for binary to determine if Duranta gNB is already installed
+if [ "$CLEAN_INSTALL" = false ] &&
+    [ -f "openairinterface5g/cmake_targets/ran_build/build/nr-softmodem" ] &&
+    { [ "$RADIO_TYPE" != "ZMQ" ] || [ -f "openairinterface5g/cmake_targets/ran_build/build/liboai_zmqdevif.so" ]; } &&
+    { [ "$USE_IMSCOPE" != true ] || [ -f "openairinterface5g/cmake_targets/ran_build/build/libimscope.so" ]; }; then
+    echo "Duranta gNB is already installed, skipping."
+    exit 0
 fi
 
 # Run a sudo command every minute to ensure script execution without user interaction
 ./install_scripts/start_sudo_refresh.sh
+trap './install_scripts/stop_sudo_refresh.sh 2>/dev/null || true' EXIT
 
 # Get the start timestamp in seconds
 INSTALL_START_TIME=$(date +%s)
@@ -80,18 +85,18 @@ if [ "$SHARE_OAI_DIR_FROM_UE" = true ]; then
     if [ ! -f "../User_Equipment/openairinterface5g/cmake_targets/build_oai" ]; then
         echo "Cloning shared openairinterface5g to User Equipment..."
         sudo rm -rf ../User_Equipment/openairinterface5g
-        ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/oai/openairinterface5g.git ../User_Equipment/openairinterface5g --https
+        ./install_scripts/git_clone.sh https://github.com/duranta-project/openairinterface5g.git ../User_Equipment/openairinterface5g
     fi
 else
     if [ ! -d "openairinterface5g" ]; then
         echo "Cloning openairinterface5g..."
         sudo rm -rf openairinterface5g
-        ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/oai/openairinterface5g.git openairinterface5g --https
+        ./install_scripts/git_clone.sh https://github.com/duranta-project/openairinterface5g.git openairinterface5g
     fi
 fi
 
 if [ "$APPLY_PATCHES" = true ]; then
-    echo "Patching OpenAirInterface..."
+    echo "Patching Duranta gNB..."
     ./install_scripts/apply_patches.sh
 fi
 
@@ -116,7 +121,7 @@ fi
 cd "$SCRIPT_DIR"
 if [ ! -d "$FLEXRIC_DIR/src/agent/e2_agent_api.c" ]; then
     echo "Cloning Flexible RAN Intelligent Controller (FlexRIC)..."
-    ./install_scripts/git_clone.sh https://gitlab.eurecom.fr/mosaic5g/flexric.git "$FLEXRIC_DIR" --https
+    ./install_scripts/git_clone.sh https://github.com/duranta-project/flexric.git "$FLEXRIC_DIR"
 fi
 
 FLEXRIC_PATCH_DIR="../RAN_Intelligent_Controllers/Flexible-RIC"
@@ -152,7 +157,7 @@ sed -i 's/#define FR_CONF_FILE_LEN 128/#define FR_CONF_FILE_LEN 1024/g' "$FLEXRI
 
 echo
 echo
-echo "Installing Next Generation Node B (OpenAirInterface)..."
+echo "Installing Next Generation Node B (Duranta)..."
 # Modifies the needrestart configuration to suppress interactive prompts
 if [ -d /etc/needrestart ]; then
     sudo install -d -m 0755 /etc/needrestart/conf.d
@@ -179,11 +184,15 @@ else
 fi
 if [[ "$INSTALL_GCC" == "true" ]]; then
     echo "Installing GCC 13..."
-    sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+    if ! sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test; then
+        echo "ERROR: Failed to add the Ubuntu Toolchain PPA."
+        exit 1
+    fi
     sudo apt-get update
-    sudo env $APTVARS apt-get install -y gcc-13 g++-13
+    sudo env $APTVARS apt-get install -y gcc-13 g++-13 cpp-13
     sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 100
     sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-13 100
+    sudo update-alternatives --install /usr/bin/cpp cpp /usr/bin/cpp-13 100
 fi
 
 if ! command -v cmake &>/dev/null; then
@@ -193,10 +202,11 @@ if ! command -v cmake &>/dev/null; then
 fi
 CMAKE_VERSION=$(cmake --version | head -n1 | awk '{print $3}')
 if [[ "$CMAKE_VERSION" == 3.16.* ]]; then
-    echo "Detected CMake 3.16. Updating CMake for compatibility with OpenAirInterface..."
+    UBUNTU_CODENAME=$(./install_scripts/get_ubuntu_codename.sh)
+    echo "Detected CMake $CMAKE_VERSION. Updating CMake for Duranta compatibility..."
     # Add Kitware's apt repository
     wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc | sudo apt-key add -
-    sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ focal main'
+    sudo apt-add-repository -y "deb https://apt.kitware.com/ubuntu/ $UBUNTU_CODENAME main"
     sudo apt-get update
     sudo env $APTVARS apt-get install -y cmake
 fi
@@ -234,9 +244,9 @@ if [ "$TELNET_SERVER" = true ]; then
         sudo env $APTVARS apt-get install -y telnet
     fi
 fi
-if [ "$NRSCOPE_GUI" = true ]; then
+if [ "$USE_IMSCOPE" = true ]; then
     sudo env $APTVARS apt-get install -y libglfw3-dev libopengl-dev
-    sudo env $APTVARS apt-get install -y libforms-bin libforms-dev
+    # sudo env $APTVARS apt-get install -y libforms-bin libforms-dev
     ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --build-lib imscope"
 fi
 
@@ -248,11 +258,9 @@ echo
 if [ "$RADIO_TYPE" = "ZMQ" ]; then
     echo "Building ZeroMQ libzmq..."
     if [ -d ../User_Equipment/libzmq ]; then
-        if [ ! -L libzmq ]; then
+        if [ ! -e libzmq ] && [ ! -L libzmq ]; then
             echo "Found UE library. Creating libzmq link instead."
             ln -s ../User_Equipment/libzmq libzmq
-        else
-            echo "Link to libzmq already created."
         fi
     else
         if [ ! -d libzmq ]; then
@@ -273,11 +281,9 @@ if [ "$RADIO_TYPE" = "ZMQ" ]; then
     echo
     echo "Building ZeroMQ czmq..."
     if [ -d ../User_Equipment/czmq ]; then
-        if [ ! -L czmq ]; then
+        if [ ! -e czmq ] && [ ! -L czmq ]; then
             echo "Found UE library. Creating czmq link instead."
             ln -s ../User_Equipment/czmq czmq
-        else
-            echo "Link to czmq already created."
         fi
     else
         if [ ! -d czmq ]; then
@@ -300,13 +306,13 @@ if [ "$RADIO_TYPE" = "ZMQ" ]; then
         echo "ZeroMQ was not installed correctly. Exiting."
         exit 1
     else
-        echo "ZeroMQ installed successfully."
+        echo "Successfully installed ZeroMQ."
     fi
 
     cd "$SCRIPT_DIR"
 fi
 
-echo "Compiling and Installing OpenAirInterface gNB..."
+echo "Compiling and Installing Duranta gNB..."
 
 cd "$SCRIPT_DIR/openairinterface5g"
 source oaienv
@@ -314,6 +320,10 @@ source oaienv
 # Install OAI dependencies
 cd "$SCRIPT_DIR/openairinterface5g/cmake_targets"
 ./build_oai -I
+
+if [ "$USE_IMSCOPE" = true ]; then
+    "$SCRIPT_DIR/install_scripts/ensure_imscope_dependencies.sh"
+fi
 
 # Build OAI 5G gNB
 cd "$SCRIPT_DIR/openairinterface5g/cmake_targets"
@@ -338,4 +348,4 @@ if [ -n "$INSTALL_START_TIME" ]; then
     echo "$DURATION_MINUTES minutes" >>install_time.txt
 fi
 
-echo "The gNodeB installation completed successfully."
+echo "Successfully completed the gNodeB installation."

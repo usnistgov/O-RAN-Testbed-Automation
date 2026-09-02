@@ -28,7 +28,7 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-echo "# Script: $(realpath "$0")..."
+echo "# Script: $(realpath "$0") $@"
 
 # Exit immediately if a command fails
 set -e
@@ -64,12 +64,10 @@ RIC_YAML_FILE_NAME_UPDATED="example_recipe_latest_stable_updated.yaml"
 if [ ! -f "../RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME_UPDATED" ]; then
     RIC_YAML_FILE_NAME_UPDATED="example_recipe_latest_stable.yaml"
 fi
-RIC_INSTALLATION_STDOUT="$SCRIPT_DIR/logs/ric_influxdb_installation_stdout.txt"
+RIC_INSTALLATION_STDOUT="$PARENT_DIR/logs/ric_influxdb_installation_stdout.txt"
+mkdir -p "$(dirname "$RIC_INSTALLATION_STDOUT")"
 
-echo
-echo
-echo "Please ignore \"Error: INSTALLATION FAILED: cannot re-use a name that is still in use\" as these pods are already installed."
-sudo ./install -f "../RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME_UPDATED" -c "influxdb" 2>&1 | tee -a "$RIC_INSTALLATION_STDOUT" || true
+sudo helm upgrade --install r4-influxdb ../helm/influxdb --namespace ricplt --values "../RECIPE_EXAMPLE/$RIC_YAML_FILE_NAME_UPDATED" 2>&1 | tee -a "$RIC_INSTALLATION_STDOUT"
 cd "$PARENT_DIR"
 
 sudo ./install_scripts/wait_for_kubectl.sh

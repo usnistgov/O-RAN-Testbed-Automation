@@ -157,7 +157,7 @@ if [[ "$OPEN5GS_INSTALLED" = true || "$GNODEB_INSTALLED" = true || "$UE_INSTALLE
         sudo rm -rf Next_Generation_Node_B/ocudu
         sudo rm -rf Next_Generation_Node_B/ocudu_o1_adapter
         sudo rm -rf Next_Generation_Node_B/ocudu_netconf
-        sudo rm -rf Next_Generation_Node_B/zmq_broker
+        sudo rm -rf Next_Generation_Node_B/zmq_channel_emulator
         sudo rm -rf Next_Generation_Node_B/czmq
         sudo rm -rf Next_Generation_Node_B/libzmq
         sudo rm -rf Next_Generation_Node_B/logs
@@ -294,13 +294,7 @@ echo "##########################################################################
 echo
 echo
 
-cd 5G_Core_Network
 ./generate_configurations.sh
-cd ../Next_Generation_Node_B
-./generate_configurations.sh
-cd ../User_Equipment
-./generate_configurations.sh
-cd ..
 
 if [ "$INSTALL_NEAR_RT_RIC" = true ]; then
     if [ "$USE_FLEXRIC" = "true" ]; then
@@ -309,12 +303,14 @@ if [ "$INSTALL_NEAR_RT_RIC" = true ]; then
         cd ../../..
     fi
 
+    stty sane || true
     echo
     echo
     echo "################################################################################"
     echo "# Successfully installed the Near-RT RIC, 5G Core, gNodeB, and UE.             #"
     echo "################################################################################"
 else
+    stty sane || true
     echo
     echo
     echo "################################################################################"

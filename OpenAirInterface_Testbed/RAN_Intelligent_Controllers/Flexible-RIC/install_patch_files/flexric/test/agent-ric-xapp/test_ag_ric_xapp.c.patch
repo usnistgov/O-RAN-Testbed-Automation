@@ -1,0 +1,64 @@
+diff --git a/test/agent-ric-xapp/test_ag_ric_xapp.c b/test/agent-ric-xapp/test_ag_ric_xapp.c
+index 9b029678..211fef0e 100644
+--- a/test/agent-ric-xapp/test_ag_ric_xapp.c
++++ b/test/agent-ric-xapp/test_ag_ric_xapp.c
+@@ -221,8 +221,9 @@ sm_ag_if_ans_t write_subs_rc(void const* data)
+ static 
+ int cnt_mac = 0;
+ static
+-void sm_cb_mac(sm_ag_if_rd_t const* rd)
++void sm_cb_mac(sm_ag_if_rd_t const* rd, global_e2_node_id_t const* node_id)
+ {
++  (void)node_id;
+   assert(rd != NULL);
+   assert(rd->type == INDICATION_MSG_AGENT_IF_ANS_V0);
+   assert(rd->ind.type == MAC_STATS_V0); 
+@@ -237,8 +238,9 @@ void sm_cb_mac(sm_ag_if_rd_t const* rd)
+ static 
+ int cnt_rlc = 0;
+ static
+-void sm_cb_rlc(sm_ag_if_rd_t const* rd)
++void sm_cb_rlc(sm_ag_if_rd_t const* rd, global_e2_node_id_t const* node_id)
+ {
++  (void)node_id;
+   assert(rd != NULL);
+   assert(rd->type == INDICATION_MSG_AGENT_IF_ANS_V0);
+   assert(rd->ind.type == RLC_STATS_V0); 
+@@ -254,8 +256,9 @@ void sm_cb_rlc(sm_ag_if_rd_t const* rd)
+ static 
+ int cnt_gtp = 0;
+ static
+-void sm_cb_gtp(sm_ag_if_rd_t const* rd)
++void sm_cb_gtp(sm_ag_if_rd_t const* rd, global_e2_node_id_t const* node_id)
+ {
++  (void)node_id;
+   assert(rd != NULL);
+   assert(rd->type == INDICATION_MSG_AGENT_IF_ANS_V0);
+   assert(rd->ind.type == GTP_STATS_V0); 
+@@ -268,8 +271,9 @@ void sm_cb_gtp(sm_ag_if_rd_t const* rd)
+ }
+ 
+ static
+-void sm_cb_kpm(sm_ag_if_rd_t const* rd)
++void sm_cb_kpm(sm_ag_if_rd_t const* rd, global_e2_node_id_t const* node_id)
+ {
++  (void)node_id;
+   assert(rd != NULL);
+   assert(rd->type == INDICATION_MSG_AGENT_IF_ANS_V0);
+   assert(rd->ind.type == KPM_STATS_V3_0); 
+@@ -281,8 +285,9 @@ void sm_cb_kpm(sm_ag_if_rd_t const* rd)
+ }
+ 
+ static
+-void sm_cb_rc(sm_ag_if_rd_t const* rd)
++void sm_cb_rc(sm_ag_if_rd_t const* rd, global_e2_node_id_t const* node_id)
+ {
++  (void)node_id;
+   assert(rd != NULL);
+   assert(rd->type == INDICATION_MSG_AGENT_IF_ANS_V0);
+   assert(rd->ind.type == RAN_CTRL_STATS_V1_03); 
+@@ -497,4 +502,3 @@ int main(int argc, char *argv[])
+ 
+   printf("Test communicating E2-Agent, Near-RIC and xApp run SUCCESSFULLY\n");
+ }
+-

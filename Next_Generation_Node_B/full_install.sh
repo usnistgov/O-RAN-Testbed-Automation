@@ -54,6 +54,7 @@ fi
 
 # Run a sudo command every minute to ensure script execution without user interaction
 ./install_scripts/start_sudo_refresh.sh
+trap './install_scripts/stop_sudo_refresh.sh 2>/dev/null || true' EXIT
 
 # Get the start timestamp in seconds
 INSTALL_START_TIME=$(date +%s)
@@ -88,6 +89,9 @@ if [[ "$USE_SYSTEMCTL" == "true" ]]; then
         sudo systemctl disable apt-daily-upgrade.timer &>/dev/null && echo "Successfully disabled apt-daily-upgrade.timer service."
     fi
 fi
+
+# Ensure compatible Mbed TLS version (for Ubuntu 20.04)
+./install_scripts/ensure_compatible_mbedtls.sh
 
 if [ ! -d "ocudu" ]; then
     echo "Cloning OCUDU..."
@@ -151,11 +155,9 @@ cd "$SCRIPT_DIR"
 echo
 echo "Building ZeroMQ libzmq..."
 if [ -d ../User_Equipment/libzmq ]; then
-    if [ ! -L libzmq ]; then
+    if [ ! -e libzmq ] && [ ! -L libzmq ]; then
         echo "Found UE library. Creating libzmq link instead."
         ln -s ../User_Equipment/libzmq libzmq
-    else
-        echo "Link to libzmq already created."
     fi
 else
     if [ ! -d libzmq ]; then
@@ -176,11 +178,9 @@ fi
 echo
 echo "Building ZeroMQ czmq..."
 if [ -d ../User_Equipment/czmq ]; then
-    if [ ! -L czmq ]; then
+    if [ ! -e czmq ] && [ ! -L czmq ]; then
         echo "Found UE library. Creating czmq link instead."
         ln -s ../User_Equipment/czmq czmq
-    else
-        echo "Link to czmq already created."
     fi
 else
     if [ ! -d czmq ]; then
@@ -203,34 +203,10 @@ if ! pkg-config --exists libzmq || ! pkg-config --exists libczmq; then
     echo "ZeroMQ was not installed correctly. Exiting."
     exit 1
 else
-    echo "ZeroMQ installed successfully."
+    echo "Successfully installed ZeroMQ."
 fi
 
 cd "$SCRIPT_DIR"
-
-if [ ! -f "zmq_broker/multi_ue_scenario.py" ]; then
-    if ! command -v grcc >/dev/null 2>&1; then
-        echo "Installing GNU Radio Companion Compiler (grcc) for the ZeroMQ Broker..."
-        sudo env $APTVARS apt-get install -y gnuradio
-    fi
-fi
-
-echo
-echo
-mkdir -p zmq_broker
-if [ ! -f "zmq_broker/multi_ue_scenario.grc" ]; then
-    if ! command -v jq &>/dev/null; then
-        echo "Installing jq..."
-        sudo env $APTVARS apt-get install -y jq
-    fi
-    DOCS_HASH=$(jq -r '."https://gitlab.com/ocudu/ocudu_docs.git"[1]' ../commit_hashes.json 2>/dev/null)
-    if [ -z "$DOCS_HASH" ] || [ "$DOCS_HASH" = "null" ]; then
-        DOCS_HASH="main"
-    fi
-    echo "Downloading ZeroMQ Broker GNU Radio Companion flowgraph (${DOCS_HASH})..."
-    wget -qO zmq_broker/multi_ue_scenario.grc "https://gitlab.com/ocudu/ocudu_docs/-/raw/${DOCS_HASH}/docs/tutorials/srsue/assets/multi_ue_scenario.grc"
-    wget -qO zmq_broker/multi_ue_scenario.grc.license "https://gitlab.com/ocudu/ocudu_docs/-/raw/${DOCS_HASH}/docs/tutorials/srsue/assets/multi_ue_scenario.grc.license"
-fi
 
 echo
 echo
@@ -280,4 +256,4 @@ if [[ "$TUNE_PERFORMANCE" == "true" ]]; then
     cd ..
 fi
 
-echo "The gNodeB installation completed successfully."
+echo "Successfully completed the gNodeB installation."

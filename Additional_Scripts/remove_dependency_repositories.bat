@@ -64,7 +64,7 @@ REM copyright protection within the United States.
 REM This script will remove the untracked 5G_Core_Network, Next_Generation_Node_B, User_Equipment and RAN_Intelligent_Controllers repositories that were downloaded.
 
 
-echo "# Script: $(realpath "$0")..."
+echo "# Script: $(realpath "$0") $@"
 
 REM Main Testbed Repositories
 if exist "5G_Core_Network\open5gs" rmdir /s /q "5G_Core_Network\open5gs"
@@ -88,7 +88,7 @@ if exist "User_Equipment\install_time.txt" del /f /q "User_Equipment\install_tim
 if exist "Next_Generation_Node_B\ocudu" rmdir /s /q "Next_Generation_Node_B\ocudu"
 if exist "Next_Generation_Node_B\ocudu_o1_adapter" rmdir /s /q "Next_Generation_Node_B\ocudu_o1_adapter"
 if exist "Next_Generation_Node_B\ocudu_netconf" rmdir /s /q "Next_Generation_Node_B\ocudu_netconf"
-if exist "Next_Generation_Node_B\zmq_broker" rmdir /s /q "Next_Generation_Node_B\zmq_broker"
+if exist "Next_Generation_Node_B\zmq_channel_emulator" rmdir /s /q "Next_Generation_Node_B\zmq_channel_emulator"
 if exist "Next_Generation_Node_B\czmq" rmdir /s /q "Next_Generation_Node_B\czmq"
 if exist "Next_Generation_Node_B\libzmq" rmdir /s /q "Next_Generation_Node_B\libzmq"
 if exist "Next_Generation_Node_B\logs" rmdir /s /q "Next_Generation_Node_B\logs"
@@ -143,4 +143,4 @@ if exist "OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC\logs
 if exist "OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC\configs" rmdir /s /q "OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC\configs"
 if exist "OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC\install_time.txt" del /f /q "OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC\install_time.txt"
 
-echo "Repositories were removed successfully."
+echo "Successfully removed repositories."

@@ -1,9 +1,11 @@
+diff --git a/radio/zmq/zmq_imported.h b/radio/zmq/zmq_imported.h
+index a33ba59016..ee44916252 100644
 --- a/radio/zmq/zmq_imported.h
 +++ b/radio/zmq/zmq_imported.h
-@@ -19,8 +19,8 @@
-  public:
+@@ -20,8 +20,8 @@ class zmq_tx_channel {
    void *socket_;
-   overflow_buffer buffer_;
+   std::queue<zmq_msg_t> queue_;
+   std::mutex queue_mutex_;
 -  std::atomic<uint64_t> sample_count_ = 0;
 -  std::atomic<bool> is_tx_enabled_ = false;
 +  std::atomic<uint64_t> sample_count_{0};

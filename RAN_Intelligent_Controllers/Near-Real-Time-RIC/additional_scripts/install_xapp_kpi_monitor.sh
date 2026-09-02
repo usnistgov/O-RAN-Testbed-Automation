@@ -28,7 +28,7 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-echo "# Script: $(realpath "$0")..."
+echo "# Script: $(realpath "$0") $@"
 
 # Run this script to build and deploy the Key Performance Indicator (KPI) Monitor xApp (kpimon-go) in the Near-Real-Time RIC.
 # More information can be found at: https://github.com/o-ran-sc/ric-app-kpimon-go and https://docs.o-ran-sc.org/projects/o-ran-sc-ric-app-kpimon/en/latest/overview.html
@@ -36,13 +36,25 @@ echo "# Script: $(realpath "$0")..."
 # Exit immediately if a command fails
 set -e
 
+CLEAN_INSTALL=false
+
 CURRENT_DIR=$(pwd)
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PARENT_DIR=$(dirname "$SCRIPT_DIR")
 cd "$PARENT_DIR"
 
+if [ "$CLEAN_INSTALL" != "true" ] && XAPP_DEPLOYMENT=$(kubectl get deployment -n ricxapp -o name 2>/dev/null | grep -m1 'kpimon-go' || true) && [ -n "$XAPP_DEPLOYMENT" ]; then
+    echo "Restarting KPI Monitor xApp (kpimon-go)..."
+    if kubectl rollout restart -n ricxapp "$XAPP_DEPLOYMENT" && kubectl rollout status -n ricxapp "$XAPP_DEPLOYMENT" --timeout=60s; then
+        echo "Successfully restarted KPI Monitor xApp."
+        exit 0
+    fi
+    # Otherwise continue to the full installation process
+fi
+
 # Run a sudo command every minute to ensure script execution without user interaction
 ./install_scripts/start_sudo_refresh.sh
+trap './install_scripts/stop_sudo_refresh.sh 2>/dev/null || true' EXIT
 
 if ! kubectl get pods -n ricplt | grep r4-influxdb-influxdb2 &>/dev/null; then
     echo "The InfluxDB pod is not running, installing it..."
@@ -85,10 +97,28 @@ if [ ! -f "e2sm/wrapper.previous.c" ]; then
 fi
 git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/xApps/kpimon-go/e2sm/wrapper.c.patch"
 
+echo "Updating E2SM-KPM MatchingCondItem bindings to the KPM v2.03 layout..."
+git restore e2sm/asn1/kpm2_0.asn
+git restore e2sm/headers/MatchingCondItem.h
+git restore e2sm/lib/MatchingCondItem.c
+rm -f e2sm/headers/LogicalOR.h
+rm -f e2sm/headers/MatchingCondItem-Choice.h
+rm -f e2sm/lib/LogicalOR.c
+rm -f e2sm/lib/MatchingCondItem-Choice.c
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/xApps/kpimon-go/e2sm/asn1/kpm2_0.asn.patch"
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/xApps/kpimon-go/e2sm/headers/LogicalOR.h.patch"
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/xApps/kpimon-go/e2sm/headers/MatchingCondItem-Choice.h.patch"
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/xApps/kpimon-go/e2sm/headers/MatchingCondItem.h.patch"
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/xApps/kpimon-go/e2sm/lib/LogicalOR.c.patch"
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/xApps/kpimon-go/e2sm/lib/MatchingCondItem-Choice.c.patch"
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/xApps/kpimon-go/e2sm/lib/MatchingCondItem.c.patch"
+
+git restore control/control.go
 if [ ! -f "control/control.go.previous" ]; then
     echo "Backing up control/control.go to control/control.go.previous..."
     cp control/control.go control/control.go.previous
 fi
+git apply --verbose --ignore-whitespace "$PARENT_DIR/install_patch_files/xApps/kpimon-go/control/control.go.patch"
 
 # Replace my-org with influxdata in control/control.go
 if grep -q '"my-org"' control/control.go; then
@@ -108,7 +138,7 @@ kubectl exec -n ricplt -it r4-influxdb-influxdb2-0 -- influx bucket create --org
 # Set influxdb2.NewClient("http://r4-influxdb-influxdb2.ricplt:80", "$INFLUXDB_TOKEN")
 if grep -q "influxdb2.NewClient(" control/control.go; then
     echo "Patching control/control.go to replace 'influxdb2.NewClient(' with the new client call..."
-    if [ ! -f "src/control/control.go.previous" ]; then
+    if [ ! -f "control/control.go.previous" ]; then
         cp control/control.go control/control.go.previous
     fi
     sed -i "s|influxdb2.NewClient([^)]*)|influxdb2.NewClient(\"http://r4-influxdb-influxdb2.ricplt:80\", \"$INFLUXDB_TOKEN\")|g" control/control.go
@@ -175,8 +205,8 @@ if ! command -v jq &>/dev/null; then
 fi
 
 FILE="deploy/config_updated.json"
-sudo rm -rf $FILE
-cp deploy/config.json $FILE
+sudo rm -rf "$FILE"
+cp deploy/config.json "$FILE"
 # Modify the required fields using jq and overwrite the original file
 jq '.containers[0].image.tag = "latest" |
     .containers[0].image.registry = "127.0.0.1:80" |
@@ -260,6 +290,7 @@ cd "$PARENT_DIR"
 # Stop the sudo timeout refresher, it is no longer necessary to run
 ./install_scripts/stop_sudo_refresh.sh
 
+stty sane || true
 echo
 echo
 echo "################################################################################"

@@ -40,7 +40,13 @@ cd "$SCRIPT_DIR"
 # Default values
 UE_NUMBER=1
 RFSIM_SERVER=0
-DISABLE_NRSCOPE_IF_INSTALLED=false
+USE_IMSCOPE=false
+ZMQ_THREAD_POOL="-1,-1"
+USE_ZMQ_CHANNEL_EMULATOR=false
+SHOW_ZMQ_CHANNEL_EMULATOR_GUI=true
+if [ -z "${DISPLAY:-}" ] && [ -z "${WAYLAND_DISPLAY:-}" ]; then
+    SHOW_ZMQ_CHANNEL_EMULATOR_GUI=false
+fi
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -60,25 +66,35 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-if ! [[ $UE_NUMBER =~ ^[0-9]+$ ]]; then
-    echo "ERROR: UE number must be a number."
+if ! [[ "$UE_NUMBER" =~ ^[1-9][0-9]*$ ]]; then
+    echo "ERROR: UE number must be a positive integer."
     exit 1
 fi
-if [ $UE_NUMBER -lt 1 ]; then
-    echo "ERROR: UE number must be greater than or equal to 1."
+if [ "$SHOW_ZMQ_CHANNEL_EMULATOR_GUI" != "true" ] && [ "$SHOW_ZMQ_CHANNEL_EMULATOR_GUI" != "false" ]; then
+    echo "ERROR: SHOW_ZMQ_CHANNEL_EMULATOR_GUI must be true or false."
     exit 1
 fi
 
-if [ ! -f "configs/ue1.conf" ]; then
-    echo "Configuration was not found for OAI UE 1. Please run ./generate_configurations.sh first."
-    exit 1
+if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ]; then
+    # Optionally, validate the ZeroMQ channel emulator before starting the UE
+    # "$SCRIPT_DIR/install_scripts/validate_zmq_channel_emulator_config.sh" --channel-emulator-only --ues "$UE_NUMBER"
+
+    CHANNEL_EMULATOR_UE_NUMBER=$("$SCRIPT_DIR/install_scripts/get_zmq_channel_emulator_config.sh" --ue "$UE_NUMBER" | awk '{print $1}')
+    ZMQ_RX_PORT=$("$SCRIPT_DIR/install_scripts/get_zmq_channel_emulator_config.sh" --ue "$UE_NUMBER" | awk '{print $2}')
+    ZMQ_TX_PORT=$("$SCRIPT_DIR/install_scripts/get_zmq_channel_emulator_config.sh" --ue "$UE_NUMBER" | awk '{print $3}')
+    UE_HOST_IP=$("$SCRIPT_DIR/install_scripts/get_ue_namespace_ip.sh" host "$UE_NUMBER")
+    if [ ! -f "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build/liboai_zmqdevif.so" ]; then
+        echo "ERROR: ZeroMQ device library not found. Rerun full_install.sh after setting RADIO_TYPE=\"ZMQ\"."
+        exit 1
+    fi
+    "$SCRIPT_DIR/install_scripts/run_zmq_channel_emulator.sh" --show-ui "$SHOW_ZMQ_CHANNEL_EMULATOR_GUI"
 fi
 
 # Function to handle graceful shutdown
 graceful_shutdown() {
     trap - SIGINT SIGTERM SIGQUIT
     echo "Shutting down UE $UE_NUMBER gracefully..."
-    "$SCRIPT_DIR/stop.sh" $UE_NUMBER
+    "$SCRIPT_DIR/stop.sh" "$UE_NUMBER"
     exit
 }
 trap graceful_shutdown SIGINT SIGTERM SIGQUIT
@@ -106,18 +122,18 @@ if [ ! -f "$UE_CONF_PATH" ]; then
     echo "Configuration file for UE $UE_NUMBER not found, creating..."
     ./generate_configurations.sh "$UE_NUMBER"
     if [ ! -f "$UE_CONF_PATH" ]; then
-        echo "Configuration file for UE $UE_NUMBER still not found after generation."
+        echo "ERROR: Configuration file for UE $UE_NUMBER not found."
         exit 1
     fi
 fi
 
 HOSTNAME_IP=$(hostname -I | awk '{print $1}')
 
-if ./is_running.sh | grep -q "ue$UE_NUMBER"; then
+if ./is_running.sh | grep -Eq "(^|[ (])ue${UE_NUMBER}([ )]|$)"; then
     echo "Already running ue$UE_NUMBER."
 else
     if [ ! -f "$UE_CONF_PATH" ]; then
-        echo "Configuration was not found for OAI UE $UE_NUMBER. Please run ./generate_configurations.sh first."
+        echo "Configuration was not found for Duranta UE $UE_NUMBER. Please run ./generate_configurations.sh first."
         exit 1
     fi
     mkdir -p logs
@@ -130,46 +146,66 @@ else
     # Give the UE its own network namespace and configure it to access the host network
     sudo ./install_scripts/setup_ue_namespace.sh "$UE_NUMBER"
 
-    if [ "$RFSIM_SERVER" -ne 0 ]; then
-        echo "RF simulator server mode enabled."
-        RFSIM_SERVER_ARG="--rfsimulator.serveraddr server"
-        SERVER_IP=$(sudo ip netns exec ue$UE_NUMBER ip addr show dev v-ue$UE_NUMBER | grep "inet " | awk '{print $2}' | cut -d/ -f1)
-        mkdir -p configs
-        echo "$SERVER_IP" >configs/get_rfsim_server_address.txt
+    if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ]; then
+        RFSIM_SERVER_ARG=""
     else
-        SERVER_IP=$(cat configs/get_rfsim_server_address.txt)
-        if [ -z "$SERVER_IP" ]; then
-            echo "ERROR: Could not find RF simulator server address."
-            exit 1
+        if [ "$RFSIM_SERVER" -ne 0 ]; then
+            echo "RF simulator server mode enabled."
+            RFSIM_SERVER_ARG="--rfsimulator.[0].serveraddr server"
+            SERVER_IP=$(sudo ip netns exec ue$UE_NUMBER ip addr show dev v-ue$UE_NUMBER | grep "inet " | awk '{print $2}' | cut -d/ -f1)
+            mkdir -p configs
+            echo "$SERVER_IP" >configs/get_rfsim_server_address.txt
+        else
+            SERVER_IP=$(cat configs/get_rfsim_server_address.txt)
+            if [ -z "$SERVER_IP" ]; then
+                echo "ERROR: Could not find RF simulator server address."
+                exit 1
+            fi
+            RFSIM_SERVER_ARG="--rfsimulator.[0].serveraddr $SERVER_IP"
         fi
-        RFSIM_SERVER_ARG="--rfsimulator.serveraddr $SERVER_IP"
     fi
 
-    ADDITIONAL_FLAGS=""
-    if [ "$DISABLE_NRSCOPE_IF_INSTALLED" = false ] && [ -f "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build/libimscope.so" ]; then
+    ADDITIONAL_FLAGS="-E"
+    if [ "$USE_IMSCOPE" = "true" ]; then
+        if [ ! -f "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build/libimscope.so" ]; then
+            echo "ERROR: ImScope library not found. Rerun full_install.sh after setting USE_IMSCOPE=true."
+            exit 1
+        fi
         echo "Enabling ImScope..."
-        ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --imscope -d --log_config.global_log_options utc_time"
+        ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --imscope --log_config.global_log_options utc_time"
     fi
 
     cd "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build"
 
     RADIO_TYPE=$(cat "$SCRIPT_DIR/configs/radio_type.txt" 2>/dev/null || echo "RFSIM")
-    if [ "$RADIO_TYPE" = "ZMQ" ]; then
+    if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ]; then
+        RADIO_ARGS="--device.name oai_zmqdevif --zmq.[0].tx_channels tcp://0.0.0.0:$ZMQ_TX_PORT --zmq.[0].rx_channels tcp://$UE_HOST_IP:$ZMQ_RX_PORT --thread-pool $ZMQ_THREAD_POOL"
+    elif [ "$RADIO_TYPE" = "ZMQ" ]; then
         ZMQ_TX_PORT=$((4555 + UE_NUMBER * 2))
         ZMQ_RX_PORT=$((4554 + UE_NUMBER * 2))
-        UE_HOST_IP=$(python3 "$SCRIPT_DIR/install_scripts/fetch_nth_ip.py" "10.201.0.0/16" $((UE_NUMBER * 4)))
+        UE_HOST_IP=$("$SCRIPT_DIR/install_scripts/get_ue_namespace_ip.sh" host "$UE_NUMBER")
         RADIO_ARGS="--device.name oai_zmqdevif --zmq.[0].tx_channels tcp://0.0.0.0:$ZMQ_TX_PORT --zmq.[0].rx_channels tcp://$UE_HOST_IP:$ZMQ_RX_PORT"
     elif [ "$RADIO_TYPE" = "USRP" ]; then
         RADIO_ARGS=""
     else
-        RADIO_ARGS="--rfsim $RFSIM_SERVER_ARG --rfsimulator.options chanmod"
+        RADIO_ARGS="--rfsim $RFSIM_SERVER_ARG --rfsimulator.[0].options chanmod"
     fi
 
+    # Radio configuration presets (band 3 and band 78)
+    BAND=3
     BANDWIDTH_RBS=106
-    NUMEROLOGY=1
-    BAND=78
-    DL_CARRIER_FREQUENCY_HZ=3619200000
+    NUMEROLOGY=0
+    DL_CARRIER_FREQUENCY_HZ=1842500000
+    UL_CARRIER_OFFSET_HZ=-95000000
+    SSB_START_SUBCARRIER=486
+    #
+    # BAND=78
+    # BANDWIDTH_RBS=51
+    # NUMEROLOGY=1
+    # DL_CARRIER_FREQUENCY_HZ=3489420000
+    # UL_CARRIER_OFFSET_HZ=0
+    # SSB_START_SUBCARRIER=0
 
-    # sudo ip netns exec ue$UE_NUMBER ./nr-uesoftmodem -O "../../../../configs/ue$UE_NUMBER.conf" $RADIO_ARGS -r $BANDWIDTH_RBS --numerology $NUMEROLOGY --band $BAND -C $DL_CARRIER_FREQUENCY_HZ
-    sudo script -q -f -c "ip netns exec ue$UE_NUMBER ./nr-uesoftmodem -O \"../../../../configs/ue$UE_NUMBER.conf\" $RADIO_ARGS -r $BANDWIDTH_RBS --numerology $NUMEROLOGY --band $BAND -C $DL_CARRIER_FREQUENCY_HZ $ADDITIONAL_FLAGS" "$SCRIPT_DIR/logs/ue${UE_NUMBER}_stdout.txt"
+    # sudo ip netns exec ue$UE_NUMBER ./nr-uesoftmodem -O "../../../../configs/ue$UE_NUMBER.conf" $RADIO_ARGS -r $BANDWIDTH_RBS --numerology $NUMEROLOGY --band $BAND -C $DL_CARRIER_FREQUENCY_HZ --CO $UL_CARRIER_OFFSET_HZ --ssb $SSB_START_SUBCARRIER
+    sudo script -q -f -c "ip netns exec ue$UE_NUMBER ./nr-uesoftmodem -O \"../../../../configs/ue$UE_NUMBER.conf\" $RADIO_ARGS -r $BANDWIDTH_RBS --numerology $NUMEROLOGY --band $BAND -C $DL_CARRIER_FREQUENCY_HZ --CO $UL_CARRIER_OFFSET_HZ --ssb $SSB_START_SUBCARRIER $ADDITIONAL_FLAGS" "$SCRIPT_DIR/logs/ue${UE_NUMBER}_stdout.txt"
 fi

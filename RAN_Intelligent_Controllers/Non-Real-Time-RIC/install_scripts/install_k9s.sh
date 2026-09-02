@@ -28,60 +28,68 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-echo "# Script: $(realpath "$0")..."
+echo "# Script: $(realpath "$0") $@"
 
 # Exit immediately if a command fails
 set -e
 
 # Check if k9s is already installed
-if command -v k9s &>/dev/null; then
+if ! command -v k9s &>/dev/null; then
+    echo "Downloading and extracting k9s..."
+
+    # Create and navigate to the installation directory
+    mkdir -p "$HOME/k9s-installation"
+    cd "$HOME/k9s-installation"
+
+    # Determine the processor architecture
+    ARCH_SUFFIX=""
+    case $(uname -m) in
+    "x86_64")
+        ARCH_SUFFIX="Linux_amd64"
+        ;;
+    "aarch64")
+        ARCH_SUFFIX="Linux_arm64"
+        ;;
+    "armv7l")
+        ARCH_SUFFIX="Linux_armv7"
+        ;;
+    "ppc64le")
+        ARCH_SUFFIX="Linux_ppc64le"
+        ;;
+    "s390x")
+        ARCH_SUFFIX="Linux_s390x"
+        ;;
+    *)
+        echo "Unsupported architecture: $(uname -m)"
+        exit 1
+        ;;
+    esac
+
+    # Construct the download URL using the determined architecture suffix
+    DOWNLOAD_URL="https://github.com/derailed/k9s/releases/latest/download/k9s_${ARCH_SUFFIX}.tar.gz"
+
+    # Download and check if the curl command was successful
+    if curl -fLO "$DOWNLOAD_URL"; then
+        tar -xzf "k9s_${ARCH_SUFFIX}.tar.gz"
+        sudo install -m 755 k9s /usr/local/bin/k9s
+        rm "k9s_${ARCH_SUFFIX}.tar.gz"
+        mkdir -p "$HOME/.config/k9s"
+        echo "Successfully installed k9s."
+    else
+        echo "Failed to download k9s for the architecture: ${ARCH_SUFFIX}"
+        # Clean up the installation directory if the download fails
+        cd ..
+        rm -rf "$HOME/k9s-installation"
+    fi
+else
     echo "Already installed k9s, skipping."
-    exit 0
 fi
 
-echo "Downloading and extracting k9s..."
-
-# Create and navigate to the installation directory
-mkdir -p "$HOME/k9s-installation"
-cd "$HOME/k9s-installation"
-
-# Determine the processor architecture
-ARCH_SUFFIX=""
-case $(uname -m) in
-"x86_64")
-    ARCH_SUFFIX="Linux_amd64"
-    ;;
-"aarch64")
-    ARCH_SUFFIX="Linux_arm64"
-    ;;
-"armv7l")
-    ARCH_SUFFIX="Linux_armv7"
-    ;;
-"ppc64le")
-    ARCH_SUFFIX="Linux_ppc64le"
-    ;;
-"s390x")
-    ARCH_SUFFIX="Linux_s390x"
-    ;;
-*)
-    echo "Unsupported architecture: $(uname -m)"
-    exit 1
-    ;;
-esac
-
-# Construct the download URL using the determined architecture suffix
-DOWNLOAD_URL="https://github.com/derailed/k9s/releases/latest/download/k9s_${ARCH_SUFFIX}.tar.gz"
-
-# Download and check if the curl command was successful
-if curl -fLO "$DOWNLOAD_URL"; then
-    tar -xzf k9s_${ARCH_SUFFIX}.tar.gz
-    sudo install -m 755 k9s /usr/local/bin/k9s
-    rm k9s_${ARCH_SUFFIX}.tar.gz
-    mkdir -p "$HOME/.config/k9s"
-    echo "Successfully installed k9s."
-else
-    echo "Failed to download k9s for the architecture: ${ARCH_SUFFIX}"
-    # Clean up the installation directory if the download fails
-    cd ..
-    rm -rf "$HOME/k9s-installation"
+if ! command -v kubecolor &>/dev/null; then
+    echo "Installing kubecolor..."
+    sudo env $APTVARS apt-get install -y kubecolor
+fi
+if ! grep -q 'alias kubectl="kubecolor"' ~/.bashrc; then
+    echo 'alias kubectl="kubecolor"' >>~/.bashrc
+    source ~/.bashrc
 fi

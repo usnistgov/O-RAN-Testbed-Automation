@@ -44,29 +44,32 @@ UE_NUMBER=1
 if [ "$#" -eq 1 ]; then
     UE_NUMBER=$1
 fi
-if ! [[ $UE_NUMBER =~ ^[0-9]+$ ]]; then
-    echo "ERROR: UE number must be a number."
-    exit 1
-fi
-if [ $UE_NUMBER -lt 1 ]; then
-    echo "ERROR: UE number must be greater than or equal to 1."
+if ! [[ "$UE_NUMBER" =~ ^[1-9][0-9]*$ ]]; then
+    echo "ERROR: UE number must be a positive integer."
     exit 1
 fi
 
-if [ ! -f "configs/ue1.conf" ]; then
-    echo "Configuration was not found for SRS UE. Please run ./generate_configurations.sh first."
-    exit 1
+UE_CONF_PATH="configs/ue$UE_NUMBER.conf"
+if [ ! -f "$UE_CONF_PATH" ]; then
+    echo "Configuration file for UE $UE_NUMBER not found, creating..."
+    ./generate_configurations.sh "$UE_NUMBER"
+    if [ ! -f "$UE_CONF_PATH" ]; then
+        echo "ERROR: Configuration file for UE $UE_NUMBER not found."
+        exit 1
+    fi
 fi
+
+echo "Using srsue binary: $SCRIPT_DIR/srsRAN_4G/build/srsue/src/srsue"
 echo "Starting User Equipment in background..."
 mkdir -p logs
 >logs/ue${UE_NUMBER}_stdout.txt
 sudo chown --recursive "${SUDO_USER:-$USER}" logs
 
 sudo -v # Ensure sudo session is active
-sudo setsid bash -c "stdbuf -oL -eL \"$SCRIPT_DIR/run.sh\" $UE_NUMBER >/dev/null 2>&1" </dev/null &
+sudo setsid bash -c "exec stdbuf -oL -eL \"$SCRIPT_DIR/run.sh\" $UE_NUMBER" </dev/null >/dev/null 2>&1 &
 
 ATTEMPT=0
-while ! ./is_running.sh | grep -q "ue$UE_NUMBER"; do
+while ! ./is_running.sh | grep -Eq "(^|[ (])ue${UE_NUMBER}([ )]|$)"; do
     sleep 0.5
     ATTEMPT=$((ATTEMPT + 1))
     if [ $ATTEMPT -ge 120 ]; then

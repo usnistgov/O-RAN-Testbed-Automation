@@ -1,8 +1,8 @@
-## Near-RT RIC, M-Release
+## Near-RT RIC, N-Release
 
 The Near-RT RIC, conceptualized by the O-RAN Alliance's Working Group 3 (WG3) [\[1\]][oran-wg3] and implemented by the O-RAN Software Community [\[2\]][oransc-nearrtric], enables dynamic management and optimization of Radio Access Networks (RAN).
 
-This automation tool is based on the M-Release of the Near-RT RIC. More information about these releases can be found at [\[3\]][oransc-releases].
+This automation tool is based on the N-Release of the Near-RT RIC. More information about these releases can be found at [\[3\]][oransc-releases].
 
 ## Usage
 
@@ -167,7 +167,7 @@ The cluster is installed with Flannel as the default network plugin. There are s
 16. Traffic Steering xApp project page. O-RAN Software Community. [https://github.com/o-ran-sc/ric-app-ts][trafficxapp-code]
 17. HW Python xApp project page. O-RAN Software Community. [https://github.com/o-ran-sc/ric-app-hw-python][hw-python-code]
 18. HW Rust xApp project page. O-RAN Software Community. [https://github.com/o-ran-sc/ric-app-hw-rust][hw-rust-code]
-19. O-RAN NearRT-RIC and xApp. OCUDU Documentation. [https://ocudu.gitlab.io/ocudu_docs/user_manual/tutorials/near-rt-ric/#limitations][ocudu-lim]
+19. O-RAN NearRT-RIC and xApp. OCUDU Documentation. [https://ocudu.gitlab.io/ocudu_docs/tutorials/near-rt-ric/#limitations][ocudu-lim]
 20. eBPF-based Networking, Observability, Security. Cilium. [https://cilium.io][cilium-io]
 21. Hubble - Network, Service & Security Observability for Kubernetes using eBPF. Hubble. [https://cilium.io/hubble][cilium-hubble]
 
@@ -191,6 +191,6 @@ The cluster is installed with Flannel as the default network plugin. There are s
 [trafficxapp-docs]: https://docs.o-ran-sc.org/projects/o-ran-sc-ric-app-ts/en/latest/user-guide.html
 [hw-python-code]: https://github.com/o-ran-sc/ric-app-hw-python
 [hw-rust-code]: https://github.com/o-ran-sc/ric-app-hw-rust
-[ocudu-lim]: https://ocudu.gitlab.io/ocudu_docs/user_manual/tutorials/near-rt-ric/#limitations
+[ocudu-lim]: https://ocudu.gitlab.io/ocudu_docs/tutorials/near-rt-ric/#limitations
 [cilium-io]: https://cilium.io
 [cilium-hubble]: https://cilium.io/hubble

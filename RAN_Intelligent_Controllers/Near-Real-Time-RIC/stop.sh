@@ -34,7 +34,9 @@ set -e
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
-echo "# Script: $(realpath "$0")..."
+echo "# Script: $(realpath "$0") $@"
+
+sudo ./install_scripts/stop_e2sim.sh
 
 echo "Stopping the cluster..."
 sudo systemctl start kubelet

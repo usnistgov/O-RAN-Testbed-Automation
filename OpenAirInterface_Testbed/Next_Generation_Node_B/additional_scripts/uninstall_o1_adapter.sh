@@ -66,4 +66,4 @@ fi
 
 sudo rm -rf o1-adapter
 
-echo "Successfully uninstalled O1 Adapter."
+echo "Successfully completed O1 Adapter uninstallation."

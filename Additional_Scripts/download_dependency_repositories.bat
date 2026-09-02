@@ -40,7 +40,7 @@ cd "5G_Core_Network" >nul 2>&1
 if not errorlevel 1 (
     git clone https://github.com/open5gs/open5gs.git
     cd "open5gs"
-    git checkout f77810fa59829b3348b38afbf2b0b43ed350df62
+    git checkout 0ad773687daf353e65a965b4164f3dd7f28ff99a
     cd ..\..
 ) else (
     echo ERROR: Failed to cd to 5G_Core_Network. Skipping clone.
@@ -74,7 +74,7 @@ cd "User_Equipment" >nul 2>&1
 if not errorlevel 1 (
     git clone https://github.com/zeromq/libzmq.git
     cd "libzmq"
-    git checkout b946c18f676760387276cd095bbdd8c0e18c09bf
+    git checkout 46493370217ac135246617fa2f6ac819d8b61bfc
     cd ..\..
 ) else (
     echo ERROR: Failed to cd to User_Equipment. Skipping clone.
@@ -98,7 +98,7 @@ cd "Next_Generation_Node_B" >nul 2>&1
 if not errorlevel 1 (
     git clone https://gitlab.com/ocudu/ocudu.git
     cd "ocudu"
-    git checkout 8e48b78bf6ea89e83e93dcee6f4ad0e17da132e1
+    git checkout 9c8ba5a16c0db5c96705d9f1c468eaff0fbf7e20
     cd ..\..
 ) else (
     echo ERROR: Failed to cd to Next_Generation_Node_B. Skipping clone.
@@ -110,7 +110,7 @@ cd "Next_Generation_Node_B" >nul 2>&1
 if not errorlevel 1 (
     git clone https://gitlab.com/ocudu/ocudu_elements/ocudu_oran_apps/ocudu_o1_adapter.git
     cd "ocudu_o1_adapter"
-    git checkout 776c351aed1e8fe179e244f76c1a58582a0374d5
+    git checkout 1d4517c065442a69a00d4174ee75d59a14e1010c
     cd ..\..
 ) else (
     echo ERROR: Failed to cd to Next_Generation_Node_B. Skipping clone.
@@ -122,7 +122,7 @@ cd "Next_Generation_Node_B" >nul 2>&1
 if not errorlevel 1 (
     git clone https://gitlab.com/ocudu/ocudu_elements/ocudu_oran_apps/ocudu_netconf.git
     cd "ocudu_netconf"
-    git checkout ddf3a2382a10ee85f7e4642b3a07e7cd789b822d
+    git checkout fe717ab2820bc9ebf8321291a4e5d7434894a0d2
     cd ..\..
 ) else (
     echo ERROR: Failed to cd to Next_Generation_Node_B. Skipping clone.
@@ -131,10 +131,10 @@ if not errorlevel 1 (
 cd Next_Generation_Node_B
 mklink /D libzmq ..\User_Equipment\libzmq
 mklink /D czmq ..\User_Equipment\czmq
-if not exist zmq_broker mkdir zmq_broker
-cd zmq_broker
+if not exist zmq_channel_emulator mkdir zmq_channel_emulator
+cd zmq_channel_emulator
 if not exist "multi_ue_scenario.grc" (
-    curl -L --fail --silent --show-error -o multi_ue_scenario.grc https://gitlab.com/ocudu/ocudu_docs/-/raw/46fc04904dc8ef5050a55323136fc681f3e04f1a/docs/tutorials/srsue/assets/multi_ue_scenario.grc
+    curl -L --fail --silent --show-error -o multi_ue_scenario.grc https://gitlab.com/ocudu/ocudu_docs/-/raw/34cda760023331162d7e15424424442e4af2dfe8/docs/tutorials/srsue/assets/multi_ue_scenario.grc
     if errorlevel 1 (
         echo ERROR: Failed to download multi_ue_scenario.grc
         exit /b 1
@@ -306,7 +306,7 @@ cd "RAN_Intelligent_Controllers\Non-Real-Time-RIC" >nul 2>&1
 if not errorlevel 1 (
     git clone https://gerrit.o-ran-sc.org/r/nonrtric/plt/rappmanager.git
     cd "rappmanager"
-    git checkout 3b4813b6dab278581601a06185c146ea47b4ebb7
+    git checkout 1eca521d8fd88de890e4fc7f3e5e2d262673d8c9
     cd ..\..\..
 ) else (
     echo ERROR: Failed to cd to RAN_Intelligent_Controllers\Non-Real-Time-RIC. Skipping clone.
@@ -342,7 +342,7 @@ cd "RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\smo-install" >nul 2>&1
 if not errorlevel 1 (
     git clone https://github.com/onap/multicloud-k8s.git
     cd "multicloud-k8s"
-    git checkout a3c6f080e9a015c7aab0d351af3864f239fb2931
+    git checkout f76da968efe25ee14e8b5b43d3e526eab50497cc
     cd ..\..\..\..\..
 ) else (
     echo ERROR: Failed to cd to RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\smo-install. Skipping clone.
@@ -354,7 +354,7 @@ cd "RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\smo-install" >nul 2>&1
 if not errorlevel 1 (
     git clone https://gerrit.onap.org/r/oom.git
     cd "onap_oom"
-    git checkout 2214f66e9d9f757239d0297353d9194f782e9eac
+    git checkout bb650a828c4f78dbbe596b5b1145fd92d14058ce
     cd ..\..\..\..\..
 ) else (
     echo ERROR: Failed to cd to RAN_Intelligent_Controllers\Non-Real-Time-RIC\dep\smo-install. Skipping clone.
@@ -366,7 +366,7 @@ cd "RAN_Intelligent_Controllers\Non-Real-Time-RIC" >nul 2>&1
 if not errorlevel 1 (
     git clone https://gerrit.o-ran-sc.org/r/portal/nonrtric-controlpanel.git
     cd "nonrtric-controlpanel"
-    git checkout 9f0bc855a687f918548d5dcea7a43913256cdd54
+    git checkout fb9683fa6f729dc556e44beb803c7434f895b854
     cd ..\..\..
 ) else (
     echo ERROR: Failed to cd to RAN_Intelligent_Controllers\Non-Real-Time-RIC. Skipping clone.
@@ -382,7 +382,7 @@ if not exist "OpenAirInterface_Testbed\5G_Core_Network\open5gs" (
     if not errorlevel 1 (
         git clone https://github.com/open5gs/open5gs.git
         cd "open5gs"
-        git checkout f77810fa59829b3348b38afbf2b0b43ed350df62
+        git checkout 0ad773687daf353e65a965b4164f3dd7f28ff99a
         cd ..\..\..
     ) else (
         echo ERROR: Failed to cd to OpenAirInterface_Testbed\5G_Core_Network. Skipping clone.
@@ -403,9 +403,9 @@ cd %~dp0..
 if exist "OpenAirInterface_Testbed\User_Equipment\openairinterface5g" rmdir /s /q "OpenAirInterface_Testbed\User_Equipment\openairinterface5g"
 cd "OpenAirInterface_Testbed\User_Equipment" >nul 2>&1
 if not errorlevel 1 (
-    git clone https://gitlab.eurecom.fr/oai/openairinterface5g.git
+    git clone https://github.com/duranta-project/openairinterface5g.git
     cd "openairinterface5g"
-    git checkout 26efcc498931b8f6979c39f9f44400f3c965fdc4
+    git checkout ceccfc8ffa4340d5bdc08a9fc84d2e6ab3f9472c
     cd ..\..\..
 ) else (
     echo ERROR: Failed to cd to OpenAirInterface_Testbed\User_Equipment. Skipping clone.
@@ -421,7 +421,7 @@ cd "OpenAirInterface_Testbed\Next_Generation_Node_B" >nul 2>&1
 if not errorlevel 1 (
     git clone https://gitlab.eurecom.fr/oai/o1-adapter.git
     cd "o1-adapter"
-    git checkout cb424e4c6ca1cecdd331f52a87eca916f49d7d05
+    git checkout 08f208b2936a6558aa0b30d65faac9d642883ed5
     cd ..\..\..
 ) else (
     echo ERROR: Failed to cd to OpenAirInterface_Testbed\Next_Generation_Node_B. Skipping clone.
@@ -433,7 +433,7 @@ cd "OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC" >nul 2>&1
 if not errorlevel 1 (
     git clone https://github.com/swig/swig.git
     cd "swig"
-    git checkout f5c98866f77abce0a0d73c38b2bde21d26244f23
+    git checkout 5872e9b4176cf59ce4e31b010c29a4cebf32960f
     cd ..\..\..\..
 ) else (
     echo ERROR: Failed to cd to OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC. Skipping clone.
@@ -443,7 +443,7 @@ cd %~dp0..
 if exist "OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC\flexric" rmdir /s /q "OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC\flexric"
 cd "OpenAirInterface_Testbed\RAN_Intelligent_Controllers\Flexible-RIC" >nul 2>&1
 if not errorlevel 1 (
-    git clone https://gitlab.eurecom.fr/mosaic5g/flexric.git
+    git clone https://github.com/duranta-project/flexric.git
     cd "flexric"
     git checkout ef6d722f22191eea74089966983da1f5ec1fedd4
     cd ..\..\..\..
@@ -452,5 +452,5 @@ if not errorlevel 1 (
 )
 
 
-echo Repositories were cloned successfully.
+echo Successfully cloned repositories.
 pause

@@ -1,0 +1,35 @@
+diff --git a/examples/xApp/c/monitor/xapp_rc_moni.c b/examples/xApp/c/monitor/xapp_rc_moni.c
+index 345892a8..42ca0d60 100644
+--- a/examples/xApp/c/monitor/xapp_rc_moni.c
++++ b/examples/xApp/c/monitor/xapp_rc_moni.c
+@@ -182,7 +182,8 @@ void log_octet_str_ran_param_value(const e2sm_rc_ind_hdr_frmt_1_t *hdr, byte_arr
+ 
+       ue_id_e2sm_t ue_id = dec_ue_id_asn(&ue_id_asn);
+       ue_id_e2sm_e const ue_id_type = ue_id.type;
+-      log_ue_id ue_id_logger = log_ue_id_e2sm[ue_id_type];
++      log_ue_id ue_id_logger =
++          ue_id_type >= 0 && ue_id_type < END_UE_ID_E2SM ? log_ue_id_e2sm[ue_id_type] : NULL;
+       if (ue_id_logger) {
+         ue_id_logger(ue_id);
+       } else {
+@@ -286,7 +287,8 @@ void log_ind_1_2(const e2sm_rc_ind_hdr_frmt_1_t *hdr, const e2sm_rc_ind_msg_frmt
+       seq_ue_id_t* const ue_id_item = &msg->seq_ue_id[i];
+ 
+       ue_id_e2sm_e const ue_id_type = ue_id_item->ue_id.type;
+-      log_ue_id ue_id_logger = log_ue_id_e2sm[ue_id_type];
++      log_ue_id ue_id_logger =
++          ue_id_type >= 0 && ue_id_type < END_UE_ID_E2SM ? log_ue_id_e2sm[ue_id_type] : NULL;
+       if (ue_id_logger) {
+         ue_id_logger(ue_id_item->ue_id);
+       } else {
+@@ -318,8 +320,9 @@ void log_ind_1_2(const e2sm_rc_ind_hdr_frmt_1_t *hdr, const e2sm_rc_ind_msg_frmt
+ }
+ 
+ static
+-void sm_cb_rc(sm_ag_if_rd_t const* rd)
++void sm_cb_rc(sm_ag_if_rd_t const* rd, global_e2_node_id_t const* node_id)
+ {
++  (void)node_id;
+   assert(rd != NULL);
+   assert(rd->type == INDICATION_MSG_AGENT_IF_ANS_V0);
+ 

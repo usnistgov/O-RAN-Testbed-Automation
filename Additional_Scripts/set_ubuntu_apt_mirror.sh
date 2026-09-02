@@ -66,7 +66,6 @@ if [ -z "$MIRROR" ]; then
     exit 1
 fi
 
-TIMESTAMP=$(date +%Y%m%d%H%M%S)
 UPDATED_ANY=false
 
 for SOURCE_FILE in /etc/apt/sources.list /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources; do
@@ -123,7 +122,6 @@ for SOURCE_FILE in /etc/apt/sources.list /etc/apt/sources.list.d/*.list /etc/apt
     fi
 
     echo "Updating $SOURCE_FILE..."
-    sudo cp -a "$SOURCE_FILE" "$SOURCE_FILE.bak.$TIMESTAMP"
     sudo install -m 0644 "$TMP_FILE" "$SOURCE_FILE"
     rm -f "$TMP_FILE"
 
@@ -134,7 +132,7 @@ for SOURCE_FILE in /etc/apt/sources.list /etc/apt/sources.list.d/*.list /etc/apt
 done
 
 if [ "$UPDATED_ANY" = true ]; then
-    echo "Successfully updated APT mirror configuration. Backups use suffix .bak.$TIMESTAMP."
+    echo "Successfully updated APT mirror configuration."
     sudo apt-get update
 else
     echo "No Ubuntu APT mirror entries needed to be updated."

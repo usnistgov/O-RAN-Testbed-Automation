@@ -62,9 +62,10 @@ void rlc_tx_tm_entity::handle_sdu(byte_buffer sdu_buf, bool is_retx)
 }
 
 // TS 38.322 v16.2.0 Sec. 5.4
-void rlc_tx_tm_entity::discard_sdu(uint32_t pdcp_sn)
+void rlc_tx_tm_entity::discard_sdu(uint32_t pdcp_sn_start, uint32_t block_size)
 {
-  logger.log_warning("Ignoring invalid attempt to discard SDU in TM. pdcp_sn={}", pdcp_sn);
+  logger.log_warning(
+      "Ignoring invalid attempt to discard SDU in TM. pdcp_sn={} block_size={}", pdcp_sn_start, block_size);
   metrics_high.metrics_add_discard_failure(1);
 }
 
@@ -137,6 +138,7 @@ void rlc_tx_tm_entity::handle_changed_buffer_state()
     // Redirect handling of status to pcell_executor
     if (not pcell_executor.defer([this]() { update_mac_buffer_state(); })) {
       logger.log_error("Failed to enqueue buffer state update");
+      pending_buffer_state.clear(std::memory_order_seq_cst);
     }
   } else {
     logger.log_debug("Avoiding redundant buffer state update to lower layer");

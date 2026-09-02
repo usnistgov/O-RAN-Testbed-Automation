@@ -465,7 +465,6 @@ install_asn1c_from_source(){
     echo_info "\nInstalling ASN1."
     $SUDO $INSTALLER -y install bison flex
     $SUDO rm -rf /tmp/asn1c
-    # GIT_SSL_NO_VERIFY=true git clone https://gitlab.eurecom.fr/oai/asn1c.git /tmp/asn1c
     git clone https://github.com/mouse07410/asn1c /tmp/asn1c
     cd /tmp/asn1c
     #git checkout vlm_master
@@ -495,8 +494,8 @@ install_simde_from_source(){
     if [[ -v SIMDE_VERSION ]]; then
       git checkout -f $SIMDE_VERSION
     else
-      # At time of writing, last working commit for OAI: c7f26b7
-      git checkout c7f26b73ba8e874b95c2cec2b497826ad2188f68
+      # At time of writing, last working commit for OAI: 1c68d9a
+      git checkout 1c68d9ad60bf63f3fb527c4ee3b2319d828ffcc6
     fi
     # Showing which version is used
     git log -n1

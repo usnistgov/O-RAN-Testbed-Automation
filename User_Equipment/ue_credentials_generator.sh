@@ -28,6 +28,8 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+
 if [ $# -lt 1 ] || [ $# -gt 2 ]; then # Input validation
     echo "Usage: $0 <UE_NUMBER> [PLMN]"
     echo "Output fields: UE_OPC, UE_IMEI, UE_IMSI, UE_KEY, UE_NAMESPACE"
@@ -38,8 +40,12 @@ UE_NUMBER="$1"
 PLMN="${2:-""}" # Optional PLMN parameter
 
 # Validate that UE_NUMBER is a positive integer
-if ! [[ "$UE_NUMBER" =~ ^[0-9]+$ ]] || [ "$UE_NUMBER" -lt 1 ]; then
+if ! [[ "$UE_NUMBER" =~ ^[1-9][0-9]*$ ]]; then
     echo "ERROR: UE_NUMBER must be a positive integer."
+    exit 1
+fi
+if ! "$SCRIPT_DIR/install_scripts/get_ue_namespace_ip.sh" host "$UE_NUMBER" >/dev/null 2>&1; then
+    echo "ERROR: UE $UE_NUMBER cannot be allocated an address in the namespace subnet."
     exit 1
 fi
 

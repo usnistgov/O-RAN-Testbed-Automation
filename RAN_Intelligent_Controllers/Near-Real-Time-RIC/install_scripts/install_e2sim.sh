@@ -28,7 +28,7 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-echo "# Script: $(realpath "$0")..."
+echo "# Script: $(realpath "$0") $@"
 
 # Exit immediately if a command fails
 set -e
@@ -47,8 +47,8 @@ sudo ./install_scripts/update_docker_dns.sh
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 sudo env $APTVARS apt-get install -y cmake g++ libsctp-dev
 DOCKER_FILE_PATH="e2-interface/e2sim/Dockerfile_kpm_updated"
-cp e2-interface/e2sim/Dockerfile_kpm $DOCKER_FILE_PATH
-sudo ./install_scripts/revise_e2sim_dockerfile.sh $DOCKER_FILE_PATH
+cp e2-interface/e2sim/Dockerfile_kpm "$DOCKER_FILE_PATH"
+sudo ./install_scripts/revise_e2sim_dockerfile.sh "$DOCKER_FILE_PATH"
 
 # Patch the E2 simulator with source code developed by Abdul Fikih Kurnia in https://hackmd.io/@abdfikih/BkIeoH9D0
 cp install_patch_files/e2-interface/e2sim/src/messagerouting/e2ap_message_handler.cpp e2-interface/e2sim/src/messagerouting/
@@ -63,7 +63,7 @@ cd build/
 cmake .. && make -j$(nproc) package && cmake .. -DDEV_PKG=1 && make -j$(nproc) package
 cp *.deb ../e2sm_examples/kpm_e2sm/
 cd ../
-docker build -t oransim:0.0.999 . -f Dockerfile_kpm_updated
+docker build --build-arg CONTAINER_PULL_REGISTRY=nexus3.o-ran-sc.org:10002 -t oransim:0.0.999 -f Dockerfile_kpm_updated .
 if [ $? -ne 0 ]; then
     echo "ERROR: Docker build failed. Cleaning up the E2 simulator..."
     sudo rm -rf e2-interface

@@ -28,7 +28,7 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-echo "# Script: $(realpath "$0")..."
+echo "# Script: $(realpath "$0") $@"
 
 if ! command -v ufw >/dev/null 2>&1; then
     echo "Command ufw not found, skipping."
@@ -40,7 +40,7 @@ MAX_ATTEMPTS=10
 while ((ATTEMPTS++ < MAX_ATTEMPTS)); do
     echo "Attempting to disable ufw..."
     if output=$(sudo ufw disable 2>&1); then
-        echo "ufw disabled successfully."
+        echo "Successfully disabled ufw."
         break
     else
         echo "    Failed to disable ufw: $output"

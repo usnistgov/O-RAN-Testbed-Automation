@@ -68,6 +68,7 @@ fi
 
 # Run a sudo command every minute to ensure script execution without user interaction
 ./install_scripts/start_sudo_refresh.sh
+trap './install_scripts/stop_sudo_refresh.sh 2>/dev/null || true' EXIT
 
 # Detect if systemctl is available
 USE_SYSTEMCTL=false
@@ -190,7 +191,7 @@ if command -v kubeadm &>/dev/null; then
     mount | grep '/var/lib/kubelet' | awk '{print $3}' | xargs -r sudo umount -f
     echo "Resetting Kubernetes..."
     echo "y" | sudo kubeadm reset -f -v5
-    echo "Kubernetes reset successfully."
+    echo "Successfully reset Kubernetes."
 fi
 
 # Stop Kubernetes services using systemd
@@ -276,7 +277,7 @@ sudo rm -rf /var/lib/dockershim || true
 sudo rm -rf /var/run/kubernetes || true
 sudo rm -rf /var/lib/cni/ || true
 sudo rm -rf /root/.kube/ || true
-sudo rm -rf $HOME/.kube/ || true
+sudo rm -rf "$HOME/.kube/" || true
 
 # Remove all Kubernetes-related Docker or containerd images
 if command -v docker &>/dev/null; then
@@ -291,10 +292,19 @@ fi
 # Remove containerd containers and images if crictl is installed
 if command -v crictl &>/dev/null; then
     echo "Removing all containerd containers and images..."
-    sudo crictl stop $(sudo crictl pods -q 2>/dev/null || true) || true
-    sudo crictl rmp $(sudo crictl pods -q 2>/dev/null || true) || true
-    sudo crictl rm $(sudo crictl ps -a -q 2>/dev/null || true) || true
-    sudo crictl rmi $(sudo crictl images -q 2>/dev/null || true) || true
+    PODS=$(sudo crictl pods -q 2>/dev/null || true)
+    CONTAINERS=$(sudo crictl ps -a -q 2>/dev/null || true)
+    IMAGES=$(sudo crictl images -q 2>/dev/null || true)
+    if [[ -n "$PODS" ]]; then
+        sudo crictl stop $PODS >/dev/null 2>&1 || true
+        sudo crictl rmp $PODS >/dev/null 2>&1 || true
+    fi
+    if [[ -n "$CONTAINERS" ]]; then
+        sudo crictl rm $CONTAINERS >/dev/null 2>&1 || true
+    fi
+    if [[ -n "$IMAGES" ]]; then
+        sudo crictl rmi $IMAGES >/dev/null 2>&1 || true
+    fi
 else
     echo "crictl not found; skipping containerd cleanup."
 fi
@@ -345,6 +355,9 @@ sudo ip link delete weave 2>/dev/null || true
 sudo rm -rf ~/.kube
 echo
 echo "Kubernetes is cleaned up."
+
+echo "Enabling swap to restore system state..."
+sudo ./install_scripts/enable_swap.sh
 
 echo "Performing general system cleanup..."
 sudo apt-get autoremove -y

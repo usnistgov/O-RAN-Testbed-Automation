@@ -19,6 +19,11 @@ unsigned short config_frames[4] = {2,9,11,13};
 #include "openair2/E2AP/flexric/src/agent/e2_agent_api.h"
 #include "openair2/E2AP/RAN_FUNCTION/init_ran_func.h"
 #endif
+
+#ifdef E3_AGENT
+#include "openair2/E3AP/e3_agent.h"
+#endif
+
 #include "nr-softmodem.h"
 #include <common/utils/assertions.h>
 #include <openair2/GNB_APP/gnb_app.h>
@@ -60,7 +65,6 @@ unsigned short config_frames[4] = {2,9,11,13};
 #include "nr-softmodem-common.h"
 #include "openair2/E1AP/e1ap_common.h"
 #include "pdcp.h"
-#include "radio/COMMON/common_lib.h"
 #include "s1ap_eNB.h"
 #include "sctp_eNB_task.h"
 #include "system.h"
@@ -69,6 +73,7 @@ unsigned short config_frames[4] = {2,9,11,13};
 #include "x2ap_eNB.h"
 #include "openair1/SCHED_NR/sched_nr.h"
 #include "openair2/SDAP/nr_sdap/nr_sdap.h"
+#include "openair3/NRPPA/nrppa_gNB.h"
 
 RAN_CONTEXT_t RC;
 pthread_cond_t nfapi_sync_cond;
@@ -81,24 +86,10 @@ int sync_var=-1; //!< protected by mutex \ref sync_mutex.
 int config_sync_var=-1;
 int oai_exit = 0;
 
-unsigned int mmapped_dma=0;
-
 uint64_t downlink_frequency[MAX_NUM_CCs][4];
 int64_t uplink_frequency_offset[MAX_NUM_CCs][4];
 char *uecap_file;
 
-runmode_t mode = normal_txrx;
-
-#if MAX_NUM_CCs == 1
-double tx_gain[MAX_NUM_CCs][4] = {{20,0,0,0}};
-double rx_gain[MAX_NUM_CCs][4] = {{110,0,0,0}};
-#else
-double tx_gain[MAX_NUM_CCs][4] = {{20,0,0,0},{20,0,0,0}};
-double rx_gain[MAX_NUM_CCs][4] = {{110,0,0,0},{20,0,0,0}};
-#endif
-
-int chain_offset = 0;
-int numerology = 0;
 double cpuf;
 
 /*------------------------------------------------------------------------*/
@@ -128,6 +119,9 @@ void exit_function(const char *file, const char *function, const int line, const
   if (RC.ru == NULL)
     exit(-1); // likely init not completed, prevent crash or hang, exit now...
 
+  // Signal worker threads (ru_thread, L1) to stop before tearing down the radio
+  oai_exit = 1;
+
   for (ru_id=0; ru_id<RC.nb_RU; ru_id++) {
     if (RC.ru[ru_id] == NULL) {
       continue;
@@ -135,6 +129,10 @@ void exit_function(const char *file, const char *function, const int line, const
     if (RC.ru[ru_id]->ifdevice.trx_stop_func) {
       RC.ru[ru_id]->ifdevice.trx_stop_func(&RC.ru[ru_id]->ifdevice);
       RC.ru[ru_id]->ifdevice.trx_stop_func = NULL;
+    }
+    if (RC.ru[ru_id]->rfdevice.trx_stop_func) {
+      RC.ru[ru_id]->rfdevice.trx_stop_func(&RC.ru[ru_id]->rfdevice);
+      RC.ru[ru_id]->rfdevice.trx_stop_func = NULL;
     }
     if (RC.ru[ru_id]->rfdevice.trx_end_func) {
       if (RC.ru[ru_id]->rfdevice.trx_get_stats_func) {
@@ -145,10 +143,6 @@ void exit_function(const char *file, const char *function, const int line, const
       RC.ru[ru_id]->rfdevice.trx_end_func = NULL;
     }
 
-    if (RC.ru[ru_id]->ifdevice.trx_stop_func) {
-      RC.ru[ru_id]->ifdevice.trx_stop_func(&RC.ru[ru_id]->ifdevice);
-      RC.ru[ru_id]->ifdevice.trx_stop_func = NULL;
-    }
     if (RC.ru[ru_id] && RC.ru[ru_id]->ifdevice.trx_end_func) {
       if (RC.ru[ru_id]->ifdevice.trx_get_stats_func) {
         RC.ru[ru_id]->ifdevice.trx_get_stats_func(&RC.ru[ru_id]->ifdevice);
@@ -158,8 +152,6 @@ void exit_function(const char *file, const char *function, const int line, const
       RC.ru[ru_id]->ifdevice.trx_end_func = NULL;
     }
   }
-
-  oai_exit = 1;
 
   if (assert) {
     abort();
@@ -184,10 +176,14 @@ static int create_gNB_tasks(ngran_node_t node_type, configmodule_interface_t *cf
 
   RCconfig_verify(cfg, node_type);
 
+  nr_cell_sched_t *cell = NULL; // This is still assuming RC.nb_nr_macrlc_inst is always 1, need to find a better way when RC.nb_nr_macrlc_inst is > 1
   if (RC.nb_nr_macrlc_inst > 0)
-    RCconfig_nr_macrlc(cfg);
+    RCconfig_nr_macrlc(cfg, &cell);
 
-  if (RC.nb_nr_L1_inst>0) AssertFatal(l1_north_init_gNB()==0,"could not initialize L1 north interface\n");
+  if (RC.nb_nr_L1_inst > 0) {
+    int ret = l1_north_init_gNB();
+    AssertFatal(ret == 0, "could not initialize L1 north interface\n");
+  }
 
   AssertFatal (gnb_nb <= RC.nb_nr_inst,
                "Number of gNB is greater than gNB defined in configuration file (%d/%d)!",
@@ -244,6 +240,11 @@ static int create_gNB_tasks(ngran_node_t node_type, configmodule_interface_t *cf
     if (gnb_nb > 0) {
       if (itti_create_task (TASK_NGAP, ngap_gNB_task, NULL) < 0) {
         LOG_E(NGAP, "Create task for NGAP failed\n");
+        return -1;
+      }
+
+      if (itti_create_task(TASK_NRPPA, nrppa_gNB_task, NULL) < 0) {
+        LOG_E(NGAP, "Create task for NRPPA failed\n");
         return -1;
       }
     }
@@ -401,7 +402,7 @@ int stop_L1(module_id_t gnb_id)
  * Restart the nr-softmodem after it has been soft-stopped with stop_L1L2()
  */
 #include "openair2/LAYER2/NR_MAC_gNB/mac_proto.h"
-int start_L1L2(module_id_t gnb_id)
+int start_L1L2(module_id_t gnb_id, nr_cell_sched_t *cell)
 {
   LOG_I(GNB_APP, "starting nr-softmodem\n");
   /* block threads */
@@ -409,12 +410,12 @@ int start_L1L2(module_id_t gnb_id)
   sync_var = -1;
 
   /* update config */
-  gNB_MAC_INST *mac = RC.nrmac[0];
-  NR_ServingCellConfigCommon_t *scc = mac->common_channels[0].ServingCellConfigCommon;
-  nr_mac_config_scc(mac, scc, &mac->radio_config);
+  gNB_MAC_INST *mac = RC.nrmac[gnb_id];
+  NR_ServingCellConfigCommon_t *scc = cell->common_channels.ServingCellConfigCommon;
+  nr_mac_config_scc(mac, cell, scc, &cell->radio_config);
 
-  NR_BCCH_BCH_Message_t *mib = mac->common_channels[0].mib;
-  const NR_BCCH_DL_SCH_Message_t *sib1 = mac->common_channels[0].sib1;
+  NR_BCCH_BCH_Message_t *mib = cell->common_channels.mib;
+  const NR_BCCH_DL_SCH_Message_t *sib1 = cell->common_channels.sib1;
   f1ap_setup_req_t *sr = mac->f1_config.setup_req;
   DevAssert(sr->num_cells_available == 1);
   f1ap_served_cell_info_t *info = &sr->cell[0].info;
@@ -510,7 +511,6 @@ int main( int argc, char **argv ) {
   setvbuf(stdout, NULL, _IONBF, 0);
   setvbuf(stderr, NULL, _IONBF, 0);
 #endif
-  mode = normal_txrx;
   logInit();
   lock_memory_to_ram();
   get_options(uniqCfg);
@@ -520,6 +520,13 @@ int main( int argc, char **argv ) {
           "no SYS_NICE capability: cannot set thread priority and affinity, consider running with sudo for optimum performance\n");
 
   softmodem_verify_mode(get_softmodem_params());
+
+//////////////////////////////////
+//// Init the E3 Agent
+#ifdef E3_AGENT
+  printf("Init E3 Agent\n");
+  e3_init();
+#endif // E3_AGENT
 
 #if T_TRACER
   T_Config_Init();
@@ -607,7 +614,7 @@ int main( int argc, char **argv ) {
 
     for (ru_id=0; ru_id<RC.nb_RU; ru_id++) {
       RC.ru[ru_id]->rf_map.card=0;
-      RC.ru[ru_id]->rf_map.chain=CC_id+chain_offset;
+      RC.ru[ru_id]->rf_map.chain = CC_id;
       if (ru_id==0) sl_ahead = RC.ru[ru_id]->sl_ahead;	
       else AssertFatal(RC.ru[ru_id]->sl_ahead != RC.ru[0]->sl_ahead,"RU %d has different sl_ahead %d than RU 0 %d\n",ru_id,RC.ru[ru_id]->sl_ahead,RC.ru[0]->sl_ahead);
     }
@@ -726,6 +733,11 @@ int main( int argc, char **argv ) {
   pthread_mutex_destroy(&nfapi_sync_mutex);
 
   time_manager_finish();
+
+#ifdef E3_AGENT
+  printf("Destroy E3 Agent\n");
+  e3_destroy();
+#endif // E3_AGENT
 
   free(pckg);
   logClean();

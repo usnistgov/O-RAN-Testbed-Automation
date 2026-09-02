@@ -57,6 +57,7 @@ fi
 
 # Run a sudo command every minute to ensure script execution without user interaction
 ./install_scripts/start_sudo_refresh.sh
+trap './install_scripts/stop_sudo_refresh.sh 2>/dev/null || true' EXIT
 
 # Get the start timestamp in seconds
 INSTALL_START_TIME=$(date +%s)
@@ -243,6 +244,12 @@ fi
 sudo ./install_scripts/enable_docker_build_kit.sh
 
 echo
+echo "Installing k9s..."
+if ! sudo ./install_scripts/install_k9s.sh; then
+    echo "Could not install k9s at the moment, skipping."
+fi
+
+echo
 echo "Installing Near-Real Time RAN Intelligent Controller (O-RAN SC)..."
 
 # Determine if RAN Intelligent Controller pods should be reset
@@ -379,12 +386,6 @@ if kubectl taint nodes --all node-role.kubernetes.io/master- &>/dev/null; then
 fi
 
 cd "$SCRIPT_DIR"
-
-echo
-echo "Installing k9s..."
-if ! sudo ./install_scripts/install_k9s.sh; then
-    echo "Could not install k9s at the moment, skipping."
-fi
 
 echo
 echo "Building and Installing the E2 Simulator..."
@@ -536,4 +537,4 @@ if [ -n "$INSTALL_START_TIME" ]; then
     echo "$DURATION_MINUTES minutes" >>install_time.txt
 fi
 
-echo "The Near-Real Time RAN Intelligent Controller installation completed successfully."
+echo "Successfully completed the Near-Real Time RAN Intelligent Controller installation."

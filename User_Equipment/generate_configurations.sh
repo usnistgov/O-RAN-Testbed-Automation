@@ -30,6 +30,7 @@
 
 # Exit immediately if a command fails
 set -e
+echo "# Script: $(realpath "$0") $@"
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
@@ -42,27 +43,31 @@ cd "$SCRIPT_DIR"
 
 EXAMPLE_CONFIG_PATH="$SCRIPT_DIR/srsRAN_4G/srsue/ue.conf.example"
 CLEAR_CONFIGS=false
+UE_NR_PROFILE="srsue" # Supported: srsue, generic_fr1
+ZMQ_DEBUG_ARGS=""     # Example: fail_on_disconnect=true,log_trx_timeout=true,trx_timeout_ms=1000
 
-# Support input argument for the UE number(s), for example:
-# ./generate_configurations.sh --> configures UE 1, 2, and 3
-# ./generate_configurations.sh 2 --> configures UE 2
-# ./generate_configurations.sh 4 5 6 --> configures UE 4, 5, and 6
+if [ $# -eq 1 ] && { [ "$1" = "-h" ] || [ "$1" = "--help" ]; }; then
+    echo "Usage: $0 [ue_number ...]"
+    exit 0
+fi
+
 UE_NUMBERS=("$@")
 if [ ${#UE_NUMBERS[@]} -eq 0 ]; then
     UE_NUMBERS=(3 2 1)
     CLEAR_CONFIGS=true
 fi
-# Check if the input is a number
-for i in "${UE_NUMBERS[@]}"; do
-    if ! [[ "$i" =~ ^[0-9]+$ ]]; then
-        echo "ERROR: UE number must be a number."
+# Check if the input is correct
+for UE_NUMBER in "${UE_NUMBERS[@]}"; do
+    if ! [[ "$UE_NUMBER" =~ ^[1-9][0-9]*$ ]]; then
+        echo "ERROR: UE number must be a positive integer."
+        echo "Usage: $0 [ue_number ...]"
         exit 1
     fi
-    if [ "$i" -lt 1 ]; then
-        echo "ERROR: UE number must be greater than or equal to 1."
+    if ! "$SCRIPT_DIR/install_scripts/get_ue_namespace_ip.sh" host "$UE_NUMBER" >/dev/null 2>&1; then
+        echo "ERROR: UE $UE_NUMBER cannot be allocated an address in the namespace subnet."
         exit 1
     fi
-    echo "UE $i will be configured."
+    echo "UE $UE_NUMBER will be configured."
 done
 
 # Ensure the correct YAML editor is installed
@@ -182,6 +187,123 @@ if [ ! -f "$EXAMPLE_CONFIG_PATH" ]; then
     exit 1
 fi
 
+GNB_CONFIG_PATH="$SCRIPT_DIR/../Next_Generation_Node_B/configs/gnb.yaml"
+
+# Radio configuration presets (band 3 and band 78)
+NR_BAND="3"
+NR_DL_ARFCN="368500"
+NR_SSB_ARFCN="368410"
+NR_NOF_PRB="106"
+NR_MAX_NOF_PRB="106"
+NR_SCS="15"
+GNB_NR_BW_MHZ="20"
+UE_RF_SRATE_HZ="23.04e6"
+#
+# NR_BAND="78" # For band 78 it is recommended to connect OCUDU with Duranta's 5G UE by changing "USE_DURANTA_UE=true" in the base directory run.sh and generate_configurations.sh
+# NR_DL_ARFCN="632628"
+# NR_SSB_ARFCN="632256"
+# NR_NOF_PRB="51"
+# NR_MAX_NOF_PRB="51"
+# NR_SCS="30"
+# GNB_NR_BW_MHZ="20"
+# UE_RF_SRATE_HZ="23.04e6"
+
+# NOTE: Does not validate whether a given operating band supports the selected bandwidth/SCS combination (3GPP 38.104 clause 5.3.5: BS channel bandwidth per operating band)
+if [ -f "$GNB_CONFIG_PATH" ]; then
+    GNB_NR_BAND=$(yq eval '.cell_cfg.band // ""' "$GNB_CONFIG_PATH")
+    GNB_NR_DL_ARFCN=$(yq eval '.cell_cfg.dl_arfcn // ""' "$GNB_CONFIG_PATH")
+    GNB_NR_BW_MHZ=$(yq eval '.cell_cfg.channel_bandwidth_MHz // ""' "$GNB_CONFIG_PATH")
+    GNB_NR_SCS=$(yq eval '.cell_cfg.common_scs // ""' "$GNB_CONFIG_PATH")
+    GNB_RF_SRATE_MHZ=$(yq eval '.ru_sdr.srate // ""' "$GNB_CONFIG_PATH")
+
+    if [[ "$GNB_NR_BAND" =~ ^[0-9]+$ ]]; then
+        NR_BAND="$GNB_NR_BAND"
+    fi
+    if [[ "$GNB_NR_DL_ARFCN" =~ ^[0-9]+$ ]]; then
+        NR_DL_ARFCN="$GNB_NR_DL_ARFCN"
+    fi
+    if [[ "$GNB_NR_SCS" =~ ^[0-9]+$ ]]; then
+        NR_SCS="$GNB_NR_SCS"
+    fi
+    if [[ "$GNB_RF_SRATE_MHZ" =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
+        UE_RF_SRATE_HZ="${GNB_RF_SRATE_MHZ}e6"
+    fi
+
+    # 3GPP 38.104, Table 5.3.2-1: Transmission bandwidth configuration NRB for FR1.
+    case "${GNB_NR_BW_MHZ}_${NR_SCS}" in
+    3_15) NR_NOF_PRB="15" ;;
+    5_15) NR_NOF_PRB="25" ;;
+    10_15) NR_NOF_PRB="52" ;;
+    15_15) NR_NOF_PRB="79" ;;
+    20_15) NR_NOF_PRB="106" ;;
+    25_15) NR_NOF_PRB="133" ;;
+    30_15) NR_NOF_PRB="160" ;;
+    35_15) NR_NOF_PRB="188" ;;
+    40_15) NR_NOF_PRB="216" ;;
+    45_15) NR_NOF_PRB="242" ;;
+    50_15) NR_NOF_PRB="270" ;;
+    5_30) NR_NOF_PRB="11" ;;
+    10_30) NR_NOF_PRB="24" ;;
+    15_30) NR_NOF_PRB="38" ;;
+    20_30) NR_NOF_PRB="51" ;;
+    25_30) NR_NOF_PRB="65" ;;
+    30_30) NR_NOF_PRB="78" ;;
+    35_30) NR_NOF_PRB="92" ;;
+    40_30) NR_NOF_PRB="106" ;;
+    45_30) NR_NOF_PRB="119" ;;
+    50_30) NR_NOF_PRB="133" ;;
+    60_30) NR_NOF_PRB="162" ;;
+    70_30) NR_NOF_PRB="189" ;;
+    80_30) NR_NOF_PRB="217" ;;
+    90_30) NR_NOF_PRB="245" ;;
+    100_30) NR_NOF_PRB="273" ;;
+    10_60) NR_NOF_PRB="11" ;;
+    15_60) NR_NOF_PRB="18" ;;
+    20_60) NR_NOF_PRB="24" ;;
+    25_60) NR_NOF_PRB="31" ;;
+    30_60) NR_NOF_PRB="38" ;;
+    35_60) NR_NOF_PRB="44" ;;
+    40_60) NR_NOF_PRB="51" ;;
+    45_60) NR_NOF_PRB="58" ;;
+    50_60) NR_NOF_PRB="65" ;;
+    60_60) NR_NOF_PRB="79" ;;
+    70_60) NR_NOF_PRB="93" ;;
+    80_60) NR_NOF_PRB="107" ;;
+    90_60) NR_NOF_PRB="121" ;;
+    100_60) NR_NOF_PRB="135" ;;
+    *)
+        echo "ERROR: Unsupported FR1 NR bandwidth/SCS: ${GNB_NR_BW_MHZ} MHz / ${NR_SCS} kHz (3GPP TS 38.104 Table 5.3.2-1)."
+        exit 1
+        ;;
+    esac
+    if [ "$UE_NR_PROFILE" = "srsue" ]; then
+        # OCUDU srsUE tutorial limitation: srsUE SA supports 15 kHz SCS with 5, 10, 15, or 20 MHz BW.
+        # https://ocudu.gitlab.io/ocudu_docs/tutorials/srsue/#limitations
+        case "${GNB_NR_BW_MHZ}_${NR_SCS}" in
+        5_15 | 10_15 | 15_15 | 20_15) ;;
+        *)
+            echo "ERROR: Unsupported srsUE NR bandwidth/SCS: ${GNB_NR_BW_MHZ} MHz / ${NR_SCS} kHz (3GPP TS 38.104 Table 5.3.2-1)."
+            echo "srsUE SA supports 15 kHz SCS with 5, 10, 15, or 20 MHz bandwidth."
+            echo "Set UE_NR_PROFILE=generic_fr1 only for a UE implementation that supports this numerology."
+            exit 1
+            ;;
+        esac
+    elif [ "$UE_NR_PROFILE" != "generic_fr1" ]; then
+        echo "ERROR: Unsupported UE_NR_PROFILE '$UE_NR_PROFILE'. Supported: srsue, generic_fr1."
+        exit 1
+    fi
+    NR_MAX_NOF_PRB="$NR_NOF_PRB"
+
+    if [[ "$NR_BAND" = "3" && "$NR_DL_ARFCN" = "368500" && "$NR_SCS" = "15" ]] && [[ "$GNB_NR_BW_MHZ" = "10" || "$GNB_NR_BW_MHZ" = "20" ]]; then
+        NR_SSB_ARFCN="368410"
+    elif [[ "$NR_BAND" = "78" && "$NR_DL_ARFCN" = "632628" && "$NR_SCS" = "30" && "$GNB_NR_BW_MHZ" = "20" ]]; then
+        NR_SSB_ARFCN="632256"
+    else
+        echo "ERROR: Could not determine SSB ARFCN for UE config. Add a validated derivation for this band/BW/SCS."
+        exit 1
+    fi
+fi
+
 UE_CREDENTIAL_GENERATOR_SCRIPT="$SCRIPT_DIR/ue_credentials_generator.sh"
 if [ ! -f "$UE_CREDENTIAL_GENERATOR_SCRIPT" ]; then
     echo "ERROR: Cannot find $UE_CREDENTIAL_GENERATOR_SCRIPT to generate UE subscriber credentials."
@@ -189,10 +311,16 @@ if [ ! -f "$UE_CREDENTIAL_GENERATOR_SCRIPT" ]; then
 fi
 
 for UE_NUMBER in "${UE_NUMBERS[@]}"; do
-    cp "$EXAMPLE_CONFIG_PATH" "configs/ue${UE_NUMBER}.conf"
+    echo "UE $UE_NUMBER will be configured."
 
-    UE_TX_PORT=$((2001 + UE_NUMBER * 100))
     UE_RX_PORT=$((2000 + UE_NUMBER * 100))
+    UE_TX_PORT=$((UE_RX_PORT + 1))
+    if [ "$UE_TX_PORT" -gt 65535 ]; then
+        echo "ERROR: UE $UE_NUMBER has a ZeroMQ port above 65535."
+        exit 1
+    fi
+
+    cp "$EXAMPLE_CONFIG_PATH" "configs/ue${UE_NUMBER}.conf"
 
     # Fetch the UE's OPc, IMEI, IMSI, KEY, and NAMESPACE
     read -r UE_OPC UE_IMEI UE_IMSI UE_KEY UE_NAMESPACE < <("$UE_CREDENTIAL_GENERATOR_SCRIPT" "$UE_NUMBER" "$PLMN")
@@ -200,33 +328,31 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
     # Update configuration values for RF front-end device
     update_conf "configs/ue${UE_NUMBER}.conf" "rf" "device_name" "zmq"
 
-    # Calculate IP offsets for this UE using the same subnetting scheme as in setup_ue_namespace.sh
-    # Allocate a /30 (4 addresses) subnet per UE (e.g., UE 1 -> 10.201.0.4/30, Gateway .5, UE .6)
-    BASE_SUBNET="10.201.0.0/16"
-    SUBNET_SIZE=4
+    UE_HOST_IP=$(install_scripts/get_ue_namespace_ip.sh host "$UE_NUMBER")
 
-    # Calculate IP offsets
-    SUBNET_OFFSET=$((UE_NUMBER * SUBNET_SIZE))
-    HOST_IP_OFFSET=$((SUBNET_OFFSET))   # .5
-    UE_IP_OFFSET=$((SUBNET_OFFSET + 1)) # .6
-
-    UE_HOST_IP=$(python3 install_scripts/fetch_nth_ip.py "$BASE_SUBNET" $HOST_IP_OFFSET)
-
-    update_conf "configs/ue${UE_NUMBER}.conf" "rf" "device_args" "tx_port=tcp://*:$UE_TX_PORT,rx_port=tcp://$UE_HOST_IP:$UE_RX_PORT,base_srate=23.04e6"
+    DEVICE_ARGS="tx_port=tcp://*:$UE_TX_PORT,rx_port=tcp://$UE_HOST_IP:$UE_RX_PORT,base_srate=$UE_RF_SRATE_HZ,id=ue$UE_NUMBER"
+    if [ -n "$ZMQ_DEBUG_ARGS" ]; then
+        DEVICE_ARGS="$DEVICE_ARGS,$ZMQ_DEBUG_ARGS"
+    fi
+    update_conf "configs/ue${UE_NUMBER}.conf" "rf" "device_args" "$DEVICE_ARGS"
     update_conf "configs/ue${UE_NUMBER}.conf" "rf" "nof_antennas" "1"
     update_conf "configs/ue${UE_NUMBER}.conf" "rf" "freq_offset" "0"
     update_conf "configs/ue${UE_NUMBER}.conf" "rf" "tx_gain" "35"
     update_conf "configs/ue${UE_NUMBER}.conf" "rf" "rx_gain" "60"
-    update_conf "configs/ue${UE_NUMBER}.conf" "rf" "srate" "23.04e6"
+    update_conf "configs/ue${UE_NUMBER}.conf" "rf" "srate" "$UE_RF_SRATE_HZ"
 
     # Update configuration values for RAT (EUTRA)
     update_conf "configs/ue${UE_NUMBER}.conf" "rat.eutra" "nof_carriers" "0" # Disabled EUTRA (LTE) since we are using NR (5G)
 
     # Update configuration values for RAT (NR)
     update_conf "configs/ue${UE_NUMBER}.conf" "rat.nr" "nof_carriers" "1"
-    update_conf "configs/ue${UE_NUMBER}.conf" "rat.nr" "bands" "3"
-    update_conf "configs/ue${UE_NUMBER}.conf" "rat.nr" "max_nof_prb" "106"
-    update_conf "configs/ue${UE_NUMBER}.conf" "rat.nr" "nof_prb" "106"
+    update_conf "configs/ue${UE_NUMBER}.conf" "rat.nr" "bands" "$NR_BAND"
+    update_conf "configs/ue${UE_NUMBER}.conf" "rat.nr" "dl_nr_arfcn" "$NR_DL_ARFCN"
+    update_conf "configs/ue${UE_NUMBER}.conf" "rat.nr" "ssb_nr_arfcn" "$NR_SSB_ARFCN"
+    update_conf "configs/ue${UE_NUMBER}.conf" "rat.nr" "max_nof_prb" "$NR_MAX_NOF_PRB"
+    update_conf "configs/ue${UE_NUMBER}.conf" "rat.nr" "nof_prb" "$NR_NOF_PRB"
+    update_conf "configs/ue${UE_NUMBER}.conf" "rat.nr" "scs" "$NR_SCS"
+    update_conf "configs/ue${UE_NUMBER}.conf" "rat.nr" "ssb_scs" "$NR_SCS"
 
     # Update configuration values for PCAP
     update_conf "configs/ue${UE_NUMBER}.conf" "pcap" "enable" "none"
@@ -237,7 +363,7 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
     update_conf "configs/ue${UE_NUMBER}.conf" "pcap" "nas_filename" "$SCRIPT_DIR/logs/ue${UE_NUMBER}_nas.pcap"
 
     # Update configuration values for Logging
-    update_conf "configs/ue${UE_NUMBER}.conf" "log" "phy_lib_level" "none"
+    update_conf "configs/ue${UE_NUMBER}.conf" "log" "phy_lib_level" "warning"
     update_conf "configs/ue${UE_NUMBER}.conf" "log" "rf_level" "warning"
     update_conf "configs/ue${UE_NUMBER}.conf" "log" "phy_level" "warning"
     update_conf "configs/ue${UE_NUMBER}.conf" "log" "pdcp_level" "warning"
@@ -293,21 +419,21 @@ for UE_NUMBER in "${UE_NUMBERS[@]}"; do
     # Update configuration values for GUI
     update_conf "configs/ue${UE_NUMBER}.conf" "gui" "enable" "false"
 
-    UE_IPV4=""
-    if [ $UE_NUMBER -gt 3 ]; then
-        echo "UE is greater than registered subscribers, registering UE $UE_NUMBER..."
-        REGISTRATION_DIR=$(dirname "$SCRIPT_DIR")/5G_Core_Network/install_scripts
-        if [ -f "$REGISTRATION_DIR/./register_subscriber.sh" ]; then
-            UE_INDEX=$((UE_NUMBER + 99))
-            UE_IPV4=$(python3 install_scripts/fetch_nth_ip.py "$OGSTUN_IPV4" "$UE_INDEX")
-            if [ $? -eq 0 ]; then
-                IPV4_LINE="--ipv4 $UE_IPV4"
-            else
-                IPV4_LINE=""
-            fi
-            "$REGISTRATION_DIR/./register_subscriber.sh" --imsi "$UE_IMSI" --key "$UE_KEY" --opc "$UE_OPC" --apn "$CURRENT_DNN" --sst "$SST_DEC" --sd "$SD_HEX" $IPV4_LINE || true
-        fi
-    fi
+    # UE_IPV4=""
+    # if [ $UE_NUMBER -gt 3 ]; then
+    #     echo "UE is greater than registered subscribers, registering UE $UE_NUMBER..."
+    #     REGISTRATION_DIR=$(dirname "$SCRIPT_DIR")/5G_Core_Network/install_scripts
+    #     if [ -f "$REGISTRATION_DIR/./register_subscriber.sh" ]; then
+    #         UE_INDEX=$((UE_NUMBER + 99))
+    #         UE_IPV4=$(python3 install_scripts/fetch_nth_ip.py "$OGSTUN_IPV4" "$UE_INDEX")
+    #         if [ $? -eq 0 ]; then
+    #             IPV4_LINE="--ipv4 $UE_IPV4"
+    #         else
+    #             IPV4_LINE=""
+    #         fi
+    #         "$REGISTRATION_DIR/./register_subscriber.sh" --imsi "$UE_IMSI" --key "$UE_KEY" --opc "$UE_OPC" --apn "$CURRENT_DNN" --sst "$SST_DEC" --sd "$SD_HEX" $IPV4_LINE || true
+    #     fi
+    # fi
 
     echo
     echo "Successfully configured UE ${UE_NUMBER}."

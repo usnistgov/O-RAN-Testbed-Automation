@@ -37,6 +37,16 @@ fi
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
+USE_ZMQ_CHANNEL_EMULATOR=false
+
+if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ]; then
+    if pgrep -f "[z]mq_channel_emulator\.py" >/dev/null; then
+        echo "ZeroMQ Channel Emulator: RUNNING"
+    else
+        echo "ZeroMQ Channel Emulator: NOT_RUNNING"
+    fi
+fi
+
 RUNNING_CUDU_NUMBERS=()
 # check for cu.conf from the configuration file path
 while read -r LINE; do

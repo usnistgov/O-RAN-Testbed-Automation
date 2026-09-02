@@ -28,7 +28,7 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-echo "# Script: $(realpath "$0")..."
+echo "# Script: $(realpath "$0") $@"
 
 # Exit immediately if a command fails
 set -e
@@ -48,8 +48,8 @@ if ! command -v jq &>/dev/null; then
 fi
 
 FILE="config/config-file_updated.json"
-sudo rm -rf $FILE
-cp config/config-file.json $FILE
+sudo rm -rf "$FILE"
+cp config/config-file.json "$FILE"
 # Modify the required fields using jq and overwrite the original file, following the NIST TN 2311 blueprint
 jq '.containers[0].image.tag = "latest" |
     .containers[0].image.registry = "example.com:80" |

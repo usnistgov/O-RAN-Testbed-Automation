@@ -28,7 +28,12 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-DISABLE_NRSCOPE_IF_INSTALLED=false
+IMSCOPE_ENABLED=false
+USE_ZMQ_CHANNEL_EMULATOR=false
+SHOW_ZMQ_CHANNEL_EMULATOR_GUI=true
+if [ -z "${DISPLAY:-}" ] && [ -z "${WAYLAND_DISPLAY:-}" ]; then
+    SHOW_ZMQ_CHANNEL_EMULATOR_GUI=false
+fi
 
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
@@ -38,13 +43,44 @@ fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 
+ENV_ARGS=()
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+    --imscope)
+        IMSCOPE_ENABLED=true
+        shift
+        ;;
+    *)
+        ENV_ARGS+=("$1")
+        shift
+        ;;
+    esac
+done
+set -- "${ENV_ARGS[@]}"
+
 if ! command -v gdb &>/dev/null; then
     echo "Installing GNU Debugger..."
     sudo apt-get update
     sudo env $APTVARS apt-get install -y gdb
 fi
 
-ADDITIONAL_FLAGS=""
+if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ]; then
+    if [ ! -f "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build/liboai_zmqdevif.so" ]; then
+        echo "ERROR: ZeroMQ device library not found. Rerun full_install.sh after setting RADIO_TYPE=\"ZMQ\"."
+        exit 1
+    fi
+    "$SCRIPT_DIR/install_scripts/run_zmq_channel_emulator.sh" --show-ui "$SHOW_ZMQ_CHANNEL_EMULATOR_GUI"
+    if [ $# -eq 0 ]; then
+        set -- 1
+    fi
+    set -- "$@" --gdb
+    if [ "$IMSCOPE_ENABLED" = "true" ]; then
+        set -- "$@" --imscope
+    fi
+    exec "$SCRIPT_DIR/run_split_du.sh" "$@"
+fi
+
+ADDITIONAL_FLAGS="-E"
 if [ -f "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build/libtelnetsrv.so" ]; then
     echo "Found telnet server library. Enabling telnet server..."
     TELNET_ADDRESS=127.0.0.1
@@ -55,28 +91,16 @@ if [ -f "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build/libtelnets
     ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --telnetsrv.listenport $TELNET_PORT"
     ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --telnetsrv.listenstdin 1"
 fi
-
-IMSCOPE=false
-if [ "$DISABLE_NRSCOPE_IF_INSTALLED" = false ] && [ -f "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build/libimscope.so" ]; then
+if [ "$IMSCOPE_ENABLED" = "true" ]; then
+    if [ ! -f "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build/libimscope.so" ]; then
+        echo "ERROR: ImScope library not found. Rerun full_install.sh after setting USE_IMSCOPE=true."
+        exit 1
+    fi
     echo "Enabling ImScope..."
-    ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --imscope -d --log_config.global_log_options utc_time"
-    IMSCOPE=true
+    ADDITIONAL_FLAGS="$ADDITIONAL_FLAGS --imscope --log_config.global_log_options utc_time"
 fi
 
 cd "$SCRIPT_DIR"
-
-RADIO_TYPE=$(cat "$SCRIPT_DIR/configs/radio_type.txt" 2>/dev/null || echo "RFSIM")
-if [ "$RADIO_TYPE" = "ZMQ" ]; then
-    ZMQ_TX_PORT=4556
-    ZMQ_RX_PORT=4557
-    UE_NUMBER=1
-    UE_NS_IP=$(python3 "$SCRIPT_DIR/install_scripts/fetch_nth_ip.py" "10.201.0.0/16" $((UE_NUMBER * 4 + 1)))
-    RADIO_ARGS="--device.name oai_zmqdevif --zmq.[0].tx_channels tcp://0.0.0.0:$ZMQ_TX_PORT --zmq.[0].rx_channels tcp://$UE_NS_IP:$ZMQ_RX_PORT"
-elif [ "$RADIO_TYPE" = "USRP" ]; then
-    RADIO_ARGS=""
-else
-    RADIO_ARGS="$RADIO_ARGS"
-fi
 
 # Write the hostname IP to the get_rfsim_server_address.txt file
 HOSTNAME_IP=$(hostname -I | awk '{print $1}')
@@ -91,8 +115,24 @@ fi
 
 cd "$SCRIPT_DIR/openairinterface5g/cmake_targets/ran_build/build"
 
+# Code from (https://github.com/duranta-project/openairinterface5g/blob/develop/radio/rfsimulator/README.md#5g-case):
+# sudo ./nr-softmodem -O "$SCRIPT_DIR/configs/gnb.conf" $RADIO_ARGS --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS
+
+RADIO_TYPE=$(cat "$SCRIPT_DIR/configs/radio_type.txt" 2>/dev/null || echo "RFSIM")
+if [ "$RADIO_TYPE" = "ZMQ" ]; then
+    ZMQ_TX_PORT=4556
+    ZMQ_RX_PORT=4557
+    UE_NUMBER=1
+    UE_NS_IP=$("$SCRIPT_DIR/install_scripts/get_ue_namespace_ip.sh" ue "$UE_NUMBER")
+    RADIO_ARGS="--device.name oai_zmqdevif --zmq.[0].tx_channels tcp://0.0.0.0:$ZMQ_TX_PORT --zmq.[0].rx_channels tcp://$UE_NS_IP:$ZMQ_RX_PORT"
+elif [ "$RADIO_TYPE" = "USRP" ]; then
+    RADIO_ARGS=""
+else
+    RADIO_ARGS="--rfsim --rfsimulator.[0].serveraddr server --rfsimulator.[0].options chanmod"
+fi
+
 # sudo gdb --args ./nr-softmodem -O "$SCRIPT_DIR/configs/gnb.conf" $RADIO_ARGS --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS
-if [ "$IMSCOPE" = true ]; then # ImScope GUI cannot be run with sudo
+if [ "$IMSCOPE_ENABLED" = true ]; then # ImScope GUI cannot be run with sudo
     script -q -f -c "gdb --args ./nr-softmodem -O \"$SCRIPT_DIR/configs/gnb.conf\" $RADIO_ARGS --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS" "$SCRIPT_DIR/logs/gnb_stdout.txt"
 else
     sudo script -q -f -c "gdb --args ./nr-softmodem -O \"$SCRIPT_DIR/configs/gnb.conf\" $RADIO_ARGS --gNBs.[0].min_rxtxtime 6 $ADDITIONAL_FLAGS" "$SCRIPT_DIR/logs/gnb_stdout.txt"

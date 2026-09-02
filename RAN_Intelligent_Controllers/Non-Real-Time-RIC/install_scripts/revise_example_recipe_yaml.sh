@@ -28,7 +28,7 @@
 # damage to property. The software developed by NIST employees is not subject to
 # copyright protection within the United States.
 
-echo "# Script: $(realpath "$0")..."
+echo "# Script: $(realpath "$0") $@"
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$(dirname "$SCRIPT_DIR")"
@@ -71,7 +71,7 @@ update_yaml() {
 }
 
 # Guide from the Non-RT RIC wiki:
-# https://lf-o-ran-sc.atlassian.net/wiki/spaces/RICNR/pages/679903652/Release+M+-+Run+in+Kubernetes
+# https://lf-o-ran-sc.atlassian.net/wiki/spaces/RICNR/pages/929792370/Release+N+-+Run+in+Kubernetes
 
 update_yaml $RECIPE_PATH '.nonrtric.installPms' 'true'
 update_yaml $RECIPE_PATH '.nonrtric.installA1controller' 'false'

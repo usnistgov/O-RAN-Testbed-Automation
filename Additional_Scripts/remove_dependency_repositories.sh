@@ -36,7 +36,7 @@ if ! command -v realpath &>/dev/null; then
     sudo env $APTVARS apt-get install -y coreutils
 fi
 
-echo "# Script: $(realpath "$0")..."
+echo "# Script: $(realpath "$0") $@"
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$(dirname "$SCRIPT_DIR")"
@@ -66,7 +66,7 @@ sudo rm -rf User_Equipment/install_time.txt
 sudo rm -rf Next_Generation_Node_B/ocudu
 sudo rm -rf Next_Generation_Node_B/ocudu_o1_adapter
 sudo rm -rf Next_Generation_Node_B/ocudu_netconf
-sudo rm -rf Next_Generation_Node_B/zmq_broker
+sudo rm -rf Next_Generation_Node_B/zmq_channel_emulator
 sudo rm -rf Next_Generation_Node_B/czmq
 sudo rm -rf Next_Generation_Node_B/libzmq
 sudo rm -rf Next_Generation_Node_B/logs
@@ -128,4 +128,4 @@ sudo rm -rf OpenAirInterface_Testbed/RAN_Intelligent_Controllers/Flexible-RIC/in
 # Echo every command as it is ran
 set +x
 
-echo "Repositories were removed successfully."
+echo "Successfully removed repositories."

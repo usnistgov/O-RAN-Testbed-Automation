@@ -104,5 +104,5 @@ cd "$SCRIPT_DIR"
 echo
 echo
 echo "################################################################################"
-echo "# Successfully uninstalled OpenAirInterface UE and gNodeB                      #"
+echo "# Successfully uninstalled Duranta UE and gNodeB                               #"
 echo "################################################################################"

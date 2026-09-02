@@ -1,8 +1,8 @@
 diff --git a/helm/e2mgr/templates/configmap.yaml b/helm/e2mgr/templates/configmap.yaml
-index 0973eba..946120f 100644
+index 0973eba..81ae44c 100644
 --- a/helm/e2mgr/templates/configmap.yaml
 +++ b/helm/e2mgr/templates/configmap.yaml
-@@ -26,26 +26,26 @@ data:
+@@ -26,26 +26,28 @@ data:
    router.txt: |
      newrt|start
      rte|1080|{{ include "common.servicename.e2mgr.rmr" .      }}.{{ include "common.namespace.platform" . }}:{{ include "common.serviceport.e2mgr.rmr.data" . }}
@@ -34,6 +34,8 @@ index 0973eba..946120f 100644
 -    rte|12010|{{ include "common.servicename.e2term.rmr" .     }}.{{ include "common.namespace.platform" . }}:{{ include "common.serviceport.e2term.rmr.data" . }}
 -    rte|12020|{{ include "common.servicename.e2term.rmr" .     }}.{{ include "common.namespace.platform" . }}:{{ include "common.serviceport.e2term.rmr.data" . }}
 +    rte|10371|service-ricplt-e2term-rmr-alpha.{{ include "common.namespace.platform" . }}:{{ include "common.serviceport.e2term.rmr.data" . }}
++    rte|12002|service-ricplt-e2term-rmr-alpha.{{ include "common.namespace.platform" . }}:{{ include "common.serviceport.e2term.rmr.data" . }}
++    rte|12003|service-ricplt-e2term-rmr-alpha.{{ include "common.namespace.platform" . }}:{{ include "common.serviceport.e2term.rmr.data" . }}
 +    rte|12010|service-ricplt-e2term-rmr-alpha.{{ include "common.namespace.platform" . }}:{{ include "common.serviceport.e2term.rmr.data" . }}
 +    rte|12020|service-ricplt-e2term-rmr-alpha.{{ include "common.namespace.platform" . }}:{{ include "common.serviceport.e2term.rmr.data" . }}
      rte|20001|{{ include "common.servicename.a1mediator.rmr" . }}.{{ include "common.namespace.platform" . }}:{{ include "common.serviceport.a1mediator.rmr.data" . }}

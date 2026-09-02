@@ -31,6 +31,13 @@
 # Exit immediately if a command fails
 set -e
 
+USE_SRSRAN_UE=false # Experimental
+USE_ZMQ_CHANNEL_EMULATOR=false
+SHOW_ZMQ_CHANNEL_EMULATOR_GUI=true
+if [ -z "${DISPLAY:-}" ] && [ -z "${WAYLAND_DISPLAY:-}" ]; then
+    SHOW_ZMQ_CHANNEL_EMULATOR_GUI=false
+fi
+
 APTVARS="NEEDRESTART_MODE=l NEEDRESTART_SUSPEND=1 DEBIAN_FRONTEND=noninteractive"
 if ! command -v realpath &>/dev/null; then
     echo "Package \"coreutils\" not found, installing..."
@@ -38,11 +45,40 @@ if ! command -v realpath &>/dev/null; then
 fi
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
+cd "$SCRIPT_DIR"
+
+UE_DIRECTORY="$SCRIPT_DIR/User_Equipment"
+UE_READY_MESSAGE="Received PDU Session Establishment Accept"
+if [ "$USE_SRSRAN_UE" = "true" ]; then
+    if [ "$USE_ZMQ_CHANNEL_EMULATOR" != "true" ]; then
+        echo "ERROR: The srsRAN UE requires the ZeroMQ channel emulator with the Duranta gNodeB. It can be enabled with the following commands:"
+        echo "    sed -i 's/^RADIO_TYPE=.*$/RADIO_TYPE="ZMQ" # Set to "SIMU", "ZMQ", or "USRP"/' User_Equipment/full_install.sh"
+        echo "    sed -i 's/^RADIO_TYPE=.*$/RADIO_TYPE="ZMQ" # Set to "SIMU", "ZMQ", or "USRP"/' User_Equipment/generate_configurations.sh"
+        echo "    sed -i 's/^RADIO_TYPE=.*$/RADIO_TYPE="ZMQ" # Set to "SIMU", "ZMQ", or "USRP"/' Next_Generation_Node_B/full_install.sh"
+        echo "    sed -i 's/^RADIO_TYPE=.*$/RADIO_TYPE="ZMQ"                   # Set to "SIMU", "ZMQ", or "USRP"/' Next_Generation_Node_B/generate_configurations.sh"
+        echo "    sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' run.sh"
+        echo "    sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' run_handover_scenario.sh"
+        echo "    sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' run_with_grafana_dashboard.sh"
+        echo "    sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' User_Equipment/run.sh"
+        echo "    sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' User_Equipment/run_background.sh"
+        echo "    sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' User_Equipment/run_gdb.sh"
+        echo "    sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' Next_Generation_Node_B/run.sh"
+        echo "    sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' Next_Generation_Node_B/run_background.sh"
+        echo "    sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' Next_Generation_Node_B/run_gdb.sh"
+        echo "    sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' Next_Generation_Node_B/run_split_du.sh"
+        echo "    sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' Next_Generation_Node_B/is_running.sh"
+        echo "    sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=false$/USE_ZMQ_CHANNEL_EMULATOR=true/' Next_Generation_Node_B/stop.sh"
+        exit 1
+    fi
+    UE_DIRECTORY="$SCRIPT_DIR/../User_Equipment"
+    UE_READY_MESSAGE="PDU Session Establishment successful" # srsRAN_4G
+    # UE_READY_MESSAGE="Attaching UE..." # srsRAN_4G
+fi
 
 RUN_TELNET_SESSION_AFTER=true
 NUM_UES=1
 NUM_DUS=2
-RUN_XAPP_KPM_MONITOR=false
+RUN_XAPP_KPM_MONITOR=true
 RUN_GRAFANA_DASHBOARD=false
 
 if [ "$RUN_GRAFANA_DASHBOARD" = true ] && [ "$RUN_XAPP_KPM_MONITOR" = false ]; then
@@ -58,17 +94,19 @@ while [[ $# -gt 0 ]]; do
         shift
         ;;
     help | -h | --help)
-        echo "Usage: $0 [show] [--num-dus N] [help|-h|--help]"
+        echo "Usage: $0 [show] [--num-ues N] [--num-dus N] [help|-h|--help]"
         echo "  show           Show logs in new terminals"
+        echo "  --num-ues N    Set number of UEs (default: 1)."
+        echo "                 Note: RF simulator supports only one UE, while the ZeroMQ channel emulator supports multiple UEs."
         echo "  --num-dus N    Set number of DUs (default: 2)"
         echo "  help, -h       Show this help message"
         exit 0
         ;;
-    # NOTE: RF Simulator's client-server architecture does not currently support a virtual multi-UE handover scenario. However, handovers for multiple COTS UEs are supported over the air.
-    # --num-ues)
-    #     NUM_UES="$2"
-    #     shift 2
-    #     ;;
+        # NOTE: RF Simulator's client-server architecture does not currently support a virtual multi-UE handover scenario. However, handovers for multiple COTS UEs are supported over the air and through the ZeroMQ channel emulator.
+    --num-ues)
+        NUM_UES="$2"
+        shift 2
+        ;;
     --num-dus)
         NUM_DUS="$2"
         shift 2
@@ -80,15 +118,74 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-if [ "$NUM_UES" -lt 0 ] || [ "$NUM_DUS" -lt 2 ]; then
-    echo "ERROR: Number of UEs must be 0 or more, and number of DUs must be 2 or more."
+if ! [[ "$NUM_UES" =~ ^[1-9][0-9]*$ ]]; then
+    echo "ERROR: Number of UEs must be a positive integer."
+    exit 1
+fi
+if ! [[ "$NUM_DUS" =~ ^[1-9][0-9]*$ ]]; then
+    echo "ERROR: Number of DUs must be a positive integer."
+    exit 1
+fi
+if [ "$NUM_DUS" = 1 ]; then
+    echo "ERROR: Number of UEs must be 1 or more, and number of DUs must be 2 or more."
+    exit 1
+fi
+if [ "$USE_ZMQ_CHANNEL_EMULATOR" != "true" ] && [ "$NUM_UES" != 1 ]; then
+    echo "ERROR: The RF simulator handover scenario supports one virtual UE."
     exit 1
 fi
 
 cd "$SCRIPT_DIR"
 
+if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ]; then
+    mapfile -t CHANNEL_EMULATOR_UE_NUMBERS < <(./Next_Generation_Node_B/install_scripts/get_zmq_channel_emulator_config.sh --ues)
+    mapfile -t CHANNEL_EMULATOR_CELL_NUMBERS < <(./Next_Generation_Node_B/install_scripts/get_zmq_channel_emulator_config.sh --cells)
+    if [ "$NUM_UES" != "${#CHANNEL_EMULATOR_UE_NUMBERS[@]}" ] || [ "$NUM_DUS" != "${#CHANNEL_EMULATOR_CELL_NUMBERS[@]}" ]; then
+        echo "WARNING: The requested number of UEs or DUs does not match the generated ZeroMQ channel emulator configuration."
+        NUM_UES=${#CHANNEL_EMULATOR_UE_NUMBERS[@]}
+        NUM_DUS=${#CHANNEL_EMULATOR_CELL_NUMBERS[@]}
+        echo "Using $NUM_UES UE(s) and $NUM_DUS DU(s) from the ZeroMQ channel emulator configuration."
+    fi
+
+    CHANNEL_EMULATOR_UE_NUMBERS_STR=$(
+        IFS=,
+        echo "${CHANNEL_EMULATOR_UE_NUMBERS[*]}"
+    )
+    CHANNEL_EMULATOR_CELL_NUMBERS_STR=$(
+        IFS=,
+        echo "${CHANNEL_EMULATOR_CELL_NUMBERS[*]}"
+    )
+    ./Next_Generation_Node_B/install_scripts/validate_zmq_channel_emulator_config.sh --channel-emulator-only --ues "$CHANNEL_EMULATOR_UE_NUMBERS_STR" --cells "$CHANNEL_EMULATOR_CELL_NUMBERS_STR"
+
+    GNB_ZMQ_LIBRARY="$SCRIPT_DIR/Next_Generation_Node_B/openairinterface5g/cmake_targets/ran_build/build/liboai_zmqdevif.so"
+    if [ "$USE_SRSRAN_UE" = "true" ]; then
+        UE_ZMQ_LIBRARY="$UE_DIRECTORY/srsRAN_4G/build/srsue/src/srsue"
+    else
+        UE_ZMQ_LIBRARY="$UE_DIRECTORY/openairinterface5g/cmake_targets/ran_build/build/liboai_zmqdevif.so"
+    fi
+    if [ ! -f "$GNB_ZMQ_LIBRARY" ] || [ ! -f "$UE_ZMQ_LIBRARY" ]; then
+        echo "ERROR: The Duranta gNodeB and selected UE must be built with ZeroMQ support."
+        if [ ! -f "$GNB_ZMQ_LIBRARY" ]; then
+            echo "Missing gNodeB library: $GNB_ZMQ_LIBRARY"
+        fi
+        if [ ! -f "$UE_ZMQ_LIBRARY" ]; then
+            echo "Missing UE library: $UE_ZMQ_LIBRARY"
+        fi
+        echo "Rerun the required full_install.sh scripts with ZeroMQ enabled."
+        exit 1
+    fi
+fi
+
 # Upon exit, gracefully stop all components and fix console in case it breaks
-trap 'trap - EXIT SIGINT SIGTERM; echo "#################################  STOPPING... #################################"; "$SCRIPT_DIR/./stop.sh"; stty sane || true; exit' EXIT SIGINT SIGTERM
+trap '
+    EXIT_STATUS=$?
+    trap - EXIT SIGINT SIGTERM
+    stty sane || true
+    echo "#################################  STOPPING... #################################"
+    "$SCRIPT_DIR/stop.sh" || true
+    stty sane || true
+    exit "$EXIT_STATUS"
+' EXIT SIGINT SIGTERM
 
 echo "Running 5G Core components..."
 cd 5G_Core_Network
@@ -101,7 +198,7 @@ cd RAN_Intelligent_Controllers/Flexible-RIC
 ./run_background.sh
 
 if $(./is_running.sh | grep -q "NOT_RUNNING"); then
-    echo "Error starting FlexRIC."
+    echo "ERROR: Could not start FlexRIC."
     exit 1
 fi
 cd ../..
@@ -120,12 +217,18 @@ while ! ./5G_Core_Network/is_amf_ready.sh | grep -q "true"; do
 done
 echo -e "\nAMF is ready."
 
-echo
-echo "Running CU..."
 cd Next_Generation_Node_B
-./run_background_split_cu.sh
-if [ "$SHOW_TERMINALS" = true ]; then
-    nohup x-terminal-emulator -T "CU Log" -e bash -c "tail -f logs/split_cu_stdout.txt; exec bash" >/dev/null 2>&1 &
+if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ]; then
+    echo
+    ./install_scripts/run_zmq_channel_emulator.sh --show-ui "$SHOW_ZMQ_CHANNEL_EMULATOR_GUI"
+else
+    echo
+    echo "Running CU..."
+    ./run_background_split_cu.sh
+    stty sane || true
+    if [ "$SHOW_TERMINALS" = true ]; then
+        nohup x-terminal-emulator -T "CU Log" -e bash -c "tail -f logs/split_cu_stdout.txt; exec bash" >/dev/null 2>&1 &
+    fi
 fi
 cd ..
 
@@ -134,19 +237,26 @@ start_ue() {
     IS_RFSIM_SERVER=$2
     echo
     echo "Running UE $UE_ID..."
-    cd User_Equipment
+    cd "$UE_DIRECTORY"
     if [ "$IS_RFSIM_SERVER" = true ]; then
         ./run_background.sh "$UE_ID" --rfsim-server
     else
         ./run_background.sh "$UE_ID"
     fi
+    stty sane || true
     if [ "$SHOW_TERMINALS" = true ]; then
         nohup x-terminal-emulator -T "UE $UE_ID Log" -e bash -c "tail -f logs/ue${UE_ID}_stdout.txt; exec bash" >/dev/null 2>&1 &
+    fi
+
+    if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ]; then
+        cd "$SCRIPT_DIR"
+        return
     fi
 
     echo -en "\nWaiting for UE $UE_ID to be ready"
     ATTEMPT=0
     while [ ! -f logs/ue${UE_ID}_stdout.txt ] || ! grep -q "TYPE <CTRL-C> TO TERMINATE" logs/ue${UE_ID}_stdout.txt; do
+        stty sane || true
         echo -n "."
         sleep 0.5
         ATTEMPT=$((ATTEMPT + 1))
@@ -154,116 +264,177 @@ start_ue() {
             echo "UE $UE_ID did not start after 60 seconds, exiting..."
             exit 1
         fi
-        if grep -q "State = NR_RRC_CONNECTED" logs/ue${UE_ID}_stdout.txt; then
+        if [ -f "logs/ue${UE_ID}_stdout.txt" ] && grep -q "State = NR_RRC_CONNECTED" "logs/ue${UE_ID}_stdout.txt"; then
             break
-        elif $(./is_running.sh | grep -q "NOT_RUNNING"); then
-            echo "Error starting UE $UE_ID. Check logs/ue${UE_ID}_stdout.txt for more information."
+        elif ! ./is_running.sh | grep -Eq "(^|[ (])ue${UE_ID}([ )]|$)"; then
+            echo "ERROR: Could not start UE $UE_ID. Check logs/ue${UE_ID}_stdout.txt for more information."
             exit 1
         fi
     done
     echo -e "\nUE $UE_ID is ready."
-    cd ..
+    cd "$SCRIPT_DIR"
 }
 
-wait_for_ue_to_connect_to_du_1() {
+wait_for_ue_to_connect() {
     UE_ID=$1
-    echo -en "\nWaiting for UE $UE_ID to connect to DU 1"
+    LOG_FILE="$UE_DIRECTORY/logs/ue${UE_ID}_stdout.txt"
+    echo -en "\nWaiting for UE $UE_ID to establish a PDU session"
     ATTEMPT=0
-    while [ ! -f User_Equipment/logs/ue${UE_ID}_stdout.txt ] || ! grep -q "Received PDU Session Establishment Accept," User_Equipment/logs/ue${UE_ID}_stdout.txt; do
+    while [ ! -f "$LOG_FILE" ] || ! grep -qaF "$UE_READY_MESSAGE" "$LOG_FILE"; do
+        stty sane || true
         echo -n "."
         sleep 0.5
         ATTEMPT=$((ATTEMPT + 1))
         if [ $ATTEMPT -ge 120 ]; then
-            echo "UE $UE_ID did not connect to DU 1 after 60 seconds, exiting..."
+            echo "UE $UE_ID did not establish a PDU session after 60 seconds, exiting..."
             exit 1
         fi
-        if grep -q "Received PDU Session Establishment Accept," User_Equipment/logs/ue${UE_ID}_stdout.txt; then
-            break
-        elif ./User_Equipment/is_running.sh | grep -q "NOT_RUNNING" || ./Next_Generation_Node_B/is_running.sh | grep -q "NOT_RUNNING"; then
+        if ! "$UE_DIRECTORY/is_running.sh" | grep -Eq "(^|[ (])ue${UE_ID}([ )]|$)" || ! ./Next_Generation_Node_B/is_running.sh | grep -Eq "(^|[ (])du1([ )]|$)"; then
             echo "ERROR: DU 1 or UE $UE_ID may not be running. Check logs for more information."
             exit 1
         fi
     done
-    echo -e "\nUE $UE_ID has connected to DU 1."
+    echo -e "\nUE $UE_ID has established a PDU session."
 }
 
-# Start the first UE since it will be the RF simulator server for the DUs
 NEXT_UE_ID=1
-start_ue $NEXT_UE_ID true
-NEXT_UE_ID=$((NEXT_UE_ID + 1))
+if [ "$USE_ZMQ_CHANNEL_EMULATOR" != "true" ]; then
+    RFSIM_SERVER_IP=$(./User_Equipment/install_scripts/get_ue_namespace_ip.sh ue "$NEXT_UE_ID")
+    echo "$RFSIM_SERVER_IP" >User_Equipment/configs/get_rfsim_server_address.txt
+fi
 
 echo
 echo "Running DU 1..."
 cd Next_Generation_Node_B
-./run_background_split_du.sh 1 --no-rfsim-server
+if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ]; then
+    ./run_background_split_du.sh 1
+else
+    ./run_background_split_du.sh 1 --no-rfsim-server
+fi
+stty sane || true
 if [ "$SHOW_TERMINALS" = true ]; then
     nohup x-terminal-emulator -T "DU 1 Log" -e bash -c "tail -f logs/split_du1_stdout.txt; exec bash" >/dev/null 2>&1 &
+    if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ]; then
+        nohup x-terminal-emulator -T "CU Log" -e bash -c "tail -f logs/split_cu_stdout.txt; exec bash" >/dev/null 2>&1 &
+    fi
 fi
 cd ..
 
-echo -en "\nWaiting for DU 1 to be ready"
-cd Next_Generation_Node_B
-ATTEMPT=0
-while [ ! -f logs/split_du1_stdout.txt ] || ! grep -q "TYPE <CTRL-C> TO TERMINATE" logs/split_du1_stdout.txt; do
-    echo -n "."
-    sleep 0.5
-    ATTEMPT=$((ATTEMPT + 1))
-    if [ $ATTEMPT -ge 120 ]; then
-        echo "DU 1 did not start after 60 seconds, exiting..."
-        exit 1
-    fi
-    if grep -q "TYPE <CTRL-C> TO TERMINATE" logs/split_du1_stdout.txt; then
-        break
-    elif $(./is_running.sh | grep -q "NOT_RUNNING"); then
-        echo "Error starting DU 1. Check logs/split_du1_stdout.txt for more information."
-        exit 1
-    fi
-done
-echo -e "\nDU 1 is ready."
-cd ..
+if [ "$USE_ZMQ_CHANNEL_EMULATOR" != "true" ]; then
+    # The first UE is the RF simulator server for the DUs
+    start_ue "$NEXT_UE_ID" true
+    NEXT_UE_ID=$((NEXT_UE_ID + 1))
 
-# Ensure that DU 1 has connected to the UE before proceeding
-wait_for_ue_to_connect_to_du_1 1
-
-if [ "$NUM_UES" -gt 0 ]; then
-    while [ $NEXT_UE_ID -le "$NUM_UES" ]; do
-        start_ue "$NEXT_UE_ID" false
-        wait_for_ue_to_connect_to_du_1 "$NEXT_UE_ID"
-        NEXT_UE_ID=$((NEXT_UE_ID + 1))
-    done
-fi
-
-DU_ID=2
-while [ $DU_ID -le "$NUM_DUS" ]; do
-    echo
-    echo "Running DU $DU_ID..."
+    echo -en "\nWaiting for DU 1 to be ready"
     cd Next_Generation_Node_B
-    ./run_background_split_du.sh "$DU_ID" --no-rfsim-server
-    if [ "$SHOW_TERMINALS" = true ]; then
-        nohup x-terminal-emulator -T "DU $DU_ID Log" -e bash -c "tail -f logs/split_du${DU_ID}_stdout.txt; exec bash" >/dev/null 2>&1 &
-    fi
-
-    echo -en "\nWaiting for DU $DU_ID to be ready"
     ATTEMPT=0
-    while [ ! -f logs/split_du${DU_ID}_stdout.txt ] || ! grep -q "TYPE <CTRL-C> TO TERMINATE" logs/split_du${DU_ID}_stdout.txt; do
+    while ! ./is_du_ready.sh 1 | grep -qx "true"; do
+        stty sane || true
         echo -n "."
         sleep 0.5
         ATTEMPT=$((ATTEMPT + 1))
         if [ $ATTEMPT -ge 120 ]; then
-            echo "DU $DU_ID did not start after 60 seconds, exiting..."
+            echo "DU 1 did not start after 60 seconds, exiting..."
             exit 1
         fi
-        if grep -q "TYPE <CTRL-C> TO TERMINATE" logs/split_du${DU_ID}_stdout.txt; then
-            break
-        elif $(./is_running.sh | grep -q "NOT_RUNNING"); then
-            echo "Error starting DU $DU_ID. Check logs/split_du${DU_ID}_stdout.txt for more information."
+        if ! ./is_running.sh | grep -Eq "(^|[ (])du1([ )]|$)"; then
+            echo "ERROR: Could not start DU 1. Check logs/split_du1_stdout.txt for more information."
             exit 1
         fi
     done
-    echo -e "\nDU $DU_ID is ready."
+    echo -e "\nDU 1 is ready."
     cd ..
-    DU_ID=$((DU_ID + 1))
-done
+fi
+
+if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ]; then
+    for DU_ID in "${CHANNEL_EMULATOR_CELL_NUMBERS[@]}"; do
+        if [ "$DU_ID" = "1" ]; then
+            continue
+        fi
+        echo
+        echo "Running DU $DU_ID..."
+        cd Next_Generation_Node_B
+        ./run_background_split_du.sh "$DU_ID"
+        stty sane || true
+        if [ "$SHOW_TERMINALS" = true ]; then
+            nohup x-terminal-emulator -T "DU $DU_ID Log" -e bash -c "tail -f logs/split_du${DU_ID}_stdout.txt; exec bash" >/dev/null 2>&1 &
+        fi
+        cd ..
+    done
+
+    for UE_ID in "${CHANNEL_EMULATOR_UE_NUMBERS[@]}"; do
+        start_ue "$UE_ID" false
+    done
+
+    cd Next_Generation_Node_B
+    for DU_ID in "${CHANNEL_EMULATOR_CELL_NUMBERS[@]}"; do
+        LOG_FILE="logs/split_du${DU_ID}_stdout.txt"
+        echo -en "\nWaiting for DU $DU_ID to be ready"
+        ATTEMPT=0
+        while ! ./is_du_ready.sh "$DU_ID" | grep -qx "true"; do
+            stty sane || true
+            echo -n "."
+            sleep 0.5
+            ATTEMPT=$((ATTEMPT + 1))
+            if [ $ATTEMPT -ge 120 ]; then
+                echo "DU $DU_ID did not start after 60 seconds, exiting..."
+                exit 1
+            fi
+            if ! ./is_running.sh | grep -Eq "(^|[ (])du${DU_ID}([ )]|$)"; then
+                echo "ERROR: Could not start DU $DU_ID. Check $LOG_FILE for more information."
+                exit 1
+            fi
+        done
+        echo -e "\nDU $DU_ID is ready."
+    done
+    cd ..
+
+    for UE_ID in "${CHANNEL_EMULATOR_UE_NUMBERS[@]}"; do
+        wait_for_ue_to_connect "$UE_ID"
+    done
+else
+    # Ensure that DU 1 has connected to the UE before proceeding
+    wait_for_ue_to_connect 1
+    while [ $NEXT_UE_ID -le "$NUM_UES" ]; do
+        start_ue "$NEXT_UE_ID" false
+        wait_for_ue_to_connect "$NEXT_UE_ID"
+        NEXT_UE_ID=$((NEXT_UE_ID + 1))
+    done
+fi
+
+if [ "$USE_ZMQ_CHANNEL_EMULATOR" != "true" ]; then
+    DU_ID=2
+    while [ $DU_ID -le "$NUM_DUS" ]; do
+        echo
+        echo "Running DU $DU_ID..."
+        cd Next_Generation_Node_B
+        ./run_background_split_du.sh "$DU_ID" --no-rfsim-server
+        stty sane || true
+        if [ "$SHOW_TERMINALS" = true ]; then
+            nohup x-terminal-emulator -T "DU $DU_ID Log" -e bash -c "tail -f logs/split_du${DU_ID}_stdout.txt; exec bash" >/dev/null 2>&1 &
+        fi
+
+        echo -en "\nWaiting for DU $DU_ID to be ready"
+        ATTEMPT=0
+        while ! ./is_du_ready.sh "$DU_ID" | grep -qx "true"; do
+            stty sane || true
+            echo -n "."
+            sleep 0.5
+            ATTEMPT=$((ATTEMPT + 1))
+            if [ $ATTEMPT -ge 120 ]; then
+                echo "DU $DU_ID did not start after 60 seconds, exiting..."
+                exit 1
+            fi
+            if ! ./is_running.sh | grep -Eq "(^|[ (])du${DU_ID}([ )]|$)"; then
+                echo "ERROR: Could not start DU $DU_ID. Check logs/split_du${DU_ID}_stdout.txt for more information."
+                exit 1
+            fi
+        done
+        echo -e "\nDU $DU_ID is ready."
+        cd ..
+        DU_ID=$((DU_ID + 1))
+    done
+fi
 
 if [ "$RUN_XAPP_KPM_MONITOR" = true ]; then
     echo

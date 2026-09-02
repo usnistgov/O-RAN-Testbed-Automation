@@ -69,5 +69,6 @@ for UE_NUMBER in "${SORTED_UES[@]}"; do
         echo "$PDU_SESSIONS"
         continue
     fi
-    echo "UE $UE_NUMBER: $PDU_SESSIONS"
+    C_RNTI=$(sed -n 's/.*Random Access Complete\.[[:space:]]*c-rnti=\(0x[[:xdigit:]]*\).*/\1/p' "logs/ue${UE_NUMBER}_stdout.txt" | tail -n 1 | tr -d '\r' | sed 's/^0x\(.*\)$/0x\U\1/')
+    echo "UE $UE_NUMBER: C-RNTI ${C_RNTI:-unknown}, PDU session $PDU_SESSIONS"
 done

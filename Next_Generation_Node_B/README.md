@@ -82,18 +82,18 @@ To configure multiple cells with the channel emulator, pass `--cells <cell_numbe
 </details>
 
 <details>
-<summary>Retrieve PDU session IPs</summary>
+<summary>Retrieve UE connection details</summary>
 
-After multiple UEs are running, the PDU session IP can be retrieved with the following.
+After UEs are running their C-RNTIs and PDU session IPs can be retrieved with the following. C-RNTIs may not match UE numbers because they are temporary and follow RACH completion order.
 
 ```bash
-# List all PDU sessions for all UEs:
-./User_Equipment/additional_scripts/get_all_pdu_sessions.sh
+# List C-RNTIs and PDU sessions for all UEs:
+User_Equipment/additional_scripts/get_all_pdu_sessions.sh
 
 # List PDU sessions for a specific UE:
-./User_Equipment/install_scripts/get_pdu_sessions.sh 1
-./User_Equipment/install_scripts/get_pdu_sessions.sh 2
-./User_Equipment/install_scripts/get_pdu_sessions.sh 3
+User_Equipment/install_scripts/get_pdu_sessions.sh 1
+User_Equipment/install_scripts/get_pdu_sessions.sh 2
+User_Equipment/install_scripts/get_pdu_sessions.sh 3
 ```
 
 </details>

@@ -86,7 +86,7 @@ if [ "$USE_ZMQ_CHANNEL_EMULATOR" = "true" ]; then
         echo "Run ./generate_configurations.sh with the same UE numbers before ./run.sh."
         exit 1
     fi
-    echo "ZeroMQ channel emulator UE startup order: ${UE_NUMBERS[*]}"
+    echo "ZeroMQ channel emulator UEs: ${UE_NUMBERS[*]}"
 else
     UE_NUMBERS=(1)
 fi

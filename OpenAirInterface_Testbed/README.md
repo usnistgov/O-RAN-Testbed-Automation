@@ -85,7 +85,7 @@ sed -i 's/^USE_ZMQ_CHANNEL_EMULATOR=true$/USE_ZMQ_CHANNEL_EMULATOR=false/' Next_
 </details>
 <hr>
 
-When the ZeroMQ channel emulator is enabled, `./run.sh` starts the configured DUs and UEs and waits for them to become ready. All configured endpoints must be running for samples to flow.
+When the ZeroMQ channel emulator is enabled, `./run.sh` starts the configured DUs and UEs and waits for them to become ready. All configured endpoints must be running for samples to flow. Use `./User_Equipment/additional_scripts/get_all_pdu_sessions.sh` to list the C-RNTI and PDU session IP of each UE.
 
 ## Handover Scenario
 
